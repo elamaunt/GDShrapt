@@ -1,6 +1,6 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDType
+    public class GDType : GDIdentifier
     {
     }
 }

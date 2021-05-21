@@ -1,12 +1,10 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace GDScriptConverter
 {
     public class GDProject
     {
-        internal void AddClass(GDClass @class)
-        {
-            throw new NotImplementedException();
-        }
+        public List<GDTypeDeclaration> Types { get; } = new List<GDTypeDeclaration>();
+
     }
 }

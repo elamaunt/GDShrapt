@@ -23,18 +23,26 @@
         {
             base.CompleteSequence(state);
 
+            GDStatement statement = null;
+
             switch (Sequence)
             {
                 case "tool":
+                    statement = new GDToolAtribute();
                     break;
                 case "func":
+                    statement = new GDMethodDeclaration();
                     break;
                 case "var":
-                    state.PushNode(GDClass.AppendStatement(new GDVariableDeclaration()));
+                    statement = new GDVariableDeclaration();
                     break;
                 default:
+                    statement = new GDInvalidStatement(Sequence);
                     break;
             }
+
+            GDClass.Statements.Add(statement);
+            state.PushNode(statement);
         }
     }
 }

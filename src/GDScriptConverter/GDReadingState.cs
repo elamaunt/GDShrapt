@@ -11,7 +11,7 @@ namespace GDScriptConverter
         public bool LineIntendationEnded;
 
         public GDProject Project { get; }
-        public GDClass Class { get; private set; }
+        public GDTypeDeclaration Type { get; private set; }
 
         GDNode CurrentNode => _nodesStack.Peek();
 
@@ -28,12 +28,14 @@ namespace GDScriptConverter
 
         public void FileStarted()
         {
-            Class = PushNode(new GDClass());
+            Type = PushNode(new GDTypeDeclaration());
+            Project.Types.Add(Type);
+
         }
 
         public void FileFinished()
         {
-            Project.AddClass(Class);
+            
         }
 
         public void LineFinished()

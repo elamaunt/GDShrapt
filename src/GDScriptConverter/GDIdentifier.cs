@@ -1,0 +1,15 @@
+﻿namespace GDScriptConverter
+{
+    public class GDIdentifier : GDCharSequenceNode
+    {
+        protected override bool CanAppendChar(char c, GDReadingState state)
+        {
+            return c == '_' || char.IsLetterOrDigit(c);
+        }
+
+        public override void HandleLineFinish(GDReadingState state)
+        {
+            CompleteSequence(state);
+        }
+    }
+}

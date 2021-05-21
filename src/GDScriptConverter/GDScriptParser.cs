@@ -14,9 +14,6 @@ namespace GDScriptConverter
         {
             var state = new GDReadingState(Project);
 
-            //var cl = new GDClass();
-            //state.Node = cl;
-
             state.FileStarted();
 
             foreach (var line in File.ReadLines(filePath))
@@ -24,7 +21,7 @@ namespace GDScriptConverter
 
             state.FileFinished();
 
-            return state.Class;
+            return state.Type;
         }
 
         private void ParseLine(string line, GDReadingState state)
