@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDScriptConverter", "GDScriptConverter\GDScriptConverter.csproj", "{0154101B-4D28-4763-A65A-D65124A2C07F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0154101B-4D28-4763-A65A-D65124A2C07F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0154101B-4D28-4763-A65A-D65124A2C07F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0154101B-4D28-4763-A65A-D65124A2C07F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0154101B-4D28-4763-A65A-D65124A2C07F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {665B514F-FCDB-4D8A-8B4A-EFFFB6CA51D3}
+	EndGlobalSection
+EndGlobal
