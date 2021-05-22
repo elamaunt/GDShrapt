@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace GDScriptConverter
 {
-    public class GDClass : GDNode
+    public class GDClassDeclaration : GDNode
     {
-        public List<GDStatement> Statements { get; } = new List<GDStatement>();
+        public List<GDClassMember> Members { get; } = new List<GDClassMember>();
 
         public override void HandleChar(char c, GDReadingState state)
         {
-            state.PushNode(new GDClassStatementResolver(this));
+            state.PushNode(new GDClassMemberResolver(this));
             state.HandleChar(c);
         }
 

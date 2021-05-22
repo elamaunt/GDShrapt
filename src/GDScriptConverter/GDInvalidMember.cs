@@ -1,10 +1,10 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDInvalidStatement : GDStatement
+    public class GDInvalidMember : GDClassMember
     {
-        public string Sequence { get; }
+        public string Sequence { get; set; }
 
-        public GDInvalidStatement(string sequence)
+        public GDInvalidMember(string sequence)
         {
             Sequence = sequence;
         }

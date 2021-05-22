@@ -1,16 +1,16 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDVariableDeclaration : GDClassMember
+    public class GDParameter : GDNode
     {
         public GDIdentifier Identifier { get; set; }
         public GDType Type { get; set; }
-        public GDExpression Initializer { get; set; }
-
-        public bool IsConstant { get; set; }
 
         public override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
+                return;
+
+            if (c == '(')
                 return;
 
             if (Identifier == null)
@@ -23,25 +23,17 @@
             if (Type == null && c == ':')
             {
                 state.PushNode(Type = new GDType());
-                state.HandleChar(c);
-                return;
             }
 
-            if (c == '=')
+            if (c == ')')
             {
-                state.PushNode(new GDExressionResolver(expr => Initializer = expr));
-            }
-            else
-            {
-                // Consider another characters in line as a comment
-                state.PushNode(new GDComment());
-                state.HandleChar(c);
+                state.PopNode();
             }
         }
 
         public override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+
         }
     }
 }

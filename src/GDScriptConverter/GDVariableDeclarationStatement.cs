@@ -1,6 +1,6 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDVariableDeclaration : GDClassMember
+    public class GDVariableDeclarationStatement : GDMethodStatement
     {
         public GDIdentifier Identifier { get; set; }
         public GDType Type { get; set; }
@@ -23,7 +23,6 @@
             if (Type == null && c == ':')
             {
                 state.PushNode(Type = new GDType());
-                state.HandleChar(c);
                 return;
             }
 

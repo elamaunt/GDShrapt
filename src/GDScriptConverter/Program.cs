@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace GDScriptConverter
 {
@@ -8,40 +9,48 @@ namespace GDScriptConverter
         static void Main(string[] args)
         {
             RETURN:
-            if (args == null || args.Length < 2)
+            if (args == null || args.Length < 1)
             {
-                Console.WriteLine("GDScriptConverter parse and convert all godot scripts to their C# eqvivalent.");
-                Console.WriteLine("All code style will be rewritten to C# standarts.");
+                Console.WriteLine("GDScriptConverter parses and converts all godot scripts to their C# eqvivalent.");
+                Console.WriteLine("All code style will be rewritten to C# standarts (if possible).");
                 Console.WriteLine("");
                 Console.WriteLine("Usage:");
-                Console.WriteLine("GDScriptConverter <path to godot project root directory> <empty destination directory>");
+                Console.WriteLine("GDScriptConverter <path to godot project root directory> [empty destination directory]");
                 return;
             }
 
             var from = args[0];
-            var to = args[1];
+            var to = args.ElementAtOrDefault(1) ?? string.Empty;
 
             if (from.IsNullOrEmpty() || to.IsNullOrEmpty() || !Directory.Exists(from))
                 goto RETURN;
 
             var parser = new GDScriptParser();
 
-            ProcessDirectory(from, to, (filePath, destinationPath) =>
+            if (File.Exists(from))
             {
-                var extension = Path.GetExtension(filePath);
+                ParseFile(parser, from, Path.Combine(to, Path.GetFileName(from)));
+            }
+            else
+            {
+                ProcessDirectory(from, to, (path, destination) => ParseFile(parser, path, destination));
+            }
+        }
 
-                if (extension.EndsWith(".gd", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine($"Parsing script file: '{filePath}'");
-                    var tree = parser.Parse(filePath);
-                }
-                else
-                {
-                    Console.WriteLine($"Simple copy file: '{filePath}'");
-                    File.Copy(file.FullName, tempPath, true);
-                }
-            });
+        static void ParseFile(GDScriptParser parser, string filePath, string destinationPath)
+        {
+            var extension = Path.GetExtension(filePath);
 
+            if (extension.EndsWith(".gd", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"Parsing script file: '{filePath}'");
+                var tree = parser.Parse(filePath);
+            }
+            else
+            {
+                Console.WriteLine($"Simple copy file: '{filePath}'");
+                File.Copy(filePath, destinationPath, true);
+            }
         }
 
         static void ProcessDirectory(string path1, string path2, Action<string, string> fileHandler)

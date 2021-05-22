@@ -45,6 +45,13 @@ namespace GDScriptConverter
 
         public void HandleChar(char c)
         {
+            if (c == '#')
+            {
+                CurrentNode.HandleSharpChar(this);
+                return;
+            }
+
+
             if (!LineIntendationEnded)
             {
                 if (c == '\t')
@@ -57,7 +64,6 @@ namespace GDScriptConverter
                     LineIntendationEnded = true;
                 }
             }
-
 
             CurrentNode.HandleChar(c, this);
         }

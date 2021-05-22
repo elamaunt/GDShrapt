@@ -2,7 +2,7 @@
 
 namespace GDScriptConverter
 {
-    internal class GDScriptParser
+    public class GDScriptParser
     {
         public GDProject Project { get; } = new GDProject();
 
