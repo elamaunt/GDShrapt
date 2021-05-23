@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace GDScriptConverter
 {
     public class GDExressionResolver : GDNode
     {
         readonly Action<GDExpression> _handler;
+
+        Stack<GDExpression> _expressionsStack = new Stack<GDExpression>();
 
         public GDExressionResolver(Action<GDExpression> handler)
         {
@@ -20,6 +23,21 @@ namespace GDScriptConverter
             {
                 state.PushNode(new GDNumberExpression());
                 state.HandleChar(c);
+                return;
+            }
+
+            if (c=='"')
+            {
+                state.PushNode(new GDStringExpression());
+                return;
+            }
+
+            state.PushNode(_expressionsStack.PushAndPeek(new GDIdentifierExpression()));
+
+
+            if (c == '"')
+            {
+                
                 return;
             }
 

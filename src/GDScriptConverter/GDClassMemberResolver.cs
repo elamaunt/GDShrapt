@@ -1,4 +1,6 @@
-﻿namespace GDScriptConverter
+﻿using System;
+
+namespace GDScriptConverter
 {
     public class GDClassMemberResolver : GDCharSequenceNode
     {
@@ -25,11 +27,17 @@
         {
             base.CompleteSequence(state);
 
+            if (Sequence.IsNullOrWhiteSpace())
+                return;
+
             GDClassMember member = null;
 
             switch (Sequence)
             {
-                 case "extends":
+                case "class_name":
+                    member = new GDClassNameAtribute();
+                    break;
+                case "extends":
                     member = new GDExtendsAtribute();
                     break;
                 case "tool":
@@ -54,7 +62,7 @@
                     member = new GDVariableDeclaration();
                     break;
                 default:
-                    member = new GDInvalidMember(Sequence);
+                    member = new GDInvalidMember(GDClass, Sequence);
                     break;
             }
 

@@ -1,4 +1,6 @@
-﻿namespace GDScriptConverter
+﻿using System;
+
+namespace GDScriptConverter
 {
     public class GDMethodStatementResolver : GDCharSequenceNode
     {
@@ -33,13 +35,16 @@
                     statement = new GDConditionalStatement();
                     break;
                 case "var":
-                    statement = new GDVariableDeclaration
+                    statement = new GDVariableDeclarationStatement();
                     break;
                 case "return":
                     break;
                 default:
                     break;
             }
+
+            Method.Statements.Add(statement);
+            state.PushNode(statement);
         }
     }
 }
