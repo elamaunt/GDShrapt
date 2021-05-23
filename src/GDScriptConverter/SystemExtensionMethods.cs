@@ -12,5 +12,12 @@ namespace System
             self.Push(item);
             return item;
         }
+        public static T PeekOrDefault<T>(this Stack<T> self)
+        {
+            if (self.Count == 0)
+                return default;
+
+            return self.Peek();
+        }
     }
 }

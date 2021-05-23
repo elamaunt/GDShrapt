@@ -18,7 +18,7 @@ namespace GDScriptConverter
             return c != ' ';
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteSequence(state);
         }
@@ -61,11 +61,15 @@ namespace GDScriptConverter
                 case "var":
                     member = new GDVariableDeclaration();
                     break;
+                case "export":
+                    member = new GDExportAtribute();
+                    break;
                 default:
                     member = new GDInvalidMember(GDClass, Sequence);
                     break;
             }
 
+            
             GDClass.Members.Add(member);
             state.PushNode(member);
         }

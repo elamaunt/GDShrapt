@@ -7,7 +7,7 @@
             return c == '_' || char.IsLetterOrDigit(c);
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteSequence(state);
         }

@@ -11,7 +11,7 @@
             Sequence = sequence;
         }
 
-        public override void HandleChar(char c, GDReadingState state)
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
                 return;
@@ -21,7 +21,7 @@
             state.HandleChar(c);
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
             // Ignore
         }

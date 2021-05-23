@@ -7,7 +7,7 @@
             return char.IsDigit(c);
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
             throw new System.NotImplementedException();
         }

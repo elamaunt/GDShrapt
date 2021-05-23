@@ -1,6 +1,6 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDVariableDeclarationStatement : GDMethodStatement
+    public class GDVariableDeclarationStatement : GDStatement
     {
         public GDIdentifier Identifier { get; set; }
         public GDType Type { get; set; }
@@ -8,7 +8,7 @@
 
         public bool IsConstant { get; set; }
 
-        public override void HandleChar(char c, GDReadingState state)
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
                 return;
@@ -38,7 +38,7 @@
             }
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
         }

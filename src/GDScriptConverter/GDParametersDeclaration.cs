@@ -2,24 +2,24 @@
 
 namespace GDScriptConverter
 {
-    public class GDParameters : GDNode
+    public class GDParametersDeclaration : GDNode
     {
-        List<GDParameter> Parameters { get; } = new List<GDParameter>();
+        List<GDParameterDeclaration> Parameters { get; } = new List<GDParameterDeclaration>();
 
-        public override void HandleChar(char c, GDReadingState state)
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
                 return;
 
             if (c == ',')
             {
-                var parameter = new GDParameter();
+                var parameter = new GDParameterDeclaration();
                 Parameters.Add(parameter);
                 state.PushNode(parameter);
             }
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
             throw new System.NotImplementedException();
         }

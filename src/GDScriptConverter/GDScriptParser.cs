@@ -4,15 +4,29 @@ namespace GDScriptConverter
 {
     public class GDScriptParser
     {
-        public GDProject Project { get; } = new GDProject();
+        //public GDProject Project { get; } = new GDProject();
 
-        public GDScriptParser()
+        public GDTypeDeclaration ParseFileContent(string content)
         {
+            var state = new GDReadingState();
+
+            state.FileStarted();
+
+            using (var reader = new StringReader(content))
+            {
+                string line;
+                while((line = reader.ReadLine()) != null)
+                    ParseLine(line, state);
+            }
+
+            state.FileFinished();
+
+            return state.Type;
         }
 
-        public GDNode Parse(string filePath)
+        public GDTypeDeclaration ParseFile(string filePath)
         {
-            var state = new GDReadingState(Project);
+            var state = new GDReadingState();
 
             state.FileStarted();
 

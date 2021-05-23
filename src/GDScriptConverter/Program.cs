@@ -44,7 +44,8 @@ namespace GDScriptConverter
             if (extension.EndsWith(".gd", StringComparison.OrdinalIgnoreCase))
             {
                 Console.WriteLine($"Parsing script file: '{filePath}'");
-                var tree = parser.Parse(filePath);
+                var declaration = parser.ParseFile(filePath);
+                // TODO
             }
             else
             {

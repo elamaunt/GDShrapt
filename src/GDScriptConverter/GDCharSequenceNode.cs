@@ -9,7 +9,7 @@ namespace GDScriptConverter
         public bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
 
-        public override void HandleChar(char c, GDReadingState state)
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsCompleted)
                 throw new System.Exception("Char sequence already completed");
@@ -46,6 +46,13 @@ namespace GDScriptConverter
             Sequence = _sequenceBuilder.ToString();
             _sequenceBuilder = null;
             state.PopNode();
+        }
+
+        protected internal void ResetSequence()
+        {
+            IsCompleted = false;
+            Sequence = null;
+            _sequenceBuilder = new StringBuilder();
         }
 
         protected abstract bool CanAppendChar(char c, GDReadingState state);

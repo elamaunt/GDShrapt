@@ -1,25 +1,25 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDExtendsAtribute : GDClassMember
+    public class GDMemberOperatorExpression : GDExpression
     {
-        public GDType Type { get; set; }
+        public GDIdentifier Identifier { get; set; }
 
         protected internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
                 return;
 
-            if (Type == null)
+            if (Identifier == null)
             {
-                state.PushNode(Type = new GDType());
+                state.PushNode(Identifier = new GDIdentifier());
                 state.HandleChar(c);
+                return;
             }
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
-            state.LineFinished();
+            throw new System.NotImplementedException();
         }
     }
 }

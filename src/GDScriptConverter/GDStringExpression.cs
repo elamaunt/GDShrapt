@@ -1,20 +1,25 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDStringExpression : GDCharSequenceNode
+    public class GDStringExpression : GDExpression
     {
-        public override void HandleLineFinish(GDReadingState state)
+        public GDString String { get; set; }
+
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
-            Append('\n');
+            if (String == null)
+            {
+                state.PushNode(String = new GDString());
+                state.HandleChar(c);
+                return;
+            }
+
+            state.PopNode();
+            state.HandleChar(c);
         }
 
-        protected override bool CanAppendChar(char c, GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
-            return c != '"';
-        }
-
-        public override void HandleSharpChar(GDReadingState state)
-        {
-            Append('#');
+            state.PopNode();
         }
     }
 }

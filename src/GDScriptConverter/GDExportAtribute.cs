@@ -1,16 +1,15 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDToolAtribute : GDClassMember
+    public class GDExportAtribute : GDClassMember
     {
         protected internal override void HandleChar(char c, GDReadingState state)
         {
-            state.PopNode();
-            state.HandleChar(c);
+            throw new System.NotImplementedException();
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            throw new System.NotImplementedException();
         }
     }
 }

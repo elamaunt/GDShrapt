@@ -6,18 +6,15 @@ namespace GDScriptConverter
     {
         readonly Stack<GDNode> _nodesStack = new Stack<GDNode>();
 
-
         public int LineIntendation;
         public bool LineIntendationEnded;
 
-        public GDProject Project { get; }
-        public GDTypeDeclaration Type { get; private set; }
+        public GDTypeDeclaration Type { get; internal set; }
 
         GDNode CurrentNode => _nodesStack.Peek();
 
-        public GDReadingState(GDProject project)
+        public GDReadingState()
         {
-            Project = project;
         }
 
         public void LineStarted()
@@ -28,9 +25,7 @@ namespace GDScriptConverter
 
         public void FileStarted()
         {
-            Type = PushNode(new GDTypeDeclaration());
-            Project.Types.Add(Type);
-
+            PushNode(new GDTypeDeclarationResolver(this));
         }
 
         public void FileFinished()

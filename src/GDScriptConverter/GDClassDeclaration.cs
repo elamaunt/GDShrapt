@@ -1,19 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GDScriptConverter
 {
-    public class GDClassDeclaration : GDNode
+    public class GDClassDeclaration : GDTypeDeclaration
     {
         public List<GDClassMember> Members { get; } = new List<GDClassMember>();
 
-        public override void HandleChar(char c, GDReadingState state)
+        public GDType ExtendsClass => Members.OfType<GDExtendsAtribute>().FirstOrDefault()?.Type;
+        public GDIdentifier Name => Members.OfType<GDClassNameAtribute>().FirstOrDefault()?.Identifier;
+        public bool IsTool => Members.OfType<GDToolAtribute>().Any();
+
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
             state.PushNode(new GDClassMemberResolver(this));
             state.HandleChar(c);
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
             // Nothing
         }

@@ -2,14 +2,28 @@
 {
     public class GDIdentifierExpression : GDExpression
     {
-        public override void HandleChar(char c, GDReadingState state)
+        public GDIdentifier Identifier { get; set; }
+
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (IsSpace(c))
+                return;
+
+            if (Identifier == null)
+            {
+                state.PushNode(Identifier = new GDIdentifier());
+                state.HandleChar(c);
+                return;
+            }
+
+            state.PopNode();
+            state.HandleChar(c);
         }
 
-        public override void HandleLineFinish(GDReadingState state)
+        protected internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            state.PopNode();
+            state.LineFinished();
         }
     }
 }

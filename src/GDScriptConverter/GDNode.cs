@@ -4,12 +4,12 @@
     {
         public GDComment Comment { get; set; }
 
-        public abstract void HandleChar(char c, GDReadingState state);
-        public abstract void HandleLineFinish(GDReadingState state);
+        protected internal abstract void HandleChar(char c, GDReadingState state);
+        protected internal abstract void HandleLineFinish(GDReadingState state);
 
-        public bool IsSpace(char c) => c == ' ' || c == '\t';
+        protected bool IsSpace(char c) => c == ' ' || c == '\t';
 
-        public virtual void HandleSharpChar(GDReadingState state)
+        protected internal virtual void HandleSharpChar(GDReadingState state)
         {
             state.PushNode(Comment = new GDComment());
         }
