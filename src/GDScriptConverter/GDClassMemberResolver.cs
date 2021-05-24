@@ -13,6 +13,14 @@ namespace GDScriptConverter
             GDClass = gDClass;
         }
 
+        protected internal override void HandleChar(char c, GDReadingState state)
+        {
+            // Ignore space chars in start
+            if (SequenceBuilder.Length == 0 && IsSpace(c))
+                return;
+            base.HandleChar(c, state);
+        }
+
         protected override bool CanAppendChar(char c, GDReadingState state)
         {
             return c != ' ';
@@ -45,6 +53,7 @@ namespace GDScriptConverter
                     break;
                 case "static":
                     _staticFunc = true;
+                    ResetSequence();
                     break;
                 case "func":
                     member = new GDMethodDeclaration()

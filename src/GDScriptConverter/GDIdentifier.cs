@@ -10,6 +10,7 @@
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteSequence(state);
+            state.LineFinished();
         }
     }
 }

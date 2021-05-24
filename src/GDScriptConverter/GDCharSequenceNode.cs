@@ -4,7 +4,7 @@ namespace GDScriptConverter
 {
     public abstract class GDCharSequenceNode : GDNode
     {
-        StringBuilder _sequenceBuilder = new StringBuilder();
+        protected StringBuilder SequenceBuilder { get; set; } = new StringBuilder();
 
         public bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
@@ -16,7 +16,7 @@ namespace GDScriptConverter
 
             if (CanAppendChar(c, state))
             {
-                _sequenceBuilder.Append(c);
+                SequenceBuilder.Append(c);
                 return;
             }
 
@@ -29,7 +29,7 @@ namespace GDScriptConverter
             if (IsCompleted)
                 throw new System.Exception("Char sequence already completed");
 
-            _sequenceBuilder.Append(c);
+            SequenceBuilder.Append(c);
         }
 
         protected void Append(string str)
@@ -37,14 +37,14 @@ namespace GDScriptConverter
             if (IsCompleted)
                 throw new System.Exception("Char sequence already completed");
 
-            _sequenceBuilder.Append(str);
+            SequenceBuilder.Append(str);
         }
 
         protected virtual void CompleteSequence(GDReadingState state)
         {
             IsCompleted = true;
-            Sequence = _sequenceBuilder.ToString();
-            _sequenceBuilder = null;
+            Sequence = SequenceBuilder.ToString();
+            SequenceBuilder = null;
             state.PopNode();
         }
 
@@ -52,7 +52,7 @@ namespace GDScriptConverter
         {
             IsCompleted = false;
             Sequence = null;
-            _sequenceBuilder = new StringBuilder();
+            SequenceBuilder = new StringBuilder();
         }
 
         protected abstract bool CanAppendChar(char c, GDReadingState state);

@@ -18,6 +18,10 @@
         LessThanOrEqual = 13,
         MoreThanOrEqual = 14,
         Equal = 15,
-        DivideAndAssign = 16
+        DivideAndAssign = 16,
+        Or = 17,
+        And = 18,
+        Is = 19
+
     }
 }

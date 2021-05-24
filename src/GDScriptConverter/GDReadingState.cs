@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace GDScriptConverter
 {
@@ -23,14 +24,24 @@ namespace GDScriptConverter
             LineIntendationEnded = false;
         }
 
-        public void FileStarted()
+        public void ContentStarted()
         {
             PushNode(new GDTypeDeclarationResolver(this));
         }
 
-        public void FileFinished()
+        public void ContentFinished()
         {
-            
+            var count = _nodesStack.Count;
+
+            do
+            {
+                count = _nodesStack.Count;
+                CurrentNode.ForceComplete(this);
+            }
+            while (_nodesStack.Count > 0 && count != _nodesStack.Count);
+
+            if (_nodesStack.Count > 0)
+                throw new Exception("Invalid reading state. Nodes stack isn't empty. Last node is: " + CurrentNode);
         }
 
         public void LineFinished()

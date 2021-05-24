@@ -1,15 +1,36 @@
-﻿namespace GDScriptConverter
+﻿using System.Collections.Generic;
+
+namespace GDScriptConverter
 {
     public class GDParametersExpression : GDExpression
     {
+        public List<GDExpression> Parameters { get; } = new List<GDExpression>();
+
         protected internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (IsSpace(c))
+                return;
+
+            if (c == ',')
+            {
+                state.PushNode(new GDExressionResolver(expr => Parameters.Add(expr)));
+                return;
+            }
+
+            if (c == ')')
+            {
+                state.PopNode();
+                return;
+            }
+
+            state.PushNode(new GDExressionResolver(expr => Parameters.Add(expr)));
+            state.HandleChar(c);
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            // Ignore
+            // TODO: if needs handling
         }
     }
 }

@@ -14,12 +14,15 @@
             }
 
             state.PopNode();
-            state.HandleChar(c);
+
+            if (c != '\"')
+                state.HandleChar(c);
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
+            state.LineFinished();
         }
     }
 }

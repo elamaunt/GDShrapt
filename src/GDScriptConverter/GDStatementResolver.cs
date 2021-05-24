@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace GDScriptConverter
 {
@@ -10,6 +9,19 @@ namespace GDScriptConverter
         public GDStatementResolver(List<GDStatement> list)
         {
             List = list;
+        }
+
+        protected internal override void HandleChar(char c, GDReadingState state)
+        {
+            if (SequenceBuilder?.Length == 0 && (char.IsDigit(c) || c == '.' || c == '(' ))
+            {
+                var statement = new GDExpressionStatement();
+                List.Add(statement);
+                state.PushNode(statement);
+                state.HandleChar(c);
+            }
+            else
+                base.HandleChar(c, state);
         }
 
         protected override bool CanAppendChar(char c, GDReadingState state)
@@ -51,10 +63,23 @@ namespace GDScriptConverter
                     statement = new GDVariableDeclarationStatement();
                     break;
                 case "return":
+                    statement = new GDReturnStatement();
                     break;
+                case "pass":
+                    statement = new GDPassStatement();
+                    break;
+
+
+                //case var s when Sequence.StartsWith('.'):
+
+
+                //    break;
                 default:
                     break;
             }
+
+
+
 
             List.Add(statement);
             state.PushNode(statement);

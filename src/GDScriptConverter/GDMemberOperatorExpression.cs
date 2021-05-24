@@ -15,11 +15,15 @@
                 state.HandleChar(c);
                 return;
             }
+
+            state.PopNode();
+            state.HandleChar(c);
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            state.PopNode();
+            state.LineFinished();
         }
     }
 }

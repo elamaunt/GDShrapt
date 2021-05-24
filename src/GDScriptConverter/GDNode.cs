@@ -1,8 +1,10 @@
-﻿namespace GDScriptConverter
+﻿using System;
+
+namespace GDScriptConverter
 {
     public abstract class GDNode
     {
-        public GDComment Comment { get; set; }
+        public GDComment EndLineComment { get; set; }
 
         protected internal abstract void HandleChar(char c, GDReadingState state);
         protected internal abstract void HandleLineFinish(GDReadingState state);
@@ -11,7 +13,12 @@
 
         protected internal virtual void HandleSharpChar(GDReadingState state)
         {
-            state.PushNode(Comment = new GDComment());
+            state.PushNode(EndLineComment = new GDComment());
+        }
+
+        protected internal virtual void ForceComplete(GDReadingState state)
+        {
+            state.PopNode();
         }
     }
 }

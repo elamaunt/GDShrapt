@@ -10,7 +10,7 @@ namespace GDScriptConverter
         {
             var state = new GDReadingState();
 
-            state.FileStarted();
+            state.ContentStarted();
 
             using (var reader = new StringReader(content))
             {
@@ -19,7 +19,7 @@ namespace GDScriptConverter
                     ParseLine(line, state);
             }
 
-            state.FileFinished();
+            state.ContentFinished();
 
             return state.Type;
         }
@@ -28,12 +28,12 @@ namespace GDScriptConverter
         {
             var state = new GDReadingState();
 
-            state.FileStarted();
+            state.ContentStarted();
 
             foreach (var line in File.ReadLines(filePath))
                 ParseLine(line, state);
 
-            state.FileFinished();
+            state.ContentFinished();
 
             return state.Type;
         }

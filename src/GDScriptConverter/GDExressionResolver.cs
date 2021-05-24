@@ -11,6 +11,8 @@ namespace GDScriptConverter
 
         GDExpression Last => _expressionsStack.PeekOrDefault();
 
+        //GDIdentifier _nextIdentifier;
+
         public GDExressionResolver(Action<GDExpression> handler)
         {
             _handler = handler;
@@ -51,76 +53,57 @@ namespace GDScriptConverter
                     switch (Last)
                     {
                         case GDIdentifierExpression expr:
+                            {
+                                _expressionsStack.Pop();
+                                PushAndPeek(state, new GDCallExression() { CallerExpression = expr });
+                                return;
+                            }
                         case GDMemberOperatorExpression expr2:
                             {
-                                PushAndPeek(state, new GDCallExression()
-                                {
-                                    CallerExpression = expr ?? expr2
-                                });
-                                break;
+                                _expressionsStack.Pop();
+                                PushAndPeek(state, new GDCallExression() { CallerExpression = expr2 });
+                                return;
                             }
                         default:
-                            break;
+                            _expressionsStack.Push(new GDBracketExpression());
+                            return;
                     }
-
-                    break;
                 case ')':
-                    break;
+                    CompleteExpression(state);
+                    state.HandleChar(c);
+                    return;
                 default:
                     break;
             }
 
-            if (c == '.')
-            {
-                return;
-            }
-
-            if (c=='"')
-            {
-                return;
-            }
-
-            if (c == '>')
-            {
-                
-            }
-
-            if (c == '<')
-            {
-                return;
-            }
-
-            if (c == '=')
-            {
-                return;
-            }
-
-            if (c == '!')
-            {
-                return;
-            }
-
-            if (c == '(')
+            // TODO: preresolve language keywords
+            /*if (_nextIdentifier != null)
             {
 
-                return;
             }
-
-            if (c == ')')
+            else
             {
-                return;
-            }
 
+            }*/
 
-
-            state.PushNode(_expressionsStack.PushAndPeek(new GDIdentifierExpression()));
-
+            PushAndPeek(state, new GDIdentifierExpression());
+            state.HandleChar(c);
             // TODO: another expressions
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new NotImplementedException();
+            CompleteExpression(state);
+        }
+
+        private void CompleteExpression(GDReadingState state)
+        {
+            var last = Last;
+
+            if (last != null)
+                _handler(last);
+
+            state.PopNode();
         }
 
         private void PushAndPeek(GDReadingState state, GDExpression node)

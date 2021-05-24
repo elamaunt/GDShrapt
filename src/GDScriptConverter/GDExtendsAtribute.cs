@@ -13,7 +13,11 @@
             {
                 state.PushNode(Type = new GDType());
                 state.HandleChar(c);
+                return;
             }
+
+            state.PopNode();
+            state.HandleChar(c);
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)

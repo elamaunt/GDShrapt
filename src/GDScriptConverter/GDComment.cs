@@ -8,7 +8,7 @@
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            CompleteSequence(state);
             state.LineFinished();
         }
 

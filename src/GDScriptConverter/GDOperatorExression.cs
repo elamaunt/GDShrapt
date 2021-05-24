@@ -4,6 +4,9 @@
     {
         public GDOperatorType OperatorType { get; set; }
 
+        public GDExpression LeftExpression { get; set; }
+        public GDExpression RightExpression { get; set; }
+
         protected internal override void HandleChar(char c, GDReadingState state)
         {
             switch (OperatorType)
