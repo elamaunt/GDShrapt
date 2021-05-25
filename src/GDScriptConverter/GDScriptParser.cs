@@ -10,7 +10,7 @@ namespace GDScriptConverter
         {
             var state = new GDReadingState();
 
-            state.ContentStarted();
+            state.PushNode(new GDTypeDeclarationResolver(state));
 
             using (var reader = new StringReader(content))
             {
@@ -19,7 +19,7 @@ namespace GDScriptConverter
                     ParseLine(line, state);
             }
 
-            state.ContentFinished();
+            state.CompleteReading();
 
             return state.Type;
         }
@@ -28,14 +28,33 @@ namespace GDScriptConverter
         {
             var state = new GDReadingState();
 
-            state.ContentStarted();
+            state.PushNode(new GDTypeDeclarationResolver(state));
 
             foreach (var line in File.ReadLines(filePath))
                 ParseLine(line, state);
 
-            state.ContentFinished();
+            state.CompleteReading();
 
             return state.Type;
+        }
+
+        public GDExpression ParseExpression(string content)
+        {
+            GDExpression expression = null;
+            
+            var state = new GDReadingState();
+
+            state.PushNode(new GDExpressionResolver(expr => expression = expr));
+
+            using (var reader = new StringReader(content))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                    ParseLine(line, state);
+            }
+
+            state.CompleteReading();
+            return expression;
         }
 
         private void ParseLine(string line, GDReadingState state)

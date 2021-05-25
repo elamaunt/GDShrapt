@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
 namespace GDScriptConverter
 {
-    public class GDStatementResolver : GDCharSequenceNode
+    public class GDStatementResolver : GDCharSequence
     {
-        public List<GDStatement> List { get; }
+        readonly Action<GDStatement> _handler;
 
-        public GDStatementResolver(List<GDStatement> list)
+        public GDStatementResolver(Action<GDStatement> handler)
         {
-            List = list;
+            _handler = handler;
         }
 
         protected internal override void HandleChar(char c, GDReadingState state)
@@ -16,7 +16,7 @@ namespace GDScriptConverter
             if (SequenceBuilder?.Length == 0 && (char.IsDigit(c) || c == '.' || c == '(' ))
             {
                 var statement = new GDExpressionStatement();
-                List.Add(statement);
+                _handler(statement);
                 state.PushNode(statement);
                 state.HandleChar(c);
             }
@@ -68,20 +68,11 @@ namespace GDScriptConverter
                 case "pass":
                     statement = new GDPassStatement();
                     break;
-
-
-                //case var s when Sequence.StartsWith('.'):
-
-
-                //    break;
                 default:
                     break;
             }
 
-
-
-
-            List.Add(statement);
+            _handler(statement);
             state.PushNode(statement);
         }
     }

@@ -1,10 +1,10 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDPassStatement : GDStatement
+    public class GDNumber : GDCharSequence
     {
-        protected internal override void HandleChar(char c, GDReadingState state)
+        protected override bool CanAppendChar(char c, GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            return char.IsDigit(c);
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)

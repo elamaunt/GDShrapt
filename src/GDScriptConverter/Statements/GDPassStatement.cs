@@ -1,10 +1,11 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDNumberExpression : GDCharSequenceNode
+    public class GDPassStatement : GDStatement
     {
-        protected override bool CanAppendChar(char c, GDReadingState state)
+        protected internal override void HandleChar(char c, GDReadingState state)
         {
-            return char.IsDigit(c);
+            state.PopNode();
+            state.HandleChar(c);
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)

@@ -8,7 +8,7 @@ namespace GDScriptConverter
 
         protected internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (IsSpace(c) || c == '(')
                 return;
 
             if (c == ',')
@@ -16,6 +16,20 @@ namespace GDScriptConverter
                 var parameter = new GDParameterDeclaration();
                 Parameters.Add(parameter);
                 state.PushNode(parameter);
+                return;
+            }
+
+            if (c == ')')
+            {
+                state.PopNode();
+                return;
+            }
+
+            {
+                var parameter = new GDParameterDeclaration();
+                Parameters.Add(parameter);
+                state.PushNode(parameter);
+                state.HandleChar(c);
             }
         }
 

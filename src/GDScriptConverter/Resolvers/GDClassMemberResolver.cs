@@ -2,7 +2,7 @@
 
 namespace GDScriptConverter
 {
-    public class GDClassMemberResolver : GDCharSequenceNode
+    public class GDClassMemberResolver : GDCharSequence
     {
         private bool _staticFunc = false;
 
@@ -35,7 +35,9 @@ namespace GDScriptConverter
         {
             base.CompleteSequence(state);
 
-            if (Sequence.IsNullOrWhiteSpace())
+            var seq = Sequence;
+
+            if (seq.IsNullOrWhiteSpace())
                 return;
 
             GDClassMember member = null;
@@ -54,7 +56,7 @@ namespace GDScriptConverter
                 case "static":
                     _staticFunc = true;
                     ResetSequence();
-                    break;
+                    return;
                 case "func":
                     member = new GDMethodDeclaration()
                     {
@@ -74,11 +76,11 @@ namespace GDScriptConverter
                     member = new GDExportAtribute();
                     break;
                 default:
-                    member = new GDInvalidMember(GDClass, Sequence);
+                    member = new GDInvalidMember(seq);
                     break;
             }
 
-            
+            ResetSequence();
             GDClass.Members.Add(member);
             state.PushNode(member);
         }

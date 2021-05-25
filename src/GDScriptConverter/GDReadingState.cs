@@ -5,14 +5,23 @@ namespace GDScriptConverter
 {
     public class GDReadingState
     {
+        /// <summary>
+        /// Main reading nodes stack
+        /// </summary>
         readonly Stack<GDNode> _nodesStack = new Stack<GDNode>();
 
-        public int LineIntendation;
-        public bool LineIntendationEnded;
+        /// <summary>
+        /// Additional stack to manage expressions hierarchies properly
+        /// </summary>
+        readonly Stack<GDExpressionResolver> _expressionResolversStack = new Stack<GDExpressionResolver>(); 
+
+        public int LineIntendation { get; private set; }
+        public bool LineIntendationEnded { get; private set; }
 
         public GDTypeDeclaration Type { get; internal set; }
 
-        GDNode CurrentNode => _nodesStack.Peek();
+        GDNode CurrentNode => _nodesStack.PeekOrDefault();
+        GDNode CurrentExpressionsResolver => _expressionResolversStack.PeekOrDefault();
 
         public GDReadingState()
         {
@@ -24,14 +33,9 @@ namespace GDScriptConverter
             LineIntendationEnded = false;
         }
 
-        public void ContentStarted()
+        public void CompleteReading()
         {
-            PushNode(new GDTypeDeclarationResolver(this));
-        }
-
-        public void ContentFinished()
-        {
-            var count = _nodesStack.Count;
+            int count;
 
             do
             {
@@ -51,12 +55,16 @@ namespace GDScriptConverter
 
         public void HandleChar(char c)
         {
+            var node = CurrentNode;
+
+            if (node == null)
+                return;
+
             if (c == '#')
             {
-                CurrentNode.HandleSharpChar(this);
+                node.HandleSharpChar(this);
                 return;
             }
-
 
             if (!LineIntendationEnded)
             {
@@ -71,19 +79,28 @@ namespace GDScriptConverter
                 }
             }
 
-            CurrentNode.HandleChar(c, this);
+            node.HandleChar(c, this);
         }
 
         public T PushNode<T>(T node)
             where T : GDNode
         {
             _nodesStack.Push(node);
+
+            if (node is GDExpressionResolver resolver)
+                _expressionResolversStack.Push(resolver);
+
             return node;
         }
 
         public GDNode PopNode()
         {
-            return _nodesStack.Pop();
+            var node = _nodesStack.Pop();
+
+            if (node == CurrentExpressionsResolver)
+                _expressionResolversStack.Pop();
+
+            return node;
         }
     }
 }

@@ -33,7 +33,7 @@ namespace GDScriptConverter
 
             if (c == ':')
             {
-                state.PushNode(new GDStatementResolver(Statements));
+                state.PushNode(new GDStatementResolver(expr => Statements.Add(expr)));
             }
             else
             {

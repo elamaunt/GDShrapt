@@ -43,5 +43,51 @@ func save(path, resource, flags):
             Assert.AreEqual("HTerrainDataSaver", @class.Name?.Sequence);
             Assert.AreEqual(true, @class.IsTool);
         }
+
+        [TestMethod]
+        public void ParseLogicalExpression1()
+        {
+            var parser = new GDScriptParser();
+
+            var code = @"a > b and c > d";
+
+            var expression = parser.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+
+            var @dualOperator = (GDDualOperatorExression)expression;
+            Assert.AreEqual(GDDualOperatorType.And, @dualOperator.OperatorType);
+
+            var leftExpression = @dualOperator.LeftExpression;
+
+            Assert.IsNotNull(leftExpression);
+            Assert.IsInstanceOfType(leftExpression, typeof(GDDualOperatorExression));
+            
+            var rightExpression = @dualOperator.LeftExpression;
+
+            Assert.IsNotNull(rightExpression);
+            Assert.IsInstanceOfType(rightExpression, typeof(GDDualOperatorExression));
+
+            var @leftDualOperator = (GDDualOperatorExression)leftExpression;
+
+            Assert.IsInstanceOfType(@leftDualOperator.LeftExpression, typeof(GDIdentifierExpression));
+            Assert.IsNotNull(@leftDualOperator.LeftExpression);
+            Assert.IsInstanceOfType(@leftDualOperator.RightExpression, typeof(GDIdentifierExpression));
+            Assert.IsNotNull(@leftDualOperator.RightExpression);
+
+            Assert.AreEqual("a", ((GDIdentifierExpression)@leftDualOperator.LeftExpression).Identifier.Sequence);
+            Assert.AreEqual("b", ((GDIdentifierExpression)@leftDualOperator.RightExpression).Identifier.Sequence);
+
+            var @rightDualOperator = (GDDualOperatorExression)rightExpression;
+
+            Assert.IsInstanceOfType(@rightDualOperator.LeftExpression, typeof(GDIdentifierExpression));
+            Assert.IsNotNull(@rightDualOperator.LeftExpression);
+            Assert.IsInstanceOfType(@rightDualOperator.RightExpression, typeof(GDIdentifierExpression));
+            Assert.IsNotNull(@rightDualOperator.RightExpression);
+
+            Assert.AreEqual("c", ((GDIdentifierExpression)@rightDualOperator.LeftExpression).Identifier.Sequence);
+            Assert.AreEqual("d", ((GDIdentifierExpression)@rightDualOperator.RightExpression).Identifier.Sequence);
+        }
     }
 }

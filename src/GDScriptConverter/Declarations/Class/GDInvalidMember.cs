@@ -2,12 +2,10 @@
 {
     public class GDInvalidMember : GDClassMember
     {
-        public GDClassDeclaration GDClass { get; }
         public string Sequence { get; set; }
 
-        public GDInvalidMember(GDClassDeclaration gDClass, string sequence)
+        public GDInvalidMember(string sequence)
         {
-            GDClass = gDClass;
             Sequence = sequence;
         }
 
@@ -17,13 +15,13 @@
                 return;
 
             state.PopNode();
-            state.PushNode(new GDClassMemberResolver(GDClass));
             state.HandleChar(c);
         }
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
-            // Ignore
+            state.PopNode();
+            state.LineFinished();
         }
     }
 }

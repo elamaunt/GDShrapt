@@ -1,19 +1,15 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDCallExression : GDExpression
+    public class GDExpressionStatement : GDStatement
     {
-        public GDExpression CallerExpression { get; set; }
+        public GDExpression Expression { get; set; }
 
-        public GDParametersExpression ParametersExpression { get; set; }
 
         protected internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-                return;
-
-            if (ParametersExpression == null)
+            if (Expression == null)
             {
-                state.PushNode(ParametersExpression = new GDParametersExpression());
+                state.PushNode(new GDExpressionResolver(expr => Expression = expr));
                 state.HandleChar(c);
                 return;
             }

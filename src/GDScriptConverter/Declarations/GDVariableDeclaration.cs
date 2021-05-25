@@ -29,7 +29,7 @@
 
             if (c == '=')
             {
-                state.PushNode(new GDExressionResolver(expr => Initializer = expr));
+                state.PushNode(new GDExpressionResolver(expr => Initializer = expr));
             }
             else
             {

@@ -1,6 +1,6 @@
 ﻿namespace GDScriptConverter
 {
-    public class GDIdentifier : GDCharSequenceNode
+    public class GDIdentifier : GDCharSequence
     {
         protected override bool CanAppendChar(char c, GDReadingState state)
         {

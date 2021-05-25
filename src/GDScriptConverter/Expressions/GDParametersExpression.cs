@@ -13,7 +13,7 @@ namespace GDScriptConverter
 
             if (c == ',')
             {
-                state.PushNode(new GDExressionResolver(expr => Parameters.Add(expr)));
+                state.PushNode(new GDExpressionResolver(expr => Parameters.Add(expr)));
                 return;
             }
 
@@ -23,7 +23,7 @@ namespace GDScriptConverter
                 return;
             }
 
-            state.PushNode(new GDExressionResolver(expr => Parameters.Add(expr)));
+            state.PushNode(new GDExpressionResolver(expr => Parameters.Add(expr)));
             state.HandleChar(c);
         }
 

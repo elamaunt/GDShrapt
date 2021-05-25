@@ -2,7 +2,7 @@
 
 namespace GDScriptConverter
 {
-    public abstract class GDCharSequenceNode : GDNode
+    public abstract class GDCharSequence : GDNode
     {
         protected StringBuilder SequenceBuilder { get; set; } = new StringBuilder();
 
