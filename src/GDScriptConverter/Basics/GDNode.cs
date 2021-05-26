@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GDScriptConverter
+﻿namespace GDScriptConverter
 {
     public abstract class GDNode
     {

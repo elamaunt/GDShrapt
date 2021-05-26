@@ -2,8 +2,8 @@
 {
     public enum GDDualOperatorType
     {
-        Unknown = 0,
-        Undefined,
+        Null = 0,
+        Unknown,
         MoreThan,
         LessThan,
         Assignment,
@@ -21,6 +21,7 @@
         DivideAndAssign,
         Or,
         And,
-        Is
+        Is,
+        As
     }
 }

@@ -12,5 +12,10 @@
         {
             state.PopNode();
         }
+
+        public override string ToString()
+        {
+            return $"tool";
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace GDScriptConverter
     {
         readonly Action<GDExpression> _handler;
 
-       // StringBuilder _sequenceBuilder = new StringBuilder();
+       // 
         //bool _facedSpaceChar;
         //bool _sequenceScanMode;
         GDExpression _expression;
@@ -50,65 +50,7 @@ namespace GDScriptConverter
                 ".",
             };
 
-        public bool SequenceHasPatterns
-        {
-            get
-            {
-                var seq = _sequenceBuilder;
-
-                if (seq == null || seq.Length == 0)
-                    return true;
-
-                for (int i = 0; i < _operators.Length; i++)
-                {
-                    var word = _operators[i];
-
-                    if (word.Length < seq.Length)
-                        continue;
-
-                    for (int k = 0; k < seq.Length; k++)
-                    {
-                        if (seq[k] != word[k])
-                            goto CONTINUE;
-                    }
-
-                    return true;
-                    CONTINUE: continue;
-                }
-
-                return false;
-            }
-        }
-
-        public string MatchedPattern
-        {
-            get
-            {
-                var seq = _sequenceBuilder;
-
-                if (seq == null || seq.Length == 0)
-                    return null;
-
-                for (int i = 0; i < _operators.Length; i++)
-                {
-                    var word = _operators[i];
-
-                    if (word.Length != seq.Length)
-                        continue;
-
-                    for (int k = 0; k < seq.Length; k++)
-                    {
-                        if (seq[k] != word[k])
-                            goto CONTINUE;
-                    }
-
-                    return word;
-                    CONTINUE: continue;
-                }
-
-                return null;
-            }
-        }*/
+       */
 
         /*protected override bool CanAppendChar(char c, GDReadingState state)
         {
@@ -191,7 +133,13 @@ namespace GDScriptConverter
                     return;
                 }
 
-                if (c == '/' ||
+                PushAndSave(state, new GDDualOperatorExression()
+                {
+                    LeftExpression = _expression
+                });
+                state.HandleChar(c);
+
+                /*if (c == '/' ||
                     c == '*' ||
                     c == '+' ||
                     c == '-' ||
@@ -210,7 +158,7 @@ namespace GDScriptConverter
                         state.HandleChar(c);
                     }
                     return;
-                }
+                }*/
 
                 /*if (char.IsDigit(c))
                 {
@@ -377,6 +325,7 @@ namespace GDScriptConverter
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteExpression(state);
+            state.FinishLine();
         }
 
         /*protected override void CompleteSequence(GDReadingState state)
@@ -389,7 +338,7 @@ namespace GDScriptConverter
             var last = _expression;
 
             if (last != null)
-                _handler(last);
+                _handler(last.RebuildOfPriorityIfNeeded());
 
             state.PopNode();
         }

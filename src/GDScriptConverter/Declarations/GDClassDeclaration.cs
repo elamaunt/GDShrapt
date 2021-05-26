@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace GDScriptConverter
 {
@@ -21,6 +21,16 @@ namespace GDScriptConverter
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             // Nothing
+        }
+
+        public override string ToString()
+        {
+            var builder = new StringBuilder();
+
+            for (int i = 0; i < Members.Count; i++)
+                builder.AppendLine(Members[i].ToString());
+
+            return builder.ToString();
         }
     }
 }

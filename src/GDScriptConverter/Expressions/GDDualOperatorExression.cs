@@ -2,120 +2,35 @@
 {
     public class GDDualOperatorExression : GDExpression
     {
-        public GDDualOperator Operator { get; set; }
         public GDExpression LeftExpression { get; set; }
+        public GDDualOperatorType OperatorType { get; set; }
         public GDExpression RightExpression { get; set; }
+
 
         protected internal override void HandleChar(char c, GDReadingState state)
         {
-            if(LeftExpression == null)
+            if (LeftExpression == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => LeftExpression = expr));
+                state.PushNode(new GDExpressionResolver(expr =>
+                {
+                    LeftExpression = expr;
+                }));
                 state.HandleChar(c);
                 return;
             }
 
-           /* switch (OperatorType)
+            if (OperatorType == GDDualOperatorType.Null)
             {
-                case GDDualOperatorType.Unknown:
-                    switch (c)
-                    {
-                        case '>':
-                            OperatorType = GDDualOperatorType.MoreThan;
-                            return;
-                        case '<':
-                            OperatorType = GDDualOperatorType.LessThan;
-                            return;
-                        case '=':
-                            OperatorType = GDDualOperatorType.Assignment;
-                            return;
-                        case '-':
-                            OperatorType = GDDualOperatorType.Subtraction;
-                            return;
-                        case '+':
-                            OperatorType = GDDualOperatorType.Addition;
-                            return;
-                        case '/':
-                            OperatorType = GDDualOperatorType.Division;
-                            return;
-                        case '*':
-                            OperatorType = GDDualOperatorType.Multiply;
-                            return;
-                        //case '!':
-                        //    OperatorType = GDDualOperatorType.Negate;
-                        //    return;
-                        default:
-                            break;
-                    }
-                    break;
-                case GDDualOperatorType.Assignment:
-                    if (c == '=')
-                    {
-                        OperatorType = GDDualOperatorType.Equal;
-                        return;
-                    }
-                    break;
-                case GDDualOperatorType.MoreThan:
-                    if (c == '=')
-                    {
-                        OperatorType = GDDualOperatorType.MoreThanOrEqual;
-                        return;
-                    }
-                    break;
-                case GDDualOperatorType.LessThan:
-                    if (c == '=')
-                    {
-                        OperatorType = GDDualOperatorType.LessThanOrEqual;
-                        return;
-                    }
-                    break;
-                //case GDDualOperatorType.Negate:
-                //    if (c == '=')
-                //    {
-                //        OperatorType = GDDualOperatorType.NotEqual;
-                //        return;
-                //    }
-                //    break;
-                case GDDualOperatorType.Multiply:
-                    if (c == '=')
-                    {
-                        OperatorType = GDDualOperatorType.MultiplyAndAssign;
-                        return;
-                    }
-                    break;
-                case GDDualOperatorType.Subtraction:
-                    if (c == '=')
-                    {
-                        OperatorType = GDDualOperatorType.SubtractAndAssign;
-                        return;
-                    }
-                    break;
-                case GDDualOperatorType.Addition:
-                    if (c == '=')
-                    {
-                        OperatorType = GDDualOperatorType.AddAndAssign;
-                        return;
-                    }
-                    break;
-                case GDDualOperatorType.Division:
-                    if (c == '=')
-                    {
-                        OperatorType = GDDualOperatorType.DivideAndAssign;
-                        return;
-                    }
-                    break;
-                default:
-                    break;
-            }*/
+                state.PushNode(new GDDualOperatorResolver(op => OperatorType = op));
+                state.HandleChar(c);
+                return;
+            }
 
             if (RightExpression == null)
             {
                 state.PushNode(new GDExpressionResolver(expr =>
                 {
                     RightExpression = expr;
-
-                    if (expr is GDDualOperatorExression dual)
-                        ReformatIfNeeded(this, dual);
                 }));
                 state.HandleChar(c);
                 return;
@@ -125,21 +40,95 @@
             state.HandleChar(c);
         }
 
-        private void ReformatIfNeeded(GDDualOperatorExression left, GDDualOperatorExression right)
-        {
+        /* private void ReformatIfNeeded(GDDualOperatorExression left, GDDualOperatorExression right)
+         {
 
-        }
+         }*/
 
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.LineFinished();
+            state.FinishLine();
         }
 
-       /* public override GDExpression CombineLeft(GDExpression expr)
+        /* public override GDExpression CombineLeft(GDExpression expr)
+         {
+             LeftExpression = expr;
+             return base.CombineLeft(expr);
+         }*/
+
+        public override int Priority
         {
-            LeftExpression = expr;
-            return base.CombineLeft(expr);
-        }*/
+            get
+            {
+                switch (OperatorType)
+                {
+                    case GDDualOperatorType.Null:
+                    case GDDualOperatorType.Unknown: return 20;
+                    case GDDualOperatorType.Division:
+                    case GDDualOperatorType.Multiply: return 14;
+                    case GDDualOperatorType.Subtraction:
+                    case GDDualOperatorType.Addition: return 13;
+                    case GDDualOperatorType.Equal:
+                    case GDDualOperatorType.NotEqual: return 10;
+                    case GDDualOperatorType.Assignment:
+                    case GDDualOperatorType.AddAndAssign:
+                    case GDDualOperatorType.MultiplyAndAssign:
+                    case GDDualOperatorType.DivideAndAssign:
+                    case GDDualOperatorType.SubtractAndAssign: return 3;
+                    case GDDualOperatorType.MoreThan:
+                    case GDDualOperatorType.LessThan:
+                    case GDDualOperatorType.LessThanOrEqual:
+                    case GDDualOperatorType.MoreThanOrEqual: return 11;
+                    case GDDualOperatorType.Or: return 5;
+                    case GDDualOperatorType.And: return 6;
+                    case GDDualOperatorType.Is:
+                    case GDDualOperatorType.As: return 19;
+                    default:
+                        return 0;
+                }
+            }
+        }
+
+        protected override GDExpression PriorityRebuildingPass()
+        {
+            var leftPriority = LeftExpression?.Priority;
+
+            if (Priority > leftPriority || (Priority == leftPriority && LeftExpression?.AssociationOrder == GDAssociationOrderType.FromRightToLeft))
+            {
+                var previous = LeftExpression;
+                LeftExpression = LeftExpression.SwapRight(this).RebuildOfPriorityIfNeeded();
+                return previous;
+            }
+
+            var rightPriority = RightExpression?.Priority;
+
+            if (Priority > rightPriority || (Priority == rightPriority && RightExpression?.AssociationOrder == GDAssociationOrderType.FromLeftToRight))
+            {
+                var previous = RightExpression;
+                RightExpression = RightExpression.SwapLeft(this).RebuildOfPriorityIfNeeded();
+                return previous;
+            }
+
+            return this;
+        }
+
+        public override GDExpression SwapLeft(GDExpression expression)
+        {
+            var left = LeftExpression;
+            LeftExpression = expression;
+            return left;
+        }
+
+        public override GDExpression SwapRight(GDExpression expression)
+        {
+            var right = RightExpression;
+            RightExpression = expression;
+            return right;
+        }
+        public override string ToString()
+        {
+            return $"{LeftExpression} {OperatorType.Print()} {RightExpression}";
+        }
     }
 }

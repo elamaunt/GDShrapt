@@ -64,7 +64,7 @@ func save(path, resource, flags):
             Assert.IsNotNull(leftExpression);
             Assert.IsInstanceOfType(leftExpression, typeof(GDDualOperatorExression));
             
-            var rightExpression = @dualOperator.LeftExpression;
+            var rightExpression = @dualOperator.RightExpression;
 
             Assert.IsNotNull(rightExpression);
             Assert.IsInstanceOfType(rightExpression, typeof(GDDualOperatorExression));
@@ -88,6 +88,8 @@ func save(path, resource, flags):
 
             Assert.AreEqual("c", ((GDIdentifierExpression)@rightDualOperator.LeftExpression).Identifier.Sequence);
             Assert.AreEqual("d", ((GDIdentifierExpression)@rightDualOperator.RightExpression).Identifier.Sequence);
+
+            var print = expression.ToString();
         }
     }
 }

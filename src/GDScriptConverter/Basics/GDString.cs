@@ -16,5 +16,10 @@
         {
             Append('#');
         }
+
+        public override string ToString()
+        {
+            return $"\"{Sequence}\"";
+        }
     }
 }

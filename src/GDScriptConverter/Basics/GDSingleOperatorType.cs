@@ -2,8 +2,8 @@
 {
     public enum GDSingleOperatorType
     {
-        Unknown = 0,
-        Undefined = -1,
+        Null = 0,
+        Unknown,
         Negate,
         Not
     }

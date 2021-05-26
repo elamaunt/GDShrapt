@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GDScriptConverter
 {
@@ -31,6 +32,12 @@ namespace GDScriptConverter
         {
             // Ignore
             // TODO: if needs handling
+        }
+        public override int Priority => throw new System.NotImplementedException();
+
+        public override string ToString()
+        {
+            return $"({string.Join(',', Parameters.Select(x=> x.ToString()))})";
         }
     }
 }

@@ -10,32 +10,22 @@ namespace GDScriptConverter
         /// </summary>
         readonly Stack<GDNode> _nodesStack = new Stack<GDNode>();
 
-        /// <summary>
-        /// Additional stack to manage expressions hierarchies properly
-        /// </summary>
-        readonly Stack<GDExpressionResolver> _expressionResolversStack = new Stack<GDExpressionResolver>(); 
-
         public int LineIntendation { get; private set; }
         public bool LineIntendationEnded { get; private set; }
 
         public GDTypeDeclaration Type { get; internal set; }
 
         GDNode CurrentNode => _nodesStack.PeekOrDefault();
-        GDNode CurrentExpressionsResolver => _expressionResolversStack.PeekOrDefault();
-
+ 
         public GDReadingState()
         {
         }
-
-        public void LineStarted()
-        {
-            LineIntendation = 0;
-            LineIntendationEnded = false;
-        }
-
         public void CompleteReading()
         {
             int count;
+
+            if (_nodesStack.Count == 0)
+                return;
 
             do
             {
@@ -48,9 +38,11 @@ namespace GDScriptConverter
                 throw new Exception("Invalid reading state. Nodes stack isn't empty. Last node is: " + CurrentNode);
         }
 
-        public void LineFinished()
+        public void FinishLine()
         {
-            CurrentNode.HandleLineFinish(this);
+            CurrentNode?.HandleLineFinish(this);
+            LineIntendation = 0;
+            LineIntendationEnded = false;
         }
 
         public void HandleChar(char c)
@@ -86,21 +78,12 @@ namespace GDScriptConverter
             where T : GDNode
         {
             _nodesStack.Push(node);
-
-            if (node is GDExpressionResolver resolver)
-                _expressionResolversStack.Push(resolver);
-
             return node;
         }
 
         public GDNode PopNode()
         {
-            var node = _nodesStack.Pop();
-
-            if (node == CurrentExpressionsResolver)
-                _expressionResolversStack.Pop();
-
-            return node;
+            return _nodesStack.Pop();
         }
     }
 }

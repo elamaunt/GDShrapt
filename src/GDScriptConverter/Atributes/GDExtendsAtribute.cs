@@ -23,7 +23,12 @@
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.LineFinished();
+            state.FinishLine();
+        }
+
+        public override string ToString()
+        {
+            return $"extends {Type}";
         }
     }
 }

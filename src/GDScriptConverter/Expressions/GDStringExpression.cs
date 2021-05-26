@@ -2,6 +2,7 @@
 {
     public class GDStringExpression : GDExpression
     {
+        public override int Priority => 21;
         public GDString String { get; set; }
 
         protected internal override void HandleChar(char c, GDReadingState state)
@@ -22,7 +23,7 @@
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.LineFinished();
+            state.FinishLine();
         }
     }
 }

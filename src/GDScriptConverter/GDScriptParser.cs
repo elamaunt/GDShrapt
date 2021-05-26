@@ -59,12 +59,10 @@ namespace GDScriptConverter
 
         private void ParseLine(string line, GDReadingState state)
         {
-            state.LineStarted();
-
             for (int i = 0; i < line.Length; i++)
                 state.HandleChar(line[i]);
 
-            state.LineFinished();
+            state.FinishLine();
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace GDScriptConverter
+﻿using System;
+
+namespace GDScriptConverter
 {
     public class GDVariableDeclaration : GDClassMember
     {
@@ -42,6 +44,18 @@
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
+        }
+        public override string ToString()
+        {
+            if (Type != null)
+            {
+                var type = Type.ToString();
+
+                if (type.IsNullOrEmpty())
+                    return $"{(IsConstant ? "const" : "var")} {Identifier} := {Initializer}";
+                return $"{(IsConstant ? "const" : "var")} {Identifier} : {type} = {Initializer}";
+            }
+            return $"{(IsConstant ? "const" : "var")} {Identifier} = {Initializer}";
         }
     }
 }

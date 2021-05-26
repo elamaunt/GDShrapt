@@ -10,7 +10,12 @@
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteSequence(state);
-            state.LineFinished();
+            state.FinishLine();
+        }
+
+        public override string ToString()
+        {
+            return $"{Sequence}";
         }
     }
 }

@@ -33,5 +33,13 @@
             // Ignore
             // TODO: if needs handling
         }
+
+        public override string ToString()
+        {
+            if (Type == null)
+                return $"{Identifier}";
+            else
+                return $"{Identifier} : {Type}";
+        }
     }
 }

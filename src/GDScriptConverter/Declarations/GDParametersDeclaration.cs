@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GDScriptConverter
 {
@@ -36,6 +37,11 @@ namespace GDScriptConverter
         protected internal override void HandleLineFinish(GDReadingState state)
         {
             throw new System.NotImplementedException();
+        }
+
+        public override string ToString()
+        {
+            return $"({string.Join(',', Parameters.Select(x => x.ToString()))})";
         }
     }
 }
