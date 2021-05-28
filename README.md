@@ -1,4 +1,4 @@
-# GDSharp
+# GDShrapt
 
 Basic services to work with GDScript language from Godot gamedevelopment engine. 
 The services written in C# and free to use.
