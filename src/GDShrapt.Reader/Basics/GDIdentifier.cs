@@ -10,7 +10,7 @@
         internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteSequence(state);
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         public override string ToString()

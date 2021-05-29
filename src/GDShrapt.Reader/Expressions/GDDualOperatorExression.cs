@@ -17,14 +17,18 @@
                 {
                     LeftExpression = expr;
                 }));
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
             if (OperatorType == GDDualOperatorType.Null)
             {
-                state.PushNode(new GDDualOperatorResolver(op => OperatorType = op));
-                state.HandleChar(c);
+                state.PushNode(new GDDualOperatorResolver((op, comment) =>
+                {
+                    OperatorType = op;
+                    EndLineComment = comment;
+                }));
+                state.PassChar(c);
                 return;
             }
 
@@ -34,18 +38,18 @@
                 {
                     RightExpression = expr;
                 }));
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
             state.PopNode();
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
 
@@ -85,6 +89,7 @@
             RightExpression = expression;
             return right;
         }
+
         public override string ToString()
         {
             return $"{LeftExpression} {OperatorType.Print()} {RightExpression}";

@@ -4,6 +4,7 @@ namespace GDShrapt.Reader
 {
     public class GDMethodDeclaration : GDClassMember
     {
+        bool _typeChecked;
         public GDIdentifier Identifier { get; set; }
         public GDParametersDeclaration Parameters { get; set; }
         public GDType ReturnType { get; set; }
@@ -20,33 +21,44 @@ namespace GDShrapt.Reader
             if (Identifier == null)
             {
                 state.PushNode(Identifier = new GDIdentifier());
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
             if (Parameters == null)
             {
                 state.PushNode(Parameters = new GDParametersDeclaration());
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
+
             if (c == ':')
             {
+                _typeChecked = true;
                 state.PushNode(new GDStatementResolver(1, expr => Statements.Add(expr)));
             }
             else
             {
-                if (c == '-' || c == '>')
-                    return;
+                if (!_typeChecked)
+                {
+                    if (c == '-' || c == '>')
+                        return;
 
-                state.PushNode(ReturnType = new GDType());
+                    state.PushNode(ReturnType = new GDType());
+                    _typeChecked = true;
+                    return;
+                }
+
+                state.PopNode();
+                state.PassChar(c);
             }
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            // Nothing
+            state.PopNode();
+            state.PassLineFinish();
         }
     }
 }

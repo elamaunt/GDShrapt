@@ -30,7 +30,7 @@ namespace GDShrapt.Reader
                 var parameter = new GDParameterDeclaration();
                 Parameters.Add(parameter);
                 state.PushNode(parameter);
-                state.HandleChar(c);
+                state.PassChar(c);
             }
         }
 
@@ -41,7 +41,7 @@ namespace GDShrapt.Reader
 
         public override string ToString()
         {
-            return $"({string.Join(",", Parameters.Select(x => x.ToString()))})";
+            return $"({string.Join(", ", Parameters.Select(x => x.ToString()))})";
         }
     }
 }

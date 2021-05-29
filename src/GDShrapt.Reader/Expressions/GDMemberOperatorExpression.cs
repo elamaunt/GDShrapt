@@ -15,7 +15,7 @@
             if (CallerExpression == null)
             {
                 state.PushNode(new GDExpressionResolver(expr => CallerExpression = expr));
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
@@ -24,18 +24,18 @@
                 state.PushNode(Identifier = new GDIdentifier());
 
                 if (c != '.')
-                    state.HandleChar(c);
+                    state.PassChar(c);
                 return;
             }
 
             state.PopNode();
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         /* public override GDExpression CombineLeft(GDExpression expr)

@@ -4,9 +4,23 @@ namespace GDShrapt.Reader
 {
     public class GDScriptReader
     {
+        public static readonly GDReadSettings DefaultSettings = new GDReadSettings();
+
+        public GDReadSettings Settings { get; }
+
+        public GDScriptReader()
+        {
+            Settings = DefaultSettings;
+        }
+
+        public GDScriptReader(GDReadSettings settings)
+        {
+            Settings = settings;
+        }
+
         public GDClassDeclaration ParseFileContent(string content)
         {
-            var state = new GDReadingState();
+            var state = new GDReadingState(Settings);
 
             var declaration = new GDClassDeclaration();
             state.PushNode(declaration);
@@ -25,7 +39,7 @@ namespace GDShrapt.Reader
 
         public GDClassDeclaration ParseFile(string filePath)
         {
-            var state = new GDReadingState();
+            var state = new GDReadingState(Settings);
 
             var declaration = new GDClassDeclaration();
             state.PushNode(declaration);
@@ -42,7 +56,7 @@ namespace GDShrapt.Reader
         {
             GDExpression expression = null;
             
-            var state = new GDReadingState();
+            var state = new GDReadingState(Settings);
 
             state.PushNode(new GDExpressionResolver(expr => expression = expr));
 
@@ -61,7 +75,7 @@ namespace GDShrapt.Reader
         {
             GDStatement statement = null;
 
-            var state = new GDReadingState();
+            var state = new GDReadingState(Settings);
 
             state.PushNode(new GDStatementResolver(0, st => statement = st));
 
@@ -79,9 +93,9 @@ namespace GDShrapt.Reader
         private void ParseLine(string line, GDReadingState state)
         {
             for (int i = 0; i < line.Length; i++)
-                state.HandleChar(line[i]);
+                state.PassChar(line[i]);
 
-            state.FinishLine();
+            state.PassLineFinish();
         }
     }
 }

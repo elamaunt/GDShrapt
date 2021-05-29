@@ -1,21 +1,21 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Reader
 {
     public class GDIfStatement : GDStatement
     {
-        public GDIfStatement(int lineIntendation)
-            : base(lineIntendation)
-        {
-        }
+        private bool _expressionEnded;
+        private bool _trueStatementsChecked;
 
         public GDExpression Condition { get; set; }
         public List<GDStatement> TrueStatements { get; } = new List<GDStatement>();
         public List<GDStatement> FalseStatements { get; } = new List<GDStatement>();
 
-        private bool _expressionEnded;
-        private bool _trueStatementsChecked;
-        private bool _falseStatementsChecked;
+        public GDIfStatement(int lineIntendation)
+            : base(lineIntendation)
+        {
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -25,7 +25,7 @@ namespace GDShrapt.Reader
             if (Condition == null)
             {
                 state.PushNode(new GDExpressionResolver(expr => Condition = expr));
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
@@ -42,20 +42,20 @@ namespace GDShrapt.Reader
             {
                 _trueStatementsChecked = true;
                 state.PushNode(new GDStatementResolver(LineIntendation + 1, expr => TrueStatements.Add(expr)));
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
+            // 'if' statement doesn't handle 'else' and 'elif' branches by yourself. It is managed by statement resolver.
+            // Just return control flow to previous node.
             state.PopNode();
-            state.HandleChar(c);
+            state.PassChar(c);
+        }
 
-            // TODO: false branch
-            /*if (FalseStatements.Count == 0)
-            {
-                state.PushNode(new GDStatementResolver(expr => FalseStatements.Add(expr)));
-                state.HandleChar(c);
-                return;
-            }*/
+
+        internal void HandleFalseStatements(GDReadingState state)
+        {
+            state.PushNode(new GDStatementResolver(LineIntendation + 1, expr => FalseStatements.Add(expr)));
         }
 
         internal override void HandleLineFinish(GDReadingState state)
@@ -68,7 +68,33 @@ namespace GDShrapt.Reader
             }
 
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
+        }
+
+        public override string ToString()
+        {
+            if (FalseStatements.Count == 0)
+            {
+                return $@"if {Condition}:
+    {string.Join("\n\t", TrueStatements.Select(x => x.ToString()))}";
+            }
+            else
+            {
+                if (FalseStatements.Count == 1 && FalseStatements[0] is GDIfStatement statement)
+                {
+                    return $@"if {Condition}:
+    {string.Join("\n\t", TrueStatements.Select(x => x.ToString()))}
+el{statement}";
+                }
+                else
+                {
+                    return $@"if {Condition}:
+    {string.Join("\n\t", TrueStatements.Select(x => x.ToString()))}
+else:
+    {string.Join("\n\t", FalseStatements.Select(x => x.ToString()))}";
+
+                }
+            }
         }
     }
 }

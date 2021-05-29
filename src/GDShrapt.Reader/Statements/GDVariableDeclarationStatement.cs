@@ -23,7 +23,7 @@ namespace GDShrapt.Reader
             if (Identifier == null)
             {
                 state.PushNode(Identifier = new GDIdentifier());
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
@@ -41,7 +41,7 @@ namespace GDShrapt.Reader
             {
                 // Consider another characters in line as a comment
                 state.PushNode(new GDComment());
-                state.HandleChar(c);
+                state.PassChar(c);
             }
         }
 

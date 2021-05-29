@@ -2,11 +2,11 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDSingleOperatorResolver : GDPattern
+    internal class GDSingleOperatorResolver : GDPattern
     {
-        readonly Action<GDSingleOperatorType> _handler;
+        readonly Action<GDSingleOperatorType, GDComment> _handler;
 
-        public GDSingleOperatorResolver(Action<GDSingleOperatorType> handler)
+        public GDSingleOperatorResolver(Action<GDSingleOperatorType, GDComment> handler)
         {
             _handler = handler;
         }
@@ -28,22 +28,22 @@ namespace GDShrapt.Reader
             {
                 case "!":
                 case "not":
-                    _handler(GDSingleOperatorType.Not);
+                    _handler(GDSingleOperatorType.Not, EndLineComment);
                     break;
                 case "-":
-                    _handler(GDSingleOperatorType.Negate);
+                    _handler(GDSingleOperatorType.Negate, EndLineComment);
                     break;
                 default:
-                    _handler(GDSingleOperatorType.Unknown);
+                    _handler(GDSingleOperatorType.Unknown, EndLineComment);
                     break;
             }
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            _handler(GDSingleOperatorType.Unknown);
+            _handler(GDSingleOperatorType.Unknown, EndLineComment);
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
         }
     }
 }

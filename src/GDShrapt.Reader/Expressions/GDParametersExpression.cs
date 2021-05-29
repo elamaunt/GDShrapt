@@ -5,6 +5,8 @@ namespace GDShrapt.Reader
 {
     public class GDParametersExpression : GDExpression
     {
+        bool _parametersChecked;
+
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Parameters);
         public List<GDExpression> Parameters { get; } = new List<GDExpression>();
 
@@ -25,19 +27,30 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            state.PushNode(new GDExpressionResolver(expr => Parameters.Add(expr)));
-            state.HandleChar(c);
+            if (!_parametersChecked)
+            {
+                _parametersChecked = true;
+                state.PushNode(new GDExpressionResolver(expr => Parameters.Add(expr)));
+                state.PassChar(c);
+                return;
+            }
+
+            state.PopNode();
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            // Ignore
-            // TODO: if needs handling
+            state.PopNode();
+            state.PassLineFinish();
         }
 
         public override string ToString()
         {
-            return $"({string.Join(",", Parameters.Select(x=> x.ToString()))})";
+            if (Parameters.Count == 0)
+                return "()";
+
+            return $"({string.Join(", ", Parameters.Select(x=> x.ToString()))})";
         }
     }
 }

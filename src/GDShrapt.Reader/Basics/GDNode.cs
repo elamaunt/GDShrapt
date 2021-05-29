@@ -2,6 +2,7 @@
 {
     public abstract class GDNode
     {
+        public string NodeName => GetType().Name;
         public GDComment EndLineComment { get; set; }
 
         internal abstract void HandleChar(char c, GDReadingState state);

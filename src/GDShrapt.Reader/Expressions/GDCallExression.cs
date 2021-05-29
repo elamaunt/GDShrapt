@@ -16,18 +16,18 @@
             if (ParametersExpression == null)
             {
                 state.PushNode(ParametersExpression = new GDParametersExpression());
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
             state.PopNode();
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         public override string ToString()

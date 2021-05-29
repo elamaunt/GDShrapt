@@ -10,20 +10,25 @@
             if (String == null)
             {
                 state.PushNode(String = new GDString());
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
             state.PopNode();
 
             if (c != '\"')
-                state.HandleChar(c);
+                state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
+        }
+
+        public override string ToString()
+        {
+            return $"{String}";
         }
     }
 }

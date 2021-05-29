@@ -21,7 +21,7 @@ namespace GDShrapt.Reader
             }
 
             CompleteSequence(state);
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal void Append(char c)

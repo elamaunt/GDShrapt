@@ -11,11 +11,12 @@ namespace GDShrapt.Reader
         public GDType ExtendsClass => Members.OfType<GDExtendsAtribute>().FirstOrDefault()?.Type;
         public GDIdentifier Name => Members.OfType<GDClassNameAtribute>().FirstOrDefault()?.Identifier;
         public bool IsTool => Members.OfType<GDToolAtribute>().Any();
+        public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             state.PushNode(new GDClassMemberResolver(member => Members.Add(member)));
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)

@@ -15,7 +15,7 @@ namespace GDShrapt.Reader.Declarations
         internal override void HandleChar(char c, GDReadingState state)
         {
             state.PushNode(new GDClassMemberResolver(member => Members.Add(member)));
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)

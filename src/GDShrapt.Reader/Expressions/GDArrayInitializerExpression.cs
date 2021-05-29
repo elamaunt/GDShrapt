@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Reader
 {
@@ -22,13 +23,18 @@ namespace GDShrapt.Reader
             }
 
             state.PushNode(new GDExpressionResolver(expr => Values.Add(expr)));
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
+        }
+
+        public override string ToString()
+        {
+            return $"[{string.Join(", ", Values.Select(x => x.ToString()))}]";
         }
     }
 }

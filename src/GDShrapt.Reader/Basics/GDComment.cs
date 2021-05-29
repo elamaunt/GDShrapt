@@ -9,7 +9,7 @@
         internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteSequence(state);
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         internal override bool CanAppendChar(char c, GDReadingState state)

@@ -13,26 +13,30 @@
 
             if (OperatorType == GDSingleOperatorType.Null)
             {
-                state.PushNode(new GDSingleOperatorResolver(op => OperatorType = op));
-                state.HandleChar(c);
+                state.PushNode(new GDSingleOperatorResolver((op, comment) =>
+                {
+                    OperatorType = op;
+                    EndLineComment = comment;
+                }));
+                state.PassChar(c);
                 return;
             }
 
             if (TargetExpression == null)
             {
                 state.PushNode(new GDExpressionResolver(expr => TargetExpression = expr));
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
             state.PopNode();
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         public override string ToString()

@@ -5,13 +5,20 @@ namespace GDShrapt.Reader
 {
     internal class GDReadingState
     {
+        public GDReadSettings Settings { get; }
+
         /// <summary>
         /// Main reading nodes stack
         /// </summary>
         readonly Stack<GDNode> _nodesStack = new Stack<GDNode>();
-
         GDNode CurrentNode => _nodesStack.PeekOrDefault();
- 
+
+
+        public GDReadingState(GDReadSettings settings)
+        {
+            Settings = settings;
+        }
+
         public void CompleteReading()
         {
             int count;
@@ -30,12 +37,12 @@ namespace GDShrapt.Reader
                 throw new Exception("Invalid reading state. Nodes stack isn't empty. Last node is: " + CurrentNode);
         }
 
-        public void FinishLine()
+        public void PassLineFinish()
         {
             CurrentNode?.HandleLineFinish(this);
         }
 
-        public void HandleChar(char c)
+        public void PassChar(char c)
         {
             var node = CurrentNode;
 

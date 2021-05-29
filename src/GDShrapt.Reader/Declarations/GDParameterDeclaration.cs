@@ -13,7 +13,7 @@
             if (Identifier == null)
             {
                 state.PushNode(Identifier = new GDIdentifier());
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
@@ -25,7 +25,7 @@
             state.PopNode();
 
             if (c == ')')
-                state.HandleChar(c);
+                state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)

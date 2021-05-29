@@ -35,7 +35,7 @@ namespace GDShrapt.Reader
                 {
                     PatternMatched(_lastPatternCheck.MatchedPattern);
                     state.PopNode();
-                    state.HandleChar(c);
+                    state.PassChar(c);
                 }
                 else
                 {

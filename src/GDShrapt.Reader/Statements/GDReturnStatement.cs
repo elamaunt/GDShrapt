@@ -18,18 +18,18 @@
             if (ResultExpression == null)
             {
                 state.PushNode(new GDExpressionResolver(expr => ResultExpression = expr));
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
             state.PopNode();
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         public override string ToString()

@@ -1,5 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
+    // TODO: handle godot number pattern by regular expression
     public class GDNumber : GDCharSequence
     {
         internal override bool CanAppendChar(char c, GDReadingState state)
@@ -9,7 +10,9 @@
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            CompleteSequence(state);
+            state.PopNode();
+            state.PassLineFinish();
         }
 
         public override string ToString()

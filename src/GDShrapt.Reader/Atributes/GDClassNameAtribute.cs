@@ -12,14 +12,14 @@
             if (Identifier == null)
             {
                 state.PushNode(Identifier = new GDIdentifier());
-                state.HandleChar(c);
+                state.PassChar(c);
             }
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         public override string ToString()

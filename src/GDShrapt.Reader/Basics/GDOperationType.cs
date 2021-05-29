@@ -8,6 +8,7 @@
         Call,
         Identifier,
         Member,
-        Parameters
+        Parameters,
+        Indexer
     }
 }

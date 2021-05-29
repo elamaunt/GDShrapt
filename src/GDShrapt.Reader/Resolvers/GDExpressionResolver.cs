@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDExpressionResolver : GDNode
+    internal class GDExpressionResolver : GDNode
     {
         readonly Action<GDExpression> _handler;
         GDExpression _expression;
@@ -19,7 +19,7 @@ namespace GDShrapt.Reader
             if (c == ',' || c == ')' || c == ']' || c == ':')
             {
                 CompleteExpression(state);
-                state.HandleChar(c);
+                state.PassChar(c);
                 return;
             }
 
@@ -46,14 +46,14 @@ namespace GDShrapt.Reader
                 if (char.IsDigit(c))
                 {
                     PushAndSave(state, new GDNumberExpression());
-                    state.HandleChar(c);
+                    state.PassChar(c);
                     return;
                 }
 
                 if (char.IsLetter(c) || c == '_')
                 {
                     PushAndSave(state, new GDIdentifierExpression());
-                    state.HandleChar(c);
+                    state.PassChar(c);
                     return;
                 }
 
@@ -66,7 +66,7 @@ namespace GDShrapt.Reader
                 if (c == '-' || c == '!')
                 {
                     PushAndSave(state, new GDSingleOperatorExpression());
-                    state.HandleChar(c);
+                    state.PassChar(c);
                     return;
                 }
             }
@@ -81,18 +81,37 @@ namespace GDShrapt.Reader
                     return;
                 }
 
+                if (c == '[')
+                {
+                    PushAndSave(state, new GDIndexerExression()
+                    {
+                        CallerExpression = _expression
+                    });
+                    state.PassChar(c);
+                    return;
+                }
+
+                if (c == '.')
+                {
+                    PushAndSave(state, new GDMemberOperatorExpression()
+                    {
+                        CallerExpression = _expression
+                    });
+                    return;
+                }
+
                 PushAndSave(state, new GDDualOperatorExression()
                 {
                     LeftExpression = _expression
                 });
-                state.HandleChar(c);
+                state.PassChar(c);
             }
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteExpression(state);
-            state.FinishLine();
+            state.PassLineFinish();
         }
 
         private void CompleteExpression(GDReadingState state)
@@ -100,7 +119,12 @@ namespace GDShrapt.Reader
             var last = _expression;
 
             if (last != null)
-                _handler(last.RebuildOfPriorityIfNeeded());
+            {
+                var expr = last.RebuildOfPriorityIfNeeded();
+                expr.EndLineComment = EndLineComment;
+                EndLineComment = null;
+                _handler(expr);
+            }
 
             state.PopNode();
         }

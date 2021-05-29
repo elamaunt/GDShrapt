@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDClassMemberResolver : GDCharSequence
+    internal class GDClassMemberResolver : GDCharSequence
     {
         private bool _staticFunc = false;
         private readonly Action<GDClassMember> _handler;
@@ -27,6 +27,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
+            _staticFunc = false;
             CompleteSequence(state);
         }
 
@@ -80,7 +81,12 @@ namespace GDShrapt.Reader
             }
 
             ResetSequence();
+
+            member.EndLineComment = EndLineComment;
+            EndLineComment = null;
+
             _handler(member);
+            
             state.PushNode(member);
         }
     }

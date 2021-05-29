@@ -5,7 +5,7 @@
         internal override void HandleChar(char c, GDReadingState state)
         {
             state.PopNode();
-            state.HandleChar(c);
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
