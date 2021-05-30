@@ -2,7 +2,7 @@
 {
     public class GDPassStatement : GDStatement
     {
-        public GDPassStatement(int lineIntendation)
+        internal GDPassStatement(int lineIntendation)
             : base(lineIntendation)
         {
         }

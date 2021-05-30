@@ -6,6 +6,8 @@ namespace GDShrapt.Reader
 {
     public class GDClassDeclaration : GDNode
     {
+        bool _membersChecked;
+
         public List<GDClassMember> Members { get; } = new List<GDClassMember>();
 
         public GDType ExtendsClass => Members.OfType<GDExtendsAtribute>().FirstOrDefault()?.Type;
@@ -15,13 +17,30 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            state.PushNode(new GDClassMemberResolver(member => Members.Add(member)));
-            state.PassChar(c);
+            if (!_membersChecked)
+            {
+                _membersChecked = true;
+                state.PushNode(new GDClassMemberResolver(0, member => Members.Add(member)));
+                state.PassChar(c);
+                return;
+            }
+
+            // Complete reading
+            state.PopNode();
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            // Nothing
+            if (!_membersChecked)
+            {
+                _membersChecked = true;
+                state.PushNode(new GDClassMemberResolver(0, member => Members.Add(member)));
+                state.PassLineFinish();
+                return;
+            }
+
+            // Complete reading
+            state.PopNode();
         }
 
         public override string ToString()

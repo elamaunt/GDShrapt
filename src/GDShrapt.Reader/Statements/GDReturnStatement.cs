@@ -4,11 +4,15 @@
     {
         public GDExpression ResultExpression { get; set; }
 
-        public GDReturnStatement(int lineIntendation)
+        internal GDReturnStatement(int lineIntendation)
             : base(lineIntendation)
         {
         }
 
+        public GDReturnStatement()
+        {
+
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

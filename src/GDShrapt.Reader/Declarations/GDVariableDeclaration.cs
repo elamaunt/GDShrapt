@@ -9,6 +9,7 @@ namespace GDShrapt.Reader
         public GDExpression Initializer { get; set; }
 
         public bool IsConstant { get; set; }
+        public bool HasOnReadyInitialization { get; set; }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

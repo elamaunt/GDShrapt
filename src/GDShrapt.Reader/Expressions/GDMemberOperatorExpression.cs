@@ -38,12 +38,6 @@
             state.PassLineFinish();
         }
 
-        /* public override GDExpression CombineLeft(GDExpression expr)
-         {
-             CallerExpression = expr;
-             return base.CombineLeft(expr);
-         }*/
-
         public override GDExpression SwapLeft(GDExpression expression)
         {
             var left = CallerExpression;

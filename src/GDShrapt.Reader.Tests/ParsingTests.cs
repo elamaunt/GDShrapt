@@ -91,8 +91,6 @@ func save(path, resource, flags):
 
             Assert.AreEqual("c", ((GDIdentifierExpression)@rightDualOperator.LeftExpression).Identifier.Sequence);
             Assert.AreEqual("d", ((GDIdentifierExpression)@rightDualOperator.RightExpression).Identifier.Sequence);
-
-            var print = expression.ToString();
         }
 
         [TestMethod]
@@ -253,6 +251,32 @@ else:
 
             Assert.IsInstanceOfType(ifStatement.FalseStatements[0], typeof(GDExpressionStatement));
             Assert.IsInstanceOfType(ifStatement.FalseStatements[1], typeof(GDReturnStatement));
+        }
+
+        [TestMethod]
+        public void FunctionTypeTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+static func my_int_function() -> int:
+    return 0";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            Assert.AreEqual(1, declaration.Methods.Count());
+
+            var method = declaration.Methods.ElementAt(0);
+
+            Assert.IsNotNull(method);
+            Assert.AreEqual(1, method.Statements.Count);
+            Assert.IsInstanceOfType(method.Statements[0], typeof(GDReturnStatement));
+
+            Assert.IsNotNull(method);
+            Assert.AreEqual("int", method.ReturnType?.Sequence);
+            Assert.AreEqual("my_int_function", method.Identifier?.Sequence);
+            Assert.AreEqual(true, method.IsStatic);
         }
     }
 }

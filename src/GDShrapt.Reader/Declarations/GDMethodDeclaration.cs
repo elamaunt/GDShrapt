@@ -4,6 +4,7 @@ namespace GDShrapt.Reader
 {
     public class GDMethodDeclaration : GDClassMember
     {
+        bool _statementsChecked;
         bool _typeChecked;
         public GDIdentifier Identifier { get; set; }
         public GDParametersDeclaration Parameters { get; set; }
@@ -32,10 +33,17 @@ namespace GDShrapt.Reader
                 return;
             }
 
+            if (_statementsChecked)
+            {
+                state.PopNode();
+                state.PassChar(c);
+                return;
+            }
 
             if (c == ':')
             {
                 _typeChecked = true;
+                _statementsChecked = true;
                 state.PushNode(new GDStatementResolver(1, expr => Statements.Add(expr)));
             }
             else
@@ -46,6 +54,7 @@ namespace GDShrapt.Reader
                         return;
 
                     state.PushNode(ReturnType = new GDType());
+                    state.PassChar(c);
                     _typeChecked = true;
                     return;
                 }

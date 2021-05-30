@@ -12,9 +12,14 @@ namespace GDShrapt.Reader
         public List<GDStatement> TrueStatements { get; } = new List<GDStatement>();
         public List<GDStatement> FalseStatements { get; } = new List<GDStatement>();
 
-        public GDIfStatement(int lineIntendation)
+        internal GDIfStatement(int lineIntendation)
             : base(lineIntendation)
         {
+        }
+
+        public GDIfStatement()
+        {
+
         }
 
         internal override void HandleChar(char c, GDReadingState state)

@@ -19,7 +19,6 @@ namespace GDShrapt.Reader
                 "-",
                 "!"
             };
-
         }
 
         protected override void PatternMatched(string pattern)

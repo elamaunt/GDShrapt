@@ -2,8 +2,12 @@
 {
     public class GDWhileStatement : GDStatement
     {
-        public GDWhileStatement(int lineIntendation)
+        internal GDWhileStatement(int lineIntendation)
             : base(lineIntendation)
+        {
+        }
+
+        public GDWhileStatement()
         {
         }
 

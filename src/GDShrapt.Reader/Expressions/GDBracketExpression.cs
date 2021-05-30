@@ -7,12 +7,24 @@
         public GDExpression InnerExpression { get; set; }
         internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (IsSpace(c))
+                return;
+
+            if (InnerExpression == null)
+            {
+                state.PushNode(new GDExpressionResolver(expr => InnerExpression = expr));
+                state.PassChar(c);
+                return;
+            }
+
+            state.PopNode();
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            state.PopNode();
+            state.PassLineFinish();
         }
 
         public override string ToString()

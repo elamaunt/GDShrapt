@@ -2,9 +2,14 @@
 {
     public class GDForStatement : GDStatement
     {
-        public GDForStatement(int lineIntendation)
+        internal GDForStatement(int lineIntendation)
             : base(lineIntendation)
         {
+        }
+
+        public GDForStatement()
+        {
+
         }
 
         internal override void HandleChar(char c, GDReadingState state)

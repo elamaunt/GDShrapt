@@ -6,22 +6,50 @@ namespace GDShrapt.Reader
 {
     public class GDInnerClassDeclaration : GDClassMember
     {
+        readonly int _lineIntendation;
+        bool _membersChecked;
+
         public List<GDClassMember> Members { get; } = new List<GDClassMember>();
 
         public GDType ExtendsClass => Members.OfType<GDExtendsAtribute>().FirstOrDefault()?.Type;
         public GDIdentifier Name => Members.OfType<GDClassNameAtribute>().FirstOrDefault()?.Identifier;
         public bool IsTool => Members.OfType<GDToolAtribute>().Any();
 
+        internal GDInnerClassDeclaration(int lineIntendation)
+        {
+            _lineIntendation = lineIntendation;
+        }
+
+        public GDInnerClassDeclaration()
+        {
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
-            state.PushNode(new GDClassMemberResolver(member => Members.Add(member)));
-            state.PassChar(c);
+            if (!_membersChecked)
+            {
+                _membersChecked = true;
+                state.PushNode(new GDClassMemberResolver(_lineIntendation + 1, member => Members.Add(member)));
+                state.PassChar(c);
+                return;
+            }
+
+            // Complete reading
+            state.PopNode();
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
+            if (!_membersChecked)
+            {
+                _membersChecked = true;
+                state.PushNode(new GDClassMemberResolver(_lineIntendation + 1, member => Members.Add(member)));
+                state.PassLineFinish();
+                return;
+            }
+
+            // Complete reading
             state.PopNode();
-            state.PassLineFinish();
         }
 
         public override string ToString()

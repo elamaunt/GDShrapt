@@ -4,7 +4,7 @@
     {
         public GDExpression Expression { get; set; }
 
-        public GDExpressionStatement(int lineIntendation)
+        internal GDExpressionStatement(int lineIntendation)
             : base(lineIntendation)
         {
         }

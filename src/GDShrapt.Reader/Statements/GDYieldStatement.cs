@@ -2,8 +2,12 @@
 {
     public class GDYieldStatement : GDStatement
     {
-        public GDYieldStatement(int lineIntendation)
+        internal GDYieldStatement(int lineIntendation)
             : base(lineIntendation)
+        {
+        }
+
+        public GDYieldStatement()
         {
         }
 

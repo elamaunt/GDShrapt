@@ -4,16 +4,20 @@ namespace GDShrapt.Reader
 {
     public class GDVariableDeclarationStatement : GDStatement
     {
-        public GDVariableDeclarationStatement(int lineIntendation)
+        public GDIdentifier Identifier { get; set; }
+        public GDType Type { get; set; }
+        public GDExpression Initializer { get; set; }
+        public bool IsConstant { get; set; }
+
+        internal GDVariableDeclarationStatement(int lineIntendation)
             : base(lineIntendation)
         {
         }
 
-        public GDIdentifier Identifier { get; set; }
-        public GDType Type { get; set; }
-        public GDExpression Initializer { get; set; }
+        public GDVariableDeclarationStatement()
+        {
 
-        public bool IsConstant { get; set; }
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

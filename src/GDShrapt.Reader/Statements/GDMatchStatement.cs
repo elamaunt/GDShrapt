@@ -2,9 +2,14 @@
 {
     public class GDMatchStatement : GDStatement
     {
-        public GDMatchStatement(int lineIntendation)
+        internal GDMatchStatement(int lineIntendation)
             : base(lineIntendation)
         {
+        }
+
+        public GDMatchStatement()
+        {
+
         }
 
         internal override void HandleChar(char c, GDReadingState state)

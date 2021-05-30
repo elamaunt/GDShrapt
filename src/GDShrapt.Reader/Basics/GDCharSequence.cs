@@ -2,6 +2,9 @@
 
 namespace GDShrapt.Reader
 {
+    /// <summary>
+    /// Basic node type to read any sequences of chars
+    /// </summary>
     public abstract class GDCharSequence : GDNode
     {
         internal StringBuilder SequenceBuilder { get; set; } = new StringBuilder();
@@ -55,6 +58,12 @@ namespace GDShrapt.Reader
             SequenceBuilder = new StringBuilder();
         }
 
+        /// <summary>
+        /// Checks whether the char should be added to current sequence
+        /// </summary>
+        /// <param name="c">Char to check</param>
+        /// <param name="state">Current reading state</param>
+        /// <returns>Should add char to sequence</returns>
         internal abstract bool CanAppendChar(char c, GDReadingState state);
     }
 }
