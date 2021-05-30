@@ -72,6 +72,23 @@ namespace GDShrapt.Reader
             }
             else
             {
+                if (_expression is GDIdentifierExpression identifierExpr)
+                {
+                    switch (identifierExpr.Identifier?.Sequence)
+                    {
+                        case "pass":
+                            PushAndSave(state, new GDPassExpression());
+                            state.PassChar(c);
+                            return;
+                        case "return":
+                            PushAndSave(state, new GDReturnExpression());
+                            state.PassChar(c);
+                            return; 
+                        default:
+                            break;
+                    }
+                }
+
                 if (c == '(')
                 {
                     PushAndSave(state, new GDCallExression()

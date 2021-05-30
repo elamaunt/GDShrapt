@@ -74,7 +74,7 @@ namespace GDShrapt.Reader
                     _handler(GDDualOperatorType.Multiply, EndLineComment);
                     break;
                 case "+":
-                    _handler(GDDualOperatorType.AddAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.Addition, EndLineComment);
                     break;
                 case "-":
                     _handler(GDDualOperatorType.Subtraction, EndLineComment);

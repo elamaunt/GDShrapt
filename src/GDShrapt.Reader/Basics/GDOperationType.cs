@@ -9,6 +9,8 @@
         Identifier,
         Member,
         Parameters,
-        Indexer
+        Indexer,
+        Return,
+        Pass
     }
 }

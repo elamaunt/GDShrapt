@@ -5,7 +5,7 @@ namespace GDShrapt.Reader
 {
     public class GDParametersDeclaration : GDNode
     {
-        List<GDParameterDeclaration> Parameters { get; } = new List<GDParameterDeclaration>();
+        public List<GDParameterDeclaration> Parameters { get; } = new List<GDParameterDeclaration>();
 
         internal override void HandleChar(char c, GDReadingState state)
         {

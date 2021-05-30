@@ -76,6 +76,9 @@ namespace GDShrapt.Reader
             }
             else
             {
+                if (_sequenceBuilder.Length == 0 && IsSpace(c))
+                    return;
+
                 var sequence = _sequenceBuilder.ToString();
 
                 ResetSequence();

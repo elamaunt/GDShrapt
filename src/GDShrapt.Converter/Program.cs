@@ -9,7 +9,7 @@ namespace GDShrapt.Converter
     {
         static void Main(string[] args)
         {
-            RETURN:
+        RETURN:
             if (args == null || args.Length < 1)
             {
                 Console.WriteLine("GDScriptConverter parses and converts all godot scripts to their C# eqvivalent.");
@@ -46,7 +46,21 @@ namespace GDShrapt.Converter
             {
                 Console.WriteLine($"Parsing script file: '{filePath}'");
                 var declaration = parser.ParseFile(filePath);
-                // TODO
+
+                // Create GDScript tree walker
+                var visitor = new CSharpGeneratingVisitor(new ConversionSettings()
+                {
+                    Namespace = "Generated",
+                    FileName = filePath,
+                    ConvertGDScriptNamingStyleToSharp = true
+                });
+
+                var treeWalker = new GDTreeWalker(visitor);
+                treeWalker.WalkInNode(declaration);
+
+                // Generate C# code and save it in a file
+                var newPath = Path.ChangeExtension(destinationPath, ".cs");
+                File.WriteAllText(newPath, visitor.BuildCSharpNormalisedCode());
             }
             else
             {
@@ -79,3 +93,4 @@ namespace GDShrapt.Converter
         }
     }
 }
+

@@ -2,6 +2,8 @@
 {
     public class GDString : GDCharSequence
     {
+        public bool Multiline { get; set; }
+
         internal override void HandleLineFinish(GDReadingState state)
         {
             Append('\n');

@@ -165,6 +165,55 @@ else:
             Assert.IsInstanceOfType(ifStatement.FalseStatements[0], typeof(GDExpressionStatement));
         }
 
+        [TestMethod]
+        public void IfStatementTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+if a: return";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDIfStatement));
+
+            var ifStatement = (GDIfStatement)statement;
+
+            Assert.AreEqual(1, ifStatement.TrueStatements.Count);
+            Assert.AreEqual(0, ifStatement.FalseStatements.Count);
+
+            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDExpressionStatement));
+        }
+
+        [TestMethod]
+        public void IfElseStatementTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+if 1 + 1 == 2: return 2 + 2
+else:
+    var x = 3 + 3
+    return x";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDIfStatement));
+
+            var ifStatement = (GDIfStatement)statement;
+
+            Assert.AreEqual(1, ifStatement.TrueStatements.Count);
+            Assert.AreEqual(2, ifStatement.FalseStatements.Count);
+
+            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDExpressionStatement));
+
+            Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.TrueStatements[0]).Expression, typeof(GDReturnExpression));
+
+            Assert.IsInstanceOfType(ifStatement.FalseStatements[0], typeof(GDVariableDeclarationStatement));
+            Assert.IsInstanceOfType(ifStatement.FalseStatements[1], typeof(GDReturnStatement));
+        }
 
         [TestMethod]
         public void ElifStatementTest()

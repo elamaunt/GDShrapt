@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text;
 
-namespace GDShrapt.Reader.Declarations
+namespace GDShrapt.Reader
 {
     public class GDInnerClassDeclaration : GDClassMember
     {
@@ -20,7 +20,8 @@ namespace GDShrapt.Reader.Declarations
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            // Nothing
+            state.PopNode();
+            state.PassLineFinish();
         }
 
         public override string ToString()

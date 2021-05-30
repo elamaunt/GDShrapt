@@ -41,7 +41,9 @@ namespace GDShrapt.Reader
             if (!_trueStatementsChecked)
             {
                 _trueStatementsChecked = true;
-                state.PushNode(new GDStatementResolver(LineIntendation + 1, expr => TrueStatements.Add(expr)));
+                var statement = new GDExpressionStatement(LineIntendation + 1);
+                TrueStatements.Add(statement);
+                state.PushNode(statement);
                 state.PassChar(c);
                 return;
             }
