@@ -278,5 +278,55 @@ static func my_int_function() -> int:
             Assert.AreEqual("my_int_function", method.Identifier?.Sequence);
             Assert.AreEqual(true, method.IsStatic);
         }
+
+        [TestMethod]
+        public void ForStatementTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+for x in [5, 7, 11]:
+    print(x)";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDForStatement));
+
+            var forStatement = (GDForStatement)statement;
+
+            Assert.AreEqual("x", forStatement.Variable?.Sequence);
+            Assert.IsInstanceOfType(forStatement.Collection, typeof(GDArrayInitializerExpression));
+            Assert.AreEqual("[5, 7, 11]", forStatement.Collection.ToString());
+
+            Assert.AreEqual(1, forStatement.Statements.Count);
+            Assert.IsInstanceOfType(forStatement.Statements[0], typeof(GDExpressionStatement));
+
+        }
+
+        [TestMethod]
+        public void ForStatementTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+for i in range(2, 8, 2):
+    print(i)";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDForStatement));
+
+            var forStatement = (GDForStatement)statement;
+
+            Assert.AreEqual("i", forStatement.Variable?.Sequence);
+            Assert.IsInstanceOfType(forStatement.Collection, typeof(GDCallExression));
+            Assert.AreEqual("range(2, 8, 2)", forStatement.Collection.ToString());
+
+            Assert.AreEqual(1, forStatement.Statements.Count);
+            Assert.IsInstanceOfType(forStatement.Statements[0], typeof(GDExpressionStatement));
+
+        }
     }
 }

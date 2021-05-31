@@ -48,9 +48,9 @@ namespace GDShrapt.Reader
         public override string ToString()
         {
             if (Parameters.Count == 0)
-                return "()";
+                return "";
 
-            return $"({string.Join(", ", Parameters.Select(x=> x.ToString()))})";
+            return $"{string.Join(", ", Parameters.Select(x=> x.ToString()))}";
         }
     }
 }
