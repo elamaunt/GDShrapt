@@ -328,5 +328,51 @@ for i in range(2, 8, 2):
             Assert.IsInstanceOfType(forStatement.Statements[0], typeof(GDExpressionStatement));
 
         }
+
+        [TestMethod]
+        public void WhileStatementTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+while true:
+    print(""Hello world"")";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDWhileStatement));
+
+            var whileStatement = (GDWhileStatement)statement;
+
+            Assert.IsInstanceOfType(whileStatement.Condition, typeof(GDIdentifierExpression));
+            Assert.AreEqual("true", ((GDIdentifierExpression)whileStatement.Condition).Identifier?.Sequence);
+
+            Assert.AreEqual(1, whileStatement.Statements.Count);
+            Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
+        }
+
+        [TestMethod]
+        public void WhileStatementTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+while a > b:
+    print(""Hello world"")";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDWhileStatement));
+
+            var whileStatement = (GDWhileStatement)statement;
+
+            Assert.IsInstanceOfType(whileStatement.Condition, typeof(GDDualOperatorExression));
+            Assert.AreEqual("a > b", whileStatement.Condition.ToString());
+
+            Assert.AreEqual(1, whileStatement.Statements.Count);
+            Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
+        }
     }
 }
