@@ -9,7 +9,6 @@
         void Visit(GDMethodDeclaration d);
         void Visit(GDToolAtribute a);
         void Visit(GDClassNameAtribute a);
-        void Visit(GDExportAtribute a);
         void Visit(GDExtendsAtribute a);
         void Visit(GDExpressionStatement s);
         void Visit(GDIfStatement s);

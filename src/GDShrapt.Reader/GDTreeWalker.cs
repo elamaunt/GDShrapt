@@ -40,9 +40,6 @@ namespace GDShrapt.Reader
                 case GDExtendsAtribute extendsAtribute:
                     WalkIn(extendsAtribute);
                     break;
-                case GDExportAtribute exportAtribute:
-                    WalkIn(exportAtribute);
-                    break;
                 case GDClassNameAtribute classNameAtribute:
                     WalkIn(classNameAtribute);
                     break;
@@ -165,12 +162,6 @@ namespace GDShrapt.Reader
         }
 
         private void WalkIn(GDExtendsAtribute a)
-        {
-            _visitor.Visit(a);
-            _visitor.LeftNode();
-        }
-
-        private void WalkIn(GDExportAtribute a)
         {
             _visitor.Visit(a);
             _visitor.LeftNode();

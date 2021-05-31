@@ -8,6 +8,7 @@ namespace GDShrapt.Reader
         public GDType Type { get; set; }
         public GDExpression Initializer { get; set; }
 
+        public bool IsExported { get; set; }
         public bool IsConstant { get; set; }
         public bool HasOnReadyInitialization { get; set; }
 

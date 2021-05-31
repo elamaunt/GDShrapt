@@ -11,6 +11,7 @@
         Parameters,
         Indexer,
         Return,
-        Pass
+        Pass,
+        VariableDeclaration
     }
 }

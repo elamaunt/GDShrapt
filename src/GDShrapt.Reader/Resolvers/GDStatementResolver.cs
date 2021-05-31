@@ -8,7 +8,7 @@ namespace GDShrapt.Reader
         readonly Action<GDStatement> _handler;
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
-        int _lineIntendationThreshold;
+        readonly int _lineIntendationThreshold;
         int _lineIntendation;
         bool _lineIntendationEnded;
 

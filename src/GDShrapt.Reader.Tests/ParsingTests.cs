@@ -374,5 +374,78 @@ while a > b:
             Assert.AreEqual(1, whileStatement.Statements.Count);
             Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
         }
+
+        [TestMethod]
+        public void MatchStatementTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+match x:
+    1:
+        print(""We are number one!"")
+    2:
+        print(""Two are better than one!"")
+    ""test"":
+        print(""Oh snap! It's a string!"")";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            Assert.IsNotNull(matchStatement.Value);
+            Assert.AreEqual("x", matchStatement.Value.ToString());
+            Assert.AreEqual(3, matchStatement.Cases.Count);
+
+            Assert.AreEqual("1", matchStatement.Cases[0].Condition.ToString());
+            Assert.AreEqual("2", matchStatement.Cases[1].Condition.ToString());
+            Assert.AreEqual("\"test\"", matchStatement.Cases[2].Condition.ToString());
+
+            Assert.AreEqual(1, matchStatement.Cases[0].Statements.Count);
+            Assert.AreEqual(1, matchStatement.Cases[1].Statements.Count);
+            Assert.AreEqual(1, matchStatement.Cases[2].Statements.Count);
+
+            Assert.AreEqual("print(\"We are number one!\")", matchStatement.Cases[0].Statements[0].ToString());
+            Assert.AreEqual("print(\"Two are better than one!\")", matchStatement.Cases[1].Statements[0].ToString());
+            Assert.AreEqual("print(\"Oh snap! It's a string!\")", matchStatement.Cases[2].Statements[0].ToString());
+        }
+
+        [TestMethod]
+        public void MatchStatementTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"match x:
+    1:
+        print(""It's one!"")
+    2:
+        print(""It's one times two!"")
+    var new_var:
+        print(""It's not 1 or 2, it's "", new_var)";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            Assert.IsNotNull(matchStatement.Value);
+            Assert.AreEqual("x", matchStatement.Value.ToString());
+            Assert.AreEqual(3, matchStatement.Cases.Count);
+
+            Assert.AreEqual("1", matchStatement.Cases[0].Condition.ToString());
+            Assert.AreEqual("2", matchStatement.Cases[1].Condition.ToString());
+
+            Assert.IsInstanceOfType(matchStatement.Cases[2].Condition, typeof(GDVariableDeclarationExpression));
+            Assert.AreEqual("var new_var", matchStatement.Cases[2].Condition.ToString());
+
+            Assert.AreEqual(1, matchStatement.Cases[0].Statements.Count);
+            Assert.AreEqual(1, matchStatement.Cases[1].Statements.Count);
+            Assert.AreEqual(1, matchStatement.Cases[2].Statements.Count);
+        }
     }
 }

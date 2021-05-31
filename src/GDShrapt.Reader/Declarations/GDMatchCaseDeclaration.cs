@@ -3,20 +3,21 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDMatchStatement : GDStatement
+    public class GDMatchCaseDeclaration : GDNode
     {
+        readonly int _lineIntendation;
         bool _expressionEnded;
-        bool _casesChecked;
+        bool _statementsChecked;
 
-        public GDExpression Value { get; set; }
-        public List<GDMatchCaseDeclaration> Cases { get; } = new List<GDMatchCaseDeclaration>();
+        public GDExpression Condition { get; set; }
+        public List<GDStatement> Statements { get; } = new List<GDStatement>();
 
-        internal GDMatchStatement(int lineIntendation)
-            : base(lineIntendation)
+        internal GDMatchCaseDeclaration(int lineIntendation)
         {
+            _lineIntendation = lineIntendation;
         }
 
-        public GDMatchStatement()
+        public GDMatchCaseDeclaration()
         {
         }
 
@@ -25,9 +26,9 @@ namespace GDShrapt.Reader
             if (IsSpace(c))
                 return;
 
-            if (Value == null)
+            if (Condition == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => Value = expr));
+                state.PushNode(new GDExpressionResolver(expr => Condition = expr));
                 state.PassChar(c);
                 return;
             }
@@ -44,10 +45,10 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            if (!_casesChecked)
+            if (_expressionEnded && !_statementsChecked)
             {
-                _casesChecked = true;
-                state.PushNode(new GDMatchCaseResolver(LineIntendation + 1, @case => Cases.Add(@case)));
+                _statementsChecked = true;
+                state.PushNode(new GDStatementResolver(_lineIntendation + 1, expr => Statements.Add(expr)));
                 return;
             }
 
@@ -57,8 +58,8 @@ namespace GDShrapt.Reader
 
         public override string ToString()
         {
-            return $@"match {Value}:
-    {string.Join("\n\t", Cases.Select(x => x.ToString()))}";
+            return $@"{Condition}:
+    {string.Join("\n\t", Statements.Select(x => x.ToString()))}";
         }
     }
 }

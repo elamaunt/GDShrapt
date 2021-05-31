@@ -5,11 +5,10 @@ namespace GDShrapt.Reader
 {
     internal class GDClassMemberResolver : GDNode
     {
-        private readonly Action<GDClassMember> _handler;
-
+        readonly Action<GDClassMember> _handler;
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
-        int _lineIntendationThreshold;
+        readonly int _lineIntendationThreshold;
         int _lineIntendation;
         bool _lineIntendationEnded;
 
@@ -17,6 +16,7 @@ namespace GDShrapt.Reader
 
         bool _static;
         bool _onready;
+        bool _export;
 
         public GDClassMemberResolver(int lineIntendation, Action<GDClassMember> handler)
         {
@@ -111,19 +111,26 @@ namespace GDShrapt.Reader
         {
             GDClassMember member = null;
 
-            if (_onready)
+            if (_export)
             {
-                member = GetMemberForOnready(sequence);
+                member = GetMemberForExport(sequence);
             }
             else
             {
-                if (_static)
+                if (_onready)
                 {
-                    member = GetMemberForStatic(sequence);
+                    member = GetMemberForOnready(sequence);
                 }
                 else
                 {
-                    member = GetFirstMember(sequence);
+                    if (_static)
+                    {
+                        member = GetMemberForStatic(sequence);
+                    }
+                    else
+                    {
+                        member = GetFirstMember(sequence);
+                    }
                 }
             }
 
@@ -153,7 +160,10 @@ namespace GDShrapt.Reader
                 case "static":
                     _static = true;
                     return null;
-                
+                case "export":
+                    _export = true;
+                    return null;
+
                 case "class_name":
                     return new GDClassNameAtribute();
                 case "extends":
@@ -166,8 +176,23 @@ namespace GDShrapt.Reader
                     return new GDVariableDeclaration() { IsConstant = true };
                 case "var":
                     return new GDVariableDeclaration();
-                case "export":
-                    return new GDExportAtribute();
+                default:
+                    return new GDInvalidMember(sequence);
+            }
+        }
+        private GDClassMember GetMemberForExport(string sequence)
+        {
+            switch (sequence)
+            {
+                case "onready" when !_onready:
+                    _onready = true;
+                    return null;
+                case "var":
+                    return new GDVariableDeclaration()
+                    {
+                        HasOnReadyInitialization = _onready,
+                        IsExported = _export
+                    };
                 default:
                     return new GDInvalidMember(sequence);
             }
@@ -177,10 +202,14 @@ namespace GDShrapt.Reader
         {
             switch (sequence)
             {
+                case "export" when !_export:
+                    _export = true;
+                    return null;
                 case "var":
                     return new GDVariableDeclaration()
                     {
-                        HasOnReadyInitialization = true
+                        HasOnReadyInitialization = _onready,
+                        IsExported = _export
                     };
                 default:
                     return new GDInvalidMember(sequence);

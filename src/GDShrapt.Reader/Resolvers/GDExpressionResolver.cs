@@ -76,6 +76,10 @@ namespace GDShrapt.Reader
                 {
                     switch (identifierExpr.Identifier?.Sequence)
                     {
+                        case "var":
+                            PushAndSave(state, new GDVariableDeclarationExpression());
+                            state.PassChar(c);
+                            return;
                         case "pass":
                             PushAndSave(state, new GDPassExpression());
                             state.PassChar(c);
