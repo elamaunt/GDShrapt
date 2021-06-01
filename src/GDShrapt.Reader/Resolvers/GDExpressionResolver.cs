@@ -64,6 +64,12 @@ namespace GDShrapt.Reader
                     return;
                 }
 
+                if (c == '@')
+                {
+                    PushAndSave(state, new GDNodePathExpression());
+                    return;
+                }
+
                 if (c == '$')
                 {
                     PushAndSave(state, new GDGetNodeExpression());

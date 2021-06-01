@@ -36,8 +36,8 @@ func save(path, resource, flags):
             var @class = reader.ParseFileContent(code);
 
             Assert.IsNotNull(@class);
-            Assert.AreEqual("ResourceFormatSaver", @class.ExtendsClass?.Sequence);
-            Assert.AreEqual("HTerrainDataSaver", @class.Name?.Sequence);
+            Assert.AreEqual("ResourceFormatSaver", @class.Extends?.Type?.Sequence);
+            Assert.AreEqual("HTerrainDataSaver", @class.ClassName?.Identifier?.Sequence);
             Assert.AreEqual(true, @class.IsTool);
 
             Assert.AreEqual(7, @class.Members.Count);
@@ -585,6 +585,129 @@ match x:
             Assert.IsTrue(stringExpression.String.Multiline);
             Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("te'\"st", stringExpression.String.Value);
+        }
+
+        [TestMethod]
+        public void VariableExportTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "export var a = 123";
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDVariableDeclaration));
+
+            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members[0];
+
+            Assert.IsTrue(variableDeclaration.IsExported);
+            Assert.IsNotNull(variableDeclaration.Initializer);
+            Assert.IsNotNull(variableDeclaration.Identifier);
+            Assert.AreEqual("a", variableDeclaration.Identifier.Sequence);
+            Assert.AreEqual("123", variableDeclaration.Initializer.ToString());
+        }
+
+        [TestMethod]
+        public void EnumTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"enum test { a : 1, b, c : 3}";
+
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDEnumDeclaration));
+
+            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members[0];
+
+            Assert.AreEqual("test", enumDeclaration.Identifier.Sequence);
+            Assert.AreEqual(3, enumDeclaration.Values.Count);
+
+            Assert.AreEqual("a", enumDeclaration.Values[0].Identifier?.ToString());
+            Assert.AreEqual("b", enumDeclaration.Values[1].Identifier?.ToString());
+            Assert.AreEqual("c", enumDeclaration.Values[2].Identifier?.ToString());
+
+            Assert.AreEqual("1", enumDeclaration.Values[0].Value?.ToString());
+            Assert.IsNull(enumDeclaration.Values[1].Value);
+            Assert.AreEqual("3", enumDeclaration.Values[2].Value?.ToString());
+        }
+
+        [TestMethod]
+        public void EnumTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"enum {a,b,c = 10}";
+
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDEnumDeclaration));
+
+            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members[0];
+
+            Assert.IsNull(enumDeclaration.Identifier);
+            Assert.AreEqual(3, enumDeclaration.Values.Count);
+
+            Assert.AreEqual("a", enumDeclaration.Values[0].Identifier?.ToString());
+            Assert.AreEqual("b", enumDeclaration.Values[1].Identifier?.ToString());
+            Assert.AreEqual("c", enumDeclaration.Values[2].Identifier?.ToString());
+
+            Assert.IsNull(enumDeclaration.Values[0].Value);
+            Assert.IsNull(enumDeclaration.Values[1].Value);
+            Assert.IsNotNull(enumDeclaration.Values[2].Value);
+        }
+
+        [TestMethod]
+        public void ClassNameTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "class_name Test, \"res://interface/icons/item.png\"";
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.IsNotNull(classDeclaration.ClassName);
+            Assert.IsNotNull(classDeclaration.ClassName.Identifier);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.AreEqual("Test", classDeclaration.ClassName.Identifier.Sequence);
+
+            Assert.IsNotNull(classDeclaration.ClassName.Icon);
+            Assert.AreEqual("res://interface/icons/item.png", classDeclaration.ClassName.Icon.Value);
+        }
+
+        [TestMethod]
+        public void ExtendsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "extends Test";
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.IsNotNull(classDeclaration.Extends);
+            Assert.IsNotNull(classDeclaration.Extends.Type);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.AreEqual("Test", classDeclaration.Extends.Type.Sequence);
+        }
+
+        [TestMethod]
+        public void ExtendsTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "extends \"res://path/to/character.gd\"";
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.IsNotNull(classDeclaration.Extends);
+            Assert.IsNotNull(classDeclaration.Extends.Path);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Value);
         }
     }
 }

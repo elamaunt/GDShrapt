@@ -14,7 +14,7 @@
             {
                 if (c == '\"' || c == '\'')
                 {
-                    state.PushNode(Type = new GDType());
+                    state.PushNode(Path = new GDString());
                     state.PassChar(c);
                     return;
                 }

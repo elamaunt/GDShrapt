@@ -10,10 +10,12 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
+            if (IsSpace(c))
+                return;
+
             if (c == '}')
             {
                 state.PopNode();
-                state.PassChar(c);
                 return;
             }
 

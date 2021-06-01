@@ -14,6 +14,7 @@
         Pass,
         VariableDeclaration,
         DictionaryInitializer,
-        GetNode
+        GetNode,
+        NodePath
     }
 }

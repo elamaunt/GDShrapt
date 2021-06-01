@@ -155,6 +155,7 @@ namespace GDShrapt.Reader
                 case "match":
                     statement = new GDMatchStatement(_lineIntendation);
                     break;
+                    
                 case "yield":
                     statement = new GDYieldStatement(_lineIntendation);
                     break;
@@ -166,6 +167,12 @@ namespace GDShrapt.Reader
                     break;
                 case "pass":
                     statement = new GDPassStatement(_lineIntendation);
+                    break;
+                case "break":
+                    statement = new GDBreakStatement(_lineIntendation);
+                    break;
+                case "breakpoint":
+                    statement = new GDBreakPointStatement(_lineIntendation);
                     break;
                 default:
                     {

@@ -28,7 +28,7 @@
 
             if (!_keyChecked)
             {
-                _keyChecked = c == ':';
+                _keyChecked = c == ':' || c == '=';
                 return;
             }
 
@@ -46,6 +46,11 @@
         internal override void HandleLineFinish(GDReadingState state)
         {
             // Ignore
+        }
+
+        public override string ToString()
+        {
+            return $"{Key}: {Value}";
         }
     }
 }
