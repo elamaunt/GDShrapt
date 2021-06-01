@@ -170,6 +170,10 @@ namespace GDShrapt.Reader
                     return new GDExtendsAtribute();
                 case "tool":
                     return new GDToolAtribute();
+                case "signal":
+                    return new GDSignalDeclaration();
+                case "enum":
+                    return new GDEnumDeclaration();
                 case "func":
                     return new GDMethodDeclaration();
                 case "const":

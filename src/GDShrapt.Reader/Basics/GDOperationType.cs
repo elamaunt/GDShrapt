@@ -12,6 +12,8 @@
         Indexer,
         Return,
         Pass,
-        VariableDeclaration
+        VariableDeclaration,
+        DictionaryInitializer,
+        GetNode
     }
 }

@@ -17,7 +17,7 @@ namespace GDShrapt.Reader
             {
                 "not",
                 "-",
-                "!"
+                "!",
             };
         }
 

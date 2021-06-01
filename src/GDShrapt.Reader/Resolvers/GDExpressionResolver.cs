@@ -16,7 +16,7 @@ namespace GDShrapt.Reader
             if (IsSpace(c))
                 return;
 
-            if (c == ',' || c == ')' || c == ']' || c == ':')
+            if (c == ',' || c == '}' || c == ')' || c == ']' || c == ':')
             {
                 CompleteExpression(state);
                 state.PassChar(c);
@@ -31,15 +31,22 @@ namespace GDShrapt.Reader
                     return;
                 }
 
+                if (c == '{')
+                {
+                    PushAndSave(state, new GDDictionaryInitializerExpression());
+                    return;
+                }
+
                 if (c == '(')
                 {
                     PushAndSave(state, new GDBracketExpression());
                     return;
                 }
 
-                if (c == '\"')
+                if (c == '\"' || c == '\'')
                 {
                     PushAndSave(state, new GDStringExpression());
+                    state.PassChar(c);
                     return;
                 }
 
@@ -54,6 +61,12 @@ namespace GDShrapt.Reader
                 {
                     PushAndSave(state, new GDIdentifierExpression());
                     state.PassChar(c);
+                    return;
+                }
+
+                if (c == '$')
+                {
+                    PushAndSave(state, new GDGetNodeExpression());
                     return;
                 }
 

@@ -34,6 +34,11 @@ namespace GDShrapt.Reader
             }
         }
 
+        internal static int GetOperationPriority(object getNode)
+        {
+            throw new NotImplementedException();
+        }
+
         public static string Print(this GDSingleOperatorType self)
         {
             switch (self)

@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GDShrapt.Converter.Tests
 {
-    [TestClass]
+    [TestClass, Ignore]
     public class ConversionTests
     {
         [TestMethod]

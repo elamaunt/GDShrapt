@@ -40,13 +40,10 @@ namespace GDShrapt.Reader
             if (c == '=')
             {
                 state.PushNode(new GDExpressionResolver(expr => Initializer = expr));
+                return;
             }
-            else
-            {
-                // Consider another characters in line as a comment
-                state.PushNode(new GDComment());
-                state.PassChar(c);
-            }
+
+            // TODO: handle setget 
         }
 
         internal override void HandleLineFinish(GDReadingState state)

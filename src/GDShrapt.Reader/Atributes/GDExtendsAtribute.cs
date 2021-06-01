@@ -3,17 +3,27 @@
     public class GDExtendsAtribute : GDClassMember
     {
         public GDType Type { get; set; }
+        public GDString Path { get; set; }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
                 return;
 
-            if (Type == null)
+            if (Path == null || Type == null)
             {
-                state.PushNode(Type = new GDType());
-                state.PassChar(c);
-                return;
+                if (c == '\"' || c == '\'')
+                {
+                    state.PushNode(Type = new GDType());
+                    state.PassChar(c);
+                    return;
+                }
+                else
+                {
+                    state.PushNode(Type = new GDType());
+                    state.PassChar(c);
+                    return;
+                }
             }
 
             state.PopNode();
@@ -28,7 +38,13 @@
 
         public override string ToString()
         {
-            return $"extends {Type}";
+            if (Type != null)
+                return $"extends {Type}";
+
+            if (Path != null)
+                return $"extends {Path}";
+
+            return "extends";
         }
     }
 }

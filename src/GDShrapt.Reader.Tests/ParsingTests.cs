@@ -447,5 +447,144 @@ match x:
             Assert.AreEqual(1, matchStatement.Cases[1].Statements.Count);
             Assert.AreEqual(1, matchStatement.Cases[2].Statements.Count);
         }
+
+        [TestMethod]
+        public void ArrayTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var d = [ a, b, 1, ""Hello World"" ]";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDVariableDeclarationStatement));
+
+            var variableDeclaration = (GDVariableDeclarationStatement)statement;
+
+            Assert.IsNotNull(variableDeclaration.Initializer);
+            Assert.IsInstanceOfType(variableDeclaration.Initializer, typeof(GDArrayInitializerExpression));
+
+            var arrayInitializer = (GDArrayInitializerExpression)variableDeclaration.Initializer;
+
+            Assert.AreEqual(4, arrayInitializer.Values.Count);
+
+            Assert.AreEqual("a", arrayInitializer.Values[0].ToString());
+            Assert.AreEqual("b", arrayInitializer.Values[1].ToString());
+            Assert.AreEqual("1", arrayInitializer.Values[2].ToString());
+            Assert.AreEqual("\"Hello World\"", arrayInitializer.Values[3].ToString());
+        }
+
+        [TestMethod]
+        public void DictionaryTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var d = { a : 1, b : 2, c : ""test"", ""Hello"":""World"" }";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDVariableDeclarationStatement));
+
+            var variableDeclaration = (GDVariableDeclarationStatement)statement;
+            
+            Assert.IsNotNull(variableDeclaration.Initializer);
+            Assert.IsInstanceOfType(variableDeclaration.Initializer, typeof(GDDictionaryInitializerExpression));
+
+            var dictionaryInitializer = (GDDictionaryInitializerExpression)variableDeclaration.Initializer;
+
+            Assert.AreEqual(4, dictionaryInitializer.KeyValues.Count);
+
+            Assert.AreEqual("a", dictionaryInitializer.KeyValues[0].Key.ToString());
+            Assert.AreEqual("b", dictionaryInitializer.KeyValues[1].Key.ToString());
+            Assert.AreEqual("c", dictionaryInitializer.KeyValues[2].Key.ToString());
+            Assert.AreEqual("\"Hello\"", dictionaryInitializer.KeyValues[3].Key.ToString());
+
+            Assert.AreEqual("1", dictionaryInitializer.KeyValues[0].Value.ToString());
+            Assert.AreEqual("2", dictionaryInitializer.KeyValues[1].Value.ToString());
+            Assert.AreEqual("\"test\"", dictionaryInitializer.KeyValues[2].Value.ToString());
+            Assert.AreEqual("\"World\"", dictionaryInitializer.KeyValues[3].Value.ToString());
+        }
+
+        [TestMethod]
+        public void StringTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"""test""";
+
+            var statement = reader.ParseExpression(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDStringExpression));
+
+            var stringExpression = (GDStringExpression)statement;
+
+            Assert.IsNotNull(stringExpression.String);
+            Assert.IsFalse(stringExpression.String.Multiline);
+            Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
+            Assert.AreEqual("test", stringExpression.String.Value);
+        }
+
+        [TestMethod]
+        public void StringTest3()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "'te\"\"st'";
+
+            var statement = reader.ParseExpression(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDStringExpression));
+
+            var stringExpression = (GDStringExpression)statement;
+
+            Assert.IsNotNull(stringExpression.String);
+            Assert.IsFalse(stringExpression.String.Multiline);
+            Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
+            Assert.AreEqual("te\"\"st", stringExpression.String.Value);
+        }
+
+        [TestMethod]
+        public void MultilineStringTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "\"\"\"te\"\"st\"\"\"";
+
+            var statement = reader.ParseExpression(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDStringExpression));
+
+            var stringExpression = (GDStringExpression)statement;
+
+            Assert.IsNotNull(stringExpression.String);
+            Assert.IsTrue(stringExpression.String.Multiline);
+            Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
+            Assert.AreEqual("te\"\"st", stringExpression.String.Value);
+        }
+
+        [TestMethod]
+        public void MultilineStringTest2()
+        {
+            var reader = new GDScriptReader();
+            
+            var code = "\'\'\'te\'\"st\'\'\'";
+
+            var statement = reader.ParseExpression(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDStringExpression));
+
+            var stringExpression = (GDStringExpression)statement;
+
+            Assert.IsNotNull(stringExpression.String);
+            Assert.IsTrue(stringExpression.String.Multiline);
+            Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
+            Assert.AreEqual("te'\"st", stringExpression.String.Value);
+        }
     }
 }

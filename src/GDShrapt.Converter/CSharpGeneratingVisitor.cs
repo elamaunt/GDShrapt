@@ -148,11 +148,6 @@ namespace GDShrapt.Converter
 
         }
 
-        public void Visit(GDExportAtribute a)
-        {
-
-        }
-
         public void Visit(GDExtendsAtribute a)
         {
 
