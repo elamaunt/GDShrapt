@@ -52,7 +52,7 @@ namespace GDShrapt.Converter
 
             Push(@namespace, nameSpace => _generatedNamespace = (NamespaceDeclarationSyntax)nameSpace);
 
-            var classDeclaration = GenerateClassShell(d.ClassName?.Sequence, d.Extends?.Sequence, d.IsTool);
+            var classDeclaration = GenerateClassShell(d.ClassName?.Identifier?.Sequence, d.Extends?.Type?.Sequence, d.IsTool);
 
             Push(classDeclaration, (NamespaceDeclarationSyntax nameSpace, ClassDeclarationSyntax @class ) => nameSpace.AddMembers(@class));
         }
