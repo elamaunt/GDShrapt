@@ -937,5 +937,32 @@ match x:
 
             Assert.AreEqual("set_height", variableDeclaration.SetMethodIdentifier.Sequence);
         }
+
+        [TestMethod]
+        public void SignalTest()
+        {
+            var reader = new GDScriptReader();
+            var code = "signal my_signal(value, other_value)";
+
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+
+            Assert.IsNotNull(classDeclaration.Members[0]);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDSignalDeclaration));
+
+            var signalDeclaration = (GDSignalDeclaration)classDeclaration.Members[0];
+
+            Assert.IsNotNull(signalDeclaration.Identifier);
+            Assert.AreEqual("my_signal", signalDeclaration.Identifier.Sequence);
+
+            Assert.IsNotNull(signalDeclaration.Parameters);
+            Assert.IsNotNull(signalDeclaration.Parameters.Parameters);
+            Assert.AreEqual(2, signalDeclaration.Parameters.Parameters.Count);
+
+            Assert.AreEqual("value", signalDeclaration.Parameters.Parameters[0]?.Identifier?.Sequence);
+            Assert.AreEqual("other_value", signalDeclaration.Parameters.Parameters[1]?.Identifier?.Sequence);
+        }
     }
 }
