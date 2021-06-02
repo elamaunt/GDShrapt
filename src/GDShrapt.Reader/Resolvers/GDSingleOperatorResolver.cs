@@ -22,7 +22,7 @@ namespace GDShrapt.Reader
             };
         }
 
-        protected override void PatternMatched(string pattern)
+        protected override void PatternMatched(string pattern, GDReadingState state)
         {
             switch (pattern)
             {
@@ -38,6 +38,12 @@ namespace GDShrapt.Reader
                     break;
                 default:
                     _handler(GDSingleOperatorType.Unknown, EndLineComment);
+
+                    if (pattern != null)
+                    {
+                        for (int i = 0; i < pattern.Length; i++)
+                            state.PassChar(pattern[i]);
+                    }
                     break;
             }
         }

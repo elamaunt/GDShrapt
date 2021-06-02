@@ -2,6 +2,9 @@
 {
     public class GDDualOperatorExression : GDExpression
     {
+        bool _leftExpressionChecked;
+        bool _rightExpressionChecked;
+
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public override GDAssociationOrderType AssociationOrder => GDHelper.GetOperatorAssociationOrder(OperatorType);
 
@@ -11,12 +14,24 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (LeftExpression == null)
+            if (IsSpace(c))
+                return;
+
+            if (!_leftExpressionChecked && LeftExpression == null)
             {
+                _leftExpressionChecked = true;
                 state.PushNode(new GDExpressionResolver(expr =>
                 {
                     LeftExpression = expr;
                 }));
+                state.PassChar(c);
+                return;
+            }
+
+            // Indicates that it isn't a normal expression. The parent should handle the state.
+            if (LeftExpression == null)
+            {
+                state.PopNode();
                 state.PassChar(c);
                 return;
             }
@@ -32,8 +47,10 @@
                 return;
             }
 
-            if (RightExpression == null)
+            if (!_rightExpressionChecked && RightExpression == null)
             {
+                _rightExpressionChecked = true;
+
                 state.PushNode(new GDExpressionResolver(expr =>
                 {
                     RightExpression = expr;

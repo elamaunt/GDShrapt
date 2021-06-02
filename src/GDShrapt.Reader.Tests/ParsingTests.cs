@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Globalization;
 using System.Linq;
 
 namespace GDShrapt.Reader.Tests
@@ -102,10 +103,8 @@ func save(path, resource, flags):
 
             var expression = reader.ParseExpression(code);
 
-            var printedTree = expression.ToString();
-
             Assert.IsNotNull(expression);
-            Assert.AreEqual(code, printedTree);
+            Assert.AreEqual(code, expression.ToString());
 
             Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
 
@@ -862,6 +861,81 @@ match x:
                 Assert.AreEqual("a", singleOperatorExpression.TargetExpression.ToString());
                 Assert.AreEqual(op, singleOperatorExpression.OperatorType.Print());
             }
+        }
+
+        [TestMethod]
+        public void PropertyTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "var speed = 1 setget set_speed get_speed";
+
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+
+            Assert.IsNotNull(classDeclaration.Members[0]);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDVariableDeclaration));
+
+            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members[0];
+            
+            Assert.IsNotNull(variableDeclaration.Identifier);
+            Assert.AreEqual("speed", variableDeclaration.Identifier.Sequence);
+
+            Assert.AreEqual("1", variableDeclaration.Initializer.ToString());
+
+            Assert.IsFalse(variableDeclaration.IsConstant);
+            Assert.IsFalse(variableDeclaration.IsExported);
+            Assert.IsFalse(variableDeclaration.HasOnReadyInitialization);
+
+            Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
+            Assert.IsNotNull(variableDeclaration.GetMethodIdentifier);
+
+            Assert.AreEqual("set_speed", variableDeclaration.SetMethodIdentifier.Sequence);
+            Assert.AreEqual("get_speed", variableDeclaration.GetMethodIdentifier.Sequence);
+        }
+
+        [TestMethod]
+        public void PropertyTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "export var _height = 100.1e+10 setget set_height";
+
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+
+            Assert.IsNotNull(classDeclaration.Members[0]);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDVariableDeclaration));
+
+            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members[0];
+
+            Assert.IsNotNull(variableDeclaration.Identifier);
+            Assert.AreEqual("_height", variableDeclaration.Identifier.Sequence);
+
+            Assert.IsInstanceOfType(variableDeclaration.Initializer, typeof(GDNumberExpression));
+
+            var number = ((GDNumberExpression)variableDeclaration.Initializer).Number;
+
+            Assert.IsNotNull(number);
+
+            Assert.AreEqual(GDNumberType.Double, number.ResolveNumberType());
+
+            var value = double.Parse("100.1e+10", CultureInfo.InvariantCulture);
+            Assert.AreEqual(value, number.ValueDouble);
+            Assert.AreEqual("100.1e+10", number.ValueAsString);
+
+            Assert.IsFalse(variableDeclaration.IsConstant);
+            Assert.IsTrue(variableDeclaration.IsExported);
+            Assert.IsFalse(variableDeclaration.HasOnReadyInitialization);
+
+            Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
+            Assert.IsNull(variableDeclaration.GetMethodIdentifier);
+
+            Assert.AreEqual("set_height", variableDeclaration.SetMethodIdentifier.Sequence);
         }
     }
 }

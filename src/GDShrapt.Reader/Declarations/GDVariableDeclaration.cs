@@ -4,9 +4,15 @@ namespace GDShrapt.Reader
 {
     public class GDVariableDeclaration : GDClassMember
     {
+        bool _setgetKeywordChecked;
+        bool _hasSetget;
+
         public GDIdentifier Identifier { get; set; }
         public GDType Type { get; set; }
         public GDExpression Initializer { get; set; }
+
+        public GDIdentifier GetMethodIdentifier { get; set; }
+        public GDIdentifier SetMethodIdentifier { get; set; }
 
         public bool IsExported { get; set; }
         public bool IsConstant { get; set; }
@@ -34,19 +40,44 @@ namespace GDShrapt.Reader
             if (c == '=')
             {
                 state.PushNode(new GDExpressionResolver(expr => Initializer = expr));
+                return;
             }
-            else
+
+            if (!IsConstant && !_setgetKeywordChecked)
             {
-                // Consider another characters in line as a comment
-                state.PushNode(new GDComment());
+                _setgetKeywordChecked = true;
+                state.PushNode(new GDStaticKeywordResolver("setget", result => _hasSetget = result));
                 state.PassChar(c);
+                return;
             }
+
+            if (_hasSetget)
+            {
+                if (SetMethodIdentifier == null)
+                {
+                    state.PushNode(SetMethodIdentifier = new GDIdentifier());
+                    state.PassChar(c);
+                    return;
+                }
+
+                if (GetMethodIdentifier == null)
+                {
+                    state.PushNode(GetMethodIdentifier = new GDIdentifier());
+                    state.PassChar(c);
+                    return;
+                }
+            }
+
+            state.PopNode();
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
+           // state.PassLineFinish();
         }
+
         public override string ToString()
         {
             if (Type != null)

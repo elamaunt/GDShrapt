@@ -95,28 +95,54 @@ namespace GDShrapt.Reader
                 {
                     switch (identifierExpr.Identifier?.Sequence)
                     {
+                        case "setget":
+                            {
+                                _expression = null;
+                                CompleteExpression(state);
+
+                                for (int i = 0; i < "setget".Length; i++)
+                                    state.PassChar("setget"[i]);
+
+                                state.PassChar(' ');
+                                state.PassChar(c);
+                            }
+                            return;
                         case "not":
                             PushAndSave(state, new GDSingleOperatorExpression()
                             {
                                 OperatorType = GDSingleOperatorType.Not2
                             });
+                            state.PassChar(' ');
                             state.PassChar(c);
                             return;
-
                         case "var":
                             PushAndSave(state, new GDVariableDeclarationExpression());
+                            state.PassChar(' ');
                             state.PassChar(c);
                             return;
                         case "pass":
                             PushAndSave(state, new GDPassExpression());
+                            state.PassChar(' ');
                             state.PassChar(c);
                             return;
                         case "return":
                             PushAndSave(state, new GDReturnExpression());
+                            state.PassChar(' ');
                             state.PassChar(c);
                             return; 
                         default:
                             break;
+                    }
+                }
+
+                if (_expression is GDDualOperatorExression dualOperatorExpression)
+                {
+                    if (dualOperatorExpression.OperatorType == GDDualOperatorType.Unknown && dualOperatorExpression.RightExpression == null)
+                    {
+                        _expression = dualOperatorExpression.LeftExpression;
+                        CompleteExpression(state);
+                        state.PassChar(c);
+                        return;
                     }
                 }
 

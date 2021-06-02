@@ -5,7 +5,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public abstract class GDPattern : GDNode
+    internal abstract class GDPattern : GDNode
     {
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
@@ -31,16 +31,16 @@ namespace GDShrapt.Reader
 
             if (!check.HasLongerPatternsToMatch)
             {
+                state.PopNode();
+
                 if (check.MatchedPattern == null)
                 {
-                    PatternMatched(_lastPatternCheck.MatchedPattern);
-                    state.PopNode();
+                    PatternMatched(_lastPatternCheck.MatchedPattern, state);
                     state.PassChar(c);
                 }
                 else
                 {
-                    PatternMatched(check.MatchedPattern);
-                    state.PopNode();
+                    PatternMatched(check.MatchedPattern, state);
                 }
 
                 _sequenceBuilder.Clear();
@@ -50,7 +50,7 @@ namespace GDShrapt.Reader
             _lastPatternCheck = check;
         }
 
-        protected abstract void PatternMatched(string pattern);
+        protected abstract void PatternMatched(string pattern, GDReadingState state);
 
         public (bool HasLongerPatternsToMatch, string MatchedPattern) CheckForPatterns()
         {

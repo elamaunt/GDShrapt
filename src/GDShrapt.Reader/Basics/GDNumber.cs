@@ -14,7 +14,7 @@ namespace GDShrapt.Reader
         int _digitsCounter = 0;
         bool _justSwitchedToExponentialPart;
         bool _isExponentialPart;
-        bool _negativeExponentialPart;
+        bool _exponentialPartSignNoticed;
 
         public double ValueDouble
         {
@@ -129,9 +129,9 @@ namespace GDShrapt.Reader
                         return;
                     }
 
-                    if (c == '-' && _isExponentialPart && !_negativeExponentialPart && _justSwitchedToExponentialPart)
+                    if ((c == '-' || c == '+') && _isExponentialPart && !_exponentialPartSignNoticed && _justSwitchedToExponentialPart)
                     {
-                        _negativeExponentialPart = true;
+                        _exponentialPartSignNoticed = true;
                         _stringBuilder.Append(c);
                         return;
                     }

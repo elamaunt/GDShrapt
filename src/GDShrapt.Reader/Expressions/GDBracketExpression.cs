@@ -2,6 +2,8 @@
 {
     public class GDBracketExpression : GDExpression
     {
+        bool _expressionChecked;
+
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Brackets);
 
         public GDExpression InnerExpression { get; set; }
@@ -10,8 +12,9 @@
             if (IsSpace(c))
                 return;
 
-            if (InnerExpression == null)
+            if (!_expressionChecked && InnerExpression == null)
             {
+                _expressionChecked = true;
                 state.PushNode(new GDExpressionResolver(expr => InnerExpression = expr));
                 state.PassChar(c);
                 return;
