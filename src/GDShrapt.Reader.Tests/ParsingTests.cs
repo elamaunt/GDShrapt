@@ -60,7 +60,7 @@ func save(path, resource, flags):
             Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
 
             var @dualOperator = (GDDualOperatorExression)expression;
-            Assert.AreEqual(GDDualOperatorType.And, @dualOperator.OperatorType);
+            Assert.AreEqual(GDDualOperatorType.And2, @dualOperator.OperatorType);
 
             var leftExpression = @dualOperator.LeftExpression;
 
@@ -528,7 +528,7 @@ match x:
         }
 
         [TestMethod]
-        public void StringTest3()
+        public void StringTest2()
         {
             var reader = new GDScriptReader();
 
@@ -786,6 +786,82 @@ match x:
             Assert.IsNotNull(numberExpression.Number);
             Assert.AreEqual(GDNumberType.Double, numberExpression.Number.ResolveNumberType());
             Assert.AreEqual(value, numberExpression.Number.ValueDouble);
+        }
+
+        [TestMethod]
+        [DataRow("and",
+                "or",
+                "as",
+                "is",
+                "=",
+                "<",
+                ">",
+                "/",
+                "*",
+                "+",
+                "-",
+                ">=",
+                "<=",
+                "==",
+                "/=",
+                "!=",
+                "*=",
+                "-=",
+                "+=",
+                "&&",
+                "||",
+                "%=",
+                "<<",
+                ">>",
+                "%",
+                "^",
+                "|",
+                "&",
+                "in",
+                "&=",
+                "|=")]
+        public void DualOperatorsTest(params string[] operators)
+        {
+            var reader = new GDScriptReader();
+
+            foreach (var op in operators)
+            {
+                var code = $"a {op} b";
+
+                var expression = reader.ParseExpression(code);
+                Assert.IsNotNull(expression);
+                Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+
+                var dualOperatorExpression = (GDDualOperatorExression)expression;
+
+                Assert.AreEqual("a", dualOperatorExpression.LeftExpression.ToString());
+                Assert.AreEqual("b", dualOperatorExpression.RightExpression.ToString());
+                Assert.AreEqual(op, dualOperatorExpression.OperatorType.Print());
+            }
+        }
+
+        [TestMethod]
+        [DataRow("not",
+                "-",
+                "!",
+                "~")]
+        public void SingleOperatorsTest(params string[] operators)
+        {
+            var reader = new GDScriptReader();
+
+            foreach (var op in operators)
+            {
+                var code = $"{op} a";
+
+                var expression = reader.ParseExpression(code);
+                Assert.IsNotNull(expression);
+                Assert.IsInstanceOfType(expression, typeof(GDSingleOperatorExpression));
+
+                var singleOperatorExpression = (GDSingleOperatorExpression)expression;
+
+                Assert.AreEqual("a", singleOperatorExpression.TargetExpression.ToString());
+                Assert.AreEqual(op, singleOperatorExpression.OperatorType.Print());
+            }
         }
     }
 }

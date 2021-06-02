@@ -35,7 +35,17 @@ namespace GDShrapt.Reader
                 "-=",
                 "+=",
                 "&&",
-                "||"
+                "||",
+                "%=",
+                "<<",
+                ">>",
+                "%",
+                "^",
+                "|",
+                "&",
+                "in",
+                "&=",
+                "|="
             };
             
         }
@@ -45,12 +55,16 @@ namespace GDShrapt.Reader
             switch (pattern)
             {
                 case "&&":
-                case "and":
                     _handler(GDDualOperatorType.And, EndLineComment);
                     break;
+                case "and":
+                    _handler(GDDualOperatorType.And2, EndLineComment);
+                    break;
                 case "||":
-                case "or":
                     _handler(GDDualOperatorType.Or, EndLineComment);
+                    break;
+                case "or":
+                    _handler(GDDualOperatorType.Or2, EndLineComment);
                     break;
                 case "as":
                     _handler(GDDualOperatorType.As, EndLineComment);
@@ -102,6 +116,36 @@ namespace GDShrapt.Reader
                     break;
                 case "+=":
                     _handler(GDDualOperatorType.AddAndAssign, EndLineComment);
+                    break;
+                case "%=":
+                    _handler(GDDualOperatorType.ModAndAssign, EndLineComment);
+                    break;
+                case "<<":
+                    _handler(GDDualOperatorType.BitShiftLeft, EndLineComment);
+                    break;
+                case ">>":
+                    _handler(GDDualOperatorType.BitShiftRight, EndLineComment);
+                    break;
+                case "%":
+                    _handler(GDDualOperatorType.Mod, EndLineComment);
+                    break;
+                case "^":
+                    _handler(GDDualOperatorType.Xor, EndLineComment);
+                    break;
+                case "|":
+                    _handler(GDDualOperatorType.BitwiseOr, EndLineComment);
+                    break; 
+                case "&":
+                    _handler(GDDualOperatorType.BitwiseAnd, EndLineComment);
+                    break;
+                case "in":
+                    _handler(GDDualOperatorType.In, EndLineComment);
+                    break;
+                case "&=":
+                    _handler(GDDualOperatorType.BitwiseAndAndAssign, EndLineComment);
+                    break;
+                case "|=":
+                    _handler(GDDualOperatorType.BitwiseOrAndAssign, EndLineComment);
                     break;
                 default:
                     _handler(GDDualOperatorType.Unknown, EndLineComment);

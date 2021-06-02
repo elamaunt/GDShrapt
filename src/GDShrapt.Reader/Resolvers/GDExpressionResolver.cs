@@ -82,7 +82,7 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                if (c == '-' || c == '!')
+                if (c == '-' || c == '!' || c == '~')
                 {
                     PushAndSave(state, new GDSingleOperatorExpression());
                     state.PassChar(c);
@@ -95,6 +95,14 @@ namespace GDShrapt.Reader
                 {
                     switch (identifierExpr.Identifier?.Sequence)
                     {
+                        case "not":
+                            PushAndSave(state, new GDSingleOperatorExpression()
+                            {
+                                OperatorType = GDSingleOperatorType.Not2
+                            });
+                            state.PassChar(c);
+                            return;
+
                         case "var":
                             PushAndSave(state, new GDVariableDeclarationExpression());
                             state.PassChar(c);

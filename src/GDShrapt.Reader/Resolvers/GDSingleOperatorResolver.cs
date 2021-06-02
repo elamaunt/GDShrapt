@@ -18,6 +18,7 @@ namespace GDShrapt.Reader
                 "not",
                 "-",
                 "!",
+                "~"
             };
         }
 
@@ -31,6 +32,9 @@ namespace GDShrapt.Reader
                     break;
                 case "-":
                     _handler(GDSingleOperatorType.Negate, EndLineComment);
+                    break;
+                case "~":
+                    _handler(GDSingleOperatorType.BitwiseNegate, EndLineComment);
                     break;
                 default:
                     _handler(GDSingleOperatorType.Unknown, EndLineComment);

@@ -12,6 +12,8 @@ namespace GDShrapt.Reader
         internal bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
 
+        internal int SequenceBuilderLength => SequenceBuilder.Length;
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsCompleted)

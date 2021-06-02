@@ -4,6 +4,8 @@
     {
         internal override bool CanAppendChar(char c, GDReadingState state)
         {
+            if (SequenceBuilderLength == 0)
+                return c == '_' || char.IsLetter(c);
             return c == '_' || char.IsLetterOrDigit(c);
         }
 

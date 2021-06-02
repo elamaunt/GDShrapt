@@ -20,8 +20,20 @@
         Equal,
         DivideAndAssign,
         Or,
+        Or2,
         And,
+        And2,
         Is,
-        As
+        As,
+        ModAndAssign,
+        BitShiftLeft,
+        BitShiftRight,
+        Mod,
+        Xor,
+        BitwiseOr,
+        BitwiseAnd,
+        In,
+        BitwiseAndAndAssign,
+        BitwiseOrAndAssign
     }
 }

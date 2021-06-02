@@ -5,6 +5,8 @@
         Null = 0,
         Unknown,
         Negate,
-        Not
+        Not,
+        Not2,
+        BitwiseNegate,
     }
 }
