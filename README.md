@@ -1,15 +1,91 @@
 # GDShrapt
 
-Basic services to work with GDScript language from Godot gamedevelopment engine. 
-The services written in C# and free to use.
-
+GDShrapt is object-oriented one-pass parser of GDScript. Also it allows to convert code to C#. 
+The project written in C#, consists of two parts **GDShrapt.Reader** and **GDShrapt.Converter** and free to use. 
 <b>Godot</b> https://github.com/godotengine/godot
 
-# Current state
+## GDShrapt.Reader
 
-Currently work in progress. The project is at initial stage. 
+GDShrapt.Reader allows to build a lexical tree or generate a new code from scratch.
+
+### Samples
+
+GDScript input:
+
+```gdscript
+tool
+class_name HTerrainDataSaver
+extends ResourceFormatSaver
+
+const HTerrainData = preload("./ hterrain_data.gd")
+
+
+func get_recognized_extensions(res):
+	if res != null and res is HTerrainData:
+		return PoolStringArray([HTerrainData.META_EXTENSION])
+	return PoolStringArray()
+
+
+func recognize(res):
+	return res is HTerrainData
+
+
+func save(path, resource, flags):
+	resource.save_data(path.get_base_dir())
+```
+
+Parser usage:
+
+```C#
+ // Initialize a reader instance
+ var reader = new GDScriptReader();
+ 
+ // Parse the raw code
+ var @class = reader.ParseFileContent(code); // returns instance of type GDClassDeclaration 
+ 
+ // Get 'extends' atribute information
+ Console.WriteLine(@class.Extends.Type.Sequence); // outputs base class name "ResourceFormatSaver"
+ 
+ // Get 'class_name' atribute information
+ Console.WriteLine(@class.ClassName.Type.Sequence); // outputs current class name "HTerrainDataSaver"
+ 
+ // Check 'tool' atribute 
+ Console.WriteLine(@class.IsTool); // outputs true 
+ 
+ // Enumerates all class variables
+ foreach(GDVariableDeclaration variable in @class.Variables)
+ {
+    Console.WriteLine(method.Identifier.Sequence); // outputs variables's name
+ }
+ 
+ // Enumerates all class methods
+ foreach(GDMethodDeclaration method in @class.Methods)
+ {
+    Console.WriteLine(method.Identifier.Sequence); // outputs method's name
+    
+    // Enumerates all method statements
+    foreach(GDStatement st in Statements)
+    {
+        // ... your code
+    }
+ }
+```
+
+Tree building samples and runtime code generation are coming soon.
+For more samples see the [tests](src/GDShrapt.Reader.Tests/ParsingTests.cs).
+
+## GDShrapt.Converter
+GDShrapt.Converter allows to convert lexical tree in same C# code. 
+This project is at very initial stage.
+
+### Samples
+Not ready.
+
+# How to use
+Currently you can use the project only by cloning the repository. Nuget package is comming soon.
+
+# Current state
+The project is in pre-pre-alpha stage.
 
 # Current goals
-
-1. Create a fast GDScript reader which results GDScript code in an object-oriented syntax tree.
-2. Effective conversion GDScript tree to C# via Roslyn https://github.com/dotnet/roslyn.
+Prepare the project to pre-alpha stage and publish nuget.
