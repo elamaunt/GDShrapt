@@ -64,7 +64,7 @@ Parser usage:
     Console.WriteLine(method.Identifier.Sequence); // outputs method's name
     
     // Enumerates all method statements
-    foreach(GDStatement st in Statements)
+    foreach(GDStatement st in method.Statements)
     {
         // ... your code
     }
