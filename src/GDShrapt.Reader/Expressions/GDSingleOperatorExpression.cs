@@ -39,9 +39,29 @@
             state.PassLineFinish();
         }
 
+        /// <summary>
+        /// Rebuilds current node if another inner node has higher priority.
+        /// </summary>
+        /// <returns>Same node if nothing changed or a new node which now the root</returns>
+        protected override GDExpression PriorityRebuildingPass()
+        {
+            if (IsLowerPriorityThan(TargetExpression, GDSideType.Left))
+            {
+                var previous = TargetExpression;
+                TargetExpression = TargetExpression.SwapLeft(this).RebuildOfPriorityIfNeeded();
+                return previous;
+            }
+
+            return this;
+        }
+
+
         public override string ToString()
         {
-            return $"{OperatorType.Print()}{TargetExpression})";
+            if (OperatorType == GDSingleOperatorType.Not2)
+                return $"{OperatorType.Print()} {TargetExpression}";
+
+            return $"{OperatorType.Print()}{TargetExpression}";
         }
     }
 }

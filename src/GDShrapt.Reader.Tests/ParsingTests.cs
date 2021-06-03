@@ -964,5 +964,57 @@ match x:
             Assert.AreEqual("value", signalDeclaration.Parameters.Parameters[0]?.Identifier?.Sequence);
             Assert.AreEqual("other_value", signalDeclaration.Parameters.Parameters[1]?.Identifier?.Sequence);
         }
+
+        [TestMethod]
+        public void IfExpressionTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "3 if y < 10 else -1";
+
+            var expression = reader.ParseExpression(code);
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDIfExpression));
+
+            var ifExpression = (GDIfExpression)expression;
+
+            Assert.IsNotNull(ifExpression.TrueExpression);
+            Assert.IsNotNull(ifExpression.Condition);
+            Assert.IsNotNull(ifExpression.FalseExpression);
+
+            Assert.AreEqual("3", ifExpression.TrueExpression.ToString());
+            Assert.AreEqual("y < 10", ifExpression.Condition.ToString());
+            Assert.AreEqual("-1", ifExpression.FalseExpression.ToString());
+        }
+
+        [TestMethod]
+        public void IfExpressionTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "var x = 3 + 4 if -y != 10 else n";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            Assert.AreEqual(1, declaration.Members.Count);
+            Assert.IsInstanceOfType(declaration.Members[0], typeof(GDVariableDeclaration));
+
+            var variableDeclaration = (GDVariableDeclaration)declaration.Members[0];
+
+            Assert.IsInstanceOfType(variableDeclaration.Initializer, typeof(GDIfExpression));
+
+            var ifExpression = (GDIfExpression)variableDeclaration.Initializer;
+
+            Assert.IsNotNull(ifExpression.TrueExpression);
+            Assert.IsNotNull(ifExpression.Condition);
+            Assert.IsNotNull(ifExpression.FalseExpression);
+
+            Assert.IsInstanceOfType(ifExpression.Condition, typeof(GDDualOperatorExression));
+
+            Assert.AreEqual("3 + 4", ifExpression.TrueExpression.ToString());
+            Assert.AreEqual("-y != 10", ifExpression.Condition.ToString());
+            Assert.AreEqual("n", ifExpression.FalseExpression.ToString());
+        }
     }
 }

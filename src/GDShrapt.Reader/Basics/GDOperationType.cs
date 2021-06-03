@@ -15,6 +15,7 @@
         VariableDeclaration,
         DictionaryInitializer,
         GetNode,
-        NodePath
+        NodePath,
+        If
     }
 }

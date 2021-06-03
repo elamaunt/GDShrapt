@@ -26,7 +26,6 @@ namespace GDShrapt.Reader
             else
             {
                 Complete(false, state);
-                state.PopNode();
 
                 for (int i = 0; i < _index; i++)
                     state.PassChar(_keyword[i]);

@@ -6,6 +6,10 @@ namespace GDShrapt.Reader
     {
         readonly Action<GDExpression> _handler;
         GDExpression _expression;
+
+        bool _ifExpressionChecked;
+        bool _isIfExpressionNext;
+
         public GDExpressionResolver(Action<GDExpression> handler)
         {
             _handler = handler;
@@ -93,15 +97,18 @@ namespace GDShrapt.Reader
             {
                 if (_expression is GDIdentifierExpression identifierExpr)
                 {
-                    switch (identifierExpr.Identifier?.Sequence)
+                    var s = identifierExpr.Identifier?.Sequence;
+                    switch (s)
                     {
+                        case "if":
+                        case "else":
                         case "setget":
                             {
                                 _expression = null;
                                 CompleteExpression(state);
 
-                                for (int i = 0; i < "setget".Length; i++)
-                                    state.PassChar("setget"[i]);
+                                for (int i = 0; i < s.Length; i++)
+                                    state.PassChar(s[i]);
 
                                 state.PassChar(' ');
                                 state.PassChar(c);
@@ -130,6 +137,7 @@ namespace GDShrapt.Reader
                             state.PassChar(' ');
                             state.PassChar(c);
                             return; 
+                        
                         default:
                             break;
                     }
@@ -144,6 +152,26 @@ namespace GDShrapt.Reader
                         state.PassChar(c);
                         return;
                     }
+                }
+
+                if (c == 'i' && !_ifExpressionChecked)
+                {
+                    _ifExpressionChecked = true;
+                    state.PushNode(new GDStaticKeywordResolver("if ", result => _isIfExpressionNext = result));
+                    state.PassChar(c);
+                    return;
+                }
+
+                if (_isIfExpressionNext)
+                {
+                    _ifExpressionChecked = false;
+                    _isIfExpressionNext = false;
+                    PushAndSave(state, new GDIfExpression()
+                    {
+                        TrueExpression = _expression
+                    });
+                    state.PassChar(c);
+                    return;
                 }
 
                 if (c == '(')
