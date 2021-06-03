@@ -2,7 +2,7 @@
 
 GDShrapt is object-oriented one-pass parser of GDScript. Also it allows to convert code to C#. 
 The project written in C#, consists of two parts **GDShrapt.Reader** and **GDShrapt.Converter** and free to use. 
-<b>Godot</b> https://github.com/godotengine/godot
+GDScript is the main language of [Godot Engine](https://github.com/godotengine/godot)
 
 ## GDShrapt.Reader
 
