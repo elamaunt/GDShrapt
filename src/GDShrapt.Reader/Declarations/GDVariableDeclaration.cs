@@ -63,7 +63,9 @@ namespace GDShrapt.Reader
                 if (GetMethodIdentifier == null)
                 {
                     state.PushNode(GetMethodIdentifier = new GDIdentifier());
-                    state.PassChar(c);
+
+                    if (c != ',')
+                        state.PassChar(c);
                     return;
                 }
             }
@@ -75,7 +77,7 @@ namespace GDShrapt.Reader
         internal override void HandleLineFinish(GDReadingState state)
         {
             state.PopNode();
-           // state.PassLineFinish();
+            state.PassLineFinish();
         }
 
         public override string ToString()

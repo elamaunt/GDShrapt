@@ -13,6 +13,8 @@ namespace GDShrapt.Reader
         public GDExtendsAtribute Extends => Members.OfType<GDExtendsAtribute>().FirstOrDefault();
         public GDClassNameAtribute ClassName => Members.OfType<GDClassNameAtribute>().FirstOrDefault();
         public bool IsTool => Members.OfType<GDToolAtribute>().Any();
+
+        public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
 
         internal override void HandleChar(char c, GDReadingState state)
