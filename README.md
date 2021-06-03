@@ -36,7 +36,7 @@ func save(path, resource, flags):
 
 Parser usage:
 
-```C#
+```csharp
  // Initialize a reader instance
  var reader = new GDScriptReader();
  
