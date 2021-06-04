@@ -9,7 +9,8 @@ GDScript is the main language of [Godot Engine](https://github.com/godotengine/g
 GDShrapt.Reader allows to build a lexical tree or generate a new code from scratch.
 
 ### How to install
-Currently available prealpha version from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader)
+
+Currently available prealpha version from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
@@ -83,15 +84,19 @@ Tree building samples and runtime code generation are coming soon.
 For more samples see the [tests](src/GDShrapt.Reader.Tests/ParsingTests.cs).
 
 ## GDShrapt.Converter
+
 GDShrapt.Converter allows to convert lexical tree in same C# code. 
 This project is at very initial stage.
 
 ### Samples
+
 Not ready.
 
 # Current state
+
 The project is in pre-pre-alpha stage. The reader has some specific limitations on parsing 'match' statements. It will be parsed but without specific node types.
 It may be not convenient to handle this nodes by code.
 
 # Current goals
+
 Complete parsing of GDScript without limitations.
