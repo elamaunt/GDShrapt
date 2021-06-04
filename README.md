@@ -11,7 +11,7 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 ### How to install
 Currently available prealpha version from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader)
 
-Installation from console:
+Installation from Nuget console:
 ```
 Install-Package GDShrapt.Reader -Version 1.0.0-prealpha
 ```
