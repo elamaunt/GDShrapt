@@ -90,7 +90,8 @@ This project is at very initial stage.
 Not ready.
 
 # Current state
-The project is in pre-pre-alpha stage.
+The project is in pre-pre-alpha stage. The reader has some specific limitations on parsing 'match' statements. It will be parsed but without specific node types.
+It may be not convenient to handle this nodes by code.
 
 # Current goals
-Prepare the project to pre-alpha stage and publish nuget.
+Complete parsing of GDScript without limitations.
