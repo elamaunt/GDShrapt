@@ -1016,5 +1016,63 @@ match x:
             Assert.AreEqual("-y != 10", ifExpression.Condition.ToString());
             Assert.AreEqual("n", ifExpression.FalseExpression.ToString());
         }
+
+        [TestMethod]
+        public void NegativeNumberTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "- 10";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDNumberExpression));
+
+            var numberExpression = (GDNumberExpression)expression;
+
+            Assert.IsNotNull(numberExpression.Number);
+            Assert.AreEqual(GDNumberType.LongDecimal, numberExpression.Number.ResolveNumberType());
+            Assert.AreEqual(-10, numberExpression.Number.ValueInt64);
+        }
+
+        [TestMethod]
+        public void BracketsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "13 + -2 * -(10-20) / 3.0";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+
+            var dualOperator = (GDDualOperatorExression)expression;
+
+            Assert.AreEqual("13", dualOperator.LeftExpression.ToString());
+
+            Assert.AreEqual(GDDualOperatorType.Addition, dualOperator.OperatorType);
+
+            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDDualOperatorExression));
+
+            var dualOperator2 = (GDDualOperatorExression)dualOperator.RightExpression;
+
+            Assert.AreEqual("3.0", dualOperator2.RightExpression.ToString());
+
+            Assert.IsInstanceOfType(dualOperator2.LeftExpression, typeof(GDDualOperatorExression));
+
+            var dualOperator3 = (GDDualOperatorExression)dualOperator2.LeftExpression;
+
+            Assert.AreEqual("-2", dualOperator3.LeftExpression.ToString());
+            Assert.IsInstanceOfType(dualOperator3.RightExpression, typeof(GDSingleOperatorExpression));
+
+            var singleOperator = (GDSingleOperatorExpression)dualOperator3.RightExpression;
+
+            Assert.AreEqual(GDSingleOperatorType.Negate, singleOperator.OperatorType);
+            Assert.IsInstanceOfType(singleOperator.TargetExpression, typeof(GDBracketExpression));
+
+            Assert.AreEqual("(10 - 20)", singleOperator.TargetExpression.ToString());
+        }
     }
 }

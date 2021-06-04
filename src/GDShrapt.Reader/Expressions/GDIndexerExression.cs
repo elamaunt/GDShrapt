@@ -44,6 +44,37 @@
             state.PassLineFinish();
         }
 
+        protected override GDExpression PriorityRebuildingPass()
+        {
+            if (IsHigherPriorityThan(CallerExpression, GDSideType.Left))
+            {
+                var previous = CallerExpression;
+                CallerExpression = previous.SwapRight(this).RebuildRootOfPriorityIfNeeded();
+                return previous;
+            }
+
+            return this;
+        }
+
+        public override GDExpression SwapLeft(GDExpression expression)
+        {
+            var left = CallerExpression;
+            CallerExpression = expression;
+            return left;
+        }
+
+        public override GDExpression SwapRight(GDExpression expression)
+        {
+            var right = CallerExpression;
+            CallerExpression = expression;
+            return right;
+        }
+
+        public override void RebuildBranchesOfPriorityIfNeeded()
+        {
+            CallerExpression = CallerExpression.RebuildRootOfPriorityIfNeeded();
+        }
+
         public override string ToString()
         {
             return $"{CallerExpression}[{InnerExpression}]";

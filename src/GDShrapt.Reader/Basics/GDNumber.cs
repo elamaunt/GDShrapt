@@ -33,7 +33,7 @@ namespace GDShrapt.Reader
                     default:
                         throw new InvalidOperationException("The value is undefined");
                 }
-               
+
             }
             set => _literalValue = Convert.ToString(value);
         }
@@ -57,7 +57,7 @@ namespace GDShrapt.Reader
                     default:
                         throw new InvalidOperationException("The value is undefined");
                 }
-                
+
             }
             set => _literalValue = Convert.ToString(value);
         }
@@ -104,7 +104,7 @@ namespace GDShrapt.Reader
             else
             {
                 if (_digitsCounter == 1 &&
-                    (c=='b' || c == 'x'))
+                    (c == 'b' || c == 'x'))
                 {
                     _type = c == 'b' ? GDNumberType.LongBinary : GDNumberType.LongHexadecimal;
                     _stringBuilder.Append(c);
@@ -221,13 +221,44 @@ namespace GDShrapt.Reader
                     return false;
                 return true;
             }
-            catch(ArgumentOutOfRangeException)
+            catch (ArgumentOutOfRangeException)
             {
                 return false;
             }
             catch (FormatException)
             {
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Negates the literal value 
+        /// </summary>
+        public void Negate()
+        {
+            switch (IsNegative)
+            {
+                case true:
+                    _literalValue = _literalValue.Substring(1);
+                    break;
+                case false:
+                    _literalValue = "-" + _literalValue;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public bool IsDefined => !_literalValue.IsNullOrEmpty();
+
+        public bool? IsNegative
+        {
+            get
+            {
+                if (!IsDefined)
+                    return null;
+
+                return _literalValue[0] == '-';
             }
         }
 

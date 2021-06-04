@@ -39,22 +39,43 @@
             state.PassLineFinish();
         }
 
-        /// <summary>
-        /// Rebuilds current node if another inner node has higher priority.
-        /// </summary>
-        /// <returns>Same node if nothing changed or a new node which now the root</returns>
         protected override GDExpression PriorityRebuildingPass()
         {
-            if (IsLowerPriorityThan(TargetExpression, GDSideType.Left))
+            if (IsHigherPriorityThan(TargetExpression, GDSideType.Left))
             {
                 var previous = TargetExpression;
-                TargetExpression = TargetExpression.SwapLeft(this).RebuildOfPriorityIfNeeded();
+                TargetExpression = previous.SwapLeft(this).RebuildRootOfPriorityIfNeeded();
                 return previous;
+            }
+
+            // Remove 'negate' operator for number expression. Just make the number negative.
+            if (OperatorType == GDSingleOperatorType.Negate && TargetExpression is GDNumberExpression numberExpression)
+            {
+                numberExpression.Number.Negate();
+                return numberExpression;
             }
 
             return this;
         }
 
+        public override GDExpression SwapLeft(GDExpression expression)
+        {
+            var right = TargetExpression;
+            TargetExpression = expression;
+            return right;
+        }
+
+        public override GDExpression SwapRight(GDExpression expression)
+        {
+            var right = TargetExpression;
+            TargetExpression = expression;
+            return right;
+        }
+
+        public override void RebuildBranchesOfPriorityIfNeeded()
+        {
+            TargetExpression = TargetExpression.RebuildRootOfPriorityIfNeeded();
+        }
 
         public override string ToString()
         {

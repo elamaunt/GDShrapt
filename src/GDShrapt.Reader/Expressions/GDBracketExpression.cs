@@ -21,7 +21,9 @@
             }
 
             state.PopNode();
-            state.PassChar(c);
+
+            if (c != ')')
+                state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)

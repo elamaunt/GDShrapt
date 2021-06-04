@@ -83,7 +83,7 @@ namespace GDShrapt.Reader
 
                 ResetSequence();
 
-                if (IsSpace(c) || c == ':')
+                if (IsSpace(c) || c == ':' || c == ';')
                 {
                     CompleteAsStatement(state, sequence);
                 }
@@ -155,7 +155,6 @@ namespace GDShrapt.Reader
                 case "match":
                     statement = new GDMatchStatement(_lineIntendation);
                     break;
-                    
                 case "yield":
                     statement = new GDYieldStatement(_lineIntendation);
                     break;
@@ -167,6 +166,9 @@ namespace GDShrapt.Reader
                     break;
                 case "pass":
                     statement = new GDPassStatement(_lineIntendation);
+                    break;
+                case "continue":
+                    statement = new GDContinueStatement(_lineIntendation);
                     break;
                 case "break":
                     statement = new GDBreakStatement(_lineIntendation);

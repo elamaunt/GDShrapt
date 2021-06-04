@@ -69,17 +69,22 @@
         /// <returns>Same node if nothing changed or a new node which now the root</returns>
         protected override GDExpression PriorityRebuildingPass()
         {
-            if (IsLowerPriorityThan(TrueExpression, GDSideType.Left))
+            if (IsHigherPriorityThan(TrueExpression, GDSideType.Left))
             {
                 var previous = TrueExpression;
-                TrueExpression = TrueExpression.SwapRight(this).RebuildOfPriorityIfNeeded();
+                // Remove expression to break cycle
+                TrueExpression = null;
+                TrueExpression = previous.SwapRight(this).RebuildRootOfPriorityIfNeeded();
                 return previous;
             }
 
-            if (IsLowerPriorityThan(FalseExpression, GDSideType.Right))
+            if (IsHigherPriorityThan(FalseExpression, GDSideType.Right))
             {
                 var previous = FalseExpression;
-                FalseExpression = FalseExpression.SwapLeft(this).RebuildOfPriorityIfNeeded();
+
+                // Remove expression to break cycle
+                FalseExpression = null;
+                FalseExpression = previous.SwapLeft(this).RebuildRootOfPriorityIfNeeded();
                 return previous;
             }
 
@@ -98,6 +103,12 @@
             var right = FalseExpression;
             FalseExpression = expression;
             return right;
+        }
+
+        public override void RebuildBranchesOfPriorityIfNeeded()
+        {
+            TrueExpression = TrueExpression.RebuildRootOfPriorityIfNeeded();
+            FalseExpression = FalseExpression.RebuildRootOfPriorityIfNeeded();
         }
 
         public override string ToString()

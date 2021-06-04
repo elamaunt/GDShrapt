@@ -20,7 +20,7 @@ namespace GDShrapt.Reader
             if (IsSpace(c))
                 return;
 
-            if (c == ',' || c == '}' || c == ')' || c == ']' || c == ':')
+            if (c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c ==';')
             {
                 CompleteExpression(state);
                 state.PassChar(c);
@@ -132,6 +132,11 @@ namespace GDShrapt.Reader
                             state.PassChar(' ');
                             state.PassChar(c);
                             return;
+                        case "continue":
+                            PushAndSave(state, new GDContinueExpression());
+                            state.PassChar(' ');
+                            state.PassChar(c);
+                            return;
                         case "return":
                             PushAndSave(state, new GDReturnExpression());
                             state.PassChar(' ');
@@ -222,7 +227,17 @@ namespace GDShrapt.Reader
 
             if (last != null)
             {
-                var expr = last.RebuildOfPriorityIfNeeded();
+                // Handle negative number from Negate operator and GDNumberExpression
+                if (last is GDSingleOperatorExpression operatorExpression && 
+                    operatorExpression.OperatorType == GDSingleOperatorType.Negate &&
+                    operatorExpression.TargetExpression is GDNumberExpression numberExpression)
+                {
+                    numberExpression.Number.Negate();
+                    last = operatorExpression.TargetExpression;
+                }
+
+                var expr = last.RebuildRootOfPriorityIfNeeded();
+                
                 expr.EndLineComment = EndLineComment;
                 EndLineComment = null;
                 _handler(expr);

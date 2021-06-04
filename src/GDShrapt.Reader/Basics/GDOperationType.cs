@@ -16,6 +16,7 @@
         DictionaryInitializer,
         GetNode,
         NodePath,
-        If
+        If,
+        Continue
     }
 }

@@ -8,11 +8,11 @@ namespace GDShrapt.Reader
         public virtual GDAssociationOrderType AssociationOrder => GDAssociationOrderType.Undefined;
 
         /// <summary>
-        /// Rebuilds expression tree from current node in terms of priority and returns a new root (or the same expression if it is not changed)
+        /// Rebuilds expression root node in terms of priority and returns a new root (or the same expression if it is not changed)
         /// </summary>
         /// <returns>Actual root of the current expression tree in terms of priority</returns>
 
-        public GDExpression RebuildOfPriorityIfNeeded()
+        public GDExpression RebuildRootOfPriorityIfNeeded()
         {
             var root = this;
             bool changed;
@@ -21,11 +21,22 @@ namespace GDShrapt.Reader
             {
                 var newRoot = root.PriorityRebuildingPass();
                 changed = newRoot != root;
+
+                if (changed)
+                    newRoot.RebuildBranchesOfPriorityIfNeeded();
                 root = newRoot;
             }
             while (changed);
 
             return root;
+        }
+
+        /// <summary>
+        /// Calls <see cref="RebuildRootOfPriorityIfNeeded"/> for inner expressions or do nothing if priority is normal./>
+        /// </summary>
+        public virtual void RebuildBranchesOfPriorityIfNeeded()
+        {
+            // Nothing
         }
 
         protected virtual GDExpression PriorityRebuildingPass()
@@ -60,6 +71,34 @@ namespace GDShrapt.Reader
         /// <param name="consideringSide">Relative position of the other expression</param>
         /// <returns>True if current expression have lower priority than other. Otherwise false</returns>
         public bool IsLowerPriorityThan(GDExpression other, GDSideType consideringSide)
+        {
+            if (other == null)
+                return false;
+
+            var thisPriority = Priority;
+            var otherPriority = other.Priority;
+
+            if (otherPriority > thisPriority)
+                return true;
+
+            if (thisPriority == otherPriority)
+            {
+                if (consideringSide == GDSideType.Left)
+                    return other.AssociationOrder == GDAssociationOrderType.FromLeftToRight;
+                else
+                    return other.AssociationOrder == GDAssociationOrderType.FromRightToLeft;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Compares current expression with another one in terms of execution priority
+        /// </summary>
+        /// <param name="other">Expression</param>
+        /// <param name="consideringSide">Relative position of the other expression</param>
+        /// <returns>True if current expression have higher priority than other. Otherwise false</returns>
+        public bool IsHigherPriorityThan(GDExpression other, GDSideType consideringSide)
         {
             if (other == null)
                 return false;
