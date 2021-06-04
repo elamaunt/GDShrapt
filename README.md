@@ -8,6 +8,14 @@ GDScript is the main language of [Godot Engine](https://github.com/godotengine/g
 
 GDShrapt.Reader allows to build a lexical tree or generate a new code from scratch.
 
+### How to install
+Currently available prealpha version from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader)
+
+Installation from console:
+```
+Install-Package GDShrapt.Reader -Version 1.0.0-prealpha
+```
+
 ### Samples
 
 GDScript input:
@@ -80,9 +88,6 @@ This project is at very initial stage.
 
 ### Samples
 Not ready.
-
-# How to use
-Currently you can use the project only by cloning the repository. Nuget package is comming soon.
 
 # Current state
 The project is in pre-pre-alpha stage.
