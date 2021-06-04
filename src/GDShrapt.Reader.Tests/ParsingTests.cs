@@ -399,9 +399,14 @@ match x:
             Assert.AreEqual("x", matchStatement.Value.ToString());
             Assert.AreEqual(3, matchStatement.Cases.Count);
 
-            Assert.AreEqual("1", matchStatement.Cases[0].Condition.ToString());
-            Assert.AreEqual("2", matchStatement.Cases[1].Condition.ToString());
-            Assert.AreEqual("\"test\"", matchStatement.Cases[2].Condition.ToString());
+            Assert.AreEqual(1, matchStatement.Cases[0].Conditions.Count);
+            Assert.AreEqual("1", matchStatement.Cases[0].Conditions[0].ToString());
+
+            Assert.AreEqual(1, matchStatement.Cases[1].Conditions.Count);
+            Assert.AreEqual("2", matchStatement.Cases[1].Conditions[0].ToString());
+
+            Assert.AreEqual(1, matchStatement.Cases[2].Conditions.Count);
+            Assert.AreEqual("\"test\"", matchStatement.Cases[2].Conditions[0].ToString());
 
             Assert.AreEqual(1, matchStatement.Cases[0].Statements.Count);
             Assert.AreEqual(1, matchStatement.Cases[1].Statements.Count);
@@ -436,11 +441,15 @@ match x:
             Assert.AreEqual("x", matchStatement.Value.ToString());
             Assert.AreEqual(3, matchStatement.Cases.Count);
 
-            Assert.AreEqual("1", matchStatement.Cases[0].Condition.ToString());
-            Assert.AreEqual("2", matchStatement.Cases[1].Condition.ToString());
+            Assert.AreEqual(1, matchStatement.Cases[0].Conditions.Count);
+            Assert.AreEqual("1", matchStatement.Cases[0].Conditions[0].ToString());
 
-            Assert.IsInstanceOfType(matchStatement.Cases[2].Condition, typeof(GDVariableDeclarationExpression));
-            Assert.AreEqual("var new_var", matchStatement.Cases[2].Condition.ToString());
+            Assert.AreEqual(1, matchStatement.Cases[1].Conditions.Count);
+            Assert.AreEqual("2", matchStatement.Cases[1].Conditions[0].ToString());
+
+            Assert.AreEqual(1, matchStatement.Cases[2].Conditions.Count);
+            Assert.IsInstanceOfType(matchStatement.Cases[2].Conditions[0], typeof(GDVariableDeclarationExpression));
+            Assert.AreEqual("var new_var", matchStatement.Cases[2].Conditions[0].ToString());
 
             Assert.AreEqual(1, matchStatement.Cases[0].Statements.Count);
             Assert.AreEqual(1, matchStatement.Cases[1].Statements.Count);

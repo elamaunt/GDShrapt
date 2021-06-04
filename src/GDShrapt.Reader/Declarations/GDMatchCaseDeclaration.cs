@@ -9,7 +9,7 @@ namespace GDShrapt.Reader
         bool _expressionEnded;
         bool _statementsChecked;
 
-        public GDExpression Condition { get; set; }
+        public List<GDExpression> Conditions { get; } = new List<GDExpression>();
         public List<GDStatement> Statements { get; } = new List<GDStatement>();
 
         internal GDMatchCaseDeclaration(int lineIntendation)
@@ -26,21 +26,16 @@ namespace GDShrapt.Reader
             if (IsSpace(c))
                 return;
 
-            if (Condition == null)
+            if (c == ':' || _expressionEnded)
             {
-                state.PushNode(new GDExpressionResolver(expr => Condition = expr));
-                state.PassChar(c);
-                return;
-            }
-
-            if (!_expressionEnded)
-            {
-                if (c != ':')
-                    return;
-
                 _expressionEnded = true;
                 return;
             }
+
+            state.PushNode(new GDExpressionResolver(expr => Conditions.Add(expr)));
+
+            if (c != ',')
+                state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
@@ -58,7 +53,7 @@ namespace GDShrapt.Reader
 
         public override string ToString()
         {
-            return $@"{Condition}:
+            return $@"{string.Join(", ", Conditions.Select(x => x.ToString()))}:
     {string.Join("\n\t", Statements.Select(x => x.ToString()))}";
         }
     }
