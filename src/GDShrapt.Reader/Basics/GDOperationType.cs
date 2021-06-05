@@ -17,6 +17,7 @@
         GetNode,
         NodePath,
         If,
-        Continue
+        Continue,
+        DefaultOperator
     }
 }

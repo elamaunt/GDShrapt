@@ -4,8 +4,20 @@ namespace GDShrapt.Reader
 {
     public abstract class GDExpression : GDNode
     {
+        /// <summary>
+        /// Epxression priority. Used by expression building algorithm.
+        /// </summary>
         public abstract int Priority { get; }
+
+        /// <summary>
+        /// Expression AssociationOrder. Used by expression building algorithm, when expressions have equal priority.
+        /// </summary>
         public virtual GDAssociationOrderType AssociationOrder => GDAssociationOrderType.Undefined;
+
+        internal GDExpression()
+        {
+
+        }
 
         /// <summary>
         /// Rebuilds expression root node in terms of priority and returns a new root (or the same expression if it is not changed)

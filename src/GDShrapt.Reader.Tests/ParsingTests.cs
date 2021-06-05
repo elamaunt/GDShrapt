@@ -344,8 +344,8 @@ while true:
 
             var whileStatement = (GDWhileStatement)statement;
 
-            Assert.IsInstanceOfType(whileStatement.Condition, typeof(GDIdentifierExpression));
-            Assert.AreEqual("true", ((GDIdentifierExpression)whileStatement.Condition).Identifier?.Sequence);
+            Assert.IsInstanceOfType(whileStatement.Condition, typeof(GDBoolExpression));
+            Assert.AreEqual(true, ((GDBoolExpression)whileStatement.Condition).Value);
 
             Assert.AreEqual(1, whileStatement.Statements.Count);
             Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
@@ -1082,6 +1082,30 @@ match x:
             Assert.IsInstanceOfType(singleOperator.TargetExpression, typeof(GDBracketExpression));
 
             Assert.AreEqual("(10 - 20)", singleOperator.TargetExpression.ToString());
+        }
+
+        [TestMethod]
+        public void MatchDefaultOperatorTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+match x:
+    1:
+        return true
+    _:
+        return false";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            Assert.AreEqual(2, matchStatement.Cases.Count);
+            Assert.AreEqual(1, matchStatement.Cases[1].Conditions.Count);
+            Assert.IsInstanceOfType(matchStatement.Cases[1].Conditions[0], typeof(GDMatchDefaultOperatorExpression));
         }
     }
 }

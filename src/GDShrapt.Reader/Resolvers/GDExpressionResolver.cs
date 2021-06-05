@@ -9,6 +9,7 @@ namespace GDShrapt.Reader
 
         bool _ifExpressionChecked;
         bool _isIfExpressionNext;
+        bool _isCompleted;
 
         public GDExpressionResolver(Action<GDExpression> handler)
         {
@@ -22,7 +23,8 @@ namespace GDShrapt.Reader
 
             if (c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c ==';')
             {
-                CompleteExpression(state);
+                if (!CheckKeywords(state))
+                    CompleteExpression(state);
                 state.PassChar(c);
                 return;
             }
@@ -95,57 +97,11 @@ namespace GDShrapt.Reader
             }
             else
             {
-                if (_expression is GDIdentifierExpression identifierExpr)
+                if (CheckKeywords(state))
                 {
-                    var s = identifierExpr.Identifier?.Sequence;
-                    switch (s)
-                    {
-                        case "if":
-                        case "else":
-                        case "setget":
-                            {
-                                _expression = null;
-                                CompleteExpression(state);
-
-                                for (int i = 0; i < s.Length; i++)
-                                    state.PassChar(s[i]);
-
-                                state.PassChar(' ');
-                                state.PassChar(c);
-                            }
-                            return;
-                        case "not":
-                            PushAndSave(state, new GDSingleOperatorExpression()
-                            {
-                                OperatorType = GDSingleOperatorType.Not2
-                            });
-                            state.PassChar(' ');
-                            state.PassChar(c);
-                            return;
-                        case "var":
-                            PushAndSave(state, new GDVariableDeclarationExpression());
-                            state.PassChar(' ');
-                            state.PassChar(c);
-                            return;
-                        case "pass":
-                            PushAndSave(state, new GDPassExpression());
-                            state.PassChar(' ');
-                            state.PassChar(c);
-                            return;
-                        case "continue":
-                            PushAndSave(state, new GDContinueExpression());
-                            state.PassChar(' ');
-                            state.PassChar(c);
-                            return;
-                        case "return":
-                            PushAndSave(state, new GDReturnExpression());
-                            state.PassChar(' ');
-                            state.PassChar(c);
-                            return; 
-                        
-                        default:
-                            break;
-                    }
+                    state.PassChar(' ');
+                    state.PassChar(c);
+                    return;
                 }
 
                 if (_expression is GDDualOperatorExression dualOperatorExpression)
@@ -215,14 +171,76 @@ namespace GDShrapt.Reader
             }
         }
 
+        private bool CheckKeywords(GDReadingState state)
+        {
+            if (_expression is GDIdentifierExpression identifierExpr)
+            {
+                var s = identifierExpr.Identifier?.Sequence;
+                switch (s)
+                {
+                    case "if":
+                    case "else":
+                    case "setget":
+                        {
+                            _expression = null;
+                            CompleteExpression(state);
+
+                            for (int i = 0; i < s.Length; i++)
+                                state.PassChar(s[i]);
+                        }
+                        return true;
+                    case "not":
+                        PushAndSave(state, new GDSingleOperatorExpression()
+                        {
+                            OperatorType = GDSingleOperatorType.Not2
+                        });
+                        return true;
+                    case "var":
+                        PushAndSave(state, new GDVariableDeclarationExpression());
+                        return true;
+                    case "pass":
+                        PushAndSave(state, new GDPassExpression());
+                        return true;
+                    case "continue":
+                        PushAndSave(state, new GDContinueExpression());
+                        return true;
+                    case "return":
+                        PushAndSave(state, new GDReturnExpression());
+                        return true;
+                    case "_":
+                        PushAndSave(state, new GDMatchDefaultOperatorExpression());
+                        return true;
+                    case "false":
+                        PushAndSave(state, new GDBoolExpression());
+                        return true;
+                    case "true":
+                        PushAndSave(state, new GDBoolExpression()
+                        {
+                            Value = true
+                        });
+                        return true;
+                    default:
+                        break;
+                }
+            }
+
+            return false;
+        }
+
         internal override void HandleLineFinish(GDReadingState state)
         {
-            CompleteExpression(state);
+            if (!CheckKeywords(state))
+                CompleteExpression(state);
             state.PassLineFinish();
         }
 
         private void CompleteExpression(GDReadingState state)
         {
+            if (_isCompleted)
+                return;
+
+            _isCompleted = true;
+
             var last = _expression;
 
             if (last != null)
