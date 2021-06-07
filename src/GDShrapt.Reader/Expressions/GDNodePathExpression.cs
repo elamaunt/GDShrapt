@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDNodePathExpression : GDExpression
+    public sealed class GDNodePathExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.NodePath);
 

@@ -4,25 +4,27 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDClassDeclaration : GDNode
+    public sealed class GDClassDeclaration : GDNode
     {
         bool _membersChecked;
 
-        public List<GDClassMember> Members { get; } = new List<GDClassMember>();
+        public IEnumerable<GDClassMember> Members => TokensList.OfType<GDClassMember>();
 
-        public GDExtendsAtribute Extends => Members.OfType<GDExtendsAtribute>().FirstOrDefault();
-        public GDClassNameAtribute ClassName => Members.OfType<GDClassNameAtribute>().FirstOrDefault();
+        public GDExtendsAtribute Extends => TokensList.OfType<GDExtendsAtribute>().FirstOrDefault();
+        public GDClassNameAtribute ClassName => TokensList.OfType<GDClassNameAtribute>().FirstOrDefault();
         public bool IsTool => Members.OfType<GDToolAtribute>().Any();
 
-        public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
-        public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
+        public IEnumerable<GDVariableDeclaration> Variables => TokensList.OfType<GDVariableDeclaration>();
+        public IEnumerable<GDMethodDeclaration> Methods => TokensList.OfType<GDMethodDeclaration>();
+        public IEnumerable<GDEnumDeclaration> Enums => TokensList.OfType<GDEnumDeclaration>();
+        public IEnumerable<GDInnerClassDeclaration> InnerClasses => TokensList.OfType<GDInnerClassDeclaration>();
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (!_membersChecked)
             {
                 _membersChecked = true;
-                state.PushNode(new GDClassMemberResolver(0, member => Members.Add(member)));
+                state.PushNode(new GDClassMemberResolver(0, member => TokensList.AddLast(member)));
                 state.PassChar(c);
                 return;
             }
@@ -36,23 +38,13 @@ namespace GDShrapt.Reader
             if (!_membersChecked)
             {
                 _membersChecked = true;
-                state.PushNode(new GDClassMemberResolver(0, member => Members.Add(member)));
+                state.PushNode(new GDClassMemberResolver(0, member => TokensList.AddLast(member)));
                 state.PassLineFinish();
                 return;
             }
 
             // Complete reading
             state.PopNode();
-        }
-
-        public override string ToString()
-        {
-            var builder = new StringBuilder();
-
-            for (int i = 0; i < Members.Count; i++)
-                builder.AppendLine(Members[i].ToString());
-
-            return builder.ToString();
         }
     }
 }

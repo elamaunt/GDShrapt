@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDSignalDeclaration : GDClassMember
+    public sealed class GDSignalDeclaration : GDClassMember
     {
         public GDIdentifier Identifier { get; set; }
 

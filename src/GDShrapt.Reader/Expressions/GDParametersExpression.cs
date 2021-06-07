@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDParametersExpression : GDExpression
+    public sealed class GDParametersExpression : GDExpression
     {
         bool _parametersChecked;
 

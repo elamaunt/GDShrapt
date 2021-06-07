@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDInnerClassDeclaration : GDClassMember
+    public sealed class GDInnerClassDeclaration : GDClassMember
     {
         readonly int _lineIntendation;
         bool _membersChecked;
@@ -14,6 +14,11 @@ namespace GDShrapt.Reader
         public GDType ExtendsClass => Members.OfType<GDExtendsAtribute>().FirstOrDefault()?.Type;
         public GDIdentifier Name => Members.OfType<GDClassNameAtribute>().FirstOrDefault()?.Identifier;
         public bool IsTool => Members.OfType<GDToolAtribute>().Any();
+
+        public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
+        public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
+        public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
+        public IEnumerable<GDInnerClassDeclaration> InnerClasses => Members.OfType<GDInnerClassDeclaration>();
 
         internal GDInnerClassDeclaration(int lineIntendation)
         {

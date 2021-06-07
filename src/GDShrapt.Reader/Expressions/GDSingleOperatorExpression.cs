@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDSingleOperatorExpression : GDExpression
+    public sealed class GDSingleOperatorExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public GDSingleOperatorType OperatorType { get; set; }

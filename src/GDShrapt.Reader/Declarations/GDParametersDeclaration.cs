@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDParametersDeclaration : GDNode
+    public sealed class GDParametersDeclaration : GDNode
     {
         public List<GDParameterDeclaration> Parameters { get; } = new List<GDParameterDeclaration>();
 

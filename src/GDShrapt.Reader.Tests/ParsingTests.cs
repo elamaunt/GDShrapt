@@ -1107,5 +1107,120 @@ match x:
             Assert.AreEqual(1, matchStatement.Cases[1].Conditions.Count);
             Assert.IsInstanceOfType(matchStatement.Cases[1].Conditions[0], typeof(GDMatchDefaultOperatorExpression));
         }
+
+        [TestMethod]
+        public void MethodsChainTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"A(1 + 2)()(-3).B().C() + D() / E()(""test"")";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+
+            var dualOperator = (GDDualOperatorExression)expression;
+
+            Assert.AreEqual(GDDualOperatorType.Addition, dualOperator.OperatorType);
+
+            Assert.IsInstanceOfType(dualOperator.LeftExpression, typeof(GDCallExression));
+            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDDualOperatorExression));
+
+            var rightDualOperator = (GDDualOperatorExression)dualOperator.RightExpression;
+
+            Assert.AreEqual(GDDualOperatorType.Division, rightDualOperator.OperatorType);
+            Assert.AreEqual("D()", rightDualOperator.LeftExpression.ToString());
+
+            Assert.IsInstanceOfType(rightDualOperator.RightExpression, typeof(GDCallExression));
+
+            var rightCallExpression = (GDCallExression)rightDualOperator.RightExpression;
+
+            Assert.AreEqual("\"test\"", rightCallExpression.ParametersExpression.ToString());
+
+            var callExpression = (GDCallExression)dualOperator.LeftExpression;
+            Assert.AreEqual(0, callExpression.ParametersExpression.Parameters.Count);
+            var memberOperatorExpression = callExpression.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
+            Assert.AreEqual("C", memberOperatorExpression.Identifier?.Sequence);
+
+            callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            Assert.AreEqual(0, callExpression.ParametersExpression.Parameters.Count);
+            memberOperatorExpression = callExpression.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
+            Assert.AreEqual("B", memberOperatorExpression.Identifier?.Sequence);
+
+            callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            Assert.AreEqual(1, callExpression.ParametersExpression.Parameters.Count);
+            Assert.AreEqual("-3", callExpression.ParametersExpression.ToString());
+
+            callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            Assert.AreEqual(0, callExpression.ParametersExpression.Parameters.Count);
+
+            callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            Assert.AreEqual(1, callExpression.ParametersExpression.Parameters.Count);
+            Assert.AreEqual("1 + 2", callExpression.ParametersExpression.ToString());
+
+            var identifierExpression = callExpression.CallerExpression.CastOrAssert<GDIdentifierExpression>();
+            Assert.AreEqual("A", identifierExpression.Identifier?.Sequence);
+        }
+
+        [TestMethod]
+        public void CommentsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+# before tool comment
+tool # tool comment
+
+# before class name comment
+class_name HTerrainDataSaver # class name comment
+
+# before extends comment
+extends ResourceFormatSaver # extends comment
+
+# before const comment
+const HTerrainData = preload(""./ hterrain_data.gd"") # const comment
+
+# before func comment 1
+# before func comment 2
+func get_recognized_extensions(res): # func comment
+
+    # before if statement comment
+	if res != null and res is HTerrainData: # if expression comment
+# before return statement comment
+		return PoolStringArray([HTerrainData.META_EXTENSION]) # if true statement comment
+
+	return PoolStringArray()
+
+# end file comment 1
+# end file comment 2
+";
+
+            var @class = reader.ParseFileContent(code);
+
+            @class.EndLineComment
+
+        }
+
+        [TestMethod]
+        public void CommentsTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+# before enum comment
+enum { a, # a comment
+# before b comment
+       b, # b comment
+# before c comment
+       c # c comment}
+# after c comment
+      } # enum ending comment
+";
+
+            var @class = reader.ParseFileContent(code);
+
+
+        }
     }
 }

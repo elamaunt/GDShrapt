@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDDualOperatorExression : GDExpression
+    public sealed class GDDualOperatorExression : GDExpression
     {
         bool _leftExpressionChecked;
         bool _rightExpressionChecked;

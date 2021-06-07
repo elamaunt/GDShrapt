@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDPassExpression : GDExpression
+    public sealed class GDPassExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Pass);
 

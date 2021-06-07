@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDBreakPointStatement : GDStatement
+    public sealed class GDBreakPointStatement : GDStatement
     {
         internal GDBreakPointStatement(int lineIntendation)
             : base(lineIntendation)

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDWhileStatement : GDStatement
+    public sealed class GDWhileStatement : GDStatement
     {
         bool _expressionEnded;
         bool _statementsChecked;

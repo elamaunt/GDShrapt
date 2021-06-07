@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDParameterDeclaration : GDNode
+    public sealed class GDParameterDeclaration : GDNode
     {
         public GDIdentifier Identifier { get; set; }
         public GDType Type { get; set; }

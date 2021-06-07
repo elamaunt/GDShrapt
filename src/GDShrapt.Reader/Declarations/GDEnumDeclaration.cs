@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDEnumDeclaration : GDClassMember
+    public sealed class GDEnumDeclaration : GDClassMember
     {
         bool _nameSkiped;
         public GDIdentifier Identifier { get; set; }

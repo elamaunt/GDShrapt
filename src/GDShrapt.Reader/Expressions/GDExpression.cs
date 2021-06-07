@@ -5,7 +5,7 @@ namespace GDShrapt.Reader
     public abstract class GDExpression : GDNode
     {
         /// <summary>
-        /// Epxression priority. Used by expression building algorithm.
+        /// Expression priority. Used by expression building algorithm.
         /// </summary>
         public abstract int Priority { get; }
 
@@ -44,7 +44,7 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Calls <see cref="RebuildRootOfPriorityIfNeeded"/> for inner expressions or do nothing if priority is normal./>
+        /// Calls <see cref="RebuildRootOfPriorityIfNeeded"/> for inner expressions or do nothing if priority is normal.
         /// </summary>
         public virtual void RebuildBranchesOfPriorityIfNeeded()
         {

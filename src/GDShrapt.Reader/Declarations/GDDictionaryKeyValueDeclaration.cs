@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDDictionaryKeyValueDeclaration : GDNode
+    public sealed class GDDictionaryKeyValueDeclaration : GDNode
     {
         bool _keyChecked;
 

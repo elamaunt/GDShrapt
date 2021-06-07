@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDMethodDeclaration : GDClassMember
+    public sealed class GDMethodDeclaration : GDClassMember
     {
         bool _statementsChecked;
         bool _typeChecked;

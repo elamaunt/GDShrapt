@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDContinueStatement : GDStatement
+    public sealed class GDContinueStatement : GDStatement
     {
         internal GDContinueStatement(int lineIntendation)
             : base(lineIntendation)

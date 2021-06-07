@@ -3,9 +3,9 @@
 namespace GDShrapt.Reader
 {
     /// <summary>
-    /// Basic node type to read any sequences of chars
+    /// Basic token type to read any sequences of chars
     /// </summary>
-    public abstract class GDCharSequence : GDNode
+    public abstract class GDCharSequence : GDSimpleSyntaxToken
     {
         internal StringBuilder SequenceBuilder { get; set; } = new StringBuilder();
 

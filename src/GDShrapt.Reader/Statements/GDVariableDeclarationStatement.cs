@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDVariableDeclarationStatement : GDStatement
+    public sealed class GDVariableDeclarationStatement : GDStatement
     {
         public GDIdentifier Identifier { get; set; }
         public GDType Type { get; set; }

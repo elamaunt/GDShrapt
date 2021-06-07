@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDBracketExpression : GDExpression
+    public sealed class GDBracketExpression : GDExpression
     {
         bool _expressionChecked;
 

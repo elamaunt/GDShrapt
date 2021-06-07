@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDPassStatement : GDStatement
+    public sealed class GDPassStatement : GDStatement
     {
         internal GDPassStatement(int lineIntendation)
             : base(lineIntendation)

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDMatchCaseDeclaration : GDNode
+    public sealed class GDMatchCaseDeclaration : GDNode
     {
         readonly int _lineIntendation;
         bool _expressionEnded;

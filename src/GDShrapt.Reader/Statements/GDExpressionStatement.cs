@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDExpressionStatement : GDStatement
+    public sealed class GDExpressionStatement : GDStatement
     {
         public GDExpression Expression { get; set; }
 

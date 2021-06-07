@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDVariableDeclaration : GDClassMember
+    public sealed class GDVariableDeclaration : GDClassMember
     {
         bool _setgetKeywordChecked;
         bool _hasSetget;

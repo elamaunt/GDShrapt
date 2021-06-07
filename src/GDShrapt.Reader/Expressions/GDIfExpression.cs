@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDIfExpression : GDExpression
+    public sealed class GDIfExpression : GDExpression
     {
         bool _elseKeyChecked;
         bool _hasElse;

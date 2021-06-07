@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDEnumValueDeclaration : GDNode
+    public sealed class GDEnumValueDeclaration : GDNode
     {
         bool _keyChecked;
         public GDIdentifier Identifier { get; set; }

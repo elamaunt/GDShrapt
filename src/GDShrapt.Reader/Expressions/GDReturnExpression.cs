@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDReturnExpression : GDExpression
+    public sealed class GDReturnExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Return);
 

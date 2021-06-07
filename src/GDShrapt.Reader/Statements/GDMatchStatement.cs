@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDMatchStatement : GDStatement
+    public sealed class GDMatchStatement : GDStatement
     {
         bool _expressionEnded;
         bool _casesChecked;

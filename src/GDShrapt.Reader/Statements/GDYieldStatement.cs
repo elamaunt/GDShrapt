@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDYieldStatement : GDStatement
+    public sealed class GDYieldStatement : GDStatement
     {
         internal GDYieldStatement(int lineIntendation)
             : base(lineIntendation)

@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDIndexerExression : GDExpression
+    public sealed class GDIndexerExression : GDExpression
     {
         private bool _openSquareBracketChecked;
 

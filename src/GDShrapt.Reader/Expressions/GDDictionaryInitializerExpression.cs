@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDDictionaryInitializerExpression : GDExpression
+    public sealed class GDDictionaryInitializerExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.DictionaryInitializer);
         public List<GDDictionaryKeyValueDeclaration> KeyValues { get; } = new List<GDDictionaryKeyValueDeclaration>();

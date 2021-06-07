@@ -1,55 +1,55 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace GDShrapt.Reader
 {
-    public abstract class GDNode
+    /// <summary>
+    /// Basic GDScript node, may contains multiple tokens
+    /// </summary>
+    public abstract class GDNode : GDSyntaxToken
     {
-        /// <summary>
-        /// Name of the node Type class.
-        /// </summary>
-        public string NodeName => GetType().Name;
+        internal LinkedList<GDSyntaxToken> TokensList { get; } = new LinkedList<GDSyntaxToken>();
 
-        /// <summary>
-        /// Node comment. Properly comment handling currently isn't been completed.
-        /// </summary>
-        public GDComment EndLineComment { get; set; }
-
-        /// <summary>
-        /// Pass single character in the node. 
-        /// If the node can't handle the character it may return the character to previous node in reading state.
-        /// </summary>
-        /// <param name="c">Character</param>
-        /// <param name="state">Current reading state</param>
-        internal abstract void HandleChar(char c, GDReadingState state);
-
-        /// <summary>
-        /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for new line character
-        /// </summary>
-        /// <param name="state">Current reading state</param>
-        internal abstract void HandleLineFinish(GDReadingState state);
-
-        /// <summary>
-        /// Simple check on whitespace characters ' ' and '\t'.
-        /// </summary>
-        /// <param name="c">One char to check</param>
-        internal bool IsSpace(char c) => c == ' ' || c == '\t';
-
-        /// <summary>
-        /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for shart (line commentary) character.
-        /// Default implementation will add a new comment node in the reading state.
-        /// </summary>
-        /// <param name="state">Current reading state</param>
-        internal virtual void HandleSharpChar(GDReadingState state)
+        public IEnumerable<GDSyntaxToken> Tokens()
         {
-            state.PushNode(EndLineComment = new GDComment());
+            foreach (var token in TokensList.OfType<GDSyntaxToken>())
+                yield return token;
         }
 
         /// <summary>
-        /// Force completing node characters handling process in terms of current reading state.
-        /// Used for situation when the reading code has ended.
+        /// Removes child node or does nothing if node is already removed.
         /// </summary>
-        /// <param name="state">Current reading state</param>
-        internal virtual void ForceComplete(GDReadingState state)
+        /// <param name="token">Child token</param>
+        public virtual void RemoveChild(GDSyntaxToken token)
         {
-            state.PopNode();
+            if (!ReferenceEquals(Parent, this))
+                throw new InvalidOperationException("The specified node has a different parent.");
+
+            var node = token.ParentLinkedListNode;
+
+            if (node == null || !ReferenceEquals(node.List, TokensList))
+                throw new InvalidOperationException("The specified node hasn't a linkedList reference to the parent.");
+
+            TokensList.Remove(node);
+        }
+
+        internal void SwitchTo(GDSimpleSyntaxToken token, GDReadingState state)
+        {
+            TokensList.AddLast(token);
+            state.SetReadingToken(token);
+        }
+
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            SwitchTo(new GDComment(), state);
+        }
+
+        public override void AppendTo(StringBuilder builder)
+        {
+            foreach (var token in TokensList)
+                token.AppendTo(builder);
         }
     }
 }

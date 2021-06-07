@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public class GDArrayInitializerExpression : GDExpression
+    public sealed class GDArrayInitializerExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.ArrayInitializer);
         public List<GDExpression> Values { get; } = new List<GDExpression>();

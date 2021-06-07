@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDIdentifierExpression : GDExpression
+    public sealed class GDIdentifierExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Identifier);
         public GDIdentifier Identifier { get; set; }

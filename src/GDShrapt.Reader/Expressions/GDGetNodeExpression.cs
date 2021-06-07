@@ -1,6 +1,8 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
-    public class GDGetNodeExpression : GDExpression
+    public sealed class GDGetNodeExpression : GDExpression
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetNode);
 
@@ -8,12 +10,12 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-
+            throw new NotImplementedException();
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-
+            throw new NotImplementedException();
         }
     }
 }
