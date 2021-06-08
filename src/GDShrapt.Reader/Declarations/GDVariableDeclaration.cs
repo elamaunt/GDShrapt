@@ -25,14 +25,14 @@ namespace GDShrapt.Reader
 
             if (Identifier == null)
             {
-                state.PushNode(Identifier = new GDIdentifier());
+                state.SetReadingToken(Identifier = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }
 
             if (Type == null && c == ':')
             {
-                state.PushNode(Type = new GDType());
+                state.SetReadingToken(Type = new GDType());
                 state.PassChar(c);
                 return;
             }
@@ -55,14 +55,14 @@ namespace GDShrapt.Reader
             {
                 if (SetMethodIdentifier == null)
                 {
-                    state.PushNode(SetMethodIdentifier = new GDIdentifier());
+                    state.SetReadingToken(SetMethodIdentifier = new GDIdentifier());
                     state.PassChar(c);
                     return;
                 }
 
                 if (GetMethodIdentifier == null)
                 {
-                    state.PushNode(GetMethodIdentifier = new GDIdentifier());
+                    state.SetReadingToken(GetMethodIdentifier = new GDIdentifier());
 
                     if (c != ',')
                         state.PassChar(c);

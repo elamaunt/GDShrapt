@@ -9,7 +9,7 @@
         {
             if (String == null)
             {
-                state.PushNode(String = new GDString());
+                state.SetReadingToken(String = new GDString());
                 state.PassChar(c);
                 return;
             }

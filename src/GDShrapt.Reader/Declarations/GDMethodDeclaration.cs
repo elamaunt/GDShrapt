@@ -21,7 +21,7 @@ namespace GDShrapt.Reader
 
             if (Identifier == null)
             {
-                state.PushNode(Identifier = new GDIdentifier());
+                state.SetReadingToken(Identifier = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }
@@ -53,7 +53,7 @@ namespace GDShrapt.Reader
                     if (c == '-' || c == '>')
                         return;
 
-                    state.PushNode(ReturnType = new GDType());
+                    state.SetReadingToken(ReturnType = new GDType());
                     state.PassChar(c);
                     _typeChecked = true;
                     return;

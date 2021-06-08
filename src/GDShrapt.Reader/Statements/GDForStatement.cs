@@ -31,7 +31,7 @@ namespace GDShrapt.Reader
 
             if (Variable == null)
             {
-                state.PushNode(Variable = new GDIdentifier());
+                state.SetReadingToken(Variable = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }

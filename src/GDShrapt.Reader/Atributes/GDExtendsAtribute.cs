@@ -14,13 +14,13 @@
             {
                 if (c == '\"' || c == '\'')
                 {
-                    state.PushNode(Path = new GDString());
+                    state.SetReadingToken(Path = new GDString());
                     state.PassChar(c);
                     return;
                 }
                 else
                 {
-                    state.PushNode(Type = new GDType());
+                    state.SetReadingToken(Type = new GDType());
                     state.PassChar(c);
                     return;
                 }

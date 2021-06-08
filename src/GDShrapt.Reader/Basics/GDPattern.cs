@@ -5,7 +5,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    internal abstract class GDPattern : GDSyntaxToken
+    internal abstract class GDPattern : GDNode
     {
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 

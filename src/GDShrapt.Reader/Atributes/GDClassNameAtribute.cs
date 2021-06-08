@@ -16,13 +16,13 @@
             {
                 if (c == '\"' || c == '\'')
                 {
-                    state.PushNode(Path = new GDString());
+                    state.SetReadingToken(Path = new GDString());
                     state.PassChar(c);
                     return;
                 }
                 else
                 {
-                    state.PushNode(Identifier = new GDIdentifier());
+                    state.SetReadingToken(Identifier = new GDIdentifier());
                     state.PassChar(c);
                     return;
                 }
@@ -30,7 +30,7 @@
 
             if (c == ',' && Icon == null)
             {
-                state.PushNode(Icon = new GDString());
+                state.SetReadingToken(Icon = new GDString());
                 return;
             }
 
@@ -47,9 +47,9 @@
         public override string ToString()
         {
             if (Icon != null)
-                return $"class_name {(GDNode)Identifier ?? Path}, {Icon}";
+                return $"class_name {(GDSimpleSyntaxToken)Identifier ?? Path}, {Icon}";
 
-            return $"class_name {(GDNode)Identifier ?? Path}";
+            return $"class_name {(GDSimpleSyntaxToken)Identifier ?? Path}";
         }
     }
 }

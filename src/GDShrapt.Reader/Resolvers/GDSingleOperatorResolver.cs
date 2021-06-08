@@ -4,9 +4,9 @@ namespace GDShrapt.Reader
 {
     internal class GDSingleOperatorResolver : GDPattern
     {
-        readonly Action<GDSingleOperatorType, GDComment> _handler;
+        readonly Action<GDSingleOperatorType> _handler;
 
-        public GDSingleOperatorResolver(Action<GDSingleOperatorType, GDComment> handler)
+        public GDSingleOperatorResolver(Action<GDSingleOperatorType> handler)
         {
             _handler = handler;
         }
@@ -28,16 +28,16 @@ namespace GDShrapt.Reader
             {
                 case "!":
                 case "not":
-                    _handler(GDSingleOperatorType.Not, EndLineComment);
+                    _handler(GDSingleOperatorType.Not);
                     break;
                 case "-":
-                    _handler(GDSingleOperatorType.Negate, EndLineComment);
+                    _handler(GDSingleOperatorType.Negate);
                     break;
                 case "~":
-                    _handler(GDSingleOperatorType.BitwiseNegate, EndLineComment);
+                    _handler(GDSingleOperatorType.BitwiseNegate);
                     break;
                 default:
-                    _handler(GDSingleOperatorType.Unknown, EndLineComment);
+                    _handler(GDSingleOperatorType.Unknown);
 
                     if (pattern != null)
                     {
@@ -50,7 +50,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            _handler(GDSingleOperatorType.Unknown, EndLineComment);
+            _handler(GDSingleOperatorType.Unknown);
             state.PopNode();
             state.PassLineFinish();
         }

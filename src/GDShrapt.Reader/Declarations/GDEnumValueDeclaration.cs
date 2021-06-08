@@ -20,7 +20,7 @@
 
             if (Identifier == null)
             {
-                state.PushNode(Identifier = new GDIdentifier());
+                state.SetReadingToken(Identifier = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }

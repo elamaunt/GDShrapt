@@ -4,9 +4,9 @@ namespace GDShrapt.Reader
 {
     internal class GDDualOperatorResolver : GDPattern
     {
-        readonly Action<GDDualOperatorType, GDComment> _handler;
+        readonly Action<GDDualOperatorType> _handler;
 
-        public GDDualOperatorResolver(Action<GDDualOperatorType, GDComment> handler)
+        public GDDualOperatorResolver(Action<GDDualOperatorType> handler)
         {
             _handler = handler;
         }
@@ -55,100 +55,100 @@ namespace GDShrapt.Reader
             switch (pattern)
             {
                 case "&&":
-                    _handler(GDDualOperatorType.And, EndLineComment);
+                    _handler(GDDualOperatorType.And);
                     break;
                 case "and":
-                    _handler(GDDualOperatorType.And2, EndLineComment);
+                    _handler(GDDualOperatorType.And2);
                     break;
                 case "||":
-                    _handler(GDDualOperatorType.Or, EndLineComment);
+                    _handler(GDDualOperatorType.Or);
                     break;
                 case "or":
-                    _handler(GDDualOperatorType.Or2, EndLineComment);
+                    _handler(GDDualOperatorType.Or2);
                     break;
                 case "as":
-                    _handler(GDDualOperatorType.As, EndLineComment);
+                    _handler(GDDualOperatorType.As);
                     break;
                 case "is":
-                    _handler(GDDualOperatorType.Is, EndLineComment);
+                    _handler(GDDualOperatorType.Is);
                     break;
                 case "=":
-                    _handler(GDDualOperatorType.Assignment, EndLineComment);
+                    _handler(GDDualOperatorType.Assignment);
                     break;
                 case "<":
-                    _handler(GDDualOperatorType.LessThan, EndLineComment);
+                    _handler(GDDualOperatorType.LessThan);
                     break;
                 case ">":
-                    _handler(GDDualOperatorType.MoreThan, EndLineComment);
+                    _handler(GDDualOperatorType.MoreThan);
                     break;
                 case "/":
-                    _handler(GDDualOperatorType.Division, EndLineComment);
+                    _handler(GDDualOperatorType.Division);
                     break;
                 case "*":
-                    _handler(GDDualOperatorType.Multiply, EndLineComment);
+                    _handler(GDDualOperatorType.Multiply);
                     break;
                 case "+":
-                    _handler(GDDualOperatorType.Addition, EndLineComment);
+                    _handler(GDDualOperatorType.Addition);
                     break;
                 case "-":
-                    _handler(GDDualOperatorType.Subtraction, EndLineComment);
+                    _handler(GDDualOperatorType.Subtraction);
                     break;
                 case ">=":
-                    _handler(GDDualOperatorType.MoreThanOrEqual, EndLineComment);
+                    _handler(GDDualOperatorType.MoreThanOrEqual);
                     break;
                 case "<=":
-                    _handler(GDDualOperatorType.LessThanOrEqual, EndLineComment);
+                    _handler(GDDualOperatorType.LessThanOrEqual);
                     break;
                 case "==":
-                    _handler(GDDualOperatorType.Equal, EndLineComment);
+                    _handler(GDDualOperatorType.Equal);
                     break;
                 case "/=":
-                    _handler(GDDualOperatorType.DivideAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.DivideAndAssign);
                     break;
                 case "!=":
-                    _handler(GDDualOperatorType.NotEqual, EndLineComment);
+                    _handler(GDDualOperatorType.NotEqual);
                     break;
                 case "*=":
-                    _handler(GDDualOperatorType.MultiplyAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.MultiplyAndAssign);
                     break;
                 case "-=":
-                    _handler(GDDualOperatorType.SubtractAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.SubtractAndAssign);
                     break;
                 case "+=":
-                    _handler(GDDualOperatorType.AddAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.AddAndAssign);
                     break;
                 case "%=":
-                    _handler(GDDualOperatorType.ModAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.ModAndAssign);
                     break;
                 case "<<":
-                    _handler(GDDualOperatorType.BitShiftLeft, EndLineComment);
+                    _handler(GDDualOperatorType.BitShiftLeft);
                     break;
                 case ">>":
-                    _handler(GDDualOperatorType.BitShiftRight, EndLineComment);
+                    _handler(GDDualOperatorType.BitShiftRight);
                     break;
                 case "%":
-                    _handler(GDDualOperatorType.Mod, EndLineComment);
+                    _handler(GDDualOperatorType.Mod);
                     break;
                 case "^":
-                    _handler(GDDualOperatorType.Xor, EndLineComment);
+                    _handler(GDDualOperatorType.Xor);
                     break;
                 case "|":
-                    _handler(GDDualOperatorType.BitwiseOr, EndLineComment);
+                    _handler(GDDualOperatorType.BitwiseOr);
                     break; 
                 case "&":
-                    _handler(GDDualOperatorType.BitwiseAnd, EndLineComment);
+                    _handler(GDDualOperatorType.BitwiseAnd);
                     break;
                 case "in":
-                    _handler(GDDualOperatorType.In, EndLineComment);
+                    _handler(GDDualOperatorType.In);
                     break;
                 case "&=":
-                    _handler(GDDualOperatorType.BitwiseAndAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.BitwiseAndAndAssign);
                     break;
                 case "|=":
-                    _handler(GDDualOperatorType.BitwiseOrAndAssign, EndLineComment);
+                    _handler(GDDualOperatorType.BitwiseOrAndAssign);
                     break;
                 default:
-                    _handler(GDDualOperatorType.Unknown, EndLineComment);
+                    _handler(GDDualOperatorType.Unknown);
 
                     if (pattern != null)
                     {
@@ -161,7 +161,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            _handler(GDDualOperatorType.Unknown, EndLineComment);
+            _handler(GDDualOperatorType.Unknown);
             state.PopNode();
             state.PassLineFinish();
         }

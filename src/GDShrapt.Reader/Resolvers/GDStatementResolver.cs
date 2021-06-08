@@ -200,8 +200,6 @@ namespace GDShrapt.Reader
 
         private void ReturnExpression(GDStatement statement)
         {
-            statement.EndLineComment = EndLineComment;
-            EndLineComment = null;
             _handler(statement);
         }
     }

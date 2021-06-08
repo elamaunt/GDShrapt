@@ -46,6 +46,11 @@ namespace GDShrapt.Reader
             SwitchTo(new GDComment(), state);
         }
 
+        internal override void ForceComplete(GDReadingState state)
+        {
+            state.PopNode();
+        }
+
         public override void AppendTo(StringBuilder builder)
         {
             foreach (var token in TokensList)

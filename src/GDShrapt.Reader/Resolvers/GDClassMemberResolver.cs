@@ -140,10 +140,6 @@ namespace GDShrapt.Reader
             _onready = false;
             _static = false;
 
-            // Insert comment if exists
-            member.EndLineComment = EndLineComment;
-            EndLineComment = null;
-
             _handler(member);
             
             state.PushNode(member);

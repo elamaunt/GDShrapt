@@ -38,10 +38,9 @@
 
             if (OperatorType == GDDualOperatorType.Null)
             {
-                state.PushNode(new GDDualOperatorResolver((op, comment) =>
+                state.PushNode(new GDDualOperatorResolver((op) =>
                 {
                     OperatorType = op;
-                    EndLineComment = comment;
                 }));
                 state.PassChar(c);
                 return;

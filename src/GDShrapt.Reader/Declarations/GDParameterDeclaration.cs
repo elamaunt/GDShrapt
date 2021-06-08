@@ -12,14 +12,14 @@
 
             if (Identifier == null)
             {
-                state.PushNode(Identifier = new GDIdentifier());
+                state.SetReadingToken(Identifier = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }
 
             if (Type == null && c == ':')
             {
-                state.PushNode(Type = new GDType());
+                state.SetReadingToken(Type = new GDType());
             }
 
             state.PopNode();

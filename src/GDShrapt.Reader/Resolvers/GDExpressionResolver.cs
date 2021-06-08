@@ -256,8 +256,6 @@ namespace GDShrapt.Reader
 
                 var expr = last.RebuildRootOfPriorityIfNeeded();
                 
-                expr.EndLineComment = EndLineComment;
-                EndLineComment = null;
                 _handler(expr);
             }
 

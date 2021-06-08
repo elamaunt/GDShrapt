@@ -13,10 +13,9 @@
 
             if (OperatorType == GDSingleOperatorType.Null)
             {
-                state.PushNode(new GDSingleOperatorResolver((op, comment) =>
+                state.PushNode(new GDSingleOperatorResolver((op) =>
                 {
                     OperatorType = op;
-                    EndLineComment = comment;
                 }));
                 state.PassChar(c);
                 return;

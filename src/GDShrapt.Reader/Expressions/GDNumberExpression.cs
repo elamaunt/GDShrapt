@@ -12,7 +12,7 @@
 
             if (Number == null)
             {
-                state.PushNode(Number = new GDNumber());
+                state.SetReadingToken(Number = new GDNumber());
                 state.PassChar(c);
                 return;
             }
