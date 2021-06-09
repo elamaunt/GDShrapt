@@ -18,12 +18,15 @@
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
+            {
+                SwitchTo(new GDSpace(), state);
                 return;
+            }
 
             if (!_trueChecked && TrueExpression == null)
             {
                 _trueChecked = true;
-                state.PushNode(new GDExpressionResolver(expr => TrueExpression = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -31,7 +34,7 @@
             if (!_conditionChecked && Condition == null)
             {
                 _conditionChecked = true;
-                state.PushNode(new GDExpressionResolver(expr => Condition = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -39,7 +42,7 @@
             if (!_elseKeyChecked)
             {
                 _elseKeyChecked = true;
-                state.PushNode(new GDStaticKeywordResolver("else ", result => _hasElse = result));
+                state.Push(new GDStaticKeywordResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -47,19 +50,19 @@
             if (_hasElse && !_falseChecked && FalseExpression == null)
             {
                 _falseChecked = true;
-                state.PushNode(new GDExpressionResolver(expr => FalseExpression = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
 
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

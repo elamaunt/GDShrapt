@@ -1,49 +1,43 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-    internal class GDStaticKeywordResolver : GDNode
+    internal class GDStaticKeywordResolver : GDPatternResolver
     {
-        readonly string _keyword;
-        readonly Action<bool> _handler;
-
-        int _index;
-
-        public GDStaticKeywordResolver(string keyword, Action<bool> handler)
+        public GDStaticKeywordResolver(ITokensContainer owner)
+            : base(owner)
         {
-            _keyword = keyword;
-            _handler = handler;
         }
 
-        internal override void HandleChar(char c, GDReadingState state)
+        public override string[] GeneratePatterns()
         {
-            // Compares the keyword chars one by one
-            if (c == _keyword[_index])
+            return new string[]
             {
-                if ((++_index) == _keyword.Length)
-                    Complete(true, state);
-            }
-            else
+                "in",
+                "setget",
+                "if",
+                "else",
+                "in"
+            };
+        }
+
+        protected override void PatternMatched(string pattern, GDReadingState state)
+        {
+            switch (pattern)
             {
-                Complete(false, state);
-
-                for (int i = 0; i < _index; i++)
-                    state.PassChar(_keyword[i]);
-
-                state.PassChar(c);
+                case "in":
+                    Append(new GDInKeyword());
+                    return;
+                case "if":
+                    Append(new GDIfKeyword());
+                    return;
+                case "else":
+                    Append(new GDElseKeyword());
+                    return;
+                case "setget":
+                    Append(new GDSetGetKeyword());
+                    return;
+                default:
+                    throw new GDInvalidReadingStateExeption($"Unhandled pattern match '{pattern}'");
             }
-        }
-
-        internal override void HandleLineFinish(GDReadingState state)
-        {
-            Complete(false, state);
-            state.PassLineFinish();
-        }
-
-        private void Complete(bool result, GDReadingState state)
-        {
-            _handler(result);
-            state.PopNode();
         }
     }
 }

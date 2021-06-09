@@ -27,7 +27,7 @@ namespace GDShrapt.Reader
 
             if (Condition == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => Condition = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -46,12 +46,12 @@ namespace GDShrapt.Reader
                 _statementsChecked = true;
                 var statement = new GDExpressionStatement(LineIntendation + 1);
                 Statements.Add(statement);
-                state.PushNode(statement);
+                state.Push(statement);
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
@@ -60,11 +60,11 @@ namespace GDShrapt.Reader
             if (!_statementsChecked)
             {
                 _statementsChecked = true;
-                state.PushNode(new GDStatementResolver(LineIntendation + 1, expr => Statements.Add(expr)));
+                state.Push(new GDStatementResolver(this, LineIntendation + 1));
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

@@ -24,13 +24,13 @@ namespace GDShrapt.Reader
             if (!_membersChecked)
             {
                 _membersChecked = true;
-                state.PushNode(new GDClassMemberResolver(0, member => TokensList.AddLast(member)));
+                state.Push(new GDClassMemberResolver(this, 0, member => TokensList.AddLast(member)));
                 state.PassChar(c);
                 return;
             }
 
             // Complete reading
-            state.PopNode();
+            state.Pop();
         }
 
         internal override void HandleLineFinish(GDReadingState state)
@@ -38,13 +38,13 @@ namespace GDShrapt.Reader
             if (!_membersChecked)
             {
                 _membersChecked = true;
-                state.PushNode(new GDClassMemberResolver(0, member => TokensList.AddLast(member)));
+                state.Push(new GDClassMemberResolver(this, 0, member => TokensList.AddLast(member)));
                 state.PassLineFinish();
                 return;
             }
 
             // Complete reading
-            state.PopNode();
+            state.Pop();
         }
     }
 }

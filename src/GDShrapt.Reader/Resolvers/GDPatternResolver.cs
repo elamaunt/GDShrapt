@@ -5,8 +5,9 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    internal abstract class GDPattern : GDNode
+    internal abstract class GDPatternResolver : GDResolver
     {
+
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         public abstract string[] GeneratePatterns();
@@ -23,6 +24,11 @@ namespace GDShrapt.Reader
         public bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
 
+        public GDPatternResolver(ITokensContainer owner)
+            : base(owner)
+        {
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             _sequenceBuilder.Append(c);
@@ -31,7 +37,7 @@ namespace GDShrapt.Reader
 
             if (!check.HasLongerPatternsToMatch)
             {
-                state.PopNode();
+                state.Pop();
 
                 if (check.MatchedPattern == null)
                 {
@@ -119,6 +125,16 @@ namespace GDShrapt.Reader
 
             // Prepare and save patterns
             _patternsCache[type] = _sortedPatterns = patterns.Distinct().OrderByDescending(x => x.Length).ToArray();
+        }
+
+        internal override void HandleLineFinish(GDReadingState state)
+        {
+            HandleChar('\n', state);
+        }
+
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            HandleChar('#', state);
         }
     }
 }

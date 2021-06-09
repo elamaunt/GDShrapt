@@ -16,13 +16,13 @@
             {
                 if (c == '\"' || c == '\'')
                 {
-                    state.SetReadingToken(Path = new GDString());
+                    state.Push(Path = new GDString());
                     state.PassChar(c);
                     return;
                 }
                 else
                 {
-                    state.SetReadingToken(Identifier = new GDIdentifier());
+                    state.Push(Identifier = new GDIdentifier());
                     state.PassChar(c);
                     return;
                 }
@@ -30,17 +30,17 @@
 
             if (c == ',' && Icon == null)
             {
-                state.SetReadingToken(Icon = new GDString());
+                state.Push(Icon = new GDString());
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

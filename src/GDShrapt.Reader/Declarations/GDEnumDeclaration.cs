@@ -16,7 +16,7 @@ namespace GDShrapt.Reader
 
             if (c == '}')
             {
-                state.PopNode();
+                state.Pop();
                 return;
             }
 
@@ -30,7 +30,7 @@ namespace GDShrapt.Reader
             {
                 if (Identifier == null)
                 {
-                    state.SetReadingToken(Identifier = new GDIdentifier());
+                    state.Push(Identifier = new GDIdentifier());
                     state.PassChar(c);
                     return;
                 }
@@ -38,7 +38,7 @@ namespace GDShrapt.Reader
 
             var decl = new GDEnumValueDeclaration();
             Values.Add(decl);
-            state.PushNode(decl);
+            state.Push(decl);
 
             if (c != ',')
                 state.PassChar(c);
@@ -46,7 +46,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

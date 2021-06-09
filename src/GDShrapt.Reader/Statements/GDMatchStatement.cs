@@ -27,7 +27,7 @@ namespace GDShrapt.Reader
 
             if (Value == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => Value = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -47,11 +47,11 @@ namespace GDShrapt.Reader
             if (!_casesChecked)
             {
                 _casesChecked = true;
-                state.PushNode(new GDMatchCaseResolver(LineIntendation + 1, @case => Cases.Add(@case)));
+                state.Push(new GDMatchCaseResolver(this, LineIntendation + 1));
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

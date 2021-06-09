@@ -20,10 +20,7 @@
             if (!_leftExpressionChecked && LeftExpression == null)
             {
                 _leftExpressionChecked = true;
-                state.PushNode(new GDExpressionResolver(expr =>
-                {
-                    LeftExpression = expr;
-                }));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -31,17 +28,14 @@
             // Indicates that it isn't a normal expression. The parent should handle the state.
             if (LeftExpression == null)
             {
-                state.PopNode();
+                state.Pop();
                 state.PassChar(c);
                 return;
             }
 
             if (OperatorType == GDDualOperatorType.Null)
             {
-                state.PushNode(new GDDualOperatorResolver((op) =>
-                {
-                    OperatorType = op;
-                }));
+                state.Push(new GDDualOperatorResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -50,21 +44,18 @@
             {
                 _rightExpressionChecked = true;
 
-                state.PushNode(new GDExpressionResolver(expr =>
-                {
-                    RightExpression = expr;
-                }));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

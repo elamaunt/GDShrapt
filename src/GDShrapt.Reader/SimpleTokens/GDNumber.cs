@@ -157,7 +157,7 @@ namespace GDShrapt.Reader
                 }
 
                 CompleteString();
-                state.PopNode();
+                state.Pop();
                 state.PassChar(c);
             }
         }
@@ -165,7 +165,7 @@ namespace GDShrapt.Reader
         internal override void HandleLineFinish(GDReadingState state)
         {
             CompleteString();
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

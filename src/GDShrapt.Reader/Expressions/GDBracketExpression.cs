@@ -15,12 +15,12 @@
             if (!_expressionChecked && InnerExpression == null)
             {
                 _expressionChecked = true;
-                state.PushNode(new GDExpressionResolver(expr => InnerExpression = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
 
             if (c != ')')
                 state.PassChar(c);
@@ -28,7 +28,7 @@
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

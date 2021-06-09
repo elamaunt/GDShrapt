@@ -2,18 +2,17 @@
 
 namespace GDShrapt.Reader
 {
-    internal class GDExpressionResolver : GDNode
+    internal class GDExpressionResolver : GDResolver
     {
-        readonly Action<GDExpression> _handler;
         GDExpression _expression;
 
         bool _ifExpressionChecked;
         bool _isIfExpressionNext;
         bool _isCompleted;
 
-        public GDExpressionResolver(Action<GDExpression> handler)
+        public GDExpressionResolver(ITokensContainer owner)
+            : base(owner)
         {
-            _handler = handler;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -118,7 +117,7 @@ namespace GDShrapt.Reader
                 if (c == 'i' && !_ifExpressionChecked)
                 {
                     _ifExpressionChecked = true;
-                    state.PushNode(new GDStaticKeywordResolver("if ", result => _isIfExpressionNext = result));
+                    state.Push(new GDStaticKeywordResolver(this));
                     state.PassChar(c);
                     return;
                 }
@@ -254,17 +253,15 @@ namespace GDShrapt.Reader
                     last = operatorExpression.TargetExpression;
                 }
 
-                var expr = last.RebuildRootOfPriorityIfNeeded();
-                
-                _handler(expr);
+                Append(last.RebuildRootOfPriorityIfNeeded());
             }
 
-            state.PopNode();
+            state.Pop();
         }
 
         private void PushAndSave(GDReadingState state, GDExpression node)
         {
-            state.PushNode(_expression = node);
+            state.Push(_expression = node);
         }
     }
 }

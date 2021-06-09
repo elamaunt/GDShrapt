@@ -15,13 +15,13 @@ namespace GDShrapt.Reader
 
             if (c == '}')
             {
-                state.PopNode();
+                state.Pop();
                 return;
             }
 
             var decl = new GDDictionaryKeyValueDeclaration();
             KeyValues.Add(decl);
-            state.PushNode(decl);
+            state.Push(decl);
 
             if (c != ',')
                 state.PassChar(c);
@@ -29,7 +29,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

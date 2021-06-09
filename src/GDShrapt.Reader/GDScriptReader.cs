@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 
 namespace GDShrapt.Reader
 {
@@ -23,7 +24,7 @@ namespace GDShrapt.Reader
             var state = new GDReadingState(Settings);
 
             var declaration = new GDClassDeclaration();
-            state.PushNode(declaration);
+            state.Push(declaration);
 
             using (var reader = new StringReader(content))
             {
@@ -42,7 +43,7 @@ namespace GDShrapt.Reader
             var state = new GDReadingState(Settings);
 
             var declaration = new GDClassDeclaration();
-            state.PushNode(declaration);
+            state.Push(declaration);
 
             foreach (var line in File.ReadLines(filePath))
                 ParseLine(line, state);
@@ -54,11 +55,10 @@ namespace GDShrapt.Reader
 
         public GDExpression ParseExpression(string content)
         {
-            GDExpression expression = null;
-            
             var state = new GDReadingState(Settings);
+            var container = new GDTokensContainer();
 
-            state.PushNode(new GDExpressionResolver(expr => expression = expr));
+            state.Push(new GDExpressionResolver(container));
 
             using (var reader = new StringReader(content))
             {
@@ -68,16 +68,15 @@ namespace GDShrapt.Reader
             }
 
             state.CompleteReading();
-            return expression;
+            return container.TokensList.OfType<GDExpression>().FirstOrDefault();
         }
 
         public GDStatement ParseStatement(string content)
         {
-            GDStatement statement = null;
-
             var state = new GDReadingState(Settings);
+            var container = new GDTokensContainer();
 
-            state.PushNode(new GDStatementResolver(0, st => statement = st));
+            state.Push(new GDStatementResolver(container, 0));
 
             using (var reader = new StringReader(content))
             {
@@ -87,7 +86,7 @@ namespace GDShrapt.Reader
             }
 
             state.CompleteReading();
-            return statement;
+            return container.TokensList.OfType<GDStatement>().FirstOrDefault();
         }
 
         private void ParseLine(string line, GDReadingState state)

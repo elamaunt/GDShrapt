@@ -3,75 +3,23 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    internal class GDClassMemberResolver : GDNode
+    internal class GDClassMemberResolver : GDIntendedResolver
     {
         readonly Action<GDClassMember> _handler;
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
-
-        readonly int _lineIntendationThreshold;
-        int _lineIntendation;
-        bool _lineIntendationEnded;
-
-        int _spaceCounter;
 
         bool _static;
         bool _onready;
         bool _export;
 
-        public GDClassMemberResolver(int lineIntendation, Action<GDClassMember> handler)
+        public GDClassMemberResolver(ITokensContainer owner, int lineIntendation, Action<GDClassMember> handler)
+            : base(owner, lineIntendation)
         {
-            _lineIntendationThreshold = lineIntendation;
             _handler = handler;
         }
 
-        internal override void HandleChar(char c, GDReadingState state)
+        internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
-            // Every member must start with line intendation equals intentation of parent plus 1
-            if (!_lineIntendationEnded)
-            {
-                if (c == '\t')
-                {
-                    _spaceCounter = 0;
-                    _lineIntendation++;
-                    return;
-                }
-                else
-                {
-                    if (c == ' ' && state.Settings.ConvertFourSpacesIntoTabs)
-                    {
-                        _spaceCounter++;
-
-                        if (_spaceCounter == 4)
-                        {
-                            _spaceCounter = 0;
-                            HandleChar('\t', state);
-                        }
-
-                        return;
-                    }
-                    else
-                    {
-                        _lineIntendationEnded = true;
-
-                        if (_lineIntendationThreshold != _lineIntendation)
-                        {
-                            state.PopNode();
-
-                            // Pass all data to the previous node
-                            state.PassLineFinish();
-
-                            for (int i = 0; i < _lineIntendation; i++)
-                                state.PassChar('\t');
-                            for (int i = 0; i < _spaceCounter; i++)
-                                state.PassChar(' ');
-
-                            state.PassChar(c);
-                            return;
-                        }
-                    }
-                }
-            }
-
             if (!IsSpace(c))
             {
                 _sequenceBuilder.Append(c);
@@ -95,9 +43,7 @@ namespace GDShrapt.Reader
             }
             else
             {
-                _lineIntendation = 0;
-                _lineIntendationEnded = false;
-                _spaceCounter = 0;
+                ResetIntendation();
                 ResetSequence();
             }
         }
@@ -109,124 +55,131 @@ namespace GDShrapt.Reader
 
         private void Complete(GDReadingState state, string sequence)
         {
-            GDClassMember member = null;
+            (GDClassMember member, bool valid) x;
 
             if (_export)
             {
-                member = GetMemberForExport(sequence);
+                x = GetMemberForExport(sequence);
             }
             else
             {
                 if (_onready)
                 {
-                    member = GetMemberForOnready(sequence);
+                    x = GetMemberForOnready(sequence);
                 }
                 else
                 {
                     if (_static)
                     {
-                        member = GetMemberForStatic(sequence);
+                        x = GetMemberForStatic(sequence);
                     }
                     else
                     {
-                        member = GetFirstMember(sequence);
+                        x = GetFirstMember(sequence);
                     }
                 }
             }
 
-            if (member == null)
-                return;
+            if (x.valid)
+            {
 
-            _onready = false;
-            _static = false;
+                if (x.member == null)
+                    return;
 
-            _handler(member);
-            
-            state.PushNode(member);
+                _onready = false;
+                _static = false;
+
+                _handler(x.member);
+                state.Push(x.member);
+            }
+            else
+            {
+                state.Push(new GDInvalidToken(' '));
+            }
         }
 
-        private GDClassMember GetFirstMember(string sequence)
+        private (GDClassMember, bool) GetFirstMember(string sequence)
         {
             switch (sequence)
             {
                 // Modifiers
                 case "onready":
                     _onready = true;
-                    return null;
+                    return (null, true);
                 case "static":
                     _static = true;
-                    return null;
+                    return (null, true);
                 case "export":
                     _export = true;
-                    return null;
+                    return (null, true);
 
                 case "class_name":
-                    return new GDClassNameAtribute();
+                    return (new GDClassNameAtribute(), true);
                 case "extends":
-                    return new GDExtendsAtribute();
+                    return (new GDExtendsAtribute(), true);
                 case "tool":
-                    return new GDToolAtribute();
+                    return (new GDToolAtribute(), true);
                 case "signal":
-                    return new GDSignalDeclaration();
+                    return (new GDSignalDeclaration(), true);
                 case "enum":
-                    return new GDEnumDeclaration();
+                    return (new GDEnumDeclaration(), true);
                 case "func":
-                    return new GDMethodDeclaration();
+                    return (new GDMethodDeclaration(), true);
                 case "const":
-                    return new GDVariableDeclaration() { IsConstant = true };
+                    return (new GDVariableDeclaration() { IsConstant = true }, true);
                 case "var":
-                    return new GDVariableDeclaration();
-                default:
-                    return new GDInvalidMember(sequence);
+                    return (new GDVariableDeclaration(), true);
+            default:
+                    return (null, false);
             }
         }
-        private GDClassMember GetMemberForExport(string sequence)
+        private (GDClassMember, bool) GetMemberForExport(string sequence)
         {
             switch (sequence)
             {
                 case "onready" when !_onready:
                     _onready = true;
-                    return null;
+                    return (null, true);
                 case "var":
-                    return new GDVariableDeclaration()
+                    return (new GDVariableDeclaration()
                     {
                         HasOnReadyInitialization = _onready,
                         IsExported = _export
-                    };
+                    }, true);
                 default:
-                    return new GDInvalidMember(sequence);
+                    return (null, false);
             }
         }
 
-        private GDClassMember GetMemberForOnready(string sequence)
+        private (GDClassMember, bool) GetMemberForOnready(string sequence)
         {
             switch (sequence)
             {
                 case "export" when !_export:
                     _export = true;
-                    return null;
+                    return (null, true);
                 case "var":
-                    return new GDVariableDeclaration()
+                    return (new GDVariableDeclaration()
                     {
                         HasOnReadyInitialization = _onready,
                         IsExported = _export
-                    };
+                    }, true);
                 default:
-                    return new GDInvalidMember(sequence);
+                    return (null, false);
             }
         }
 
-        private GDClassMember GetMemberForStatic(string sequence)
+        private (GDClassMember, bool) GetMemberForStatic(string sequence)
         {
             switch (sequence)
             {
                 case "func":
-                    return new GDMethodDeclaration()
+                    return (new GDMethodDeclaration()
                     {
                         IsStatic = true
-                    };
+                    }, true);
                 default:
-                    return new GDInvalidMember(sequence);
+                    return (null, false);
             }
         }
     }

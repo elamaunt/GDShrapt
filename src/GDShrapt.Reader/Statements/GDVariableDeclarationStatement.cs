@@ -26,20 +26,20 @@ namespace GDShrapt.Reader
 
             if (Identifier == null)
             {
-                state.SetReadingToken(Identifier = new GDIdentifier());
+                state.Push(Identifier = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }
 
             if (Type == null && c == ':')
             {
-                state.SetReadingToken(Type = new GDType());
+                state.Push(Type = new GDType());
                 return;
             }
 
             if (c == '=')
             {
-                state.PushNode(new GDExpressionResolver(expr => Initializer = expr));
+                state.Push(new GDExpressionResolver(this));
                 return;
             }
 
@@ -48,7 +48,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
         }
 
         public override string ToString()

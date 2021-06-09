@@ -8,7 +8,7 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract class GDNode : GDSyntaxToken
+    public abstract class GDNode : GDSyntaxToken, ITokensContainer
     {
         internal LinkedList<GDSyntaxToken> TokensList { get; } = new LinkedList<GDSyntaxToken>();
 
@@ -38,7 +38,7 @@ namespace GDShrapt.Reader
         internal void SwitchTo(GDSimpleSyntaxToken token, GDReadingState state)
         {
             TokensList.AddLast(token);
-            state.SetReadingToken(token);
+            state.Push(token);
         }
 
         internal override void HandleSharpChar(GDReadingState state)
@@ -48,13 +48,33 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
         }
 
         public override void AppendTo(StringBuilder builder)
         {
             foreach (var token in TokensList)
                 token.AppendTo(builder);
+        }
+
+        internal void AppendToThisNode(GDSyntaxToken token)
+        {
+            TokensList.AddLast(token);
+        }
+
+        void ITokensContainer.Append(GDSyntaxToken token)
+        {
+            AppendToThisNode(token);
+        }
+
+        void ITokensContainer.AppendExpressionSkip()
+        {
+            throw new NotImplementedException();
+        }
+
+        void ITokensContainer.AppendKeywordSkip()
+        {
+            throw new NotImplementedException();
         }
     }
 }

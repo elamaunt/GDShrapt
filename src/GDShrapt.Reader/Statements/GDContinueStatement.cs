@@ -14,13 +14,13 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

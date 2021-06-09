@@ -32,7 +32,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            state.PushNode(new GDExpressionResolver(expr => Conditions.Add(expr)));
+            state.Push(new GDExpressionResolver(this));
 
             if (c != ',')
                 state.PassChar(c);
@@ -43,11 +43,11 @@ namespace GDShrapt.Reader
             if (_expressionEnded && !_statementsChecked)
             {
                 _statementsChecked = true;
-                state.PushNode(new GDStatementResolver(_lineIntendation + 1, expr => Statements.Add(expr)));
+                state.Push(new GDStatementResolver(this, _lineIntendation + 1));
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

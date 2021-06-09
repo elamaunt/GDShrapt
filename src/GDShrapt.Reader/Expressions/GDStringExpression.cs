@@ -9,18 +9,18 @@
         {
             if (String == null)
             {
-                state.SetReadingToken(String = new GDString());
+                state.Push(String = new GDString());
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

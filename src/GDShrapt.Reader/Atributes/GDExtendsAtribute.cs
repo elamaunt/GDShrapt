@@ -14,25 +14,25 @@
             {
                 if (c == '\"' || c == '\'')
                 {
-                    state.SetReadingToken(Path = new GDString());
+                    state.Push(Path = new GDString());
                     state.PassChar(c);
                     return;
                 }
                 else
                 {
-                    state.SetReadingToken(Type = new GDType());
+                    state.Push(Type = new GDType());
                     state.PassChar(c);
                     return;
                 }
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

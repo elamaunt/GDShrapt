@@ -16,7 +16,7 @@
 
             if (CallerExpression == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => CallerExpression = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -32,7 +32,7 @@
 
             if (InnerExpression == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => InnerExpression = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -40,7 +40,7 @@
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

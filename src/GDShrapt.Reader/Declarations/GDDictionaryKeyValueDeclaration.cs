@@ -14,14 +14,14 @@
 
             if (c == '}' || c ==',')
             {
-                state.PopNode();
+                state.Pop();
                 state.PassChar(c);
                 return;
             }
 
             if (Key == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => Key = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -34,12 +34,12 @@
 
             if (Value == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => Value = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 

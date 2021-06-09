@@ -50,7 +50,7 @@ namespace GDShrapt.Reader
             IsCompleted = true;
             Sequence = SequenceBuilder.ToString();
             SequenceBuilder = null;
-            state.PopNode();
+            state.Pop();
         }
 
         internal void ResetSequence()

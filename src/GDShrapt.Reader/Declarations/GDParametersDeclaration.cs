@@ -16,20 +16,20 @@ namespace GDShrapt.Reader
             {
                 var parameter = new GDParameterDeclaration();
                 Parameters.Add(parameter);
-                state.PushNode(parameter);
+                state.Push(parameter);
                 return;
             }
 
             if (c == ')')
             {
-                state.PopNode();
+                state.Pop();
                 return;
             }
 
             {
                 var parameter = new GDParameterDeclaration();
                 Parameters.Add(parameter);
-                state.PushNode(parameter);
+                state.Push(parameter);
                 state.PassChar(c);
             }
         }

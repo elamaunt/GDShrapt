@@ -3,73 +3,19 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    internal class GDStatementResolver : GDNode
+    internal class GDStatementResolver : GDIntendedResolver
     {
-        readonly Action<GDStatement> _handler;
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
-
-        readonly int _lineIntendationThreshold;
-        int _lineIntendation;
-        bool _lineIntendationEnded;
-
-        int _spaceCounter;
 
         GDIfStatement _ifStatement;
 
-        public GDStatementResolver(int lineIntendation, Action<GDStatement> handler)
+        public GDStatementResolver(ITokensContainer owner, int lineIntendation)
+            : base(owner, lineIntendation)
         {
-            _lineIntendationThreshold = lineIntendation;
-            _handler = handler;
         }
 
-        internal override void HandleChar(char c, GDReadingState state)
+        internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
-            // Every statement must start with line intendation equals intentation of parent plus 1
-            if (!_lineIntendationEnded)
-            {
-                if (c == '\t')
-                {
-                    _spaceCounter = 0;
-                    _lineIntendation++;
-                    return;
-                }
-                else
-                {
-                    if (c == ' ' && state.Settings.ConvertFourSpacesIntoTabs)
-                    {
-                        _spaceCounter++;
-
-                        if (_spaceCounter == 4)
-                        {
-                            _spaceCounter = 0;
-                            HandleChar('\t', state);
-                        }
-
-                        return;
-                    }
-                    else
-                    {
-                        _lineIntendationEnded = true;
-
-                        if (_lineIntendationThreshold != _lineIntendation)
-                        {
-                            state.PopNode();
-
-                            // Pass all data to the previous node
-                            state.PassLineFinish();
-
-                            for (int i = 0; i < _lineIntendation; i++)
-                                state.PassChar('\t');
-                            for (int i = 0; i < _spaceCounter; i++)
-                                state.PassChar(' ');
-
-                            state.PassChar(c);
-                            return;
-                        }
-                    }
-                }
-            }
-
             if (char.IsLetter(c) && _sequenceBuilder.Length < 6)
             {
                 _sequenceBuilder.Append(c);
@@ -106,9 +52,7 @@ namespace GDShrapt.Reader
             }
             else
             {
-                _lineIntendation = 0;
-                _lineIntendationEnded = false;
-                _spaceCounter = 0;
+                ResetIntendation();
                 ResetSequence();
             }
         }
@@ -135,46 +79,46 @@ namespace GDShrapt.Reader
                 case "elif":
                     if (_ifStatement != null)
                     {
-                        var newIfStatement = new GDIfStatement(_lineIntendation);
+                        var newIfStatement = new GDIfStatement(LineIntendationThreshold);
                         statement = newIfStatement;
                         _ifStatement.FalseStatements.Add(statement);
                         _ifStatement = newIfStatement;
-                        state.PushNode(statement);
+                        state.Push(statement);
                     }
 
                     return;
                 case "if":
-                    statement = _ifStatement = new GDIfStatement(_lineIntendation);
+                    statement = _ifStatement = new GDIfStatement(LineIntendationThreshold);
                     break;
                 case "for":
-                    statement = new GDForStatement(_lineIntendation);
+                    statement = new GDForStatement(LineIntendationThreshold);
                     break;
                 case "while":
-                    statement = new GDWhileStatement(_lineIntendation);
+                    statement = new GDWhileStatement(LineIntendationThreshold);
                     break;
                 case "match":
-                    statement = new GDMatchStatement(_lineIntendation);
+                    statement = new GDMatchStatement(LineIntendationThreshold);
                     break;
                 case "yield":
-                    statement = new GDYieldStatement(_lineIntendation);
+                    statement = new GDYieldStatement(LineIntendationThreshold);
                     break;
                 case "var":
-                    statement = new GDVariableDeclarationStatement(_lineIntendation);
+                    statement = new GDVariableDeclarationStatement(LineIntendationThreshold);
                     break;
                 case "return":
-                    statement = new GDReturnStatement(_lineIntendation);
+                    statement = new GDReturnStatement(LineIntendationThreshold);
                     break;
                 case "pass":
-                    statement = new GDPassStatement(_lineIntendation);
+                    statement = new GDPassStatement(LineIntendationThreshold);
                     break;
                 case "continue":
-                    statement = new GDContinueStatement(_lineIntendation);
+                    statement = new GDContinueStatement(LineIntendationThreshold);
                     break;
                 case "break":
-                    statement = new GDBreakStatement(_lineIntendation);
+                    statement = new GDBreakStatement(LineIntendationThreshold);
                     break;
                 case "breakpoint":
-                    statement = new GDBreakPointStatement(_lineIntendation);
+                    statement = new GDBreakPointStatement(LineIntendationThreshold);
                     break;
                 default:
                     {
@@ -183,24 +127,19 @@ namespace GDShrapt.Reader
                     }
             }
 
-            ReturnExpression(statement);
-            state.PushNode(statement);
+            Append(statement);
+            state.Push(statement);
         }
 
         private void CompleteAsExpressionStatement(GDReadingState state, string sequence)
         {
             var statement = new GDExpressionStatement();
 
-            ReturnExpression(statement);
-            state.PushNode(statement);
+            Append(statement);
+            state.Push(statement);
 
             for (int i = 0; i < sequence.Length; i++)
                 state.PassChar(sequence[i]);
-        }
-
-        private void ReturnExpression(GDStatement statement)
-        {
-            _handler(statement);
         }
     }
 }

@@ -17,31 +17,31 @@ namespace GDShrapt.Reader
 
             if (c == ',')
             {
-                state.PushNode(new GDExpressionResolver(expr => Parameters.Add(expr)));
+                state.Push(new GDExpressionResolver(this));
                 return;
             }
 
             if (c == ')')
             {
-                state.PopNode();
+                state.Pop();
                 return;
             }
 
             if (!_parametersChecked)
             {
                 _parametersChecked = true;
-                state.PushNode(new GDExpressionResolver(expr => Parameters.Add(expr)));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

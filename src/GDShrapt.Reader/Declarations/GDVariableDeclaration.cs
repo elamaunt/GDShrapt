@@ -25,28 +25,28 @@ namespace GDShrapt.Reader
 
             if (Identifier == null)
             {
-                state.SetReadingToken(Identifier = new GDIdentifier());
+                state.Push(Identifier = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }
 
             if (Type == null && c == ':')
             {
-                state.SetReadingToken(Type = new GDType());
+                state.Push(Type = new GDType());
                 state.PassChar(c);
                 return;
             }
 
             if (c == '=')
             {
-                state.PushNode(new GDExpressionResolver(expr => Initializer = expr));
+                state.Push(new GDExpressionResolver(this));
                 return;
             }
 
             if (!IsConstant && !_setgetKeywordChecked)
             {
                 _setgetKeywordChecked = true;
-                state.PushNode(new GDStaticKeywordResolver("setget", result => _hasSetget = result));
+                state.Push(new GDStaticKeywordResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -55,14 +55,14 @@ namespace GDShrapt.Reader
             {
                 if (SetMethodIdentifier == null)
                 {
-                    state.SetReadingToken(SetMethodIdentifier = new GDIdentifier());
+                    state.Push(SetMethodIdentifier = new GDIdentifier());
                     state.PassChar(c);
                     return;
                 }
 
                 if (GetMethodIdentifier == null)
                 {
-                    state.SetReadingToken(GetMethodIdentifier = new GDIdentifier());
+                    state.Push(GetMethodIdentifier = new GDIdentifier());
 
                     if (c != ',')
                         state.PassChar(c);
@@ -70,13 +70,13 @@ namespace GDShrapt.Reader
                 }
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

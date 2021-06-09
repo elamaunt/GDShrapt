@@ -29,7 +29,7 @@ namespace GDShrapt.Reader
 
             if (Condition == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => Condition = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -48,21 +48,21 @@ namespace GDShrapt.Reader
                 _trueStatementsChecked = true;
                 var statement = new GDExpressionStatement(LineIntendation + 1);
                 TrueStatements.Add(statement);
-                state.PushNode(statement);
+                state.Push(statement);
                 state.PassChar(c);
                 return;
             }
 
             // 'if' statement doesn't handle 'else' and 'elif' branches by yourself. It is managed by statement resolver.
             // Just return control flow to previous node.
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
 
         internal void HandleFalseStatements(GDReadingState state)
         {
-            state.PushNode(new GDStatementResolver(LineIntendation + 1, expr => FalseStatements.Add(expr)));
+            state.Push(new GDStatementResolver(this, LineIntendation + 1));
         }
 
         internal override void HandleLineFinish(GDReadingState state)
@@ -70,11 +70,11 @@ namespace GDShrapt.Reader
             if (!_trueStatementsChecked)
             {
                 _trueStatementsChecked = true;
-                state.PushNode(new GDStatementResolver(LineIntendation + 1, expr => TrueStatements.Add(expr)));
+                state.Push(new GDStatementResolver(this, LineIntendation + 1));
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

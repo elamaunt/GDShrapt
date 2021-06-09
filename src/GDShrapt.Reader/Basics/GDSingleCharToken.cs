@@ -1,4 +1,4 @@
-﻿namespace GDShrapt.Reader.Basics
+﻿namespace GDShrapt.Reader
 {
     public abstract class GDSingleCharToken : GDSimpleSyntaxToken
     {
@@ -6,19 +6,19 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            state.DropReadingToken();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.DropReadingToken();
+            state.Pop();
             state.PassLineFinish();
         }
 
         internal override void HandleSharpChar(GDReadingState state)
         {
-            state.DropReadingToken();
+            state.Pop();
             state.PassChar('#');
         }
 

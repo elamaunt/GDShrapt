@@ -12,23 +12,23 @@ namespace GDShrapt.Reader
         {
             if (c == ']')
             {
-                state.PopNode();
+                state.Pop();
                 return;
             }
 
             if (c == ',')
             {
-                state.PushNode(new GDExpressionResolver(expr => Values.Add(expr)));
+                state.Push(new GDExpressionResolver(this));
                 return;
             }
 
-            state.PushNode(new GDExpressionResolver(expr => Values.Add(expr)));
+            state.Push(new GDExpressionResolver(this));
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

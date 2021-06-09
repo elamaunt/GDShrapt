@@ -71,7 +71,7 @@ namespace GDShrapt.Reader
                 if (!Multiline)
                 {
                     Value = _stringBuilder.ToString();
-                    state.PopNode();
+                    state.Pop();
                 }
                 else
                 {
@@ -80,7 +80,7 @@ namespace GDShrapt.Reader
                     if (_boundingCharsCounter == 3)
                     {
                         Value = _stringBuilder.ToString();
-                        state.PopNode();
+                        state.Pop();
                     }
                 }
             }
@@ -103,7 +103,7 @@ namespace GDShrapt.Reader
             else
             {
                 Value = _stringBuilder.ToString();
-                state.PopNode();
+                state.Pop();
                 state.PassLineFinish();
             }
         }

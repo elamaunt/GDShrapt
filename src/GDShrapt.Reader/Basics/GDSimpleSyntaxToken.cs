@@ -11,18 +11,18 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
-            state.DropReadingToken();
+            state.Pop();
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.DropReadingToken();
+            state.Pop();
             state.PassLineFinish();
         }
 
         internal override void HandleSharpChar(GDReadingState state)
         {
-            state.DropReadingToken();
+            state.Pop();
             state.PassChar('#');
         }
     }

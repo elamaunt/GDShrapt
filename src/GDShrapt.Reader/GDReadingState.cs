@@ -48,20 +48,12 @@ namespace GDShrapt.Reader
                 throw new Exception("Invalid reading state. Nodes stack isn't empty. Last token is: " + CurrentToken);
         }
 
-        public void SetReadingToken(GDSimpleSyntaxToken token)
+        public void Push(GDSimpleSyntaxToken token)
         {
             if (_simpleToken != null)
                 throw new Exception("Invalid reading state. Current reading token hasn't been droped.");
 
             _simpleToken = token;
-        }
-
-        public void DropReadingToken()
-        {
-            if (_simpleToken == null)
-                throw new Exception("Invalid reading state. Current reading token has already been droped.");
-
-            _simpleToken = null;
         }
 
         /// <summary>
@@ -94,14 +86,13 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Adds new node to the stack.
         /// </summary>
-        public T PushNode<T>(T node)
+        public void Push<T>(T node)
             where T : GDNode
         {
             if (node == null)
                 throw new ArgumentNullException(nameof(node));
 
             _tokensStack.Push(node);
-            return node;
         }
 
         /// <summary>
@@ -109,9 +100,15 @@ namespace GDShrapt.Reader
         /// Usually it is calling by the last node itself.
         /// </summary>
         /// <returns>Removed node</returns>
-        public GDNode PopNode()
+        public void Pop()
         {
-            return _tokensStack.Pop();
+            if (_simpleToken != null)
+            {
+                _simpleToken = null;
+                return;
+            }
+
+            _tokensStack.Pop();
         }
     }
 }

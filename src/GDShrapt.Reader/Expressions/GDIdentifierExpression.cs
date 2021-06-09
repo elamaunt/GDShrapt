@@ -12,18 +12,18 @@
 
             if (Identifier == null)
             {
-                state.SetReadingToken(Identifier = new GDIdentifier());
+                state.Push(Identifier = new GDIdentifier());
                 state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 

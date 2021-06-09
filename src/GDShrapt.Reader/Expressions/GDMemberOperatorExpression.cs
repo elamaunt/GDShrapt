@@ -14,27 +14,27 @@
 
             if (CallerExpression == null)
             {
-                state.PushNode(new GDExpressionResolver(expr => CallerExpression = expr));
+                state.Push(new GDExpressionResolver(this));
                 state.PassChar(c);
                 return;
             }
 
             if (Identifier == null)
             {
-                state.SetReadingToken(Identifier = new GDIdentifier());
+                state.Push(Identifier = new GDIdentifier());
 
                 if (c != '.')
                     state.PassChar(c);
                 return;
             }
 
-            state.PopNode();
+            state.Pop();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.PopNode();
+            state.Pop();
             state.PassLineFinish();
         }
 
