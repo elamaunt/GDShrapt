@@ -56,9 +56,9 @@ namespace GDShrapt.Reader
         public GDExpression ParseExpression(string content)
         {
             var state = new GDReadingState(Settings);
-            var container = new GDTokensContainer();
+            var receiver = new GDReceiver();
 
-            state.Push(new GDExpressionResolver(container));
+            state.Push(new GDExpressionResolver(receiver));
 
             using (var reader = new StringReader(content))
             {
@@ -68,15 +68,15 @@ namespace GDShrapt.Reader
             }
 
             state.CompleteReading();
-            return container.TokensList.OfType<GDExpression>().FirstOrDefault();
+            return receiver.Tokens.OfType<GDExpression>().FirstOrDefault();
         }
 
         public GDStatement ParseStatement(string content)
         {
             var state = new GDReadingState(Settings);
-            var container = new GDTokensContainer();
+            var receiver = new GDReceiver();
 
-            state.Push(new GDStatementResolver(container, 0));
+            state.Push(new GDStatementResolver(receiver, 0));
 
             using (var reader = new StringReader(content))
             {
@@ -86,7 +86,7 @@ namespace GDShrapt.Reader
             }
 
             state.CompleteReading();
-            return container.TokensList.OfType<GDStatement>().FirstOrDefault();
+            return receiver.Tokens.OfType<GDStatement>().FirstOrDefault();
         }
 
         private void ParseLine(string line, GDReadingState state)

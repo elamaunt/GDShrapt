@@ -1,21 +1,21 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
 namespace GDShrapt.Reader
 {
     internal class GDClassMemberResolver : GDIntendedResolver
     {
-        readonly Action<GDClassMember> _handler;
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         bool _static;
         bool _onready;
         bool _export;
 
-        public GDClassMemberResolver(ITokensContainer owner, int lineIntendation, Action<GDClassMember> handler)
+        new IClassMembersReceiver Owner { get; }
+
+        public GDClassMemberResolver(IClassMembersReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
-            _handler = handler;
+            Owner = owner;
         }
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
@@ -89,12 +89,12 @@ namespace GDShrapt.Reader
                 _onready = false;
                 _static = false;
 
-                _handler(x.member);
+                Owner.HandleReceivedToken(x.member);
                 state.Push(x.member);
             }
             else
             {
-                state.Push(new GDInvalidToken(' '));
+                AppendAndPush(new GDInvalidToken(' '), state);
             }
         }
 

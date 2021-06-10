@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDMethodDeclaration : GDClassMember
+    public sealed class GDMethodDeclaration : GDClassMember, IStatementsReceiver
     {
         bool _statementsChecked;
         bool _typeChecked;
@@ -68,6 +68,31 @@ namespace GDShrapt.Reader
         {
             state.Pop();
             state.PassLineFinish();
+        }
+
+        void IStatementsReceiver.HandleReceivedToken(GDStatement token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

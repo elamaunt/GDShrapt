@@ -4,20 +4,18 @@ using System.Collections.Generic;
 namespace GDShrapt.Reader
 {
     /// <summary>
-    /// Contains nodes stack and settings during the code reading process.
+    /// Contains readers stack and settings during the code reading process.
     /// Manages the reading process.
     /// </summary>
     internal class GDReadingState
     {
         public GDReadSettings Settings { get; }
 
-        GDSimpleSyntaxToken _simpleToken;
-
         /// <summary>
         /// Main reading stack
         /// </summary>
-        readonly Stack<GDNode> _tokensStack = new Stack<GDNode>();
-        GDSyntaxToken CurrentToken => (GDSyntaxToken)_simpleToken ?? _tokensStack.PeekOrDefault();
+        readonly Stack<GDReader> _readersStack = new Stack<GDReader>();
+        GDReader CurrentReader => _readersStack.PeekOrDefault();
 
         public GDReadingState(GDReadSettings settings)
         {
@@ -30,85 +28,69 @@ namespace GDShrapt.Reader
         /// </summary>
         public void CompleteReading()
         {
-            _simpleToken?.ForceComplete(this);
-
             int count;
 
-            if (_tokensStack.Count == 0)
+            if (_readersStack.Count == 0)
                 return;
 
             do
             {
-                count = _tokensStack.Count;
-                CurrentToken.ForceComplete(this);
+                count = _readersStack.Count;
+                CurrentReader.ForceComplete(this);
             }
-            while (_tokensStack.Count > 0 && count != _tokensStack.Count);
+            while (_readersStack.Count > 0 && count != _readersStack.Count);
 
-            if (_tokensStack.Count > 0)
-                throw new Exception("Invalid reading state. Nodes stack isn't empty. Last token is: " + CurrentToken);
-        }
-
-        public void Push(GDSimpleSyntaxToken token)
-        {
-            if (_simpleToken != null)
-                throw new Exception("Invalid reading state. Current reading token hasn't been droped.");
-
-            _simpleToken = token;
+            if (_readersStack.Count > 0)
+                throw new GDInvalidReadingStateException("Invalid reading state. Readers stack isn't empty. Last reader is: " + CurrentReader);
         }
 
         /// <summary>
-        /// Sends new line character '\n' to the current token.
+        /// Sends new line character '\n' to the current reader.
         /// </summary>
         public void PassLineFinish()
         {
-            CurrentToken?.HandleLineFinish(this);
+            CurrentReader?.HandleLineFinish(this);
         }
 
         /// <summary>
-        /// Sends a character to the current token.
+        /// Sends a character to the current reader.
         /// </summary>
         public void PassChar(char c)
         {
-            var node = CurrentToken;
+            var reader = CurrentReader;
 
-            if (node == null)
+            if (reader == null)
                 return;
 
             if (c == '#')
             {
-                node.HandleSharpChar(this);
+                reader.HandleSharpChar(this);
                 return;
             }
 
-            node.HandleChar(c, this);
+            reader.HandleChar(c, this);
         }
 
         /// <summary>
-        /// Adds new node to the stack.
+        /// Adds new reader to the stack.
         /// </summary>
-        public void Push<T>(T node)
-            where T : GDNode
+        public T Push<T>(T reader)
+            where T : GDReader
         {
-            if (node == null)
-                throw new ArgumentNullException(nameof(node));
-
-            _tokensStack.Push(node);
+            if (reader == null)
+                throw new ArgumentNullException(nameof(reader));
+            
+            _readersStack.Push(reader);
+            return reader;
         }
 
         /// <summary>
-        /// Removes last node from the stack.
-        /// Usually it is calling by the last node itself.
+        /// Removes last reader from the stack.
+        /// Usually it is calling by the last reader itself.
         /// </summary>
-        /// <returns>Removed node</returns>
         public void Pop()
         {
-            if (_simpleToken != null)
-            {
-                _simpleToken = null;
-                return;
-            }
-
-            _tokensStack.Pop();
+            _readersStack.Pop();
         }
     }
 }

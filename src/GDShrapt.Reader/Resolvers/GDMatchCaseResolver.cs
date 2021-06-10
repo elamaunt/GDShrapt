@@ -1,18 +1,26 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     internal class GDMatchCaseResolver : GDIntendedResolver
     {
-        public GDMatchCaseResolver(ITokensContainer owner, int lineIntendation)
+        new IMatchCaseReceiver Owner { get; }
+
+        public GDMatchCaseResolver(IMatchCaseReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
+            Owner = owner;
         }
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
+            if (IsSpace(c))
+            {
+                AppendAndPush(new GDSpace(), state);
+                state.PassChar(c);
+                return;
+            }
+
             var declaration = new GDMatchCaseDeclaration(LineIntendationThreshold);
-            Append(declaration);
+            Owner.HandleReceivedToken(declaration);
             state.Push(declaration);
             state.PassChar(c);
         }

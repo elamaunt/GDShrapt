@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDArrayInitializerExpression : GDExpression
+    public sealed class GDArrayInitializerExpression : GDExpression, IExpressionsReceiver
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.ArrayInitializer);
         public List<GDExpression> Values { get; } = new List<GDExpression>();
@@ -35,6 +35,36 @@ namespace GDShrapt.Reader
         public override string ToString()
         {
             return $"[{string.Join(", ", Values.Select(x => x.ToString()))}]";
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

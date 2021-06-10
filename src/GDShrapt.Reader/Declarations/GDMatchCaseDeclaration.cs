@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDMatchCaseDeclaration : GDNode
+    public sealed class GDMatchCaseDeclaration : GDNode, IExpressionsReceiver, IStatementsReceiver
     {
         readonly int _lineIntendation;
         bool _expressionEnded;
@@ -55,6 +55,41 @@ namespace GDShrapt.Reader
         {
             return $@"{string.Join(", ", Conditions.Select(x => x.ToString()))}:
     {string.Join("\n\t", Statements.Select(x => x.ToString()))}";
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStatementsReceiver.HandleReceivedToken(GDStatement token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

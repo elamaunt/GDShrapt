@@ -2,6 +2,8 @@
 {
     public sealed class GDBreakPointStatement : GDStatement
     {
+        public GDBreakPointKeyword BreakPoint { get; set; }
+
         internal GDBreakPointStatement(int lineIntendation)
             : base(lineIntendation)
         {

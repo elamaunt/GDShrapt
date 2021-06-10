@@ -4,9 +4,11 @@ namespace GDShrapt.Reader
 {
     internal class GDSingleOperatorResolver : GDPatternResolver
     {
-        public GDSingleOperatorResolver(ITokensContainer owner)
+        public new ISingleOperatorReceiver Owner { get; }
+        public GDSingleOperatorResolver(ISingleOperatorReceiver owner)
             : base(owner)
         {
+            Owner = owner;
         }
 
         public override string[] GeneratePatterns()
@@ -35,7 +37,7 @@ namespace GDShrapt.Reader
                     Append(GDSingleOperatorType.BitwiseNegate);
                     break;
                 default:
-                    Append(GDSingleOperatorType.Unknown);
+                    Owner.HandleSingleOperatorSkip();
 
                     if (pattern != null)
                     {
@@ -46,16 +48,9 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
-        {
-            Append(GDSingleOperatorType.Unknown);
-            state.Pop();
-            state.PassLineFinish();
-        }
-
         void Append(GDSingleOperatorType operatorType)
         {
-            Append(new GDSingleOperator() { OperatorType = operatorType });
+            Owner.HandleReceivedToken(new GDSingleOperator() { OperatorType = operatorType });
         }
     }
 }

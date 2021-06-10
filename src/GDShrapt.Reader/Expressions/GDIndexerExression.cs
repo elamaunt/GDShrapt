@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDIndexerExression : GDExpression
+    public sealed class GDIndexerExression : GDExpression, IExpressionsReceiver
     {
         private bool _openSquareBracketChecked;
 
@@ -78,6 +78,36 @@
         public override string ToString()
         {
             return $"{CallerExpression}[{InnerExpression}]";
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

@@ -2,8 +2,6 @@
 {
     public abstract class GDStatement : GDNode
     {
-        //public List<GDComment> CommentsBefore { get; } = new List<GDComment>();
-
         /// <summary>
         /// The count of '\t' before the statement
         /// </summary>

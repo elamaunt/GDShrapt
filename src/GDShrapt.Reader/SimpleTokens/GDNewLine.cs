@@ -1,6 +1,7 @@
-﻿namespace GDShrapt.Reader.SimpleTokens
+﻿namespace GDShrapt.Reader
 {
-    public sealed class GDNewLine
+    public sealed class GDNewLine : GDSingleCharToken
     {
+        public override char Char => '\n';
     }
 }

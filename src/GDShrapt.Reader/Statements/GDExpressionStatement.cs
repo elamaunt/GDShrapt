@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDExpressionStatement : GDStatement
+    public sealed class GDExpressionStatement : GDStatement, IExpressionsReceiver
     {
         public GDExpression Expression { get; set; }
 
@@ -36,6 +36,36 @@
         public override string ToString()
         {
             return $"{Expression}";
+        }
+
+        public void HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

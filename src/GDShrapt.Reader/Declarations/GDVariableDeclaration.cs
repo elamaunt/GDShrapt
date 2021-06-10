@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDVariableDeclaration : GDClassMember
+    public sealed class GDVariableDeclaration : GDClassMember, IExpressionsReceiver, IKeywordReceiver<GDSetGetKeyword>
     {
         bool _setgetKeywordChecked;
         bool _hasSetget;
@@ -46,7 +46,7 @@ namespace GDShrapt.Reader
             if (!IsConstant && !_setgetKeywordChecked)
             {
                 _setgetKeywordChecked = true;
-                state.Push(new GDStaticKeywordResolver(this));
+                state.Push(new GDKeywordResolver<GDSetGetKeyword>(this));
                 state.PassChar(c);
                 return;
             }
@@ -91,6 +91,46 @@ namespace GDShrapt.Reader
                 return $"{(IsConstant ? "const" : "var")} {Identifier} : {type} = {Initializer}";
             }
             return $"{(IsConstant ? "const" : "var")} {Identifier} = {Initializer}";
+        }
+
+        void IKeywordReceiver<GDSetGetKeyword>.HandleReceivedToken(GDSetGetKeyword token)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IKeywordReceiver<GDSetGetKeyword>.HandleReceivedKeywordSkip()
+        {
+            throw new NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            throw new NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            throw new NotImplementedException();
         }
     }
 }

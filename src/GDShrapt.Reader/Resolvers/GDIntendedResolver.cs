@@ -7,7 +7,7 @@
         bool _lineIntendationEnded;
         int _spaceCounter;
 
-        public GDIntendedResolver(ITokensContainer owner, int lineIntendation)
+        public GDIntendedResolver(IStyleTokensReceiver owner, int lineIntendation)
             : base(owner)
         {
             LineIntendationThreshold = lineIntendation;

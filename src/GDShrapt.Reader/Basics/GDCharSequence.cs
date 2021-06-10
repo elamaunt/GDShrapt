@@ -7,12 +7,12 @@ namespace GDShrapt.Reader
     /// </summary>
     public abstract class GDCharSequence : GDSimpleSyntaxToken
     {
-        internal StringBuilder SequenceBuilder { get; set; } = new StringBuilder();
+        StringBuilder _sequenceBuilder = new StringBuilder();
 
         internal bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
 
-        internal int SequenceBuilderLength => SequenceBuilder.Length;
+        internal int SequenceBuilderLength => _sequenceBuilder.Length;
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -21,7 +21,7 @@ namespace GDShrapt.Reader
 
             if (CanAppendChar(c, state))
             {
-                SequenceBuilder.Append(c);
+                _sequenceBuilder.Append(c);
                 return;
             }
 
@@ -34,7 +34,7 @@ namespace GDShrapt.Reader
             if (IsCompleted)
                 throw new System.Exception("Char sequence already completed");
 
-            SequenceBuilder.Append(c);
+            _sequenceBuilder.Append(c);
         }
 
         internal void Append(string str)
@@ -42,14 +42,14 @@ namespace GDShrapt.Reader
             if (IsCompleted)
                 throw new System.Exception("Char sequence already completed");
 
-            SequenceBuilder.Append(str);
+            _sequenceBuilder.Append(str);
         }
 
         internal virtual void CompleteSequence(GDReadingState state)
         {
             IsCompleted = true;
-            Sequence = SequenceBuilder.ToString();
-            SequenceBuilder = null;
+            Sequence = _sequenceBuilder.ToString();
+            _sequenceBuilder = null;
             state.Pop();
         }
 
@@ -57,7 +57,7 @@ namespace GDShrapt.Reader
         {
             IsCompleted = false;
             Sequence = null;
-            SequenceBuilder = new StringBuilder();
+            _sequenceBuilder = new StringBuilder();
         }
 
         /// <summary>

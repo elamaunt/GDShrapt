@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDForStatement : GDStatement
+    public sealed class GDForStatement : GDStatement, IKeywordReceiver<GDInKeyword>, IExpressionsReceiver, IStatementsReceiver
     {
         bool _checkedInKeyword;
         bool _expressionEnded;
@@ -38,7 +38,7 @@ namespace GDShrapt.Reader
 
             if(!_checkedInKeyword)
             {
-                state.Push(new GDStaticKeywordResolver(this));
+                state.Push(new GDKeywordResolver<GDInKeyword>(this));
                 state.PassChar(c);
                 return;
             }
@@ -90,6 +90,51 @@ namespace GDShrapt.Reader
         {
             return $@"for {Variable} in {Collection}:
     {string.Join("\n\t", Statements.Select(x => x.ToString()))}";
+        }
+
+        void IKeywordReceiver<GDInKeyword>.HandleReceivedToken(GDInKeyword token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IKeywordReceiver<GDInKeyword>.HandleReceivedKeywordSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStatementsReceiver.HandleReceivedToken(GDStatement token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

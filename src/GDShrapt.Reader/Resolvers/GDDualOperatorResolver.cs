@@ -1,12 +1,12 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     internal class GDDualOperatorResolver : GDPatternResolver
     {
-        public GDDualOperatorResolver(ITokensContainer owner)
+        public new IDualOperatorReceiver Owner { get; }
+        public GDDualOperatorResolver(IDualOperatorReceiver owner)
             : base(owner)
         {
+            Owner = owner;
         }
 
         public override string[] GeneratePatterns()
@@ -53,100 +53,100 @@ namespace GDShrapt.Reader
             switch (pattern)
             {
                 case "&&":
-                    Append(GDDualOperatorType.And);
+                    Return(GDDualOperatorType.And);
                     break;
                 case "and":
-                    Append(GDDualOperatorType.And2);
+                    Return(GDDualOperatorType.And2);
                     break;
                 case "||":
-                    Append(GDDualOperatorType.Or);
+                    Return(GDDualOperatorType.Or);
                     break;
                 case "or":
-                    Append(GDDualOperatorType.Or2);
+                    Return(GDDualOperatorType.Or2);
                     break;
                 case "as":
-                    Append(GDDualOperatorType.As);
+                    Return(GDDualOperatorType.As);
                     break;
                 case "is":
-                    Append(GDDualOperatorType.Is);
+                    Return(GDDualOperatorType.Is);
                     break;
                 case "=":
-                    Append(GDDualOperatorType.Assignment);
+                    Return(GDDualOperatorType.Assignment);
                     break;
                 case "<":
-                    Append(GDDualOperatorType.LessThan);
+                    Return(GDDualOperatorType.LessThan);
                     break;
                 case ">":
-                    Append(GDDualOperatorType.MoreThan);
+                    Return(GDDualOperatorType.MoreThan);
                     break;
                 case "/":
-                    Append(GDDualOperatorType.Division);
+                    Return(GDDualOperatorType.Division);
                     break;
                 case "*":
-                    Append(GDDualOperatorType.Multiply);
+                    Return(GDDualOperatorType.Multiply);
                     break;
                 case "+":
-                    Append(GDDualOperatorType.Addition);
+                    Return(GDDualOperatorType.Addition);
                     break;
                 case "-":
-                    Append(GDDualOperatorType.Subtraction);
+                    Return(GDDualOperatorType.Subtraction);
                     break;
                 case ">=":
-                    Append(GDDualOperatorType.MoreThanOrEqual);
+                    Return(GDDualOperatorType.MoreThanOrEqual);
                     break;
                 case "<=":
-                    Append(GDDualOperatorType.LessThanOrEqual);
+                    Return(GDDualOperatorType.LessThanOrEqual);
                     break;
                 case "==":
-                    Append(GDDualOperatorType.Equal);
+                    Return(GDDualOperatorType.Equal);
                     break;
                 case "/=":
-                    Append(GDDualOperatorType.DivideAndAssign);
+                    Return(GDDualOperatorType.DivideAndAssign);
                     break;
                 case "!=":
-                    Append(GDDualOperatorType.NotEqual);
+                    Return(GDDualOperatorType.NotEqual);
                     break;
                 case "*=":
-                    Append(GDDualOperatorType.MultiplyAndAssign);
+                    Return(GDDualOperatorType.MultiplyAndAssign);
                     break;
                 case "-=":
-                    Append(GDDualOperatorType.SubtractAndAssign);
+                    Return(GDDualOperatorType.SubtractAndAssign);
                     break;
                 case "+=":
-                    Append(GDDualOperatorType.AddAndAssign);
+                    Return(GDDualOperatorType.AddAndAssign);
                     break;
                 case "%=":
-                    Append(GDDualOperatorType.ModAndAssign);
+                    Return(GDDualOperatorType.ModAndAssign);
                     break;
                 case "<<":
-                    Append(GDDualOperatorType.BitShiftLeft);
+                    Return(GDDualOperatorType.BitShiftLeft);
                     break;
                 case ">>":
-                    Append(GDDualOperatorType.BitShiftRight);
+                    Return(GDDualOperatorType.BitShiftRight);
                     break;
                 case "%":
-                    Append(GDDualOperatorType.Mod);
+                    Return(GDDualOperatorType.Mod);
                     break;
                 case "^":
-                    Append(GDDualOperatorType.Xor);
+                    Return(GDDualOperatorType.Xor);
                     break;
                 case "|":
-                    Append(GDDualOperatorType.BitwiseOr);
+                    Return(GDDualOperatorType.BitwiseOr);
                     break; 
                 case "&":
-                    Append(GDDualOperatorType.BitwiseAnd);
+                    Return(GDDualOperatorType.BitwiseAnd);
                     break;
                 case "in":
-                    Append(GDDualOperatorType.In);
+                    Return(GDDualOperatorType.In);
                     break;
                 case "&=":
-                    Append(GDDualOperatorType.BitwiseAndAndAssign);
+                    Return(GDDualOperatorType.BitwiseAndAndAssign);
                     break;
                 case "|=":
-                    Append(GDDualOperatorType.BitwiseOrAndAssign);
+                    Return(GDDualOperatorType.BitwiseOrAndAssign);
                     break;
                 default:
-                    Append(GDDualOperatorType.Unknown);
+                    Owner.HandleDualOperatorSkip();
 
                     if (pattern != null)
                     {
@@ -157,9 +157,9 @@ namespace GDShrapt.Reader
             }
         }
 
-        void Append(GDDualOperatorType operatorType)
+        void Return(GDDualOperatorType operatorType)
         {
-            Append(new GDDualOperator() { OperatorType = operatorType });
+            Owner.HandleReceivedToken(new GDDualOperator() { OperatorType = operatorType });
         }
     }
 }

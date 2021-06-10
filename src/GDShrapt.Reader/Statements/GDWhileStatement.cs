@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDWhileStatement : GDStatement
+    public sealed class GDWhileStatement : GDStatement, IExpressionsReceiver, IStatementsReceiver
     {
         bool _expressionEnded;
         bool _statementsChecked;
@@ -72,6 +72,41 @@ namespace GDShrapt.Reader
         {
             return $@"while {Condition}:
     {string.Join("\n\t", Statements.Select(x => x.ToString()))}";
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStatementsReceiver.HandleReceivedToken(GDStatement token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

@@ -17,9 +17,10 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            // Old code
+           /* if (IsSpace(c))
             {
-                SwitchTo(new GDSpace(), state);
+                AppendAndPush(new GDSpace(), state);
                 return;
             }
 
@@ -42,7 +43,7 @@
             if (!_elseKeyChecked)
             {
                 _elseKeyChecked = true;
-                state.Push(new GDStaticKeywordResolver(this));
+                state.Push(new GDKeywordResolver(this));
                 state.PassChar(c);
                 return;
             }
@@ -57,7 +58,7 @@
 
             state.Pop();
             state.PassChar(c);
-
+           */
         }
 
         internal override void HandleLineFinish(GDReadingState state)

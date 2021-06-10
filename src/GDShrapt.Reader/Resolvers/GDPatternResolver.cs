@@ -24,7 +24,7 @@ namespace GDShrapt.Reader
         public bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
 
-        public GDPatternResolver(ITokensContainer owner)
+        public GDPatternResolver(IStyleTokensReceiver owner)
             : base(owner)
         {
         }

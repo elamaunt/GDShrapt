@@ -2,6 +2,9 @@
 {
     public sealed class GDBreakStatement : GDStatement
     {
+
+        public GDBreakKeyword Break { get; set; }
+
         internal GDBreakStatement(int lineIntendation)
             : base(lineIntendation)
         {

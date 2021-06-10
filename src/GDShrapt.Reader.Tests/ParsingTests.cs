@@ -41,7 +41,7 @@ func save(path, resource, flags):
             Assert.AreEqual("HTerrainDataSaver", @class.ClassName?.Identifier?.Sequence);
             Assert.AreEqual(true, @class.IsTool);
 
-            Assert.AreEqual(7, @class.Members.Count());
+            Assert.AreEqual(7, @class.Members.Count);
             Assert.AreEqual(3, @class.Methods.Count());
             Assert.AreEqual(2, @class.Methods.ElementAt(0).Statements.Count);
             Assert.AreEqual(1, @class.Methods.ElementAt(1).Statements.Count);
@@ -604,10 +604,10 @@ match x:
             var classDeclaration = reader.ParseFileContent(code);
 
             Assert.IsNotNull(classDeclaration);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
-            Assert.IsInstanceOfType(classDeclaration.Members.ElementAtOrDefault(0), typeof(GDVariableDeclaration));
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDVariableDeclaration));
 
-            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members.ElementAtOrDefault(0);
+            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members[0];
 
             Assert.IsTrue(variableDeclaration.IsExported);
             Assert.IsNotNull(variableDeclaration.Initializer);
@@ -626,10 +626,10 @@ match x:
             var classDeclaration = reader.ParseFileContent(code);
 
             Assert.IsNotNull(classDeclaration);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
-            Assert.IsInstanceOfType(classDeclaration.Members.ElementAtOrDefault(0), typeof(GDEnumDeclaration));
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDEnumDeclaration));
 
-            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members.ElementAtOrDefault(0);
+            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members[0];
 
             Assert.AreEqual("test", enumDeclaration.Identifier.Sequence);
             Assert.AreEqual(3, enumDeclaration.Values.Count);
@@ -653,10 +653,10 @@ match x:
             var classDeclaration = reader.ParseFileContent(code);
 
             Assert.IsNotNull(classDeclaration);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
-            Assert.IsInstanceOfType(classDeclaration.Members.ElementAtOrDefault(0), typeof(GDEnumDeclaration));
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDEnumDeclaration));
 
-            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members.ElementAtOrDefault(0);
+            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members[0];
 
             Assert.IsNull(enumDeclaration.Identifier);
             Assert.AreEqual(3, enumDeclaration.Values.Count);
@@ -681,7 +681,7 @@ match x:
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.ClassName);
             Assert.IsNotNull(classDeclaration.ClassName.Identifier);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
+            Assert.AreEqual(1, classDeclaration.Members.Count);
             Assert.AreEqual("Test", classDeclaration.ClassName.Identifier.Sequence);
 
             Assert.IsNotNull(classDeclaration.ClassName.Icon);
@@ -699,7 +699,7 @@ match x:
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Type);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
+            Assert.AreEqual(1, classDeclaration.Members.Count);
             Assert.AreEqual("Test", classDeclaration.Extends.Type.Sequence);
         }
 
@@ -714,7 +714,7 @@ match x:
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Path);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
+            Assert.AreEqual(1, classDeclaration.Members.Count);
             Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Value);
         }
 
@@ -882,12 +882,12 @@ match x:
             var classDeclaration = reader.ParseFileContent(code);
 
             Assert.IsNotNull(classDeclaration);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
+            Assert.AreEqual(1, classDeclaration.Members.Count);
 
-            Assert.IsNotNull(classDeclaration.Members.ElementAtOrDefault(0));
-            Assert.IsInstanceOfType(classDeclaration.Members.ElementAtOrDefault(0), typeof(GDVariableDeclaration));
+            Assert.IsNotNull(classDeclaration.Members[0]);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDVariableDeclaration));
 
-            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members.ElementAtOrDefault(0);
+            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members[0];
             
             Assert.IsNotNull(variableDeclaration.Identifier);
             Assert.AreEqual("speed", variableDeclaration.Identifier.Sequence);
@@ -915,12 +915,12 @@ match x:
             var classDeclaration = reader.ParseFileContent(code);
 
             Assert.IsNotNull(classDeclaration);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
+            Assert.AreEqual(1, classDeclaration.Members.Count);
 
-            Assert.IsNotNull(classDeclaration.Members.ElementAtOrDefault(0));
-            Assert.IsInstanceOfType(classDeclaration.Members.ElementAtOrDefault(0), typeof(GDVariableDeclaration));
+            Assert.IsNotNull(classDeclaration.Members[0]);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDVariableDeclaration));
 
-            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members.ElementAtOrDefault(0);
+            var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members[0];
 
             Assert.IsNotNull(variableDeclaration.Identifier);
             Assert.AreEqual("_height", variableDeclaration.Identifier.Sequence);
@@ -956,12 +956,12 @@ match x:
             var classDeclaration = reader.ParseFileContent(code);
 
             Assert.IsNotNull(classDeclaration);
-            Assert.AreEqual(1, classDeclaration.Members.Count());
+            Assert.AreEqual(1, classDeclaration.Members.Count);
 
-            Assert.IsNotNull(classDeclaration.Members.ElementAtOrDefault(0));
-            Assert.IsInstanceOfType(classDeclaration.Members.ElementAtOrDefault(0), typeof(GDSignalDeclaration));
+            Assert.IsNotNull(classDeclaration.Members[0]);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDSignalDeclaration));
 
-            var signalDeclaration = (GDSignalDeclaration)classDeclaration.Members.ElementAtOrDefault(0);
+            var signalDeclaration = (GDSignalDeclaration)classDeclaration.Members[0];
         
             Assert.IsNotNull(signalDeclaration.Identifier);
             Assert.AreEqual("my_signal", signalDeclaration.Identifier.Sequence);
@@ -1006,10 +1006,10 @@ match x:
             var declaration = reader.ParseFileContent(code);
             Assert.IsNotNull(declaration);
 
-            Assert.AreEqual(1, declaration.Members.Count());
-            Assert.IsInstanceOfType(declaration.Members.ElementAtOrDefault(0), typeof(GDVariableDeclaration));
+            Assert.AreEqual(1, declaration.Members.Count);
+            Assert.IsInstanceOfType(declaration.Members[0], typeof(GDVariableDeclaration));
 
-            var variableDeclaration = (GDVariableDeclaration)declaration.Members.ElementAtOrDefault(0);
+            var variableDeclaration = (GDVariableDeclaration)declaration.Members[0];
 
             Assert.IsInstanceOfType(variableDeclaration.Initializer, typeof(GDIfExpression));
 

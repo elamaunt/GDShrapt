@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    internal class GDExpressionResolver : GDResolver
+    internal class GDExpressionResolver : GDResolver, IKeywordReceiver<GDIfKeyword>, IKeywordReceiver<GDElseKeyword>
     {
         GDExpression _expression;
 
@@ -10,15 +10,22 @@ namespace GDShrapt.Reader
         bool _isIfExpressionNext;
         bool _isCompleted;
 
-        public GDExpressionResolver(ITokensContainer owner)
+        new IExpressionsReceiver Owner { get; }
+
+        public GDExpressionResolver(IExpressionsReceiver owner)
             : base(owner)
         {
+            Owner = owner;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
+            {
+                AppendAndPush(new GDSpace(), state);
+                state.PassChar(c);
                 return;
+            }
 
             if (c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c ==';')
             {
@@ -117,7 +124,7 @@ namespace GDShrapt.Reader
                 if (c == 'i' && !_ifExpressionChecked)
                 {
                     _ifExpressionChecked = true;
-                    state.Push(new GDStaticKeywordResolver(this));
+                    state.Push(new GDKeywordResolver<GDIfKeyword>(this));
                     state.PassChar(c);
                     return;
                 }
@@ -245,7 +252,7 @@ namespace GDShrapt.Reader
             if (last != null)
             {
                 // Handle negative number from Negate operator and GDNumberExpression
-                if (last is GDSingleOperatorExpression operatorExpression && 
+                if (last is GDSingleOperatorExpression operatorExpression &&
                     operatorExpression.OperatorType == GDSingleOperatorType.Negate &&
                     operatorExpression.TargetExpression is GDNumberExpression numberExpression)
                 {
@@ -253,8 +260,10 @@ namespace GDShrapt.Reader
                     last = operatorExpression.TargetExpression;
                 }
 
-                Append(last.RebuildRootOfPriorityIfNeeded());
+                Owner.HandleReceivedToken(last.RebuildRootOfPriorityIfNeeded());
             }
+            else
+                Owner.HandleReceivedExpressionSkip();
 
             state.Pop();
         }
@@ -262,6 +271,41 @@ namespace GDShrapt.Reader
         private void PushAndSave(GDReadingState state, GDExpression node)
         {
             state.Push(_expression = node);
+        }
+
+        public void HandleReceivedToken(GDIfKeyword token)
+        {
+            _isIfExpressionNext = true;
+        }
+
+        public void HandleReceivedKeywordSkip()
+        {
+            _isIfExpressionNext = false;
+        }
+
+        public void HandleReceivedToken(GDComment token)
+        {
+
+        }
+
+        public void HandleReceivedToken(GDNewLine token)
+        {
+
+        }
+
+        public void HandleReceivedToken(GDSpace token)
+        {
+
+        }
+
+        public void HandleReceivedToken(GDInvalidToken token)
+        {
+
+        }
+
+        public void HandleReceivedToken(GDElseKeyword token)
+        {
+
         }
     }
 }

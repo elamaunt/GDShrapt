@@ -1,27 +1,39 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal abstract class GDResolver : GDNode
+    internal abstract class GDResolver : GDReader
     {
-        public ITokensContainer Owner { get; }
+        public IStyleTokensReceiver Owner { get; }
 
-        public GDResolver(ITokensContainer owner)
+        public GDResolver(IStyleTokensReceiver owner)
         {
             Owner = owner;
         }
 
-        protected void Append(GDSyntaxToken token)
+        internal override void HandleSharpChar(GDReadingState state)
         {
-            Owner.Append(token);
+            AppendAndPush(new GDComment(), state);
         }
 
-        protected void AppendExpressionSkip()
+        protected void AppendAndPush(GDComment token, GDReadingState state)
         {
-            Owner.AppendExpressionSkip();
+            Owner.HandleReceivedToken(token);
+            state.Push(token);
+        }
+        protected void AppendAndPush(GDNewLine token, GDReadingState state)
+        {
+            Owner.HandleReceivedToken(token);
+            state.Push(token);
+        }
+        protected void AppendAndPush(GDSpace token, GDReadingState state)
+        {
+            Owner.HandleReceivedToken(token);
+            state.Push(token);
         }
 
-        protected void AppendKeywordSkip()
+        protected void AppendAndPush(GDInvalidToken token, GDReadingState state)
         {
-            Owner.AppendKeywordSkip();
+            Owner.HandleReceivedToken(token);
+            state.Push(token);
         }
     }
 }

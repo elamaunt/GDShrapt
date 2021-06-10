@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDIfKeyword : GDKeywordToken
+    public sealed class GDForKeyword : GDSequenceToken, IGDKeywordToken
     {
-        public override string Keyword => "if";
+        public override string Sequence => "for";
     }
 }

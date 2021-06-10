@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDDualOperatorExression : GDExpression
+    public sealed class GDDualOperatorExression : GDExpression, IExpressionsReceiver, IDualOperatorReceiver
     {
         bool _leftExpressionChecked;
         bool _rightExpressionChecked;
@@ -110,6 +110,46 @@
         public override string ToString()
         {
             return $"{LeftExpression} {OperatorType.Print()} {RightExpression}";
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IDualOperatorReceiver.HandleReceivedToken(GDDualOperator token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IDualOperatorReceiver.HandleDualOperatorSkip()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

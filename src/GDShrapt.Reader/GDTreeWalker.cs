@@ -125,7 +125,7 @@ namespace GDShrapt.Reader
         {
             _visitor.Visit(d);
 
-            foreach (var method in d.Members)
+            foreach (var method in d.Methods)
                 WalkInNode(method);
 
             _visitor.LeftNode();

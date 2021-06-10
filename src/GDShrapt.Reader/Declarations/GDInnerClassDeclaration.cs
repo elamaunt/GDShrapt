@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDInnerClassDeclaration : GDClassMember
+    public sealed class GDInnerClassDeclaration : GDClassMember, IClassMembersReceiver
     {
         readonly int _lineIntendation;
         bool _membersChecked;
@@ -34,7 +34,7 @@ namespace GDShrapt.Reader
             if (!_membersChecked)
             {
                 _membersChecked = true;
-                state.Push(new GDClassMemberResolver(this, _lineIntendation + 1, member => Members.Add(member)));
+                state.Push(new GDClassMemberResolver(this, _lineIntendation + 1));
                 state.PassChar(c);
                 return;
             }
@@ -48,7 +48,7 @@ namespace GDShrapt.Reader
             if (!_membersChecked)
             {
                 _membersChecked = true;
-                state.Push(new GDClassMemberResolver(this, _lineIntendation + 1, member => Members.Add(member)));
+                state.Push(new GDClassMemberResolver(this, _lineIntendation + 1));
                 state.PassLineFinish();
                 return;
             }
@@ -65,6 +65,31 @@ namespace GDShrapt.Reader
                 builder.AppendLine(Members[i].ToString());
 
             return builder.ToString();
+        }
+
+        void IClassMembersReceiver.HandleReceivedToken(GDClassMember token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

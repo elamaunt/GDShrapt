@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDParametersExpression : GDExpression
+    public sealed class GDParametersExpression : GDExpression, IExpressionsReceiver
     {
         bool _parametersChecked;
 
@@ -51,6 +51,36 @@ namespace GDShrapt.Reader
                 return "";
 
             return $"{string.Join(", ", Parameters.Select(x=> x.ToString()))}";
+        }
+
+        public void HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -8,16 +8,18 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract class GDNode : GDSyntaxToken, ITokensContainer
+    public abstract partial class GDNode : GDSyntaxToken, IEnumerable<GDSyntaxToken>
     {
-        internal LinkedList<GDSyntaxToken> TokensList { get; } = new LinkedList<GDSyntaxToken>();
+        // internal abstract ICollection<GDSyntaxToken> Collection { get; }
+        internal virtual ICollection<GDSyntaxToken> Collection => throw new NotImplementedException();
 
         public IEnumerable<GDSyntaxToken> Tokens()
         {
-            foreach (var token in TokensList.OfType<GDSyntaxToken>())
+            foreach (var token in Collection)
                 yield return token;
         }
 
+        /*
         /// <summary>
         /// Removes child node or does nothing if node is already removed.
         /// </summary>
@@ -33,48 +35,61 @@ namespace GDShrapt.Reader
                 throw new InvalidOperationException("The specified node hasn't a linkedList reference to the parent.");
 
             TokensList.Remove(node);
-        }
+        }*/
 
-        internal void SwitchTo(GDSimpleSyntaxToken token, GDReadingState state)
+        internal virtual void AppendAndPush(GDSyntaxToken token, GDReadingState state)
         {
-            TokensList.AddLast(token);
+            Collection.Add(token);
             state.Push(token);
         }
 
         internal override void HandleSharpChar(GDReadingState state)
         {
-            SwitchTo(new GDComment(), state);
-        }
-
-        internal override void ForceComplete(GDReadingState state)
-        {
-            state.Pop();
+            AppendAndPush(new GDComment(), state);
         }
 
         public override void AppendTo(StringBuilder builder)
         {
-            foreach (var token in TokensList)
+            foreach (var token in Collection)
                 token.AppendTo(builder);
         }
 
-        internal void AppendToThisNode(GDSyntaxToken token)
+        /*void ITokensReceiver.HandleReceivedToken(GDKeywordToken token) => HandleReceivedToken(token);
+        internal virtual void HandleReceivedToken(GDKeywordToken token)
         {
-            TokensList.AddLast(token);
+            throw new GDInvalidReadingStateException($"This node '{NodeName}' doesn't support handling tokens");
         }
 
-        void ITokensContainer.Append(GDSyntaxToken token)
+        void ITokensReceiver.HandleReceivedExpressionSkip() => HandleReceivedExpressionSkip();
+        internal virtual void HandleReceivedExpressionSkip()
         {
-            AppendToThisNode(token);
+            throw new GDInvalidReadingStateException($"This node '{NodeName}' doesn't support handling Expression skip");
+        }*/
+
+        /*void ITokensReceiver.HandleReceivedKeywordSkip() => HandleReceivedKeywordSkip();
+        internal virtual void HandleReceivedKeywordSkip()
+        {
+            throw new GDInvalidReadingStateException($"This node '{NodeName}' doesn't support handling Keyword skip");
+        }*/
+
+        public override string ToString()
+        {
+            var builder = new StringBuilder();
+            
+            foreach (var token in Collection)
+                token.AppendTo(builder);
+
+            return builder.ToString();
         }
 
-        void ITokensContainer.AppendExpressionSkip()
+        public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
-            throw new NotImplementedException();
+            return Collection.GetEnumerator();
         }
 
-        void ITokensContainer.AppendKeywordSkip()
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return Collection.GetEnumerator();
         }
     }
 }

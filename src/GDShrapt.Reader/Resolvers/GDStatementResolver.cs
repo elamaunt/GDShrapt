@@ -1,49 +1,115 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
 namespace GDShrapt.Reader
 {
     internal class GDStatementResolver : GDIntendedResolver
     {
+        GDIfStatement _ifStatement;
+        bool _statementResolved;
+
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
-        GDIfStatement _ifStatement;
 
-        public GDStatementResolver(ITokensContainer owner, int lineIntendation)
+        new IStatementsReceiver Owner { get; }
+
+        public GDStatementResolver(IStatementsReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
+            Owner = owner;
         }
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
-            if (char.IsLetter(c) && _sequenceBuilder.Length < 6)
+            if (!_statementResolved)
             {
-                _sequenceBuilder.Append(c);
-            }
-            else
-            {
-                if (_sequenceBuilder.Length == 0 && IsSpace(c))
-                    return;
-
-                var sequence = _sequenceBuilder.ToString();
-
-                ResetSequence();
-
-                if (IsSpace(c) || c == ':' || c == ';')
+                if (_sequenceBuilder.Length == 0)
                 {
-                    CompleteAsStatement(state, sequence);
+                    if (IsSpace(c))
+                    {
+                        AppendAndPush(new GDSpace(), state);
+                        state.PassChar(c);
+                        return;
+                    }
+                }
+
+                if (char.IsLetter(c))
+                {
+                    _sequenceBuilder.Append(c);
                 }
                 else
                 {
-                    CompleteAsExpressionStatement(state, sequence);
+                    CompleteAsStatement(state, _sequenceBuilder.ToString());
                     state.PassChar(c);
                 }
             }
+            else
+            {
+                if (IsSpace(c))
+                {
+                    AppendAndPush(new GDSpace(), state);
+                    state.PassChar(c);
+                    return;
+                }
+
+                AppendAndPush(new GDInvalidToken(' ', '\n'), state);
+                state.PassChar(c);
+            }
+            
+
+            
+
+
+            // Old code
+                /*if (char.IsLetter(c) && _sequenceBuilder.Length < 6)
+                {
+                    _sequenceBuilder.Append(c);
+                }
+                else
+                {
+                    if (_sequenceBuilder.Length == 0 && IsSpace(c))
+                        return;
+
+                    var sequence = _sequenceBuilder.ToString();
+
+                    ResetSequence();
+
+                    if (IsSpace(c) || c == ':' || c == ';')
+                    {
+                        CompleteAsStatement(state, sequence);
+                    }
+                    else
+                    {
+                        CompleteAsExpressionStatement(state, sequence);
+                        state.PassChar(c);
+                    }
+                }*/
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            if (_sequenceBuilder?.Length > 0)
+            if (_statementResolved)
+            {
+                _statementResolved = false;
+                _sequenceBuilder.Clear();
+            }
+            else
+            {
+                if (_sequenceBuilder?.Length > 0)
+                {
+                    var sequence = _sequenceBuilder.ToString();
+                    _sequenceBuilder.Clear();
+                    CompleteAsStatement(state, sequence);
+                    state.PassLineFinish();
+                }
+            }
+
+            AppendAndPush(new GDNewLine(), state);
+            ResetIntendation();
+            state.PassLineFinish();
+
+
+            // Old code
+            /*if (_sequenceBuilder?.Length > 0)
             {
                 var sequence = _sequenceBuilder.ToString();
                 ResetSequence();
@@ -54,16 +120,14 @@ namespace GDShrapt.Reader
             {
                 ResetIntendation();
                 ResetSequence();
-            }
-        }
-
-        private void ResetSequence()
-        {
-            _sequenceBuilder.Clear();
+            }*/
         }
 
         private void CompleteAsStatement(GDReadingState state, string sequence)
         {
+            _sequenceBuilder.Clear();
+            _statementResolved = true;
+
             GDStatement statement = null;
 
             switch (sequence)
@@ -91,33 +155,43 @@ namespace GDShrapt.Reader
                     statement = _ifStatement = new GDIfStatement(LineIntendationThreshold);
                     break;
                 case "for":
+                    _ifStatement = null;
                     statement = new GDForStatement(LineIntendationThreshold);
                     break;
                 case "while":
+                    _ifStatement = null;
                     statement = new GDWhileStatement(LineIntendationThreshold);
                     break;
                 case "match":
+                    _ifStatement = null;
                     statement = new GDMatchStatement(LineIntendationThreshold);
                     break;
                 case "yield":
+                    _ifStatement = null;
                     statement = new GDYieldStatement(LineIntendationThreshold);
                     break;
                 case "var":
+                    _ifStatement = null;
                     statement = new GDVariableDeclarationStatement(LineIntendationThreshold);
                     break;
                 case "return":
+                    _ifStatement = null;
                     statement = new GDReturnStatement(LineIntendationThreshold);
                     break;
                 case "pass":
+                    _ifStatement = null;
                     statement = new GDPassStatement(LineIntendationThreshold);
                     break;
                 case "continue":
+                    _ifStatement = null;
                     statement = new GDContinueStatement(LineIntendationThreshold);
                     break;
                 case "break":
+                    _ifStatement = null;
                     statement = new GDBreakStatement(LineIntendationThreshold);
                     break;
                 case "breakpoint":
+                    _ifStatement = null;
                     statement = new GDBreakPointStatement(LineIntendationThreshold);
                     break;
                 default:
@@ -127,15 +201,19 @@ namespace GDShrapt.Reader
                     }
             }
 
-            Append(statement);
+            Owner.HandleReceivedToken(statement);
             state.Push(statement);
+
+            for (int i = 0; i < sequence.Length; i++)
+                state.PassChar(sequence[i]);
         }
 
         private void CompleteAsExpressionStatement(GDReadingState state, string sequence)
         {
+            _ifStatement = null;
             var statement = new GDExpressionStatement();
 
-            Append(statement);
+            Owner.HandleReceivedToken(statement);
             state.Push(statement);
 
             for (int i = 0; i < sequence.Length; i++)

@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDSingleOperatorExpression : GDExpression
+    public sealed class GDSingleOperatorExpression : GDExpression, ISingleOperatorReceiver, IExpressionsReceiver
     {
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public GDSingleOperatorType OperatorType { get; set; }
@@ -79,6 +79,46 @@
                 return $"{OperatorType.Print()} {TargetExpression}";
 
             return $"{OperatorType.Print()}{TargetExpression}";
+        }
+
+        void ISingleOperatorReceiver.HandleReceivedToken(GDSingleOperator token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ISingleOperatorReceiver.HandleSingleOperatorSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

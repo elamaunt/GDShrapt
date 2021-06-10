@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
-    public abstract class GDKeywordToken : GDSimpleSyntaxToken
+    public abstract class GDSequenceToken : GDSimpleSyntaxToken
     {
-        public abstract string Keyword { get; }
+        public abstract string Sequence { get; }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -24,7 +24,7 @@
 
         public override string ToString()
         {
-            return Keyword;
+            return Sequence;
         }
     }
 }
