@@ -8,14 +8,18 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract partial class GDNode : GDSyntaxToken, IEnumerable<GDSyntaxToken>
+    public abstract partial class GDNode : GDSyntaxToken, IEnumerable<GDSyntaxToken>, ITokenReceiver
     {
-        // internal abstract ICollection<GDSyntaxToken> Collection { get; }
-        internal virtual ICollection<GDSyntaxToken> Collection => throw new NotImplementedException();
+        // TODO: remove virtual. Should be abstract
+        internal virtual GDTokensForm Form => throw new NotImplementedException();
+        internal GDTokensForm BaseForm
+        {
+            set => Form.MoveTokens(value);
+        }
 
         public IEnumerable<GDSyntaxToken> Tokens()
         {
-            foreach (var token in Collection)
+            foreach (var token in Form)
                 yield return token;
         }
 
@@ -39,7 +43,7 @@ namespace GDShrapt.Reader
 
         internal virtual void AppendAndPush(GDSyntaxToken token, GDReadingState state)
         {
-            Collection.Add(token);
+            Form.Add(token);
             state.Push(token);
         }
 
@@ -50,33 +54,15 @@ namespace GDShrapt.Reader
 
         public override void AppendTo(StringBuilder builder)
         {
-            foreach (var token in Collection)
+            foreach (var token in Form)
                 token.AppendTo(builder);
         }
-
-        /*void ITokensReceiver.HandleReceivedToken(GDKeywordToken token) => HandleReceivedToken(token);
-        internal virtual void HandleReceivedToken(GDKeywordToken token)
-        {
-            throw new GDInvalidReadingStateException($"This node '{NodeName}' doesn't support handling tokens");
-        }
-
-        void ITokensReceiver.HandleReceivedExpressionSkip() => HandleReceivedExpressionSkip();
-        internal virtual void HandleReceivedExpressionSkip()
-        {
-            throw new GDInvalidReadingStateException($"This node '{NodeName}' doesn't support handling Expression skip");
-        }*/
-
-        /*void ITokensReceiver.HandleReceivedKeywordSkip() => HandleReceivedKeywordSkip();
-        internal virtual void HandleReceivedKeywordSkip()
-        {
-            throw new GDInvalidReadingStateException($"This node '{NodeName}' doesn't support handling Keyword skip");
-        }*/
 
         public override string ToString()
         {
             var builder = new StringBuilder();
             
-            foreach (var token in Collection)
+            foreach (var token in Form)
                 token.AppendTo(builder);
 
             return builder.ToString();
@@ -84,12 +70,22 @@ namespace GDShrapt.Reader
 
         public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
-            return Collection.GetEnumerator();
+            return Form.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return Collection.GetEnumerator();
+            return Form.GetEnumerator();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
+        void ITokenReceiver.HandleReceivedAbstractToken(GDSyntaxToken token)
+        {
+            Form.AddBeforeActiveToken(token);
         }
     }
 }

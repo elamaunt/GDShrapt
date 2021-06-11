@@ -7,15 +7,13 @@ namespace GDShrapt.Reader
     {
         bool _membersChecked;
 
-        readonly GDTokensForm<GDClassMembersList> _form = new GDTokensForm<GDClassMembersList>();
-
-        State _state;
-
         enum State
         {
             Members,
             Copmleted
         }
+
+        readonly GDTokensForm<State, GDClassMembersList> _form = new GDTokensForm<State, GDClassMembersList>();
 
         public GDClassMembersList Members
         {
@@ -35,12 +33,12 @@ namespace GDShrapt.Reader
         {
             if (IsSpace(c))
             {
-                _form.AddBeforeToken(state.Push(new GDSpace()), (int)_state);
+                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
-            switch (_state)
+            switch (_form.State)
             {
                 case State.Members:
                     break;

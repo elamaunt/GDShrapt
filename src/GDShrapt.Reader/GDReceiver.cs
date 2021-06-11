@@ -6,7 +6,7 @@ namespace GDShrapt.Reader
     {
         public List<GDSyntaxToken> Tokens { get; } = new List<GDSyntaxToken>();
 
-        public void HandleReceivedToken(GDSyntaxToken token)
+        public void HandleReceivedAbstractToken(GDSyntaxToken token)
         {
             Tokens.Add(token);
         }
@@ -40,7 +40,7 @@ namespace GDShrapt.Reader
         {
             Tokens.Add(token);
         }
-
+        
         public void HandleReceivedExpressionSkip()
         {
 

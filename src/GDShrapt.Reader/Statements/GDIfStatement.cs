@@ -41,7 +41,6 @@
             get => _form.Token5 ?? (_form.Token5 = new GDStatementsList(LineIntendation + 1));
         }
 
-        State _state;
         enum State
         {
             IfKeyword,
@@ -53,7 +52,7 @@
             Completed
         }
 
-        readonly GDTokensForm<GDSyntaxToken, GDExpression, GDColon, GDStatementsList, GDSyntaxToken, GDStatementsList> _form = new GDTokensForm<GDSyntaxToken, GDExpression, GDColon, GDStatementsList, GDSyntaxToken, GDStatementsList>();
+        readonly GDTokensForm<State, GDSyntaxToken, GDExpression, GDColon, GDStatementsList, GDSyntaxToken, GDStatementsList> _form = new GDTokensForm<State, GDSyntaxToken, GDExpression, GDColon, GDStatementsList, GDSyntaxToken, GDStatementsList>();
 
         internal GDIfStatement(int lineIntendation)
             : base(lineIntendation)
@@ -69,12 +68,12 @@
         {
             if (IsSpace(c))
             {
-                _form.AddBeforeToken(state.Push(new GDSpace()), (int)_state);
+                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
-            switch (_state)
+            switch (_form.State)
             {
                 case State.IfKeyword:
                     state.Push(new GDKeywordResolver<GDIfKeyword>(this));
@@ -89,7 +88,7 @@
                     state.PassChar(c);
                     break;
                 case State.TrueStatements:
-                    _state = State.ElseOrElifKeyword;
+                    _form.State = State.ElseOrElifKeyword;
                     state.Push(TrueStatements);
                     state.PassChar(c);
                     break;
@@ -100,7 +99,7 @@
                     state.PassChar(c);
                     break;
                 case State.FalseStatements:
-                    _state = State.Completed;
+                    _form.State = State.Completed;
                     state.Push(TrueStatements);
                     state.PassChar(c);
                     break;
@@ -156,12 +155,12 @@
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            switch (_state)
+            switch (_form.State)
             {
                 case State.TrueStatements:
                 case State.ElseOrElifKeyword:
                 case State.FalseStatements:
-                    _form.AddBeforeToken(state.Push(new GDNewLine()), (int)_state);
+                    _form.AddBeforeActiveToken(new GDNewLine());
                     break;
                 default:
                     state.Pop();
@@ -210,10 +209,10 @@ else:
 
         public void HandleReceivedToken(GDIfKeyword token)
         {
-            if (_state == State.IfKeyword)
+            if (_form.State == State.IfKeyword)
             {
                 If = token;
-                _state = State.Condition;
+                _form.State = State.Condition;
                 return;
             }
 
@@ -222,15 +221,15 @@ else:
 
         public void HandleReceivedKeywordSkip()
         {
-            if (_state == State.IfKeyword)
+            if (_form.State == State.IfKeyword)
             {
-                _state = State.Condition;
+                _form.State = State.Condition;
                 return;
             }
 
-            if (_state == State.ElseOrElifKeyword)
+            if (_form.State == State.ElseOrElifKeyword)
             {
-                _state = State.FalseStatements;
+                _form.State = State.FalseStatements;
                 return;
             }
 
@@ -239,10 +238,10 @@ else:
 
         public void HandleReceivedToken(GDElseKeyword token)
         {
-            if (_state == State.ElseOrElifKeyword)
+            if (_form.State == State.ElseOrElifKeyword)
             {
                 ElseOrElif = token;
-                _state = State.FalseStatements;
+                _form.State = State.FalseStatements;
                 return;
             }
 
@@ -251,10 +250,10 @@ else:
 
         public void HandleReceivedToken(GDElifKeyword token)
         {
-            if (_state == State.ElseOrElifKeyword)
+            if (_form.State == State.ElseOrElifKeyword)
             {
                 ElseOrElif = token;
-                _state = State.FalseStatements;
+                _form.State = State.FalseStatements;
                 return;
             }
 
@@ -263,10 +262,10 @@ else:
 
         public void HandleReceivedToken(GDColon token)
         {
-            if (_state == State.Colon)
+            if (_form.State == State.Colon)
             {
                 Colon = token;
-                _state = State.TrueStatements;
+                _form.State = State.TrueStatements;
                 return;
             }
 
@@ -275,9 +274,9 @@ else:
 
         void ITokenReceiver<GDColon>.HandleReceivedTokenSkip<B>()
         {
-            if (_state == State.Colon)
+            if (_form.State == State.Colon)
             {
-                _state = State.TrueStatements;
+                _form.State = State.TrueStatements;
                 return;
             }
 
@@ -286,10 +285,10 @@ else:
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            if (_state == State.Condition)
+            if (_form.State == State.Condition)
             {
                 Condition = token;
-                _state = State.Colon;
+                _form.State = State.Colon;
                 return;
             }
 
@@ -298,9 +297,9 @@ else:
 
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
-            if (_state == State.Condition)
+            if (_form.State == State.Condition)
             {
-                _state = State.Colon;
+                _form.State = State.Colon;
                 return;
             }
 
@@ -309,22 +308,22 @@ else:
 
         void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
         {
-            _form.AddBeforeToken(token, (int)_state);
+            _form.AddBeforeActiveToken(token);
         }
 
         void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
         {
-            _form.AddBeforeToken(token, (int)_state);
+            _form.AddBeforeActiveToken(token);
         }
 
         void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
         {
-            _form.AddBeforeToken(token, (int)_state);
+            _form.AddBeforeActiveToken(token);
         }
 
         void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
         {
-            _form.AddBeforeToken(token, (int)_state);
+            _form.AddBeforeActiveToken(token);
         }
     }
 }

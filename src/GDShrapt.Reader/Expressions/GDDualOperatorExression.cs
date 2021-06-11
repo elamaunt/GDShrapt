@@ -2,61 +2,100 @@
 {
     public sealed class GDDualOperatorExression : GDExpression, IExpressionsReceiver, IDualOperatorReceiver
     {
-        bool _leftExpressionChecked;
-        bool _rightExpressionChecked;
-
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public override GDAssociationOrderType AssociationOrder => GDHelper.GetOperatorAssociationOrder(OperatorType);
 
-        public GDExpression LeftExpression { get; set; }
-        public GDDualOperatorType OperatorType { get; set; }
-        public GDExpression RightExpression { get; set; }
+        enum State
+        {
+            LeftExpression,
+            DualOperator,
+            RightExpression,
+            Completed
+        }
+
+        public GDExpression LeftExpression 
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+
+        public GDDualOperator Operator
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+
+        public GDDualOperatorType OperatorType
+        {
+            get => _form.Token1 == null ? GDDualOperatorType.Null : _form.Token1.OperatorType;
+        }
+
+        public GDExpression RightExpression
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+
+        readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>();
+        internal override GDTokensForm Form => _form;
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
-                return;
-
-            if (!_leftExpressionChecked && LeftExpression == null)
             {
-                _leftExpressionChecked = true;
-                state.Push(new GDExpressionResolver(this));
+                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
-            // Indicates that it isn't a normal expression. The parent should handle the state.
-            if (LeftExpression == null)
+            switch (_form.State)
             {
-                state.Pop();
-                state.PassChar(c);
-                return;
+                case State.LeftExpression:
+                    state.Push(new GDExpressionResolver(this));
+                    state.PassChar(c);
+                    break;
+                case State.DualOperator:
+                    // Indicates that it isn't a normal expression. The parent should handle the state.
+                    if (LeftExpression == null)
+                    {
+                        state.Pop();
+                        state.PassChar(c);
+                        return;
+                    }
+
+                    state.Push(new GDDualOperatorResolver(this));
+                    state.PassChar(c);
+                    break;
+                case State.RightExpression:
+                    state.Push(new GDExpressionResolver(this));
+                    state.PassChar(c);
+                    break;
+                case State.Completed:
+                    state.Pop();
+                    state.PassChar(c);
+                    break;
+                default:
+                    break;
             }
-
-            if (OperatorType == GDDualOperatorType.Null)
-            {
-                state.Push(new GDDualOperatorResolver(this));
-                state.PassChar(c);
-                return;
-            }
-
-            if (!_rightExpressionChecked && RightExpression == null)
-            {
-                _rightExpressionChecked = true;
-
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
-                return;
-            }
-
-            state.Pop();
-            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            state.Pop();
-            state.PassLineFinish();
+            switch (_form.State)
+            {
+                case State.LeftExpression:
+                case State.DualOperator:
+                case State.RightExpression:
+                    _form.AddBeforeActiveToken(state.Push(new GDNewLine()));
+                    break;
+                case State.Completed:
+                    state.Pop();
+                    state.PassLineFinish();
+                    break;
+                default:
+                    break;
+            }
+            
         }
 
 
@@ -114,42 +153,81 @@
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.LeftExpression)
+            {
+                LeftExpression = token;
+                _form.State = State.DualOperator;
+                return;
+            }
+
+            if (_form.State == State.RightExpression)
+            {
+                RightExpression = token;
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
-            throw new System.NotImplementedException();
-        }
+            if (_form.State == State.LeftExpression)
+            {
+                _form.State = State.DualOperator;
+                return;
+            }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
-        {
-            throw new System.NotImplementedException();
-        }
+            if (_form.State == State.RightExpression)
+            {
+                _form.State = State.Completed;
+                return;
+            }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            throw new System.NotImplementedException();
+            throw new GDInvalidReadingStateException();
         }
 
         void IDualOperatorReceiver.HandleReceivedToken(GDDualOperator token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.DualOperator)
+            {
+                Operator = token;
+                _form.State = State.RightExpression;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IDualOperatorReceiver.HandleDualOperatorSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.DualOperator)
+            {
+                _form.State = State.RightExpression;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            _form.AddBeforeActiveToken(token);
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            _form.AddBeforeActiveToken(token);
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            _form.AddBeforeActiveToken(token);
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+             _form.AddBeforeActiveToken(token);
         }
     }
 }

@@ -5,9 +5,10 @@ namespace GDShrapt.Reader
     internal class GDExpressionResolver : GDResolver, IKeywordReceiver<GDIfKeyword>, IKeywordReceiver<GDElseKeyword>
     {
         GDExpression _expression;
+        GDTokensForm _expressionParentForm;
+        GDIfKeyword _nextIfKeyword;
 
         bool _ifExpressionChecked;
-        bool _isIfExpressionNext;
         bool _isCompleted;
 
         new IExpressionsReceiver Owner { get; }
@@ -112,9 +113,14 @@ namespace GDShrapt.Reader
 
                 if (_expression is GDDualOperatorExression dualOperatorExpression)
                 {
-                    if (dualOperatorExpression.OperatorType == GDDualOperatorType.Unknown && dualOperatorExpression.RightExpression == null)
+                    if (dualOperatorExpression.OperatorType == GDDualOperatorType.Null && dualOperatorExpression.RightExpression == null)
                     {
+                        // Save dual operators form with LeftExpression.
+                        // Many operators, based on expression at start have the same form.
+                        // And we wil move the form to another expression
+                        _expressionParentForm = dualOperatorExpression.Form;
                         _expression = dualOperatorExpression.LeftExpression;
+
                         CompleteExpression(state);
                         state.PassChar(c);
                         return;
@@ -129,50 +135,42 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                if (_isIfExpressionNext)
+                if (_nextIfKeyword != null)
                 {
+                    var keyword = _nextIfKeyword;
                     _ifExpressionChecked = false;
-                    _isIfExpressionNext = false;
-                    PushAndSave(state, new GDIfExpression()
+                    _nextIfKeyword = null;
+
+                    throw new NotImplementedException();
+                    /*PushAndSave(state, new GDIfExpression()
                     {
-                        TrueExpression = _expression
+                        TrueExpression = _expression,
+                        
                     });
-                    state.PassChar(c);
+                    state.PassChar(c);*/
                     return;
                 }
 
                 if (c == '(')
                 {
-                    PushAndSave(state, new GDCallExression()
-                    {
-                        CallerExpression = _expression
-                    });
+                    PushAndSave(state, new GDCallExression());
                     return;
                 }
 
                 if (c == '[')
                 {
-                    PushAndSave(state, new GDIndexerExression()
-                    {
-                        CallerExpression = _expression
-                    });
+                    PushAndSave(state, new GDIndexerExression());
                     state.PassChar(c);
                     return;
                 }
 
                 if (c == '.')
                 {
-                    PushAndSave(state, new GDMemberOperatorExpression()
-                    {
-                        CallerExpression = _expression
-                    });
+                    PushAndSave(state, new GDMemberOperatorExpression());
                     return;
                 }
 
-                PushAndSave(state, new GDDualOperatorExression()
-                {
-                    LeftExpression = _expression
-                });
+                PushAndSave(state, new GDDualOperatorExression());
                 state.PassChar(c);
             }
         }
@@ -198,7 +196,7 @@ namespace GDShrapt.Reader
                     case "not":
                         PushAndSave(state, new GDSingleOperatorExpression()
                         {
-                            OperatorType = GDSingleOperatorType.Not2
+                            OperatorType = GDSingleOperatorType.Not2,
                         });
                         return true;
                     case "var":
@@ -270,42 +268,67 @@ namespace GDShrapt.Reader
 
         private void PushAndSave(GDReadingState state, GDExpression node)
         {
+            if (_expressionParentForm != null)
+            {
+                _expression.BaseForm = _expressionParentForm;
+                _expressionParentForm = null;
+                _expression = null;
+            }
+
+            if (_expression != null)
+            {
+                node.SwapLeft(_expression);
+
+                // TODO: check all expression for state index. Are there any expressions with state index not 1
+                node.Form.StateIndex = 1;
+
+            }
+
+
             state.Push(_expression = node);
         }
 
         public void HandleReceivedToken(GDIfKeyword token)
         {
-            _isIfExpressionNext = true;
+            _nextIfKeyword = token;
         }
 
         public void HandleReceivedKeywordSkip()
         {
-            _isIfExpressionNext = false;
+            // Nothing
         }
 
         public void HandleReceivedToken(GDComment token)
         {
+            throw new NotImplementedException();
 
         }
 
         public void HandleReceivedToken(GDNewLine token)
         {
+            throw new NotImplementedException();
 
         }
 
         public void HandleReceivedToken(GDSpace token)
         {
-
+            throw new NotImplementedException();
         }
 
         public void HandleReceivedToken(GDInvalidToken token)
         {
-
+            throw new NotImplementedException();
         }
 
         public void HandleReceivedToken(GDElseKeyword token)
         {
+            throw new NotImplementedException();
+        }
 
+        public void HandleReceivedAbstractToken(GDSyntaxToken token)
+        {
+            // TODO: validate token
+            Owner.HandleReceivedAbstractToken(token);
         }
     }
 }

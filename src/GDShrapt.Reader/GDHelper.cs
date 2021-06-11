@@ -9,7 +9,6 @@ namespace GDShrapt.Reader
             switch (self)
             {
                 case GDDualOperatorType.Null: return "";
-                case GDDualOperatorType.Unknown: return "";
                 case GDDualOperatorType.MoreThan: return ">";
                 case GDDualOperatorType.LessThan: return "<";
                 case GDDualOperatorType.Assignment: return "=";
@@ -79,8 +78,7 @@ namespace GDShrapt.Reader
         {
             switch (type)
             {
-                case GDDualOperatorType.Null:
-                case GDDualOperatorType.Unknown: return 20;
+                case GDDualOperatorType.Null: return 20;
                 case GDDualOperatorType.Mod:
                 case GDDualOperatorType.Division:
                 case GDDualOperatorType.Multiply: return 14;
@@ -138,7 +136,6 @@ namespace GDShrapt.Reader
             switch (type)
             {
                 case GDDualOperatorType.Null: 
-                case GDDualOperatorType.Unknown:
                     return GDAssociationOrderType.Undefined;
 
                 case GDDualOperatorType.MoreThan:

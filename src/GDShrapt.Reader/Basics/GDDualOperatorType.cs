@@ -3,7 +3,6 @@
     public enum GDDualOperatorType
     {
         Null = 0,
-        Unknown,
         MoreThan,
         LessThan,
         Assignment,

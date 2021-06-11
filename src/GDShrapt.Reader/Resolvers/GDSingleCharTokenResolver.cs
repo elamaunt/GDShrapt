@@ -15,6 +15,8 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
+            state.Pop();
+
             if (_token.Char == c)
             {
                 Owner.HandleReceivedToken(new TOKEN());
@@ -22,6 +24,7 @@
             }
 
             Owner.HandleReceivedTokenSkip<TOKEN>();
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)

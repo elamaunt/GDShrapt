@@ -17,6 +17,7 @@ namespace GDShrapt.Reader
         internal override void HandleChar(char c, GDReadingState state)
         {
             var s = Sequence;
+
             if (s[_index++] == c)
             {
                 if (_index == s.Length)
@@ -30,7 +31,7 @@ namespace GDShrapt.Reader
             state.Pop();
             OnFail();
 
-            for (int i = 0; i < _index; i++)
+            for (int i = 0; i < _index - 1; i++)
                 state.PassChar(s[i]);
 
             state.PassChar(c);
