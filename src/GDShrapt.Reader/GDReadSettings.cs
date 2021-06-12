@@ -7,5 +7,7 @@
         /// Default value is TRUE
         /// </summary>
         public bool ConvertFourSpacesIntoTabs { get; set; } = true;
+
+        public int ReadBufferSize { get; set; } = 1024;
     }
 }

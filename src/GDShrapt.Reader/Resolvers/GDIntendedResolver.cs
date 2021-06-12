@@ -7,9 +7,12 @@
         bool _lineIntendationEnded;
         int _spaceCounter;
 
-        public GDIntendedResolver(IStyleTokensReceiver owner, int lineIntendation)
+        new IIntendationReceiver Owner { get; }
+
+        public GDIntendedResolver(IIntendationReceiver owner, int lineIntendation)
             : base(owner)
         {
+            Owner = owner;
             LineIntendationThreshold = lineIntendation;
         }
 
@@ -30,6 +33,11 @@
             {
                 if (c == '\t')
                 {
+                    if (_spaceCounter > 0)
+                    {
+                        // TODO: warning spaces before tabs
+                    }
+
                     _spaceCounter = 0;
                     _lineIntendation++;
                     return true;
@@ -67,6 +75,11 @@
                             state.PassChar(c);
                             return true;
                         }
+
+                        Owner.HandleReceivedToken(new GDIntendation() 
+                        { 
+                            LineIntendationThreshold = LineIntendationThreshold 
+                        });
                     }
                 }
             }

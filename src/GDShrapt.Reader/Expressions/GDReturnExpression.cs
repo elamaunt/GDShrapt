@@ -44,25 +44,5 @@
         {
             throw new System.NotImplementedException();
         }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

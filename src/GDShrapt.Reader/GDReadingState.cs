@@ -62,6 +62,15 @@ namespace GDShrapt.Reader
             if (reader == null)
                 return;
 
+            if (c == '\r')
+                return;
+
+            if (c == '\n')
+            {
+                reader.HandleLineFinish(this);
+                return;
+            }
+
             if (c == '#')
             {
                 reader.HandleSharpChar(this);

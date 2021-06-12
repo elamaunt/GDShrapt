@@ -53,6 +53,7 @@
         }
 
         readonly GDTokensForm<State, GDSyntaxToken, GDExpression, GDColon, GDStatementsList, GDSyntaxToken, GDStatementsList> _form = new GDTokensForm<State, GDSyntaxToken, GDExpression, GDColon, GDStatementsList, GDSyntaxToken, GDStatementsList>();
+        internal override GDTokensForm Form => _form;
 
         internal GDIfStatement(int lineIntendation)
             : base(lineIntendation)
@@ -61,7 +62,7 @@
 
         public GDIfStatement()
         {
-            _form.AddBeforeToken1(new GDSpace() { Sequence = " " });
+            //_form.AddBeforeToken1(new GDSpace() { Sequence = " " });
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -150,17 +151,38 @@
 
         internal void HandleFalseStatements(GDReadingState state)
         {
-            state.Push(FalseStatements);
+            if (_form.State == State.FalseStatements)
+            {
+                state.Push(FalseStatements);
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
             switch (_form.State)
             {
-                case State.TrueStatements:
-                case State.ElseOrElifKeyword:
-                case State.FalseStatements:
+                case State.Condition:
+                case State.Colon:
+                    _form.State = State.FalseStatements;
                     _form.AddBeforeActiveToken(new GDNewLine());
+                    break;
+                case State.TrueStatements:
+                    _form.State = State.ElseOrElifKeyword;
+                    state.Push(TrueStatements);
+                    state.PassLineFinish();
+                    break;
+                case State.ElseOrElifKeyword:
+                    _form.State = State.FalseStatements;
+                    _form.AddBeforeActiveToken(new GDNewLine());
+                    break;
+                case State.FalseStatements:
+                    _form.State = State.Completed;
+                    state.Push(TrueStatements);
+                    state.PassLineFinish();
                     break;
                 default:
                     state.Pop();

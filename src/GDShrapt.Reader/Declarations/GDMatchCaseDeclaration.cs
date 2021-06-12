@@ -91,5 +91,10 @@ namespace GDShrapt.Reader
         {
             throw new System.NotImplementedException();
         }
+
+        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

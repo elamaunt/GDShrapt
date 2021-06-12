@@ -146,11 +146,6 @@
             return right;
         }
 
-        public override string ToString()
-        {
-            return $"{LeftExpression} {OperatorType.Print()} {RightExpression}";
-        }
-
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.LeftExpression)

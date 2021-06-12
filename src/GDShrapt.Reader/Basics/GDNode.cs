@@ -8,7 +8,7 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract partial class GDNode : GDSyntaxToken, IEnumerable<GDSyntaxToken>, ITokenReceiver
+    public abstract partial class GDNode : GDSyntaxToken, IEnumerable<GDSyntaxToken>, IStyleTokensReceiver
     {
         // TODO: remove virtual. Should be abstract
         internal virtual GDTokensForm Form => throw new NotImplementedException();
@@ -84,6 +84,21 @@ namespace GDShrapt.Reader
         }
 
         void ITokenReceiver.HandleReceivedAbstractToken(GDSyntaxToken token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
+        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
         {
             Form.AddBeforeActiveToken(token);
         }

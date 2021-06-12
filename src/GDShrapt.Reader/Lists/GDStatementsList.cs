@@ -3,6 +3,7 @@
     public class GDStatementsList : GDSeparatedList<GDStatement, GDNewLine>, IStatementsReceiver
     {
         private int _lineIntendationThreshold;
+        bool _completed;
 
         internal GDStatementsList(int lineIntendation)
         {
@@ -15,22 +16,45 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDStatementResolver(this, _lineIntendationThreshold));
+                state.PassChar(c);
+                return;
+            }
+
+            state.Pop();
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDStatementResolver(this, _lineIntendationThreshold));
+                state.PassLineFinish();
+                return;
+            }
+
+            state.Pop();
+            state.PassLineFinish();
         }
 
         void IStatementsReceiver.HandleReceivedToken(GDStatement token)
         {
-            TokensList.AddLast(token);
+            ListForm.Add(token);
         }
 
         void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
         {
-            TokensList.AddLast(token);
+            ListForm.Add(token);
+        }
+
+        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
+        {
+            ListForm.Add(token);
         }
     }
 }

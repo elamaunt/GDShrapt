@@ -10,7 +10,7 @@ namespace GDShrapt.Reader
         StringBuilder _sequenceBuilder = new StringBuilder();
 
         internal bool IsCompleted { get; private set; }
-        public string Sequence { get; set; }
+        public string Sequence { get; protected set; }
 
         internal int SequenceBuilderLength => _sequenceBuilder.Length;
 
@@ -67,5 +67,10 @@ namespace GDShrapt.Reader
         /// <param name="state">Current reading state</param>
         /// <returns>Should add char to sequence</returns>
         internal abstract bool CanAppendChar(char c, GDReadingState state);
+
+        public override string ToString()
+        {
+            return $"{Sequence}";
+        }
     }
 }

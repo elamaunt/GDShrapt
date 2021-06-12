@@ -53,32 +53,12 @@ namespace GDShrapt.Reader
             return $"{string.Join(", ", Parameters.Select(x=> x.ToString()))}";
         }
 
-        public void HandleReceivedToken(GDExpression token)
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             throw new System.NotImplementedException();
         }
 
-        public void HandleReceivedExpressionSkip()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void HandleReceivedToken(GDComment token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void HandleReceivedToken(GDNewLine token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void HandleReceivedToken(GDSpace token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void HandleReceivedToken(GDInvalidToken token)
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
             throw new System.NotImplementedException();
         }

@@ -1,8 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal interface IClassMembersReceiver : IStyleTokensReceiver
+    internal interface IClassMembersReceiver : IIntendationReceiver
     {
         void HandleReceivedToken(GDClassMember token);
-
     }
 }

@@ -26,11 +26,13 @@ namespace GDShrapt.Reader
             var declaration = new GDClassDeclaration();
             state.Push(declaration);
 
+            var buffer = new char[Settings.ReadBufferSize];
+            int count = 0;
+
             using (var reader = new StringReader(content))
             {
-                string line;
-                while((line = reader.ReadLine()) != null)
-                    ParseLine(line, state);
+                while ((count = reader.Read(buffer, 0, buffer.Length)) > 0)
+                    ParseBuffer(buffer, count, state);
             }
 
             state.CompleteReading();
@@ -45,8 +47,15 @@ namespace GDShrapt.Reader
             var declaration = new GDClassDeclaration();
             state.Push(declaration);
 
-            foreach (var line in File.ReadLines(filePath))
-                ParseLine(line, state);
+            var buffer = new char[Settings.ReadBufferSize];
+            int count = 0;
+
+            using(var stream = File.OpenRead(filePath))
+            using (var reader = new StreamReader(stream))
+            {
+                while ((count = reader.Read(buffer, 0, buffer.Length)) > 0)
+                    ParseBuffer(buffer, count, state);
+            }
 
             state.CompleteReading();
 
@@ -60,11 +69,13 @@ namespace GDShrapt.Reader
 
             state.Push(new GDExpressionResolver(receiver));
 
+            var buffer = new char[Settings.ReadBufferSize];
+            int count = 0;
+
             using (var reader = new StringReader(content))
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                    ParseLine(line, state);
+                while ((count = reader.Read(buffer, 0, buffer.Length)) > 0)
+                    ParseBuffer(buffer, count, state);
             }
 
             state.CompleteReading();
@@ -77,24 +88,24 @@ namespace GDShrapt.Reader
             var receiver = new GDReceiver();
 
             state.Push(new GDStatementResolver(receiver, 0));
+            
+            var buffer = new char[Settings.ReadBufferSize];
+            int count = 0;
 
             using (var reader = new StringReader(content))
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                    ParseLine(line, state);
+                while ((count = reader.Read(buffer, 0, buffer.Length)) > 0)
+                    ParseBuffer(buffer, count, state);
             }
 
             state.CompleteReading();
             return receiver.Tokens.OfType<GDStatement>().FirstOrDefault();
         }
 
-        private void ParseLine(string line, GDReadingState state)
+        private void ParseBuffer(char[] buffer, int count, GDReadingState state)
         {
-            for (int i = 0; i < line.Length; i++)
-                state.PassChar(line[i]);
-
-            state.PassLineFinish();
+            for (int i = 0; i < count; i++)
+                state.PassChar(buffer[i]);
         }
     }
 }

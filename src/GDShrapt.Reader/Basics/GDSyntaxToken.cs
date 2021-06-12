@@ -1,10 +1,12 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
     /// <summary>
     /// Basic syntax node.
     /// </summary>
+    [DebuggerDisplay("{DebuggerView}")]
     public abstract class GDSyntaxToken : GDReader
     {
        //readonly WeakReference<GDNode> _parentWeakRef = new WeakReference<GDNode>(null);
@@ -60,5 +62,8 @@ namespace GDShrapt.Reader
         {
             builder.Append(ToString());
         }
+
+        [DebuggerHidden]
+        internal string DebuggerView => $"{NodeName} '{ToString()}'";
     }
 }

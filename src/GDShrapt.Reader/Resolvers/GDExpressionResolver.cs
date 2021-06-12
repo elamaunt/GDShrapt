@@ -153,24 +153,24 @@ namespace GDShrapt.Reader
 
                 if (c == '(')
                 {
-                    PushAndSave(state, new GDCallExression());
+                    PushAndSwap(state, new GDCallExression());
                     return;
                 }
 
                 if (c == '[')
                 {
-                    PushAndSave(state, new GDIndexerExression());
+                    PushAndSwap(state, new GDIndexerExression());
                     state.PassChar(c);
                     return;
                 }
 
                 if (c == '.')
                 {
-                    PushAndSave(state, new GDMemberOperatorExpression());
+                    PushAndSwap(state, new GDMemberOperatorExpression());
                     return;
                 }
 
-                PushAndSave(state, new GDDualOperatorExression());
+                PushAndSwap(state, new GDDualOperatorExression());
                 state.PassChar(c);
             }
         }
@@ -247,6 +247,9 @@ namespace GDShrapt.Reader
 
             var last = _expression;
 
+            _expression = null;
+            _expressionParentForm = null;
+
             if (last != null)
             {
                 // Handle negative number from Negate operator and GDNumberExpression
@@ -266,7 +269,7 @@ namespace GDShrapt.Reader
             state.Pop();
         }
 
-        private void PushAndSave(GDReadingState state, GDExpression node)
+        private void PushAndSwap(GDReadingState state, GDExpression node)
         {
             if (_expressionParentForm != null)
             {
@@ -281,10 +284,14 @@ namespace GDShrapt.Reader
 
                 // TODO: check all expression for state index. Are there any expressions with state index not 1
                 node.Form.StateIndex = 1;
-
             }
 
+            state.Push(_expression = node);
+        }
 
+        private void PushAndSave(GDReadingState state, GDExpression node)
+        {
+            _expressionParentForm = null;
             state.Push(_expression = node);
         }
 

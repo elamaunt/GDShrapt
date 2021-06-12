@@ -7,57 +7,46 @@ namespace GDShrapt.Reader
         where NODE : GDNode
         where SEPARATOR : GDSimpleSyntaxToken, new()
     {
-        internal LinkedList<GDSyntaxToken> TokensList { get; } = new LinkedList<GDSyntaxToken>();
+        GDTokensListForm<NODE> _form = new GDTokensListForm<NODE>();
 
-        public int Count { get; private set; }
+        internal GDTokensListForm<NODE> ListForm => _form;
+        internal override GDTokensForm Form => _form;
 
+        public int Count => _form.Count;
         public bool IsReadOnly => false;
 
         public NODE this[int index] 
         {
-            get => TokensList.OfType<NODE>().ElementAt(index);
+            get => _form[index];
             set
             {
-                var v = TokensList.OfType<NODE>().ElementAt(index);
-                var node = TokensList.Find(v);
-                node.Value = value;
+                _form[index] = value;
             }
         }
 
         public void Add(NODE item)
         {
-            if (Count > 0)
-                TokensList.AddLast(new SEPARATOR());
-            TokensList.AddLast(item);
-            Count++;
+            _form.Add(item);
         }
 
         public void Clear()
         {
-            Count = 0;
-            TokensList.Clear();
+            _form.ClearAllTokens();
         }
 
         public bool Contains(NODE item)
         {
-            return this.OfType<NODE>().Contains(item);
+            return _form.Contains(item);
         }
 
         public void CopyTo(NODE[] array, int arrayIndex)
         {
-            foreach (var item in TokensList.OfType<NODE>())
-                array[arrayIndex++] = item;
+            _form.CopyTo(array, arrayIndex);
         }
 
         public bool Remove(NODE item)
         {
-            if (TokensList.Remove(item))
-            {
-                Count--;
-                return true;
-            }
-
-            return false;
+            return _form.Remove(item);
         }
 
         IEnumerator<NODE> IEnumerable<NODE>.GetEnumerator()
@@ -67,53 +56,36 @@ namespace GDShrapt.Reader
 
         public int IndexOf(NODE item)
         {
-            int index = 0;
-
-            foreach (var token in TokensList.OfType<NODE>())
-            {
-                if (token == item)
-                    return index;
-                index++;
-            }
-
-            return -1;
+            return _form.IndexOf(item);
         }
 
         public void Insert(int index, NODE item)
         {
-            var v = TokensList.OfType<NODE>().ElementAt(index);
-            var node = TokensList.Find(v);
-
-            TokensList.AddBefore(node, new SEPARATOR());
-            TokensList.AddBefore(node, item);
-            TokensList.AddBefore(node, new SEPARATOR());
-
-            Count++;
+            _form.Insert(index, item);
         }
 
         public void RemoveAt(int index)
         {
-            if (TokensList.Remove(TokensList.OfType<NODE>().ElementAt(index)))
-                Count--;
+            _form.RemoveAt(index);
         }
 
         void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
         {
-            TokensList.AddLast(token);
+            _form.Add(token);
         }
 
         void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
         {
-            TokensList.AddLast(token);
+            _form.Add(token);
         }
 
         void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
         {
-            TokensList.AddLast(token);
+            _form.Add(token);
         }
         void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
         {
-            TokensList.AddLast(token);
+            _form.Add(token);
         }
     }
 }

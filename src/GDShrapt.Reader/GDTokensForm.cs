@@ -5,6 +5,115 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
+
+
+    internal class GDTokensListForm<NODE> : GDTokensForm, IList<NODE>
+        where NODE : GDSyntaxToken
+    {
+        public GDTokensListForm()
+            : base()
+        {
+        }
+
+        public new int Count => _statePoints.Count;
+        public int TokensCount => base.Count;
+
+        public NODE this[int index]
+        { 
+            get => (NODE)_statePoints[index].Value; 
+            set => _statePoints[index].Value = value; 
+        }
+
+        public void Add(NODE item)
+        {
+            _statePoints.Add(_list.AddLast(item));
+            StateIndex++;
+        }
+
+        public bool Contains(NODE item)
+        {
+            if (item is null)
+                throw new ArgumentNullException(nameof(item));
+
+            return _list.Contains(item);
+        }
+
+        public void CopyTo(NODE[] array, int arrayIndex)
+        {
+            for (int i = 0; i < _statePoints.Count; i++)
+            {
+                var node = _statePoints[i];
+
+                if (node == null || node.Value == null)
+                    continue;
+
+                array[arrayIndex++] = (NODE)node.Value;
+            }
+        }
+
+        public int IndexOf(NODE item)
+        {
+            if (item is null)
+                throw new ArgumentNullException(nameof(item));
+
+            var node = _list.Find(item);
+
+            if (node == null)
+                return -1;
+
+            return _statePoints.IndexOf(node);
+        }
+
+        public void Insert(int index, NODE item)
+        {
+            if (item is null)
+                throw new ArgumentNullException(nameof(item));
+
+            var node = _statePoints[index];
+            var newNode =_list.AddBefore(node, item);
+            _statePoints.Insert(index, newNode);
+        }
+
+        public new void Clear()
+        {
+            var c = _statePoints.Count;
+
+            for (int i = 0; i < c; i++)
+                _list.Remove(_statePoints[0]);
+
+            _statePoints.Clear();
+        }
+
+        public void ClearAllTokens() => base.Clear();
+
+        public bool Remove(NODE item)
+        {
+            if (item is null)
+                throw new ArgumentNullException(nameof(item));
+
+            var node = _list.Find(item);
+
+            if (node == null)
+                return false;
+
+            _statePoints.Remove(node);
+            _list.Remove(node);
+            return true;
+        }
+
+        public void RemoveAt(int index)
+        {
+            var node = _statePoints[index];
+            _statePoints.RemoveAt(index);
+            _list.Remove(node);
+        }
+
+        IEnumerator<NODE> IEnumerable<NODE>.GetEnumerator()
+        {
+            return _statePoints.OfType<NODE>().GetEnumerator();
+        }
+    }
+
     internal class GDTokensForm<STATE, T0> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
@@ -220,21 +329,31 @@ namespace GDShrapt.Reader
 
     internal abstract class GDTokensForm : ICollection<GDSyntaxToken>
     {
-        LinkedList<GDSyntaxToken> _list;
-        LinkedListNode<GDSyntaxToken>[] _statePoints;
+        protected LinkedList<GDSyntaxToken> _list;
+        protected List<LinkedListNode<GDSyntaxToken>> _statePoints;
 
         public int Count => _list.Count;
         public bool IsReadOnly => false;
 
         public int StateIndex { get; set; }
 
+        readonly int _initialSize;
+
         public GDTokensForm(int size)
         {
+            _initialSize = size;
             _list = new LinkedList<GDSyntaxToken>();
-            _statePoints = new LinkedListNode<GDSyntaxToken>[size];
+            _statePoints = new List<LinkedListNode<GDSyntaxToken>>(size);
 
             for (int i = 0; i < size; i++)
-                _list.AddLast(_statePoints[i] = new LinkedListNode<GDSyntaxToken>(null));
+                _statePoints.Add(_list.AddLast(default(GDSyntaxToken)));
+        }
+
+        public GDTokensForm()
+        {
+            _initialSize = 0;
+            _list = new LinkedList<GDSyntaxToken>();
+            _statePoints = new List<LinkedListNode<GDSyntaxToken>>();
         }
 
         public void MoveTokens(GDTokensForm baseForm)
@@ -242,7 +361,7 @@ namespace GDShrapt.Reader
             if (baseForm == null)
                 return;
 
-            if (StateIndex > 0 || _list.Count > _statePoints.Length)
+            if (StateIndex > 0 || _list.Count > _statePoints.Count)
                 throw new InvalidOperationException("MoveTokens supported only for initial form");
 
             var node = baseForm._list.First;
@@ -274,7 +393,7 @@ namespace GDShrapt.Reader
             if (token is null)
                 throw new System.ArgumentNullException(nameof(token));
 
-            if (index < _statePoints.Length)
+            if (index < _statePoints.Count)
                 AddMiddle(token, index);
             else
                 Add(token);
@@ -293,7 +412,7 @@ namespace GDShrapt.Reader
             if (value is null)
                 throw new System.ArgumentNullException(nameof(value));
 
-            if (index >= _statePoints.Length)
+            if (index >= _statePoints.Count)
             {
                 _list.AddLast(value);
             }
@@ -312,15 +431,15 @@ namespace GDShrapt.Reader
         protected T Get<T>(int index) where T : GDSyntaxToken => (T)_statePoints[index].Value;
         protected GDSyntaxToken Get(int index) => _statePoints[index].Value;
 
-       
+
         public void Clear()
         {
-            var size = _statePoints.Length;
             _list = new LinkedList<GDSyntaxToken>();
-            _statePoints = new LinkedListNode<GDSyntaxToken>[size];
+            _statePoints = new List<LinkedListNode<GDSyntaxToken>>(_initialSize);
 
-            for (int i = 0; i < size; i++)
-                _list.AddLast(_statePoints[i] = new LinkedListNode<GDSyntaxToken>(null));
+            if (_initialSize > 0)
+                for (int i = 0; i < _initialSize; i++)
+                    _statePoints[i] = _list.AddLast((GDSyntaxToken)null);
         }
 
         public bool Contains(GDSyntaxToken item)
@@ -341,7 +460,7 @@ namespace GDShrapt.Reader
             if (item is null)
                 throw new System.ArgumentNullException(nameof(item));
 
-            for (int i = 0; i < _statePoints.Length; i++)
+            for (int i = 0; i < _statePoints.Count; i++)
             {
                 if (_statePoints[i].Value == item)
                 {

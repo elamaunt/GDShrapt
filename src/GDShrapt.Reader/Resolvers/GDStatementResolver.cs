@@ -100,13 +100,12 @@ namespace GDShrapt.Reader
                     _sequenceBuilder.Clear();
                     CompleteAsStatement(state, sequence);
                     state.PassLineFinish();
+                    return;
                 }
             }
 
-            AppendAndPush(new GDNewLine(), state);
+            Owner.HandleReceivedToken(new GDNewLine());
             ResetIntendation();
-            state.PassLineFinish();
-
 
             // Old code
             /*if (_sequenceBuilder?.Length > 0)
@@ -123,7 +122,7 @@ namespace GDShrapt.Reader
             }*/
         }
 
-        private void CompleteAsStatement(GDReadingState state, string sequence)
+        private GDStatement CompleteAsStatement(GDReadingState state, string sequence)
         {
             _sequenceBuilder.Clear();
             _statementResolved = true;
@@ -132,7 +131,8 @@ namespace GDShrapt.Reader
 
             switch (sequence)
             {
-                case "else":
+                // TODO: move logic to if statement
+                /*case "else":
                     if (_ifStatement != null)
                     {
                         _ifStatement.HandleFalseStatements(state);
@@ -150,7 +150,7 @@ namespace GDShrapt.Reader
                         state.Push(statement);
                     }
 
-                    return;
+                    return;*/
                 case "if":
                     statement = _ifStatement = new GDIfStatement(LineIntendationThreshold);
                     break;
@@ -196,19 +196,21 @@ namespace GDShrapt.Reader
                     break;
                 default:
                     {
-                        CompleteAsExpressionStatement(state, sequence);
-                        return;
+                        return CompleteAsExpressionStatement(state, sequence);
                     }
             }
 
             Owner.HandleReceivedToken(statement);
+
             state.Push(statement);
 
             for (int i = 0; i < sequence.Length; i++)
                 state.PassChar(sequence[i]);
+
+            return statement;
         }
 
-        private void CompleteAsExpressionStatement(GDReadingState state, string sequence)
+        private GDExpressionStatement CompleteAsExpressionStatement(GDReadingState state, string sequence)
         {
             _ifStatement = null;
             var statement = new GDExpressionStatement();
@@ -218,6 +220,20 @@ namespace GDShrapt.Reader
 
             for (int i = 0; i < sequence.Length; i++)
                 state.PassChar(sequence[i]);
+
+            return statement;
+        }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            if (!_statementResolved)
+            {
+                var sequence = _sequenceBuilder.ToString();
+                _sequenceBuilder.Clear();
+                CompleteAsStatement(state, sequence)?.ForceComplete(state);
+            }
+
+            base.ForceComplete(state);
         }
     }
 }

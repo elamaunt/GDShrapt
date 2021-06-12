@@ -14,7 +14,12 @@
 
         void IClassMembersReceiver.HandleReceivedToken(GDClassMember token)
         {
-            TokensList.AddLast(token);
+            ListForm.Add(token);
+        }
+
+        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
+        {
+            ListForm.Add(token);
         }
     }
 }
