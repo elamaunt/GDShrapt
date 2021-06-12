@@ -110,45 +110,9 @@
                     break;
 
             }
-
-
-            // Old code
-            /* if (IsSpace(c))
-                 return;
-
-             if (Condition == null)
-             {
-                 state.Push(new GDExpressionResolver(this));
-                 state.PassChar(c);
-                 return;
-             }
-
-             if (!_expressionEnded)
-             {
-                 if (c != ':')
-                     return;
-
-                 _expressionEnded = true;
-                 return;
-             }
-
-             if (!_trueStatementsChecked)
-             {
-                 _trueStatementsChecked = true;
-                 var statement = new GDExpressionStatement(LineIntendation + 1);
-                 TrueStatements.Add(statement);
-                 state.Push(statement);
-                 state.PassChar(c);
-                 return;
-             }
-
-             // 'if' statement doesn't handle 'else' and 'elif' branches by yourself. It is managed by statement resolver.
-             // Just return control flow to previous node.
-             state.Pop();
-             state.PassChar(c);*/
         }
 
-
+        // TODO: rework
         internal void HandleFalseStatements(GDReadingState state)
         {
             if (_form.State == State.FalseStatements)
@@ -189,47 +153,9 @@
                     state.PassLineFinish();
                     break;
             }
-
-
-            // Old code
-            /*if (!_trueStatementsChecked)
-            {
-                _trueStatementsChecked = true;
-                state.Push(new GDStatementResolver(this, LineIntendation + 1));
-                return;
-            }
-
-            state.Pop();
-            state.PassLineFinish();*/
         }
 
-        /*public override string ToString()
-        {
-            if (FalseStatements.Count == 0)
-            {
-                return $@"if {Condition}:
-    {string.Join("\n\t", TrueStatements.Select(x => x.ToString()))}";
-            }
-            else
-            {
-                if (FalseStatements.Count == 1 && FalseStatements[0] is GDIfStatement statement)
-                {
-                    return $@"if {Condition}:
-    {string.Join("\n\t", TrueStatements.Select(x => x.ToString()))}
-el{statement}";
-                }
-                else
-                {
-                    return $@"if {Condition}:
-    {string.Join("\n\t", TrueStatements.Select(x => x.ToString()))}
-else:
-    {string.Join("\n\t", FalseStatements.Select(x => x.ToString()))}";
-
-                }
-            }
-        }*/
-
-        public void HandleReceivedToken(GDIfKeyword token)
+        void IKeywordReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
         {
             if (_form.State == State.IfKeyword)
             {
@@ -241,7 +167,7 @@ else:
             throw new GDInvalidReadingStateException();
         }
 
-        public void HandleReceivedKeywordSkip()
+        void IKeywordReceiver<GDIfKeyword>.HandleReceivedKeywordSkip()
         {
             if (_form.State == State.IfKeyword)
             {
@@ -249,6 +175,11 @@ else:
                 return;
             }
 
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDElseKeyword>.HandleReceivedKeywordSkip()
+        {
             if (_form.State == State.ElseOrElifKeyword)
             {
                 _form.State = State.FalseStatements;
@@ -258,7 +189,18 @@ else:
             throw new GDInvalidReadingStateException();
         }
 
-        public void HandleReceivedToken(GDElseKeyword token)
+        void IKeywordReceiver<GDElifKeyword>.HandleReceivedKeywordSkip()
+        {
+            if (_form.State == State.ElseOrElifKeyword)
+            {
+                _form.State = State.FalseStatements;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
         {
             if (_form.State == State.ElseOrElifKeyword)
             {
@@ -270,7 +212,7 @@ else:
             throw new GDInvalidReadingStateException();
         }
 
-        public void HandleReceivedToken(GDElifKeyword token)
+        void IKeywordReceiver<GDElifKeyword>.HandleReceivedToken(GDElifKeyword token)
         {
             if (_form.State == State.ElseOrElifKeyword)
             {
@@ -282,7 +224,7 @@ else:
             throw new GDInvalidReadingStateException();
         }
 
-        public void HandleReceivedToken(GDColon token)
+        void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
             if (_form.State == State.Colon)
             {
@@ -294,7 +236,7 @@ else:
             throw new GDInvalidReadingStateException();
         }
 
-        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip<B>()
+        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Colon)
             {
@@ -326,26 +268,6 @@ else:
             }
 
             throw new GDInvalidReadingStateException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
-        {
-            _form.AddBeforeActiveToken(token);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            _form.AddBeforeActiveToken(token);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            _form.AddBeforeActiveToken(token);
-        }
-
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            _form.AddBeforeActiveToken(token);
         }
     }
 }

@@ -2,6 +2,18 @@
 {
     public class GDClassMembersList : GDSeparatedList<GDClassMember, GDNewLine>, IClassMembersReceiver
     {
+        private int _lineIntendationThreshold;
+        bool _completed;
+
+        internal GDClassMembersList(int lineIntendation)
+        {
+            _lineIntendationThreshold = lineIntendation;
+        }
+
+        public GDClassMembersList()
+        {
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
 

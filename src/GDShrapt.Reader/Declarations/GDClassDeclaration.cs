@@ -5,24 +5,29 @@ namespace GDShrapt.Reader
 {
     public sealed class GDClassDeclaration : GDNode
     {
-        bool _membersChecked;
-
-        enum State
+        public GDClassAtributesList Atributes
         {
-            Members,
-            Copmleted
+            get => _form.Token0 ?? (_form.Token0 = new GDClassAtributesList());
         }
-
-        readonly GDTokensForm<State, GDClassMembersList> _form = new GDTokensForm<State, GDClassMembersList>();
 
         public GDClassMembersList Members
         {
-            get => _form.Token0 ?? (_form.Token0 = new GDClassMembersList());
+            get => _form.Token1 ?? (_form.Token1 = new GDClassMembersList());
         }
 
-        public GDExtendsAtribute Extends => Members.OfType<GDExtendsAtribute>().FirstOrDefault();
-        public GDClassNameAtribute ClassName => Members.OfType<GDClassNameAtribute>().FirstOrDefault();
-        public bool IsTool => Members.OfType<GDToolAtribute>().Any();
+        enum State
+        {
+            Atributes,
+            Members,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDClassAtributesList, GDClassMembersList> _form = new GDTokensForm<State, GDClassAtributesList, GDClassMembersList>();
+        internal override GDTokensForm Form => _form;
+
+        public GDExtendsAtribute Extends => Atributes.OfType<GDExtendsAtribute>().FirstOrDefault();
+        public GDClassNameAtribute ClassName => Atributes.OfType<GDClassNameAtribute>().FirstOrDefault();
+        public bool IsTool => Atributes.OfType<GDToolAtribute>().Any();
 
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
@@ -40,42 +45,38 @@ namespace GDShrapt.Reader
 
             switch (_form.State)
             {
-                case State.Members:
+                case State.Atributes:
+                    _form.State = State.Members;
+                    state.Push(Atributes);
+                    state.PassChar(c);
                     break;
-                case State.Copmleted:
+                case State.Members:
+                    _form.State = State.Completed;
+                    state.Push(Members);
+                    state.PassChar(c);
                     break;
                 default:
-                    break;
+                    throw new GDInvalidReadingStateException();
             }
-
-            // Old code
-            /*
-            if (!_membersChecked)
-            {
-                _membersChecked = true;
-                state.Push(new GDClassMemberResolver(this, 0));
-                state.PassChar(c);
-                return;
-            }
-
-            // Complete reading
-            state.Pop();*/
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            // Old code
-            /*
-            if (!_membersChecked)
+            switch (_form.State)
             {
-                _membersChecked = true;
-                state.Push(new GDClassMemberResolver(this, 0));
-                state.PassLineFinish();
-                return;
+                case State.Atributes:
+                    _form.State = State.Members;
+                    state.Push(Atributes);
+                    state.PassLineFinish();
+                    break;
+                case State.Members:
+                    _form.State = State.Completed;
+                    state.Push(Members);
+                    state.PassLineFinish();
+                    break;
+                default:
+                    throw new GDInvalidReadingStateException();
             }
-
-            // Complete reading
-            state.Pop();*/
         }
     }
 }

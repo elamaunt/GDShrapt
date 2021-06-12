@@ -22,6 +22,9 @@
         /// <param name="c">One char to check</param>
         internal bool IsSpace(char c) => c == ' ' || c == '\t';
 
+        internal bool IsIdentifierStartChar(char c) => c == '_' || char.IsLetter(c);
+        internal bool IsStringStartChar(char c) => c == '\'' || c == '\"';
+
         /// <summary>
         /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for sharp (line commentary) character.
         /// Default implementation will add a new comment token in the reading state.

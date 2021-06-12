@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -11,7 +10,7 @@ namespace GDShrapt.Reader
     public abstract partial class GDNode : GDSyntaxToken, IEnumerable<GDSyntaxToken>, IStyleTokensReceiver
     {
         // TODO: remove virtual. Should be abstract
-        internal virtual GDTokensForm Form => throw new NotImplementedException();
+        internal abstract GDTokensForm Form { get; }
         internal GDTokensForm BaseForm
         {
             set => Form.MoveTokens(value);
@@ -41,15 +40,11 @@ namespace GDShrapt.Reader
             TokensList.Remove(node);
         }*/
 
-        internal virtual void AppendAndPush(GDSyntaxToken token, GDReadingState state)
-        {
-            Form.Add(token);
-            state.Push(token);
-        }
-
         internal override void HandleSharpChar(GDReadingState state)
         {
-            AppendAndPush(new GDComment(), state);
+            var comment = new GDComment();
+            Form.AddBeforeActiveToken(comment);
+            state.Push(comment);
         }
 
         public override void AppendTo(StringBuilder builder)

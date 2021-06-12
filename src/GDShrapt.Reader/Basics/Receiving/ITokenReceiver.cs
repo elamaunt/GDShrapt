@@ -4,8 +4,7 @@
         where T : GDSyntaxToken
     {
         void HandleReceivedToken(T token);
-        void HandleReceivedTokenSkip<B>()
-            where B : T;
+        void HandleReceivedTokenSkip();
     }
 
     internal interface ITokenReceiver
