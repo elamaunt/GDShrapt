@@ -5,8 +5,6 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-
-
     internal class GDTokensListForm<NODE> : GDTokensForm, IList<NODE>
         where NODE : GDSyntaxToken
     {
@@ -312,6 +310,176 @@ namespace GDShrapt.Reader
         public T7 Token7 { get => Get<T7>(7); set => Set(value, 7); }
     }
 
+    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8> : GDTokensForm<STATE>
+        where STATE : struct, System.Enum
+        where T0 : GDSyntaxToken
+        where T1 : GDSyntaxToken
+        where T2 : GDSyntaxToken
+        where T3 : GDSyntaxToken
+        where T4 : GDSyntaxToken
+        where T5 : GDSyntaxToken
+        where T6 : GDSyntaxToken
+        where T7 : GDSyntaxToken
+        where T8 : GDSyntaxToken
+    {
+        public GDTokensForm()
+            : base(9)
+        {
+
+        }
+
+        public void AddBeforeToken0(GDSyntaxToken token) => AddMiddle(token, 0);
+        public T0 Token0 { get => Get<T0>(0); set => Set(value, 0); }
+        public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 1);
+        public T1 Token1 { get => Get<T1>(1); set => Set(value, 1); }
+        public void AddBeforeToken2(GDSyntaxToken token) => AddMiddle(token, 2);
+        public T2 Token2 { get => Get<T2>(2); set => Set(value, 2); }
+        public void AddBeforeToken3(GDSyntaxToken token) => AddMiddle(token, 3);
+        public T3 Token3 { get => Get<T3>(3); set => Set(value, 3); }
+        public void AddBeforeToken4(GDSyntaxToken token) => AddMiddle(token, 4);
+        public T4 Token4 { get => Get<T4>(4); set => Set(value, 4); }
+        public void AddBeforeToken5(GDSyntaxToken token) => AddMiddle(token, 5);
+        public T5 Token5 { get => Get<T5>(5); set => Set(value, 5); }
+        public void AddBeforeToken6(GDSyntaxToken token) => AddMiddle(token, 6);
+        public T6 Token6 { get => Get<T6>(6); set => Set(value, 6); }
+        public void AddBeforeToken7(GDSyntaxToken token) => AddMiddle(token, 7);
+        public T7 Token7 { get => Get<T7>(7); set => Set(value, 7); }
+        public void AddBeforeToken8(GDSyntaxToken token) => AddMiddle(token, 8);
+        public T8 Token8 { get => Get<T8>(8); set => Set(value, 8); }
+    }
+
+    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : GDTokensForm<STATE>
+        where STATE : struct, System.Enum
+        where T0 : GDSyntaxToken
+        where T1 : GDSyntaxToken
+        where T2 : GDSyntaxToken
+        where T3 : GDSyntaxToken
+        where T4 : GDSyntaxToken
+        where T5 : GDSyntaxToken
+        where T6 : GDSyntaxToken
+        where T7 : GDSyntaxToken
+        where T8 : GDSyntaxToken
+        where T9 : GDSyntaxToken
+    {
+        public GDTokensForm()
+            : base(10)
+        {
+
+        }
+
+        public void AddBeforeToken0(GDSyntaxToken token) => AddMiddle(token, 0);
+        public T0 Token0 { get => Get<T0>(0); set => Set(value, 0); }
+        public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 1);
+        public T1 Token1 { get => Get<T1>(1); set => Set(value, 1); }
+        public void AddBeforeToken2(GDSyntaxToken token) => AddMiddle(token, 2);
+        public T2 Token2 { get => Get<T2>(2); set => Set(value, 2); }
+        public void AddBeforeToken3(GDSyntaxToken token) => AddMiddle(token, 3);
+        public T3 Token3 { get => Get<T3>(3); set => Set(value, 3); }
+        public void AddBeforeToken4(GDSyntaxToken token) => AddMiddle(token, 4);
+        public T4 Token4 { get => Get<T4>(4); set => Set(value, 4); }
+        public void AddBeforeToken5(GDSyntaxToken token) => AddMiddle(token, 5);
+        public T5 Token5 { get => Get<T5>(5); set => Set(value, 5); }
+        public void AddBeforeToken6(GDSyntaxToken token) => AddMiddle(token, 6);
+        public T6 Token6 { get => Get<T6>(6); set => Set(value, 6); }
+        public void AddBeforeToken7(GDSyntaxToken token) => AddMiddle(token, 7);
+        public T7 Token7 { get => Get<T7>(7); set => Set(value, 7); }
+        public void AddBeforeToken8(GDSyntaxToken token) => AddMiddle(token, 8);
+        public T8 Token8 { get => Get<T8>(8); set => Set(value, 8); }
+        public void AddBeforeToken9(GDSyntaxToken token) => AddMiddle(token, 9);
+        public T9 Token9 { get => Get<T9>(9); set => Set(value, 9); }
+    }
+
+    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : GDTokensForm<STATE>
+        where STATE : struct, System.Enum
+        where T0 : GDSyntaxToken
+        where T1 : GDSyntaxToken
+        where T2 : GDSyntaxToken
+        where T3 : GDSyntaxToken
+        where T4 : GDSyntaxToken
+        where T5 : GDSyntaxToken
+        where T6 : GDSyntaxToken
+        where T7 : GDSyntaxToken
+        where T8 : GDSyntaxToken
+        where T9 : GDSyntaxToken
+        where T10 : GDSyntaxToken
+    {
+        public GDTokensForm()
+            : base(11)
+        {
+
+        }
+
+        public void AddBeforeToken0(GDSyntaxToken token) => AddMiddle(token, 0);
+        public T0 Token0 { get => Get<T0>(0); set => Set(value, 0); }
+        public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 1);
+        public T1 Token1 { get => Get<T1>(1); set => Set(value, 1); }
+        public void AddBeforeToken2(GDSyntaxToken token) => AddMiddle(token, 2);
+        public T2 Token2 { get => Get<T2>(2); set => Set(value, 2); }
+        public void AddBeforeToken3(GDSyntaxToken token) => AddMiddle(token, 3);
+        public T3 Token3 { get => Get<T3>(3); set => Set(value, 3); }
+        public void AddBeforeToken4(GDSyntaxToken token) => AddMiddle(token, 4);
+        public T4 Token4 { get => Get<T4>(4); set => Set(value, 4); }
+        public void AddBeforeToken5(GDSyntaxToken token) => AddMiddle(token, 5);
+        public T5 Token5 { get => Get<T5>(5); set => Set(value, 5); }
+        public void AddBeforeToken6(GDSyntaxToken token) => AddMiddle(token, 6);
+        public T6 Token6 { get => Get<T6>(6); set => Set(value, 6); }
+        public void AddBeforeToken7(GDSyntaxToken token) => AddMiddle(token, 7);
+        public T7 Token7 { get => Get<T7>(7); set => Set(value, 7); }
+        public void AddBeforeToken8(GDSyntaxToken token) => AddMiddle(token, 8);
+        public T8 Token8 { get => Get<T8>(8); set => Set(value, 8); }
+        public void AddBeforeToken9(GDSyntaxToken token) => AddMiddle(token, 9);
+        public T9 Token9 { get => Get<T9>(9); set => Set(value, 9); }
+        public void AddBeforeToken10(GDSyntaxToken token) => AddMiddle(token, 10);
+        public T10 Token10 { get => Get<T10>(10); set => Set(value, 10); }
+    }
+
+    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : GDTokensForm<STATE>
+        where STATE : struct, System.Enum
+        where T0 : GDSyntaxToken
+        where T1 : GDSyntaxToken
+        where T2 : GDSyntaxToken
+        where T3 : GDSyntaxToken
+        where T4 : GDSyntaxToken
+        where T5 : GDSyntaxToken
+        where T6 : GDSyntaxToken
+        where T7 : GDSyntaxToken
+        where T8 : GDSyntaxToken
+        where T9 : GDSyntaxToken
+        where T10 : GDSyntaxToken
+        where T11 : GDSyntaxToken
+    {
+        public GDTokensForm()
+            : base(12)
+        {
+
+        }
+
+        public void AddBeforeToken0(GDSyntaxToken token) => AddMiddle(token, 0);
+        public T0 Token0 { get => Get<T0>(0); set => Set(value, 0); }
+        public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 1);
+        public T1 Token1 { get => Get<T1>(1); set => Set(value, 1); }
+        public void AddBeforeToken2(GDSyntaxToken token) => AddMiddle(token, 2);
+        public T2 Token2 { get => Get<T2>(2); set => Set(value, 2); }
+        public void AddBeforeToken3(GDSyntaxToken token) => AddMiddle(token, 3);
+        public T3 Token3 { get => Get<T3>(3); set => Set(value, 3); }
+        public void AddBeforeToken4(GDSyntaxToken token) => AddMiddle(token, 4);
+        public T4 Token4 { get => Get<T4>(4); set => Set(value, 4); }
+        public void AddBeforeToken5(GDSyntaxToken token) => AddMiddle(token, 5);
+        public T5 Token5 { get => Get<T5>(5); set => Set(value, 5); }
+        public void AddBeforeToken6(GDSyntaxToken token) => AddMiddle(token, 6);
+        public T6 Token6 { get => Get<T6>(6); set => Set(value, 6); }
+        public void AddBeforeToken7(GDSyntaxToken token) => AddMiddle(token, 7);
+        public T7 Token7 { get => Get<T7>(7); set => Set(value, 7); }
+        public void AddBeforeToken8(GDSyntaxToken token) => AddMiddle(token, 8);
+        public T8 Token8 { get => Get<T8>(8); set => Set(value, 8); }
+        public void AddBeforeToken9(GDSyntaxToken token) => AddMiddle(token, 9);
+        public T9 Token9 { get => Get<T9>(9); set => Set(value, 9); }
+        public void AddBeforeToken10(GDSyntaxToken token) => AddMiddle(token, 10);
+        public T10 Token10 { get => Get<T10>(10); set => Set(value, 10); }
+        public void AddBeforeToken11(GDSyntaxToken token) => AddMiddle(token, 11);
+        public T11 Token11 { get => Get<T11>(11); set => Set(value, 11); }
+    }
+
     internal abstract class GDTokensForm<STATE> : GDTokensForm
        where STATE : struct, System.Enum
     {
@@ -472,16 +640,16 @@ namespace GDShrapt.Reader
             return _list.Remove(item);
         }
 
-        public void Validate()
+        /*public void Validate()
         {
             // TODO: check all tokens in the linked list on simplicity
 
             throw new GDInvalidReadingStateException();
-        }
+        }*/
 
         public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
-            return _list.OfType<GDSyntaxToken>().GetEnumerator();
+            return _list.Where(x => x != null).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

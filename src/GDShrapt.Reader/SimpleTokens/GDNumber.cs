@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDNumber : GDSimpleSyntaxToken
+    public class GDNumber : GDDataToken
     {
         readonly StringBuilder _stringBuilder = new StringBuilder();
 

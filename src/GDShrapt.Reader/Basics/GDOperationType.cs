@@ -12,12 +12,14 @@
         Indexer,
         Return,
         Pass,
-        VariableDeclaration,
+        MatchCaseVariable,
         DictionaryInitializer,
         GetNode,
         NodePath,
         If,
         Continue,
-        DefaultOperator
+        DefaultOperator,
+        Breakpoint,
+        Break
     }
 }

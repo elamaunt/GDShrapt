@@ -23,12 +23,12 @@ namespace GDShrapt.Reader
         {
             if (IsSpace(c))
             {
-                AppendAndPush(new GDSpace(), state);
+                Owner.HandleReceivedToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
-            if (c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c ==';')
+            if (IsExpressionStopChar(c))
             {
                 if (!CheckKeywords(state))
                     CompleteExpression(state);
@@ -200,7 +200,7 @@ namespace GDShrapt.Reader
                         });
                         return true;
                     case "var":
-                        PushAndSave(state, new GDVariableDeclarationExpression());
+                        PushAndSave(state, new GDMatchCaseVariableExpression());
                         return true;
                     case "pass":
                         PushAndSave(state, new GDPassExpression());

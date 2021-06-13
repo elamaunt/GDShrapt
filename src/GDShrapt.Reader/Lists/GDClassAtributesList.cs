@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDClassAtributesList : GDSeparatedList<GDClassAtribute, GDNewLine>
+    public sealed class GDClassAtributesList : GDSeparatedList<GDClassAtribute, GDNewLine>, IClassAtributesReceiver
     {
         private int _lineIntendationThreshold;
         bool _completed;
@@ -16,12 +16,40 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDClassAtributesResolver(this, _lineIntendationThreshold));
+                state.PassChar(c);
+                return;
+            }
+
+            state.Pop();
+            state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDClassAtributesResolver(this, _lineIntendationThreshold));
+                state.PassLineFinish();
+                return;
+            }
+
+            state.Pop();
+            state.PassLineFinish();
+        }
+
+        void IClassAtributesReceiver.HandleReceivedToken(GDClassAtribute token)
+        {
+            ListForm.Add(token);
+        }
+
+        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
+        {
+            ListForm.Add(token);
         }
     }
 }

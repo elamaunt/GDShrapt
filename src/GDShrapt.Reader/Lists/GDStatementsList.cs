@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDStatementsList : GDSeparatedList<GDStatement, GDNewLine>, IStatementsReceiver
+    public sealed class GDStatementsList : GDSeparatedList<GDStatement, GDNewLine>, IStatementsReceiver
     {
         private int _lineIntendationThreshold;
         bool _completed;

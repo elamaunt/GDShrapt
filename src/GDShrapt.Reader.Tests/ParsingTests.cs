@@ -448,7 +448,7 @@ match x:
             Assert.AreEqual("2", matchStatement.Cases[1].Conditions[0].ToString());
 
             Assert.AreEqual(1, matchStatement.Cases[2].Conditions.Count);
-            Assert.IsInstanceOfType(matchStatement.Cases[2].Conditions[0], typeof(GDVariableDeclarationExpression));
+            Assert.IsInstanceOfType(matchStatement.Cases[2].Conditions[0], typeof(GDMatchCaseVariableExpression));
             Assert.AreEqual("var new_var", matchStatement.Cases[2].Conditions[0].ToString());
 
             Assert.AreEqual(1, matchStatement.Cases[0].Statements.Count);

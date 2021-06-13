@@ -1,25 +1,56 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDReturnExpression : GDExpression, IExpressionsReceiver
+    public sealed class GDReturnExpression : GDExpression, 
+        IExpressionsReceiver, 
+        IKeywordReceiver<GDReturnKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Return);
+        internal GDReturnKeyword ReturnKeyword
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
 
-        public GDExpression ResultExpression { get; set; }
+        public GDExpression Expression
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+
+        enum State
+        {
+            Return,
+            Expression,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDReturnKeyword, GDExpression> _form = new GDTokensForm<State, GDReturnKeyword, GDExpression>();
+        internal override GDTokensForm Form => _form;
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
-                return;
-
-            if (ResultExpression == null)
             {
-                state.Push(new GDExpressionResolver(this));
+                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            switch (_form.State)
+            {
+                case State.Return:
+                    state.Push(new GDKeywordResolver<GDReturnKeyword>(this));
+                    state.PassChar(c);
+                    break;
+                case State.Expression:
+                    state.Push(new GDExpressionResolver(this));
+                    state.PassChar(c);
+                    break;
+                default:
+                    state.Pop();
+                    state.PassChar(c);
+                    break;
+            }
         }
 
         internal override void HandleLineFinish(GDReadingState state)
@@ -28,21 +59,50 @@
             state.PassLineFinish();
         }
 
-        public override string ToString()
+        void IKeywordReceiver<GDReturnKeyword>.HandleReceivedToken(GDReturnKeyword token)
         {
-            if (ResultExpression == null)
-                return $"return";
-            return $"return {ResultExpression}";
+            if (_form.State == State.Return)
+            {
+                _form.State = State.Expression;
+                ReturnKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDReturnKeyword>.HandleReceivedKeywordSkip()
+        {
+            if (_form.State == State.Return)
+            {
+                _form.State = State.Expression;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.Completed;
+                Expression = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

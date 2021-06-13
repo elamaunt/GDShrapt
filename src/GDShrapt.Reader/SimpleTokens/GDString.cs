@@ -3,7 +3,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDString : GDSimpleSyntaxToken
+    public sealed class GDString : GDDataToken
     {
         readonly StringBuilder _stringBuilder = new StringBuilder();
         bool _stringStarted;

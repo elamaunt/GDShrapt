@@ -62,21 +62,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            switch (_form.State)
-            {
-                case State.Atributes:
-                    _form.State = State.Members;
-                    state.Push(Atributes);
-                    state.PassLineFinish();
-                    break;
-                case State.Members:
-                    _form.State = State.Completed;
-                    state.Push(Members);
-                    state.PassLineFinish();
-                    break;
-                default:
-                    throw new GDInvalidReadingStateException();
-            }
+            _form.AddBeforeActiveToken(new GDNewLine());
         }
     }
 }

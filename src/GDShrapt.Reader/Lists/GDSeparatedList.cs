@@ -4,7 +4,7 @@ using System.Linq;
 namespace GDShrapt.Reader
 {
     public abstract class GDSeparatedList<NODE, SEPARATOR> : GDNode, IList<NODE>, IStyleTokensReceiver
-        where NODE : GDNode
+        where NODE : GDSyntaxToken
         where SEPARATOR : GDSimpleSyntaxToken, new()
     {
         GDTokensListForm<NODE> _form = new GDTokensListForm<NODE>();

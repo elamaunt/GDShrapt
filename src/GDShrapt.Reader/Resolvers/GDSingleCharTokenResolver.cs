@@ -23,13 +23,13 @@
                 return;
             }
 
-            Owner.HandleReceivedTokenSkip<TOKEN>();
+            Owner.HandleReceivedTokenSkip();
             state.PassChar(c);
         }
 
         internal override void HandleLineFinish(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            HandleChar('\n', state);
         }
     }
 }

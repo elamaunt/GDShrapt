@@ -94,7 +94,7 @@ namespace GDShrapt.Reader
             }
             else
             {
-                AppendAndPush(new GDInvalidToken(' '), state);
+                Owner.HandleReceivedToken(state.Push(new GDInvalidToken(' ')));
             }
         }
 
@@ -113,12 +113,12 @@ namespace GDShrapt.Reader
                     _export = true;
                     return (null, true);
 
-                case "class_name":
+               /* case "class_name":
                     return (new GDClassNameAtribute(), true);
                 case "extends":
                     return (new GDExtendsAtribute(), true);
                 case "tool":
-                    return (new GDToolAtribute(), true);
+                    return (new GDToolAtribute(), true);*/
                 case "signal":
                     return (new GDSignalDeclaration(), true);
                 case "enum":

@@ -51,6 +51,10 @@ namespace GDShrapt.Reader
             // Nothing
         }
 
+        /// <summary>
+        /// Rebuilds current node if another inner node has higher priority.
+        /// </summary>
+        /// <returns>Same node if nothing changed or a new node which now the root</returns>
         protected virtual GDExpression PriorityRebuildingPass()
         {
             return this;

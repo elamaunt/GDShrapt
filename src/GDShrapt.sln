@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Reader.Tests", "GD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Reader", "GDShrapt.Reader\GDShrapt.Reader.csproj", "{EF8F42CC-A17C-4F08-800D-04BC5EAB59F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDShrapt.Converter.Tests", "GDShrapt.Converter.Tests\GDShrapt.Converter.Tests.csproj", "{C4475DC1-EE4E-4808-864A-7923DF24AE36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Converter.Tests", "GDShrapt.Converter.Tests\GDShrapt.Converter.Tests.csproj", "{C4475DC1-EE4E-4808-864A-7923DF24AE36}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

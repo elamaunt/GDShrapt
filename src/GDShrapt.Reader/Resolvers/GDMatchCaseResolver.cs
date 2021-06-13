@@ -19,9 +19,7 @@
                 return;
             }
 
-            var declaration = new GDMatchCaseDeclaration(LineIntendationThreshold);
-            Owner.HandleReceivedToken(declaration);
-            state.Push(declaration);
+            Owner.HandleReceivedToken(state.Push(new GDMatchCaseDeclaration(LineIntendationThreshold)));
             state.PassChar(c);
         }
     }

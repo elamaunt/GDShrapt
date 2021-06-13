@@ -1,8 +1,11 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDExpressionStatement : GDStatement, IExpressionsReceiver
+    public sealed class GDBreakPointExpression : GDExpression,
+        IKeywordReceiver<GDBreakPointKeyword>
     {
-        public GDExpression Expression
+        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Breakpoint);
+        
+        internal GDBreakPointKeyword BreakPointKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -10,27 +13,17 @@
 
         enum State
         {
-            Expression,
+            BreakPoint,
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpression> _form = new GDTokensForm<State, GDExpression>();
+        readonly GDTokensForm<State, GDBreakPointKeyword> _form = new GDTokensForm<State, GDBreakPointKeyword>();
         internal override GDTokensForm Form => _form;
-
-        internal GDExpressionStatement(int lineIntendation)
-            : base(lineIntendation)
-        {
-        }
-
-        public GDExpressionStatement()
-        {
-
-        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.Expression)
-                state.Push(new GDExpressionResolver(this));
+            if (_form.State == State.BreakPoint)
+                state.Push(new GDKeywordResolver<GDBreakPointKeyword>(this));
             else
                 state.Pop();
 
@@ -43,21 +36,21 @@
             state.PassLineFinish();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void IKeywordReceiver<GDBreakPointKeyword>.HandleReceivedToken(GDBreakPointKeyword token)
         {
-            if (_form.State == State.Expression)
+            if (_form.State == State.BreakPoint)
             {
                 _form.State = State.Completed;
-                Expression = token;
+                BreakPointKeyword = token;
                 return;
             }
 
             throw new GDInvalidReadingStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void IKeywordReceiver<GDBreakPointKeyword>.HandleReceivedKeywordSkip()
         {
-            if (_form.State == State.Expression)
+            if (_form.State == State.BreakPoint)
             {
                 _form.State = State.Completed;
                 return;

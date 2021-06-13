@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDIdentifier : GDCharSequence
+    public class GDIdentifier : GDDataToken //GDCharSequence 
     {
         public bool IsPi => string.Equals(Sequence, "PI", StringComparison.Ordinal);
         public bool IsTau => string.Equals(Sequence, "TAU", StringComparison.Ordinal);

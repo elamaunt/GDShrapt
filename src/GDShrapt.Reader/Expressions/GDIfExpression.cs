@@ -1,64 +1,88 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDIfExpression : GDExpression
+    public sealed class GDIfExpression : GDExpression,
+        IExpressionsReceiver,
+        IKeywordReceiver<GDIfKeyword>,
+        IKeywordReceiver<GDElseKeyword>
     {
-        bool _elseKeyChecked;
-        bool _hasElse;
-
-        bool _trueChecked;
-        bool _conditionChecked;
-        bool _falseChecked;
-
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.If);
 
-        public GDExpression TrueExpression { get; set; }
-        public GDExpression Condition { get; set; }
-        public GDExpression FalseExpression { get; set; }
+        public GDExpression TrueExpression
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+        internal GDIfKeyword IfKeyword
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+        public GDExpression Condition
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+        internal GDElseKeyword ElseKeyword
+        {
+            get => _form.Token3;
+            set => _form.Token3 = value;
+        }
+
+        public GDExpression FalseExpression
+        {
+            get => _form.Token4;
+            set => _form.Token4 = value;
+        }
+
+        enum State
+        {
+            True,
+            If,
+            Condition,
+            Else,
+            False,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>();
+        internal override GDTokensForm Form => _form;
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            // Old code
-           /* if (IsSpace(c))
+            if (IsSpace(c))
             {
-                AppendAndPush(new GDSpace(), state);
-                return;
-            }
-
-            if (!_trueChecked && TrueExpression == null)
-            {
-                _trueChecked = true;
-                state.Push(new GDExpressionResolver(this));
+                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
-            if (!_conditionChecked && Condition == null)
+            switch (_form.State)
             {
-                _conditionChecked = true;
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
-                return;
+                case State.True:
+                    state.Push(new GDExpressionResolver(this));
+                    state.PassChar(c);
+                    break;
+                case State.If:
+                    state.Push(new GDKeywordResolver<GDIfKeyword>(this));
+                    state.PassChar(c);
+                    break;
+                case State.Condition:
+                    state.Push(new GDExpressionResolver(this));
+                    state.PassChar(c);
+                    break;
+                case State.Else:
+                    state.Push(new GDKeywordResolver<GDElseKeyword>(this));
+                    state.PassChar(c);
+                    break;
+                case State.False:
+                    state.Push(new GDExpressionResolver(this));
+                    state.PassChar(c);
+                    break;
+                default:
+                    state.Pop();
+                    state.PassChar(c);
+                    break;
             }
-
-            if (!_elseKeyChecked)
-            {
-                _elseKeyChecked = true;
-                state.Push(new GDKeywordResolver(this));
-                state.PassChar(c);
-                return;
-            }
-
-            if (_hasElse && !_falseChecked && FalseExpression == null)
-            {
-                _falseChecked = true;
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
-                return;
-            }
-
-            state.Pop();
-            state.PassChar(c);
-           */
         }
 
         internal override void HandleLineFinish(GDReadingState state)
@@ -67,10 +91,6 @@
             state.PassLineFinish();
         }
 
-        /// <summary>
-        /// Rebuilds current node if another inner node has higher priority.
-        /// </summary>
-        /// <returns>Same node if nothing changed or a new node which now the root</returns>
         protected override GDExpression PriorityRebuildingPass()
         {
             if (IsHigherPriorityThan(TrueExpression, GDSideType.Left))
@@ -115,9 +135,99 @@
             FalseExpression = FalseExpression.RebuildRootOfPriorityIfNeeded();
         }
 
-        public override string ToString()
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            return $"{TrueExpression} if {Condition} else {FalseExpression}";
+            if (_form.State == State.True)
+            {
+                _form.State = State.If;
+                TrueExpression = token;
+                return;
+            }
+
+            if (_form.State == State.Condition)
+            {
+                _form.State = State.Else;
+                Condition = token;
+                return;
+            }
+
+            if (_form.State == State.False)
+            {
+                _form.State = State.Completed;
+                FalseExpression = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            if (_form.State == State.True)
+            {
+                _form.State = State.If;
+                return;
+            }
+
+            if (_form.State == State.Condition)
+            {
+                _form.State = State.Else;
+                return;
+            }
+
+            if (_form.State == State.False)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
+        {
+            if (_form.State == State.If)
+            {
+                _form.State = State.Condition;
+                IfKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDIfKeyword>.HandleReceivedKeywordSkip()
+        {
+            if (_form.State == State.If)
+            {
+                _form.State = State.Condition;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
+        {
+            if (_form.State == State.Else)
+            {
+                _form.State = State.False;
+                ElseKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDElseKeyword>.HandleReceivedKeywordSkip()
+        {
+            if (_form.State == State.Else)
+            {
+                _form.State = State.False;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

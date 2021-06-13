@@ -12,10 +12,8 @@
         void Visit(GDExtendsAtribute a);
         void Visit(GDExpressionStatement s);
         void Visit(GDIfStatement s);
-        void Visit(GDReturnStatement s);
         void Visit(GDForStatement s);
         void Visit(GDMatchStatement s);
-        void Visit(GDPassStatement s);
         void Visit(GDVariableDeclarationStatement s);
         void Visit(GDWhileStatement s);
         void Visit(GDYieldStatement s);

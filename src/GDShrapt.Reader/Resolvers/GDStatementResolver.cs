@@ -4,6 +4,7 @@ namespace GDShrapt.Reader
 {
     internal class GDStatementResolver : GDIntendedResolver
     {
+        // TODO: make if statement self sufficient
         GDIfStatement _ifStatement;
         bool _statementResolved;
 
@@ -26,7 +27,7 @@ namespace GDShrapt.Reader
                 {
                     if (IsSpace(c))
                     {
-                        AppendAndPush(new GDSpace(), state);
+                        Owner.HandleReceivedToken(state.Push(new GDSpace()));
                         state.PassChar(c);
                         return;
                     }
@@ -46,12 +47,12 @@ namespace GDShrapt.Reader
             {
                 if (IsSpace(c))
                 {
-                    AppendAndPush(new GDSpace(), state);
+                    Owner.HandleReceivedToken(state.Push(new GDSpace()));
                     state.PassChar(c);
                     return;
                 }
 
-                AppendAndPush(new GDInvalidToken(' ', '\n'), state);
+                Owner.HandleReceivedToken(state.Push(new GDInvalidToken(' ', '\n')));
                 state.PassChar(c);
             }
             
@@ -106,20 +107,6 @@ namespace GDShrapt.Reader
 
             Owner.HandleReceivedToken(new GDNewLine());
             ResetIntendation();
-
-            // Old code
-            /*if (_sequenceBuilder?.Length > 0)
-            {
-                var sequence = _sequenceBuilder.ToString();
-                ResetSequence();
-                CompleteAsStatement(state, sequence);
-                state.PassLineFinish();
-            }
-            else
-            {
-                ResetIntendation();
-                ResetSequence();
-            }*/
         }
 
         private GDStatement CompleteAsStatement(GDReadingState state, string sequence)
@@ -184,15 +171,15 @@ namespace GDShrapt.Reader
                     break;
                 case "continue":
                     _ifStatement = null;
-                    statement = new GDContinueStatement(LineIntendationThreshold);
+                    statement = new GDContinueExpression(LineIntendationThreshold);
                     break;
                 case "break":
                     _ifStatement = null;
-                    statement = new GDBreakStatement(LineIntendationThreshold);
+                    statement = new GDBreakExpression(LineIntendationThreshold);
                     break;
                 case "breakpoint":
                     _ifStatement = null;
-                    statement = new GDBreakPointStatement(LineIntendationThreshold);
+                    statement = new GDBreakPointExpression(LineIntendationThreshold);
                     break;
                 default:
                     {

@@ -62,7 +62,6 @@
 
         public GDIfStatement()
         {
-            //_form.AddBeforeToken1(new GDSpace() { Sequence = " " });
         }
 
         internal override void HandleChar(char c, GDReadingState state)

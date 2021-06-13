@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     public class GDTreeWalker : GDExpressionWalker
     {
@@ -54,17 +52,11 @@ namespace GDShrapt.Reader
                 case GDIfStatement ifStatement:
                     WalkIn(ifStatement);
                     break;
-                case GDReturnStatement returnStatement:
-                    WalkIn(returnStatement);
-                    break;
                 case GDForStatement forStatement:
                     WalkIn(forStatement);
                     break;
                 case GDMatchStatement matchStatement:
                     WalkIn(matchStatement);
-                    break;
-                case GDPassStatement passStatement:
-                    WalkIn(passStatement);
                     break;
                 case GDVariableDeclarationStatement variableDeclarationStatement:
                     WalkIn(variableDeclarationStatement);
@@ -191,12 +183,6 @@ namespace GDShrapt.Reader
             _visitor.LeftNode();
         }
 
-        protected void WalkIn(GDReturnStatement s)
-        {
-            _visitor.Visit(s);
-            _visitor.LeftNode();
-        }
-
         protected void WalkIn(GDForStatement s)
         {
             _visitor.Visit(s);
@@ -204,12 +190,6 @@ namespace GDShrapt.Reader
         }
 
         protected void WalkIn(GDMatchStatement s)
-        {
-            _visitor.Visit(s);
-            _visitor.LeftNode();
-        }
-
-        protected void WalkIn(GDPassStatement s)
         {
             _visitor.Visit(s);
             _visitor.LeftNode();

@@ -24,6 +24,9 @@
 
         internal bool IsIdentifierStartChar(char c) => c == '_' || char.IsLetter(c);
         internal bool IsStringStartChar(char c) => c == '\'' || c == '\"';
+        internal bool IsExpressionStopChar(char c) => c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c == ';';
+        internal bool IsNumberStartChar(char c) => char.IsDigit(c);
+
 
         /// <summary>
         /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for sharp (line commentary) character.

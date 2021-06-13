@@ -1,8 +1,11 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDExpressionStatement : GDStatement, IExpressionsReceiver
+    public sealed class GDBreakExpression : GDExpression,
+        IKeywordReceiver<GDBreakKeyword>
     {
-        public GDExpression Expression
+        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Break);
+
+        internal GDBreakKeyword BreakKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -10,27 +13,17 @@
 
         enum State
         {
-            Expression,
+            Break,
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpression> _form = new GDTokensForm<State, GDExpression>();
+        readonly GDTokensForm<State, GDBreakKeyword> _form = new GDTokensForm<State, GDBreakKeyword>();
         internal override GDTokensForm Form => _form;
-
-        internal GDExpressionStatement(int lineIntendation)
-            : base(lineIntendation)
-        {
-        }
-
-        public GDExpressionStatement()
-        {
-
-        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.Expression)
-                state.Push(new GDExpressionResolver(this));
+            if (_form.State == State.Break)
+                state.Push(new GDKeywordResolver<GDBreakKeyword>(this));
             else
                 state.Pop();
 
@@ -43,21 +36,21 @@
             state.PassLineFinish();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void IKeywordReceiver<GDBreakKeyword>.HandleReceivedToken(GDBreakKeyword token)
         {
-            if (_form.State == State.Expression)
+            if (_form.State == State.Break)
             {
                 _form.State = State.Completed;
-                Expression = token;
+                BreakKeyword = token;
                 return;
             }
 
             throw new GDInvalidReadingStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void IKeywordReceiver<GDBreakKeyword>.HandleReceivedKeywordSkip()
         {
-            if (_form.State == State.Expression)
+            if (_form.State == State.Break)
             {
                 _form.State = State.Completed;
                 return;
