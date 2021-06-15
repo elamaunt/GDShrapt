@@ -86,7 +86,7 @@ namespace GDShrapt.Reader
                 }*/
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (_statementResolved)
             {
@@ -100,7 +100,7 @@ namespace GDShrapt.Reader
                     var sequence = _sequenceBuilder.ToString();
                     _sequenceBuilder.Clear();
                     CompleteAsStatement(state, sequence);
-                    state.PassLineFinish();
+                    state.PassNewLine();
                     return;
                 }
             }

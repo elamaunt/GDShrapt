@@ -3,7 +3,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDString : GDDataToken
+    public sealed class GDString : GDLiteralToken
     {
         readonly StringBuilder _stringBuilder = new StringBuilder();
         bool _stringStarted;
@@ -94,7 +94,7 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (Multiline)
             {
@@ -104,7 +104,7 @@ namespace GDShrapt.Reader
             {
                 Value = _stringBuilder.ToString();
                 state.Pop();
-                state.PassLineFinish();
+                state.PassNewLine();
             }
         }
 

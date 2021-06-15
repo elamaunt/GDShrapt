@@ -14,10 +14,10 @@ namespace GDShrapt.Reader
             state.Pop();
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         internal override void HandleSharpChar(GDReadingState state)

@@ -34,7 +34,7 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             throw new System.NotImplementedException();
         }

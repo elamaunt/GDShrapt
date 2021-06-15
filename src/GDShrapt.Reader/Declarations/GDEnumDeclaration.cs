@@ -94,18 +94,18 @@
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (_form.State == State.Values)
             {
                 _form.State = State.FigureCloseBracket;
                 state.Push(Values);
-                state.PassLineFinish();
+                state.PassNewLine();
                 return;
             }
 
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         void IKeywordReceiver<GDEnumKeyword>.HandleReceivedToken(GDEnumKeyword token)

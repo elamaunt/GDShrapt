@@ -38,7 +38,7 @@ namespace GDShrapt.Reader
                 state.PassChar(c);
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (_expressionEnded && !_statementsChecked)
             {
@@ -48,7 +48,7 @@ namespace GDShrapt.Reader
             }
 
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         public override string ToString()

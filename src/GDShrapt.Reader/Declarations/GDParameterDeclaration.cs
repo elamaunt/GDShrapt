@@ -28,7 +28,7 @@
                 state.PassChar(c);
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             // Ignore
             // TODO: if needs handling

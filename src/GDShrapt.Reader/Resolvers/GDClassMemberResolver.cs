@@ -32,14 +32,14 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (_sequenceBuilder?.Length > 0)
             {
                 var sequence = _sequenceBuilder.ToString();
                 ResetSequence();
                 Complete(state, sequence);
-                state.PassLineFinish();
+                state.PassNewLine();
             }
             else
             {

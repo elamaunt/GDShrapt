@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDIdentifier : GDDataToken //GDCharSequence 
+    public class GDIdentifier : GDDataToken
     {
         public bool IsPi => string.Equals(Sequence, "PI", StringComparison.Ordinal);
         public bool IsTau => string.Equals(Sequence, "TAU", StringComparison.Ordinal);
@@ -12,17 +13,45 @@ namespace GDShrapt.Reader
         public bool IsFalse => string.Equals(Sequence, "false", StringComparison.Ordinal);
         public bool IsSelf => string.Equals(Sequence, "self", StringComparison.Ordinal);
        
-        internal override bool CanAppendChar(char c, GDReadingState state)
+        public string Sequence { get; set; }
+
+        StringBuilder _builder = new StringBuilder();
+
+        internal override void HandleChar(char c, GDReadingState state)
         {
-            if (SequenceBuilderLength == 0)
-                return c == '_' || char.IsLetter(c);
-            return c == '_' || char.IsLetterOrDigit(c);
+            if (_builder.Length == 0)
+            {
+                if (IsIdentifierStartChar(c))
+                {
+                    _builder.Append(c);
+                }
+                else
+                {
+                    state.Pop();
+                    state.PassChar(c);
+                }
+            }
+            else
+            {
+                if (c == '_' || char.IsLetterOrDigit(c))
+                {
+                    _builder.Append(c);
+                }
+                else
+                {
+                    Sequence = _builder.ToString();
+                    state.Pop();
+                    state.PassChar(c);
+                }
+            }
+            
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
-            CompleteSequence(state);
-            state.PassLineFinish();
+            if (_builder.Length > 0)
+                Sequence = _builder.ToString();
+            state.PassNewLine();
         }
 
         public override string ToString()

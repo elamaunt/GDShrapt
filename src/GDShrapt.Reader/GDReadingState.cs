@@ -47,9 +47,9 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Sends new line character '\n' to the current reader.
         /// </summary>
-        public void PassLineFinish()
+        public void PassNewLine()
         {
-            CurrentReader?.HandleLineFinish(this);
+            CurrentReader?.HandleNewLineChar(this);
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace GDShrapt.Reader
 
             if (c == '\n')
             {
-                reader.HandleLineFinish(this);
+                reader.HandleNewLineChar(this);
                 return;
             }
 
@@ -100,6 +100,29 @@ namespace GDShrapt.Reader
         public void Pop()
         {
             _readersStack.Pop();
+        }
+
+        public void PopAndPass(char c)
+        {
+            _readersStack.Pop();
+            PassChar(c);
+        }
+
+        public T PushAndPass<T>(T reader, char c)
+            where T : GDReader
+        {
+            if (reader == null)
+                throw new ArgumentNullException(nameof(reader));
+
+            _readersStack.Push(reader);
+            PassChar(c);
+            return reader;
+        }
+
+        public void PopAndPassNewLine()
+        {
+            _readersStack.Pop();
+            PassNewLine();
         }
     }
 }

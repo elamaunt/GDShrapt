@@ -43,13 +43,13 @@ namespace GDShrapt.Reader
             state.Pop();
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (!_membersChecked)
             {
                 _membersChecked = true;
                 state.Push(new GDClassMemberResolver(this, _lineIntendation + 1));
-                state.PassLineFinish();
+                state.PassNewLine();
                 return;
             }
 

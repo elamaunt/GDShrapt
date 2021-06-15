@@ -2,8 +2,9 @@
 {
     public sealed class GDVariableDeclaration : GDClassMember, 
         IKeywordReceiver<GDConstKeyword>,
-        IKeywordReceiver<GDExportKeyword>,
+        IExportReceiver,
         IKeywordReceiver<GDOnreadyKeyword>,
+        IKeywordReceiver<GDVarKeyword>,
         ITokenReceiver<GDColon>,
         ITokenReceiver<GDAssign>,
         IExpressionsReceiver,
@@ -14,58 +15,66 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        internal GDExportDeclaration Export
+        internal GDOnreadyKeyword OnreadyKeyword
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        internal GDOnreadyKeyword OnreadyKeyword
+
+        public GDExportDeclaration Export
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        public GDIdentifier Identifier
+        
+        internal GDVarKeyword VarKeyword
         {
             get => _form.Token3;
             set => _form.Token3 = value;
         }
-        internal GDColon Colon
+
+        public GDIdentifier Identifier
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
-        public GDType Type
+        internal GDColon Colon
         {
             get => _form.Token5;
             set => _form.Token5 = value;
         }
-        internal GDAssign Assign
+        public GDType Type
         {
             get => _form.Token6;
             set => _form.Token6 = value;
         }
-        public GDExpression Initializer
+        internal GDAssign Assign
         {
             get => _form.Token7;
             set => _form.Token7 = value;
         }
-        internal GDSetGetKeyword SetGetKeyword
+        public GDExpression Initializer
         {
             get => _form.Token8;
             set => _form.Token8 = value;
         }
-        public GDIdentifier GetMethodIdentifier
+        internal GDSetGetKeyword SetGetKeyword
         {
             get => _form.Token9;
             set => _form.Token9 = value;
         }
-        public GDIdentifier SetMethodIdentifier
+        public GDIdentifier GetMethodIdentifier
         {
             get => _form.Token10;
             set => _form.Token10 = value;
         }
+        public GDIdentifier SetMethodIdentifier
+        {
+            get => _form.Token11;
+            set => _form.Token11 = value;
+        }
 
-        public bool IsExported => ExportKeyword != null;
+        public bool IsExported => Export != null;
         public bool IsConstant => ConstKeyword != null;
         public bool HasOnReadyInitialization => OnreadyKeyword != null;
 
@@ -74,6 +83,7 @@
             Const,
             Export,
             Onready,
+            Var,
             Identifier,
             Colon,
             Type,
@@ -85,7 +95,7 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDConstKeyword, GDExportKeyword, GDOnreadyKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDIdentifier> _form = new GDTokensForm<State, GDConstKeyword, GDExportKeyword, GDOnreadyKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDIdentifier>();
+        readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDIdentifier> _form = new GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDIdentifier>();
         internal override GDTokensForm Form => _form;
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -100,23 +110,22 @@
             switch (_form.State)
             {
                 case State.Const:
-                    state.Push(new GDKeywordResolver<GDConstKeyword>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDKeywordResolver<GDConstKeyword>(this), c);
                     break;
                 case State.Export:
-                    state.Push(new GDKeywordResolver<GDExportKeyword>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDExportResolver(this), c);
                     break;
                 case State.Onready:
-                    state.Push(new GDKeywordResolver<GDOnreadyKeyword>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDKeywordResolver<GDOnreadyKeyword>(this), c);
+                    break;
+                case State.Var:
+                    state.PushAndPass(new GDKeywordResolver<GDVarKeyword>(this), c);
                     break;
                 case State.Identifier:
                     if (IsIdentifierStartChar(c))
                     {
                         _form.State = State.Assign;
-                        state.Push(Identifier = new GDIdentifier());
-                        state.PassChar(c);
+                        state.PushAndPass(Identifier = new GDIdentifier(), c);
                     }
                     else
                     {
@@ -125,15 +134,13 @@
                     }
                     break;
                 case State.Colon:
-                    state.Push(new GDSingleCharTokenResolver<GDColon>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDSingleCharTokenResolver<GDColon>(this), c);
                     break;
                 case State.Type:
                     if (IsIdentifierStartChar(c))
                     {
                         _form.State = State.Assign;
-                        state.Push(Type = new GDType());
-                        state.PassChar(c);
+                        state.PushAndPass(Type = new GDType(), c);
                     }
                     else
                     {
@@ -186,17 +193,17 @@
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         void IKeywordReceiver<GDConstKeyword>.HandleReceivedToken(GDConstKeyword token)
         {
             if (_form.State == State.Const)
             {
-                _form.State = State.Export;
+                _form.State = State.Onready;
                 ConstKeyword = token;
                 return;
             }
@@ -207,29 +214,6 @@
         void IKeywordReceiver<GDConstKeyword>.HandleReceivedKeywordSkip()
         {
             if (_form.State == State.Const)
-            {
-                _form.State = State.Export;
-                return;
-            }
-
-            throw new GDInvalidReadingStateException();
-        }
-
-        void IKeywordReceiver<GDExportKeyword>.HandleReceivedToken(GDExportKeyword token)
-        {
-            if (_form.State == State.Export)
-            {
-                _form.State = State.Onready;
-                ExportKeyword = token;
-                return;
-            }
-
-            throw new GDInvalidReadingStateException();
-        }
-
-        void IKeywordReceiver<GDExportKeyword>.HandleReceivedKeywordSkip()
-        {
-            if (_form.State == State.Export)
             {
                 _form.State = State.Onready;
                 return;
@@ -242,7 +226,7 @@
         {
             if (_form.State == State.Onready)
             {
-                _form.State = State.Identifier;
+                _form.State = State.Export;
                 OnreadyKeyword = token;
                 return;
             }
@@ -253,6 +237,52 @@
         void IKeywordReceiver<GDOnreadyKeyword>.HandleReceivedKeywordSkip()
         {
             if (_form.State == State.Onready)
+            {
+                _form.State = State.Export;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IExportReceiver.HandleReceivedExport(GDExportDeclaration token)
+        {
+            if (_form.State == State.Export)
+            {
+                Export = token;
+                _form.State = State.Var;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IExportReceiver.HandleReceivedExportSkip()
+        {
+            if (_form.State == State.Export)
+            {
+                _form.State = State.Var;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
+        {
+            if (_form.State == State.Var)
+            {
+                _form.State = State.Identifier;
+                VarKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDVarKeyword>.HandleReceivedKeywordSkip()
+        {
+            if (_form.State == State.Var)
             {
                 _form.State = State.Identifier;
                 return;

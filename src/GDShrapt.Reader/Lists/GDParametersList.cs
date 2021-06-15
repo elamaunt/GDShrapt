@@ -1,6 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDParametersList : GDSeparatedList<GDParameterDeclaration, GDComma>
+    public sealed class GDParametersList : GDSeparatedList<GDParameterDeclaration, GDComma>,
+        ITokenReceiver<GDParameterDeclaration>,
+        ITokenReceiver<GDComma>
     {
         bool _completed;
 
@@ -18,18 +20,37 @@
             state.PassChar(c);
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (!_completed)
             {
                 _completed = true;
                 state.Push(new GDExpressionResolver(this));
-                state.PassLineFinish();
+                state.PassNewLine();
                 return;
             }
 
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
+        }
+
+        void ITokenReceiver<GDParameterDeclaration>.HandleReceivedToken(GDParameterDeclaration token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver<GDParameterDeclaration>.HandleReceivedTokenSkip()
+        {
+            throw new System.NotImplementedException();
+        }
+        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

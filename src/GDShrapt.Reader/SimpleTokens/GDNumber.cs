@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDNumber : GDDataToken
+    public class GDNumber : GDLiteralToken
     {
         readonly StringBuilder _stringBuilder = new StringBuilder();
 
@@ -162,11 +162,11 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             CompleteString();
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         internal override void ForceComplete(GDReadingState state)

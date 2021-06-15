@@ -28,18 +28,18 @@
             state.PassChar(c);
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (!_completed)
             {
                 _completed = true;
                 state.Push(new GDStatementResolver(this, _lineIntendationThreshold));
-                state.PassLineFinish();
+                state.PassNewLine();
                 return;
             }
 
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         void IStatementsReceiver.HandleReceivedToken(GDStatement token)

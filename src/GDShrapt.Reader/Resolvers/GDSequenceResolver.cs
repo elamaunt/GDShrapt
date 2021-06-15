@@ -40,7 +40,7 @@ namespace GDShrapt.Reader
         protected abstract void OnFail();
         protected abstract void OnMatch();
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             HandleChar('\n', state);
         }

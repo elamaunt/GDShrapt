@@ -65,7 +65,7 @@
                             state.Pop();
 
                             // Pass all data to the previous node
-                            state.PassLineFinish();
+                            state.PassNewLine();
 
                             for (int i = 0; i < _lineIntendation; i++)
                                 state.PassChar('\t');
@@ -87,7 +87,7 @@
             return false;
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             ResetIntendation();
         }

@@ -124,7 +124,7 @@
             throw new GDInvalidReadingStateException();
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             switch (_form.State)
             {
@@ -136,7 +136,7 @@
                 case State.TrueStatements:
                     _form.State = State.ElseOrElifKeyword;
                     state.Push(TrueStatements);
-                    state.PassLineFinish();
+                    state.PassNewLine();
                     break;
                 case State.ElseOrElifKeyword:
                     _form.State = State.FalseStatements;
@@ -145,11 +145,11 @@
                 case State.FalseStatements:
                     _form.State = State.Completed;
                     state.Push(TrueStatements);
-                    state.PassLineFinish();
+                    state.PassNewLine();
                     break;
                 default:
                     state.Pop();
-                    state.PassLineFinish();
+                    state.PassNewLine();
                     break;
             }
         }

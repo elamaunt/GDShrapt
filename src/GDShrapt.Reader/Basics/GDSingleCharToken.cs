@@ -12,7 +12,7 @@
             state.Pop();
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (Char != '\n')
                 throw new GDInvalidReadingStateException();

@@ -53,10 +53,10 @@
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             state.Pop();
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         void IKeywordReceiver<GDReturnKeyword>.HandleReceivedToken(GDReturnKeyword token)

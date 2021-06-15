@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDType : GDCharSequence
+    public class GDType : GDDataToken
     {
         public bool ExtractTypeFromInitializer => IsEmpty;
         public bool IsEmpty => Sequence.IsNullOrEmpty();
@@ -29,17 +30,45 @@ namespace GDShrapt.Reader
         public bool IsRect2 => string.Equals(Sequence, "Rect2", StringComparison.Ordinal);
         public bool IsVector2 => string.Equals(Sequence, "Vector2", StringComparison.Ordinal);
 
-        internal override bool CanAppendChar(char c, GDReadingState state)
+        public string Sequence { get; set; }
+
+        StringBuilder _builder = new StringBuilder();
+
+        internal override void HandleChar(char c, GDReadingState state)
         {
-            if (SequenceBuilderLength == 0)
-                return c == '_' || char.IsLetter(c);
-            return c == '_' || char.IsLetterOrDigit(c);
+            if (_builder.Length == 0)
+            {
+                if (IsIdentifierStartChar(c))
+                {
+                    _builder.Append(c);
+                }
+                else
+                {
+                    state.Pop();
+                    state.PassChar(c);
+                }
+            }
+            else
+            {
+                if (c == '_' || char.IsLetterOrDigit(c))
+                {
+                    _builder.Append(c);
+                }
+                else
+                {
+                    Sequence = _builder.ToString();
+                    state.Pop();
+                    state.PassChar(c);
+                }
+            }
+
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
-            CompleteSequence(state);
-            state.PassLineFinish();
+            if (_builder.Length > 0)
+                Sequence = _builder.ToString();
+            state.PassNewLine();
         }
 
         public override string ToString()

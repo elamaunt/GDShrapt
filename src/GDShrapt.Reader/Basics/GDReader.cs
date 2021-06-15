@@ -14,7 +14,7 @@
         /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for new line character
         /// </summary>
         /// <param name="state">Current reading state</param>
-        internal abstract void HandleLineFinish(GDReadingState state);
+        internal abstract void HandleNewLineChar(GDReadingState state);
 
         /// <summary>
         /// Simple check on whitespace characters ' ' and '\t'.

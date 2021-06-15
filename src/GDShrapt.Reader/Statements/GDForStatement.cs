@@ -109,7 +109,7 @@
             }
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             switch (_form.State)
             {
@@ -123,11 +123,11 @@
                 case State.Statements:
                     _form.State = State.Completed;
                     state.Push(Statements);
-                    state.PassLineFinish();
+                    state.PassNewLine();
                     break;
                 default:
                     state.Pop();
-                    state.PassLineFinish();
+                    state.PassNewLine();
                     break;
             }
         }

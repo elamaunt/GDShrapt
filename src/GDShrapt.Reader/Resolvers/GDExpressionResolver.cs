@@ -231,11 +231,11 @@ namespace GDShrapt.Reader
             return false;
         }
 
-        internal override void HandleLineFinish(GDReadingState state)
+        internal override void HandleNewLineChar(GDReadingState state)
         {
             if (!CheckKeywords(state))
                 CompleteExpression(state);
-            state.PassLineFinish();
+            state.PassNewLine();
         }
 
         private void CompleteExpression(GDReadingState state)
