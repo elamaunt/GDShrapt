@@ -1,70 +1,105 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-    public sealed class GDArrayInitializerExpression : GDExpression, IExpressionsReceiver
+    public sealed class GDArrayInitializerExpression : GDExpression,
+        ITokenReceiver<GDSquareOpenBracket>,
+        ITokenReceiver<GDSquareCloseBracket>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.ArrayInitializer);
-        public List<GDExpression> Values { get; } = new List<GDExpression>();
 
+        internal GDSquareOpenBracket SquareOpenBracket
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+        public GDExpressionsList Values { get => _form.Token1 ?? (_form.Token1 = new GDExpressionsList()); }
+        internal GDSquareCloseBracket SquareCloseBracket
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+
+        enum State
+        {
+            SquareOpenBracket,
+            Values,
+            SquareCloseBracket,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket> _form = new GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket>();
+        internal override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (c == ']')
-            {
-                state.Pop();
+            if (this.ResolveStyleToken(c, state))
                 return;
-            }
 
-            if (c == ',')
+            switch (_form.State)
             {
-                state.Push(new GDExpressionResolver(this));
-                return;
+                case State.SquareOpenBracket:
+                    this.ResolveSquareOpenBracket(c, state);
+                    break;
+                case State.Values:
+                    _form.State = State.SquareCloseBracket;
+                    state.PushAndPass(Values, c);
+                    break;
+                case State.SquareCloseBracket:
+                    this.ResolveSquareCloseBracket(c, state);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
             }
-
-            state.Push(new GDExpressionResolver(this));
-            state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
-        public override string ToString()
+        void ITokenReceiver<GDSquareOpenBracket>.HandleReceivedToken(GDSquareOpenBracket token)
         {
-            return $"[{string.Join(", ", Values.Select(x => x.ToString()))}]";
+            if (_form.State == State.SquareOpenBracket)
+            {
+                _form.State = State.Values;
+                SquareOpenBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDSquareOpenBracket>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.SquareOpenBracket)
+            {
+                _form.State = State.Values;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedToken(GDSquareCloseBracket token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.SquareCloseBracket)
+            {
+                _form.State = State.Completed;
+                SquareCloseBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
-        }
+            if (_form.State == State.SquareCloseBracket)
+            {
+                _form.State = State.Completed;
+                return;
+            }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            throw new System.NotImplementedException();
+            throw new GDInvalidReadingStateException();
         }
     }
 }

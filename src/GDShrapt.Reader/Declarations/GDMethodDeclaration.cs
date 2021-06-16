@@ -1,66 +1,123 @@
-﻿using System.Collections.Generic;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-    public sealed class GDMethodDeclaration : GDClassMember, IStatementsReceiver
+    public sealed class GDMethodDeclaration : GDClassMember, 
+        IKeywordReceiver<GDStaticKeyword>,
+        IKeywordReceiver<GDFuncKeyword>,
+        IIdentifierReceiver,
+        ITokenReceiver<GDOpenBracket>,
+        ITokenReceiver<GDCloseBracket>,
+        IKeywordReceiver<GDReturnTypeKeyword>,
+        ITypeReceiver,
+        ITokenReceiver<GDColon>
     {
-        bool _statementsChecked;
-        bool _typeChecked;
-        public GDIdentifier Identifier { get; set; }
-        public GDParametersDeclaration Parameters { get; set; }
-        public GDType ReturnType { get; set; }
+        internal GDStaticKeyword StaticKeyword
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+        internal GDFuncKeyword FuncKeyword
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+        public GDIdentifier Identifier
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+        internal GDOpenBracket OpenBracket
+        {
+            get => _form.Token3;
+            set => _form.Token3 = value;
+        }
+        public GDParametersList Parameters { get => _form.Token4 ?? (_form.Token4 = new GDParametersList()); }
+        internal GDCloseBracket CloseBracket
+        {
+            get => _form.Token5;
+            set => _form.Token5 = value;
+        }
+        internal GDReturnTypeKeyword ReturnTypeKeyword
+        {
+            get => _form.Token6;
+            set => _form.Token6 = value;
+        }
+        public GDType ReturnType
+        {
+            get => _form.Token7;
+            set => _form.Token7 = value;
+        }
+        internal GDColon Colon
+        {
+            get => _form.Token8;
+            set => _form.Token8 = value;
+        }
+        public GDStatementsList Statements { get => _form.Token9 ?? (_form.Token9 = new GDStatementsList()); }
 
         public bool IsStatic { get; set; }
 
-        public List<GDStatement> Statements { get; } = new List<GDStatement>();
+        enum State
+        {
+            Static,
+            Func,
+            Identifier,
+            OpenBracket,
+            Parameters,
+            CloseBracket,
+            ReturnTypeKeyword,
+            Type,
+            Colon,
+            Statements,
+            Completed,
+        }
 
+        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>();
+        internal override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
-                return;
-
-            if (Identifier == null)
             {
-                state.Push(Identifier = new GDIdentifier());
+                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
-            if (Parameters == null)
+            switch (_form.State)
             {
-                state.Push(Parameters = new GDParametersDeclaration());
-                state.PassChar(c);
-                return;
-            }
-
-            if (_statementsChecked)
-            {
-                state.Pop();
-                state.PassChar(c);
-                return;
-            }
-
-            if (c == ':')
-            {
-                _typeChecked = true;
-                _statementsChecked = true;
-                state.Push(new GDStatementResolver(this, 1));
-            }
-            else
-            {
-                if (!_typeChecked)
-                {
-                    if (c == '-' || c == '>')
-                        return;
-
-                    state.Push(ReturnType = new GDType());
-                    state.PassChar(c);
-                    _typeChecked = true;
-                    return;
-                }
-
-                state.Pop();
-                state.PassChar(c);
+                case State.Static:
+                    this.ResolveKeyword<GDStaticKeyword>(c, state);
+                    break;
+                case State.Func:
+                    this.ResolveKeyword<GDStaticKeyword>(c, state);
+                    break;
+                case State.Identifier:
+                    this.ResolveIdentifier(c, state);
+                    break;
+                case State.OpenBracket:
+                    this.ResolveOpenBracket(c, state);
+                    break;
+                case State.Parameters:
+                    _form.State = State.CloseBracket;
+                    state.PushAndPass(Parameters, c);
+                    break;
+                case State.CloseBracket:
+                    this.ResolveCloseBracket(c, state);
+                    break;
+                case State.ReturnTypeKeyword:
+                    this.ResolveKeyword<GDReturnTypeKeyword>(c, state);
+                    break;
+                case State.Type:
+                    this.ResolveType(c, state);
+                    break;
+                case State.Colon:
+                    this.ResolveColon(c, state);
+                    break;
+                case State.Statements:
+                    _form.State = State.Completed;
+                    state.PushAndPass(Statements, c);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
             }
         }
 
@@ -70,29 +127,187 @@ namespace GDShrapt.Reader
             state.PassNewLine();
         }
 
-        void IStatementsReceiver.HandleReceivedToken(GDStatement token)
+        void IKeywordReceiver<GDStaticKeyword>.HandleReceivedToken(GDStaticKeyword token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Static)
+            {
+                _form.State = State.Func;
+                StaticKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        void IKeywordReceiver<GDStaticKeyword>.HandleReceivedKeywordSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Static)
+            {
+                _form.State = State.Func;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        void IKeywordReceiver<GDFuncKeyword>.HandleReceivedToken(GDFuncKeyword token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Func)
+            {
+                _form.State = State.Identifier;
+                FuncKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException(); 
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        void IKeywordReceiver<GDFuncKeyword>.HandleReceivedKeywordSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Func)
+            {
+                _form.State = State.Identifier;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.OpenBracket;
+                Identifier = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
+        {
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.OpenBracket;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
+        {
+            if (_form.State == State.OpenBracket)
+            {
+                _form.State = State.Parameters;
+                OpenBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.OpenBracket)
+            {
+                _form.State = State.Parameters;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDCloseBracket>.HandleReceivedToken(GDCloseBracket token)
+        {
+            if (_form.State == State.CloseBracket)
+            {
+                _form.State = State.ReturnTypeKeyword;
+                CloseBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.CloseBracket)
+            {
+                _form.State = State.ReturnTypeKeyword;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDReturnTypeKeyword>.HandleReceivedToken(GDReturnTypeKeyword token)
+        {
+            if (_form.State == State.ReturnTypeKeyword)
+            {
+                _form.State = State.Type;
+                ReturnTypeKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDReturnTypeKeyword>.HandleReceivedKeywordSkip()
+        {
+            if (_form.State == State.ReturnTypeKeyword)
+            {
+                _form.State = State.Colon;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITypeReceiver.HandleReceivedToken(GDType token)
+        {
+            if (_form.State == State.ReturnTypeKeyword)
+            {
+                _form.State = State.Colon;
+                ReturnType = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITypeReceiver.HandleReceivedTypeSkip()
+        {
+            if (_form.State == State.ReturnTypeKeyword)
+            {
+                _form.State = State.Colon;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
+        {
+            if (_form.State == State.Colon)
+            {
+                _form.State = State.Statements;
+                Colon = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.Colon)
+            {
+                _form.State = State.Statements;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

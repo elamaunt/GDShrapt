@@ -20,6 +20,7 @@
         Continue,
         DefaultOperator,
         Breakpoint,
-        Break
+        Break,
+        Yield
     }
 }

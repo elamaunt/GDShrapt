@@ -14,7 +14,7 @@
         {
             if (IsSpace(c))
             {
-                AppendAndPush(new GDSpace(), state);
+                Owner.HandleReceivedToken(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }

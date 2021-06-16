@@ -10,7 +10,6 @@
         void Visit(GDIndexerExression e);
         void Visit(GDMemberOperatorExpression e);
         void Visit(GDNumberExpression e);
-        void Visit(GDParametersExpression e);
         void Visit(GDSingleOperatorExpression e);
         void Visit(GDStringExpression e);
         void Visit(GDReturnExpression e);

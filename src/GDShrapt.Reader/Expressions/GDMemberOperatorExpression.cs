@@ -1,35 +1,59 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDMemberOperatorExpression : GDExpression, IExpressionsReceiver
+    public sealed class GDMemberOperatorExpression : GDExpression,
+        IExpressionsReceiver,
+        ITokenReceiver<GDPoint>,
+        IIdentifierReceiver
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Member);
 
-        public GDExpression CallerExpression { get; set; }
-        public GDIdentifier Identifier { get; set; }
+        public GDExpression CallerExpression
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+        internal GDPoint Point
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+        public GDIdentifier Identifier
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+
+        enum State
+        {
+            CallerExpression,
+            Point,
+            Identifier,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDExpression, GDPoint, GDIdentifier> _form = new GDTokensForm<State, GDExpression, GDPoint, GDIdentifier>();
+        internal override GDTokensForm Form => _form;
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (this.ResolveStyleToken(c, state))
                 return;
 
-            if (CallerExpression == null)
+            switch (_form.State)
             {
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
-                return;
+                case State.CallerExpression:
+                    this.ResolveExpression(c, state);
+                    break;
+                case State.Point:
+                    this.ResolvePoint(c, state);
+                    break;
+                case State.Identifier:
+                    this.ResolveIdentifier(c, state);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
             }
-
-            if (Identifier == null)
-            {
-                state.Push(Identifier = new GDIdentifier());
-
-                if (c != '.')
-                    state.PassChar(c);
-                return;
-            }
-
-            state.Pop();
-            state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
@@ -69,39 +93,73 @@
             CallerExpression = CallerExpression.RebuildRootOfPriorityIfNeeded();
         }
 
-        public override string ToString()
-        {
-            return $"{CallerExpression}.{Identifier}";
-        }
-
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.CallerExpression)
+            {
+                _form.State = State.Point;
+                CallerExpression = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.CallerExpression)
+            {
+                _form.State = State.Point;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        void ITokenReceiver<GDPoint>.HandleReceivedToken(GDPoint token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Point)
+            {
+                _form.State = State.Identifier;
+                Point = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        void ITokenReceiver<GDPoint>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Point)
+            {
+                _form.State = State.Identifier;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.Completed;
+                Identifier = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

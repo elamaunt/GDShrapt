@@ -195,7 +195,7 @@ namespace GDShrapt.Converter
 
         }
 
-        public void Visit(GDYieldStatement s)
+        public void Visit(GDYieldExpression s)
         {
 
         }

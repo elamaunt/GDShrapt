@@ -63,8 +63,7 @@
                         return;
                     }
 
-                    state.Push(new GDDualOperatorResolver(this));
-                    state.PassChar(c);
+                    this.ResolveDualOperator(c, state);
                     break;
                 case State.RightExpression:
                     state.Push(new GDExpressionResolver(this));

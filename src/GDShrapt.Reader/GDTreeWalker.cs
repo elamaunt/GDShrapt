@@ -64,7 +64,7 @@
                 case GDWhileStatement whileStatement:
                     WalkIn(whileStatement);
                     break;
-                case GDYieldStatement yieldStatement:
+                case GDYieldExpression yieldStatement:
                     WalkIn(yieldStatement);
                     break;
 
@@ -207,7 +207,7 @@
             _visitor.LeftNode();
         }
 
-        protected void WalkIn(GDYieldStatement s)
+        protected void WalkIn(GDYieldExpression s)
         {
             _visitor.Visit(s);
             _visitor.LeftNode();

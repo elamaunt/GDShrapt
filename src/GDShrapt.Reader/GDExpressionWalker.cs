@@ -58,12 +58,6 @@
             _visitor.LeftNode();
         }
 
-        protected void WalkIn(GDParametersExpression e)
-        {
-            _visitor.Visit(e);
-            _visitor.LeftNode();
-        }
-
         protected void WalkIn(GDSingleOperatorExpression e)
         {
             _visitor.Visit(e);
@@ -119,9 +113,6 @@
                     break;
                 case GDNumberExpression numberExpression:
                     WalkIn(numberExpression);
-                    break;
-                case GDParametersExpression parametersExpression:
-                    WalkIn(parametersExpression);
                     break;
                 case GDSingleOperatorExpression singleOperatorExpression:
                     WalkIn(singleOperatorExpression);

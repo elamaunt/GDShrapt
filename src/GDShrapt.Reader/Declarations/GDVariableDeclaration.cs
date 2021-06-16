@@ -8,7 +8,8 @@
         ITokenReceiver<GDColon>,
         ITokenReceiver<GDAssign>,
         IExpressionsReceiver,
-        IKeywordReceiver<GDSetGetKeyword>
+        IKeywordReceiver<GDSetGetKeyword>,
+        ITokenReceiver<GDComma>
     {
         internal GDConstKeyword ConstKeyword 
         {
@@ -63,15 +64,22 @@
             get => _form.Token9;
             set => _form.Token9 = value;
         }
-        public GDIdentifier GetMethodIdentifier
+        public GDIdentifier SetMethodIdentifier
         {
             get => _form.Token10;
             set => _form.Token10 = value;
         }
-        public GDIdentifier SetMethodIdentifier
+
+        internal GDComma Comma
         {
             get => _form.Token11;
             set => _form.Token11 = value;
+        }
+
+        public GDIdentifier GetMethodIdentifier
+        {
+            get => _form.Token12;
+            set => _form.Token12 = value;
         }
 
         public bool IsExported => Export != null;
@@ -90,12 +98,13 @@
             Assign,
             Initializer,
             SetGet,
-            GetMethod,
             SetMethod,
+            Comma,
+            GetMethod,
             Completed
         }
 
-        readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDIdentifier> _form = new GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDIdentifier>();
+        readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier> _form = new GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier>();
         internal override GDTokensForm Form => _form;
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -160,10 +169,10 @@
                     state.Push(new GDKeywordResolver<GDSetGetKeyword>(this));
                     state.PassChar(c);
                     break;
-                case State.GetMethod:
+                case State.SetMethod:
                     if (IsIdentifierStartChar(c))
                     {
-                        _form.State = State.SetMethod;
+                        _form.State = State.Comma;
                         state.Push(Identifier = new GDIdentifier());
                     }
                     else
@@ -173,7 +182,10 @@
 
                     state.PassChar(c);
                     break;
-                case State.SetMethod:
+                case State.Comma:
+                    this.ResolveComma(c, state);
+                    break;
+                case State.GetMethod:
                     if (IsIdentifierStartChar(c))
                     {
                         _form.State = State.Completed;
@@ -224,7 +236,7 @@
 
         void IKeywordReceiver<GDOnreadyKeyword>.HandleReceivedToken(GDOnreadyKeyword token)
         {
-            if (_form.State == State.Onready)
+            if (_form.StateIndex <= (int)State.Onready)
             {
                 _form.State = State.Export;
                 OnreadyKeyword = token;
@@ -236,7 +248,7 @@
 
         void IKeywordReceiver<GDOnreadyKeyword>.HandleReceivedKeywordSkip()
         {
-            if (_form.State == State.Onready)
+            if (_form.StateIndex <= (int)State.Onready)
             {
                 _form.State = State.Export;
                 return;
@@ -247,7 +259,7 @@
 
         void IExportReceiver.HandleReceivedExport(GDExportDeclaration token)
         {
-            if (_form.State == State.Export)
+            if (_form.StateIndex <= (int)State.Export)
             {
                 Export = token;
                 _form.State = State.Var;
@@ -259,7 +271,7 @@
 
         void IExportReceiver.HandleReceivedExportSkip()
         {
-            if (_form.State == State.Export)
+            if (_form.StateIndex <= (int)State.Export)
             {
                 _form.State = State.Var;
                 return;
@@ -270,7 +282,7 @@
 
         void IKeywordReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
         {
-            if (_form.State == State.Var)
+            if (_form.StateIndex <= (int)State.Var)
             {
                 _form.State = State.Identifier;
                 VarKeyword = token;
@@ -282,7 +294,7 @@
 
         void IKeywordReceiver<GDVarKeyword>.HandleReceivedKeywordSkip()
         {
-            if (_form.State == State.Var)
+            if (_form.StateIndex <= (int)State.Var)
             {
                 _form.State = State.Identifier;
                 return;
@@ -378,6 +390,29 @@
             if (_form.State == State.SetGet)
             {
                 _form.State = State.SetMethod;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
+        {
+            if (_form.State == State.Comma)
+            {
+                _form.State = State.GetMethod;
+                Comma = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.Comma)
+            {
+                _form.State = State.GetMethod;
                 return;
             }
 

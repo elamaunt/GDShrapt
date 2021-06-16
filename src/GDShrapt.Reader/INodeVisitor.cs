@@ -16,7 +16,7 @@
         void Visit(GDMatchStatement s);
         void Visit(GDVariableDeclarationStatement s);
         void Visit(GDWhileStatement s);
-        void Visit(GDYieldStatement s);
+        void Visit(GDYieldExpression s);
         new void LeftNode();
     }
 }

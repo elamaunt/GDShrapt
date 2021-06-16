@@ -898,11 +898,11 @@ match x:
             Assert.IsFalse(variableDeclaration.IsExported);
             Assert.IsFalse(variableDeclaration.HasOnReadyInitialization);
 
-            Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
             Assert.IsNotNull(variableDeclaration.GetMethodIdentifier);
+            Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
 
-            Assert.AreEqual("set_speed", variableDeclaration.SetMethodIdentifier.Sequence);
-            Assert.AreEqual("get_speed", variableDeclaration.GetMethodIdentifier.Sequence);
+            Assert.AreEqual("set_speed", variableDeclaration.GetMethodIdentifier.Sequence);
+            Assert.AreEqual("get_speed", variableDeclaration.SetMethodIdentifier.Sequence);
         }
 
         [TestMethod]
@@ -941,10 +941,10 @@ match x:
             Assert.IsTrue(variableDeclaration.IsExported);
             Assert.IsFalse(variableDeclaration.HasOnReadyInitialization);
 
-            Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
-            Assert.IsNull(variableDeclaration.GetMethodIdentifier);
+            Assert.IsNotNull(variableDeclaration.GetMethodIdentifier);
+            Assert.IsNull(variableDeclaration.SetMethodIdentifier);
 
-            Assert.AreEqual("set_height", variableDeclaration.SetMethodIdentifier.Sequence);
+            Assert.AreEqual("set_height", variableDeclaration.GetMethodIdentifier.Sequence);
         }
 
         [TestMethod]

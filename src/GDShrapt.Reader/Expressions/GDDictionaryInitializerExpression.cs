@@ -1,30 +1,54 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-    public sealed class GDDictionaryInitializerExpression : GDExpression
+    public sealed class GDDictionaryInitializerExpression : GDExpression,
+        ITokenReceiver<GDFigureOpenBracket>,
+        ITokenReceiver<GDFigureCloseBracket>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.DictionaryInitializer);
-        public List<GDDictionaryKeyValueDeclaration> KeyValues { get; } = new List<GDDictionaryKeyValueDeclaration>();
 
+        internal GDFigureOpenBracket FigureOpenBracket
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+        public GDDictionaryKeyValueDeclarationList KeyValues { get => _form.Token1 ?? (_form.Token1 = new GDDictionaryKeyValueDeclarationList()); }
+        internal GDFigureCloseBracket FigureCloseBracket
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+
+        enum State
+        {
+            FigureOpenBracket,
+            KeyValues,
+            FigureCloseBracket,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket> _form = new GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket>();
+        internal override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (this.ResolveStyleToken(c, state))
                 return;
 
-            if (c == '}')
+            switch (_form.State)
             {
-                state.Pop();
-                return;
+                case State.FigureOpenBracket:
+                    this.ResolveFigureOpenBracket(c, state);
+                    break;
+                case State.KeyValues:
+                    _form.State = State.FigureCloseBracket;
+                    state.PushAndPass(KeyValues, c);
+                    break;
+                case State.FigureCloseBracket:
+                    this.ResolveFigureCloseBracket(c, state);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
             }
-
-            var decl = new GDDictionaryKeyValueDeclaration();
-            KeyValues.Add(decl);
-            state.Push(decl);
-
-            if (c != ',')
-                state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
@@ -33,9 +57,50 @@ namespace GDShrapt.Reader
             state.PassNewLine();
         }
 
-        public override string ToString()
+        void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedToken(GDFigureOpenBracket token)
         {
-            return $"{{{string.Join(", ", KeyValues.Select(x => x.ToString()))}}}";
+            if (_form.State == State.FigureOpenBracket)
+            {
+                _form.State = State.KeyValues;
+                FigureOpenBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.FigureOpenBracket)
+            {
+                _form.State = State.KeyValues;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDFigureCloseBracket>.HandleReceivedToken(GDFigureCloseBracket token)
+        {
+            if (_form.State == State.FigureCloseBracket)
+            {
+                _form.State = State.Completed;
+                FigureCloseBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDFigureCloseBracket>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.FigureCloseBracket)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

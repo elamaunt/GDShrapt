@@ -1,86 +1,153 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDDictionaryKeyValueDeclaration : GDNode, IExpressionsReceiver
+    public sealed class GDDictionaryKeyValueDeclaration : GDNode,
+        IExpressionsReceiver,
+        ITokenReceiver<GDColon>,
+        ITokenReceiver<GDAssign>
     {
-        bool _keyChecked;
+        public GDExpression Key
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
 
-        public GDExpression Key { get; set; }
-        public GDExpression Value { get; set; }
+        internal GDColon Colon
+        {
+            get => (GDColon)_form.Token1;
+            set => _form.Token1 = value;
+        }
+        internal GDAssign Assign
+        {
+            get => (GDAssign)_form.Token1;
+            set => _form.Token1 = value;
+        }
+        public GDExpression Value
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
 
+        enum State
+        {
+            Key,
+            Colon,
+            Assign,
+            Value,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDExpression, GDSingleCharToken, GDExpression> _form = new GDTokensForm<State, GDExpression, GDSingleCharToken, GDExpression>();
+        internal override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (this.ResolveStyleToken(c, state))
                 return;
 
-            if (c == '}' || c ==',')
+            switch (_form.State)
             {
-                state.Pop();
-                state.PassChar(c);
-                return;
+                case State.Key:
+                    this.ResolveExpression(c, state);
+                    break;
+                case State.Colon:
+                    this.ResolveColon(c, state);
+                    break;
+                case State.Assign:
+                    this.ResolveAssign(c, state);
+                    break;
+                case State.Value:
+                    this.ResolveExpression(c, state);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
             }
-
-            if (Key == null)
-            {
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
-                return;
-            }
-
-            if (!_keyChecked)
-            {
-                _keyChecked = c == ':' || c == '=';
-                return;
-            }
-
-            if (Value == null)
-            {
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
-                return;
-            }
-
-            state.Pop();
-            state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            // Ignore
-        }
-
-        public override string ToString()
-        {
-            return $"{Key}: {Value}";
+            _form.AddBeforeActiveToken(new GDNewLine());
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Key)
+            {
+                _form.State = State.Colon;
+                Key = token;
+                return;
+            }
+
+            if (_form.State == State.Value)
+            {
+                _form.State = State.Completed;
+                Value = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Key)
+            {
+                _form.State = State.Colon;
+                return;
+            }
+
+            if (_form.State == State.Value)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Colon)
+            {
+                _form.State = State.Value;
+                Colon = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Colon)
+            {
+                _form.State = State.Assign;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Assign)
+            {
+                _form.State = State.Value;
+                Assign = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        void ITokenReceiver<GDAssign>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Assign)
+            {
+                _form.State = State.Value;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

@@ -1,16 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDYieldStatement : GDStatement
+    public sealed class GDDictionaryKeyValueDeclarationList : GDSeparatedList<GDDictionaryKeyValueDeclaration, GDComma>
     {
-        internal GDYieldStatement(int lineIntendation)
-            : base(lineIntendation)
-        {
-        }
-
-        public GDYieldStatement()
-        {
-        }
-
         internal override void HandleChar(char c, GDReadingState state)
         {
             throw new System.NotImplementedException();

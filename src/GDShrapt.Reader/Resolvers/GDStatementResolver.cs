@@ -155,7 +155,7 @@ namespace GDShrapt.Reader
                     break;
                 case "yield":
                     _ifStatement = null;
-                    statement = new GDYieldStatement(LineIntendationThreshold);
+                    statement = new GDYieldExpression(LineIntendationThreshold);
                     break;
                 case "var":
                     _ifStatement = null;

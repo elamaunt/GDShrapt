@@ -1,38 +1,54 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDSingleOperatorExpression : GDExpression, ISingleOperatorReceiver, IExpressionsReceiver
+    public sealed class GDSingleOperatorExpression : GDExpression, 
+        ISingleOperatorReceiver,
+        IExpressionsReceiver
     {
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
-        public GDSingleOperatorType OperatorType { get; set; }
-        public GDExpression TargetExpression { get; set; }
 
+        public GDSingleOperator Operator
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+        public GDExpression TargetExpression
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+        public GDSingleOperatorType OperatorType { get => _form.Token0 == null ? GDSingleOperatorType.Null : _form.Token0.OperatorType; }
+
+        enum State
+        {
+            Operator,
+            TargetExpression,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDSingleOperator, GDExpression> _form = new GDTokensForm<State, GDSingleOperator, GDExpression>();
+        internal override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (this.ResolveStyleToken(c, state))
                 return;
 
-            if (OperatorType == GDSingleOperatorType.Null)
+            switch (_form.State)
             {
-                state.Push(new GDSingleOperatorResolver(this));
-                state.PassChar(c);
-                return;
+                case State.Operator:
+                    this.ResolveSingleOperator(c, state);
+                    break;
+                case State.TargetExpression:
+                    this.ResolveExpression(c, state);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
             }
-
-            if (TargetExpression == null)
-            {
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
-                return;
-            }
-
-            state.Pop();
-            state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         protected override GDExpression PriorityRebuildingPass()
@@ -44,6 +60,7 @@
                 return previous;
             }
 
+            // TODO: may lose the data about syntax
             // Remove 'negate' operator for number expression. Just make the number negative.
             if (OperatorType == GDSingleOperatorType.Negate && TargetExpression is GDNumberExpression numberExpression)
             {
@@ -83,42 +100,48 @@
 
         void ISingleOperatorReceiver.HandleReceivedToken(GDSingleOperator token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Operator)
+            {
+                _form.State = State.TargetExpression;
+                Operator = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void ISingleOperatorReceiver.HandleSingleOperatorSkip()
         {
-            throw new System.NotImplementedException();
-        }
+            if (_form.State == State.Operator)
+            {
+                _form.State = State.TargetExpression;
+                return;
+            }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            throw new System.NotImplementedException();
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.TargetExpression)
+            {
+                _form.State = State.Completed;
+                TargetExpression = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.TargetExpression)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }
