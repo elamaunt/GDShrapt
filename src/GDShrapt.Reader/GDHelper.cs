@@ -50,7 +50,6 @@ namespace GDShrapt.Reader
             switch (self)
             {
                 case GDSingleOperatorType.Null: return "";
-                case GDSingleOperatorType.Unknown: return "";
                 case GDSingleOperatorType.Negate: return "-";
                 case GDSingleOperatorType.Not: return "!";
                 case GDSingleOperatorType.Not2: return "not";
@@ -120,8 +119,7 @@ namespace GDShrapt.Reader
         {
             switch (type)
             {
-                case GDSingleOperatorType.Null:
-                case GDSingleOperatorType.Unknown: return 20;
+                case GDSingleOperatorType.Null: return 20;
                 case GDSingleOperatorType.Negate:
                 case GDSingleOperatorType.Not:
                 case GDSingleOperatorType.Not2:

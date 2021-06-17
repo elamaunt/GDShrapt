@@ -4,53 +4,48 @@
         ITokenReceiver<GDParameterDeclaration>,
         ITokenReceiver<GDComma>
     {
-        bool _completed;
-
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (!_completed)
+            if (c == ',')
             {
-                _completed = true;
-                state.Push(new GDExpressionResolver(this));
-                state.PassChar(c);
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            if (c == ')')
+            {
+                state.PopAndPass(c);
+                return;
+            }
+
+            if (c.IsIdentifierStartChar())
+                ListForm.Add(state.PushAndPass(new GDParameterDeclaration(), c));
+            else
+                this.ResolveInvalidToken(c, state, x => x == ',' || x == ')' || x.IsIdentifierStartChar());
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (!_completed)
-            {
-                _completed = true;
-                state.Push(new GDExpressionResolver(this));
-                state.PassNewLine();
-                return;
-            }
-
-            state.Pop();
-            state.PassNewLine();
+            ListForm.Add(new GDNewLine());
         }
 
         void ITokenReceiver<GDParameterDeclaration>.HandleReceivedToken(GDParameterDeclaration token)
         {
-            throw new System.NotImplementedException();
+            ListForm.Add(token);
         }
 
         void ITokenReceiver<GDParameterDeclaration>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+
         }
+
         void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
         {
-            throw new System.NotImplementedException();
+            ListForm.Add(token);
         }
 
         void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+
         }
     }
 }

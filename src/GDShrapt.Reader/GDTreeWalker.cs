@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+
+namespace GDShrapt.Reader
 {
     public class GDTreeWalker : GDExpressionWalker
     {
@@ -93,9 +95,6 @@
                 case GDNumberExpression numberExpression:
                     WalkIn(numberExpression);
                     break;
-                case GDParametersExpression parametersExpression:
-                    WalkIn(parametersExpression);
-                    break;
                 case GDSingleOperatorExpression singleOperatorExpression:
                     WalkIn(singleOperatorExpression);
                     break;
@@ -135,8 +134,8 @@
 
             WalkInNode(d.Parameters);
 
-            foreach (var method in d.Statements)
-                WalkInNode(method);
+            foreach (var statement in d.Statements)
+                WalkInNode(statement);
 
             _visitor.LeftNode();
         }

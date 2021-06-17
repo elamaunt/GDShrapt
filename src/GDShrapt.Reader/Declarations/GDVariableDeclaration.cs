@@ -107,6 +107,17 @@
         readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier> _form = new GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier>();
         internal override GDTokensForm Form => _form;
 
+        internal GDVariableDeclaration(int intendation)
+            : base(intendation)
+        {
+
+        }
+
+        public GDVariableDeclaration()
+        {
+
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))

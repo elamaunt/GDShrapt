@@ -25,6 +25,7 @@ namespace GDShrapt.Reader
                 var sequence = _sequenceBuilder.ToString();
                 ResetSequence();
                 Complete(state, sequence);
+                state.PassChar(c);
             }
         }
 
@@ -51,17 +52,12 @@ namespace GDShrapt.Reader
 
         private void Complete(GDReadingState state, string sequence)
         {
-            (GDClassAtribute atribute, bool valid) x;
+            var atribute = GetAtribute(sequence);
 
-            x = GetAtribute(sequence);
-
-            if (x.valid)
+            if (atribute != null)
             {
-                if (x.atribute == null)
-                    return;
-
-                Owner.HandleReceivedToken(x.atribute);
-                state.Push(x.atribute);
+                Owner.HandleReceivedToken(atribute);
+                state.Push(atribute);
             }
             else
             {
@@ -72,18 +68,18 @@ namespace GDShrapt.Reader
             }
         }
 
-        private (GDClassAtribute, bool) GetAtribute(string sequence)
+        private GDClassAtribute GetAtribute(string sequence)
         {
             switch (sequence)
             {
                 case "class_name":
-                    return (new GDClassNameAtribute(), true);
+                    return new GDClassNameAtribute();
                 case "extends":
-                    return (new GDExtendsAtribute(), true);
+                    return new GDExtendsAtribute();
                 case "tool":
-                    return (new GDToolAtribute(), true);
+                    return new GDToolAtribute();
             default:
-                    return (null, false);
+                    return null;
             }
         }
     }

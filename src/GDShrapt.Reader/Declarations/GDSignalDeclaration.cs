@@ -43,6 +43,18 @@
 
         readonly GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> _form = new GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket>();
         internal override GDTokensForm Form => _form;
+
+        internal GDSignalDeclaration(int intendation)
+            : base(intendation)
+        {
+
+        }
+
+        public GDSignalDeclaration()
+        {
+
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))

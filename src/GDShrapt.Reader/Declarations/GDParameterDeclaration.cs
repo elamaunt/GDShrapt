@@ -30,7 +30,7 @@
         }
 
         readonly GDTokensForm<State, GDIdentifier, GDColon, GDType> _form = new GDTokensForm<State, GDIdentifier, GDColon, GDType>();
-        internal override GDTokensForm Form => throw new System.NotImplementedException();
+        internal override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (this.ResolveStyleToken(c, state))

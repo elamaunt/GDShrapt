@@ -1,15 +1,47 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDDictionaryKeyValueDeclarationList : GDSeparatedList<GDDictionaryKeyValueDeclaration, GDComma>
+    public sealed class GDDictionaryKeyValueDeclarationList : GDSeparatedList<GDDictionaryKeyValueDeclaration, GDComma>,
+        ITokenReceiver<GDDictionaryKeyValueDeclaration>,
+        ITokenReceiver<GDComma>
     {
         internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            if (c == ',')
+            {
+                ListForm.Add(new GDComma());
+                return;
+            }
+
+            if (c == '}')
+            {
+                state.PopAndPass(c);
+                return;
+            }
+
+            ListForm.Add(state.PushAndPass(new GDDictionaryKeyValueDeclaration(), c));
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            throw new System.NotImplementedException();
+            ListForm.Add(new GDNewLine());
+        }
+
+        void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)
+        {
+            ListForm.Add(token);
+        }
+
+        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
+        {
+            ListForm.Add(token);
+        }
+
+        void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedTokenSkip()
+        {
+        }
+
+        void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
+        {
         }
     }
 }

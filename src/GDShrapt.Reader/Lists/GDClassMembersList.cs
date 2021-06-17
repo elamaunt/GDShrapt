@@ -10,10 +10,6 @@
             _lineIntendationThreshold = lineIntendation;
         }
 
-        public GDClassMembersList()
-        {
-        }
-
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (!_completed)

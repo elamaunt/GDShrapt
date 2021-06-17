@@ -10,6 +10,5 @@
     internal interface ITokenReceiver
     {
         void HandleReceivedToken(GDInvalidToken token);
-        void HandleReceivedAbstractToken(GDSyntaxToken token);
     }
 }

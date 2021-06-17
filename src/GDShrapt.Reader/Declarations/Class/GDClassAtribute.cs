@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public abstract class GDClassAtribute : GDIntendedNode
+    public abstract class GDClassAtribute : GDNode
     {
     }
 }

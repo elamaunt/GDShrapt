@@ -12,7 +12,7 @@ namespace GDShrapt.Reader
 
         public GDClassMembersList Members
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDClassMembersList());
+            get => _form.Token1 ?? (_form.Token1 = new GDClassMembersList(1));
         }
 
         enum State

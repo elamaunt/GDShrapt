@@ -9,8 +9,6 @@ namespace GDShrapt.Reader
         ITokenReceiver<GDColon>,
         ITokenReceiver<GDNewLine>
     {
-        readonly int _lineIntendation;
-
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
         public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
@@ -38,7 +36,7 @@ namespace GDShrapt.Reader
         }
         public GDClassMembersList Members
         {
-            get => _form.Token4 ?? (_form.Token4 = new GDClassMembersList(_lineIntendation + 1));
+            get => _form.Token4 ?? (_form.Token4 = new GDClassMembersList(Intendation + 1));
         }
 
         enum State
@@ -54,9 +52,9 @@ namespace GDShrapt.Reader
         readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList> _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList>();
         internal override GDTokensForm Form => _form;
 
-        internal GDInnerClassDeclaration(int lineIntendation)
+        internal GDInnerClassDeclaration(int intendation)
+            : base(intendation)
         {
-            _lineIntendation = lineIntendation;
         }
 
         public GDInnerClassDeclaration()

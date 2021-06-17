@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -7,7 +6,7 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract partial class GDNode : GDSyntaxToken, IEnumerable<GDSyntaxToken>, IStyleTokensReceiver
+    public abstract partial class GDNode : GDSyntaxToken, IStyleTokensReceiver
     {
         // TODO: remove virtual. Should be abstract
         internal abstract GDTokensForm Form { get; }
@@ -16,11 +15,7 @@ namespace GDShrapt.Reader
             set => Form.MoveTokens(value);
         }
 
-        public IEnumerable<GDSyntaxToken> Tokens()
-        {
-            foreach (var token in Form)
-                yield return token;
-        }
+        public IEnumerable<GDSyntaxToken> Tokens => Form;
 
         /*
         /// <summary>
@@ -63,22 +58,7 @@ namespace GDShrapt.Reader
             return builder.ToString();
         }
 
-        public IEnumerator<GDSyntaxToken> GetEnumerator()
-        {
-            return Form.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return Form.GetEnumerator();
-        }
-
         void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            Form.AddBeforeActiveToken(token);
-        }
-
-        void ITokenReceiver.HandleReceivedAbstractToken(GDSyntaxToken token)
         {
             Form.AddBeforeActiveToken(token);
         }

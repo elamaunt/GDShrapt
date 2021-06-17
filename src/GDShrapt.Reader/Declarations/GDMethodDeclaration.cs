@@ -53,7 +53,7 @@
         }
         public GDStatementsList Statements { get => _form.Token9 ?? (_form.Token9 = new GDStatementsList()); }
 
-        public bool IsStatic { get; set; }
+        public bool IsStatic => StaticKeyword != null;
 
         enum State
         {
@@ -72,6 +72,18 @@
 
         readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>();
         internal override GDTokensForm Form => _form;
+
+        internal GDMethodDeclaration(int intendation)
+            : base(intendation)
+        {
+
+        }
+
+        public GDMethodDeclaration()
+        {
+
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))

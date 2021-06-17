@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GDShrapt.Reader
@@ -49,9 +50,14 @@ namespace GDShrapt.Reader
             return _form.Remove(item);
         }
 
-        IEnumerator<NODE> IEnumerable<NODE>.GetEnumerator()
+        public IEnumerator<NODE> GetEnumerator()
         {
-            return this.OfType<NODE>().GetEnumerator();
+            return ListForm.OfType<NODE>().GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ListForm.OfType<NODE>().GetEnumerator();
         }
 
         public int IndexOf(NODE item)

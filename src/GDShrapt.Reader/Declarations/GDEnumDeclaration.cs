@@ -38,8 +38,14 @@
         }
 
         readonly GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> _form = new GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket>();
-
         internal override GDTokensForm Form => _form;
+        internal GDEnumDeclaration(int intendation)
+           : base(intendation)
+        {
+        }
+        public GDEnumDeclaration()
+        {
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

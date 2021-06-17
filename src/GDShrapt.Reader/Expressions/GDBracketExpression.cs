@@ -66,32 +66,71 @@
 
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.OpenBracket)
+            {
+                _form.State = State.Expression;
+                OpenBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void ITokenReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.OpenBracket)
+            {
+                _form.State = State.Expression;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.CloseBracket;
+                InnerExpression = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.CloseBracket;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void ITokenReceiver<GDCloseBracket>.HandleReceivedToken(GDCloseBracket token)
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.CloseBracket)
+            {
+                _form.State = State.Completed;
+                CloseBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
 
         void ITokenReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
         {
-            throw new System.NotImplementedException();
+            if (_form.State == State.CloseBracket)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

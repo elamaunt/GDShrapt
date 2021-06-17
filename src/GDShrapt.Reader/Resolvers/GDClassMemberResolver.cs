@@ -6,10 +6,6 @@ namespace GDShrapt.Reader
     {
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
-        bool _static;
-        bool _onready;
-        bool _export;
-
         new IClassMembersReceiver Owner { get; }
 
         public GDClassMemberResolver(IClassMembersReceiver owner, int lineIntendation)
@@ -29,6 +25,7 @@ namespace GDShrapt.Reader
                 var sequence = _sequenceBuilder.ToString();
                 ResetSequence();
                 Complete(state, sequence);
+                state.PassChar(c);
             }
         }
 
@@ -55,131 +52,30 @@ namespace GDShrapt.Reader
 
         private void Complete(GDReadingState state, string sequence)
         {
-            (GDClassMember member, bool valid) x;
-
-            if (_export)
-            {
-                x = GetMemberForExport(sequence);
-            }
-            else
-            {
-                if (_onready)
-                {
-                    x = GetMemberForOnready(sequence);
-                }
-                else
-                {
-                    if (_static)
-                    {
-                        x = GetMemberForStatic(sequence);
-                    }
-                    else
-                    {
-                        x = GetFirstMember(sequence);
-                    }
-                }
-            }
-
-            if (x.valid)
-            {
-
-                if (x.member == null)
-                    return;
-
-                _onready = false;
-                _static = false;
-
-                Owner.HandleReceivedToken(x.member);
-                state.Push(x.member);
-            }
-            else
-            {
-                Owner.HandleReceivedToken(state.Push(new GDInvalidToken(' ')));
-            }
-        }
-
-        private (GDClassMember, bool) GetFirstMember(string sequence)
-        {
             switch (sequence)
             {
-                // Modifiers
-                case "onready":
-                    _onready = true;
-                    return (null, true);
-                case "static":
-                    _static = true;
-                    return (null, true);
-                case "export":
-                    _export = true;
-                    return (null, true);
-
-               /* case "class_name":
-                    return (new GDClassNameAtribute(), true);
-                case "extends":
-                    return (new GDExtendsAtribute(), true);
-                case "tool":
-                    return (new GDToolAtribute(), true);*/
                 case "signal":
-                    return (new GDSignalDeclaration(), true);
+                    Owner.HandleReceivedToken(state.Push(new GDSignalDeclaration(LineIntendationThreshold + 1)));
+                    break;
                 case "enum":
-                    return (new GDEnumDeclaration(), true);
+                    Owner.HandleReceivedToken(state.Push(new GDEnumDeclaration(LineIntendationThreshold + 1)));
+                    break;
+                case "static":
                 case "func":
-                    return (new GDMethodDeclaration(), true);
+                    Owner.HandleReceivedToken(state.Push(new GDMethodDeclaration(LineIntendationThreshold + 1)));
+                    break;
+                case "export":
+                case "onready":
                 case "const":
-                    return (new GDVariableDeclaration() { IsConstant = true }, true);
                 case "var":
-                    return (new GDVariableDeclaration(), true);
-            default:
-                    return (null, false);
-            }
-        }
-        private (GDClassMember, bool) GetMemberForExport(string sequence)
-        {
-            switch (sequence)
-            {
-                case "onready" when !_onready:
-                    _onready = true;
-                    return (null, true);
-                case "var":
-                    return (new GDVariableDeclaration()
-                    {
-                        HasOnReadyInitialization = _onready,
-                        IsExported = _export
-                    }, true);
+                    Owner.HandleReceivedToken(state.Push(new GDVariableDeclaration(LineIntendationThreshold + 1)));
+                    break;
+                case "class":
+                    Owner.HandleReceivedToken(state.Push(new GDInnerClassDeclaration(LineIntendationThreshold + 1)));
+                    break;
                 default:
-                    return (null, false);
-            }
-        }
-
-        private (GDClassMember, bool) GetMemberForOnready(string sequence)
-        {
-            switch (sequence)
-            {
-                case "export" when !_export:
-                    _export = true;
-                    return (null, true);
-                case "var":
-                    return (new GDVariableDeclaration()
-                    {
-                        HasOnReadyInitialization = _onready,
-                        IsExported = _export
-                    }, true);
-                default:
-                    return (null, false);
-            }
-        }
-
-        private (GDClassMember, bool) GetMemberForStatic(string sequence)
-        {
-            switch (sequence)
-            {
-                case "func":
-                    return (new GDMethodDeclaration()
-                    {
-                        IsStatic = true
-                    }, true);
-                default:
-                    return (null, false);
+                    Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsNewLine())));
+                    break;
             }
         }
     }
