@@ -153,33 +153,9 @@ namespace GDShrapt.Reader
                     _ifStatement = null;
                     statement = new GDMatchStatement(LineIntendationThreshold);
                     break;
-                case "yield":
-                    _ifStatement = null;
-                    statement = new GDYieldExpression(LineIntendationThreshold);
-                    break;
                 case "var":
                     _ifStatement = null;
                     statement = new GDVariableDeclarationStatement(LineIntendationThreshold);
-                    break;
-                case "return":
-                    _ifStatement = null;
-                    statement = new GDReturnStatement(LineIntendationThreshold);
-                    break;
-                case "pass":
-                    _ifStatement = null;
-                    statement = new GDPassStatement(LineIntendationThreshold);
-                    break;
-                case "continue":
-                    _ifStatement = null;
-                    statement = new GDContinueExpression(LineIntendationThreshold);
-                    break;
-                case "break":
-                    _ifStatement = null;
-                    statement = new GDBreakExpression(LineIntendationThreshold);
-                    break;
-                case "breakpoint":
-                    _ifStatement = null;
-                    statement = new GDBreakPointExpression(LineIntendationThreshold);
                     break;
                 default:
                     {

@@ -1,17 +1,36 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-    public sealed class GDMatchCaseDeclaration : GDNode, IExpressionsReceiver, IStatementsReceiver
+    public sealed class GDMatchCaseDeclaration : GDNode,
+        ITokenReceiver<GDColon>
     {
-        readonly int _lineIntendation;
-        bool _expressionEnded;
-        bool _statementsChecked;
+        private int _lineIntendation;
+        public GDExpressionsList Conditions { get => _form.Token0 ?? (_form.Token0 = new GDExpressionsList()); }
 
-        public List<GDExpression> Conditions { get; } = new List<GDExpression>();
-        public List<GDStatement> Statements { get; } = new List<GDStatement>();
+        internal GDColon Colon
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
 
+        internal GDNewLine NewLine
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+
+        public GDStatementsList Statements { get => _form.Token3 ?? (_form.Token3 = new GDStatementsList()); }
+
+        enum State
+        {
+            Conditions,
+            Colon,
+            NewLine,
+            Statements,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDExpressionsList, GDColon, GDNewLine, GDStatementsList> _form = new GDTokensForm<State, GDExpressionsList, GDColon, GDNewLine, GDStatementsList>();
+        internal override GDTokensForm Form => _form;
         internal GDMatchCaseDeclaration(int lineIntendation)
         {
             _lineIntendation = lineIntendation;
@@ -23,78 +42,68 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (this.ResolveStyleToken(c, state))
                 return;
 
-            if (c == ':' || _expressionEnded)
+            switch (_form.State)
             {
-                _expressionEnded = true;
-                return;
+                case State.Conditions:
+                    _form.State = State.Colon;
+                    state.PushAndPass(Conditions, c);
+                    break;
+                case State.Colon:
+                    this.ResolveColon(c, state);
+                    break;
+                case State.NewLine:
+                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    break;
+                case State.Statements:
+                    _form.State = State.Completed;
+                    state.PushAndPass(Statements, c);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
             }
-
-            state.Push(new GDExpressionResolver(this));
-
-            if (c != ',')
-                state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_expressionEnded && !_statementsChecked)
+            switch (_form.State)
             {
-                _statementsChecked = true;
-                state.Push(new GDStatementResolver(this, _lineIntendation + 1));
+                case State.Conditions:
+                case State.Colon:
+                case State.NewLine:
+                    _form.State = State.Statements;
+                    NewLine = new GDNewLine();
+                    break;
+                default:
+                    state.PopAndPassNewLine();
+                    break;
+            }
+        }
+
+        void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
+        {
+            if (_form.State == State.Colon)
+            {
+                _form.State = State.NewLine;
+                Colon = token;
                 return;
             }
 
-            state.Pop();
-            state.PassNewLine();
+            throw new GDInvalidReadingStateException();
         }
 
-        public override string ToString()
+        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            return $@"{string.Join(", ", Conditions.Select(x => x.ToString()))}:
-    {string.Join("\n\t", Statements.Select(x => x.ToString()))}";
-        }
+            if (_form.State == State.Colon)
+            {
+                _form.State = State.NewLine;
+                return;
+            }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IStatementsReceiver.HandleReceivedToken(GDStatement token)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
-        {
-            throw new System.NotImplementedException();
+            throw new GDInvalidReadingStateException();
         }
     }
 }

@@ -2,7 +2,9 @@
 {
     public sealed class GDYieldExpression : GDExpression,
         IKeywordReceiver<GDYieldKeyword>,
-        IExpressionsReceiver
+        ITokenReceiver<GDOpenBracket>,
+        IExpressionsReceiver,
+        ITokenReceiver<GDCloseBracket>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Yield);
 
@@ -11,21 +13,32 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
-        public GDExpression Expression
+        internal GDOpenBracket OpenBracket
         {
             get => _form.Token1;
             set => _form.Token1 = value;
+        }
+        public GDExpression Expression
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
+        internal GDCloseBracket CloseBracket
+        {
+            get => _form.Token3;
+            set => _form.Token3 = value;
         }
 
         enum State
         {
             Yield,
+            OpenBracket,
             Expression,
+            CloseBracket,
             Completed
         }
 
-        readonly GDTokensForm<State, GDYieldKeyword, GDExpression> _form = new GDTokensForm<State, GDYieldKeyword, GDExpression>();
+        readonly GDTokensForm<State, GDYieldKeyword, GDOpenBracket, GDExpression, GDCloseBracket> _form = new GDTokensForm<State, GDYieldKeyword, GDOpenBracket, GDExpression, GDCloseBracket>();
         internal override GDTokensForm Form => _form;
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -42,8 +55,14 @@
                 case State.Yield:
                     this.ResolveKeyword(c, state);
                     break;
+                case State.OpenBracket:
+                    this.ResolveOpenBracket(c, state);
+                    break;
                 case State.Expression:
                     this.ResolveExpression(c, state);
+                    break;
+                case State.CloseBracket:
+                    this.ResolveCloseBracket(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -60,7 +79,7 @@
         {
             if (_form.State == State.Yield)
             {
-                _form.State = State.Expression;
+                _form.State = State.OpenBracket;
                 YieldKeyword = token;
                 return;
             }
@@ -71,6 +90,28 @@
         void IKeywordReceiver<GDYieldKeyword>.HandleReceivedKeywordSkip()
         {
             if (_form.State == State.Yield)
+            {
+                _form.State = State.OpenBracket;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+        void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
+        {
+            if (_form.State == State.OpenBracket)
+            {
+                _form.State = State.Expression;
+                OpenBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.OpenBracket)
             {
                 _form.State = State.Expression;
                 return;
@@ -83,7 +124,7 @@
         {
             if (_form.State == State.Expression)
             {
-                _form.State = State.Completed;
+                _form.State = State.CloseBracket;
                 Expression = token;
                 return;
             }
@@ -94,6 +135,29 @@
         void IExpressionsReceiver.HandleReceivedExpressionSkip()
         {
             if (_form.State == State.Expression)
+            {
+                _form.State = State.CloseBracket;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDCloseBracket>.HandleReceivedToken(GDCloseBracket token)
+        {
+            if (_form.State == State.CloseBracket)
+            {
+                _form.State = State.Completed;
+                CloseBracket = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.CloseBracket)
             {
                 _form.State = State.Completed;
                 return;

@@ -30,10 +30,50 @@ namespace GDShrapt.Reader
             return true;
         }
 
+        public static bool ResolvePath(this IPathReceiver receiver, char c, GDReadingState state)
+        {
+            if (!IsSpace(c))
+            {
+                receiver.HandleReceivedToken(state.Push(new GDPath()));
+                state.PassChar(c);
+                return true;
+            }
+
+            receiver.HandleReceivedIdentifierSkip();
+            state.PassChar(c);
+            return false;
+        }
+
         public static void ResolveKeyword<T>(this IKeywordReceiver<T> receiver, char c, GDReadingState state)
             where T : GDSyntaxToken, IGDKeywordToken, new()
         {
             state.PushAndPass(new GDKeywordResolver<T>(receiver), c);
+        }
+
+        public static bool ResolveDollar(this ITokenReceiver<GDDollar> receiver, char c, GDReadingState state)
+        {
+            var result = c == '$';
+            if (result)
+                receiver.HandleReceivedToken(new GDDollar());
+            else
+            {
+                receiver.HandleReceivedTokenSkip();
+                state.PassChar(c);
+            }
+            return result;
+        }
+        
+        public static bool ResolveAt(this ITokenReceiver<GDAt> receiver, char c, GDReadingState state)
+        {
+            var result = c == '@';
+            if (result)
+                receiver.HandleReceivedToken(new GDAt());
+            else
+            {
+                receiver.HandleReceivedTokenSkip();
+                state.PassChar(c);
+            }
+            return result;
         }
 
         public static bool ResolveColon(this ITokenReceiver<GDColon> receiver, char c, GDReadingState state)

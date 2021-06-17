@@ -5,24 +5,20 @@
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public override GDAssociationOrderType AssociationOrder => GDHelper.GetOperatorAssociationOrder(OperatorType);
 
-        enum State
-        {
-            LeftExpression,
-            DualOperator,
-            RightExpression,
-            Completed
-        }
-
         public GDExpression LeftExpression 
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
         public GDDualOperator Operator
         {
             get => _form.Token1;
             set => _form.Token1 = value;
+        }
+        public GDExpression RightExpression
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
         }
 
         public GDDualOperatorType OperatorType
@@ -30,10 +26,12 @@
             get => _form.Token1 == null ? GDDualOperatorType.Null : _form.Token1.OperatorType;
         }
 
-        public GDExpression RightExpression
+        enum State
         {
-            get => _form.Token2;
-            set => _form.Token2 = value;
+            LeftExpression,
+            DualOperator,
+            RightExpression,
+            Completed
         }
 
         readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>();
@@ -202,26 +200,6 @@
             }
 
             throw new GDInvalidReadingStateException();
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
-        {
-            _form.AddBeforeActiveToken(token);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            _form.AddBeforeActiveToken(token);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            _form.AddBeforeActiveToken(token);
-        }
-
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-             _form.AddBeforeActiveToken(token);
         }
     }
 }

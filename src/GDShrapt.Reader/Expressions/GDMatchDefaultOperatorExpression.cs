@@ -32,8 +32,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         void ITokenReceiver<GDDefaultToken>.HandleReceivedToken(GDDefaultToken token)

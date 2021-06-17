@@ -2,20 +2,100 @@
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDGetNodeExpression : GDExpression
+    public sealed class GDGetNodeExpression : GDExpression,
+        ITokenReceiver<GDDollar>,
+        IPathReceiver
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetNode);
 
-        public string Path { get; set; }
+        internal GDDollar Dollar
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
 
+        public GDPath Path
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+
+        enum State
+        {
+            Dollar,
+            Path,
+            Completed
+        }
+
+        readonly GDTokensForm<State, GDDollar, GDPath> _form = new GDTokensForm<State, GDDollar, GDPath>();
+        internal override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new NotImplementedException();
+            switch (_form.State)
+            {
+                case State.Dollar:
+                    if (this.ResolveStyleToken(c, state))
+                        return;
+                    this.ResolveDollar(c, state);
+                    break;
+                case State.Path:
+                    this.ResolvePath(c, state);
+                    break;
+                default:
+                    state.PopAndPass(c);
+                    break;
+            }
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            throw new NotImplementedException();
+            state.PopAndPassNewLine();
+        }
+
+        void ITokenReceiver<GDDollar>.HandleReceivedToken(GDDollar token)
+        {
+            if (_form.State == State.Dollar)
+            {
+                _form.State = State.Path;
+                Dollar = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDDollar>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.Dollar)
+            {
+                _form.State = State.Path;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IPathReceiver.HandleReceivedToken(GDPath token)
+        {
+            if (_form.State == State.Path)
+            {
+                _form.State = State.Completed;
+                Path = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IPathReceiver.HandleReceivedIdentifierSkip()
+        {
+            if (_form.State == State.Path)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

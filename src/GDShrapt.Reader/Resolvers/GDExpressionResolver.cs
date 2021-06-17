@@ -215,14 +215,19 @@ namespace GDShrapt.Reader
                         PushAndSave(state, new GDMatchDefaultOperatorExpression());
                         return true;
                     case "false":
-                        PushAndSave(state, new GDBoolExpression());
-                        return true;
-                    case "true":
-                        PushAndSave(state, new GDBoolExpression()
                         {
-                            Value = true
-                        });
-                        return true;
+                            var e = new GDBoolExpression();
+                            e.SendKeyword(new GDFalseKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
+                    case "true":
+                        {
+                            var e = new GDBoolExpression();
+                            e.SendKeyword(new GDTrueKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
                     default:
                         break;
                 }
