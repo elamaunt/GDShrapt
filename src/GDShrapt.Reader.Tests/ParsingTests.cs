@@ -134,7 +134,7 @@ if a != null and a is A:
             Assert.AreEqual(1, ifStatement.TrueStatements.Count);
             Assert.AreEqual(0, ifStatement.FalseStatements.Count);
 
-            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDReturnStatement));
+            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDExpressionStatement));
         }
 
         [TestMethod]
@@ -158,7 +158,7 @@ else:
             Assert.AreEqual(1, ifStatement.TrueStatements.Count);
             Assert.AreEqual(1, ifStatement.FalseStatements.Count);
 
-            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDReturnStatement));
+            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDExpressionStatement));
             Assert.IsInstanceOfType(ifStatement.FalseStatements[0], typeof(GDExpressionStatement));
         }
 
@@ -209,7 +209,8 @@ else:
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.TrueStatements[0]).Expression, typeof(GDReturnExpression));
 
             Assert.IsInstanceOfType(ifStatement.FalseStatements[0], typeof(GDVariableDeclarationStatement));
-            Assert.IsInstanceOfType(ifStatement.FalseStatements[1], typeof(GDReturnStatement));
+            Assert.IsInstanceOfType(ifStatement.FalseStatements[1], typeof(GDExpressionStatement));
+            Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.FalseStatements[1]).Expression, typeof(GDReturnExpression));
         }
 
         [TestMethod]
@@ -237,7 +238,8 @@ else:
             Assert.AreEqual(1, ifStatement.TrueStatements.Count);
             Assert.AreEqual(1, ifStatement.FalseStatements.Count);
 
-            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDReturnStatement));
+            Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDExpressionStatement));
+            Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.TrueStatements[0]).Expression, typeof(GDReturnExpression));
             Assert.IsInstanceOfType(ifStatement.FalseStatements[0], typeof(GDIfStatement));
 
             ifStatement = (GDIfStatement)ifStatement.FalseStatements[0];
@@ -246,10 +248,12 @@ else:
             Assert.AreEqual(2, ifStatement.FalseStatements.Count);
 
             Assert.IsInstanceOfType(ifStatement.TrueStatements[0], typeof(GDExpressionStatement));
-            Assert.IsInstanceOfType(ifStatement.TrueStatements[1], typeof(GDReturnStatement));
+            Assert.IsInstanceOfType(ifStatement.TrueStatements[1], typeof(GDExpressionStatement));
+            Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.TrueStatements[1]).Expression, typeof(GDReturnExpression));
 
             Assert.IsInstanceOfType(ifStatement.FalseStatements[0], typeof(GDExpressionStatement));
-            Assert.IsInstanceOfType(ifStatement.FalseStatements[1], typeof(GDReturnStatement));
+            Assert.IsInstanceOfType(ifStatement.FalseStatements[1], typeof(GDExpressionStatement));
+            Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.FalseStatements[1]).Expression, typeof(GDReturnExpression));
         }
 
         [TestMethod]
@@ -270,7 +274,8 @@ static func my_int_function() -> int:
 
             Assert.IsNotNull(method);
             Assert.AreEqual(1, method.Statements.Count);
-            Assert.IsInstanceOfType(method.Statements[0], typeof(GDReturnStatement));
+            Assert.IsInstanceOfType(method.Statements[0], typeof(GDExpressionStatement));
+            Assert.IsInstanceOfType(((GDExpressionStatement)method.Statements[0]).Expression, typeof(GDReturnExpression));
 
             Assert.IsNotNull(method);
             Assert.AreEqual("int", method.ReturnType?.Sequence);
@@ -967,11 +972,10 @@ match x:
             Assert.AreEqual("my_signal", signalDeclaration.Identifier.Sequence);
 
             Assert.IsNotNull(signalDeclaration.Parameters);
-            Assert.IsNotNull(signalDeclaration.Parameters.Parameters);
-            Assert.AreEqual(2, signalDeclaration.Parameters.Parameters.Count);
+            Assert.AreEqual(2, signalDeclaration.Parameters.Count);
 
-            Assert.AreEqual("value", signalDeclaration.Parameters.Parameters[0]?.Identifier?.Sequence);
-            Assert.AreEqual("other_value", signalDeclaration.Parameters.Parameters[1]?.Identifier?.Sequence);
+            Assert.AreEqual("value", signalDeclaration.Parameters[0]?.Identifier?.Sequence);
+            Assert.AreEqual("other_value", signalDeclaration.Parameters[1]?.Identifier?.Sequence);
         }
 
         [TestMethod]
@@ -1136,28 +1140,28 @@ match x:
 
             var rightCallExpression = (GDCallExression)rightDualOperator.RightExpression;
 
-            Assert.AreEqual("\"test\"", rightCallExpression.ParametersExpression.ToString());
+            Assert.AreEqual("\"test\"", rightCallExpression.ToString());
 
             var callExpression = (GDCallExression)dualOperator.LeftExpression;
-            Assert.AreEqual(0, callExpression.ParametersExpression.Parameters.Count);
+            Assert.AreEqual(0, callExpression.Parameters.Count);
             var memberOperatorExpression = callExpression.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
             Assert.AreEqual("C", memberOperatorExpression.Identifier?.Sequence);
 
             callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExression>();
-            Assert.AreEqual(0, callExpression.ParametersExpression.Parameters.Count);
+            Assert.AreEqual(0, callExpression.Parameters.Count);
             memberOperatorExpression = callExpression.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
             Assert.AreEqual("B", memberOperatorExpression.Identifier?.Sequence);
 
             callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExression>();
-            Assert.AreEqual(1, callExpression.ParametersExpression.Parameters.Count);
-            Assert.AreEqual("-3", callExpression.ParametersExpression.ToString());
+            Assert.AreEqual(1, callExpression.Parameters.Count);
+            Assert.AreEqual("-3", callExpression.Parameters.ToString());
 
             callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExression>();
-            Assert.AreEqual(0, callExpression.ParametersExpression.Parameters.Count);
+            Assert.AreEqual(0, callExpression.Parameters.Count);
 
             callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExression>();
-            Assert.AreEqual(1, callExpression.ParametersExpression.Parameters.Count);
-            Assert.AreEqual("1 + 2", callExpression.ParametersExpression.ToString());
+            Assert.AreEqual(1, callExpression.Parameters.Count);
+            Assert.AreEqual("1 + 2", callExpression.ToString());
 
             var identifierExpression = callExpression.CallerExpression.CastOrAssert<GDIdentifierExpression>();
             Assert.AreEqual("A", identifierExpression.Identifier?.Sequence);

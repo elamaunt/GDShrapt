@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDMatchCasesList : GDSeparatedList<GDStatement, GDNewLine>, IMatchCaseReceiver
+    public sealed class GDMatchCasesList : GDSeparatedList<GDMatchCaseDeclaration, GDNewLine>, IMatchCaseReceiver
     {
         private int _lineIntendationThreshold;
         bool _completed;
