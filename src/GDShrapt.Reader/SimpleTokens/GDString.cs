@@ -126,6 +126,12 @@ namespace GDShrapt.Reader
             HandleChar('#', state);
         }
 
+        internal override void ForceComplete(GDReadingState state)
+        {
+            Value = _stringBuilder.ToString();
+            base.ForceComplete(state);
+        }
+
         public override string ToString()
         {
             if (Multiline)

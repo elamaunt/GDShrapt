@@ -136,5 +136,11 @@ namespace GDShrapt.Reader
         {
             HandleChar('#', state);
         }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            PatternMatched(_lastPatternCheck.MatchedPattern, state);
+            base.ForceComplete(state);
+        }
     }
 }

@@ -54,6 +54,13 @@ namespace GDShrapt.Reader
             state.PassNewLine();
         }
 
+        internal override void ForceComplete(GDReadingState state)
+        {
+            if (_builder.Length > 0)
+                Sequence = _builder.ToString();
+            base.ForceComplete(state);
+        }
+
         public override string ToString()
         {
             return $"{Sequence}";

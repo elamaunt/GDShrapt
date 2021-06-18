@@ -46,6 +46,7 @@
             IfKeyword,
             Condition,
             Colon,
+            //NewLine,
             TrueStatements,
             ElseOrElifKeyword,
             FalseStatements,
@@ -66,7 +67,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (IsSpace(c) /*&& _form.State != State.TrueStatements*/)
             {
                 _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
@@ -93,6 +94,7 @@
                     state.PassChar(c);
                     break;
                 case State.ElseOrElifKeyword:
+                    // TODO: rework
                     // 'if' statement doesn't handle 'else' and 'elif' branches by yourself. It is managed by statement resolver.
                     // Just return control flow to previous node.
                     state.Pop();
@@ -112,7 +114,7 @@
         }
 
         // TODO: rework
-        internal void HandleFalseStatements(GDReadingState state)
+        /*internal void HandleFalseStatements(GDReadingState state)
         {
             if (_form.State == State.FalseStatements)
             {
@@ -122,7 +124,7 @@
             }
 
             throw new GDInvalidReadingStateException();
-        }
+        }*/
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
@@ -130,6 +132,7 @@
             {
                 case State.Condition:
                 case State.Colon:
+               // case State.NewLine:
                     _form.State = State.FalseStatements;
                     _form.AddBeforeActiveToken(new GDNewLine());
                     break;

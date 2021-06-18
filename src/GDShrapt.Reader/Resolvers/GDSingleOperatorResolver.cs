@@ -52,5 +52,11 @@ namespace GDShrapt.Reader
         {
             Owner.HandleReceivedToken(new GDSingleOperator() { OperatorType = operatorType });
         }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            base.ForceComplete(state);
+            Owner.HandleSingleOperatorSkip();
+        }
     }
 }

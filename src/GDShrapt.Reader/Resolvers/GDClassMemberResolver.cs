@@ -55,26 +55,78 @@ namespace GDShrapt.Reader
             switch (sequence)
             {
                 case "signal":
-                    Owner.HandleReceivedToken(state.Push(new GDSignalDeclaration(LineIntendationThreshold + 1)));
-                    break;
+                    {
+                        var m = new GDSignalDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDSignalKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+                        break;
+                    }
                 case "enum":
-                    Owner.HandleReceivedToken(state.Push(new GDEnumDeclaration(LineIntendationThreshold + 1)));
-                    break;
+                    {
+                        var m = new GDEnumDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDEnumKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+                        break;
+                    }
                 case "static":
+                    {
+                        var m = new GDMethodDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDStaticKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+                        break;
+                    }
                 case "func":
-                    Owner.HandleReceivedToken(state.Push(new GDMethodDeclaration(LineIntendationThreshold + 1)));
-                    break;
+                    {
+                        var m = new GDMethodDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDFuncKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+                        break;
+                    }
                 case "export":
+                    {
+                        Owner.HandleReceivedToken(state.Push(new GDVariableDeclaration(LineIntendationThreshold)));
+
+                        for (int i = 0; i < sequence.Length; i++)
+                            state.PassChar(sequence[i]);
+                    }
+                    break;
                 case "onready":
+                    {
+                        var m = new GDVariableDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDOnreadyKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+
+                        break;
+                    }
                 case "const":
+                    {
+                        var m = new GDVariableDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDConstKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+                    }
+                    break;
                 case "var":
-                    Owner.HandleReceivedToken(state.Push(new GDVariableDeclaration(LineIntendationThreshold + 1)));
+                    {
+                        var m = new GDVariableDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDVarKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+                    }
                     break;
                 case "class":
-                    Owner.HandleReceivedToken(state.Push(new GDInnerClassDeclaration(LineIntendationThreshold + 1)));
+                    {
+                        var m = new GDInnerClassDeclaration(LineIntendationThreshold);
+                        m.SendKeyword(new GDClassKeyword());
+                        Owner.HandleReceivedToken(state.Push(m));
+                    }
                     break;
                 default:
-                    Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsNewLine())));
+                    {
+                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsNewLine())));
+                       
+                        if (sequence != null)
+                            for (int i = 0; i < sequence.Length; i++)
+                                state.PassChar(sequence[i]);
+                    }
                     break;
             }
         }

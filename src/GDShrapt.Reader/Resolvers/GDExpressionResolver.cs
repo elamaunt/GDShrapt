@@ -43,18 +43,21 @@ namespace GDShrapt.Reader
                 if (c == '[')
                 {
                     PushAndSave(state, new GDArrayInitializerExpression());
+                    state.PassChar(c);
                     return;
                 }
 
                 if (c == '{')
                 {
                     PushAndSave(state, new GDDictionaryInitializerExpression());
+                    state.PassChar(c);
                     return;
                 }
 
                 if (c == '(')
                 {
                     PushAndSave(state, new GDBracketExpression());
+                    state.PassChar(c);
                     return;
                 }
 
@@ -82,18 +85,21 @@ namespace GDShrapt.Reader
                 if (c == '@')
                 {
                     PushAndSave(state, new GDNodePathExpression());
+                    state.PassChar(c);
                     return;
                 }
 
                 if (c == '$')
                 {
                     PushAndSave(state, new GDGetNodeExpression());
+                    state.PassChar(c);
                     return;
                 }
 
                 if (c == '.')
                 {
                     PushAndSave(state, new GDMemberOperatorExpression());
+                    state.PassChar(c);
                     return;
                 }
 
@@ -181,6 +187,7 @@ namespace GDShrapt.Reader
             if (_expression is GDIdentifierExpression identifierExpr)
             {
                 var s = identifierExpr.Identifier?.Sequence;
+
                 switch (s)
                 {
                     case "if":
@@ -195,23 +202,47 @@ namespace GDShrapt.Reader
                         }
                         return true;
                     case "not":
-                        PushAndSave(state, new GDSingleOperatorExpression());
-                        return true;
+                        {
+                            var e = new GDSingleOperatorExpression();
+                            e.SendSingleOperator(new GDSingleOperator() { OperatorType = GDSingleOperatorType.Not2 });
+                            PushAndSave(state, e);
+                            return true;
+                        }
                     case "var":
-                        PushAndSave(state, new GDMatchCaseVariableExpression());
-                        return true;
+                        {
+                            var e = new GDMatchCaseVariableExpression();
+                            e.SendKeyword(new GDVarKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
                     case "pass":
-                        PushAndSave(state, new GDPassExpression());
-                        return true;
+                        {
+                            var e = new GDPassExpression();
+                            e.SendKeyword(new GDPassKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
                     case "continue":
-                        PushAndSave(state, new GDContinueExpression());
-                        return true;
+                        {
+                            var e = new GDContinueExpression();
+                            e.SendKeyword(new GDContinueKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
                     case "return":
-                        PushAndSave(state, new GDReturnExpression());
-                        return true;
+                        {
+                            var e = new GDReturnExpression();
+                            e.SendKeyword(new GDReturnKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
                     case "_":
-                        PushAndSave(state, new GDMatchDefaultOperatorExpression());
-                        return true;
+                        {
+                            var e = new GDMatchDefaultOperatorExpression();
+                            e.SendToken(new GDDefaultToken());
+                            PushAndSave(state, e);
+                            return true;
+                        }
                     case "false":
                         {
                             var e = new GDBoolExpression();
@@ -290,6 +321,12 @@ namespace GDShrapt.Reader
             }
 
             state.Push(_expression = node);
+        }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            CheckKeywords(state);
+            CompleteExpression(state);
         }
 
         private void PushAndSave(GDReadingState state, GDExpression node)

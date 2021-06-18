@@ -22,19 +22,25 @@ namespace GDShrapt.Reader
             get => _form.Token2;
             set => _form.Token2 = value;
         }
+        internal GDNewLine NewLine
+        {
+            get => _form.Token3;
+            set => _form.Token3 = value;
+        }
 
-        public GDStatementsList Statements { get => _form.Token3 ?? (_form.Token3 = new GDStatementsList(LineIntendation + 1)); }
+        public GDStatementsList Statements { get => _form.Token4 ?? (_form.Token4 = new GDStatementsList(LineIntendation + 1)); }
 
         enum State
         {
             While,
             Condition,
             Colon,
+            NewLine,
             Statements,
             Completed
         }
 
-        readonly GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDStatementsList> _form = new GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDStatementsList>();
+        readonly GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList> _form = new GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>();
         internal override GDTokensForm Form => _form;
 
         internal GDWhileStatement(int lineIntendation)
@@ -69,6 +75,9 @@ namespace GDShrapt.Reader
                     state.Push(new GDSingleCharTokenResolver<GDColon>(this));
                     state.PassChar(c);
                     break;
+                case State.NewLine:
+                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    break;
                 case State.Statements:
                     _form.State = State.Completed;
                     state.Push(Statements);
@@ -87,8 +96,9 @@ namespace GDShrapt.Reader
             {
                 case State.Condition:
                 case State.Colon:
+                case State.NewLine:
                     _form.State = State.Statements;
-                    _form.AddBeforeActiveToken(new GDNewLine());
+                    NewLine =new GDNewLine();
                     break;
                 case State.Statements:
                     _form.State = State.Completed;
@@ -152,7 +162,7 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Statements;
+                _form.State = State.NewLine;
                 Colon = token;
                 return;
             }
@@ -164,7 +174,7 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Statements;
+                _form.State = State.NewLine;
                 return;
             }
 

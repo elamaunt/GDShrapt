@@ -5,6 +5,8 @@
         IExportReceiver,
         IKeywordReceiver<GDOnreadyKeyword>,
         IKeywordReceiver<GDVarKeyword>,
+        IIdentifierReceiver,
+        ITypeReceiver,
         ITokenReceiver<GDColon>,
         ITokenReceiver<GDAssign>,
         IExpressionsReceiver,
@@ -142,31 +144,13 @@
                     state.PushAndPass(new GDKeywordResolver<GDVarKeyword>(this), c);
                     break;
                 case State.Identifier:
-                    if (IsIdentifierStartChar(c))
-                    {
-                        _form.State = State.Assign;
-                        state.PushAndPass(Identifier = new GDIdentifier(), c);
-                    }
-                    else
-                    {
-                        _form.State = State.Colon;
-                        goto case State.Colon;
-                    }
+                    this.ResolveIdentifier(c, state);
                     break;
                 case State.Colon:
                     state.PushAndPass(new GDSingleCharTokenResolver<GDColon>(this), c);
                     break;
                 case State.Type:
-                    if (IsIdentifierStartChar(c))
-                    {
-                        _form.State = State.Assign;
-                        state.PushAndPass(Type = new GDType(), c);
-                    }
-                    else
-                    {
-                        _form.State = State.Assign;
-                        goto case State.Assign;
-                    }
+                    this.ResolveType(c, state);
                     break;
                 case State.Assign:
                     state.Push(new GDSingleCharTokenResolver<GDAssign>(this));
@@ -181,37 +165,16 @@
                     state.PassChar(c);
                     break;
                 case State.SetMethod:
-                    if (IsIdentifierStartChar(c))
-                    {
-                        _form.State = State.Comma;
-                        state.Push(Identifier = new GDIdentifier());
-                    }
-                    else
-                    {
-                        _form.AddBeforeActiveToken(state.Push(new GDInvalidToken(' ', '\n')));
-                    }
-
-                    state.PassChar(c);
+                    this.ResolveIdentifier(c, state);
                     break;
                 case State.Comma:
                     this.ResolveComma(c, state);
                     break;
                 case State.GetMethod:
-                    if (IsIdentifierStartChar(c))
-                    {
-                        _form.State = State.Completed;
-                        state.Push(Identifier = new GDIdentifier());
-                    }
-                    else
-                    {
-                        _form.AddBeforeActiveToken(state.Push(new GDInvalidToken(' ', '\n')));
-                    }
-
-                    state.PassChar(c);
+                    this.ResolveIdentifier(c, state);
                     break;
                 default:
-                    state.Pop();
-                    state.PassChar(c);
+                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
                     break;
             }
         }
@@ -330,7 +293,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Type;
+                _form.State = State.Assign;
                 return;
             }
 
@@ -353,7 +316,7 @@
         {
             if (_form.State == State.Assign)
             {
-                _form.State = State.Initializer;
+                _form.State = State.SetGet;
                 return;
             }
 
@@ -424,6 +387,78 @@
             if (_form.State == State.Comma)
             {
                 _form.State = State.GetMethod;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
+        {
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.Assign;
+                Identifier = token;
+                return;
+            }
+
+            if (_form.State == State.SetMethod)
+            {
+                _form.State = State.Comma;
+                SetMethodIdentifier = token;
+                return;
+            }
+
+            if (_form.State == State.GetMethod)
+            {
+                _form.State = State.Completed;
+                GetMethodIdentifier = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
+        {
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.Colon;
+                return;
+            }
+
+            if (_form.State == State.SetMethod)
+            {
+                _form.State = State.Comma;
+                return;
+            }
+
+            if (_form.State == State.GetMethod)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITypeReceiver.HandleReceivedToken(GDType token)
+        {
+            if (_form.State == State.Type)
+            {
+                _form.State = State.Assign;
+                Type = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITypeReceiver.HandleReceivedTypeSkip()
+        {
+            if (_form.State == State.Type)
+            {
+                _form.State = State.Assign;
                 return;
             }
 

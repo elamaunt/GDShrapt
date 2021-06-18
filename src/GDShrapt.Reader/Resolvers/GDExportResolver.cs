@@ -15,7 +15,6 @@
         {
             Owner.HandleReceivedExportSkip();
         }
-
         protected override void OnMatch()
         {
             var declaration = new GDExportDeclaration();

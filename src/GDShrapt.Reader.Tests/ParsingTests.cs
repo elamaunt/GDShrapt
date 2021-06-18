@@ -111,7 +111,7 @@ func save(path, resource, flags):
             var @dualOperator = (GDDualOperatorExression)expression;
 
             Assert.AreEqual(GDDualOperatorType.Assignment, @dualOperator.OperatorType);
-            Assert.AreEqual("a > b > c", @dualOperator.LeftExpression.ToString());
+            Assert.AreEqual("a > b > c ", @dualOperator.LeftExpression.ToString());
         }
 
         [TestMethod]
@@ -686,7 +686,7 @@ match x:
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.ClassName);
             Assert.IsNotNull(classDeclaration.ClassName.Identifier);
-            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.AreEqual(1, classDeclaration.Atributes.Count);
             Assert.AreEqual("Test", classDeclaration.ClassName.Identifier.Sequence);
 
             Assert.IsNotNull(classDeclaration.ClassName.Icon);
@@ -704,7 +704,7 @@ match x:
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Type);
-            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.AreEqual(1, classDeclaration.Atributes.Count);
             Assert.AreEqual("Test", classDeclaration.Extends.Type.Sequence);
         }
 
@@ -719,7 +719,7 @@ match x:
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Path);
-            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.AreEqual(1, classDeclaration.Atributes.Count);
             Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Value);
         }
 
@@ -882,7 +882,7 @@ match x:
         {
             var reader = new GDScriptReader();
 
-            var code = "var speed = 1 setget set_speed get_speed";
+            var code = "var speed = 1 setget set_speed, get_speed";
 
             var classDeclaration = reader.ParseFileContent(code);
 
@@ -906,8 +906,8 @@ match x:
             Assert.IsNotNull(variableDeclaration.GetMethodIdentifier);
             Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
 
-            Assert.AreEqual("set_speed", variableDeclaration.GetMethodIdentifier.Sequence);
-            Assert.AreEqual("get_speed", variableDeclaration.SetMethodIdentifier.Sequence);
+            Assert.AreEqual("set_speed", variableDeclaration.SetMethodIdentifier .Sequence);
+            Assert.AreEqual("get_speed", variableDeclaration.GetMethodIdentifier.Sequence);
         }
 
         [TestMethod]
@@ -946,10 +946,10 @@ match x:
             Assert.IsTrue(variableDeclaration.IsExported);
             Assert.IsFalse(variableDeclaration.HasOnReadyInitialization);
 
-            Assert.IsNotNull(variableDeclaration.GetMethodIdentifier);
-            Assert.IsNull(variableDeclaration.SetMethodIdentifier);
+            Assert.IsNull(variableDeclaration.GetMethodIdentifier);
+            Assert.IsNotNull (variableDeclaration.SetMethodIdentifier);
 
-            Assert.AreEqual("set_height", variableDeclaration.GetMethodIdentifier.Sequence);
+            Assert.AreEqual("set_height", variableDeclaration.SetMethodIdentifier.Sequence);
         }
 
         [TestMethod]

@@ -118,7 +118,7 @@
 
         void ITokenReceiver<GDPoint>.HandleReceivedToken(GDPoint token)
         {
-            if (_form.State == State.Point)
+            if (_form.StateIndex <= (int)State.Point)
             {
                 _form.State = State.Identifier;
                 Point = token;
@@ -130,7 +130,7 @@
 
         void ITokenReceiver<GDPoint>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Point)
+            if (_form.StateIndex <= (int)State.Point)
             {
                 _form.State = State.Identifier;
                 return;

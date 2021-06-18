@@ -24,22 +24,12 @@
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (!_completed)
-            {
-                _completed = true;
-                state.Push(new GDStatementResolver(this, _lineIntendationThreshold));
-                state.PassNewLine();
-                return;
-            }
-
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         void IStatementsReceiver.HandleReceivedToken(GDStatement token)

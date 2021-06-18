@@ -97,7 +97,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Type;
+                _form.State = State.Completed;
                 return;
             }
 

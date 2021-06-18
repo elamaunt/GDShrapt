@@ -19,6 +19,8 @@
                 return;
             }
 
+            state.Pop();
+
             if (IsStringStartChar(c))
             {
                 Owner.HandleReceivedToken(state.Push(new GDString()));
@@ -32,13 +34,15 @@
                 state.PassChar(c);
                 return;
             }
+
+            Owner.HandleReceivedTokenSkip();
+            state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
             Owner.HandleReceivedTokenSkip();
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
     }
 }

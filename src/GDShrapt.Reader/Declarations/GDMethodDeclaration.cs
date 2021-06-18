@@ -51,7 +51,13 @@
             get => _form.Token8;
             set => _form.Token8 = value;
         }
-        public GDStatementsList Statements { get => _form.Token9 ?? (_form.Token9 = new GDStatementsList()); }
+        internal GDNewLine NewLine
+        {
+            get => _form.Token9;
+            set => _form.Token9 = value;
+        }
+
+        public GDStatementsList Statements { get => _form.Token10 ?? (_form.Token10 = new GDStatementsList(Intendation + 1)); }
 
         public bool IsStatic => StaticKeyword != null;
 
@@ -66,11 +72,12 @@
             ReturnTypeKeyword,
             Type,
             Colon,
+            NewLine,
             Statements,
             Completed,
         }
 
-        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>();
+        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList> _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList>();
         internal override GDTokensForm Form => _form;
 
         internal GDMethodDeclaration(int intendation)
@@ -86,7 +93,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
+            if (IsSpace(c) && _form.State != State.Statements)
             {
                 _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
@@ -99,7 +106,7 @@
                     this.ResolveKeyword<GDStaticKeyword>(c, state);
                     break;
                 case State.Func:
-                    this.ResolveKeyword<GDStaticKeyword>(c, state);
+                    this.ResolveKeyword<GDFuncKeyword>(c, state);
                     break;
                 case State.Identifier:
                     this.ResolveIdentifier(c, state);
@@ -123,6 +130,9 @@
                 case State.Colon:
                     this.ResolveColon(c, state);
                     break;
+                case State.NewLine:
+                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    break;
                 case State.Statements:
                     _form.State = State.Completed;
                     state.PushAndPass(Statements, c);
@@ -135,8 +145,22 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            if (_form.StateIndex <= (int)State.NewLine)
+            {
+                _form.State = State.Statements;
+                NewLine = new GDNewLine();
+                return;
+            }
+
+            if (_form.State == State.Statements)
+            {
+                _form.State = State.Completed;
+                state.Push(Statements);
+                state.PassNewLine();
+                return;
+            }
+
+            state.PopAndPassNewLine();
         }
 
         void IKeywordReceiver<GDStaticKeyword>.HandleReceivedToken(GDStaticKeyword token)
@@ -278,7 +302,7 @@
 
         void ITypeReceiver.HandleReceivedToken(GDType token)
         {
-            if (_form.State == State.ReturnTypeKeyword)
+            if (_form.State == State.Type)
             {
                 _form.State = State.Colon;
                 ReturnType = token;
@@ -290,7 +314,7 @@
 
         void ITypeReceiver.HandleReceivedTypeSkip()
         {
-            if (_form.State == State.ReturnTypeKeyword)
+            if (_form.State == State.Type)
             {
                 _form.State = State.Colon;
                 return;
@@ -303,7 +327,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Statements;
+                _form.State = State.NewLine;
                 Colon = token;
                 return;
             }
@@ -315,7 +339,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Statements;
+                _form.State = State.NewLine;
                 return;
             }
 

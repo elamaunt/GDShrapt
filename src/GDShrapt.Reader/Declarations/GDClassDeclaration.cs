@@ -7,12 +7,12 @@ namespace GDShrapt.Reader
     {
         public GDClassAtributesList Atributes
         {
-            get => _form.Token0 ?? (_form.Token0 = new GDClassAtributesList());
+            get => _form.Token0 ?? (_form.Token0 = new GDClassAtributesList(0));
         }
 
         public GDClassMembersList Members
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDClassMembersList(1));
+            get => _form.Token1 ?? (_form.Token1 = new GDClassMembersList(0));
         }
 
         enum State

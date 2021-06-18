@@ -49,5 +49,11 @@ namespace GDShrapt.Reader
         {
             HandleChar('#', state);
         }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            base.ForceComplete(state);
+            OnFail();
+        }
     }
 }

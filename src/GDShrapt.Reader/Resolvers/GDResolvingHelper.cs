@@ -10,6 +10,22 @@ namespace GDShrapt.Reader
             receiver.HandleReceivedToken(keyword);
         }
 
+        public static void SendToken<T>(this ITokenReceiver<T> receiver, T token)
+            where T : GDSyntaxToken, new()
+        {
+            receiver.HandleReceivedToken(token);
+        }
+
+        public static void SendSingleOperator(this ISingleOperatorReceiver receiver, GDSingleOperator token)
+        {
+            receiver.HandleReceivedToken(token);
+        }
+
+        public static void SendDualOperator(this IDualOperatorReceiver receiver, GDDualOperator token)
+        {
+            receiver.HandleReceivedToken(token);
+        }
+
         public static void ResolveDualOperator(this IDualOperatorReceiver receiver, char c, GDReadingState state)
         {
             state.PushAndPass(new GDDualOperatorResolver(receiver), c);
@@ -279,7 +295,6 @@ namespace GDShrapt.Reader
             else
                 receiver.HandleReceivedExpressionSkip();
             state.PassChar(c);
-
         }
 
         public static bool ResolveDataToken(this IDataTokenReceiver receiver, char c, GDReadingState state)
