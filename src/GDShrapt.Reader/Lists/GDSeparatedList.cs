@@ -8,13 +8,18 @@ namespace GDShrapt.Reader
         where NODE : GDSyntaxToken
         where SEPARATOR : GDSimpleSyntaxToken, new()
     {
-        GDTokensListForm<NODE> _form = new GDTokensListForm<NODE>();
+        readonly GDTokensListForm<NODE> _form;
 
         internal GDTokensListForm<NODE> ListForm => _form;
         internal override GDTokensForm Form => _form;
 
         public int Count => _form.Count;
         public bool IsReadOnly => false;
+
+        public GDSeparatedList()
+        {
+            _form = new GDTokensListForm<NODE>(this);
+        }
 
         public NODE this[int index] 
         {

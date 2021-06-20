@@ -29,6 +29,14 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDStatementResolver(this, _lineIntendationThreshold));
+                state.PassNewLine();
+                return;
+            }
+
             state.PopAndPassNewLine();
         }
 

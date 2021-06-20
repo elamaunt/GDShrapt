@@ -24,8 +24,13 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDAt, GDString> _form = new GDTokensForm<State, GDAt, GDString>();
+        readonly GDTokensForm<State, GDAt, GDString> _form;
         internal override GDTokensForm Form => _form;
+        public GDNodePathExpression()
+        {
+            _form = new GDTokensForm<State, GDAt, GDString>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             switch (_form.State)

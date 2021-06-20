@@ -9,11 +9,6 @@ namespace GDShrapt.Reader
             builder.Append(ToString());
         }
 
-        internal override void ForceComplete(GDReadingState state)
-        {
-            state.Pop();
-        }
-
         internal override void HandleNewLineChar(GDReadingState state)
         {
             state.Pop();

@@ -15,9 +15,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDNumber> _form = new GDTokensForm<State, GDNumber>();
-
+        readonly GDTokensForm<State, GDNumber> _form;
         internal override GDTokensForm Form => _form;
+        public GDNumberExpression()
+        {
+            _form = new GDTokensForm<State, GDNumber>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

@@ -34,23 +34,20 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>();
+        readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form;
         internal override GDTokensForm Form => _form;
+        public GDDualOperatorExression()
+        {
+            _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
-                return;
-            }
-
             switch (_form.State)
             {
                 case State.LeftExpression:
-                    state.Push(new GDExpressionResolver(this));
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.DualOperator:
                     // Indicates that it isn't a normal expression. The parent should handle the state.
@@ -61,17 +58,15 @@
                         return;
                     }
 
-                    this.ResolveDualOperator(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveDualOperator(c, state);
                     break;
                 case State.RightExpression:
-                    state.Push(new GDExpressionResolver(this));
-                    state.PassChar(c);
-                    break;
-                case State.Completed:
-                    state.Pop();
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 default:
+                    state.PopAndPass(c);
                     break;
             }
         }
@@ -195,7 +190,7 @@
         {
             if (_form.State == State.DualOperator)
             {
-                _form.State = State.RightExpression;
+                _form.State = State.Completed;
                 return;
             }
 

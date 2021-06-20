@@ -2,7 +2,7 @@
 {
     public class GDToolAtribute : GDClassAtribute, IKeywordReceiver<GDToolKeyword>
     {
-        public GDToolKeyword ToolKeyword
+        internal GDToolKeyword ToolKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -14,8 +14,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDToolKeyword> _form = new GDTokensForm<State, GDToolKeyword>();
+        readonly GDTokensForm<State, GDToolKeyword> _form;
         internal override GDTokensForm Form => _form;
+        public GDToolAtribute()
+        {
+            _form = new GDTokensForm<State, GDToolKeyword>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -39,7 +43,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
+            state.PopAndPassNewLine();
         }
 
         void IKeywordReceiver<GDToolKeyword>.HandleReceivedToken(GDToolKeyword token)

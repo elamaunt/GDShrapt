@@ -53,6 +53,15 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Sends all characters from the string to the current reader.
+        /// </summary>
+        public void PassString(string s)
+        {
+            for (int i = 0; i < s.Length; i++)
+                PassChar(s[i]);
+        }
+
+        /// <summary>
         /// Sends a character to the current reader.
         /// </summary>
         public void PassChar(char c)
@@ -116,6 +125,17 @@ namespace GDShrapt.Reader
 
             _readersStack.Push(reader);
             PassChar(c);
+            return reader;
+        }
+
+        public T PushAndPassNewLine<T>(T reader)
+           where T : GDReader
+        {
+            if (reader == null)
+                throw new ArgumentNullException(nameof(reader));
+
+            _readersStack.Push(reader);
+            PassNewLine();
             return reader;
         }
 

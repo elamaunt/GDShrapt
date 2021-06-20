@@ -26,24 +26,28 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket> _form = new GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket>();
+        readonly GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket> _form;
         internal override GDTokensForm Form => _form;
+        public GDDictionaryInitializerExpression()
+        {
+            _form = new GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveStyleToken(c, state))
-                return;
-
             switch (_form.State)
             {
                 case State.FigureOpenBracket:
-                    this.ResolveFigureOpenBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveFigureOpenBracket(c, state);
                     break;
                 case State.KeyValues:
                     _form.State = State.FigureCloseBracket;
                     state.PushAndPass(KeyValues, c);
                     break;
                 case State.FigureCloseBracket:
-                    this.ResolveFigureCloseBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveFigureCloseBracket(c, state);
                     break;
                 default:
                     state.PopAndPass(c);

@@ -54,17 +54,18 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList> _form = new GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>();
+        readonly GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDForStatement(int lineIntendation)
             : base(lineIntendation)
         {
+            _form = new GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>(this);
         }
 
         public GDForStatement()
         {
-
+            _form = new GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -111,8 +112,7 @@
                     break;
                 case State.Statements:
                     _form.State = State.Completed;
-                    state.Push(Statements);
-                    state.PassChar(c);
+                    state.PushAndPass(Statements, c);
                     break;
                 default:
                     state.Pop();

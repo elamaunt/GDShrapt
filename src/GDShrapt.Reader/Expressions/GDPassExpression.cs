@@ -17,8 +17,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDPassKeyword> _form = new GDTokensForm<State, GDPassKeyword>();
+        readonly GDTokensForm<State, GDPassKeyword> _form;
         internal override GDTokensForm Form => _form;
+        public GDPassExpression()
+        {
+            _form = new GDTokensForm<State, GDPassKeyword>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -32,8 +36,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         void IKeywordReceiver<GDPassKeyword>.HandleReceivedToken(GDPassKeyword token)

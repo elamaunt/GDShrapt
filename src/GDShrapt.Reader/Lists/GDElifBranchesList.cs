@@ -1,11 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDClassMembersList : GDSeparatedList<GDClassMember, GDNewLine>, IClassMembersReceiver
+    public sealed class GDElifBranchesList : GDSeparatedList<GDElifBranch, GDNewLine>,
+        IElifBranchReceiver
     {
         private int _lineIntendationThreshold;
         bool _completed;
 
-        internal GDClassMembersList(int lineIntendation)
+        internal GDElifBranchesList(int lineIntendation)
         {
             _lineIntendationThreshold = lineIntendation;
         }
@@ -15,7 +16,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.PushAndPass(new GDClassMemberResolver(this, _lineIntendationThreshold), c);
+                state.PushAndPass(new GDElifResolver(this, _lineIntendationThreshold), c);
                 return;
             }
 
@@ -27,7 +28,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDClassMemberResolver(this, _lineIntendationThreshold));
+                state.Push(new GDElifResolver(this, _lineIntendationThreshold));
                 state.PassNewLine();
                 return;
             }
@@ -35,7 +36,7 @@
             state.PopAndPassNewLine();
         }
 
-        void IClassMembersReceiver.HandleReceivedToken(GDClassMember token)
+        void IElifBranchReceiver.HandleReceivedToken(GDElifBranch token)
         {
             ListForm.Add(token);
         }

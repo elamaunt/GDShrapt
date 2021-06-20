@@ -17,8 +17,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDBreakPointKeyword> _form = new GDTokensForm<State, GDBreakPointKeyword>();
+        readonly GDTokensForm<State, GDBreakPointKeyword> _form;
         internal override GDTokensForm Form => _form;
+        public GDBreakPointExpression()
+        {
+            _form = new GDTokensForm<State, GDBreakPointKeyword>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

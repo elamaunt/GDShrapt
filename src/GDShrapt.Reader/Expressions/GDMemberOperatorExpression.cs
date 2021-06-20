@@ -31,24 +31,28 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpression, GDPoint, GDIdentifier> _form = new GDTokensForm<State, GDExpression, GDPoint, GDIdentifier>();
+        readonly GDTokensForm<State, GDExpression, GDPoint, GDIdentifier> _form;
         internal override GDTokensForm Form => _form;
+        public GDMemberOperatorExpression()
+        {
+            _form = new GDTokensForm<State, GDExpression, GDPoint, GDIdentifier>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveStyleToken(c, state))
-                return;
-
             switch (_form.State)
             {
                 case State.CallerExpression:
-                    this.ResolveExpression(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveExpression(c, state);
                     break;
                 case State.Point:
-                    this.ResolvePoint(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolvePoint(c, state);
                     break;
                 case State.Identifier:
-                    this.ResolveIdentifier(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveIdentifier(c, state);
                     break;
                 default:
                     state.PopAndPass(c);

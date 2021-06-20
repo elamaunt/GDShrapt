@@ -37,14 +37,16 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> _form = new GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket>();
+        readonly GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> _form;
         internal override GDTokensForm Form => _form;
         internal GDEnumDeclaration(int intendation)
            : base(intendation)
         {
+            _form = new GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket>(this);
         }
         public GDEnumDeclaration()
         {
+            _form = new GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -59,8 +61,7 @@
             switch (_form.State)
             {
                 case State.Enum:
-                    state.Push(new GDKeywordResolver<GDEnumKeyword>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDKeywordResolver<GDEnumKeyword>(this), c);
                     break;
                 case State.Identifier:
                     if (c == '{')
@@ -71,6 +72,7 @@
 
                     if (IsIdentifierStartChar(c))
                     {
+                        _form.State = State.FigureOpenBracket;
                         state.Push(Identifier = new GDIdentifier());
                         state.PassChar(c);
                     }
@@ -81,8 +83,7 @@
                     }
                     break;
                 case State.FigureOpenBracket:
-                    state.Push(new GDSingleCharTokenResolver<GDFigureOpenBracket>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDSingleCharTokenResolver<GDFigureOpenBracket>(this), c);
                     break;
                 case State.Values:
                     _form.State = State.FigureCloseBracket;
@@ -90,12 +91,10 @@
                     state.PassChar(c);
                     break;
                 case State.FigureCloseBracket:
-                    state.Push(new GDSingleCharTokenResolver<GDFigureCloseBracket>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDSingleCharTokenResolver<GDFigureCloseBracket>(this), c);
                     break;
                 default:
-                    state.Pop();
-                    state.PassChar(c);
+                    state.PopAndPass(c);
                     break;
             }
         }
@@ -105,13 +104,11 @@
             if (_form.State == State.Values)
             {
                 _form.State = State.FigureCloseBracket;
-                state.Push(Values);
-                state.PassNewLine();
+                state.PushAndPassNewLine(Values);
                 return;
             }
 
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         void IKeywordReceiver<GDEnumKeyword>.HandleReceivedToken(GDEnumKeyword token)

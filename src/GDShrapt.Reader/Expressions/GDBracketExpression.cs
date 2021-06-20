@@ -7,9 +7,21 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Brackets);
 
-        internal GDOpenBracket OpenBracket { get; set; }
-        public GDExpression InnerExpression { get; set; }
-        internal GDCloseBracket CloseBracket { get; set; }
+        internal GDOpenBracket OpenBracket
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+        public GDExpression InnerExpression
+        {
+            get => _form.Token1;
+            set => _form.Token1 = value;
+        }
+        internal GDCloseBracket CloseBracket
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
 
         enum State
         {
@@ -19,27 +31,28 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDOpenBracket, GDExpression, GDCloseBracket> _form = new GDTokensForm<State, GDOpenBracket, GDExpression, GDCloseBracket>();
+        readonly GDTokensForm<State, GDOpenBracket, GDExpression, GDCloseBracket> _form;
         internal override GDTokensForm Form => _form;
+        public GDBracketExpression()
+        {
+            _form = new GDTokensForm<State, GDOpenBracket, GDExpression, GDCloseBracket>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
-                return;
-            }
-
             switch (_form.State)
             {
                 case State.OpenBracket:
-                    this.ResolveOpenBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveOpenBracket(c, state);
                     break;
                 case State.Expression:
-                    this.ResolveExpression(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveExpression(c, state);
                     break;
                 case State.CloseBracket:
-                    this.ResolveCloseBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveCloseBracket(c, state);
                     break;
                 default:
                     state.PopAndPass(c);

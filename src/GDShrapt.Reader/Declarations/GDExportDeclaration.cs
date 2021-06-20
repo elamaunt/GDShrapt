@@ -34,8 +34,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket> _form = new GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket>();
+        readonly GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket> _form;
         internal override GDTokensForm Form => _form;
+        public GDExportDeclaration()
+        {
+            _form = new GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

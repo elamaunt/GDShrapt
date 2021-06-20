@@ -29,8 +29,13 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDIdentifier, GDColon, GDType> _form = new GDTokensForm<State, GDIdentifier, GDColon, GDType>();
+        readonly GDTokensForm<State, GDIdentifier, GDColon, GDType> _form;
         internal override GDTokensForm Form => _form;
+        public GDParameterDeclaration()
+        {
+            _form = new GDTokensForm<State, GDIdentifier, GDColon, GDType>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (this.ResolveStyleToken(c, state))

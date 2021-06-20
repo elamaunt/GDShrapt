@@ -25,20 +25,24 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDSingleOperator, GDExpression> _form = new GDTokensForm<State, GDSingleOperator, GDExpression>();
+        readonly GDTokensForm<State, GDSingleOperator, GDExpression> _form;
         internal override GDTokensForm Form => _form;
+        public GDSingleOperatorExpression()
+        {
+            _form = new GDTokensForm<State, GDSingleOperator, GDExpression>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveStyleToken(c, state))
-                return;
-
             switch (_form.State)
             {
                 case State.Operator:
-                    this.ResolveSingleOperator(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveSingleOperator(c, state);
                     break;
                 case State.TargetExpression:
-                    this.ResolveExpression(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveExpression(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -88,14 +92,6 @@
         public override void RebuildBranchesOfPriorityIfNeeded()
         {
             TargetExpression = TargetExpression.RebuildRootOfPriorityIfNeeded();
-        }
-
-        public override string ToString()
-        {
-            if (OperatorType == GDSingleOperatorType.Not2)
-                return $"{OperatorType.Print()} {TargetExpression}";
-
-            return $"{OperatorType.Print()}{TargetExpression}";
         }
 
         void ISingleOperatorReceiver.HandleReceivedToken(GDSingleOperator token)

@@ -9,6 +9,7 @@
 
     internal interface ITokenReceiver
     {
+        void HandleAbstractToken(GDSyntaxToken token);
         void HandleReceivedToken(GDInvalidToken token);
     }
 }

@@ -140,7 +140,6 @@ namespace GDShrapt.Reader
         internal override void ForceComplete(GDReadingState state)
         {
             PatternMatched(_lastPatternCheck.MatchedPattern, state);
-            base.ForceComplete(state);
         }
     }
 }

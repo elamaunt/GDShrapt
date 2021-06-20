@@ -44,8 +44,7 @@ namespace GDShrapt.Reader
                 }
                 else
                 {
-                    state.Pop();
-                    state.PassChar(c);
+                    state.PopAndPass(c);
                 }
             }
             else
@@ -57,8 +56,7 @@ namespace GDShrapt.Reader
                 else
                 {
                     Sequence = _builder.ToString();
-                    state.Pop();
-                    state.PassChar(c);
+                    state.PopAndPass(c);
                 }
             }
 
@@ -68,7 +66,7 @@ namespace GDShrapt.Reader
         {
             if (_builder.Length > 0)
                 Sequence = _builder.ToString();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         internal override void ForceComplete(GDReadingState state)

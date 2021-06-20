@@ -24,7 +24,7 @@
 
         public override string ToString()
         {
-            return $"#{Sequence}";
+            return $"{Sequence}";
         }
     }
 }

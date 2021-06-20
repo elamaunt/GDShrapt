@@ -55,8 +55,8 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
-            base.ForceComplete(state);
             Owner.HandleSingleOperatorSkip();
+            base.ForceComplete(state);
         }
     }
 }

@@ -17,8 +17,13 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDContinueKeyword> _form = new GDTokensForm<State, GDContinueKeyword>();
+        readonly GDTokensForm<State, GDContinueKeyword> _form;
         internal override GDTokensForm Form => _form;
+
+        public GDContinueExpression()
+        {
+            _form = new GDTokensForm<State, GDContinueKeyword>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

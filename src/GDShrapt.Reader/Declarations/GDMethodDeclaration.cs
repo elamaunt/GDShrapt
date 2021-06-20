@@ -77,23 +77,23 @@
             Completed,
         }
 
-        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList> _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList>();
+        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDMethodDeclaration(int intendation)
             : base(intendation)
         {
-
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList>(this);
         }
 
         public GDMethodDeclaration()
         {
-
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c) && _form.State != State.Statements)
+            if (IsSpace(c) && _form.State != State.Statements && _form.State != State.Parameters) 
             {
                 _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
@@ -188,7 +188,7 @@
 
         void IKeywordReceiver<GDFuncKeyword>.HandleReceivedToken(GDFuncKeyword token)
         {
-            if (_form.State == State.Func)
+            if (_form.StateIndex <= (int)State.Func)
             {
                 _form.State = State.Identifier;
                 FuncKeyword = token;
@@ -200,7 +200,7 @@
 
         void IKeywordReceiver<GDFuncKeyword>.HandleReceivedKeywordSkip()
         {
-            if (_form.State == State.Func)
+            if (_form.StateIndex <= (int)State.Func)
             {
                 _form.State = State.Identifier;
                 return;

@@ -49,16 +49,18 @@ namespace GDShrapt.Reader
             Completed
         }
 
-        readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList> _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList>();
+        readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDInnerClassDeclaration(int intendation)
             : base(intendation)
         {
+            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList>(this);
         }
 
         public GDInnerClassDeclaration()
         {
+            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)

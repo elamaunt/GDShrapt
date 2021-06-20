@@ -38,31 +38,32 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDYieldKeyword, GDOpenBracket, GDExpression, GDCloseBracket> _form = new GDTokensForm<State, GDYieldKeyword, GDOpenBracket, GDExpression, GDCloseBracket>();
+        readonly GDTokensForm<State, GDYieldKeyword, GDOpenBracket, GDExpression, GDCloseBracket> _form;
         internal override GDTokensForm Form => _form;
+        public GDYieldExpression()
+        {
+            _form = new GDTokensForm<State, GDYieldKeyword, GDOpenBracket, GDExpression, GDCloseBracket>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
-                return;
-            }
-
             switch (_form.State)
             {
                 case State.Yield:
-                    this.ResolveKeyword(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveKeyword(c, state);
                     break;
                 case State.OpenBracket:
-                    this.ResolveOpenBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveOpenBracket(c, state);
                     break;
                 case State.Expression:
-                    this.ResolveExpression(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveExpression(c, state);
                     break;
                 case State.CloseBracket:
-                    this.ResolveCloseBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveCloseBracket(c, state);
                     break;
                 default:
                     state.PopAndPass(c);

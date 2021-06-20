@@ -35,6 +35,8 @@
         /// <param name="state">Current reading state</param>
         internal abstract void HandleSharpChar(GDReadingState state);
 
+
+
         /// <summary>
         /// Force completes token characters handling process in terms of current reading state.
         /// Used for situation when the reading code has ended.

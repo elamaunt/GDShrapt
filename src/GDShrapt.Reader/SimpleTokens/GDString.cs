@@ -134,10 +134,11 @@ namespace GDShrapt.Reader
 
         public override string ToString()
         {
-            if (Multiline)
-                return $"\"\"\"{Value}\"\"\"";
-
             var c = GetBoundingChar();
+
+            if (Multiline)
+                return $"{c}{c}{c}{Value}{c}{c}{c}";
+
             return $"{c}{Value}{c}";
         }
     }

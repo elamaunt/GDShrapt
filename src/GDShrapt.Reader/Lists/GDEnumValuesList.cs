@@ -18,7 +18,7 @@
                 return;
             }
 
-            ListForm.Add(state.PushAndPass(new GDDictionaryKeyValueDeclaration(), c));
+            ListForm.Add(state.PushAndPass(new GDEnumValueDeclaration(), c));
         }
 
         internal override void HandleNewLineChar(GDReadingState state)

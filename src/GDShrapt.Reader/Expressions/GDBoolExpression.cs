@@ -21,8 +21,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDBoolKeyword> _form = new GDTokensForm<State, GDBoolKeyword>();
+        readonly GDTokensForm<State, GDBoolKeyword> _form;
         internal override GDTokensForm Form => _form;
+        public GDBoolExpression()
+        {
+            _form = new GDTokensForm<State, GDBoolKeyword>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

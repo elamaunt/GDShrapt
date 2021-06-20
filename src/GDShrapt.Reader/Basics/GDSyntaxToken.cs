@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -9,50 +10,36 @@ namespace GDShrapt.Reader
     [DebuggerDisplay("{DebuggerView}")]
     public abstract class GDSyntaxToken : GDReader
     {
-       //readonly WeakReference<GDNode> _parentWeakRef = new WeakReference<GDNode>(null);
-       // WeakReference<LinkedListNode<GDSyntaxToken>> _parentListNodeWeakRef = new WeakReference<LinkedListNode<GDSyntaxToken>>(null);
+        GDNode _parent;
 
         /// <summary>
         /// Name of the node Type class.
         /// </summary>
         public string NodeName => GetType().Name;
 
-        /* /// <summary>
-         /// Parent node in a lexical tree
-         /// </summary>
-         public GDNode Parent
-         {
-             get
-             {
-                 _parentWeakRef.TryGetTarget(out GDNode parent);
-                 return parent;
-             }
+        /// <summary>
+        /// Parent node in a lexical tree
+        /// </summary>
+        public GDNode Parent
+        {
+            get => _parent;
 
-             internal set
-             {
-                 _parentWeakRef.SetTarget(value);
-             }
-         }
+            internal set
+            {
+                if (_parent != null && _parent != value)
+                    RemoveFromParent();
 
-         /// <summary>
-         /// LinkedListNode reference, if the node has a parent. Used by <see cref="RemoveChild"/> method.
-         /// </summary>
-         internal LinkedListNode<GDSyntaxToken> ParentLinkedListNode
-         {
-             get
-             {
-                 _parentListNodeWeakRef.TryGetTarget(out LinkedListNode<GDSyntaxToken> linkedListNode);
-                 return linkedListNode;
-             }
-         }
+                _parent = value;
+            }
+        }
 
-         /// <summary>
-         /// Removes this node parent or do nothing if <see cref="Parent"/> <see langword="null"/>
-         /// </summary>
-         public void RemoveFromParent()
-         {
-             Parent?.RemoveChild(this);
-         }*/
+        /// <summary>
+        /// Removes this node parent or do nothing if <see cref="Parent"/> <see langword="null"/>
+        /// </summary>
+        public bool RemoveFromParent()
+        {
+            return Parent?.RemoveChild(this) ?? false;
+        }
 
         /// <summary>
         /// Adds token string representation to <see cref="StringBuilder"/> instance.

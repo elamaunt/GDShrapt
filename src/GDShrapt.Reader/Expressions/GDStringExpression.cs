@@ -15,19 +15,24 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDString> _form = new GDTokensForm<State, GDString>();
-
+        readonly GDTokensForm<State, GDString> _form;
         internal override GDTokensForm Form => _form;
+        public GDStringExpression()
+        {
+            _form = new GDTokensForm<State, GDString>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (_form.State == State.String)
             {
+                if (this.ResolveStyleToken(c, state))
+                    return;
+
                 if (IsStringStartChar(c))
                 {
                     _form.State = State.Completed;
-                    state.Push(String = new GDString());
-                    state.PassChar(c);
+                    state.PushAndPass(String = new GDString(), c);
                 }
                 else
                 {

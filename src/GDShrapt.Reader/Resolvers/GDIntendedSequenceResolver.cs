@@ -1,17 +1,16 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal abstract class GDSequenceResolver : GDResolver
+    internal abstract class GDIntendedSequenceResolver : GDIntendedResolver
     {
         public int Index { get; private set; }
-
         public abstract string Sequence { get; }
 
-        public GDSequenceResolver(IStyleTokensReceiver owner)
-            : base(owner)
+        public GDIntendedSequenceResolver(IIntendationReceiver owner, int lineIntendation)
+            : base(owner, lineIntendation)
         {
         }
 
-        internal override void HandleChar(char c, GDReadingState state)
+        internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
             var s = Sequence;
 
@@ -20,13 +19,15 @@
                 if (Index == s.Length)
                 {
                     state.Pop();
-                    OnMatch();
+                    OnMatch(state);
                 }
                 return;
             }
 
             state.Pop();
-            OnFail();
+            OnFail(state);
+
+            PassIntendation(state);
 
             for (int i = 0; i < Index - 1; i++)
                 state.PassChar(s[i]);
@@ -34,8 +35,8 @@
             state.PassChar(c);
         }
 
-        protected abstract void OnFail();
-        protected abstract void OnMatch();
+        protected abstract void OnFail(GDReadingState state);
+        protected abstract void OnMatch(GDReadingState state);
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
@@ -49,7 +50,12 @@
 
         internal override void ForceComplete(GDReadingState state)
         {
-            OnFail();
+            var s = Sequence;
+            state.Pop();
+            OnFail(state);
+
+            for (int i = 0; i < Index - 1; i++)
+                state.PassChar(s[i]);
         }
     }
 }

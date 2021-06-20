@@ -17,8 +17,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDBreakKeyword> _form = new GDTokensForm<State, GDBreakKeyword>();
+        readonly GDTokensForm<State, GDBreakKeyword> _form;
         internal override GDTokensForm Form => _form;
+        public GDBreakExpression()
+        {
+            _form = new GDTokensForm<State, GDBreakKeyword>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

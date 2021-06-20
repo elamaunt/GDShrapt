@@ -9,7 +9,7 @@ namespace GDShrapt.Reader
 
         public int LineIntendationThreshold { get; set; }
 
-        StringBuilder _sequenceBuilder = new StringBuilder();
+        internal StringBuilder _sequenceBuilder = new StringBuilder();
 
         internal override void HandleChar(char c, GDReadingState state)
         {

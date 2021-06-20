@@ -4,6 +4,16 @@ namespace GDShrapt.Reader
 {
     internal static class GDResolvingHelper
     {
+        public static void SendExpression(this IExpressionsReceiver receiver, GDExpression token)
+        {
+            receiver.HandleReceivedToken(token);
+        }
+
+        public static void SendSpace(this IStyleTokensReceiver receiver, GDSpace token)
+        {
+            receiver.HandleReceivedToken(token);
+        }
+
         public static void SendKeyword<T>(this IKeywordReceiver<T> receiver, T keyword)
             where T : GDSyntaxToken, IGDKeywordToken, new()
         {

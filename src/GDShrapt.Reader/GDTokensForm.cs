@@ -8,8 +8,8 @@ namespace GDShrapt.Reader
     internal class GDTokensListForm<NODE> : GDTokensForm, IList<NODE>
         where NODE : GDSyntaxToken
     {
-        public GDTokensListForm()
-            : base()
+        public GDTokensListForm(GDNode owner)
+            : base(owner)
         {
         }
 
@@ -17,13 +17,31 @@ namespace GDShrapt.Reader
         public int TokensCount => base.Count;
 
         public NODE this[int index]
-        { 
-            get => (NODE)_statePoints[index].Value; 
-            set => _statePoints[index].Value = value; 
+        {
+            get => (NODE)_statePoints[index].Value;
+            set
+            {
+                var node = _statePoints[index];
+
+                if (node.Value == value)
+                    return;
+
+                if (node.Value != null)
+                    node.Value.Parent = null;
+
+                if (value != null)
+                {
+                    value.Parent = _owner;
+                    node.Value = value;
+                }
+                else
+                    node.Value = null;
+            }
         }
 
         public void Add(NODE item)
         {
+            item.Parent = _owner;
             _statePoints.Add(_list.AddLast(item));
             StateIndex++;
         }
@@ -77,7 +95,14 @@ namespace GDShrapt.Reader
             var c = _statePoints.Count;
 
             for (int i = 0; i < c; i++)
-                _list.Remove(_statePoints[0]);
+            {
+                var node = _statePoints[0];
+
+                if (node.Value != null)
+                    node.Value.Parent = null;
+
+                _list.Remove(node);
+            }
 
             _statePoints.Clear();
         }
@@ -94,6 +119,8 @@ namespace GDShrapt.Reader
             if (node == null)
                 return false;
 
+            item.Parent = null;
+
             _statePoints.Remove(node);
             _list.Remove(node);
             return true;
@@ -102,6 +129,10 @@ namespace GDShrapt.Reader
         public void RemoveAt(int index)
         {
             var node = _statePoints[index];
+
+            if (node.Value != null)
+                node.Value.Parent = null;
+
             _statePoints.RemoveAt(index);
             _list.Remove(node);
         }
@@ -116,8 +147,8 @@ namespace GDShrapt.Reader
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(1)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 1)
         {
 
         }
@@ -131,8 +162,8 @@ namespace GDShrapt.Reader
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(2)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 2)
         {
 
         }
@@ -149,8 +180,8 @@ namespace GDShrapt.Reader
         where T1 : GDSyntaxToken
         where T2 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(3)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 3)
         {
 
         }
@@ -170,8 +201,8 @@ namespace GDShrapt.Reader
         where T2 : GDSyntaxToken
         where T3 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(4)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 4)
         {
 
         }
@@ -194,8 +225,8 @@ namespace GDShrapt.Reader
         where T3 : GDSyntaxToken
         where T4 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(5)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 5)
         {
 
         }
@@ -223,8 +254,8 @@ namespace GDShrapt.Reader
         where T4 : GDSyntaxToken
         where T5 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(6)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 6)
         {
 
         }
@@ -253,8 +284,8 @@ namespace GDShrapt.Reader
         where T5 : GDSyntaxToken
         where T6 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(7)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 7)
         {
 
         }
@@ -286,8 +317,8 @@ namespace GDShrapt.Reader
         where T6 : GDSyntaxToken
         where T7 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(8)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 8)
         {
 
         }
@@ -322,8 +353,8 @@ namespace GDShrapt.Reader
         where T7 : GDSyntaxToken
         where T8 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(9)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 9)
         {
 
         }
@@ -361,8 +392,8 @@ namespace GDShrapt.Reader
         where T8 : GDSyntaxToken
         where T9 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(10)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 10)
         {
 
         }
@@ -403,8 +434,8 @@ namespace GDShrapt.Reader
         where T9 : GDSyntaxToken
         where T10 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(11)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 11)
         {
 
         }
@@ -448,8 +479,8 @@ namespace GDShrapt.Reader
         where T10 : GDSyntaxToken
         where T11 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(12)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 12)
         {
 
         }
@@ -496,8 +527,8 @@ namespace GDShrapt.Reader
         where T11 : GDSyntaxToken
         where T12 : GDSyntaxToken
     {
-        public GDTokensForm()
-            : base(13)
+        public GDTokensForm(GDNode owner)
+            : base(owner, 13)
         {
 
         }
@@ -533,8 +564,8 @@ namespace GDShrapt.Reader
     internal abstract class GDTokensForm<STATE> : GDTokensForm
        where STATE : struct, System.Enum
     {
-        public GDTokensForm(int size) 
-            : base(size)
+        public GDTokensForm(GDNode owner, int size) 
+            : base(owner, size)
         {
         }
 
@@ -554,11 +585,15 @@ namespace GDShrapt.Reader
         public bool IsReadOnly => false;
 
         public int StateIndex { get; set; }
+        public bool IsCompleted => StateIndex == _statePoints.Count;
 
+        protected readonly GDNode _owner;
         readonly int _initialSize;
 
-        public GDTokensForm(int size)
+        public GDTokensForm(GDNode owner, int size)
         {
+            _owner = owner;
+
             _initialSize = size;
             _list = new LinkedList<GDSyntaxToken>();
             _statePoints = new List<LinkedListNode<GDSyntaxToken>>(size);
@@ -567,38 +602,13 @@ namespace GDShrapt.Reader
                 _statePoints.Add(_list.AddLast(default(GDSyntaxToken)));
         }
 
-        public GDTokensForm()
+        public GDTokensForm(GDNode owner)
         {
+            _owner = owner;
+
             _initialSize = 0;
             _list = new LinkedList<GDSyntaxToken>();
             _statePoints = new List<LinkedListNode<GDSyntaxToken>>();
-        }
-
-        public void MoveTokens(GDTokensForm baseForm)
-        {
-            if (baseForm == null)
-                return;
-
-            if (StateIndex > 0 || _list.Count > _statePoints.Count)
-                throw new InvalidOperationException("MoveTokens supported only for initial form");
-
-            var node = baseForm._list.First;
-            var pointNode = baseForm._statePoints[StateIndex];
-
-            while (node != null)
-            {
-                if (ReferenceEquals(node, pointNode))
-                {
-                    _statePoints[StateIndex].Value = node.Value;
-                    pointNode = baseForm._statePoints[++StateIndex];
-                }
-                else
-                {
-                    AddBeforeActiveToken(node.Value);
-                }
-
-                node = node.Next;
-            }
         }
 
         public void AddBeforeActiveToken(GDSyntaxToken token)
@@ -622,6 +632,7 @@ namespace GDShrapt.Reader
             if (value is null)
                 throw new System.ArgumentNullException(nameof(value));
 
+            value.Parent = _owner;
             _list.AddLast(value);
         }
 
@@ -629,6 +640,8 @@ namespace GDShrapt.Reader
         {
             if (value is null)
                 throw new System.ArgumentNullException(nameof(value));
+
+            value.Parent = _owner;
 
             if (index >= _statePoints.Count)
             {
@@ -643,7 +656,12 @@ namespace GDShrapt.Reader
 
         protected void Set(GDSyntaxToken value, int index)
         {
-            _statePoints[index].Value = value;
+            var node = _statePoints[index];
+
+            if (value != null)
+                value.Parent = _owner;
+
+            node.Value = value;
         }
 
         protected T Get<T>(int index) where T : GDSyntaxToken => (T)_statePoints[index].Value;
@@ -652,6 +670,12 @@ namespace GDShrapt.Reader
 
         public void Clear()
         {
+            foreach (var token in _list)
+            {
+                if (token != null)
+                    token.Parent = null;
+            }
+
             _list = new LinkedList<GDSyntaxToken>();
             _statePoints = new List<LinkedListNode<GDSyntaxToken>>(_initialSize);
 
@@ -683,19 +707,19 @@ namespace GDShrapt.Reader
                 if (_statePoints[i].Value == item)
                 {
                     _statePoints[i].Value = null;
+                    item.Parent = null;
                     return true;
                 }
             }
 
-            return _list.Remove(item);
+            if (_list.Remove(item))
+            {
+                item.Parent = null;
+                return true;
+            }
+
+            return false;
         }
-
-        /*public void Validate()
-        {
-            // TODO: check all tokens in the linked list on simplicity
-
-            throw new GDInvalidReadingStateException();
-        }*/
 
         public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
@@ -705,6 +729,36 @@ namespace GDShrapt.Reader
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        internal IEnumerable<GDSyntaxToken> GetAllTokensAfter(int index)
+        {
+            var node = _statePoints[index];
+
+            var next = node.Next;
+            while (next != null)
+            {
+                if (next.Value != null)
+                    yield return next.Value;
+                next = next.Next;
+            }
+        }
+
+        internal int CountTokensBetween(int start, int end)
+        {
+            var s = _statePoints[start];
+            var e = _statePoints[end];
+
+            int counter = 0;
+            var next = s.Next;
+
+            while(next != e)
+            {
+                counter++;
+                next = next.Next;
+            }
+
+            return counter;
         }
     }
 }

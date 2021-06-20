@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -8,32 +9,21 @@ namespace GDShrapt.Reader
     /// </summary>
     public abstract partial class GDNode : GDSyntaxToken, IStyleTokensReceiver
     {
-        // TODO: remove virtual. Should be abstract
         internal abstract GDTokensForm Form { get; }
-        internal GDTokensForm BaseForm
-        {
-            set => Form.MoveTokens(value);
-        }
-
+        
         public IEnumerable<GDSyntaxToken> Tokens => Form;
 
-        /*
         /// <summary>
         /// Removes child node or does nothing if node is already removed.
         /// </summary>
         /// <param name="token">Child token</param>
-        public virtual void RemoveChild(GDSyntaxToken token)
+        public bool RemoveChild(GDSyntaxToken token)
         {
-            if (!ReferenceEquals(Parent, this))
+            if (!ReferenceEquals(token.Parent, this))
                 throw new InvalidOperationException("The specified node has a different parent.");
 
-            var node = token.ParentLinkedListNode;
-
-            if (node == null || !ReferenceEquals(node.List, TokensList))
-                throw new InvalidOperationException("The specified node hasn't a linkedList reference to the parent.");
-
-            TokensList.Remove(node);
-        }*/
+            return Form.Remove(token);
+        }
 
         internal override void HandleSharpChar(GDReadingState state)
         {
@@ -74,6 +64,11 @@ namespace GDShrapt.Reader
         }
 
         void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
+        void ITokenReceiver.HandleAbstractToken(GDSyntaxToken token)
         {
             Form.AddBeforeActiveToken(token);
         }

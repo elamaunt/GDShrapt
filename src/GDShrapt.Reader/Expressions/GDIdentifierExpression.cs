@@ -15,18 +15,15 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDIdentifier> _form = new GDTokensForm<State, GDIdentifier>();
+        readonly GDTokensForm<State, GDIdentifier> _form;
         internal override GDTokensForm Form => _form;
+        public GDIdentifierExpression()
+        {
+            _form = new GDTokensForm<State, GDIdentifier>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
-                return;
-            }
-
             if (_form.State == State.Identifier)
             {
                 _form.State = State.Completed;
@@ -35,14 +32,12 @@
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
     }
 }

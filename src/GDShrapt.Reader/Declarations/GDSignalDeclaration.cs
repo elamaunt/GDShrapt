@@ -41,18 +41,18 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> _form = new GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket>();
+        readonly GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDSignalDeclaration(int intendation)
             : base(intendation)
         {
-
+            _form = new GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket>(this);
         }
 
         public GDSignalDeclaration()
         {
-
+            _form = new GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)

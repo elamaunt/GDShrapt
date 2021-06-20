@@ -22,8 +22,13 @@ namespace GDShrapt.Reader
             Completed
         }
 
-        readonly GDTokensForm<State, GDClassAtributesList, GDClassMembersList> _form = new GDTokensForm<State, GDClassAtributesList, GDClassMembersList>();
+        readonly GDTokensForm<State, GDClassAtributesList, GDClassMembersList> _form;
         internal override GDTokensForm Form => _form;
+
+        public GDClassDeclaration()
+        {
+            _form = new GDTokensForm<State, GDClassAtributesList, GDClassMembersList>(this);
+        }
 
         public GDExtendsAtribute Extends => Atributes.OfType<GDExtendsAtribute>().FirstOrDefault();
         public GDClassNameAtribute ClassName => Atributes.OfType<GDClassNameAtribute>().FirstOrDefault();

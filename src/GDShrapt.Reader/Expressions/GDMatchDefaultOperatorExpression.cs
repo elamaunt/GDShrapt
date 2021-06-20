@@ -17,8 +17,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDDefaultToken> _form = new GDTokensForm<State, GDDefaultToken>();
+        readonly GDTokensForm<State, GDDefaultToken> _form;
         internal override GDTokensForm Form => _form;
+        public GDMatchDefaultOperatorExpression()
+        {
+            _form = new GDTokensForm<State, GDDefaultToken>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {

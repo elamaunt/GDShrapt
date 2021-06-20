@@ -6,5 +6,11 @@
         {
             return IsSpace(c);
         }
+
+        public static GDSpace operator +(GDSpace one, GDSpace other)
+        {
+            one.Sequence += other.Sequence;
+            return one;
+        }
     }
 }

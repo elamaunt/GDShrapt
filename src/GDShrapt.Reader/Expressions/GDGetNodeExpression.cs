@@ -27,8 +27,13 @@ namespace GDShrapt.Reader
             Completed
         }
 
-        readonly GDTokensForm<State, GDDollar, GDPath> _form = new GDTokensForm<State, GDDollar, GDPath>();
+        readonly GDTokensForm<State, GDDollar, GDPath> _form;
         internal override GDTokensForm Form => _form;
+        public GDGetNodeExpression()
+        {
+            _form = new GDTokensForm<State, GDDollar, GDPath>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             switch (_form.State)

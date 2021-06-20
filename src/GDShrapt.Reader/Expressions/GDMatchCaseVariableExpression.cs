@@ -23,30 +23,30 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDVarKeyword, GDIdentifier> _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier>();
+        readonly GDTokensForm<State, GDVarKeyword, GDIdentifier> _form;
         internal override GDTokensForm Form => _form;
+        public GDMatchCaseVariableExpression()
+        {
+            _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
-                return;
-            }
 
             switch (_form.State)
             {
                 case State.Var:
-                    state.Push(new GDKeywordResolver<GDVarKeyword>(this));
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDKeywordResolver<GDVarKeyword>(this), c);
                     break;
                 case State.Identifier:
+                    if (this.ResolveStyleToken(c, state))
+                        return;
+
                     if (IsIdentifierStartChar(c))
                     {
                         _form.State = State.Completed;
-                        state.Push(Identifier = new GDIdentifier());
-                        state.PassChar(c);
+                        state.PushAndPass(Identifier = new GDIdentifier(), c);
                         return;
                     }
 
@@ -54,8 +54,7 @@
                     state.PassChar(c);
                     break;
                 default:
-                    state.Pop();
-                    state.PassChar(c);
+                    state.PopAndPass(c);
                     break;
             }
         }

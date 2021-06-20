@@ -2,6 +2,8 @@
 {
     internal class GDMatchCaseResolver : GDIntendedResolver
     {
+        GDSpace _lastSpace;
+
         new IMatchCaseReceiver Owner { get; }
 
         public GDMatchCaseResolver(IMatchCaseReceiver owner, int lineIntendation)
@@ -14,13 +16,47 @@
         {
             if (IsSpace(c))
             {
-                Owner.HandleReceivedToken(state.Push(new GDSpace()));
+                state.Push(_lastSpace = new GDSpace());
                 state.PassChar(c);
                 return;
             }
 
+            SendIntendationToOwner();
+
+            if (_lastSpace != null)
+            {
+                Owner.HandleReceivedToken(_lastSpace);
+                _lastSpace = null;
+            }
+
             Owner.HandleReceivedToken(state.Push(new GDMatchCaseDeclaration(LineIntendationThreshold)));
             state.PassChar(c);
+        }
+
+        internal override void HandleNewLineChar(GDReadingState state)
+        {
+            SendIntendationToOwner();
+
+            if (_lastSpace != null)
+            {
+                Owner.HandleReceivedToken(_lastSpace);
+                _lastSpace = null;
+            }
+
+            Owner.HandleReceivedToken(new GDNewLine());
+            ResetIntendation();
+        }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            if (_lastSpace != null)
+            {
+                Owner.HandleReceivedToken(_lastSpace);
+                _lastSpace = null;
+            }
+
+            SendIntendationToOwner();
+            base.ForceComplete(state);
         }
     }
 }

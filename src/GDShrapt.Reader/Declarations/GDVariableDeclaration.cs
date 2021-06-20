@@ -106,18 +106,18 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier> _form = new GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier>();
+        readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDVariableDeclaration(int intendation)
             : base(intendation)
         {
-
+            _form = new GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier>(this);
         }
 
         public GDVariableDeclaration()
         {
-
+            _form = new GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)

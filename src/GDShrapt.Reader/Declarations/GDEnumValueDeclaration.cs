@@ -6,6 +6,8 @@
         ITokenReceiver<GDAssign>,
         IExpressionsReceiver
     {
+        bool _checkedColon;
+
         public GDIdentifier Identifier
         {
             get => _form.Token0;
@@ -33,14 +35,18 @@
         enum State
         {
             Identifier,
-            Colon,
-            Assign,
+            ColonOrAssign,
             Value,
             Completed
         }
 
-        readonly GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression> _form = new GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression>();
+        readonly GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression> _form;
         internal override GDTokensForm Form => _form;
+        public GDEnumValueDeclaration()
+        {
+            _form = new GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))
@@ -55,11 +61,11 @@
                 case State.Identifier:
                     this.ResolveIdentifier(c, state);
                     break;
-                case State.Colon:
-                    this.ResolveColon(c, state);
-                    break;
-                case State.Assign:
-                    this.ResolveAssign(c, state);
+                case State.ColonOrAssign:
+                    if (!_checkedColon)
+                        this.ResolveColon(c, state);
+                    else
+                        this.ResolveAssign(c, state);
                     break;
                 case State.Value:
                     this.ResolveExpression(c, state);
@@ -79,7 +85,7 @@
         {
             if (_form.State == State.Identifier)
             {
-                _form.State = State.Colon;
+                _form.State = State.ColonOrAssign;
                 Identifier = token;
                 return;
             }
@@ -91,7 +97,7 @@
         {
             if (_form.State == State.Identifier)
             {
-                _form.State = State.Colon;
+                _form.State = State.ColonOrAssign;
                 return;
             }
 
@@ -100,8 +106,9 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.State == State.ColonOrAssign)
             {
+                _checkedColon = true;
                 _form.State = State.Value;
                 Colon = token;
                 return;
@@ -112,9 +119,9 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.State == State.ColonOrAssign)
             {
-                _form.State = State.Assign;
+                _checkedColon = true;
                 return;
             }
 
@@ -123,7 +130,7 @@
 
         void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
         {
-            if (_form.State == State.Assign)
+            if (_form.State == State.ColonOrAssign)
             {
                 _form.State = State.Value;
                 Assign = token;
@@ -135,7 +142,7 @@
 
         void ITokenReceiver<GDAssign>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Assign)
+            if (_form.State == State.ColonOrAssign)
             {
                 _form.State = State.Value;
                 return;

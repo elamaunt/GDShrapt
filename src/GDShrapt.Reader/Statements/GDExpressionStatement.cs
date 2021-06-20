@@ -14,17 +14,18 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpression> _form = new GDTokensForm<State, GDExpression>();
+        readonly GDTokensForm<State, GDExpression> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDExpressionStatement(int lineIntendation)
             : base(lineIntendation)
         {
+            _form = new GDTokensForm<State, GDExpression>(this);
         }
 
         public GDExpressionStatement()
         {
-
+            _form = new GDTokensForm<State, GDExpression>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)

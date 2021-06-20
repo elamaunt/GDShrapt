@@ -1,66 +1,135 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDExtendsAtribute : GDClassAtribute
+    public class GDExtendsAtribute : GDClassAtribute,
+        IKeywordReceiver<GDExtendsKeyword>,
+        ITypeReceiver,
+        IStringReceiver
     {
+        internal GDExtendsKeyword ExtendsKeyword
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
         public GDType Type
         {
-            get => (GDType)_form.Token0;
-            set => _form.Token0 = value;
+            get => (GDType)_form.Token1;
+            set => _form.Token1 = value;
         }
         public GDString Path
         {
-            get => (GDString)_form.Token0;
-            set => _form.Token0 = value;
+            get => (GDString)_form.Token1;
+            set => _form.Token1 = value;
         }
 
         enum State
         {
-            TypeOrPath,
+            Extends,
+            Path, 
+            Type,
             Completed
         }
 
-        readonly GDTokensForm<State, GDSimpleSyntaxToken> _form = new GDTokensForm<State, GDSimpleSyntaxToken>();
+        readonly GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken> _form;
         internal override GDTokensForm Form => _form;
+        public GDExtendsAtribute()
+        {
+            _form = new GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
+            if (this.ResolveStyleToken(c, state))
                 return;
-            }
 
-            if (_form.State == State.TypeOrPath)
+            switch (_form.State)
             {
-                if (IsStringStartChar(c))
-                {
-                    _form.State = State.Completed;
-                    state.Push(Path = new GDString());
-                }
-                else
-                {
-                    if (IsIdentifierStartChar(c))
-                    {
-                        _form.State = State.Completed;
-                        state.Push(Type = new GDType());
-                    }
-                    else
-                        state.Pop();
-                }
-
-                state.PassChar(c);
-                return;
+                case State.Extends:
+                    this.ResolveKeyword(c, state);
+                    break;
+                case State.Path:
+                    this.ResolveString(c, state);
+                    break;
+                case State.Type:
+                    this.ResolveType(c, state);
+                    break;
+                default:
+                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    break;
             }
-
-            state.Pop();
-            state.PassChar(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
+        }
+
+        void IKeywordReceiver<GDExtendsKeyword>.HandleReceivedToken(GDExtendsKeyword token)
+        {
+            if (_form.State == State.Extends)
+            {
+                _form.State = State.Path;
+                ExtendsKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IKeywordReceiver<GDExtendsKeyword>.HandleReceivedKeywordSkip()
+        {
+            if (_form.State == State.Extends)
+            {
+                _form.State = State.Path;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITypeReceiver.HandleReceivedToken(GDType token)
+        {
+            if (_form.State == State.Type)
+            {
+                _form.State = State.Completed;
+                Type = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITypeReceiver.HandleReceivedTypeSkip()
+        {
+            if (_form.State == State.Type)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IStringReceiver.HandleReceivedToken(GDString token)
+        {
+            if (_form.State == State.Path)
+            {
+                _form.State = State.Completed;
+                Path = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IStringReceiver.HandleReceivedStringSkip()
+        {
+            if (_form.State == State.Path)
+            {
+                _form.State = State.Type;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
         }
     }
 }

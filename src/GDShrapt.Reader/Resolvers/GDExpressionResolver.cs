@@ -1,19 +1,19 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     internal class GDExpressionResolver : GDResolver, 
-        IKeywordReceiver<GDIfKeyword>, 
-        IKeywordReceiver<GDElseKeyword>
+        IKeywordReceiver<GDIfKeyword>
     {
         GDExpression _expression;
-        GDTokensForm _expressionParentForm;
         GDIfKeyword _nextIfKeyword;
+        GDSpace _lastSpace;
 
         bool _ifExpressionChecked;
         bool _isCompleted;
 
         new IExpressionsReceiver Owner { get; }
+
+        public bool IsCompleted => _isCompleted;
+        public ITokenReceiver Parent => Owner;
 
         public GDExpressionResolver(IExpressionsReceiver owner)
             : base(owner)
@@ -23,9 +23,23 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
+            if (_nextIfKeyword != null)
+            {
+                var keyword = _nextIfKeyword;
+                _ifExpressionChecked = false;
+                _nextIfKeyword = null;
+
+                var expr = new GDIfExpression();
+                PushAndSwap(state, expr);
+                expr.SendKeyword(keyword);
+
+                state.PassChar(c);
+                return;
+            }
+
             if (IsSpace(c))
             {
-                Owner.HandleReceivedToken(state.Push(new GDSpace()));
+                state.Push(_lastSpace = new GDSpace());
                 state.PassChar(c);
                 return;
             }
@@ -114,7 +128,6 @@ namespace GDShrapt.Reader
             {
                 if (CheckKeywords(state))
                 {
-                    state.PassChar(' ');
                     state.PassChar(c);
                     return;
                 }
@@ -123,13 +136,18 @@ namespace GDShrapt.Reader
                 {
                     if (dualOperatorExpression.OperatorType == GDDualOperatorType.Null && dualOperatorExpression.RightExpression == null)
                     {
-                        // Save dual operators form with LeftExpression.
-                        // Many operators, based on expression at start have the same form.
-                        // And we will move the form to another expression
-                        _expressionParentForm = dualOperatorExpression.Form;
-                        _expression = dualOperatorExpression.LeftExpression;
+                        // This is the end of expression.
+                        var form = dualOperatorExpression.Form;
+                        var leftExpression = dualOperatorExpression.LeftExpression;
+
+                        _expression = leftExpression;
 
                         CompleteExpression(state);
+
+                        // Send all next tokens to current reader
+                        foreach (var token in form.GetAllTokensAfter(0))
+                            state.PassString(token.ToString());
+
                         state.PassChar(c);
                         return;
                     }
@@ -139,19 +157,6 @@ namespace GDShrapt.Reader
                 {
                     _ifExpressionChecked = true;
                     state.Push(new GDKeywordResolver<GDIfKeyword>(this));
-                    state.PassChar(c);
-                    return;
-                }
-
-                if (_nextIfKeyword != null)
-                {
-                    var keyword = _nextIfKeyword;
-                    _ifExpressionChecked = false;
-                    _nextIfKeyword = null;
-
-                    var expr = new GDIfExpression();
-                    PushAndSwap(state, expr);
-                    expr.SendKeyword(keyword);
                     state.PassChar(c);
                     return;
                 }
@@ -195,6 +200,13 @@ namespace GDShrapt.Reader
                     case "setget":
                         {
                             _expression = null;
+
+                            if (_lastSpace != null)
+                            {
+                                Owner.HandleReceivedToken(_lastSpace);
+                                _lastSpace = null;
+                            }
+
                             CompleteExpression(state);
 
                             for (int i = 0; i < s.Length; i++)
@@ -282,13 +294,13 @@ namespace GDShrapt.Reader
             var last = _expression;
 
             _expression = null;
-            _expressionParentForm = null;
 
             if (last != null)
             {
-                // Handle negative number from Negate operator and GDNumberExpression
+                // Handle negative number from Negate operator and GDNumberExpression. It must be zero tokens between negate and the number
                 if (last is GDSingleOperatorExpression operatorExpression &&
                     operatorExpression.OperatorType == GDSingleOperatorType.Negate &&
+                    operatorExpression.Form.CountTokensBetween(0, 1) == 0 &&
                     operatorExpression.TargetExpression is GDNumberExpression numberExpression)
                 {
                     numberExpression.Number.Negate();
@@ -300,24 +312,33 @@ namespace GDShrapt.Reader
             else
                 Owner.HandleReceivedExpressionSkip();
 
+            if (_lastSpace != null)
+            {
+                Owner.HandleReceivedToken(_lastSpace);
+                _lastSpace = null;
+            }
+
             state.Pop();
         }
 
-        private void PushAndSwap(GDReadingState state, GDExpression node)
+        private void PushAndSwap<T>(GDReadingState state, T node)
+            where T: GDExpression, IExpressionsReceiver
         {
-            if (_expressionParentForm != null)
-            {
-                _expression.BaseForm = _expressionParentForm;
-                _expressionParentForm = null;
-                _expression = null;
-            }
-
             if (_expression != null)
             {
-                node.SwapLeft(_expression);
+                node.SendExpression(_expression);
 
-                // TODO: check all expression for state index. Are there any expressions with state index not 1
-                node.Form.StateIndex = 1;
+               /* if (_lastSpace != null)
+                {
+                    _expression.SendSpace(_lastSpace);
+                    _lastSpace = null;
+                }*/
+            }
+
+            if (_lastSpace != null)
+            {
+                node.SendSpace(_lastSpace);
+                _lastSpace = null;
             }
 
             state.Push(_expression = node);
@@ -325,13 +346,18 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
-            CheckKeywords(state);
-            CompleteExpression(state);
+            if (!CheckKeywords(state))
+                CompleteExpression(state);
         }
 
         private void PushAndSave(GDReadingState state, GDExpression node)
         {
-            _expressionParentForm = null;
+            if (_lastSpace != null)
+            {
+                node.SendSpace(_lastSpace);
+                _lastSpace = null;
+            }
+
             state.Push(_expression = node);
         }
 
@@ -345,29 +371,30 @@ namespace GDShrapt.Reader
             // Nothing
         }
 
+        // TODO: remove methods below
         public void HandleReceivedToken(GDComment token)
         {
-            throw new GDInvalidReadingStateException();
+            Owner.HandleReceivedToken(token);
         }
 
         public void HandleReceivedToken(GDNewLine token)
         {
-            throw new GDInvalidReadingStateException();
+            Owner.HandleReceivedToken(token);
         }
 
         public void HandleReceivedToken(GDSpace token)
         {
-            throw new GDInvalidReadingStateException();
+            Owner.HandleReceivedToken(token);
         }
 
         public void HandleReceivedToken(GDInvalidToken token)
         {
-            throw new GDInvalidReadingStateException();
+            Owner.HandleReceivedToken(token);
         }
 
-        public void HandleReceivedToken(GDElseKeyword token)
+        public void HandleAbstractToken(GDSyntaxToken token)
         {
-            throw new GDInvalidReadingStateException();
+            Owner.HandleAbstractToken(token);
         }
     }
 }

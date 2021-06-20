@@ -33,16 +33,18 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList> _form = new GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList>();
+        readonly GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDMatchStatement(int lineIntendation)
             : base(lineIntendation)
         {
+            _form = new GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList>(this);
         }
 
         public GDMatchStatement()
         {
+            _form = new GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)

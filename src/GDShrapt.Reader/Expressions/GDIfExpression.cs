@@ -44,43 +44,39 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>();
+        readonly GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> _form;
         internal override GDTokensForm Form => _form;
+        public GDIfExpression()
+        {
+            _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>(this);
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
-                return;
-            }
-
             switch (_form.State)
             {
                 case State.True:
-                    state.Push(new GDExpressionResolver(this));
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.If:
-                    state.Push(new GDKeywordResolver<GDIfKeyword>(this));
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDKeywordResolver<GDIfKeyword>(this), c);
                     break;
                 case State.Condition:
-                    state.Push(new GDExpressionResolver(this));
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.Else:
-                    state.Push(new GDKeywordResolver<GDElseKeyword>(this));
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDKeywordResolver<GDElseKeyword>(this), c);
                     break;
                 case State.False:
-                    state.Push(new GDExpressionResolver(this));
-                    state.PassChar(c);
+                    if (!this.ResolveStyleToken(c, state))
+                        state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 default:
-                    state.Pop();
-                    state.PassChar(c);
+                    state.PopAndPass(c);
                     break;
             }
         }

@@ -59,8 +59,8 @@ namespace GDShrapt.Converter
 
         public void Visit(GDInnerClassDeclaration d)
         {
-            var classDeclaration = GenerateClassShell(d.Name?.Sequence, d.ExtendsClass?.Sequence, d.IsTool);
-            Push(classDeclaration, (ClassDeclarationSyntax @parentClass, ClassDeclarationSyntax @class) => @parentClass.AddMembers(@class));
+            //var classDeclaration = GenerateClassShell(d.Name?.Sequence, d.ExtendsClass?.Sequence, d.IsTool);
+            //Push(classDeclaration, (ClassDeclarationSyntax @parentClass, ClassDeclarationSyntax @class) => @parentClass.AddMembers(@class));
         }
 
         private ClassDeclarationSyntax GenerateClassShell(string name, string extendsClassName, bool isTool)
@@ -164,23 +164,12 @@ namespace GDShrapt.Converter
         {
 
         }
-
-        public void Visit(GDReturnStatement s)
-        {
-
-        }
-
         public void Visit(GDForStatement s)
         {
 
         }
 
         public void Visit(GDMatchStatement s)
-        {
-
-        }
-
-        public void Visit(GDPassStatement s)
         {
 
         }
@@ -237,11 +226,6 @@ namespace GDShrapt.Converter
         }
 
         public void Visit(GDNumberExpression e)
-        {
-
-        }
-
-        public void Visit(GDParametersExpression e)
         {
 
         }

@@ -65,8 +65,6 @@
                             state.Pop();
 
                             // Pass all data to the previous node
-                            state.PassNewLine();
-
                             for (int i = 0; i < _lineIntendation; i++)
                                 state.PassChar('\t');
                             for (int i = 0; i < _spaceCounter; i++)
@@ -75,11 +73,6 @@
                             state.PassChar(c);
                             return true;
                         }
-
-                        Owner.HandleReceivedToken(new GDIntendation() 
-                        { 
-                            LineIntendationThreshold = LineIntendationThreshold 
-                        });
                     }
                 }
             }
@@ -87,9 +80,18 @@
             return false;
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        protected void SendIntendationToOwner()
         {
-            ResetIntendation();
+            Owner.HandleReceivedToken(new GDIntendation()
+            {
+                LineIntendationThreshold = LineIntendationThreshold
+            });
+        }
+
+        protected void PassIntendation(GDReadingState state)
+        {
+            for (int i = 0; i < _lineIntendation; i++)
+                state.PassChar('\t');
         }
 
         protected void ResetIntendation()
