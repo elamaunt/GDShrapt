@@ -67,7 +67,7 @@ namespace GDShrapt.Reader
 
         private void Complete(GDReadingState state, string sequence)
         {
-            SendIntendationToOwner();
+            SendIntendationTokensToOwner();
 
             _memberResolved = true;
             switch (sequence)
@@ -162,7 +162,7 @@ namespace GDShrapt.Reader
             }
 
             if (!_memberResolved)
-                SendIntendationToOwner();
+                SendIntendationTokensToOwner();
             base.ForceComplete(state);
         }
     }

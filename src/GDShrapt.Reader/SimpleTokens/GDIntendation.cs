@@ -26,7 +26,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            if (c == ' ' && state.Settings.ConvertFourSpacesIntoTabs)
+            if (c == ' ' && state.Settings.ReadFourSpacesAsIntendation)
             {
                 _spaceCounter++;
                 _sequenceBuilder.Append(c);

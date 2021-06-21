@@ -47,10 +47,15 @@ namespace GDShrapt.Reader
 
         internal virtual void CompleteSequence(GDReadingState state)
         {
+            Complete();
+            state.Pop();
+        }
+
+        internal void Complete()
+        {
             IsCompleted = true;
             Sequence = _sequenceBuilder.ToString();
             _sequenceBuilder = null;
-            state.Pop();
         }
 
         internal void ResetSequence()
@@ -58,6 +63,17 @@ namespace GDShrapt.Reader
             IsCompleted = false;
             Sequence = null;
             _sequenceBuilder = new StringBuilder();
+        }
+
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            Complete();
+            base.HandleSharpChar(state);
+        }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            CompleteSequence(state);
         }
 
         /// <summary>

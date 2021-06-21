@@ -12,6 +12,7 @@
         internal override void HandleSharpChar(GDReadingState state)
         {
             Owner.HandleReceivedToken(state.Push(new GDComment()));
+            state.PassSharpChar();
         }
     }
 }

@@ -49,7 +49,7 @@ namespace GDShrapt.Reader
         /// </summary>
         public void PassNewLine()
         {
-            CurrentReader?.HandleNewLineChar(this);
+            CurrentReader.HandleNewLineChar(this);
         }
 
         /// <summary>
@@ -59,6 +59,11 @@ namespace GDShrapt.Reader
         {
             for (int i = 0; i < s.Length; i++)
                 PassChar(s[i]);
+        }
+
+        public void PassSharpChar()
+        {
+            CurrentReader.HandleSharpChar(this);
         }
 
         /// <summary>

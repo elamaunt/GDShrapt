@@ -32,13 +32,11 @@
 
             if (_form.State == State.Tool)
             {
-                state.Push(new GDKeywordResolver<GDToolKeyword>(this));
-                state.PassChar(c);
+                state.PushAndPass(new GDKeywordResolver<GDToolKeyword>(this), c);
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)

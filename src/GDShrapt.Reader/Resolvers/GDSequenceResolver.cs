@@ -42,9 +42,26 @@
             HandleChar('\n', state);
         }
 
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            state.Pop();
+            OnFail();
+
+            var s = Sequence;
+
+            for (int i = 0; i < Index - 1; i++)
+                state.PassChar(s[i]);
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
+            state.Pop();
             OnFail();
+
+            var s = Sequence;
+
+            for (int i = 0; i < Index - 1; i++)
+                state.PassChar(s[i]);
         }
     }
 }

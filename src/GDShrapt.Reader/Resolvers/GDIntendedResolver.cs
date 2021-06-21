@@ -11,6 +11,7 @@ namespace GDShrapt.Reader
         int _lineIntendation;
         bool _lineIntendationEnded;
         int _spaceCounter;
+        bool _inComment;
 
         new IIntendationReceiver Owner { get; }
 
@@ -39,8 +40,15 @@ namespace GDShrapt.Reader
             {
                 if (c == '\n')
                 {
+                    _inComment = false;
                     _spaceCounter = 0;
                     _lineIntendation = 0;
+                    _sequenceBuilder.Append(c);
+                    return true;
+                }
+
+                if (_inComment)
+                {
                     _sequenceBuilder.Append(c);
                     return true;
                 }
@@ -58,7 +66,7 @@ namespace GDShrapt.Reader
                     return true;
                 }
 
-                if (c == ' ' && state.Settings.ConvertFourSpacesIntoTabs)
+                if (c == ' ' && state.Settings.ReadFourSpacesAsIntendation)
                 {
                     _spaceCounter++;
                     _sequenceBuilder.Append(c);
@@ -101,13 +109,89 @@ namespace GDShrapt.Reader
             HandleNewLineAfterIntendation(state);
         }
 
-        protected void SendIntendationToOwner()
+        internal override void HandleSharpChar(GDReadingState state)
         {
-            Owner.HandleReceivedToken(new GDIntendation()
+            if (_lineIntendationEnded)
+                base.HandleSharpChar(state);
+            else
             {
-                Sequence = _sequenceBuilder.ToString(),
-                LineIntendationThreshold = LineIntendationThreshold
-            });
+                _inComment = true;
+                HandleIntendation('#', state);
+            }
+        }
+
+        protected void SendIntendationTokensToOwner()
+        {
+            GDComment comment = null;
+            GDSpace space = null;
+
+            for (int i = 0; i < _sequenceBuilder.Length; i++)
+            {
+                var c = _sequenceBuilder[i];
+                switch (c)
+                {
+                    case '\t':
+                    case ' ':
+                        if (comment != null)
+                            comment.Append(c);
+                        else
+                        {
+                            if (space == null)
+                                space = new GDSpace();
+                            space.Append(c);
+                        }
+                        break;
+                    case '#':
+                        if (space != null)
+                        {
+                            space.Complete();
+                            Owner.HandleReceivedToken(space);
+                            space = null;
+                        }
+
+                        if (comment == null)
+                            comment = new GDComment();
+                        comment.Append(c);
+                        break;
+                    case '\n':
+                        if (space != null)
+                        {
+                            space.Complete();
+                            Owner.HandleReceivedToken(space);
+                            space = null;
+                        }
+
+                        if (comment != null)
+                        {
+                            comment.Complete();
+                            Owner.HandleReceivedToken(comment);
+                            comment = null;
+                        }
+
+                        Owner.HandleReceivedToken(new GDNewLine());
+                        break;
+                    default:
+                        comment.Append(c);
+                        break;
+                }
+            }
+
+            if (space != null)
+            {
+                Owner.HandleReceivedToken(new GDIntendation()
+                {
+                    Sequence = space.Sequence,
+                    LineIntendationThreshold = LineIntendationThreshold
+                });
+            }
+            else
+            {
+                Owner.HandleReceivedToken(new GDIntendation()
+                {
+                    Sequence = string.Empty,
+                    LineIntendationThreshold = LineIntendationThreshold
+                });
+            }
         }
 
         protected void PassIntendationSequence(GDReadingState state)

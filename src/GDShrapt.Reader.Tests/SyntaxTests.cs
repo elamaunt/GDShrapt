@@ -3,7 +3,7 @@
 namespace GDShrapt.Reader.Tests
 {
     [TestClass]
-    class SyntaxTests
+    public class SyntaxTests
     {
         [TestMethod]
         public void CommentsTest()
@@ -39,6 +39,9 @@ func get_recognized_extensions(res): # func comment
 ";
 
             var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+            AssertHelper.CompareStrings(code, @class.ToString());
         }
 
         [TestMethod]
@@ -59,7 +62,8 @@ enum { a, # a comment
 
             var @class = reader.ParseFileContent(code);
 
-
+            Assert.IsNotNull(@class);
+            AssertHelper.CompareStrings(code, @class.ToString());
         }
     }
 }

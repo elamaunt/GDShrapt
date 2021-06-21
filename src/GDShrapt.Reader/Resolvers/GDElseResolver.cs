@@ -23,7 +23,7 @@
 
             branch.SendKeyword(new GDElseKeyword());
 
-            SendIntendationToOwner();
+            SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(branch);
             state.Push(branch);
         }

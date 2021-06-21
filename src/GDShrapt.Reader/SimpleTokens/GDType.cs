@@ -69,6 +69,13 @@ namespace GDShrapt.Reader
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            if (_builder.Length > 0)
+                Sequence = _builder.ToString();
+            base.HandleSharpChar(state);
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             if (_builder.Length > 0)

@@ -13,6 +13,23 @@ namespace GDShrapt.Reader
         
         public IEnumerable<GDSyntaxToken> Tokens => Form;
 
+        public IEnumerable<GDSyntaxToken> AllTokens
+        {
+            get
+            {
+                foreach (var token in Tokens)
+                {
+                    if (token is GDNode node)
+                    {
+                        foreach (var nodeToken in node.AllTokens)
+                            yield return token;
+                    }
+                    else
+                        yield return token;
+                }
+            }
+        }
+
         /// <summary>
         /// Removes child node or does nothing if node is already removed.
         /// </summary>
@@ -30,6 +47,7 @@ namespace GDShrapt.Reader
             var comment = new GDComment();
             Form.AddBeforeActiveToken(comment);
             state.Push(comment);
+            state.PassSharpChar();
         }
 
         public override void AppendTo(StringBuilder builder)

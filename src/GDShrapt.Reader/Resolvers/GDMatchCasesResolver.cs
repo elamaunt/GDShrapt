@@ -21,7 +21,7 @@
                 return;
             }
 
-            SendIntendationToOwner();
+            SendIntendationTokensToOwner();
 
             if (_lastSpace != null)
             {

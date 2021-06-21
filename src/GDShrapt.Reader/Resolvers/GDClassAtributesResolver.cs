@@ -55,7 +55,7 @@ namespace GDShrapt.Reader
 
             if (atribute != null)
             {
-                SendIntendationToOwner();
+                SendIntendationTokensToOwner();
                 Owner.HandleReceivedToken(atribute);
                 state.Push(atribute);
 
@@ -99,7 +99,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            SendIntendationToOwner();
+            SendIntendationTokensToOwner();
             base.ForceComplete(state);
         }
     }

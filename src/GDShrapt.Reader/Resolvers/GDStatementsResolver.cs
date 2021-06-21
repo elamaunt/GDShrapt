@@ -129,7 +129,7 @@ namespace GDShrapt.Reader
                     }
             }
 
-            SendIntendationToOwner();
+            SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(statement);
             state.Push(statement);
             return statement;
@@ -139,7 +139,7 @@ namespace GDShrapt.Reader
         {
             var statement = new GDExpressionStatement();
 
-            SendIntendationToOwner();
+            SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(statement);
             state.Push(statement);
             state.PassString(sequence);
