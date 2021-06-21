@@ -32,14 +32,6 @@
             set => _form.Token4 = value;
         }
 
-        internal GDNewLine NewLine
-        {
-            get => _form.Token5;
-            set => _form.Token5 = value;
-
-        }
-
-
         public GDStatementsList Statements { get => _form.Token6?? (_form.Token6 = new GDStatementsList(LineIntendation + 1)); }
 
         enum State
@@ -49,7 +41,6 @@
             In,
             Collection,
             Colon,
-            NewLine,
             Statements,
             Completed
         }
@@ -70,12 +61,8 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c) && _form.State != State.Statements)
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
+            if (this.ResolveStyleToken(c, state))
                 return;
-            }
 
             switch (_form.State)
             {
@@ -107,12 +94,8 @@
                     state.Push(new GDSingleCharTokenResolver<GDColon>(this));
                     state.PassChar(c);
                     break;
-                case State.NewLine:
-                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
-                    break;
                 case State.Statements:
-                    _form.State = State.Completed;
-                    state.PushAndPass(Statements, c);
+                    this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
                 default:
                     state.Pop();
@@ -129,10 +112,6 @@
                 case State.Variable:
                 case State.Colon:
                 case State.Collection:
-                case State.NewLine:
-                    _form.State = State.Statements;
-                    NewLine = new GDNewLine();
-                    break;
                 case State.Statements:
                     _form.State = State.Completed;
                     state.Push(Statements);
@@ -174,7 +153,7 @@
             if (_form.State == State.Colon)
             {
                 Colon = token;
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 return;
             }
 
@@ -185,7 +164,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 return;
             }
 

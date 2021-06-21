@@ -2,9 +2,8 @@
 {
     public sealed class GDIfStatement : GDStatement,
         IKeywordReceiver<GDIfKeyword>,
-        IKeywordReceiver<GDElseKeyword>
+        IElseBranchReceiver
     {
-        bool _elseChecked;
         bool _waitForEndLine = true;
 
         public GDIfBranch IfBranch
@@ -54,19 +53,13 @@
                     state.PushAndPass(ElifBranchesList, c);
                     break;
                 case State.ElseBranch:
-                    if (!_elseChecked)
-                        this.ResolveKeyword<GDElseKeyword>(c, state);
-                    else
-                    {
-                        _form.State = State.Completed;
-                        state.PushAndPass(ElseBranch, c);
-                    }
+                    state.PushAndPassNewLine(new GDElseResolver(this, LineIntendation));
                     break;
                 default:
                     if (!this.ResolveStyleToken(c, state))
                     {
                         if (_waitForEndLine)
-                            this.ResolveInvalidToken(c, state, x => !x.IsSpace());
+                            this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                         else
                             state.PopAndPass(c);
                     }
@@ -87,8 +80,7 @@
                     state.PushAndPassNewLine(ElifBranchesList);
                     break;
                 case State.ElseBranch:
-                    _form.State = State.Completed;
-                    state.PushAndPassNewLine(ElseBranch = new GDElseBranch(LineIntendation));
+                    state.PushAndPassNewLine(new GDElseResolver(this, LineIntendation));
                     break;
                 default:
                     state.PopAndPassNewLine();
@@ -115,23 +107,22 @@
             throw new GDInvalidReadingStateException();
         }
 
-        void IKeywordReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
+        void IElseBranchReceiver.HandleReceivedToken(GDElseBranch token)
         {
             if (_form.State == State.ElseBranch)
             {
-                _elseChecked = true;
-                ElseBranch.SendKeyword(token);
+                ElseBranch = token;
+                _form.State = State.Completed;
                 return;
             }
 
             throw new GDInvalidReadingStateException();
         }
 
-        void IKeywordReceiver<GDElseKeyword>.HandleReceivedKeywordSkip()
+        void IElseBranchReceiver.HandleReceivedElseBranchSkip()
         {
             if (_form.State == State.ElseBranch)
             {
-                _waitForEndLine = false;
                 _form.State = State.Completed;
                 return;
             }

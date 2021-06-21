@@ -29,7 +29,7 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
         {
             if (_sequenceBuilder?.Length > 0)
             {
@@ -37,14 +37,11 @@ namespace GDShrapt.Reader
                 ResetSequence();
                 Complete(state, sequence);
                 state.PassNewLine();
+                return;
             }
-            else
-            {
-                SendIntendationToOwner();
-                Owner.HandleReceivedToken(new GDNewLine());
-                ResetIntendation();
-                ResetSequence();
-            }
+
+            ResetIntendation();
+            state.PassNewLine();
         }
 
         private void ResetSequence()
@@ -69,7 +66,7 @@ namespace GDShrapt.Reader
             {
                 state.Pop();
 
-                PassIntendation(state);
+                PassIntendationSequence(state);
 
                 for (int i = 0; i < sequence.Length; i++)
                     state.PassChar(sequence[i]);
@@ -98,14 +95,11 @@ namespace GDShrapt.Reader
                 var sequence = _sequenceBuilder.ToString();
                 ResetSequence();
                 Complete(state, sequence);
-                state.PassNewLine();
+                ResetIntendation();
                 return;
             }
 
             SendIntendationToOwner();
-            Owner.HandleReceivedToken(new GDNewLine());
-            ResetIntendation();
-            ResetSequence();
             base.ForceComplete(state);
         }
     }

@@ -15,7 +15,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.PushAndPass(new GDClassMemberResolver(this, _lineIntendationThreshold), c);
+                state.PushAndPass(new GDClassMembersResolver(this, _lineIntendationThreshold), c);
                 return;
             }
 
@@ -27,7 +27,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDClassMemberResolver(this, _lineIntendationThreshold));
+                state.Push(new GDClassMembersResolver(this, _lineIntendationThreshold));
                 state.PassNewLine();
                 return;
             }

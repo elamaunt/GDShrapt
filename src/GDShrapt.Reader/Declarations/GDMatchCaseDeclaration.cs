@@ -12,58 +12,45 @@
             set => _form.Token1 = value;
         }
 
-        internal GDNewLine NewLine
-        {
-            get => _form.Token2;
-            set => _form.Token2 = value;
-        }
-
-        public GDStatementsList Statements { get => _form.Token3 ?? (_form.Token3 = new GDStatementsList(_lineIntendation + 1)); }
+        public GDStatementsList Statements { get => _form.Token2 ?? (_form.Token2 = new GDStatementsList(_lineIntendation + 1)); }
 
         enum State
         {
             Conditions,
             Colon,
-            NewLine,
             Statements,
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpressionsList, GDColon, GDNewLine, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDExpressionsList, GDColon, GDStatementsList> _form;
         internal override GDTokensForm Form => _form;
         internal GDMatchCaseDeclaration(int lineIntendation)
         {
             _lineIntendation = lineIntendation;
-            _form = new GDTokensForm<State, GDExpressionsList, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDExpressionsList, GDColon, GDStatementsList>(this);
         }
 
         public GDMatchCaseDeclaration()
         {
-            _form = new GDTokensForm<State, GDExpressionsList, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDExpressionsList, GDColon, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
+            if (this.ResolveStyleToken(c, state))
+                return;
+
             switch (_form.State)
             {
                 case State.Conditions:
-                    if (!this.ResolveStyleToken(c, state))
-                    {
-                        _form.State = State.Colon;
-                        state.PushAndPass(Conditions, c);
-                    }
+                    _form.State = State.Colon;
+                    state.PushAndPass(Conditions, c);
                     break;
                 case State.Colon:
-                    if (!this.ResolveStyleToken(c, state))
-                        this.ResolveColon(c, state);
-                    break;
-                case State.NewLine:
-                    if (!this.ResolveStyleToken(c, state))
-                        this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    this.ResolveColon(c, state);
                     break;
                 case State.Statements:
-                    _form.State = State.Completed;
-                    state.PushAndPass(Statements, c);
+                    this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
                 default:
                     state.PopAndPass(c);
@@ -77,9 +64,9 @@
             {
                 case State.Conditions:
                 case State.Colon:
-                case State.NewLine:
-                    _form.State = State.Statements;
-                    NewLine = new GDNewLine();
+                case State.Statements:
+                    _form.State = State.Completed;
+                    state.PushAndPassNewLine(Statements);
                     break;
                 default:
                     state.PopAndPassNewLine();
@@ -91,7 +78,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 Colon = token;
                 return;
             }
@@ -103,7 +90,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 return;
             }
 

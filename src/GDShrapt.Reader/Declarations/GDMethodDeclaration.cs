@@ -51,13 +51,8 @@
             get => _form.Token8;
             set => _form.Token8 = value;
         }
-        internal GDNewLine NewLine
-        {
-            get => _form.Token9;
-            set => _form.Token9 = value;
-        }
 
-        public GDStatementsList Statements { get => _form.Token10 ?? (_form.Token10 = new GDStatementsList(Intendation + 1)); }
+        public GDStatementsList Statements { get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1)); }
 
         public bool IsStatic => StaticKeyword != null;
 
@@ -72,28 +67,27 @@
             ReturnTypeKeyword,
             Type,
             Colon,
-            NewLine,
             Statements,
             Completed,
         }
 
-        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDMethodDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
         }
 
         public GDMethodDeclaration()
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c) && _form.State != State.Statements && _form.State != State.Parameters) 
+            if (IsSpace(c) && _form.State != State.Parameters) 
             {
                 _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
@@ -130,12 +124,8 @@
                 case State.Colon:
                     this.ResolveColon(c, state);
                     break;
-                case State.NewLine:
-                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
-                    break;
                 case State.Statements:
-                    _form.State = State.Completed;
-                    state.PushAndPass(Statements, c);
+                    this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
                 default:
                     state.PopAndPass(c);
@@ -145,14 +135,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.StateIndex <= (int)State.NewLine)
-            {
-                _form.State = State.Statements;
-                NewLine = new GDNewLine();
-                return;
-            }
-
-            if (_form.State == State.Statements)
+            if (_form.StateIndex <= (int)State.Statements)
             {
                 _form.State = State.Completed;
                 state.Push(Statements);
@@ -327,7 +310,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 Colon = token;
                 return;
             }
@@ -339,7 +322,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 return;
             }
 

@@ -2,13 +2,15 @@
 
 namespace GDShrapt.Reader
 {
-    internal class GDClassMemberResolver : GDIntendedResolver
+    internal class GDClassMembersResolver : GDIntendedResolver
     {
+        bool _memberResolved;
+
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         new IClassMembersReceiver Owner { get; }
 
-        public GDClassMemberResolver(IClassMembersReceiver owner, int lineIntendation)
+        public GDClassMembersResolver(IClassMembersReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;
@@ -16,6 +18,19 @@ namespace GDShrapt.Reader
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
+            if (_memberResolved)
+            {
+                if (IsSpace(c))
+                {
+                    Owner.HandleReceivedToken(state.Push(new GDSpace()));
+                    state.PassChar(c);
+                    return;
+                }
+
+                Owner.ResolveInvalidToken(c, state, x => !x.IsSpace());
+                return;
+            }
+
             if (!IsSpace(c))
             {
                 _sequenceBuilder.Append(c);
@@ -29,7 +44,7 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
         {
             if (_sequenceBuilder?.Length > 0)
             {
@@ -37,14 +52,11 @@ namespace GDShrapt.Reader
                 ResetSequence();
                 Complete(state, sequence);
                 state.PassNewLine();
+                return;
             }
-            else
-            {
-                SendIntendationToOwner();
-                Owner.HandleReceivedToken(new GDNewLine());
-                ResetIntendation();
-                ResetSequence();
-            }
+
+            _memberResolved = false;
+            state.PassNewLine();
         }
 
         private void ResetSequence()
@@ -54,14 +66,15 @@ namespace GDShrapt.Reader
 
         private void Complete(GDReadingState state, string sequence)
         {
+            SendIntendationToOwner();
 
+            _memberResolved = true;
             switch (sequence)
             {
                 case "signal":
                     {
                         var m = new GDSignalDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDSignalKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
@@ -69,7 +82,6 @@ namespace GDShrapt.Reader
                     {
                         var m = new GDEnumDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDEnumKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
@@ -77,7 +89,6 @@ namespace GDShrapt.Reader
                     {
                         var m = new GDMethodDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDStaticKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
@@ -85,13 +96,11 @@ namespace GDShrapt.Reader
                     {
                         var m = new GDMethodDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDFuncKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
                 case "export":
                     {
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(new GDVariableDeclaration(LineIntendationThreshold)));
 
                         for (int i = 0; i < sequence.Length; i++)
@@ -102,7 +111,6 @@ namespace GDShrapt.Reader
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDOnreadyKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
@@ -110,7 +118,6 @@ namespace GDShrapt.Reader
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDConstKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
@@ -118,7 +125,6 @@ namespace GDShrapt.Reader
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDVarKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
@@ -126,15 +132,14 @@ namespace GDShrapt.Reader
                     {
                         var m = new GDInnerClassDeclaration(LineIntendationThreshold);
                         m.SendKeyword(new GDClassKeyword());
-                        SendIntendationToOwner();
                         Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
                 default:
                     {
-                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsNewLine())));
+                        _memberResolved = false;
 
-                        PassIntendation(state);
+                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsSpace() || x.IsNewLine())));
 
                         if (sequence != null)
                             for (int i = 0; i < sequence.Length; i++)
@@ -151,16 +156,11 @@ namespace GDShrapt.Reader
                 var sequence = _sequenceBuilder.ToString();
                 ResetSequence();
                 Complete(state, sequence);
+                ResetIntendation();
                 return;
             }
-            else
-            {
-                SendIntendationToOwner();
-                Owner.HandleReceivedToken(new GDNewLine());
-                ResetIntendation();
-                ResetSequence();
-            }
 
+            SendIntendationToOwner();
             base.ForceComplete(state);
         }
     }

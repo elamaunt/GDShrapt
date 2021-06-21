@@ -27,7 +27,7 @@
             state.Pop();
             OnFail(state);
 
-            PassIntendation(state);
+            PassIntendationSequence(state);
 
             for (int i = 0; i < Index - 1; i++)
                 state.PassChar(s[i]);
@@ -38,14 +38,9 @@
         protected abstract void OnFail(GDReadingState state);
         protected abstract void OnMatch(GDReadingState state);
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
         {
             HandleChar('\n', state);
-        }
-
-        internal override void HandleSharpChar(GDReadingState state)
-        {
-            HandleChar('#', state);
         }
 
         internal override void ForceComplete(GDReadingState state)
@@ -53,6 +48,8 @@
             var s = Sequence;
             state.Pop();
             OnFail(state);
+
+            PassIntendationSequence(state);
 
             for (int i = 0; i < Index - 1; i++)
                 state.PassChar(s[i]);

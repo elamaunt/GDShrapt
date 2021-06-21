@@ -135,11 +135,9 @@ func save(path, resource, flags):
 
             var ifStatement = (GDIfStatement)statement;
 
-            Assert.IsNotNull(ifStatement.IfBranch);
-
             Assert.AreEqual("a != null and a is A", ifStatement.IfBranch.Condition.ToString());
             Assert.AreEqual(1, ifStatement.IfBranch.Statements.Count);
-            Assert.IsNull(ifStatement.ElseBranch);
+
             Assert.AreEqual(0, ifStatement.ElifBranchesList.Count);
             Assert.AreEqual(1, ifStatement.IfBranch.Statements.Count);
 
@@ -195,9 +193,6 @@ else:
 
             var ifStatement = (GDIfStatement)statement;
            
-            Assert.IsNotNull(ifStatement.IfBranch);
-            Assert.IsNull(ifStatement.ElseBranch);
-
             Assert.AreEqual(0, ifStatement.IfBranch.Statements.Count);
 
             Assert.IsNotNull(ifStatement.IfBranch.Expression);

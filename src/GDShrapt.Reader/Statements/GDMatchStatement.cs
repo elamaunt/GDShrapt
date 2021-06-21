@@ -59,25 +59,20 @@
             switch (_form.State)
             {
                 case State.Match:
-                    state.Push(new GDKeywordResolver<GDMatchKeyword>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDKeywordResolver<GDMatchKeyword>(this), c);
                     break;
                 case State.Value:
-                    state.Push(new GDExpressionResolver(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.Colon:
-                    state.Push(new GDSingleCharTokenResolver<GDColon>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDSingleCharTokenResolver<GDColon>(this), c);
                     break;
                 case State.Cases:
                     _form.State = State.Completed;
-                    state.Push(Cases);
-                    state.PassChar(c);
+                    state.PushAndPass(Cases, c);
                     break;
                 default:
-                    state.Pop();
-                    state.PassChar(c);
+                    state.PopAndPass(c);
                     break;
             }
         }
@@ -90,12 +85,10 @@
                 case State.Colon:
                 case State.Cases:
                     _form.State = State.Completed;
-                    state.Push(Cases);
-                    state.PassNewLine();
+                    state.PushAndPassNewLine(Cases);
                     break;
                 default:
-                    state.Pop(); 
-                    state.PassNewLine();
+                    state.PopAndPassNewLine(); 
                     break;
             }
         }

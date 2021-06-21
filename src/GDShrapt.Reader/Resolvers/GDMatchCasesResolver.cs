@@ -1,12 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal class GDMatchCaseResolver : GDIntendedResolver
+    internal class GDMatchCasesResolver : GDIntendedResolver
     {
         GDSpace _lastSpace;
 
         new IMatchCaseReceiver Owner { get; }
 
-        public GDMatchCaseResolver(IMatchCaseReceiver owner, int lineIntendation)
+        public GDMatchCasesResolver(IMatchCaseReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;
@@ -33,18 +33,10 @@
             state.PassChar(c);
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
         {
-            SendIntendationToOwner();
-
-            if (_lastSpace != null)
-            {
-                Owner.HandleReceivedToken(_lastSpace);
-                _lastSpace = null;
-            }
-
-            Owner.HandleReceivedToken(new GDNewLine());
             ResetIntendation();
+            state.PassNewLine();
         }
 
         internal override void ForceComplete(GDReadingState state)
@@ -55,8 +47,8 @@
                 _lastSpace = null;
             }
 
-            SendIntendationToOwner();
             base.ForceComplete(state);
+            PassIntendationSequence(state);
         }
     }
 }

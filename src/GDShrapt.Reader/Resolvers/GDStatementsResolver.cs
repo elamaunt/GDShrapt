@@ -2,15 +2,15 @@
 
 namespace GDShrapt.Reader
 {
-    internal class GDStatementResolver : GDIntendedResolver
+    internal class GDStatementsResolver : GDIntendedResolver
     {
-        bool _waitForNewLine;
+        bool _statementResolved;
 
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         new IStatementsReceiver Owner { get; }
 
-        public GDStatementResolver(IStatementsReceiver owner, int lineIntendation)
+        public GDStatementsResolver(IStatementsReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;
@@ -18,7 +18,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
-            if (_waitForNewLine)
+            if (_statementResolved)
             {
                 if (IsSpace(c))
                 {
@@ -28,7 +28,6 @@ namespace GDShrapt.Reader
                 }
 
                 Owner.ResolveInvalidToken(c, state, x => !x.IsSpace());
-                state.PassChar(c);
                 return;
             }
 
@@ -65,7 +64,7 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
         {
             if (_sequenceBuilder.Length > 0)
             {
@@ -76,18 +75,15 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            if (_waitForNewLine)
-                _waitForNewLine = false;
-            else
-                SendIntendationToOwner();
-            Owner.HandleReceivedToken(new GDNewLine());
+            _statementResolved = false;
             ResetIntendation();
+            state.PassNewLine();
         }
 
         private GDStatement CompleteAsStatement(GDReadingState state, string sequence)
         {
             _sequenceBuilder.Clear();
-            _waitForNewLine = true;
+            _statementResolved = true;
             GDStatement statement = null;
 
             switch (sequence)
@@ -146,9 +142,7 @@ namespace GDShrapt.Reader
             SendIntendationToOwner();
             Owner.HandleReceivedToken(statement);
             state.Push(statement);
-
-            for (int i = 0; i < sequence.Length; i++)
-                state.PassChar(sequence[i]);
+            state.PassString(sequence);
 
             return statement;
         }
@@ -165,6 +159,7 @@ namespace GDShrapt.Reader
             }
 
             base.ForceComplete(state);
+            PassIntendationSequence(state);
         }
     }
 }

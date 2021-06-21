@@ -6,8 +6,7 @@ namespace GDShrapt.Reader
     public sealed class GDInnerClassDeclaration : GDClassMember,
         IKeywordReceiver<GDClassKeyword>,
         IIdentifierReceiver,
-        ITokenReceiver<GDColon>,
-        ITokenReceiver<GDNewLine>
+        ITokenReceiver<GDColon>
     {
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
@@ -29,14 +28,10 @@ namespace GDShrapt.Reader
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        internal GDNewLine NewLine
-        {
-            get => _form.Token3;
-            set => _form.Token3 = value;
-        }
+
         public GDClassMembersList Members
         {
-            get => _form.Token4 ?? (_form.Token4 = new GDClassMembersList(Intendation + 1));
+            get => _form.Token3 ?? (_form.Token3 = new GDClassMembersList(Intendation + 1));
         }
 
         enum State
@@ -44,23 +39,22 @@ namespace GDShrapt.Reader
             Class,
             Identifier,
             Colon,
-            NewLine,
             Members,
             Completed
         }
 
-        readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList> _form;
+        readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDClassMembersList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDInnerClassDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList>(this);
+            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDClassMembersList>(this);
         }
 
         public GDInnerClassDeclaration()
         {
-            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDNewLine, GDClassMembersList>(this);
+            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDClassMembersList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -79,12 +73,8 @@ namespace GDShrapt.Reader
                 case State.Colon:
                     this.ResolveColon(c, state);
                     break;
-                case State.NewLine:
-                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
-                    break;
                 case State.Members:
-                    _form.State = State.Completed;
-                    state.PushAndPass(Members, c);
+                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
                     break;
                 default:
                     state.PopAndPass(c);
@@ -99,9 +89,9 @@ namespace GDShrapt.Reader
                 case State.Class:
                 case State.Identifier:
                 case State.Colon:
-                case State.NewLine:
-                    _form.State = State.Members;
-                    NewLine = new GDNewLine();
+                case State.Members:
+                    _form.State = State.Completed;
+                    state.PushAndPassNewLine(Members);
                     break;
                 default:
                     state.PopAndPassNewLine();
@@ -159,7 +149,7 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Members;
                 Colon = token;
                 return;
             }
@@ -171,42 +161,11 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Members;
                 return;
             }
 
             throw new GDInvalidReadingStateException();
-        }
-
-        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
-        {
-            switch (_form.State)
-            {
-                case State.Class:
-                case State.Identifier:
-                case State.Colon:
-                case State.NewLine:
-                    _form.State = State.Members;
-                    NewLine = token;
-                    break;
-                default:
-                    throw new GDInvalidReadingStateException();
-            }
-        }
-
-        void ITokenReceiver<GDNewLine>.HandleReceivedTokenSkip()
-        {
-            switch (_form.State)
-            {
-                case State.Class:
-                case State.Identifier:
-                case State.Colon:
-                case State.NewLine:
-                    _form.State = State.Members;
-                    break;
-                default:
-                    throw new GDInvalidReadingStateException();
-            }
         }
     }
 }

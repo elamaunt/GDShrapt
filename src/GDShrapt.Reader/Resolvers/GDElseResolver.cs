@@ -1,12 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal class GDElifResolver : GDIntendedSequenceResolver
+    internal sealed class GDElseResolver : GDIntendedSequenceResolver
     {
-        new IElifBranchReceiver Owner { get; }
+        new IElseBranchReceiver Owner { get; }
 
-        public override string Sequence => "elif";
+        public override string Sequence => "else";
 
-        public GDElifResolver(IElifBranchReceiver owner, int lineIntendation)
+        public GDElseResolver(IElseBranchReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;
@@ -14,14 +14,14 @@
 
         protected override void OnFail(GDReadingState state)
         {
-            // Ignore
+            Owner.HandleReceivedElseBranchSkip();
         }
 
         protected override void OnMatch(GDReadingState state)
         {
-            var branch = new GDElifBranch();
+            var branch = new GDElseBranch();
 
-            branch.SendKeyword(new GDElifKeyword());
+            branch.SendKeyword(new GDElseKeyword());
 
             SendIntendationToOwner();
             Owner.HandleReceivedToken(branch);

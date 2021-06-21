@@ -22,11 +22,6 @@ namespace GDShrapt.Reader
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        internal GDNewLine NewLine
-        {
-            get => _form.Token3;
-            set => _form.Token3 = value;
-        }
 
         public GDStatementsList Statements { get => _form.Token4 ?? (_form.Token4 = new GDStatementsList(LineIntendation + 1)); }
 
@@ -35,7 +30,6 @@ namespace GDShrapt.Reader
             While,
             Condition,
             Colon,
-            NewLine,
             Statements,
             Completed
         }
@@ -77,13 +71,8 @@ namespace GDShrapt.Reader
                     state.Push(new GDSingleCharTokenResolver<GDColon>(this));
                     state.PassChar(c);
                     break;
-                case State.NewLine:
-                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
-                    break;
                 case State.Statements:
-                    _form.State = State.Completed;
-                    state.Push(Statements);
-                    state.PassChar(c);
+                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
                     break;
                 default:
                     state.Pop();
@@ -98,18 +87,12 @@ namespace GDShrapt.Reader
             {
                 case State.Condition:
                 case State.Colon:
-                case State.NewLine:
-                    _form.State = State.Statements;
-                    NewLine =new GDNewLine();
-                    break;
                 case State.Statements:
                     _form.State = State.Completed;
-                    state.Push(Statements);
-                    state.PassNewLine();
+                    state.PushAndPassNewLine(Statements);
                     break;
                 default:
-                    state.Pop();
-                    state.PassNewLine();
+                    state.PopAndPassNewLine();
                     break;
             }
         }
@@ -164,7 +147,7 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 Colon = token;
                 return;
             }
@@ -176,7 +159,7 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.NewLine;
+                _form.State = State.Statements;
                 return;
             }
 

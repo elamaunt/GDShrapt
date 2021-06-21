@@ -19,7 +19,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementResolver(this, _lineIntendationThreshold));
+                state.Push(new GDStatementsResolver(this, _lineIntendationThreshold));
                 state.PassChar(c);
                 return;
             }
@@ -32,7 +32,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementResolver(this, _lineIntendationThreshold));
+                state.Push(new GDStatementsResolver(this, _lineIntendationThreshold));
                 state.PassNewLine();
                 return;
             }

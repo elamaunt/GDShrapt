@@ -87,7 +87,7 @@ namespace GDShrapt.Reader
             var state = new GDReadingState(Settings);
             var receiver = new GDReceiver();
 
-            state.Push(new GDStatementResolver(receiver, 0));
+            state.Push(new GDStatementsResolver(receiver, 0));
             
             var buffer = new char[Settings.ReadBufferSize];
             int count = 0;

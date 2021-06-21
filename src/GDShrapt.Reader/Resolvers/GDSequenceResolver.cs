@@ -42,11 +42,6 @@
             HandleChar('\n', state);
         }
 
-        internal override void HandleSharpChar(GDReadingState state)
-        {
-            HandleChar('#', state);
-        }
-
         internal override void ForceComplete(GDReadingState state)
         {
             OnFail();

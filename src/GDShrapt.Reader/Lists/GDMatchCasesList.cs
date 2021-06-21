@@ -19,13 +19,11 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDMatchCaseResolver(this, _lineIntendationThreshold));
-                state.PassChar(c);
+                state.PushAndPass(new GDMatchCasesResolver(this, _lineIntendationThreshold), c);
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
@@ -33,13 +31,11 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDMatchCaseResolver(this, _lineIntendationThreshold));
-                state.PassNewLine();
+                state.PushAndPassNewLine(new GDMatchCasesResolver(this, _lineIntendationThreshold));
                 return;
             }
 
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         void IMatchCaseReceiver.HandleReceivedToken(GDMatchCaseDeclaration token)

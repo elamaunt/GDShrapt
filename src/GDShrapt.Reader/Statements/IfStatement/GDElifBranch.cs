@@ -3,8 +3,7 @@
     public sealed class GDElifBranch : GDIntendedNode,
         IKeywordReceiver<GDElifKeyword>,
         IExpressionsReceiver,
-        ITokenReceiver<GDColon>,
-        ITokenReceiver<GDNewLine>
+        ITokenReceiver<GDColon>
     {
         internal GDElifKeyword ElifKeyword
         {
@@ -28,15 +27,9 @@
             get => _form.Token3;
             set => _form.Token3 = value;
         }
-
-        internal GDNewLine NewLine
-        {
-            get => _form.Token4;
-            set => _form.Token4 = value;
-        }
         public GDStatementsList Statements
         {
-            get => _form.Token5 ?? (_form.Token5 = new GDStatementsList(Intendation + 1));
+            get => _form.Token4 ?? (_form.Token4 = new GDStatementsList(Intendation + 1));
         }
 
         enum State
@@ -45,49 +38,43 @@
             Condition,
             Colon,
             Expression,
-            NewLine,
             Statements,
             Completed
         }
 
-        readonly GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDNewLine, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDElifBranch(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDElifBranch()
         {
-            _form = new GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
+            if (this.ResolveStyleToken(c, state))
+                return;
+
             switch (_form.State)
             {
                 case State.Elif:
-                    if (!this.ResolveStyleToken(c, state))
-                        this.ResolveKeyword(c, state);
+                    this.ResolveKeyword(c, state);
                     break;
                 case State.Colon:
-                    if (!this.ResolveStyleToken(c, state))
-                        this.ResolveColon(c, state);
+                    this.ResolveColon(c, state);
                     break;
                 case State.Condition:
                 case State.Expression:
-                    if (!this.ResolveStyleToken(c, state))
-                        this.ResolveExpression(c, state);
-                    break;
-                case State.NewLine:
-                    if (!this.ResolveStyleToken(c, state))
-                        this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    this.ResolveExpression(c, state);
                     break;
                 case State.Statements:
-                    _form.State = State.Completed;
-                    state.PushAndPass(Statements, c);
+                    this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
                 default:
                     state.PopAndPass(c);
@@ -103,10 +90,6 @@
                 case State.Condition:
                 case State.Colon:
                 case State.Expression:
-                case State.NewLine:
-                    _form.State = State.Statements;
-                    NewLine = new GDNewLine();
-                    break;
                 case State.Statements:
                     _form.State = State.Completed;
                     state.Push(Statements);
@@ -192,30 +175,7 @@
 
             if (_form.State == State.Expression)
             {
-                _form.State = State.NewLine;
-                return;
-            }
-
-            throw new GDInvalidReadingStateException();
-        }
-
-        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
-        {
-            if (_form.State == State.NewLine)
-            {
                 _form.State = State.Statements;
-                NewLine = token;
-                return;
-            }
-
-            throw new GDInvalidReadingStateException();
-        }
-
-        void ITokenReceiver<GDNewLine>.HandleReceivedTokenSkip()
-        {
-            if (_form.State == State.NewLine)
-            {
-                _form.State = State.Completed;
                 return;
             }
 
