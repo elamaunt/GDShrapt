@@ -44,6 +44,21 @@ namespace GDShrapt.Reader
             state.PassNewLine();
         }
 
+        internal override void HandleSharpCharAfterIntendation(GDReadingState state)
+        {
+            if (_sequenceBuilder?.Length > 0)
+            {
+                var sequence = _sequenceBuilder.ToString();
+                ResetSequence();
+                Complete(state, sequence);
+                state.PassSharpChar();
+                return;
+            }
+
+            Owner.HandleReceivedToken(state.Push(new GDComment()));
+            state.PassSharpChar();
+        }
+
         private void ResetSequence()
         {
             _sequenceBuilder.Clear();

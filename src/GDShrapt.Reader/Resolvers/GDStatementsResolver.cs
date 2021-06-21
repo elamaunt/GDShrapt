@@ -80,6 +80,21 @@ namespace GDShrapt.Reader
             state.PassNewLine();
         }
 
+        internal override void HandleSharpCharAfterIntendation(GDReadingState state)
+        {
+            if (_sequenceBuilder.Length > 0)
+            {
+                var sequence = _sequenceBuilder.ToString();
+                _sequenceBuilder.Clear();
+                CompleteAsStatement(state, sequence);
+                state.PassSharpChar();
+                return;
+            }
+
+            Owner.HandleReceivedToken(state.Push(new GDComment()));
+            state.PassSharpChar();
+        }
+
         private GDStatement CompleteAsStatement(GDReadingState state, string sequence)
         {
             _sequenceBuilder.Clear();

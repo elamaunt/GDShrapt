@@ -39,6 +39,12 @@
             state.PassNewLine();
         }
 
+        internal override void HandleSharpCharAfterIntendation(GDReadingState state)
+        {
+            Owner.HandleReceivedToken(state.Push(new GDComment()));
+            state.PassSharpChar();
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             if (_lastSpace != null)

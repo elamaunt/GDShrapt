@@ -54,5 +54,19 @@
             for (int i = 0; i < Index - 1; i++)
                 state.PassChar(s[i]);
         }
+
+        internal override void HandleSharpCharAfterIntendation(GDReadingState state)
+        {
+            var s = Sequence;
+            state.Pop();
+            OnFail(state);
+
+            PassIntendationSequence(state);
+
+            for (int i = 0; i < Index - 1; i++)
+                state.PassChar(s[i]);
+
+            state.PassSharpChar();
+        }
     }
 }

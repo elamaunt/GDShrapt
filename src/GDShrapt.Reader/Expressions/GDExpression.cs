@@ -135,5 +135,11 @@ namespace GDShrapt.Reader
 
             return false;
         }
+
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            state.Pop();
+            state.PassSharpChar();
+        }
     }
 }

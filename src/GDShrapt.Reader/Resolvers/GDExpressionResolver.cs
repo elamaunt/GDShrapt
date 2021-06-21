@@ -284,6 +284,13 @@
             state.PassNewLine();
         }
 
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            if (!CheckKeywords(state))
+                CompleteExpression(state);
+            state.PassSharpChar();
+        }
+
         private void CompleteExpression(GDReadingState state)
         {
             if (_isCompleted)

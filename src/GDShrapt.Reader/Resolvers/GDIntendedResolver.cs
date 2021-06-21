@@ -32,6 +32,7 @@ namespace GDShrapt.Reader
 
         internal abstract void HandleCharAfterIntendation(char c, GDReadingState state);
         internal abstract void HandleNewLineAfterIntendation(GDReadingState state);
+        internal abstract void HandleSharpCharAfterIntendation(GDReadingState state);
 
         bool HandleIntendation(char c, GDReadingState state)
         {
@@ -112,7 +113,7 @@ namespace GDShrapt.Reader
         internal override void HandleSharpChar(GDReadingState state)
         {
             if (_lineIntendationEnded)
-                base.HandleSharpChar(state);
+                HandleSharpCharAfterIntendation(state);
             else
             {
                 _inComment = true;
@@ -178,6 +179,7 @@ namespace GDShrapt.Reader
 
             if (space != null)
             {
+                space.Complete();
                 Owner.HandleReceivedToken(new GDIntendation()
                 {
                     Sequence = space.Sequence,
