@@ -56,6 +56,7 @@ namespace GDShrapt.Reader
             }
 
             _memberResolved = false;
+            ResetIntendation();
             state.PassNewLine();
         }
 
