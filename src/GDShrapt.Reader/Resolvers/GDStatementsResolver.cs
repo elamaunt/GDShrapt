@@ -155,11 +155,14 @@ namespace GDShrapt.Reader
                 _sequenceBuilder.Clear();
 
                 CompleteAsStatement(state, sequence);
+                ResetIntendation();
                 return;
             }
 
             base.ForceComplete(state);
-            PassIntendationSequence(state);
+
+            if (!_statementResolved)
+                PassIntendationSequence(state);
         }
     }
 }

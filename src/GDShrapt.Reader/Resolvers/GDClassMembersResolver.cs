@@ -161,7 +161,8 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            SendIntendationToOwner();
+            if (!_memberResolved)
+                SendIntendationToOwner();
             base.ForceComplete(state);
         }
     }
