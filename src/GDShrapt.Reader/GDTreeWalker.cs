@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     public class GDTreeWalker : GDExpressionWalker
     {
