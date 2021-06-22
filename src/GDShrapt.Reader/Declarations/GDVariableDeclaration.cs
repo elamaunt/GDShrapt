@@ -153,16 +153,13 @@
                     this.ResolveType(c, state);
                     break;
                 case State.Assign:
-                    state.Push(new GDSingleCharTokenResolver<GDAssign>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDSingleCharTokenResolver<GDAssign>(this), c);
                     break;
                 case State.Initializer:
-                    state.Push(new GDExpressionResolver(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.SetGet:
-                    state.Push(new GDKeywordResolver<GDSetGetKeyword>(this));
-                    state.PassChar(c);
+                    state.PushAndPass(new GDKeywordResolver<GDSetGetKeyword>(this), c);
                     break;
                 case State.SetMethod:
                     this.ResolveIdentifier(c, state);
@@ -181,8 +178,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         void IKeywordReceiver<GDConstKeyword>.HandleReceivedToken(GDConstKeyword token)

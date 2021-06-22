@@ -48,6 +48,13 @@
             {
                 if (!CheckKeywords(state))
                     CompleteExpression(state);
+
+                if (_lastSpace != null)
+                {
+                    Owner.HandleReceivedToken(_lastSpace);
+                    _lastSpace = null;
+                }
+
                 state.PassChar(c);
                 return;
             }
@@ -112,7 +119,7 @@
 
                 if (c == '.')
                 {
-                    PushAndSave(state, new GDMemberOperatorExpression());
+                    PushAndSwap(state, new GDMemberOperatorExpression());
                     state.PassChar(c);
                     return;
                 }
@@ -302,6 +309,8 @@
 
             _expression = null;
 
+            state.Pop();
+
             if (last != null)
             {
                 // Handle negative number from Negate operator and GDNumberExpression. It must be zero tokens between negate and the number
@@ -312,9 +321,17 @@
                 {
                     numberExpression.Number.Negate();
                     last = operatorExpression.TargetExpression;
-                }
 
-                Owner.HandleReceivedToken(last.RebuildRootOfPriorityIfNeeded());
+                    Owner.HandleReceivedToken(last.RebuildRootOfPriorityIfNeeded());
+
+                    // Send all tokens after Single operator to current reader
+                    foreach (var token in operatorExpression.Form.GetAllTokensAfter(1))
+                        state.PassString(token.ToString());
+                }
+                else
+                {
+                    Owner.HandleReceivedToken(last.RebuildRootOfPriorityIfNeeded());
+                }
             }
             else
                 Owner.HandleReceivedExpressionSkip();
@@ -324,23 +341,15 @@
                 Owner.HandleReceivedToken(_lastSpace);
                 _lastSpace = null;
             }
-
-            state.Pop();
         }
 
         private void PushAndSwap<T>(GDReadingState state, T node)
             where T: GDExpression, IExpressionsReceiver
         {
             if (_expression != null)
-            {
                 node.SendExpression(_expression);
-
-               /* if (_lastSpace != null)
-                {
-                    _expression.SendSpace(_lastSpace);
-                    _lastSpace = null;
-                }*/
-            }
+            else
+                node.HandleReceivedExpressionSkip();
 
             if (_lastSpace != null)
             {

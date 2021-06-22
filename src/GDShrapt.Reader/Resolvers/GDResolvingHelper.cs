@@ -56,20 +56,6 @@ namespace GDShrapt.Reader
             return true;
         }
 
-        public static bool ResolvePath(this IPathReceiver receiver, char c, GDReadingState state)
-        {
-            if (!IsSpace(c))
-            {
-                receiver.HandleReceivedToken(state.Push(new GDPath()));
-                state.PassChar(c);
-                return true;
-            }
-
-            receiver.HandleReceivedIdentifierSkip();
-            state.PassChar(c);
-            return false;
-        }
-
         public static void ResolveKeyword<T>(this IKeywordReceiver<T> receiver, char c, GDReadingState state)
             where T : GDSyntaxToken, IGDKeywordToken, new()
         {
@@ -101,6 +87,20 @@ namespace GDShrapt.Reader
             }
             return result;
         }
+
+        public static bool ResolveRightSlash(this ITokenReceiver<GDRightSlash> receiver, char c, GDReadingState state)
+        {
+            var result = c == '/';
+            if (result)
+                receiver.HandleReceivedToken(new GDRightSlash());
+            else
+            {
+                receiver.HandleReceivedTokenSkip();
+                state.PassChar(c);
+            }
+            return result;
+        }
+        
 
         public static bool ResolveColon(this ITokenReceiver<GDColon> receiver, char c, GDReadingState state)
         {
@@ -309,7 +309,7 @@ namespace GDShrapt.Reader
 
         public static bool ResolveDataToken(this IDataTokenReceiver receiver, char c, GDReadingState state)
         {
-            if (IsNumberStartChar(c))
+            if (IsNumberStartChar(c) || c == '-')
             {
                 receiver.HandleReceivedToken(state.Push(new GDNumber()));
                 state.PassChar(c);
@@ -415,7 +415,7 @@ namespace GDShrapt.Reader
             return false;
         }
 
-        public static bool IsDataStartCharToken(this char c) => IsIdentifierStartChar(c) || IsNumberStartChar(c) || IsStringStartChar(c);
+        public static bool IsDataStartCharToken(this char c) => IsIdentifierStartChar(c) || IsNumberStartChar(c) || IsStringStartChar(c) || IsNumberStartChar(c) || c == '-';
         public static bool IsCommentStartChar(this char c) => c == '#';
         public static bool IsSpace(this char c) => c == ' ' || c == '\t';
         public static bool IsIdentifierStartChar(this char c) => c == '_' || char.IsLetter(c);

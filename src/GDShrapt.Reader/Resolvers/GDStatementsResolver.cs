@@ -46,7 +46,7 @@ namespace GDShrapt.Reader
                 }
                 else
                 {
-                    Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => char.IsLetter(x))));
+                    CompleteAsExpressionStatement(state);
                     state.PassChar(c);
                 }
             }
@@ -150,15 +150,21 @@ namespace GDShrapt.Reader
             return statement;
         }
 
-        private GDExpressionStatement CompleteAsExpressionStatement(GDReadingState state, string sequence)
+        private GDExpressionStatement CompleteAsExpressionStatement(GDReadingState state)
         {
             var statement = new GDExpressionStatement();
 
             SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(statement);
             state.Push(statement);
-            state.PassString(sequence);
 
+            return statement;
+        }
+
+        private GDExpressionStatement CompleteAsExpressionStatement(GDReadingState state, string sequence)
+        {
+            var statement = CompleteAsExpressionStatement(state);
+            state.PassString(sequence);
             return statement;
         }
 

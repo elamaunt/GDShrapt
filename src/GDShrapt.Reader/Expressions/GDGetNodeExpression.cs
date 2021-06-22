@@ -1,10 +1,7 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     public sealed class GDGetNodeExpression : GDExpression,
-        ITokenReceiver<GDDollar>,
-        IPathReceiver
+        ITokenReceiver<GDDollar>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetNode);
 
@@ -14,11 +11,7 @@ namespace GDShrapt.Reader
             set => _form.Token0 = value;
         }
 
-        public GDPath Path
-        {
-            get => _form.Token1;
-            set => _form.Token1 = value;
-        }
+        public GDPathList Path { get => _form.Token1 ?? (_form.Token1 = new GDPathList()); }
 
         enum State
         {
@@ -27,11 +20,11 @@ namespace GDShrapt.Reader
             Completed
         }
 
-        readonly GDTokensForm<State, GDDollar, GDPath> _form;
+        readonly GDTokensForm<State, GDDollar, GDPathList> _form;
         internal override GDTokensForm Form => _form;
         public GDGetNodeExpression()
         {
-            _form = new GDTokensForm<State, GDDollar, GDPath>(this);
+            _form = new GDTokensForm<State, GDDollar, GDPathList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -44,7 +37,8 @@ namespace GDShrapt.Reader
                     this.ResolveDollar(c, state);
                     break;
                 case State.Path:
-                    this.ResolvePath(c, state);
+                    _form.State = State.Completed;
+                    state.PushAndPass(Path, c);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -74,29 +68,6 @@ namespace GDShrapt.Reader
             if (_form.State == State.Dollar)
             {
                 _form.State = State.Path;
-                return;
-            }
-
-            throw new GDInvalidReadingStateException();
-        }
-
-        void IPathReceiver.HandleReceivedToken(GDPath token)
-        {
-            if (_form.State == State.Path)
-            {
-                _form.State = State.Completed;
-                Path = token;
-                return;
-            }
-
-            throw new GDInvalidReadingStateException();
-        }
-
-        void IPathReceiver.HandleReceivedIdentifierSkip()
-        {
-            if (_form.State == State.Path)
-            {
-                _form.State = State.Completed;
                 return;
             }
 

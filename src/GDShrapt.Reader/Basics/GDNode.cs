@@ -7,7 +7,7 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract partial class GDNode : GDSyntaxToken, IStyleTokensReceiver
+    public abstract class GDNode : GDSyntaxToken, IStyleTokensReceiver
     {
         internal abstract GDTokensForm Form { get; }
         
@@ -17,15 +17,32 @@ namespace GDShrapt.Reader
         {
             get
             {
-                foreach (var token in Tokens)
+                foreach (var token in Form)
                 {
                     if (token is GDNode node)
                     {
                         foreach (var nodeToken in node.AllTokens)
-                            yield return token;
+                            yield return nodeToken;
                     }
                     else
                         yield return token;
+                }
+            }
+        }
+
+        public IEnumerable<GDNode> AllNodes
+        {
+            get
+            {
+                foreach (var token in Form)
+                {
+                    if (token is GDNode node)
+                    {
+                        yield return node;
+
+                        foreach (var nodeToken in node.AllNodes)
+                            yield return nodeToken;
+                    }
                 }
             }
         }

@@ -68,6 +68,13 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
+            if (_form.State == State.Parameters)
+            {
+                _form.State = State.CloseBracket;
+                state.PushAndPassNewLine(Parameters);
+                return;
+            }
+
             state.PopAndPassNewLine();
         }
 

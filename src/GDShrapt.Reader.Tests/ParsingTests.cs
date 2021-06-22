@@ -48,7 +48,7 @@ func save(path, resource, flags):
             Assert.AreEqual(1, @class.Methods.ElementAt(1).Statements.Count);
             Assert.AreEqual(1, @class.Methods.ElementAt(2).Statements.Count);
 
-            AssertHelper.CompareStrings(code, @class.ToString());
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
         }
 
         [TestMethod]
@@ -96,7 +96,7 @@ func save(path, resource, flags):
             Assert.AreEqual("c", ((GDIdentifierExpression)@rightDualOperator.LeftExpression).Identifier.Sequence);
             Assert.AreEqual("d", ((GDIdentifierExpression)@rightDualOperator.RightExpression).Identifier.Sequence);
 
-            AssertHelper.CompareStrings(code, expression.ToString());
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
         }
 
         [TestMethod]
@@ -117,7 +117,7 @@ func save(path, resource, flags):
             Assert.AreEqual(GDDualOperatorType.Assignment, @dualOperator.OperatorType);
             Assert.AreEqual("a > b > c", @dualOperator.LeftExpression.ToString());
 
-            AssertHelper.CompareStrings(code, expression.ToString());
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
         }
 
         [TestMethod]
@@ -144,7 +144,7 @@ func save(path, resource, flags):
             Assert.IsInstanceOfType(ifStatement.IfBranch.Statements[0], typeof(GDExpressionStatement));
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.IfBranch.Statements[0]).Expression, typeof(GDReturnExpression));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -176,7 +176,7 @@ else:
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.IfBranch.Statements[0]).Expression, typeof(GDReturnExpression));
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[0]).Expression, typeof(GDDualOperatorExression));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -198,7 +198,7 @@ else:
             Assert.IsNotNull(ifStatement.IfBranch.Expression);
             Assert.IsInstanceOfType(ifStatement.IfBranch.Expression, typeof(GDReturnExpression));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -230,7 +230,7 @@ else:
             Assert.IsInstanceOfType(ifStatement.ElseBranch.Statements[1], typeof(GDExpressionStatement));
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[1]).Expression, typeof(GDReturnExpression));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -274,7 +274,7 @@ else:
             Assert.IsInstanceOfType(ifStatement.ElseBranch.Statements[1], typeof(GDExpressionStatement));
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[1]).Expression, typeof(GDReturnExpression));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -302,7 +302,7 @@ else:
             Assert.AreEqual("my_int_function", method.Identifier?.Sequence);
             Assert.AreEqual(true, method.IsStatic);
 
-            AssertHelper.CompareStrings(code, declaration.ToString());
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
         }
 
         [TestMethod]
@@ -327,7 +327,7 @@ else:
             Assert.AreEqual(1, forStatement.Statements.Count);
             Assert.IsInstanceOfType(forStatement.Statements[0], typeof(GDExpressionStatement));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -352,7 +352,7 @@ else:
             Assert.AreEqual(1, forStatement.Statements.Count);
             Assert.IsInstanceOfType(forStatement.Statements[0], typeof(GDExpressionStatement));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -376,7 +376,7 @@ else:
             Assert.AreEqual(1, whileStatement.Statements.Count);
             Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -400,7 +400,7 @@ else:
             Assert.AreEqual(1, whileStatement.Statements.Count);
             Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -444,7 +444,7 @@ else:
             Assert.AreEqual("print(\"Two are better than one!\")", matchStatement.Cases[1].Statements[0].ToString());
             Assert.AreEqual("print(\"Oh snap! It's a string!\")", matchStatement.Cases[2].Statements[0].ToString());
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -485,7 +485,7 @@ else:
             Assert.AreEqual(1, matchStatement.Cases[1].Statements.Count);
             Assert.AreEqual(1, matchStatement.Cases[2].Statements.Count);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -514,7 +514,7 @@ else:
             Assert.AreEqual("1", arrayInitializer.Values[2].ToString());
             Assert.AreEqual("\"Hello World\"", arrayInitializer.Values[3].ToString());
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -548,7 +548,7 @@ else:
             Assert.AreEqual("\"test\"", dictionaryInitializer.KeyValues[2].Value.ToString());
             Assert.AreEqual("\"World\"", dictionaryInitializer.KeyValues[3].Value.ToString());
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -570,7 +570,7 @@ else:
             Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("test", stringExpression.String.Value);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -592,7 +592,7 @@ else:
             Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("te\"\"st", stringExpression.String.Value);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -614,7 +614,7 @@ else:
             Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("te\"\"st", stringExpression.String.Value);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -636,11 +636,11 @@ else:
             Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("te'\"st", stringExpression.String.Value);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
-        public void VariableExportTest()
+        public void ExportTest()
         {
             var reader = new GDScriptReader();
 
@@ -659,7 +659,148 @@ else:
             Assert.AreEqual("a", variableDeclaration.Identifier.Sequence);
             Assert.AreEqual("123", variableDeclaration.Initializer.ToString());
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+        }
+
+        [TestMethod]
+        public void ExportDeclarationsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+# If the exported value assigns a constant or constant expression,
+# the type will be inferred and used in the editor.
+
+export var number = 5
+
+# Export can take a basic data type as an argument, which will be
+# used in the editor.
+
+export(int) var number
+
+# Export can also take a resource type to use as a hint.
+
+export(Texture) var character_face
+export(PackedScene) var scene_file
+# There are many resource types that can be used this way, try e.g.
+# the following to list them:
+export(Resource) var resource
+
+# Integers and strings hint enumerated values.
+
+# Editor will enumerate as 0, 1 and 2.
+export(int, ""Warrior"", ""Magician"", ""Thief"") var character_class
+# Editor will enumerate with string names.
+export(String, ""Rebecca"", ""Mary"", ""Leah"") var character_name
+
+# Named enum values
+
+# Editor will enumerate as THING_1, THING_2, ANOTHER_THING.
+enum NamedEnum { THING_1, THING_2, ANOTHER_THING = -1 }
+        export(NamedEnum) var x
+
+# Strings as paths
+
+# String is a path to a file.
+export(String, FILE) var f
+# String is a path to a directory.
+export(String, DIR) var f
+# String is a path to a file, custom filter provided as hint.
+export(String, FILE, ""*.txt"") var f
+
+# Using paths in the global filesystem is also possible,
+# but only in scripts in ""tool"" mode.
+
+# String is a path to a PNG file in the global filesystem.
+export(String, FILE, GLOBAL, ""*.png"") var tool_image
+# String is a path to a directory in the global filesystem.
+export(String, DIR, GLOBAL) var tool_dir
+
+# The MULTILINE setting tells the editor to show a large input
+# field for editing over multiple lines.
+export(String, MULTILINE) var text
+
+# Limiting editor input ranges
+
+# Allow integer values from 0 to 20.
+export(int, 20) var i
+# Allow integer values from -10 to 20.
+export(int, -10, 20) var j
+# Allow floats from -10 to 20 and snap the value to multiples of 0.2.
+export(float, -10, 20, 0.2) var k
+# Allow values 'y = exp(x)' where 'y' varies between 100 and 1000
+# while snapping to steps of 20. The editor will present a
+# slider for easily editing the value.
+export(float, EXP, 100, 1000, 20) var l
+
+# Floats with easing hint
+
+# Display a visual representation of the 'ease()' function
+# when editing.
+export(float, EASE) var transition_speed
+
+# Colors
+
+# Color given as red-green-blue value (alpha will always be 1).
+export(Color, RGB) var col
+# Color given as red-green-blue-alpha value.
+export(Color, RGBA) var col
+
+# Nodes
+
+# Another node in the scene can be exported as a NodePath.
+export(NodePath) var node_path
+# Do take note that the node itself isn't being exported -
+# there is one more step to call the true node:
+var node = get_node(node_path)
+
+# Resources
+
+export(Resource) var resource
+# In the Inspector, you can then drag and drop a resource file
+# from the FileSystem dock into the variable slot.
+
+# Opening the inspector dropdown may result in an
+# extremely long list of possible classes to create, however.
+# Therefore, if you specify an extension of Resource such as:
+export(AnimationNode) var resource
+# The drop-down menu will be limited to AnimationNode and all
+# its inherited classes.
+";
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+
+            var exports = classDeclaration.AllNodes.OfType<GDExportDeclaration>().ToArray();
+
+            Assert.AreEqual(24, exports.Length);
+
+            Assert.AreEqual(0, exports[0].Parameters.Count);
+            Assert.AreEqual(1, exports[1].Parameters.Count);
+            Assert.AreEqual(1, exports[2].Parameters.Count);
+            Assert.AreEqual(1, exports[3].Parameters.Count);
+            Assert.AreEqual(1, exports[4].Parameters.Count);
+            Assert.AreEqual(4, exports[5].Parameters.Count);
+            Assert.AreEqual(4, exports[6].Parameters.Count);
+            Assert.AreEqual(1, exports[7].Parameters.Count);
+            Assert.AreEqual(2, exports[8].Parameters.Count);
+            Assert.AreEqual(2, exports[9].Parameters.Count);
+            Assert.AreEqual(3, exports[10].Parameters.Count);
+            Assert.AreEqual(4, exports[11].Parameters.Count);
+            Assert.AreEqual(3, exports[12].Parameters.Count);
+            Assert.AreEqual(2, exports[13].Parameters.Count);
+            Assert.AreEqual(2, exports[14].Parameters.Count);
+            Assert.AreEqual(3, exports[15].Parameters.Count);
+            Assert.AreEqual(4, exports[16].Parameters.Count);
+            Assert.AreEqual(5, exports[17].Parameters.Count);
+            Assert.AreEqual(2, exports[18].Parameters.Count);
+            Assert.AreEqual(2, exports[19].Parameters.Count);
+            Assert.AreEqual(2, exports[20].Parameters.Count);
+            Assert.AreEqual(1, exports[21].Parameters.Count);
+            Assert.AreEqual(1, exports[22].Parameters.Count);
+            Assert.AreEqual(1, exports[23].Parameters.Count);
+
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -688,7 +829,7 @@ else:
             Assert.IsNull(enumDeclaration.Values[1].Value);
             Assert.AreEqual("3", enumDeclaration.Values[2].Value?.ToString());
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -717,7 +858,7 @@ else:
             Assert.IsNull(enumDeclaration.Values[1].Value);
             Assert.IsNotNull(enumDeclaration.Values[2].Value);
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -737,7 +878,7 @@ else:
             Assert.IsNotNull(classDeclaration.ClassName.Icon);
             Assert.AreEqual("res://interface/icons/item.png", classDeclaration.ClassName.Icon.Value);
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -754,7 +895,7 @@ else:
             Assert.AreEqual(1, classDeclaration.Atributes.Count);
             Assert.AreEqual("Test", classDeclaration.Extends.Type.Sequence);
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -771,7 +912,7 @@ else:
             Assert.AreEqual(1, classDeclaration.Atributes.Count);
             Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Value);
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -792,7 +933,7 @@ else:
             Assert.AreEqual(GDNumberType.LongDecimal, numberExpression.Number.ResolveNumberType());
             Assert.AreEqual(1234, numberExpression.Number.ValueInt64);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -813,7 +954,7 @@ else:
             Assert.AreEqual(GDNumberType.LongHexadecimal, numberExpression.Number.ResolveNumberType());
             Assert.AreEqual(36689, numberExpression.Number.ValueInt64);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -834,7 +975,7 @@ else:
             Assert.AreEqual(GDNumberType.LongBinary, numberExpression.Number.ResolveNumberType());
             Assert.AreEqual(42, numberExpression.Number.ValueInt64);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -857,7 +998,7 @@ else:
             Assert.AreEqual(GDNumberType.Double, numberExpression.Number.ResolveNumberType());
             Assert.AreEqual(value, numberExpression.Number.ValueDouble);
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -910,7 +1051,7 @@ else:
                 Assert.AreEqual("b", dualOperatorExpression.RightExpression.ToString());
                 Assert.AreEqual(op, dualOperatorExpression.OperatorType.Print());
 
-                AssertHelper.CompareStrings(code, expression.ToString());
+                AssertHelper.CompareCodeStrings(code, expression.ToString());
             }
         }
 
@@ -936,7 +1077,7 @@ else:
                 Assert.AreEqual("a", singleOperatorExpression.TargetExpression.ToString());
                 Assert.AreEqual(op, singleOperatorExpression.OperatorType.Print());
 
-                AssertHelper.CompareStrings(code, expression.ToString());
+                AssertHelper.CompareCodeStrings(code, expression.ToString());
             }
         }
 
@@ -972,7 +1113,7 @@ else:
             Assert.AreEqual("set_speed", variableDeclaration.SetMethodIdentifier .Sequence);
             Assert.AreEqual("get_speed", variableDeclaration.GetMethodIdentifier.Sequence);
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -1016,7 +1157,7 @@ else:
 
             Assert.AreEqual("set_height", variableDeclaration.SetMethodIdentifier.Sequence);
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -1044,7 +1185,7 @@ else:
             Assert.AreEqual("value", signalDeclaration.Parameters[0]?.Identifier?.Sequence);
             Assert.AreEqual("other_value", signalDeclaration.Parameters[1]?.Identifier?.Sequence);
 
-            AssertHelper.CompareStrings(code, classDeclaration.ToString());
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
         }
 
         [TestMethod]
@@ -1069,7 +1210,7 @@ else:
             Assert.AreEqual("y < 10", ifExpression.Condition.ToString());
             Assert.AreEqual("-1", ifExpression.FalseExpression.ToString());
 
-            AssertHelper.CompareStrings(code, expression.ToString());
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
         }
 
         [TestMethod]
@@ -1101,7 +1242,7 @@ else:
             Assert.AreEqual("-y != 10", ifExpression.Condition.ToString());
             Assert.AreEqual("n", ifExpression.FalseExpression.ToString());
 
-            AssertHelper.CompareStrings(code, declaration.ToString());
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
         }
 
         [TestMethod]
@@ -1122,7 +1263,7 @@ else:
             Assert.AreEqual(GDNumberType.LongDecimal, numberExpression.Number.ResolveNumberType());
             Assert.AreEqual(-10, numberExpression.Number.ValueInt64);
 
-            AssertHelper.CompareStrings(code, expression.ToString());
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
         }
 
         [TestMethod]
@@ -1163,7 +1304,7 @@ else:
 
             Assert.AreEqual("(10-20)", singleOperator.TargetExpression.ToString());
 
-            AssertHelper.CompareStrings(code, expression.ToString());
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
         }
 
         [TestMethod]
@@ -1188,7 +1329,7 @@ else:
             Assert.AreEqual(1, matchStatement.Cases[1].Conditions.Count);
             Assert.IsInstanceOfType(matchStatement.Cases[1].Conditions[0], typeof(GDMatchDefaultOperatorExpression));
 
-            AssertHelper.CompareStrings(code, statement.ToString());
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
 
         [TestMethod]
@@ -1245,7 +1386,118 @@ else:
             var identifierExpression = callExpression.CallerExpression.CastOrAssert<GDIdentifierExpression>();
             Assert.AreEqual("A", identifierExpression.Identifier?.Sequence);
 
-            AssertHelper.CompareStrings(code, expression.ToString());
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+        }
+
+        [TestMethod]
+        public void BaseMethodCallTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func _init(res : string = ""Hello world"").(res) -> void:
+	._init(""1234"");
+    pass";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+            Assert.AreEqual(1, @class.Methods.Count());
+
+            var method = @class.Methods.First();
+            Assert.IsNotNull(method);
+
+            Assert.IsTrue(method.ReturnType.IsVoid);
+            Assert.AreEqual("_init", method.Identifier.Sequence);
+            Assert.AreEqual(1, method.Parameters.Count);
+            Assert.AreEqual(1, method.BaseCallParameters.Count);
+
+            var parameter = method.Parameters[0];
+            Assert.IsNotNull(parameter);
+
+            Assert.AreEqual("res", parameter.Identifier.Sequence);
+            Assert.AreEqual("string", parameter.Type.Sequence);
+            Assert.AreEqual("\"Hello world\"", parameter.DefaultValue.ToString());
+
+            var baseCallParameter = method.BaseCallParameters[0];
+
+            Assert.AreEqual("res", baseCallParameter.ToString());
+
+            Assert.AreEqual(2, method.Statements.Count);
+
+            var callStatement = method.Statements[0].CastOrAssert<GDExpressionStatement>();
+
+            Assert.IsInstanceOfType(callStatement.Tokens.Last(), typeof(GDSemiColon));
+
+            var callExpression = callStatement.Expression.CastOrAssert<GDCallExression>();
+
+            Assert.AreEqual("._init", callExpression.CallerExpression.ToString());
+            Assert.AreEqual("\"1234\"", callExpression.Parameters.ToString());
+
+            var passStatement = method.Statements[1].CastOrAssert<GDExpressionStatement>().Expression.CastOrAssert<GDPassExpression>();
+
+            Assert.IsNotNull(passStatement);
+            Assert.AreEqual(1, passStatement.Tokens.Count());
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+        }
+
+        [TestMethod]
+        public void StringEscapingTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "\"Hello \\\" World\"";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDStringExpression));
+            Assert.AreEqual("Hello \\\" World", ((GDStringExpression)expression).String.Value);
+            
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+        }
+
+        [TestMethod]
+        public void GetNodeTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"$Animation/Root/ _345/ end .CallMethod()";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+
+            var call = expression.CastOrAssert<GDCallExression>();
+
+            var memberOperator = call.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
+            Assert.AreEqual("CallMethod", memberOperator.Identifier.Sequence);
+
+            var getNodeExpression = memberOperator.CallerExpression.CastOrAssert<GDGetNodeExpression>();
+            Assert.AreEqual("Animation/Root/ _345/ end ", getNodeExpression.Path.ToString());
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+        }
+
+        [TestMethod]
+        public void NodePathTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@""/root/MyAutoload"".get_name(0)";
+
+            var expression = reader.ParseExpression(code);
+
+            var call = expression.CastOrAssert<GDCallExression>();
+            Assert.AreEqual("0", call.Parameters.ToString());
+
+            var memberOperator = call.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
+            Assert.AreEqual("get_name", memberOperator.Identifier.Sequence);
+
+            var nodePathExpression = memberOperator.CallerExpression.CastOrAssert<GDNodePathExpression>();
+            Assert.AreEqual("/root/MyAutoload", nodePathExpression.Path.Value);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
         }
     }
 }

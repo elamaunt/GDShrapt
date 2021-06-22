@@ -20,13 +20,13 @@
                 if (Index == s.Length)
                 {
                     state.Pop();
-                    OnMatch();
+                    OnMatch(state);
                 }
                 return;
             }
 
             state.Pop();
-            OnFail();
+            OnFail(state);
 
             for (int i = 0; i < Index - 1; i++)
                 state.PassChar(s[i]);
@@ -34,8 +34,8 @@
             state.PassChar(c);
         }
 
-        protected abstract void OnFail();
-        protected abstract void OnMatch();
+        protected abstract void OnFail(GDReadingState state);
+        protected abstract void OnMatch(GDReadingState state);
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
@@ -45,7 +45,7 @@
         internal override void HandleSharpChar(GDReadingState state)
         {
             state.Pop();
-            OnFail();
+            OnFail(state);
 
             var s = Sequence;
 
@@ -56,7 +56,7 @@
         internal override void ForceComplete(GDReadingState state)
         {
             state.Pop();
-            OnFail();
+            OnFail(state);
 
             var s = Sequence;
 

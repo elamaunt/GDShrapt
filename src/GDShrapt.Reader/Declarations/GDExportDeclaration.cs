@@ -43,27 +43,23 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c))
-            {
-                _form.AddBeforeActiveToken(state.Push(new GDSpace()));
-                state.PassChar(c);
-                return;
-            }
-
             switch (_form.State)
             {
                 case State.Export:
-                    this.ResolveKeyword(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveKeyword(c, state);
                     break;
                 case State.OpenBracket:
-                    this.ResolveOpenBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveOpenBracket(c, state);
                     break;
                 case State.Parameters:
                     _form.State = State.CloseBracket;
                     state.PushAndPass(Parameters, c);
                     break;
                 case State.CloseBracket:
-                    this.ResolveCloseBracket(c, state);
+                    if (!this.ResolveStyleToken(c, state))
+                        this.ResolveCloseBracket(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -73,6 +69,13 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
+            if (_form.State == State.Parameters)
+            {
+                _form.State = State.CloseBracket;
+                state.PushAndPassNewLine(Parameters);
+                return;
+            }
+
             state.PopAndPassNewLine();
         }
 

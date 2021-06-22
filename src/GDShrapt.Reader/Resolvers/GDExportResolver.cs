@@ -11,15 +11,16 @@
             Owner = owner;
         }
 
-        protected override void OnFail()
+        protected override void OnFail(GDReadingState state)
         {
             Owner.HandleReceivedExportSkip();
         }
-        protected override void OnMatch()
+        protected override void OnMatch(GDReadingState state)
         {
             var declaration = new GDExportDeclaration();
             declaration.SendKeyword(new GDExportKeyword());
             Owner.HandleReceivedExport(declaration);
+            state.Push(declaration);
         }
     }
 }

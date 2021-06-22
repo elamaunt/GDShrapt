@@ -1,10 +1,10 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal class GDDataTokenResolver : GDResolver
+    internal class GDDataTokensResolver : GDResolver
     {
         new IDataTokenReceiver Owner { get; }
 
-        public GDDataTokenResolver(IDataTokenReceiver owner)
+        public GDDataTokensResolver(IDataTokenReceiver owner)
             : base(owner)
         {
             Owner = owner;
@@ -19,7 +19,12 @@
                 return;
             }
 
-            state.Pop();
+            if (IsNumberStartChar(c) || c == '-')
+            {
+                Owner.HandleReceivedToken(state.Push(new GDNumber()));
+                state.PassChar(c);
+                return;
+            }
 
             if (IsStringStartChar(c))
             {
@@ -36,7 +41,7 @@
             }
 
             Owner.HandleReceivedTokenSkip();
-            state.PassChar(c);
+            state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)

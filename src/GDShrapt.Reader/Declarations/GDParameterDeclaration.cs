@@ -3,7 +3,9 @@
     public sealed class GDParameterDeclaration : GDNode,
         IIdentifierReceiver,
         ITokenReceiver<GDColon>,
-        ITypeReceiver
+        ITypeReceiver,
+        ITokenReceiver<GDAssign>,
+        IExpressionsReceiver
     {
         public GDIdentifier Identifier
         {
@@ -21,19 +23,33 @@
             set => _form.Token2 = value;
         }
 
+        internal GDAssign Assign
+        {
+            get => _form.Token3;
+            set => _form.Token3 = value;
+        }
+
+        public GDExpression DefaultValue
+        {
+            get => _form.Token4;
+            set => _form.Token4 = value;
+        }
+
         enum State
         {
             Identifier,
             Colon,
             Type,
+            Assign,
+            DefaultValue,
             Completed
         }
 
-        readonly GDTokensForm<State, GDIdentifier, GDColon, GDType> _form;
+        readonly GDTokensForm<State, GDIdentifier, GDColon, GDType, GDAssign, GDExpression> _form;
         internal override GDTokensForm Form => _form;
         public GDParameterDeclaration()
         {
-            _form = new GDTokensForm<State, GDIdentifier, GDColon, GDType>(this);
+            _form = new GDTokensForm<State, GDIdentifier, GDColon, GDType, GDAssign, GDExpression>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -51,6 +67,12 @@
                     break;
                 case State.Type:
                     this.ResolveType(c, state);
+                    break;
+                case State.Assign:
+                    this.ResolveAssign(c, state);
+                    break;
+                case State.DefaultValue:
+                    this.ResolveExpression(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -102,7 +124,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Completed;
+                _form.State = State.Assign;
                 return;
             }
 
@@ -113,7 +135,7 @@
         {
             if (_form.State == State.Type)
             {
-                _form.State = State.Completed;
+                _form.State = State.Assign;
                 Type = token;
                 return;
             }
@@ -124,6 +146,52 @@
         void ITypeReceiver.HandleReceivedTypeSkip()
         {
             if (_form.State == State.Type)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
+        {
+            if (_form.State == State.Assign)
+            {
+                _form.State = State.DefaultValue;
+                Assign = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDAssign>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.Assign)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        {
+            if (_form.State == State.DefaultValue)
+            {
+                _form.State = State.Completed;
+                DefaultValue = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        {
+            if (_form.State == State.DefaultValue)
             {
                 _form.State = State.Completed;
                 return;

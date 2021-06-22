@@ -13,19 +13,16 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
         internal GDColon Colon
         {
             get => (GDColon)_form.Token1;
             set => _form.Token1 = value;
         }
-
         internal GDAssign Assign
         {
             get => (GDAssign)_form.Token1;
             set => _form.Token1 = value;
         }
-
         public GDExpression Value
         {
             get => _form.Token2;

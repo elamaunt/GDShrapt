@@ -8,7 +8,8 @@
         ITokenReceiver<GDCloseBracket>,
         IKeywordReceiver<GDReturnTypeKeyword>,
         ITypeReceiver,
-        ITokenReceiver<GDColon>
+        ITokenReceiver<GDColon>,
+        ITokenReceiver<GDPoint>
     {
         internal GDStaticKeyword StaticKeyword
         {
@@ -36,23 +37,43 @@
             get => _form.Token5;
             set => _form.Token5 = value;
         }
-        internal GDReturnTypeKeyword ReturnTypeKeyword
+
+        internal GDPoint BaseCallPoint
         {
             get => _form.Token6;
             set => _form.Token6 = value;
         }
-        public GDType ReturnType
+
+        internal GDOpenBracket BaseCallOpenBracket
         {
             get => _form.Token7;
             set => _form.Token7 = value;
         }
-        internal GDColon Colon
+        public GDExpressionsList BaseCallParameters { get => _form.Token8 ?? (_form.Token8 = new GDExpressionsList()); }
+
+        internal GDCloseBracket BaseCallCloseBracket
         {
-            get => _form.Token8;
-            set => _form.Token8 = value;
+            get => _form.Token9;
+            set => _form.Token9 = value;
         }
 
-        public GDStatementsList Statements { get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1)); }
+        internal GDReturnTypeKeyword ReturnTypeKeyword
+        {
+            get => _form.Token10;
+            set => _form.Token10 = value;
+        }
+        public GDType ReturnType
+        {
+            get => _form.Token11;
+            set => _form.Token11 = value;
+        }
+        internal GDColon Colon
+        {
+            get => _form.Token12;
+            set => _form.Token12 = value;
+        }
+
+        public GDStatementsList Statements { get => _form.Token13 ?? (_form.Token13 = new GDStatementsList(Intendation + 1)); }
 
         public bool IsStatic => StaticKeyword != null;
 
@@ -64,6 +85,12 @@
             OpenBracket,
             Parameters,
             CloseBracket,
+
+            BaseCallPoint,
+            BaseCallOpenBracket,
+            BaseCallParameters,
+            BaseCallCloseBracket,
+
             ReturnTypeKeyword,
             Type,
             Colon,
@@ -71,23 +98,23 @@
             Completed,
         }
 
-        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form;
         internal override GDTokensForm Form => _form;
 
         internal GDMethodDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
         }
 
         public GDMethodDeclaration()
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c) && _form.State != State.Parameters) 
+            if (IsSpace(c) && _form.State != State.Parameters && _form.State != State.BaseCallParameters) 
             {
                 _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
@@ -115,6 +142,21 @@
                 case State.CloseBracket:
                     this.ResolveCloseBracket(c, state);
                     break;
+
+                case State.BaseCallPoint:
+                    this.ResolvePoint(c, state);
+                    break;
+                case State.BaseCallOpenBracket:
+                    this.ResolveOpenBracket(c, state);
+                    break;
+                case State.BaseCallParameters:
+                    _form.State = State.BaseCallCloseBracket;
+                    state.PushAndPass(BaseCallParameters, c);
+                    break;
+                case State.BaseCallCloseBracket:
+                    this.ResolveCloseBracket(c, state);
+                    break;
+
                 case State.ReturnTypeKeyword:
                     this.ResolveKeyword<GDReturnTypeKeyword>(c, state);
                     break;
@@ -135,11 +177,24 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
+            if (_form.State == State.Parameters)
+            {
+                _form.State = State.CloseBracket;
+                state.PushAndPassNewLine(Parameters);
+                return;
+            }
+
+            if (_form.State == State.BaseCallParameters)
+            {
+                _form.State = State.BaseCallCloseBracket;
+                state.PushAndPassNewLine(BaseCallParameters);
+                return;
+            }
+
             if (_form.StateIndex <= (int)State.Statements)
             {
                 _form.State = State.Completed;
-                state.Push(Statements);
-                state.PassNewLine();
+                state.PushAndPassNewLine(Statements);
                 return;
             }
 
@@ -223,6 +278,13 @@
                 return;
             }
 
+            if (_form.State == State.BaseCallOpenBracket)
+            {
+                _form.State = State.BaseCallParameters;
+                BaseCallOpenBracket = token;
+                return;
+            }
+
             throw new GDInvalidReadingStateException();
         }
 
@@ -234,6 +296,12 @@
                 return;
             }
 
+            if (_form.State == State.BaseCallOpenBracket)
+            {
+                _form.State = State.BaseCallParameters;
+                return;
+            }
+
             throw new GDInvalidReadingStateException();
         }
 
@@ -241,8 +309,15 @@
         {
             if (_form.State == State.CloseBracket)
             {
-                _form.State = State.ReturnTypeKeyword;
+                _form.State = State.BaseCallPoint;
                 CloseBracket = token;
+                return;
+            }
+
+            if (_form.State == State.BaseCallCloseBracket)
+            {
+                _form.State = State.ReturnTypeKeyword;
+                BaseCallCloseBracket = token;
                 return;
             }
 
@@ -252,6 +327,12 @@
         void ITokenReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.CloseBracket)
+            {
+                _form.State = State.BaseCallPoint;
+                return;
+            }
+
+            if (_form.State == State.BaseCallCloseBracket)
             {
                 _form.State = State.ReturnTypeKeyword;
                 return;
@@ -266,6 +347,28 @@
             {
                 _form.State = State.Type;
                 ReturnTypeKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+        void ITokenReceiver<GDPoint>.HandleReceivedToken(GDPoint token)
+        {
+            if (_form.State == State.BaseCallPoint)
+            {
+                _form.State = State.BaseCallOpenBracket;
+                BaseCallPoint = token;
+                return;
+            }
+
+            throw new GDInvalidReadingStateException();
+        }
+
+        void ITokenReceiver<GDPoint>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.BaseCallPoint)
+            {
+                _form.State = State.ReturnTypeKeyword;
                 return;
             }
 

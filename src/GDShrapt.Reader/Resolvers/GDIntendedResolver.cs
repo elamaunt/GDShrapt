@@ -12,6 +12,7 @@ namespace GDShrapt.Reader
         bool _lineIntendationEnded;
         int _spaceCounter;
         bool _inComment;
+        bool _intendationTokensSent;
 
         new IIntendationReceiver Owner { get; }
 
@@ -84,7 +85,8 @@ namespace GDShrapt.Reader
                 {
                     _lineIntendationEnded = true;
 
-                    if (LineIntendationThreshold != _lineIntendation)
+                    // The 'end of the block' condition
+                    if (LineIntendationThreshold > _lineIntendation)
                     {
                         state.Pop();
 
@@ -95,10 +97,15 @@ namespace GDShrapt.Reader
                         state.PassChar(c);
                         return true;
                     }
-                }
 
+                    if (LineIntendationThreshold < _lineIntendation)
+                    {
+                        // TODO: warning invalid extra intendation
+                    }
+                }
             }
 
+            // It's OK
             return false;
         }
 
@@ -123,6 +130,11 @@ namespace GDShrapt.Reader
 
         protected void SendIntendationTokensToOwner()
         {
+            if (_intendationTokensSent)
+                return;
+
+            _intendationTokensSent = true;
+
             GDComment comment = null;
             GDSpace space = null;
 
@@ -208,6 +220,7 @@ namespace GDShrapt.Reader
             _lineIntendation = 0;
             _lineIntendationEnded = false;
             _spaceCounter = 0;
+            _intendationTokensSent = false;
         }
     }
 }

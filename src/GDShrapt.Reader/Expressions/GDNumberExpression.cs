@@ -40,14 +40,12 @@
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
     }
 }

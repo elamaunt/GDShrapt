@@ -15,12 +15,12 @@
             Owner = owner;
         }
 
-        protected override void OnMatch()
+        protected override void OnMatch(GDReadingState state)
         {
             Owner.HandleReceivedToken(new KEYWORD());
         }
 
-        protected override void OnFail()
+        protected override void OnFail(GDReadingState state)
         {
             Owner.HandleReceivedKeywordSkip();
         }

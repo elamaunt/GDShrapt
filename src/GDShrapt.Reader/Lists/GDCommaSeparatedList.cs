@@ -2,7 +2,7 @@
 {
     public abstract class GDCommaSeparatedList<NODE> : GDSeparatedList<NODE, GDComma>,
         ITokenReceiver<GDComma>
-        where NODE : GDNode
+        where NODE : GDSyntaxToken
     {
         bool _checkedNextNode;
         internal abstract GDReader ResolveNode();

@@ -103,6 +103,12 @@ namespace GDShrapt.Reader
             }
             else
             {
+                if (_stringBuilder.Length == 0 && c == '-')
+                {
+                    _stringBuilder.Append(c);
+                    return;
+                }
+
                 if (_digitsCounter == 1 &&
                     (c == 'b' || c == 'x'))
                 {
@@ -157,16 +163,14 @@ namespace GDShrapt.Reader
                 }
 
                 CompleteString();
-                state.Pop();
-                state.PassChar(c);
+                state.PopAndPass(c);
             }
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
             CompleteString();
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         internal override void ForceComplete(GDReadingState state)

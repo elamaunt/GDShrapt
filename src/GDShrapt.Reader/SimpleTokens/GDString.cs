@@ -8,7 +8,7 @@ namespace GDShrapt.Reader
         readonly StringBuilder _stringBuilder = new StringBuilder();
         bool _stringStarted;
         int _boundingCharsCounter;
-
+        bool _escapeNextChar;
         public bool Multiline { get; set; }
         public GDStringBoundingChar BoundingChar { get; set; }
         public string Value { get; set; }
@@ -36,29 +36,51 @@ namespace GDShrapt.Reader
                 else
                 {
                     var bc = GetBoundingChar();
-                    if (c != bc)
+
+                    if (c == '\\')
                     {
-                        _stringStarted = true;
+                        if (!_escapeNextChar)
+                        {
+                            _escapeNextChar = true;
+                            _stringStarted = true;
 
-                        for (int i = 0; i < _boundingCharsCounter -1; i++)
-                            _stringBuilder.Append(bc);
+                            for (int i = 0; i < _boundingCharsCounter - 1; i++)
+                                _stringBuilder.Append(bc);
 
-                        _boundingCharsCounter = 0;
-                        _stringBuilder.Append(c);
+                            _boundingCharsCounter = 0;
+                            _stringBuilder.Append(c);
+                        }
+                        else
+                        {
+                            _escapeNextChar = false;
+                            _stringBuilder.Append(c);
+                        }
                     }
                     else
                     {
-                        _boundingCharsCounter++;
-
-                        if (_boundingCharsCounter == 3)
+                        if (c != bc)
                         {
-                            Multiline = true;
-                            _boundingCharsCounter = 0;
                             _stringStarted = true;
+
+                            for (int i = 0; i < _boundingCharsCounter - 1; i++)
+                                _stringBuilder.Append(bc);
+
+                            _boundingCharsCounter = 0;
+                            _stringBuilder.Append(c);
                         }
+                        else
+                        {
+                            _boundingCharsCounter++;
 
+                            if (_boundingCharsCounter == 3)
+                            {
+                                Multiline = true;
+                                _boundingCharsCounter = 0;
+                                _stringStarted = true;
+                            }
+
+                        }
                     }
-
                 }
 
                 return;
@@ -66,31 +88,54 @@ namespace GDShrapt.Reader
 
             var boundingChar = GetBoundingChar();
 
-            if (c == boundingChar)
+            if (c == '\\')
             {
-                if (!Multiline)
+                if (!_escapeNextChar)
                 {
-                    Value = _stringBuilder.ToString();
-                    state.Pop();
+                    _escapeNextChar = true;
+
+                    for (int i = 0; i < _boundingCharsCounter; i++)
+                        _stringBuilder.Append(boundingChar);
+
+                    _boundingCharsCounter = 0;
+
+                    _stringBuilder.Append(c);
                 }
                 else
                 {
-                    _boundingCharsCounter++;
-
-                    if (_boundingCharsCounter == 3)
-                    {
-                        Value = _stringBuilder.ToString();
-                        state.Pop();
-                    }
+                    _escapeNextChar = false;
+                    _stringBuilder.Append(c);
                 }
             }
             else
             {
-                for (int i = 0; i < _boundingCharsCounter; i++)
-                    _stringBuilder.Append(boundingChar);
+                if (c == boundingChar && !_escapeNextChar)
+                {
+                    if (!Multiline)
+                    {
+                        Value = _stringBuilder.ToString();
+                        state.Pop();
+                    }
+                    else
+                    {
+                        _boundingCharsCounter++;
 
-                _boundingCharsCounter = 0;
-                _stringBuilder.Append(c);
+                        if (_boundingCharsCounter == 3)
+                        {
+                            Value = _stringBuilder.ToString();
+                            state.Pop();
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < _boundingCharsCounter; i++)
+                        _stringBuilder.Append(boundingChar);
+
+                    _boundingCharsCounter = 0;
+                    _escapeNextChar = false;
+                    _stringBuilder.Append(c);
+                }
             }
         }
 

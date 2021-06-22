@@ -31,16 +31,33 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            if (!IsSpace(c))
+            if (char.IsLetter(c))
             {
                 _sequenceBuilder.Append(c);
             }
             else
             {
-                var sequence = _sequenceBuilder.ToString();
-                ResetSequence();
-                Complete(state, sequence);
-                state.PassChar(c);
+                if (_sequenceBuilder.Length > 0)
+                {
+                    var sequence = _sequenceBuilder.ToString();
+                    ResetSequence();
+                    Complete(state, sequence);
+                    state.PassChar(c);
+                }
+                else
+                {
+                    if (IsSpace(c))
+                    {
+                        Owner.HandleReceivedToken(state.Push(new GDSpace()));
+                    }
+                    else
+                    {
+                        SendIntendationTokensToOwner();
+                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => char.IsLetter(x) || x.IsSpace() || x.IsNewLine())));
+                    }
+
+                    state.PassChar(c);
+                }
             }
         }
 

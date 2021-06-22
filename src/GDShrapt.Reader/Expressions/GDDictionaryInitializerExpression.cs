@@ -57,8 +57,14 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            if (_form.State == State.KeyValues)
+            {
+                _form.State = State.FigureCloseBracket;
+                state.PushAndPassNewLine(KeyValues);
+                return;
+            }
+
+            state.PopAndPassNewLine();
         }
 
         void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedToken(GDFigureOpenBracket token)
