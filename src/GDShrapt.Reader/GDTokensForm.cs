@@ -292,17 +292,17 @@ namespace GDShrapt.Reader
 
         public void AddBeforeToken0(GDSyntaxToken token) => AddMiddle(token, 0);
         public T0 Token0 { get => Get<T0>(0); set => Set(value, 0); }
-        public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 0);
+        public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 1);
         public T1 Token1 { get => Get<T1>(1); set => Set(value, 1); }
-        public void AddBeforeToken2(GDSyntaxToken token) => AddMiddle(token, 1);
+        public void AddBeforeToken2(GDSyntaxToken token) => AddMiddle(token, 2);
         public T2 Token2 { get => Get<T2>(2); set => Set(value, 2); }
-        public void AddBeforeToken3(GDSyntaxToken token) => AddMiddle(token, 2);
+        public void AddBeforeToken3(GDSyntaxToken token) => AddMiddle(token, 3);
         public T3 Token3 { get => Get<T3>(3); set => Set(value, 3); }
-        public void AddBeforeToken4(GDSyntaxToken token) => AddMiddle(token, 3);
+        public void AddBeforeToken4(GDSyntaxToken token) => AddMiddle(token, 4);
         public T4 Token4 { get => Get<T4>(4); set => Set(value, 4); }
-        public void AddBeforeToken5(GDSyntaxToken token) => AddMiddle(token, 4);
+        public void AddBeforeToken5(GDSyntaxToken token) => AddMiddle(token, 5);
         public T5 Token5 { get => Get<T5>(5); set => Set(value, 5); }
-        public void AddBeforeToken6(GDSyntaxToken token) => AddMiddle(token, 5);
+        public void AddBeforeToken6(GDSyntaxToken token) => AddMiddle(token, 6);
         public T6 Token6 { get => Get<T6>(6); set => Set(value, 6); }
     }
 
