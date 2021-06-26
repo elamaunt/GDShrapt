@@ -73,7 +73,7 @@ namespace GDShrapt.Reader
                 token.AppendTo(builder);
         }
 
-        public override string ToString()
+        public sealed override string ToString()
         {
             var builder = new StringBuilder();
             
@@ -92,7 +92,7 @@ namespace GDShrapt.Reader
         public override GDSyntaxToken Clone()
         {
             var node = CreateEmptyInstance();
-            node.Form.CloneFrom(node.Form);
+            node.Form.CloneFrom(Form);
             return node;
         }
 

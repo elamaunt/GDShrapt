@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDNumber : GDLiteralToken
+    public sealed class GDNumber : GDLiteralToken
     {
         readonly StringBuilder _stringBuilder = new StringBuilder();
 

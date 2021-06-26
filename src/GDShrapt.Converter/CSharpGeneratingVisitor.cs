@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace GDShrapt.Converter
 {
-    public class CSharpGeneratingVisitor : INodeVisitor
+    public class CSharpGeneratingVisitor //: INodeVisitor
     {
         private readonly ConversionSettings _settings;
 
@@ -200,7 +200,7 @@ namespace GDShrapt.Converter
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////
-        public void Visit(GDCallExression e)
+        public void Visit(GDCallExpression e)
         {
 
         }

@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDComment : GDCharSequence
+    public sealed class GDComment : GDCharSequence
     {
         public GDComment()
         {

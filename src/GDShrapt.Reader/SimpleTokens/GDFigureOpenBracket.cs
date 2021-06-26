@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDFigureOpenBracket : GDSingleCharToken, IGDStructureToken
+    public sealed class GDFigureOpenBracket : GDSingleCharToken, IGDStructureToken
     {
         public override char Char => '{';
 

@@ -346,7 +346,7 @@ else:
             var forStatement = (GDForStatement)statement;
 
             Assert.AreEqual("i", forStatement.Variable?.Sequence);
-            Assert.IsInstanceOfType(forStatement.Collection, typeof(GDCallExression));
+            Assert.IsInstanceOfType(forStatement.Collection, typeof(GDCallExpression));
             Assert.AreEqual("range(2, 8, 2)", forStatement.Collection.ToString());
 
             Assert.AreEqual(1, forStatement.Statements.Count);
@@ -1348,7 +1348,7 @@ export(AnimationNode) var resource
 
             Assert.AreEqual(GDDualOperatorType.Addition, dualOperator.OperatorType);
 
-            Assert.IsInstanceOfType(dualOperator.LeftExpression, typeof(GDCallExression));
+            Assert.IsInstanceOfType(dualOperator.LeftExpression, typeof(GDCallExpression));
             Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDDualOperatorExression));
 
             var rightDualOperator = (GDDualOperatorExression)dualOperator.RightExpression;
@@ -1356,30 +1356,30 @@ export(AnimationNode) var resource
             Assert.AreEqual(GDDualOperatorType.Division, rightDualOperator.OperatorType);
             Assert.AreEqual("D()", rightDualOperator.LeftExpression.ToString());
 
-            Assert.IsInstanceOfType(rightDualOperator.RightExpression, typeof(GDCallExression));
+            Assert.IsInstanceOfType(rightDualOperator.RightExpression, typeof(GDCallExpression));
 
-            var rightCallExpression = (GDCallExression)rightDualOperator.RightExpression;
+            var rightCallExpression = (GDCallExpression)rightDualOperator.RightExpression;
 
             Assert.AreEqual("E()(\"test\")", rightCallExpression.ToString());
 
-            var callExpression = (GDCallExression)dualOperator.LeftExpression;
+            var callExpression = (GDCallExpression)dualOperator.LeftExpression;
             Assert.AreEqual(0, callExpression.Parameters.Count);
             var memberOperatorExpression = callExpression.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
             Assert.AreEqual("C", memberOperatorExpression.Identifier?.Sequence);
 
-            callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExpression>();
             Assert.AreEqual(0, callExpression.Parameters.Count);
             memberOperatorExpression = callExpression.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
             Assert.AreEqual("B", memberOperatorExpression.Identifier?.Sequence);
 
-            callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            callExpression = memberOperatorExpression.CallerExpression.CastOrAssert<GDCallExpression>();
             Assert.AreEqual(1, callExpression.Parameters.Count);
             Assert.AreEqual("-3", callExpression.Parameters.ToString());
 
-            callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExpression>();
             Assert.AreEqual(0, callExpression.Parameters.Count);
 
-            callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExression>();
+            callExpression = callExpression.CallerExpression.CastOrAssert<GDCallExpression>();
             Assert.AreEqual(1, callExpression.Parameters.Count);
             Assert.AreEqual("1 + 2", callExpression.Parameters.ToString());
 
@@ -1428,7 +1428,7 @@ export(AnimationNode) var resource
 
             Assert.IsInstanceOfType(callStatement.Tokens.Last(), typeof(GDSemiColon));
 
-            var callExpression = callStatement.Expression.CastOrAssert<GDCallExression>();
+            var callExpression = callStatement.Expression.CastOrAssert<GDCallExpression>();
 
             Assert.AreEqual("._init", callExpression.CallerExpression.ToString());
             Assert.AreEqual("\"1234\"", callExpression.Parameters.ToString());
@@ -1468,7 +1468,7 @@ export(AnimationNode) var resource
 
             Assert.IsNotNull(expression);
 
-            var call = expression.CastOrAssert<GDCallExression>();
+            var call = expression.CastOrAssert<GDCallExpression>();
 
             var memberOperator = call.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
             Assert.AreEqual("CallMethod", memberOperator.Identifier.Sequence);
@@ -1488,7 +1488,7 @@ export(AnimationNode) var resource
 
             var expression = reader.ParseExpression(code);
 
-            var call = expression.CastOrAssert<GDCallExression>();
+            var call = expression.CastOrAssert<GDCallExpression>();
             Assert.AreEqual("0", call.Parameters.ToString());
 
             var memberOperator = call.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();

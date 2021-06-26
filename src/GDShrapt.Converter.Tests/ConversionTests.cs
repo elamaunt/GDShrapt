@@ -42,8 +42,8 @@ func save(path, resource, flags):
                 ConvertGDScriptNamingStyleToSharp = true
             });
 
-            var treeWalker = new GDTreeWalker(visitor);
-            treeWalker.WalkInNode(declaration);
+           // var treeWalker = new GDTreeWalker(visitor);
+           // treeWalker.WalkInNode(declaration);
 
             var csharpCode = visitor.BuildCSharpNormalisedCode();
 

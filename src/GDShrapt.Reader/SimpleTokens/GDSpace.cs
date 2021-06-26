@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDSpace : GDCharSequence
+    public sealed class GDSpace : GDCharSequence
     {
         internal override bool CanAppendChar(char c, GDReadingState state)
         {

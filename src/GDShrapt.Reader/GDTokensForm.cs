@@ -717,6 +717,30 @@ namespace GDShrapt.Reader
             node.Value = value;
         }
 
+        /// <summary>
+        /// Used only by cloning methods. <see cref="CloneFrom(GDTokensForm)"/>
+        /// </summary>
+        void SetOrAdd(GDSyntaxToken value, int index)
+        {
+            if (index >= _statePoints.Count)
+            {
+                // Only for ListForms
+                _statePoints.Add(_list.AddLast(value));
+
+                if (value != null)
+                    value.Parent = _owner;
+            }
+            else
+            {
+                var node = _statePoints[index];
+
+                if (value != null)
+                    value.Parent = _owner;
+
+                node.Value = value;
+            }
+        }
+
         protected T Get<T>(int index) where T : GDSyntaxToken => (T)_statePoints[index].Value;
         protected GDSyntaxToken Get(int index) => _statePoints[index].Value;
 
@@ -814,30 +838,35 @@ namespace GDShrapt.Reader
             return counter;
         }
 
+        /// <summary>
+        /// Main nodes cloning method. Current form must be empty
+        /// </summary>
+        /// <param name="form">The form to be cloned</param>
         internal void CloneFrom(GDTokensForm form)
         {
-            if (_initialSize != form._initialSize)
-                throw new InvalidOperationException("Forms must have same size");
+            if ((_initialSize != 0 || form._initialSize != 0) && _initialSize != form._initialSize)
+                throw new InvalidOperationException("Forms must have same size or zero");
 
             if (StateIndex > 0)
                 throw new InvalidOperationException("The form must be at initial state");
 
+            if (form._list.Count == 0)
+                return;
+
             var node = form._list.First;
             var point = form._statePoints[StateIndex];
 
-            while (true)
+            while (node != null)
             {
                 if (point == node)
                 {
-                    Set(point.Value?.Clone(), StateIndex++);
-                    point = form._statePoints[StateIndex];
+                    SetOrAdd(node.Value?.Clone(), StateIndex++);
+                    point = form._statePoints.ElementAtOrDefault(StateIndex);
                 }
                 else
                 {
-                    var clone = point.Value?.Clone();
-
-                    if (clone != null)
-                        AddBeforeActiveToken(clone);
+                    var clone = node.Value?.Clone();
+                    AddBeforeActiveToken(clone);
                 }
 
                 node = node.Next;

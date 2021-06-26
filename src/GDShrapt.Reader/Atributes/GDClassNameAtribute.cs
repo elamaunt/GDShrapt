@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDClassNameAtribute : GDClassAtribute,
+    public sealed class GDClassNameAtribute : GDClassAtribute,
         IKeywordReceiver<GDClassNameKeyword>,
         IIdentifierReceiver,
         ITokenReceiver<GDComma>,

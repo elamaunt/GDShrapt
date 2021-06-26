@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDIntendation : GDSimpleSyntaxToken
+    public sealed class GDIntendation : GDSimpleSyntaxToken
     {
         int _lineIntendation;
         int _spaceCounter;

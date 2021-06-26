@@ -55,8 +55,8 @@ namespace GDShrapt.Converter
                     ConvertGDScriptNamingStyleToSharp = true
                 });
 
-                var treeWalker = new GDTreeWalker(visitor);
-                treeWalker.WalkInNode(declaration);
+                //var treeWalker = new GDTreeWalker(visitor);
+                //treeWalker.WalkInNode(declaration);
 
                 // Generate C# code and save it in a file
                 var newPath = Path.ChangeExtension(destinationPath, ".cs");

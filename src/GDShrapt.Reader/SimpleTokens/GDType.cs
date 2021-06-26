@@ -3,7 +3,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public class GDType : GDDataToken
+    public sealed class GDType : GDDataToken
     {
         public bool ExtractTypeFromInitializer => IsEmpty;
         public bool IsEmpty => Sequence.IsNullOrEmpty();

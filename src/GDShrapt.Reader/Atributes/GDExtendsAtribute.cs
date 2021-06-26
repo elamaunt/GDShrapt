@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDExtendsAtribute : GDClassAtribute,
+    public sealed class GDExtendsAtribute : GDClassAtribute,
         IKeywordReceiver<GDExtendsKeyword>,
         ITypeReceiver,
         IStringReceiver

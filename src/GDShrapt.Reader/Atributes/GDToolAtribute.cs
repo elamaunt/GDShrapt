@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDToolAtribute : GDClassAtribute, IKeywordReceiver<GDToolKeyword>
+    public sealed class GDToolAtribute : GDClassAtribute, IKeywordReceiver<GDToolKeyword>
     {
         internal GDToolKeyword ToolKeyword
         {
