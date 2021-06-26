@@ -63,9 +63,9 @@ Install-Package GDShrapt.Reader -Version 2.1.0-alpha
 ## Version history
 
 #### 2.1.0-alpha
-Implemented 'clone' methods for every token type.
+Implemented 'clone' methods for every token type. Now you can clone the lexical tree with all it's structure.
 Changed the project type to Net.Standart 2.0 (Because this version is supported by Godot).
-Small fix with 'ToString' method of GDIndexerExpression.
+Small fix with the 'ToString' method of GDIndexerExpression.
 
 #### 2.0.0-alpha
 The project is now in Net.Standart 2.1 and was 
