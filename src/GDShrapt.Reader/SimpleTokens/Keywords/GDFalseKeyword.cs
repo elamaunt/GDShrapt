@@ -4,5 +4,10 @@
     {
         public override string Sequence => "false";
         public override bool Value => false;
+
+        public override GDSyntaxToken Clone()
+        {
+            return new GDFalseKeyword();
+        }
     }
 }

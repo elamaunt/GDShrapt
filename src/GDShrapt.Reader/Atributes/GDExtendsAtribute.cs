@@ -63,6 +63,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDExtendsAtribute();
+        }
+
         void IKeywordReceiver<GDExtendsKeyword>.HandleReceivedToken(GDExtendsKeyword token)
         {
             if (_form.State == State.Extends)

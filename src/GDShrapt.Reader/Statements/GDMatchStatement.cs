@@ -93,6 +93,11 @@
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDMatchStatement();
+        }
+
         void IKeywordReceiver<GDMatchKeyword>.HandleReceivedToken(GDMatchKeyword token)
         {
             if (_form.State == State.Match)

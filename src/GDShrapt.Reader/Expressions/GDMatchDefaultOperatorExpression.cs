@@ -39,6 +39,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDMatchDefaultOperatorExpression();
+        }
+
         void ITokenReceiver<GDDefaultToken>.HandleReceivedToken(GDDefaultToken token)
         {
             if (_form.State == State.Default)

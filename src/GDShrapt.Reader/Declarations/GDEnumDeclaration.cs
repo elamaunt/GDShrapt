@@ -111,6 +111,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDEnumDeclaration();
+        }
+
         void IKeywordReceiver<GDEnumKeyword>.HandleReceivedToken(GDEnumKeyword token)
         {
             if (_form.State == State.Enum)

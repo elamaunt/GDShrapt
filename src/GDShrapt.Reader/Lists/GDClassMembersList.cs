@@ -10,6 +10,10 @@
             _lineIntendationThreshold = lineIntendation;
         }
 
+        public GDClassMembersList()
+        {
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (!_completed)
@@ -33,6 +37,11 @@
             }
 
             state.PopAndPassNewLine();
+        }
+
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDClassMembersList();
         }
 
         void IClassMembersReceiver.HandleReceivedToken(GDClassMember token)

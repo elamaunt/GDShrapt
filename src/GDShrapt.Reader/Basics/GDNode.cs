@@ -83,6 +83,19 @@ namespace GDShrapt.Reader
             return builder.ToString();
         }
 
+        /// <summary>
+        /// Creates empty instance of this node type
+        /// </summary>
+        /// <returns>New empty instance</returns>
+        public abstract GDNode CreateEmptyInstance();
+
+        public override GDSyntaxToken Clone()
+        {
+            var node = CreateEmptyInstance();
+            node.Form.CloneFrom(node.Form);
+            return node;
+        }
+
         void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
         {
             Form.AddBeforeActiveToken(token);

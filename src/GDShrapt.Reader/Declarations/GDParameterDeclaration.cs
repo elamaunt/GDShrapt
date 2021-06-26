@@ -85,6 +85,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDParameterDeclaration();
+        }
+
         void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
         {
             if(_form.State == State.Identifier)

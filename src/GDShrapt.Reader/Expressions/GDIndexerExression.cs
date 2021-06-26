@@ -107,9 +107,9 @@
             CallerExpression = CallerExpression.RebuildRootOfPriorityIfNeeded();
         }
 
-        public override string ToString()
+        public override GDNode CreateEmptyInstance()
         {
-            return $"{CallerExpression}[{InnerExpression}]";
+            return new GDIndexerExression();
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)

@@ -15,6 +15,11 @@
             return node;
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDParametersList();
+        }
+
         void ITokenReceiver<GDParameterDeclaration>.HandleReceivedToken(GDParameterDeclaration token)
         {
             ListForm.Add(token);

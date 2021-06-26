@@ -50,6 +50,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDBoolExpression();
+        }
+
         void IKeywordReceiver<GDTrueKeyword>.HandleReceivedToken(GDTrueKeyword token)
         {
             if (_form.State != State.Completed)

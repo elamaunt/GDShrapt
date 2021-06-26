@@ -12,6 +12,11 @@
             return c.IsExpressionStopChar();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDExpressionsList();
+        }
+
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             ListForm.Add(token);

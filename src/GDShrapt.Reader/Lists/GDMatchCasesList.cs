@@ -38,6 +38,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDMatchCasesList();
+        }
+
         void IMatchCaseReceiver.HandleReceivedToken(GDMatchCaseDeclaration token)
         {
             ListForm.Add(token);

@@ -41,6 +41,11 @@
             state.PassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDContinueExpression();
+        }
+
         void IKeywordReceiver<GDContinueKeyword>.HandleReceivedToken(GDContinueKeyword token)
         {
             if (_form.State == State.Continue)

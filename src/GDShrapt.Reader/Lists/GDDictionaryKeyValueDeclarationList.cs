@@ -4,6 +4,10 @@
         ITokenReceiver<GDDictionaryKeyValueDeclaration>,
         ITokenReceiver<GDComma>
     {
+        public GDDictionaryKeyValueDeclarationList()
+        { 
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (c == ',')
@@ -24,6 +28,10 @@
         internal override void HandleNewLineChar(GDReadingState state)
         {
             ListForm.Add(new GDNewLine());
+        }
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDDictionaryKeyValueDeclarationList();
         }
 
         void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)

@@ -91,6 +91,11 @@
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDElseBranch();
+        }
+
         void IKeywordReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
         {
             if (_form.State == State.Else)

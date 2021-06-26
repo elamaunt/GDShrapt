@@ -97,6 +97,11 @@ namespace GDShrapt.Reader
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDWhileStatement();
+        }
+
         void IKeywordReceiver<GDWhileKeyword>.HandleReceivedToken(GDWhileKeyword token)
         {
             if (_form.State == State.While)

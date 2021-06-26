@@ -96,6 +96,11 @@
             CallerExpression = CallerExpression.RebuildRootOfPriorityIfNeeded();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDMemberOperatorExpression();
+        }
+
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.CallerExpression)

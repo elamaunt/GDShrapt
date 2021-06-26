@@ -177,6 +177,16 @@ namespace GDShrapt.Reader
             base.ForceComplete(state);
         }
 
+        public override GDSyntaxToken Clone()
+        {
+            return new GDString()
+            {
+                Value = Value,
+                BoundingChar = BoundingChar,
+                Multiline = Multiline
+            };
+        }
+
         public override string ToString()
         {
             var c = GetBoundingChar();

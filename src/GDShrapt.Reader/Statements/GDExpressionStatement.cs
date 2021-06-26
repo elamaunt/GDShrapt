@@ -61,6 +61,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDExpressionStatement();
+        }
+
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.Expression)

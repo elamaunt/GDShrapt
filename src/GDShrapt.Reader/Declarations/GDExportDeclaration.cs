@@ -79,6 +79,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDExportDeclaration();
+        }
+
         void IKeywordReceiver<GDExportKeyword>.HandleReceivedToken(GDExportKeyword token)
         {
             if (_form.State == State.Export)

@@ -78,6 +78,11 @@
             _form.AddBeforeActiveToken(new GDNewLine());
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDEnumValueDeclaration();
+        }
+
         void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
         {
             if (_form.State == State.Identifier)

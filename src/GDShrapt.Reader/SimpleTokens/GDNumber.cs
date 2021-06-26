@@ -271,6 +271,14 @@ namespace GDShrapt.Reader
             return value.Replace("_", "");
         }
 
+        public override GDSyntaxToken Clone()
+        {
+            return new GDNumber()
+            {
+                _literalValue = _literalValue
+            };
+        }
+
         public override string ToString()
         {
             return $"{_literalValue}";

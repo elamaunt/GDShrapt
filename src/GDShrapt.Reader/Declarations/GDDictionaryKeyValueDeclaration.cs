@@ -75,6 +75,11 @@
             _form.AddBeforeActiveToken(new GDNewLine());
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDDictionaryKeyValueDeclaration();
+        }
+
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.Key)

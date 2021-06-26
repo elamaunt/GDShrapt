@@ -112,5 +112,10 @@
 
             throw new GDInvalidReadingStateException();
         }
+
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDArrayInitializerExpression();
+        }
     }
 }

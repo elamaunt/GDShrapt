@@ -8,7 +8,7 @@ namespace GDShrapt.Reader
     /// Basic syntax node.
     /// </summary>
     [DebuggerDisplay("{DebuggerView}")]
-    public abstract class GDSyntaxToken : GDReader
+    public abstract class GDSyntaxToken : GDReader, ICloneable
     {
         GDNode _parent;
 
@@ -34,7 +34,7 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Removes this node parent or do nothing if <see cref="Parent"/> <see langword="null"/>
+        /// Removes this node from parent or do nothing if <see cref="Parent"/> <see langword="null"/>
         /// </summary>
         public bool RemoveFromParent()
         {
@@ -48,6 +48,17 @@ namespace GDShrapt.Reader
         public virtual void AppendTo(StringBuilder builder)
         {
             builder.Append(ToString());
+        }
+
+        /// <summary>
+        /// Creates deep clone of the current token and it's children
+        /// </summary>
+        /// <returns>New token with all children (if node)</returns>
+        public abstract GDSyntaxToken Clone();
+
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
 
         [DebuggerHidden]

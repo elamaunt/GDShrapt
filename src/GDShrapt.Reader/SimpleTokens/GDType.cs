@@ -83,6 +83,14 @@ namespace GDShrapt.Reader
             base.ForceComplete(state);
         }
 
+        public override GDSyntaxToken Clone()
+        {
+            return new GDType()
+            { 
+                Sequence = Sequence
+            };
+        }
+
         public override string ToString()
         {
             return $"{Sequence}";

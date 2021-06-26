@@ -44,6 +44,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDToolAtribute();
+        }
+
         void IKeywordReceiver<GDToolKeyword>.HandleReceivedToken(GDToolKeyword token)
         {
             if (_form.State == State.Tool)

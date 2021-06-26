@@ -19,6 +19,11 @@
             ListForm.Add(new GDNewLine());
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDExportParametersList();
+        }
+
         void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
         {
             ListForm.Add(token);

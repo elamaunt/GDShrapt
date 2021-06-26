@@ -22,6 +22,14 @@
             HandleChar('#', state);
         }
 
+        public override GDSyntaxToken Clone()
+        {
+            return new GDComment()
+            { 
+                Sequence = Sequence
+            };
+        }
+
         public override string ToString()
         {
             return $"{Sequence}";

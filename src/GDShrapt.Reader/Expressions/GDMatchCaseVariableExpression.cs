@@ -65,6 +65,11 @@
             state.PassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDMatchCaseVariableExpression();
+        }
+
         void IKeywordReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
         { 
             if (_form.State == State.Var)

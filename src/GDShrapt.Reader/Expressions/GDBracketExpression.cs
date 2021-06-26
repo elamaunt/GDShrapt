@@ -77,6 +77,11 @@
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDBracketExpression();
+        }
+
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
             if (_form.State == State.OpenBracket)

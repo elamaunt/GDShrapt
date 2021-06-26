@@ -30,6 +30,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDPathList();
+        }
+
         void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
         {
             _switch = !_switch;

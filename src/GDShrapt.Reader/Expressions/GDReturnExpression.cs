@@ -54,6 +54,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDReturnExpression();
+        }
+
         void IKeywordReceiver<GDReturnKeyword>.HandleReceivedToken(GDReturnKeyword token)
         {
             if (_form.State == State.Return)

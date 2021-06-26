@@ -74,6 +74,11 @@
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDMatchCaseDeclaration();
+        }
+
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
             if (_form.State == State.Colon)

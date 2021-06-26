@@ -76,6 +76,12 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDYieldExpression();
+        }
+
+
         void IKeywordReceiver<GDYieldKeyword>.HandleReceivedToken(GDYieldKeyword token)
         {
             if (_form.State == State.Yield)

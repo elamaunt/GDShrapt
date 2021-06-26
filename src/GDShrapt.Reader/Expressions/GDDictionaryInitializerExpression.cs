@@ -67,6 +67,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDDictionaryInitializerExpression();
+        }
+
         void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedToken(GDFigureOpenBracket token)
         {
             if (_form.State == State.FigureOpenBracket)

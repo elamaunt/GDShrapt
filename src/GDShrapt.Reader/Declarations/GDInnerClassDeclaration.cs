@@ -99,6 +99,11 @@ namespace GDShrapt.Reader
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDInnerClassDeclaration();
+        }
+
         void IKeywordReceiver<GDClassKeyword>.HandleReceivedToken(GDClassKeyword token)
         {
             if (_form.State == State.Class)

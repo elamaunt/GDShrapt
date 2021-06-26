@@ -40,6 +40,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDStatementsList();
+        }
+
         void IStatementsReceiver.HandleReceivedToken(GDStatement token)
         {
             ListForm.Add(token);

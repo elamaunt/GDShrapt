@@ -11,6 +11,11 @@
             _lineIntendationThreshold = lineIntendation;
         }
 
+        public GDElifBranchesList()
+        {
+
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (!_completed)
@@ -34,6 +39,10 @@
             }
 
             state.PopAndPassNewLine();
+        }
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDElifBranchesList();
         }
 
         void IElifBranchReceiver.HandleReceivedToken(GDElifBranch token)

@@ -51,5 +51,10 @@
             state.Pop();
             state.PassNewLine();
         }
+
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDStringExpression();
+        }
     }
 }

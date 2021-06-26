@@ -201,6 +201,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDMethodDeclaration();
+        }
+
         void IKeywordReceiver<GDStaticKeyword>.HandleReceivedToken(GDStaticKeyword token)
         {
             if (_form.State == State.Static)

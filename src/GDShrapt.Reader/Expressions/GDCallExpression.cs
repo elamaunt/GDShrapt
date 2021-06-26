@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDCallExression : GDExpression,
+    public sealed class GDCallExpression : GDExpression,
         IExpressionsReceiver,
         ITokenReceiver<GDOpenBracket>,
         ITokenReceiver<GDCloseBracket>
@@ -35,7 +35,7 @@
 
         readonly GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
         internal override GDTokensForm Form => _form;
-        public GDCallExression()
+        public GDCallExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
         }
@@ -76,6 +76,11 @@
             }
 
             state.PopAndPassNewLine();
+        }
+
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDCallExpression();
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)

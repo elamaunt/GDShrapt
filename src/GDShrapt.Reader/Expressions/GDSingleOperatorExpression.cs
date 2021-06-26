@@ -94,6 +94,11 @@
             TargetExpression = TargetExpression.RebuildRootOfPriorityIfNeeded();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDSingleOperatorExpression();
+        }
+
         void ISingleOperatorReceiver.HandleReceivedToken(GDSingleOperator token)
         {
             if (_form.State == State.Operator)

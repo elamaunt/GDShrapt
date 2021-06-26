@@ -26,6 +26,11 @@
             ListForm.Add(new GDNewLine());
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDEnumValuesList();
+        }
+
         void ITokenReceiver<GDEnumValueDeclaration>.HandleReceivedToken(GDEnumValueDeclaration token)
         {
             ListForm.Add(token);

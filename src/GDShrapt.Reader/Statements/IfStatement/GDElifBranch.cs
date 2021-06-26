@@ -101,6 +101,11 @@
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDElifBranch();
+        }
+
         void IKeywordReceiver<GDElifKeyword>.HandleReceivedToken(GDElifKeyword token)
         {
             if (_form.State == State.Elif)

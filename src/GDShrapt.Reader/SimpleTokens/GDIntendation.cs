@@ -46,6 +46,14 @@ namespace GDShrapt.Reader
             state.PopAndPass(c);
         }
 
+        public override GDSyntaxToken Clone()
+        {
+            return new GDIntendation()
+            {
+                Sequence = Sequence
+            };
+        }
+
         public override string ToString()
         {
             return $"{Sequence}";

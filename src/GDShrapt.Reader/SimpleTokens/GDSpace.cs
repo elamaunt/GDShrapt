@@ -12,5 +12,13 @@
             one.Sequence += other.Sequence;
             return one;
         }
+
+        public override GDSyntaxToken Clone()
+        {
+            return new GDSpace()
+            { 
+                Sequence = Sequence
+            };
+        }
     }
 }

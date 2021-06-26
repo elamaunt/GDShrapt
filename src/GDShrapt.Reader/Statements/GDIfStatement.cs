@@ -88,6 +88,11 @@
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDIfStatement();
+        }
+
         void IKeywordReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
         {
             if (_form.State == State.IfBranch)

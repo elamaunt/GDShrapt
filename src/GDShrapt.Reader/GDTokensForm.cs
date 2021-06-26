@@ -813,5 +813,35 @@ namespace GDShrapt.Reader
 
             return counter;
         }
+
+        internal void CloneFrom(GDTokensForm form)
+        {
+            if (_initialSize != form._initialSize)
+                throw new InvalidOperationException("Forms must have same size");
+
+            if (StateIndex > 0)
+                throw new InvalidOperationException("The form must be at initial state");
+
+            var node = form._list.First;
+            var point = form._statePoints[StateIndex];
+
+            while (true)
+            {
+                if (point == node)
+                {
+                    Set(point.Value?.Clone(), StateIndex++);
+                    point = form._statePoints[StateIndex];
+                }
+                else
+                {
+                    var clone = point.Value?.Clone();
+
+                    if (clone != null)
+                        AddBeforeActiveToken(clone);
+                }
+
+                node = node.Next;
+            }
+        }
     }
 }

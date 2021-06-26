@@ -99,6 +99,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDVariableDeclarationStatement();
+        }
+
         void IKeywordReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
         {
             if (_form.State == State.Var)

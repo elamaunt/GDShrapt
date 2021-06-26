@@ -51,6 +51,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDGetNodeExpression();
+        }
+
         void ITokenReceiver<GDDollar>.HandleReceivedToken(GDDollar token)
         {
             if (_form.State == State.Dollar)

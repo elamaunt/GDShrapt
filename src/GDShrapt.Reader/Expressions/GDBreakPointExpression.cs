@@ -40,6 +40,11 @@
             state.PassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDBreakPointExpression();
+        }
+
         void IKeywordReceiver<GDBreakPointKeyword>.HandleReceivedToken(GDBreakPointKeyword token)
         {
             if (_form.State == State.BreakPoint)

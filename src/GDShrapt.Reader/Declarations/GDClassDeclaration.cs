@@ -39,6 +39,11 @@ namespace GDShrapt.Reader
         public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
         public IEnumerable<GDInnerClassDeclaration> InnerClasses => Members.OfType<GDInnerClassDeclaration>();
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDClassDeclaration();
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))

@@ -93,6 +93,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDSignalDeclaration();
+        }
+
         void IKeywordReceiver<GDSignalKeyword>.HandleReceivedToken(GDSignalKeyword token)
         {
             if (_form.State == State.Signal)

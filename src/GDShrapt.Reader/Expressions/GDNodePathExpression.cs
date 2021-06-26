@@ -54,6 +54,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDNodePathExpression();
+        }
+
         void ITokenReceiver<GDAt>.HandleReceivedToken(GDAt token)
         {
             if (_form.State == State.At)

@@ -138,6 +138,11 @@
             return right;
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDDualOperatorExression();
+        }
+
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.LeftExpression)

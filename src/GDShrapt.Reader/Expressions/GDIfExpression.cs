@@ -131,6 +131,11 @@
             FalseExpression = FalseExpression.RebuildRootOfPriorityIfNeeded();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDIfExpression();
+        }
+
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.True)

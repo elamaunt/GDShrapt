@@ -39,5 +39,10 @@
         {
             state.PopAndPassNewLine();
         }
+
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDIdentifierExpression();
+        }
     }
 }

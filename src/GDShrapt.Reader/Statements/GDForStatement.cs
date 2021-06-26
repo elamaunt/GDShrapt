@@ -124,6 +124,10 @@
             }
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDForStatement();
+        }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
         {

@@ -76,6 +76,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDClassNameAtribute();
+        }
+
         void IKeywordReceiver<GDClassNameKeyword>.HandleReceivedToken(GDClassNameKeyword token)
         {
             if (_form.State == State.ClassName)

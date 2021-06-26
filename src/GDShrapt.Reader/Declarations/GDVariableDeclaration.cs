@@ -181,6 +181,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDVariableDeclaration();
+        }
+
         void IKeywordReceiver<GDConstKeyword>.HandleReceivedToken(GDConstKeyword token)
         {
             if (_form.State == State.Const)

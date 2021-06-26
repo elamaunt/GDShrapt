@@ -39,6 +39,11 @@
             state.PopAndPassNewLine();
         }
 
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDPassExpression();
+        }
+
         void IKeywordReceiver<GDPassKeyword>.HandleReceivedToken(GDPassKeyword token)
         {
             if (_form.State == State.Pass)

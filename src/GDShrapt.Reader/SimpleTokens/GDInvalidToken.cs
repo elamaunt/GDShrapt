@@ -24,5 +24,13 @@ namespace GDShrapt.Reader
 
             return Array.IndexOf(_stopChars, c) == -1;
         }
+
+        public override GDSyntaxToken Clone()
+        {
+            return new GDInvalidToken()
+            { 
+                Sequence = Sequence
+            };
+        }
     }
 }
