@@ -6,26 +6,27 @@
         ITokenReceiver<GDOpenBracket>,
         ITokenReceiver<GDCloseBracket>
     {
-        internal GDSignalKeyword SignalKeyword
+        public GDSignalKeyword SignalKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
         public GDIdentifier Identifier
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-
-        internal GDOpenBracket OpenBracket
+        public GDOpenBracket OpenBracket
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-
-        public GDParametersList Parameters { get => _form.Token3 ?? (_form.Token3 = new GDParametersList()); }
-        internal GDCloseBracket CloseBracket
+        public GDParametersList Parameters 
+        {
+            get => _form.Token3 ?? (_form.Token3 = new GDParametersList());
+            set => _form.Token3 = value;
+        }
+        public GDCloseBracket CloseBracket
         {
             get => _form.Token4;
             set => _form.Token4 = value;
@@ -42,8 +43,7 @@
         }
 
         readonly GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> _form;
-        internal override GDTokensForm Form => _form;
-
+        public override GDTokensForm Form => _form;
         internal GDSignalDeclaration(int intendation)
             : base(intendation)
         {

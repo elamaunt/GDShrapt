@@ -9,8 +9,7 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
-        internal GDSemiColon SemiColon
+        public GDSemiColon SemiColon
         {
             get => _form.Token1;
             set => _form.Token1 = value;
@@ -24,7 +23,7 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDSemiColon> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         internal GDExpressionStatement(int lineIntendation)
             : base(lineIntendation)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -9,9 +10,10 @@ namespace GDShrapt.Reader
     /// </summary>
     public abstract class GDNode : GDSyntaxToken, IStyleTokensReceiver
     {
-        internal abstract GDTokensForm Form { get; }
+        public abstract GDTokensForm Form { get; }
         
         public IEnumerable<GDSyntaxToken> Tokens => Form;
+        public IEnumerable<GDNode> Nodes => Tokens.OfType<GDNode>();
 
         public IEnumerable<GDSyntaxToken> AllTokens
         {
@@ -22,6 +24,23 @@ namespace GDShrapt.Reader
                     if (token is GDNode node)
                     {
                         foreach (var nodeToken in node.AllTokens)
+                            yield return nodeToken;
+                    }
+                    else
+                        yield return token;
+                }
+            }
+        }
+
+        public IEnumerable<GDSyntaxToken> AllTokensReversed
+        {
+            get
+            {
+                foreach (var token in Form.Reversed())
+                {
+                    if (token is GDNode node)
+                    {
+                        foreach (var nodeToken in node.AllTokensReversed)
                             yield return nodeToken;
                     }
                     else
@@ -42,6 +61,23 @@ namespace GDShrapt.Reader
 
                         foreach (var nodeToken in node.AllNodes)
                             yield return nodeToken;
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<GDNode> AllNodesReversed
+        {
+            get
+            {
+                foreach (var token in Form.Reversed())
+                {
+                    if (token is GDNode node)
+                    {
+                        foreach (var nodeToken in node.AllNodesReversed)
+                            yield return nodeToken;
+
+                        yield return node;
                     }
                 }
             }
@@ -94,6 +130,23 @@ namespace GDShrapt.Reader
             var node = CreateEmptyInstance();
             node.Form.CloneFrom(Form);
             return node;
+        }
+
+        /// <summary>
+        /// Indexer to get 'Add' syntax working in tokens building
+        /// </summary>
+        public GDSyntaxToken this[int index]
+        {
+            set => Form.AddBeforeToken(value, index);
+        }
+
+        public override int Length => Tokens.Sum(x => x.Length);
+
+        public override int NewLinesCount => Tokens.Sum(x => x.NewLinesCount);
+
+        public virtual IEnumerable<GDIdentifier> GetDependencies()
+        {
+            return Nodes.SelectMany(x => x.GetDependencies());
         }
 
         void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)

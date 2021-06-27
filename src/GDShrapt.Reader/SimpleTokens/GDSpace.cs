@@ -1,7 +1,20 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDSpace : GDCharSequence
     {
+        public new string Sequence
+        {
+            get => base.Sequence;
+            set
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    throw new FormatException("Invalid space format.");
+                base.Sequence = value;
+            }
+        }
+
         internal override bool CanAppendChar(char c, GDReadingState state)
         {
             return IsSpace(c);

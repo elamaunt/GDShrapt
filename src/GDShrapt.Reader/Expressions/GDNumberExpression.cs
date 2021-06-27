@@ -16,7 +16,7 @@
         }
 
         readonly GDTokensForm<State, GDNumber> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDNumberExpression()
         {
             _form = new GDTokensForm<State, GDNumber>(this);

@@ -6,7 +6,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.NodePath);
 
-        internal GDAt At
+        public GDAt At
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -25,7 +25,7 @@
         }
 
         readonly GDTokensForm<State, GDAt, GDString> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDNodePathExpression()
         {
             _form = new GDTokensForm<State, GDAt, GDString>(this);

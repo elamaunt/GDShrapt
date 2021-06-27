@@ -12,13 +12,17 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        internal GDOpenBracket OpenBracket
+        public GDOpenBracket OpenBracket
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        public GDExpressionsList Parameters { get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList()); }
-        internal GDCloseBracket CloseBracket
+        public GDExpressionsList Parameters
+        {
+            get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList());
+            set => _form.Token2 = value;
+        }
+        public GDCloseBracket CloseBracket
         {
             get => _form.Token3;
             set => _form.Token3 = value;
@@ -34,7 +38,7 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDCallExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);

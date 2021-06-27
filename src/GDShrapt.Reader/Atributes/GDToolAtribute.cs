@@ -2,7 +2,7 @@
 {
     public sealed class GDToolAtribute : GDClassAtribute, IKeywordReceiver<GDToolKeyword>
     {
-        internal GDToolKeyword ToolKeyword
+        public GDToolKeyword ToolKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -15,7 +15,7 @@
         }
 
         readonly GDTokensForm<State, GDToolKeyword> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDToolAtribute()
         {
             _form = new GDTokensForm<State, GDToolKeyword>(this);

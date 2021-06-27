@@ -13,35 +13,32 @@
         IKeywordReceiver<GDSetGetKeyword>,
         ITokenReceiver<GDComma>
     {
-        internal GDConstKeyword ConstKeyword 
+        public GDConstKeyword ConstKeyword 
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        internal GDOnreadyKeyword OnreadyKeyword
+        public GDOnreadyKeyword OnreadyKeyword
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-
         public GDExportDeclaration Export
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        
-        internal GDVarKeyword VarKeyword
+        public GDVarKeyword VarKeyword
         {
             get => _form.Token3;
             set => _form.Token3 = value;
         }
-
         public GDIdentifier Identifier
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => _form.Token5;
             set => _form.Token5 = value;
@@ -51,7 +48,7 @@
             get => _form.Token6;
             set => _form.Token6 = value;
         }
-        internal GDAssign Assign
+        public GDAssign Assign
         {
             get => _form.Token7;
             set => _form.Token7 = value;
@@ -61,7 +58,7 @@
             get => _form.Token8;
             set => _form.Token8 = value;
         }
-        internal GDSetGetKeyword SetGetKeyword
+        public GDSetGetKeyword SetGetKeyword
         {
             get => _form.Token9;
             set => _form.Token9 = value;
@@ -71,13 +68,11 @@
             get => _form.Token10;
             set => _form.Token10 = value;
         }
-
-        internal GDComma Comma
+        public GDComma Comma
         {
             get => _form.Token11;
             set => _form.Token11 = value;
         }
-
         public GDIdentifier GetMethodIdentifier
         {
             get => _form.Token12;
@@ -107,7 +102,7 @@
         }
 
         readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         internal GDVariableDeclaration(int intendation)
             : base(intendation)

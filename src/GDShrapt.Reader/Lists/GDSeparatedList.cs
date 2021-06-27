@@ -10,8 +10,8 @@ namespace GDShrapt.Reader
     {
         readonly GDTokensListForm<NODE> _form;
 
-        internal GDTokensListForm<NODE> ListForm => _form;
-        internal override GDTokensForm Form => _form;
+        public GDTokensListForm<NODE> ListForm => _form;
+        public override GDTokensForm Form => _form;
 
         public int Count => _form.Count;
         public bool IsReadOnly => false;

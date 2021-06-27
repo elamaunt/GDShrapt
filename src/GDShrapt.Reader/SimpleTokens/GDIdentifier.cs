@@ -3,7 +3,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDIdentifier : GDDataToken
+    public sealed class GDIdentifier : GDDataToken, IEquatable<GDIdentifier>
     {
         public bool IsPi => string.Equals(Sequence, "PI", StringComparison.Ordinal);
         public bool IsTau => string.Equals(Sequence, "TAU", StringComparison.Ordinal);
@@ -12,7 +12,7 @@ namespace GDShrapt.Reader
         public bool IsTrue => string.Equals(Sequence, "true", StringComparison.Ordinal);
         public bool IsFalse => string.Equals(Sequence, "false", StringComparison.Ordinal);
         public bool IsSelf => string.Equals(Sequence, "self", StringComparison.Ordinal);
-       
+
         public string Sequence { get; set; }
 
         StringBuilder _builder = new StringBuilder();
@@ -42,7 +42,7 @@ namespace GDShrapt.Reader
                     state.PopAndPass(c);
                 }
             }
-            
+
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
@@ -70,14 +70,55 @@ namespace GDShrapt.Reader
         public override GDSyntaxToken Clone()
         {
             return new GDIdentifier()
-            { 
+            {
                 Sequence = Sequence
             };
+        }
+
+        public static bool operator ==(GDIdentifier one, GDIdentifier two)
+        {
+            /*if (one == null)
+                return two == null;
+
+            if (two == null)
+                return false;*/
+
+            return string.Equals(one.Sequence, two.Sequence, StringComparison.Ordinal);
+        }
+
+        public static bool operator !=(GDIdentifier one, GDIdentifier two)
+        {
+            /*if (one == null)
+                return two != null;
+
+            if (two == null)
+                return true;*/
+
+            return !string.Equals(one.Sequence, two.Sequence, StringComparison.Ordinal);
+        }
+
+        public override int GetHashCode()
+        {
+            return Sequence?.GetHashCode() ?? base.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is GDIdentifier identifier)
+                return string.Equals(Sequence, identifier.Sequence, StringComparison.Ordinal);
+            return base.Equals(obj);
+        }
+
+        public bool Equals(GDIdentifier other)
+        {
+            return string.Equals(Sequence, other.Sequence, StringComparison.Ordinal);
         }
 
         public override string ToString()
         {
             return $"{Sequence}";
         }
+
+        
     }
 }

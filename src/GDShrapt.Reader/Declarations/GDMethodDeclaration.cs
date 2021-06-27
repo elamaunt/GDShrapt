@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDMethodDeclaration : GDClassMember, 
         IKeywordReceiver<GDStaticKeyword>,
@@ -11,12 +13,12 @@
         ITokenReceiver<GDColon>,
         ITokenReceiver<GDPoint>
     {
-        internal GDStaticKeyword StaticKeyword
+        public GDStaticKeyword StaticKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        internal GDFuncKeyword FuncKeyword
+        public GDFuncKeyword FuncKeyword
         {
             get => _form.Token1;
             set => _form.Token1 = value;
@@ -26,38 +28,42 @@
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        internal GDOpenBracket OpenBracket
+        public GDOpenBracket OpenBracket
         {
             get => _form.Token3;
             set => _form.Token3 = value;
         }
-        public GDParametersList Parameters { get => _form.Token4 ?? (_form.Token4 = new GDParametersList()); }
-        internal GDCloseBracket CloseBracket
+        public GDParametersList Parameters
+        {
+            get => _form.Token4 ?? (_form.Token4 = new GDParametersList());
+            set => _form.Token4 = value;
+        }
+        public GDCloseBracket CloseBracket
         {
             get => _form.Token5;
             set => _form.Token5 = value;
         }
-
-        internal GDPoint BaseCallPoint
+        public GDPoint BaseCallPoint
         {
             get => _form.Token6;
             set => _form.Token6 = value;
         }
-
-        internal GDOpenBracket BaseCallOpenBracket
+        public GDOpenBracket BaseCallOpenBracket
         {
             get => _form.Token7;
             set => _form.Token7 = value;
         }
-        public GDExpressionsList BaseCallParameters { get => _form.Token8 ?? (_form.Token8 = new GDExpressionsList()); }
-
-        internal GDCloseBracket BaseCallCloseBracket
+        public GDExpressionsList BaseCallParameters 
+        { 
+            get => _form.Token8 ?? (_form.Token8 = new GDExpressionsList());
+            set => _form.Token8 = value;
+        }
+        public GDCloseBracket BaseCallCloseBracket
         {
             get => _form.Token9;
             set => _form.Token9 = value;
         }
-
-        internal GDReturnTypeKeyword ReturnTypeKeyword
+        public GDReturnTypeKeyword ReturnTypeKeyword
         {
             get => _form.Token10;
             set => _form.Token10 = value;
@@ -67,13 +73,16 @@
             get => _form.Token11;
             set => _form.Token11 = value;
         }
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => _form.Token12;
             set => _form.Token12 = value;
         }
-
-        public GDStatementsList Statements { get => _form.Token13 ?? (_form.Token13 = new GDStatementsList(Intendation + 1)); }
+        public GDStatementsList Statements
+        { 
+            get => _form.Token13 ?? (_form.Token13 = new GDStatementsList(Intendation + 1));
+            set => _form.Token13 = value;
+        }
 
         public bool IsStatic => StaticKeyword != null;
 
@@ -99,7 +108,7 @@
         }
 
         readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         internal GDMethodDeclaration(int intendation)
             : base(intendation)

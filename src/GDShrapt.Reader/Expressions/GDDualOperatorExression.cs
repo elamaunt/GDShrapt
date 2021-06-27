@@ -35,7 +35,7 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDDualOperatorExression()
         {
             _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>(this);

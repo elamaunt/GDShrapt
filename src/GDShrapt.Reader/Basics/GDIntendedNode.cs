@@ -2,7 +2,7 @@
 {
     public abstract class GDIntendedNode : GDNode, IIntendationReceiver
     {
-        public int Intendation { get; }
+        internal int Intendation { get; }
 
         internal GDIntendedNode(int intendation)
         {
@@ -16,6 +16,15 @@
         void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
         {
             Form.AddBeforeActiveToken(token);
+        }
+
+        public void FormatIntendation()
+        {
+            
+
+            
+
+            //AllNodes
         }
     }
 }

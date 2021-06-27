@@ -12,13 +12,12 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => (GDColon)_form.Token1;
             set => _form.Token1 = value;
         }
-        internal GDAssign Assign
+        public GDAssign Assign
         {
             get => (GDAssign)_form.Token1;
             set => _form.Token1 = value;
@@ -44,7 +43,7 @@
             _form = new GDTokensForm<State, GDExpression, GDSingleCharToken, GDExpression>(this);
         }
 
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (this.ResolveStyleToken(c, state))

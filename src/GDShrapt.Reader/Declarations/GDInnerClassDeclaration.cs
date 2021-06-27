@@ -13,7 +13,7 @@ namespace GDShrapt.Reader
         public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
         public IEnumerable<GDInnerClassDeclaration> InnerClasses => Members.OfType<GDInnerClassDeclaration>();
 
-        internal GDClassKeyword ClassKeyword
+        public GDClassKeyword ClassKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -23,15 +23,15 @@ namespace GDShrapt.Reader
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-
         public GDClassMembersList Members
         {
             get => _form.Token3 ?? (_form.Token3 = new GDClassMembersList(Intendation + 1));
+            set => _form.Token3 = value;
         }
 
         enum State
@@ -44,7 +44,7 @@ namespace GDShrapt.Reader
         }
 
         readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDClassMembersList> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         internal GDInnerClassDeclaration(int intendation)
             : base(intendation)

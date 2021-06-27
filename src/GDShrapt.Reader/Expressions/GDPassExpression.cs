@@ -5,7 +5,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Pass);
 
-        internal GDPassKeyword PassKeyword
+        public GDPassKeyword PassKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -18,7 +18,7 @@
         }
 
         readonly GDTokensForm<State, GDPassKeyword> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDPassExpression()
         {
             _form = new GDTokensForm<State, GDPassKeyword>(this);

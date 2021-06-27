@@ -5,7 +5,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetNode);
 
-        internal GDDollar Dollar
+        public GDDollar Dollar
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -21,7 +21,7 @@
         }
 
         readonly GDTokensForm<State, GDDollar, GDPathList> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDGetNodeExpression()
         {
             _form = new GDTokensForm<State, GDDollar, GDPathList>(this);

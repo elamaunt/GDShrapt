@@ -26,7 +26,7 @@
         }
 
         readonly GDTokensForm<State, GDSingleOperator, GDExpression> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDSingleOperatorExpression()
         {
             _form = new GDTokensForm<State, GDSingleOperator, GDExpression>(this);

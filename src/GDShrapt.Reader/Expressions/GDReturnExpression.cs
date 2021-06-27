@@ -5,7 +5,7 @@
         IKeywordReceiver<GDReturnKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Return);
-        internal GDReturnKeyword ReturnKeyword
+        public GDReturnKeyword ReturnKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -25,7 +25,7 @@
         }
 
         readonly GDTokensForm<State, GDReturnKeyword, GDExpression> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDReturnExpression()
         {
             _form = new GDTokensForm<State, GDReturnKeyword, GDExpression>(this);

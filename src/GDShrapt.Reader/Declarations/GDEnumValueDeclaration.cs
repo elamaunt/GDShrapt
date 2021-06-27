@@ -13,12 +13,12 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => (GDColon)_form.Token1;
             set => _form.Token1 = value;
         }
-        internal GDAssign Assign
+        public GDAssign Assign
         {
             get => (GDAssign)_form.Token1;
             set => _form.Token1 = value;
@@ -38,7 +38,7 @@
         }
 
         readonly GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDEnumValueDeclaration()
         {
             _form = new GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression>(this);

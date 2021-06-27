@@ -5,21 +5,22 @@
         ITokenReceiver<GDOpenBracket>,
         ITokenReceiver<GDCloseBracket>
     {
-        internal GDExportKeyword ExportKeyword
+        public GDExportKeyword ExportKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
-        internal GDOpenBracket OpenBracket
+        public GDOpenBracket OpenBracket
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-
-        public GDExportParametersList Parameters { get => _form.Token2 ?? (_form.Token2 = new GDExportParametersList()); }
-
-        internal GDCloseBracket CloseBracket
+        public GDExportParametersList Parameters 
+        { 
+            get => _form.Token2 ?? (_form.Token2 = new GDExportParametersList());
+            set => _form.Token2 = value;
+        }
+        public GDCloseBracket CloseBracket
         {
             get => _form.Token3;
             set => _form.Token3 = value;
@@ -35,7 +36,7 @@
         }
 
         readonly GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDExportDeclaration()
         {
             _form = new GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket>(this);

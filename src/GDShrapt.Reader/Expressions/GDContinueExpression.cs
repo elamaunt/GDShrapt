@@ -5,7 +5,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Continue);
 
-        internal GDContinueKeyword ContinueKeyword
+        public GDContinueKeyword ContinueKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -18,7 +18,7 @@
         }
 
         readonly GDTokensForm<State, GDContinueKeyword> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         public GDContinueExpression()
         {

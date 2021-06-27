@@ -5,7 +5,7 @@
         ITokenReceiver<GDColon>,
         IExpressionsReceiver
     {
-        internal GDMatchKeyword MatchKeyword
+        public GDMatchKeyword MatchKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -15,14 +15,16 @@
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-
-        public GDMatchCasesList Cases { get => _form.Token3 ?? (_form.Token3 = new GDMatchCasesList(LineIntendation + 1)); }
+        public GDMatchCasesList Cases 
+        {
+            get => _form.Token3 ?? (_form.Token3 = new GDMatchCasesList(LineIntendation + 1));
+            set => _form.Token3 = value;
+        }
 
         enum State
         {
@@ -34,7 +36,7 @@
         }
 
         readonly GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         internal GDMatchStatement(int lineIntendation)
             : base(lineIntendation)

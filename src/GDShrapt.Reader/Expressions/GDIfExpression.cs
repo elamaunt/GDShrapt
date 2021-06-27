@@ -12,7 +12,7 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        internal GDIfKeyword IfKeyword
+        public GDIfKeyword IfKeyword
         {
             get => _form.Token1;
             set => _form.Token1 = value;
@@ -22,7 +22,7 @@
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        internal GDElseKeyword ElseKeyword
+        public GDElseKeyword ElseKeyword
         {
             get => _form.Token3;
             set => _form.Token3 = value;
@@ -45,7 +45,7 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDIfExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>(this);

@@ -5,7 +5,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.DefaultOperator);
 
-        internal GDDefaultToken DefaultToken
+        public GDDefaultToken DefaultToken
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -18,7 +18,7 @@
         }
 
         readonly GDTokensForm<State, GDDefaultToken> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDMatchDefaultOperatorExpression()
         {
             _form = new GDTokensForm<State, GDDefaultToken>(this);

@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Diagnostics;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
@@ -52,6 +54,23 @@ namespace GDShrapt.Reader
             {
                 Sequence = Sequence
             };
+        }
+
+        public void Update()
+        {
+            var p = Parent;
+            int intendation = 0;
+
+            while (p != null)
+            {
+                if (p is GDIntendedNode)
+                    intendation++;
+
+                p = p.Parent;
+            }
+
+            LineIntendationThreshold = intendation;
+            Sequence = new string('\t', intendation);
         }
 
         public override string ToString()

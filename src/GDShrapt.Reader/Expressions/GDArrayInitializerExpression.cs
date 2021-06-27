@@ -6,13 +6,17 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.ArrayInitializer);
 
-        internal GDSquareOpenBracket SquareOpenBracket
+        public GDSquareOpenBracket SquareOpenBracket
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        public GDExpressionsList Values { get => _form.Token1 ?? (_form.Token1 = new GDExpressionsList()); }
-        internal GDSquareCloseBracket SquareCloseBracket
+        public GDExpressionsList Values 
+        {
+            get => _form.Token1 ?? (_form.Token1 = new GDExpressionsList());
+            set => _form.Token1 = value;
+        }
+        public GDSquareCloseBracket SquareCloseBracket
         {
             get => _form.Token2;
             set => _form.Token2 = value;
@@ -27,7 +31,7 @@
         }
 
         readonly GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDArrayInitializerExpression()
         {
             _form = new GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket>(this);

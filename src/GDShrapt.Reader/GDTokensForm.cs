@@ -5,10 +5,10 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    internal class GDTokensListForm<NODE> : GDTokensForm, IList<NODE>
-        where NODE : GDSyntaxToken
+    public class GDTokensListForm<TOKEN> : GDTokensForm, IList<TOKEN>
+        where TOKEN : GDSyntaxToken
     {
-        public GDTokensListForm(GDNode owner)
+        internal GDTokensListForm(GDNode owner)
             : base(owner)
         {
         }
@@ -16,9 +16,9 @@ namespace GDShrapt.Reader
         public new int Count => _statePoints.Count;
         public int TokensCount => base.Count;
 
-        public NODE this[int index]
+        public TOKEN this[int index]
         {
-            get => (NODE)_statePoints[index].Value;
+            get => (TOKEN)_statePoints[index].Value;
             set
             {
                 var node = _statePoints[index];
@@ -39,14 +39,152 @@ namespace GDShrapt.Reader
             }
         }
 
-        public void Add(NODE item)
+        public void Add(TOKEN item)
         {
             item.Parent = _owner;
             _statePoints.Add(_list.AddLast(item));
             StateIndex++;
         }
 
-        public bool Contains(NODE item)
+        public override void Add(GDSyntaxToken value)
+        {
+            if (value is TOKEN token)
+                Add(token);
+            else
+                base.Add(value);
+        }
+
+        public override void AddAfterToken(GDSyntaxToken newToken, GDSyntaxToken afterThisToken)
+        {
+            if (newToken is TOKEN token)
+            {
+                if (afterThisToken is TOKEN afterToken)
+                {
+                    var node = _list.Find(afterToken);
+
+                    if (node == null)
+                        throw new NullReferenceException("There is no specific token in the form");
+
+                    var index = _statePoints.IndexOf(node);
+
+                    var nextIndex = index + 1;
+
+                    newToken.Parent = _owner;
+
+                    if (nextIndex == _statePoints.Count)
+                        _statePoints.Add(_list.AddAfter(node, token));
+                    else
+                        _statePoints.Insert(nextIndex, _list.AddAfter(node, token));
+                }
+                else
+                {
+                    var node = _list.Find(afterThisToken);
+
+                    if (node == null)
+                        throw new NullReferenceException("There is no specific token in the form");
+
+                    LinkedListNode<GDSyntaxToken> nextTypedToken = null;
+                    var next = node.Next;
+                    while (next != null)
+                    {
+                        if (next.Value is TOKEN)
+                        {
+                            nextTypedToken = next;
+                            break;
+                        }
+                        next = next.Next;
+                    }
+
+                    newToken.Parent = _owner;
+
+                    if (nextTypedToken == null)
+                    {
+                        _statePoints.Add(_list.AddAfter(node, token));
+                    }
+                    else
+                    {
+                        var index = _statePoints.IndexOf(nextTypedToken);
+                        _statePoints.Insert(index, _list.AddAfter(node, token));
+                    }
+                }
+            }
+            else
+            {
+                base.AddAfterToken(newToken, afterThisToken);
+            }
+        }
+
+        public override void AddBeforeToken(GDSyntaxToken newToken, GDSyntaxToken beforeThisToken)
+        {
+            if (newToken is TOKEN token)
+            {
+                if (beforeThisToken is TOKEN beforeToken)
+                {
+                    var node = _list.Find(beforeToken);
+
+                    if (node == null)
+                        throw new NullReferenceException("There is no specific token in the form");
+
+                    var index = _statePoints.IndexOf(node);
+
+                    var previousIndex = index - 1;
+                    newToken.Parent = _owner;
+
+                    _statePoints.Insert(previousIndex, _list.AddBefore(node, token));
+                }
+                else
+                {
+                    var node = _list.Find(beforeThisToken);
+
+                    if (node == null)
+                        throw new NullReferenceException("There is no specific token in the form");
+
+                    LinkedListNode<GDSyntaxToken> nextTypedToken = null;
+                    var next = node.Next;
+                    while (next != null)
+                    {
+                        if (next.Value is TOKEN)
+                        {
+                            nextTypedToken = next;
+                            break;
+                        }
+                        next = next.Next;
+                    }
+
+                    newToken.Parent = _owner;
+                    
+                    if (nextTypedToken == null)
+                    {
+                        _statePoints.Add(_list.AddAfter(node, token));
+                    }
+                    else
+                    {
+                        var index = _statePoints.IndexOf(nextTypedToken);
+                        _statePoints.Insert(index, _list.AddAfter(node, token));
+                    }
+                }
+            }
+            else
+            {
+                base.AddBeforeToken(newToken, beforeThisToken);
+            }
+        }
+
+        public override void AddBeforeToken(GDSyntaxToken newToken, int statePointIndex)
+        {
+            if (newToken is TOKEN token)
+            {
+                var node = _statePoints[statePointIndex];
+                newToken.Parent = _owner;
+                _statePoints.Insert(statePointIndex, _list.AddBefore(node, token));
+            }
+            else
+            {
+                base.AddBeforeToken(newToken, statePointIndex);
+            }
+        }
+
+        public bool Contains(TOKEN item)
         {
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
@@ -54,7 +192,7 @@ namespace GDShrapt.Reader
             return _list.Contains(item);
         }
 
-        public void CopyTo(NODE[] array, int arrayIndex)
+        public void CopyTo(TOKEN[] array, int arrayIndex)
         {
             for (int i = 0; i < _statePoints.Count; i++)
             {
@@ -63,11 +201,11 @@ namespace GDShrapt.Reader
                 if (node == null || node.Value == null)
                     continue;
 
-                array[arrayIndex++] = (NODE)node.Value;
+                array[arrayIndex++] = (TOKEN)node.Value;
             }
         }
 
-        public int IndexOf(NODE item)
+        public int IndexOf(TOKEN item)
         {
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
@@ -80,13 +218,14 @@ namespace GDShrapt.Reader
             return _statePoints.IndexOf(node);
         }
 
-        public void Insert(int index, NODE item)
+        public void Insert(int index, TOKEN item)
         {
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
 
             var node = _statePoints[index];
             var newNode =_list.AddBefore(node, item);
+            item.Parent = _owner;
             _statePoints.Insert(index, newNode);
         }
 
@@ -109,7 +248,7 @@ namespace GDShrapt.Reader
 
         public void ClearAllTokens() => base.Clear();
 
-        public bool Remove(NODE item)
+        public bool Remove(TOKEN item)
         {
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
@@ -123,6 +262,7 @@ namespace GDShrapt.Reader
 
             _statePoints.Remove(node);
             _list.Remove(node);
+            StateIndex--;
             return true;
         }
 
@@ -135,11 +275,12 @@ namespace GDShrapt.Reader
 
             _statePoints.RemoveAt(index);
             _list.Remove(node);
+            StateIndex--;
         }
 
-        IEnumerator<NODE> IEnumerable<NODE>.GetEnumerator()
+        IEnumerator<TOKEN> IEnumerable<TOKEN>.GetEnumerator()
         {
-            return _statePoints.OfType<NODE>().GetEnumerator();
+            return _statePoints.OfType<TOKEN>().GetEnumerator();
         }
     }
 
@@ -167,7 +308,6 @@ namespace GDShrapt.Reader
         {
 
         }
-
         public void AddBeforeToken0(GDSyntaxToken token) => AddMiddle(token, 0);
         public T0 Token0 { get => Get<T0>(0); set => Set(value, 0); }
         public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 1);
@@ -629,7 +769,10 @@ namespace GDShrapt.Reader
         }
     }
 
-    internal abstract class GDTokensForm : ICollection<GDSyntaxToken>
+    /// <summary>
+    /// Basic class which contains form (like a skeleton) of the specific node
+    /// </summary>
+    public abstract class GDTokensForm : ICollection<GDSyntaxToken>
     {
         protected LinkedList<GDSyntaxToken> _list;
         protected List<LinkedListNode<GDSyntaxToken>> _statePoints;
@@ -643,7 +786,7 @@ namespace GDShrapt.Reader
         protected readonly GDNode _owner;
         readonly int _initialSize;
 
-        public GDTokensForm(GDNode owner, int size)
+        internal GDTokensForm(GDNode owner, int size)
         {
             _owner = owner;
 
@@ -655,7 +798,7 @@ namespace GDShrapt.Reader
                 _statePoints.Add(_list.AddLast(default(GDSyntaxToken)));
         }
 
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
         {
             _owner = owner;
 
@@ -669,18 +812,50 @@ namespace GDShrapt.Reader
             AddBeforeToken(token, StateIndex);
         }
 
-        public void AddBeforeToken(GDSyntaxToken token, int index)
+        public virtual void AddBeforeToken(GDSyntaxToken newToken, int statePointIndex)
         {
-            if (token is null)
-                throw new System.ArgumentNullException(nameof(token));
+            if (newToken is null)
+                throw new System.ArgumentNullException(nameof(newToken));
 
-            if (index < _statePoints.Count)
-                AddMiddle(token, index);
+            if (statePointIndex < _statePoints.Count)
+                AddMiddle(newToken, statePointIndex);
             else
-                Add(token);
+                Add(newToken);
         }
 
-        public void Add(GDSyntaxToken value)
+        public virtual void AddBeforeToken(GDSyntaxToken newToken, GDSyntaxToken beforeThisToken)
+        {
+            if (newToken is null)
+                throw new System.ArgumentNullException(nameof(newToken));
+            if (beforeThisToken is null)
+                throw new System.ArgumentNullException(nameof(beforeThisToken));
+
+            var node = _list.Find(beforeThisToken);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            newToken.Parent = _owner;
+            _list.AddBefore(node, newToken);
+        }
+
+        public virtual void AddAfterToken(GDSyntaxToken newToken, GDSyntaxToken afterThisToken)
+        {
+            if (newToken is null)
+                throw new System.ArgumentNullException(nameof(newToken));
+            if (afterThisToken is null)
+                throw new System.ArgumentNullException(nameof(afterThisToken));
+
+            var node = _list.Find(afterThisToken);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            newToken.Parent = _owner;
+            _list.AddAfter(node, newToken);
+        }
+
+        public virtual void Add(GDSyntaxToken value)
         {
             if (value is null)
                 throw new System.ArgumentNullException(nameof(value));
@@ -711,6 +886,9 @@ namespace GDShrapt.Reader
         {
             var node = _statePoints[index];
 
+            if (node.Value != null)
+                node.Value.Parent = null; 
+
             if (value != null)
                 value.Parent = _owner;
 
@@ -734,6 +912,9 @@ namespace GDShrapt.Reader
             {
                 var node = _statePoints[index];
 
+                if (node.Value != null)
+                    node.Value.Parent = null;
+
                 if (value != null)
                     value.Parent = _owner;
 
@@ -741,8 +922,8 @@ namespace GDShrapt.Reader
             }
         }
 
-        protected T Get<T>(int index) where T : GDSyntaxToken => (T)_statePoints[index].Value;
-        protected GDSyntaxToken Get(int index) => _statePoints[index].Value;
+        public T Get<T>(int statePointIndex) where T : GDSyntaxToken => (T)_statePoints[statePointIndex].Value;
+        public GDSyntaxToken Get(int index) => _statePoints[index].Value;
 
 
         public void Clear()
@@ -800,7 +981,14 @@ namespace GDShrapt.Reader
 
         public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
-            return _list.Where(x => x != null).GetEnumerator();
+            var node = _list.First;
+
+            do
+            {
+                if (node.Value != null)
+                    yield return node.Value;
+                node = node.Next;
+            } while (node != null);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -808,9 +996,21 @@ namespace GDShrapt.Reader
             return GetEnumerator();
         }
 
-        internal IEnumerable<GDSyntaxToken> GetAllTokensAfter(int index)
+        public IEnumerable<GDSyntaxToken> Reversed()
         {
-            var node = _statePoints[index];
+            var node = _list.Last;
+
+            do
+            {
+                if (node.Value != null)
+                    yield return node.Value;
+                node = node.Previous;
+            } while (node != null);
+        }
+
+        public IEnumerable<GDSyntaxToken> GetAllTokensAfter(int statePointIndex)
+        {
+            var node = _statePoints[statePointIndex];
 
             var next = node.Next;
             while (next != null)
@@ -821,10 +1021,55 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal int CountTokensBetween(int start, int end)
+        public IEnumerable<GDSyntaxToken> GetAllTokensAfter(GDSyntaxToken token)
         {
-            var s = _statePoints[start];
-            var e = _statePoints[end];
+            var node = _list.Find(token);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            var next = node.Next;
+            while (next != null)
+            {
+                if (next.Value != null)
+                    yield return next.Value;
+                next = next.Next;
+            }
+        }
+
+        public IEnumerable<GDSyntaxToken> GetTokensBefore(int statePointIndex)
+        {
+            var node = _statePoints[statePointIndex];
+
+            var previous = node.Previous;
+            while (previous != null)
+            {
+                if (previous.Value != null)
+                    yield return previous.Value;
+                previous = previous.Previous;
+            }
+        }
+
+        public IEnumerable<GDSyntaxToken> GetTokensBefore(GDSyntaxToken token)
+        {
+            var node = _list.Find(token);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            var previous = node.Previous;
+            while (previous != null)
+            {
+                if (previous.Value != null)
+                    yield return previous.Value;
+                previous = previous.Previous;
+            }
+        }
+
+        public int CountTokensBetween(int statePointStartIndex, int statePointEndIndex)
+        {
+            var s = _statePoints[statePointStartIndex];
+            var e = _statePoints[statePointEndIndex];
 
             int counter = 0;
             var next = s.Next;

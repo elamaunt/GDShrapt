@@ -12,7 +12,7 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        internal GDSquareOpenBracket SquareOpenBracket
+        public GDSquareOpenBracket SquareOpenBracket
         {
             get => _form.Token1;
             set => _form.Token1 = value;
@@ -22,7 +22,7 @@
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        internal GDSquareCloseBracket SquareCloseBracket
+        public GDSquareCloseBracket SquareCloseBracket
         {
             get => _form.Token3;
             set => _form.Token3 = value;
@@ -39,7 +39,7 @@
 
 
         readonly GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDIndexerExression()
         {
             _form = new GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket>(this);

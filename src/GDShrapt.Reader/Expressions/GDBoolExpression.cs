@@ -6,7 +6,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Literal);
 
-        internal GDBoolKeyword BoolKeyword
+        public GDBoolKeyword BoolKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -22,7 +22,7 @@
         }
 
         readonly GDTokensForm<State, GDBoolKeyword> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDBoolExpression()
         {
             _form = new GDTokensForm<State, GDBoolKeyword>(this);

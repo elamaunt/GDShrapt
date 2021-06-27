@@ -4,8 +4,8 @@
         IKeywordReceiver<GDBreakPointKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Breakpoint);
-        
-        internal GDBreakPointKeyword BreakPointKeyword
+
+        public GDBreakPointKeyword BreakPointKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -18,7 +18,7 @@
         }
 
         readonly GDTokensForm<State, GDBreakPointKeyword> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDBreakPointExpression()
         {
             _form = new GDTokensForm<State, GDBreakPointKeyword>(this);

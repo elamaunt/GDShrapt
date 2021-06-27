@@ -5,7 +5,7 @@
         ITypeReceiver,
         IStringReceiver
     {
-        internal GDExtendsKeyword ExtendsKeyword
+        public GDExtendsKeyword ExtendsKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -30,7 +30,7 @@
         }
 
         readonly GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDExtendsAtribute()
         {
             _form = new GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken>(this);

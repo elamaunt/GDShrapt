@@ -20,5 +20,8 @@ namespace GDShrapt.Reader
             state.Pop();
             state.PassChar('#');
         }
+
+        public override int Length => ToString().Length;
+        public override int NewLinesCount => 0;
     }
 }

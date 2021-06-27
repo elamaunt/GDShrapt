@@ -5,7 +5,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.MatchCaseVariable);
 
-        internal GDVarKeyword VarKeyword 
+        public GDVarKeyword VarKeyword 
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -24,7 +24,7 @@
         }
 
         readonly GDTokensForm<State, GDVarKeyword, GDIdentifier> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDMatchCaseVariableExpression()
         {
             _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier>(this);

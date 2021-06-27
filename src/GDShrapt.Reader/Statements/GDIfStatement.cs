@@ -11,7 +11,11 @@
             get => _form.Token0 ?? (_form.Token0 = new GDIfBranch(LineIntendation));
             set => _form.Token0 = value;
         }
-        public GDElifBranchesList ElifBranchesList { get => _form.Token1 ?? (_form.Token1 = new GDElifBranchesList(LineIntendation)); }
+        public GDElifBranchesList ElifBranchesList
+        {
+            get => _form.Token1 ?? (_form.Token1 = new GDElifBranchesList(LineIntendation));
+            set => _form.Token1 = value;
+        }
         public GDElseBranch ElseBranch
         {
             get => _form.Token2 ?? (_form.Token2 = new GDElseBranch(LineIntendation));
@@ -27,7 +31,7 @@
         }
 
         readonly GDTokensForm<State, GDIfBranch, GDElifBranchesList, GDElseBranch> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         internal GDIfStatement(int lineIntendation)
             : base(lineIntendation)

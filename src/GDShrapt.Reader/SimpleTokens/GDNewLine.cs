@@ -8,5 +8,7 @@
         {
             return new GDNewLine();
         }
+
+        public override int NewLinesCount => 1;
     }
 }

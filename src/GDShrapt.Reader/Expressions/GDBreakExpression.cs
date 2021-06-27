@@ -5,7 +5,7 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Break);
 
-        internal GDBreakKeyword BreakKeyword
+        public GDBreakKeyword BreakKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -18,7 +18,7 @@
         }
 
         readonly GDTokensForm<State, GDBreakKeyword> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDBreakExpression()
         {
             _form = new GDTokensForm<State, GDBreakKeyword>(this);

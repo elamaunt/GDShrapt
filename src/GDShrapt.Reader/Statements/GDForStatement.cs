@@ -6,7 +6,7 @@
         ITokenReceiver<GDColon>,
         IExpressionsReceiver
     {
-        internal GDForKeyword ForKeyword
+        public GDForKeyword ForKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -16,7 +16,7 @@
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        internal GDInKeyword InKeyword
+        public GDInKeyword InKeyword
         {
             get => _form.Token2;
             set => _form.Token2 = value;
@@ -26,13 +26,22 @@
             get => _form.Token3;
             set => _form.Token3 = value;
         }
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
+        public GDExpression Expression
+        {
+            get => _form.Token5;
+            set => _form.Token5 = value;
+        }
 
-        public GDStatementsList Statements { get => _form.Token6?? (_form.Token6 = new GDStatementsList(LineIntendation + 1)); }
+        public GDStatementsList Statements 
+        {
+            get => _form.Token6 ?? (_form.Token6 = new GDStatementsList(LineIntendation + 1));
+            set => _form.Token6 = value;
+        }
 
         enum State
         {
@@ -41,22 +50,23 @@
             In,
             Collection,
             Colon,
+            Expression,
             Statements,
             Completed
         }
 
-        readonly GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList> _form;
-        internal override GDTokensForm Form => _form;
+        readonly GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
+        public override GDTokensForm Form => _form;
 
         internal GDForStatement(int lineIntendation)
             : base(lineIntendation)
         {
-            _form = new GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDForStatement()
         {
-            _form = new GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -94,6 +104,9 @@
                     state.Push(new GDSingleCharTokenResolver<GDColon>(this));
                     state.PassChar(c);
                     break;
+                case State.Expression:
+                    this.ResolveExpression(c, state);
+                    break;
                 case State.Statements:
                     this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
@@ -112,6 +125,7 @@
                 case State.Variable:
                 case State.Colon:
                 case State.Collection:
+                case State.Expression:
                 case State.Statements:
                     _form.State = State.Completed;
                     state.Push(Statements);
@@ -138,6 +152,13 @@
                 return;
             }
 
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.Completed;
+                Expression = token;
+                return;
+            }
+
             throw new GDInvalidReadingStateException();
         }
 
@@ -149,6 +170,12 @@
                 return;
             }
 
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.Statements;
+                return;
+            }
+
             throw new GDInvalidReadingStateException();
         }
 
@@ -157,7 +184,7 @@
             if (_form.State == State.Colon)
             {
                 Colon = token;
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 return;
             }
 
@@ -168,7 +195,7 @@
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 return;
             }
 

@@ -6,7 +6,7 @@
         ITokenReceiver<GDComma>,
         IStringReceiver
     {
-        internal GDClassNameKeyword ClassNameKeyword
+        public GDClassNameKeyword ClassNameKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -16,8 +16,7 @@
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-
-        internal GDComma Comma
+        public GDComma Comma
         {
             get => _form.Token2;
             set => _form.Token2 = value;
@@ -39,7 +38,7 @@
         }
 
         readonly GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
 
         public GDClassNameAtribute()
         {

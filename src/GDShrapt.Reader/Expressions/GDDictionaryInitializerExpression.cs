@@ -6,13 +6,17 @@
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.DictionaryInitializer);
 
-        internal GDFigureOpenBracket FigureOpenBracket
+        public GDFigureOpenBracket FigureOpenBracket
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        public GDDictionaryKeyValueDeclarationList KeyValues { get => _form.Token1 ?? (_form.Token1 = new GDDictionaryKeyValueDeclarationList()); }
-        internal GDFigureCloseBracket FigureCloseBracket
+        public GDDictionaryKeyValueDeclarationList KeyValues
+        {
+            get => _form.Token1 ?? (_form.Token1 = new GDDictionaryKeyValueDeclarationList());
+            set => _form.Token1 = value;
+        }
+        public GDFigureCloseBracket FigureCloseBracket
         {
             get => _form.Token2;
             set => _form.Token2 = value;
@@ -27,7 +31,7 @@
         }
 
         readonly GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDDictionaryInitializerExpression()
         {
             _form = new GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket>(this);

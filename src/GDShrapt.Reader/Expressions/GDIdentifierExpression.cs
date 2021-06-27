@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDIdentifierExpression : GDExpression
     {
@@ -16,7 +18,7 @@
         }
 
         readonly GDTokensForm<State, GDIdentifier> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         public GDIdentifierExpression()
         {
             _form = new GDTokensForm<State, GDIdentifier>(this);
@@ -43,6 +45,14 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDIdentifierExpression();
+        }
+
+        public override IEnumerable<GDIdentifier> GetDependencies()
+        {
+            var identifier = Identifier;
+
+            if (identifier != null)
+                yield return identifier;
         }
     }
 }

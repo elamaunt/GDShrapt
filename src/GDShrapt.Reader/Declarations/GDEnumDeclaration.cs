@@ -5,7 +5,7 @@
         ITokenReceiver<GDFigureOpenBracket>,
         ITokenReceiver<GDFigureCloseBracket>
     {
-        internal GDEnumKeyword EnumKeyword
+        public GDEnumKeyword EnumKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -15,13 +15,17 @@
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        internal GDFigureOpenBracket FigureOpenBracket
+        public GDFigureOpenBracket FigureOpenBracket
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-        public GDEnumValuesList Values { get => _form.Token3 ?? (_form.Token3 = new GDEnumValuesList()); }
-        internal GDFigureCloseBracket FigureCloseBracket
+        public GDEnumValuesList Values 
+        {
+            get => _form.Token3 ?? (_form.Token3 = new GDEnumValuesList());
+            set => _form.Token3 = value;
+        }
+        public GDFigureCloseBracket FigureCloseBracket
         {
             get => _form.Token4;
             set => _form.Token4 = value;
@@ -38,7 +42,7 @@
         }
 
         readonly GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> _form;
-        internal override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form;
         internal GDEnumDeclaration(int intendation)
            : base(intendation)
         {

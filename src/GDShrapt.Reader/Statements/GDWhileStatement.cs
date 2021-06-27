@@ -6,46 +6,54 @@ namespace GDShrapt.Reader
         IExpressionsReceiver,
         ITokenReceiver<GDColon>
     {
-        internal GDWhileKeyword WhileKeyword
+        public GDWhileKeyword WhileKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
         public GDExpression Condition
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        internal GDColon Colon
+        public GDColon Colon
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
-
-        public GDStatementsList Statements { get => _form.Token4 ?? (_form.Token4 = new GDStatementsList(LineIntendation + 1)); }
+        public GDExpression Expression
+        {
+            get => _form.Token3;
+            set => _form.Token3 = value;
+        }
+        public GDStatementsList Statements 
+        {
+            get => _form.Token4 ?? (_form.Token4 = new GDStatementsList(LineIntendation + 1));
+            set => _form.Token4 = value;
+        }
 
         enum State
         {
             While,
             Condition,
             Colon,
+            Expression,
             Statements,
             Completed
         }
 
-        readonly GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList> _form;
-        internal override GDTokensForm Form => _form;
+        readonly GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
+        public override GDTokensForm Form => _form;
 
         internal GDWhileStatement(int lineIntendation)
             : base(lineIntendation)
         {
-            _form = new GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDWhileStatement()
         {
-            _form = new GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDNewLine, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -71,6 +79,9 @@ namespace GDShrapt.Reader
                     state.Push(new GDSingleCharTokenResolver<GDColon>(this));
                     state.PassChar(c);
                     break;
+                case State.Expression:
+                    this.ResolveExpression(c, state);
+                    break;
                 case State.Statements:
                     this.ResolveInvalidToken(c, state, x => x.IsNewLine());
                     break;
@@ -87,6 +98,7 @@ namespace GDShrapt.Reader
             {
                 case State.Condition:
                 case State.Colon:
+                case State.Expression:
                 case State.Statements:
                     _form.State = State.Completed;
                     state.PushAndPassNewLine(Statements);
@@ -134,6 +146,13 @@ namespace GDShrapt.Reader
                 return;
             }
 
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.Completed;
+                Expression = token;
+                return;
+            }
+
             throw new GDInvalidReadingStateException();
         }
 
@@ -145,6 +164,12 @@ namespace GDShrapt.Reader
                 return;
             }
 
+            if (_form.State == State.Expression)
+            {
+                _form.State = State.Statements;
+                return;
+            }
+
             throw new GDInvalidReadingStateException();
         }
 
@@ -152,7 +177,7 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 Colon = token;
                 return;
             }
@@ -164,7 +189,7 @@ namespace GDShrapt.Reader
         {
             if (_form.State == State.Colon)
             {
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 return;
             }
 

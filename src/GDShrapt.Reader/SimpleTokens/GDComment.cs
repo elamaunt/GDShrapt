@@ -1,7 +1,15 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDComment : GDCharSequence
     {
+        public new string Sequence
+        {
+            get => base.Sequence;
+            set => base.Sequence = (value?.StartsWith("#") ?? true) ? value : "#" + value;
+        }
+
         public GDComment()
         {
         }
