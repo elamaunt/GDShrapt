@@ -280,7 +280,13 @@ namespace GDShrapt.Reader
 
         IEnumerator<TOKEN> IEnumerable<TOKEN>.GetEnumerator()
         {
-            return _statePoints.OfType<TOKEN>().GetEnumerator();
+            for (int i = 0; i < _statePoints.Count; i++)
+                yield return (TOKEN)_statePoints[i].Value;
+        }
+
+        new IEnumerator<GDSyntaxToken> GetEnumerator()
+        {
+            return base.GetEnumerator();
         }
     }
 
@@ -982,6 +988,31 @@ namespace GDShrapt.Reader
         public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
             var node = _list.First;
+            
+            if (node == null)
+                yield break;
+
+            do
+            {
+                if (node.Value != null)
+                    yield return node.Value;
+                node = node.Next;
+            } while (node != null);
+
+            yield break;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public IEnumerable<GDSyntaxToken> Direct()
+        {
+            var node = _list.First;
+
+            if (node == null)
+                yield break;
 
             do
             {
@@ -991,14 +1022,12 @@ namespace GDShrapt.Reader
             } while (node != null);
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
         public IEnumerable<GDSyntaxToken> Reversed()
         {
             var node = _list.Last;
+
+            if (node == null)
+                yield break;
 
             do
             {

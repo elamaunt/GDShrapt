@@ -10,5 +10,6 @@
         }
 
         public override int NewLinesCount => 1;
+        public override int Length => 0;
     }
 }

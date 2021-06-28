@@ -21,7 +21,7 @@ namespace GDShrapt.Reader
             _form = new GDTokensListForm<NODE>(this);
         }
 
-        public NODE this[int index] 
+        public new NODE this[int index] 
         {
             get => _form[index];
             set

@@ -69,7 +69,9 @@ namespace GDShrapt.Reader
                 if (parent == null)
                     return 0;
 
-                return parent.StartLine + parent.Form.GetTokensBefore(this).Sum(x => x.NewLinesCount) + NewLinesCount;
+                var tokensBefore = parent.Form.GetTokensBefore(this);
+
+                return parent.StartLine + tokensBefore.Sum(x => x.NewLinesCount);
             }
         }
 
@@ -83,15 +85,12 @@ namespace GDShrapt.Reader
                 var parent = _parent;
 
                 if (parent == null)
-                {
-                    Debug.WriteLine($"StartColumn {TypeName} parent null");
                     return 0;
-                }
 
                 int start = 0;
                 bool found = false;
 
-                foreach (var item in parent.AllTokensReversed)
+                foreach (var item in parent.TokensReversed)
                 {
                     if (item == this)
                     {
@@ -104,13 +103,15 @@ namespace GDShrapt.Reader
 
                     if (item is GDNode node)
                     {
-                        foreach (var innerToken in node.AllTokensReversed)
+                        int tokensCount;
+                        if (node.CheckNewLine(out tokensCount))
                         {
-                            if (item.NewLinesCount == 0)
-                                start += item.Length;
-                            else
-                                return start;
-                        } 
+                            return start + tokensCount;
+                        }
+                        else
+                        {
+                            start += tokensCount;
+                        }
                     }
                     else
                     {
@@ -120,8 +121,6 @@ namespace GDShrapt.Reader
                             return start;
                     }
                 }
-
-                Debug.WriteLine($"StartColumn {TypeName} offset of parent {start}");
 
                 return parent.StartColumn + start;
             }

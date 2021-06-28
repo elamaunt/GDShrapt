@@ -12,8 +12,10 @@ namespace GDShrapt.Reader
     {
         public abstract GDTokensForm Form { get; }
         
-        public IEnumerable<GDSyntaxToken> Tokens => Form;
+        public IEnumerable<GDSyntaxToken> Tokens => Form.Direct();
+        public IEnumerable<GDSyntaxToken> TokensReversed => Form.Reversed();
         public IEnumerable<GDNode> Nodes => Tokens.OfType<GDNode>();
+        public IEnumerable<GDNode> NodesReversed => TokensReversed.OfType<GDNode>();
 
         public IEnumerable<GDSyntaxToken> AllTokens
         {
@@ -93,6 +95,26 @@ namespace GDShrapt.Reader
                 throw new InvalidOperationException("The specified node has a different parent.");
 
             return Form.Remove(token);
+        }
+
+        /// <summary>
+        /// Checks the last newLine in the node. If no new lines in the node returns the length of the token. 
+        /// Otherwise returns character count before the last new line.
+        /// </summary>
+        /// <param name="tokensCount">Count of the character before the last 'new line'</param>
+        /// <returns>Is 'new line' character exist in the node</returns>
+        public bool CheckNewLine(out int tokensCount)
+        {
+            tokensCount = 0;
+
+            foreach (var token in AllTokensReversed)
+            {
+                if (token.NewLinesCount > 0)
+                    return true;
+                tokensCount += token.Length;
+            }
+
+            return false;
         }
 
         internal override void HandleSharpChar(GDReadingState state)

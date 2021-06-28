@@ -178,5 +178,113 @@ func get_recognized_extensions(res): # func comment
             var clone = @class.Clone();
             AssertHelper.CompareCodeStrings(@class.ToString(), clone.ToString());
         }
+
+        [TestMethod]
+        public void StartLineAndColumnTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func _init(res : string = ""Hello world"").(res) -> void:
+	._init(""1234"");
+	var array = [1,
+                 2,
+                 3]
+	for i in array:
+		print(i)
+	pass";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+            Assert.AreEqual(1, @class.Methods.Count());
+
+            var tokens = @class.AllTokens.ToArray();
+
+            int i = 0;
+
+            CheckPosition(tokens[i++], 0, 0); // intendation
+            CheckPosition(tokens[i++], 0, 0); // func
+            CheckPosition(tokens[i++], 0, 4); // ' '
+            CheckPosition(tokens[i++], 0, 5); // _init
+            CheckPosition(tokens[i++], 0, 10); // (
+            CheckPosition(tokens[i++], 0, 11); // res
+            CheckPosition(tokens[i++], 0, 14); // ' '
+            CheckPosition(tokens[i++], 0, 15); // :
+            CheckPosition(tokens[i++], 0, 16); // ' '
+            CheckPosition(tokens[i++], 0, 17); // string
+            CheckPosition(tokens[i++], 0, 23); // ' '
+            CheckPosition(tokens[i++], 0, 24); // =
+            CheckPosition(tokens[i++], 0, 25); // ' '
+            CheckPosition(tokens[i++], 0, 26); // "Hello world"
+            CheckPosition(tokens[i++], 0, 39); // )
+            CheckPosition(tokens[i++], 0, 40); // .
+            CheckPosition(tokens[i++], 0, 41); // (
+            CheckPosition(tokens[i++], 0, 42); // res
+            CheckPosition(tokens[i++], 0, 45); // )
+            CheckPosition(tokens[i++], 0, 46); // ' '
+            CheckPosition(tokens[i++], 0, 47); // ->
+            CheckPosition(tokens[i++], 0, 49); // ' '
+            CheckPosition(tokens[i++], 0, 50); // void
+            CheckPosition(tokens[i++], 0, 54); // :
+            CheckPosition(tokens[i++], 0, 55); // \n
+
+            CheckPosition(tokens[i++], 1, 0); // intendation
+            CheckPosition(tokens[i++], 1, 1); // .
+            CheckPosition(tokens[i++], 1, 2); // _init
+            CheckPosition(tokens[i++], 1, 7); // (
+            CheckPosition(tokens[i++], 1, 8); // "1234"
+            CheckPosition(tokens[i++], 1, 14); // )
+            CheckPosition(tokens[i++], 1, 15); // ;
+            CheckPosition(tokens[i++], 1, 16); // \n
+
+            CheckPosition(tokens[i++], 2, 0); // intendation
+            CheckPosition(tokens[i++], 2, 1); // var
+            CheckPosition(tokens[i++], 2, 4); // ' '
+            CheckPosition(tokens[i++], 2, 5); // array
+            CheckPosition(tokens[i++], 2, 10); // ' '
+            CheckPosition(tokens[i++], 2, 11); // =
+            CheckPosition(tokens[i++], 2, 12); // ' '
+            CheckPosition(tokens[i++], 2, 13); // [
+            CheckPosition(tokens[i++], 2, 14); // 1
+            CheckPosition(tokens[i++], 2, 15); // ,
+            CheckPosition(tokens[i++], 2, 16); // \n
+
+            CheckPosition(tokens[i++], 3, 0); // '                 ' big space
+            CheckPosition(tokens[i++], 3, 17); // 2
+            CheckPosition(tokens[i++], 3, 18); // ,
+            CheckPosition(tokens[i++], 3, 19); // \n
+
+            CheckPosition(tokens[i++], 4, 0); // '                 ' big space
+            CheckPosition(tokens[i++], 4, 17); // 3
+            CheckPosition(tokens[i++], 4, 18); // ]
+            CheckPosition(tokens[i++], 4, 19); // \n
+
+            CheckPosition(tokens[i++], 5, 0); // intendation
+            CheckPosition(tokens[i++], 5, 1); // for
+            CheckPosition(tokens[i++], 5, 4); // ' '
+            CheckPosition(tokens[i++], 5, 5); // i
+            CheckPosition(tokens[i++], 5, 6); // ' '
+            CheckPosition(tokens[i++], 5, 7); // in
+            CheckPosition(tokens[i++], 5, 9); // ' '
+            CheckPosition(tokens[i++], 5, 10); // array
+            CheckPosition(tokens[i++], 5, 15); // :
+            CheckPosition(tokens[i++], 5, 16); // \n
+
+            CheckPosition(tokens[i++], 6, 0); // intendation 2
+            CheckPosition(tokens[i++], 6, 2); // print
+            CheckPosition(tokens[i++], 6, 7); // (
+            CheckPosition(tokens[i++], 6, 8); // i
+            CheckPosition(tokens[i++], 6, 9); // )
+            CheckPosition(tokens[i++], 6, 10); // \n
+
+            CheckPosition(tokens[i++], 7, 0); // intendation
+            CheckPosition(tokens[i++], 7, 1); // pass
+        }
+
+        private void CheckPosition(GDSyntaxToken token, int line, int column)
+        {
+            Assert.AreEqual(line, token.StartLine);
+            Assert.AreEqual(column, token.StartColumn);
+        }
     }
 }
