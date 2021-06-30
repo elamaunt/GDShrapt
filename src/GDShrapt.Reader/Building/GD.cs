@@ -179,10 +179,41 @@
 
                 return list;
             }
+
+            public static GDParametersList Parameters(params GDParameterDeclaration[] parameters)
+            {
+                var list = new GDParametersList();
+
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (i > 0)
+                    {
+                        list.Form.Add(new GDComma());
+                        list.Form.Add(Syntax.Space());
+                    }
+
+                    list.Add(parameters[i]);
+                }
+
+                return list;
+            }
         }
 
-        public static class Member
+        public static class Declaration
         {
+            public static GDMethodDeclaration Method(GDIdentifier identifier, GDParametersList parameters, bool isStatic = false, params GDStatement[] statements) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = identifier,
+                Colon = new GDColon(),
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket(),
+                [13] = new GDNewLine(),
+                Statements = List.Statements(statements)
+            };
+
             public static GDMethodDeclaration Method(GDIdentifier identifier, bool isStatic = false, params GDStatement[] statements) => new GDMethodDeclaration( )
             { 
                 FuncKeyword = new GDFuncKeyword(),
@@ -193,6 +224,16 @@
                 CloseBracket = new GDCloseBracket(),
                 [13] = new GDNewLine(),
                 Statements = List.Statements(statements)
+            };
+
+            public static GDParameterDeclaration Parameter(string identifier) => new GDParameterDeclaration()
+            {
+                Identifier = Syntax.Identifier(identifier)
+            };
+
+            public static GDParameterDeclaration Parameter(GDIdentifier identifier) => new GDParameterDeclaration()
+            { 
+                Identifier = identifier
             };
         }
     }

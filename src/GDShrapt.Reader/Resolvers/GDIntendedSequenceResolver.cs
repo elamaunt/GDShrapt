@@ -43,6 +43,12 @@
             HandleChar('\n', state);
         }
 
+        protected override void OnIntendationThresholdMet(GDReadingState state)
+        {
+            base.OnIntendationThresholdMet(state);
+            OnFail(state);
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             var s = Sequence;

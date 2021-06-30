@@ -88,6 +88,7 @@ namespace GDShrapt.Reader
                     // The 'end of the block' condition
                     if (LineIntendationThreshold > _lineIntendation)
                     {
+                        OnIntendationThresholdMet(state);
                         state.Pop();
 
                         // Pass all data to the previous node
@@ -107,6 +108,11 @@ namespace GDShrapt.Reader
 
             // It's OK
             return false;
+        }
+
+        protected virtual void OnIntendationThresholdMet(GDReadingState state)
+        {
+            // Nothing
         }
 
         internal sealed override void HandleNewLineChar(GDReadingState state)

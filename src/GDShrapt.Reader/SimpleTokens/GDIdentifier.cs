@@ -77,22 +77,22 @@ namespace GDShrapt.Reader
 
         public static bool operator ==(GDIdentifier one, GDIdentifier two)
         {
-            /*if (one == null)
-                return two == null;
+            if (ReferenceEquals(one, null))
+                return ReferenceEquals(two, null);
 
-            if (two == null)
-                return false;*/
+            if (ReferenceEquals(two,null))
+                return false;
 
             return string.Equals(one.Sequence, two.Sequence, StringComparison.Ordinal);
         }
 
         public static bool operator !=(GDIdentifier one, GDIdentifier two)
         {
-            /*if (one == null)
-                return two != null;
+            if (ReferenceEquals(one, null))
+                return !ReferenceEquals(two, null);
 
-            if (two == null)
-                return true;*/
+            if (ReferenceEquals(two,null))
+                return true;
 
             return !string.Equals(one.Sequence, two.Sequence, StringComparison.Ordinal);
         }
@@ -118,7 +118,5 @@ namespace GDShrapt.Reader
         {
             return $"{Sequence}";
         }
-
-        
     }
 }

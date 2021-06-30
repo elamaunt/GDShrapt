@@ -18,4 +18,14 @@
     <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Scripts\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Scripts\Sample.gd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
