@@ -180,7 +180,7 @@ func get_recognized_extensions(res): # func comment
         }
 
         [TestMethod]
-        public void StartLineAndColumnTest()
+        public void LineAndColumnTest()
         {
             var reader = new GDScriptReader();
 
@@ -202,89 +202,92 @@ func get_recognized_extensions(res): # func comment
 
             int i = 0;
 
-            CheckPosition(tokens[i++], 0, 0); // intendation
-            CheckPosition(tokens[i++], 0, 0); // func
-            CheckPosition(tokens[i++], 0, 4); // ' '
-            CheckPosition(tokens[i++], 0, 5); // _init
-            CheckPosition(tokens[i++], 0, 10); // (
-            CheckPosition(tokens[i++], 0, 11); // res
-            CheckPosition(tokens[i++], 0, 14); // ' '
-            CheckPosition(tokens[i++], 0, 15); // :
-            CheckPosition(tokens[i++], 0, 16); // ' '
-            CheckPosition(tokens[i++], 0, 17); // string
-            CheckPosition(tokens[i++], 0, 23); // ' '
-            CheckPosition(tokens[i++], 0, 24); // =
-            CheckPosition(tokens[i++], 0, 25); // ' '
-            CheckPosition(tokens[i++], 0, 26); // "Hello world"
-            CheckPosition(tokens[i++], 0, 39); // )
-            CheckPosition(tokens[i++], 0, 40); // .
-            CheckPosition(tokens[i++], 0, 41); // (
-            CheckPosition(tokens[i++], 0, 42); // res
-            CheckPosition(tokens[i++], 0, 45); // )
-            CheckPosition(tokens[i++], 0, 46); // ' '
-            CheckPosition(tokens[i++], 0, 47); // ->
-            CheckPosition(tokens[i++], 0, 49); // ' '
-            CheckPosition(tokens[i++], 0, 50); // void
-            CheckPosition(tokens[i++], 0, 54); // :
-            CheckPosition(tokens[i++], 0, 55); // \n
+            CheckPosition(tokens[i++], 0, 0, 0, 0); // intendation
+            CheckPosition(tokens[i++], 0, 0, 0, 4); // func
+            CheckPosition(tokens[i++], 0, 4, 0, 5); // ' '
+            CheckPosition(tokens[i++], 0, 5, 0, 10); // _init
+            CheckPosition(tokens[i++], 0, 10, 0, 11); // (
+            CheckPosition(tokens[i++], 0, 11, 0, 14); // res
+            CheckPosition(tokens[i++], 0, 14, 0, 15); // ' '
+            CheckPosition(tokens[i++], 0, 15, 0, 16); // :
+            CheckPosition(tokens[i++], 0, 16, 0, 17); // ' '
+            CheckPosition(tokens[i++], 0, 17, 0, 23); // string
+            CheckPosition(tokens[i++], 0, 23, 0, 24); // ' '
+            CheckPosition(tokens[i++], 0, 24, 0, 25); // =
+            CheckPosition(tokens[i++], 0, 25, 0, 26); // ' '
+            CheckPosition(tokens[i++], 0, 26, 0, 39); // "Hello world"
+            CheckPosition(tokens[i++], 0, 39, 0, 40); // )
+            CheckPosition(tokens[i++], 0, 40, 0, 41); // .
+            CheckPosition(tokens[i++], 0, 41, 0, 42); // (
+            CheckPosition(tokens[i++], 0, 42, 0, 45); // res
+            CheckPosition(tokens[i++], 0, 45, 0, 46); // )
+            CheckPosition(tokens[i++], 0, 46, 0, 47); // ' '
+            CheckPosition(tokens[i++], 0, 47, 0, 49); // ->
+            CheckPosition(tokens[i++], 0, 49, 0, 50); // ' '
+            CheckPosition(tokens[i++], 0, 50, 0, 54); // void
+            CheckPosition(tokens[i++], 0, 54, 0, 55); // :
+            CheckPosition(tokens[i++], 0, 55, 1, 0); // \n
 
-            CheckPosition(tokens[i++], 1, 0); // intendation
-            CheckPosition(tokens[i++], 1, 1); // .
-            CheckPosition(tokens[i++], 1, 2); // _init
-            CheckPosition(tokens[i++], 1, 7); // (
-            CheckPosition(tokens[i++], 1, 8); // "1234"
-            CheckPosition(tokens[i++], 1, 14); // )
-            CheckPosition(tokens[i++], 1, 15); // ;
-            CheckPosition(tokens[i++], 1, 16); // \n
+            CheckPosition(tokens[i++], 1, 0, 1, 1); // intendation
+            CheckPosition(tokens[i++], 1, 1, 1, 2); // .
+            CheckPosition(tokens[i++], 1, 2, 1, 7); // _init
+            CheckPosition(tokens[i++], 1, 7, 1, 8); // (
+            CheckPosition(tokens[i++], 1, 8, 1, 14); // "1234"
+            CheckPosition(tokens[i++], 1, 14, 1, 15); // )
+            CheckPosition(tokens[i++], 1, 15, 1, 16); // ;
+            CheckPosition(tokens[i++], 1, 16, 2, 0); // \n
 
-            CheckPosition(tokens[i++], 2, 0); // intendation
-            CheckPosition(tokens[i++], 2, 1); // var
-            CheckPosition(tokens[i++], 2, 4); // ' '
-            CheckPosition(tokens[i++], 2, 5); // array
-            CheckPosition(tokens[i++], 2, 10); // ' '
-            CheckPosition(tokens[i++], 2, 11); // =
-            CheckPosition(tokens[i++], 2, 12); // ' '
-            CheckPosition(tokens[i++], 2, 13); // [
-            CheckPosition(tokens[i++], 2, 14); // 1
-            CheckPosition(tokens[i++], 2, 15); // ,
-            CheckPosition(tokens[i++], 2, 16); // \n
+            CheckPosition(tokens[i++], 2, 0, 2, 1); // intendation
+            CheckPosition(tokens[i++], 2, 1, 2, 4); // var
+            CheckPosition(tokens[i++], 2, 4, 2, 5); // ' '
+            CheckPosition(tokens[i++], 2, 5, 2, 10); // array
+            CheckPosition(tokens[i++], 2, 10, 2, 11); // ' '
+            CheckPosition(tokens[i++], 2, 11, 2, 12); // =
+            CheckPosition(tokens[i++], 2, 12, 2, 13); // ' '
+            CheckPosition(tokens[i++], 2, 13, 2, 14); // [
+            CheckPosition(tokens[i++], 2, 14, 2, 15); // 1
+            CheckPosition(tokens[i++], 2, 15, 2, 16); // ,
+            CheckPosition(tokens[i++], 2, 16, 3, 0); // \n
 
-            CheckPosition(tokens[i++], 3, 0); // '                 ' big space
-            CheckPosition(tokens[i++], 3, 17); // 2
-            CheckPosition(tokens[i++], 3, 18); // ,
-            CheckPosition(tokens[i++], 3, 19); // \n
+            CheckPosition(tokens[i++], 3, 0, 3, 17); // '                 ' big space
+            CheckPosition(tokens[i++], 3, 17, 3, 18); // 2
+            CheckPosition(tokens[i++], 3, 18, 3, 19); // ,
+            CheckPosition(tokens[i++], 3, 19, 4, 0); // \n
 
-            CheckPosition(tokens[i++], 4, 0); // '                 ' big space
-            CheckPosition(tokens[i++], 4, 17); // 3
-            CheckPosition(tokens[i++], 4, 18); // ]
-            CheckPosition(tokens[i++], 4, 19); // \n
+            CheckPosition(tokens[i++], 4, 0, 4, 17); // '                 ' big space
+            CheckPosition(tokens[i++], 4, 17, 4, 18); // 3
+            CheckPosition(tokens[i++], 4, 18, 4, 19); // ]
+            CheckPosition(tokens[i++], 4, 19, 5, 0); // \n
 
-            CheckPosition(tokens[i++], 5, 0); // intendation
-            CheckPosition(tokens[i++], 5, 1); // for
-            CheckPosition(tokens[i++], 5, 4); // ' '
-            CheckPosition(tokens[i++], 5, 5); // i
-            CheckPosition(tokens[i++], 5, 6); // ' '
-            CheckPosition(tokens[i++], 5, 7); // in
-            CheckPosition(tokens[i++], 5, 9); // ' '
-            CheckPosition(tokens[i++], 5, 10); // array
-            CheckPosition(tokens[i++], 5, 15); // :
-            CheckPosition(tokens[i++], 5, 16); // \n
+            CheckPosition(tokens[i++], 5, 0, 5, 1); // intendation
+            CheckPosition(tokens[i++], 5, 1, 5, 4); // for
+            CheckPosition(tokens[i++], 5, 4, 5, 5); // ' '
+            CheckPosition(tokens[i++], 5, 5, 5, 6); // i
+            CheckPosition(tokens[i++], 5, 6, 5, 7); // ' '
+            CheckPosition(tokens[i++], 5, 7, 5, 9); // in
+            CheckPosition(tokens[i++], 5, 9, 5, 10); // ' '
+            CheckPosition(tokens[i++], 5, 10, 5, 15); // array
+            CheckPosition(tokens[i++], 5, 15, 5, 16); // :
+            CheckPosition(tokens[i++], 5, 16, 6, 0); // \n
 
-            CheckPosition(tokens[i++], 6, 0); // intendation 2
-            CheckPosition(tokens[i++], 6, 2); // print
-            CheckPosition(tokens[i++], 6, 7); // (
-            CheckPosition(tokens[i++], 6, 8); // i
-            CheckPosition(tokens[i++], 6, 9); // )
-            CheckPosition(tokens[i++], 6, 10); // \n
+            CheckPosition(tokens[i++], 6, 0, 6, 2); // intendation 2
+            CheckPosition(tokens[i++], 6, 2, 6, 7); // print
+            CheckPosition(tokens[i++], 6, 7, 6, 8); // (
+            CheckPosition(tokens[i++], 6, 8, 6, 9); // i
+            CheckPosition(tokens[i++], 6, 9, 6, 10); // )
+            CheckPosition(tokens[i++], 6, 10, 7, 0); // \n
 
-            CheckPosition(tokens[i++], 7, 0); // intendation
-            CheckPosition(tokens[i++], 7, 1); // pass
+            CheckPosition(tokens[i++], 7, 0, 7, 1); // intendation
+            CheckPosition(tokens[i++], 7, 1, 7, 5); // pass
         }
 
-        private void CheckPosition(GDSyntaxToken token, int line, int column)
+        private void CheckPosition(GDSyntaxToken token, int startLine, int startColumn, int endLine, int endColumn)
         {
-            Assert.AreEqual(line, token.StartLine);
-            Assert.AreEqual(column, token.StartColumn);
+            Assert.AreEqual(startLine, token.StartLine);
+            Assert.AreEqual(startColumn, token.StartColumn);
+
+            Assert.AreEqual(endLine, token.EndLine);
+            Assert.AreEqual(endColumn, token.EndColumn);
         }
     }
 }

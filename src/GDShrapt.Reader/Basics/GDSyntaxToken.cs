@@ -76,6 +76,24 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Ending token's line in the code which is represented by the tree.
+        /// </summary>
+        public int EndLine
+        {
+            get
+            {
+                var parent = _parent;
+
+                if (parent == null)
+                    return 0;
+
+                var tokensBefore = parent.Form.GetTokensBefore(this);
+
+                return parent.StartLine + tokensBefore.Sum(x => x.NewLinesCount) + NewLinesCount;
+            }
+        }
+
+        /// <summary>
         /// Starting token's column in the code which is represented by the tree.
         /// </summary>
         public int StartColumn
@@ -125,6 +143,11 @@ namespace GDShrapt.Reader
                 return parent.StartColumn + start;
             }
         }
+
+        /// <summary>
+        /// Ending token's column in the code which is represented by the tree.
+        /// </summary>
+        public virtual int EndColumn => StartColumn + Length;
 
         /// <summary>
         /// The length of the code (represented by the token) in characters

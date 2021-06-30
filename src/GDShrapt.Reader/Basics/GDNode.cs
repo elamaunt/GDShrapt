@@ -166,6 +166,78 @@ namespace GDShrapt.Reader
 
         public override int NewLinesCount => Tokens.Sum(x => x.NewLinesCount);
 
+        public override int EndColumn
+        {
+            get
+            {
+                int column = 0;
+
+                foreach (var item in TokensReversed)
+                {
+                    if (item is GDNode node)
+                    {
+                        int tokensCount;
+                        if (node.CheckNewLine(out tokensCount))
+                        {
+                            return tokensCount + column;
+                        }
+                        else
+                        {
+                            column += tokensCount;
+                        }
+                    }
+                    else
+                    {
+                        if (item.NewLinesCount == 0)
+                            column += item.Length;
+                        else
+                            return column;
+                    }
+                }
+
+                var parent = Parent;
+
+                if (parent == null)
+                    return column;
+
+                bool found = false;
+
+                foreach (var item in parent.TokensReversed)
+                {
+                    if (item == this)
+                    {
+                        found = true;
+                        continue;
+                    }
+
+                    if (!found)
+                        continue;
+
+                    if (item is GDNode node)
+                    {
+                        int tokensCount;
+                        if (node.CheckNewLine(out tokensCount))
+                        {
+                            return column + tokensCount;
+                        }
+                        else
+                        {
+                            column += tokensCount;
+                        }
+                    }
+                    else
+                    {
+                        if (item.NewLinesCount == 0)
+                            column += item.Length;
+                        else
+                            return column;
+                    }
+                }
+
+                return parent.StartColumn + column;
+            }
+        }
+
         public virtual IEnumerable<GDIdentifier> GetDependencies()
         {
             return Nodes.SelectMany(x => x.GetDependencies());

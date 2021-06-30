@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDElseBranch : GDIntendedNode,
+    public sealed class GDElseBranch : GDNode,
         IKeywordReceiver<GDElseKeyword>,
         ITokenReceiver<GDColon>,
         IExpressionsReceiver
@@ -22,7 +22,7 @@
         }
         public GDStatementsList Statements
         {
-            get => _form.Token3 ?? (_form.Token3 = new GDStatementsList(Intendation + 1));
+            get => _form.Token3 ?? (_form.Token3 = new GDStatementsList(_intendation + 1));
             set => _form.Token3 = value;
         }
 
@@ -35,12 +35,13 @@
             Completed
         }
 
+        private readonly int _intendation;
         readonly GDTokensForm<State, GDElseKeyword, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form;
 
-        internal GDElseBranch(int intendation) 
-            : base(intendation)
+        internal GDElseBranch(int intendation)
         {
+            _intendation = intendation;
             _form = new GDTokensForm<State, GDElseKeyword, GDColon, GDExpression, GDStatementsList>(this);
         }
 

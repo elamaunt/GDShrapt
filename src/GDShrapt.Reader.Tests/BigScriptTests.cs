@@ -7,7 +7,7 @@ namespace GDShrapt.Reader.Tests
     public class BigScriptTests
     {
         [TestMethod]
-        public void BigScriptPrasingTest()
+        public void BigScriptParsingTest()
         {
             var reader = new GDScriptReader();
 
