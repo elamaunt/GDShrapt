@@ -238,6 +238,15 @@ namespace GDShrapt.Reader
             }
         }
 
+        /// <summary>
+        /// Searches all <see cref="GDIntendation"/> tokens and calls <see cref="GDIntendation.Update"/> for every one
+        /// </summary>
+        public void UpdateIntendation()
+        {
+            foreach (var intendation in AllTokens.OfType<GDIntendation>())
+                intendation.Update();
+        }
+
         public virtual IEnumerable<GDIdentifier> GetDependencies()
         {
             return Nodes.SelectMany(x => x.GetDependencies());

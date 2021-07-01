@@ -17,14 +17,5 @@
         {
             Form.AddBeforeActiveToken(token);
         }
-
-        public void FormatIntendation()
-        {
-            
-
-            
-
-            //AllNodes
-        }
     }
 }

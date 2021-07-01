@@ -1,9 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDMatchCaseDeclaration : GDNode,
+    public sealed class GDMatchCaseDeclaration : GDIntendedNode,
         ITokenReceiver<GDColon>
     {
-        private int _lineIntendation;
         public GDExpressionsList Conditions { get => _form.Token0 ?? (_form.Token0 = new GDExpressionsList()); }
 
         public GDColon Colon
@@ -14,7 +13,7 @@
 
         public GDStatementsList Statements 
         { 
-            get => _form.Token2 ?? (_form.Token2 = new GDStatementsList(_lineIntendation + 1));
+            get => _form.Token2 ?? (_form.Token2 = new GDStatementsList(Intendation + 1));
             set => _form.Token2 = value;
         }
 
@@ -29,8 +28,8 @@
         readonly GDTokensForm<State, GDExpressionsList, GDColon, GDStatementsList> _form;
         public override GDTokensForm Form => _form;
         internal GDMatchCaseDeclaration(int lineIntendation)
+            : base(lineIntendation)
         {
-            _lineIntendation = lineIntendation;
             _form = new GDTokensForm<State, GDExpressionsList, GDColon, GDStatementsList>(this);
         }
 
