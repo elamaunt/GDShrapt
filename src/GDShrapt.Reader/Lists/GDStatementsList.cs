@@ -1,4 +1,7 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDStatementsList : GDSeparatedList<GDStatement, GDNewLine>, IStatementsReceiver
     {
@@ -43,6 +46,21 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDStatementsList();
+        }
+
+        public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
+        {
+            if (beforeLine.HasValue)
+            {
+                return Form.Direct()
+                      .OfType<GDVariableDeclarationStatement>()
+                      .Select(x => x.Identifier);
+            }
+
+            return Form.Direct()
+                       .OfType<GDVariableDeclarationStatement>()
+                       .Where(x => x.StartLine < beforeLine)
+                       .Select(x => x.Identifier);
         }
 
         void IStatementsReceiver.HandleReceivedToken(GDStatement token)

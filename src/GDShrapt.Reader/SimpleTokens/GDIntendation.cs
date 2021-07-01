@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 
 namespace GDShrapt.Reader
 {
@@ -56,6 +54,10 @@ namespace GDShrapt.Reader
             };
         }
 
+        /// <summary>
+        /// Counts all <see cref="GDIntendedNode"/> in parents and updates <see cref="LineIntendationThreshold"/> with the count.
+        /// Also updates the <see cref="Sequence"/>.
+        /// </summary>
         public void Update()
         {
             var p = Parent;

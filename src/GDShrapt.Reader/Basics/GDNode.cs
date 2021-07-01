@@ -239,6 +239,17 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Returns variable identifiers that are visible before line and defined by this node and its children
+        /// Actual only for method scope.
+        /// </summary>
+        /// <param name="beforeLine">Excluded line. Actual for <see cref="GDStatementsList"/></param>
+        /// <returns>Enumeration</returns>
+        public virtual IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
+        {
+            return Enumerable.Empty<GDIdentifier>();
+        }
+
+        /// <summary>
         /// Searches all <see cref="GDIntendation"/> tokens and calls <see cref="GDIntendation.Update"/> for every one
         /// </summary>
         public void UpdateIntendation()

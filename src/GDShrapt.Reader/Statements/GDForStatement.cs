@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDForStatement : GDStatement,
         IKeywordReceiver<GDForKeyword>,
@@ -141,6 +143,13 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDForStatement();
+        }
+
+        public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
+        {
+            var v = Variable;
+            if (v != null)
+                yield return v;
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)

@@ -1,4 +1,7 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDMethodDeclaration : GDClassMember, 
         IKeywordReceiver<GDStaticKeyword>,
@@ -211,6 +214,11 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDMethodDeclaration();
+        }
+
+        public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
+        {
+            return Parameters.Select(x => x.Identifier);
         }
 
         void IKeywordReceiver<GDStaticKeyword>.HandleReceivedToken(GDStaticKeyword token)

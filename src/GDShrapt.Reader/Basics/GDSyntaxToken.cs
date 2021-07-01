@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -35,6 +36,38 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Nearest class member
+        /// </summary>
+        public GDClassMember ClassMember => Parents.OfType<GDClassMember>().FirstOrDefault();
+
+        /// <summary>
+        /// Main class if exists
+        /// </summary>
+        public GDClassDeclaration MainClassDeclaration => Parents.OfType<GDClassDeclaration>().FirstOrDefault();
+
+        /// <summary>
+        /// Nearest inner class if exists
+        /// </summary>
+        public GDInnerClassDeclaration InnerClassDeclaration => Parents.OfType<GDInnerClassDeclaration>().FirstOrDefault();
+
+        /// <summary>
+        /// All parent nodes enumeration
+        /// </summary>
+        public IEnumerable<GDNode> Parents
+        {
+            get
+            {
+                var p = Parent;
+
+                while (p != null)
+                {
+                    yield return p;
+                    p = p.Parent;
+                }
+            }
+        }
+
+        /// <summary>
         /// Removes this node from parent or do nothing if <see cref="Parent"/> <see langword="null"/>
         /// </summary>
         public bool RemoveFromParent()
@@ -52,13 +85,13 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Creates deep clone of the current token and it's children
+        /// Creates deep clone of the current token and it's children.
         /// </summary>
         /// <returns>New token with all children (if node)</returns>
         public abstract GDSyntaxToken Clone();
 
         /// <summary>
-        /// Starting token's line in the code which is represented by the tree.
+        /// Starting token's line in the code which is represented by the tree. Calculating property.
         /// </summary>
         public int StartLine
         {
@@ -76,7 +109,7 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Ending token's line in the code which is represented by the tree.
+        /// Ending token's line in the code which is represented by the tree. Calculating property.
         /// </summary>
         public int EndLine
         {
@@ -94,7 +127,7 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Starting token's column in the code which is represented by the tree.
+        /// Starting token's column in the code which is represented by the tree. Calculating property.
         /// </summary>
         public int StartColumn
         {
@@ -145,21 +178,25 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Ending token's column in the code which is represented by the tree.
+        /// Ending token's column in the code which is represented by the tree. Calculating property.
         /// </summary>
         public virtual int EndColumn => StartColumn + Length;
 
         /// <summary>
-        /// The length of the code (represented by the token) in characters
+        /// The length of the code (represented by the token and its children) in characters. Calculating property.
         /// </summary>
         public abstract int Length { get; }
 
         /// <summary>
-        /// New line characters in the token
+        /// New line characters in the token. Checks children. Calculating property.
         /// </summary>
         public abstract int NewLinesCount { get; }
 
 
+        /// <summary>
+        /// Checks whether the token start in range
+        /// </summary>
+        /// <returns>True if start in range</returns>
         public bool IsStartInRange(int startLine, int startColumn, int endLine, int endColumn)
         {
             if (startLine == endLine)
@@ -190,32 +227,99 @@ namespace GDShrapt.Reader
             }
         }
 
-       /* public bool IsWholeInRange(int startLine, int startColumn, int endLine, int endColumn)
+        /// <summary>
+        /// Checks wrether the entire token lies in range.
+        /// </summary>
+        /// <returns>True if lies</returns>
+        public bool IsWholeInRange(int startLine, int startColumn, int endLine, int endColumn)
         {
-            if (startLine == endLine)
+            if (startLine > endLine)
+                throw new ArgumentOutOfRangeException("StartLine must be equals or lower than endLine");
+
+            if (startLine == endLine && startColumn > endColumn)
+                throw new ArgumentOutOfRangeException("StartColumn must be equals or lower than endColumn");
+
+            var tokenStartLine = StartLine;
+
+            if (startLine > tokenStartLine)
+                return false;
+
+            if (startLine == tokenStartLine && StartColumn < startColumn)
+                return false;
+
+            var tokenEndLine = EndLine;
+
+            if (endLine < tokenEndLine)
+                return false;
+
+            if (endLine == tokenEndLine && EndColumn > endColumn)
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns enumeration of visible Identifiers of variables defined before the token.
+        /// </summary>
+        /// <param name="owningMember">The Class member which contains the token</param>
+        /// <returns>Enumeration</returns>
+        public List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(out GDClassMember owningMember)
+        {
+            owningMember = null;
+
+            var startLine = StartLine;
+
+            GDNode node = (this is GDNode n) ? n : Parent;
+
+            var results = new List<GDIdentifier>();
+
+            while (true)
             {
-                var column = Column;
-                return Line == startLine && column >= startColumn && column + Length <= endColumn;
+                node = node.Parent;
+
+                if (node == null || node is GDClassDeclaration || node is GDInnerClassDeclaration)
+                    break;
+
+                if (node is GDMethodDeclaration method)
+                    owningMember = method;
+
+                foreach (var item in node.GetMethodScopeDeclarations(startLine))
+                    results.Add(item);
             }
-            else
+
+            return results;
+        }
+
+        /// <summary>
+        /// Returns enumeration of visible Identifiers of variables defined before the token.
+        /// </summary>
+        /// <param name="owningMember">The Class member which contains the token</param>
+        /// <returns>Enumeration</returns>
+        public List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(int beforeLine, out GDClassMember owningMember)
+        {
+            owningMember = null;
+
+            GDNode node = (this is GDNode n) ? n : Parent;
+
+            var results = new List<GDIdentifier>();
+
+            while (true)
             {
-                if (startLine > endLine)
-                    throw new ArgumentOutOfRangeException("startLine must be lower than endLine");
+                node = node.Parent;
 
-                var line = Line;
+                if (node == null || node is GDClassDeclaration || node is GDInnerClassDeclaration)
+                    break;
 
-                if (line == startLine)
-                    return Column >= startColumn;
+                if (node is GDMethodDeclaration method)
+                    owningMember = method;
 
-                if (line == endLine)
-                    return Column <= endColumn;
-
-                if (line < startLine || line > endLine)
-                    return false;
-
-                return true;
+                foreach (var item in node.GetMethodScopeDeclarations(beforeLine))
+                    results.Add(item);
             }
-        }*/
+
+            return results;
+        }
+
 
         object ICloneable.Clone()
         {

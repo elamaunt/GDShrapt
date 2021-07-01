@@ -1,4 +1,7 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDMatchCaseDeclaration : GDIntendedNode,
         ITokenReceiver<GDColon>
@@ -80,6 +83,11 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDMatchCaseDeclaration();
+        }
+
+        public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
+        {
+            return Conditions.AllNodes.OfType<GDMatchCaseVariableExpression>().Select(x => x.Identifier);
         }
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
