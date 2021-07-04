@@ -259,6 +259,42 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Checks wrether the entire token contains the position.
+        /// </summary>
+        /// <returns>True if position at the end or at the start of the token. Also true if the position in the midst of the token. Otherwise false</returns>
+        public bool ContainsPosition(int line, int column)
+        {
+            var startLine = StartLine;
+            var endLine = EndLine;
+
+            if (endLine == line)
+            {
+                if (startLine == line)
+                {
+                    return column >= StartColumn && column <= EndColumn;
+                }
+                else
+                {
+                    return column <= EndColumn;
+                }
+            }
+            else
+            {
+                if (startLine == line)
+                {
+                    return column >= StartColumn;
+                }
+                else
+                {
+                    if (line >= startLine && line < endLine)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Returns enumeration of visible Identifiers of variables defined before the token.
         /// </summary>
         /// <param name="owningMember">The Class member which contains the token</param>
