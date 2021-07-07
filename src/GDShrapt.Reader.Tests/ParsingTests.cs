@@ -61,22 +61,22 @@ func save(path, resource, flags):
             var expression = reader.ParseExpression(code);
 
             Assert.IsNotNull(expression);
-            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
 
-            var @dualOperator = (GDDualOperatorExression)expression;
+            var @dualOperator = (GDDualOperatorExpression)expression;
             Assert.AreEqual(GDDualOperatorType.And2, @dualOperator.OperatorType);
 
             var leftExpression = @dualOperator.LeftExpression;
 
             Assert.IsNotNull(leftExpression);
-            Assert.IsInstanceOfType(leftExpression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(leftExpression, typeof(GDDualOperatorExpression));
             
             var rightExpression = @dualOperator.RightExpression;
 
             Assert.IsNotNull(rightExpression);
-            Assert.IsInstanceOfType(rightExpression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(rightExpression, typeof(GDDualOperatorExpression));
 
-            var @leftDualOperator = (GDDualOperatorExression)leftExpression;
+            var @leftDualOperator = (GDDualOperatorExpression)leftExpression;
 
             Assert.IsInstanceOfType(@leftDualOperator.LeftExpression, typeof(GDIdentifierExpression));
             Assert.IsNotNull(@leftDualOperator.LeftExpression);
@@ -86,7 +86,7 @@ func save(path, resource, flags):
             Assert.AreEqual("a", ((GDIdentifierExpression)@leftDualOperator.LeftExpression).Identifier.Sequence);
             Assert.AreEqual("b", ((GDIdentifierExpression)@leftDualOperator.RightExpression).Identifier.Sequence);
 
-            var @rightDualOperator = (GDDualOperatorExression)rightExpression;
+            var @rightDualOperator = (GDDualOperatorExpression)rightExpression;
 
             Assert.IsInstanceOfType(@rightDualOperator.LeftExpression, typeof(GDIdentifierExpression));
             Assert.IsNotNull(@rightDualOperator.LeftExpression);
@@ -110,9 +110,9 @@ func save(path, resource, flags):
 
             Assert.IsNotNull(expression);
 
-            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
 
-            var @dualOperator = (GDDualOperatorExression)expression;
+            var @dualOperator = (GDDualOperatorExpression)expression;
 
             Assert.AreEqual(GDDualOperatorType.Assignment, @dualOperator.OperatorType);
             Assert.AreEqual("a > b > c", @dualOperator.LeftExpression.ToString());
@@ -174,7 +174,7 @@ else:
             Assert.IsInstanceOfType(ifStatement.ElseBranch.Statements[0], typeof(GDExpressionStatement));
 
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.IfBranch.Statements[0]).Expression, typeof(GDReturnExpression));
-            Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[0]).Expression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[0]).Expression, typeof(GDDualOperatorExpression));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
@@ -394,7 +394,7 @@ else:
 
             var whileStatement = (GDWhileStatement)statement;
 
-            Assert.IsInstanceOfType(whileStatement.Condition, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(whileStatement.Condition, typeof(GDDualOperatorExpression));
             Assert.AreEqual("a > b", whileStatement.Condition.ToString());
 
             Assert.AreEqual(1, whileStatement.Statements.Count);
@@ -1043,9 +1043,9 @@ export(AnimationNode) var resource
 
                 var expression = reader.ParseExpression(code);
                 Assert.IsNotNull(expression);
-                Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+                Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
 
-                var dualOperatorExpression = (GDDualOperatorExression)expression;
+                var dualOperatorExpression = (GDDualOperatorExpression)expression;
 
                 Assert.AreEqual("a", dualOperatorExpression.LeftExpression.ToString());
                 Assert.AreEqual("b", dualOperatorExpression.RightExpression.ToString());
@@ -1236,7 +1236,7 @@ export(AnimationNode) var resource
             Assert.IsNotNull(ifExpression.Condition);
             Assert.IsNotNull(ifExpression.FalseExpression);
 
-            Assert.IsInstanceOfType(ifExpression.Condition, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(ifExpression.Condition, typeof(GDDualOperatorExpression));
 
             Assert.AreEqual("3 + 4", ifExpression.TrueExpression.ToString());
             Assert.AreEqual("-y != 10", ifExpression.Condition.ToString());
@@ -1276,23 +1276,23 @@ export(AnimationNode) var resource
             var expression = reader.ParseExpression(code);
 
             Assert.IsNotNull(expression);
-            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
 
-            var dualOperator = (GDDualOperatorExression)expression;
+            var dualOperator = (GDDualOperatorExpression)expression;
 
             Assert.AreEqual("13", dualOperator.LeftExpression.ToString());
 
             Assert.AreEqual(GDDualOperatorType.Addition, dualOperator.OperatorType);
 
-            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDDualOperatorExpression));
 
-            var dualOperator2 = (GDDualOperatorExression)dualOperator.RightExpression;
+            var dualOperator2 = (GDDualOperatorExpression)dualOperator.RightExpression;
 
             Assert.AreEqual("3.0", dualOperator2.RightExpression.ToString());
 
-            Assert.IsInstanceOfType(dualOperator2.LeftExpression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(dualOperator2.LeftExpression, typeof(GDDualOperatorExpression));
 
-            var dualOperator3 = (GDDualOperatorExression)dualOperator2.LeftExpression;
+            var dualOperator3 = (GDDualOperatorExpression)dualOperator2.LeftExpression;
 
             Assert.AreEqual("-2", dualOperator3.LeftExpression.ToString());
             Assert.IsInstanceOfType(dualOperator3.RightExpression, typeof(GDSingleOperatorExpression));
@@ -1342,16 +1342,16 @@ export(AnimationNode) var resource
             var expression = reader.ParseExpression(code);
 
             Assert.IsNotNull(expression);
-            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
 
-            var dualOperator = (GDDualOperatorExression)expression;
+            var dualOperator = (GDDualOperatorExpression)expression;
 
             Assert.AreEqual(GDDualOperatorType.Addition, dualOperator.OperatorType);
 
             Assert.IsInstanceOfType(dualOperator.LeftExpression, typeof(GDCallExpression));
-            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDDualOperatorExression));
+            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDDualOperatorExpression));
 
-            var rightDualOperator = (GDDualOperatorExression)dualOperator.RightExpression;
+            var rightDualOperator = (GDDualOperatorExpression)dualOperator.RightExpression;
 
             Assert.AreEqual(GDDualOperatorType.Division, rightDualOperator.OperatorType);
             Assert.AreEqual("D()", rightDualOperator.LeftExpression.ToString());

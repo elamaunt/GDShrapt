@@ -139,7 +139,7 @@
                     return;
                 }
 
-                if (_expression is GDDualOperatorExression dualOperatorExpression)
+                if (_expression is GDDualOperatorExpression dualOperatorExpression)
                 {
                     if (dualOperatorExpression.OperatorType == GDDualOperatorType.Null && dualOperatorExpression.RightExpression == null)
                     {
@@ -189,7 +189,7 @@
                     return;
                 }
 
-                PushAndSwap(state, new GDDualOperatorExression());
+                PushAndSwap(state, new GDDualOperatorExpression());
                 state.PassChar(c);
             }
         }

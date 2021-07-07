@@ -6,7 +6,11 @@ namespace GDShrapt.Reader
     public sealed class GDMatchCaseDeclaration : GDIntendedNode,
         ITokenReceiver<GDColon>
     {
-        public GDExpressionsList Conditions { get => _form.Token0 ?? (_form.Token0 = new GDExpressionsList()); }
+        public GDExpressionsList Conditions 
+        {
+            get => _form.Token0 ?? (_form.Token0 = new GDExpressionsList());
+            set => _form.Token0 = value;
+        }
 
         public GDColon Colon
         {

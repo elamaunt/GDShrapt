@@ -21,6 +21,11 @@ namespace GDShrapt.Reader
             Settings = settings;
         }
 
+        public void ParseFile(object fullPath)
+        {
+            throw new NotImplementedException();
+        }
+
         public GDClassDeclaration ParseFileContent(string content)
         {
             var state = new GDReadingState(Settings);

@@ -11,7 +11,11 @@
             set => _form.Token0 = value;
         }
 
-        public GDPathList Path { get => _form.Token1 ?? (_form.Token1 = new GDPathList()); }
+        public GDPathList Path 
+        {
+            get => _form.Token1 ?? (_form.Token1 = new GDPathList());
+            set => _form.Token1 = value;
+        }
 
         enum State
         {

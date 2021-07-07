@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDDualOperatorExression : GDExpression, IExpressionsReceiver, IDualOperatorReceiver
+    public sealed class GDDualOperatorExpression : GDExpression, IExpressionsReceiver, IDualOperatorReceiver
     {
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public override GDAssociationOrderType AssociationOrder => GDHelper.GetOperatorAssociationOrder(OperatorType);
@@ -36,7 +36,7 @@
 
         readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form;
         public override GDTokensForm Form => _form;
-        public GDDualOperatorExression()
+        public GDDualOperatorExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>(this);
         }
@@ -140,7 +140,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDDualOperatorExression();
+            return new GDDualOperatorExpression();
         }
 
         void IExpressionsReceiver.HandleReceivedToken(GDExpression token)

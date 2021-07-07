@@ -205,7 +205,7 @@ namespace GDShrapt.Converter
 
         }
 
-        public void Visit(GDDualOperatorExression e)
+        public void Visit(GDDualOperatorExpression e)
         {
 
         }
