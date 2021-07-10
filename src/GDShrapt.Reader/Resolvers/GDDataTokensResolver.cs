@@ -2,9 +2,9 @@
 {
     internal class GDDataTokensResolver : GDResolver
     {
-        new IDataTokenReceiver Owner { get; }
+        new ITokenReceiver<GDDataToken> Owner { get; }
 
-        public GDDataTokensResolver(IDataTokenReceiver owner)
+        public GDDataTokensResolver(ITokenReceiver<GDDataToken> owner)
             : base(owner)
         {
             Owner = owner;
@@ -40,13 +40,11 @@
                 return;
             }
 
-            Owner.HandleReceivedTokenSkip();
             state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            Owner.HandleReceivedTokenSkip();
             state.PopAndPassNewLine();
         }
     }

@@ -6,9 +6,9 @@ namespace GDShrapt.Reader
     {
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
-        new IClassAtributesReceiver Owner { get; }
+        new IIntendedTokenReceiver<GDClassAtribute> Owner { get; }
 
-        public GDClassAtributesResolver(IClassAtributesReceiver owner, int lineIntendation)
+        public GDClassAtributesResolver(IIntendedTokenReceiver<GDClassAtribute> owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;

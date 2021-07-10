@@ -2,11 +2,11 @@
 {
     internal class GDElifResolver : GDIntendedSequenceResolver
     {
-        new IElifBranchReceiver Owner { get; }
+        new IIntendedTokenReceiver<GDElifBranch> Owner { get; }
 
         public override string Sequence => "elif";
 
-        public GDElifResolver(IElifBranchReceiver owner, int lineIntendation)
+        public GDElifResolver(IIntendedTokenReceiver<GDElifBranch> owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;

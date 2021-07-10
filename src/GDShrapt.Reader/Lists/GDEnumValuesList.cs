@@ -1,29 +1,19 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDEnumValuesList : GDSeparatedList<GDEnumValueDeclaration, GDNewLine>,
+    public sealed class GDEnumValuesList : GDCommaSeparatedList<GDEnumValueDeclaration>,
         ITokenReceiver<GDEnumValueDeclaration>,
-        ITokenReceiver<GDNewLine>
+        ITokenReceiver<GDComma>
     {
-        internal override void HandleChar(char c, GDReadingState state)
+        internal override GDReader ResolveNode()
         {
-            if (c == ',')
-            {
-                ListForm.Add(new GDComma());
-                return;
-            }
-
-            if (c == '}')
-            {
-                state.PopAndPass(c);
-                return;
-            }
-
-            ListForm.Add(state.PushAndPass(new GDEnumValueDeclaration(), c));
+            var node = new GDEnumValueDeclaration();
+            this.SendToken(node);
+            return node;
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override bool IsStopChar(char c)
         {
-            ListForm.Add(new GDNewLine());
+            return !c.IsIdentifierStartChar() && c != ',';
         }
 
         public override GDNode CreateEmptyInstance()
@@ -36,17 +26,9 @@
             ListForm.Add(token);
         }
 
-        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
         {
             ListForm.Add(token);
-        }
-
-        void ITokenReceiver<GDEnumValueDeclaration>.HandleReceivedTokenSkip()
-        {
-        }
-
-        void ITokenReceiver<GDNewLine>.HandleReceivedTokenSkip()
-        {
         }
     }
 }

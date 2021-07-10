@@ -1,14 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDElifBranchesList : GDSeparatedList<GDElifBranch, GDNewLine>,
-        IElifBranchReceiver
+    public sealed class GDElifBranchesList : GDIntendedTokensList<GDElifBranch>
     {
-        private int _lineIntendationThreshold;
         bool _completed;
 
         internal GDElifBranchesList(int lineIntendation)
+            : base (lineIntendation)
         {
-            _lineIntendationThreshold = lineIntendation;
         }
 
         public GDElifBranchesList()
@@ -21,7 +19,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.PushAndPass(new GDElifResolver(this, _lineIntendationThreshold), c);
+                state.PushAndPass(new GDElifResolver(this, LineIntendationThreshold), c);
                 return;
             }
 
@@ -33,7 +31,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDElifResolver(this, _lineIntendationThreshold));
+                state.Push(new GDElifResolver(this, LineIntendationThreshold));
                 state.PassNewLine();
                 return;
             }
@@ -43,16 +41,6 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDElifBranchesList();
-        }
-
-        void IElifBranchReceiver.HandleReceivedToken(GDElifBranch token)
-        {
-            ListForm.Add(token);
-        }
-
-        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
-        {
-            ListForm.Add(token);
         }
     }
 }

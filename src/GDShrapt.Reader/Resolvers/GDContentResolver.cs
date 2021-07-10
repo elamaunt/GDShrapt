@@ -2,9 +2,11 @@
 {
     internal class GDContentResolver : GDIntendedResolver
     {
-        public GDContentResolver(IIntendationReceiver owner, int lineIntendation) 
+        new IIntendedTokenReceiver<GDNode> Owner { get; }
+        public GDContentResolver(IIntendedTokenReceiver<GDNode> owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
+            Owner = owner;
         }
 
 

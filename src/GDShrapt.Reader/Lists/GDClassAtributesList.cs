@@ -1,13 +1,13 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDClassAtributesList : GDSeparatedList<GDClassAtribute, GDNewLine>, IClassAtributesReceiver
+    public sealed class GDClassAtributesList : GDIntendedTokensList<GDClassAtribute>,
+        ITokenReceiver<GDClassAtribute>
     {
-        private int _lineIntendationThreshold;
         bool _completed;
 
-        internal GDClassAtributesList(int lineIntendation)
+        internal GDClassAtributesList(int lineIntendation) 
+            : base(lineIntendation)
         {
-            _lineIntendationThreshold = lineIntendation;
         }
 
         public GDClassAtributesList()
@@ -19,7 +19,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDClassAtributesResolver(this, _lineIntendationThreshold));
+                state.Push(new GDClassAtributesResolver(this, LineIntendationThreshold));
                 state.PassChar(c);
                 return;
             }
@@ -33,7 +33,7 @@
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDClassAtributesResolver(this, _lineIntendationThreshold));
+                state.Push(new GDClassAtributesResolver(this, LineIntendationThreshold));
                 state.PassNewLine();
                 return;
             }
@@ -47,12 +47,7 @@
             return new GDClassAtributesList();
         }
 
-        void IClassAtributesReceiver.HandleReceivedToken(GDClassAtribute token)
-        {
-            ListForm.Add(token);
-        }
-
-        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
+        void ITokenReceiver<GDClassAtribute>.HandleReceivedToken(GDClassAtribute token)
         {
             ListForm.Add(token);
         }

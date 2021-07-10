@@ -2,11 +2,11 @@
 {
     internal sealed class GDElseResolver : GDIntendedSequenceResolver
     {
-        new IElseBranchReceiver Owner { get; }
+        new IIntendedTokenOrSkipReceiver<GDElseBranch> Owner { get; }
 
         public override string Sequence => "else";
 
-        public GDElseResolver(IElseBranchReceiver owner, int lineIntendation)
+        public GDElseResolver(IIntendedTokenOrSkipReceiver<GDElseBranch> owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;
@@ -14,7 +14,7 @@
 
         protected override void OnFail(GDReadingState state)
         {
-            Owner.HandleReceivedElseBranchSkip();
+            Owner.HandleReceivedTokenSkip();
         }
 
         protected override void OnMatch(GDReadingState state)

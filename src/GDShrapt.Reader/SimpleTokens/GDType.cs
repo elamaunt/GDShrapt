@@ -83,6 +83,13 @@ namespace GDShrapt.Reader
             base.ForceComplete(state);
         }
 
+        public static implicit operator GDType(string type)
+        {
+            return new GDType()
+            {
+                Sequence = type
+            };
+        }
         public override GDSyntaxToken Clone()
         {
             return new GDType()

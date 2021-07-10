@@ -8,9 +8,9 @@ namespace GDShrapt.Reader
 
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
-        new IStatementsReceiver Owner { get; }
+        new IIntendedTokenReceiver<GDStatement> Owner { get; }
 
-        public GDStatementsResolver(IStatementsReceiver owner, int lineIntendation)
+        public GDStatementsResolver(IIntendedTokenReceiver<GDStatement> owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;
@@ -106,7 +106,7 @@ namespace GDShrapt.Reader
                 case "if":
                     {
                         var s = new GDIfStatement(LineIntendationThreshold);
-                        s.SendKeyword(new GDIfKeyword());
+                        s.IfBranch.SendKeyword(new GDIfKeyword());
                         statement = s;
                         break;
                     }

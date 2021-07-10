@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDMatchCasesList : GDSeparatedList<GDMatchCaseDeclaration, GDNewLine>, IMatchCaseReceiver
+    public sealed class GDMatchCasesList : GDIntendedTokensList<GDMatchCaseDeclaration>
     {
         private int _lineIntendationThreshold;
         bool _completed;
@@ -41,16 +41,6 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDMatchCasesList();
-        }
-
-        void IMatchCaseReceiver.HandleReceivedToken(GDMatchCaseDeclaration token)
-        {
-            ListForm.Add(token);
-        }
-
-        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
-        {
-            ListForm.Add(token);
         }
     }
 }

@@ -1,7 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDMatchCaseVariableExpression : GDExpression,
-        IKeywordReceiver<GDVarKeyword>
+        ITokenOrSkipReceiver<GDVarKeyword>,
+        ITokenOrSkipReceiver<GDIdentifier>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.MatchCaseVariable);
 
@@ -36,12 +37,14 @@
             switch (_form.State)
             {
                 case State.Var:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         state.PushAndPass(new GDKeywordResolver<GDVarKeyword>(this), c);
                     break;
                 case State.Identifier:
-                    if (this.ResolveStyleToken(c, state))
+                    if (this.ResolveSpaceToken(c, state))
                         return;
+
+                    this.ResolveIdentifier(c, state);
 
                     if (IsIdentifierStartChar(c))
                     {
@@ -70,7 +73,7 @@
             return new GDMatchCaseVariableExpression();
         }
 
-        void IKeywordReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
+        void ITokenReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
         { 
             if (_form.State == State.Var)
             {
@@ -79,10 +82,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDVarKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDVarKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Var)
             {
@@ -90,7 +93,30 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
+        {
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.Completed;
+                Identifier = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.Identifier)
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
         }
     }
 }

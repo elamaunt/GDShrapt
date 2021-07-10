@@ -4,12 +4,11 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public abstract class GDSeparatedList<NODE, SEPARATOR> : GDNode, IList<NODE>, IStyleTokensReceiver
+    public abstract class GDSeparatedList<NODE, SEPARATOR> : GDNode, IList<NODE>
         where NODE : GDSyntaxToken
         where SEPARATOR : GDSimpleSyntaxToken, new()
     {
         readonly GDTokensListForm<NODE> _form;
-
         public GDTokensListForm<NODE> ListForm => _form;
         public override GDTokensForm Form => _form;
 
@@ -78,25 +77,6 @@ namespace GDShrapt.Reader
         public void RemoveAt(int index)
         {
             _form.RemoveAt(index);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
-        {
-            _form.Add(token);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            _form.Add(token);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
-        {
-            _form.Add(token);
-        }
-        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
-        {
-            _form.Add(token);
         }
     }
 }

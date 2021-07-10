@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDNodePathExpression : GDExpression,
-        ITokenReceiver<GDAt>,
-        IStringReceiver
+        ITokenOrSkipReceiver<GDAt>,
+        ITokenOrSkipReceiver<GDString>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.NodePath);
 
@@ -36,7 +36,7 @@
             switch (_form.State)
             {
                 case State.At:
-                    if (this.ResolveStyleToken(c, state))
+                    if (this.ResolveSpaceToken(c, state))
                         return;
                     this.ResolveAt(c, state);
                     break;
@@ -68,10 +68,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDAt>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDAt>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.At)
             {
@@ -79,10 +79,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IStringReceiver.HandleReceivedToken(GDString token)
+        void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
         {
             if (_form.State == State.Path)
             {
@@ -91,10 +91,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IStringReceiver.HandleReceivedStringSkip()
+        void ITokenSkipReceiver<GDString>.HandleReceivedTokenSkip()
         {
             if(_form.State == State.Path)
             {
@@ -102,7 +102,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

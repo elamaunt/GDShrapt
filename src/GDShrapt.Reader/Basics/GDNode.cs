@@ -8,7 +8,9 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract class GDNode : GDSyntaxToken, IStyleTokensReceiver
+    public abstract class GDNode : GDSyntaxToken,
+        ITokenReceiver<GDComment>,
+        ITokenReceiver<GDSpace>
     {
         public abstract GDTokensForm Form { get; }
         
@@ -268,22 +270,22 @@ namespace GDShrapt.Reader
             Form.AddBeforeActiveToken(token);
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDComment token)
+        void ITokenReceiver<GDComment>.HandleReceivedToken(GDComment token)
         {
             Form.AddBeforeActiveToken(token);
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
+        void ITokenReceiver<GDSpace>.HandleReceivedToken(GDSpace token)
         {
             Form.AddBeforeActiveToken(token);
         }
 
-        void IStyleTokensReceiver.HandleReceivedToken(GDSpace token)
+        void ITokenReceiver.HandleReceivedToken(GDSpace token)
         {
             Form.AddBeforeActiveToken(token);
         }
 
-        void ITokenReceiver.HandleAbstractToken(GDSyntaxToken token)
+        void ITokenReceiver.HandleReceivedToken(GDComment token)
         {
             Form.AddBeforeActiveToken(token);
         }

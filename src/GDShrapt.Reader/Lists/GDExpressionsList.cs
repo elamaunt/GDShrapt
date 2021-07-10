@@ -1,6 +1,9 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDExpressionsList : GDCommaSeparatedList<GDExpression>, IExpressionsReceiver
+    public sealed class GDExpressionsList : GDCommaSeparatedList<GDExpression>,
+        ITokenReceiver<GDExpression>,
+        ITokenReceiver<GDComma>
+
     {
         internal override GDReader ResolveNode()
         {
@@ -17,13 +20,14 @@
             return new GDExpressionsList();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             ListForm.Add(token);
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
         {
+            ListForm.Add(token);
         }
     }
 }

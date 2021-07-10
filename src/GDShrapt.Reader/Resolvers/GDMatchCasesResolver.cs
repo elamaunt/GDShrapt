@@ -4,9 +4,9 @@
     {
         GDSpace _lastSpace;
 
-        new IMatchCaseReceiver Owner { get; }
+        new IIntendedTokenReceiver<GDMatchCaseDeclaration> Owner { get; }
 
-        public GDMatchCasesResolver(IMatchCaseReceiver owner, int lineIntendation)
+        public GDMatchCasesResolver(IIntendedTokenReceiver<GDMatchCaseDeclaration> owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;

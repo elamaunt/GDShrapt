@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDExpressionStatement : GDStatement,
-        IExpressionsReceiver,
-        ITokenReceiver<GDSemiColon>
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDSemiColon>
     {
         public GDExpression Expression
         {
@@ -41,15 +41,15 @@
             switch (_form.State)
             {
                 case State.Expression:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveExpression(c, state);
                     break;
                 case State.SemiColon:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveSemiColon(c, state);
                     break;
                 default:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveInvalidToken(c, state, x => !x.IsSpace());
                     break;
             }
@@ -65,7 +65,7 @@
             return new GDExpressionStatement();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.Expression)
             {
@@ -74,10 +74,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Expression)
             {
@@ -85,7 +85,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDSemiColon>.HandleReceivedToken(GDSemiColon token)
@@ -97,10 +97,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDSemiColon>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDSemiColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.SemiColon)
             {
@@ -108,7 +108,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

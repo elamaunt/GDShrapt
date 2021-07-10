@@ -5,7 +5,7 @@
         public int Index { get; private set; }
         public abstract string Sequence { get; }
 
-        public GDIntendedSequenceResolver(IIntendationReceiver owner, int lineIntendation)
+        public GDIntendedSequenceResolver(IIntendedTokenReceiver owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
         }

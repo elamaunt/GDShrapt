@@ -4,7 +4,7 @@ using System.Linq;
 namespace GDShrapt.Reader
 {
     public sealed class GDMatchCaseDeclaration : GDIntendedNode,
-        ITokenReceiver<GDColon>
+        ITokenOrSkipReceiver<GDColon>
     {
         public GDExpressionsList Conditions 
         {
@@ -47,7 +47,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveStyleToken(c, state))
+            if (this.ResolveSpaceToken(c, state))
                 return;
 
             switch (_form.State)
@@ -103,10 +103,10 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Colon)
             {
@@ -114,7 +114,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

@@ -26,7 +26,7 @@
         {
             if (_form.State == State.String)
             {
-                if (this.ResolveStyleToken(c, state))
+                if (this.ResolveSpaceToken(c, state))
                     return;
 
                 if (IsStringStartChar(c))

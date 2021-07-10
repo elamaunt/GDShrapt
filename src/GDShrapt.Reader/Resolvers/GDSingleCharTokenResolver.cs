@@ -3,11 +3,11 @@
     internal class GDSingleCharTokenResolver<TOKEN> : GDResolver
         where TOKEN : GDSingleCharToken, new()
     {
-        public new ITokenReceiver<TOKEN> Owner { get; }
+        public new ITokenOrSkipReceiver<TOKEN> Owner { get; }
 
         static TOKEN _token = new TOKEN();
 
-        public GDSingleCharTokenResolver(ITokenReceiver<TOKEN> owner)
+        public GDSingleCharTokenResolver(ITokenOrSkipReceiver<TOKEN> owner)
             : base(owner)
         {
             Owner = owner;

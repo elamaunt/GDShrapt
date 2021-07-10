@@ -1,7 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public abstract class GDCommaSeparatedList<NODE> : GDSeparatedList<NODE, GDComma>,
-        ITokenReceiver<GDComma>
+    public abstract class GDCommaSeparatedList<NODE> : GDSeparatedList<NODE, GDComma>, INewLineReceiver
         where NODE : GDSyntaxToken
     {
         bool _checkedNextNode;
@@ -53,14 +52,9 @@
             ListForm.Add(new GDNewLine());
         }
 
-        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
         {
-            ListForm.Add(token);
-        }
-
-        void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
-        {
-
+            ListForm.Add(new GDNewLine());
         }
     }
 }

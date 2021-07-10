@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDIfStatement : GDStatement,
-        IKeywordReceiver<GDIfKeyword>,
-        IElseBranchReceiver
+        IIntendedTokenOrSkipReceiver<GDIfBranch>,
+        IIntendedTokenOrSkipReceiver<GDElseBranch>
     {
         bool _waitForEndLine = true;
 
@@ -60,7 +60,7 @@
                     state.PushAndPassNewLine(new GDElseResolver(this, LineIntendation));
                     break;
                 default:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                     {
                         if (_waitForEndLine)
                             this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
@@ -97,26 +97,26 @@
             return new GDIfStatement();
         }
 
-        void IKeywordReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
+        void ITokenReceiver<GDIfBranch>.HandleReceivedToken(GDIfBranch token)
         {
             if (_form.State == State.IfBranch)
             {
-                IfBranch.SendKeyword(token);
+                IfBranch = token;
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDIfKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDIfBranch>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.IfBranch)
                 return;
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IElseBranchReceiver.HandleReceivedToken(GDElseBranch token)
+        void ITokenReceiver<GDElseBranch>.HandleReceivedToken(GDElseBranch token)
         {
             if (_form.State == State.ElseBranch)
             {
@@ -125,10 +125,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IElseBranchReceiver.HandleReceivedElseBranchSkip()
+        void ITokenSkipReceiver<GDElseBranch>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.ElseBranch)
             {
@@ -136,7 +136,17 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
+        }
+
+        void IIntendedTokenReceiver.HandleReceivedToken(GDIntendation token)
+        {
+            _form.AddBeforeActiveToken(token);
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            _form.AddBeforeActiveToken(token);
         }
     }
 }

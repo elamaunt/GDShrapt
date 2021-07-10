@@ -1,15 +1,16 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDPathList : GDSeparatedList<GDIdentifier, GDRightSlash>,
-        IIdentifierReceiver,
-        ITokenReceiver<GDRightSlash>
+        ITokenReceiver<GDSpace>,
+        ITokenOrSkipReceiver<GDIdentifier>,
+        ITokenOrSkipReceiver<GDRightSlash>
     {
         bool _switch;
         bool _ended;
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveStyleToken(c, state))
+            if (this.ResolveSpaceToken(c, state))
                 return;
 
             if (_ended)
@@ -35,7 +36,7 @@
             return new GDPathList();
         }
 
-        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
             _switch = !_switch;
             ListForm.Add(token);
@@ -46,14 +47,19 @@
             _switch = !_switch;
             ListForm.Add(token);
         }
-        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
             _ended = true;
         }
 
-        void ITokenReceiver<GDRightSlash>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDRightSlash>.HandleReceivedTokenSkip()
         {
             _ended = true;
+        }
+
+        void ITokenReceiver<GDSpace>.HandleReceivedToken(GDSpace token)
+        {
+            ListForm.Add(token);
         }
     }
 }

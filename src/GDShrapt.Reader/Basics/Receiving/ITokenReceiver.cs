@@ -1,15 +1,16 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal interface ITokenReceiver<T> : IStyleTokensReceiver
+    public interface ITokenReceiver<T> : ITokenReceiver
         where T : GDSyntaxToken
     {
         void HandleReceivedToken(T token);
-        void HandleReceivedTokenSkip();
     }
 
-    internal interface ITokenReceiver
+
+    public interface ITokenReceiver
     {
-        void HandleAbstractToken(GDSyntaxToken token);
+        void HandleReceivedToken(GDComment token);
+        void HandleReceivedToken(GDSpace token);
         void HandleReceivedToken(GDInvalidToken token);
     }
 }

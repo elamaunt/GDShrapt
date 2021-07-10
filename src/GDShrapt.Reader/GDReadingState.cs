@@ -41,7 +41,7 @@ namespace GDShrapt.Reader
             while (_readersStack.Count > 0 && count != _readersStack.Count);
 
             if (_readersStack.Count > 0)
-                throw new GDInvalidReadingStateException("Invalid reading state. Readers stack isn't empty. Last reader is: " + CurrentReader);
+                throw new GDInvalidStateException("Invalid reading state. Readers stack isn't empty. Last reader is: " + CurrentReader);
         }
 
         /// <summary>

@@ -23,12 +23,12 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

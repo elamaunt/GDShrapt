@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDToolAtribute : GDClassAtribute, IKeywordReceiver<GDToolKeyword>
+    public sealed class GDToolAtribute : GDClassAtribute, ITokenOrSkipReceiver<GDToolKeyword>
     {
         public GDToolKeyword ToolKeyword
         {
@@ -49,7 +49,7 @@
             return new GDToolAtribute();
         }
 
-        void IKeywordReceiver<GDToolKeyword>.HandleReceivedToken(GDToolKeyword token)
+        void ITokenReceiver<GDToolKeyword>.HandleReceivedToken(GDToolKeyword token)
         {
             if (_form.State == State.Tool)
             {
@@ -58,10 +58,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDToolKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDToolKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Tool)
             {
@@ -69,7 +69,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

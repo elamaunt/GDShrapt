@@ -1,9 +1,9 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDIfExpression : GDExpression,
-        IExpressionsReceiver,
-        IKeywordReceiver<GDIfKeyword>,
-        IKeywordReceiver<GDElseKeyword>
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDIfKeyword>,
+        ITokenOrSkipReceiver<GDElseKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.If);
 
@@ -56,23 +56,23 @@
             switch (_form.State)
             {
                 case State.True:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.If:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         state.PushAndPass(new GDKeywordResolver<GDIfKeyword>(this), c);
                     break;
                 case State.Condition:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.Else:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         state.PushAndPass(new GDKeywordResolver<GDElseKeyword>(this), c);
                     break;
                 case State.False:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 default:
@@ -83,8 +83,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         protected override GDExpression PriorityRebuildingPass()
@@ -136,7 +135,7 @@
             return new GDIfExpression();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.True)
             {
@@ -159,10 +158,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.True)
             {
@@ -182,10 +181,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
+        void ITokenReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
         {
             if (_form.State == State.If)
             {
@@ -194,10 +193,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDIfKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDIfKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.If)
             {
@@ -205,10 +204,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
+        void ITokenReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
         {
             if (_form.State == State.Else)
             {
@@ -217,10 +216,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDElseKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDElseKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Else)
             {
@@ -228,7 +227,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

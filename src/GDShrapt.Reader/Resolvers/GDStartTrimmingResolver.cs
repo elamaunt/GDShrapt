@@ -5,16 +5,18 @@ namespace GDShrapt.Reader
     internal sealed class GDStartTrimmingResolver : GDResolver
     {
         private readonly Func<GDResolver> _factory;
-
-        public GDStartTrimmingResolver(IStyleTokensReceiver owner, Func<GDResolver> factory)
+        new IIntendedTokenReceiver Owner { get; }
+        public GDStartTrimmingResolver(IIntendedTokenReceiver owner, Func<GDResolver> factory)
             : base(owner)
-        { 
+        {
+            Owner = owner;
             _factory = factory;
         }
 
+
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (Owner.ResolveStyleToken(c, state))
+            if (Owner.ResolveSpaceToken(c, state))
                 return;
 
             state.Pop();

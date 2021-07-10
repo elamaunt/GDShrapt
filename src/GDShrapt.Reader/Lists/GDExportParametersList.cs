@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDExportParametersList : GDCommaSeparatedList<GDDataToken>,
-        IDataTokenReceiver,
+        ITokenReceiver<GDDataToken>,
         ITokenReceiver<GDComma>
     {
         internal override bool IsStopChar(char c)
@@ -29,17 +29,9 @@
             ListForm.Add(token);
         }
 
-        void IDataTokenReceiver.HandleReceivedToken(GDDataToken token)
+        void ITokenReceiver<GDDataToken>.HandleReceivedToken(GDDataToken token)
         {
             ListForm.Add(token);
-        }
-
-        void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
-        {
-        }
-
-        void IDataTokenReceiver.HandleReceivedTokenSkip()
-        {
         }
     }
 }

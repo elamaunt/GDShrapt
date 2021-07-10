@@ -1,9 +1,9 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDIndexerExression : GDExpression,
-        IExpressionsReceiver,
-        ITokenReceiver<GDSquareOpenBracket>,
-        ITokenReceiver<GDSquareCloseBracket>
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDSquareOpenBracket>,
+        ITokenOrSkipReceiver<GDSquareCloseBracket>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Indexer);
 
@@ -50,19 +50,19 @@
             switch (_form.State)
             {
                 case State.Caller:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveExpression(c, state);
                     break;
                 case State.SquareOpenBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveSquareOpenBracket(c, state);
                     break;
                 case State.Inner:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveExpression(c, state);
                     break;
                 case State.SquareCloseBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveSquareCloseBracket(c, state);
                     break;
                 default:
@@ -112,7 +112,7 @@
             return new GDIndexerExression();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.Caller)
             {
@@ -128,10 +128,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Caller)
             {
@@ -145,7 +145,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDSquareOpenBracket>.HandleReceivedToken(GDSquareOpenBracket token)
@@ -157,10 +157,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDSquareOpenBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDSquareOpenBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.SquareOpenBracket)
             {
@@ -168,7 +168,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedToken(GDSquareCloseBracket token)
@@ -180,10 +180,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDSquareCloseBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.SquareCloseBracket)
             {
@@ -191,7 +191,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDArrayInitializerExpression : GDExpression,
-        ITokenReceiver<GDSquareOpenBracket>,
-        ITokenReceiver<GDSquareCloseBracket>
+        ITokenOrSkipReceiver<GDSquareOpenBracket>,
+        ITokenOrSkipReceiver<GDSquareCloseBracket>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.ArrayInitializer);
 
@@ -42,7 +42,7 @@
             switch (_form.State)
             {
                 case State.SquareOpenBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveSquareOpenBracket(c, state);
                     break;
                 case State.Values:
@@ -50,7 +50,7 @@
                     state.PushAndPass(Values, c);
                     break;
                 case State.SquareCloseBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveSquareCloseBracket(c, state);
                     break;
                 default:
@@ -80,10 +80,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDSquareOpenBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDSquareOpenBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.SquareOpenBracket)
             {
@@ -91,7 +91,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedToken(GDSquareCloseBracket token)
@@ -103,10 +103,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDSquareCloseBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.SquareCloseBracket)
             {
@@ -114,7 +114,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         public override GDNode CreateEmptyInstance()

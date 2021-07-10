@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDGetNodeExpression : GDExpression,
-        ITokenReceiver<GDDollar>
+        ITokenOrSkipReceiver<GDDollar>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetNode);
 
@@ -36,7 +36,7 @@
             switch (_form.State)
             {
                 case State.Dollar:
-                    if (this.ResolveStyleToken(c, state))
+                    if (this.ResolveSpaceToken(c, state))
                         return;
                     this.ResolveDollar(c, state);
                     break;
@@ -69,10 +69,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDDollar>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDDollar>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Dollar)
             {
@@ -80,7 +80,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

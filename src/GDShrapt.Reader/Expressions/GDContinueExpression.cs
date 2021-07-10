@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDContinueExpression : GDExpression,
-        IKeywordReceiver<GDContinueKeyword>
+        ITokenOrSkipReceiver<GDContinueKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Continue);
 
@@ -46,7 +46,7 @@
             return new GDContinueExpression();
         }
 
-        void IKeywordReceiver<GDContinueKeyword>.HandleReceivedToken(GDContinueKeyword token)
+        void ITokenReceiver<GDContinueKeyword>.HandleReceivedToken(GDContinueKeyword token)
         {
             if (_form.State == State.Continue)
             {
@@ -55,10 +55,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDContinueKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDContinueKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Continue)
             {
@@ -66,7 +66,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

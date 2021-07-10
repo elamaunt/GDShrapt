@@ -1,10 +1,10 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDEnumValueDeclaration : GDNode,
-        IIdentifierReceiver,
-        ITokenReceiver<GDColon>,
-        ITokenReceiver<GDAssign>,
-        IExpressionsReceiver
+        ITokenOrSkipReceiver<GDIdentifier>,
+        ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDAssign>,
+        ITokenOrSkipReceiver<GDExpression>
     {
         bool _checkedColon;
 
@@ -83,7 +83,7 @@
             return new GDEnumValueDeclaration();
         }
 
-        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
             if (_form.State == State.Identifier)
             {
@@ -92,10 +92,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Identifier)
             {
@@ -103,7 +103,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
@@ -116,10 +116,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.ColonOrAssign)
             {
@@ -127,7 +127,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
@@ -139,10 +139,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDAssign>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDAssign>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.ColonOrAssign)
             {
@@ -150,10 +150,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.Value)
             {
@@ -162,10 +162,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Value)
             {
@@ -173,7 +173,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

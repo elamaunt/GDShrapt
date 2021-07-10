@@ -17,7 +17,7 @@ namespace GDShrapt.Reader
             if (c == '\t')
             {
                 if (_spaceCounter > 0)
-                    throw new GDInvalidReadingStateException();
+                    throw new GDInvalidStateException();
 
                 _spaceCounter = 0;
 

@@ -14,9 +14,9 @@ namespace GDShrapt.Reader
         bool _inComment;
         bool _intendationTokensSent;
 
-        new IIntendationReceiver Owner { get; }
+        new IIntendedTokenReceiver Owner { get; }
 
-        public GDIntendedResolver(IIntendationReceiver owner, int lineIntendation)
+        public GDIntendedResolver(IIntendedTokenReceiver owner, int lineIntendation)
             : base(owner)
         {
             Owner = owner;

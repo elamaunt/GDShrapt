@@ -2,8 +2,8 @@
 {
     internal class GDDualOperatorResolver : GDPatternResolver
     {
-        public new IDualOperatorReceiver Owner { get; }
-        public GDDualOperatorResolver(IDualOperatorReceiver owner)
+        public new ITokenOrSkipReceiver<GDDualOperator> Owner { get; }
+        public GDDualOperatorResolver(ITokenOrSkipReceiver<GDDualOperator> owner)
             : base(owner)
         {
             Owner = owner;
@@ -146,7 +146,7 @@
                     Return(GDDualOperatorType.BitwiseOrAndAssign);
                     break;
                 default:
-                    Owner.HandleDualOperatorSkip();
+                    Owner.HandleReceivedTokenSkip();
 
                     if (pattern != null)
                     {

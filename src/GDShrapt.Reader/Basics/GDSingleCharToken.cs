@@ -7,7 +7,7 @@
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (Char != c)
-                throw new GDInvalidReadingStateException();
+                throw new GDInvalidStateException();
 
             state.Pop();
         }
@@ -15,7 +15,7 @@
         internal override void HandleNewLineChar(GDReadingState state)
         {
             if (Char != '\n')
-                throw new GDInvalidReadingStateException();
+                throw new GDInvalidStateException();
 
             state.Pop();
         }
@@ -23,9 +23,9 @@
         internal override void HandleSharpChar(GDReadingState state)
         {
             if (Char != '#')
-                throw new GDInvalidReadingStateException();
+                throw new GDInvalidStateException();
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         public override string ToString()

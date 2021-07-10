@@ -3,18 +3,18 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDStatementsList : GDSeparatedList<GDStatement, GDNewLine>, IStatementsReceiver
+    public sealed class GDStatementsList : GDIntendedTokensList<GDStatement>
     {
-        private int _lineIntendationThreshold;
         bool _completed;
 
         internal GDStatementsList(int lineIntendation)
+             : base(lineIntendation)
         {
-            _lineIntendationThreshold = lineIntendation;
         }
 
         public GDStatementsList()
         {
+
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -22,7 +22,7 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementsResolver(this, _lineIntendationThreshold));
+                state.Push(new GDStatementsResolver(this, LineIntendationThreshold));
                 state.PassChar(c);
                 return;
             }
@@ -35,7 +35,7 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementsResolver(this, _lineIntendationThreshold));
+                state.Push(new GDStatementsResolver(this, LineIntendationThreshold));
                 state.PassNewLine();
                 return;
             }
@@ -61,21 +61,6 @@ namespace GDShrapt.Reader
                        .OfType<GDVariableDeclarationStatement>()
                        .Where(x => x.StartLine < beforeLine)
                        .Select(x => x.Identifier);
-        }
-
-        void IStatementsReceiver.HandleReceivedToken(GDStatement token)
-        {
-            ListForm.Add(token);
-        }
-
-        void IStyleTokensReceiver.HandleReceivedToken(GDNewLine token)
-        {
-            ListForm.Add(token);
-        }
-
-        void IIntendationReceiver.HandleReceivedToken(GDIntendation token)
-        {
-            ListForm.Add(token);
         }
     }
 }

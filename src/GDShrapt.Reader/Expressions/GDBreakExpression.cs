@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDBreakExpression : GDExpression,
-        IKeywordReceiver<GDBreakKeyword>
+        ITokenOrSkipReceiver<GDBreakKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Break);
 
@@ -45,7 +45,7 @@
             return new GDBreakExpression();
         }
 
-        void IKeywordReceiver<GDBreakKeyword>.HandleReceivedToken(GDBreakKeyword token)
+        void ITokenReceiver<GDBreakKeyword>.HandleReceivedToken(GDBreakKeyword token)
         {
             if (_form.State == State.Break)
             {
@@ -54,10 +54,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDBreakKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDBreakKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Break)
             {
@@ -65,7 +65,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

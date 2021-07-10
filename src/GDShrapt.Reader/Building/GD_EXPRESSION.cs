@@ -80,6 +80,18 @@
                 Identifier = identifier
             };
 
+            public static GDMemberOperatorExpression BaseMember(string identifier) => new GDMemberOperatorExpression()
+            {
+                Point = new GDPoint(),
+                Identifier = Syntax.Identifier(identifier)
+            };
+
+            public static GDMemberOperatorExpression BaseMember(GDIdentifier identifier) => new GDMemberOperatorExpression()
+            {
+                Point = new GDPoint(),
+                Identifier = identifier
+            };
+
             public static GDNumberExpression Number(GDNumber number) => new GDNumberExpression()
             {
                 Number = number

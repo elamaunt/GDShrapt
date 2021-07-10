@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDSingleOperatorExpression : GDExpression, 
-        ISingleOperatorReceiver,
-        IExpressionsReceiver
+    public sealed class GDSingleOperatorExpression : GDExpression,
+        ITokenOrSkipReceiver<GDSingleOperator>,
+        ITokenOrSkipReceiver<GDExpression>
     {
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
 
@@ -37,11 +37,11 @@
             switch (_form.State)
             {
                 case State.Operator:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveSingleOperator(c, state);
                     break;
                 case State.TargetExpression:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveExpression(c, state);
                     break;
                 default:
@@ -99,7 +99,7 @@
             return new GDSingleOperatorExpression();
         }
 
-        void ISingleOperatorReceiver.HandleReceivedToken(GDSingleOperator token)
+        void ITokenReceiver<GDSingleOperator>.HandleReceivedToken(GDSingleOperator token)
         {
             if (_form.State == State.Operator)
             {
@@ -108,10 +108,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ISingleOperatorReceiver.HandleSingleOperatorSkip()
+        void ITokenSkipReceiver<GDSingleOperator>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Operator)
             {
@@ -119,10 +119,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.TargetExpression)
             {
@@ -131,10 +131,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.TargetExpression)
             {
@@ -142,7 +142,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

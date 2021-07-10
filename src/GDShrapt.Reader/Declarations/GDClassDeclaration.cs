@@ -68,7 +68,7 @@ namespace GDShrapt.Reader
                     state.PassChar(c);
                     break;
                 default:
-                    throw new GDInvalidReadingStateException();
+                    throw new GDInvalidStateException();
             }
         }
 

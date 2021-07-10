@@ -80,7 +80,7 @@ namespace GDShrapt.Reader
             if (ReferenceEquals(one, null))
                 return ReferenceEquals(two, null);
 
-            if (ReferenceEquals(two,null))
+            if (ReferenceEquals(two, null))
                 return false;
 
             return string.Equals(one.Sequence, two.Sequence, StringComparison.Ordinal);
@@ -91,10 +91,18 @@ namespace GDShrapt.Reader
             if (ReferenceEquals(one, null))
                 return !ReferenceEquals(two, null);
 
-            if (ReferenceEquals(two,null))
+            if (ReferenceEquals(two, null))
                 return true;
 
             return !string.Equals(one.Sequence, two.Sequence, StringComparison.Ordinal);
+        }
+
+        public static implicit operator GDIdentifier(string id)
+        {
+            return new GDIdentifier()
+            {
+                Sequence = id
+            };
         }
 
         public override int GetHashCode()

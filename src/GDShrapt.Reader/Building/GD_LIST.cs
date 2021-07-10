@@ -7,7 +7,7 @@
             public static GDStatementsList Statements(params GDStatement[] statements)
             {
                 if (statements == null || statements.Length == 0)
-                    return null;
+                    return new GDStatementsList();
 
                 var list = new GDStatementsList();
 
@@ -24,7 +24,7 @@
             public static GDExpressionsList Expressions(params GDExpression[] expressions)
             {
                 if (expressions == null || expressions.Length == 0)
-                    return null;
+                    return new GDExpressionsList();
 
                 var list = new GDExpressionsList();
 
@@ -45,7 +45,7 @@
             public static GDDictionaryKeyValueDeclarationList KeyValues(params GDDictionaryKeyValueDeclaration[] keyValues)
             {
                 if (keyValues == null || keyValues.Length == 0)
-                    return null;
+                    return new GDDictionaryKeyValueDeclarationList();
 
                 var list = new GDDictionaryKeyValueDeclarationList();
 
@@ -66,7 +66,7 @@
             public static GDParametersList Parameters(params GDParameterDeclaration[] parameters)
             {
                 if (parameters == null || parameters.Length == 0)
-                    return null;
+                    return new GDParametersList();
 
                 var list = new GDParametersList();
 
@@ -87,7 +87,7 @@
             public static GDElifBranchesList ElifBranches(params GDElifBranch[] branches)
             {
                 if (branches == null || branches.Length == 0)
-                    return null;
+                    return new GDElifBranchesList();
 
                 var list = new GDElifBranchesList();
 
@@ -101,16 +101,23 @@
                 return list;
             }
 
+            public static GDClassMembersList Members() => new GDClassMembersList();
+
             public static GDClassMembersList Members(params GDClassMember[] members)
             {
                 if (members == null || members.Length == 0)
-                    return null;
+                    return new GDClassMembersList();
 
                 var list = new GDClassMembersList();
 
                 for (int i = 0; i < members.Length; i++)
                 {
-                    list.Form.Add(new GDNewLine());
+                    if (i > 0)
+                    {
+                        list.Form.Add(new GDNewLine());
+                        list.Form.Add(new GDNewLine());
+                    }
+
                     list.Form.Add(Syntax.Intendation());
                     list.Add(members[i]);
                 }
@@ -118,16 +125,19 @@
                 return list;
             }
 
+            public static GDClassAtributesList Atributes() => new GDClassAtributesList();
+
             public static GDClassAtributesList Atributes(params GDClassAtribute[] atributes)
             {
                 if (atributes == null || atributes.Length == 0)
-                    return null;
+                    return new GDClassAtributesList();
 
                 var list = new GDClassAtributesList();
 
                 for (int i = 0; i < atributes.Length; i++)
                 {
-                    list.Form.Add(new GDNewLine());
+                    if (i > 0)
+                        list.Form.Add(new GDNewLine());
                     list.Form.Add(Syntax.Intendation());
                     list.Add(atributes[i]);
                 }
@@ -138,7 +148,7 @@
             public static GDEnumValuesList EnumValues(params GDEnumValueDeclaration[] values)
             {
                 if (values == null || values.Length == 0)
-                    return null;
+                    return new GDEnumValuesList();
 
                 var list = new GDEnumValuesList();
 
@@ -159,7 +169,7 @@
             public static GDPathList Path(params GDIdentifier[] identifiers)
             {
                  if (identifiers == null || identifiers.Length == 0)
-                    return null;
+                    return new GDPathList();
 
                 var list = new GDPathList();
 
@@ -177,7 +187,7 @@
             public static GDExportParametersList ExportParameters(params GDDataToken[] tokens)
             {
                 if (tokens == null || tokens.Length == 0)
-                    return null;
+                    return new GDExportParametersList();
 
                 var list = new GDExportParametersList();
 
@@ -191,6 +201,136 @@
 
                     list.Add(tokens[i]);
                 }
+
+                return list;
+            }
+
+            public static GDStatementsList Statements(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return new GDStatementsList();
+
+                var list = new GDStatementsList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDExpressionsList Expressions(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return new GDExpressionsList();
+
+                var list = new GDExpressionsList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDDictionaryKeyValueDeclarationList KeyValues(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return new GDDictionaryKeyValueDeclarationList();
+
+                var list = new GDDictionaryKeyValueDeclarationList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDParametersList Parameters(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return new GDParametersList();
+
+                var list = new GDParametersList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDElifBranchesList ElifBranches(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return new GDElifBranchesList();
+
+                var list = new GDElifBranchesList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDClassMembersList Members(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return null;
+
+                var list = new GDClassMembersList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDClassAtributesList Atributes(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return null;
+
+                var list = new GDClassAtributesList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDEnumValuesList EnumValues(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return null;
+
+                var list = new GDEnumValuesList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDPathList Path(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return null;
+
+                var list = new GDPathList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
+
+                return list;
+            }
+
+            public static GDExportParametersList ExportParameters(params GDSyntaxToken[] unsafeTokens)
+            {
+                if (unsafeTokens == null || unsafeTokens.Length == 0)
+                    return null;
+
+                var list = new GDExportParametersList();
+
+                for (int i = 0; i < unsafeTokens.Length; i++)
+                    list.Form.Add(unsafeTokens[i]);
 
                 return list;
             }

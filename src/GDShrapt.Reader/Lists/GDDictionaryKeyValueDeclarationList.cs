@@ -1,8 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDDictionaryKeyValueDeclarationList : GDSeparatedList<GDDictionaryKeyValueDeclaration, GDComma>,
-        ITokenReceiver<GDDictionaryKeyValueDeclaration>,
-        ITokenReceiver<GDComma>
+    public sealed class GDDictionaryKeyValueDeclarationList : GDSeparatedList<GDDictionaryKeyValueDeclaration, GDComma>
     {
         public GDDictionaryKeyValueDeclarationList()
         { 
@@ -34,7 +32,7 @@
             return new GDDictionaryKeyValueDeclarationList();
         }
 
-        void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)
+        /*void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)
         {
             ListForm.Add(token);
         }
@@ -50,6 +48,6 @@
 
         void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
         {
-        }
+        }*/
     }
 }

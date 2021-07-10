@@ -2,9 +2,9 @@
 {
     internal abstract class GDResolver : GDReader
     {
-        public IStyleTokensReceiver Owner { get; }
+        public ITokenReceiver Owner { get; }
 
-        public GDResolver(IStyleTokensReceiver owner)
+        public GDResolver(ITokenReceiver owner)
         {
             Owner = owner;
         }

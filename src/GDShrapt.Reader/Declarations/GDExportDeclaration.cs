@@ -1,9 +1,9 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDExportDeclaration : GDNode,
-        IKeywordReceiver<GDExportKeyword>,
-        ITokenReceiver<GDOpenBracket>,
-        ITokenReceiver<GDCloseBracket>
+        ITokenOrSkipReceiver<GDExportKeyword>,
+        ITokenOrSkipReceiver<GDOpenBracket>,
+        ITokenOrSkipReceiver<GDCloseBracket>
     {
         public GDExportKeyword ExportKeyword
         {
@@ -47,11 +47,11 @@
             switch (_form.State)
             {
                 case State.Export:
-                    if (!this.ResolveStyleToken(c, state))
-                        this.ResolveKeyword(c, state);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveKeyword<GDExportKeyword>(c, state);
                     break;
                 case State.OpenBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveOpenBracket(c, state);
                     break;
                 case State.Parameters:
@@ -59,7 +59,7 @@
                     state.PushAndPass(Parameters, c);
                     break;
                 case State.CloseBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveCloseBracket(c, state);
                     break;
                 default:
@@ -85,7 +85,7 @@
             return new GDExportDeclaration();
         }
 
-        void IKeywordReceiver<GDExportKeyword>.HandleReceivedToken(GDExportKeyword token)
+        void ITokenReceiver<GDExportKeyword>.HandleReceivedToken(GDExportKeyword token)
         {
             if (_form.State == State.Export)
             {
@@ -94,10 +94,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDExportKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDExportKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Export)
             {
@@ -105,7 +105,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
@@ -117,10 +117,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.OpenBracket)
             {
@@ -128,7 +128,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDCloseBracket>.HandleReceivedToken(GDCloseBracket token)
@@ -140,10 +140,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.CloseBracket)
             {
@@ -151,7 +151,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

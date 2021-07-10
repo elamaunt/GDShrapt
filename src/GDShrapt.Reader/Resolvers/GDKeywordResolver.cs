@@ -1,15 +1,15 @@
 ﻿namespace GDShrapt.Reader
 {
     internal class GDKeywordResolver<KEYWORD> : GDSequenceResolver
-        where KEYWORD : IGDKeywordToken, new()
+        where KEYWORD : GDSyntaxToken, IGDKeywordToken, new()
     {
-        public new IKeywordReceiver<KEYWORD> Owner { get; }
+        public new ITokenOrSkipReceiver<KEYWORD> Owner { get; }
 
         static KEYWORD _keyword = new KEYWORD();
 
         public override string Sequence => _keyword.Sequence;
 
-        public GDKeywordResolver(IKeywordReceiver<KEYWORD> owner)
+        public GDKeywordResolver(ITokenOrSkipReceiver<KEYWORD> owner)
             : base(owner)
         {
             Owner = owner;
@@ -22,7 +22,7 @@
 
         protected override void OnFail(GDReadingState state)
         {
-            Owner.HandleReceivedKeywordSkip();
+            Owner.HandleReceivedTokenSkip();
         }
     }
 }

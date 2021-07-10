@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDDictionaryInitializerExpression : GDExpression,
-        ITokenReceiver<GDFigureOpenBracket>,
-        ITokenReceiver<GDFigureCloseBracket>
+        ITokenOrSkipReceiver<GDFigureOpenBracket>,
+        ITokenOrSkipReceiver<GDFigureCloseBracket>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.DictionaryInitializer);
 
@@ -42,7 +42,7 @@
             switch (_form.State)
             {
                 case State.FigureOpenBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveFigureOpenBracket(c, state);
                     break;
                 case State.KeyValues:
@@ -50,7 +50,7 @@
                     state.PushAndPass(KeyValues, c);
                     break;
                 case State.FigureCloseBracket:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveFigureCloseBracket(c, state);
                     break;
                 default:
@@ -85,10 +85,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDFigureOpenBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.FigureOpenBracket)
             {
@@ -96,7 +96,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDFigureCloseBracket>.HandleReceivedToken(GDFigureCloseBracket token)
@@ -108,10 +108,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDFigureCloseBracket>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDFigureCloseBracket>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.FigureCloseBracket)
             {
@@ -119,7 +119,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

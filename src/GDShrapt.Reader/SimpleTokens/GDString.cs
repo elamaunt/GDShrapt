@@ -166,6 +166,14 @@ namespace GDShrapt.Reader
             }
         }
 
+        public static implicit operator GDString(string value)
+        {
+            return new GDString()
+            {
+                Value = value
+            };
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             HandleChar('#', state);

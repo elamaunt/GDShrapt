@@ -2,10 +2,10 @@
 {
     internal class GDExportResolver : GDSequenceResolver
     {
-        new IExportReceiver Owner { get; }
+        new ITokenOrSkipReceiver<GDExportDeclaration> Owner { get; }
         public override string Sequence => "export";
 
-        public GDExportResolver(IExportReceiver owner)
+        public GDExportResolver(ITokenOrSkipReceiver<GDExportDeclaration> owner)
             : base(owner)
         {
             Owner = owner;
@@ -13,13 +13,13 @@
 
         protected override void OnFail(GDReadingState state)
         {
-            Owner.HandleReceivedExportSkip();
+            Owner.HandleReceivedTokenSkip();
         }
         protected override void OnMatch(GDReadingState state)
         {
             var declaration = new GDExportDeclaration();
             declaration.SendKeyword(new GDExportKeyword());
-            Owner.HandleReceivedExport(declaration);
+            Owner.HandleReceivedToken(declaration);
             state.Push(declaration);
         }
     }

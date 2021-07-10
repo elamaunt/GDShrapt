@@ -4,44 +4,12 @@ namespace GDShrapt.Reader
 {
     internal static class GDResolvingHelper
     {
-        public static void SendExpression(this IExpressionsReceiver receiver, GDExpression token)
-        {
-            receiver.HandleReceivedToken(token);
-        }
-
-        public static void SendSpace(this IStyleTokensReceiver receiver, GDSpace token)
-        {
-            receiver.HandleReceivedToken(token);
-        }
-
-        public static void SendKeyword<T>(this IKeywordReceiver<T> receiver, T keyword)
-            where T : GDSyntaxToken, IGDKeywordToken, new()
-        {
-            receiver.HandleReceivedToken(keyword);
-        }
-
-        public static void SendToken<T>(this ITokenReceiver<T> receiver, T token)
-            where T : GDSyntaxToken, new()
-        {
-            receiver.HandleReceivedToken(token);
-        }
-
-        public static void SendSingleOperator(this ISingleOperatorReceiver receiver, GDSingleOperator token)
-        {
-            receiver.HandleReceivedToken(token);
-        }
-
-        public static void SendDualOperator(this IDualOperatorReceiver receiver, GDDualOperator token)
-        {
-            receiver.HandleReceivedToken(token);
-        }
-
-        public static void ResolveDualOperator(this IDualOperatorReceiver receiver, char c, GDReadingState state)
+        public static void ResolveDualOperator(this ITokenOrSkipReceiver<GDDualOperator> receiver, char c, GDReadingState state)
         {
             state.PushAndPass(new GDDualOperatorResolver(receiver), c);
         }
 
-        public static void ResolveSingleOperator(this ISingleOperatorReceiver receiver, char c, GDReadingState state)
+        public static void ResolveSingleOperator(this ITokenOrSkipReceiver<GDSingleOperator> receiver, char c, GDReadingState state)
         {
             state.PushAndPass(new GDSingleOperatorResolver(receiver), c);
         }
@@ -56,13 +24,13 @@ namespace GDShrapt.Reader
             return true;
         }
 
-        public static void ResolveKeyword<T>(this IKeywordReceiver<T> receiver, char c, GDReadingState state)
+        public static void ResolveKeyword<T>(this ITokenOrSkipReceiver<T> receiver, char c, GDReadingState state)
             where T : GDSyntaxToken, IGDKeywordToken, new()
         {
             state.PushAndPass(new GDKeywordResolver<T>(receiver), c);
         }
 
-        public static bool ResolveDollar(this ITokenReceiver<GDDollar> receiver, char c, GDReadingState state)
+        public static bool ResolveDollar(this ITokenOrSkipReceiver<GDDollar> receiver, char c, GDReadingState state)
         {
             var result = c == '$';
             if (result)
@@ -75,7 +43,7 @@ namespace GDShrapt.Reader
             return result;
         }
         
-        public static bool ResolveAt(this ITokenReceiver<GDAt> receiver, char c, GDReadingState state)
+        public static bool ResolveAt(this ITokenOrSkipReceiver<GDAt> receiver, char c, GDReadingState state)
         {
             var result = c == '@';
             if (result)
@@ -88,7 +56,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveRightSlash(this ITokenReceiver<GDRightSlash> receiver, char c, GDReadingState state)
+        public static bool ResolveRightSlash(this ITokenOrSkipReceiver<GDRightSlash> receiver, char c, GDReadingState state)
         {
             var result = c == '/';
             if (result)
@@ -102,7 +70,7 @@ namespace GDShrapt.Reader
         }
         
 
-        public static bool ResolveColon(this ITokenReceiver<GDColon> receiver, char c, GDReadingState state)
+        public static bool ResolveColon(this ITokenOrSkipReceiver<GDColon> receiver, char c, GDReadingState state)
         {
             var result = c == ':';
             if (result)
@@ -115,7 +83,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveComma(this ITokenReceiver<GDComma> receiver, char c, GDReadingState state)
+        public static bool ResolveComma(this ITokenOrSkipReceiver<GDComma> receiver, char c, GDReadingState state)
         {
             var result = c == ',';
             if (result)
@@ -129,7 +97,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveAssign(this ITokenReceiver<GDAssign> receiver, char c, GDReadingState state)
+        public static bool ResolveAssign(this ITokenOrSkipReceiver<GDAssign> receiver, char c, GDReadingState state)
         {
             var result = c == '=';
             if (result)
@@ -142,7 +110,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveCloseBracket(this ITokenReceiver<GDCloseBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveCloseBracket(this ITokenOrSkipReceiver<GDCloseBracket> receiver, char c, GDReadingState state)
         {
             var result = c == ')';
             if (result)
@@ -155,7 +123,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveOpenBracket(this ITokenReceiver<GDOpenBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveOpenBracket(this ITokenOrSkipReceiver<GDOpenBracket> receiver, char c, GDReadingState state)
         {
             var result = c == '(';
             if (result)
@@ -168,7 +136,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveDefaultToken(this ITokenReceiver<GDDefaultToken> receiver, char c, GDReadingState state)
+        public static bool ResolveDefaultToken(this ITokenOrSkipReceiver<GDDefaultToken> receiver, char c, GDReadingState state)
         {
             var result = c == '_';
             if (result)
@@ -181,7 +149,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveSquareOpenBracket(this ITokenReceiver<GDSquareOpenBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveSquareOpenBracket(this ITokenOrSkipReceiver<GDSquareOpenBracket> receiver, char c, GDReadingState state)
         {
             var result = c == '[';
             if (result)
@@ -194,7 +162,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveSquareCloseBracket(this ITokenReceiver<GDSquareCloseBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveSquareCloseBracket(this ITokenOrSkipReceiver<GDSquareCloseBracket> receiver, char c, GDReadingState state)
         {
             var result = c == ']';
             if (result)
@@ -207,7 +175,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveFigureOpenBracket(this ITokenReceiver<GDFigureOpenBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveFigureOpenBracket(this ITokenOrSkipReceiver<GDFigureOpenBracket> receiver, char c, GDReadingState state)
         {
             var result = c == '{';
             if (result)
@@ -220,7 +188,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveFigureCloseBracket(this ITokenReceiver<GDFigureCloseBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveFigureCloseBracket(this ITokenOrSkipReceiver<GDFigureCloseBracket> receiver, char c, GDReadingState state)
         {
             var result = c == '}';
             if (result)
@@ -233,7 +201,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveCornerOpenBracket(this ITokenReceiver<GDCornerOpenBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveCornerOpenBracket(this ITokenOrSkipReceiver<GDCornerOpenBracket> receiver, char c, GDReadingState state)
         {
             var result = c == '<';
             if (result)
@@ -246,7 +214,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveCornerCloseBracket(this ITokenReceiver<GDCornerCloseBracket> receiver, char c, GDReadingState state)
+        public static bool ResolveCornerCloseBracket(this ITokenOrSkipReceiver<GDCornerCloseBracket> receiver, char c, GDReadingState state)
         {
             var result = c == '>';
             if (result)
@@ -259,7 +227,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveNewLine(this ITokenReceiver<GDNewLine> receiver, char c, GDReadingState state)
+        public static bool ResolveNewLine(this ITokenOrSkipReceiver<GDNewLine> receiver, char c, GDReadingState state)
         {
             var result = c == '\n';
             if (result)
@@ -272,7 +240,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolveSemiColon(this ITokenReceiver<GDSemiColon> receiver, char c, GDReadingState state)
+        public static bool ResolveSemiColon(this ITokenOrSkipReceiver<GDSemiColon> receiver, char c, GDReadingState state)
         {
             var result = c == ';';
             if (result)
@@ -285,7 +253,7 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static bool ResolvePoint(this ITokenReceiver<GDPoint> receiver, char c, GDReadingState state)
+        public static bool ResolvePoint(this ITokenOrSkipReceiver<GDPoint> receiver, char c, GDReadingState state)
         {
             var result = c == '.';
             if (result)
@@ -298,16 +266,16 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static void ResolveExpression(this IExpressionsReceiver receiver, char c, GDReadingState state)
+        public static void ResolveExpression(this ITokenOrSkipReceiver<GDExpression> receiver, char c, GDReadingState state)
         {
             if (!IsExpressionStopChar(c))
                 state.Push(new GDExpressionResolver(receiver));
             else
-                receiver.HandleReceivedExpressionSkip();
+                receiver.HandleReceivedTokenSkip();
             state.PassChar(c);
         }
 
-        public static bool ResolveDataToken(this IDataTokenReceiver receiver, char c, GDReadingState state)
+        public static bool ResolveDataToken(this ITokenOrSkipReceiver<GDDataToken> receiver, char c, GDReadingState state)
         {
             if (IsNumberStartChar(c) || c == '-')
             {
@@ -334,7 +302,7 @@ namespace GDShrapt.Reader
             return false;
         }
 
-        public static bool ResolveIdentifier(this IIdentifierReceiver receiver, char c, GDReadingState state)
+        public static bool ResolveIdentifier(this ITokenOrSkipReceiver<GDIdentifier> receiver, char c, GDReadingState state)
         {
             if (IsIdentifierStartChar(c))
             {
@@ -343,12 +311,12 @@ namespace GDShrapt.Reader
                 return true;
             }
 
-            receiver.HandleReceivedIdentifierSkip();
+            receiver.HandleReceivedTokenSkip();
             state.PassChar(c);
             return false;
         }
 
-        public static bool ResolveType(this ITypeReceiver receiver, char c, GDReadingState state)
+        public static bool ResolveType(this ITokenOrSkipReceiver<GDType> receiver, char c, GDReadingState state)
         {
             if (IsIdentifierStartChar(c))
             {
@@ -357,12 +325,12 @@ namespace GDShrapt.Reader
                 return true;
             }
 
-            receiver.HandleReceivedTypeSkip();
+            receiver.HandleReceivedTokenSkip();
             state.PassChar(c);
             return false;
         }
 
-        public static bool ResolveNumber(this INumberReceiver receiver, char c, GDReadingState state)
+        public static bool ResolveNumber(this ITokenOrSkipReceiver<GDNumber> receiver, char c, GDReadingState state)
         {
             if (IsNumberStartChar(c))
             {
@@ -371,12 +339,12 @@ namespace GDShrapt.Reader
                 return true;
             }
 
-            receiver.HandleReceivedNumberSkip();
+            receiver.HandleReceivedTokenSkip();
             state.PassChar(c);
             return false;
         }
 
-        public static bool ResolveStyleToken(this IStyleTokensReceiver receiver, char c, GDReadingState state)
+        public static bool ResolveSpaceToken(this ITokenReceiver<GDSpace> receiver, char c, GDReadingState state)
         {
             if (IsSpace(c))
             {
@@ -385,12 +353,34 @@ namespace GDShrapt.Reader
                 return true;
             }
 
+            return false;
+        }
+
+        public static bool ResolveSpaceToken(this ITokenReceiver receiver, char c, GDReadingState state)
+        {
+            if (IsSpace(c))
+            {
+                receiver.HandleReceivedToken(state.Push(new GDSpace()));
+                state.PassChar(c);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool ResolveNewLineToken(this ITokenReceiver<GDNewLine> receiver, char c, GDReadingState state)
+        {
             if (IsNewLine(c))
             {
                 receiver.HandleReceivedToken(new GDNewLine());
                 return true;
             }
 
+            return false;
+        }
+
+        public static bool ResolveCommentToken(this ITokenReceiver<GDComment> receiver, char c, GDReadingState state)
+        {
             if (IsCommentStartChar(c))
             {
                 receiver.HandleReceivedToken(new GDComment());
@@ -401,7 +391,7 @@ namespace GDShrapt.Reader
             return false;
         }
 
-        public static bool ResolveString(this IStringReceiver receiver, char c, GDReadingState state)
+        public static bool ResolveString(this ITokenOrSkipReceiver<GDString> receiver, char c, GDReadingState state)
         {
             if (IsStringStartChar(c))
             {
@@ -410,7 +400,7 @@ namespace GDShrapt.Reader
                 return true;
             }
 
-            receiver.HandleReceivedStringSkip();
+            receiver.HandleReceivedTokenSkip();
             state.PassChar(c);
             return false;
         }

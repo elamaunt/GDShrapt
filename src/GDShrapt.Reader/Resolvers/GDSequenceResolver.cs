@@ -6,7 +6,7 @@
 
         public abstract string Sequence { get; }
 
-        public GDSequenceResolver(IStyleTokensReceiver owner)
+        public GDSequenceResolver(ITokenReceiver owner)
             : base(owner)
         {
         }

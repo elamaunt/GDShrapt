@@ -1,17 +1,17 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDVariableDeclaration : GDClassMember, 
-        IKeywordReceiver<GDConstKeyword>,
-        IExportReceiver,
-        IKeywordReceiver<GDOnreadyKeyword>,
-        IKeywordReceiver<GDVarKeyword>,
-        IIdentifierReceiver,
-        ITypeReceiver,
-        ITokenReceiver<GDColon>,
-        ITokenReceiver<GDAssign>,
-        IExpressionsReceiver,
-        IKeywordReceiver<GDSetGetKeyword>,
-        ITokenReceiver<GDComma>
+        ITokenOrSkipReceiver<GDConstKeyword>,
+        ITokenOrSkipReceiver<GDIdentifier>,
+        ITokenOrSkipReceiver<GDOnreadyKeyword>,
+        ITokenOrSkipReceiver<GDVarKeyword>,
+        ITokenOrSkipReceiver<GDType>,
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDAssign>,
+        ITokenOrSkipReceiver<GDExportDeclaration>,
+        ITokenOrSkipReceiver<GDSetGetKeyword>,
+        ITokenOrSkipReceiver<GDComma>
     {
         public GDConstKeyword ConstKeyword 
         {
@@ -181,7 +181,7 @@
             return new GDVariableDeclaration();
         }
 
-        void IKeywordReceiver<GDConstKeyword>.HandleReceivedToken(GDConstKeyword token)
+        void ITokenReceiver<GDConstKeyword>.HandleReceivedToken(GDConstKeyword token)
         {
             if (_form.State == State.Const)
             {
@@ -190,10 +190,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDConstKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDConstKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Const)
             {
@@ -201,10 +201,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDOnreadyKeyword>.HandleReceivedToken(GDOnreadyKeyword token)
+        void ITokenReceiver<GDOnreadyKeyword>.HandleReceivedToken(GDOnreadyKeyword token)
         {
             if (_form.StateIndex <= (int)State.Onready)
             {
@@ -213,10 +213,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDOnreadyKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDOnreadyKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.StateIndex <= (int)State.Onready)
             {
@@ -224,10 +224,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExportReceiver.HandleReceivedExport(GDExportDeclaration token)
+        void ITokenReceiver<GDExportDeclaration>.HandleReceivedToken(GDExportDeclaration token)
         {
             if (_form.StateIndex <= (int)State.Export)
             {
@@ -236,10 +236,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExportReceiver.HandleReceivedExportSkip()
+        void ITokenSkipReceiver<GDExportDeclaration>.HandleReceivedTokenSkip()
         {
             if (_form.StateIndex <= (int)State.Export)
             {
@@ -247,10 +247,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
+        void ITokenReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
         {
             if (_form.StateIndex <= (int)State.Var)
             {
@@ -259,10 +259,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDVarKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDVarKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.StateIndex <= (int)State.Var)
             {
@@ -270,7 +270,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
@@ -282,10 +282,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Colon)
             {
@@ -293,7 +293,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
@@ -305,10 +305,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDAssign>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDAssign>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Assign)
             {
@@ -316,10 +316,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.Initializer)
             {
@@ -328,10 +328,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Initializer)
             {
@@ -340,10 +340,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDSetGetKeyword>.HandleReceivedToken(GDSetGetKeyword token)
+        void ITokenReceiver<GDSetGetKeyword>.HandleReceivedToken(GDSetGetKeyword token)
         {
             if (_form.State == State.SetGet)
             {
@@ -352,10 +352,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDSetGetKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDSetGetKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.SetGet)
             {
@@ -363,7 +363,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
@@ -375,10 +375,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDComma>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Comma)
             {
@@ -386,10 +386,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
             if (_form.State == State.Identifier)
             {
@@ -412,10 +412,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Identifier)
             {
@@ -435,10 +435,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITypeReceiver.HandleReceivedToken(GDType token)
+        void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
         {
             if (_form.State == State.Type)
             {
@@ -447,10 +447,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITypeReceiver.HandleReceivedTypeSkip()
+        void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Type)
             {
@@ -458,7 +458,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

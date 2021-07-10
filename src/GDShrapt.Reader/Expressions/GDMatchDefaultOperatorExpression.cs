@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDMatchDefaultOperatorExpression : GDExpression,
-        ITokenReceiver<GDDefaultToken>
+        ITokenOrSkipReceiver<GDDefaultToken>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.DefaultOperator);
 
@@ -53,10 +53,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDDefaultToken>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDDefaultToken>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Default)
             {
@@ -64,7 +64,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

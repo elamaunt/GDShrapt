@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     internal class GDExpressionResolver : GDResolver, 
-        IKeywordReceiver<GDIfKeyword>
+        ITokenOrSkipReceiver<GDIfKeyword>
     {
         GDExpression _expression;
         GDIfKeyword _nextIfKeyword;
@@ -10,12 +10,19 @@
         bool _ifExpressionChecked;
         bool _isCompleted;
 
-        new IExpressionsReceiver Owner { get; }
+        new ITokenReceiver<GDExpression> Owner { get; }
+        ITokenSkipReceiver<GDExpression> OwnerWithSkip { get; }
 
         public bool IsCompleted => _isCompleted;
-        public ITokenReceiver Parent => Owner;
 
-        public GDExpressionResolver(IExpressionsReceiver owner)
+        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner)
+            : base(owner)
+        {
+            Owner = owner;
+            OwnerWithSkip = owner;
+        }
+
+        public GDExpressionResolver(ITokenReceiver<GDExpression> owner)
             : base(owner)
         {
             Owner = owner;
@@ -334,7 +341,7 @@
                 }
             }
             else
-                Owner.HandleReceivedExpressionSkip();
+                OwnerWithSkip?.HandleReceivedTokenSkip();
 
             if (_lastSpace != null)
             {
@@ -344,12 +351,12 @@
         }
 
         private void PushAndSwap<T>(GDReadingState state, T node)
-            where T: GDExpression, IExpressionsReceiver
+            where T: GDExpression, ITokenOrSkipReceiver<GDExpression>
         {
             if (_expression != null)
-                node.SendExpression(_expression);
+                node.HandleReceivedToken(_expression);
             else
-                node.HandleReceivedExpressionSkip();
+                node.HandleReceivedTokenSkip();
 
             if (_lastSpace != null)
             {
@@ -382,35 +389,22 @@
             _nextIfKeyword = token;
         }
 
-        public void HandleReceivedKeywordSkip()
+        public void HandleReceivedTokenSkip()
         {
             // Nothing
         }
 
-        // TODO: remove methods below
         public void HandleReceivedToken(GDComment token)
         {
             Owner.HandleReceivedToken(token);
         }
-
-        public void HandleReceivedToken(GDNewLine token)
-        {
-            Owner.HandleReceivedToken(token);
-        }
-
         public void HandleReceivedToken(GDSpace token)
         {
             Owner.HandleReceivedToken(token);
         }
-
         public void HandleReceivedToken(GDInvalidToken token)
         {
             Owner.HandleReceivedToken(token);
-        }
-
-        public void HandleAbstractToken(GDSyntaxToken token)
-        {
-            Owner.HandleAbstractToken(token);
         }
     }
 }

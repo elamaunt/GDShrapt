@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal interface IGDKeywordToken
+    public interface IGDKeywordToken
     {
         string Sequence { get; }
     }

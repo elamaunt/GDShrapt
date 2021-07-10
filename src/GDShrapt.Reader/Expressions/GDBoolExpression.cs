@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDBoolExpression : GDExpression,
-        IKeywordReceiver<GDTrueKeyword>,
-        IKeywordReceiver<GDFalseKeyword>
+        ITokenOrSkipReceiver<GDTrueKeyword>,
+        ITokenOrSkipReceiver<GDFalseKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Literal);
 
@@ -55,7 +55,7 @@
             return new GDBoolExpression();
         }
 
-        void IKeywordReceiver<GDTrueKeyword>.HandleReceivedToken(GDTrueKeyword token)
+        void ITokenReceiver<GDTrueKeyword>.HandleReceivedToken(GDTrueKeyword token)
         {
             if (_form.State != State.Completed)
             {
@@ -64,10 +64,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDTrueKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDTrueKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State != State.Completed)
             {
@@ -75,10 +75,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDFalseKeyword>.HandleReceivedToken(GDFalseKeyword token)
+        void ITokenReceiver<GDFalseKeyword>.HandleReceivedToken(GDFalseKeyword token)
         {
             if (_form.State != State.Completed)
             {
@@ -87,10 +87,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDFalseKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDFalseKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State != State.Completed)
             {
@@ -98,7 +98,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

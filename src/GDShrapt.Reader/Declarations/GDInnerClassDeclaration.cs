@@ -4,9 +4,9 @@ using System.Linq;
 namespace GDShrapt.Reader
 {
     public sealed class GDInnerClassDeclaration : GDClassMember,
-        IKeywordReceiver<GDClassKeyword>,
-        IIdentifierReceiver,
-        ITokenReceiver<GDColon>
+        ITokenOrSkipReceiver<GDClassKeyword>,
+        ITokenOrSkipReceiver<GDIdentifier>,
+        ITokenOrSkipReceiver<GDColon>
     {
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
@@ -59,13 +59,13 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveStyleToken(c, state))
+            if (this.ResolveSpaceToken(c, state))
                 return;
 
             switch (_form.State)
             {
                 case State.Class:
-                    this.ResolveKeyword(c, state);
+                    this.ResolveKeyword<GDClassKeyword>(c, state);
                     break;
                 case State.Identifier:
                     this.ResolveIdentifier(c, state);
@@ -104,7 +104,7 @@ namespace GDShrapt.Reader
             return new GDInnerClassDeclaration();
         }
 
-        void IKeywordReceiver<GDClassKeyword>.HandleReceivedToken(GDClassKeyword token)
+        void ITokenReceiver<GDClassKeyword>.HandleReceivedToken(GDClassKeyword token)
         {
             if (_form.State == State.Class)
             {
@@ -113,10 +113,10 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDClassKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDClassKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Class)
             {
@@ -124,10 +124,10 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
             if (_form.State == State.Identifier)
             { 
@@ -136,10 +136,10 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Identifier)
             {
@@ -147,7 +147,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
@@ -159,10 +159,10 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDColon>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Colon)
             {
@@ -170,7 +170,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

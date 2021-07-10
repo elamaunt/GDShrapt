@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDPassExpression : GDExpression,
-        IKeywordReceiver<GDPassKeyword>
+        ITokenOrSkipReceiver<GDPassKeyword>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Pass);
 
@@ -44,7 +44,7 @@
             return new GDPassExpression();
         }
 
-        void IKeywordReceiver<GDPassKeyword>.HandleReceivedToken(GDPassKeyword token)
+        void ITokenReceiver<GDPassKeyword>.HandleReceivedToken(GDPassKeyword token)
         {
             if (_form.State == State.Pass)
             {
@@ -53,10 +53,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IKeywordReceiver<GDPassKeyword>.HandleReceivedKeywordSkip()
+        void ITokenSkipReceiver<GDPassKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Pass)
             {
@@ -64,7 +64,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }

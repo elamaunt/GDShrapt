@@ -1,9 +1,9 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDMemberOperatorExpression : GDExpression,
-        IExpressionsReceiver,
-        ITokenReceiver<GDPoint>,
-        IIdentifierReceiver
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDPoint>,
+        ITokenOrSkipReceiver<GDIdentifier>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Member);
 
@@ -43,15 +43,15 @@
             switch (_form.State)
             {
                 case State.CallerExpression:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveExpression(c, state);
                     break;
                 case State.Point:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolvePoint(c, state);
                     break;
                 case State.Identifier:
-                    if (!this.ResolveStyleToken(c, state))
+                    if (!this.ResolveSpaceToken(c, state))
                         this.ResolveIdentifier(c, state);
                     break;
                 default:
@@ -101,7 +101,7 @@
             return new GDMemberOperatorExpression();
         }
 
-        void IExpressionsReceiver.HandleReceivedToken(GDExpression token)
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.State == State.CallerExpression)
             {
@@ -110,10 +110,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IExpressionsReceiver.HandleReceivedExpressionSkip()
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.CallerExpression)
             {
@@ -121,7 +121,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDPoint>.HandleReceivedToken(GDPoint token)
@@ -133,10 +133,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDPoint>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDPoint>.HandleReceivedTokenSkip()
         {
             if (_form.StateIndex <= (int)State.Point)
             {
@@ -144,10 +144,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IIdentifierReceiver.HandleReceivedToken(GDIdentifier token)
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
             if (_form.State == State.Identifier)
             {
@@ -156,10 +156,10 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
 
-        void IIdentifierReceiver.HandleReceivedIdentifierSkip()
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Identifier)
             {
@@ -167,7 +167,7 @@
                 return;
             }
 
-            throw new GDInvalidReadingStateException();
+            throw new GDInvalidStateException();
         }
     }
 }
