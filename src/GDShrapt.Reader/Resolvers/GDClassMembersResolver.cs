@@ -107,28 +107,28 @@ namespace GDShrapt.Reader
                 case "signal":
                     {
                         var m = new GDSignalDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDSignalKeyword());
+                        m.Add(new GDSignalKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
                 case "enum":
                     {
                         var m = new GDEnumDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDEnumKeyword());
+                        m.Add(new GDEnumKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
                 case "static":
                     {
                         var m = new GDMethodDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDStaticKeyword());
+                        m.Add(new GDStaticKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
                 case "func":
                     {
                         var m = new GDMethodDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDFuncKeyword());
+                        m.Add(new GDFuncKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
@@ -143,28 +143,28 @@ namespace GDShrapt.Reader
                 case "onready":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDOnreadyKeyword());
+                        m.Add(new GDOnreadyKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
                 case "const":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDConstKeyword());
+                        m.Add(new GDConstKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
                 case "var":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDVarKeyword());
+                        m.Add(new GDVarKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
                 case "class":
                     {
                         var m = new GDInnerClassDeclaration(LineIntendationThreshold);
-                        m.SendKeyword(new GDClassKeyword());
+                        m.Add(new GDClassKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;

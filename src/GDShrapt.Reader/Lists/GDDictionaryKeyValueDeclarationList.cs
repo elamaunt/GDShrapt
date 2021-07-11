@@ -1,38 +1,27 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDDictionaryKeyValueDeclarationList : GDSeparatedList<GDDictionaryKeyValueDeclaration, GDComma>
+    public sealed class GDDictionaryKeyValueDeclarationList : GDCommaSeparatedList<GDDictionaryKeyValueDeclaration>,
+        ITokenReceiver<GDDictionaryKeyValueDeclaration>,
+        ITokenReceiver<GDComma>
     {
-        public GDDictionaryKeyValueDeclarationList()
-        { 
-        }
-
-        internal override void HandleChar(char c, GDReadingState state)
+        internal override GDReader ResolveNode()
         {
-            if (c == ',')
-            {
-                ListForm.Add(new GDComma());
-                return;
-            }
-
-            if (c == '}')
-            {
-                state.PopAndPass(c);
-                return;
-            }
-
-            ListForm.Add(state.PushAndPass(new GDDictionaryKeyValueDeclaration(), c));
+            var node = new GDDictionaryKeyValueDeclaration();
+            ListForm.Add(node);
+            return node;
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override bool IsStopChar(char c)
         {
-            ListForm.Add(new GDNewLine());
+            return c == '}';
         }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDDictionaryKeyValueDeclarationList();
         }
 
-        /*void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)
+        void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)
         {
             ListForm.Add(token);
         }
@@ -41,13 +30,5 @@
         {
             ListForm.Add(token);
         }
-
-        void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedTokenSkip()
-        {
-        }
-
-        void ITokenReceiver<GDComma>.HandleReceivedTokenSkip()
-        {
-        }*/
     }
 }

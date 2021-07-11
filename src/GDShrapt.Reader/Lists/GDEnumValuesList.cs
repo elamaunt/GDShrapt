@@ -7,13 +7,13 @@
         internal override GDReader ResolveNode()
         {
             var node = new GDEnumValueDeclaration();
-            this.SendToken(node);
+            ListForm.Add(node);
             return node;
         }
 
         internal override bool IsStopChar(char c)
         {
-            return !c.IsIdentifierStartChar() && c != ',';
+            return !c.IsIdentifierStartChar();
         }
 
         public override GDNode CreateEmptyInstance()

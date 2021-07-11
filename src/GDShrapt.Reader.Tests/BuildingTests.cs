@@ -34,13 +34,11 @@ namespace GDShrapt.Reader.Tests
         [TestMethod]
         public void CustomStyleTest()
         {
-
             var declaration = GD.Declaration.Class()
-                 GD.List.Atributes(),
-                 GD.Syntax.NewLine(),
-                 GD.Syntax.NewLine(),
-                 GD.List.Members()
-                );
+                .AddAtributes(x => x.AddToolAtribute())
+                .AddNewLine()
+                .AddNewLine()
+                .AddMembers(x => x.AddVariable("a"));
 
         }
     }

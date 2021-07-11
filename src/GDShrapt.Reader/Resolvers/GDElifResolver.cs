@@ -21,7 +21,7 @@
         {
             var branch = new GDElifBranch();
 
-            branch.SendKeyword(new GDElifKeyword());
+            branch.Add(new GDElifKeyword());
 
             SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(branch);

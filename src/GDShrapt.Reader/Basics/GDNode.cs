@@ -121,9 +121,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleSharpChar(GDReadingState state)
         {
-            var comment = new GDComment();
-            Form.AddBeforeActiveToken(comment);
-            state.Push(comment);
+            Form.AddBeforeActiveToken(state.Push(new GDComment()));
             state.PassSharpChar();
         }
 

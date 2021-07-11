@@ -20,6 +20,12 @@ namespace GDShrapt.Reader
             _form = new GDTokensListForm<NODE>(this);
         }
 
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            Form.Add(state.Push(new GDComment()));
+            state.PassSharpChar();
+        }
+
         public new NODE this[int index] 
         {
             get => _form[index];

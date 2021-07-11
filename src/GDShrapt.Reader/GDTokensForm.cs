@@ -174,9 +174,17 @@ namespace GDShrapt.Reader
         {
             if (newToken is TOKEN token)
             {
-                var node = _statePoints[statePointIndex];
-                newToken.Parent = _owner;
-                _statePoints.Insert(statePointIndex, _list.AddBefore(node, token));
+                if (statePointIndex < _statePoints.Count)
+                {
+                    var node = _statePoints[statePointIndex];
+                    newToken.Parent = _owner;
+                    _statePoints.Insert(statePointIndex, _list.AddBefore(node, token));
+                }
+                else
+                {
+                    newToken.Parent = _owner;
+                    _statePoints.Add(_list.AddLast(token));
+                }
             }
             else
             {

@@ -3,7 +3,10 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDClassDeclaration : GDNode
+    public sealed class GDClassDeclaration : GDNode,
+        ITokenReceiver<GDClassAtributesList>,
+        ITokenReceiver<GDClassMembersList>,
+        INewLineReceiver
     {
         public GDClassAtributesList Atributes
         {
@@ -73,6 +76,35 @@ namespace GDShrapt.Reader
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
+        {
+            _form.AddBeforeActiveToken(new GDNewLine());
+        }
+
+        void ITokenReceiver<GDClassAtributesList>.HandleReceivedToken(GDClassAtributesList token)
+        {
+            if (_form.State == State.Atributes)
+            {
+                Atributes = token;
+                _form.State = State.Members;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDClassMembersList>.HandleReceivedToken(GDClassMembersList token)
+        {
+            if (_form.StateIndex <= (int)State.Members)
+            {
+                Members = token;
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
         {
             _form.AddBeforeActiveToken(new GDNewLine());
         }

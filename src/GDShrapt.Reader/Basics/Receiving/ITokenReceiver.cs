@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public interface ITokenReceiver<T> : ITokenReceiver
+    public interface ITokenReceiver<in T> : ITokenReceiver
         where T : GDSyntaxToken
     {
         void HandleReceivedToken(T token);

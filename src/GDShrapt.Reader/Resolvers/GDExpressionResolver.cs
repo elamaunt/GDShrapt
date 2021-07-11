@@ -38,7 +38,7 @@
 
                 var expr = new GDIfExpression();
                 PushAndSwap(state, expr);
-                expr.SendKeyword(keyword);
+                expr.Add(keyword);
 
                 state.PassChar(c);
                 return;
@@ -230,56 +230,56 @@
                     case "not":
                         {
                             var e = new GDSingleOperatorExpression();
-                            e.SendSingleOperator(new GDSingleOperator() { OperatorType = GDSingleOperatorType.Not2 });
+                            e.Add(new GDSingleOperator() { OperatorType = GDSingleOperatorType.Not2 });
                             PushAndSave(state, e);
                             return true;
                         }
                     case "var":
                         {
                             var e = new GDMatchCaseVariableExpression();
-                            e.SendKeyword(new GDVarKeyword());
+                            e.Add(new GDVarKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "pass":
                         {
                             var e = new GDPassExpression();
-                            e.SendKeyword(new GDPassKeyword());
+                            e.Add(new GDPassKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "continue":
                         {
                             var e = new GDContinueExpression();
-                            e.SendKeyword(new GDContinueKeyword());
+                            e.Add(new GDContinueKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "return":
                         {
                             var e = new GDReturnExpression();
-                            e.SendKeyword(new GDReturnKeyword());
+                            e.Add(new GDReturnKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "_":
                         {
                             var e = new GDMatchDefaultOperatorExpression();
-                            e.SendToken(new GDDefaultToken());
+                            e.Add(new GDDefaultToken());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "false":
                         {
                             var e = new GDBoolExpression();
-                            e.SendKeyword(new GDFalseKeyword());
+                            e.Add(new GDFalseKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "true":
                         {
                             var e = new GDBoolExpression();
-                            e.SendKeyword(new GDTrueKeyword());
+                            e.Add(new GDTrueKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
@@ -360,7 +360,7 @@
 
             if (_lastSpace != null)
             {
-                node.SendSpace(_lastSpace);
+                node.HandleReceivedToken(_lastSpace);
                 _lastSpace = null;
             }
 
@@ -377,7 +377,7 @@
         {
             if (_lastSpace != null)
             {
-                node.SendSpace(_lastSpace);
+                node.Add(_lastSpace);
                 _lastSpace = null;
             }
 

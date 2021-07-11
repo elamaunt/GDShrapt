@@ -21,7 +21,7 @@
         {
             var branch = new GDElseBranch(LineIntendationThreshold);
 
-            branch.SendKeyword(new GDElseKeyword());
+            branch.Add(new GDElseKeyword());
 
             SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(branch);

@@ -14,10 +14,12 @@
             };
 
             public static GDNumber Number(string stringValue) => new GDNumber() { ValueAsString = stringValue };
+            public static GDNumber Number(int value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(long value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(double value) => new GDNumber() { ValueDouble = value };
 
             public static GDSpace Space(int count = 1) => new GDSpace() { Sequence = new string(' ', count) };
+            public static GDSpace Space(string whiteSpace) => new GDSpace() { Sequence = whiteSpace };
             public static GDNewLine NewLine() => new GDNewLine();
             public static GDIntendation Intendation(int count = 0) => new GDIntendation() { Sequence = new string('\t', count), LineIntendationThreshold = count };
             public static GDComment Comment(string comment) => new GDComment() { Sequence = comment };

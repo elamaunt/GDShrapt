@@ -12,7 +12,7 @@
         internal override GDReader ResolveNode()
         {
             var node = new GDParameterDeclaration();
-            this.SendToken(node);
+            ListForm.Add(node);
             return node;
         }
 

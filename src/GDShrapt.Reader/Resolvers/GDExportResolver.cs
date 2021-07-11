@@ -18,7 +18,7 @@
         protected override void OnMatch(GDReadingState state)
         {
             var declaration = new GDExportDeclaration();
-            declaration.SendKeyword(new GDExportKeyword());
+            declaration.Add(new GDExportKeyword());
             Owner.HandleReceivedToken(declaration);
             state.Push(declaration);
         }

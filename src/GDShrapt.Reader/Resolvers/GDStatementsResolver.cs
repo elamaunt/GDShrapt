@@ -106,35 +106,35 @@ namespace GDShrapt.Reader
                 case "if":
                     {
                         var s = new GDIfStatement(LineIntendationThreshold);
-                        s.IfBranch.SendKeyword(new GDIfKeyword());
+                        s.IfBranch.Add(new GDIfKeyword());
                         statement = s;
                         break;
                     }
                 case "for":
                     {
                         var s = new GDForStatement(LineIntendationThreshold);
-                        s.SendKeyword(new GDForKeyword());
+                        s.Add(new GDForKeyword());
                         statement = s;
                         break;
                     }
                 case "while":
                     {
                         var s = new GDWhileStatement(LineIntendationThreshold);
-                        s.SendKeyword(new GDWhileKeyword());
+                        s.Add(new GDWhileKeyword());
                         statement = s;
                         break;
                     }
                 case "match":
                     {
                         var s = new GDMatchStatement(LineIntendationThreshold);
-                        s.SendKeyword(new GDMatchKeyword());
+                        s.Add(new GDMatchKeyword());
                         statement = s;
                         break;
                     }
                 case "var":
                     {
                         var s = new GDVariableDeclarationStatement(LineIntendationThreshold);
-                        s.SendKeyword(new GDVarKeyword());
+                        s.Add(new GDVarKeyword());
                         statement = s;
                         break;
                     }

@@ -4,15 +4,19 @@
     {
         public static class Declaration
         {
-            public static GDClassDeclaration Class(params GDSyntaxToken[] unsafeTokens) => null;// GDBuildingHelper.Construct<GDClassDeclaration>(unsafeTokens);
-
-            //public static GDBuilder<GDClassDeclaration, GDClassAtributesList, GDClassMembersList> ClassBuilder(params GDSyntaxToken[] unsafeTokens) => new GDBuilder<GDClassDeclaration, GDClassAtributesList, GDClassMembersList>(new GDClassDeclaration());
-
+            public static GDClassDeclaration Class() => new GDClassDeclaration();
             public static GDClassDeclaration Class(GDClassAtributesList atributes, GDClassMembersList members) => new GDClassDeclaration()
             {
                 Atributes = atributes,
                 [1] = new GDNewLine(),
                 Members = members
+            };
+
+            public static GDInnerClassDeclaration InnerClass(string name) => new GDInnerClassDeclaration()
+            {
+                ClassKeyword = new GDClassKeyword(),
+                [1] = Syntax.Space(),
+                Identifier = Syntax.Identifier(name)
             };
 
             public static GDInnerClassDeclaration InnerClass(string name, GDClassMembersList members) => new GDInnerClassDeclaration()

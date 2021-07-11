@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public interface ITokenOrSkipReceiver<T> : ITokenReceiver<T>, ITokenSkipReceiver<T>
+    public interface ITokenOrSkipReceiver<in T> : ITokenReceiver<T>, ITokenSkipReceiver<T>
         where T : GDSyntaxToken
     {
     }
