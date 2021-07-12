@@ -1,9 +1,13 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public static partial class GD
     {
         public static class Branch
         {
+            public static GDIfBranch If() => new GDIfBranch();
+            public static GDIfBranch If(Func<GDIfBranch, GDIfBranch> setup) => setup(new GDIfBranch());
             public static GDIfBranch If(GDExpression condition, GDExpression expression) => new GDIfBranch()
             {
                 IfKeyword = new GDIfKeyword(),
@@ -32,6 +36,8 @@
                 Statements = statements
             };
 
+            public static GDElifBranch Elif() => new GDElifBranch();
+            public static GDElifBranch Elif(Func<GDElifBranch, GDElifBranch> setup) => setup(new GDElifBranch());
             public static GDElifBranch Elif(GDExpression condition, GDExpression expression) => new GDElifBranch()
             {
                 ElifKeyword = new GDElifKeyword(),
@@ -60,6 +66,8 @@
                 Statements = statements
             };
 
+            public static GDElseBranch Else() => new GDElseBranch();
+            public static GDElseBranch Else(Func<GDElseBranch, GDElseBranch> setup) => setup(new GDElseBranch());
             public static GDElseBranch Else(GDExpression expression) => new GDElseBranch()
             {
                 ElseKeyword = new GDElseKeyword(),

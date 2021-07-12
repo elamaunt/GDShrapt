@@ -1,10 +1,13 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public static partial class GD
     {
         public static class Declaration
         {
             public static GDClassDeclaration Class() => new GDClassDeclaration();
+            public static GDClassDeclaration Class(Func<GDClassDeclaration, GDClassDeclaration> setup) => setup(new GDClassDeclaration());
             public static GDClassDeclaration Class(GDClassAtributesList atributes, GDClassMembersList members) => new GDClassDeclaration()
             {
                 Atributes = atributes,
@@ -13,7 +16,7 @@
             };
 
             public static GDInnerClassDeclaration InnerClass() => new GDInnerClassDeclaration();
-
+            public static GDInnerClassDeclaration InnerClass(Func<GDInnerClassDeclaration, GDInnerClassDeclaration> setup) => setup(new GDInnerClassDeclaration());
             public static GDInnerClassDeclaration InnerClass(string name) => new GDInnerClassDeclaration()
             {
                 ClassKeyword = new GDClassKeyword(),
@@ -70,7 +73,7 @@
             };
 
             public static GDMethodDeclaration Method() => new GDMethodDeclaration();
-
+            public static GDMethodDeclaration Method(Func<GDMethodDeclaration, GDMethodDeclaration> setup) => setup(new GDMethodDeclaration());
             public static GDMethodDeclaration Method(GDIdentifier identifier, GDParametersList parameters, params GDStatement[] statements) => new GDMethodDeclaration()
             {
                 FuncKeyword = new GDFuncKeyword(),
@@ -128,6 +131,21 @@
                 Statements = List.Statements(statements)
             };
 
+            public static GDMethodDeclaration Method(GDIdentifier identifier, GDExpression[] baseCallParameters, params GDStatement[] statements) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = identifier,
+                OpenBracket = new GDOpenBracket(),
+                CloseBracket = new GDCloseBracket(),
+                BaseCallPoint = new GDPoint(),
+                BaseCallOpenBracket = new GDOpenBracket(),
+                BaseCallParameters = List.Expressions(baseCallParameters),
+                BaseCallCloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                Statements = List.Statements(statements)
+            };
+
             public static GDMethodDeclaration StaticMethod(GDIdentifier identifier, params GDStatement[] statements) => new GDMethodDeclaration()
             {
                 StaticKeyword = new GDStaticKeyword(),
@@ -180,6 +198,7 @@
             };
 
             public static GDParameterDeclaration Parameter() => new GDParameterDeclaration();
+            public static GDParameterDeclaration Parameter(Func<GDParameterDeclaration, GDParameterDeclaration> setup) => setup(new GDParameterDeclaration());
             public static GDParameterDeclaration Parameter(string identifier) => new GDParameterDeclaration()
             {
                 Identifier = Syntax.Identifier(identifier)
@@ -235,6 +254,7 @@
             };
 
             public static GDMatchCaseDeclaration MatchCase() => new GDMatchCaseDeclaration();
+            public static GDMatchCaseDeclaration MatchCase(Func<GDMatchCaseDeclaration, GDMatchCaseDeclaration> setup) => setup(new GDMatchCaseDeclaration());
 
             public static GDMatchCaseDeclaration MatchCase(GDExpressionsList conditions, GDStatementsList statements) => new GDMatchCaseDeclaration()
             { 
@@ -251,7 +271,7 @@
             };
 
             public static GDSignalDeclaration Signal() => new GDSignalDeclaration();
-
+            public static GDSignalDeclaration Signal(Func<GDSignalDeclaration, GDSignalDeclaration> setup) => setup(new GDSignalDeclaration());
             public static GDSignalDeclaration Signal(GDIdentifier identifier, GDParametersList parameters) => new GDSignalDeclaration()
             {
                 SignalKeyword = new GDSignalKeyword(),
@@ -283,7 +303,7 @@
             };
 
             public static GDVariableDeclaration Variable() => new GDVariableDeclaration();
-
+            public static GDVariableDeclaration Variable(Func<GDVariableDeclaration, GDVariableDeclaration> setup) => setup(new GDVariableDeclaration());
             public static GDVariableDeclaration Variable(GDIdentifier identifier) => new GDVariableDeclaration()
             { 
                 VarKeyword = new GDVarKeyword(),

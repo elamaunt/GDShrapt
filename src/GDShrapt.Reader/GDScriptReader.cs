@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -19,11 +18,6 @@ namespace GDShrapt.Reader
         public GDScriptReader(GDReadSettings settings)
         {
             Settings = settings;
-        }
-
-        public void ParseFile(object fullPath)
-        {
-            throw new NotImplementedException();
         }
 
         public GDClassDeclaration ParseFileContent(string content)

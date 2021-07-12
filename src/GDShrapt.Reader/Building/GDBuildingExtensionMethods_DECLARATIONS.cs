@@ -32,113 +32,141 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddAtributes<T>(this T receiver, Func<GDClassAtributesList, GDClassAtributesList> setup)
-            where T : ITokenReceiver<GDClassAtributesList>
+        public static T AddVariable<T>(this T receiver, Func<GDVariableDeclaration, GDVariableDeclaration> setup)
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
-            receiver.HandleReceivedToken(setup(new GDClassAtributesList()));
-            return receiver;
-        }
-
-        public static T AddMembers<T>(this T receiver, Func<GDClassMembersList, GDClassMembersList> setup)
-            where T : ITokenReceiver<GDClassMembersList>
-        {
-            receiver.HandleReceivedToken(setup(new GDClassMembersList()));
+            receiver.HandleReceivedToken(setup(new GDVariableDeclaration()));
             return receiver;
         }
 
         public static T AddVariable<T>(this T receiver, string name)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Variable(name));
             return receiver;
         }
 
         public static T AddVariable<T>(this T receiver, string name, string type)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Variable(name, type));
             return receiver;
         }
         public static T AddVariable<T>(this T receiver, string name, string type, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Variable(name, type, initializer));
             return receiver;
         }
 
         public static T AddVariable<T>(this T receiver, string name, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Variable(name, initializer));
             return receiver;
         }
 
         public static T AddVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Variable(identifier, type, export, initializer));
             return receiver;
         }
 
         public static T AddVariable<T>(this T receiver, string identifier, string type, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Variable(identifier, type, initializer, setMethod, getMethod));
             return receiver;
         }
 
         public static T AddVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Variable(identifier, type, export, initializer, setMethod, getMethod));
             return receiver;
         }
         public static T AddConst<T>(this T receiver, string identifier, string type, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Const(identifier, type, initializer));
             return receiver;
         }
 
         public static T AddConst<T>(this T receiver, string identifier, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Const(identifier, initializer));
             return receiver;
         }
 
         public static T AddOnreadyVariable<T>(this T receiver, string name, string type, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(name, type, initializer));
             return receiver;
         }
 
         public static T AddOnreadyVariable<T>(this T receiver, string name, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(name, initializer));
             return receiver;
         }
 
         public static T AddOnreadyVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(identifier, type, export, initializer));
             return receiver;
         }
 
         public static T AddOnreadyVariable<T>(this T receiver, string identifier, string type, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(identifier, type, initializer, setMethod, getMethod));
             return receiver;
         }
 
         public static T AddOnreadyVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod)
-            where T : ITokenReceiver<GDClassMember>
+            where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(identifier, type, export, initializer, setMethod, getMethod));
+            return receiver;
+        }
+
+        public static T AddMethod<T>(this T receiver, Func<GDMethodDeclaration, GDMethodDeclaration> setup)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(setup(new GDMethodDeclaration()));
+            return receiver;
+        }
+
+        public static T AddMethod<T>(this T receiver, string name, params GDStatement[] statements)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, statements));
+            return receiver;
+        }
+
+        public static T AddMethod<T>(this T receiver, string name, string type, params GDStatement[] statements)
+           where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, type, statements));
+            return receiver;
+        }
+
+        public static T AddMethod<T>(this T receiver, string name, string type, GDExpression[] baseCallParameters, params GDStatement[] statements)
+           where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, type, baseCallParameters, statements));
+            return receiver;
+        }
+
+        public static T AddMethod<T>(this T receiver, string name, GDExpression[] baseCallParameters, params GDStatement[] statements)
+           where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, baseCallParameters, statements));
             return receiver;
         }
     }

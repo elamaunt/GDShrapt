@@ -45,8 +45,33 @@ namespace GDShrapt.Reader.Tests
                 .AddNewLine()
                 .AddMembers(x => x
                     .AddVariable("a")
-                    .AddConst("pi", GD.Expression.String("Hello")));
+                    .AddNewLine()
+                    .AddConst("message", GD.Expression.String("Hello"))
+                    .AddNewLine()
+                    .AddNewLine()
+                    .AddMethod(x => x
+                        .AddFuncKeyword()
+                        .AddSpace()
+                        .Add("_start")
+                        .AddOpenBracket()
+                        .AddCloseBracket()
+                        .AddStatements(x => x
+                            .AddNewLine()
+                            .AddNewLine()
+                            .AddIntendation()
+                            .AddCall(GD.Expression.Identifier("print"), GD.Expression.String("Hello world"))
+                            .AddNewLine()
+                            .AddNewLine()
+                            .AddIntendation()
+                            .AddPass())));
 
+            declaration.UpdateIntendation();
+
+            var code = declaration.ToString();
+
+            var codeToCompare = "tool\nclass_name Generated\nextends Node2D\n\nvar a\nconst message = \"Hello\"\n\nfunc _start()\n\n\tprint(\"Hello world\")\n\n\tpass";
+
+            AssertHelper.CompareCodeStrings(codeToCompare, code);
         }
     }
 }

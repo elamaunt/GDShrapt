@@ -215,7 +215,7 @@ namespace GDShrapt.Converter
 
         }
 
-        public void Visit(GDIndexerExression e)
+        public void Visit(GDIndexerExpression e)
         {
 
         }

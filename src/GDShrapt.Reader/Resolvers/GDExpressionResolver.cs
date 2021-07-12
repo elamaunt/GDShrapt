@@ -184,7 +184,7 @@
 
                 if (c == '[')
                 {
-                    PushAndSwap(state, new GDIndexerExression());
+                    PushAndSwap(state, new GDIndexerExpression());
                     state.PassChar(c);
                     return;
                 }

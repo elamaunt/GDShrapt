@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDIndexerExression : GDExpression,
+    public sealed class GDIndexerExpression : GDExpression,
         ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDSquareOpenBracket>,
         ITokenOrSkipReceiver<GDSquareCloseBracket>
@@ -40,7 +40,7 @@
 
         readonly GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket> _form;
         public override GDTokensForm Form => _form;
-        public GDIndexerExression()
+        public GDIndexerExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket>(this);
         }
@@ -109,7 +109,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDIndexerExression();
+            return new GDIndexerExpression();
         }
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)

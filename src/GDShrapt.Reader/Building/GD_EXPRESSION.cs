@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public static partial class GD
     {
@@ -15,6 +17,8 @@
             public static GDNumberExpression Number(long value) => new GDNumberExpression() { Number = Syntax.Number(value) };
             public static GDNumberExpression Number(double value) => new GDNumberExpression() { Number = Syntax.Number(value) };
 
+            public static GDIfExpression If() => new GDIfExpression();
+            public static GDIfExpression If(Func<GDIfExpression, GDIfExpression> setup) => setup(new GDIfExpression());
             public static GDIfExpression If(GDExpression condition, GDExpression trueExpr, GDExpression falseExpr) => new GDIfExpression()
             {
                 TrueExpression = trueExpr,
@@ -28,11 +32,15 @@
                 FalseExpression = falseExpr
             };
 
+            public static GDArrayInitializerExpression Array() => new GDArrayInitializerExpression();
+            public static GDArrayInitializerExpression Array(Func<GDArrayInitializerExpression, GDArrayInitializerExpression> setup) => setup(new GDArrayInitializerExpression());
             public static GDArrayInitializerExpression Array(params GDExpression[] expressions) => new GDArrayInitializerExpression()
             {
                 Values = List.Expressions(expressions)
             };
 
+            public static GDDictionaryInitializerExpression Dictionary() => new GDDictionaryInitializerExpression();
+            public static GDDictionaryInitializerExpression Dictionary(Func<GDDictionaryInitializerExpression, GDDictionaryInitializerExpression> setup) => setup(new GDDictionaryInitializerExpression());
             public static GDDictionaryInitializerExpression Dictionary(params GDDictionaryKeyValueDeclaration[] keyValues) => new GDDictionaryInitializerExpression()
             {
                 KeyValues = List.KeyValues(keyValues)
@@ -51,6 +59,8 @@
                 BoolKeyword = value ? (GDBoolKeyword)new GDTrueKeyword() : new GDFalseKeyword()
             };
 
+            public static GDCallExpression Call() => new GDCallExpression();
+            public static GDCallExpression Call(Func<GDCallExpression, GDCallExpression> setup) => setup(new GDCallExpression());
             public static GDCallExpression Call(GDExpression caller, params GDExpression[] parameters) => new GDCallExpression()
             {
                 CallerExpression = caller,
@@ -59,12 +69,18 @@
                 CloseBracket = new GDCloseBracket()
             };
 
+            public static GDBracketExpression Bracket() => new GDBracketExpression();
+            public static GDBracketExpression Bracket(Func<GDBracketExpression, GDBracketExpression> setup) => setup(new GDBracketExpression());
+
             public static GDBracketExpression Bracket(GDExpression inner) => new GDBracketExpression()
             {
                 OpenBracket = new GDOpenBracket(),
                 InnerExpression = inner,
                 CloseBracket = new GDCloseBracket()
             };
+
+            public static GDMemberOperatorExpression Member() => new GDMemberOperatorExpression();
+            public static GDMemberOperatorExpression Member(Func<GDMemberOperatorExpression, GDMemberOperatorExpression> setup) => setup(new GDMemberOperatorExpression());
 
             public static GDMemberOperatorExpression Member(GDExpression caller, string identifier) => new GDMemberOperatorExpression()
             {
@@ -97,7 +113,9 @@
                 Number = number
             };
 
-            public static GDIndexerExression Indexer(GDExpression caller, GDExpression indexExpression) => new GDIndexerExression()
+            public static GDIndexerExpression Indexer() => new GDIndexerExpression();
+            public static GDIndexerExpression Indexer(Func<GDIndexerExpression, GDIndexerExpression> setup) => setup(new GDIndexerExpression());
+            public static GDIndexerExpression Indexer(GDExpression caller, GDExpression indexExpression) => new GDIndexerExpression()
             {
                 CallerExpression = caller,
                 SquareOpenBracket = new GDSquareOpenBracket(),
@@ -130,6 +148,7 @@
                 ReturnKeyword = new GDReturnKeyword()
             };
 
+            public static GDReturnExpression Return(Func<GDReturnExpression, GDReturnExpression> setup) => setup(new GDReturnExpression());
             public static GDReturnExpression Return(GDExpression result) => new GDReturnExpression()
             {
                 ReturnKeyword = new GDReturnKeyword(),
@@ -137,12 +156,16 @@
                 Expression = result
             };
 
+            public static GDSingleOperatorExpression SingleOperator() => new GDSingleOperatorExpression();
+            public static GDSingleOperatorExpression SingleOperator(Func<GDSingleOperatorExpression, GDSingleOperatorExpression> setup) => setup(new GDSingleOperatorExpression());
             public static GDSingleOperatorExpression SingleOperator(GDSingleOperator @operator, GDExpression operand) => new GDSingleOperatorExpression()
             {
                 Operator = @operator,
                 TargetExpression = operand
             };
 
+            public static GDDualOperatorExpression DualOperator() => new GDDualOperatorExpression();
+            public static GDDualOperatorExpression DualOperator(Func<GDDualOperatorExpression, GDDualOperatorExpression> setup) => setup(new GDDualOperatorExpression());
             public static GDDualOperatorExpression DualOperator(GDExpression left, GDDualOperator @operator, GDExpression right) => new GDDualOperatorExpression()
             {
                 LeftExpression = left,
@@ -150,10 +173,18 @@
                 RightExpression = right
             };
 
+            public static GDGetNodeExpression GetNode() => new GDGetNodeExpression();
+            public static GDGetNodeExpression GetNode(Func<GDGetNodeExpression, GDGetNodeExpression> setup) => setup(new GDGetNodeExpression());
             public static GDGetNodeExpression GetNode(GDPathList pathList) => new GDGetNodeExpression()
             {
                 Dollar = new GDDollar(),
                 Path = pathList
+            };
+
+            public static GDGetNodeExpression GetNode(params GDIdentifier[] names) => new GDGetNodeExpression()
+            {
+                Dollar = new GDDollar(),
+                Path = List.Path(names)
             };
 
             public static GDBoolExpression True() => new GDBoolExpression()
@@ -166,12 +197,16 @@
                 BoolKeyword = new GDFalseKeyword()
             };
 
+            public static GDNodePathExpression NodePath() => new GDNodePathExpression();
+            public static GDNodePathExpression NodePath(Func<GDNodePathExpression, GDNodePathExpression> setup) => setup(new GDNodePathExpression());
             public static GDNodePathExpression NodePath(GDString path) => new GDNodePathExpression()
             {
                 At = new GDAt(),
                 Path = path
             };
 
+            public static GDMatchCaseVariableExpression MatchCaseVariable() => new GDMatchCaseVariableExpression();
+            public static GDMatchCaseVariableExpression MatchCaseVariable(Func<GDMatchCaseVariableExpression, GDMatchCaseVariableExpression> setup) => setup(new GDMatchCaseVariableExpression());
             public static GDMatchCaseVariableExpression MatchCaseVariable(string identifier) => new GDMatchCaseVariableExpression()
             {
                 VarKeyword = new GDVarKeyword(),
@@ -186,11 +221,21 @@
                 Identifier = identifier
             };
 
-            public static GDYieldExpression Yield(GDExpression innerExpression = null) => new GDYieldExpression()
+            public static GDYieldExpression Yield() => new GDYieldExpression();
+            public static GDYieldExpression Yield(Func<GDYieldExpression, GDYieldExpression> setup) => setup(new GDYieldExpression());
+            public static GDYieldExpression Yield(GDExpressionsList parameters) => new GDYieldExpression()
             {
                 YieldKeyword = new GDYieldKeyword(),
                 CloseBracket = new GDCloseBracket(),
-                Expression = innerExpression,
+                Parameters = parameters,
+                OpenBracket = new GDOpenBracket()
+            };
+
+            public static GDYieldExpression Yield(params GDExpression[] parameters) => new GDYieldExpression()
+            {
+                YieldKeyword = new GDYieldKeyword(),
+                CloseBracket = new GDCloseBracket(),
+                Parameters = List.Expressions(parameters),
                 OpenBracket = new GDOpenBracket()
             };
 
