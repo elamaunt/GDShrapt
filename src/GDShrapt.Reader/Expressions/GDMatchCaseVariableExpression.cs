@@ -33,28 +33,15 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-
             switch (_form.State)
             {
                 case State.Var:
                     if (!this.ResolveSpaceToken(c, state))
-                        state.PushAndPass(new GDKeywordResolver<GDVarKeyword>(this), c);
+                        this.ResolveKeyword<GDVarKeyword>(c, state);
                     break;
                 case State.Identifier:
-                    if (this.ResolveSpaceToken(c, state))
-                        return;
-
-                    this.ResolveIdentifier(c, state);
-
-                    if (IsIdentifierStartChar(c))
-                    {
-                        _form.State = State.Completed;
-                        state.PushAndPass(Identifier = new GDIdentifier(), c);
-                        return;
-                    }
-
-                    _form.AddBeforeActiveToken(state.Push(new GDInvalidToken(x => IsIdentifierStartChar(c))));
-                    state.PassChar(c);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveIdentifier(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -64,8 +51,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         public override GDNode CreateEmptyInstance()
@@ -75,7 +61,7 @@
 
         void ITokenReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
         { 
-            if (_form.State == State.Var)
+            if (_form.IsOrLowerState(State.Var))
             {
                 _form.State = State.Identifier;
                 VarKeyword = token;
@@ -87,7 +73,7 @@
 
         void ITokenSkipReceiver<GDVarKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Var)
+            if (_form.IsOrLowerState(State.Var))
             {
                 _form.State = State.Identifier;
                 return;
@@ -98,7 +84,7 @@
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Completed;
                 Identifier = token;
@@ -110,7 +96,7 @@
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Completed;
                 return;

@@ -26,7 +26,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.Default)
+            if (_form.IsOrLowerState(State.Default))
                 state.Push(new GDSingleCharTokenResolver<GDDefaultToken>(this));
             else
                 state.Pop();
@@ -46,7 +46,7 @@
 
         void ITokenReceiver<GDDefaultToken>.HandleReceivedToken(GDDefaultToken token)
         {
-            if (_form.State == State.Default)
+            if (_form.IsOrLowerState(State.Default))
             {
                 _form.State = State.Completed;
                 DefaultToken = token;
@@ -58,7 +58,7 @@
 
         void ITokenSkipReceiver<GDDefaultToken>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Default)
+            if (_form.IsOrLowerState(State.Default))
             {
                 _form.State = State.Completed;
                 return;

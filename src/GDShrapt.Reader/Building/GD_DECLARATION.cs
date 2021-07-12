@@ -12,6 +12,8 @@
                 Members = members
             };
 
+            public static GDInnerClassDeclaration InnerClass() => new GDInnerClassDeclaration();
+
             public static GDInnerClassDeclaration InnerClass(string name) => new GDInnerClassDeclaration()
             {
                 ClassKeyword = new GDClassKeyword(),
@@ -66,6 +68,8 @@
                 [3] = new GDNewLine(),
                 Members = List.Members(members)
             };
+
+            public static GDMethodDeclaration Method() => new GDMethodDeclaration();
 
             public static GDMethodDeclaration Method(GDIdentifier identifier, GDParametersList parameters, params GDStatement[] statements) => new GDMethodDeclaration()
             {
@@ -175,6 +179,7 @@
                 Statements = List.Statements(statements)
             };
 
+            public static GDParameterDeclaration Parameter() => new GDParameterDeclaration();
             public static GDParameterDeclaration Parameter(string identifier) => new GDParameterDeclaration()
             {
                 Identifier = Syntax.Identifier(identifier)
@@ -229,6 +234,8 @@
                 DefaultValue = defaultValue
             };
 
+            public static GDMatchCaseDeclaration MatchCase() => new GDMatchCaseDeclaration();
+
             public static GDMatchCaseDeclaration MatchCase(GDExpressionsList conditions, GDStatementsList statements) => new GDMatchCaseDeclaration()
             { 
                 Conditions = conditions,
@@ -242,6 +249,8 @@
                 Colon = new GDColon(),
                 Statements = List.Statements(statements)
             };
+
+            public static GDSignalDeclaration Signal() => new GDSignalDeclaration();
 
             public static GDSignalDeclaration Signal(GDIdentifier identifier, GDParametersList parameters) => new GDSignalDeclaration()
             {
@@ -273,6 +282,8 @@
                 CloseBracket = new GDCloseBracket()
             };
 
+            public static GDVariableDeclaration Variable() => new GDVariableDeclaration();
+
             public static GDVariableDeclaration Variable(GDIdentifier identifier) => new GDVariableDeclaration()
             { 
                 VarKeyword = new GDVarKeyword(),
@@ -296,6 +307,17 @@
                 Colon = new GDColon(),
                 [6] = Syntax.Space(),
                 Type = Syntax.Type(type)
+            };
+
+            public static GDVariableDeclaration Variable(string identifier, GDExpression initializer) => new GDVariableDeclaration()
+            {
+                VarKeyword = new GDVarKeyword(),
+                [4] = Syntax.Space(),
+                Identifier = Syntax.Identifier(identifier),
+                [7] = Syntax.Space(),
+                Assign = new GDAssign(),
+                [8] = Syntax.Space(),
+                Initializer = initializer
             };
 
             public static GDVariableDeclaration Variable(string identifier, string type, GDExpression initializer) => new GDVariableDeclaration()

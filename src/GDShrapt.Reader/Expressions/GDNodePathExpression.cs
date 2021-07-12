@@ -61,7 +61,7 @@
 
         void ITokenReceiver<GDAt>.HandleReceivedToken(GDAt token)
         {
-            if (_form.State == State.At)
+            if (_form.IsOrLowerState(State.At))
             {
                 _form.State = State.Path;
                 At = token;
@@ -73,7 +73,7 @@
 
         void ITokenSkipReceiver<GDAt>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.At)
+            if (_form.IsOrLowerState(State.At))
             {
                 _form.State = State.Path;
                 return;
@@ -84,7 +84,7 @@
 
         void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
         {
-            if (_form.State == State.Path)
+            if (_form.IsOrLowerState(State.Path))
             {
                 _form.State = State.Completed;
                 Path = token;

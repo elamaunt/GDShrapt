@@ -24,7 +24,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.Number)
+            if (_form.IsOrLowerState(State.Number))
             {
                 if (IsNumberStartChar(c))
                 {

@@ -102,7 +102,7 @@
 
         void ITokenReceiver<GDMatchKeyword>.HandleReceivedToken(GDMatchKeyword token)
         {
-            if (_form.State == State.Match)
+            if (_form.IsOrLowerState(State.Match))
             {
                 MatchKeyword = token;
                 _form.State = State.Value;
@@ -114,7 +114,7 @@
 
         void ITokenSkipReceiver<GDMatchKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Match)
+            if (_form.IsOrLowerState(State.Match))
             {
                 _form.State = State.Value;
                 return;
@@ -125,7 +125,7 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 Colon = token;
                 _form.State = State.Cases;
@@ -137,7 +137,7 @@
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Cases;
                 return;
@@ -148,7 +148,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Value)
+            if (_form.IsOrLowerState(State.Value))
             {
                 Value = token;
                 _form.State = State.Colon;
@@ -160,7 +160,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Value)
+            if (_form.IsOrLowerState(State.Value))
             {
                 _form.State = State.Colon;
                 return;

@@ -3,7 +3,9 @@
     public sealed class GDCallExpression : GDExpression,
         ITokenOrSkipReceiver<GDOpenBracket>,
         ITokenOrSkipReceiver<GDExpression>,
-        ITokenOrSkipReceiver<GDCloseBracket>
+        ITokenOrSkipReceiver<GDCloseBracket>,
+        ITokenReceiver<GDNewLine>,
+        INewLineReceiver
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Call);
 
@@ -72,7 +74,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.State == State.Parameters)
+            if (_form.IsOrLowerState(State.Parameters))
             {
                 _form.State = State.CloseBracket;
                 state.PushAndPassNewLine(Parameters);
@@ -89,7 +91,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Caller)
+            if (_form.IsOrLowerState(State.Caller))
             {
                 _form.State = State.OpenBracket;
                 CallerExpression = token;
@@ -101,7 +103,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Caller)
+            if (_form.IsOrLowerState(State.Caller))
             {
                 _form.State = State.OpenBracket;
                 return;
@@ -112,7 +114,7 @@
 
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
-            if (_form.State == State.OpenBracket)
+            if (_form.IsOrLowerState(State.OpenBracket))
             {
                 _form.State = State.Parameters;
                 OpenBracket = token;
@@ -124,7 +126,7 @@
 
         void ITokenSkipReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.OpenBracket)
+            if (_form.IsOrLowerState(State.OpenBracket))
             {
                 _form.State = State.Parameters;
                 return;
@@ -135,7 +137,7 @@
 
         void ITokenReceiver<GDCloseBracket>.HandleReceivedToken(GDCloseBracket token)
         {
-            if (_form.State == State.CloseBracket)
+            if (_form.IsOrLowerState(State.CloseBracket))
             {
                 _form.State = State.Completed;
                 CloseBracket = token;
@@ -147,9 +149,31 @@
 
         void ITokenSkipReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.CloseBracket)
+            if (_form.IsOrLowerState(State.CloseBracket))
             {
                 _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 

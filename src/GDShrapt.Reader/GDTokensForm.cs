@@ -781,6 +781,8 @@ namespace GDShrapt.Reader
             get => (STATE)(object)StateIndex;
             set => StateIndex = (int)(object)value;
         }
+
+        public bool IsOrLowerState(STATE state) => StateIndex <= (int)(object)state;
     }
 
     /// <summary>

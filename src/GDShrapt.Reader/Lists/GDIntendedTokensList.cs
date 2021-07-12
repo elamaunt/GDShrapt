@@ -1,6 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
-    public abstract class GDIntendedTokensList<TOKEN> : GDSeparatedList<TOKEN, GDNewLine>, IIntendedTokenReceiver<TOKEN>
+    public abstract class GDIntendedTokensList<TOKEN> : GDSeparatedList<TOKEN, GDNewLine>,
+        IIntendedTokenReceiver<TOKEN>
         where TOKEN : GDSyntaxToken
     {
         protected int LineIntendationThreshold { get; }

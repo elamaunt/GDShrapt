@@ -26,7 +26,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.BreakPoint)
+            if (_form.IsOrLowerState(State.BreakPoint))
                 state.Push(new GDKeywordResolver<GDBreakPointKeyword>(this));
             else
                 state.Pop();
@@ -47,7 +47,7 @@
 
         void ITokenReceiver<GDBreakPointKeyword>.HandleReceivedToken(GDBreakPointKeyword token)
         {
-            if (_form.State == State.BreakPoint)
+            if (_form.IsOrLowerState(State.BreakPoint))
             {
                 _form.State = State.Completed;
                 BreakPointKeyword = token;
@@ -59,7 +59,7 @@
 
         void ITokenSkipReceiver<GDBreakPointKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.BreakPoint)
+            if (_form.IsOrLowerState(State.BreakPoint))
             {
                 _form.State = State.Completed;
                 return;

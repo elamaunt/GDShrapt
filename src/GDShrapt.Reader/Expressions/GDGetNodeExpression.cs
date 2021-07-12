@@ -62,7 +62,7 @@
 
         void ITokenReceiver<GDDollar>.HandleReceivedToken(GDDollar token)
         {
-            if (_form.State == State.Dollar)
+            if (_form.IsOrLowerState(State.Dollar))
             {
                 _form.State = State.Path;
                 Dollar = token;
@@ -74,7 +74,7 @@
 
         void ITokenSkipReceiver<GDDollar>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Dollar)
+            if (_form.IsOrLowerState(State.Dollar))
             {
                 _form.State = State.Path;
                 return;

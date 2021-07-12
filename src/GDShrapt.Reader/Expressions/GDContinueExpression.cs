@@ -27,7 +27,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.Continue)
+            if (_form.IsOrLowerState(State.Continue))
                 state.Push(new GDKeywordResolver<GDContinueKeyword>(this));
             else
                 state.Pop();
@@ -48,7 +48,7 @@
 
         void ITokenReceiver<GDContinueKeyword>.HandleReceivedToken(GDContinueKeyword token)
         {
-            if (_form.State == State.Continue)
+            if (_form.IsOrLowerState(State.Continue))
             {
                 _form.State = State.Completed;
                 ContinueKeyword = token;
@@ -60,7 +60,7 @@
 
         void ITokenSkipReceiver<GDContinueKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Continue)
+            if (_form.IsOrLowerState(State.Continue))
             {
                 _form.State = State.Completed;
                 return;

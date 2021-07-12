@@ -2,7 +2,9 @@
 {
     public sealed class GDEnumDeclaration : GDClassMember,
         ITokenOrSkipReceiver<GDEnumKeyword>,
+        ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDFigureOpenBracket>,
+        ITokenOrSkipReceiver<GDEnumValuesList>,
         ITokenOrSkipReceiver<GDFigureCloseBracket>
     {
         public GDEnumKeyword EnumKeyword
@@ -105,7 +107,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.State == State.Values)
+            if (_form.IsOrLowerState(State.Values))
             {
                 _form.State = State.FigureCloseBracket;
                 state.PushAndPassNewLine(Values);
@@ -122,7 +124,7 @@
 
         void ITokenReceiver<GDEnumKeyword>.HandleReceivedToken(GDEnumKeyword token)
         {
-            if (_form.State == State.Enum)
+            if (_form.IsOrLowerState(State.Enum))
             {
                 _form.State = State.Identifier;
                 EnumKeyword = token;
@@ -134,7 +136,7 @@
 
         void ITokenSkipReceiver<GDEnumKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Enum)
+            if (_form.IsOrLowerState(State.Enum))
             {
                 _form.State = State.Identifier;
                 return;
@@ -145,7 +147,7 @@
 
         void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedToken(GDFigureOpenBracket token)
         {
-            if (_form.State == State.FigureOpenBracket)
+            if (_form.IsOrLowerState(State.FigureOpenBracket))
             {
                 _form.State = State.Values;
                 FigureOpenBracket = token;
@@ -157,7 +159,7 @@
 
         void ITokenSkipReceiver<GDFigureOpenBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.FigureOpenBracket)
+            if (_form.IsOrLowerState(State.FigureOpenBracket))
             {
                 _form.State = State.Values;
                 return;
@@ -168,7 +170,7 @@
 
         void ITokenReceiver<GDFigureCloseBracket>.HandleReceivedToken(GDFigureCloseBracket token)
         {
-            if (_form.State == State.FigureCloseBracket)
+            if (_form.IsOrLowerState(State.FigureCloseBracket))
             {
                 _form.State = State.Completed;
                 FigureCloseBracket = token;
@@ -180,9 +182,55 @@
 
         void ITokenSkipReceiver<GDFigureCloseBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.FigureCloseBracket)
+            if (_form.IsOrLowerState(State.FigureCloseBracket))
             {
                 _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
+        {
+            if (_form.IsOrLowerState(State.Identifier))
+            {
+                Identifier = token;
+                _form.State = State.FigureOpenBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Identifier))
+            {
+                _form.State = State.FigureOpenBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDEnumValuesList>.HandleReceivedToken(GDEnumValuesList token)
+        {
+            if (_form.IsOrLowerState(State.Values))
+            {
+                Values = token;
+                _form.State = State.FigureCloseBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDEnumValuesList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Values))
+            {
+                _form.State = State.FigureCloseBracket;
                 return;
             }
 

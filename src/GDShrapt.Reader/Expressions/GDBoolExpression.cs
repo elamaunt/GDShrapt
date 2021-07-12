@@ -30,13 +30,13 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.True)
+            if (_form.IsOrLowerState(State.True))
             {
                 this.ResolveKeyword<GDTrueKeyword>(c, state);
                 return;
             }
 
-            if (_form.State == State.False)
+            if (_form.IsOrLowerState(State.False))
             {
                 this.ResolveKeyword<GDFalseKeyword>(c, state);
                 return;

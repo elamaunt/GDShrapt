@@ -4,7 +4,9 @@ using System.Linq;
 namespace GDShrapt.Reader
 {
     public sealed class GDMatchCaseDeclaration : GDIntendedNode,
-        ITokenOrSkipReceiver<GDColon>
+        ITokenOrSkipReceiver<GDExpressionsList>,
+        ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDStatementsList>
     {
         public GDExpressionsList Conditions 
         {
@@ -96,7 +98,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Statements;
                 Colon = token;
@@ -108,9 +110,55 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Statements;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDExpressionsList>.HandleReceivedToken(GDExpressionsList token)
+        {
+            if (_form.IsOrLowerState(State.Conditions))
+            {
+                _form.State = State.Colon;
+                Conditions = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpressionsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Conditions))
+            {
+                _form.State = State.Colon;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDStatementsList>.HandleReceivedToken(GDStatementsList token)
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
+                Statements = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDStatementsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
                 return;
             }
 

@@ -8,10 +8,13 @@ namespace GDShrapt.Reader
         ITokenOrSkipReceiver<GDFuncKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDOpenBracket>,
+        ITokenOrSkipReceiver<GDParametersList>,
         ITokenOrSkipReceiver<GDCloseBracket>,
         ITokenOrSkipReceiver<GDReturnTypeKeyword>,
+        ITokenOrSkipReceiver<GDExpressionsList>,
         ITokenOrSkipReceiver<GDType>,
         ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDStatementsList>,
         ITokenOrSkipReceiver<GDPoint>
     {
         public GDStaticKeyword StaticKeyword
@@ -187,14 +190,14 @@ namespace GDShrapt.Reader
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.State == State.Parameters)
+            if (_form.IsOrLowerState(State.Parameters))
             {
                 _form.State = State.CloseBracket;
                 state.PushAndPassNewLine(Parameters);
                 return;
             }
 
-            if (_form.State == State.BaseCallParameters)
+            if (_form.IsOrLowerState(State.BaseCallParameters))
             {
                 _form.State = State.BaseCallCloseBracket;
                 state.PushAndPassNewLine(BaseCallParameters);
@@ -223,7 +226,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDStaticKeyword>.HandleReceivedToken(GDStaticKeyword token)
         {
-            if (_form.State == State.Static)
+            if (_form.IsOrLowerState(State.Static))
             {
                 _form.State = State.Func;
                 StaticKeyword = token;
@@ -235,7 +238,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDStaticKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Static)
+            if (_form.IsOrLowerState(State.Static))
             {
                 _form.State = State.Func;
                 return;
@@ -269,7 +272,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.OpenBracket;
                 Identifier = token;
@@ -280,7 +283,7 @@ namespace GDShrapt.Reader
         }
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.OpenBracket;
                 return;
@@ -291,14 +294,14 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
-            if (_form.State == State.OpenBracket)
+            if (_form.IsOrLowerState(State.OpenBracket))
             {
                 _form.State = State.Parameters;
                 OpenBracket = token;
                 return;
             }
 
-            if (_form.State == State.BaseCallOpenBracket)
+            if (_form.IsOrLowerState(State.BaseCallOpenBracket))
             {
                 _form.State = State.BaseCallParameters;
                 BaseCallOpenBracket = token;
@@ -310,13 +313,13 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.OpenBracket)
+            if (_form.IsOrLowerState(State.OpenBracket))
             {
                 _form.State = State.Parameters;
                 return;
             }
 
-            if (_form.State == State.BaseCallOpenBracket)
+            if (_form.IsOrLowerState(State.BaseCallOpenBracket))
             {
                 _form.State = State.BaseCallParameters;
                 return;
@@ -327,14 +330,14 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDCloseBracket>.HandleReceivedToken(GDCloseBracket token)
         {
-            if (_form.State == State.CloseBracket)
+            if (_form.IsOrLowerState(State.CloseBracket))
             {
                 _form.State = State.BaseCallPoint;
                 CloseBracket = token;
                 return;
             }
 
-            if (_form.State == State.BaseCallCloseBracket)
+            if (_form.IsOrLowerState(State.BaseCallCloseBracket))
             {
                 _form.State = State.ReturnTypeKeyword;
                 BaseCallCloseBracket = token;
@@ -346,13 +349,13 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.CloseBracket)
+            if (_form.IsOrLowerState(State.CloseBracket))
             {
                 _form.State = State.BaseCallPoint;
                 return;
             }
 
-            if (_form.State == State.BaseCallCloseBracket)
+            if (_form.IsOrLowerState(State.BaseCallCloseBracket))
             {
                 _form.State = State.ReturnTypeKeyword;
                 return;
@@ -363,7 +366,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDReturnTypeKeyword>.HandleReceivedToken(GDReturnTypeKeyword token)
         {
-            if (_form.State == State.ReturnTypeKeyword)
+            if (_form.IsOrLowerState(State.ReturnTypeKeyword))
             {
                 _form.State = State.Type;
                 ReturnTypeKeyword = token;
@@ -374,7 +377,7 @@ namespace GDShrapt.Reader
         }
         void ITokenReceiver<GDPoint>.HandleReceivedToken(GDPoint token)
         {
-            if (_form.State == State.BaseCallPoint)
+            if (_form.IsOrLowerState(State.BaseCallPoint))
             {
                 _form.State = State.BaseCallOpenBracket;
                 BaseCallPoint = token;
@@ -386,7 +389,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDPoint>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.BaseCallPoint)
+            if (_form.IsOrLowerState(State.BaseCallPoint))
             {
                 _form.State = State.ReturnTypeKeyword;
                 return;
@@ -397,7 +400,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDReturnTypeKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.ReturnTypeKeyword)
+            if (_form.IsOrLowerState(State.ReturnTypeKeyword))
             {
                 _form.State = State.Colon;
                 return;
@@ -408,7 +411,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
         {
-            if (_form.State == State.Type)
+            if (_form.IsOrLowerState(State.Type))
             {
                 _form.State = State.Colon;
                 ReturnType = token;
@@ -420,7 +423,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Type)
+            if (_form.IsOrLowerState(State.Type))
             {
                 _form.State = State.Colon;
                 return;
@@ -431,7 +434,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Statements;
                 Colon = token;
@@ -443,9 +446,78 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Statements;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDParametersList>.HandleReceivedToken(GDParametersList token)
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                Parameters = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDParametersList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDExpressionsList>.HandleReceivedToken(GDExpressionsList token)
+        {
+            if (_form.IsOrLowerState(State.BaseCallParameters))
+            {
+                _form.State = State.BaseCallCloseBracket;
+                BaseCallParameters = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpressionsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.BaseCallParameters))
+            {
+                _form.State = State.BaseCallCloseBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDStatementsList>.HandleReceivedToken(GDStatementsList token)
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
+                Statements = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDStatementsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
                 return;
             }
 

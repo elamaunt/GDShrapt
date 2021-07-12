@@ -356,6 +356,7 @@ namespace GDShrapt.Reader
             return false;
         }
 
+
         public static bool ResolveSpaceToken(this ITokenReceiver receiver, char c, GDReadingState state)
         {
             if (IsSpace(c))
@@ -369,6 +370,17 @@ namespace GDShrapt.Reader
         }
 
         public static bool ResolveNewLineToken(this ITokenReceiver<GDNewLine> receiver, char c, GDReadingState state)
+        {
+            if (IsNewLine(c))
+            {
+                receiver.HandleReceivedToken(new GDNewLine());
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool ResolveNewLineToken(this INewLineReceiver receiver, char c, GDReadingState state)
         {
             if (IsNewLine(c))
             {

@@ -183,7 +183,7 @@
 
         void ITokenReceiver<GDConstKeyword>.HandleReceivedToken(GDConstKeyword token)
         {
-            if (_form.State == State.Const)
+            if (_form.IsOrLowerState(State.Const))
             {
                 _form.State = State.Onready;
                 ConstKeyword = token;
@@ -195,7 +195,7 @@
 
         void ITokenSkipReceiver<GDConstKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Const)
+            if (_form.IsOrLowerState(State.Const))
             {
                 _form.State = State.Onready;
                 return;
@@ -275,7 +275,7 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Type;
                 Colon = token;
@@ -287,7 +287,7 @@
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Assign;
                 return;
@@ -298,7 +298,7 @@
 
         void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
         {
-            if (_form.State == State.Assign)
+            if (_form.IsOrLowerState(State.Assign))
             {
                 _form.State = State.Initializer;
                 Assign = token;
@@ -310,7 +310,7 @@
 
         void ITokenSkipReceiver<GDAssign>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Assign)
+            if (_form.IsOrLowerState(State.Assign))
             {
                 _form.State = State.SetGet;
                 return;
@@ -321,7 +321,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Initializer)
+            if (_form.IsOrLowerState(State.Initializer))
             {
                 _form.State = State.SetGet;
                 Initializer = token;
@@ -333,7 +333,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Initializer)
+            if (_form.IsOrLowerState(State.Initializer))
             {
                 _form.State = State.SetGet;
 
@@ -345,7 +345,7 @@
 
         void ITokenReceiver<GDSetGetKeyword>.HandleReceivedToken(GDSetGetKeyword token)
         {
-            if (_form.State == State.SetGet)
+            if (_form.IsOrLowerState(State.SetGet))
             {
                 _form.State = State.SetMethod;
                 SetGetKeyword = token;
@@ -357,7 +357,7 @@
 
         void ITokenSkipReceiver<GDSetGetKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.SetGet)
+            if (_form.IsOrLowerState(State.SetGet))
             {
                 _form.State = State.SetMethod;
                 return;
@@ -368,7 +368,7 @@
 
         void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
         {
-            if (_form.State == State.Comma)
+            if (_form.IsOrLowerState(State.Comma))
             {
                 _form.State = State.GetMethod;
                 Comma = token;
@@ -380,7 +380,7 @@
 
         void ITokenSkipReceiver<GDComma>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Comma)
+            if (_form.IsOrLowerState(State.Comma))
             {
                 _form.State = State.GetMethod;
                 return;
@@ -391,21 +391,21 @@
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Assign;
                 Identifier = token;
                 return;
             }
 
-            if (_form.State == State.SetMethod)
+            if (_form.IsOrLowerState(State.SetMethod))
             {
                 _form.State = State.Comma;
                 SetMethodIdentifier = token;
                 return;
             }
 
-            if (_form.State == State.GetMethod)
+            if (_form.IsOrLowerState(State.GetMethod))
             {
                 _form.State = State.Completed;
                 GetMethodIdentifier = token;
@@ -417,19 +417,19 @@
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Colon;
                 return;
             }
 
-            if (_form.State == State.SetMethod)
+            if (_form.IsOrLowerState(State.SetMethod))
             {
                 _form.State = State.Comma;
                 return;
             }
 
-            if (_form.State == State.GetMethod)
+            if (_form.IsOrLowerState(State.GetMethod))
             {
                 _form.State = State.Completed;
                 return;
@@ -440,7 +440,7 @@
 
         void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
         {
-            if (_form.State == State.Type)
+            if (_form.IsOrLowerState(State.Type))
             {
                 _form.State = State.Assign;
                 Type = token;
@@ -452,7 +452,7 @@
 
         void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Type)
+            if (_form.IsOrLowerState(State.Type))
             {
                 _form.State = State.Assign;
                 return;

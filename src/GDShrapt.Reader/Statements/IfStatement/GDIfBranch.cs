@@ -109,7 +109,7 @@
 
         void ITokenReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
         {
-            if (_form.State == State.If)
+            if (_form.IsOrLowerState(State.If))
             {
                 _form.State = State.Condition;
                 IfKeyword = token;
@@ -121,7 +121,7 @@
 
         void ITokenSkipReceiver<GDIfKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.If)
+            if (_form.IsOrLowerState(State.If))
             {
                 _form.State = State.Condition;
                 return;
@@ -132,7 +132,7 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Expression;
                 Colon = token;
@@ -144,7 +144,7 @@
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Expression;
                 return;
@@ -154,14 +154,14 @@
         }
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Condition)
+            if (_form.IsOrLowerState(State.Condition))
             {
                 _form.State = State.Colon;
                 Condition = token;
                 return;
             }
 
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Completed;
                 Expression = token;
@@ -173,13 +173,13 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Condition)
+            if (_form.IsOrLowerState(State.Condition))
             {
                 _form.State = State.Colon;
                 return;
             }
 
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Statements;
                 return;

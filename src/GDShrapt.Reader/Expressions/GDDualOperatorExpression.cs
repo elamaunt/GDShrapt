@@ -2,7 +2,9 @@
 {
     public sealed class GDDualOperatorExpression : GDExpression,
         ITokenOrSkipReceiver<GDExpression>, 
-        ITokenOrSkipReceiver<GDDualOperator>
+        ITokenOrSkipReceiver<GDDualOperator>,
+        ITokenReceiver<GDNewLine>,
+        INewLineReceiver
     {
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public override GDAssociationOrderType AssociationOrder => GDHelper.GetOperatorAssociationOrder(OperatorType);
@@ -75,21 +77,10 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            switch (_form.State)
-            {
-                case State.LeftExpression:
-                case State.DualOperator:
-                case State.RightExpression:
-                    _form.AddBeforeActiveToken(state.Push(new GDNewLine()));
-                    break;
-                case State.Completed:
-                    state.Pop();
-                    state.PassNewLine();
-                    break;
-                default:
-                    break;
-            }
-            
+            if (_form.State != State.Completed)
+                _form.AddBeforeActiveToken(state.Push(new GDNewLine()));
+            else
+                state.PopAndPassNewLine();
         }
 
 
@@ -102,7 +93,7 @@
             if (IsHigherPriorityThan(LeftExpression, GDSideType.Left))
             {
                 var previous = LeftExpression;
-                // Remove expression to break cycle
+                // Remove expression to break the cycle
                 LeftExpression = null;
                 LeftExpression = previous.SwapRight(this).RebuildRootOfPriorityIfNeeded();
                 return previous;
@@ -111,7 +102,7 @@
             if (IsHigherPriorityThan(RightExpression, GDSideType.Right))
             {
                 var previous = RightExpression;
-                // Remove expression to break cycle
+                // Remove expression to break the cycle
                 RightExpression = null;
                 RightExpression = previous.SwapLeft(this).RebuildRootOfPriorityIfNeeded();
                 return previous;
@@ -147,14 +138,14 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.LeftExpression)
+            if (_form.IsOrLowerState(State.LeftExpression))
             {
                 LeftExpression = token;
                 _form.State = State.DualOperator;
                 return;
             }
 
-            if (_form.State == State.RightExpression)
+            if (_form.IsOrLowerState(State.RightExpression))
             {
                 RightExpression = token;
                 _form.State = State.Completed;
@@ -166,13 +157,13 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.LeftExpression)
+            if (_form.IsOrLowerState(State.LeftExpression))
             {
                 _form.State = State.DualOperator;
                 return;
             }
 
-            if (_form.State == State.RightExpression)
+            if (_form.IsOrLowerState(State.RightExpression))
             {
                 _form.State = State.Completed;
                 return;
@@ -183,7 +174,7 @@
 
         void ITokenReceiver<GDDualOperator>.HandleReceivedToken(GDDualOperator token)
         {
-            if (_form.State == State.DualOperator)
+            if (_form.IsOrLowerState(State.DualOperator))
             {
                 Operator = token;
                 _form.State = State.RightExpression;
@@ -195,9 +186,31 @@
 
         void ITokenSkipReceiver<GDDualOperator>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.DualOperator)
+            if (_form.IsOrLowerState(State.DualOperator))
             {
                 _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 

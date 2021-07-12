@@ -6,6 +6,7 @@ namespace GDShrapt.Reader
     public sealed class GDInnerClassDeclaration : GDClassMember,
         ITokenOrSkipReceiver<GDClassKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
+        ITokenOrSkipReceiver<GDClassMembersList>,
         ITokenOrSkipReceiver<GDColon>
     {
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
@@ -106,7 +107,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDClassKeyword>.HandleReceivedToken(GDClassKeyword token)
         {
-            if (_form.State == State.Class)
+            if (_form.IsOrLowerState(State.Class))
             {
                 _form.State = State.Identifier;
                 ClassKeyword = token;
@@ -118,7 +119,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDClassKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Class)
+            if (_form.IsOrLowerState(State.Class))
             {
                 _form.State = State.Identifier;
                 return;
@@ -129,7 +130,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             { 
                 _form.State = State.Colon;
                 Identifier = token;
@@ -141,7 +142,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Colon;
                 return;
@@ -152,7 +153,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Members;
                 Colon = token;
@@ -164,9 +165,32 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Members;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDClassMembersList>.HandleReceivedToken(GDClassMembersList token)
+        {
+            if (_form.IsOrLowerState(State.Members))
+            {
+                Members = token;
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDClassMembersList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Members))
+            {
+                _form.State = State.Completed;
                 return;
             }
 

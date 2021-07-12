@@ -81,14 +81,14 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Key)
+            if (_form.IsOrLowerState(State.Key))
             {
                 _form.State = State.ColonOrAssign;
                 Key = token;
                 return;
             }
 
-            if (_form.State == State.Value)
+            if (_form.IsOrLowerState(State.Value))
             {
                 _form.State = State.Completed;
                 Value = token;
@@ -100,13 +100,13 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Key)
+            if (_form.IsOrLowerState(State.Key))
             {
                 _form.State = State.ColonOrAssign;
                 return;
             }
 
-            if (_form.State == State.Value)
+            if (_form.IsOrLowerState(State.Value))
             {
                 _form.State = State.Completed;
                 return;
@@ -117,7 +117,7 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _checkedColon = true;
                 _form.State = State.Value;
@@ -130,7 +130,7 @@
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _checkedColon = true;
                 return;
@@ -141,7 +141,7 @@
 
         void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _form.State = State.Value;
                 Assign = token;
@@ -153,7 +153,7 @@
 
         void ITokenSkipReceiver<GDAssign>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _form.State = State.Value;
                 return;

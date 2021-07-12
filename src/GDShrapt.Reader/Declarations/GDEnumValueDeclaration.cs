@@ -85,7 +85,7 @@
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.ColonOrAssign;
                 Identifier = token;
@@ -97,7 +97,7 @@
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.ColonOrAssign;
                 return;
@@ -108,7 +108,7 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _checkedColon = true;
                 _form.State = State.Value;
@@ -121,7 +121,7 @@
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _checkedColon = true;
                 return;
@@ -132,7 +132,7 @@
 
         void ITokenReceiver<GDAssign>.HandleReceivedToken(GDAssign token)
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _form.State = State.Value;
                 Assign = token;
@@ -144,7 +144,7 @@
 
         void ITokenSkipReceiver<GDAssign>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.ColonOrAssign)
+            if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _form.State = State.Value;
                 return;
@@ -155,7 +155,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Value)
+            if (_form.IsOrLowerState(State.Value))
             {
                 _form.State = State.Completed;
                 Value = token;
@@ -167,7 +167,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Value)
+            if (_form.IsOrLowerState(State.Value))
             {
                 _form.State = State.Completed;
                 return;

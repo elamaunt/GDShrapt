@@ -3,6 +3,7 @@
     public sealed class GDExportDeclaration : GDNode,
         ITokenOrSkipReceiver<GDExportKeyword>,
         ITokenOrSkipReceiver<GDOpenBracket>,
+        ITokenOrSkipReceiver<GDExportParametersList>,
         ITokenOrSkipReceiver<GDCloseBracket>
     {
         public GDExportKeyword ExportKeyword
@@ -70,7 +71,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.State == State.Parameters)
+            if (_form.IsOrLowerState(State.Parameters))
             {
                 _form.State = State.CloseBracket;
                 state.PushAndPassNewLine(Parameters);
@@ -87,7 +88,7 @@
 
         void ITokenReceiver<GDExportKeyword>.HandleReceivedToken(GDExportKeyword token)
         {
-            if (_form.State == State.Export)
+            if (_form.IsOrLowerState(State.Export))
             {
                 _form.State = State.OpenBracket;
                 ExportKeyword = token;
@@ -99,7 +100,7 @@
 
         void ITokenSkipReceiver<GDExportKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Export)
+            if (_form.IsOrLowerState(State.Export))
             {
                 _form.State = State.OpenBracket;
                 return;
@@ -110,7 +111,7 @@
 
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
-            if (_form.State == State.OpenBracket)
+            if (_form.IsOrLowerState(State.OpenBracket))
             {
                 _form.State = State.Parameters;
                 OpenBracket = token;
@@ -122,7 +123,7 @@
 
         void ITokenSkipReceiver<GDOpenBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.OpenBracket)
+            if (_form.IsOrLowerState(State.OpenBracket))
             {
                 _form.State = State.Completed;
                 return;
@@ -133,7 +134,7 @@
 
         void ITokenReceiver<GDCloseBracket>.HandleReceivedToken(GDCloseBracket token)
         {
-            if (_form.State == State.CloseBracket)
+            if (_form.IsOrLowerState(State.CloseBracket))
             {
                 _form.State = State.Completed;
                 CloseBracket = token;
@@ -145,9 +146,32 @@
 
         void ITokenSkipReceiver<GDCloseBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.CloseBracket)
+            if (_form.IsOrLowerState(State.CloseBracket))
             {
                 _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDExportParametersList>.HandleReceivedToken(GDExportParametersList token)
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                Parameters = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExportParametersList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
                 return;
             }
 

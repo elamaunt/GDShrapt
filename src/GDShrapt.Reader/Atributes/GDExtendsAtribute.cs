@@ -70,7 +70,7 @@
 
         void ITokenReceiver<GDExtendsKeyword>.HandleReceivedToken(GDExtendsKeyword token)
         {
-            if (_form.State == State.Extends)
+            if (_form.IsOrLowerState(State.Extends))
             {
                 _form.State = State.Path;
                 ExtendsKeyword = token;
@@ -82,7 +82,7 @@
 
         void ITokenSkipReceiver<GDExtendsKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Extends)
+            if (_form.IsOrLowerState(State.Extends))
             {
                 _form.State = State.Path;
                 return;
@@ -93,7 +93,7 @@
 
         void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
         {
-            if (_form.State == State.Type)
+            if (_form.IsOrLowerState(State.Type))
             {
                 _form.State = State.Completed;
                 Type = token;
@@ -105,7 +105,7 @@
 
         void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Type)
+            if (_form.IsOrLowerState(State.Type))
             {
                 _form.State = State.Completed;
                 return;
@@ -116,7 +116,7 @@
 
         void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
         {
-            if (_form.State == State.Path)
+            if (_form.IsOrLowerState(State.Path))
             {
                 _form.State = State.Completed;
                 Path = token;
@@ -128,7 +128,7 @@
 
         void ITokenSkipReceiver<GDString>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Path)
+            if (_form.IsOrLowerState(State.Path))
             {
                 _form.State = State.Type;
                 return;

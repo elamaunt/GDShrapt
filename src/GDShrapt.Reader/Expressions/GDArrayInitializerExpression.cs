@@ -2,6 +2,7 @@
 {
     public sealed class GDArrayInitializerExpression : GDExpression,
         ITokenOrSkipReceiver<GDSquareOpenBracket>,
+        ITokenOrSkipReceiver<GDExpressionsList>,
         ITokenOrSkipReceiver<GDSquareCloseBracket>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.ArrayInitializer);
@@ -61,7 +62,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.State == State.Values)
+            if (_form.IsOrLowerState(State.Values))
             {
                 _form.State = State.SquareCloseBracket;
                 state.PushAndPassNewLine(Values);
@@ -70,10 +71,14 @@
 
             state.PopAndPassNewLine();
         }
+        public override GDNode CreateEmptyInstance()
+        {
+            return new GDArrayInitializerExpression();
+        }
 
         void ITokenReceiver<GDSquareOpenBracket>.HandleReceivedToken(GDSquareOpenBracket token)
         {
-            if (_form.State == State.SquareOpenBracket)
+            if (_form.IsOrLowerState(State.SquareOpenBracket))
             {
                 _form.State = State.Values;
                 SquareOpenBracket = token;
@@ -85,7 +90,7 @@
 
         void ITokenSkipReceiver<GDSquareOpenBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.SquareOpenBracket)
+            if (_form.IsOrLowerState(State.SquareOpenBracket))
             {
                 _form.State = State.Values;
                 return;
@@ -96,7 +101,7 @@
 
         void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedToken(GDSquareCloseBracket token)
         {
-            if (_form.State == State.SquareCloseBracket)
+            if (_form.IsOrLowerState(State.SquareCloseBracket))
             {
                 _form.State = State.Completed;
                 SquareCloseBracket = token;
@@ -108,7 +113,7 @@
 
         void ITokenSkipReceiver<GDSquareCloseBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.SquareCloseBracket)
+            if (_form.IsOrLowerState(State.SquareCloseBracket))
             {
                 _form.State = State.Completed;
                 return;
@@ -117,9 +122,27 @@
             throw new GDInvalidStateException();
         }
 
-        public override GDNode CreateEmptyInstance()
+        void ITokenReceiver<GDExpressionsList>.HandleReceivedToken(GDExpressionsList token)
         {
-            return new GDArrayInitializerExpression();
+            if (_form.IsOrLowerState(State.Values))
+            {
+                Values = token;
+                _form.State = State.SquareCloseBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpressionsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Values))
+            {
+                _form.State = State.SquareCloseBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
         }
     }
 }

@@ -100,7 +100,7 @@
 
         void ITokenReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
         {
-            if (_form.State == State.Else)
+            if (_form.IsOrLowerState(State.Else))
             {
                 _form.State = State.Colon;
                 ElseKeyword = token;
@@ -112,7 +112,7 @@
 
         void ITokenSkipReceiver<GDElseKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Else)
+            if (_form.IsOrLowerState(State.Else))
             {
                 _form.State = State.Colon;
                 return;
@@ -123,7 +123,7 @@
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Expression;
                 Colon = token;
@@ -135,7 +135,7 @@
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Expression;
                 return;
@@ -145,7 +145,7 @@
         }
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Completed;
                 Expression = token;
@@ -157,7 +157,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Statements;
                 return;

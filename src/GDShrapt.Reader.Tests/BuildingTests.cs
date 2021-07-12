@@ -35,10 +35,17 @@ namespace GDShrapt.Reader.Tests
         public void CustomStyleTest()
         {
             var declaration = GD.Declaration.Class()
-                .AddAtributes(x => x.AddToolAtribute())
+                .AddAtributes(x => x
+                    .AddToolAtribute()
+                    .AddNewLine()
+                    .AddClassNameAtribute("Generated")
+                    .AddNewLine()
+                    .AddExtendsAtribute("Node2D"))
                 .AddNewLine()
                 .AddNewLine()
-                .AddMembers(x => x.AddVariable("a"));
+                .AddMembers(x => x
+                    .AddVariable("a")
+                    .AddConst("pi", GD.Expression.String("Hello")));
 
         }
     }

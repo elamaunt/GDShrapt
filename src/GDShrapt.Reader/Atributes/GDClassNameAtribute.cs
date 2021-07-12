@@ -82,7 +82,7 @@
 
         void ITokenReceiver<GDClassNameKeyword>.HandleReceivedToken(GDClassNameKeyword token)
         {
-            if (_form.State == State.ClassName)
+            if (_form.IsOrLowerState(State.ClassName))
             {
                 _form.State = State.Identifier;
                 ClassNameKeyword = token;
@@ -94,7 +94,7 @@
 
         void ITokenSkipReceiver<GDClassNameKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.ClassName)
+            if (_form.IsOrLowerState(State.ClassName))
             {
                 _form.State = State.Identifier;
                 return;
@@ -105,7 +105,7 @@
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Comma;
                 Identifier = token;
@@ -117,7 +117,7 @@
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Comma;
                 return;
@@ -128,7 +128,7 @@
 
         void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
         {
-            if (_form.State == State.Comma)
+            if (_form.IsOrLowerState(State.Comma))
             {
                 _form.State = State.Icon;
                 Comma = token;
@@ -140,7 +140,7 @@
 
         void ITokenSkipReceiver<GDComma>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Comma)
+            if (_form.IsOrLowerState(State.Comma))
             {
                 _form.State = State.Icon;
                 return;
@@ -151,7 +151,7 @@
 
         void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
         {
-            if (_form.State == State.Icon)
+            if (_form.IsOrLowerState(State.Icon))
             {
                 _form.State = State.Completed;
                 Icon = token;
@@ -163,7 +163,7 @@
 
         void ITokenSkipReceiver<GDString>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Icon)
+            if (_form.IsOrLowerState(State.Icon))
             {
                 _form.State = State.Completed;
                 return;

@@ -103,7 +103,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.CallerExpression)
+            if (_form.IsOrLowerState(State.CallerExpression))
             {
                 _form.State = State.Point;
                 CallerExpression = token;
@@ -115,7 +115,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.CallerExpression)
+            if (_form.IsOrLowerState(State.CallerExpression))
             {
                 _form.State = State.Point;
                 return;
@@ -149,7 +149,7 @@
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Completed;
                 Identifier = token;
@@ -161,7 +161,7 @@
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Completed;
                 return;

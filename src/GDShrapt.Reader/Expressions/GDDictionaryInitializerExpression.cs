@@ -61,7 +61,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.State == State.KeyValues)
+            if (_form.IsOrLowerState(State.KeyValues))
             {
                 _form.State = State.FigureCloseBracket;
                 state.PushAndPassNewLine(KeyValues);
@@ -78,7 +78,7 @@
 
         void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedToken(GDFigureOpenBracket token)
         {
-            if (_form.State == State.FigureOpenBracket)
+            if (_form.IsOrLowerState(State.FigureOpenBracket))
             {
                 _form.State = State.KeyValues;
                 FigureOpenBracket = token;
@@ -90,7 +90,7 @@
 
         void ITokenSkipReceiver<GDFigureOpenBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.FigureOpenBracket)
+            if (_form.IsOrLowerState(State.FigureOpenBracket))
             {
                 _form.State = State.KeyValues;
                 return;
@@ -101,7 +101,7 @@
 
         void ITokenReceiver<GDFigureCloseBracket>.HandleReceivedToken(GDFigureCloseBracket token)
         {
-            if (_form.State == State.FigureCloseBracket)
+            if (_form.IsOrLowerState(State.FigureCloseBracket))
             {
                 _form.State = State.Completed;
                 FigureCloseBracket = token;
@@ -113,7 +113,7 @@
 
         void ITokenSkipReceiver<GDFigureCloseBracket>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.FigureCloseBracket)
+            if (_form.IsOrLowerState(State.FigureCloseBracket))
             {
                 _form.State = State.Completed;
                 return;

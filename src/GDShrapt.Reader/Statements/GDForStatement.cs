@@ -146,14 +146,14 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Collection)
+            if (_form.IsOrLowerState(State.Collection))
             {
                 _form.State = State.Colon;
                 Collection = token;
                 return;
             }
 
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Completed;
                 Expression = token;
@@ -165,13 +165,13 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Collection)
+            if (_form.IsOrLowerState(State.Collection))
             {
                 _form.State = State.Colon;
                 return;
             }
 
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Statements;
                 return;
@@ -182,7 +182,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 Colon = token;
                 _form.State = State.Expression;
@@ -194,7 +194,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Colon)
+            if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Expression;
                 return;
@@ -205,7 +205,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDInKeyword>.HandleReceivedToken(GDInKeyword token)
         {
-            if (_form.State == State.In)
+            if (_form.IsOrLowerState(State.In))
             {
                 InKeyword = token;
                 _form.State = State.Collection;
@@ -217,7 +217,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDInKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.In)
+            if (_form.IsOrLowerState(State.In))
             {
                 _form.State = State.Collection;
                 return;
@@ -228,7 +228,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDForKeyword>.HandleReceivedToken(GDForKeyword token)
         {
-            if (_form.State == State.For)
+            if (_form.IsOrLowerState(State.For))
             {
                 ForKeyword = token;
                 _form.State = State.Variable;
@@ -240,7 +240,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDForKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.For)
+            if (_form.IsOrLowerState(State.For))
             {
                 _form.State = State.Variable;
                 return;
@@ -251,7 +251,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.State == State.Variable)
+            if (_form.IsOrLowerState(State.Variable))
             {
                 Variable = token;
                 _form.State = State.In;
@@ -263,7 +263,7 @@ namespace GDShrapt.Reader
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Variable)
+            if (_form.IsOrLowerState(State.Variable))
             {
                 _form.State = State.In;
                 return;

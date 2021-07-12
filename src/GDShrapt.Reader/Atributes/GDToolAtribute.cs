@@ -30,7 +30,7 @@
                 return;
             }
 
-            if (_form.State == State.Tool)
+            if (_form.IsOrLowerState(State.Tool))
             {
                 state.PushAndPass(new GDKeywordResolver<GDToolKeyword>(this), c);
                 return;
@@ -51,7 +51,7 @@
 
         void ITokenReceiver<GDToolKeyword>.HandleReceivedToken(GDToolKeyword token)
         {
-            if (_form.State == State.Tool)
+            if (_form.IsOrLowerState(State.Tool))
             {
                 _form.State = State.Completed;
                 ToolKeyword = token;
@@ -60,10 +60,10 @@
 
             throw new GDInvalidStateException();
         }
-
+        
         void ITokenSkipReceiver<GDToolKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Tool)
+            if (_form.IsOrLowerState(State.Tool))
             {
                 _form.State = State.Completed;
                 return;

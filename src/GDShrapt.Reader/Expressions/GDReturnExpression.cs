@@ -61,7 +61,7 @@
 
         void ITokenReceiver<GDReturnKeyword>.HandleReceivedToken(GDReturnKeyword token)
         {
-            if (_form.State == State.Return)
+            if (_form.IsOrLowerState(State.Return))
             {
                 _form.State = State.Expression;
                 ReturnKeyword = token;
@@ -73,7 +73,7 @@
 
         void ITokenSkipReceiver<GDReturnKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Return)
+            if (_form.IsOrLowerState(State.Return))
             {
                 _form.State = State.Expression;
                 return;
@@ -84,7 +84,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Completed;
                 Expression = token;
@@ -96,7 +96,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Completed;
                 return;

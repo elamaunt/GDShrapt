@@ -26,7 +26,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.Pass)
+            if (_form.IsOrLowerState(State.Pass))
                 state.Push(new GDKeywordResolver<GDPassKeyword>(this));
             else
                 state.Pop();
@@ -46,7 +46,7 @@
 
         void ITokenReceiver<GDPassKeyword>.HandleReceivedToken(GDPassKeyword token)
         {
-            if (_form.State == State.Pass)
+            if (_form.IsOrLowerState(State.Pass))
             {
                 _form.State = State.Completed;
                 PassKeyword = token;
@@ -58,7 +58,7 @@
 
         void ITokenSkipReceiver<GDPassKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Pass)
+            if (_form.IsOrLowerState(State.Pass))
             {
                 _form.State = State.Completed;
                 return;

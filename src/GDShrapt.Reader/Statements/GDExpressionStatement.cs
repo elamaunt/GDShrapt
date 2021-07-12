@@ -67,7 +67,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.SemiColon;
                 Expression = token;
@@ -79,7 +79,7 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Expression)
+            if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Completed;
                 return;
@@ -90,7 +90,7 @@
 
         void ITokenReceiver<GDSemiColon>.HandleReceivedToken(GDSemiColon token)
         {
-            if (_form.State == State.SemiColon)
+            if (_form.IsOrLowerState(State.SemiColon))
             {
                 _form.State = State.Completed;
                 SemiColon = token;
@@ -102,7 +102,7 @@
 
         void ITokenSkipReceiver<GDSemiColon>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.SemiColon)
+            if (_form.IsOrLowerState(State.SemiColon))
             {
                 _form.State = State.Completed;
                 return;

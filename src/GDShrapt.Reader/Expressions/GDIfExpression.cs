@@ -137,21 +137,21 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            if (_form.State == State.True)
+            if (_form.IsOrLowerState(State.True))
             {
                 _form.State = State.If;
                 TrueExpression = token;
                 return;
             }
 
-            if (_form.State == State.Condition)
+            if (_form.IsOrLowerState(State.Condition))
             {
                 _form.State = State.Else;
                 Condition = token;
                 return;
             }
 
-            if (_form.State == State.False)
+            if (_form.IsOrLowerState(State.False))
             {
                 _form.State = State.Completed;
                 FalseExpression = token;
@@ -163,19 +163,19 @@
 
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.True)
+            if (_form.IsOrLowerState(State.True))
             {
                 _form.State = State.If;
                 return;
             }
 
-            if (_form.State == State.Condition)
+            if (_form.IsOrLowerState(State.Condition))
             {
                 _form.State = State.Else;
                 return;
             }
 
-            if (_form.State == State.False)
+            if (_form.IsOrLowerState(State.False))
             {
                 _form.State = State.Completed;
                 return;
@@ -186,7 +186,7 @@
 
         void ITokenReceiver<GDIfKeyword>.HandleReceivedToken(GDIfKeyword token)
         {
-            if (_form.State == State.If)
+            if (_form.IsOrLowerState(State.If))
             {
                 _form.State = State.Condition;
                 IfKeyword = token;
@@ -198,7 +198,7 @@
 
         void ITokenSkipReceiver<GDIfKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.If)
+            if (_form.IsOrLowerState(State.If))
             {
                 _form.State = State.Condition;
                 return;
@@ -209,7 +209,7 @@
 
         void ITokenReceiver<GDElseKeyword>.HandleReceivedToken(GDElseKeyword token)
         {
-            if (_form.State == State.Else)
+            if (_form.IsOrLowerState(State.Else))
             {
                 _form.State = State.False;
                 ElseKeyword = token;
@@ -221,7 +221,7 @@
 
         void ITokenSkipReceiver<GDElseKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Else)
+            if (_form.IsOrLowerState(State.Else))
             {
                 _form.State = State.False;
                 return;

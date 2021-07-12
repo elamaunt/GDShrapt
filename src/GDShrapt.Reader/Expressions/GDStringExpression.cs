@@ -24,7 +24,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.String)
+            if (_form.IsOrLowerState(State.String))
             {
                 if (this.ResolveSpaceToken(c, state))
                     return;
@@ -42,14 +42,12 @@
                 return;
             }
 
-            state.Pop();
-            state.PassChar(c);
+            state.PopAndPass(c);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.Pop();
-            state.PassNewLine();
+            state.PopAndPassNewLine();
         }
 
         public override GDNode CreateEmptyInstance()

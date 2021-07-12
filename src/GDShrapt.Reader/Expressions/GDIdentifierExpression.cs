@@ -26,7 +26,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_form.State == State.Identifier)
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.Completed;
                 state.Push(Identifier = new GDIdentifier());

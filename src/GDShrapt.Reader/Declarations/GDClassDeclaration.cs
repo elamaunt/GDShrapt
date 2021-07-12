@@ -6,6 +6,7 @@ namespace GDShrapt.Reader
     public sealed class GDClassDeclaration : GDNode,
         ITokenReceiver<GDClassAtributesList>,
         ITokenReceiver<GDClassMembersList>,
+        ITokenReceiver<GDNewLine>,
         INewLineReceiver
     {
         public GDClassAtributesList Atributes
@@ -82,7 +83,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDClassAtributesList>.HandleReceivedToken(GDClassAtributesList token)
         {
-            if (_form.State == State.Atributes)
+            if (_form.IsOrLowerState(State.Atributes))
             {
                 Atributes = token;
                 _form.State = State.Members;
@@ -102,6 +103,11 @@ namespace GDShrapt.Reader
             }
 
             throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        {
+            _form.AddBeforeActiveToken(new GDNewLine());
         }
 
         void INewLineReceiver.HandleReceivedToken(GDNewLine token)

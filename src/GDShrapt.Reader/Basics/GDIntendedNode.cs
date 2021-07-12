@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public abstract class GDIntendedNode : GDNode, ITokenOrSkipReceiver<GDIntendation>
+    public abstract class GDIntendedNode : GDNode, ITokenReceiver<GDIntendation>
     {
         internal int Intendation { get; }
 
@@ -16,11 +16,6 @@
         void ITokenReceiver<GDIntendation>.HandleReceivedToken(GDIntendation token)
         {
             Form.AddBeforeActiveToken(token);
-        }
-
-        void ITokenSkipReceiver<GDIntendation>.HandleReceivedTokenSkip()
-        {
-            // Ignore?
         }
     }
 }

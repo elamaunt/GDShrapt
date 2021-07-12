@@ -99,7 +99,7 @@
 
         void ITokenReceiver<GDIfBranch>.HandleReceivedToken(GDIfBranch token)
         {
-            if (_form.State == State.IfBranch)
+            if (_form.IsOrLowerState(State.IfBranch))
             {
                 IfBranch = token;
                 return;
@@ -110,7 +110,7 @@
 
         void ITokenSkipReceiver<GDIfBranch>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.IfBranch)
+            if (_form.IsOrLowerState(State.IfBranch))
                 return;
 
             throw new GDInvalidStateException();
@@ -118,7 +118,7 @@
 
         void ITokenReceiver<GDElseBranch>.HandleReceivedToken(GDElseBranch token)
         {
-            if (_form.State == State.ElseBranch)
+            if (_form.IsOrLowerState(State.ElseBranch))
             {
                 ElseBranch = token;
                 _form.State = State.Completed;
@@ -130,7 +130,7 @@
 
         void ITokenSkipReceiver<GDElseBranch>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.ElseBranch)
+            if (_form.IsOrLowerState(State.ElseBranch))
             {
                 _form.State = State.Completed;
                 return;
