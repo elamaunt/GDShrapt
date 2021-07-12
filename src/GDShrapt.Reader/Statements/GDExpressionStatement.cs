@@ -15,7 +15,7 @@
             set => _form.Token1 = value;
         }
 
-        enum State
+        public enum State
         {
             Expression,
             SemiColon,
@@ -24,6 +24,7 @@
 
         readonly GDTokensForm<State, GDExpression, GDSemiColon> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDExpression, GDSemiColon> TypedForm => _form;
 
         internal GDExpressionStatement(int lineIntendation)
             : base(lineIntendation)

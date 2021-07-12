@@ -28,7 +28,7 @@
             set => _form.Token3 = value;
         }
 
-        enum State
+        public enum State
         {
             ClassName,
             Identifier,
@@ -38,7 +38,8 @@
         }
 
         readonly GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString> TypedForm => _form;
 
         public GDClassNameAtribute()
         {

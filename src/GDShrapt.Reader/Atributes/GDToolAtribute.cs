@@ -8,7 +8,7 @@
             set => _form.Token0 = value;
         }
 
-        enum State
+        public enum State
         {
             Tool,
             Completed
@@ -16,6 +16,7 @@
 
         readonly GDTokensForm<State, GDToolKeyword> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDToolKeyword> TypedForm => _form;
         public GDToolAtribute()
         {
             _form = new GDTokensForm<State, GDToolKeyword>(this);

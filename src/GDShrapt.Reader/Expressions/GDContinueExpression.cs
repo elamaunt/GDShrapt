@@ -11,7 +11,7 @@
             set => _form.Token0 = value;
         }
 
-        enum State
+        public enum State
         {
             Continue,
             Completed
@@ -19,6 +19,7 @@
 
         readonly GDTokensForm<State, GDContinueKeyword> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDContinueKeyword> TypedForm => _form;
 
         public GDContinueExpression()
         {

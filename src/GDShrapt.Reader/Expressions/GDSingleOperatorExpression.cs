@@ -20,7 +20,7 @@
         }
         public GDSingleOperatorType OperatorType { get => _form.Token0 == null ? GDSingleOperatorType.Null : _form.Token0.OperatorType; }
 
-        enum State
+        public enum State
         {
             Operator,
             TargetExpression,
@@ -29,6 +29,7 @@
 
         readonly GDTokensForm<State, GDSingleOperator, GDExpression> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDSingleOperator, GDExpression> TypedForm => _form;
         public GDSingleOperatorExpression()
         {
             _form = new GDTokensForm<State, GDSingleOperator, GDExpression>(this);

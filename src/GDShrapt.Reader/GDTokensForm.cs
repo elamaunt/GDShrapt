@@ -298,11 +298,11 @@ namespace GDShrapt.Reader
         }
     }
 
-    internal class GDTokensForm<STATE, T0> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 1)
         {
 
@@ -312,12 +312,12 @@ namespace GDShrapt.Reader
         public T0 Token0 { get => Get<T0>(0); set => Set(value, 0); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 2)
         {
 
@@ -328,13 +328,13 @@ namespace GDShrapt.Reader
         public T1 Token1 { get => Get<T1>(1); set => Set(value, 1); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
         where T2 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 3)
         {
 
@@ -348,14 +348,14 @@ namespace GDShrapt.Reader
         public T2 Token2 { get => Get<T2>(2); set => Set(value, 2); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
         where T2 : GDSyntaxToken
         where T3 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 4)
         {
 
@@ -371,7 +371,7 @@ namespace GDShrapt.Reader
         public T3 Token3 { get => Get<T3>(3); set => Set(value, 3); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -379,7 +379,7 @@ namespace GDShrapt.Reader
         where T3 : GDSyntaxToken
         where T4 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 5)
         {
 
@@ -399,7 +399,7 @@ namespace GDShrapt.Reader
 
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -408,7 +408,7 @@ namespace GDShrapt.Reader
         where T4 : GDSyntaxToken
         where T5 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 6)
         {
 
@@ -428,7 +428,7 @@ namespace GDShrapt.Reader
         public T5 Token5 { get => Get<T5>(5); set => Set(value, 5); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -438,7 +438,7 @@ namespace GDShrapt.Reader
         where T5 : GDSyntaxToken
         where T6 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 7)
         {
 
@@ -460,7 +460,7 @@ namespace GDShrapt.Reader
         public T6 Token6 { get => Get<T6>(6); set => Set(value, 6); }
     }
 
-    internal class GDTokensForm<STATE, T0,T1,T2,T3,T4,T5,T6,T7> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0,T1,T2,T3,T4,T5,T6,T7> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -471,7 +471,7 @@ namespace GDShrapt.Reader
         where T6 : GDSyntaxToken
         where T7 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 8)
         {
 
@@ -495,7 +495,7 @@ namespace GDShrapt.Reader
         public T7 Token7 { get => Get<T7>(7); set => Set(value, 7); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -507,7 +507,7 @@ namespace GDShrapt.Reader
         where T7 : GDSyntaxToken
         where T8 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 9)
         {
 
@@ -533,7 +533,7 @@ namespace GDShrapt.Reader
         public T8 Token8 { get => Get<T8>(8); set => Set(value, 8); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -546,7 +546,7 @@ namespace GDShrapt.Reader
         where T8 : GDSyntaxToken
         where T9 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 10)
         {
 
@@ -574,7 +574,7 @@ namespace GDShrapt.Reader
         public T9 Token9 { get => Get<T9>(9); set => Set(value, 9); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -588,7 +588,7 @@ namespace GDShrapt.Reader
         where T9 : GDSyntaxToken
         where T10 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 11)
         {
 
@@ -618,7 +618,7 @@ namespace GDShrapt.Reader
         public T10 Token10 { get => Get<T10>(10); set => Set(value, 10); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -633,7 +633,7 @@ namespace GDShrapt.Reader
         where T10 : GDSyntaxToken
         where T11 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 12)
         {
 
@@ -665,7 +665,7 @@ namespace GDShrapt.Reader
         public T11 Token11 { get => Get<T11>(11); set => Set(value, 11); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -681,7 +681,7 @@ namespace GDShrapt.Reader
         where T11 : GDSyntaxToken
         where T12 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 13)
         {
 
@@ -715,7 +715,7 @@ namespace GDShrapt.Reader
         public T12 Token12 { get => Get<T12>(12); set => Set(value, 12); }
     }
 
-    internal class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> : GDTokensForm<STATE>
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
         where T1 : GDSyntaxToken
@@ -732,7 +732,7 @@ namespace GDShrapt.Reader
         where T12 : GDSyntaxToken
         where T13 : GDSyntaxToken
     {
-        public GDTokensForm(GDNode owner)
+        internal GDTokensForm(GDNode owner)
             : base(owner, 14)
         {
 
@@ -768,10 +768,10 @@ namespace GDShrapt.Reader
         public T13 Token13 { get => Get<T13>(13); set => Set(value, 13); }
     }
 
-    internal abstract class GDTokensForm<STATE> : GDTokensForm
+    public abstract class GDTokensForm<STATE> : GDTokensForm
        where STATE : struct, System.Enum
     {
-        public GDTokensForm(GDNode owner, int size) 
+        internal GDTokensForm(GDNode owner, int size) 
             : base(owner, size)
         {
         }

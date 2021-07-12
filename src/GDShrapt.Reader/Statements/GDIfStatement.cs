@@ -22,7 +22,7 @@
             set => _form.Token2 = value;
         }
 
-        enum State
+        public enum State
         {
             IfBranch,
             ElifBranches,
@@ -32,6 +32,7 @@
 
         readonly GDTokensForm<State, GDIfBranch, GDElifBranchesList, GDElseBranch> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDIfBranch, GDElifBranchesList, GDElseBranch> TypedForm => _form;
 
         internal GDIfStatement(int lineIntendation)
             : base(lineIntendation)

@@ -11,7 +11,7 @@ namespace GDShrapt.Reader
             set => _form.Token0 = value;
         }
 
-        enum State
+        public enum State
         {
             Identifier,
             Completed
@@ -19,6 +19,7 @@ namespace GDShrapt.Reader
 
         readonly GDTokensForm<State, GDIdentifier> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDIdentifier> TypedForm => _form;
         public GDIdentifierExpression()
         {
             _form = new GDTokensForm<State, GDIdentifier>(this);

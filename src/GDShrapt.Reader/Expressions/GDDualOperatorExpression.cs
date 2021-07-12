@@ -30,7 +30,7 @@
             get => _form.Token1 == null ? GDDualOperatorType.Null : _form.Token1.OperatorType;
         }
 
-        enum State
+        public enum State
         {
             LeftExpression,
             DualOperator,
@@ -39,7 +39,8 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> TypedForm => _form;
         public GDDualOperatorExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>(this);

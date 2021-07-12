@@ -26,7 +26,7 @@
             set => _form.Token3 = value;
         }
 
-        enum State
+        public enum State
         {
             Else, 
             Colon,
@@ -37,7 +37,8 @@
 
         private readonly int _intendation;
         readonly GDTokensForm<State, GDElseKeyword, GDColon, GDExpression, GDStatementsList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDElseKeyword, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDElseBranch(int intendation)
         {

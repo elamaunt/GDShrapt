@@ -29,7 +29,7 @@
             set => _form.Token2 = value;
         }
 
-        enum State
+        public enum State
         {
             Identifier,
             ColonOrAssign,
@@ -39,6 +39,7 @@
 
         readonly GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression> TypedForm => _form;
         public GDEnumValueDeclaration()
         {
             _form = new GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression>(this);

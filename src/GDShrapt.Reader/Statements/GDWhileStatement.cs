@@ -32,7 +32,7 @@ namespace GDShrapt.Reader
             set => _form.Token4 = value;
         }
 
-        enum State
+        public enum State
         {
             While,
             Condition,
@@ -43,7 +43,8 @@ namespace GDShrapt.Reader
         }
 
         readonly GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDWhileKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDWhileStatement(int lineIntendation)
             : base(lineIntendation)

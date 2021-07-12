@@ -17,7 +17,7 @@
             set => _form.Token1 = value;
         }
 
-        enum State
+        public enum State
         {
             At, 
             Path,
@@ -25,7 +25,8 @@
         }
 
         readonly GDTokensForm<State, GDAt, GDString> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDAt, GDString> TypedForm => _form;
         public GDNodePathExpression()
         {
             _form = new GDTokensForm<State, GDAt, GDString>(this);

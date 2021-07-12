@@ -21,7 +21,7 @@ namespace GDShrapt.Reader
             set => _form.Token1 = value;
         }
 
-        enum State
+        public enum State
         {
             Atributes,
             Members,
@@ -29,7 +29,8 @@ namespace GDShrapt.Reader
         }
 
         readonly GDTokensForm<State, GDClassAtributesList, GDClassMembersList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDClassAtributesList, GDClassMembersList> TypedForm => _form;
 
         public GDClassDeclaration()
         {

@@ -21,7 +21,7 @@
             set => _form.Token1 = value;
         }
 
-        enum State
+        public enum State
         {
             Extends,
             Path, 
@@ -30,7 +30,8 @@
         }
 
         readonly GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken> TypedForm => _form;
         public GDExtendsAtribute()
         {
             _form = new GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken>(this);

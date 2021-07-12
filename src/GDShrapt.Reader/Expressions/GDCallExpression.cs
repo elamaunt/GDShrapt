@@ -30,7 +30,7 @@
             set => _form.Token3 = value;
         }
 
-        enum State
+        public enum State
         {
             Caller,
             OpenBracket,
@@ -40,7 +40,8 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
         public GDCallExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);

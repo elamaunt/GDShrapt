@@ -27,7 +27,7 @@
             set => _form.Token3 = value;
         }
 
-        enum State
+        public enum State
         {
             Export,
             OpenBracket,
@@ -38,6 +38,7 @@
 
         readonly GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket> TypedForm => _form;
         public GDExportDeclaration()
         {
             _form = new GDTokensForm<State, GDExportKeyword, GDOpenBracket, GDExportParametersList, GDCloseBracket>(this);

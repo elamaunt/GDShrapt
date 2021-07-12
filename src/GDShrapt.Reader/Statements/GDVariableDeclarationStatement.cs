@@ -39,7 +39,7 @@
             set => _form.Token5 = value;
         }
 
-        enum State
+        public enum State
         {
             Var,
             Identifier,
@@ -52,6 +52,7 @@
 
         readonly GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression> TypedForm => _form;
         internal GDVariableDeclarationStatement(int lineIntendation)
             : base(lineIntendation)
         {

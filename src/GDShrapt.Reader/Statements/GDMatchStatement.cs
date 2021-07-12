@@ -26,7 +26,7 @@
             set => _form.Token3 = value;
         }
 
-        enum State
+        public enum State
         {
             Match,
             Value,
@@ -36,7 +36,8 @@
         }
 
         readonly GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDMatchKeyword, GDExpression, GDColon, GDMatchCasesList> TypedForm => _form;
 
         internal GDMatchStatement(int lineIntendation)
             : base(lineIntendation)

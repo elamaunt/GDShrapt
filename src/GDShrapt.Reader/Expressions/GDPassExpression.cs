@@ -11,14 +11,15 @@
             set => _form.Token0 = value;
         }
 
-        enum State
+        public enum State
         {
             Pass,
             Completed
         }
 
         readonly GDTokensForm<State, GDPassKeyword> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDPassKeyword> TypedForm => _form;
         public GDPassExpression()
         {
             _form = new GDTokensForm<State, GDPassKeyword>(this);

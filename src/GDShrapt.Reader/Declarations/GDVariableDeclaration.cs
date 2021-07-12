@@ -83,7 +83,7 @@
         public bool IsConstant => ConstKeyword != null;
         public bool HasOnReadyInitialization => OnreadyKeyword != null;
 
-        enum State
+        public enum State
         { 
             Const,
             Export,
@@ -103,6 +103,7 @@
 
         readonly GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDConstKeyword, GDOnreadyKeyword, GDExportDeclaration, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression, GDSetGetKeyword, GDIdentifier, GDComma, GDIdentifier> TypedForm => _form;
 
         internal GDVariableDeclaration(int intendation)
             : base(intendation)

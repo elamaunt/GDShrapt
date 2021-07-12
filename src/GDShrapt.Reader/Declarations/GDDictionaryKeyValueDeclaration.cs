@@ -28,7 +28,7 @@
             set => _form.Token2 = value;
         }
 
-        enum State
+        public enum State
         {
             Key,
             ColonOrAssign,
@@ -44,6 +44,7 @@
         }
 
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDExpression, GDSingleCharToken, GDExpression> TypedForm => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (this.ResolveSpaceToken(c, state))

@@ -35,7 +35,7 @@ namespace GDShrapt.Reader
             set => _form.Token3 = value;
         }
 
-        enum State
+        public enum State
         {
             Class,
             Identifier,
@@ -46,6 +46,7 @@ namespace GDShrapt.Reader
 
         readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDClassMembersList> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDClassKeyword, GDIdentifier, GDColon, GDClassMembersList> TypedForm => _form;
 
         internal GDInnerClassDeclaration(int intendation)
             : base(intendation)

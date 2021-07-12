@@ -11,14 +11,15 @@
             set => _form.Token0 = value;
         }
 
-        enum State
+        public enum State
         {
             Break,
             Completed
         }
 
         readonly GDTokensForm<State, GDBreakKeyword> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDBreakKeyword> TypedForm => _form;
         public GDBreakExpression()
         {
             _form = new GDTokensForm<State, GDBreakKeyword>(this);

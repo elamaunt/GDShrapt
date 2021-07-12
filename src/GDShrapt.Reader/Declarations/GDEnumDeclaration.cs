@@ -33,7 +33,7 @@
             set => _form.Token4 = value;
         }
 
-        enum State
+        public enum State
         {
             Enum,
             Identifier,
@@ -44,7 +44,8 @@
         }
 
         readonly GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> TypedForm => _form;
         internal GDEnumDeclaration(int intendation)
            : base(intendation)
         {

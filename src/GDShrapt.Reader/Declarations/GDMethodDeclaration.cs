@@ -90,7 +90,7 @@ namespace GDShrapt.Reader
 
         public bool IsStatic => StaticKeyword != null;
 
-        enum State
+        public enum State
         {
             Static,
             Func,
@@ -112,7 +112,8 @@ namespace GDShrapt.Reader
         }
 
         readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> TypedForm => _form;
 
         internal GDMethodDeclaration(int intendation)
             : base(intendation)

@@ -31,7 +31,7 @@
             set => _form.Token4 = value;
         }
 
-        enum State
+        public enum State
         {
             If, 
             Condition, 
@@ -43,7 +43,8 @@
 
         private readonly int _intendation;
         readonly GDTokensForm<State, GDIfKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDIfKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDIfBranch(int intendation) 
         {

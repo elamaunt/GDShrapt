@@ -46,7 +46,7 @@ namespace GDShrapt.Reader
             set => _form.Token6 = value;
         }
 
-        enum State
+        public enum State
         {
             For,
             Variable,
@@ -59,7 +59,8 @@ namespace GDShrapt.Reader
         }
 
         readonly GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDForKeyword, GDIdentifier, GDInKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDForStatement(int lineIntendation)
             : base(lineIntendation)

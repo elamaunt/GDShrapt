@@ -26,7 +26,7 @@ namespace GDShrapt.Reader
             set => _form.Token2 = value;
         }
 
-        enum State
+        public enum State
         {
             Conditions,
             Colon,
@@ -35,7 +35,8 @@ namespace GDShrapt.Reader
         }
 
         readonly GDTokensForm<State, GDExpressionsList, GDColon, GDStatementsList> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDExpressionsList, GDColon, GDStatementsList> TypedForm => _form;
         internal GDMatchCaseDeclaration(int lineIntendation)
             : base(lineIntendation)
         {

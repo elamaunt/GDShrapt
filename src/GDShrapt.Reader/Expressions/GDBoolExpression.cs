@@ -14,7 +14,7 @@
 
         public bool? Value => BoolKeyword?.Value;
 
-        enum State
+        public enum State
         {
             True,
             False,
@@ -23,6 +23,7 @@
 
         readonly GDTokensForm<State, GDBoolKeyword> _form;
         public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDBoolKeyword> TypedForm => _form;
         public GDBoolExpression()
         {
             _form = new GDTokensForm<State, GDBoolKeyword>(this);

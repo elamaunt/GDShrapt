@@ -17,7 +17,7 @@
             set => _form.Token1 = value;
         }
 
-        enum State
+        public enum State
         {
             Var,
             Identifier,
@@ -25,7 +25,8 @@
         }
 
         readonly GDTokensForm<State, GDVarKeyword, GDIdentifier> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDVarKeyword, GDIdentifier> TypedForm => _form;
         public GDMatchCaseVariableExpression()
         {
             _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier>(this);

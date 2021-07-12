@@ -11,14 +11,15 @@
             set => _form.Token0 = value;
         }
 
-        enum State
+        public enum State
         {
             Default,
             Completed
         }
 
         readonly GDTokensForm<State, GDDefaultToken> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDDefaultToken> TypedForm => _form;
         public GDMatchDefaultOperatorExpression()
         {
             _form = new GDTokensForm<State, GDDefaultToken>(this);

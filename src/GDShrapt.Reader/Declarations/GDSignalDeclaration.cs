@@ -33,7 +33,7 @@
             set => _form.Token4 = value;
         }
 
-        enum State
+        public enum State
         {
             Signal,
             Identifier,
@@ -44,7 +44,8 @@
         }
 
         readonly GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> TypedForm => _form;
         internal GDSignalDeclaration(int intendation)
             : base(intendation)
         {

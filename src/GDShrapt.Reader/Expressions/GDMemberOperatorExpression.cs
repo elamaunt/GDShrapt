@@ -23,7 +23,7 @@
             set => _form.Token2 = value;
         }
 
-        enum State
+        public enum State
         {
             CallerExpression,
             Point,
@@ -32,7 +32,8 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDPoint, GDIdentifier> _form;
-        public override GDTokensForm Form => _form;
+        public override GDTokensForm Form => _form; 
+        public GDTokensForm<State, GDExpression, GDPoint, GDIdentifier> TypedForm => _form;
         public GDMemberOperatorExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDPoint, GDIdentifier>(this);
