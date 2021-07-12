@@ -12,11 +12,11 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **2.0.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **2.1.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 2.0.0-alpha
+Install-Package GDShrapt.Reader -Version 2.1.0-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
@@ -56,11 +56,16 @@ Install-Package GDShrapt.Reader -Version 2.0.0-alpha
 | RPC annotations parsing | IN PLAN |
 | Syntax errors managment and properly handling | IN PLAN |
 | Tree walking and node visiting | IN PLAN |
-| Syntax cloning | IN PLAN |
+| Syntax cloning | YES |
 | Syntax factory | IN PLAN |
 | Tree diff tool | IN PLAN |
 
 ## Version history
+
+#### 2.1.0-alpha
+Implemented 'clone' methods for every token type. Now you can clone the lexical tree with all it's structure.
+Changed the project type to Net.Standart 2.0 (Because this version is supported by Godot).
+Small fix with the 'ToString' method of GDIndexerExpression.
 
 #### 2.0.0-alpha
 The project is now in Net.Standart 2.1 and was 
