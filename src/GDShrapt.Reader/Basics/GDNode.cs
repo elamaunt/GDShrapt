@@ -238,6 +238,9 @@ namespace GDShrapt.Reader
             }
         }
 
+        public int TokensCount => Form.TokensCount;
+        public bool HasTokens => Form.HasTokens;
+
         /// <summary>
         /// Returns variable identifiers that are visible before line and defined by this node and its children
         /// Actual only for method scope.

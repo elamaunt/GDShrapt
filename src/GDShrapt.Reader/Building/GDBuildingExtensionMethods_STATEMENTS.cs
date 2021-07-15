@@ -143,5 +143,26 @@ namespace GDShrapt.Reader
             receiver.HandleReceivedToken(GD.Expression.Call(setup));
             return receiver;
         }
+
+        public static T AddMatch<T>(this T receiver, Func<GDMatchStatement, GDMatchStatement> setup)
+           where T : ITokenReceiver<GDMatchStatement>
+        {
+            receiver.HandleReceivedToken(GD.Statement.Match(setup));
+            return receiver;
+        }
+
+        public static T AddMatch<T>(this T receiver, GDExpression value, params GDMatchCaseDeclaration[] cases)
+           where T : ITokenReceiver<GDMatchStatement>
+        {
+            receiver.HandleReceivedToken(GD.Statement.Match(value, cases));
+            return receiver;
+        }
+
+        public static T AddMatch<T>(this T receiver, GDExpression value, GDMatchCasesList cases)
+           where T : ITokenReceiver<GDMatchStatement>
+        {
+            receiver.HandleReceivedToken(GD.Statement.Match(value, cases));
+            return receiver;
+        }
     }
 }

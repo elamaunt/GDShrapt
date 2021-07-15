@@ -51,7 +51,7 @@
                     break;
                 case State.Expression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, this);
                     break;
                 case State.CloseBracket:
                     if (!this.ResolveSpaceToken(c, state))

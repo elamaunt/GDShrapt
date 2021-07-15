@@ -12,14 +12,15 @@
 
         new ITokenReceiver<GDExpression> Owner { get; }
         ITokenSkipReceiver<GDExpression> OwnerWithSkip { get; }
-
+        INewLineReceiver NewLineReceiver { get; }
         public bool IsCompleted => _isCompleted;
 
-        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner)
+        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner, INewLineReceiver newLineReceiver = null)
             : base(owner)
         {
             Owner = owner;
             OwnerWithSkip = owner;
+            NewLineReceiver = newLineReceiver;
         }
 
         public GDExpressionResolver(ITokenReceiver<GDExpression> owner)
@@ -148,7 +149,7 @@
 
                 if (_expression is GDDualOperatorExpression dualOperatorExpression)
                 {
-                    if (dualOperatorExpression.OperatorType == GDDualOperatorType.Null && dualOperatorExpression.RightExpression == null)
+                    if (dualOperatorExpression.OperatorType == GDDualOperatorType.Null)
                     {
                         // This is the end of expression.
                         var form = dualOperatorExpression.Form;
@@ -196,7 +197,7 @@
                     return;
                 }
 
-                PushAndSwap(state, new GDDualOperatorExpression());
+                PushAndSwap(state, new GDDualOperatorExpression(NewLineReceiver != null));
                 state.PassChar(c);
             }
         }
@@ -293,16 +294,59 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (!CheckKeywords(state))
-                CompleteExpression(state);
-            state.PassNewLine();
+            if (NewLineReceiver != null)
+            {
+                if (_expression != null)
+                {
+                    PushAndSwap(state, new GDDualOperatorExpression(true));
+                    state.PassNewLine();
+                }
+                else
+                {
+                    if (_lastSpace != null)
+                    {
+                        NewLineReceiver.HandleReceivedToken(_lastSpace);
+                        _lastSpace = null;
+                    }
+
+                    NewLineReceiver.HandleReceivedToken(new GDNewLine());
+                }
+            }
+            else
+            {
+                if (!CheckKeywords(state))
+                    CompleteExpression(state);
+                state.PassNewLine();
+            }
+            
         }
 
         internal override void HandleSharpChar(GDReadingState state)
         {
-            if (!CheckKeywords(state))
-                CompleteExpression(state);
-            state.PassSharpChar();
+            if (NewLineReceiver != null)
+            {
+                if (_expression != null)
+                {
+                    PushAndSwap(state, new GDDualOperatorExpression(true));
+                    state.PassSharpChar();
+                }
+                else
+                {
+                    if (_lastSpace != null)
+                    {
+                        NewLineReceiver.HandleReceivedToken(_lastSpace);
+                        _lastSpace = null;
+                    }
+
+                    NewLineReceiver.HandleReceivedToken(state.PushAndPass(new GDComment(), '#'));
+                }
+            }
+            else
+            {
+                if (!CheckKeywords(state))
+                    CompleteExpression(state);
+                state.PassSharpChar();
+            }
         }
 
         private void CompleteExpression(GDReadingState state)

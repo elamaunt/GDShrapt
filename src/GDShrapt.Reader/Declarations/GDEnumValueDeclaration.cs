@@ -76,7 +76,10 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            _form.AddBeforeActiveToken(new GDNewLine());
+            if (_form.State == State.Completed)
+                state.PopAndPassNewLine();
+            else
+                _form.AddBeforeActiveToken(new GDNewLine());
         }
 
         public override GDNode CreateEmptyInstance()

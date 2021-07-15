@@ -823,6 +823,9 @@ namespace GDShrapt.Reader
             _statePoints = new List<LinkedListNode<GDSyntaxToken>>();
         }
 
+        public int TokensCount => _list.Count - _statePoints.Count(x => x.Value != null);
+        public bool HasTokens => _list.Count > _statePoints.Count || _statePoints.Any(x => x.Value != null);
+
         public void AddBeforeActiveToken(GDSyntaxToken token)
         {
             AddBeforeToken(token, StateIndex);

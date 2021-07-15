@@ -39,11 +39,19 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form;
+        public bool AllowNewLines { get; }
+
         public override GDTokensForm Form => _form; 
         public GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> TypedForm => _form;
         public GDDualOperatorExpression()
+            : this(true)
+        {
+        }
+
+        public GDDualOperatorExpression(bool allowNewLines)
         {
             _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>(this);
+            AllowNewLines = allowNewLines;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -52,7 +60,7 @@
             {
                 case State.LeftExpression:
                     if (!this.ResolveSpaceToken(c, state))
-                        state.PushAndPass(new GDExpressionResolver(this), c);
+                        this.ResolveExpression(c, state);
                     break;
                 case State.DualOperator:
                     // Indicates that it isn't a normal expression. The parent should handle the state.
@@ -68,7 +76,7 @@
                     break;
                 case State.RightExpression:
                     if (!this.ResolveSpaceToken(c, state))
-                        state.PushAndPass(new GDExpressionResolver(this), c);
+                        this.ResolveExpression(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -78,12 +86,11 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.State != State.Completed)
-                _form.AddBeforeActiveToken(state.Push(new GDNewLine()));
+            if (AllowNewLines && _form.State != State.Completed)
+                _form.AddBeforeActiveToken(new GDNewLine());
             else
                 state.PopAndPassNewLine();
         }
-
 
         /// <summary>
         /// Rebuilds current node if another inner node has higher priority.
@@ -198,7 +205,7 @@
 
         void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
         {
-            if (_form.State != State.Completed)
+            if (AllowNewLines && _form.State != State.Completed)
             {
                 _form.AddBeforeActiveToken(token);
                 return;
@@ -209,7 +216,7 @@
 
         void INewLineReceiver.HandleReceivedToken(GDNewLine token)
         {
-            if (_form.State != State.Completed)
+            if (AllowNewLines && _form.State != State.Completed)
             {
                 _form.AddBeforeActiveToken(token);
                 return;

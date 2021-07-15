@@ -1499,5 +1499,28 @@ export(AnimationNode) var resource
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
         }
+
+        [TestMethod]
+        public void NewLineParsingTest1()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var a = (b
++
+c)";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+
+            var declaration = statement.CastOrAssert<GDVariableDeclarationStatement>();
+            var brackets = declaration.Initializer.CastOrAssert<GDBracketExpression>();
+            var dualExpression = brackets.InnerExpression.CastOrAssert<GDDualOperatorExpression>();
+
+            Assert.AreEqual("b", dualExpression.LeftExpression.ToString());
+            Assert.AreEqual("c", dualExpression.RightExpression.ToString());
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+        }
     }
 }
