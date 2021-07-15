@@ -18,10 +18,24 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddClassNameAtribute<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDClassNameAtribute>
+        {
+            receiver.HandleReceivedToken(GD.Atribute.ClassName(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddExtendsAtribute<T>(this T receiver, string baseTypeName)
             where T : ITokenReceiver<GDExtendsAtribute>
         {
             receiver.HandleReceivedToken(GD.Atribute.Extends(baseTypeName));
+            return receiver;
+        }
+
+        public static T AddExtendsAtribute<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDExtendsAtribute>
+        {
+            receiver.HandleReceivedToken(GD.Atribute.Extends(unsafeTokens));
             return receiver;
         }
 
@@ -36,6 +50,13 @@ namespace GDShrapt.Reader
             where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(setup(new GDVariableDeclaration()));
+            return receiver;
+        }
+
+        public static T AddVariable<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDVariableDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.Variable(unsafeTokens));
             return receiver;
         }
 
@@ -139,6 +160,13 @@ namespace GDShrapt.Reader
             where T : ITokenReceiver<GDMethodDeclaration>
         {
             receiver.HandleReceivedToken(setup(new GDMethodDeclaration()));
+            return receiver;
+        }
+
+        public static T AddMethod<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.Method(unsafeTokens));
             return receiver;
         }
 

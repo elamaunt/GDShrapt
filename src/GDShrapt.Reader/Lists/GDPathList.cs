@@ -39,13 +39,13 @@
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
             _switch = !_switch;
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
 
         void ITokenReceiver<GDRightSlash>.HandleReceivedToken(GDRightSlash token)
         {
             _switch = !_switch;
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
@@ -59,7 +59,7 @@
 
         void ITokenReceiver<GDSpace>.HandleReceivedToken(GDSpace token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

@@ -11,7 +11,7 @@
         internal override GDReader ResolveNode()
         {
             var node = new GDParameterDeclaration();
-            ListForm.Add(node);
+            ListForm.AddToEnd(node);
             return node;
         }
 
@@ -22,7 +22,7 @@
 
         void ITokenReceiver<GDParameterDeclaration>.HandleReceivedToken(GDParameterDeclaration token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

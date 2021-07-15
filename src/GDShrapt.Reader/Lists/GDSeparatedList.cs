@@ -22,7 +22,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleSharpChar(GDReadingState state)
         {
-            Form.Add(state.Push(new GDComment()));
+            Form.AddToEnd(state.Push(new GDComment()));
             state.PassSharpChar();
         }
 
@@ -37,7 +37,7 @@ namespace GDShrapt.Reader
 
         public void Add(NODE item)
         {
-            _form.Add(item);
+            _form.AddToEnd(item);
         }
 
         public void Clear()

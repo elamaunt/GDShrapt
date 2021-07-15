@@ -53,6 +53,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddIfExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDIfExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.If(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddIfExpression<T>(this T receiver, Func<GDIfExpression, GDIfExpression> setup)
            where T : ITokenReceiver<GDIfExpression>
         {
@@ -67,6 +74,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddArrayExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDArrayInitializerExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Array(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddArrayExpression<T>(this T receiver, Func<GDArrayInitializerExpression, GDArrayInitializerExpression> setup)
            where T : ITokenReceiver<GDArrayInitializerExpression>
         {
@@ -78,6 +92,13 @@ namespace GDShrapt.Reader
            where T : ITokenReceiver<GDDictionaryInitializerExpression>
         {
             receiver.HandleReceivedToken(GD.Expression.Dictionary(keyValues));
+            return receiver;
+        }
+
+        public static T AddDictionaryExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDDictionaryInitializerExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Dictionary(unsafeTokens));
             return receiver;
         }
 
@@ -109,6 +130,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddCallExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDCallExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Call(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddCallExpression<T>(this T receiver, Func<GDCallExpression, GDCallExpression> setup)
            where T : ITokenReceiver<GDCallExpression>
         {
@@ -123,6 +151,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddBracketExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDBracketExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Bracket(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddBracketExpression<T>(this T receiver, GDExpression inner)
            where T : ITokenReceiver<GDBracketExpression>
         {
@@ -134,6 +169,13 @@ namespace GDShrapt.Reader
            where T : ITokenReceiver<GDMemberOperatorExpression>
         {
             receiver.HandleReceivedToken(GD.Expression.Member(setup));
+            return receiver;
+        }
+
+        public static T AddMemberOperatorExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDMemberOperatorExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Member(unsafeTokens));
             return receiver;
         }
 
@@ -155,6 +197,13 @@ namespace GDShrapt.Reader
           where T : ITokenReceiver<GDIndexerExpression>
         {
             receiver.HandleReceivedToken(GD.Expression.Indexer(caller, indexExpression));
+            return receiver;
+        }
+
+        public static T AddIndexerExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDIndexerExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Indexer(unsafeTokens));
             return receiver;
         }
 
@@ -200,6 +249,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddReturnExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDReturnExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Return(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddReturnExpression<T>(this T receiver, Func<GDReturnExpression, GDReturnExpression> setup)
           where T : ITokenReceiver<GDReturnExpression>
         {
@@ -221,6 +277,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddDualOperatorExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDDualOperatorExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.DualOperator(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddDualOperatorExpression<T>(this T receiver, Func<GDDualOperatorExpression, GDDualOperatorExpression> setup)
           where T : ITokenReceiver<GDDualOperatorExpression>
         {
@@ -235,7 +298,14 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddSingleOperator<T>(this T receiver, GDSingleOperator @operator, GDExpression operand)
+        public static T AddSingleOperatorExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDSingleOperatorExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.SingleOperator(unsafeTokens));
+            return receiver;
+        }
+
+        public static T AddSingleOperatorExpression<T>(this T receiver, GDSingleOperator @operator, GDExpression operand)
          where T : ITokenReceiver<GDSingleOperatorExpression>
         {
             receiver.HandleReceivedToken(GD.Expression.SingleOperator(@operator, operand));
@@ -246,6 +316,13 @@ namespace GDShrapt.Reader
          where T : ITokenReceiver<GDGetNodeExpression>
         {
             receiver.HandleReceivedToken(GD.Expression.GetNode(setup));
+            return receiver;
+        }
+
+        public static T AddGetNodeExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDGetNodeExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.GetNode(unsafeTokens));
             return receiver;
         }
 
@@ -269,6 +346,12 @@ namespace GDShrapt.Reader
             receiver.HandleReceivedToken(GD.Expression.NodePath(path));
             return receiver;
         }
+        public static T AddNodePathExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDNodePathExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.NodePath(unsafeTokens));
+            return receiver;
+        }
 
         public static T AddNodePathExpression<T>(this T receiver, Func<GDNodePathExpression, GDNodePathExpression> setup)
          where T : ITokenReceiver<GDNodePathExpression>
@@ -284,6 +367,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddMatchCaseVariableExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDMatchCaseVariableExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.MatchCaseVariable(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddMatchCaseVariableExpression<T>(this T receiver, string identifier)
          where T : ITokenReceiver<GDMatchCaseVariableExpression>
         {
@@ -295,6 +385,13 @@ namespace GDShrapt.Reader
          where T : ITokenReceiver<GDYieldExpression>
         {
             receiver.HandleReceivedToken(GD.Expression.Yield(setup));
+            return receiver;
+        }
+
+        public static T AddYieldExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDYieldExpression>
+        {
+            receiver.HandleReceivedToken(GD.Expression.Yield(unsafeTokens));
             return receiver;
         }
 

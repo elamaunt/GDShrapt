@@ -8,6 +8,7 @@ namespace GDShrapt.Reader
         {
             public static GDIfBranch If() => new GDIfBranch();
             public static GDIfBranch If(Func<GDIfBranch, GDIfBranch> setup) => setup(new GDIfBranch());
+            public static GDIfBranch If(params GDSyntaxToken[] unsafeTokens) => new GDIfBranch() { FormTokensSetter = unsafeTokens };
             public static GDIfBranch If(GDExpression condition, GDExpression expression) => new GDIfBranch()
             {
                 IfKeyword = new GDIfKeyword(),
@@ -38,6 +39,7 @@ namespace GDShrapt.Reader
 
             public static GDElifBranch Elif() => new GDElifBranch();
             public static GDElifBranch Elif(Func<GDElifBranch, GDElifBranch> setup) => setup(new GDElifBranch());
+            public static GDElifBranch Elif(params GDSyntaxToken[] unsafeTokens) => new GDElifBranch() { FormTokensSetter = unsafeTokens };
             public static GDElifBranch Elif(GDExpression condition, GDExpression expression) => new GDElifBranch()
             {
                 ElifKeyword = new GDElifKeyword(),
@@ -68,6 +70,7 @@ namespace GDShrapt.Reader
 
             public static GDElseBranch Else() => new GDElseBranch();
             public static GDElseBranch Else(Func<GDElseBranch, GDElseBranch> setup) => setup(new GDElseBranch());
+            public static GDElseBranch Else(params GDSyntaxToken[] unsafeTokens) => new GDElseBranch() { FormTokensSetter = unsafeTokens };
             public static GDElseBranch Else(GDExpression expression) => new GDElseBranch()
             {
                 ElseKeyword = new GDElseKeyword(),

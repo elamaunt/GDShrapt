@@ -30,6 +30,23 @@
             return receiver;
         }
 
+        public static T Add<T, B>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<B>
+            where B : GDNode, new()
+        {
+            receiver.HandleReceivedToken(new B() { FormTokensSetter = unsafeTokens });
+            return receiver;
+        }
+
+        public static T Add<T, B>(this T receiver)
+            where T : ITokenReceiver<B>
+            where B : GDSyntaxToken, new()
+        {
+            receiver.HandleReceivedToken(new B());
+            return receiver;
+        }
+
+
         public static T Add<T, B>(this T receiver, B token)
             where T : ITokenReceiver<B>
             where B : GDSyntaxToken

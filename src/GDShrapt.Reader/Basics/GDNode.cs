@@ -14,6 +14,15 @@ namespace GDShrapt.Reader
     {
         public abstract GDTokensForm Form { get; }
         
+        /// <summary>
+        /// Sets new tokens for the node's form. Tokens may be null
+        /// </summary>
+        public GDSyntaxToken[] FormTokensSetter
+        {
+            set => Form.SetFormUnsafe(value);
+        }
+             
+
         public IEnumerable<GDSyntaxToken> Tokens => Form.Direct();
         public IEnumerable<GDSyntaxToken> TokensReversed => Form.Reversed();
         public IEnumerable<GDNode> Nodes => Tokens.OfType<GDNode>();

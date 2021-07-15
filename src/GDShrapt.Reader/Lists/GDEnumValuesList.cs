@@ -6,7 +6,7 @@
         internal override GDReader ResolveNode()
         {
             var node = new GDEnumValueDeclaration();
-            ListForm.Add(node);
+            ListForm.AddToEnd(node);
             return node;
         }
 
@@ -22,7 +22,7 @@
 
         void ITokenReceiver<GDEnumValueDeclaration>.HandleReceivedToken(GDEnumValueDeclaration token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

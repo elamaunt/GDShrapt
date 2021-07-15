@@ -36,15 +36,15 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDExpression, GDSingleCharToken, GDExpression> _form;
+        readonly GDTokensForm<State, GDExpression, GDPairToken, GDExpression> _form;
 
         public GDDictionaryKeyValueDeclaration()
         {
-            _form = new GDTokensForm<State, GDExpression, GDSingleCharToken, GDExpression>(this);
+            _form = new GDTokensForm<State, GDExpression, GDPairToken, GDExpression>(this);
         }
 
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDExpression, GDSingleCharToken, GDExpression> TypedForm => _form;
+        public GDTokensForm<State, GDExpression, GDPairToken, GDExpression> TypedForm => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (this.ResolveSpaceToken(c, state))

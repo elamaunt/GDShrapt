@@ -13,6 +13,7 @@ namespace GDShrapt.Reader
 
             public static GDClassNameAtribute ClassName() => new GDClassNameAtribute();
             public static GDClassNameAtribute ClassName(Func<GDClassNameAtribute, GDClassNameAtribute> setup) => setup(new GDClassNameAtribute());
+            public static GDClassNameAtribute ClassName(params GDSyntaxToken[] unsafeTokens) => new GDClassNameAtribute() { FormTokensSetter = unsafeTokens };
             public static GDClassNameAtribute ClassName(string identifier) => new GDClassNameAtribute()
             {
                 ClassNameKeyword = new GDClassNameKeyword(),
@@ -29,6 +30,7 @@ namespace GDShrapt.Reader
 
             public static GDExtendsAtribute Extends() => new GDExtendsAtribute();
             public static GDExtendsAtribute Extends(Func<GDExtendsAtribute, GDExtendsAtribute> setup) => setup(new GDExtendsAtribute());
+            public static GDExtendsAtribute Extends(params GDSyntaxToken[] unsafeTokens) => new GDExtendsAtribute() { FormTokensSetter = unsafeTokens };
             public static GDExtendsAtribute Extends(GDType type) => new GDExtendsAtribute()
             { 
                 ExtendsKeyword = new GDExtendsKeyword(),

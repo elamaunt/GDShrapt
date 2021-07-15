@@ -18,6 +18,7 @@
             public static GDNumber Number(long value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(double value) => new GDNumber() { ValueDouble = value };
 
+            public static GDSpace OneSpace => Space();
             public static GDSpace Space(int count = 1) => new GDSpace() { Sequence = new string(' ', count) };
             public static GDSpace Space(string whiteSpace) => new GDSpace() { Sequence = whiteSpace };
             public static GDNewLine NewLine => new GDNewLine();

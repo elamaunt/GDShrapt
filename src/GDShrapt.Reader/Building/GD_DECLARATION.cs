@@ -2,12 +2,16 @@
 
 namespace GDShrapt.Reader
 {
+    /// <summary>
+    /// GDScript code generation helper
+    /// </summary>
     public static partial class GD
     {
         public static class Declaration
         {
             public static GDClassDeclaration Class() => new GDClassDeclaration();
             public static GDClassDeclaration Class(Func<GDClassDeclaration, GDClassDeclaration> setup) => setup(new GDClassDeclaration());
+            public static GDClassDeclaration Class(params GDSyntaxToken[] unsafeTokens) => new GDClassDeclaration() { FormTokensSetter = unsafeTokens };
             public static GDClassDeclaration Class(GDClassAtributesList atributes, GDClassMembersList members) => new GDClassDeclaration()
             {
                 Atributes = atributes,
@@ -17,6 +21,7 @@ namespace GDShrapt.Reader
 
             public static GDInnerClassDeclaration InnerClass() => new GDInnerClassDeclaration();
             public static GDInnerClassDeclaration InnerClass(Func<GDInnerClassDeclaration, GDInnerClassDeclaration> setup) => setup(new GDInnerClassDeclaration());
+            public static GDInnerClassDeclaration InnerClass(params GDSyntaxToken[] unsafeTokens) => new GDInnerClassDeclaration() { FormTokensSetter = unsafeTokens };
             public static GDInnerClassDeclaration InnerClass(string name) => new GDInnerClassDeclaration()
             {
                 ClassKeyword = new GDClassKeyword(),
@@ -74,6 +79,7 @@ namespace GDShrapt.Reader
 
             public static GDMethodDeclaration Method() => new GDMethodDeclaration();
             public static GDMethodDeclaration Method(Func<GDMethodDeclaration, GDMethodDeclaration> setup) => setup(new GDMethodDeclaration());
+            public static GDMethodDeclaration Method(params GDSyntaxToken[] unsafeTokens) => new GDMethodDeclaration() { FormTokensSetter = unsafeTokens };
             public static GDMethodDeclaration Method(GDIdentifier identifier, GDParametersList parameters, params GDStatement[] statements) => new GDMethodDeclaration()
             {
                 FuncKeyword = new GDFuncKeyword(),
@@ -199,6 +205,7 @@ namespace GDShrapt.Reader
 
             public static GDParameterDeclaration Parameter() => new GDParameterDeclaration();
             public static GDParameterDeclaration Parameter(Func<GDParameterDeclaration, GDParameterDeclaration> setup) => setup(new GDParameterDeclaration());
+            public static GDParameterDeclaration Parameter(params GDSyntaxToken[] unsafeTokens) => new GDParameterDeclaration() { FormTokensSetter = unsafeTokens };
             public static GDParameterDeclaration Parameter(string identifier) => new GDParameterDeclaration()
             {
                 Identifier = Syntax.Identifier(identifier)
@@ -256,6 +263,7 @@ namespace GDShrapt.Reader
             public static GDMatchCaseDeclaration MatchCase() => new GDMatchCaseDeclaration();
             public static GDMatchCaseDeclaration MatchCase(Func<GDMatchCaseDeclaration, GDMatchCaseDeclaration> setup) => setup(new GDMatchCaseDeclaration());
 
+            public static GDMatchCaseDeclaration MatchCase(params GDSyntaxToken[] unsafeTokens) => new GDMatchCaseDeclaration() { FormTokensSetter = unsafeTokens };
             public static GDMatchCaseDeclaration MatchCase(GDExpressionsList conditions, GDStatementsList statements) => new GDMatchCaseDeclaration()
             { 
                 Conditions = conditions,
@@ -272,6 +280,7 @@ namespace GDShrapt.Reader
 
             public static GDSignalDeclaration Signal() => new GDSignalDeclaration();
             public static GDSignalDeclaration Signal(Func<GDSignalDeclaration, GDSignalDeclaration> setup) => setup(new GDSignalDeclaration());
+            public static GDSignalDeclaration Signal(params GDSyntaxToken[] unsafeTokens) => new GDSignalDeclaration() { FormTokensSetter = unsafeTokens };
             public static GDSignalDeclaration Signal(GDIdentifier identifier, GDParametersList parameters) => new GDSignalDeclaration()
             {
                 SignalKeyword = new GDSignalKeyword(),
@@ -304,6 +313,7 @@ namespace GDShrapt.Reader
 
             public static GDVariableDeclaration Variable() => new GDVariableDeclaration();
             public static GDVariableDeclaration Variable(Func<GDVariableDeclaration, GDVariableDeclaration> setup) => setup(new GDVariableDeclaration());
+            public static GDVariableDeclaration Variable(params GDSyntaxToken[] unsafeTokens) => new GDVariableDeclaration() { FormTokensSetter = unsafeTokens };
             public static GDVariableDeclaration Variable(GDIdentifier identifier) => new GDVariableDeclaration()
             { 
                 VarKeyword = new GDVarKeyword(),

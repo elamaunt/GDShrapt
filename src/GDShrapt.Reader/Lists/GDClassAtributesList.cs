@@ -49,7 +49,7 @@
 
         void ITokenReceiver<GDClassAtribute>.HandleReceivedToken(GDClassAtribute token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

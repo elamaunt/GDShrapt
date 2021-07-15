@@ -8,6 +8,7 @@ namespace GDShrapt.Reader
         {
             public static GDForStatement For() => new GDForStatement();
             public static GDForStatement For(Func<GDForStatement, GDForStatement> setup) => setup(new GDForStatement());
+            public static GDForStatement For(params GDSyntaxToken[] unsafeTokens) => new GDForStatement() { FormTokensSetter = unsafeTokens };
             public static GDForStatement For(GDIdentifier variable, GDExpression collection, GDExpression body) => new GDForStatement()
             {
                 ForKeyword = new GDForKeyword(),
@@ -43,6 +44,7 @@ namespace GDShrapt.Reader
 
             public static GDIfStatement If() => new GDIfStatement();
             public static GDIfStatement If(Func<GDIfStatement, GDIfStatement> setup) => setup(new GDIfStatement());
+            public static GDIfStatement If(params GDSyntaxToken[] unsafeTokens) => new GDIfStatement() { FormTokensSetter = unsafeTokens };
             public static GDIfStatement If(GDIfBranch ifBranch) => new GDIfStatement()
             {
                 IfBranch = ifBranch
@@ -76,6 +78,7 @@ namespace GDShrapt.Reader
             public static GDWhileStatement While() => new GDWhileStatement();
             public static GDWhileStatement While(Func<GDWhileStatement, GDWhileStatement> setup) => setup(new GDWhileStatement());
 
+            public static GDWhileStatement While(params GDSyntaxToken[] unsafeTokens) => new GDWhileStatement() { FormTokensSetter = unsafeTokens };
             public static GDWhileStatement While(GDExpression condition, GDExpression body) => new GDWhileStatement()
             {
                 WhileKeyword = new GDWhileKeyword(),
@@ -106,6 +109,7 @@ namespace GDShrapt.Reader
 
             public static GDMatchStatement Match() => new GDMatchStatement();
             public static GDMatchStatement Match(Func<GDMatchStatement, GDMatchStatement> setup) => setup(new GDMatchStatement());
+            public static GDMatchStatement Match(params GDSyntaxToken[] unsafeTokens) => new GDMatchStatement() { FormTokensSetter = unsafeTokens };
             public static GDMatchStatement Match(GDExpression value, params GDMatchCaseDeclaration[] cases) => new GDMatchStatement()
             {
                 MatchKeyword = new GDMatchKeyword(),
@@ -125,6 +129,7 @@ namespace GDShrapt.Reader
 
             public static GDVariableDeclarationStatement Variable() => new GDVariableDeclarationStatement();
             public static GDVariableDeclarationStatement Variable(Func<GDVariableDeclarationStatement, GDVariableDeclarationStatement> setup) => setup(new GDVariableDeclarationStatement());
+            public static GDVariableDeclarationStatement Variable(params GDSyntaxToken[] unsafeTokens) => new GDVariableDeclarationStatement() { FormTokensSetter = unsafeTokens };
             public static GDVariableDeclarationStatement Variable(string name) => new GDVariableDeclarationStatement()
             { 
                 VarKeyword = new GDVarKeyword(),

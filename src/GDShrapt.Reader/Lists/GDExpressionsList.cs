@@ -21,7 +21,7 @@
 
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

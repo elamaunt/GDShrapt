@@ -11,6 +11,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddStatements<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDStatementsList>
+        {
+            receiver.HandleReceivedToken(GD.List.Statements(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddStatements<T>(this T receiver, GDStatementsList statementsList)
             where T : ITokenReceiver<GDStatementsList>
         {
@@ -46,10 +53,24 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddAtributes<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDClassAtributesList>
+        {
+            receiver.HandleReceivedToken(GD.List.Atributes(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddMembers<T>(this T receiver, params GDClassMember[] members)
             where T : ITokenReceiver<GDClassMembersList>
         {
             receiver.HandleReceivedToken(GD.List.Members(members));
+            return receiver;
+        }
+
+        public static T AddMembers<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDClassMembersList>
+        {
+            receiver.HandleReceivedToken(GD.List.Members(unsafeTokens));
             return receiver;
         }
 
@@ -74,6 +95,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddExpressions<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDExpressionsList>
+        {
+            receiver.HandleReceivedToken(GD.List.Expressions(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddExpressions<T>(this T receiver, GDClassMembersList list)
             where T : ITokenReceiver<GDClassMembersList>
         {
@@ -92,6 +120,13 @@ namespace GDShrapt.Reader
            where T : ITokenReceiver<GDDictionaryKeyValueDeclarationList>
         {
             receiver.HandleReceivedToken(GD.List.KeyValues(declarations));
+            return receiver;
+        }
+
+        public static T AddKeyValues<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDDictionaryKeyValueDeclarationList>
+        {
+            receiver.HandleReceivedToken(GD.List.KeyValues(unsafeTokens));
             return receiver;
         }
 
@@ -116,6 +151,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddParameters<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDParametersList>
+        {
+            receiver.HandleReceivedToken(GD.List.Parameters(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddParameters<T>(this T receiver, GDParametersList list)
             where T : ITokenReceiver<GDParametersList>
         {
@@ -134,6 +176,13 @@ namespace GDShrapt.Reader
           where T : ITokenReceiver<GDElifBranchesList>
         {
             receiver.HandleReceivedToken(GD.List.ElifBranches(branches));
+            return receiver;
+        }
+
+        public static T AddElifBranches<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDElifBranchesList>
+        {
+            receiver.HandleReceivedToken(GD.List.ElifBranches(unsafeTokens));
             return receiver;
         }
 
@@ -158,6 +207,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddEnumValues<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDEnumValuesList>
+        {
+            receiver.HandleReceivedToken(GD.List.EnumValues(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddEnumValues<T>(this T receiver, GDEnumValuesList list)
             where T : ITokenReceiver<GDEnumValuesList>
         {
@@ -179,6 +235,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddPath<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDPathList>
+        {
+            receiver.HandleReceivedToken(GD.List.Path(unsafeTokens));
+            return receiver;
+        }
+
         public static T AddPath<T>(this T receiver, GDPathList list)
             where T : ITokenReceiver<GDPathList>
         {
@@ -197,6 +260,13 @@ namespace GDShrapt.Reader
           where T : ITokenReceiver<GDExportParametersList>
         {
             receiver.HandleReceivedToken(GD.List.ExportParameters(tokens));
+            return receiver;
+        }
+
+        public static T AddExportParameters<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDExportParametersList>
+        {
+            receiver.HandleReceivedToken(GD.List.ExportParameters(unsafeTokens));
             return receiver;
         }
 

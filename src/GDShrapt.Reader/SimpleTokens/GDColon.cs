@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDColon : GDSingleCharToken, IGDStructureToken
+    public sealed class GDColon : GDPairToken, IGDStructureToken
     {
         public override char Char => ':';
 

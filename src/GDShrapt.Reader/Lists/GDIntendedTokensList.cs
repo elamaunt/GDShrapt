@@ -18,17 +18,17 @@
 
         void IIntendedTokenReceiver.HandleReceivedToken(GDIntendation token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
 
         void INewLineReceiver.HandleReceivedToken(GDNewLine token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
 
         void ITokenReceiver<TOKEN>.HandleReceivedToken(TOKEN token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

@@ -46,7 +46,7 @@
 
         void ITokenReceiver<GDClassMember>.HandleReceivedToken(GDClassMember token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

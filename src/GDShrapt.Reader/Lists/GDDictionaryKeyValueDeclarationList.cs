@@ -6,7 +6,7 @@
         internal override GDReader ResolveNode()
         {
             var node = new GDDictionaryKeyValueDeclaration();
-            ListForm.Add(node);
+            ListForm.AddToEnd(node);
             return node;
         }
 
@@ -22,7 +22,7 @@
 
         void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

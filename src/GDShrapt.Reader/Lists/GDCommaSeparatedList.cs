@@ -13,14 +13,14 @@
         {
             if (IsSpace(c))
             {
-                ListForm.Add(state.Push(new GDSpace()));
+                ListForm.AddToEnd(state.Push(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
 
             if (c == ',')
             {
-                ListForm.Add(new GDComma());
+                ListForm.AddToEnd(new GDComma());
                 return;
             }
             else
@@ -37,22 +37,22 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            ListForm.Add(new GDNewLine());
+            ListForm.AddToEnd(new GDNewLine());
         }
 
         void INewLineReceiver.HandleReceivedToken(GDNewLine token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
 
         void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
 
         void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

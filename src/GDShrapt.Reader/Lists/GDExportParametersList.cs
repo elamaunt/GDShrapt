@@ -15,7 +15,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            ListForm.Add(new GDNewLine());
+            ListForm.AddToEnd(new GDNewLine());
         }
 
         public override GDNode CreateEmptyInstance()
@@ -24,7 +24,7 @@
         }
         void ITokenReceiver<GDDataToken>.HandleReceivedToken(GDDataToken token)
         {
-            ListForm.Add(token);
+            ListForm.AddToEnd(token);
         }
     }
 }

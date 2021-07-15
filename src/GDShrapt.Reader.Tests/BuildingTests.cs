@@ -73,5 +73,68 @@ namespace GDShrapt.Reader.Tests
 
             AssertHelper.CompareCodeStrings(codeToCompare, code);
         }
+
+        [TestMethod]
+        public void CustomStyleTest2()
+        {
+            var declaration = GD.Declaration.Class(
+                GD.List.Atributes(
+                    GD.Atribute.Tool(),
+                    GD.Syntax.NewLine,
+                    GD.Atribute.ClassName("Generated"),
+                    GD.Syntax.NewLine,
+                    GD.Atribute.Extends("Node2D")),
+
+                GD.Syntax.NewLine,
+                GD.Syntax.NewLine,
+
+                GD.Declaration.Variable(
+                     GD.Keyword.Const,
+                     GD.Syntax.OneSpace,
+                     GD.Syntax.Identifier("my_constant"),
+                     GD.Syntax.OneSpace,
+                     GD.Syntax.Assign,
+                     GD.Syntax.OneSpace,
+                     GD.Syntax.String("Hello World")),
+
+                GD.Syntax.NewLine,
+                GD.Syntax.NewLine,
+
+                GD.Declaration.Variable(
+                    GD.Keyword.Onready,
+                    GD.Syntax.OneSpace,
+                    GD.Keyword.Var,
+                    GD.Syntax.OneSpace,
+                    GD.Syntax.Identifier("parameter"),
+                    GD.Syntax.OneSpace,
+                    GD.Syntax.Assign,
+                    GD.Syntax.OneSpace,
+                    GD.Expression.True()),
+
+                GD.Syntax.NewLine,
+                GD.Syntax.NewLine,
+
+                GD.Declaration.Method(
+                    GD.Keyword.Func,
+                    GD.Syntax.OneSpace,
+                    GD.Syntax.Identifier("_start"),
+                    GD.Syntax.OpenBracket,
+                    GD.Syntax.CloseBracket,
+                    GD.Syntax.Colon,
+
+                    GD.Syntax.NewLine,
+                    GD.Syntax.Intendation(1),
+                    GD.Expression.Call(
+                        GD.Expression.Identifier("print"),
+                        GD.Syntax.OpenBracket,
+                        GD.List.Expressions(GD.Expression.String("Hello world")),
+                        GD.Syntax.CloseBracket)));
+
+            var code = declaration.ToString();
+
+            var codeToCompare = "tool\nclass_name Generated\nextends Node2D\n\nconst my_constant = \"Hello World\"\n\nonready var parameter = true\n\nfunc _start():\n\tprint(\"Hello world\")";
+
+            AssertHelper.CompareCodeStrings(codeToCompare, code);
+        }
     }
 }

@@ -13,7 +13,7 @@
             ListForm = new GDTokensListForm<GDSyntaxToken>(this);
 
             for (int i = 0; i < tokens.Length; i++)
-                ListForm.Add(tokens[i]);
+                ListForm.AddToEnd(tokens[i]);
         }
 
         public override GDNode CreateEmptyInstance()

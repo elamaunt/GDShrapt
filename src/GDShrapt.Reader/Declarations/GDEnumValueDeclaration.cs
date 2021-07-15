@@ -37,12 +37,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression> _form;
+        readonly GDTokensForm<State, GDIdentifier, GDPairToken, GDExpression> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression> TypedForm => _form;
+        public GDTokensForm<State, GDIdentifier, GDPairToken, GDExpression> TypedForm => _form;
         public GDEnumValueDeclaration()
         {
-            _form = new GDTokensForm<State, GDIdentifier, GDSingleCharToken, GDExpression>(this);
+            _form = new GDTokensForm<State, GDIdentifier, GDPairToken, GDExpression>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
