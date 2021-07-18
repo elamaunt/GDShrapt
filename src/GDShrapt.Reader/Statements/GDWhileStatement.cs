@@ -4,7 +4,8 @@ namespace GDShrapt.Reader
     public sealed class GDWhileStatement : GDStatement, 
         ITokenOrSkipReceiver<GDWhileKeyword>,
         ITokenOrSkipReceiver<GDExpression>,
-        ITokenOrSkipReceiver<GDColon>
+        ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDStatementsList>
     {
         public GDWhileKeyword WhileKeyword
         {
@@ -191,6 +192,29 @@ namespace GDShrapt.Reader
             if (_form.IsOrLowerState(State.Colon))
             {
                 _form.State = State.Expression;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDStatementsList>.HandleReceivedToken(GDStatementsList token)
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
+                Statements = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDStatementsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
                 return;
             }
 

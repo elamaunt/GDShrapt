@@ -7,7 +7,8 @@ namespace GDShrapt.Reader
         ITokenOrSkipReceiver<GDInKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDColon>,
-        ITokenOrSkipReceiver<GDExpression>
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDStatementsList>
     {
         public GDForKeyword ForKeyword
         {
@@ -267,6 +268,29 @@ namespace GDShrapt.Reader
             if (_form.IsOrLowerState(State.Variable))
             {
                 _form.State = State.In;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDStatementsList>.HandleReceivedToken(GDStatementsList token)
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                Statements = token;
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDStatementsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
                 return;
             }
 

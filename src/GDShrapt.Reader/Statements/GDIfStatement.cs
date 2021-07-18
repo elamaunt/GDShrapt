@@ -2,6 +2,7 @@
 {
     public sealed class GDIfStatement : GDStatement,
         IIntendedTokenOrSkipReceiver<GDIfBranch>,
+        IIntendedTokenOrSkipReceiver<GDElifBranchesList>,
         IIntendedTokenOrSkipReceiver<GDElseBranch>
     {
         bool _waitForEndLine = true;
@@ -103,6 +104,7 @@
             if (_form.IsOrLowerState(State.IfBranch))
             {
                 IfBranch = token;
+                _form.State = State.ElifBranches;
                 return;
             }
 
@@ -112,7 +114,33 @@
         void ITokenSkipReceiver<GDIfBranch>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.IfBranch))
+            {
+                _form.State = State.ElifBranches;
                 return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDElifBranchesList>.HandleReceivedToken(GDElifBranchesList token)
+        {
+            if (_form.IsOrLowerState(State.ElifBranches))
+            {
+                ElifBranchesList = token;
+                _form.State = State.ElseBranch;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDElifBranchesList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.ElifBranches))
+            {
+                _form.State = State.ElseBranch;
+                return;
+            }
 
             throw new GDInvalidStateException();
         }

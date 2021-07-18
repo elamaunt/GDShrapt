@@ -3,7 +3,8 @@
     public sealed class GDElifBranch : GDNode,
         ITokenOrSkipReceiver<GDElifKeyword>,
         ITokenOrSkipReceiver<GDExpression>,
-        ITokenOrSkipReceiver<GDColon>
+        ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDStatementsList>
     {
         public GDElifKeyword ElifKeyword
         {
@@ -183,6 +184,29 @@
             if (_form.IsOrLowerState(State.Expression))
             {
                 _form.State = State.Statements;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDStatementsList>.HandleReceivedToken(GDStatementsList token)
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
+                Statements = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDStatementsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Statements))
+            {
+                _form.State = State.Completed;
                 return;
             }
 

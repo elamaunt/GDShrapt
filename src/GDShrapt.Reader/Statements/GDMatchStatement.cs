@@ -3,7 +3,8 @@
     public sealed class GDMatchStatement : GDStatement,
         ITokenOrSkipReceiver<GDMatchKeyword>,
         ITokenOrSkipReceiver<GDColon>,
-        ITokenOrSkipReceiver<GDExpression>
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDMatchCasesList>
     {
         public GDMatchKeyword MatchKeyword
         {
@@ -164,6 +165,29 @@
             if (_form.IsOrLowerState(State.Value))
             {
                 _form.State = State.Colon;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDMatchCasesList>.HandleReceivedToken(GDMatchCasesList token)
+        {
+            if (_form.IsOrLowerState(State.Cases))
+            {
+                Cases = token;
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDMatchCasesList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Cases))
+            {
+                _form.State = State.Completed;
                 return;
             }
 

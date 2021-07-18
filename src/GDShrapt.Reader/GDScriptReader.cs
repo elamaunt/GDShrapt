@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -105,10 +106,11 @@ namespace GDShrapt.Reader
 
         public List<GDSyntaxToken> ParseUnspecifiedContent(string content)
         {
-            var state = new GDReadingState(Settings);
+            throw new NotImplementedException();
+            /*var state = new GDReadingState(Settings);
             var receiver = new GDReceiver();
 
-            state.Push(new GDContentResolver(receiver, 0));
+            state.Push(new GDContentResolver(receiver));
 
             var buffer = new char[Settings.ReadBufferSize];
             int count = 0;
@@ -120,7 +122,7 @@ namespace GDShrapt.Reader
             }
 
             state.CompleteReading();
-            return receiver.Tokens;
+            return receiver.Tokens;*/
         }
 
         private void ParseBuffer(char[] buffer, int count, GDReadingState state)
