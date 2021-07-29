@@ -9,6 +9,9 @@ namespace GDShrapt.Reader
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         int _lineIntendation;
+
+        public int CalculatedIntendation => _lineIntendation;
+
         bool _lineIntendationEnded;
         int _spaceCounter;
         bool _inComment;

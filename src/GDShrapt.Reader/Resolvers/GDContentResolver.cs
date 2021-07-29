@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    internal class GDContentResolver : GDResolver
+    internal class GDContentResolver : GDIntendedResolver
     {
         new IIntendedTokenReceiver<GDNode> Owner { get; }
 
@@ -11,35 +11,40 @@ namespace GDShrapt.Reader
         GDSpace _lastSpace;
 
         public GDContentResolver(IIntendedTokenReceiver<GDNode> owner)
-            : base(owner)
+            : base(owner, 0)
         {
             Owner = owner;
         }
 
 
-        internal override void HandleChar(char c, GDReadingState state)
+        internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
+            if (char.IsLetter(c) || c == '_')
+            {
+                _sequence.Append(c);
+                return;
+            }
+
+            if (_sequence.Length > 0)
+            {
+                HandleSequence(_sequence.ToString());
+                _sequence.Clear();
+                state.PassChar(c);
+                return;
+            }
+
             if (IsSpace(c))
             {
-                if (_sequence.Length == 0)
-                {
-                    state.PushAndPass(_lastSpace = new GDSpace(), c);
-                }
-                else
-                {
-                    HandleSequence(_sequence.ToString());
-                }
+                state.PushAndPass(_lastSpace = new GDSpace(), c);
+                return;
             }
-            else
-            {
-                //if (char.
 
-                if (char.IsLetter(c))
-                {
-                    _sequence.Append(c);
-                    return;
-                }
-            }
+            // statements
+            //state.Pop();
+
+            state.PushAndPass(new GDStatementsList(), c);
+
+
         }
 
         private void HandleSequence(string seq)
@@ -47,7 +52,7 @@ namespace GDShrapt.Reader
 
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
         {
             if (_sequence.Length == 0)
             {
@@ -65,7 +70,7 @@ namespace GDShrapt.Reader
             }
         }
 
-        internal override void HandleSharpChar(GDReadingState state)
+        internal override void HandleSharpCharAfterIntendation(GDReadingState state)
         {
             if (_sequence.Length == 0)
             {
