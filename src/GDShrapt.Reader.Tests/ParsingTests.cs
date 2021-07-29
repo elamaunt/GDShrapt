@@ -1522,5 +1522,29 @@ c)";
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
         }
+
+        [TestMethod]
+        public void UnspecifiedContentParsingTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code1 = "tool";
+            var code2 = "var a = b + c";
+            var code3 = "for a in [0,1,2]: print(\"Hello\")";
+
+            var nodes1 = reader.ParseUnspecifiedContent(code1);
+            var nodes2 = reader.ParseUnspecifiedContent(code2);
+            var nodes3 = reader.ParseUnspecifiedContent(code3);
+
+            Assert.AreEqual(1, nodes1.Count);
+            Assert.AreEqual(1, nodes2.Count);
+            Assert.AreEqual(1, nodes3.Count);
+
+            Assert.IsInstanceOfType(nodes1[0], typeof(GDClassDeclaration));
+            Assert.IsInstanceOfType(nodes2[0], typeof(GDClassDeclaration));
+            Assert.IsInstanceOfType(nodes3[0], typeof(GDStatementsList));
+
+            Assert.IsInstanceOfType(((GDStatementsList)nodes3[0])[0], typeof(GDForStatement));
+        }
     }
 }

@@ -19,7 +19,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
-            if (char.IsLetter(c) || c == '_')
+            if (char.IsLetter(c) || c == '_' || (_sequence.Length > 0 && char.IsDigit(c)))
             {
                 _sequence.Append(c);
                 return;
@@ -27,8 +27,7 @@ namespace GDShrapt.Reader
 
             if (_sequence.Length > 0)
             {
-                HandleSequence(_sequence.ToString());
-                _sequence.Clear();
+                HandleSequence(_sequence.ToString(), state);
                 state.PassChar(c);
                 return;
             }
@@ -39,17 +38,64 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            // statements
-            //state.Pop();
-
-            state.PushAndPass(new GDStatementsList(), c);
-
-
+            Owner.HandleReceivedToken(state.PushAndPass(new GDStatementsList(), c));
         }
 
-        private void HandleSequence(string seq)
+        private void HandleSequence(string seq, GDReadingState state)
         {
+            _sequence.Clear();
 
+            if (CalculatedIntendation > 0)
+            {
+                switch (seq)
+                {
+                    case "var":
+                    case "func":
+                    case "signal":
+                    case "const":
+                    case "class":
+                    case "static":
+                    case "onready":
+                        Owner.HandleReceivedToken(state.Push(new GDInnerClassDeclaration(CalculatedIntendation)));
+                        break;
+                    default:
+                        Owner.HandleReceivedToken(state.Push(new GDStatementsList()));
+                        break;
+                }
+
+                PassIntendationSequence(state);
+            }
+            else
+            {
+                switch (seq)
+                {
+                    case "extends":
+                    case "class_name":
+                    case "tool":
+                    case "var":
+                    case "func":
+                    case "const":
+                    case "signal":
+                    case "export":
+                    case "class":
+                    case "static":
+                    case "onready":
+                        Owner.HandleReceivedToken(state.Push(new GDClassDeclaration()));
+                        break;
+                    default:
+                        Owner.HandleReceivedToken(state.Push(new GDStatementsList()));
+                        break;
+                }
+            }
+
+            if (_lastSpace != null)
+            {
+                state.PassString(_lastSpace.ToString());
+                _lastSpace = null;
+            }
+
+            ResetIntendation();
+            state.PassString(seq);
         }
 
         internal override void HandleNewLineAfterIntendation(GDReadingState state)
@@ -66,7 +112,8 @@ namespace GDShrapt.Reader
             }
             else
             {
-                HandleSequence(_sequence.ToString());
+                HandleSequence(_sequence.ToString(), state);
+                state.PassNewLine();
             }
         }
 
@@ -84,8 +131,27 @@ namespace GDShrapt.Reader
             }
             else
             {
-                HandleSequence(_sequence.ToString());
+                HandleSequence(_sequence.ToString(), state);
+                state.PassSharpChar();
             }
+        }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            if (_sequence.Length > 0)
+            {
+                HandleSequence(_sequence.ToString(), state);
+            }
+            else
+            {
+                if (_lastSpace != null)
+                {
+                    Owner.HandleReceivedToken(_lastSpace);
+                    _lastSpace = null;
+                }
+            }
+
+            base.ForceComplete(state);
         }
     }
 }

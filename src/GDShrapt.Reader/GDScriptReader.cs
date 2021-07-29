@@ -106,8 +106,7 @@ namespace GDShrapt.Reader
 
         public List<GDSyntaxToken> ParseUnspecifiedContent(string content)
         {
-            throw new NotImplementedException();
-            /*var state = new GDReadingState(Settings);
+            var state = new GDReadingState(Settings);
             var receiver = new GDReceiver();
 
             state.Push(new GDContentResolver(receiver));
@@ -122,7 +121,7 @@ namespace GDShrapt.Reader
             }
 
             state.CompleteReading();
-            return receiver.Tokens;*/
+            return receiver.Tokens;
         }
 
         private void ParseBuffer(char[] buffer, int count, GDReadingState state)
