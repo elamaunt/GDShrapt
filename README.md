@@ -12,11 +12,11 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **2.1.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **3.0.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 2.1.0-alpha
+Install-Package GDShrapt.Reader -Version 3.0.0-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
@@ -57,10 +57,21 @@ Install-Package GDShrapt.Reader -Version 2.1.0-alpha
 | Syntax errors managment and properly handling | IN PLAN |
 | Tree walking and node visiting | IN PLAN |
 | Syntax cloning | YES |
-| Syntax factory | IN PLAN |
+| Syntax factory | YES |
+| Code formatting | IN PLAN |
+| Custom formatter | IN PLAN |
 | Tree diff tool | IN PLAN |
 
 ## Version history
+
+#### 3.0.0-alpha
+Many small fixes with the if-elif-else branches parsing. Improved tree managment.
+Fixed 'newline' character parsing in multiline expressions and initializers.
+Fixed Yield parsing.
+Most of internal methods are public now. 'Form' of every node is now accessible from users code.
+Implemented two styles of codegeneration.
+Implemented many additional properties for tokens and nodes (like a 'StartLine', 'Length' and so on).
+Implemented method for parsing unspecified content.
 
 #### 2.1.0-alpha
 Implemented 'clone' methods for every token type. Now you can clone the lexical tree with all it's structure.
@@ -157,9 +168,191 @@ Parser usage:
                 .ToArray();
 ```
 
-Tree building samples and runtime code generation are coming soon.
-For more samples see the [tests](src/GDShrapt.Reader.Tests/ParsingTests.cs).
+## Tree building samples or GDScript runtime generation
 
+GDShrapt supports many styles to simplify a code generation process. Just use the GD static class to create a token or a node. 
+
+### Short style
+
+```csharp
+// Build a custom class. Safe code generation. Dont control a code style
+var declaration = GD.Declaration.Class(
+                GD.List.Atributes(
+                    GD.Atribute.Tool(),
+                    GD.Atribute.ClassName("Generated"),
+                    GD.Atribute.Extends("Node2D")),
+
+                GD.Declaration.Const("my_constant", GD.Expression.String("Hello World")),
+                GD.Declaration.OnreadyVariable("parameter", GD.Expression.True()),
+
+                GD.Declaration.Method("_start",
+                    GD.Expression.Call(GD.Expression.Identifier("print"), GD.Expression.String("Hello world"))
+                    )
+                );
+
+declaration.UpdateIntendation(); // Auto update tabs (recursively)
+
+var code = declaration.ToString(); // Get the string representation
+```
+
+The result is code like:
+
+```gdscript
+tool
+class_name Generated
+extends Node2D
+
+const my_constant = "Hello World"
+
+onready var parameter = true
+
+func _start():
+	print("Hello world")
+```
+
+### Methods chain style
+
+```csharp
+// Build a custom class. Full tokens control, but unsafe for exceptions
+var declaration = GD.Declaration.Class()
+                .AddAtributes(x => x
+                    .AddToolAtribute()
+                    .AddNewLine()
+                    .AddClassNameAtribute("Generated")
+                    .AddNewLine()
+                    .AddExtendsAtribute("Node2D"))
+                .AddNewLine()
+                .AddNewLine()
+                .AddMembers(x => x
+                    .AddVariable("a")
+                    .AddNewLine()
+                    .AddConst("message", GD.Expression.String("Hello"))
+                    .AddNewLine()
+                    .AddNewLine()
+                    .AddMethod(x => x
+                        .AddFuncKeyword()
+                        .AddSpace()
+                        .Add("_start")
+                        .AddOpenBracket()
+                        .AddCloseBracket()
+                        .AddStatements(x => x
+                            .AddNewLine()
+                            .AddNewLine()
+                            .AddIntendation()
+                            .AddCall(GD.Expression.Identifier("print"), GD.Expression.String("Hello world"))
+                            .AddNewLine()
+                            .AddNewLine()
+                            .AddIntendation()
+                            .AddPass())));
+
+declaration.UpdateIntendation(); // Auto update tabs (recursively)
+
+var code = declaration.ToString(); // Get the string representation
+```
+
+### Tokens list style
+
+```csharp
+// Build a custom class. Full tokens control but unsafe for types
+var declaration = GD.Declaration.Class(
+                GD.List.Atributes(
+                    GD.Atribute.Tool(),
+                    GD.Syntax.NewLine,
+                    GD.Atribute.ClassName("Generated"),
+                    GD.Syntax.NewLine,
+                    GD.Atribute.Extends("Node2D")),
+
+                GD.Syntax.NewLine,
+                GD.Syntax.NewLine,
+
+                GD.Declaration.Variable(
+                     GD.Keyword.Const,
+                     GD.Syntax.OneSpace,
+                     GD.Syntax.Identifier("my_constant"),
+                     GD.Syntax.OneSpace,
+                     GD.Syntax.Assign,
+                     GD.Syntax.OneSpace,
+                     GD.Syntax.String("Hello World")),
+
+                GD.Syntax.NewLine,
+                GD.Syntax.NewLine,
+
+                GD.Declaration.Variable(
+                    GD.Keyword.Onready,
+                    GD.Syntax.OneSpace,
+                    GD.Keyword.Var,
+                    GD.Syntax.OneSpace,
+                    GD.Syntax.Identifier("parameter"),
+                    GD.Syntax.OneSpace,
+                    GD.Syntax.Assign,
+                    GD.Syntax.OneSpace,
+                    GD.Expression.True()),
+
+                GD.Syntax.NewLine,
+                GD.Syntax.NewLine,
+
+                GD.Declaration.Method(
+                    GD.Keyword.Func,
+                    GD.Syntax.OneSpace,
+                    GD.Syntax.Identifier("_start"),
+                    GD.Syntax.OpenBracket,
+                    GD.Syntax.CloseBracket,
+                    GD.Syntax.Colon,
+
+                    GD.Syntax.NewLine,
+                    GD.Syntax.Intendation(1),
+                    GD.Expression.Call(
+                        GD.Expression.Identifier("print"),
+                        GD.Syntax.OpenBracket,
+                        GD.List.Expressions(GD.Expression.String("Hello world")),
+                        GD.Syntax.CloseBracket)));
+
+var code = declaration.ToString(); // Get the string representation
+```
+
+### Custom style initialization
+
+```csharp
+// The sample of a For statement initizalization with predefined style. It is how GD.Statement.For method works.
+// You must know the 'form' to use this format. 
+// For example a code line like "[1] = GD.Syntax.Space()" will insert space token BEFORE the first static point in the nodes form.
+// In the code below the first point of the For statement is the iterators variable name.
+public static GDForStatement For(GDIdentifier variable, GDExpression collection, GDExpression body) => new GDForStatement()
+            {
+                ForKeyword = new GDForKeyword(),
+                [1] = GD.Syntax.Space(),
+                Variable = variable,
+                [2] = GD.Syntax.Space(),
+                InKeyword = new GDInKeyword(),
+                [3] = GD.Syntax.Space(),
+                Collection = collection,
+                Colon = new GDColon(),
+                [5] = GD.Syntax.Space(),
+                Expression = body
+            };
+```
+
+You may use a combination of the styles.
+
+### Calculating properties
+
+```csharp
+
+GDSyntaxToken token = null; // any token
+
+token.StartLine // calculate the start line of the token in the code
+token.EndLine // calculate the end line of the token in the code
+token.Length // calculate the length of the token
+token.StartColumn // calculate the start column in the line
+token.EndColumn // calculate the end column in the line
+token.NewLinesCount // calculate new line characters in the token. 
+
+token.ClassMember // find the nearest class member from parents
+token.MainClassDeclaration // find the main class contains the token
+token.Parents // enumerate all parents of the token
+```
+
+For more samples see the [tests](src/GDShrapt.Reader.Tests/ParsingTests.cs).
 
 ## GDShrapt.Converter
 
