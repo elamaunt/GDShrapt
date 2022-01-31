@@ -27,7 +27,7 @@ namespace GDShrapt.Reader
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        public GDIdentifier Identifier
+        public override GDIdentifier Identifier
         {
             get => _form.Token2;
             set => _form.Token2 = value;

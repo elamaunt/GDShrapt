@@ -251,6 +251,27 @@ namespace GDShrapt.Reader
         public bool HasTokens => Form.HasTokens;
 
         /// <summary>
+        /// Returns the first token in the node
+        /// </summary>
+        public GDSyntaxToken FirstChildToken => Form.FirstToken;
+
+        /// <summary>
+        /// Returns the last token in the node
+        /// </summary>
+        public GDSyntaxToken LastChildToken => Form.LastToken;
+
+
+        /// <summary>
+        /// Returns the first token in the node
+        /// </summary>
+        public GDNode FirstChildNode => Form.FirstNode;
+
+        /// <summary>
+        /// Returns the last token in the node
+        /// </summary>
+        public GDNode LastChildNode => Form.LastNode;
+
+        /// <summary>
         /// Returns variable identifiers that are visible before line and defined by this node and its children
         /// Actual only for method scope.
         /// </summary>

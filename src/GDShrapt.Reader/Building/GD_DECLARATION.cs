@@ -165,6 +165,20 @@ namespace GDShrapt.Reader
                 Statements = List.Statements(statements)
             };
 
+            public static GDMethodDeclaration StaticMethod(GDIdentifier identifier, GDParametersList parameters, params GDStatement[] statements) => new GDMethodDeclaration()
+            {
+                StaticKeyword = new GDStaticKeyword(),
+                [1] = Syntax.Space(),
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = identifier,
+                Colon = new GDColon(),
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket(),
+                Statements = List.Statements(statements)
+            };
+
             public static GDMethodDeclaration StaticMethod(GDIdentifier identifier, GDType returnType, params GDStatement[] statements) => new GDMethodDeclaration()
             {
                 StaticKeyword = new GDStaticKeyword(),

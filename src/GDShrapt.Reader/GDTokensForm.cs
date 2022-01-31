@@ -1061,7 +1061,7 @@ namespace GDShrapt.Reader
             var node = _statePoints[index];
 
             if (node.Value != null)
-                node.Value.Parent = null; 
+                node.Value.Parent = null;
 
             if (value != null)
                 value.Parent = _owner;
@@ -1085,7 +1085,7 @@ namespace GDShrapt.Reader
             else
             {
                 var node = _statePoints[index];
-                
+
                 if (node.Value == value)
                     return;
 
@@ -1226,7 +1226,7 @@ namespace GDShrapt.Reader
         public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
             var node = _list.First;
-            
+
             if (node == null)
                 yield break;
 
@@ -1341,7 +1341,7 @@ namespace GDShrapt.Reader
             int counter = 0;
             var next = s.Next;
 
-            while(next != e)
+            while (next != e)
             {
                 counter++;
                 next = next.Next;
@@ -1383,6 +1383,176 @@ namespace GDShrapt.Reader
 
                 node = node.Next;
             }
+        }
+
+        public T PreviousBefore<T>(GDSyntaxToken token)
+            where T : GDSyntaxToken
+        {
+            var node = _list.Find(token);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            do
+            {
+                node = node.Previous;
+                if (node.Value is T value)
+                    return value;
+            }
+            while (node != null);
+
+            return null;
+        }
+
+        public GDSyntaxToken PreviousTokenBefore(GDSyntaxToken token)
+        {
+            var node = _list.Find(token);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            do
+            {
+                node = node.Previous;
+                if (node.Value != null)
+                    return node.Value;
+            }
+            while (node != null);
+
+            return null;
+        }
+
+        public GDSyntaxToken NextTokenAfter(GDSyntaxToken token)
+        {
+            var node = _list.Find(token);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            do
+            {
+                node = node.Next;
+                if (node.Value != null)
+                    return node.Value;
+            }
+            while (node != null);
+
+            return null;
+        }
+
+        public T NextAfter<T>(GDSyntaxToken token)
+            where T : GDSyntaxToken
+        {
+            var node = _list.Find(token);
+
+            if (node == null)
+                throw new NullReferenceException("There is no specific token in the form");
+
+            do
+            {
+                node = node.Next;
+                if (node.Value is T value)
+                    return value;
+            }
+            while (node != null);
+
+            return null;
+        }
+
+        public GDSyntaxToken FirstToken
+        {
+            get
+            {
+                var node = _list.First;
+
+                if (node == null)
+                    return null;
+
+                if (node.Value != null)
+                    return node.Value;
+
+                do
+                {
+                    node = node.Next;
+                    if (node.Value != null)
+                        return node.Value;
+                }
+                while (node != null);
+
+                return null;
+            }
+        }
+
+        public GDSyntaxToken LastToken
+        {
+            get
+            {
+                var node = _list.Last;
+
+                if (node == null)
+                    return null;
+
+                if (node.Value != null)
+                    return node.Value;
+
+                do
+                {
+                    node = node.Previous;
+                    if (node.Value != null)
+                        return node.Value;
+                }
+                while (node != null);
+
+                return null;
+            }
+        }
+
+        public GDNode FirstNode => FindFirst<GDNode>();
+
+        private T FindFirst<T>()
+            where T : GDSyntaxToken
+        {
+            var node = _list.First;
+
+            if (node == null)
+                return null;
+
+            if (node.Value is T value)
+                return value;
+
+            do
+            {
+                node = node.Next;
+                if (node.Value is T v)
+                    return v;
+            }
+            while (node != null);
+
+            return null;
+        }
+
+        public GDNode LastNode => FindLast<GDNode>();
+
+        private T FindLast<T>()
+            where T : GDSyntaxToken
+        {
+            var node = _list.Last;
+
+            if (node == null)
+                return null;
+
+            if (node.Value is T value)
+                return value;
+
+            do
+            {
+                node = node.Previous;
+                if (node.Value is T v)
+                    return v;
+            }
+            while (node != null);
+
+            return null;
         }
     }
 }

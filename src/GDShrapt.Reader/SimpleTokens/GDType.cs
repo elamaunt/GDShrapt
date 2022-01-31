@@ -7,9 +7,13 @@ namespace GDShrapt.Reader
     {
         public bool ExtractTypeFromInitializer => IsEmpty;
         public bool IsEmpty => Sequence.IsNullOrEmpty();
+        public bool IsBool => string.Equals(Sequence, "bool", StringComparison.Ordinal);
+        public bool IsInt => string.Equals(Sequence, "int", StringComparison.Ordinal);
+        public bool IsFloat => string.Equals(Sequence, "float", StringComparison.Ordinal);
         public bool IsVoid => string.Equals(Sequence, "void", StringComparison.Ordinal);
         public bool IsObject => string.Equals(Sequence, "Object", StringComparison.Ordinal);
         public bool IsArray => string.Equals(Sequence, "Array", StringComparison.Ordinal);
+        public bool IsDictionary => string.Equals(Sequence, "Dictionary", StringComparison.Ordinal);
         public bool IsPoolByteArray => string.Equals(Sequence, "PoolByteArray", StringComparison.Ordinal);
         public bool IsPoolIntArray => string.Equals(Sequence, "PoolIntArray", StringComparison.Ordinal);
         public bool IsPoolRealArray => string.Equals(Sequence, "PoolRealArray", StringComparison.Ordinal);

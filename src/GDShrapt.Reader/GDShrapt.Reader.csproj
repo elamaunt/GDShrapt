@@ -22,7 +22,6 @@ Usage: Just create GDScriptReader instance and call methods from it.</Descriptio
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="GDExpressionWalker.cs" />
     <Compile Remove="GDTreeWalker.cs" />
     <Compile Remove="IExpressionsNodeVisitor.cs" />
     <Compile Remove="INodeVisitor.cs" />

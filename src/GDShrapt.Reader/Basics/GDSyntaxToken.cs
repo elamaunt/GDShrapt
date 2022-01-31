@@ -192,6 +192,26 @@ namespace GDShrapt.Reader
         /// </summary>
         public abstract int NewLinesCount { get; }
 
+        /// <summary>
+        /// Returns the next node in parent or null
+        /// </summary>
+        public GDNode NextNode => Parent?.Form.NextAfter<GDNode>(this);
+
+        /// <summary>
+        /// Returns the next token in parent or null
+        /// </summary>
+        public GDSyntaxToken NextToken => Parent?.Form.NextTokenAfter(this);
+
+        /// <summary>
+        /// Returns the previous node in parent or null
+        /// </summary>
+        public GDNode PreviousNode => Parent?.Form.PreviousBefore<GDNode>(this);
+
+        /// <summary>
+        /// Returns the previous token in parent or null
+        /// </summary>
+        public GDSyntaxToken PreviousToken => Parent?.Form.PreviousTokenBefore(this);
+
 
         /// <summary>
         /// Checks whether the token start in range

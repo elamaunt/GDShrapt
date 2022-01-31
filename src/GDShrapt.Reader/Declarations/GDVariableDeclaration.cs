@@ -33,7 +33,7 @@
             get => _form.Token3;
             set => _form.Token3 = value;
         }
-        public GDIdentifier Identifier
+        public override GDIdentifier Identifier
         {
             get => _form.Token4;
             set => _form.Token4 = value;
