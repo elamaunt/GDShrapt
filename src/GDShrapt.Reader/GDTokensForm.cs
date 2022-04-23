@@ -893,6 +893,107 @@ namespace GDShrapt.Reader
         public T13 Token13 { get => Get<T13>(13); set => ProtectedSet(value, 13); }
     }
 
+    public class GDTokensForm<STATE, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> : GDTokensForm<STATE>
+        where STATE : struct, System.Enum
+        where T0 : GDSyntaxToken
+        where T1 : GDSyntaxToken
+        where T2 : GDSyntaxToken
+        where T3 : GDSyntaxToken
+        where T4 : GDSyntaxToken
+        where T5 : GDSyntaxToken
+        where T6 : GDSyntaxToken
+        where T7 : GDSyntaxToken
+        where T8 : GDSyntaxToken
+        where T9 : GDSyntaxToken
+        where T10 : GDSyntaxToken
+        where T11 : GDSyntaxToken
+        where T12 : GDSyntaxToken
+        where T13 : GDSyntaxToken
+        where T14 : GDSyntaxToken
+    {
+        static Type[] GenericTypes = new Type[]
+        {
+            typeof(T0),
+            typeof(T1),
+            typeof(T2),
+            typeof(T3),
+            typeof(T4),
+            typeof(T5),
+            typeof(T6),
+            typeof(T7),
+            typeof(T8),
+            typeof(T9),
+            typeof(T10),
+            typeof(T11),
+            typeof(T12),
+            typeof(T13),
+            typeof(T14)
+        };
+
+        public override Type[] Types => GenericTypes;
+
+        public override bool IsTokenAppropriateForPoint(GDSyntaxToken token, int statePoint)
+        {
+            switch (statePoint)
+            {
+                case 0: return token is T0;
+                case 1: return token is T1;
+                case 2: return token is T2;
+                case 3: return token is T3;
+                case 4: return token is T4;
+                case 5: return token is T5;
+                case 6: return token is T6;
+                case 7: return token is T7;
+                case 8: return token is T8;
+                case 9: return token is T9;
+                case 10: return token is T10;
+                case 11: return token is T11;
+                case 12: return token is T12;
+                case 13: return token is T13;
+                case 14: return token is T14;
+                default:
+                    throw new IndexOutOfRangeException();
+            }
+        }
+
+
+        internal GDTokensForm(GDNode owner)
+            : base(owner, 15)
+        {
+
+        }
+
+        public void AddBeforeToken0(GDSyntaxToken token) => AddMiddle(token, 0);
+        public T0 Token0 { get => Get<T0>(0); set => ProtectedSet(value, 0); }
+        public void AddBeforeToken1(GDSyntaxToken token) => AddMiddle(token, 1);
+        public T1 Token1 { get => Get<T1>(1); set => ProtectedSet(value, 1); }
+        public void AddBeforeToken2(GDSyntaxToken token) => AddMiddle(token, 2);
+        public T2 Token2 { get => Get<T2>(2); set => ProtectedSet(value, 2); }
+        public void AddBeforeToken3(GDSyntaxToken token) => AddMiddle(token, 3);
+        public T3 Token3 { get => Get<T3>(3); set => ProtectedSet(value, 3); }
+        public void AddBeforeToken4(GDSyntaxToken token) => AddMiddle(token, 4);
+        public T4 Token4 { get => Get<T4>(4); set => ProtectedSet(value, 4); }
+        public void AddBeforeToken5(GDSyntaxToken token) => AddMiddle(token, 5);
+        public T5 Token5 { get => Get<T5>(5); set => ProtectedSet(value, 5); }
+        public void AddBeforeToken6(GDSyntaxToken token) => AddMiddle(token, 6);
+        public T6 Token6 { get => Get<T6>(6); set => ProtectedSet(value, 6); }
+        public void AddBeforeToken7(GDSyntaxToken token) => AddMiddle(token, 7);
+        public T7 Token7 { get => Get<T7>(7); set => ProtectedSet(value, 7); }
+        public void AddBeforeToken8(GDSyntaxToken token) => AddMiddle(token, 8);
+        public T8 Token8 { get => Get<T8>(8); set => ProtectedSet(value, 8); }
+        public void AddBeforeToken9(GDSyntaxToken token) => AddMiddle(token, 9);
+        public T9 Token9 { get => Get<T9>(9); set => ProtectedSet(value, 9); }
+        public void AddBeforeToken10(GDSyntaxToken token) => AddMiddle(token, 10);
+        public T10 Token10 { get => Get<T10>(10); set => ProtectedSet(value, 10); }
+        public void AddBeforeToken11(GDSyntaxToken token) => AddMiddle(token, 11);
+        public T11 Token11 { get => Get<T11>(11); set => ProtectedSet(value, 11); }
+        public void AddBeforeToken12(GDSyntaxToken token) => AddMiddle(token, 12);
+        public T12 Token12 { get => Get<T12>(12); set => ProtectedSet(value, 12); }
+        public void AddBeforeToken13(GDSyntaxToken token) => AddMiddle(token, 13);
+        public T13 Token13 { get => Get<T13>(13); set => ProtectedSet(value, 13); }
+        public void AddBeforeToken14(GDSyntaxToken token) => AddMiddle(token, 14);
+        public T14 Token14 { get => Get<T14>(14); set => ProtectedSet(value, 14); }
+    }
     public abstract class GDTokensForm<STATE> : GDTokensForm
        where STATE : struct, System.Enum
     {

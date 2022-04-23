@@ -10,7 +10,7 @@ namespace GDShrapt.Reader
     /// Basic syntax node.
     /// </summary>
     [DebuggerDisplay("{DebuggerView}")]
-    public abstract class GDSyntaxToken : GDReader, ICloneable
+    public abstract class GDSyntaxToken : GDReader, ICloneable, IGDSyntaxToken
     {
         GDNode _parent;
 
@@ -43,12 +43,17 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Main class if exists
         /// </summary>
-        public GDClassDeclaration MainClassDeclaration => Parents.OfType<GDClassDeclaration>().FirstOrDefault();
+        public GDClassDeclaration RootClassDeclaration => Parents.OfType<GDClassDeclaration>().FirstOrDefault();
 
         /// <summary>
         /// Nearest inner class if exists
         /// </summary>
         public GDInnerClassDeclaration InnerClassDeclaration => Parents.OfType<GDInnerClassDeclaration>().FirstOrDefault();
+
+        /// <summary>
+        /// Nearest owning class if exists
+        /// </summary>
+        public IGDClassDeclaration ClassDeclaration => Parents.OfType<IGDClassDeclaration>().FirstOrDefault();
 
         /// <summary>
         /// All parent nodes enumeration

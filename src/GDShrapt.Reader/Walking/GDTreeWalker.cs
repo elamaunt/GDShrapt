@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Reader
 {
@@ -457,8 +458,16 @@ namespace GDShrapt.Reader
         }
         public override void WalkInNodes(IEnumerable<GDNode> nodes)
         {
-            foreach (var node in nodes)
-                WalkInNode(node);
+            if (WalkBackward)
+            {
+                foreach (var node in nodes.Reverse())
+                    WalkInNode(node);
+            }
+            else
+            {
+                foreach (var node in nodes)
+                    WalkInNode(node);
+            }
         }
     }
 }

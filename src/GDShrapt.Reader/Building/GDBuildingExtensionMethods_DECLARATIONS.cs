@@ -177,6 +177,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
+        public static T AddMethod<T>(this T receiver, string name, string type, GDExpression expression, params GDStatement[] statements)
+           where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, type, expression, statements));
+            return receiver;
+        }
+
         public static T AddMethod<T>(this T receiver, string name, string type, params GDStatement[] statements)
            where T : ITokenReceiver<GDMethodDeclaration>
         {

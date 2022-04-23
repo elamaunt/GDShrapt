@@ -73,6 +73,7 @@ func get_recognized_extensions(res): # func comment
             });
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         [TestMethod]
@@ -136,6 +137,7 @@ a: 0,
             Assert.AreEqual(3, ((GDDictionaryInitializerExpression)expression).KeyValues.Count);
             Assert.AreEqual(2, expression.AllTokens.OfType<GDComment>().Count());
             AssertHelper.CompareCodeStrings(code, "\n"+expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]

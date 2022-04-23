@@ -17,6 +17,7 @@ namespace GDShrapt.Reader.Tests
             var fileText = File.ReadAllText(path);
 
             AssertHelper.CompareCodeStrings(fileText, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
         }
     }
 }

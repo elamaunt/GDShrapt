@@ -49,6 +49,7 @@ func save(path, resource, flags):
             Assert.AreEqual(1, @class.Methods.ElementAt(2).Statements.Count);
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         [TestMethod]
@@ -97,6 +98,7 @@ func save(path, resource, flags):
             Assert.AreEqual("d", ((GDIdentifierExpression)@rightDualOperator.RightExpression).Identifier.Sequence);
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -118,6 +120,7 @@ func save(path, resource, flags):
             Assert.AreEqual("a > b > c", @dualOperator.LeftExpression.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -145,6 +148,7 @@ func save(path, resource, flags):
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.IfBranch.Statements[0]).Expression, typeof(GDReturnExpression));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -177,6 +181,7 @@ else:
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[0]).Expression, typeof(GDDualOperatorExpression));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -199,6 +204,7 @@ else:
             Assert.IsInstanceOfType(ifStatement.IfBranch.Expression, typeof(GDReturnExpression));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -231,6 +237,7 @@ else:
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[1]).Expression, typeof(GDReturnExpression));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -275,6 +282,7 @@ else:
             Assert.IsInstanceOfType(((GDExpressionStatement)ifStatement.ElseBranch.Statements[1]).Expression, typeof(GDReturnExpression));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -303,6 +311,7 @@ else:
             Assert.AreEqual(true, method.IsStatic);
 
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
         }
 
         [TestMethod]
@@ -328,6 +337,7 @@ else:
             Assert.IsInstanceOfType(forStatement.Statements[0], typeof(GDExpressionStatement));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -353,6 +363,7 @@ else:
             Assert.IsInstanceOfType(forStatement.Statements[0], typeof(GDExpressionStatement));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -377,6 +388,7 @@ else:
             Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -401,6 +413,7 @@ else:
             Assert.IsInstanceOfType(whileStatement.Statements[0], typeof(GDExpressionStatement));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -445,6 +458,7 @@ else:
             Assert.AreEqual("print(\"Oh snap! It's a string!\")", matchStatement.Cases[2].Statements[0].ToString());
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -486,6 +500,7 @@ else:
             Assert.AreEqual(1, matchStatement.Cases[2].Statements.Count);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -515,6 +530,7 @@ else:
             Assert.AreEqual("\"Hello World\"", arrayInitializer.Values[3].ToString());
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -549,6 +565,7 @@ else:
             Assert.AreEqual("\"World\"", dictionaryInitializer.KeyValues[3].Value.ToString());
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -571,6 +588,7 @@ else:
             Assert.AreEqual("test", stringExpression.String.Value);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -593,6 +611,7 @@ else:
             Assert.AreEqual("te\"\"st", stringExpression.String.Value);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -615,6 +634,7 @@ else:
             Assert.AreEqual("te\"\"st", stringExpression.String.Value);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -637,6 +657,7 @@ else:
             Assert.AreEqual("te'\"st", stringExpression.String.Value);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -660,6 +681,7 @@ else:
             Assert.AreEqual("123", variableDeclaration.Initializer.ToString());
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -801,6 +823,7 @@ export(AnimationNode) var resource
             Assert.AreEqual(1, exports[23].Parameters.Count);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -830,6 +853,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("3", enumDeclaration.Values[2].Value?.ToString());
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -859,6 +883,7 @@ export(AnimationNode) var resource
             Assert.IsNotNull(enumDeclaration.Values[2].Value);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -879,6 +904,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("res://interface/icons/item.png", classDeclaration.ClassName.Icon.Value);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -896,6 +922,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("Test", classDeclaration.Extends.Type.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -913,6 +940,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Value);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -934,6 +962,7 @@ export(AnimationNode) var resource
             Assert.AreEqual(1234, numberExpression.Number.ValueInt64);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -955,6 +984,7 @@ export(AnimationNode) var resource
             Assert.AreEqual(36689, numberExpression.Number.ValueInt64);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -976,6 +1006,7 @@ export(AnimationNode) var resource
             Assert.AreEqual(42, numberExpression.Number.ValueInt64);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -999,6 +1030,7 @@ export(AnimationNode) var resource
             Assert.AreEqual(value, numberExpression.Number.ValueDouble);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -1052,6 +1084,7 @@ export(AnimationNode) var resource
                 Assert.AreEqual(op, dualOperatorExpression.OperatorType.Print());
 
                 AssertHelper.CompareCodeStrings(code, expression.ToString());
+                AssertHelper.NoInvalidTokens(expression);
             }
         }
 
@@ -1078,6 +1111,7 @@ export(AnimationNode) var resource
                 Assert.AreEqual(op, singleOperatorExpression.OperatorType.Print());
 
                 AssertHelper.CompareCodeStrings(code, expression.ToString());
+                AssertHelper.NoInvalidTokens(expression);
             }
         }
 
@@ -1114,6 +1148,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("get_speed", variableDeclaration.GetMethodIdentifier.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -1158,6 +1193,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("set_height", variableDeclaration.SetMethodIdentifier.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -1186,6 +1222,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("other_value", signalDeclaration.Parameters[1]?.Identifier?.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -1211,6 +1248,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("-1", ifExpression.FalseExpression.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -1243,6 +1281,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("n", ifExpression.FalseExpression.ToString());
 
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
         }
 
         [TestMethod]
@@ -1264,6 +1303,7 @@ export(AnimationNode) var resource
             Assert.AreEqual(-10, numberExpression.Number.ValueInt64);
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -1305,6 +1345,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("(10-20)", singleOperator.TargetExpression.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -1330,6 +1371,7 @@ export(AnimationNode) var resource
             Assert.IsInstanceOfType(matchStatement.Cases[1].Conditions[0], typeof(GDMatchDefaultOperatorExpression));
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -1387,6 +1429,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("A", identifierExpression.Identifier?.Sequence);
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -1439,6 +1482,7 @@ export(AnimationNode) var resource
             Assert.AreEqual(1, passStatement.Tokens.Count());
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         [TestMethod]
@@ -1455,6 +1499,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("Hello \\\" World", ((GDStringExpression)expression).String.Value);
             
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -1477,6 +1522,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("Animation/Root/ _345/ end ", getNodeExpression.Path.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -1498,6 +1544,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("/root/MyAutoload", nodePathExpression.Path.Value);
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
         }
 
         [TestMethod]
@@ -1521,6 +1568,7 @@ c)";
             Assert.AreEqual("c", dualExpression.RightExpression.ToString());
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
         }
 
         [TestMethod]
@@ -1545,6 +1593,69 @@ c)";
             Assert.IsInstanceOfType(nodes3[0], typeof(GDStatementsList));
 
             Assert.IsInstanceOfType(((GDStatementsList)nodes3[0])[0], typeof(GDForStatement));
+        }
+
+        [TestMethod]
+        public void CallInSameStringTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+var hello = ""Hello""
+
+var s = Usage.new()
+
+func t():
+	return ""a"";
+
+func _init(
+     a = ""please""
+            ):
+	var b = ""Extract me"" + t()
+
+
+    var _dict = {
+        ""width"": 2,
+		""depth"": 2,
+		""heights"": PoolRealArray([0, 0, 0, 0]),
+		""min_height"": -1,
+		""max_height"": 1
+
+    }
+
+        match b:
+		0:
+
+            pass
+        var t:
+			for i in range(10) :
+
+                var c = b + a + i + t
+
+                new_method()
+
+                print(c)
+
+
+    print(""done"")
+
+    pass
+
+func new_method() :  print(hello)";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+
+            var methodDecl = (GDMethodDeclaration)@class.Members.Last();
+
+            Assert.AreEqual("new_method", methodDecl.Identifier?.Sequence);
+            Assert.IsNotNull(methodDecl.Colon);
+            Assert.IsNotNull(methodDecl.Expression);
+            Assert.AreEqual(0, methodDecl.Statements.Count);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
     }
 }

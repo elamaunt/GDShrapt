@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDClassDeclaration : GDNode,
+    public sealed class GDClassDeclaration : GDNode, IGDClassDeclaration,
         ITokenReceiver<GDClassAtributesList>,
         ITokenReceiver<GDClassMembersList>,
         ITokenReceiver<GDNewLine>,
@@ -115,5 +115,7 @@ namespace GDShrapt.Reader
         {
             _form.AddBeforeActiveToken(new GDNewLine());
         }
+
+        GDIdentifier IGDClassDeclaration.Identifier => null;
     }
 }

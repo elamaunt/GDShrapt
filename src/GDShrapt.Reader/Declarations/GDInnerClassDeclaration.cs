@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDInnerClassDeclaration : GDClassMember,
+    public sealed class GDInnerClassDeclaration : GDClassMember, IGDClassDeclaration,
         ITokenOrSkipReceiver<GDClassKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDClassMembersList>,

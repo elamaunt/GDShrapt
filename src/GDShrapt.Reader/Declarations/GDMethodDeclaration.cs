@@ -14,6 +14,7 @@ namespace GDShrapt.Reader
         ITokenOrSkipReceiver<GDExpressionsList>,
         ITokenOrSkipReceiver<GDType>,
         ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDStatementsList>,
         ITokenOrSkipReceiver<GDPoint>
     {
@@ -82,10 +83,15 @@ namespace GDShrapt.Reader
             get => _form.Token12;
             set => _form.Token12 = value;
         }
+        public GDExpression Expression
+        {
+            get => _form.Token13;
+            set => _form.Token13 = value;
+        }
         public GDStatementsList Statements
         { 
-            get => _form.Token13 ?? (_form.Token13 = new GDStatementsList(Intendation + 1));
-            set => _form.Token13 = value;
+            get => _form.Token14 ?? (_form.Token14 = new GDStatementsList(Intendation + 1));
+            set => _form.Token14 = value;
         }
 
         public bool IsStatic => StaticKeyword != null;
@@ -107,28 +113,31 @@ namespace GDShrapt.Reader
             ReturnTypeKeyword,
             Type,
             Colon,
+            Expression,
             Statements,
             Completed,
         }
 
-        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList> TypedForm => _form;
+        public GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDMethodDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDMethodDeclaration()
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (IsSpace(c) && _form.State != State.Parameters && _form.State != State.BaseCallParameters) 
+            if (IsSpace(c) && 
+                _form.State != State.Parameters &&
+                _form.State != State.BaseCallParameters) 
             {
                 _form.AddBeforeActiveToken(state.Push(new GDSpace()));
                 state.PassChar(c);
@@ -179,6 +188,10 @@ namespace GDShrapt.Reader
                     break;
                 case State.Colon:
                     this.ResolveColon(c, state);
+                    break;
+
+                case State.Expression:
+                    this.ResolveExpression(c, state);
                     break;
                 case State.Statements:
                     this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
@@ -437,7 +450,7 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.Colon))
             {
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 Colon = token;
                 return;
             }
@@ -449,7 +462,7 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.Colon))
             {
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 return;
             }
 
@@ -496,6 +509,29 @@ namespace GDShrapt.Reader
             if (_form.IsOrLowerState(State.BaseCallParameters))
             {
                 _form.State = State.BaseCallCloseBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Expression))
+            {
+                _form.State = State.Statements;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
+        {
+            if (_form.IsOrLowerState(State.Expression))
+            {
+                _form.State = State.Statements;
+                Expression = token;
                 return;
             }
 

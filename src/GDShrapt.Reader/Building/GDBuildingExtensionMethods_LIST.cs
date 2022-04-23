@@ -102,8 +102,8 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddExpressions<T>(this T receiver, GDClassMembersList list)
-            where T : ITokenReceiver<GDClassMembersList>
+        public static T AddExpressions<T>(this T receiver, GDExpressionsList list)
+            where T : ITokenReceiver<GDExpressionsList>
         {
             receiver.HandleReceivedToken(list);
             return receiver;

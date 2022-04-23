@@ -113,7 +113,7 @@ namespace GDShrapt.Reader
         public override bool Equals(object obj)
         {
             if (obj is GDIdentifier identifier)
-                return string.Equals(Sequence, identifier.Sequence, StringComparison.Ordinal);
+                return ReferenceEquals(Sequence, identifier.Sequence) || string.Equals(Sequence, identifier.Sequence, StringComparison.Ordinal);
             return base.Equals(obj);
         }
 

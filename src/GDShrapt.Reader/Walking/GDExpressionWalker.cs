@@ -7,6 +7,8 @@ namespace GDShrapt.Reader
     {
         private IExpressionsNodeVisitor _visitor;
 
+        public bool WalkBackward { get; set; }
+
         public GDExpressionWalker(IExpressionsNodeVisitor visitor)
         {
             _visitor = visitor;
@@ -14,8 +16,16 @@ namespace GDShrapt.Reader
 
         public override void WalkInNodes(IEnumerable<GDNode> nodes)
         {
-            foreach (var node in nodes.OfType<GDExpression>())
-                WalkInNode(node);
+            if (WalkBackward)
+            {
+                foreach (var node in nodes.Reverse().OfType<GDExpression>())
+                    WalkInNode(node);
+            }
+            else
+            {
+                foreach (var node in nodes.OfType<GDExpression>())
+                    WalkInNode(node);
+            }
         }
 
         protected void WalkIn(GDArrayInitializerExpression e)

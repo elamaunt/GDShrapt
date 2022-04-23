@@ -27,6 +27,8 @@ namespace GDShrapt.Reader
         public IEnumerable<GDSyntaxToken> TokensReversed => Form.Reversed();
         public IEnumerable<GDNode> Nodes => Tokens.OfType<GDNode>();
         public IEnumerable<GDNode> NodesReversed => TokensReversed.OfType<GDNode>();
+        public IEnumerable<GDInvalidToken> InvalidTokens => Tokens.OfType<GDInvalidToken>();
+        public IEnumerable<GDInvalidToken> AllInvalidTokens => AllTokens.OfType<GDInvalidToken>();
 
         public IEnumerable<GDSyntaxToken> AllTokens
         {
@@ -272,7 +274,7 @@ namespace GDShrapt.Reader
         public GDNode LastChildNode => Form.LastNode;
 
         /// <summary>
-        /// Returns variable identifiers that are visible before line and defined by this node and its children
+        /// Returns variable identifiers that are visible before line and defined by this node and its children.
         /// Actual only for method scope.
         /// </summary>
         /// <param name="beforeLine">Excluded line. Actual for <see cref="GDStatementsList"/></param>
