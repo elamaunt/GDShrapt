@@ -1,6 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDNumberExpression : GDExpression
+    public sealed class GDNumberExpression : GDExpression,
+        ITokenOrSkipReceiver<GDNumber>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Literal);
         public GDNumber Number
@@ -52,6 +53,29 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDNumberExpression();
+        }
+
+        void ITokenReceiver<GDNumber>.HandleReceivedToken(GDNumber token)
+        {
+            if (_form.IsOrLowerState(State.Number))
+            {
+                _form.State = State.Completed;
+                Number = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDNumber>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Number))
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
         }
     }
 }

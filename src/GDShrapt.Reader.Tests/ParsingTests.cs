@@ -1657,5 +1657,67 @@ func new_method() :  print(hello)";
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+        [TestMethod]
+        public void InnerClassesTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"extends Node2D
+
+var _type = """"
+var _size = Vector2(1,1)
+
+func _ready():
+
+    pass
+
+class fish extends Node2D:
+
+    func _init():
+        _randomize()
+
+    func _randomize():
+        randomize()
+        _size = rand_range(0.75,2.0)
+
+class fishB extends fish:
+
+    func _init():
+        pass
+
+    func _randomize():
+        randomize()
+        _size = rand_range(0.0,20.0)
+
+    class fishC:
+
+        func _init():
+            pass";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+
+            Assert.AreEqual(2, @class.InnerClasses.Count());
+
+            var innerClass1 = @class.InnerClasses.ElementAt(0);
+            var innerClass2 = @class.InnerClasses.ElementAt(1);
+
+            Assert.AreEqual("fish", innerClass1.Identifier?.Sequence);
+            Assert.AreEqual("Node2D", innerClass1.BaseType?.Sequence);
+            Assert.AreEqual("fishB", innerClass2.Identifier?.Sequence);
+            Assert.AreEqual("fish", innerClass2.BaseType?.Sequence);
+
+            var innerClass3 = innerClass2.InnerClasses.FirstOrDefault();
+
+            Assert.IsNotNull(innerClass3);
+
+            Assert.AreEqual("fishC", innerClass3.Identifier?.Sequence);
+            Assert.AreEqual(1, innerClass3.Methods.Count());
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }

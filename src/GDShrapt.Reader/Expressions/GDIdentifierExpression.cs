@@ -2,7 +2,8 @@
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDIdentifierExpression : GDExpression
+    public sealed class GDIdentifierExpression : GDExpression,
+        ITokenOrSkipReceiver<GDIdentifier>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Identifier);
         public GDIdentifier Identifier
@@ -54,6 +55,29 @@ namespace GDShrapt.Reader
 
             if (identifier != null)
                 yield return identifier;
+        }
+
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
+        {
+            if (_form.IsOrLowerState(State.Identifier))
+            {
+                _form.State = State.Completed;
+                Identifier = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Identifier))
+            {
+                _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
         }
     }
 }

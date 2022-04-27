@@ -3,7 +3,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDIdentifier : GDDataToken, IEquatable<GDIdentifier>
+    public sealed class GDIdentifier : GDNameToken, IEquatable<GDIdentifier>
     {
         public bool IsPi => string.Equals(Sequence, "PI", StringComparison.Ordinal);
         public bool IsTau => string.Equals(Sequence, "TAU", StringComparison.Ordinal);

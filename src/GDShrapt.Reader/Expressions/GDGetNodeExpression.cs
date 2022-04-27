@@ -1,7 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDGetNodeExpression : GDExpression,
-        ITokenOrSkipReceiver<GDDollar>
+        ITokenOrSkipReceiver<GDDollar>,
+        ITokenOrSkipReceiver<GDPathList>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetNode);
 
@@ -76,6 +77,29 @@
         void ITokenSkipReceiver<GDDollar>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Dollar))
+            {
+                _form.State = State.Path;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDPathList>.HandleReceivedToken(GDPathList token)
+        {
+            if (_form.IsOrLowerState(State.Path))
+            {
+                _form.State = State.Path;
+                Path = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDPathList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Path))
             {
                 _form.State = State.Path;
                 return;

@@ -29,12 +29,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken> _form;
+        readonly GDTokensForm<State, GDExtendsKeyword, GDDataToken> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken> TypedForm => _form;
+        public GDTokensForm<State, GDExtendsKeyword, GDDataToken> TypedForm => _form;
         public GDExtendsAtribute()
         {
-            _form = new GDTokensForm<State, GDExtendsKeyword, GDSimpleSyntaxToken>(this);
+            _form = new GDTokensForm<State, GDExtendsKeyword, GDDataToken>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)

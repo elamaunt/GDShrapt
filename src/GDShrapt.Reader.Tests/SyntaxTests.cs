@@ -136,7 +136,7 @@ a: 0,
             Assert.IsInstanceOfType(expression, typeof(GDDictionaryInitializerExpression));
             Assert.AreEqual(3, ((GDDictionaryInitializerExpression)expression).KeyValues.Count);
             Assert.AreEqual(2, expression.AllTokens.OfType<GDComment>().Count());
-            AssertHelper.CompareCodeStrings(code, "\n"+expression.ToString());
+            AssertHelper.CompareCodeStrings(code, "\n" + expression.ToString());
             AssertHelper.NoInvalidTokens(expression);
         }
 
@@ -283,13 +283,58 @@ func get_recognized_extensions(res): # func comment
             CheckPosition(tokens[i++], 7, 1, 7, 5); // pass
         }
 
+
+        [TestMethod]
+        public void LineAndColumnTest2()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node2D
+
+class_name Usage
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = ""text""
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready(): 
+	pass
+
+func updateSample(obj):
+	var value = obj.t()
+
+    print(value)
+";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+            Assert.AreEqual(2, @class.Methods.Count());
+
+            var tokens = @class.AllTokens.ToArray();
+
+            int i = 0;
+
+            CheckPosition(tokens[i++], 0, 0, 0, 0); // intendation
+            CheckPosition(tokens[i++], 0, 0, 0, 7); // extends
+            CheckPosition(tokens[i++], 0, 7, 0, 8); // ' '
+            CheckPosition(tokens[i++], 0, 8, 0, 14); // Node2D
+            CheckPosition(tokens[i++], 0, 14, 1, 0); // \n
+            CheckPosition(tokens[i++], 1, 0, 2, 0); // \n
+            CheckPosition(tokens[i++], 2, 0, 2, 0); // intendation
+            CheckPosition(tokens[i++], 2, 0, 2, 10); // class_name
+            CheckPosition(tokens[i++], 2, 10, 2, 11); // ' '
+            CheckPosition(tokens[i++], 2, 11, 2, 16); // Usage
+        }
+
         private void CheckPosition(GDSyntaxToken token, int startLine, int startColumn, int endLine, int endColumn)
         {
-            Assert.AreEqual(startLine, token.StartLine);
-            Assert.AreEqual(startColumn, token.StartColumn);
+            Assert.AreEqual(startLine, token.StartLine, $"StartLine of {token.TypeName}. Length: {token.Length}");
+            Assert.AreEqual(startColumn, token.StartColumn, $"StartColumn of {token.TypeName}. Length: {token.Length}");
 
-            Assert.AreEqual(endLine, token.EndLine);
-            Assert.AreEqual(endColumn, token.EndColumn);
+            Assert.AreEqual(endLine, token.EndLine, $"EndLine of {token.TypeName}. Length: {token.Length}");
+            Assert.AreEqual(endColumn, token.EndColumn, $"EndColumn of {token.TypeName}. Length: {token.Length}");
         }
     }
 }
