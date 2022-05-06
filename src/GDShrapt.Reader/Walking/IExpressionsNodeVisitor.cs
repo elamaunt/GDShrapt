@@ -2,6 +2,9 @@
 {
     public interface IExpressionsNodeVisitor : IVisitor
     {
+        void WillVisit(GDExpression expr);
+        void DidLeft(GDExpression expr);
+
         void Visit(GDArrayInitializerExpression e);
         void Visit(GDBoolExpression e);
         void Visit(GDBracketExpression e);

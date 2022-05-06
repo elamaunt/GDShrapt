@@ -2,7 +2,6 @@
 {
     public sealed class GDExpressionsList : GDCommaSeparatedList<GDExpression>,
         ITokenReceiver<GDExpression>
-
     {
         internal override GDReader ResolveNode()
         {

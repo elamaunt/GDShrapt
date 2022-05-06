@@ -1,22 +1,22 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace GDShrapt.Reader
 {
     public class GDTreeWalker : GDExpressionWalker
     {
-        private readonly INodeVisitor _visitor;
-
+        protected new INodeVisitor Visitor { get; }
         public GDTreeWalker(INodeVisitor visitor) 
             : base(visitor)
         {
-            _visitor = visitor;
+            Visitor = visitor;
         }
 
-        public void WalkInNode(GDNode node)
+        public virtual void WalkInNode(GDNode node)
         {
             if (node == null)
                 return;
+
+            Visitor.WillVisit(node);
 
             switch (node)
             {
@@ -140,334 +140,339 @@ namespace GDShrapt.Reader
                     WalkInUnknown(node);
                     break;
             }
+
+            Visitor.DidLeft(node);
         }
 
-        private void WalkIn(GDElifBranch branch)
+        public void WalkIn(GDElifBranch branch)
         {
-            _visitor.Visit(branch);
-            _visitor.EnterNode(branch);
-            WalkInNodes(branch.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(branch);
+            Visitor.Visit(branch);
+            Visitor.EnterNode(branch);
+            WalkInNodes(WalkBackward ? branch.NodesReversed : branch.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(branch);
         }
 
-        private void WalkIn(GDElseBranch branch)
+        public void WalkIn(GDElseBranch branch)
         {
-            _visitor.Visit(branch);
-            _visitor.EnterNode(branch);
-            WalkInNodes(branch.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(branch);
+            Visitor.Visit(branch);
+            Visitor.EnterNode(branch);
+            WalkInNodes(WalkBackward ? branch.NodesReversed : branch.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(branch);
         }
 
-        private void WalkIn(GDIfBranch branch)
+        public void WalkIn(GDIfBranch branch)
         {
-            _visitor.Visit(branch);
-            _visitor.EnterNode(branch);
-            WalkInNodes(branch.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(branch);
+            Visitor.Visit(branch);
+            Visitor.EnterNode(branch);
+            WalkInNodes(WalkBackward ? branch.NodesReversed : branch.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(branch);
         }
 
-        private void WalkIn(GDStatementsList list)
+        public void WalkIn(GDStatementsList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDPathList list)
+        public void WalkIn(GDPathList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDParametersList list)
+        public void WalkIn(GDParametersList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDMatchCasesList list)
+        public void WalkIn(GDMatchCasesList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDExpressionsList list)
+        public void WalkIn(GDExpressionsList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDExportParametersList list)
+        public void WalkIn(GDExportParametersList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDEnumValuesList list)
+        public void WalkIn(GDEnumValuesList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDElifBranchesList list)
+        public void WalkIn(GDElifBranchesList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDDictionaryKeyValueDeclarationList list)
+        public void WalkIn(GDDictionaryKeyValueDeclarationList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDClassMembersList list)
+        public void WalkIn(GDClassMembersList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDClassAtributesList list)
+        public void WalkIn(GDClassAtributesList list)
         {
-            _visitor.Visit(list);
-            _visitor.EnterNode(list);
-            WalkInNodes(list.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(list);
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
         }
 
-        private void WalkIn(GDSignalDeclaration decl)
+        public void WalkIn(GDSignalDeclaration decl)
         {
-            _visitor.Visit(decl);
-            _visitor.EnterNode(decl);
-            WalkInNodes(decl.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(decl);
+            Visitor.Visit(decl);
+            Visitor.EnterNode(decl);
+            WalkInNodes(WalkBackward ? decl.NodesReversed : decl.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(decl);
         }
 
-        private void WalkIn(GDMatchCaseDeclaration decl)
+        public void WalkIn(GDMatchCaseDeclaration decl)
         {
-            _visitor.Visit(decl);
-            _visitor.EnterNode(decl);
-            WalkInNodes(decl.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(decl);
+            Visitor.Visit(decl);
+            Visitor.EnterNode(decl);
+            WalkInNodes(WalkBackward ? decl.NodesReversed : decl.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(decl);
         }
 
-        private void WalkIn(GDExportDeclaration decl)
+        public void WalkIn(GDExportDeclaration decl)
         {
-            _visitor.Visit(decl);
-            _visitor.EnterNode(decl);
-            WalkInNodes(decl.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(decl);
+            Visitor.Visit(decl);
+            Visitor.EnterNode(decl);
+            WalkInNodes(WalkBackward ? decl.NodesReversed : decl.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(decl);
         }
 
-        private void WalkIn(GDEnumValueDeclaration decl)
+        public void WalkIn(GDEnumValueDeclaration decl)
         {
-            _visitor.Visit(decl);
-            _visitor.EnterNode(decl);
-            WalkInNodes(decl.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(decl);
+            Visitor.Visit(decl);
+            Visitor.EnterNode(decl);
+            WalkInNodes(WalkBackward ? decl.NodesReversed : decl.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(decl);
         }
 
-        private void WalkIn(GDEnumDeclaration decl)
+        public void WalkIn(GDEnumDeclaration decl)
         {
-            _visitor.Visit(decl);
-            _visitor.EnterNode(decl);
-            WalkInNodes(decl.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(decl);
+            Visitor.Visit(decl);
+            Visitor.EnterNode(decl);
+            WalkInNodes(WalkBackward ? decl.NodesReversed : decl.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(decl);
         }
 
-        private void WalkIn(GDDictionaryKeyValueDeclaration decl)
+        public void WalkIn(GDDictionaryKeyValueDeclaration decl)
         {
-            _visitor.Visit(decl);
-            _visitor.EnterNode(decl);
-            WalkInNodes(decl.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(decl);
+            Visitor.Visit(decl);
+            Visitor.EnterNode(decl);
+            WalkInNodes(WalkBackward ? decl.NodesReversed : decl.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(decl);
         }
 
-        protected void WalkIn(GDClassDeclaration d)
+        public void WalkIn(GDClassDeclaration d)
         {
-            _visitor.Visit(d);
-            _visitor.EnterNode(d);
-            WalkInNodes(d.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(d);
+            Visitor.Visit(d);
+            Visitor.EnterNode(d);
+            WalkInNodes(WalkBackward ? d.NodesReversed : d.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(d);
         }
 
-        protected void WalkIn(GDInnerClassDeclaration d)
+        public void WalkIn(GDInnerClassDeclaration d)
         {
-            _visitor.Visit(d);
-            _visitor.EnterNode(d);
-            WalkInNodes(d.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(d);
+            Visitor.Visit(d);
+            Visitor.EnterNode(d);
+            WalkInNodes(WalkBackward ? d.NodesReversed : d.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(d);
         }
 
-        protected void WalkIn(GDMethodDeclaration d)
+        public void WalkIn(GDMethodDeclaration d)
         {
-            _visitor.Visit(d);
-            _visitor.EnterNode(d);
-            WalkInNodes(d.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(d);
+            Visitor.Visit(d);
+            Visitor.EnterNode(d);
+            WalkInNodes(WalkBackward ? d.NodesReversed : d.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(d);
         }
 
-        protected void WalkIn(GDParameterDeclaration d)
+        public void WalkIn(GDParameterDeclaration d)
         {
-            _visitor.Visit(d);
-            _visitor.EnterNode(d);
-            WalkInNodes(d.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(d);
+            Visitor.Visit(d);
+            Visitor.EnterNode(d);
+            WalkInNodes(WalkBackward ? d.NodesReversed : d.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(d);
         }
 
-        protected void WalkIn(GDVariableDeclaration d)
+        public void WalkIn(GDVariableDeclaration d)
         {
-            _visitor.Visit(d);
-            _visitor.EnterNode(d);
-            WalkInNodes(d.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(d);
+            Visitor.Visit(d);
+            Visitor.EnterNode(d);
+            WalkInNodes(WalkBackward ? d.NodesReversed : d.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(d);
         }
 
-        private void WalkIn(GDExtendsAtribute a)
+        public void WalkIn(GDExtendsAtribute a)
         {
-            _visitor.Visit(a);
-            _visitor.EnterNode(a);
-            WalkInNodes(a.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(a);
+            Visitor.Visit(a);
+            Visitor.EnterNode(a);
+            WalkInNodes(WalkBackward ? a.NodesReversed : a.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(a);
         }
 
-        private void WalkIn(GDClassNameAtribute a)
+        public void WalkIn(GDClassNameAtribute a)
         {
-            _visitor.Visit(a);
-            _visitor.EnterNode(a);
-            WalkInNodes(a.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(a);
+            Visitor.Visit(a);
+            Visitor.EnterNode(a);
+            WalkInNodes(WalkBackward ? a.NodesReversed : a.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(a);
         }
 
-        private void WalkIn(GDToolAtribute a)
+        public void WalkIn(GDToolAtribute a)
         {
-            _visitor.Visit(a);
-            _visitor.EnterNode(a);
-            WalkInNodes(a.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(a);
+            Visitor.Visit(a);
+            Visitor.EnterNode(a);
+            WalkInNodes(WalkBackward ? a.NodesReversed : a.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(a);
         }
 
-        protected void WalkIn(GDExpressionStatement s)
+        public void WalkIn(GDExpressionStatement s)
         {
-            _visitor.Visit(s);
-            _visitor.EnterNode(s);
-            WalkInNodes(s.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(s);
+            Visitor.Visit(s);
+            Visitor.EnterNode(s);
+            WalkInNodes(WalkBackward ? s.NodesReversed : s.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(s);
         }
 
-        protected void WalkIn(GDIfStatement s)
+        public void WalkIn(GDIfStatement s)
         {
-            _visitor.Visit(s);
-            _visitor.EnterNode(s);
-            WalkInNodes(s.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(s);
+            Visitor.Visit(s);
+            Visitor.EnterNode(s);
+            WalkInNodes(WalkBackward ? s.NodesReversed : s.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(s);
         }
 
-        protected void WalkIn(GDForStatement s)
+        public void WalkIn(GDForStatement s)
         {
-            _visitor.Visit(s);
-            _visitor.EnterNode(s);
-            WalkInNodes(s.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(s);
+            Visitor.Visit(s);
+            Visitor.EnterNode(s);
+            WalkInNodes(WalkBackward ? s.NodesReversed : s.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(s);
         }
 
-        protected void WalkIn(GDMatchStatement s)
+        public void WalkIn(GDMatchStatement s)
         {
-            _visitor.Visit(s);
-            _visitor.EnterNode(s);
-            WalkInNodes(s.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(s);
+            Visitor.Visit(s);
+            Visitor.EnterNode(s);
+            WalkInNodes(WalkBackward ? s.NodesReversed : s.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(s);
         }
 
-        protected void WalkIn(GDVariableDeclarationStatement s)
+        public void WalkIn(GDVariableDeclarationStatement s)
         {
-            _visitor.Visit(s);
-            _visitor.EnterNode(s);
-            WalkInNodes(s.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(s);
+            Visitor.Visit(s);
+            Visitor.EnterNode(s);
+            WalkInNodes(WalkBackward ? s.NodesReversed : s.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(s);
         }
 
         protected void WalkIn(GDWhileStatement s)
         {
-            _visitor.Visit(s);
-            _visitor.EnterNode(s);
-            WalkInNodes(s.Nodes);
-            _visitor.LeftNode();
-            _visitor.Left(s);
+            Visitor.Visit(s);
+            Visitor.EnterNode(s);
+            WalkInNodes(WalkBackward ? s.NodesReversed : s.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(s);
         }
 
-        protected void WalkInUnknown(GDNode node)
+        protected virtual void WalkInUnknown(GDNode node)
         {
-            _visitor.VisitUnknown(node);
-            _visitor.EnterNode(node);
-            WalkInNodes(node.Nodes);
-            _visitor.LeftNode();
-            _visitor.LeftUnknown(node);
+            Visitor.VisitUnknown(node);
+            Visitor.EnterNode(node);
+            WalkInNodes(WalkBackward ? node.NodesReversed : node.Nodes);
+            Visitor.LeftNode();
+            Visitor.LeftUnknown(node);
         }
+
+        public virtual void WalkInListNodes(IEnumerable<GDNode> nodes)
+        {
+            foreach (var node in nodes)
+            {
+                Visitor.EnterListChild(node);
+                WalkInNode(node);
+                Visitor.LeftListChild(node);
+            }
+        }
+
         public override void WalkInNodes(IEnumerable<GDNode> nodes)
         {
-            if (WalkBackward)
-            {
-                foreach (var node in nodes.Reverse())
-                    WalkInNode(node);
-            }
-            else
-            {
-                foreach (var node in nodes)
-                    WalkInNode(node);
-            }
+            foreach (var node in nodes)
+                WalkInNode(node);
         }
     }
 }

@@ -2,6 +2,16 @@
 {
     public abstract class ExpressionsVisitor : Visitor, IExpressionsNodeVisitor
     {
+        public virtual void DidLeft(GDExpression expr)
+        {
+            // Nothing
+        }
+
+        public virtual void WillVisit(GDExpression expr)
+        {
+            // Nothing
+        }
+
         public virtual void Left(GDArrayInitializerExpression e)
         {
             // Nothing

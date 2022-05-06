@@ -2,6 +2,9 @@
 {
     public interface INodeVisitor : IExpressionsNodeVisitor
     {
+        void WillVisit(GDNode node);
+        void DidLeft(GDNode node);
+
         void Visit(GDClassDeclaration d);
         void Visit(GDDictionaryKeyValueDeclaration d);
         void Visit(GDEnumDeclaration d);
@@ -75,5 +78,8 @@
         void Left(GDIfBranch branch);
         void Left(GDElseBranch branch);
         void Left(GDElifBranch branch);
+
+        void EnterListChild(GDNode node);
+        void LeftListChild(GDNode node);
     }
 }

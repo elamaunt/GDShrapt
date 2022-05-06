@@ -2,6 +2,15 @@
 {
     public abstract class NodeVisitor : ExpressionsVisitor, INodeVisitor
     {
+        public virtual void DidLeft(GDNode expr)
+        {
+            // Nothing
+        }
+
+        public virtual void WillVisit(GDNode expr)
+        {
+            // Nothing
+        }
         public virtual void Left(GDWhileStatement s)
         {
             // Nothing
@@ -348,6 +357,15 @@
         }
 
         public virtual void VisitUnknown(GDNode node)
+        {
+            // Nothing
+        }
+
+        public virtual void EnterListChild(GDNode node)
+        {
+            // Nothing
+        }
+        public virtual void LeftListChild(GDNode node)
         {
             // Nothing
         }

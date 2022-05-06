@@ -9,6 +9,8 @@ namespace GDShrapt.Reader
 
         public IReadOnlyCollection<GDNode> NodesStack { get; }
 
+        public GDNode Current => _nodesStack.Count > 0 ? _nodesStack.Peek() : default;
+
         public Visitor()
         {
             NodesStack = new ReadOnlyStack(_nodesStack);
