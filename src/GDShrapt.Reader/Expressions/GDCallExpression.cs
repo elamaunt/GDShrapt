@@ -3,6 +3,7 @@
     public sealed class GDCallExpression : GDExpression,
         ITokenOrSkipReceiver<GDOpenBracket>,
         ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDExpressionsList>,
         ITokenOrSkipReceiver<GDCloseBracket>,
         ITokenReceiver<GDNewLine>,
         INewLineReceiver
@@ -130,6 +131,29 @@
             if (_form.IsOrLowerState(State.OpenBracket))
             {
                 _form.State = State.Parameters;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDExpressionsList>.HandleReceivedToken(GDExpressionsList token)
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                Parameters = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpressionsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
                 return;
             }
 
