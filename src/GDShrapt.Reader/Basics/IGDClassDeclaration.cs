@@ -4,6 +4,7 @@ namespace GDShrapt.Reader
 {
     public interface IGDClassDeclaration : IGDSyntaxToken
     {
+        GDType BaseType { get; }
         GDIdentifier Identifier { get; }
         GDClassMembersList Members { get; }
         GDNode CreateEmptyInstance();

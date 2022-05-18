@@ -6,6 +6,7 @@
         {
             public static GDIdentifier Identifier(string name) => new GDIdentifier() { Sequence = name };
             public static GDType Type(string name) => new GDType() { Sequence = name };
+            public static GDType Type(GDString path) => new GDType() { Sequence = path.ToString() };
             public static GDString String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas) => new GDString()
             {
                 Value = value,

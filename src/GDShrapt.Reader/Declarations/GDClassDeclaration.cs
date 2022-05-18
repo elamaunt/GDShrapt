@@ -38,6 +38,8 @@ namespace GDShrapt.Reader
         }
 
         public GDExtendsAtribute Extends => Atributes.OfType<GDExtendsAtribute>().FirstOrDefault();
+        public GDType BaseType => Extends?.Type;
+
         public GDClassNameAtribute ClassName => Atributes.OfType<GDClassNameAtribute>().FirstOrDefault();
         public bool IsTool => Atributes.OfType<GDToolAtribute>().Any();
 

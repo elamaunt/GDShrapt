@@ -42,7 +42,7 @@ namespace GDShrapt.Reader
         public static T AddExtendsWithPathAtribute<T>(this T receiver, string path)
             where T : ITokenReceiver<GDExtendsAtribute>
         {
-            receiver.HandleReceivedToken(GD.Atribute.ExtendsPath(path));
+            receiver.HandleReceivedToken(GD.Atribute.Extends(GD.Syntax.String(path)));
             return receiver;
         }
 

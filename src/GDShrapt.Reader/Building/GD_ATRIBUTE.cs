@@ -49,14 +49,7 @@ namespace GDShrapt.Reader
             {
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
-                Path = path
-            };
-
-            public static GDExtendsAtribute ExtendsPath(string path) => new GDExtendsAtribute()
-            {
-                ExtendsKeyword = new GDExtendsKeyword(),
-                [1] = Syntax.Space(),
-                Path = Syntax.String(path)
+                Type = Syntax.Type(path)
             };
         }
     }
