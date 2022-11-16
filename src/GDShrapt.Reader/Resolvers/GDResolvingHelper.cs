@@ -69,7 +69,6 @@ namespace GDShrapt.Reader
             return result;
         }
         
-
         public static bool ResolveColon(this ITokenOrSkipReceiver<GDColon> receiver, char c, GDReadingState state)
         {
             var result = c == ':';
@@ -415,6 +414,26 @@ namespace GDShrapt.Reader
             receiver.HandleReceivedTokenSkip();
             state.PassChar(c);
             return false;
+        }
+
+        public static bool ResolveLayersList(this ITokenOrSkipReceiver<GDLayersList> receiver, char c, GDReadingState state)
+        {
+            if (IsIdentifierStartChar(c) || c == ':' || c == '.')
+            {
+                receiver.HandleReceivedToken(state.Push(new GDLayersList()));
+                state.PassChar(c);
+                return true;
+            }
+
+            receiver.HandleReceivedTokenSkip();
+            state.PassChar(c);
+            return false;
+        }
+
+
+        public static void ResolvePathSpecifier(this ITokenOrSkipReceiver<GDPathSpecifier> receiver, char c, GDReadingState state)
+        {
+            state.PushAndPass(new GDPathSpecifierResolver(receiver), c);
         }
 
         public static bool IsDataStartCharToken(this char c) => IsIdentifierStartChar(c) || IsNumberStartChar(c) || IsStringStartChar(c) || IsNumberStartChar(c) || c == '-';

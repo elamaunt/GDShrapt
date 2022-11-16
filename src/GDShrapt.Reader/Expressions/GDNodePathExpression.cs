@@ -2,7 +2,7 @@
 {
     public sealed class GDNodePathExpression : GDExpression,
         ITokenOrSkipReceiver<GDAt>,
-        ITokenOrSkipReceiver<GDString>
+        ITokenOrSkipReceiver<GDPathList>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.NodePath);
 
@@ -11,9 +11,10 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        public GDString Path
+
+        public GDPathList Path
         {
-            get => _form.Token1;
+            get => _form.Token1 ?? (_form.Token1 = new GDPathList());
             set => _form.Token1 = value;
         }
 
@@ -24,12 +25,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDAt, GDString> _form;
+        readonly GDTokensForm<State, GDAt, GDPathList> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDAt, GDString> TypedForm => _form;
+        public GDTokensForm<State, GDAt, GDPathList> TypedForm => _form;
         public GDNodePathExpression()
         {
-            _form = new GDTokensForm<State, GDAt, GDString>(this);
+            _form = new GDTokensForm<State, GDAt, GDPathList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -42,7 +43,8 @@
                     this.ResolveAt(c, state);
                     break;
                 case State.Path:
-                    this.ResolveString(c, state);
+                    _form.State = State.Completed;
+                    state.PushAndPass(Path, c);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -83,7 +85,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
+        void ITokenReceiver<GDPathList>.HandleReceivedToken(GDPathList token)
         {
             if (_form.IsOrLowerState(State.Path))
             {
@@ -95,7 +97,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDString>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDPathList>.HandleReceivedTokenSkip()
         {
             if(_form.State == State.Path)
             {

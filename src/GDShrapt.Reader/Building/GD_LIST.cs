@@ -192,7 +192,7 @@ namespace GDShrapt.Reader
             public static GDPathList Path() => new GDPathList();
             public static GDPathList Path(Func<GDPathList, GDPathList> setup) => setup(new GDPathList());
             public static GDPathList Path(params GDSyntaxToken[] unsafeTokens) => new GDPathList() { FormTokensSetter = unsafeTokens };
-            public static GDPathList Path(params GDIdentifier[] identifiers)
+            public static GDPathList Path(params GDLayersList[] identifiers)
             {
                 if (identifiers == null || identifiers.Length == 0)
                     return new GDPathList();
@@ -205,6 +205,27 @@ namespace GDShrapt.Reader
                         list.Form.AddToEnd(new GDRightSlash());
 
                     list.Add(identifiers[i]);
+                }
+
+                return list;
+            }
+
+            public static GDLayersList LayersList() => new GDLayersList();
+            public static GDLayersList LayersList(Func<GDLayersList, GDLayersList> setup) => setup(new GDLayersList());
+            public static GDLayersList LayersList(params GDSyntaxToken[] unsafeTokens) => new GDLayersList() { FormTokensSetter = unsafeTokens };
+            public static GDLayersList LayersList(params GDPathSpecifier[] pathSpecifiers)
+            {
+                if (pathSpecifiers == null || pathSpecifiers.Length == 0)
+                    return new GDLayersList();
+
+                var list = new GDLayersList();
+
+                for (int i = 0; i < pathSpecifiers.Length; i++)
+                {
+                    if (i > 0)
+                        list.Form.AddToEnd(new GDColon());
+
+                    list.Add(pathSpecifiers[i]);
                 }
 
                 return list;

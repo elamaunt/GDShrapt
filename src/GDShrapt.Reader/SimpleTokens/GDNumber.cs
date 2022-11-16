@@ -279,6 +279,8 @@ namespace GDShrapt.Reader
             };
         }
 
+        public override string StringDataRepresentation => _literalValue;
+
         public override string ToString()
         {
             return $"{_literalValue}";

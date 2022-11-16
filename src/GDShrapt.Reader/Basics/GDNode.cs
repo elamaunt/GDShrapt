@@ -145,10 +145,7 @@ namespace GDShrapt.Reader
         public sealed override string ToString()
         {
             var builder = new StringBuilder();
-            
-            foreach (var token in Form)
-                token.AppendTo(builder);
-
+            AppendTo(builder);
             return builder.ToString();
         }
 
@@ -247,6 +244,52 @@ namespace GDShrapt.Reader
 
                 return parent.StartColumn + column;
             }
+        }
+
+        /// <summary>
+        /// Tries to find the token by the position. 
+        /// </summary>
+        /// <param name="line">Position line</param>
+        /// <param name="column">Position column</param>
+        /// <param name="token">Resulted token or null</param>
+        /// <returns>Operation success</returns>
+        public bool TryGetTokenByPosition(int line, int column, out GDSyntaxToken token)
+        {
+            int currentLine = 0;
+            int currentColumn = 0;
+            token = null;
+
+            foreach (var item in AllTokens)
+            {
+                var length = item.Length;
+
+                if (currentLine > line || (currentLine == line && currentColumn > column))
+                {
+                    return token != null;
+                }
+
+                if (currentLine == line)
+                {
+                    if (currentColumn + length >= column &&
+                        (token == null ||
+                        token.Length < item.Length && !(token is GDSpace) || 
+                        token is GDSpace ||
+                        token is GDSingleCharToken))
+                    {
+                        token = item;
+                    }
+
+                    currentColumn += length;
+                }
+
+                if (item.NewLinesCount > 0)
+                {
+                    currentLine += item.NewLinesCount;
+                    currentColumn = 0;
+                }
+            }
+
+            return token != null;
         }
 
         public int TokensCount => Form.TokensCount;

@@ -1,15 +1,77 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Text;
+
+namespace GDShrapt.Reader
 {
-    public sealed class GDPathList : GDSeparatedList<GDIdentifier, GDRightSlash>,
+    public sealed class GDPathList : GDSeparatedList<GDLayersList, GDRightSlash>,
         ITokenReceiver<GDSpace>,
-        ITokenOrSkipReceiver<GDIdentifier>,
+        ITokenOrSkipReceiver<GDLayersList>,
         ITokenOrSkipReceiver<GDRightSlash>
     {
         bool _switch;
+        bool _started;
         bool _ended;
+
+        public GDPathBoundingChar BoundingChar { get; set; }
+        public bool StartedWithSlash { get; set; }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
+            if (_started && !_ended)
+            {
+                if (c == '/' && Form.Count == 0)
+                {
+                    StartedWithSlash = true;
+                    return;
+                }
+
+                if (c.IsExpressionStopChar() && BoundingChar == GDPathBoundingChar.None)
+                {
+                    _ended = true;
+                    state.PopAndPass(c);
+                    return;
+                }
+
+                if (c == '\'' && BoundingChar == GDPathBoundingChar.SingleQuotas)
+                {
+                    _ended = true;
+                    state.Pop();
+                    return;
+                }
+
+                if (c == '"' && BoundingChar == GDPathBoundingChar.DoubleQuotas)
+                {
+                    _ended = true;
+                    state.Pop();
+                    return;
+                }
+            }
+
+            if (!_started)
+            {
+                if (c == '/')
+                {
+                    StartedWithSlash = true;
+                    _started = true;
+                    return;
+                }
+
+                if (c == '\'')
+                {
+                    BoundingChar = GDPathBoundingChar.SingleQuotas;
+                    _started = true;
+                    return;
+                }
+
+                if (c == '"')
+                {
+                    BoundingChar = GDPathBoundingChar.DoubleQuotas;
+                    _started = true;
+                    return;
+                }
+
+                _started = true;
+            }
+
             if (this.ResolveSpaceToken(c, state))
                 return;
 
@@ -20,7 +82,7 @@
             }
 
             if (!_switch)
-                this.ResolveIdentifier(c, state);
+                this.ResolveLayersList(c, state);
             else
                 this.ResolveRightSlash(c, state);
         }
@@ -36,7 +98,7 @@
             return new GDPathList();
         }
 
-        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
+        void ITokenReceiver<GDLayersList>.HandleReceivedToken(GDLayersList token)
         {
             _switch = !_switch;
             ListForm.AddToEnd(token);
@@ -47,7 +109,7 @@
             _switch = !_switch;
             ListForm.AddToEnd(token);
         }
-        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDLayersList>.HandleReceivedTokenSkip()
         {
             _ended = true;
         }
@@ -60,6 +122,39 @@
         void ITokenReceiver<GDSpace>.HandleReceivedToken(GDSpace token)
         {
             ListForm.AddToEnd(token);
+        }
+
+        public override void AppendTo(StringBuilder builder)
+        {
+            switch (BoundingChar)
+            {
+                case GDPathBoundingChar.None:
+                    if (StartedWithSlash)
+                        builder.Append('/');
+                    base.AppendTo(builder);
+                    break;
+                case GDPathBoundingChar.SingleQuotas:
+                    builder.Append('\'');
+                    if (StartedWithSlash)
+                        builder.Append('/');
+                    base.AppendTo(builder);
+                    if (_ended)
+                        builder.Append('\'');
+                    break;
+                case GDPathBoundingChar.DoubleQuotas:
+                    builder.Append('"');
+                    if (StartedWithSlash)
+                        builder.Append('/');
+                    base.AppendTo(builder);
+                    if (_ended)
+                        builder.Append('"');
+                    break;
+                default:
+                    if (StartedWithSlash)
+                        builder.Append('/');
+                    base.AppendTo(builder);
+                    break;
+            }
         }
     }
 }

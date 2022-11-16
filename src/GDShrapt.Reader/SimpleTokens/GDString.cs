@@ -194,6 +194,7 @@ namespace GDShrapt.Reader
                 Multiline = Multiline
             };
         }
+        public override string StringDataRepresentation => Value;
 
         public override string ToString()
         {

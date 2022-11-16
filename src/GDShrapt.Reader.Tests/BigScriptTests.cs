@@ -19,5 +19,19 @@ namespace GDShrapt.Reader.Tests
             AssertHelper.CompareCodeStrings(fileText, declaration.ToString());
             AssertHelper.NoInvalidTokens(declaration);
         }
+
+        [TestMethod]
+        public void BigScriptParsingTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var path = Path.Combine("Scripts", "Sample2.gd");
+            var declaration = reader.ParseFile(path);
+
+            var fileText = File.ReadAllText(path);
+
+            AssertHelper.CompareCodeStrings(fileText, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
     }
 }

@@ -102,6 +102,8 @@ namespace GDShrapt.Reader
             };
         }
 
+        public override string StringDataRepresentation => Sequence;
+
         public override string ToString()
         {
             return $"{Sequence}";

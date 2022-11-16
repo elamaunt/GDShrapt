@@ -68,6 +68,9 @@ namespace GDShrapt.Reader
                 case GDOperationType.Member:
                 case GDOperationType.Call: return 19;
                 case GDOperationType.Identifier: return 21;
+                case GDOperationType.ArrayInitializer: return 21;
+                case GDOperationType.DictionaryInitializer: return 21;
+                case GDOperationType.NodePath: return 21;
                 default:
                     return -1;
             }

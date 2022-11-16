@@ -86,8 +86,8 @@
         public enum State
         { 
             Const,
-            Export,
             Onready,
+            Export,
             Var,
             Identifier,
             Colon,
@@ -130,11 +130,11 @@
                 case State.Const:
                     state.PushAndPass(new GDKeywordResolver<GDConstKeyword>(this), c);
                     break;
-                case State.Export:
-                    state.PushAndPass(new GDExportResolver(this), c);
-                    break;
                 case State.Onready:
                     state.PushAndPass(new GDKeywordResolver<GDOnreadyKeyword>(this), c);
+                    break;
+                case State.Export:
+                    state.PushAndPass(new GDExportResolver(this), c);
                     break;
                 case State.Var:
                     state.PushAndPass(new GDKeywordResolver<GDVarKeyword>(this), c);

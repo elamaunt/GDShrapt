@@ -340,12 +340,13 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddNodePathExpression<T>(this T receiver, string path)
+        public static T AddNodePathExpression<T>(this T receiver, GDPathList path)
          where T : ITokenReceiver<GDNodePathExpression>
         {
             receiver.HandleReceivedToken(GD.Expression.NodePath(path));
             return receiver;
         }
+
         public static T AddNodePathExpression<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
             where T : ITokenReceiver<GDNodePathExpression>
         {

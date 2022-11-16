@@ -6,6 +6,8 @@ namespace GDShrapt.Reader
     {
         GDIdentifier Identifier { get; }
         GDClassMembersList Members { get; }
+
+        GDType BaseType { get; }
         GDNode CreateEmptyInstance();
         IEnumerable<GDVariableDeclaration> Variables { get; }
         IEnumerable<GDMethodDeclaration> Methods { get; }

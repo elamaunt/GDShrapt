@@ -47,6 +47,9 @@
             public static GDColon Colon => new GDColon();
             public static GDSemiColon SemiColon => new GDSemiColon();
 
+            public static GDPathSpecifier PathSpecifier(GDPathSpecifierType specifier) => new GDPathSpecifier() { Type = specifier };
+            public static GDPathSpecifier PathSpecifier(string identifier) => new GDPathSpecifier() { Type = GDPathSpecifierType.Identifier, IdentifierValue = identifier };
+
             public static GDDualOperator DualOperator(GDDualOperatorType type) => new GDDualOperator()
             {
                 OperatorType = type

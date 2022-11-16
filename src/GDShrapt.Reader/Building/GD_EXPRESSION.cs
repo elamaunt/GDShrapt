@@ -209,7 +209,7 @@ namespace GDShrapt.Reader
             public static GDNodePathExpression NodePath() => new GDNodePathExpression();
             public static GDNodePathExpression NodePath(Func<GDNodePathExpression, GDNodePathExpression> setup) => setup(new GDNodePathExpression());
             public static GDNodePathExpression NodePath(params GDSyntaxToken[] unsafeTokens) => new GDNodePathExpression() { FormTokensSetter = unsafeTokens };
-            public static GDNodePathExpression NodePath(GDString path) => new GDNodePathExpression()
+            public static GDNodePathExpression NodePath(GDPathList path) => new GDNodePathExpression()
             {
                 At = new GDAt(),
                 Path = path

@@ -116,6 +116,7 @@ namespace GDShrapt.Reader
             _form.AddBeforeActiveToken(new GDNewLine());
         }
 
-        GDIdentifier IGDClassDeclaration.Identifier => null;
+        GDType IGDClassDeclaration.BaseType => Extends?.Type;
+        GDIdentifier IGDClassDeclaration.Identifier => ClassName?.Identifier;
     }
 }

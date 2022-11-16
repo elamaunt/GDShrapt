@@ -122,6 +122,8 @@ namespace GDShrapt.Reader
             return string.Equals(Sequence, other.Sequence, StringComparison.Ordinal);
         }
 
+        public override string StringDataRepresentation => Sequence;
+
         public override string ToString()
         {
             return $"{Sequence}";

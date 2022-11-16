@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 
 namespace GDShrapt.Reader.Tests
@@ -71,7 +72,7 @@ func save(path, resource, flags):
 
             Assert.IsNotNull(leftExpression);
             Assert.IsInstanceOfType(leftExpression, typeof(GDDualOperatorExpression));
-            
+
             var rightExpression = @dualOperator.RightExpression;
 
             Assert.IsNotNull(rightExpression);
@@ -167,7 +168,7 @@ else:
             Assert.IsInstanceOfType(statement, typeof(GDIfStatement));
 
             var ifStatement = (GDIfStatement)statement;
-            
+
             Assert.IsNotNull(ifStatement.IfBranch);
             Assert.IsNotNull(ifStatement.ElseBranch);
 
@@ -197,7 +198,7 @@ else:
             Assert.IsInstanceOfType(statement, typeof(GDIfStatement));
 
             var ifStatement = (GDIfStatement)statement;
-           
+
             Assert.AreEqual(0, ifStatement.IfBranch.Statements.Count);
 
             Assert.IsNotNull(ifStatement.IfBranch.Expression);
@@ -546,7 +547,7 @@ else:
             Assert.IsInstanceOfType(statement, typeof(GDVariableDeclarationStatement));
 
             var variableDeclaration = (GDVariableDeclarationStatement)statement;
-            
+
             Assert.IsNotNull(variableDeclaration.Initializer);
             Assert.IsInstanceOfType(variableDeclaration.Initializer, typeof(GDDictionaryInitializerExpression));
 
@@ -641,7 +642,7 @@ else:
         public void MultilineStringTest2()
         {
             var reader = new GDScriptReader();
-            
+
             var code = "\'\'\'te\'\"st\'\'\'";
 
             var statement = reader.ParseExpression(code);
@@ -1131,7 +1132,7 @@ export(AnimationNode) var resource
             Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDVariableDeclaration));
 
             var variableDeclaration = (GDVariableDeclaration)classDeclaration.Members[0];
-            
+
             Assert.IsNotNull(variableDeclaration.Identifier);
             Assert.AreEqual("speed", variableDeclaration.Identifier.Sequence);
 
@@ -1144,7 +1145,7 @@ export(AnimationNode) var resource
             Assert.IsNotNull(variableDeclaration.GetMethodIdentifier);
             Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
 
-            Assert.AreEqual("set_speed", variableDeclaration.SetMethodIdentifier .Sequence);
+            Assert.AreEqual("set_speed", variableDeclaration.SetMethodIdentifier.Sequence);
             Assert.AreEqual("get_speed", variableDeclaration.GetMethodIdentifier.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
@@ -1188,7 +1189,7 @@ export(AnimationNode) var resource
             Assert.IsFalse(variableDeclaration.HasOnReadyInitialization);
 
             Assert.IsNull(variableDeclaration.GetMethodIdentifier);
-            Assert.IsNotNull (variableDeclaration.SetMethodIdentifier);
+            Assert.IsNotNull(variableDeclaration.SetMethodIdentifier);
 
             Assert.AreEqual("set_height", variableDeclaration.SetMethodIdentifier.Sequence);
 
@@ -1211,7 +1212,7 @@ export(AnimationNode) var resource
             Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDSignalDeclaration));
 
             var signalDeclaration = (GDSignalDeclaration)classDeclaration.Members[0];
-        
+
             Assert.IsNotNull(signalDeclaration.Identifier);
             Assert.AreEqual("my_signal", signalDeclaration.Identifier.Sequence);
 
@@ -1497,7 +1498,7 @@ export(AnimationNode) var resource
             Assert.IsNotNull(expression);
             Assert.IsInstanceOfType(expression, typeof(GDStringExpression));
             Assert.AreEqual("Hello \\\" World", ((GDStringExpression)expression).String.Value);
-            
+
             AssertHelper.CompareCodeStrings(code, expression.ToString());
             AssertHelper.NoInvalidTokens(expression);
         }
@@ -1513,13 +1514,8 @@ export(AnimationNode) var resource
 
             Assert.IsNotNull(expression);
 
-            var call = expression.CastOrAssert<GDCallExpression>();
-
-            var memberOperator = call.CallerExpression.CastOrAssert<GDMemberOperatorExpression>();
-            Assert.AreEqual("CallMethod", memberOperator.Identifier.Sequence);
-
-            var getNodeExpression = memberOperator.CallerExpression.CastOrAssert<GDGetNodeExpression>();
-            Assert.AreEqual("Animation/Root/ _345/ end ", getNodeExpression.Path.ToString());
+            var getNodeExpression = expression.CastOrAssert<GDGetNodeExpression>();
+            Assert.AreEqual("Animation/Root/ _345/ end .CallMethod()", getNodeExpression.Path.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
             AssertHelper.NoInvalidTokens(expression);
@@ -1541,7 +1537,8 @@ export(AnimationNode) var resource
             Assert.AreEqual("get_name", memberOperator.Identifier.Sequence);
 
             var nodePathExpression = memberOperator.CallerExpression.CastOrAssert<GDNodePathExpression>();
-            Assert.AreEqual("/root/MyAutoload", nodePathExpression.Path.Value);
+
+            Assert.AreEqual("\"/root/MyAutoload\"",  nodePathExpression.Path.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
             AssertHelper.NoInvalidTokens(expression);
@@ -1718,6 +1715,46 @@ class fishB extends fish:
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void NodePathTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var samples = new string[] 
+            {
+                "@\"A\"",
+                "@\"A/B\"",
+                "@\".\"",
+                "@\"..\"",
+                "@\"../C\"",
+                "@\"/root\"",
+                "@\"/root/Main\"",
+                "@\"/root/MyAutoload\"",
+                "@\"Path2D/PathFollow2D/Sprite\"",
+                "@\"Path2D/PathFollow2D/Sprite:texture\"",
+                "@\"Path2D/PathFollow2D/Sprite:position\"",
+                "@\"Path2D/PathFollow2D/Sprite:position:x\"",
+                "@\"/root/Level/Path2D\"",
+                "@\"Path2D/PathFollow2D/Sprite:texture:load_path\""
+            };
+
+
+            for (int i = 0; i < samples.Length; i++)
+            {
+                var sample = samples[i];
+
+                var expression = reader.ParseExpression(sample);
+
+                Assert.IsNotNull(expression);
+                Assert.IsInstanceOfType(expression, typeof(GDNodePathExpression));
+
+                var nodePathExpression = (GDNodePathExpression)expression;
+
+                AssertHelper.CompareCodeStrings(sample, nodePathExpression.ToString());
+                AssertHelper.NoInvalidTokens(nodePathExpression);
+            }
         }
     }
 }
