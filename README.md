@@ -1,7 +1,7 @@
 # GDShrapt
 
-GDShrapt is object-oriented one-pass parser of GDScript. Now the main goal is production-ready parser, lexical analyzer and GDScript-to-C# converter. 
-The project written in C#, consists of two parts **GDShrapt.Reader** and **GDShrapt.Converter** and free to use. 
+GDShrapt is object-oriented one-pass parser of GDScript. Now the main goal is production-ready parser, lexical analyzer. 
+The project written in C# and free to use. 
 GDScript is the main language of [Godot Engine](https://github.com/godotengine/godot)
 
 **The project is created on personal initiative and on enthusiasm.**
@@ -12,11 +12,11 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **3.0.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **3.1.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 3.0.0-alpha
+Install-Package GDShrapt.Reader -Version 3.1.0-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
@@ -51,18 +51,25 @@ Install-Package GDShrapt.Reader -Version 3.0.0-alpha
 | Save comments while parsing | YES |
 | Moving from tokens to parent | YES |
 | NodePath and GetNode short syntax parsing | YES |
-| Inner class parsing | NOT TESTED |
+| Inner class parsing | YES |
+| Tree walking and node visiting | YES |
+| Syntax cloning | YES |
+| Syntax factory | YES |
 | Asserts handling | IN PLAN |
 | RPC annotations parsing | IN PLAN |
 | Syntax errors managment and properly handling | IN PLAN |
-| Tree walking and node visiting | IN PLAN |
-| Syntax cloning | YES |
-| Syntax factory | YES |
 | Code formatting | IN PLAN |
 | Custom formatter | IN PLAN |
 | Tree diff tool | IN PLAN |
 
 ## Version history
+
+#### 3.1.0-alpha
+Improved parsing NodePath. 
+Fixed issues with 'elif' branches and some expressions sort order.
+Improved inner classes parsing. 
+Improved node walking and visiting.
+Fixed small parsing errors.
 
 #### 3.0.0-alpha
 Many small fixes with the if-elif-else branches parsing. Improved tree managment.
@@ -353,12 +360,3 @@ token.Parents // enumerate all parents of the token
 ```
 
 For more samples see the [tests](src/GDShrapt.Reader.Tests/ParsingTests.cs).
-
-## GDShrapt.Converter
-
-GDShrapt.Converter allows to convert lexical tree in same C# code. 
-This project is at very initial stage.
-
-### Conversion samples
-
-Not ready.
