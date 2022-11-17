@@ -102,6 +102,7 @@ namespace GDShrapt.Reader
         protected virtual void WalkIn(GDGetNodeExpression e)
         {
             Visitor.Visit(e);
+            Visitor.EnterNode(e);
             WalkInNodes(WalkBackward ? e.NodesReversed : e.Nodes);
             Visitor.LeftNode();
             Visitor.Left(e);
