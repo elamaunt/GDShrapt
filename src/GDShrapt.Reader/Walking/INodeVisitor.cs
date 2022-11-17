@@ -30,6 +30,7 @@
         void Visit(GDMatchCasesList list);
         void Visit(GDParametersList list);
         void Visit(GDPathList list);
+        void Visit(GDLayersList list);
         void Visit(GDStatementsList list);
 
         void Visit(GDMethodDeclaration d);
@@ -74,6 +75,7 @@
         void Left(GDMatchCasesList list);
         void Left(GDParametersList list);
         void Left(GDPathList list);
+        void Left(GDLayersList list);
         void Left(GDStatementsList list);
         void Left(GDIfBranch branch);
         void Left(GDElseBranch branch);

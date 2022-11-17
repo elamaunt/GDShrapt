@@ -89,6 +89,9 @@ namespace GDShrapt.Reader
                 case GDStatementsList list:
                     WalkIn(list);
                     break;
+                case GDLayersList list:
+                    WalkIn(list);
+                    break;
 
                 // Atributes
                 case GDExtendsAtribute atr:
@@ -181,6 +184,15 @@ namespace GDShrapt.Reader
         }
 
         public void WalkIn(GDPathList list)
+        {
+            Visitor.Visit(list);
+            Visitor.EnterNode(list);
+            WalkInListNodes(WalkBackward ? list.NodesReversed : list.Nodes);
+            Visitor.LeftNode();
+            Visitor.Left(list);
+        }
+
+        public void WalkIn(GDLayersList list)
         {
             Visitor.Visit(list);
             Visitor.EnterNode(list);

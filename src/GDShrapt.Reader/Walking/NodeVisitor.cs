@@ -161,6 +161,11 @@
             // Nothing
         }
 
+        public virtual void Left(GDLayersList list)
+        {
+            // Nothing
+        }
+
         public virtual void Left(GDStatementsList list)
         {
             // Nothing
@@ -297,6 +302,11 @@
         }
 
         public virtual void Visit(GDPathList list)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDLayersList list)
         {
             // Nothing
         }
