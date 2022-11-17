@@ -7,7 +7,7 @@
         public override string Sequence => "elif";
 
         public GDElifResolver(IIntendedTokenReceiver<GDElifBranch> owner, int lineIntendation)
-            : base(owner, lineIntendation)
+            : base(owner, lineIntendation, false)
         {
             Owner = owner;
         }
@@ -19,7 +19,7 @@
 
         protected override void OnMatch(GDReadingState state)
         {
-            var branch = new GDElifBranch();
+            var branch = new GDElifBranch(LineIntendationThreshold);
 
             branch.Add(new GDElifKeyword());
 

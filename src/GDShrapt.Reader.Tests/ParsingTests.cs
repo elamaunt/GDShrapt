@@ -242,6 +242,41 @@ else:
         }
 
         [TestMethod]
+        public void IfElseStatementTest3()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"if a:
+	print()
+elif b:
+	print()
+if c:
+	print()
+elif d:
+	print()
+elif e:
+	print()
+else:
+    print()";
+
+            var statements = reader.ParseStatements(code);
+
+            Assert.AreEqual(2, statements.Count);
+
+            var first = statements[0];
+            var second = statements[1];
+
+            Assert.IsInstanceOfType(first, typeof(GDIfStatement)); 
+            Assert.IsInstanceOfType(second, typeof(GDIfStatement));
+
+            var firstIf = (GDIfStatement)first;
+            var secondIf = (GDIfStatement)second;
+
+            Assert.AreEqual(1, firstIf.ElifBranchesList.Count);
+            Assert.AreEqual(2, secondIf.ElifBranchesList.Count);
+        }
+
+        [TestMethod]
         public void ElifStatementTest()
         {
             var reader = new GDScriptReader();

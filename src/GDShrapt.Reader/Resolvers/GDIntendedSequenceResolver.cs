@@ -4,10 +4,12 @@
     {
         public int Index { get; private set; }
         public abstract string Sequence { get; }
+        public bool PopStateOnMatch { get; }
 
-        public GDIntendedSequenceResolver(IIntendedTokenReceiver owner, int lineIntendation)
+        public GDIntendedSequenceResolver(IIntendedTokenReceiver owner, int lineIntendation, bool popStateOnMatch = true)
             : base(owner, lineIntendation)
         {
+            PopStateOnMatch = popStateOnMatch;
         }
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
@@ -18,12 +20,21 @@
             {
                 if (Index == s.Length)
                 {
-                    state.Pop();
+                    if (PopStateOnMatch)
+                        state.Pop();
+
                     OnMatch(state);
+
+                    if (!PopStateOnMatch)
+                    {
+                        Index = 0;
+                        ResetIntendation();
+                    }
                 }
                 return;
             }
 
+            
             state.Pop();
             OnFail(state);
 

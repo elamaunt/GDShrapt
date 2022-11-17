@@ -65,12 +65,13 @@ namespace GDShrapt.Reader
             {
                 case GDOperationType.Literal: return 21;
                 case GDOperationType.Brackets: return 20;
+                case GDOperationType.Indexer:
+                case GDOperationType.NodePath:
+                case GDOperationType.DictionaryInitializer:
+                case GDOperationType.ArrayInitializer:
                 case GDOperationType.Member:
                 case GDOperationType.Call: return 19;
                 case GDOperationType.Identifier: return 21;
-                case GDOperationType.ArrayInitializer: return 21;
-                case GDOperationType.DictionaryInitializer: return 21;
-                case GDOperationType.NodePath: return 21;
                 default:
                     return -1;
             }
