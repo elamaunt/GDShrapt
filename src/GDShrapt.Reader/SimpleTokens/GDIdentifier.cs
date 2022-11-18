@@ -67,6 +67,38 @@ namespace GDShrapt.Reader
             base.ForceComplete(state);
         }
 
+        /// <summary>
+        /// Trying to find a local scope variable or a parameter declaration which has the same name.
+        /// </summary>
+        /// <returns>True if found. Otherwise false</returns>
+        public bool TryExtractLocalScopeVisibleDeclarationFromParents(out GDIdentifier declaration)
+        {
+            declaration = null;
+
+            var startLine = StartLine;
+
+            GDNode node = Parent;
+
+            while (true)
+            {
+                node = node.Parent;
+
+                if (node == null || node is GDClassDeclaration || node is GDInnerClassDeclaration)
+                    break;
+
+                foreach (var item in node.GetMethodScopeDeclarations(startLine))
+                {
+                    if (item == this)
+                    {
+                        declaration = item;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public override GDSyntaxToken Clone()
         {
             return new GDIdentifier()
