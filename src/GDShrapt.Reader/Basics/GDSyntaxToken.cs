@@ -217,6 +217,100 @@ namespace GDShrapt.Reader
         /// </summary>
         public GDSyntaxToken PreviousToken => Parent?.Form.PreviousTokenBefore(this);
 
+        /// <summary>
+        /// Returns the next token in the whole tree or null
+        /// </summary>
+        public GDSyntaxToken GlobalNextToken
+        {
+            get
+            {
+                var parent = Parent;
+
+                if (parent == null)
+                    return null;
+
+                var localNextToken = parent.Form.NextTokenAfter(this);
+
+                if (localNextToken == null)
+                {
+                    var previousParent = parent;
+                    parent = parent.Parent;
+                    
+                    if (parent == null)
+                        return null;
+
+                    var parentNextToken = parent.Form.NextTokenAfter(previousParent);
+
+                    if (parentNextToken is GDNode node)
+                    {
+                        return node.AllTokens.FirstOrDefault() ?? node.GlobalNextToken;
+                    }
+                    else
+                    {
+                        return parentNextToken ?? parent.GlobalNextToken;
+                    }
+                }
+                else
+                {
+                    if (localNextToken is GDNode node)
+                    {
+                        return node.AllTokens.FirstOrDefault() ?? node.GlobalNextToken;
+                    }
+                    else
+                    {
+                        return localNextToken;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the previous token in the whole tree or null
+        /// </summary>
+        public GDSyntaxToken GlobalPreviousToken
+        {
+            get
+            {
+                var parent = Parent;
+
+                if (parent == null)
+                    return null;
+
+                var localPreviousToken = parent.Form.PreviousTokenBefore(this);
+
+                if (localPreviousToken == null)
+                {
+                    var previousParent = parent;
+                    parent = parent.Parent;
+
+                    if (parent == null)
+                        return null;
+
+                    var parentPreviousToken = parent.Form.PreviousTokenBefore(previousParent);
+
+                    if (parentPreviousToken is GDNode node)
+                    {
+                        return node.AllTokensReversed.FirstOrDefault() ?? node.GlobalPreviousToken;
+                    } 
+                    else
+                    {
+                        return parentPreviousToken ?? parent.GlobalPreviousToken;
+                    }
+                }
+                else
+                {
+                    if (localPreviousToken is GDNode node)
+                    {
+                        return node.AllTokensReversed.FirstOrDefault() ?? node.GlobalPreviousToken;
+                    }
+                    else
+                    {
+                        return localPreviousToken;
+                    }
+                }
+            }
+        }
+
 
         /// <summary>
         /// Checks whether the token start in range
@@ -317,6 +411,36 @@ namespace GDShrapt.Reader
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Builds the whole line string, that contains token's start position.
+        /// </summary>
+        /// <returns>Line string</returns>
+        public string BuildLineThatContains()
+        {
+            var builder = new StringBuilder();
+
+            if (!(this is GDNewLine))
+            {
+                var previous = this;
+
+                do
+                {
+                    builder.Insert(0, previous.ToString());
+                    previous = previous.GlobalPreviousToken;
+                }
+                while (previous != null && !(previous is GDNewLine));
+            }
+
+            var next = GlobalNextToken;
+            while (next != null && !(next is GDNewLine))
+            {
+                builder.Append(next.ToString());
+                next = next.GlobalNextToken;
+            }
+
+            return builder.ToString();
         }
 
         /// <summary>

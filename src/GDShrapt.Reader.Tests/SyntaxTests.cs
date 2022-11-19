@@ -336,5 +336,42 @@ func updateSample(obj):
             Assert.AreEqual(endLine, token.EndLine, $"EndLine of {token.TypeName}. Length: {token.Length}");
             Assert.AreEqual(endColumn, token.EndColumn, $"EndColumn of {token.TypeName}. Length: {token.Length}");
         }
+
+        [TestMethod]
+        public void GetWholeLineTest()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node2D 
+
+class_name Usage 
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = ""text""
+
+
+# Called when the node enters the scene tree for the first time. 
+func _ready(): 
+	pass
+
+func updateSample(obj):
+	var value = obj.t()
+
+    print(value)
+";
+
+            var @class = reader.ParseFileContent(code);
+
+            var lines = code.Replace("\r", "").Split('\n');
+           
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+
+            foreach (var token in @class.AllTokens)
+            {
+                var lineByToken = token.BuildLineThatContains();
+
+                AssertHelper.CompareCodeStrings(lines[token.EndLine], lineByToken);
+            }
+        }
     }
 }

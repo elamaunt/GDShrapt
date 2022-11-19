@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public abstract class GDDataToken : GDSimpleSyntaxToken
     {

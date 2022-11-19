@@ -1497,7 +1497,7 @@ namespace GDShrapt.Reader
             do
             {
                 node = node.Previous;
-                if (node.Value is T value)
+                if (node?.Value is T value)
                     return value;
             }
             while (node != null);
@@ -1515,7 +1515,7 @@ namespace GDShrapt.Reader
             do
             {
                 node = node.Previous;
-                if (node.Value != null)
+                if (node?.Value != null)
                     return node.Value;
             }
             while (node != null);
@@ -1533,7 +1533,7 @@ namespace GDShrapt.Reader
             do
             {
                 node = node.Next;
-                if (node.Value != null)
+                if (node?.Value != null)
                     return node.Value;
             }
             while (node != null);
@@ -1552,7 +1552,7 @@ namespace GDShrapt.Reader
             do
             {
                 node = node.Next;
-                if (node.Value is T value)
+                if (node?.Value is T value)
                     return value;
             }
             while (node != null);
@@ -1575,7 +1575,7 @@ namespace GDShrapt.Reader
                 do
                 {
                     node = node.Next;
-                    if (node.Value != null)
+                    if (node?.Value != null)
                         return node.Value;
                 }
                 while (node != null);
@@ -1599,7 +1599,7 @@ namespace GDShrapt.Reader
                 do
                 {
                     node = node.Previous;
-                    if (node.Value != null)
+                    if (node?.Value != null)
                         return node.Value;
                 }
                 while (node != null);
@@ -1624,7 +1624,7 @@ namespace GDShrapt.Reader
             do
             {
                 node = node.Next;
-                if (node.Value is T v)
+                if (node?.Value is T v)
                     return v;
             }
             while (node != null);
@@ -1648,7 +1648,7 @@ namespace GDShrapt.Reader
             do
             {
                 node = node.Previous;
-                if (node.Value is T v)
+                if (node?.Value is T v)
                     return v;
             }
             while (node != null);
