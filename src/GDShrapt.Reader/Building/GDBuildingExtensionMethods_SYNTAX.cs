@@ -16,6 +16,13 @@
             return receiver;
         }
 
+        public static T AddLeftSlash<T>(this T receiver)
+            where T : ILeftSlashReceiver
+        {
+            receiver.HandleReceivedToken(GD.Syntax.LeftSlash);
+            return receiver;
+        }
+
         public static T AddComment<T>(this T receiver, string comment)
             where T : ITokenReceiver
         {

@@ -22,6 +22,7 @@
             public static GDSpace Space(int count = 1) => new GDSpace() { Sequence = new string(' ', count) };
             public static GDSpace Space(string whiteSpace) => new GDSpace() { Sequence = whiteSpace };
             public static GDNewLine NewLine => new GDNewLine();
+            public static GDLeftSlash LeftSlash => new GDLeftSlash();
             public static GDIntendation Intendation(int count = 0) => new GDIntendation()
             { 
                 Sequence = new string('\t', count),

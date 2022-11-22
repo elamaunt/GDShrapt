@@ -355,6 +355,17 @@ namespace GDShrapt.Reader
             return false;
         }
 
+        public static bool ResolveLeftSlashToken(this ITokenReceiver<GDLeftSlash> receiver, char c, GDReadingState state)
+        {
+            if (c == '\\')
+            {
+                receiver.HandleReceivedToken(state.Push(new GDLeftSlash()));
+                state.PassChar(c);
+                return true;
+            }
+
+            return false;
+        }
 
         public static bool ResolveSpaceToken(this ITokenReceiver receiver, char c, GDReadingState state)
         {

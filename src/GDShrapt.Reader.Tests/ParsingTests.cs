@@ -1791,5 +1791,54 @@ class fishB extends fish:
                 AssertHelper.NoInvalidTokens(nodePathExpression);
             }
         }
+
+        [TestMethod]
+        public void ExpressionSplittingTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func _ready():
+    if (2 == 2
+        and 3 == 3
+        and 4 == 4
+        and 5 == 5
+        and 6 == 6):
+            print(""The parenthesis way of putting 'if' statements on multiple lines."")
+
+    if 2 == 2 \
+        and 3 == 3 \
+        and 4 == 4 \
+        and 5 == 5 \
+        and 6 == 6:
+            print(""The backslash way of putting 'if' statements on multiple lines."")";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+
+            Assert.AreEqual(1, @class.Methods.Count());
+
+            var method = @class.Methods.First();
+           
+            Assert.AreEqual(2, method.Statements.Count);
+
+            var statement = method.Statements[1];
+
+            Assert.IsInstanceOfType(statement, typeof(GDIfStatement));
+
+            var ifStatement = (GDIfStatement)statement;
+
+            Assert.IsNotNull(ifStatement.IfBranch);
+
+            Assert.IsNotNull(ifStatement.IfBranch.Condition);
+            AssertHelper.CompareCodeStrings(@"2 == 2 \
+        and 3 == 3 \
+        and 4 == 4 \
+        and 5 == 5 \
+        and 6 == 6", ifStatement.IfBranch.Condition.ToString());
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }
