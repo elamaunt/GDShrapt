@@ -50,17 +50,19 @@ namespace GDShrapt.Reader
 
         public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
         {
-            if (beforeLine.HasValue)
+            if (!beforeLine.HasValue)
             {
                 return Form.Direct()
                       .OfType<GDVariableDeclarationStatement>()
-                      .Select(x => x.Identifier);
+                      .Select(x => x.Identifier)
+                      .Where(x => x != null);
             }
 
             return Form.Direct()
                        .OfType<GDVariableDeclarationStatement>()
                        .Where(x => x.StartLine < beforeLine)
-                       .Select(x => x.Identifier);
+                       .Select(x => x.Identifier)
+                       .Where(x => x != null);
         }
     }
 }

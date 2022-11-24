@@ -79,12 +79,100 @@ namespace GDShrapt.Reader
 
             GDNode node = Parent;
 
+            bool? isStaticContext = null;
+
             while (true)
             {
-                node = node.Parent;
-
-                if (node == null || node is GDClassDeclaration || node is GDInnerClassDeclaration)
+                if (node == null)
                     break;
+
+                if (node is GDVariableDeclarationStatement varDeclaration)
+                {
+                    if (varDeclaration.Identifier == this)
+                    {
+                        declaration = varDeclaration.Identifier;
+                        break;
+                    }
+
+                    node = node.Parent;
+                    continue;
+                }
+
+                if (node is GDInnerClassDeclaration innerClass)
+                {
+                    if (isStaticContext.HasValue)
+                    {
+                        if (isStaticContext.Value)
+                        {
+                            foreach (var member in innerClass.Members)
+                            {
+                                if (member.IsStatic && member.Identifier == this)
+                                {
+                                    declaration = member.Identifier;
+                                    return true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (var member in innerClass.Members)
+                            {
+                                if (member.Identifier == this)
+                                {
+                                    declaration = member.Identifier;
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+                }
+
+                if (node is GDClassDeclaration @class)
+                {
+                    if (isStaticContext.HasValue)
+                    {
+                        if (isStaticContext.Value)
+                        {
+                            foreach (var member in @class.Members)
+                            {
+                                if (member.IsStatic && member.Identifier == this)
+                                {
+                                    declaration = member.Identifier;
+                                    return true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (var member in @class.Members)
+                            {
+                                if (member.Identifier == this)
+                                {
+                                    declaration = member.Identifier;
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+                }
+
+                if (node is GDMethodDeclaration method)
+                {
+                    if (method.Identifier == this)
+                    {
+                        declaration = method.Identifier;
+                        return true;
+                    }
+
+                    isStaticContext = method.IsStatic;
+
+                    node = node.Parent;
+                    continue;
+                }
 
                 foreach (var item in node.GetMethodScopeDeclarations(startLine))
                 {
@@ -94,6 +182,8 @@ namespace GDShrapt.Reader
                         return true;
                     }
                 }
+
+                node = node.Parent;
             }
 
             return false;

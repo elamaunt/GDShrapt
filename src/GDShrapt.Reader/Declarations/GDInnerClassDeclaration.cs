@@ -67,6 +67,7 @@ namespace GDShrapt.Reader
 
         readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList> _form;
         public override GDTokensForm Form => _form;
+        public override bool IsStatic => true;
         public GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList> TypedForm => _form;
 
         internal GDInnerClassDeclaration(int intendation)

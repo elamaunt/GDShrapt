@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDVariableDeclarationStatement : GDStatement, 
         ITokenOrSkipReceiver<GDVarKeyword>,

@@ -44,7 +44,8 @@
         }
 
         readonly GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> _form;
-        public override GDTokensForm Form => _form; 
+        public override GDTokensForm Form => _form;
+        public override bool IsStatic => false;
         public GDTokensForm<State, GDSignalKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket> TypedForm => _form;
         internal GDSignalDeclaration(int intendation)
             : base(intendation)

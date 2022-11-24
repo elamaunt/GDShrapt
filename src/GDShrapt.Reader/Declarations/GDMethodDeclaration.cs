@@ -94,7 +94,7 @@ namespace GDShrapt.Reader
             set => _form.Token14 = value;
         }
 
-        public bool IsStatic => StaticKeyword != null;
+        public override bool IsStatic => StaticKeyword != null;
 
         public enum State
         {
@@ -235,7 +235,7 @@ namespace GDShrapt.Reader
 
         public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
         {
-            return Parameters.Select(x => x.Identifier);
+            return Parameters.Select(x => x.Identifier).Where(x => x != null);
         }
 
         void ITokenReceiver<GDStaticKeyword>.HandleReceivedToken(GDStaticKeyword token)

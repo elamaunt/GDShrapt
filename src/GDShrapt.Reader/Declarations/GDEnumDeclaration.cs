@@ -44,7 +44,8 @@
         }
 
         readonly GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> _form;
-        public override GDTokensForm Form => _form; 
+        public override GDTokensForm Form => _form;
+        public override bool IsStatic => true;
         public GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> TypedForm => _form;
         internal GDEnumDeclaration(int intendation)
            : base(intendation)

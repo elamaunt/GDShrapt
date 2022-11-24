@@ -82,6 +82,7 @@
         public bool IsExported => Export != null;
         public bool IsConstant => ConstKeyword != null;
         public bool HasOnReadyInitialization => OnreadyKeyword != null;
+        public override bool IsStatic => false;
 
         public enum State
         { 

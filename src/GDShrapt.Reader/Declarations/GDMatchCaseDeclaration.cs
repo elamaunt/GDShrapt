@@ -94,7 +94,10 @@ namespace GDShrapt.Reader
 
         public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
         {
-            return Conditions.AllNodes.OfType<GDMatchCaseVariableExpression>().Select(x => x.Identifier);
+            return Conditions.AllNodes
+                .OfType<GDMatchCaseVariableExpression>()
+                .Select(x => x.Identifier)
+                .Where(x => x != null);
         }
 
         void ITokenReceiver<GDColon>.HandleReceivedToken(GDColon token)
