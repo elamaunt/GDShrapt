@@ -168,7 +168,7 @@
                     this.ResolveIdentifier(c, state);
                     break;
                 default:
-                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
                     break;
             }
         }

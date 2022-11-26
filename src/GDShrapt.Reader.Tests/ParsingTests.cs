@@ -1840,5 +1840,30 @@ class fishB extends fish:
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+        [TestMethod]
+        public void ParseSameLineStatements()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func _draw_block_face(surface_tool, verts, uvs):
+	surface_tool.add_uv(uvs[1]); surface_tool.add_vertex(verts[1])";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+
+            Assert.AreEqual(1, @class.Methods.Count());
+
+            var method = @class.Methods.First();
+
+            Assert.AreEqual(2, method.Statements.Count);
+;
+            AssertHelper.CompareCodeStrings("surface_tool.add_uv(uvs[1]);", method.Statements[0].ToString());
+            AssertHelper.CompareCodeStrings("surface_tool.add_vertex(verts[1])", method.Statements[1].ToString());
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }

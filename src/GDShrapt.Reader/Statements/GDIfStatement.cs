@@ -65,7 +65,7 @@
                     if (!this.ResolveSpaceToken(c, state))
                     {
                         if (_waitForEndLine)
-                            this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
+                            this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                         else
                             state.PopAndPass(c);
                     }

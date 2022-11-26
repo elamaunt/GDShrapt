@@ -50,8 +50,7 @@
                         this.ResolveSemiColon(c, state);
                     break;
                 default:
-                    if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveInvalidToken(c, state, x => !x.IsSpace());
+                    state.PopAndPass(c);
                     break;
             }
         }

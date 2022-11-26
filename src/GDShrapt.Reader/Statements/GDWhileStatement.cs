@@ -85,7 +85,7 @@ namespace GDShrapt.Reader
                     this.ResolveExpression(c, state);
                     break;
                 case State.Statements:
-                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
                     break;
                 default:
                     state.Pop();

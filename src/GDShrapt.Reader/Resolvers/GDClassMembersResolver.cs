@@ -27,7 +27,7 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                Owner.ResolveInvalidToken(c, state, x => !x.IsSpace());
+                Owner.HandleAsInvalidToken(c, state, x => !x.IsSpace());
                 return;
             }
 

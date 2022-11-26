@@ -107,7 +107,7 @@ namespace GDShrapt.Reader
                     this.ResolveColon(c, state);
                     break;
                 case State.Members:
-                    this.ResolveInvalidToken(c, state, x => x.IsNewLine());
+                    this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
                     break;
                 default:
                     state.PopAndPass(c);

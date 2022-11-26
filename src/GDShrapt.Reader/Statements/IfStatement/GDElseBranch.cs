@@ -69,7 +69,7 @@
                     this.ResolveExpression(c, state);
                     break;
                 case State.Statements:
-                    this.ResolveInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
+                    this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
                 default:
                     state.PopAndPass(c);

@@ -42,8 +42,9 @@ namespace GDShrapt.Reader.Tests
             var invalidTokens = node.AllInvalidTokens.ToArray();
             var messageBuilder = new StringBuilder();
 
+            messageBuilder.AppendLine();
             for (int i = 0; i < invalidTokens.Length; i++)
-                messageBuilder.AppendLine(i + "." + invalidTokens[i]);
+                messageBuilder.AppendLine((i+1) + ". " + invalidTokens[i]);
 
             Assert.AreEqual(0, invalidTokens.Length, messageBuilder.ToString());
         }

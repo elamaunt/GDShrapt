@@ -5,7 +5,7 @@ namespace GDShrapt.Reader
     internal class GDStatementsResolver : GDIntendedResolver
     {
         bool _statementResolved;
-
+        bool _resolvedAsExpression;
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         new IIntendedTokenReceiver<GDStatement> Owner { get; }
@@ -27,7 +27,17 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                Owner.ResolveInvalidToken(c, state, x => !x.IsSpace());
+                if (_resolvedAsExpression)
+                {
+                    // Resolving multiple experssions on the same string
+                    var statement = new GDExpressionStatement();
+                    Owner.HandleReceivedToken(statement);
+                    state.PushAndPass(statement, c);
+                }
+                else
+                {
+                    Owner.HandleAsInvalidToken(c, state, x => !x.IsSpace());
+                }
                 return;
             }
 
@@ -75,6 +85,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
+            _resolvedAsExpression = false;
             _statementResolved = false;
             ResetIntendation();
             state.PassNewLine();
@@ -140,6 +151,7 @@ namespace GDShrapt.Reader
                     }
                 default:
                     {
+                        _resolvedAsExpression = true;
                         return CompleteAsExpressionStatement(state, sequence);
                     }
             }

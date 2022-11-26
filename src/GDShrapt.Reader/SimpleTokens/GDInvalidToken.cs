@@ -4,12 +4,10 @@ namespace GDShrapt.Reader
 {
     public sealed class GDInvalidToken : GDCharSequence
     {
-        readonly char[] _stopChars;
         readonly Predicate<char> _stop;
 
-        internal GDInvalidToken(params char[] stopChars)
+        private GDInvalidToken()
         {
-            _stopChars = stopChars;
         }
 
         internal GDInvalidToken(Predicate<char> stop)
@@ -19,10 +17,7 @@ namespace GDShrapt.Reader
 
         internal override bool CanAppendChar(char c, GDReadingState state)
         {
-            if (_stop != null)
-                return !_stop(c);
-
-            return Array.IndexOf(_stopChars, c) == -1;
+            return !_stop(c);
         }
 
         public override GDSyntaxToken Clone()
