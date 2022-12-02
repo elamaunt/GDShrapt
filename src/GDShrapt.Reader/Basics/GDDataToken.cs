@@ -1,20 +1,21 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     public abstract class GDDataToken : GDSimpleSyntaxToken
     {
-        public abstract string StringDataRepresentation { get; }
+        /// <summary>
+        /// Throws ArgumentException if set invalid format value
+        /// </summary>
+        public abstract string Sequence { get; set; }
 
         public override int GetHashCode()
         {
-            return StringDataRepresentation?.GetHashCode() ?? base.GetHashCode();
+            return Sequence?.GetHashCode() ?? base.GetHashCode();
         }
 
         public override bool Equals(object obj)
         {
             if (obj is GDDataToken other)
-                return string.Equals(StringDataRepresentation, other.StringDataRepresentation);
+                return string.Equals(Sequence, other.Sequence);
             return base.Equals(obj);
         }
     }

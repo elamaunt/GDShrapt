@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -13,7 +14,29 @@ namespace GDShrapt.Reader
         public bool IsFalse => string.Equals(Sequence, "false", StringComparison.Ordinal);
         public bool IsSelf => string.Equals(Sequence, "self", StringComparison.Ordinal);
 
-        public string Sequence { get; set; }
+        string _sequence;
+        public override string Sequence
+        {
+            get => _sequence;
+            set
+            {
+                CheckIdentifierValue(value);
+                _sequence = value;
+            }
+        }
+
+        private void CheckIdentifierValue(string value)
+        {
+            if (value.IsNullOrWhiteSpace() || value.IsNullOrEmpty())
+                throw new ArgumentException("Invalid identifier format");
+
+            if (char.IsNumber(value[0]))
+                throw new ArgumentException("Invalid identifier format");
+
+            if (value.Any(x => !char.IsLetter(x) && !char.IsDigit(x) && x != '_'))
+                throw new ArgumentException("Invalid identifier format");
+
+        }
 
         StringBuilder _builder = new StringBuilder();
 
@@ -160,6 +183,15 @@ namespace GDShrapt.Reader
                     break;
                 }
 
+                foreach (var item in node.GetMethodScopeDeclarations(startLine))
+                {
+                    if (item == this)
+                    {
+                        declaration = item;
+                        return true;
+                    }
+                }
+
                 if (node is GDMethodDeclaration method)
                 {
                     if (method.Identifier == this)
@@ -172,15 +204,6 @@ namespace GDShrapt.Reader
 
                     node = node.Parent;
                     continue;
-                }
-
-                foreach (var item in node.GetMethodScopeDeclarations(startLine))
-                {
-                    if (item == this)
-                    {
-                        declaration = item;
-                        return true;
-                    }
                 }
 
                 node = node.Parent;
@@ -243,8 +266,6 @@ namespace GDShrapt.Reader
         {
             return string.Equals(Sequence, other.Sequence, StringComparison.Ordinal);
         }
-
-        public override string StringDataRepresentation => Sequence;
 
         public override string ToString()
         {

@@ -8,12 +8,12 @@
             public static GDType Type(string name) => new GDType() { Sequence = name };
             public static GDString String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas) => new GDString()
             {
-                Value = value,
+                Sequence = value,
                 Multiline = multiline,
                 BoundingChar = boundingChar
             };
 
-            public static GDNumber Number(string stringValue) => new GDNumber() { ValueAsString = stringValue };
+            public static GDNumber Number(string stringValue) => new GDNumber() { Sequence = stringValue };
             public static GDNumber Number(int value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(long value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(double value) => new GDNumber() { ValueDouble = value };

@@ -62,7 +62,7 @@ namespace GDShrapt.Reader
             set => _literalValue = Convert.ToString(value);
         }
 
-        public string ValueAsString
+        public override string Sequence
         {
             get => _literalValue;
             set
@@ -278,8 +278,6 @@ namespace GDShrapt.Reader
                 _literalValue = _literalValue
             };
         }
-
-        public override string StringDataRepresentation => _literalValue;
 
         public override string ToString()
         {

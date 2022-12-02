@@ -11,7 +11,59 @@ namespace GDShrapt.Reader
         bool _escapeNextChar;
         public bool Multiline { get; set; }
         public GDStringBoundingChar BoundingChar { get; set; }
-        public string Value { get; set; }
+
+        string _sequence;
+        public override string Sequence 
+        {
+            get
+            {
+                if (_sequence == null)
+                    return null;
+
+                if (_sequence.Length == 0)
+                    return _sequence;
+
+                switch (BoundingChar)
+                {
+                    case GDStringBoundingChar.SingleQuotas:
+                        {
+                            var builder = new StringBuilder();
+
+                            for (int i = 0; i < _sequence.Length; i++)
+                            {
+                                var ch = _sequence[i];
+
+                                if (ch == '\\' || ch == '\'')
+                                    builder.Append('\\');
+                                builder.Append(ch);
+                            }
+
+                            return builder.ToString();
+                        }
+                    case GDStringBoundingChar.DoubleQuotas:
+                        {
+                            var builder = new StringBuilder();
+
+                            for (int i = 0; i < _sequence.Length; i++)
+                            {
+                                var ch = _sequence[i];
+
+                                if (ch == '\\' || ch == '"')
+                                    builder.Append('\\');
+                                builder.Append(ch);
+                            }
+
+                            return builder.ToString();
+                        }
+                    default:
+                        return _sequence;
+                }
+            }
+            set
+            {
+                _sequence = value;
+            }
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -113,7 +165,7 @@ namespace GDShrapt.Reader
                 {
                     if (!Multiline)
                     {
-                        Value = _stringBuilder.ToString();
+                        Sequence = _stringBuilder.ToString();
                         state.Pop();
                     }
                     else
@@ -122,7 +174,7 @@ namespace GDShrapt.Reader
 
                         if (_boundingCharsCounter == 3)
                         {
-                            Value = _stringBuilder.ToString();
+                            Sequence = _stringBuilder.ToString();
                             state.Pop();
                         }
                     }
@@ -147,7 +199,7 @@ namespace GDShrapt.Reader
             }
             else
             {
-                Value = _stringBuilder.ToString();
+                Sequence = _stringBuilder.ToString();
                 state.Pop();
                 state.PassNewLine();
             }
@@ -170,7 +222,7 @@ namespace GDShrapt.Reader
         {
             return new GDString()
             {
-                Value = value
+                Sequence = value
             };
         }
 
@@ -181,7 +233,7 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
-            Value = _stringBuilder.ToString();
+            Sequence = _stringBuilder.ToString();
             base.ForceComplete(state);
         }
 
@@ -189,21 +241,20 @@ namespace GDShrapt.Reader
         {
             return new GDString()
             {
-                Value = Value,
+                Sequence = Sequence,
                 BoundingChar = BoundingChar,
                 Multiline = Multiline
             };
         }
-        public override string StringDataRepresentation => Value;
 
         public override string ToString()
         {
             var c = GetBoundingChar();
 
             if (Multiline)
-                return $"{c}{c}{c}{Value}{c}{c}{c}";
+                return $"{c}{c}{c}{Sequence}{c}{c}{c}";
 
-            return $"{c}{Value}{c}";
+            return $"{c}{Sequence}{c}";
         }
     }
 }
