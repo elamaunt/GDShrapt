@@ -13,7 +13,13 @@ namespace GDShrapt.Reader
         public GDStringBoundingChar BoundingChar { get; set; }
 
         string _sequence;
-        public override string Sequence 
+        public override string Sequence
+        {
+            get => _sequence;
+            set => _sequence = value;
+        }
+
+        public string EscapedSequence
         {
             get
             {
@@ -58,10 +64,6 @@ namespace GDShrapt.Reader
                     default:
                         return _sequence;
                 }
-            }
-            set
-            {
-                _sequence = value;
             }
         }
 

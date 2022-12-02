@@ -621,7 +621,7 @@ else:
             Assert.IsNotNull(stringExpression.String);
             Assert.IsFalse(stringExpression.String.Multiline);
             Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
-            Assert.AreEqual("test", stringExpression.String.Value);
+            Assert.AreEqual("test", stringExpression.String.Sequence);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
             AssertHelper.NoInvalidTokens(statement);
@@ -644,7 +644,7 @@ else:
             Assert.IsNotNull(stringExpression.String);
             Assert.IsFalse(stringExpression.String.Multiline);
             Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
-            Assert.AreEqual("te\"\"st", stringExpression.String.Value);
+            Assert.AreEqual("te\"\"st", stringExpression.String.Sequence);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
             AssertHelper.NoInvalidTokens(statement);
@@ -667,7 +667,7 @@ else:
             Assert.IsNotNull(stringExpression.String);
             Assert.IsTrue(stringExpression.String.Multiline);
             Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
-            Assert.AreEqual("te\"\"st", stringExpression.String.Value);
+            Assert.AreEqual("te\"\"st", stringExpression.String.Sequence);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
             AssertHelper.NoInvalidTokens(statement);
@@ -690,7 +690,7 @@ else:
             Assert.IsNotNull(stringExpression.String);
             Assert.IsTrue(stringExpression.String.Multiline);
             Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
-            Assert.AreEqual("te'\"st", stringExpression.String.Value);
+            Assert.AreEqual("te'\"st", stringExpression.String.Sequence);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
             AssertHelper.NoInvalidTokens(statement);
@@ -937,7 +937,7 @@ export(AnimationNode) var resource
             Assert.AreEqual("Test", classDeclaration.ClassName.Identifier.Sequence);
 
             Assert.IsNotNull(classDeclaration.ClassName.Icon);
-            Assert.AreEqual("res://interface/icons/item.png", classDeclaration.ClassName.Icon.Value);
+            Assert.AreEqual("res://interface/icons/item.png", classDeclaration.ClassName.Icon.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
@@ -973,7 +973,7 @@ export(AnimationNode) var resource
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Path);
             Assert.AreEqual(1, classDeclaration.Atributes.Count);
-            Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Value);
+            Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
@@ -1217,7 +1217,7 @@ export(AnimationNode) var resource
 
             var value = double.Parse("100.1e+10", CultureInfo.InvariantCulture);
             Assert.AreEqual(value, number.ValueDouble);
-            Assert.AreEqual("100.1e+10", number.ValueAsString);
+            Assert.AreEqual("100.1e+10", number.Sequence);
 
             Assert.IsFalse(variableDeclaration.IsConstant);
             Assert.IsTrue(variableDeclaration.IsExported);
@@ -1532,7 +1532,7 @@ export(AnimationNode) var resource
 
             Assert.IsNotNull(expression);
             Assert.IsInstanceOfType(expression, typeof(GDStringExpression));
-            Assert.AreEqual("Hello \\\" World", ((GDStringExpression)expression).String.Value);
+            Assert.AreEqual("Hello \\\" World", ((GDStringExpression)expression).String.Sequence);
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
             AssertHelper.NoInvalidTokens(expression);
