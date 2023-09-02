@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     internal class GDKeywordResolver<KEYWORD> : GDSequenceResolver
-        where KEYWORD : GDSyntaxToken, IGDKeywordToken, new()
+        where KEYWORD : GDKeyword, new()
     {
         public new ITokenOrSkipReceiver<KEYWORD> Owner { get; }
 

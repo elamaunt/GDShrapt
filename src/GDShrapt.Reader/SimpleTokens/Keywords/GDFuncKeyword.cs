@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDFuncKeyword : GDSequenceToken, IGDKeywordToken
+    public sealed class GDFuncKeyword : GDKeyword
     {
         public override string Sequence => "func";
 

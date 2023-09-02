@@ -136,7 +136,7 @@
             // Nothing
         }
 
-        public virtual void Left(GDExportParametersList list)
+        public virtual void Left(GDDataParametersList list)
         {
             // Nothing
         }
@@ -281,7 +281,7 @@
             // Nothing
         }
 
-        public virtual void Visit(GDExportParametersList list)
+        public virtual void Visit(GDDataParametersList list)
         {
             // Nothing
         }

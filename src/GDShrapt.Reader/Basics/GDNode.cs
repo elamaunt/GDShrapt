@@ -150,7 +150,7 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Creates empty instance of this node type
+        /// Creates an empty instance of this node type
         /// </summary>
         /// <returns>New empty instance</returns>
         public abstract GDNode CreateEmptyInstance();

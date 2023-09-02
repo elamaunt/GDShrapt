@@ -71,7 +71,7 @@ namespace GDShrapt.Reader
                 case GDEnumValuesList list:
                     WalkIn(list);
                     break;
-                case GDExportParametersList list:
+                case GDDataParametersList list:
                     WalkIn(list);
                     break;
                 case GDExpressionsList list:
@@ -228,7 +228,7 @@ namespace GDShrapt.Reader
             Visitor.Left(list);
         }
 
-        public void WalkIn(GDExportParametersList list)
+        public void WalkIn(GDDataParametersList list)
         {
             Visitor.Visit(list);
             Visitor.EnterNode(list);

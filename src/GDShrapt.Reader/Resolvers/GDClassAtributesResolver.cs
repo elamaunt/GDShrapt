@@ -98,7 +98,7 @@ namespace GDShrapt.Reader
                     return new GDExtendsAtribute();
                 case "tool":
                     return new GDToolAtribute();
-            default:
+                default:
                     return null;
             }
         }

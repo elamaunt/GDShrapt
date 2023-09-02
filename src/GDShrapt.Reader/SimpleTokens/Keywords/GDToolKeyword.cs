@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDToolKeyword : GDSequenceToken, IGDKeywordToken
+    public sealed class GDToolKeyword : GDKeyword
     {
         public override string Sequence => "tool";
 

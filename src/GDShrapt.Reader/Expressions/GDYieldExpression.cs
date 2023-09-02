@@ -8,7 +8,7 @@
         ITokenReceiver<GDNewLine>,
         INewLineReceiver
     {
-        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Yield);
+        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Yeild);
 
         public GDYieldKeyword YieldKeyword
         {

@@ -111,12 +111,13 @@
                     return;
                 }
 
-                if (c == '@')
+                // FIXME: obsolete in godot 4.0
+                /*if (c == '@')
                 {
                     PushAndSave(state, new GDNodePathExpression());
                     state.PassChar(c);
                     return;
-                }
+                }*/
 
                 if (c == '$')
                 {
@@ -151,7 +152,7 @@
                 {
                     if (dualOperatorExpression.OperatorType == GDDualOperatorType.Null)
                     {
-                        // This is the end of expression.
+                        // This is the end of the expression.
                         var form = dualOperatorExpression.Form;
                         var leftExpression = dualOperatorExpression.LeftExpression;
 
@@ -159,7 +160,7 @@
 
                         CompleteExpression(state);
 
-                        // Send all next tokens to current reader
+                        // Send all next tokens to the current reader
                         foreach (var token in form.GetAllTokensAfter(0))
                             state.PassString(token.ToString());
 
@@ -281,6 +282,27 @@
                         {
                             var e = new GDBoolExpression();
                             e.Add(new GDTrueKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
+                    case "yield":
+                        {
+                            var e = new GDYieldExpression();
+                            e.Add(new GDYieldKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
+                    case "async":
+                        {
+                            var e = new GDAsyncExpression();
+                            e.Add(new GDAsyncKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
+                    case "func":
+                        {
+                            var e = new GDMethodExpression();
+                            e.Add(new GDFuncKeyword());
                             PushAndSave(state, e);
                             return true;
                         }

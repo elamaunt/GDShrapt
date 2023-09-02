@@ -266,7 +266,7 @@ else:
             var first = statements[0];
             var second = statements[1];
 
-            Assert.IsInstanceOfType(first, typeof(GDIfStatement)); 
+            Assert.IsInstanceOfType(first, typeof(GDIfStatement));
             Assert.IsInstanceOfType(second, typeof(GDIfStatement));
 
             var firstIf = (GDIfStatement)first;
@@ -1573,7 +1573,7 @@ export(AnimationNode) var resource
 
             var nodePathExpression = memberOperator.CallerExpression.CastOrAssert<GDNodePathExpression>();
 
-            Assert.AreEqual("\"/root/MyAutoload\"",  nodePathExpression.Path.ToString());
+            Assert.AreEqual("\"/root/MyAutoload\"", nodePathExpression.Path.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
             AssertHelper.NoInvalidTokens(expression);
@@ -1757,7 +1757,7 @@ class fishB extends fish:
         {
             var reader = new GDScriptReader();
 
-            var samples = new string[] 
+            var samples = new string[]
             {
                 "@\"A\"",
                 "@\"A/B\"",
@@ -1819,7 +1819,7 @@ class fishB extends fish:
             Assert.AreEqual(1, @class.Methods.Count());
 
             var method = @class.Methods.First();
-           
+
             Assert.AreEqual(2, method.Statements.Count);
 
             var statement = method.Statements[1];
@@ -1858,12 +1858,174 @@ class fishB extends fish:
             var method = @class.Methods.First();
 
             Assert.AreEqual(2, method.Statements.Count);
-;
+            ;
             AssertHelper.CompareCodeStrings("surface_tool.add_uv(uvs[1]);", method.Statements[0].ToString());
             AssertHelper.CompareCodeStrings("surface_tool.add_vertex(verts[1])", method.Statements[1].ToString());
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+
+     /*   [TestMethod]
+        public void ParseAtributes()
+        {
+            var reader = new GDScriptReader();
+        }
+
+        [TestMethod]
+        public void ParseFirstClassFunctions()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var test_var = func is_positive(x):
+		return x >= 0
+
+print(test_var.call(8)) # true
+
+test_var = func is_negative(x):
+	return x < 0
+
+print(test_var.call(-4)) # true";
+
+            var @statements = reader.ParseStatements(code);
+        }
+
+        [TestMethod]
+        public void ParseFirstClassLambda()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var arr = [2,1,4,5,3]
+		
+arr.sort_custom(func(x, y): return x > y)
+
+print(arr) # [5, 4, 3, 2, 1]
+
+var dicts = [{a=1, b=6}, {a=5, b=5}, {a=3, b=2}, {a=4, b=1}]
+
+dicts.sort_custom(func(x, y): return x.a > y.a)
+
+print(dicts)
+# [{""a"":5, ""b"":5}, {""a"":4, ""b"":1}, {""a"":3, ""b"":2}, {""a"":1, ""b"":6}]
+
+var greet = func(): return ""Hello, World!""
+var add_one = func(x): return x + 1
+print(greet.call())
+print(add_one.call(2))";
+
+            var @statements = reader.ParseStatements(code);
+        }
+
+        [TestMethod]
+        public void ParseLambdaWithClosureTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var get_counter = func():
+	var count = 0
+	return func():
+		count += 1
+		return count
+
+var counter = get_counter.call()
+print(counter.call()) # 1
+print(counter.call()) # 1 Didn't work :(
+print(counter.call()) # 1";
+
+            var @statements = reader.ParseStatements(code);
+        }
+
+        [TestMethod]
+        public void ParseCurryingTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var sum_all = func(x, y, z):
+	return x + y + z
+	
+var curry = func(f):
+	return func(x):
+		return func(y):
+			return func(z):
+				return f.call(x, y, z)
+	
+var curried_sum = curry.call(sum_all)
+var partial_sum_x = curried_sum.call(1)
+var partial_sum_y = partial_sum_x.call(2)
+print(partial_sum_y.call(3)) # 6
+print(curried_sum.call(1).call(2).call(3)) # 6";
+
+            var @statements = reader.ParseStatements(code);
+
+
+        }
+
+        public void ParseNewProperiesSyntaxTest1()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var my_var: set = _setter, get = _getter
+
+func _setter(new_value):
+	my_var = new_value
+
+
+func _getter():
+	return my_var";
+
+            var @class = reader.ParseFileContent(code);
+        }
+
+        public void ParseNewProperiesSyntaxTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var _score: int
+var score: int:
+    get:
+        return _score
+    set(value: int):
+        _score = value
+        _update_score_display()
+
+func _update_score_display():
+	pass # Do something to update the displayed score";
+
+            var @class = reader.ParseFileContent(code);
+        }
+
+        public void ParseNewProperiesSyntaxTest3()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var score: int:
+    get:
+        return score
+    set(value: int):
+        score = value
+        update_score_display()
+
+func update_score_display():
+	pass # Do something to update the displayed score";
+
+            var @class = reader.ParseFileContent(code);
+        }
+
+        public void ParseNewExportsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@export_category(""Main Category"")
+@export var number = 3
+@export var string = """"
+
+@export_category(""Extra Category"")
+@export var flag = false
+@export var number2: int";
+
+
+            var @class = reader.ParseFileContent(code);
+        }*/
     }
 }

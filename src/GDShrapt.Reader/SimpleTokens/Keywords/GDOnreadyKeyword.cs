@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDOnreadyKeyword : GDSequenceToken, IGDKeywordToken
+    public sealed class GDOnreadyKeyword : GDKeyword
     {
         public override string Sequence => "onready";
 

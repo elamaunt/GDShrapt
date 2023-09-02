@@ -15,6 +15,7 @@
         {
             Owner.HandleReceivedTokenSkip();
         }
+
         protected override void OnMatch(GDReadingState state)
         {
             var declaration = new GDExportDeclaration();

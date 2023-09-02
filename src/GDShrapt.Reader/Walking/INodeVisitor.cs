@@ -25,7 +25,7 @@
         void Visit(GDDictionaryKeyValueDeclarationList list);
         void Visit(GDElifBranchesList list);
         void Visit(GDEnumValuesList list);
-        void Visit(GDExportParametersList list);
+        void Visit(GDDataParametersList list);
         void Visit(GDExpressionsList list);
         void Visit(GDMatchCasesList list);
         void Visit(GDParametersList list);
@@ -70,7 +70,7 @@
         void Left(GDDictionaryKeyValueDeclarationList list);
         void Left(GDElifBranchesList list);
         void Left(GDEnumValuesList list);
-        void Left(GDExportParametersList list);
+        void Left(GDDataParametersList list);
         void Left(GDExpressionsList list);
         void Left(GDMatchCasesList list);
         void Left(GDParametersList list);

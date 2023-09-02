@@ -21,6 +21,8 @@
         DefaultOperator,
         Breakpoint,
         Break,
-        Yield
+        Yeild,
+        Async,
+        Method
     }
 }

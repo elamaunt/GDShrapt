@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDExportKeyword : GDSequenceToken, IGDKeywordToken
+    public sealed class GDExportKeyword : GDKeyword
     {
         public override string Sequence => "export";
 

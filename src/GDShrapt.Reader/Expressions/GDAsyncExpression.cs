@@ -1,72 +1,60 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-    public sealed class GDExportDeclaration : GDNode,
-        ITokenOrSkipReceiver<GDAt>,
-        ITokenOrSkipReceiver<GDExportKeyword>,
+    public sealed class GDAsyncExpression : GDExpression,
+        ITokenOrSkipReceiver<GDAsyncKeyword>,
         ITokenOrSkipReceiver<GDOpenBracket>,
-        ITokenOrSkipReceiver<GDDataParametersList>,
-        ITokenOrSkipReceiver<GDCloseBracket>
+        ITokenOrSkipReceiver<GDExpressionsList>,
+        ITokenOrSkipReceiver<GDCloseBracket>,
+        ITokenReceiver<GDNewLine>,
+        INewLineReceiver
     {
-        public GDAt At
+        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Async);
+
+        public GDAsyncKeyword AsyncKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-
-        public GDExportKeyword ExportKeyword
+        public GDOpenBracket OpenBracket
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        public GDOpenBracket OpenBracket
+        public GDExpressionsList Parameters
         {
-            get => _form.Token2;
+            get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList());
             set => _form.Token2 = value;
-        }
-        public GDDataParametersList Parameters 
-        { 
-            get => _form.Token3 ?? (_form.Token3 = new GDDataParametersList());
-            set => _form.Token3 = value;
         }
         public GDCloseBracket CloseBracket
         {
-            get => _form.Token4;
-            set => _form.Token4 = value;
+            get => _form.Token3;
+            set => _form.Token3 = value;
         }
 
         public enum State
         {
-            At,
-            Export,
+            Yield,
             OpenBracket,
             Parameters,
             CloseBracket,
             Completed
         }
 
-        readonly GDTokensForm<State, GDAt, GDExportKeyword, GDOpenBracket, GDDataParametersList, GDCloseBracket> _form;
+        readonly GDTokensForm<State, GDAsyncKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDAt, GDExportKeyword, GDOpenBracket, GDDataParametersList, GDCloseBracket> TypedForm => _form;
-        public GDExportDeclaration()
+        public GDTokensForm<State, GDAsyncKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
+        public GDAsyncExpression()
         {
-            _form = new GDTokensForm<State, GDAt, GDExportKeyword, GDOpenBracket, GDDataParametersList, GDCloseBracket>(this);
+            _form = new GDTokensForm<State, GDAsyncKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             switch (_form.State)
             {
-                case State.At:
+                case State.Yield:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveAt(c, state);
-                    break;
-                case State.Export:
-                    if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveKeyword<GDExportKeyword>(c, state);
-                    else
-                        state.Pop();
+                        this.ResolveKeyword<GDAsyncKeyword>(c, state);
                     break;
                 case State.OpenBracket:
                     if (!this.ResolveSpaceToken(c, state))
@@ -100,47 +88,23 @@ namespace GDShrapt.Reader
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDExportDeclaration();
+            return new GDYieldExpression();
         }
-
-        void ITokenReceiver<GDAt>.HandleReceivedToken(GDAt token)
+        void ITokenReceiver<GDAsyncKeyword>.HandleReceivedToken(GDAsyncKeyword token)
         {
-            if (_form.IsOrLowerState(State.At))
-            {
-                _form.State = State.Export;
-                At = token;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-
-        void ITokenSkipReceiver<GDAt>.HandleReceivedTokenSkip()
-        {
-            if (_form.IsOrLowerState(State.At))
-            {
-                _form.State = State.Export;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-
-        void ITokenReceiver<GDExportKeyword>.HandleReceivedToken(GDExportKeyword token)
-        {
-            if (_form.IsOrLowerState(State.Export))
+            if (_form.IsOrLowerState(State.Yield))
             {
                 _form.State = State.OpenBracket;
-                ExportKeyword = token;
+                AsyncKeyword = token;
                 return;
             }
 
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDExportKeyword>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDAsyncKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.IsOrLowerState(State.Export))
+            if (_form.IsOrLowerState(State.Yield))
             {
                 _form.State = State.OpenBracket;
                 return;
@@ -148,7 +112,6 @@ namespace GDShrapt.Reader
 
             throw new GDInvalidStateException();
         }
-
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
             if (_form.IsOrLowerState(State.OpenBracket))
@@ -165,7 +128,30 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.OpenBracket))
             {
-                _form.State = State.Completed;
+                _form.State = State.Parameters;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDExpressionsList>.HandleReceivedToken(GDExpressionsList token)
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                Parameters = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpressionsList>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
                 return;
             }
 
@@ -195,23 +181,22 @@ namespace GDShrapt.Reader
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDDataParametersList>.HandleReceivedToken(GDDataParametersList token)
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
         {
-            if (_form.IsOrLowerState(State.Parameters))
+            if (_form.State == State.Parameters || _form.State == State.CloseBracket)
             {
-                _form.State = State.CloseBracket;
-                Parameters = token;
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDDataParametersList>.HandleReceivedTokenSkip()
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
         {
-            if (_form.IsOrLowerState(State.Parameters))
+            if (_form.State == State.Parameters || _form.State == State.CloseBracket)
             {
-                _form.State = State.CloseBracket;
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 

@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDStaticKeyword : GDSequenceToken, IGDKeywordToken
+    public sealed class GDStaticKeyword : GDKeyword
     {
         public override string Sequence => "static";
 

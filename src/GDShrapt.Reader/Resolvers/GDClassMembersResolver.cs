@@ -132,6 +132,7 @@ namespace GDShrapt.Reader
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
+                case "@export":
                 case "export":
                     {
                         Owner.HandleReceivedToken(state.Push(new GDVariableDeclaration(LineIntendationThreshold)));
@@ -140,6 +141,7 @@ namespace GDShrapt.Reader
                             state.PassChar(sequence[i]);
                     }
                     break;
+                case "@onready":
                 case "onready":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);

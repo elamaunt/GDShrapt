@@ -24,7 +24,7 @@ namespace GDShrapt.Reader
         }
 
         public static void ResolveKeyword<T>(this ITokenOrSkipReceiver<T> receiver, char c, GDReadingState state)
-            where T : GDSyntaxToken, IGDKeywordToken, new()
+            where T : GDKeyword, new()
         {
             state.PushAndPass(new GDKeywordResolver<T>(receiver), c);
         }

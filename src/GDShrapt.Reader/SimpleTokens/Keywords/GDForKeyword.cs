@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDWhileKeyword : GDSequenceToken, IGDKeywordToken
+    public sealed class GDWhileKeyword : GDKeyword
     {
         public override string Sequence => "while";
 

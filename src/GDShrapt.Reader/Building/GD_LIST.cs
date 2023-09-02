@@ -231,15 +231,15 @@ namespace GDShrapt.Reader
                 return list;
             }
 
-            public static GDExportParametersList ExportParameters() => new GDExportParametersList();
-            public static GDExportParametersList ExportParameters(Func<GDExportParametersList, GDExportParametersList> setup) => setup(new GDExportParametersList());
-            public static GDExportParametersList ExportParameters(params GDSyntaxToken[] unsafeTokens) => new GDExportParametersList() { FormTokensSetter = unsafeTokens };
-            public static GDExportParametersList ExportParameters(params GDDataToken[] tokens)
+            public static GDDataParametersList ExportParameters() => new GDDataParametersList();
+            public static GDDataParametersList ExportParameters(Func<GDDataParametersList, GDDataParametersList> setup) => setup(new GDDataParametersList());
+            public static GDDataParametersList ExportParameters(params GDSyntaxToken[] unsafeTokens) => new GDDataParametersList() { FormTokensSetter = unsafeTokens };
+            public static GDDataParametersList ExportParameters(params GDDataToken[] tokens)
             {
                 if (tokens == null || tokens.Length == 0)
-                    return new GDExportParametersList();
+                    return new GDDataParametersList();
 
-                var list = new GDExportParametersList();
+                var list = new GDDataParametersList();
 
                 for (int i = 0; i < tokens.Length; i++)
                 {

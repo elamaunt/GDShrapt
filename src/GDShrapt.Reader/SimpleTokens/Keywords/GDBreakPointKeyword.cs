@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDBreakPointKeyword : GDSequenceToken, IGDKeywordToken
+    public sealed class GDBreakPointKeyword : GDKeyword
     {
         public override string Sequence => "breakpoint";
 
