@@ -1561,7 +1561,7 @@ export(AnimationNode) var resource
         {
             var reader = new GDScriptReader();
 
-            var code = @"@""/root/MyAutoload"".get_name(0)";
+            var code = @"^""/root/MyAutoload"".get_name(0)";
 
             var expression = reader.ParseExpression(code);
 
@@ -1759,20 +1759,20 @@ class fishB extends fish:
 
             var samples = new string[]
             {
-                "@\"A\"",
-                "@\"A/B\"",
-                "@\".\"",
-                "@\"..\"",
-                "@\"../C\"",
-                "@\"/root\"",
-                "@\"/root/Main\"",
-                "@\"/root/MyAutoload\"",
-                "@\"Path2D/PathFollow2D/Sprite\"",
-                "@\"Path2D/PathFollow2D/Sprite:texture\"",
-                "@\"Path2D/PathFollow2D/Sprite:position\"",
-                "@\"Path2D/PathFollow2D/Sprite:position:x\"",
-                "@\"/root/Level/Path2D\"",
-                "@\"Path2D/PathFollow2D/Sprite:texture:load_path\""
+                "^\"A\"",
+                "^\"A/B\"",
+                "^\".\"",
+                "^\"..\"",
+                "^\"../C\"",
+                "^\"/root\"",
+                "^\"/root/Main\"",
+                "^\"/root/MyAutoload\"",
+                "^\"Path2D/PathFollow2D/Sprite\"",
+                "^\"Path2D/PathFollow2D/Sprite:texture\"",
+                "^\"Path2D/PathFollow2D/Sprite:position\"",
+                "^\"Path2D/PathFollow2D/Sprite:position:x\"",
+                "^\"/root/Level/Path2D\"",
+                "^\"Path2D/PathFollow2D/Sprite:texture:load_path\""
             };
 
 
@@ -1866,13 +1866,6 @@ class fishB extends fish:
             AssertHelper.NoInvalidTokens(@class);
         }
 
-
-     /*   [TestMethod]
-        public void ParseAtributes()
-        {
-            var reader = new GDScriptReader();
-        }
-
         [TestMethod]
         public void ParseFirstClassFunctions()
         {
@@ -1889,6 +1882,8 @@ test_var = func is_negative(x):
 print(test_var.call(-4)) # true";
 
             var @statements = reader.ParseStatements(code);
+
+            Assert.AreEqual(2, @statements.SelectMany(x => x.AllNodes).Count(x => x is GDMethodExpression));
         }
 
         [TestMethod]
@@ -1915,6 +1910,9 @@ print(greet.call())
 print(add_one.call(2))";
 
             var @statements = reader.ParseStatements(code);
+
+            Assert.AreEqual(10, @statements.Count);
+            Assert.AreEqual(4, @statements.SelectMany(x => x.AllNodes).Count(x => x is GDMethodExpression));
         }
 
         [TestMethod]
@@ -1934,8 +1932,11 @@ print(counter.call()) # 1 Didn't work :(
 print(counter.call()) # 1";
 
             var @statements = reader.ParseStatements(code);
-        }
 
+            Assert.AreEqual(5, @statements.Count);
+            Assert.AreEqual(2, @statements.SelectMany(x => x.AllNodes).Count(x => x is GDMethodExpression));
+        }
+        
         [TestMethod]
         public void ParseCurryingTest()
         {
@@ -1958,9 +1959,12 @@ print(curried_sum.call(1).call(2).call(3)) # 6";
 
             var @statements = reader.ParseStatements(code);
 
-
+            Assert.AreEqual(7, @statements.Count);
+            Assert.AreEqual(5, @statements.SelectMany(x => x.AllNodes).Count(x => x is GDMethodExpression));
+            Assert.AreEqual(8, @statements.SelectMany(x => x.AllNodes).OfType<GDMemberOperatorExpression>().Count(x => x.Identifier == "call"));
         }
 
+        [TestMethod]
         public void ParseNewProperiesSyntaxTest1()
         {
             var reader = new GDScriptReader();
@@ -1977,7 +1981,7 @@ func _getter():
             var @class = reader.ParseFileContent(code);
         }
 
-        public void ParseNewProperiesSyntaxTest2()
+       /* public void ParseNewProperiesSyntaxTest2()
         {
             var reader = new GDScriptReader();
 
@@ -2010,7 +2014,7 @@ func update_score_display():
 	pass # Do something to update the displayed score";
 
             var @class = reader.ParseFileContent(code);
-        }
+        }*/
 
         public void ParseNewExportsTest()
         {
@@ -2026,6 +2030,20 @@ func update_score_display():
 
 
             var @class = reader.ParseFileContent(code);
-        }*/
+        }
+
+        [TestMethod]
+        public void ParseTypedArrayTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+var array1: Array[int] = [3]
+var array2: Array = [3]
+var array3: [int] = [3]
+";
+
+            var @class = reader.ParseFileContent(code);
+        }
     }
 }

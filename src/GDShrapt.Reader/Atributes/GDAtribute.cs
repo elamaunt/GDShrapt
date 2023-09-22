@@ -1,8 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    // May be usefull in the future. 
-
-    /*public class GDAtribute : GDNode,
+    public class GDAtribute : GDNode,
        ITokenOrSkipReceiver<GDAt>,
        ITokenOrSkipReceiver<GDIdentifier>,
        ITokenOrSkipReceiver<GDOpenBracket>,
@@ -207,5 +205,5 @@
 
             throw new GDInvalidStateException();
         }
-    }*/
+    }
 }

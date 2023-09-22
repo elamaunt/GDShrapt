@@ -1,12 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDNodePathExpression : GDExpression,
-        ITokenOrSkipReceiver<GDAt>,
+        ITokenOrSkipReceiver<GDSky>,
         ITokenOrSkipReceiver<GDPathList>
     {
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.NodePath);
 
-        public GDAt At
+        public GDSky Sky
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -20,27 +20,27 @@
 
         public enum State
         {
-            At, 
+            Sky, 
             Path,
             Completed
         }
 
-        readonly GDTokensForm<State, GDAt, GDPathList> _form;
+        readonly GDTokensForm<State, GDSky, GDPathList> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDAt, GDPathList> TypedForm => _form;
+        public GDTokensForm<State, GDSky, GDPathList> TypedForm => _form;
         public GDNodePathExpression()
         {
-            _form = new GDTokensForm<State, GDAt, GDPathList>(this);
+            _form = new GDTokensForm<State, GDSky, GDPathList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             switch (_form.State)
             {
-                case State.At:
+                case State.Sky:
                     if (this.ResolveSpaceToken(c, state))
                         return;
-                    this.ResolveAt(c, state);
+                    this.ResolveSky(c, state);
                     break;
                 case State.Path:
                     _form.State = State.Completed;
@@ -62,21 +62,21 @@
             return new GDNodePathExpression();
         }
 
-        void ITokenReceiver<GDAt>.HandleReceivedToken(GDAt token)
+        void ITokenReceiver<GDSky>.HandleReceivedToken(GDSky token)
         {
-            if (_form.IsOrLowerState(State.At))
+            if (_form.IsOrLowerState(State.Sky))
             {
                 _form.State = State.Path;
-                At = token;
+                Sky = token;
                 return;
             }
 
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDAt>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDSky>.HandleReceivedTokenSkip()
         {
-            if (_form.IsOrLowerState(State.At))
+            if (_form.IsOrLowerState(State.Sky))
             {
                 _form.State = State.Path;
                 return;

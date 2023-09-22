@@ -55,6 +55,19 @@ namespace GDShrapt.Reader
             return result;
         }
 
+        public static bool ResolveSky(this ITokenOrSkipReceiver<GDSky> receiver, char c, GDReadingState state)
+        {
+            var result = c == '^';
+            if (result)
+                receiver.HandleReceivedToken(new GDSky());
+            else
+            {
+                receiver.HandleReceivedTokenSkip();
+                state.PassChar(c);
+            }
+            return result;
+        }
+
         public static bool ResolveRightSlash(this ITokenOrSkipReceiver<GDRightSlash> receiver, char c, GDReadingState state)
         {
             var result = c == '/';
@@ -314,20 +327,6 @@ namespace GDShrapt.Reader
             return false;
         }
 
-        public static bool ResolveType(this ITokenOrSkipReceiver<GDType> receiver, char c, GDReadingState state)
-        {
-            if (IsIdentifierStartChar(c))
-            {
-                receiver.HandleReceivedToken(state.Push(new GDType()));
-                state.PassChar(c);
-                return true;
-            }
-
-            receiver.HandleReceivedTokenSkip();
-            state.PassChar(c);
-            return false;
-        }
-
         public static bool ResolveNumber(this ITokenOrSkipReceiver<GDNumber> receiver, char c, GDReadingState state)
         {
             if (IsNumberStartChar(c))
@@ -444,6 +443,25 @@ namespace GDShrapt.Reader
         public static void ResolvePathSpecifier(this ITokenOrSkipReceiver<GDPathSpecifier> receiver, char c, GDReadingState state)
         {
             state.PushAndPass(new GDPathSpecifierResolver(receiver), c);
+        }
+
+        public static bool ResolveType(this ITokenOrSkipReceiver<GDType> receiver, char c, GDReadingState state)
+        {
+            if (IsIdentifierStartChar(c))
+            {
+                receiver.HandleReceivedToken(state.Push(new GDType()));
+                state.PassChar(c);
+                return true;
+            }
+
+            receiver.HandleReceivedTokenSkip();
+            state.PassChar(c);
+            return false;
+        }
+
+        public static void ResolveType(this ITokenOrSkipReceiver<GDTypeNode> receiver, char c, GDReadingState state)
+        {
+            state.PushAndPass(new GDTypeResolver(receiver), c);
         }
 
         public static bool IsDataStartCharToken(this char c) => IsIdentifierStartChar(c) || IsNumberStartChar(c) || IsStringStartChar(c) || IsNumberStartChar(c) || c == '-';

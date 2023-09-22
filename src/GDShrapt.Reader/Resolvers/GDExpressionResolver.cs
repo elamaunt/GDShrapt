@@ -111,17 +111,16 @@
                     return;
                 }
 
-                // FIXME: obsolete in godot 4.0
-                /*if (c == '@')
-                {
-                    PushAndSave(state, new GDNodePathExpression());
-                    state.PassChar(c);
-                    return;
-                }*/
-
                 if (c == '$')
                 {
                     PushAndSave(state, new GDGetNodeExpression());
+                    state.PassChar(c);
+                    return;
+                }
+
+                if (c == '^')
+                {
+                    PushAndSave(state, new GDNodePathExpression());
                     state.PassChar(c);
                     return;
                 }
@@ -142,6 +141,12 @@
             }
             else
             {
+                if (_expression is GDMethodExpression)
+                {
+                    CompleteExpression(state);
+                    return;
+                }
+
                 if (CheckKeywords(state))
                 {
                     state.PassChar(c);
@@ -205,6 +210,11 @@
 
         private bool CheckKeywords(GDReadingState state)
         {
+            if (_expression is GDMethodExpression)
+            {
+                return false;
+            }
+
             if (_expression is GDIdentifierExpression identifierExpr)
             {
                 var s = identifierExpr.Identifier?.Sequence;

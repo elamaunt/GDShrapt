@@ -44,6 +44,7 @@ namespace GDShrapt.Reader
                     return "";
             }
         }
+
         public static string Print(this GDSingleOperatorType self)
         {
             switch (self)
@@ -71,6 +72,7 @@ namespace GDShrapt.Reader
                 case GDOperationType.Member:
                 case GDOperationType.Call: return 19;
                 case GDOperationType.Identifier: return 21;
+                case GDOperationType.Method: return 21;
                 default:
                     return -1;
             }

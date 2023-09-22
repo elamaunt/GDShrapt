@@ -211,7 +211,7 @@ namespace GDShrapt.Reader
             public static GDNodePathExpression NodePath(params GDSyntaxToken[] unsafeTokens) => new GDNodePathExpression() { FormTokensSetter = unsafeTokens };
             public static GDNodePathExpression NodePath(GDPathList path) => new GDNodePathExpression()
             {
-                At = new GDAt(),
+                Sky = new GDSky(),
                 Path = path
             };
 

@@ -2,6 +2,7 @@
 {
     public class GDMethodExpression : GDExpression,
          ITokenOrSkipReceiver<GDFuncKeyword>,
+         ITokenOrSkipReceiver<GDIdentifier>,
          ITokenOrSkipReceiver<GDOpenBracket>,
          ITokenOrSkipReceiver<GDParametersList>,
          ITokenOrSkipReceiver<GDCloseBracket>,
@@ -19,50 +20,58 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        public GDOpenBracket OpenBracket
+
+        public GDIdentifier Identifier
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        public GDParametersList Parameters
+
+        public GDOpenBracket OpenBracket
         {
-            get => _form.Token2 ?? (_form.Token2 = new GDParametersList());
+            get => _form.Token2;
             set => _form.Token2 = value;
         }
-        public GDCloseBracket CloseBracket
+        public GDParametersList Parameters
         {
-            get => _form.Token3;
+            get => _form.Token3 ?? (_form.Token3 = new GDParametersList());
             set => _form.Token3 = value;
         }
-        public GDReturnTypeKeyword ReturnTypeKeyword
+        public GDCloseBracket CloseBracket
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
-        public GDType ReturnType
+        public GDReturnTypeKeyword ReturnTypeKeyword
         {
             get => _form.Token5;
             set => _form.Token5 = value;
         }
-        public GDColon Colon
+        public GDType ReturnType
         {
             get => _form.Token6;
             set => _form.Token6 = value;
         }
-        public GDExpression Expression
+        public GDColon Colon
         {
             get => _form.Token7;
             set => _form.Token7 = value;
         }
+        public GDExpression Expression
+        {
+            get => _form.Token8;
+            set => _form.Token8 = value;
+        }
         public GDStatementsList Statements
         {
-            get => _form.Token8 ?? (_form.Token8 = new GDStatementsList(Intendation + 1));
-            set => _form.Token8 = value;
+            get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1));
+            set => _form.Token9 = value;
         }
 
         public enum State
         {
             Func,
+            Identifier,
             OpenBracket,
             Parameters,
             CloseBracket,
@@ -74,19 +83,19 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDFuncKeyword, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDFuncKeyword, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
+        public GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDMethodExpression(int intendation)
         {
             Intendation = intendation;
-            _form = new GDTokensForm<State, GDFuncKeyword, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDMethodExpression()
         {
-            _form = new GDTokensForm<State, GDFuncKeyword, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -107,6 +116,9 @@
             {
                 case State.Func:
                     this.ResolveKeyword<GDFuncKeyword>(c, state);
+                    break;
+                case State.Identifier:
+                    this.ResolveIdentifier(c, state);
                     break;
                 case State.OpenBracket:
                     this.ResolveOpenBracket(c, state);
@@ -133,6 +145,12 @@
                     this.ResolveExpression(c, state);
                     break;
                 case State.Statements:
+                    if (c.IsExpressionStopChar())
+                    {
+                        state.PopAndPass(c);
+                        return;
+                    }
+
                     this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
                 default:
@@ -164,7 +182,7 @@
         {
             if (_form.IsOrLowerState(State.Func))
             {
-                _form.State = State.OpenBracket;
+                _form.State = State.Identifier;
                 FuncKeyword = token;
                 return;
             }
@@ -175,6 +193,29 @@
         void ITokenSkipReceiver<GDFuncKeyword>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Func))
+            {
+                _form.State = State.Identifier;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
+        {
+            if (_form.IsOrLowerState(State.Identifier))
+            {
+                _form.State = State.OpenBracket;
+                Identifier = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Identifier))
             {
                 _form.State = State.OpenBracket;
                 return;
