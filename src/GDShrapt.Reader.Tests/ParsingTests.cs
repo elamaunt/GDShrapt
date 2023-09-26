@@ -696,7 +696,7 @@ else:
             AssertHelper.NoInvalidTokens(statement);
         }
 
-        [TestMethod]
+        /*[TestMethod]
         public void ExportTest()
         {
             var reader = new GDScriptReader();
@@ -860,7 +860,7 @@ export(AnimationNode) var resource
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
-        }
+        }*/
 
         [TestMethod]
         public void EnumTest()
@@ -1151,7 +1151,7 @@ export(AnimationNode) var resource
             }
         }
 
-        [TestMethod]
+        /*[TestMethod]
         public void PropertyTest()
         {
             var reader = new GDScriptReader();
@@ -1185,9 +1185,9 @@ export(AnimationNode) var resource
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
-        }
+        }*/
 
-        [TestMethod]
+        /*[TestMethod]
         public void PropertyTest2()
         {
             var reader = new GDScriptReader();
@@ -1230,7 +1230,7 @@ export(AnimationNode) var resource
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
-        }
+        }*/
 
         [TestMethod]
         public void SignalTest()

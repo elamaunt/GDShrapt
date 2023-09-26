@@ -8,6 +8,7 @@
         public GDSetGetAccessorsResolver(T owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
+            AllowZeroIntendationOnFirstLine = true;
             Owner = owner;
         }
 
@@ -35,18 +36,21 @@
                         // TODO: check the colon
                         var accessor = new GDSetAccessorMethodDeclarationNode(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
+                        state.Push(accessor);
                         break;
                     }
                 case "set=":
                     {
                         var accessor = new GDSetAccessorMethodDeclarationNode(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
+                        state.Push(accessor);
                         break;
                     }
                 case "set:":
                     {
                         var accessor = new GDSetAccessorBodyDeclarationNode(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
+                        state.Push(accessor);
                         break;
                     }
                 case "get":
@@ -54,29 +58,32 @@
                         // TODO: check the colon
                         var accessor = new GDGetAccessorMethodDeclarationNode(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
+                        state.Push(accessor);
                         break;
                     }
                 case "get=":
                     {
                         var accessor = new GDGetAccessorMethodDeclarationNode(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
+                        state.Push(accessor);
                         break;
                     }
                 case "get:":
                     {
                         var accessor = new GDGetAccessorBodyDeclarationNode(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
+                        state.Push(accessor);
                         break;
                     }
                 default:
                     Owner.HandleReceivedTokenSkip();
-
-                    if (pattern != null)
-                    {
-                        for (int i = 0; i < pattern.Length; i++)
-                            state.PassChar(pattern[i]);
-                    }
                     break;
+            }
+
+            if (pattern != null)
+            {
+                for (int i = 0; i < pattern.Length; i++)
+                    state.PassChar(pattern[i]);
             }
         }
 

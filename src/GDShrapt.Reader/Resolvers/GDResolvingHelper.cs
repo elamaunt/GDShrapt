@@ -464,6 +464,7 @@ namespace GDShrapt.Reader
             state.PushAndPass(new GDTypeResolver(receiver), c);
         }
 
+        public static bool IsIdentifierMiddleCharToken(this char c) => char.IsDigit(c) || char.IsLetter(c) || c == '_';
         public static bool IsDataStartCharToken(this char c) => IsIdentifierStartChar(c) || IsNumberStartChar(c) || IsStringStartChar(c) || IsNumberStartChar(c) || c == '-';
         public static bool IsCommentStartChar(this char c) => c == '#';
         public static bool IsSpace(this char c) => c == ' ' || c == '\t';

@@ -5,7 +5,8 @@ namespace GDShrapt.Reader
     internal class GDReceiver :
         IIntendedTokenReceiver<GDStatement>,
         ITokenOrSkipReceiver<GDExpression>,
-        IIntendedTokenReceiver<GDNode>
+        IIntendedTokenReceiver<GDNode>,
+        ITokenOrSkipReceiver<GDTypeNode>
     {
         public List<GDSyntaxToken> Tokens { get; } = new List<GDSyntaxToken>();
 
@@ -45,6 +46,11 @@ namespace GDShrapt.Reader
         }
 
         public void HandleReceivedToken(GDNode token)
+        {
+            Tokens.Add(token);
+        }
+
+        public void HandleReceivedToken(GDTypeNode token)
         {
             Tokens.Add(token);
         }

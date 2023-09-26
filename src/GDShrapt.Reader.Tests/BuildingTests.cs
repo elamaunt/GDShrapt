@@ -15,7 +15,7 @@ namespace GDShrapt.Reader.Tests
                     GD.Atribute.Extends("Node2D")),
 
                 GD.Declaration.Const("my_constant", GD.Expression.String("Hello World")),
-                GD.Declaration.OnreadyVariable("parameter", GD.Expression.True()),
+                GD.Declaration.Variable("parameter", GD.Expression.True()),
 
                 GD.Declaration.Method("_start",
                     GD.Expression.Call(GD.Expression.Identifier("print"), GD.Expression.String("Hello world"))

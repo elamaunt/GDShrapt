@@ -4,21 +4,27 @@
         ITokenOrSkipReceiver<GDType>
     {
         public override GDTypeNode SubType => null;
-        public override bool IsArray => false;
+        public override bool IsArray => Type?.IsArray ?? false;
        
+        public GDType Type
+        {
+            get => _form.Token0;
+            set => _form.Token0 = value;
+        }
+
         public enum State
         {
             Type,
             Completed
         }
 
-        readonly GDTokensForm<State, GDTypeNode> _form;
+        readonly GDTokensForm<State, GDType> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDTypeNode> TypedForm => _form;
+        public GDTokensForm<State, GDType> TypedForm => _form;
 
         public GDSingleTypeNode()
         {
-            _form = new GDTokensForm<State, GDTypeNode>(this);
+            _form = new GDTokensForm<State, GDType>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -46,12 +52,25 @@
 
         void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
         {
+            if (_form.State == State.Type)
+            {
+                _form.State = State.Completed;
+                Type = token;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
 
         void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
         {
+            if (_form.State == State.Type)
+            {
+                _form.State = State.Completed;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
     }
 }

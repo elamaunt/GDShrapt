@@ -9,6 +9,7 @@ namespace GDShrapt.Reader
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         int _lineIntendation;
+        bool _firstLine = true;
 
         public int CalculatedIntendation => _lineIntendation;
 
@@ -18,6 +19,8 @@ namespace GDShrapt.Reader
         bool _intendationTokensSent;
 
         new IIntendedTokenReceiver Owner { get; }
+
+        public bool AllowZeroIntendationOnFirstLine { get; set; }
 
         public GDIntendedResolver(IIntendedTokenReceiver owner, int lineIntendation)
             : base(owner)
@@ -40,11 +43,18 @@ namespace GDShrapt.Reader
 
         bool HandleIntendation(char c, GDReadingState state)
         {
+            if (AllowZeroIntendationOnFirstLine && _firstLine && !c.IsSpace())
+            {
+                _lineIntendationEnded = true;
+                return false;
+            }
+
             // Every child must start with line intendation equals intentation of parent plus 1
             if (!_lineIntendationEnded)
             {
                 if (c == '\n')
                 {
+                    _firstLine = false;
                     _inComment = false;
                     _spaceCounter = 0;
                     _lineIntendation = 0;
@@ -230,6 +240,7 @@ namespace GDShrapt.Reader
             _lineIntendationEnded = false;
             _spaceCounter = 0;
             _intendationTokensSent = false;
+            _firstLine = true;
         }
     }
 }

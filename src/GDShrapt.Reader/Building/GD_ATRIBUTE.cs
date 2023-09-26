@@ -1,4 +1,6 @@
-﻿using System;
+﻿using GDShrapt.Reader.Declarations;
+using System;
+using System.Xml.Linq;
 
 namespace GDShrapt.Reader
 {
@@ -57,6 +59,24 @@ namespace GDShrapt.Reader
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
                 Path = Syntax.String(path)
+            };
+
+            public static GDClassMemberAttributeDeclaration MemberAttribute() => new GDClassMemberAttributeDeclaration();
+            public static GDClassMemberAttributeDeclaration MemberAttribute(Func<GDClassMemberAttributeDeclaration, GDClassMemberAttributeDeclaration> setup) => setup(new GDClassMemberAttributeDeclaration());
+            public static GDClassMemberAttributeDeclaration MemberAttribute(params GDSyntaxToken[] unsafeTokens) => new GDClassMemberAttributeDeclaration() { FormTokensSetter = unsafeTokens };
+           
+            public static GDClassMemberAttributeDeclaration MemberAttribute(GDAttribute attribute) => new GDClassMemberAttributeDeclaration()
+            { 
+                Attribute = attribute
+            };
+
+            public static GDClassMemberAttributeDeclaration MemberAttribute(GDIdentifier identifier) => new GDClassMemberAttributeDeclaration()
+            {
+                Attribute = new GDAttribute() 
+                { 
+                    At = new GDAt(),
+                    Name = identifier
+                }
             };
         }
     }

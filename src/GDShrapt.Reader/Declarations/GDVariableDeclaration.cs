@@ -132,6 +132,7 @@
                 case State.Identifier:
                     this.ResolveIdentifier(c, state);
                     break;
+                case State.TypeColon:
                 case State.Colon:
                     state.PushAndPass(new GDSingleCharTokenResolver<GDColon>(this), c);
                     break;
@@ -239,7 +240,14 @@
             if (_form.IsOrLowerState(State.TypeColon))
             {
                 _form.State = State.Type;
+                TypeColon = token;
+                return;
+            }
+
+            if (_form.IsOrLowerState(State.Colon))
+            {
                 Colon = token;
+                _form.State = State.FirstAccessorDeclarationNode;
                 return;
             }
 
@@ -251,6 +259,12 @@
             if (_form.IsOrLowerState(State.TypeColon))
             {
                 _form.State = State.Assign;
+                return;
+            }
+
+            if (_form.IsOrLowerState(State.Colon))
+            {
+                _form.State = State.FirstAccessorDeclarationNode;
                 return;
             }
 
@@ -331,7 +345,7 @@
         {
             if (_form.IsOrLowerState(State.Identifier))
             {
-                _form.State = State.Assign;
+                _form.State = State.TypeColon;
                 Identifier = token;
                 return;
             }
@@ -343,7 +357,7 @@
         {
             if (_form.IsOrLowerState(State.Identifier))
             {
-                _form.State = State.Colon;
+                _form.State = State.TypeColon;
                 return;
             }
 
@@ -399,7 +413,7 @@
                 return;
             }
 
-            throw new System.NotImplementedException();
+            throw new GDInvalidStateException();
         }
 
         void ITokenSkipReceiver<GDAccessorDeclarationNode>.HandleReceivedTokenSkip()
@@ -416,7 +430,7 @@
                 return;
             }
 
-            throw new System.NotImplementedException();
+            throw new GDInvalidStateException();
         }
     }
 }
