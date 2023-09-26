@@ -5,7 +5,7 @@ using System.Text;
 
 namespace GDShrapt.Reader
 {
-    internal abstract class GDPatternResolver : GDResolver
+    internal abstract class GDIntendedPatternResolver : GDIntendedResolver
     {
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
@@ -23,36 +23,9 @@ namespace GDShrapt.Reader
         public bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
 
-        public GDPatternResolver(ITokenReceiver owner)
-            : base(owner)
+        public GDIntendedPatternResolver(IIntendedTokenReceiver owner, int intendation)
+            : base(owner, intendation)
         {
-        }
-
-        internal override void HandleChar(char c, GDReadingState state)
-        {
-            _sequenceBuilder.Append(c);
-
-            var check = CheckForPatterns();
-
-            if (!check.HasLongerPatternsToMatch)
-            {
-                state.Pop();
-
-                if (check.MatchedPattern == null)
-                {
-                    PatternMatched(_lastPatternCheck.MatchedPattern, state);
-                    state.PassChar(c);
-                }
-                else
-                {
-                    PatternMatched(check.MatchedPattern, state);
-                }
-
-                _sequenceBuilder.Clear();
-                return;
-            }
-
-            _lastPatternCheck = check;
         }
 
         protected abstract void PatternMatched(string pattern, GDReadingState state);
@@ -126,11 +99,6 @@ namespace GDShrapt.Reader
             _patternsCache[type] = _sortedPatterns = patterns.Distinct().OrderByDescending(x => x.Length).ToArray();
         }
 
-        internal override void HandleNewLineChar(GDReadingState state)
-        {
-            HandleChar('\n', state);
-        }
-
         internal override void HandleSharpChar(GDReadingState state)
         {
             HandleChar('#', state);
@@ -139,6 +107,43 @@ namespace GDShrapt.Reader
         internal override void ForceComplete(GDReadingState state)
         {
             PatternMatched(_lastPatternCheck.MatchedPattern, state);
+        }
+
+        internal override void HandleCharAfterIntendation(char c, GDReadingState state)
+        {
+            _sequenceBuilder.Append(c);
+
+            var check = CheckForPatterns();
+
+            if (!check.HasLongerPatternsToMatch)
+            {
+                state.Pop();
+
+                if (check.MatchedPattern == null)
+                {
+                    PatternMatched(_lastPatternCheck.MatchedPattern, state);
+                    state.PassChar(c);
+                }
+                else
+                {
+                    PatternMatched(check.MatchedPattern, state);
+                }
+
+                _sequenceBuilder.Clear();
+                return;
+            }
+
+            _lastPatternCheck = check;
+        }
+
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
+        {
+            HandleCharAfterIntendation('\n', state);
+        }
+
+        internal override void HandleSharpCharAfterIntendation(GDReadingState state)
+        {
+            HandleCharAfterIntendation('#', state);
         }
     }
 }

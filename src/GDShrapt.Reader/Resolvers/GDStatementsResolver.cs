@@ -29,7 +29,7 @@ namespace GDShrapt.Reader
 
                 if (_resolvedAsExpression)
                 {
-                    // Resolving multiple experssions on the same string
+                    // Resolving multiple expressions on the same string
                     var statement = new GDExpressionStatement();
                     Owner.HandleReceivedToken(statement);
                     state.PushAndPass(statement, c);

@@ -66,7 +66,7 @@
                     this.ResolveString(c, state);
                     break;
                 default:
-                    this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
+                    state.PopAndPass(c);
                     break;
             }
         }

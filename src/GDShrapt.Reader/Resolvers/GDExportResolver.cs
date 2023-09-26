@@ -1,6 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
-    internal class GDExportResolver : GDSequenceResolver
+    // Legacy
+    /*internal class GDExportResolver : GDSequenceResolver
     {
         new ITokenOrSkipReceiver<GDExportDeclaration> Owner { get; }
         public override string Sequence => "export";
@@ -23,5 +24,5 @@
             Owner.HandleReceivedToken(declaration);
             state.Push(declaration);
         }
-    }
+    }*/
 }

@@ -472,5 +472,11 @@ namespace GDShrapt.Reader
         public static bool IsExpressionStopChar(this char c) => c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c == ';';
         public static bool IsNumberStartChar(this char c) => char.IsDigit(c);
         public static bool IsNewLine(this char c) => c == '\n';
+
+        public static GDTypeNode ParseTypeNode(string type)
+        {
+            var reader = new GDScriptReader();
+            return reader.ParseType(type);
+        }
     }
 }

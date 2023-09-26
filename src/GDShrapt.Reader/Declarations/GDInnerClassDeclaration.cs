@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
-    public sealed class GDInnerClassDeclaration : GDClassMember, IGDClassDeclaration,
+    public sealed class GDInnerClassDeclaration : GDIdentifiableClassMember, IGDClassDeclaration,
         ITokenOrSkipReceiver<GDClassKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDExtendsKeyword>,
@@ -22,31 +22,37 @@ namespace GDShrapt.Reader
             get => _form.Token0;
             set => _form.Token0 = value;
         }
+
         public override GDIdentifier Identifier
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
+
         public GDExtendsKeyword Extends
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
+
         public GDType BaseType
         {
             get => (GDType)_form.Token3;
             set => _form.Token3 = value;
         }
+
         public GDString BaseTypePath
         {
             get => (GDString)_form.Token3;
             set => _form.Token3 = value;
         }
+
         public GDColon Colon
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
+
         public GDClassMembersList Members
         {
             get => _form.Token5 ?? (_form.Token5 = new GDClassMembersList(Intendation + 1));
@@ -68,6 +74,7 @@ namespace GDShrapt.Reader
         readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList> _form;
         public override GDTokensForm Form => _form;
         public override bool IsStatic => true;
+
         public GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList> TypedForm => _form;
 
         internal GDInnerClassDeclaration(int intendation)

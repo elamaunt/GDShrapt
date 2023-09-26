@@ -1981,7 +1981,7 @@ func _getter():
             var @class = reader.ParseFileContent(code);
         }
 
-       /* public void ParseNewProperiesSyntaxTest2()
+        public void ParseNewProperiesSyntaxTest2()
         {
             var reader = new GDScriptReader();
 
@@ -2014,7 +2014,7 @@ func update_score_display():
 	pass # Do something to update the displayed score";
 
             var @class = reader.ParseFileContent(code);
-        }*/
+        }
 
         public void ParseNewExportsTest()
         {

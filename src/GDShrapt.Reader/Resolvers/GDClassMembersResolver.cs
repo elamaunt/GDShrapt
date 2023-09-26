@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using GDShrapt.Reader.Declarations;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
@@ -102,6 +103,18 @@ namespace GDShrapt.Reader
             SendIntendationTokensToOwner();
 
             _memberResolved = true;
+
+            if (sequence[0] == '@')
+            {
+                Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold)));
+
+                if (sequence != null)
+                    for (int i = 0; i < sequence.Length; i++)
+                        state.PassChar(sequence[i]);
+
+                return;
+            }
+
             switch (sequence)
             {
                 case "signal":
@@ -132,23 +145,23 @@ namespace GDShrapt.Reader
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
                     }
-                case "@export":
-                case "export":
+               // case "@export":
+               /* case "export":
                     {
                         Owner.HandleReceivedToken(state.Push(new GDVariableDeclaration(LineIntendationThreshold)));
 
                         for (int i = 0; i < sequence.Length; i++)
                             state.PassChar(sequence[i]);
                     }
-                    break;
-                case "@onready":
-                case "onready":
+                    break;*/
+               // case "@onready":
+               /* case "onready":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
                         m.Add(new GDOnreadyKeyword());
                         Owner.HandleReceivedToken(state.Push(m));
                         break;
-                    }
+                    }*/
                 case "const":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);

@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDAtribute : GDNode,
+    public class GDAttribute : GDNode,
        ITokenOrSkipReceiver<GDAt>,
        ITokenOrSkipReceiver<GDIdentifier>,
        ITokenOrSkipReceiver<GDOpenBracket>,
@@ -24,11 +24,13 @@
             get => _form.Token2;
             set => _form.Token2 = value;
         }
+
         public GDDataParametersList Parameters
         {
             get => _form.Token3 ?? (_form.Token3 = new GDDataParametersList());
             set => _form.Token3 = value;
         }
+
         public GDCloseBracket CloseBracket
         {
             get => _form.Token4;
@@ -51,7 +53,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-           return new GDAtribute();
+           return new GDAttribute();
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -80,7 +82,7 @@
                         this.ResolveCloseBracket(c, state);
                     break;
                 default:
-                    this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
+                    state.PopAndPass(c);
                     break;
             }
         }
@@ -89,7 +91,6 @@
         {
             state.PopAndPassNewLine();
         }
-
 
         void ITokenReceiver<GDAt>.HandleReceivedToken(GDAt token)
         {

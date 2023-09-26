@@ -1,12 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDOpenBracket : GDSingleCharToken, IGDStructureToken
+    public sealed class GDComma : GDSingleCharToken, IGDStructureToken
     {
-        public override char Char => '(';
+        public override char Char => ',';
 
         public override GDSyntaxToken Clone()
         {
-            return new GDOpenBracket();
+            return new GDComma();
         }
     }
 }

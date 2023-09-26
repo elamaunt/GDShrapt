@@ -412,7 +412,7 @@ namespace GDShrapt.Reader
                 [5] = Syntax.Space(),
                 Colon = new GDColon(),
                 [6] = Syntax.Space(),
-                Type = Syntax.Type(type)
+                Type = GDResolvingHelper.ParseTypeNode(type)
             };
 
             public static GDVariableDeclaration Variable(string identifier, GDExpression initializer) => new GDVariableDeclaration()
@@ -434,24 +434,7 @@ namespace GDShrapt.Reader
                 [5] = Syntax.Space(),
                 Colon = new GDColon(),
                 [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer
-            };
-
-            public static GDVariableDeclaration Variable(string identifier, string type, GDExportDeclaration export, GDExpression initializer) => new GDVariableDeclaration()
-            {
-                Export = export,
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [5] = Syntax.Space(),
-                Colon = new GDColon(),
-                [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
+                Type = GDResolvingHelper.ParseTypeNode(type),
                 [7] = Syntax.Space(),
                 Assign = new GDAssign(),
                 [8] = Syntax.Space(),
@@ -461,232 +444,73 @@ namespace GDShrapt.Reader
             public static GDVariableDeclaration Variable(string identifier, string type, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod) => new GDVariableDeclaration()
             {
                 VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [5] = Syntax.Space(),
-                Colon = new GDColon(),
-                [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer,
-                [9] = Syntax.Space(),
-                SetGetKeyword = new GDSetGetKeyword(),
-                [10] = Syntax.Space(),
-                SetMethodIdentifier = setMethod,
-                [11] = Syntax.Space(),
-                Comma = new GDComma(),
-                GetMethodIdentifier = getMethod
-            };
-
-            public static GDVariableDeclaration Variable(string identifier, string type, GDExportDeclaration export, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod) => new GDVariableDeclaration()
-            {
-                Export = export,
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [5] = Syntax.Space(),
-                Colon = new GDColon(),
-                [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer,
-                [9] = Syntax.Space(),
-                SetGetKeyword = new GDSetGetKeyword(),
-                [10] = Syntax.Space(),
-                SetMethodIdentifier = setMethod,
-                [11] = Syntax.Space(),
-                Comma = new GDComma(),
-                GetMethodIdentifier = getMethod
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(GDIdentifier identifier) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = identifier
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier) => new GDVariableDeclaration()
-            {
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier)
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier, string type) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [5] = Syntax.Space(),
-                Colon = new GDColon(),
-                [6] = Syntax.Space(),
-                Type = Syntax.Type(type)
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier, string type, GDExpression initializer) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [5] = Syntax.Space(),
-                Colon = new GDColon(),
-                [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier, GDExpression initializer) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier, string type, GDExportDeclaration export, GDExpression initializer) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
                 [2] = Syntax.Space(),
-                Export = export,
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
                 Identifier = Syntax.Identifier(identifier),
-                [5] = Syntax.Space(),
+                [3] = Syntax.Space(),
                 Colon = new GDColon(),
-                [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier, GDExportDeclaration export, GDExpression initializer) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [2] = Syntax.Space(),
-                Export = export,
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
                 [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier, string type, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
+                Type = GDResolvingHelper.ParseTypeNode(type),
                 [5] = Syntax.Space(),
-                Colon = new GDColon(),
+                Assign = new GDAssign(),
                 [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
                 Initializer = initializer,
-                [9] = Syntax.Space(),
-                SetGetKeyword = new GDSetGetKeyword(),
-                [10] = Syntax.Space(),
-                SetMethodIdentifier = setMethod,
-                [11] = Syntax.Space(),
+                [7] = Syntax.Space(),
+
+                FirstAccessorDeclarationNode = new GDSetAccessorMethodDeclarationNode() 
+                { 
+                    SetKeyword = new GDSetKeyword(),
+                    [1] = Syntax.Space(),
+                    Assign = new GDAssign(),
+                    [2] = Syntax.Space(),
+                    Identifier = setMethod
+                },
+
+                [8] = Syntax.Space(),
                 Comma = new GDComma(),
-                GetMethodIdentifier = getMethod
+                [9] = Syntax.Space(),
+
+                SecondAccessorDeclarationNode = new GDGetAccessorMethodDeclarationNode()
+                { 
+                    GetKeyword = new GDGetKeyword(),
+                    [1] = Syntax.Space(),
+                    Assign = new GDAssign(),
+                    [2] = Syntax.Space(),
+                    Identifier = getMethod
+                }
             };
 
-            public static GDVariableDeclaration OnreadyVariable(string identifier, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod) => new GDVariableDeclaration()
+            public static GDVariableDeclaration Variable(string identifier, string type, GDIdentifier setMethod, GDIdentifier getMethod) => new GDVariableDeclaration()
             {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [3] = Syntax.Space(),
                 VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer,
-                [9] = Syntax.Space(),
-                SetGetKeyword = new GDSetGetKeyword(),
-                [10] = Syntax.Space(),
-                SetMethodIdentifier = setMethod,
-                [11] = Syntax.Space(),
-                Comma = new GDComma(),
-                GetMethodIdentifier = getMethod
-            };
-
-            public static GDVariableDeclaration OnreadyVariable(string identifier, string type, GDExportDeclaration export, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
                 [2] = Syntax.Space(),
-                Export = export,
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
                 Identifier = Syntax.Identifier(identifier),
+                [3] = Syntax.Space(),
+                Colon = new GDColon(),
+                [4] = Syntax.Space(),
+                Type = GDResolvingHelper.ParseTypeNode(type),
                 [5] = Syntax.Space(),
-                Colon = new GDColon(),
-                [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [8] = Syntax.Space(),
-                Initializer = initializer,
-                [9] = Syntax.Space(),
-                SetGetKeyword = new GDSetGetKeyword(),
-                [10] = Syntax.Space(),
-                SetMethodIdentifier = setMethod,
-                [11] = Syntax.Space(),
-                Comma = new GDComma(),
-                GetMethodIdentifier = getMethod
-            };
 
-            public static GDVariableDeclaration OnreadyVariable(string identifier, GDExportDeclaration export, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod) => new GDVariableDeclaration()
-            {
-                OnreadyKeyword = new GDOnreadyKeyword(),
-                [2] = Syntax.Space(),
-                Export = export,
-                [3] = Syntax.Space(),
-                VarKeyword = new GDVarKeyword(),
-                [4] = Syntax.Space(),
-                Identifier = Syntax.Identifier(identifier),
-                [7] = Syntax.Space(),
-                Assign = new GDAssign(),
+                FirstAccessorDeclarationNode = new GDSetAccessorMethodDeclarationNode()
+                {
+                    SetKeyword = new GDSetKeyword(),
+                    [1] = Syntax.Space(),
+                    Assign = new GDAssign(),
+                    [2] = Syntax.Space(),
+                    Identifier = setMethod
+                },
+
                 [8] = Syntax.Space(),
-                Initializer = initializer,
-                [9] = Syntax.Space(),
-                SetGetKeyword = new GDSetGetKeyword(),
-                [10] = Syntax.Space(),
-                SetMethodIdentifier = setMethod,
-                [11] = Syntax.Space(),
                 Comma = new GDComma(),
-                GetMethodIdentifier = getMethod
+                [9] = Syntax.Space(),
+
+                SecondAccessorDeclarationNode = new GDGetAccessorMethodDeclarationNode()
+                {
+                    GetKeyword = new GDGetKeyword(),
+                    [1] = Syntax.Space(),
+                    Assign = new GDAssign(),
+                    [2] = Syntax.Space(),
+                    Identifier = getMethod
+                }
             };
 
             public static GDVariableDeclaration Const(string identifier, string type, GDExpression initializer) => new GDVariableDeclaration()
@@ -697,7 +521,7 @@ namespace GDShrapt.Reader
                 [5] = Syntax.Space(),
                 Colon = new GDColon(),
                 [6] = Syntax.Space(),
-                Type = Syntax.Type(type),
+                Type = GDResolvingHelper.ParseTypeNode(type),
                 [7] = Syntax.Space(),
                 Assign = new GDAssign(),
                 [8] = Syntax.Space(),
@@ -715,7 +539,7 @@ namespace GDShrapt.Reader
                 Initializer = initializer
             };
 
-            public static GDVariableDeclaration Const(GDIdentifier identifier, GDType type, GDExpression initializer) => new GDVariableDeclaration()
+            public static GDVariableDeclaration Const(GDIdentifier identifier, GDTypeNode type, GDExpression initializer) => new GDVariableDeclaration()
             {
                 ConstKeyword = new GDConstKeyword(),
                 [4] = Syntax.Space(),

@@ -96,11 +96,6 @@
             // Nothing
         }
 
-        public virtual void Left(GDExportDeclaration decl)
-        {
-            // Nothing
-        }
-
         public virtual void Left(GDMatchCaseDeclaration decl)
         {
             // Nothing
@@ -207,11 +202,6 @@
         }
 
         public virtual void Visit(GDEnumValueDeclaration d)
-        {
-            // Nothing
-        }
-
-        public virtual void Visit(GDExportDeclaration d)
         {
             // Nothing
         }

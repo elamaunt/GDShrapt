@@ -1,8 +1,7 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-    public sealed class GDExportDeclaration : GDNode,
+    // Legacy
+   /* public sealed class GDExportDeclaration : GDNode,
         ITokenOrSkipReceiver<GDAt>,
         ITokenOrSkipReceiver<GDExportKeyword>,
         ITokenOrSkipReceiver<GDOpenBracket>,
@@ -49,6 +48,7 @@ namespace GDShrapt.Reader
         readonly GDTokensForm<State, GDAt, GDExportKeyword, GDOpenBracket, GDDataParametersList, GDCloseBracket> _form;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDAt, GDExportKeyword, GDOpenBracket, GDDataParametersList, GDCloseBracket> TypedForm => _form;
+       
         public GDExportDeclaration()
         {
             _form = new GDTokensForm<State, GDAt, GDExportKeyword, GDOpenBracket, GDDataParametersList, GDCloseBracket>(this);
@@ -217,5 +217,5 @@ namespace GDShrapt.Reader
 
             throw new GDInvalidStateException();
         }
-    }
+    }*/
 }

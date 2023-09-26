@@ -144,6 +144,26 @@ namespace GDShrapt.Reader
             return receiver.Tokens;
         }
 
+        public GDTypeNode ParseType(string type)
+        {
+            var state = new GDReadingState(Settings);
+            var receiver = new GDReceiver();
+
+            state.Push(new GDTypeResolver(receiver));
+
+            var buffer = new char[Settings.ReadBufferSize];
+            int count = 0;
+
+            using (var reader = new StringReader(type))
+            {
+                while ((count = reader.Read(buffer, 0, buffer.Length)) > 0)
+                    ParseBuffer(buffer, count, state);
+            }
+
+            state.CompleteReading();
+            return receiver.Tokens.OfType<GDTypeNode>().FirstOrDefault();
+        }
+
         private void ParseBuffer(char[] buffer, int count, GDReadingState state)
         {
             for (int i = 0; i < count; i++)

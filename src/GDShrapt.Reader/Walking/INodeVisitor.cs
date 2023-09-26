@@ -9,7 +9,6 @@
         void Visit(GDDictionaryKeyValueDeclaration d);
         void Visit(GDEnumDeclaration d);
         void Visit(GDEnumValueDeclaration d);
-        void Visit(GDExportDeclaration d);
         void Visit(GDInnerClassDeclaration d);
         void Visit(GDMatchCaseDeclaration d);
         void Visit(GDParameterDeclaration d);
@@ -62,7 +61,6 @@
         void Left(GDDictionaryKeyValueDeclaration decl);
         void Left(GDEnumDeclaration decl);
         void Left(GDEnumValueDeclaration decl);
-        void Left(GDExportDeclaration decl);
         void Left(GDMatchCaseDeclaration decl);
         void Left(GDSignalDeclaration decl);
         void Left(GDClassAtributesList list);

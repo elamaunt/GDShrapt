@@ -127,7 +127,7 @@ namespace GDShrapt.Reader
                     {
                         if (isStaticContext.Value)
                         {
-                            foreach (var member in innerClass.Members)
+                            foreach (var member in innerClass.Members.OfType<GDIdentifiableClassMember>())
                             {
                                 if (member.IsStatic && member.Identifier == this)
                                 {
@@ -138,7 +138,7 @@ namespace GDShrapt.Reader
                         }
                         else
                         {
-                            foreach (var member in innerClass.Members)
+                            foreach (var member in innerClass.Members.OfType<GDIdentifiableClassMember>())
                             {
                                 if (member.Identifier == this)
                                 {
@@ -158,7 +158,7 @@ namespace GDShrapt.Reader
                     {
                         if (isStaticContext.Value)
                         {
-                            foreach (var member in @class.Members)
+                            foreach (var member in @class.Members.OfType<GDIdentifiableClassMember>())
                             {
                                 if (member.IsStatic && member.Identifier == this)
                                 {
@@ -169,7 +169,7 @@ namespace GDShrapt.Reader
                         }
                         else
                         {
-                            foreach (var member in @class.Members)
+                            foreach (var member in @class.Members.OfType<GDIdentifiableClassMember>())
                             {
                                 if (member.Identifier == this)
                                 {

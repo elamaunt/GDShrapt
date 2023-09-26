@@ -33,9 +33,6 @@ namespace GDShrapt.Reader
                 case GDEnumValueDeclaration decl:
                     WalkIn(decl);
                     break;
-                case GDExportDeclaration decl:
-                    WalkIn(decl);
-                    break;
                 case GDInnerClassDeclaration decl:
                     WalkIn(decl);
                     break;
@@ -292,15 +289,6 @@ namespace GDShrapt.Reader
         }
 
         public void WalkIn(GDMatchCaseDeclaration decl)
-        {
-            Visitor.Visit(decl);
-            Visitor.EnterNode(decl);
-            WalkInNodes(WalkBackward ? decl.NodesReversed : decl.Nodes);
-            Visitor.LeftNode();
-            Visitor.Left(decl);
-        }
-
-        public void WalkIn(GDExportDeclaration decl)
         {
             Visitor.Visit(decl);
             Visitor.EnterNode(decl);

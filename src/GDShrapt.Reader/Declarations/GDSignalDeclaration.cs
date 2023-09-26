@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDSignalDeclaration : GDClassMember,
+    public sealed class GDSignalDeclaration : GDIdentifiableClassMember,
         ITokenOrSkipReceiver<GDSignalKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDOpenBracket>,

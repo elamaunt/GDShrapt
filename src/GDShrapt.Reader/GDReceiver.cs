@@ -38,6 +38,7 @@ namespace GDShrapt.Reader
         {
             Tokens.Add(token);
         }
+
         public void HandleReceivedToken(GDIntendation token)
         {
             Tokens.Add(token);

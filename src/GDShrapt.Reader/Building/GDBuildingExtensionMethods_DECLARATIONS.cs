@@ -73,12 +73,6 @@ namespace GDShrapt.Reader
             receiver.HandleReceivedToken(GD.Declaration.Variable(name, type));
             return receiver;
         }
-        public static T AddVariable<T>(this T receiver, string name, string type, GDExpression initializer)
-            where T : ITokenReceiver<GDVariableDeclaration>
-        {
-            receiver.HandleReceivedToken(GD.Declaration.Variable(name, type, initializer));
-            return receiver;
-        }
 
         public static T AddVariable<T>(this T receiver, string name, GDExpression initializer)
             where T : ITokenReceiver<GDVariableDeclaration>
@@ -87,10 +81,10 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer)
+        public static T AddVariable<T>(this T receiver, string identifier, string type, GDExpression initializer)
             where T : ITokenReceiver<GDVariableDeclaration>
         {
-            receiver.HandleReceivedToken(GD.Declaration.Variable(identifier, type, export, initializer));
+            receiver.HandleReceivedToken(GD.Declaration.Variable(identifier, type, initializer));
             return receiver;
         }
 
@@ -101,12 +95,6 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod)
-            where T : ITokenReceiver<GDVariableDeclaration>
-        {
-            receiver.HandleReceivedToken(GD.Declaration.Variable(identifier, type, export, initializer, setMethod, getMethod));
-            return receiver;
-        }
         public static T AddConst<T>(this T receiver, string identifier, string type, GDExpression initializer)
             where T : ITokenReceiver<GDVariableDeclaration>
         {
@@ -118,41 +106,6 @@ namespace GDShrapt.Reader
             where T : ITokenReceiver<GDVariableDeclaration>
         {
             receiver.HandleReceivedToken(GD.Declaration.Const(identifier, initializer));
-            return receiver;
-        }
-
-        public static T AddOnreadyVariable<T>(this T receiver, string name, string type, GDExpression initializer)
-            where T : ITokenReceiver<GDVariableDeclaration>
-        {
-            receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(name, type, initializer));
-            return receiver;
-        }
-
-        public static T AddOnreadyVariable<T>(this T receiver, string name, GDExpression initializer)
-            where T : ITokenReceiver<GDVariableDeclaration>
-        {
-            receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(name, initializer));
-            return receiver;
-        }
-
-        public static T AddOnreadyVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer)
-            where T : ITokenReceiver<GDVariableDeclaration>
-        {
-            receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(identifier, type, export, initializer));
-            return receiver;
-        }
-
-        public static T AddOnreadyVariable<T>(this T receiver, string identifier, string type, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod)
-            where T : ITokenReceiver<GDVariableDeclaration>
-        {
-            receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(identifier, type, initializer, setMethod, getMethod));
-            return receiver;
-        }
-
-        public static T AddOnreadyVariable<T>(this T receiver, string identifier, string type, GDExportDeclaration export, GDExpression initializer, GDIdentifier setMethod, GDIdentifier getMethod)
-            where T : ITokenReceiver<GDVariableDeclaration>
-        {
-            receiver.HandleReceivedToken(GD.Declaration.OnreadyVariable(identifier, type, export, initializer, setMethod, getMethod));
             return receiver;
         }
 

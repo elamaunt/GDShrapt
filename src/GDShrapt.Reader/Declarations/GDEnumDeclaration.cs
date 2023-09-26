@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDEnumDeclaration : GDClassMember,
+    public sealed class GDEnumDeclaration : GDIdentifiableClassMember,
         ITokenOrSkipReceiver<GDEnumKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDFigureOpenBracket>,
@@ -47,11 +47,13 @@
         public override GDTokensForm Form => _form;
         public override bool IsStatic => true;
         public GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket> TypedForm => _form;
+
         internal GDEnumDeclaration(int intendation)
            : base(intendation)
         {
             _form = new GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket>(this);
         }
+
         public GDEnumDeclaration()
         {
             _form = new GDTokensForm<State, GDEnumKeyword, GDIdentifier, GDFigureOpenBracket, GDEnumValuesList, GDFigureCloseBracket>(this);
