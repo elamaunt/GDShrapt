@@ -20,7 +20,6 @@ namespace GDShrapt.Reader
 
         (bool HasPatternsToMatch, string MatchedPattern) _lastPatternCheck;
 
-        public bool IsCompleted { get; private set; }
         public string Sequence { get; set; }
 
         public GDIntendedPatternResolver(IIntendedTokenReceiver owner, int intendation)
@@ -106,6 +105,7 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
+            base.ForceComplete(state);
             PatternMatched(_lastPatternCheck.MatchedPattern, state);
         }
 
@@ -144,6 +144,12 @@ namespace GDShrapt.Reader
         internal override void HandleSharpCharAfterIntendation(GDReadingState state)
         {
             HandleCharAfterIntendation('#', state);
+        }
+
+        protected override void OnIntendationThresholdMet(GDReadingState state)
+        {
+            base.OnIntendationThresholdMet(state);
+            PatternMatched(null, state);
         }
     }
 }

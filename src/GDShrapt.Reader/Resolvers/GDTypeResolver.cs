@@ -40,14 +40,44 @@ namespace GDShrapt.Reader
                 {
                     if (_type.IsArray)
                     {
+                        state.Pop();
+
+                        Owner.HandleReceivedToken(arrayTypeNode);
+
+                        state.Push(arrayTypeNode);
+
+                        var sequence = _type.Sequence;
+                        for (int i = 0; i < sequence.Length; i++)
+                            state.PassChar(sequence[i]);
+
+                        if (_space != null)
+                        {
+                            for (int i = 0; i < _space.Sequence.Length; i++)
+                                state.PassChar(_space.Sequence[i]);
+
+                            _space = null;
+                        }
+
+                        state.PassChar(c);
                         _type = null;
-                        arrayTypeNode.ArrayKeyword = new GDArrayKeyword();
+                        return;
                     }
                     else
                     {
                         Owner.HandleReceivedToken(new GDSingleTypeNode() { Type = _type });
                         _type = null;
-                        state.PopAndPass(c);
+
+                        state.Pop();
+
+                        if (_space != null)
+                        {
+                            for (int i = 0; i < _space.Sequence.Length; i++)
+                                state.PassChar(_space.Sequence[i]);
+
+                            _space = null;
+                        }
+
+                        state.PassChar(c);
                         return;
                     }
                 }

@@ -90,42 +90,94 @@
 
         void ITokenReceiver<GDArrayKeyword>.HandleReceivedToken(GDArrayKeyword token)
         {
-            
+            if (_form.State == State.Array)
+            {
+                _form.State = State.SquareOpenBracket;
+                ArrayKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
         }
 
         void ITokenSkipReceiver<GDArrayKeyword>.HandleReceivedTokenSkip()
-        { 
+        {
+            if (_form.State == State.Array)
+            {
+                _form.State = State.SquareOpenBracket;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDSquareOpenBracket>.HandleReceivedToken(GDSquareOpenBracket token)
         {
+            if (_form.IsOrLowerState(State.SquareOpenBracket))
+            {
+                _form.State = State.InnerType;
+                SquareOpenBracket = token;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
 
         void ITokenSkipReceiver<GDSquareOpenBracket>.HandleReceivedTokenSkip()
         {
+            if (_form.IsOrLowerState(State.SquareOpenBracket))
+            {
+                _form.State = State.InnerType;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDTypeNode>.HandleReceivedToken(GDTypeNode token)
         {
+            if (_form.State == State.InnerType)
+            {
+                _form.State = State.SquareCloseBracket;
+                InnerType = token;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
 
         void ITokenSkipReceiver<GDTypeNode>.HandleReceivedTokenSkip()
         {
+            if (_form.State == State.InnerType)
+            {
+                _form.State = State.SquareCloseBracket;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
 
         void ITokenReceiver<GDSquareCloseBracket>.HandleReceivedToken(GDSquareCloseBracket token)
         {
+            if (_form.IsOrLowerState(State.SquareCloseBracket))
+            {
+                _form.State = State.Completed;
+                SquareCloseBracket = token;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
 
         void ITokenSkipReceiver<GDSquareCloseBracket>.HandleReceivedTokenSkip()
         {
+            if (_form.IsOrLowerState(State.SquareCloseBracket))
+            {
+                _form.State = State.Completed;
+                return;
+            }
 
+            throw new GDInvalidStateException();
         }
     }
 }

@@ -146,19 +146,18 @@
                     state.PushAndPass(new GDExpressionResolver(this), c);
                     break;
                 case State.FirstAccessorDeclarationNode:
-                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, Intendation + 1), c);
+                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, true, Intendation + 1), c);
                     break;
                 case State.Comma:
                     if (_skipComma)
                     {
-                        _form.State = State.SecondAccessorDeclarationNode;
-                        state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, Intendation + 1), c);
+                        state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, false, Intendation + 1), c);
                         return;
                     }
                     this.ResolveComma(c, state);
                     break;
                 case State.SecondAccessorDeclarationNode:
-                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, Intendation + 1), c);
+                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, !_skipComma, Intendation + 1), c);
                     break;
                 default:
                     this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
@@ -171,13 +170,13 @@
             if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
             {
                 _skipComma = true;
-                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, Intendation + 1));
+                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, false, Intendation + 1));
                 return;
             }
 
             if (_form.State == State.SecondAccessorDeclarationNode)
             {
-                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, Intendation + 1));
+                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, false, Intendation + 1));
                 return;
             }
 

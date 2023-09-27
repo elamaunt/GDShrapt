@@ -5,10 +5,10 @@
     {
         public new T Owner { get; }
 
-        public GDSetGetAccessorsResolver(T owner, int lineIntendation)
+        public GDSetGetAccessorsResolver(T owner, bool allowZeroIntendationOnFirstLine, int lineIntendation)
             : base(owner, lineIntendation)
         {
-            AllowZeroIntendationOnFirstLine = true;
+            AllowZeroIntendationOnFirstLine = allowZeroIntendationOnFirstLine;
             Owner = owner;
         }
 
@@ -85,12 +85,6 @@
                 for (int i = 0; i < pattern.Length; i++)
                     state.PassChar(pattern[i]);
             }
-        }
-
-        internal override void ForceComplete(GDReadingState state)
-        {
-            Owner.HandleReceivedTokenSkip();
-            base.ForceComplete(state);
         }
     }
 }
