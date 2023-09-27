@@ -1,3 +1,4 @@
+using GDShrapt.Reader.Declarations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Globalization;
 using System.IO;
@@ -718,7 +719,7 @@ else:
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
-        }
+        }*/
 
         [TestMethod]
         public void ExportDeclarationsTest()
@@ -729,99 +730,99 @@ else:
 # If the exported value assigns a constant or constant expression,
 # the type will be inferred and used in the editor.
 
-export var number = 5
+@export var number = 5
 
 # Export can take a basic data type as an argument, which will be
 # used in the editor.
 
-export(int) var number
+@export(int) var number
 
 # Export can also take a resource type to use as a hint.
 
-export(Texture) var character_face
-export(PackedScene) var scene_file
+@export(Texture) var character_face
+@export(PackedScene) var scene_file
 # There are many resource types that can be used this way, try e.g.
 # the following to list them:
-export(Resource) var resource
+@export(Resource) var resource
 
 # Integers and strings hint enumerated values.
 
 # Editor will enumerate as 0, 1 and 2.
-export(int, ""Warrior"", ""Magician"", ""Thief"") var character_class
+@export(int, ""Warrior"", ""Magician"", ""Thief"") var character_class
 # Editor will enumerate with string names.
-export(String, ""Rebecca"", ""Mary"", ""Leah"") var character_name
+@export(String, ""Rebecca"", ""Mary"", ""Leah"") var character_name
 
 # Named enum values
 
 # Editor will enumerate as THING_1, THING_2, ANOTHER_THING.
 enum NamedEnum { THING_1, THING_2, ANOTHER_THING = -1 }
-        export(NamedEnum) var x
+        @export(NamedEnum) var x
 
 # Strings as paths
 
 # String is a path to a file.
-export(String, FILE) var f
+@export(String, FILE) var f
 # String is a path to a directory.
-export(String, DIR) var f
+@export(String, DIR) var f
 # String is a path to a file, custom filter provided as hint.
-export(String, FILE, ""*.txt"") var f
+@export(String, FILE, ""*.txt"") var f
 
 # Using paths in the global filesystem is also possible,
 # but only in scripts in ""tool"" mode.
 
 # String is a path to a PNG file in the global filesystem.
-export(String, FILE, GLOBAL, ""*.png"") var tool_image
+@export(String, FILE, GLOBAL, ""*.png"") var tool_image
 # String is a path to a directory in the global filesystem.
-export(String, DIR, GLOBAL) var tool_dir
+@export(String, DIR, GLOBAL) var tool_dir
 
 # The MULTILINE setting tells the editor to show a large input
 # field for editing over multiple lines.
-export(String, MULTILINE) var text
+@export(String, MULTILINE) var text
 
 # Limiting editor input ranges
 
 # Allow integer values from 0 to 20.
-export(int, 20) var i
+@export(int, 20) var i
 # Allow integer values from -10 to 20.
-export(int, -10, 20) var j
+@export(int, -10, 20) var j
 # Allow floats from -10 to 20 and snap the value to multiples of 0.2.
-export(float, -10, 20, 0.2) var k
+@export(float, -10, 20, 0.2) var k
 # Allow values 'y = exp(x)' where 'y' varies between 100 and 1000
 # while snapping to steps of 20. The editor will present a
 # slider for easily editing the value.
-export(float, EXP, 100, 1000, 20) var l
+@export(float, EXP, 100, 1000, 20) var l
 
 # Floats with easing hint
 
 # Display a visual representation of the 'ease()' function
 # when editing.
-export(float, EASE) var transition_speed
+@export(float, EASE) var transition_speed
 
 # Colors
 
 # Color given as red-green-blue value (alpha will always be 1).
-export(Color, RGB) var col
+@export(Color, RGB) var col
 # Color given as red-green-blue-alpha value.
-export(Color, RGBA) var col
+@export(Color, RGBA) var col
 
 # Nodes
 
 # Another node in the scene can be exported as a NodePath.
-export(NodePath) var node_path
+@export(NodePath) var node_path
 # Do take note that the node itself isn't being exported -
 # there is one more step to call the true node:
 var node = get_node(node_path)
 
 # Resources
 
-export(Resource) var resource
+@export(Resource) var resource
 # In the Inspector, you can then drag and drop a resource file
 # from the FileSystem dock into the variable slot.
 
 # Opening the inspector dropdown may result in an
 # extremely long list of possible classes to create, however.
 # Therefore, if you specify an extension of Resource such as:
-export(AnimationNode) var resource
+@export(AnimationNode) var resource
 # The drop-down menu will be limited to AnimationNode and all
 # its inherited classes.
 ";
@@ -829,38 +830,38 @@ export(AnimationNode) var resource
 
             Assert.IsNotNull(classDeclaration);
 
-            var exports = classDeclaration.AllNodes.OfType<GDExportDeclaration>().ToArray();
+            var exports = classDeclaration.AllNodes.OfType<GDClassMemberAttributeDeclaration>().ToArray();
 
             Assert.AreEqual(24, exports.Length);
 
-            Assert.AreEqual(0, exports[0].Parameters.Count);
-            Assert.AreEqual(1, exports[1].Parameters.Count);
-            Assert.AreEqual(1, exports[2].Parameters.Count);
-            Assert.AreEqual(1, exports[3].Parameters.Count);
-            Assert.AreEqual(1, exports[4].Parameters.Count);
-            Assert.AreEqual(4, exports[5].Parameters.Count);
-            Assert.AreEqual(4, exports[6].Parameters.Count);
-            Assert.AreEqual(1, exports[7].Parameters.Count);
-            Assert.AreEqual(2, exports[8].Parameters.Count);
-            Assert.AreEqual(2, exports[9].Parameters.Count);
-            Assert.AreEqual(3, exports[10].Parameters.Count);
-            Assert.AreEqual(4, exports[11].Parameters.Count);
-            Assert.AreEqual(3, exports[12].Parameters.Count);
-            Assert.AreEqual(2, exports[13].Parameters.Count);
-            Assert.AreEqual(2, exports[14].Parameters.Count);
-            Assert.AreEqual(3, exports[15].Parameters.Count);
-            Assert.AreEqual(4, exports[16].Parameters.Count);
-            Assert.AreEqual(5, exports[17].Parameters.Count);
-            Assert.AreEqual(2, exports[18].Parameters.Count);
-            Assert.AreEqual(2, exports[19].Parameters.Count);
-            Assert.AreEqual(2, exports[20].Parameters.Count);
-            Assert.AreEqual(1, exports[21].Parameters.Count);
-            Assert.AreEqual(1, exports[22].Parameters.Count);
-            Assert.AreEqual(1, exports[23].Parameters.Count);
+            Assert.AreEqual(0, exports[0].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[1].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[2].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[3].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[4].Attribute.Parameters.Count);
+            Assert.AreEqual(4, exports[5].Attribute.Parameters.Count);
+            Assert.AreEqual(4, exports[6].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[7].Attribute.Parameters.Count);
+            Assert.AreEqual(2, exports[8].Attribute.Parameters.Count);
+            Assert.AreEqual(2, exports[9].Attribute.Parameters.Count);
+            Assert.AreEqual(3, exports[10].Attribute.Parameters.Count);
+            Assert.AreEqual(4, exports[11].Attribute.Parameters.Count);
+            Assert.AreEqual(3, exports[12].Attribute.Parameters.Count);
+            Assert.AreEqual(2, exports[13].Attribute.Parameters.Count);
+            Assert.AreEqual(2, exports[14].Attribute.Parameters.Count);
+            Assert.AreEqual(3, exports[15].Attribute.Parameters.Count);
+            Assert.AreEqual(4, exports[16].Attribute.Parameters.Count);
+            Assert.AreEqual(5, exports[17].Attribute.Parameters.Count);
+            Assert.AreEqual(2, exports[18].Attribute.Parameters.Count);
+            Assert.AreEqual(2, exports[19].Attribute.Parameters.Count);
+            Assert.AreEqual(2, exports[20].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[21].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[22].Attribute.Parameters.Count);
+            Assert.AreEqual(1, exports[23].Attribute.Parameters.Count);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
-        }*/
+        }
 
         [TestMethod]
         public void EnumTest()

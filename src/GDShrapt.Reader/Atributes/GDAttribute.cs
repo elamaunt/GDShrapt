@@ -51,6 +51,11 @@
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDDataParametersList, GDCloseBracket> TypedForm => _form;
 
+        public GDAttribute()
+        {
+            _form = new GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDDataParametersList, GDCloseBracket>(this);
+        }
+
         public override GDNode CreateEmptyInstance()
         {
            return new GDAttribute();
@@ -58,7 +63,7 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveSpaceToken(c, state))
+            if (_form.State != State.Completed && this.ResolveSpaceToken(c, state))
                 return;
 
             switch (_form.State)
@@ -67,19 +72,17 @@
                     this.ResolveAt(c, state);
                     break;
                 case State.Name:
-                    this.ResolveCommentToken(c, state);
+                    this.ResolveIdentifier(c, state);
                     break;
                 case State.OpenBracket:
-                    if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveOpenBracket(c, state);
+                    this.ResolveOpenBracket(c, state);
                     break;
                 case State.Parameters:
                     _form.State = State.CloseBracket;
                     state.PushAndPass(Parameters, c);
                     break;
                 case State.CloseBracket:
-                    if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveCloseBracket(c, state);
+                    this.ResolveCloseBracket(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -117,9 +120,9 @@
 
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
-            if (_form.IsOrLowerState(State.At))
+            if (_form.IsOrLowerState(State.Name))
             {
-                _form.State = State.Completed;
+                _form.State = State.OpenBracket;
                 Name = token;
                 return;
             }
@@ -129,9 +132,9 @@
 
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
-            if (_form.IsOrLowerState(State.At))
+            if (_form.IsOrLowerState(State.Name))
             {
-                _form.State = State.Completed;
+                _form.State = State.OpenBracket;
                 return;
             }
 

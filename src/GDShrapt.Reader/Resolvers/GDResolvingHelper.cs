@@ -16,8 +16,8 @@ namespace GDShrapt.Reader
 
         public static void HandleAsInvalidToken(this ITokenReceiver receiver, char c, GDReadingState state, Predicate<char> test)
         {
-            if (test(c))
-                throw new GDInvalidStateException();
+            //if (test(c))
+            //    throw new GDInvalidStateException();
 
             receiver.HandleReceivedToken(state.Push(new GDInvalidToken(test)));
             state.PassChar(c);

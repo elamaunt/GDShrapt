@@ -22,10 +22,12 @@
         internal GDClassMemberAttributeDeclaration(int intendation)
            : base(intendation)
         {
+            _form = new GDTokensForm<State, GDAttribute>(this);
         }
 
         public GDClassMemberAttributeDeclaration()
         {
+            _form = new GDTokensForm<State, GDAttribute>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -45,7 +47,7 @@
                         return;
                     }
 
-                    Attribute = state.Push(new GDAttribute());
+                    Attribute = state.PushAndPass(new GDAttribute(), c);
                     _form.State = State.Completed;
                     break;
                 default:
