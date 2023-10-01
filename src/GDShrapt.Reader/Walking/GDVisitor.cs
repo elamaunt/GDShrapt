@@ -14,6 +14,7 @@ namespace GDShrapt.Reader
         {
             // Nothing
         }
+
         public virtual void Left(GDWhileStatement s)
         {
             // Nothing

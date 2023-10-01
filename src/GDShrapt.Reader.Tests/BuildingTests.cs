@@ -19,7 +19,7 @@ namespace GDShrapt.Reader.Tests
                 GD.Declaration.Variable("parameter", GD.Expression.True()),
 
                 GD.Declaration.Method("_start",
-                    GD.Expression.Call(GD.Expression.Identifier("print"), GD.Expression.String("Hello world"))
+                    GD.Expression.Call(GD.Expression.Identifier("print"), GD.Expression.String("Hello world")).ToStatement()
                     )
                 );
 
