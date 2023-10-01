@@ -44,6 +44,16 @@
             return new GDClassMembersList();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDClassMember>.HandleReceivedToken(GDClassMember token)
         {
             ListForm.AddToEnd(token);

@@ -8,7 +8,7 @@
         ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDColon>,
         ITokenOrSkipReceiver<GDAssign>,
-        IIntendedTokenOrSkipReceiver<GDAccessorDeclarationNode>,
+        IIntendedTokenOrSkipReceiver<GDAccessorDeclaration>,
         ITokenOrSkipReceiver<GDComma>
     {
         private bool _skipComma;
@@ -60,7 +60,7 @@
             set => _form.Token7 = value;
         }
 
-        public GDAccessorDeclarationNode FirstAccessorDeclarationNode
+        public GDAccessorDeclaration FirstAccessorDeclarationNode
         {
             get => _form.Token8;
             set => _form.Token8 = value;
@@ -72,7 +72,7 @@
             set => _form.Token9 = value;
         }
 
-        public GDAccessorDeclarationNode SecondAccessorDeclarationNode
+        public GDAccessorDeclaration SecondAccessorDeclarationNode
         {
             get => _form.Token10;
             set => _form.Token10 = value;
@@ -97,19 +97,19 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclarationNode, GDComma, GDAccessorDeclarationNode> _form;
+        readonly GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclarationNode, GDComma, GDAccessorDeclarationNode> TypedForm => _form;
+        public GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration> TypedForm => _form;
 
         internal GDVariableDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclarationNode, GDComma, GDAccessorDeclarationNode>(this);
+            _form = new GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration>(this);
         }
 
         public GDVariableDeclaration()
         {
-            _form = new GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclarationNode, GDComma, GDAccessorDeclarationNode>(this);
+            _form = new GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -186,6 +186,16 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDVariableDeclaration();
+        }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
         }
 
         void ITokenReceiver<GDConstKeyword>.HandleReceivedToken(GDConstKeyword token)
@@ -396,7 +406,7 @@
             _form.AddBeforeActiveToken(token);
         }
 
-        void ITokenReceiver<GDAccessorDeclarationNode>.HandleReceivedToken(GDAccessorDeclarationNode token)
+        void ITokenReceiver<GDAccessorDeclaration>.HandleReceivedToken(GDAccessorDeclaration token)
         {
             if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
             {
@@ -415,7 +425,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDAccessorDeclarationNode>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDAccessorDeclaration>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
             {

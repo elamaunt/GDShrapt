@@ -47,6 +47,16 @@
             return new GDClassAtributesList();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDClassAtribute>.HandleReceivedToken(GDClassAtribute token)
         {
             ListForm.AddToEnd(token);

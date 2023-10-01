@@ -36,6 +36,16 @@
             return new GDLayersList();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDPathSpecifier>.HandleReceivedToken(GDPathSpecifier token)
         {
             _switch = !_switch;
@@ -47,6 +57,7 @@
             _switch = !_switch;
             ListForm.AddToEnd(token);
         }
+
         void ITokenSkipReceiver<GDPathSpecifier>.HandleReceivedTokenSkip()
         {
             _ended = true;

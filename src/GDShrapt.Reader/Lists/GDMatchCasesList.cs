@@ -42,5 +42,15 @@
         {
             return new GDMatchCasesList();
         }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
     }
 }

@@ -48,6 +48,16 @@ namespace GDShrapt.Reader
             return new GDStatementsList();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
         {
             if (!beforeLine.HasValue)

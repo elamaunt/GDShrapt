@@ -49,6 +49,16 @@ namespace GDShrapt.Reader
             return new GDIdentifierExpression();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         public override IEnumerable<GDIdentifier> GetDependencies()
         {
             var identifier = Identifier;

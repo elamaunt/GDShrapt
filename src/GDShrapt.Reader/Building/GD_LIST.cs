@@ -1,4 +1,6 @@
-﻿using System;
+﻿using GDShrapt.Reader.Declarations;
+using System;
+using System.Linq;
 
 namespace GDShrapt.Reader
 {
@@ -128,16 +130,31 @@ namespace GDShrapt.Reader
 
                 var list = new GDClassMembersList();
 
+                bool previousMemberIsAttribute = false;
+                bool currentMemberIsAttribute = false;
+
                 for (int i = 0; i < members.Length; i++)
                 {
-                    if (i > 0)
+                    var member = members[i];
+
+                    currentMemberIsAttribute = member is GDClassMemberAttributeDeclaration;
+
+                    if (!currentMemberIsAttribute && previousMemberIsAttribute)
                     {
-                        list.Form.AddToEnd(new GDNewLine());
-                        list.Form.AddToEnd(new GDNewLine());
+                        list.Form.AddToEnd(Syntax.Space());
+                    }
+                    else
+                    {
+                        if (i > 0)
+                        {
+                            list.Form.AddToEnd(new GDNewLine());
+                            list.Form.AddToEnd(new GDNewLine());
+                        }
                     }
 
                     list.Form.AddToEnd(Syntax.Intendation());
-                    list.Add(members[i]);
+                    previousMemberIsAttribute = currentMemberIsAttribute;
+                    list.Add(member);
                 }
 
                 return list;

@@ -23,6 +23,16 @@
             return new GDDataParametersList();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDDataToken>.HandleReceivedToken(GDDataToken token)
         {
             ListForm.AddToEnd(token);

@@ -62,6 +62,16 @@
             return new GDNodePathExpression();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDSky>.HandleReceivedToken(GDSky token)
         {
             if (_form.IsOrLowerState(State.Sky))

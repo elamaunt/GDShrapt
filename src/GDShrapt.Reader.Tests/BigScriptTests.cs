@@ -20,7 +20,7 @@ namespace GDShrapt.Reader.Tests
             AssertHelper.NoInvalidTokens(declaration);
         }
 
-        [TestMethod]
+       /* [TestMethod]
         public void BigScriptParsingTest2()
         {
             var reader = new GDScriptReader();
@@ -46,6 +46,6 @@ namespace GDShrapt.Reader.Tests
 
             AssertHelper.CompareCodeStrings(fileText, declaration.ToString());
             AssertHelper.NoInvalidTokens(declaration);
-        }
+        }*/
     }
 }

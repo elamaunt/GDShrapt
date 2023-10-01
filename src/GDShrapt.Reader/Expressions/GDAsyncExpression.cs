@@ -90,6 +90,17 @@
         {
             return new GDYieldExpression();
         }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDAsyncKeyword>.HandleReceivedToken(GDAsyncKeyword token)
         {
             if (_form.IsOrLowerState(State.Yield))

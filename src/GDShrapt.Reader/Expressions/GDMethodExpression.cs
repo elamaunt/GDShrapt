@@ -32,36 +32,43 @@
             get => _form.Token2;
             set => _form.Token2 = value;
         }
+
         public GDParametersList Parameters
         {
             get => _form.Token3 ?? (_form.Token3 = new GDParametersList());
             set => _form.Token3 = value;
         }
+
         public GDCloseBracket CloseBracket
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
+
         public GDReturnTypeKeyword ReturnTypeKeyword
         {
             get => _form.Token5;
             set => _form.Token5 = value;
         }
+
         public GDType ReturnType
         {
             get => _form.Token6;
             set => _form.Token6 = value;
         }
+
         public GDColon Colon
         {
             get => _form.Token7;
             set => _form.Token7 = value;
         }
+
         public GDExpression Expression
         {
             get => _form.Token8;
             set => _form.Token8 = value;
         }
+
         public GDStatementsList Statements
         {
             get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1));
@@ -176,6 +183,16 @@
             }
 
             state.PopAndPassNewLine();
+        }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
         }
 
         void ITokenReceiver<GDFuncKeyword>.HandleReceivedToken(GDFuncKeyword token)

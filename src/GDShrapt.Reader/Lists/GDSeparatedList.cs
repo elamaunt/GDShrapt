@@ -84,5 +84,23 @@ namespace GDShrapt.Reader
         {
             _form.RemoveAt(index);
         }
+
+        internal override void WalkIn(IGDVisitor visitor, bool walkBackward)
+        {
+            visitor.WillVisit(this);
+            Visit(visitor);
+            visitor.EnterNode(this);
+
+            foreach (var node in walkBackward ? NodesReversed : Nodes)
+            {
+                visitor.EnterListChild(node);
+                node.WalkIn(visitor, walkBackward);
+                visitor.LeftListChild(node);
+            }
+
+            visitor.LeftNode();
+            Left(visitor);
+            visitor.DidLeft(this);
+        }
     }
 }

@@ -50,6 +50,16 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
         {
             if (_form.State == State.Type)

@@ -87,6 +87,16 @@
             return new GDEnumValueDeclaration();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDIdentifier>.HandleReceivedToken(GDIdentifier token)
         {
             if (_form.IsOrLowerState(State.Identifier))

@@ -15,6 +15,7 @@ namespace GDShrapt.Reader.Tests
                     GD.Atribute.Extends("Node2D")),
 
                 GD.Declaration.Const("my_constant", GD.Expression.String("Hello World")),
+                GD.Declaration.MemberAttribute("onready"),
                 GD.Declaration.Variable("parameter", GD.Expression.True()),
 
                 GD.Declaration.Method("_start",
@@ -26,7 +27,7 @@ namespace GDShrapt.Reader.Tests
 
             var code = declaration.ToString();
 
-            var codeToCompare = "tool\nclass_name Generated\nextends Node2D\n\nconst my_constant = \"Hello World\"\n\nonready var parameter = true\n\nfunc _start():\n\tprint(\"Hello world\")";
+            var codeToCompare = "tool\nclass_name Generated\nextends Node2D\n\nconst my_constant = \"Hello World\"\n\n@onready var parameter = true\n\nfunc _start():\n\tprint(\"Hello world\")";
 
             AssertHelper.CompareCodeStrings(codeToCompare, code);
         }

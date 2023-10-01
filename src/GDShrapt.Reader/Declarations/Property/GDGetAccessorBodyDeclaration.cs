@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDGetAccessorBodyDeclarationNode : GDAccessorDeclarationNode,
+    public class GDGetAccessorBodyDeclaration : GDAccessorDeclaration,
         ITokenOrSkipReceiver<GDGetKeyword>,
         ITokenOrSkipReceiver<GDColon>,
         ITokenOrSkipReceiver<GDStatementsList>
@@ -35,12 +35,12 @@
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDGetKeyword, GDColon, GDStatementsList> TypedForm => _form;
 
-        public GDGetAccessorBodyDeclarationNode()
+        public GDGetAccessorBodyDeclaration()
         {
             _form = new GDTokensForm<State, GDGetKeyword, GDColon, GDStatementsList>(this);
         }
 
-        public GDGetAccessorBodyDeclarationNode(int intendation)
+        public GDGetAccessorBodyDeclaration(int intendation)
             : base(intendation)
         {
             _form = new GDTokensForm<State, GDGetKeyword, GDColon, GDStatementsList>(this);
@@ -48,7 +48,17 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDGetAccessorMethodDeclarationNode();
+            return new GDGetAccessorMethodDeclaration();
+        }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)

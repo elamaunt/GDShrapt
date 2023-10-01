@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     internal class GDSetGetAccessorsResolver<T> : GDIntendedPatternResolver
-        where T : IIntendedTokenOrSkipReceiver<GDAccessorDeclarationNode>
+        where T : IIntendedTokenOrSkipReceiver<GDAccessorDeclaration>
     {
         public new T Owner { get; }
 
@@ -34,21 +34,21 @@
                 case "set":
                     {
                         // TODO: check the colon
-                        var accessor = new GDSetAccessorMethodDeclarationNode(LineIntendationThreshold);
+                        var accessor = new GDSetAccessorMethodDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         break;
                     }
                 case "set=":
                     {
-                        var accessor = new GDSetAccessorMethodDeclarationNode(LineIntendationThreshold);
+                        var accessor = new GDSetAccessorMethodDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         break;
                     }
                 case "set:":
                     {
-                        var accessor = new GDSetAccessorBodyDeclarationNode(LineIntendationThreshold);
+                        var accessor = new GDSetAccessorBodyDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         break;
@@ -56,21 +56,21 @@
                 case "get":
                     {
                         // TODO: check the colon
-                        var accessor = new GDGetAccessorMethodDeclarationNode(LineIntendationThreshold);
+                        var accessor = new GDGetAccessorMethodDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         break;
                     }
                 case "get=":
                     {
-                        var accessor = new GDGetAccessorMethodDeclarationNode(LineIntendationThreshold);
+                        var accessor = new GDGetAccessorMethodDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         break;
                     }
                 case "get:":
                     {
-                        var accessor = new GDGetAccessorBodyDeclarationNode(LineIntendationThreshold);
+                        var accessor = new GDGetAccessorBodyDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         break;

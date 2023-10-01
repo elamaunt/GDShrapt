@@ -15,26 +15,31 @@ namespace GDShrapt.Reader
             get => _form.Token0;
             set => _form.Token0 = value;
         }
+
         public GDIdentifier Identifier
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
+
         public GDColon Colon
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
+
         public GDType Type
         {
             get => _form.Token3;
             set => _form.Token3 = value;
         }
+
         public GDAssign Assign
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
+
         public GDExpression Initializer
         {
             get => _form.Token5;
@@ -105,6 +110,16 @@ namespace GDShrapt.Reader
         public override GDNode CreateEmptyInstance()
         {
             return new GDVariableDeclarationStatement();
+        }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
         }
 
         void ITokenReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)

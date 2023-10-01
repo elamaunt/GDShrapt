@@ -39,6 +39,16 @@
             _form = new GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket>(this);
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             switch (_form.State)
@@ -72,6 +82,7 @@
 
             state.PopAndPassNewLine();
         }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDArrayInitializerExpression();

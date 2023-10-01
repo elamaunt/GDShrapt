@@ -45,6 +45,16 @@
             return new GDPassExpression();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDPassKeyword>.HandleReceivedToken(GDPassKeyword token)
         {
             if (_form.IsOrLowerState(State.Pass))

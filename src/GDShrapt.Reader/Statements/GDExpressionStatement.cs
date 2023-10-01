@@ -65,6 +65,16 @@
             return new GDExpressionStatement();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             if (_form.IsOrLowerState(State.Expression))

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GDShrapt.Reader;
+using System;
 
 namespace GDShrapt.Reader
 {
@@ -136,18 +137,29 @@ namespace GDShrapt.Reader
             return false;
         }
 
-        public static implicit operator GDExpressionStatement(GDExpression expression)
-        {
-            return new GDExpressionStatement()
-            { 
-                Expression = expression
-            };
-        }
-
         internal override void HandleSharpChar(GDReadingState state)
         {
             state.Pop();
             state.PassSharpChar();
         }
+
+        internal override void WalkIn(IGDVisitor visitor, bool walkBackward)
+        {
+            visitor.WillVisitExpression(this);
+            base.WalkIn(visitor, walkBackward);
+            visitor.DidLeftExpression(this);
+        }
+
+    }
+}
+
+public static class GDExpressionExtensions
+{
+    public static GDExpressionStatement ToStatement(this GDExpression expression)
+    {
+        return new GDExpressionStatement()
+        {
+            Expression = expression
+        };
     }
 }

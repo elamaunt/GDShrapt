@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace GDShrapt.Reader
 {
-    public abstract class Visitor : IVisitor
+    public abstract class GDBaseVisitor : IGDBaseVisitor
     {
         Stack<GDNode> _nodesStack = new Stack<GDNode>();
 
@@ -11,7 +11,7 @@ namespace GDShrapt.Reader
 
         public GDNode Current => _nodesStack.Count > 0 ? _nodesStack.Peek() : default;
 
-        public Visitor()
+        public GDBaseVisitor()
         {
             NodesStack = new ReadOnlyStack(_nodesStack);
         }

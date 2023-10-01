@@ -1,11 +1,11 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDGetAccessorMethodDeclarationNode : GDAccessorDeclarationNode,
-        ITokenOrSkipReceiver<GDGetKeyword>,
+    public class GDSetAccessorMethodDeclaration : GDAccessorDeclaration,
+        ITokenOrSkipReceiver<GDSetKeyword>,
         ITokenOrSkipReceiver<GDAssign>,
         ITokenOrSkipReceiver<GDIdentifier>
     {
-        public GDGetKeyword GetKeyword
+        public GDSetKeyword SetKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -24,40 +24,50 @@
         }
 
         public enum State
-        { 
-            Get,
+        {
+            Set,
             Assign,
             Identifier,
             Completed
         }
 
-        readonly GDTokensForm<State, GDGetKeyword, GDAssign, GDIdentifier> _form;
+        readonly GDTokensForm<State, GDSetKeyword, GDAssign, GDIdentifier> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDGetKeyword, GDAssign, GDIdentifier> TypedForm => _form;
+        public GDTokensForm<State, GDSetKeyword, GDAssign, GDIdentifier> TypedForm => _form;
 
-        public GDGetAccessorMethodDeclarationNode()
+        public GDSetAccessorMethodDeclaration()
         {
-            _form = new GDTokensForm<State, GDGetKeyword, GDAssign, GDIdentifier>(this);
+            _form = new GDTokensForm<State, GDSetKeyword, GDAssign, GDIdentifier>(this);
         }
 
-        public GDGetAccessorMethodDeclarationNode(int intendation)
+        public GDSetAccessorMethodDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDGetKeyword, GDAssign, GDIdentifier>(this);
+            _form = new GDTokensForm<State, GDSetKeyword, GDAssign, GDIdentifier>(this);
         }
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDGetAccessorMethodDeclarationNode();
+            return new GDGetAccessorMethodDeclaration();
+        }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             switch (_form.State)
             {
-                case State.Get:
+                case State.Set:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveKeyword<GDGetKeyword>(c, state);
+                        this.ResolveKeyword<GDSetKeyword>(c, state);
                     break;
                 case State.Assign:
                     if (!this.ResolveSpaceToken(c, state))
@@ -78,11 +88,11 @@
             state.PopAndPassNewLine();
         }
 
-        void ITokenReceiver<GDGetKeyword>.HandleReceivedToken(GDGetKeyword token)
+        void ITokenReceiver<GDSetKeyword>.HandleReceivedToken(GDSetKeyword token)
         {
-            if (_form.State == State.Get)
+            if (_form.State == State.Set)
             {
-                GetKeyword = token;
+                SetKeyword = token;
                 _form.State = State.Assign;
                 return;
             }
@@ -90,9 +100,9 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDGetKeyword>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDSetKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Get)
+            if (_form.State == State.Set)
             {
                 _form.State = State.Assign;
                 return;

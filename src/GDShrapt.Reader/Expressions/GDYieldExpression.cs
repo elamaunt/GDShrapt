@@ -90,6 +90,17 @@
         {
             return new GDYieldExpression();
         }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDYieldKeyword>.HandleReceivedToken(GDYieldKeyword token)
         {
             if (_form.IsOrLowerState(State.Yield))
@@ -112,6 +123,7 @@
 
             throw new GDInvalidStateException();
         }
+
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
             if (_form.IsOrLowerState(State.OpenBracket))

@@ -98,6 +98,16 @@ namespace GDShrapt.Reader
             return new GDPathList();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDLayersList>.HandleReceivedToken(GDLayersList token)
         {
             _switch = !_switch;

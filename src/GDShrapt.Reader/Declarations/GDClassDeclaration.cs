@@ -51,6 +51,16 @@ namespace GDShrapt.Reader
             return new GDClassDeclaration();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (IsSpace(c))

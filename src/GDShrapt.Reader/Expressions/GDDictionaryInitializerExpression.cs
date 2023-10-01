@@ -77,6 +77,16 @@
             return new GDDictionaryInitializerExpression();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDFigureOpenBracket>.HandleReceivedToken(GDFigureOpenBracket token)
         {
             if (_form.IsOrLowerState(State.FigureOpenBracket))

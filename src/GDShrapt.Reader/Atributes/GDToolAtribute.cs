@@ -50,6 +50,16 @@
             return new GDToolAtribute();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDToolKeyword>.HandleReceivedToken(GDToolKeyword token)
         {
             if (_form.IsOrLowerState(State.Tool))

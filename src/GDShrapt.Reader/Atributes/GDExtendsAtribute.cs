@@ -69,6 +69,16 @@
             return new GDExtendsAtribute();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDExtendsKeyword>.HandleReceivedToken(GDExtendsKeyword token)
         {
             if (_form.IsOrLowerState(State.Extends))

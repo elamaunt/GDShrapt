@@ -21,6 +21,16 @@
             return new GDTokensContainer();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+           // visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+           // visitor.Left(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             throw new GDInvalidStateException();

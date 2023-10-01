@@ -11,11 +11,13 @@
             get => _form.Token0;
             set => _form.Token0 = value;
         }
+
         public GDIdentifier Identifier 
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
+
         public GDComma Comma
         {
             get => _form.Token2;
@@ -79,6 +81,16 @@
         public override GDNode CreateEmptyInstance()
         {
             return new GDClassNameAtribute();
+        }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
         }
 
         void ITokenReceiver<GDClassNameKeyword>.HandleReceivedToken(GDClassNameKeyword token)

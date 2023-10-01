@@ -23,71 +23,85 @@ namespace GDShrapt.Reader
             get => _form.Token0;
             set => _form.Token0 = value;
         }
+
         public GDFuncKeyword FuncKeyword
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
+
         public override GDIdentifier Identifier
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
+
         public GDOpenBracket OpenBracket
         {
             get => _form.Token3;
             set => _form.Token3 = value;
         }
+
         public GDParametersList Parameters
         {
             get => _form.Token4 ?? (_form.Token4 = new GDParametersList());
             set => _form.Token4 = value;
         }
+
         public GDCloseBracket CloseBracket
         {
             get => _form.Token5;
             set => _form.Token5 = value;
         }
+
         public GDPoint BaseCallPoint
         {
             get => _form.Token6;
             set => _form.Token6 = value;
         }
+
         public GDOpenBracket BaseCallOpenBracket
         {
             get => _form.Token7;
             set => _form.Token7 = value;
         }
+
         public GDExpressionsList BaseCallParameters 
         { 
             get => _form.Token8 ?? (_form.Token8 = new GDExpressionsList());
             set => _form.Token8 = value;
         }
+
         public GDCloseBracket BaseCallCloseBracket
         {
             get => _form.Token9;
             set => _form.Token9 = value;
         }
+
         public GDReturnTypeKeyword ReturnTypeKeyword
         {
             get => _form.Token10;
             set => _form.Token10 = value;
         }
+
         public GDType ReturnType
         {
             get => _form.Token11;
             set => _form.Token11 = value;
         }
+
         public GDColon Colon
         {
             get => _form.Token12;
             set => _form.Token12 = value;
         }
+
         public GDExpression Expression
         {
             get => _form.Token13;
             set => _form.Token13 = value;
         }
+
         public GDStatementsList Statements
         { 
             get => _form.Token14 ?? (_form.Token14 = new GDStatementsList(Intendation + 1));
@@ -231,6 +245,16 @@ namespace GDShrapt.Reader
         public override GDNode CreateEmptyInstance()
         {
             return new GDMethodDeclaration();
+        }
+
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
         }
 
         public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)

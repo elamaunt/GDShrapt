@@ -102,6 +102,16 @@
             return new GDMatchStatement();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDMatchKeyword>.HandleReceivedToken(GDMatchKeyword token)
         {
             if (_form.IsOrLowerState(State.Match))

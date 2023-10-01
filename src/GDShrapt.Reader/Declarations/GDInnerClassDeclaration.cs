@@ -147,6 +147,16 @@ namespace GDShrapt.Reader
             return new GDInnerClassDeclaration();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDClassKeyword>.HandleReceivedToken(GDClassKeyword token)
         {
             if (_form.IsOrLowerState(State.Class))

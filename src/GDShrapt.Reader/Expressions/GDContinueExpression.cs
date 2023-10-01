@@ -47,6 +47,16 @@
             return new GDContinueExpression();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDContinueKeyword>.HandleReceivedToken(GDContinueKeyword token)
         {
             if (_form.IsOrLowerState(State.Continue))

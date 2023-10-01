@@ -85,6 +85,16 @@
             return new GDBracketExpression();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDOpenBracket>.HandleReceivedToken(GDOpenBracket token)
         {
             if (_form.IsOrLowerState(State.OpenBracket))

@@ -46,6 +46,16 @@
             return new GDBreakPointExpression();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDBreakPointKeyword>.HandleReceivedToken(GDBreakPointKeyword token)
         {
             if (_form.IsOrLowerState(State.BreakPoint))

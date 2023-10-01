@@ -91,98 +91,98 @@ namespace GDShrapt.Reader
         public static T AddYield<T>(this T receiver, Func<GDYieldExpression, GDYieldExpression> setup)
          where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Yield(setup));
+            receiver.HandleReceivedToken(GD.Expression.Yield(setup).ToStatement());
             return receiver;
         }
 
         public static T AddYield<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
             where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Yield(unsafeTokens));
+            receiver.HandleReceivedToken(GD.Expression.Yield(unsafeTokens).ToStatement());
             return receiver;
         }
 
         public static T AddYield<T>(this T receiver, params GDExpression[] parameters)
          where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Yield(parameters));
+            receiver.HandleReceivedToken(GD.Expression.Yield(parameters).ToStatement());
             return receiver;
         }
 
         public static T AddPass<T>(this T receiver)
          where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Pass());
+            receiver.HandleReceivedToken(GD.Expression.Pass().ToStatement());
             return receiver;
         }
 
         public static T AddReturn<T>(this T receiver)
           where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Return());
+            receiver.HandleReceivedToken(GD.Expression.Return().ToStatement());
             return receiver;
         }
 
         public static T AddReturn<T>(this T receiver, Func<GDReturnExpression, GDReturnExpression> setup)
           where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Return(setup));
+            receiver.HandleReceivedToken(GD.Expression.Return(setup).ToStatement());
             return receiver;
         }
 
         public static T AddReturn<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
             where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Return(unsafeTokens));
+            receiver.HandleReceivedToken(GD.Expression.Return(unsafeTokens).ToStatement());
             return receiver;
         }
 
         public static T AddReturn<T>(this T receiver, GDExpression result)
           where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Return(result));
+            receiver.HandleReceivedToken(GD.Expression.Return(result).ToStatement());
             return receiver;
         }
 
         public static T AddDualOperator<T>(this T receiver, GDExpression left, GDDualOperator @operator, GDExpression right)
           where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.DualOperator(left, @operator, right));
+            receiver.HandleReceivedToken(GD.Expression.DualOperator(left, @operator, right).ToStatement());
             return receiver;
         }
 
         public static T AddDualOperator<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
             where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.DualOperator(unsafeTokens));
+            receiver.HandleReceivedToken(GD.Expression.DualOperator(unsafeTokens).ToStatement());
             return receiver;
         }
 
         public static T AddDualOperator<T>(this T receiver, Func<GDDualOperatorExpression, GDDualOperatorExpression> setup)
           where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.DualOperator(setup));
+            receiver.HandleReceivedToken(GD.Expression.DualOperator(setup).ToStatement());
             return receiver;
         }
 
         public static T AddCall<T>(this T receiver, GDExpression caller, params GDExpression[] parameters)
            where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Call(caller, parameters));
+            receiver.HandleReceivedToken(GD.Expression.Call(caller, parameters).ToStatement());
             return receiver;
         }
 
         public static T AddCall<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
             where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Call(unsafeTokens));
+            receiver.HandleReceivedToken(GD.Expression.Call(unsafeTokens).ToStatement());
             return receiver;
         }
 
         public static T AddCall<T>(this T receiver, Func<GDCallExpression, GDCallExpression> setup)
            where T : ITokenReceiver<GDExpressionStatement>
         {
-            receiver.HandleReceivedToken(GD.Expression.Call(setup));
+            receiver.HandleReceivedToken(GD.Expression.Call(setup).ToStatement());
             return receiver;
         }
 

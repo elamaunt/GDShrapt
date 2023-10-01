@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Linq;
 
 namespace GDShrapt.Reader
 {
@@ -335,6 +337,33 @@ namespace GDShrapt.Reader
             foreach (var intendation in AllTokens.OfType<GDIntendation>())
                 intendation.Update();
         }
+
+        public void WalkIn(IGDVisitor visitor)
+        {
+            WalkIn(visitor, false);
+        }
+
+        public void WalkInBackward(IGDVisitor visitor)
+        {
+            WalkIn(visitor, true);
+        }
+
+        internal virtual void WalkIn(IGDVisitor visitor, bool walkBackward)
+        {
+            visitor.WillVisit(this);
+            Visit(visitor);
+            visitor.EnterNode(this);
+
+            foreach (var node in walkBackward ? NodesReversed : Nodes)
+                node.WalkIn(visitor, walkBackward);
+
+            visitor.LeftNode();
+            Left(visitor);
+            visitor.DidLeft(this);
+        }
+
+        internal abstract void Visit(IGDVisitor visitor);
+        internal abstract void Left(IGDVisitor visitor);
 
         public virtual IEnumerable<GDIdentifier> GetDependencies()
         {

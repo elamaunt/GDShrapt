@@ -61,6 +61,16 @@
            return new GDAttribute();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
             if (_form.State != State.Completed && this.ResolveSpaceToken(c, state))

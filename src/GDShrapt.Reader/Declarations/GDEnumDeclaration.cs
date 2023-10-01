@@ -126,6 +126,16 @@
             return new GDEnumDeclaration();
         }
 
+        internal override void Visit(IGDVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal override void Left(IGDVisitor visitor)
+        {
+            visitor.Left(this);
+        }
+
         void ITokenReceiver<GDEnumKeyword>.HandleReceivedToken(GDEnumKeyword token)
         {
             if (_form.IsOrLowerState(State.Enum))
