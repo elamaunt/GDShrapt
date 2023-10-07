@@ -145,7 +145,7 @@ namespace GDShrapt.Reader
                 [2] = Syntax.Space(),
                 Colon = Syntax.Colon,
                 [3] = Syntax.Space(),
-                Type = type
+                Type = GDResolvingHelper.ParseTypeNode(type)
             };
 
             public static GDVariableDeclarationStatement Variable(string name, GDExpression initializer) => new GDVariableDeclarationStatement()
@@ -180,7 +180,7 @@ namespace GDShrapt.Reader
                 [2] = Syntax.Space(),
                 Colon = Syntax.Colon,
                 [3] = Syntax.Space(),
-                Type = type,
+                Type = GDResolvingHelper.ParseTypeNode(type),
                 [4] = Syntax.Space(),
                 Assign = Syntax.Assign,
                 [5] = Syntax.Space(),

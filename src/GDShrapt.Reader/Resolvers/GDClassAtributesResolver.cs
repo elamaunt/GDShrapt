@@ -6,9 +6,9 @@ namespace GDShrapt.Reader
     {
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
-        new IIntendedTokenReceiver<GDClassAtribute> Owner { get; }
+        new IIntendedTokenReceiver<GDClassAttribute> Owner { get; }
 
-        public GDClassAtributesResolver(IIntendedTokenReceiver<GDClassAtribute> owner, int lineIntendation)
+        public GDClassAtributesResolver(IIntendedTokenReceiver<GDClassAttribute> owner, int lineIntendation)
             : base(owner, lineIntendation)
         {
             Owner = owner;
@@ -88,16 +88,18 @@ namespace GDShrapt.Reader
             }
         }
 
-        private GDClassAtribute GetAtribute(string sequence)
+        private GDClassAttribute GetAtribute(string sequence)
         {
             switch (sequence)
             {
+                case "@icon":
+                    return new GDClassCustomAttribute();
                 case "class_name":
-                    return new GDClassNameAtribute();
+                    return new GDClassNameAttribute();
                 case "extends":
-                    return new GDExtendsAtribute();
+                    return new GDExtendsAttribute();
                 case "tool":
-                    return new GDToolAtribute();
+                    return new GDToolAttribute();
                 default:
                     return null;
             }

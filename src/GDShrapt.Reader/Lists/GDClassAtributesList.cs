@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDClassAtributesList : GDIntendedTokensList<GDClassAtribute>,
-        ITokenReceiver<GDClassAtribute>
+    public sealed class GDClassAtributesList : GDIntendedTokensList<GDClassAttribute>,
+        ITokenReceiver<GDClassAttribute>
     {
         bool _completed;
 
@@ -57,7 +57,7 @@
             visitor.Left(this);
         }
 
-        void ITokenReceiver<GDClassAtribute>.HandleReceivedToken(GDClassAtribute token)
+        void ITokenReceiver<GDClassAttribute>.HandleReceivedToken(GDClassAttribute token)
         {
             ListForm.AddToEnd(token);
         }

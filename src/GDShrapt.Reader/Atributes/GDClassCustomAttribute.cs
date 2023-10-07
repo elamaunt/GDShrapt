@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public class GDClassMemberAttributeDeclaration : GDClassMember, 
+    public class GDClassCustomAttribute : GDClassAttribute,
         ITokenOrSkipReceiver<GDAttribute>
     {
         public GDAttribute Attribute
@@ -19,20 +19,14 @@
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDAttribute> TypedForm => _form;
 
-        internal GDClassMemberAttributeDeclaration(int intendation)
-           : base(intendation)
-        {
-            _form = new GDTokensForm<State, GDAttribute>(this);
-        }
-
-        public GDClassMemberAttributeDeclaration()
+        public GDClassCustomAttribute()
         {
             _form = new GDTokensForm<State, GDAttribute>(this);
         }
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDClassMemberAttributeDeclaration();
+            return new GDClassCustomAttribute();
         }
 
         internal override void Visit(IGDVisitor visitor)

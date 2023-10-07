@@ -1,9 +1,5 @@
-﻿using GDShrapt.Reader.Declarations;
-using GDShrapt.Reader.Types;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
-
     public interface IGDVisitor : IGDBaseVisitor
     {
         void WillVisit(GDNode node);
@@ -37,9 +33,9 @@ namespace GDShrapt.Reader
         void Visit(GDStatementsList list);
 
         void Visit(GDMethodDeclaration d);
-        void Visit(GDToolAtribute a);
-        void Visit(GDClassNameAtribute a);
-        void Visit(GDExtendsAtribute a);
+        void Visit(GDToolAttribute a);
+        void Visit(GDClassNameAttribute a);
+        void Visit(GDExtendsAttribute a);
         void Visit(GDExpressionStatement s);
         void Visit(GDIfStatement s);
         void Visit(GDForStatement s);
@@ -62,9 +58,9 @@ namespace GDShrapt.Reader
         void Left(GDForStatement s);
         void Left(GDIfStatement s);
         void Left(GDExpressionStatement s);
-        void Left(GDToolAtribute a);
-        void Left(GDClassNameAtribute a);
-        void Left(GDExtendsAtribute a);
+        void Left(GDToolAttribute a);
+        void Left(GDClassNameAttribute a);
+        void Left(GDExtendsAttribute a);
         void Left(GDVariableDeclaration d);
         void Left(GDMethodDeclaration d);
         void Left(GDInnerClassDeclaration d);
@@ -129,8 +125,10 @@ namespace GDShrapt.Reader
         void Visit(GDSingleOperatorExpression e);
         void Visit(GDStringExpression e);
         void Visit(GDYieldExpression e);
-        void Visit(GDAsyncExpression e);
+        void Visit(GDAwaitExpression e);
         void Visit(GDMethodExpression e);
+        void Visit(GDStringTypeNode type);
+        void Visit(GDClassCustomAttribute a);
         void Left(GDBracketExpression e);
         void Left(GDYieldExpression e);
         void Left(GDStringExpression e);
@@ -152,7 +150,9 @@ namespace GDShrapt.Reader
         void Left(GDContinueExpression e);
         void Left(GDCallExpression e);
         void Left(GDDualOperatorExpression e);
-        void Left(GDAsyncExpression e);
+        void Left(GDAwaitExpression e);
         void Left(GDMethodExpression e);
+        void Left(GDStringTypeNode type);
+        void Left(GDClassCustomAttribute a);
     }
 }

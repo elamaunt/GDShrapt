@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDToolAtribute : GDClassAtribute, ITokenOrSkipReceiver<GDToolKeyword>
+    public sealed class GDToolAttribute : GDClassAttribute, ITokenOrSkipReceiver<GDToolKeyword>
     {
         public GDToolKeyword ToolKeyword
         {
@@ -17,7 +17,7 @@
         readonly GDTokensForm<State, GDToolKeyword> _form;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDToolKeyword> TypedForm => _form;
-        public GDToolAtribute()
+        public GDToolAttribute()
         {
             _form = new GDTokensForm<State, GDToolKeyword>(this);
         }
@@ -47,7 +47,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDToolAtribute();
+            return new GDToolAttribute();
         }
 
         internal override void Visit(IGDVisitor visitor)

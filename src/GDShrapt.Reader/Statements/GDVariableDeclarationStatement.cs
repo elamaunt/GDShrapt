@@ -6,7 +6,7 @@ namespace GDShrapt.Reader
         ITokenOrSkipReceiver<GDVarKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDColon>,
-        ITokenOrSkipReceiver<GDType>,
+        ITokenOrSkipReceiver<GDTypeNode>,
         ITokenOrSkipReceiver<GDAssign>,
         ITokenOrSkipReceiver<GDExpression>
     {
@@ -28,7 +28,7 @@ namespace GDShrapt.Reader
             set => _form.Token2 = value;
         }
 
-        public GDType Type
+        public GDTypeNode Type
         {
             get => _form.Token3;
             set => _form.Token3 = value;
@@ -57,18 +57,18 @@ namespace GDShrapt.Reader
             Completed
         }
 
-        readonly GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression> _form;
+        readonly GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression> TypedForm => _form;
+        public GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression> TypedForm => _form;
         internal GDVariableDeclarationStatement(int lineIntendation)
             : base(lineIntendation)
         {
-            _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression>(this);
+            _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression>(this);
         }
 
         public GDVariableDeclarationStatement()
         {
-            _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDType, GDAssign, GDExpression>(this);
+            _form = new GDTokensForm<State, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -191,7 +191,7 @@ namespace GDShrapt.Reader
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
+        void ITokenReceiver<GDTypeNode>.HandleReceivedToken(GDTypeNode token)
         {
             if (_form.IsOrLowerState(State.Type))
             {
@@ -203,7 +203,7 @@ namespace GDShrapt.Reader
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDTypeNode>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Type))
             {

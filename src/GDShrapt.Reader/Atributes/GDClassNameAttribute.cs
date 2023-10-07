@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDClassNameAtribute : GDClassAtribute,
+    public sealed class GDClassNameAttribute : GDClassAttribute,
         ITokenOrSkipReceiver<GDClassNameKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDComma>,
@@ -43,7 +43,7 @@
         public override GDTokensForm Form => _form; 
         public GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString> TypedForm => _form;
 
-        public GDClassNameAtribute()
+        public GDClassNameAttribute()
         {
             _form = new GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString>(this);
         }
@@ -80,7 +80,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDClassNameAtribute();
+            return new GDClassNameAttribute();
         }
 
         internal override void Visit(IGDVisitor visitor)

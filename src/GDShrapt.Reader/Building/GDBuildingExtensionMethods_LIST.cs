@@ -46,7 +46,7 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddAtributes<T>(this T receiver, params GDClassAtribute[] atributes)
+        public static T AddAtributes<T>(this T receiver, params GDClassAttribute[] atributes)
             where T : ITokenReceiver<GDClassAtributesList>
         {
             receiver.HandleReceivedToken(GD.List.Atributes(atributes));

@@ -1,8 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDArrayKeyword : GDKeyword
+    public sealed class GDAwaitKeyword : GDKeyword
     {
-        public override string Sequence => "Array";
+        public override string Sequence => "await";
 
         public override GDSyntaxToken Clone()
         {

@@ -2,6 +2,7 @@
 {
     public sealed class GDVariableDeclaration : GDIdentifiableClassMember,
         ITokenOrSkipReceiver<GDConstKeyword>,
+        ITokenOrSkipReceiver<GDStaticKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDVarKeyword>,
         ITokenOrSkipReceiver<GDTypeNode>,
@@ -19,63 +20,70 @@
             set => _form.Token0 = value;
         }
 
-        public GDVarKeyword VarKeyword
+        public GDStaticKeyword StaticKeyword
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        public override GDIdentifier Identifier
+
+        public GDVarKeyword VarKeyword
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
 
-        public GDColon TypeColon
+        public override GDIdentifier Identifier
         {
             get => _form.Token3;
             set => _form.Token3 = value;
         }
 
-        public GDTypeNode Type
+        public GDColon TypeColon
         {
             get => _form.Token4;
             set => _form.Token4 = value;
         }
 
-        public GDAssign Assign
+        public GDTypeNode Type
         {
             get => _form.Token5;
             set => _form.Token5 = value;
         }
 
-        public GDExpression Initializer
+        public GDAssign Assign
         {
             get => _form.Token6;
             set => _form.Token6 = value;
         }
 
-        public GDColon Colon
+        public GDExpression Initializer
         {
             get => _form.Token7;
             set => _form.Token7 = value;
         }
 
-        public GDAccessorDeclaration FirstAccessorDeclarationNode
+        public GDColon Colon
         {
             get => _form.Token8;
             set => _form.Token8 = value;
         }
 
-        public GDComma Comma
+        public GDAccessorDeclaration FirstAccessorDeclarationNode
         {
             get => _form.Token9;
             set => _form.Token9 = value;
         }
 
-        public GDAccessorDeclaration SecondAccessorDeclarationNode
+        public GDComma Comma
         {
             get => _form.Token10;
             set => _form.Token10 = value;
+        }
+
+        public GDAccessorDeclaration SecondAccessorDeclarationNode
+        {
+            get => _form.Token11;
+            set => _form.Token11 = value;
         }
 
         public bool IsConstant => ConstKeyword != null;
@@ -84,6 +92,7 @@
         public enum State
         { 
             Const,
+            Static,
             Var,
             Identifier,
             TypeColon,
@@ -97,19 +106,19 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration> _form;
+        readonly GDTokensForm<State, GDConstKeyword, GDStaticKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration> TypedForm => _form;
+        public GDTokensForm<State, GDConstKeyword, GDStaticKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration> TypedForm => _form;
 
         internal GDVariableDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration>(this);
+            _form = new GDTokensForm<State, GDConstKeyword, GDStaticKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration>(this);
         }
 
         public GDVariableDeclaration()
         {
-            _form = new GDTokensForm<State, GDConstKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration>(this);
+            _form = new GDTokensForm<State, GDConstKeyword, GDStaticKeyword, GDVarKeyword, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression, GDColon, GDAccessorDeclaration, GDComma, GDAccessorDeclaration>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -125,6 +134,9 @@
             {
                 case State.Const:
                     state.PushAndPass(new GDKeywordResolver<GDConstKeyword>(this), c);
+                    break;
+                case State.Static:
+                    state.PushAndPass(new GDKeywordResolver<GDStaticKeyword>(this), c);
                     break;
                 case State.Var:
                     state.PushAndPass(new GDKeywordResolver<GDVarKeyword>(this), c);
@@ -221,6 +233,29 @@
             throw new GDInvalidStateException();
         }
 
+        void ITokenReceiver<GDStaticKeyword>.HandleReceivedToken(GDStaticKeyword token)
+        {
+            if (_form.IsOrLowerState(State.Static))
+            {
+                _form.State = State.Var;
+                StaticKeyword = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDStaticKeyword>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Static))
+            {
+                _form.State = State.Var;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+        
         void ITokenReceiver<GDVarKeyword>.HandleReceivedToken(GDVarKeyword token)
         {
             if (_form.StateIndex <= (int)State.Var)

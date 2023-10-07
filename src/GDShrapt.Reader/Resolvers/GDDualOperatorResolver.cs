@@ -43,7 +43,12 @@
                 "&",
                 "in",
                 "&=",
-                "|="
+                "|=",
+                "**",
+                "**=",
+                 "<<=",
+                ">>=",
+                "^="
             };
             
         }
@@ -144,6 +149,21 @@
                     break;
                 case "|=":
                     Return(GDDualOperatorType.BitwiseOrAndAssign);
+                    break;
+                case "**":
+                    Return(GDDualOperatorType.Power);
+                    break;
+                case "**=":
+                    Return(GDDualOperatorType.PowerAndAssign);
+                    break;
+                case "<<=":
+                    Return(GDDualOperatorType.BitShiftLeftAndAssign);
+                    break;
+                case ">>=":
+                    Return(GDDualOperatorType.BitShiftRightAndAssign);
+                    break;
+                case "^=":
+                    Return(GDDualOperatorType.XorAndAssign);
                     break;
                 default:
                     Owner.HandleReceivedTokenSkip();

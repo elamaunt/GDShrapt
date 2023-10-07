@@ -5,42 +5,42 @@ namespace GDShrapt.Reader
     public static partial class GDBuildingExtensionMethods
     {
         public static T AddToolAtribute<T>(this T receiver)
-           where T : ITokenReceiver<GDToolAtribute>
+           where T : ITokenReceiver<GDToolAttribute>
         {
             receiver.HandleReceivedToken(GD.Atribute.Tool());
             return receiver;
         }
 
         public static T AddClassNameAtribute<T>(this T receiver, string name)
-            where T : ITokenReceiver<GDClassNameAtribute>
+            where T : ITokenReceiver<GDClassNameAttribute>
         {
             receiver.HandleReceivedToken(GD.Atribute.ClassName(name));
             return receiver;
         }
 
         public static T AddClassNameAtribute<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
-            where T : ITokenReceiver<GDClassNameAtribute>
+            where T : ITokenReceiver<GDClassNameAttribute>
         {
             receiver.HandleReceivedToken(GD.Atribute.ClassName(unsafeTokens));
             return receiver;
         }
 
         public static T AddExtendsAtribute<T>(this T receiver, string baseTypeName)
-            where T : ITokenReceiver<GDExtendsAtribute>
+            where T : ITokenReceiver<GDExtendsAttribute>
         {
             receiver.HandleReceivedToken(GD.Atribute.Extends(baseTypeName));
             return receiver;
         }
 
         public static T AddExtendsAtribute<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
-            where T : ITokenReceiver<GDExtendsAtribute>
+            where T : ITokenReceiver<GDExtendsAttribute>
         {
             receiver.HandleReceivedToken(GD.Atribute.Extends(unsafeTokens));
             return receiver;
         }
 
         public static T AddExtendsWithPathAtribute<T>(this T receiver, string path)
-            where T : ITokenReceiver<GDExtendsAtribute>
+            where T : ITokenReceiver<GDExtendsAttribute>
         {
             receiver.HandleReceivedToken(GD.Atribute.ExtendsPath(path));
             return receiver;
@@ -133,21 +133,21 @@ namespace GDShrapt.Reader
         public static T AddMethod<T>(this T receiver, string name, string type, GDExpression expression, params GDStatement[] statements)
            where T : ITokenReceiver<GDMethodDeclaration>
         {
-            receiver.HandleReceivedToken(GD.Declaration.Method(name, type, expression, statements));
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, GDResolvingHelper.ParseTypeNode(type), expression, statements));
             return receiver;
         }
 
         public static T AddMethod<T>(this T receiver, string name, string type, params GDStatement[] statements)
            where T : ITokenReceiver<GDMethodDeclaration>
         {
-            receiver.HandleReceivedToken(GD.Declaration.Method(name, type, statements));
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, GDResolvingHelper.ParseTypeNode(type), statements));
             return receiver;
         }
 
         public static T AddMethod<T>(this T receiver, string name, string type, GDExpression[] baseCallParameters, params GDStatement[] statements)
            where T : ITokenReceiver<GDMethodDeclaration>
         {
-            receiver.HandleReceivedToken(GD.Declaration.Method(name, type, baseCallParameters, statements));
+            receiver.HandleReceivedToken(GD.Declaration.Method(name, GDResolvingHelper.ParseTypeNode(type), baseCallParameters, statements));
             return receiver;
         }
 

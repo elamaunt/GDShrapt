@@ -1,6 +1,4 @@
-﻿using GDShrapt.Reader.Declarations;
-using System;
-using System.Linq;
+﻿using System;
 
 namespace GDShrapt.Reader
 {
@@ -163,7 +161,7 @@ namespace GDShrapt.Reader
             public static GDClassAtributesList Atributes() => new GDClassAtributesList();
             public static GDClassAtributesList Atributes(Func<GDClassAtributesList, GDClassAtributesList> setup) => setup(new GDClassAtributesList());
             public static GDClassAtributesList Atributes(params GDSyntaxToken[] unsafeTokens) => new GDClassAtributesList() { FormTokensSetter = unsafeTokens };
-            public static GDClassAtributesList Atributes(params GDClassAtribute[] atributes)
+            public static GDClassAtributesList Atributes(params GDClassAttribute[] atributes)
             {
                 if (atributes == null || atributes.Length == 0)
                     return new GDClassAtributesList();

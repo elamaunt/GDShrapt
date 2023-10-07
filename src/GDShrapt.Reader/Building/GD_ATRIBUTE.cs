@@ -1,6 +1,4 @@
-﻿using GDShrapt.Reader.Declarations;
-using System;
-using System.Xml.Linq;
+﻿using System;
 
 namespace GDShrapt.Reader
 {
@@ -8,57 +6,57 @@ namespace GDShrapt.Reader
     {
         public static class Atribute
         {
-            public static GDToolAtribute Tool() => new GDToolAtribute()
+            public static GDToolAttribute Tool() => new GDToolAttribute()
             {
                 ToolKeyword = new GDToolKeyword()
             };
 
-            public static GDClassNameAtribute ClassName() => new GDClassNameAtribute();
-            public static GDClassNameAtribute ClassName(Func<GDClassNameAtribute, GDClassNameAtribute> setup) => setup(new GDClassNameAtribute());
-            public static GDClassNameAtribute ClassName(params GDSyntaxToken[] unsafeTokens) => new GDClassNameAtribute() { FormTokensSetter = unsafeTokens };
-            public static GDClassNameAtribute ClassName(string identifier) => new GDClassNameAtribute()
+            public static GDClassNameAttribute ClassName() => new GDClassNameAttribute();
+            public static GDClassNameAttribute ClassName(Func<GDClassNameAttribute, GDClassNameAttribute> setup) => setup(new GDClassNameAttribute());
+            public static GDClassNameAttribute ClassName(params GDSyntaxToken[] unsafeTokens) => new GDClassNameAttribute() { FormTokensSetter = unsafeTokens };
+            public static GDClassNameAttribute ClassName(string identifier) => new GDClassNameAttribute()
             {
                 ClassNameKeyword = new GDClassNameKeyword(),
                 [1] = Syntax.Space(),
                 Identifier = Syntax.Identifier(identifier)
             };
 
-            public static GDClassNameAtribute ClassName(GDIdentifier identifier) => new GDClassNameAtribute()
+            public static GDClassNameAttribute ClassName(GDIdentifier identifier) => new GDClassNameAttribute()
             {
                 ClassNameKeyword = new GDClassNameKeyword(),
                 [1] = Syntax.Space(),
                 Identifier = identifier
             };
 
-            public static GDExtendsAtribute Extends() => new GDExtendsAtribute();
-            public static GDExtendsAtribute Extends(Func<GDExtendsAtribute, GDExtendsAtribute> setup) => setup(new GDExtendsAtribute());
-            public static GDExtendsAtribute Extends(params GDSyntaxToken[] unsafeTokens) => new GDExtendsAtribute() { FormTokensSetter = unsafeTokens };
-            public static GDExtendsAtribute Extends(GDType type) => new GDExtendsAtribute()
+            public static GDExtendsAttribute Extends() => new GDExtendsAttribute();
+            public static GDExtendsAttribute Extends(Func<GDExtendsAttribute, GDExtendsAttribute> setup) => setup(new GDExtendsAttribute());
+            public static GDExtendsAttribute Extends(params GDSyntaxToken[] unsafeTokens) => new GDExtendsAttribute() { FormTokensSetter = unsafeTokens };
+            public static GDExtendsAttribute Extends(GDTypeNode type) => new GDExtendsAttribute()
             { 
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
                 Type = type
             };
 
-            public static GDExtendsAtribute Extends(string type) => new GDExtendsAtribute()
+            public static GDExtendsAttribute Extends(string type) => new GDExtendsAttribute()
             {
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
-                Type = Syntax.Type(type)
+                Type = GDResolvingHelper.ParseTypeNode(type)
             };
 
-            public static GDExtendsAtribute Extends(GDString path) => new GDExtendsAtribute()
+            public static GDExtendsAttribute Extends(GDString path) => new GDExtendsAttribute()
             {
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
-                Path = path
+                Type = new GDStringTypeNode() { Path = path }
             };
 
-            public static GDExtendsAtribute ExtendsPath(string path) => new GDExtendsAtribute()
+            public static GDExtendsAttribute ExtendsPath(string path) => new GDExtendsAttribute()
             {
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
-                Path = Syntax.String(path)
+                Type = new GDStringTypeNode() { Path = path }
             };
 
             public static GDClassMemberAttributeDeclaration MemberAttribute() => new GDClassMemberAttributeDeclaration();

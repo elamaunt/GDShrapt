@@ -1,16 +1,16 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDAsyncExpression : GDExpression,
-        ITokenOrSkipReceiver<GDAsyncKeyword>,
+    public sealed class GDAwaitExpression : GDExpression,
+        ITokenOrSkipReceiver<GDAwaitKeyword>,
         ITokenOrSkipReceiver<GDOpenBracket>,
         ITokenOrSkipReceiver<GDExpressionsList>,
         ITokenOrSkipReceiver<GDCloseBracket>,
         ITokenReceiver<GDNewLine>,
         INewLineReceiver
     {
-        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Async);
+        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.Await);
 
-        public GDAsyncKeyword AsyncKeyword
+        public GDAwaitKeyword AwaitKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -33,28 +33,28 @@
 
         public enum State
         {
-            Yield,
+            Await,
             OpenBracket,
             Parameters,
             CloseBracket,
             Completed
         }
 
-        readonly GDTokensForm<State, GDAsyncKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
+        readonly GDTokensForm<State, GDAwaitKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDAsyncKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
-        public GDAsyncExpression()
+        public GDTokensForm<State, GDAwaitKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
+        public GDAwaitExpression()
         {
-            _form = new GDTokensForm<State, GDAsyncKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
+            _form = new GDTokensForm<State, GDAwaitKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
             switch (_form.State)
             {
-                case State.Yield:
+                case State.Await:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveKeyword<GDAsyncKeyword>(c, state);
+                        this.ResolveKeyword<GDAwaitKeyword>(c, state);
                     break;
                 case State.OpenBracket:
                     if (!this.ResolveSpaceToken(c, state))
@@ -101,21 +101,21 @@
             visitor.Left(this);
         }
 
-        void ITokenReceiver<GDAsyncKeyword>.HandleReceivedToken(GDAsyncKeyword token)
+        void ITokenReceiver<GDAwaitKeyword>.HandleReceivedToken(GDAwaitKeyword token)
         {
-            if (_form.IsOrLowerState(State.Yield))
+            if (_form.IsOrLowerState(State.Await))
             {
                 _form.State = State.OpenBracket;
-                AsyncKeyword = token;
+                AwaitKeyword = token;
                 return;
             }
 
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDAsyncKeyword>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDAwaitKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.IsOrLowerState(State.Yield))
+            if (_form.IsOrLowerState(State.Await))
             {
                 _form.State = State.OpenBracket;
                 return;

@@ -22,7 +22,7 @@
         Breakpoint,
         Break,
         Yeild,
-        Async,
+        Await,
         Method
     }
 }

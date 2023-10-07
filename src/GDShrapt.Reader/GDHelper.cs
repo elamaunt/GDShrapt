@@ -40,7 +40,12 @@ namespace GDShrapt.Reader
                 case GDDualOperatorType.In: return "in";
                 case GDDualOperatorType.BitwiseAndAndAssign: return "&=";
                 case GDDualOperatorType.BitwiseOrAndAssign: return "|=";
-                default: 
+                case GDDualOperatorType.Power: return "**";
+                case GDDualOperatorType.PowerAndAssign: return "**=";
+                case GDDualOperatorType.BitShiftLeftAndAssign: return "<<=";
+                case GDDualOperatorType.BitShiftRightAndAssign: return ">>=";
+                case GDDualOperatorType.XorAndAssign: return "^=";
+                default:
                     return "";
             }
         }
@@ -83,6 +88,7 @@ namespace GDShrapt.Reader
             switch (type)
             {
                 case GDDualOperatorType.Null: return 20;
+                case GDDualOperatorType.Power:
                 case GDDualOperatorType.Mod:
                 case GDDualOperatorType.Division:
                 case GDDualOperatorType.Multiply: return 14;
@@ -99,7 +105,11 @@ namespace GDShrapt.Reader
                 case GDDualOperatorType.DivideAndAssign:
                 case GDDualOperatorType.BitwiseAndAndAssign:
                 case GDDualOperatorType.BitwiseOrAndAssign:
-                case GDDualOperatorType.SubtractAndAssign: return 3;
+                case GDDualOperatorType.SubtractAndAssign:
+                case GDDualOperatorType.PowerAndAssign:
+                case GDDualOperatorType.BitShiftLeftAndAssign: 
+                case GDDualOperatorType.BitShiftRightAndAssign:
+                case GDDualOperatorType.XorAndAssign: return 3;
                 case GDDualOperatorType.MoreThan:
                 case GDDualOperatorType.LessThan:
                 case GDDualOperatorType.LessThanOrEqual:
@@ -140,7 +150,8 @@ namespace GDShrapt.Reader
             {
                 case GDDualOperatorType.Null: 
                     return GDAssociationOrderType.Undefined;
-
+                case GDDualOperatorType.Power:
+                    return GDAssociationOrderType.FromLeftToRight;
                 case GDDualOperatorType.MoreThan:
                 case GDDualOperatorType.LessThan:
                 case GDDualOperatorType.Subtraction:

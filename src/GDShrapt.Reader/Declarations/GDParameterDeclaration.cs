@@ -3,7 +3,7 @@
     public sealed class GDParameterDeclaration : GDNode,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDColon>,
-        ITokenOrSkipReceiver<GDType>,
+        ITokenOrSkipReceiver<GDTypeNode>,
         ITokenOrSkipReceiver<GDAssign>,
         ITokenOrSkipReceiver<GDExpression>
     {
@@ -17,7 +17,7 @@
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        public GDType Type
+        public GDTypeNode Type
         {
             get => _form.Token2;
             set => _form.Token2 = value;
@@ -43,12 +43,12 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDIdentifier, GDColon, GDType, GDAssign, GDExpression> _form;
+        readonly GDTokensForm<State, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDIdentifier, GDColon, GDType, GDAssign, GDExpression> TypedForm => _form;
+        public GDTokensForm<State, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression> TypedForm => _form;
         public GDParameterDeclaration()
         {
-            _form = new GDTokensForm<State, GDIdentifier, GDColon, GDType, GDAssign, GDExpression>(this);
+            _form = new GDTokensForm<State, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -145,7 +145,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
+        void ITokenReceiver<GDTypeNode>.HandleReceivedToken(GDTypeNode token)
         {
             if (_form.IsOrLowerState(State.Type))
             {
@@ -157,7 +157,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDTypeNode>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Type))
             {

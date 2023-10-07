@@ -33,6 +33,11 @@
         BitwiseAnd,
         In,
         BitwiseAndAndAssign,
-        BitwiseOrAndAssign
+        BitwiseOrAndAssign,
+        Power,
+        PowerAndAssign,
+        BitShiftLeftAndAssign,
+        BitShiftRightAndAssign,
+        XorAndAssign
     }
 }

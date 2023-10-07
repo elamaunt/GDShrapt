@@ -1,4 +1,4 @@
-﻿using GDShrapt.Reader.Declarations;
+﻿using System;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -10,6 +10,9 @@ namespace GDShrapt.Reader
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         new IIntendedTokenReceiver<GDClassMember> Owner { get; }
+
+        bool _staticMet;
+        GDSpace _spaceAfterStatic;
 
         public GDClassMembersResolver(IIntendedTokenReceiver<GDClassMember> owner, int lineIntendation)
             : base(owner, lineIntendation)
@@ -28,7 +31,7 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                Owner.HandleAsInvalidToken(c, state, x => !x.IsSpace());
+                Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                 return;
             }
 
@@ -49,7 +52,14 @@ namespace GDShrapt.Reader
                 {
                     if (IsSpace(c))
                     {
-                        Owner.HandleReceivedToken(state.Push(new GDSpace()));
+                        if (_staticMet)
+                        {
+                            state.Push(_spaceAfterStatic = new GDSpace());
+                        }
+                        else
+                        {
+                            Owner.HandleReceivedToken(state.Push(new GDSpace()));
+                        }
                     }
                     else
                     {
@@ -115,79 +125,143 @@ namespace GDShrapt.Reader
 
             _memberResolved = true;
 
+            void HandleStaticIfMet(ITokenReceiver<GDSpace> spaceReceiver, Action push, bool invalid = true)
+            {
+                if (!_staticMet)
+                    return;
+
+                if (invalid)
+                {
+                    Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsNewLine() || x.IsSpace())));
+
+                    var s = "static";
+                    for (int i = 0; i < s.Length; i++)
+                        state.PassChar(s[i]);
+
+                    if (_spaceAfterStatic != null)
+                    {
+                        var spaceSeq = _spaceAfterStatic.Sequence;
+
+                        for (int i = 0; i < spaceSeq.Length; i++)
+                            state.PassChar(spaceSeq[i]);
+
+                        _spaceAfterStatic = null;
+                    }
+
+                    push();
+                }
+                else
+                {
+                    push();
+
+                    var s = "static";
+                    for (int i = 0; i < s.Length; i++)
+                        state.PassChar(s[i]);
+
+                    if (_spaceAfterStatic != null)
+                    {
+                        if (spaceReceiver != null)
+                            spaceReceiver.Add(_spaceAfterStatic);
+                        else
+                            throw new GDInvalidStateException();
+
+                        _spaceAfterStatic = null;
+                    }
+                }
+            }
+
             switch (sequence)
             {
                 case "signal":
                     {
                         var m = new GDSignalDeclaration(LineIntendationThreshold);
+                        HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDSignalKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
-                        break;
                     }
+                    break;
                 case "enum":
                     {
                         var m = new GDEnumDeclaration(LineIntendationThreshold);
+                        HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDEnumKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
-                        break;
                     }
+                    break;
                 case "static":
                     {
-                        var m = new GDMethodDeclaration(LineIntendationThreshold);
-                        m.Add(new GDStaticKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
-                        break;
+                        _memberResolved = false;
+                        _sequenceBuilder.Clear();
+
+                        if (_staticMet)
+                        {
+                            Owner.HandleReceivedToken(new GDInvalidToken("static"));
+
+                            if (_spaceAfterStatic != null)
+                            {
+                                Owner.HandleReceivedToken(_spaceAfterStatic);
+                                _spaceAfterStatic = null;
+                            }
+                        }
+
+                        _staticMet = true;
                     }
+                    break;
                 case "func":
                     {
                         var m = new GDMethodDeclaration(LineIntendationThreshold);
+                        HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)), false);
                         m.Add(new GDFuncKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
-                        break;
                     }
-               // case "@export":
-               /* case "export":
-                    {
-                        Owner.HandleReceivedToken(state.Push(new GDVariableDeclaration(LineIntendationThreshold)));
+                    break;
+                /* case "export":
+                     {
+                         var m = new GDMethodDeclaration(LineIntendationThreshold);
+                         _memberResolved = false;
+                         Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold)));
 
-                        for (int i = 0; i < sequence.Length; i++)
-                            state.PassChar(sequence[i]);
-                    }
-                    break;*/
-               // case "@onready":
-               /* case "onready":
-                    {
-                        var m = new GDVariableDeclaration(LineIntendationThreshold);
-                        m.Add(new GDOnreadyKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
-                        break;
-                    }*/
+                         if (sequence != null)
+                             for (int i = 0; i < sequence.Length; i++)
+                                 state.PassChar(sequence[i]);
+
+                         return;
+                     }
+                 case "onready":
+                     {
+                         var m = new GDMethodDeclaration(LineIntendationThreshold);
+                         _memberResolved = false;
+                         Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold)));
+
+                         if (sequence != null)
+                             for (int i = 0; i < sequence.Length; i++)
+                                 state.PassChar(sequence[i]);
+
+                         return;
+                     }*/
                 case "const":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
+                        HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDConstKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
                 case "var":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
+                        HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)), false);
                         m.Add(new GDVarKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
                 case "class":
                     {
                         var m = new GDInnerClassDeclaration(LineIntendationThreshold);
+                        HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDClassKeyword());
-                        Owner.HandleReceivedToken(state.Push(m));
                     }
                     break;
                 default:
                     {
                         _memberResolved = false;
 
-                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsSpace() || x.IsNewLine())));
+                        HandleStaticIfMet(null, () => Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsSpace() || x.IsNewLine()))));
 
                         if (sequence != null)
                             for (int i = 0; i < sequence.Length; i++)

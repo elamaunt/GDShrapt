@@ -1,4 +1,4 @@
-﻿namespace GDShrapt.Reader.Types
+﻿namespace GDShrapt.Reader
 {
     public class GDArrayTypeNode : GDTypeNode, 
         ITokenOrSkipReceiver<GDArrayKeyword>,

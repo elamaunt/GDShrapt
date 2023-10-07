@@ -302,10 +302,10 @@
                             PushAndSave(state, e);
                             return true;
                         }
-                    case "async":
+                    case "await":
                         {
-                            var e = new GDAsyncExpression();
-                            e.Add(new GDAsyncKeyword());
+                            var e = new GDAwaitExpression();
+                            e.Add(new GDAwaitKeyword());
                             PushAndSave(state, e);
                             return true;
                         }

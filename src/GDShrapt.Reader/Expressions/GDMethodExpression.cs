@@ -7,7 +7,7 @@
          ITokenOrSkipReceiver<GDParametersList>,
          ITokenOrSkipReceiver<GDCloseBracket>,
          ITokenOrSkipReceiver<GDReturnTypeKeyword>,
-         ITokenOrSkipReceiver<GDType>,
+         ITokenOrSkipReceiver<GDTypeNode>,
          ITokenOrSkipReceiver<GDColon>,
          ITokenOrSkipReceiver<GDExpression>,
          ITokenOrSkipReceiver<GDStatementsList>
@@ -51,7 +51,7 @@
             set => _form.Token5 = value;
         }
 
-        public GDType ReturnType
+        public GDTypeNode ReturnType
         {
             get => _form.Token6;
             set => _form.Token6 = value;
@@ -90,19 +90,19 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
+        public GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDMethodExpression(int intendation)
         {
             Intendation = intendation;
-            _form = new GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDMethodExpression()
         {
-            _form = new GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -310,7 +310,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
+        void ITokenReceiver<GDTypeNode>.HandleReceivedToken(GDTypeNode token)
         {
             if (_form.IsOrLowerState(State.Type))
             {
@@ -322,7 +322,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDTypeNode>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Type))
             {

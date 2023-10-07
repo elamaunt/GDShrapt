@@ -1,7 +1,4 @@
-﻿using GDShrapt.Reader.Declarations;
-using GDShrapt.Reader.Types;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     public abstract class GDVisitor : GDBaseVisitor
     {
@@ -45,17 +42,17 @@ namespace GDShrapt.Reader
             // Nothing
         }
 
-        public virtual void Left(GDToolAtribute a)
+        public virtual void Left(GDToolAttribute a)
         {
             // Nothing
         }
 
-        public virtual void Left(GDClassNameAtribute a)
+        public virtual void Left(GDClassNameAttribute a)
         {
             // Nothing
         }
 
-        public virtual void Left(GDExtendsAtribute a)
+        public virtual void Left(GDExtendsAttribute a)
         {
             // Nothing
         }
@@ -310,17 +307,17 @@ namespace GDShrapt.Reader
             // Nothing
         }
 
-        public virtual void Visit(GDToolAtribute a)
+        public virtual void Visit(GDToolAttribute a)
         {
             // Nothing
         }
 
-        public virtual void Visit(GDClassNameAtribute a)
+        public virtual void Visit(GDClassNameAttribute a)
         {
             // Nothing
         }
 
-        public virtual void Visit(GDExtendsAtribute a)
+        public virtual void Visit(GDExtendsAttribute a)
         {
             // Nothing
         }

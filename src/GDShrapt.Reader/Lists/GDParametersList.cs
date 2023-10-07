@@ -5,7 +5,7 @@
     {
         internal override bool IsStopChar(char c)
         {
-            return c == ')';
+            return !c.IsIdentifierStartChar();
         }
 
         internal override GDReader ResolveNode()

@@ -1,10 +1,9 @@
-﻿using GDShrapt.Reader.Types;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     internal class GDTypeResolver : GDResolver
     {
         GDType _type;
+        GDString _string;
         GDSpace _space;
         bool _completed;
 
@@ -18,11 +17,17 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (_type == null && c.IsSpace())
+            if (_type == null && _string == null && c.IsSpace())
             {
                 var space = new GDSpace();
                 Owner.HandleReceivedToken(space);
                 state.PushAndPass(space, c);
+                return;
+            }
+
+            if (c.IsStringStartChar())
+            {
+                state.PushAndPass(_string = new GDString(), c);
                 return;
             }
 
@@ -129,7 +134,16 @@ namespace GDShrapt.Reader
             }
             else
             {
-                Owner.HandleReceivedTokenSkip();
+                if (_string != null)
+                {
+                    Owner.HandleReceivedToken(new GDStringTypeNode() { Path = _string });
+                }
+                else
+                {
+                    Owner.HandleReceivedTokenSkip();
+                }
+
+                _string = null;
             }
 
             if (_space != null)
@@ -143,7 +157,16 @@ namespace GDShrapt.Reader
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.PopAndPassNewLine();
+            state.Pop();
+            Complete(state);
+            state.PassNewLine();
+        }
+
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            state.Pop();
+            Complete(state);
+            state.PassSharpChar();
         }
 
         internal override void ForceComplete(GDReadingState state)

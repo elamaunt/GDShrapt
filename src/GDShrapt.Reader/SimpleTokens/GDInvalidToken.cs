@@ -15,6 +15,11 @@ namespace GDShrapt.Reader
             _stop = stop;
         }
 
+        internal GDInvalidToken(string sequence)
+        {
+            Sequence = sequence;
+        }
+
         internal override bool CanAppendChar(char c, GDReadingState state)
         {
             return !_stop(c);

@@ -7,8 +7,7 @@ namespace GDShrapt.Reader
         ITokenOrSkipReceiver<GDClassKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDExtendsKeyword>,
-        ITokenOrSkipReceiver<GDString>,
-        ITokenOrSkipReceiver<GDType>,
+        ITokenOrSkipReceiver<GDTypeNode>,
         ITokenOrSkipReceiver<GDClassMembersList>,
         ITokenOrSkipReceiver<GDColon>
     {
@@ -35,15 +34,9 @@ namespace GDShrapt.Reader
             set => _form.Token2 = value;
         }
 
-        public GDType BaseType
+        public GDTypeNode BaseType
         {
-            get => (GDType)_form.Token3;
-            set => _form.Token3 = value;
-        }
-
-        public GDString BaseTypePath
-        {
-            get => (GDString)_form.Token3;
+            get => _form.Token3;
             set => _form.Token3 = value;
         }
 
@@ -64,28 +57,27 @@ namespace GDShrapt.Reader
             Class,
             Identifier,
             Extends,
-            BaseTypePath,
             BaseType,
             Colon,
             Members,
             Completed
         }
 
-        readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList> _form;
+        readonly GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDTypeNode, GDColon, GDClassMembersList> _form;
         public override GDTokensForm Form => _form;
         public override bool IsStatic => true;
 
-        public GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList> TypedForm => _form;
+        public GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDTypeNode, GDColon, GDClassMembersList> TypedForm => _form;
 
         internal GDInnerClassDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList>(this);
+            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDTypeNode, GDColon, GDClassMembersList>(this);
         }
 
         public GDInnerClassDeclaration()
         {
-            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDDataToken, GDColon, GDClassMembersList>(this);
+            _form = new GDTokensForm<State, GDClassKeyword, GDIdentifier, GDExtendsKeyword, GDTypeNode, GDColon, GDClassMembersList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -103,9 +95,6 @@ namespace GDShrapt.Reader
                     break;
                 case State.Extends:
                     this.ResolveKeyword<GDExtendsKeyword>(c, state);
-                    break;
-                case State.BaseTypePath:
-                    this.ResolveString(c, state);
                     break;
                 case State.BaseType:
                     this.ResolveType(c, state);
@@ -130,7 +119,6 @@ namespace GDShrapt.Reader
                 case State.Identifier:
                 case State.Extends:
                 case State.BaseType:
-                case State.BaseTypePath:
                 case State.Colon:
                 case State.Members:
                     _form.State = State.Completed;
@@ -207,7 +195,7 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.Extends))
             {
-                _form.State = State.BaseTypePath;
+                _form.State = State.BaseType;
                 Extends = token;
                 return;
             }
@@ -219,36 +207,14 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.Extends))
             {
-                _form.State = State.BaseTypePath;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-        void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
-        {
-            if (_form.IsOrLowerState(State.BaseTypePath))
-            {
-                _form.State = State.Colon;
-                BaseTypePath = token;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-
-        void ITokenSkipReceiver<GDString>.HandleReceivedTokenSkip()
-        {
-            if (_form.IsOrLowerState(State.BaseTypePath))
-            {
                 _form.State = State.BaseType;
                 return;
             }
 
             throw new GDInvalidStateException();
         }
-
-        void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
+     
+        void ITokenReceiver<GDTypeNode>.HandleReceivedToken(GDTypeNode token)
         {
             if (_form.IsOrLowerState(State.BaseType))
             {
@@ -260,7 +226,7 @@ namespace GDShrapt.Reader
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDTypeNode>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.BaseType))
             {

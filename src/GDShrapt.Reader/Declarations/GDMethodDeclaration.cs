@@ -12,7 +12,7 @@ namespace GDShrapt.Reader
         ITokenOrSkipReceiver<GDCloseBracket>,
         ITokenOrSkipReceiver<GDReturnTypeKeyword>,
         ITokenOrSkipReceiver<GDExpressionsList>,
-        ITokenOrSkipReceiver<GDType>,
+        ITokenOrSkipReceiver<GDTypeNode>,
         ITokenOrSkipReceiver<GDColon>,
         ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDStatementsList>,
@@ -84,7 +84,7 @@ namespace GDShrapt.Reader
             set => _form.Token10 = value;
         }
 
-        public GDType ReturnType
+        public GDTypeNode ReturnType
         {
             get => _form.Token11;
             set => _form.Token11 = value;
@@ -132,19 +132,19 @@ namespace GDShrapt.Reader
             Completed,
         }
 
-        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
+        public GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         internal GDMethodDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDMethodDeclaration()
         {
-            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDType, GDColon, GDExpression, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDStaticKeyword, GDFuncKeyword, GDIdentifier, GDOpenBracket, GDParametersList, GDCloseBracket, GDPoint, GDOpenBracket, GDExpressionsList, GDCloseBracket, GDReturnTypeKeyword, GDTypeNode, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -447,7 +447,7 @@ namespace GDShrapt.Reader
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDType>.HandleReceivedToken(GDType token)
+        void ITokenReceiver<GDTypeNode>.HandleReceivedToken(GDTypeNode token)
         {
             if (_form.IsOrLowerState(State.Type))
             {
@@ -459,7 +459,7 @@ namespace GDShrapt.Reader
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDType>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDTypeNode>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Type))
             {

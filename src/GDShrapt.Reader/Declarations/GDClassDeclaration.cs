@@ -37,9 +37,9 @@ namespace GDShrapt.Reader
             _form = new GDTokensForm<State, GDClassAtributesList, GDClassMembersList>(this);
         }
 
-        public GDExtendsAtribute Extends => Atributes.OfType<GDExtendsAtribute>().FirstOrDefault();
-        public GDClassNameAtribute ClassName => Atributes.OfType<GDClassNameAtribute>().FirstOrDefault();
-        public bool IsTool => Atributes.OfType<GDToolAtribute>().Any();
+        public GDExtendsAttribute Extends => Atributes.OfType<GDExtendsAttribute>().FirstOrDefault();
+        public GDClassNameAttribute ClassName => Atributes.OfType<GDClassNameAttribute>().FirstOrDefault();
+        public bool IsTool => Atributes.OfType<GDToolAttribute>().Any();
 
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
@@ -126,7 +126,7 @@ namespace GDShrapt.Reader
             _form.AddBeforeActiveToken(new GDNewLine());
         }
 
-        GDType IGDClassDeclaration.BaseType => Extends?.Type;
+        GDTypeNode IGDClassDeclaration.BaseType => Extends?.Type;
         GDIdentifier IGDClassDeclaration.Identifier => ClassName?.Identifier;
     }
 }

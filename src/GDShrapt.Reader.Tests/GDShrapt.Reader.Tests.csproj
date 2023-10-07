@@ -19,6 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Scripts\Sample4.gd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Scripts\Sample.gd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

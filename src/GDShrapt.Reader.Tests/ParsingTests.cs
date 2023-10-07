@@ -1,7 +1,4 @@
-using GDShrapt.Reader.Declarations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 
 namespace GDShrapt.Reader.Tests
@@ -38,7 +35,7 @@ func save(path, resource, flags):
             var @class = reader.ParseFileContent(code);
 
             Assert.IsNotNull(@class);
-            Assert.AreEqual("ResourceFormatSaver", @class.Extends?.Type?.Sequence);
+            Assert.AreEqual("ResourceFormatSaver", (@class.Extends?.Type as GDSingleTypeNode)?.Type?.Sequence);
             Assert.AreEqual("HTerrainDataSaver", @class.ClassName?.Identifier?.Sequence);
             Assert.AreEqual(true, @class.IsTool);
 
@@ -343,7 +340,7 @@ else:
             Assert.IsInstanceOfType(((GDExpressionStatement)method.Statements[0]).Expression, typeof(GDReturnExpression));
 
             Assert.IsNotNull(method);
-            Assert.AreEqual("int", method.ReturnType?.Sequence);
+            Assert.AreEqual("int", (method.ReturnType as GDSingleTypeNode)?.Type?.Sequence);
             Assert.AreEqual("my_int_function", method.Identifier?.Sequence);
             Assert.AreEqual(true, method.IsStatic);
 
@@ -956,7 +953,7 @@ var node = get_node(node_path)
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Type);
             Assert.AreEqual(1, classDeclaration.Atributes.Count);
-            Assert.AreEqual("Test", classDeclaration.Extends.Type.Sequence);
+            Assert.AreEqual("Test", (classDeclaration.Extends.Type as GDSingleTypeNode).Type.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
@@ -972,9 +969,9 @@ var node = get_node(node_path)
 
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.Extends);
-            Assert.IsNotNull(classDeclaration.Extends.Path);
+            Assert.IsNotNull(classDeclaration.Extends.Type is GDStringTypeNode);
             Assert.AreEqual(1, classDeclaration.Atributes.Count);
-            Assert.AreEqual("res://path/to/character.gd", classDeclaration.Extends.Path.Sequence);
+            Assert.AreEqual("res://path/to/character.gd", (classDeclaration.Extends.Type as GDStringTypeNode).Path.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
@@ -1486,7 +1483,7 @@ var node = get_node(node_path)
             var method = @class.Methods.First();
             Assert.IsNotNull(method);
 
-            Assert.IsTrue(method.ReturnType.IsVoid);
+            Assert.IsTrue((method.ReturnType as GDSingleTypeNode).Type.IsVoid);
             Assert.AreEqual("_init", method.Identifier.Sequence);
             Assert.AreEqual(1, method.Parameters.Count);
             Assert.AreEqual(1, method.BaseCallParameters.Count);
@@ -1495,7 +1492,7 @@ var node = get_node(node_path)
             Assert.IsNotNull(parameter);
 
             Assert.AreEqual("res", parameter.Identifier.Sequence);
-            Assert.AreEqual("string", parameter.Type.Sequence);
+            Assert.AreEqual("string", (parameter.Type as GDSingleTypeNode)?.Type?.Sequence);
             Assert.AreEqual("\"Hello world\"", parameter.DefaultValue.ToString());
 
             var baseCallParameter = method.BaseCallParameters[0];
@@ -1738,9 +1735,9 @@ class fishB extends fish:
             var innerClass2 = @class.InnerClasses.ElementAt(1);
 
             Assert.AreEqual("fish", innerClass1.Identifier?.Sequence);
-            Assert.AreEqual("Node2D", innerClass1.BaseType?.Sequence);
+            Assert.AreEqual("Node2D", (innerClass1.BaseType as GDSingleTypeNode)?.Type?.Sequence);
             Assert.AreEqual("fishB", innerClass2.Identifier?.Sequence);
-            Assert.AreEqual("fish", innerClass2.BaseType?.Sequence);
+            Assert.AreEqual("fish", (innerClass2.BaseType as GDSingleTypeNode)?.Type?.Sequence);
 
             var innerClass3 = innerClass2.InnerClasses.FirstOrDefault();
 

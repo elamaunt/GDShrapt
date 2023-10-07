@@ -36,7 +36,7 @@ namespace GDShrapt.Reader
                 }
                 else
                 {
-                    Owner.HandleAsInvalidToken(c, state, x => !x.IsSpace());
+                    Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                 }
                 return;
             }

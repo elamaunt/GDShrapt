@@ -138,17 +138,17 @@ namespace GDShrapt.Converter
 
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        public void Visit(GDToolAtribute a)
+        public void Visit(GDToolAttribute a)
         {
 
         }
 
-        public void Visit(GDClassNameAtribute a)
+        public void Visit(GDClassNameAttribute a)
         {
 
         }
 
-        public void Visit(GDExtendsAtribute a)
+        public void Visit(GDExtendsAttribute a)
         {
 
         }
