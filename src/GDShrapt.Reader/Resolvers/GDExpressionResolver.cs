@@ -37,7 +37,7 @@
                 _ifExpressionChecked = false;
                 _nextIfKeyword = null;
 
-                var expr = new GDIfExpression();
+                var expr = new GDIfExpression(NewLineReceiver != null);
                 PushAndSwap(state, expr);
                 expr.Add(keyword);
 
@@ -223,6 +223,21 @@
                 {
                     case "if":
                     case "else":
+                        {
+                            _expression = null;
+
+                            if (_lastSpace != null)
+                            {
+                                Owner.HandleReceivedToken(_lastSpace);
+                                _lastSpace = null;
+                            }
+
+                            CompleteExpression(state);
+
+                            for (int i = 0; i < s.Length; i++)
+                                state.PassChar(s[i]);
+                        }
+                        return true;
                     case "setget":
                         {
                             _expression = null;

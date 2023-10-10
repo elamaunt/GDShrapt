@@ -3,8 +3,14 @@
     public sealed class GDIfExpression : GDExpression,
         ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDIfKeyword>,
-        ITokenOrSkipReceiver<GDElseKeyword>
+        ITokenOrSkipReceiver<GDElseKeyword>,
+        ITokenReceiver<GDNewLine>,
+        ITokenReceiver<GDLeftSlash>,
+        INewLineReceiver,
+        ILeftSlashReceiver
     {
+        private bool _expectingNewLineTokenForSplitting;
+
         public override int Priority => GDHelper.GetOperationPriority(GDOperationType.If);
 
         public GDExpression TrueExpression
@@ -47,36 +53,67 @@
         readonly GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> _form;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> TypedForm => _form;
+        public bool AllowNewLines { get; }
+        private bool MayHandleNewLine => (AllowNewLines && !_expectingNewLineTokenForSplitting) || (!AllowNewLines && _expectingNewLineTokenForSplitting);
+
         public GDIfExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>(this);
         }
 
+        public GDIfExpression(bool allowNewLines)
+        {
+            AllowNewLines = allowNewLines;
+            _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>(this);
+        }
+
         internal override void HandleChar(char c, GDReadingState state)
         {
+            if (this.ResolveLeftSlashToken(c, state))
+            {
+                _expectingNewLineTokenForSplitting = true;
+                return;
+            }
+
             switch (_form.State)
             {
                 case State.True:
                     if (!this.ResolveSpaceToken(c, state))
-                        state.PushAndPass(new GDExpressionResolver(this), c);
+                    {
+                        _expectingNewLineTokenForSplitting = false;
+                        this.ResolveExpression(c, state, AllowNewLines ? this : null);
+                    }
                     break;
                 case State.If:
                     if (!this.ResolveSpaceToken(c, state))
+                    {
+                        _expectingNewLineTokenForSplitting = false;
                         state.PushAndPass(new GDKeywordResolver<GDIfKeyword>(this), c);
+                    }
                     break;
                 case State.Condition:
                     if (!this.ResolveSpaceToken(c, state))
-                        state.PushAndPass(new GDExpressionResolver(this), c);
+                    {
+                        _expectingNewLineTokenForSplitting = false;
+                        this.ResolveExpression(c, state, AllowNewLines ? this : null);
+                    }
                     break;
                 case State.Else:
                     if (!this.ResolveSpaceToken(c, state))
+                    {
+                        _expectingNewLineTokenForSplitting = false;
                         state.PushAndPass(new GDKeywordResolver<GDElseKeyword>(this), c);
+                    }
                     break;
                 case State.False:
                     if (!this.ResolveSpaceToken(c, state))
-                        state.PushAndPass(new GDExpressionResolver(this), c);
+                    {
+                        _expectingNewLineTokenForSplitting = false;
+                        this.ResolveExpression(c, state, AllowNewLines ? this : null);
+                    }
                     break;
                 default:
+                    _expectingNewLineTokenForSplitting = false;
                     state.PopAndPass(c);
                     break;
             }
@@ -84,7 +121,13 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.PopAndPassNewLine();
+            if (MayHandleNewLine && _form.State != State.Completed)
+            {
+                _expectingNewLineTokenForSplitting = false;
+                _form.AddBeforeActiveToken(new GDNewLine());
+            }
+            else
+                state.PopAndPassNewLine();
         }
 
         protected override GDExpression PriorityRebuildingPass()
@@ -127,13 +170,13 @@
 
         public override void RebuildBranchesOfPriorityIfNeeded()
         {
-            TrueExpression = TrueExpression.RebuildRootOfPriorityIfNeeded();
-            FalseExpression = FalseExpression.RebuildRootOfPriorityIfNeeded();
+            TrueExpression = TrueExpression?.RebuildRootOfPriorityIfNeeded();
+            FalseExpression = FalseExpression?.RebuildRootOfPriorityIfNeeded();
         }
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDIfExpression();
+            return new GDIfExpression(AllowNewLines);
         }
 
         internal override void Visit(IGDVisitor visitor)
@@ -235,6 +278,54 @@
             if (_form.IsOrLowerState(State.Else))
             {
                 _form.State = State.False;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        {
+            if (MayHandleNewLine && _form.State != State.Completed)
+            {
+                _expectingNewLineTokenForSplitting = false;
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            if (MayHandleNewLine && _form.State != State.Completed)
+            {
+                _expectingNewLineTokenForSplitting = false;
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDLeftSlash>.HandleReceivedToken(GDLeftSlash token)
+        {
+            if (!AllowNewLines && _form.State != State.Completed)
+            {
+                _expectingNewLineTokenForSplitting = true;
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ILeftSlashReceiver.HandleReceivedToken(GDLeftSlash token)
+        {
+            if (!AllowNewLines && _form.State != State.Completed)
+            {
+                _expectingNewLineTokenForSplitting = true;
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 

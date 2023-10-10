@@ -168,7 +168,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDDualOperatorExpression();
+            return new GDDualOperatorExpression(AllowNewLines);
         }
 
         internal override void Visit(IGDVisitor visitor)

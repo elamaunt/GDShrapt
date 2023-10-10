@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Security.Claims;
 
 namespace GDShrapt.Reader.Tests
 {
@@ -1934,7 +1935,7 @@ print(counter.call()) # 1";
             Assert.AreEqual(5, @statements.Count);
             Assert.AreEqual(2, @statements.SelectMany(x => x.AllNodes).Count(x => x is GDMethodExpression));
         }
-        
+
         [TestMethod]
         public void ParseCurryingTest()
         {
@@ -1977,6 +1978,9 @@ func _getter():
 	return my_var";
 
             var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         public void ParseNewProperiesSyntaxTest2()
@@ -1995,6 +1999,9 @@ func _update_score_display():
 	pass # Do something to update the displayed score";
 
             var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         public void ParseNewProperiesSyntaxTest3()
@@ -2012,6 +2019,9 @@ func update_score_display():
 	pass # Do something to update the displayed score";
 
             var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         public void ParseNewExportsTest()
@@ -2028,6 +2038,9 @@ func update_score_display():
 
 
             var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         [TestMethod]
@@ -2042,6 +2055,54 @@ var array3: [int] = [3]
 ";
 
             var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseMultilineIfTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var angle_degrees = 135
+var quadrant = (
+		""northeast"" if angle_degrees <= 90
+		else ""southeast"" if angle_degrees <= 180
+		else ""southwest"" if angle_degrees <= 270
+		else ""northwest""
+)
+
+var position = Vector2(250, 350)
+if (
+		position.x > 200 and position.x < 400
+		and position.y > 300 and position.y < 400
+):
+	pass";
+            var @statementsList = reader.ParseStatementsList(code);
+
+            Assert.AreEqual(4, @statementsList.Count);
+
+            AssertHelper.CompareCodeStrings(code, @statementsList.ToString());
+            AssertHelper.NoInvalidTokens(@statementsList);
+        }
+
+        [TestMethod]
+        public void ParseSameLineIfTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var angle_degrees = 135
+var quadrant = ""northeast"" if angle_degrees <= 90 else ""southeast"" if angle_degrees <= 180 else ""southwest"" if angle_degrees <= 270 else ""northwest""
+
+var position = Vector2(250, 350)
+if position.x > 200 and position.x < 400 and position.y > 300 and position.y < 400:
+	pass";
+
+            var @statements = reader.ParseStatements(code);
+
+            Assert.AreEqual(4, @statements.Count);
+            Assert.AreEqual(0, @statements.SelectMany(x => x.AllInvalidTokens).Count());
         }
     }
 }

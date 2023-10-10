@@ -56,8 +56,15 @@ namespace GDShrapt.Reader
                 }
                 else
                 {
-                    CompleteAsExpressionStatement(state);
-                    state.PassChar(c);
+                    if (c.IsExpressionStopChar())
+                    {
+                        Owner.HandleReceivedToken(new GDInvalidToken(c.ToString()));
+                    }
+                    else
+                    {
+                        CompleteAsExpressionStatement(state);
+                        state.PassChar(c);
+                    }
                 }
             }
             else
@@ -114,6 +121,16 @@ namespace GDShrapt.Reader
 
             switch (sequence)
             {
+                case "and":
+                case "setget":
+                case "else":
+                    {
+                        _statementResolved = false;
+                        SendIntendationTokensToOwner();
+                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsSpace() || x.IsNewLine() || x.IsExpressionStopChar())));
+                        state.PassString(sequence);
+                        return null;
+                    }
                 case "if":
                     {
                         var s = new GDIfStatement(LineIntendationThreshold);

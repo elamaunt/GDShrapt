@@ -104,6 +104,26 @@ namespace GDShrapt.Reader
             return receiver.Tokens.OfType<GDStatement>().FirstOrDefault();
         }
 
+        public GDStatementsList ParseStatementsList(string content)
+        {
+            var state = new GDReadingState(Settings);
+            var list = new GDStatementsList();
+
+            state.Push(list);
+
+            var buffer = new char[Settings.ReadBufferSize];
+            int count = 0;
+
+            using (var reader = new StringReader(content))
+            {
+                while ((count = reader.Read(buffer, 0, buffer.Length)) > 0)
+                    ParseBuffer(buffer, count, state);
+            }
+
+            state.CompleteReading();
+            return list;
+        }
+
         public List<GDStatement> ParseStatements(string content)
         {
             var state = new GDReadingState(Settings);
