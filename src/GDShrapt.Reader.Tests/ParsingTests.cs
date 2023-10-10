@@ -2104,5 +2104,59 @@ if position.x > 200 and position.x < 400 and position.y > 300 and position.y < 4
             Assert.AreEqual(4, @statements.Count);
             Assert.AreEqual(0, @statements.SelectMany(x => x.AllInvalidTokens).Count());
         }
+
+        [TestMethod]
+        public void ParseInlinedLambda()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var x = func(y): return y == 1 if true else func(y): return y == 2";
+
+            var @statementsList = reader.ParseStatementsList(code);
+
+            Assert.AreEqual(1, @statementsList.Count);
+
+            var statement = @statementsList[0];
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDVariableDeclarationStatement));
+
+            var declaration = (GDVariableDeclarationStatement)statement;
+            var initializer = declaration.Initializer;
+
+            Assert.IsNotNull(initializer);
+            Assert.IsInstanceOfType(initializer, typeof(GDMethodExpression));
+
+            var methodExpr = (GDMethodExpression)initializer;
+
+            var expr = methodExpr.Expression;
+
+            Assert.IsNotNull(expr);
+            Assert.IsInstanceOfType(expr, typeof(GDReturnExpression));
+
+            var returnInnerExpr = ((GDReturnExpression)expr).Expression;
+
+            Assert.IsNotNull(returnInnerExpr);
+            Assert.IsInstanceOfType(returnInnerExpr, typeof(GDIfExpression));
+
+            var ifExpression = (GDIfExpression)returnInnerExpr;
+
+            var falseExpression = ifExpression.FalseExpression;
+
+            Assert.IsNotNull(falseExpression);
+            Assert.IsInstanceOfType(falseExpression, typeof(GDMethodExpression));
+
+            var inlinedMethodExpression = (GDMethodExpression)falseExpression;
+
+            var inlinedMethodReturnExpression = inlinedMethodExpression.Expression;
+
+            Assert.IsNotNull(inlinedMethodReturnExpression);
+            Assert.IsInstanceOfType(inlinedMethodReturnExpression, typeof(GDReturnExpression));
+
+            Assert.AreEqual("return y == 2", inlinedMethodReturnExpression.ToString());
+
+            AssertHelper.CompareCodeStrings(code, @statementsList.ToString());
+            AssertHelper.NoInvalidTokens(@statementsList);
+        }
     }
 }
