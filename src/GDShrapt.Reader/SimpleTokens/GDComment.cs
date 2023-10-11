@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     public sealed class GDComment : GDCharSequence
     {

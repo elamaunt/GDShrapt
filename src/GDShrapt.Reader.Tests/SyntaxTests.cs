@@ -373,5 +373,42 @@ func updateSample(obj):
                 AssertHelper.CompareCodeStrings(lines[token.EndLine], lineByToken);
             }
         }
+
+        [TestMethod]
+        public void CommentsSyntaxTest()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node2D
+
+#func _ready() -> void:
+func _process(delta) -> void:
+	var t = TYPE_NIL
+	if !(
+		t == TYPE_NIL
+		|| t == TYPE_AABB
+		|| t == TYPE_ARRAY
+		|| t == TYPE_BASIS
+		|| t == TYPE_BOOL
+		|| t == TYPE_COLOR
+		|| t == TYPE_COLOR_ARRAY
+		|| t == TYPE_DICTIONARY
+		|| t == TYPE_INT
+		|| t == TYPE_VECTOR3_ARRAY
+		#			# TODOGODOT4
+		#			|| t == TYPE_VECTOR2I
+		#			|| t == TYPE_VECTOR3I
+		#			|| t == TYPE_STRING_NAME
+		#			|| t == TYPE_RECT2I
+		#			|| t == TYPE_FLOAT64_ARRAY
+		#			|| t == TYPE_INT64_ARRAY
+		#			|| t == TYPE_CALLABLE
+	):
+		return ";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }

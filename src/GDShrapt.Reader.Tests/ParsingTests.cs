@@ -1099,7 +1099,13 @@ var node = get_node(node_path)
                 "&",
                 "in",
                 "&=",
-                "|=")]
+                "|=",
+                "**",
+                "**=",
+                "<<=",
+                ">>=", 
+                "^=",
+                "%=")]
         public void DualOperatorsTest(params string[] operators)
         {
             var reader = new GDScriptReader();
@@ -2051,8 +2057,7 @@ func update_score_display():
             var code = @"
 var array1: Array[int] = [3]
 var array2: Array = [3]
-var array3: [int] = [3]
-";
+var array3: [int] = [3]";
 
             var @class = reader.ParseFileContent(code);
 

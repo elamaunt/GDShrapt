@@ -149,7 +149,6 @@ namespace GDShrapt.Reader
             base.WalkIn(visitor, walkBackward);
             visitor.DidLeftExpression(this);
         }
-
     }
 }
 

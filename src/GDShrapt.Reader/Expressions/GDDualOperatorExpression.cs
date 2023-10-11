@@ -116,6 +116,20 @@
                 state.PopAndPassNewLine();
         }
 
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            if (MayHandleNewLine && _form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(state.Push(new GDComment()));
+            }
+            else
+            {
+                state.Pop();
+            }
+
+            state.PassSharpChar();
+        }
+
         /// <summary>
         /// Rebuilds current node if another inner node has higher priority.
         /// </summary>

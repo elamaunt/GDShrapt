@@ -130,6 +130,20 @@
                 state.PopAndPassNewLine();
         }
 
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            if (MayHandleNewLine && _form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(state.Push(new GDComment()));
+            }
+            else
+            {
+                state.Pop();
+            }
+
+            state.PassSharpChar();
+        }
+
         protected override GDExpression PriorityRebuildingPass()
         {
             if (IsHigherPriorityThan(TrueExpression, GDSideType.Left))

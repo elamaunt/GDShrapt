@@ -128,7 +128,10 @@ namespace GDShrapt.Reader
             void HandleStaticIfMet(ITokenReceiver<GDSpace> spaceReceiver, Action push, bool invalid = true)
             {
                 if (!_staticMet)
+                {
+                    push();
                     return;
+                }
 
                 if (invalid)
                 {

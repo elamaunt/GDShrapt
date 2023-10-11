@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace GDShrapt.Reader
 {
@@ -11,15 +12,18 @@ namespace GDShrapt.Reader
     {
         public GDReadSettings Settings { get; }
 
+        private readonly StackTrace _stackTrace;
+
         /// <summary>
         /// Main reading stack
         /// </summary>
-        readonly Stack<GDReader> _readersStack = new Stack<GDReader>();
+        readonly Stack<GDReader> _readersStack = new Stack<GDReader>(64);
         GDReader CurrentReader => _readersStack.PeekOrDefault();
 
         public GDReadingState(GDReadSettings settings)
         {
             Settings = settings;
+            _stackTrace = new StackTrace(false);
         }
 
         /// <summary>
@@ -102,7 +106,13 @@ namespace GDShrapt.Reader
         {
             if (reader == null)
                 throw new ArgumentNullException(nameof(reader));
-            
+
+            if (Settings.MaxReadingStack.HasValue && _readersStack.Count == Settings.MaxReadingStack.Value)
+                throw new StackOverflowException("Maximum reading reading stack is reached.");
+
+            if (Settings.MaxStacktraceFramesCount.HasValue && _stackTrace.FrameCount >= Settings.MaxStacktraceFramesCount.Value)
+                throw new StackOverflowException("Maximum stackTrace frames count is reached.");
+
             _readersStack.Push(reader);
             return reader;
         }
