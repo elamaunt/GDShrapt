@@ -18,7 +18,13 @@ namespace GDShrapt.Reader
         internal override void HandleSharpChar(GDReadingState state)
         {
             state.Pop();
-            state.PassChar('#');
+            state.PassSharpChar();
+        }
+
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            state.Pop();
+            state.PassLeftSlashChar();
         }
 
         public override int Length => ToString().Length;

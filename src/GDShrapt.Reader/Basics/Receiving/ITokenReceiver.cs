@@ -12,5 +12,6 @@
         void HandleReceivedToken(GDComment token);
         void HandleReceivedToken(GDSpace token);
         void HandleReceivedToken(GDInvalidToken token);
+        void HandleReceivedToken(GDMultiLineSplitToken token);
     }
 }

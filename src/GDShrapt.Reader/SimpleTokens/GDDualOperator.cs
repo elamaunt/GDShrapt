@@ -9,6 +9,7 @@
             state.Pop();
             state.PassChar(c);
         }
+
         public override GDSyntaxToken Clone()
         {
             return new GDDualOperator()

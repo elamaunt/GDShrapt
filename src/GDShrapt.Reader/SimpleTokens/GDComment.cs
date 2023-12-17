@@ -28,6 +28,11 @@
             HandleChar('#', state);
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            HandleChar('\\', state);
+        }
+
         public override GDSyntaxToken Clone()
         {
             return new GDComment()

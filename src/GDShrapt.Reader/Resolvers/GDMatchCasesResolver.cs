@@ -45,6 +45,12 @@
             state.PassSharpChar();
         }
 
+        internal override void HandleLeftSlashCharAfterIntendation(GDReadingState state)
+        {
+            Owner.HandleReceivedToken(state.Push(new GDMultiLineSplitToken()));
+            state.PassLeftSlashChar();
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             if (_lastSpace != null)

@@ -255,33 +255,5 @@ namespace GDShrapt.Reader
             receiver.HandleReceivedToken(setup(new GDPathList()));
             return receiver;
         }
-
-        public static T AddExportParameters<T>(this T receiver, params GDDataToken[] tokens)
-          where T : ITokenReceiver<GDDataParametersList>
-        {
-            receiver.HandleReceivedToken(GD.List.ExportParameters(tokens));
-            return receiver;
-        }
-
-        public static T AddExportParameters<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
-            where T : ITokenReceiver<GDDataParametersList>
-        {
-            receiver.HandleReceivedToken(GD.List.ExportParameters(unsafeTokens));
-            return receiver;
-        }
-
-        public static T AddExportParameters<T>(this T receiver, GDDataParametersList list)
-            where T : ITokenReceiver<GDDataParametersList>
-        {
-            receiver.HandleReceivedToken(list);
-            return receiver;
-        }
-
-        public static T AddExportParameters<T>(this T receiver, Func<GDDataParametersList, GDDataParametersList> setup)
-            where T : ITokenReceiver<GDDataParametersList>
-        {
-            receiver.HandleReceivedToken(setup(new GDDataParametersList()));
-            return receiver;
-        }
     }
 }

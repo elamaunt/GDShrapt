@@ -246,30 +246,6 @@ namespace GDShrapt.Reader
                 return list;
             }
 
-            public static GDDataParametersList ExportParameters() => new GDDataParametersList();
-            public static GDDataParametersList ExportParameters(Func<GDDataParametersList, GDDataParametersList> setup) => setup(new GDDataParametersList());
-            public static GDDataParametersList ExportParameters(params GDSyntaxToken[] unsafeTokens) => new GDDataParametersList() { FormTokensSetter = unsafeTokens };
-            public static GDDataParametersList ExportParameters(params GDDataToken[] tokens)
-            {
-                if (tokens == null || tokens.Length == 0)
-                    return new GDDataParametersList();
-
-                var list = new GDDataParametersList();
-
-                for (int i = 0; i < tokens.Length; i++)
-                {
-                    if (i > 0)
-                    {
-                        list.Form.AddToEnd(new GDComma());
-                        list.Form.AddToEnd(Syntax.Space());
-                    }
-
-                    list.Add(tokens[i]);
-                }
-
-                return list;
-            }
-
             public static GDMatchCasesList MatchCases() => new GDMatchCasesList();
             public static GDMatchCasesList MatchCases(Func<GDMatchCasesList, GDMatchCasesList> setup) => setup(new GDMatchCasesList());
             public static GDMatchCasesList MatchCases(params GDSyntaxToken[] unsafeTokens) => new GDMatchCasesList() { FormTokensSetter = unsafeTokens };

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace GDShrapt.Reader
 {
@@ -52,7 +53,7 @@ namespace GDShrapt.Reader
             var buffer = new char[Settings.ReadBufferSize];
             int count = 0;
 
-            using(var stream = File.OpenRead(filePath))
+            using (var stream = File.OpenRead(filePath))
             using (var reader = new StreamReader(stream))
             {
                 while ((count = reader.Read(buffer, 0, buffer.Length)) > 0)

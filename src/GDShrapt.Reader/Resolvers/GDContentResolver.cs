@@ -16,7 +16,6 @@ namespace GDShrapt.Reader
             Owner = owner;
         }
 
-
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
             if (char.IsLetter(c) || c == '_' || (_sequence.Length > 0 && char.IsDigit(c)))
@@ -133,6 +132,25 @@ namespace GDShrapt.Reader
             {
                 HandleSequence(_sequence.ToString(), state);
                 state.PassSharpChar();
+            }
+        }
+
+        internal override void HandleLeftSlashCharAfterIntendation(GDReadingState state)
+        {
+            if (_sequence.Length == 0)
+            {
+                if (_lastSpace != null)
+                {
+                    Owner.HandleReceivedToken(_lastSpace);
+                    _lastSpace = null;
+                }
+
+                Owner.HandleReceivedToken(state.PushAndPass(new GDMultiLineSplitToken(), '\\'));
+            }
+            else
+            {
+                HandleSequence(_sequence.ToString(), state);
+                state.PassLeftSlashChar();
             }
         }
 

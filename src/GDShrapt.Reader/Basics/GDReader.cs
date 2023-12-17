@@ -4,17 +4,24 @@
     {
         /// <summary>
         /// Pass single character in the node. 
-        /// If the node can't handle the character it may return the character to previous node in reading state.
+        /// If the node can't handle a character it may return the character to a previous node in the reading state.
         /// </summary>
         /// <param name="c">Character</param>
         /// <param name="state">Current reading state</param>
         internal abstract void HandleChar(char c, GDReadingState state);
 
         /// <summary>
-        /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for new line character
+        /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for a new line character
         /// </summary>
         /// <param name="state">Current reading state</param>
         internal abstract void HandleNewLineChar(GDReadingState state);
+
+        /// <summary>
+        /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for a back slash character
+        /// </summary>
+        /// <param name="state">Current reading state</param>
+        internal abstract void HandleLeftSlashChar(GDReadingState state);
+
 
         /// <summary>
         /// Simple check on whitespace characters ' ' and '\t'.

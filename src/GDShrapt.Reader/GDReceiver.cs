@@ -55,6 +55,11 @@ namespace GDShrapt.Reader
             Tokens.Add(token);
         }
 
+        public void HandleReceivedToken(GDMultiLineSplitToken token)
+        {
+            Tokens.Add(token);
+        }
+
         public void HandleReceivedTokenSkip()
         {
 

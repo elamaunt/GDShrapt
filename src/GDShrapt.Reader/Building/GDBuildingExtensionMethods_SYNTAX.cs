@@ -16,13 +16,6 @@
             return receiver;
         }
 
-        public static T AddLeftSlash<T>(this T receiver)
-            where T : ILeftSlashReceiver
-        {
-            receiver.HandleReceivedToken(GD.Syntax.LeftSlash);
-            return receiver;
-        }
-
         public static T AddComment<T>(this T receiver, string comment)
             where T : ITokenReceiver
         {
@@ -119,12 +112,12 @@
             return receiver;
         }
 
-        public static T Add<T>(this T receiver, string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas)
-            where T : ITokenReceiver<GDString>
+       /* public static T Add<T>(this T receiver, string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas)
+            where T : ITokenReceiver<GDStringNode>
         {
             receiver.HandleReceivedToken(GD.Syntax.String(value, multiline, boundingChar));
             return receiver;
-        }
+        }*/
 
         public static T AddFigureOpenBracket<T>(this T receiver)
             where T : ITokenReceiver<GDFigureOpenBracket>

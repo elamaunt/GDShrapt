@@ -396,6 +396,34 @@
             }
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            if (NewLineReceiver != null)
+            {
+                if (_expression != null)
+                {
+                    PushAndSwap(state, new GDDualOperatorExpression(true));
+                    state.PassLeftSlashChar();
+                }
+                else
+                {
+                    if (_lastSpace != null)
+                    {
+                        NewLineReceiver.HandleReceivedToken(_lastSpace);
+                        _lastSpace = null;
+                    }
+
+                    NewLineReceiver.HandleReceivedToken(state.PushAndPass(new GDMultiLineSplitToken(), '\\'));
+                }
+            }
+            else
+            {
+                if (!CheckKeywords(state))
+                    CompleteExpression(state);
+                state.PassLeftSlashChar();
+            }
+        }
+
         private void CompleteExpression(GDReadingState state)
         {
             if (_isCompleted)
@@ -489,11 +517,18 @@
         {
             Owner.HandleReceivedToken(token);
         }
+
         public void HandleReceivedToken(GDSpace token)
         {
             Owner.HandleReceivedToken(token);
         }
+
         public void HandleReceivedToken(GDInvalidToken token)
+        {
+            Owner.HandleReceivedToken(token);
+        }
+
+        public void HandleReceivedToken(GDMultiLineSplitToken token)
         {
             Owner.HandleReceivedToken(token);
         }

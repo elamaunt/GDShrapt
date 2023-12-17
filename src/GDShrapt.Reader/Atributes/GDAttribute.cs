@@ -4,7 +4,7 @@
        ITokenOrSkipReceiver<GDAt>,
        ITokenOrSkipReceiver<GDIdentifier>,
        ITokenOrSkipReceiver<GDOpenBracket>,
-       ITokenOrSkipReceiver<GDDataParametersList>,
+       ITokenOrSkipReceiver<GDExpressionsList>,
        ITokenOrSkipReceiver<GDCloseBracket>
     {
         public GDAt At
@@ -25,9 +25,9 @@
             set => _form.Token2 = value;
         }
 
-        public GDDataParametersList Parameters
+        public GDExpressionsList Parameters
         {
-            get => _form.Token3 ?? (_form.Token3 = new GDDataParametersList());
+            get => _form.Token3 ?? (_form.Token3 = new GDExpressionsList());
             set => _form.Token3 = value;
         }
 
@@ -47,13 +47,13 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDDataParametersList, GDCloseBracket> _form;
+        readonly GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDDataParametersList, GDCloseBracket> TypedForm => _form;
+        public GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
 
         public GDAttribute()
         {
-            _form = new GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDDataParametersList, GDCloseBracket>(this);
+            _form = new GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -197,7 +197,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDDataParametersList>.HandleReceivedToken(GDDataParametersList token)
+        void ITokenReceiver<GDExpressionsList>.HandleReceivedToken(GDExpressionsList token)
         {
             if (_form.IsOrLowerState(State.Parameters))
             {
@@ -209,7 +209,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDDataParametersList>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDExpressionsList>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Parameters))
             {

@@ -45,19 +45,19 @@ namespace GDShrapt.Reader
                 Type = GDResolvingHelper.ParseTypeNode(type)
             };
 
-            public static GDExtendsAttribute Extends(GDString path) => new GDExtendsAttribute()
+            public static GDExtendsAttribute Extends(GDStringNode path) => new GDExtendsAttribute()
             {
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
                 Type = new GDStringTypeNode() { Path = path }
             };
 
-            public static GDExtendsAttribute ExtendsPath(string path) => new GDExtendsAttribute()
+            /*public static GDExtendsAttribute ExtendsPath(string path) => new GDExtendsAttribute()
             {
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
                 Type = new GDStringTypeNode() { Path = path }
-            };
+            };*/
 
             public static GDClassMemberAttributeDeclaration MemberAttribute() => new GDClassMemberAttributeDeclaration();
             public static GDClassMemberAttributeDeclaration MemberAttribute(Func<GDClassMemberAttributeDeclaration, GDClassMemberAttributeDeclaration> setup) => setup(new GDClassMemberAttributeDeclaration());

@@ -103,6 +103,21 @@ namespace GDShrapt.Reader
             state.PassSharpChar();
         }
 
+        internal override void HandleLeftSlashCharAfterIntendation(GDReadingState state)
+        {
+            if (_sequenceBuilder?.Length > 0)
+            {
+                var sequence = _sequenceBuilder.ToString();
+                ResetSequence();
+                Complete(state, sequence);
+                state.PassLeftSlashChar();
+                return;
+            }
+
+            Owner.HandleReceivedToken(state.Push(new GDMultiLineSplitToken()));
+            state.PassLeftSlashChar();
+        }
+
         private void ResetSequence()
         {
             _sequenceBuilder.Clear();

@@ -70,6 +70,11 @@ namespace GDShrapt.Reader
             CurrentReader?.HandleSharpChar(this);
         }
 
+        public void PassLeftSlashChar()
+        {
+            CurrentReader?.HandleLeftSlashChar(this);
+        }
+
         /// <summary>
         /// Sends a character to the current reader.
         /// </summary>
@@ -92,6 +97,12 @@ namespace GDShrapt.Reader
             if (c == '#')
             {
                 reader.HandleSharpChar(this);
+                return;
+            }
+
+            if (c == '\\')
+            {
+                reader.HandleLeftSlashChar(this);
                 return;
             }
 

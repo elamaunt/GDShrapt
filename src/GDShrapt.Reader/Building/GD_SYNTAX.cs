@@ -6,12 +6,12 @@
         {
             public static GDIdentifier Identifier(string name) => new GDIdentifier() { Sequence = name };
             public static GDType Type(string name) => new GDType() { Sequence = name };
-            public static GDString String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas) => new GDString()
+           /* public static GDStringNode String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas) => new GDString()
             {
                 Sequence = value,
                 Multiline = multiline,
                 BoundingChar = boundingChar
-            };
+            };*/
 
             public static GDNumber Number(string stringValue) => new GDNumber() { Sequence = stringValue };
             public static GDNumber Number(int value) => new GDNumber() { ValueInt64 = value };

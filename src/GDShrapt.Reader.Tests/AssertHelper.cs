@@ -37,6 +37,7 @@ namespace GDShrapt.Reader.Tests
 
             Assert.AreEqual(s1, s2);
         }
+
         internal static void NoInvalidTokens(GDNode node)
         {
             var invalidTokens = node.AllInvalidTokens.ToArray();

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-
+/*
 namespace GDShrapt.Reader
 {
     public sealed class GDString : GDLiteralToken
@@ -259,4 +259,4 @@ namespace GDShrapt.Reader
             return $"{c}{Sequence}{c}";
         }
     }
-}
+}*/

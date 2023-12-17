@@ -22,6 +22,12 @@
             state.PassChar('#');
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            state.Pop();
+            state.PassLeftSlashChar();
+        }
+
         public override string ToString()
         {
             return Sequence;

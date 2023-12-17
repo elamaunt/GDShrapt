@@ -132,11 +132,6 @@
             // Nothing
         }
 
-        public virtual void Left(GDDataParametersList list)
-        {
-            // Nothing
-        }
-
         public virtual void Left(GDExpressionsList list)
         {
             // Nothing
@@ -263,11 +258,6 @@
         }
 
         public virtual void Visit(GDEnumValuesList list)
-        {
-            // Nothing
-        }
-
-        public virtual void Visit(GDDataParametersList list)
         {
             // Nothing
         }

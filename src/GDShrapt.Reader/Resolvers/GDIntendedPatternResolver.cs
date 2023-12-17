@@ -146,6 +146,11 @@ namespace GDShrapt.Reader
             HandleCharAfterIntendation('#', state);
         }
 
+        internal override void HandleLeftSlashCharAfterIntendation(GDReadingState state)
+        {
+            HandleCharAfterIntendation('\\', state);
+        }
+
         protected override void OnIntendationThresholdMet(GDReadingState state)
         {
             base.OnIntendationThresholdMet(state);

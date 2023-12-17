@@ -4,7 +4,7 @@
         ITokenOrSkipReceiver<GDClassNameKeyword>,
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDComma>,
-        ITokenOrSkipReceiver<GDString>
+        ITokenOrSkipReceiver<GDStringNode>
     {
         public GDClassNameKeyword ClassNameKeyword
         {
@@ -24,7 +24,7 @@
             set => _form.Token2 = value;
         }
 
-        public GDString Icon
+        public GDStringNode Icon
         {
             get => _form.Token3;
             set => _form.Token3 = value;
@@ -39,13 +39,13 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString> _form;
+        readonly GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDStringNode> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString> TypedForm => _form;
+        public GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDStringNode> TypedForm => _form;
 
         public GDClassNameAttribute()
         {
-            _form = new GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDString>(this);
+            _form = new GDTokensForm<State, GDClassNameKeyword, GDIdentifier, GDComma, GDStringNode>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -162,7 +162,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
+        void ITokenReceiver<GDStringNode>.HandleReceivedToken(GDStringNode token)
         {
             if (_form.IsOrLowerState(State.Icon))
             {
@@ -174,7 +174,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDString>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDStringNode>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Icon))
             {

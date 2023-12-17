@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
-using System.Xml.Linq;
 
 namespace GDShrapt.Reader
 {
@@ -136,6 +134,12 @@ namespace GDShrapt.Reader
         {
             Form.AddBeforeActiveToken(state.Push(new GDComment()));
             state.PassSharpChar();
+        }
+
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            Form.AddBeforeActiveToken(state.Push(new GDMultiLineSplitToken()));
+            state.PassLeftSlashChar();
         }
 
         public override void AppendTo(StringBuilder builder)
@@ -391,6 +395,11 @@ namespace GDShrapt.Reader
         }
 
         void ITokenReceiver.HandleReceivedToken(GDComment token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDMultiLineSplitToken token)
         {
             Form.AddBeforeActiveToken(token);
         }

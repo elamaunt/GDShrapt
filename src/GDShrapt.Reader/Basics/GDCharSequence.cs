@@ -77,6 +77,12 @@ namespace GDShrapt.Reader
             base.HandleNewLineChar(state);
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            Complete();
+            base.HandleLeftSlashChar(state);
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             CompleteSequence(state);

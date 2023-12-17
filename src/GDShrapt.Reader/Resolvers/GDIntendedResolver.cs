@@ -40,6 +40,7 @@ namespace GDShrapt.Reader
         internal abstract void HandleCharAfterIntendation(char c, GDReadingState state);
         internal abstract void HandleNewLineAfterIntendation(GDReadingState state);
         internal abstract void HandleSharpCharAfterIntendation(GDReadingState state);
+        internal abstract void HandleLeftSlashCharAfterIntendation(GDReadingState state);
 
         bool HandleIntendation(char c, GDReadingState state)
         {
@@ -144,6 +145,17 @@ namespace GDShrapt.Reader
             {
                 _inComment = true;
                 HandleIntendation('#', state);
+            }
+        }
+
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            if (_lineIntendationEnded)
+                HandleLeftSlashCharAfterIntendation(state);
+            else
+            {
+                _inComment = true;
+                HandleIntendation('\\', state);
             }
         }
 

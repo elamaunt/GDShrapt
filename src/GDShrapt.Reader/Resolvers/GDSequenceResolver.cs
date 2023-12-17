@@ -53,6 +53,17 @@
                 state.PassChar(s[i]);
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            state.Pop();
+            OnFail(state);
+
+            var s = Sequence;
+
+            for (int i = 0; i < Index - 1; i++)
+                state.PassChar(s[i]);
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             state.Pop();

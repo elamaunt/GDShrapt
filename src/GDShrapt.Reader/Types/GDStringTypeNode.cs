@@ -1,12 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
     public class GDStringTypeNode : GDTypeNode,
-        ITokenOrSkipReceiver<GDString>
+        ITokenOrSkipReceiver<GDStringNode>
     {
         public override GDTypeNode SubType => null;
         public override bool IsArray => false;
 
-        public GDString Path
+        public GDStringNode Path
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -18,13 +18,13 @@
             Completed
         }
 
-        readonly GDTokensForm<State, GDString> _form;
+        readonly GDTokensForm<State, GDStringNode> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDString> TypedForm => _form;
+        public GDTokensForm<State, GDStringNode> TypedForm => _form;
 
         public GDStringTypeNode()
         {
-            _form = new GDTokensForm<State, GDString>(this);
+            _form = new GDTokensForm<State, GDStringNode>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -60,7 +60,7 @@
             visitor.Left(this);
         }
 
-        void ITokenReceiver<GDString>.HandleReceivedToken(GDString token)
+        void ITokenReceiver<GDStringNode>.HandleReceivedToken(GDStringNode token)
         {
             if (_form.State == State.Path)
             {
@@ -72,7 +72,7 @@
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDString>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDStringNode>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Path)
             {

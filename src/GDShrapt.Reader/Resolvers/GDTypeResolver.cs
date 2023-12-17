@@ -1,9 +1,11 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
-    internal class GDTypeResolver : GDResolver
+    internal class GDTypeResolver : GDResolver, ITokenOrSkipReceiver<GDStringNode>
     {
         GDType _type;
-        GDString _string;
+        GDStringNode _string;
         GDSpace _space;
         bool _completed;
 
@@ -27,7 +29,7 @@
 
             if (c.IsStringStartChar())
             {
-                state.PushAndPass(_string = new GDString(), c);
+                this.ResolveString(c, state);
                 return;
             }
 
@@ -169,10 +171,47 @@
             state.PassSharpChar();
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            state.Pop();
+            Complete(state);
+            state.PassLeftSlashChar();
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             base.ForceComplete(state);
             Complete(state);
+        }
+
+        void ITokenReceiver<GDStringNode>.HandleReceivedToken(GDStringNode token)
+        {
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDStringNode>.HandleReceivedTokenSkip()
+        {
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDComment token)
+        {
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDSpace token)
+        {
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDInvalidToken token)
+        {
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDMultiLineSplitToken token)
+        {
+            throw new GDInvalidStateException();
         }
     }
 }
