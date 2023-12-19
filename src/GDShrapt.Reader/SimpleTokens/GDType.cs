@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -35,29 +34,7 @@ namespace GDShrapt.Reader
         public bool IsRect2 => string.Equals(Sequence, "Rect2", StringComparison.Ordinal);
         public bool IsVector2 => string.Equals(Sequence, "Vector2", StringComparison.Ordinal);
 
-        string _sequence;
-        public override string Sequence
-        {
-            get => _sequence;
-            set
-            {
-                CheckTypeValue(value);
-                _sequence = value;
-            }
-        }
-
-        private void CheckTypeValue(string value)
-        {
-            if (value.IsNullOrWhiteSpace() || value.IsNullOrEmpty())
-                throw new ArgumentException("Invalid identifier format");
-
-            if (char.IsNumber(value[0]))
-                throw new ArgumentException("Invalid identifier format");
-
-            if (value.Any(x => !char.IsLetter(x) && !char.IsDigit(x) && x != '_'))
-                throw new ArgumentException("Invalid identifier format");
-
-        }
+        public string Sequence { get; set; }
 
         StringBuilder _builder = new StringBuilder();
 
@@ -124,6 +101,16 @@ namespace GDShrapt.Reader
                 Sequence = Sequence
             };
         }
+
+        public override GDDataToken CloneWith(string stringValue)
+        {
+            return new GDType()
+            {
+                Sequence = stringValue
+            };
+        }
+
+        public override string StringDataRepresentation => Sequence;
 
         public override string ToString()
         {

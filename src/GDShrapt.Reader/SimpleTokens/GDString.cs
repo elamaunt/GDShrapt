@@ -11,61 +11,7 @@ namespace GDShrapt.Reader
         bool _escapeNextChar;
         public bool Multiline { get; set; }
         public GDStringBoundingChar BoundingChar { get; set; }
-
-        string _sequence;
-        public override string Sequence
-        {
-            get => _sequence;
-            set => _sequence = value;
-        }
-
-        public string EscapedSequence
-        {
-            get
-            {
-                if (_sequence == null)
-                    return null;
-
-                if (_sequence.Length == 0)
-                    return _sequence;
-
-                switch (BoundingChar)
-                {
-                    case GDStringBoundingChar.SingleQuotas:
-                        {
-                            var builder = new StringBuilder();
-
-                            for (int i = 0; i < _sequence.Length; i++)
-                            {
-                                var ch = _sequence[i];
-
-                                if (ch == '\\' || ch == '\'')
-                                    builder.Append('\\');
-                                builder.Append(ch);
-                            }
-
-                            return builder.ToString();
-                        }
-                    case GDStringBoundingChar.DoubleQuotas:
-                        {
-                            var builder = new StringBuilder();
-
-                            for (int i = 0; i < _sequence.Length; i++)
-                            {
-                                var ch = _sequence[i];
-
-                                if (ch == '\\' || ch == '"')
-                                    builder.Append('\\');
-                                builder.Append(ch);
-                            }
-
-                            return builder.ToString();
-                        }
-                    default:
-                        return _sequence;
-                }
-            }
-        }
+        public string Value { get; set; }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -167,7 +113,7 @@ namespace GDShrapt.Reader
                 {
                     if (!Multiline)
                     {
-                        Sequence = _stringBuilder.ToString();
+                        Value = _stringBuilder.ToString();
                         state.Pop();
                     }
                     else
@@ -176,7 +122,7 @@ namespace GDShrapt.Reader
 
                         if (_boundingCharsCounter == 3)
                         {
-                            Sequence = _stringBuilder.ToString();
+                            Value = _stringBuilder.ToString();
                             state.Pop();
                         }
                     }
@@ -201,7 +147,7 @@ namespace GDShrapt.Reader
             }
             else
             {
-                Sequence = _stringBuilder.ToString();
+                Value = _stringBuilder.ToString();
                 state.Pop();
                 state.PassNewLine();
             }
@@ -224,7 +170,15 @@ namespace GDShrapt.Reader
         {
             return new GDString()
             {
-                Sequence = value
+                Value = value
+            };
+        }
+
+        public override GDDataToken CloneWith(string stringValue)
+        {
+            return new GDString()
+            {
+                Value = stringValue
             };
         }
 
@@ -235,7 +189,7 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
-            Sequence = _stringBuilder.ToString();
+            Value = _stringBuilder.ToString();
             base.ForceComplete(state);
         }
 
@@ -243,20 +197,21 @@ namespace GDShrapt.Reader
         {
             return new GDString()
             {
-                Sequence = Sequence,
+                Value = Value,
                 BoundingChar = BoundingChar,
                 Multiline = Multiline
             };
         }
+        public override string StringDataRepresentation => Value;
 
         public override string ToString()
         {
             var c = GetBoundingChar();
 
             if (Multiline)
-                return $"{c}{c}{c}{Sequence}{c}{c}{c}";
+                return $"{c}{c}{c}{Value}{c}{c}{c}";
 
-            return $"{c}{Sequence}{c}";
+            return $"{c}{Value}{c}";
         }
     }
 }

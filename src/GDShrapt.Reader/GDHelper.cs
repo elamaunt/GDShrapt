@@ -44,6 +44,7 @@ namespace GDShrapt.Reader
                     return "";
             }
         }
+
         public static string Print(this GDSingleOperatorType self)
         {
             switch (self)

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -14,29 +13,7 @@ namespace GDShrapt.Reader
         public bool IsFalse => string.Equals(Sequence, "false", StringComparison.Ordinal);
         public bool IsSelf => string.Equals(Sequence, "self", StringComparison.Ordinal);
 
-        string _sequence;
-        public override string Sequence
-        {
-            get => _sequence;
-            set
-            {
-                CheckIdentifierValue(value);
-                _sequence = value;
-            }
-        }
-
-        private void CheckIdentifierValue(string value)
-        {
-            if (value.IsNullOrWhiteSpace() || value.IsNullOrEmpty())
-                throw new ArgumentException("Invalid identifier format");
-
-            if (char.IsNumber(value[0]))
-                throw new ArgumentException("Invalid identifier format");
-
-            if (value.Any(x => !char.IsLetter(x) && !char.IsDigit(x) && x != '_'))
-                throw new ArgumentException("Invalid identifier format");
-
-        }
+        public string Sequence { get; set; }
 
         StringBuilder _builder = new StringBuilder();
 
@@ -154,42 +131,32 @@ namespace GDShrapt.Reader
 
                 if (node is GDClassDeclaration @class)
                 {
-                    if (isStaticContext.HasValue)
+
+                    if (isStaticContext.HasValue && isStaticContext.Value)
                     {
-                        if (isStaticContext.Value)
+                        foreach (var member in @class.Members)
                         {
-                            foreach (var member in @class.Members)
+                            if (member.IsStatic && member.Identifier == this)
                             {
-                                if (member.IsStatic && member.Identifier == this)
-                                {
-                                    declaration = member.Identifier;
-                                    return true;
-                                }
+                                declaration = member.Identifier;
+                                return true;
                             }
                         }
-                        else
+                    }
+                    else
+                    {
+                        foreach (var member in @class.Members)
                         {
-                            foreach (var member in @class.Members)
+                            if (member.Identifier == this)
                             {
-                                if (member.Identifier == this)
-                                {
-                                    declaration = member.Identifier;
-                                    return true;
-                                }
+                                declaration = member.Identifier;
+                                return true;
                             }
                         }
+
                     }
 
                     break;
-                }
-
-                foreach (var item in node.GetMethodScopeDeclarations(startLine))
-                {
-                    if (item == this)
-                    {
-                        declaration = item;
-                        return true;
-                    }
                 }
 
                 if (node is GDMethodDeclaration method)
@@ -206,6 +173,15 @@ namespace GDShrapt.Reader
                     continue;
                 }
 
+                foreach (var item in node.GetMethodScopeDeclarations(startLine))
+                {
+                    if (item == this)
+                    {
+                        declaration = item;
+                        return true;
+                    }
+                }
+
                 node = node.Parent;
             }
 
@@ -217,6 +193,14 @@ namespace GDShrapt.Reader
             return new GDIdentifier()
             {
                 Sequence = Sequence
+            };
+        }
+
+        public override GDDataToken CloneWith(string stringValue)
+        {
+            return new GDIdentifier()
+            {
+                Sequence = stringValue
             };
         }
 
@@ -266,6 +250,8 @@ namespace GDShrapt.Reader
         {
             return string.Equals(Sequence, other.Sequence, StringComparison.Ordinal);
         }
+
+        public override string StringDataRepresentation => Sequence;
 
         public override string ToString()
         {

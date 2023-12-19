@@ -62,7 +62,7 @@ namespace GDShrapt.Reader
             set => _literalValue = Convert.ToString(value);
         }
 
-        public override string Sequence
+        public string ValueAsString
         {
             get => _literalValue;
             set
@@ -278,6 +278,16 @@ namespace GDShrapt.Reader
                 _literalValue = _literalValue
             };
         }
+
+        public override GDDataToken CloneWith(string stringValue)
+        {
+            return new GDNumber()
+            {
+                ValueAsString = stringValue
+            };
+        }
+
+        public override string StringDataRepresentation => _literalValue;
 
         public override string ToString()
         {

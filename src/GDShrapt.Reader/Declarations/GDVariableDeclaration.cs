@@ -395,7 +395,7 @@
         {
             if (_form.IsOrLowerState(State.Identifier))
             {
-                _form.State = State.Assign;
+                _form.State = State.Colon;
                 Identifier = token;
                 return;
             }
