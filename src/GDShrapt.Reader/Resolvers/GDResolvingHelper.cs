@@ -436,9 +436,45 @@ namespace GDShrapt.Reader
             state.PushAndPass(new GDTypeResolver(receiver), c);
         }
 
-        public static void ResolveStringPart(this ITokenOrSkipReceiver<GDStringPart> receiver, char c, GDReadingState state)
+        public static void ResolveStringPart(this ITokenOrSkipReceiver<GDStringPart> receiver, char c, GDReadingState state, GDStringBoundingChar bounder, bool multiline)
         {
-            state.PushAndPass(new GDStringPartResolver(receiver), c);
+            state.PushAndPass(new GDStringPartResolver(receiver, bounder, multiline), c);
+        }
+
+        public static bool ResolveSingleQuotas(this ITokenOrSkipReceiver<GDSingleQuotas> receiver, char c, GDReadingState state)
+        {
+            if (c == '\'')
+            {
+                receiver.HandleReceivedToken(new GDSingleQuotas());
+                return true;
+            }
+
+            receiver.HandleReceivedTokenSkip();
+            state.PassChar(c);
+            return false;
+        }
+
+        public static bool ResolveDoubleQuotas(this ITokenOrSkipReceiver<GDDoubleQuotas> receiver, char c, GDReadingState state)
+        {
+            if (c == '"')
+            {
+                receiver.HandleReceivedToken(new GDDoubleQuotas());
+                return true;
+            }
+
+            receiver.HandleReceivedTokenSkip();
+            state.PassChar(c);
+            return false;
+        }
+
+        public static void ResolveTripleSingleQuotas(this ITokenOrSkipReceiver<GDTripleSingleQuotas> receiver, char c, GDReadingState state)
+        {
+            state.PushAndPass(new GDSequenceTokenResolver<GDTripleSingleQuotas>(receiver), c);
+        }
+
+        public static void ResolveTripleDoubleQuotas(this ITokenOrSkipReceiver<GDTripleDoubleQuotas> receiver, char c, GDReadingState state)
+        {
+            state.PushAndPass(new GDSequenceTokenResolver<GDTripleDoubleQuotas>(receiver), c);
         }
 
         public static bool IsIdentifierMiddleCharToken(this char c) => char.IsDigit(c) || char.IsLetter(c) || c == '_';

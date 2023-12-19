@@ -32,7 +32,6 @@
 
                 if (IsStringStartChar(c))
                 {
-                    _form.State = State.Completed;
                     this.ResolveString(c, state);
                 }
                 else

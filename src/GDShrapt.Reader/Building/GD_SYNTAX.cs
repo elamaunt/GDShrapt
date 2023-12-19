@@ -6,13 +6,32 @@
         {
             public static GDIdentifier Identifier(string name) => new GDIdentifier() { Sequence = name };
             public static GDType Type(string name) => new GDType() { Sequence = name };
-           /* public static GDStringNode String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas) => new GDString()
-            {
-                Sequence = value,
-                Multiline = multiline,
-                BoundingChar = boundingChar
-            };*/
 
+            public static GDStringNode String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas)
+            {
+                if (multiline)
+                {
+                    if (boundingChar == GDStringBoundingChar.SingleQuotas)
+                    {
+                        return new GDMultilineDoubleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
+                    }
+                    else
+                    {
+                        return new GDMultilineDoubleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
+                    }
+                }
+                else
+                {
+                    if (boundingChar == GDStringBoundingChar.SingleQuotas)
+                    {
+                        return new GDSingleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
+                    }
+                    else
+                    {
+                        return new GDDoubleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
+                    }
+                }
+            }
             public static GDNumber Number(string stringValue) => new GDNumber() { Sequence = stringValue };
             public static GDNumber Number(int value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(long value) => new GDNumber() { ValueInt64 = value };

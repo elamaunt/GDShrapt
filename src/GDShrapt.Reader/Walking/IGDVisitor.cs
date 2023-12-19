@@ -154,5 +154,13 @@
         void Left(GDStringTypeNode type);
         void Left(GDClassCustomAttribute a);
         void Left(GDStringPartsList list);
+        void Left(GDMultilineDoubleQuotasStringNode sn);
+        void Left(GDMultilineSingleQuotasStringNode sn);
+        void Left(GDDoubleQuotasStringNode sn);
+        void Left(GDSingleQuotasStringNode sn);
+        void Visit(GDMultilineSingleQuotasStringNode sn);
+        void Visit(GDMultilineDoubleQuotasStringNode sn);
+        void Visit(GDDoubleQuotasStringNode sn);
+        void Visit(GDSingleQuotasStringNode sn);
     }
 }

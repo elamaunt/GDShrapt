@@ -37,9 +37,13 @@
                 case "'''":
                     Owner.HandleReceivedToken(state.Push(new GDMultilineSingleQuotasStringNode()));
                     break;
-                default: 
+                default:
+                    Owner.HandleReceivedTokenSkip();
                     break;
             }
+
+            if (pattern != null)
+                state.PassString(pattern);
         }
     }
 }

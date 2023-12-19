@@ -1,12 +1,22 @@
-﻿using System.Diagnostics;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     public class GDStringPartsList : GDSeparatedList<GDStringPart, GDMultiLineSplitToken>, 
         ITokenOrSkipReceiver<GDStringPart>,
         ITokenOrSkipReceiver<GDMultiLineSplitToken>
     {
         bool _ended;
+        readonly GDStringBoundingChar _bounder;
+        readonly bool _multiline;
+
+        public GDStringPartsList()
+        {
+        }
+
+        internal GDStringPartsList(GDStringBoundingChar bounder, bool multiline)
+        {
+            _bounder = bounder;
+            _multiline = multiline;
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -16,7 +26,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            this.ResolveStringPart(c, state);
+            this.ResolveStringPart(c, state, _bounder, _multiline);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)

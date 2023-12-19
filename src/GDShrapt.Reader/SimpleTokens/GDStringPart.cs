@@ -4,10 +4,7 @@ namespace GDShrapt.Reader
 {
     public sealed class GDStringPart : GDLiteralToken
     {
-        readonly bool _allowMultiline;
-        readonly GDStringBoundingChar _boundingChar;
-        readonly StringBuilder _stringBuilder = new StringBuilder();
-
+       
         string _sequence;
         public override string Sequence
         {
@@ -19,67 +16,26 @@ namespace GDShrapt.Reader
         {
         }
 
-        internal GDStringPart(bool allowMultiline, GDStringBoundingChar boundingChar)
-        {
-            _allowMultiline = allowMultiline;
-            _boundingChar = boundingChar;
-        }
-
         internal override void HandleChar(char c, GDReadingState state)
         {
-           
+            // Nothing
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_allowMultiline)
-            {
-                HandleChar('\n', state);
-            }
-            else
-            {
-                Sequence = _stringBuilder.ToString();
-                state.Pop();
-                state.PassNewLine();
-            }
+            // Nothing
         }
-
-        /*public char GetBoundingChar()
-        {
-            switch (BoundingChar)
-            {
-                case GDStringBoundingChar.SingleQuotas:
-                    return '\'';
-                case GDStringBoundingChar.DoubleQuotas:
-                    return '"';
-                default:
-                    throw new NotSupportedException();
-            }
-        }*/
-
-        /*public static implicit operator GDString(string value)
-        {
-            return new GDString()
-            {
-                Sequence = value
-            };
-        }*/
 
         internal override void HandleSharpChar(GDReadingState state)
         {
-            HandleChar('#', state);
+            // Nothing
         }
 
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
-            HandleChar('\\', state);
+            // Nothing
         }
 
-        internal override void ForceComplete(GDReadingState state)
-        {
-            Sequence = _stringBuilder.ToString();
-            base.ForceComplete(state);
-        }
 
         public override GDSyntaxToken Clone()
         {
