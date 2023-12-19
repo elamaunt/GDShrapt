@@ -217,7 +217,9 @@ func get_recognized_extensions(res): # func comment
             CheckPosition(tokens[i++], 0, 23, 0, 24); // ' '
             CheckPosition(tokens[i++], 0, 24, 0, 25); // =
             CheckPosition(tokens[i++], 0, 25, 0, 26); // ' '
-            CheckPosition(tokens[i++], 0, 26, 0, 39); // "Hello world"
+            CheckPosition(tokens[i++], 0, 26, 0, 27); // "
+            CheckPosition(tokens[i++], 0, 27, 0, 38); // Hello world
+            CheckPosition(tokens[i++], 0, 38, 0, 39); // "
             CheckPosition(tokens[i++], 0, 39, 0, 40); // )
             CheckPosition(tokens[i++], 0, 40, 0, 41); // .
             CheckPosition(tokens[i++], 0, 41, 0, 42); // (
@@ -234,7 +236,9 @@ func get_recognized_extensions(res): # func comment
             CheckPosition(tokens[i++], 1, 1, 1, 2); // .
             CheckPosition(tokens[i++], 1, 2, 1, 7); // _init
             CheckPosition(tokens[i++], 1, 7, 1, 8); // (
-            CheckPosition(tokens[i++], 1, 8, 1, 14); // "1234"
+            CheckPosition(tokens[i++], 1, 8, 1, 9); // "
+            CheckPosition(tokens[i++], 1, 9, 1, 13); // 1234
+            CheckPosition(tokens[i++], 1, 13, 1, 14); // "
             CheckPosition(tokens[i++], 1, 14, 1, 15); // )
             CheckPosition(tokens[i++], 1, 15, 1, 16); // ;
             CheckPosition(tokens[i++], 1, 16, 2, 0); // \n

@@ -39,20 +39,23 @@ namespace GDShrapt.Reader
                 state.Pop();
 
                 if (check.MatchedPattern == null)
-                {
-                    PatternMatched(_lastPatternCheck.MatchedPattern, state);
-                    state.PassChar(c);
-                }
+                    CompleteWithPattern(_lastPatternCheck.MatchedPattern, state);
                 else
-                {
-                    PatternMatched(check.MatchedPattern, state);
-                }
+                    CompleteWithPattern(check.MatchedPattern, state);
 
                 _sequenceBuilder.Clear();
                 return;
             }
 
-            _lastPatternCheck = check;
+            _lastPatternCheck = (check.HasLongerPatternsToMatch, check.MatchedPattern ?? _lastPatternCheck.MatchedPattern);
+        }
+
+        private void CompleteWithPattern(string matchedPattern, GDReadingState state)
+        {
+            PatternMatched(matchedPattern, state);
+
+            for (int i = matchedPattern?.Length ?? 0; i < _sequenceBuilder.Length; i++)
+                state.PassChar(_sequenceBuilder[i]);
         }
 
         protected abstract void PatternMatched(string pattern, GDReadingState state);
@@ -143,7 +146,7 @@ namespace GDShrapt.Reader
 
         internal override void ForceComplete(GDReadingState state)
         {
-            PatternMatched(_lastPatternCheck.MatchedPattern, state);
+            CompleteWithPattern(_lastPatternCheck.MatchedPattern, state);
         }
     }
 }

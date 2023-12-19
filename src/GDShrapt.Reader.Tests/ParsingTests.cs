@@ -1,6 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
-using System.Security.Claims;
 
 namespace GDShrapt.Reader.Tests
 {

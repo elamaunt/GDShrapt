@@ -186,7 +186,7 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDStringNode>.HandleReceivedToken(GDStringNode token)
         {
-            throw new GDInvalidStateException();
+            _string = token;
         }
 
         void ITokenSkipReceiver<GDStringNode>.HandleReceivedTokenSkip()

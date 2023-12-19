@@ -89,7 +89,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-           //_ended = true;
+           _ended = true;
             state.PopAndPassNewLine();
         }
 
@@ -110,24 +110,24 @@ namespace GDShrapt.Reader
 
         void ITokenReceiver<GDLayersList>.HandleReceivedToken(GDLayersList token)
         {
-            //_switch = !_switch;
+            _switch = !_switch;
             ListForm.AddToEnd(token);
         }
 
         void ITokenReceiver<GDRightSlash>.HandleReceivedToken(GDRightSlash token)
         {
-            //_switch = !_switch;
+            _switch = !_switch;
             ListForm.AddToEnd(token);
         }
 
         void ITokenSkipReceiver<GDLayersList>.HandleReceivedTokenSkip()
         {
-           // _ended = true;
+            _ended = true;
         }
 
         void ITokenSkipReceiver<GDRightSlash>.HandleReceivedTokenSkip()
         {
-           // _ended = true;
+            _ended = true;
         }
 
         void ITokenReceiver<GDSpace>.HandleReceivedToken(GDSpace token)
@@ -135,7 +135,7 @@ namespace GDShrapt.Reader
             ListForm.AddToEnd(token);
         }
 
-       /* public override void AppendTo(StringBuilder builder)
+        public override void AppendTo(StringBuilder builder)
         {
             switch (BoundingChar)
             {
@@ -166,6 +166,6 @@ namespace GDShrapt.Reader
                     base.AppendTo(builder);
                     break;
             }
-        }*/
+        }
     }
 }

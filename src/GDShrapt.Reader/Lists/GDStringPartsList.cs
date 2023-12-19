@@ -37,7 +37,9 @@
 
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
-            base.HandleLeftSlashChar(state);
+            _ended = false;
+            ListForm.AddToEnd(state.Push(new GDMultiLineSplitToken()));
+            state.PassLeftSlashChar();
         }
 
         public override GDNode CreateEmptyInstance()
