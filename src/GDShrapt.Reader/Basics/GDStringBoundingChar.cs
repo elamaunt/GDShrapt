@@ -4,5 +4,7 @@
     {
         SingleQuotas,
         DoubleQuotas,
+        TripleDoubleQuotas,
+        TripleSingleQuotas
     }
 }

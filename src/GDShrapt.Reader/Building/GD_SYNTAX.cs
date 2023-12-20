@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public static partial class GD
     {
@@ -7,31 +9,43 @@
             public static GDIdentifier Identifier(string name) => new GDIdentifier() { Sequence = name };
             public static GDType Type(string name) => new GDType() { Sequence = name };
 
-            public static GDStringNode String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas)
+            public static GDStringNode String(string value, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas)
             {
-                if (multiline)
+                switch (boundingChar)
                 {
-                    if (boundingChar == GDStringBoundingChar.SingleQuotas)
-                    {
-                        return new GDMultilineDoubleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
-                    }
-                    else
-                    {
-                        return new GDMultilineDoubleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
-                    }
-                }
-                else
-                {
-                    if (boundingChar == GDStringBoundingChar.SingleQuotas)
-                    {
-                        return new GDSingleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
-                    }
-                    else
-                    {
-                        return new GDDoubleQuotasStringNode() { Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } } };
-                    }
+                    case GDStringBoundingChar.SingleQuotas:
+                        return new GDSingleQuotasStringNode()
+                        { 
+                            OpeningBounder = new GDSingleQuotas(),
+                            Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } },
+                            ClosingBounder = new GDSingleQuotas()
+                        };
+                    case GDStringBoundingChar.DoubleQuotas:
+                        return new GDDoubleQuotasStringNode()
+                        {
+                            OpeningBounder = new GDDoubleQuotas(),
+                            Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } },
+                            ClosingBounder = new GDDoubleQuotas()
+                        };
+                    case GDStringBoundingChar.TripleDoubleQuotas:
+                        return new GDTripleDoubleQuotasStringNode() 
+                        { 
+                            OpeningBounder = new GDTripleDoubleQuotas(),
+                            Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } },
+                            ClosingBounder = new GDTripleDoubleQuotas()
+                        };
+                    case GDStringBoundingChar.TripleSingleQuotas:
+                        return new GDTripleSingleQuotasStringNode()
+                        { 
+                            OpeningBounder = new GDTripleSingleQuotas(),
+                            Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } },
+                            ClosingBounder = new GDTripleSingleQuotas()
+                        };
+                    default:
+                        throw new NotImplementedException();
                 }
             }
+
             public static GDNumber Number(string stringValue) => new GDNumber() { Sequence = stringValue };
             public static GDNumber Number(int value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(long value) => new GDNumber() { ValueInt64 = value };

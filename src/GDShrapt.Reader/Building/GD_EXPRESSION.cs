@@ -9,9 +9,9 @@ namespace GDShrapt.Reader
             public static GDIdentifierExpression Identifier(string name) => new GDIdentifierExpression() { Identifier = Syntax.Identifier(name) };
             public static GDIdentifierExpression Identifier(GDIdentifier identifier) => new GDIdentifierExpression() { Identifier = identifier };
            
-            public static GDStringExpression String(string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas) => new GDStringExpression()
+            public static GDStringExpression String(string value, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas) => new GDStringExpression()
             {
-                String = Syntax.String(value, multiline, boundingChar)
+                String = Syntax.String(value, boundingChar)
             };
 
             public static GDNumberExpression Number(string value) => new GDNumberExpression() { Number = Syntax.Number(value) };

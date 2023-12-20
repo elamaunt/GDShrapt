@@ -2,20 +2,19 @@
 
 namespace GDShrapt.Reader
 {
-    public class GDMultilineDoubleQuotasStringNode : GDStringNode<GDTripleDoubleQuotas>
+    public class GDTripleDoubleQuotasStringNode : GDStringNode<GDTripleDoubleQuotas>
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.DoubleQuotas, true));
+            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.TripleDoubleQuotas));
             set => _form.Token1 = value;
         }
 
-        public override bool Multiline => true;
-        public override GDStringBoundingChar BoundingChar =>  GDStringBoundingChar.DoubleQuotas;
+        public override GDStringBoundingChar BoundingChar =>  GDStringBoundingChar.TripleDoubleQuotas;
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDMultilineDoubleQuotasStringNode();
+            return new GDTripleDoubleQuotasStringNode();
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -47,19 +46,18 @@ namespace GDShrapt.Reader
         }
     }
 
-    public class GDMultilineSingleQuotasStringNode : GDStringNode<GDTripleSingleQuotas>
+    public class GDTripleSingleQuotasStringNode : GDStringNode<GDTripleSingleQuotas>
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.SingleQuotas, true));
+            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.TripleSingleQuotas));
             set => _form.Token1 = value;
         }
-        public override bool Multiline => true;
-        public override GDStringBoundingChar BoundingChar => GDStringBoundingChar.SingleQuotas;
+        public override GDStringBoundingChar BoundingChar => GDStringBoundingChar.TripleSingleQuotas;
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDMultilineSingleQuotasStringNode();
+            return new GDTripleSingleQuotasStringNode();
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -95,10 +93,9 @@ namespace GDShrapt.Reader
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.DoubleQuotas, false));
+            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.DoubleQuotas));
             set => _form.Token1 = value;
         }
-        public override bool Multiline => false;
         public override GDStringBoundingChar BoundingChar => GDStringBoundingChar.DoubleQuotas;
         public override GDNode CreateEmptyInstance()
         {
@@ -138,10 +135,9 @@ namespace GDShrapt.Reader
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.SingleQuotas, false));
+            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.SingleQuotas));
             set => _form.Token1 = value;
         }
-        public override bool Multiline => false;
         public override GDStringBoundingChar BoundingChar => GDStringBoundingChar.SingleQuotas;
 
         public override GDNode CreateEmptyInstance()
@@ -181,9 +177,10 @@ namespace GDShrapt.Reader
     public abstract class GDStringNode : GDNode, ITokenOrSkipReceiver<GDStringPartsList>
     {
         public abstract GDStringPartsList Parts { get; set; }
-        public abstract bool Multiline { get; }
         public abstract GDStringBoundingChar BoundingChar { get; }
         public string Sequence => string.Concat(Parts.Select(x => x.Sequence ?? ""));
+        public string EscapedSequence => string.Concat(Parts.Select(x => x.EscapedSequence ?? ""));
+
         public abstract void HandleReceivedToken(GDStringPartsList token);
         public abstract void HandleReceivedTokenSkip();
     }

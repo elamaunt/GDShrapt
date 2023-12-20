@@ -32,10 +32,10 @@
                     Owner.HandleReceivedToken(state.Push(new GDSingleQuotasStringNode()));
                     break;
                 case "\"\"\"":
-                    Owner.HandleReceivedToken(state.Push(new GDMultilineDoubleQuotasStringNode()));
+                    Owner.HandleReceivedToken(state.Push(new GDTripleDoubleQuotasStringNode()));
                     break;
                 case "'''":
-                    Owner.HandleReceivedToken(state.Push(new GDMultilineSingleQuotasStringNode()));
+                    Owner.HandleReceivedToken(state.Push(new GDTripleSingleQuotasStringNode()));
                     break;
                 default:
                     Owner.HandleReceivedTokenSkip();

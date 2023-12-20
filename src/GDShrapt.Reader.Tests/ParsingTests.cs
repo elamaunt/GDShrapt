@@ -617,7 +617,6 @@ else:
             var stringExpression = (GDStringExpression)statement;
 
             Assert.IsNotNull(stringExpression.String);
-            Assert.IsFalse(stringExpression.String.Multiline);
             Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("test", stringExpression.String.Sequence);
 
@@ -640,7 +639,6 @@ else:
             var stringExpression = (GDStringExpression)statement;
 
             Assert.IsNotNull(stringExpression.String);
-            Assert.IsFalse(stringExpression.String.Multiline);
             Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("te\"\"st", stringExpression.String.Sequence);
 
@@ -649,7 +647,7 @@ else:
         }
 
         [TestMethod]
-        public void MultilineStringTest()
+        public void StringTest3()
         {
             var reader = new GDScriptReader();
 
@@ -663,8 +661,7 @@ else:
             var stringExpression = (GDStringExpression)statement;
 
             Assert.IsNotNull(stringExpression.String);
-            Assert.IsTrue(stringExpression.String.Multiline);
-            Assert.AreEqual(GDStringBoundingChar.DoubleQuotas, stringExpression.String.BoundingChar);
+            Assert.AreEqual(GDStringBoundingChar.TripleDoubleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("te\"\"st", stringExpression.String.Sequence);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
@@ -672,7 +669,64 @@ else:
         }
 
         [TestMethod]
-        public void MultilineStringTest2()
+        public void StringSplitTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func _ready():
+	var s = ""Hello\\
+World""
+
+    var s2 = ""Hello\
+World""
+
+    var s3 = """"""Hello\
+World""""""
+
+    var s4 = """"""Hello\\\
+World""""""
+	var s5 = """"""Hello\\
+World""""""
+
+    print(s)
+	print(s2)
+	print(s3)
+	print(s4)
+	print(s5)
+	pass # Replace with function body.";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+
+            var stringExpressions = @class.AllNodes.OfType<GDStringExpression>().ToArray();
+
+            Assert.AreEqual(5, stringExpressions.Length);
+
+            var s = stringExpressions[0].String;
+            var s2 = stringExpressions[1].String;
+            var s3 = stringExpressions[2].String;
+            var s4 = stringExpressions[3].String;
+            var s5 = stringExpressions[4].String;
+
+            Assert.IsNotNull(s);
+            Assert.IsNotNull(s2);
+            Assert.IsNotNull(s3);
+            Assert.IsNotNull(s4);
+            Assert.IsNotNull(s5);
+
+            Assert.AreEqual("Hello\\\\\nWorld", s.Sequence);
+            Assert.AreEqual("HelloWorld", s2.Sequence);
+            Assert.AreEqual("HelloWorld", s3.Sequence);
+            Assert.AreEqual("Hello\\\\World", s4.Sequence);
+            Assert.AreEqual("Hello\\\\\nWorld", s5.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void StringTest4()
         {
             var reader = new GDScriptReader();
 
@@ -686,8 +740,7 @@ else:
             var stringExpression = (GDStringExpression)statement;
 
             Assert.IsNotNull(stringExpression.String);
-            Assert.IsTrue(stringExpression.String.Multiline);
-            Assert.AreEqual(GDStringBoundingChar.SingleQuotas, stringExpression.String.BoundingChar);
+            Assert.AreEqual(GDStringBoundingChar.TripleSingleQuotas, stringExpression.String.BoundingChar);
             Assert.AreEqual("te'\"st", stringExpression.String.Sequence);
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());

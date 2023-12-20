@@ -6,16 +6,14 @@
     {
         bool _ended;
         readonly GDStringBoundingChar _bounder;
-        readonly bool _multiline;
 
         public GDStringPartsList()
         {
         }
 
-        internal GDStringPartsList(GDStringBoundingChar bounder, bool multiline)
+        internal GDStringPartsList(GDStringBoundingChar bounder)
         {
             _bounder = bounder;
-            _multiline = multiline;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -26,7 +24,7 @@
                 return;
             }
 
-            this.ResolveStringPart(c, state, _bounder, _multiline);
+            this.ResolveStringPart(c, state, _bounder);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)

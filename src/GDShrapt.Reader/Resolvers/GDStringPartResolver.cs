@@ -5,7 +5,7 @@ namespace GDShrapt.Reader
     internal class GDStringPartResolver : GDResolver
     {
         readonly GDStringBoundingChar _bounder;
-        readonly bool _multiline;
+        bool _triple;
 
         int _boundingCharsCounter;
         bool _escapeNextChar;
@@ -14,12 +14,12 @@ namespace GDShrapt.Reader
 
         readonly StringBuilder _stringBuilder = new StringBuilder();
 
-        public GDStringPartResolver(ITokenOrSkipReceiver<GDStringPart> owner, GDStringBoundingChar bounder, bool multilne) 
+        public GDStringPartResolver(ITokenOrSkipReceiver<GDStringPart> owner, GDStringBoundingChar bounder) 
             : base(owner)
         {
             Owner = owner;
             _bounder = bounder;
-            _multiline = multilne;
+            _triple = bounder == GDStringBoundingChar.TripleSingleQuotas || bounder == GDStringBoundingChar.TripleDoubleQuotas;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -30,17 +30,17 @@ namespace GDShrapt.Reader
 
                 switch (c)
                 {
-                    case '\'': break;
-                    case '"': break;
-                    case '\\': break;
-                    case 'a': break;
-                    case 'b': break;
-                    case 'f': break;
-                    case 'n': break;
-                    case 'r': break;
-                    case 't': break;
-                    case 'v': break;
-                    case 'u': break;
+                    case '\'': _stringBuilder.Append('\\').Append('\''); break;
+                    case '"': _stringBuilder.Append('\\').Append('"'); break;
+                    case '\\': _stringBuilder.Append('\\').Append('\\'); break;
+                    case 'a': _stringBuilder.Append('\\').Append('\a'); break;
+                    case 'b': _stringBuilder.Append('\\').Append('\b'); break;
+                    case 'f': _stringBuilder.Append('\\').Append('\f'); break;
+                    case 'n': _stringBuilder.Append('\\').Append('\n'); break;
+                    case 'r': _stringBuilder.Append('\\').Append('\r'); break;
+                    case 't': _stringBuilder.Append('\\').Append('\t'); break;
+                    case 'v': _stringBuilder.Append('\\').Append('\v'); break;
+                    case 'u': _stringBuilder.Append('\\').Append('u'); break;
                     default:
                         if (_stringBuilder.Length == 0)
                             Owner.HandleReceivedTokenSkip();
@@ -54,15 +54,13 @@ namespace GDShrapt.Reader
                 }
 
                 _escapeNextChar = false;
-                _stringBuilder.Append('\\');
-                _stringBuilder.Append(c);
                 return;
             }
 
-            if (_multiline)
+            if (_triple)
             {
-                if ((c == '\'' && _bounder == GDStringBoundingChar.SingleQuotas) ||
-                    (c == '"' && _bounder == GDStringBoundingChar.DoubleQuotas))
+                if ((c == '\'' && _bounder == GDStringBoundingChar.TripleSingleQuotas) ||
+                    (c == '"' && _bounder == GDStringBoundingChar.TripleDoubleQuotas))
                 {
                     _boundingCharsCounter++;
 
@@ -75,7 +73,7 @@ namespace GDShrapt.Reader
 
                         state.Pop();
 
-                        if (_bounder == GDStringBoundingChar.SingleQuotas)
+                        if (_bounder == GDStringBoundingChar.TripleSingleQuotas)
                         {
                             for (int i = 0; i < _boundingCharsCounter; i++)
                                 state.PassChar('\'');
@@ -90,7 +88,7 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                if (_bounder == GDStringBoundingChar.SingleQuotas)
+                if (_bounder == GDStringBoundingChar.TripleSingleQuotas)
                 {
                     for (int i = 0; i < _boundingCharsCounter; i++)
                         _stringBuilder.Append('\'');
@@ -124,7 +122,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_bounder == GDStringBoundingChar.SingleQuotas)
+            if (_bounder == GDStringBoundingChar.TripleSingleQuotas || _bounder == GDStringBoundingChar.SingleQuotas)
             {
                 for (int i = 0; i < _boundingCharsCounter; i++)
                     _stringBuilder.Append('\'');
@@ -136,35 +134,12 @@ namespace GDShrapt.Reader
             }
             _boundingCharsCounter = 0;
 
-            if (_multiline || _escapeNextChar)
-                HandleChar('\n', state);
-            else
-            {
-                if (_stringBuilder.Length == 0)
-                    Owner.HandleReceivedTokenSkip();
-                else
-                    Owner.HandleReceivedToken(new GDStringPart() { Sequence = _stringBuilder.ToString() });
-
-                state.Pop();
-
-                if (_bounder == GDStringBoundingChar.SingleQuotas)
-                {
-                    for (int i = 0; i < _boundingCharsCounter; i++)
-                        _stringBuilder.Append('\'');
-                }
-                else
-                {
-                    for (int i = 0; i < _boundingCharsCounter; i++)
-                        _stringBuilder.Append('"');
-                }
-
-                state.PassNewLine();
-            }
+            HandleChar('\n', state);
         }
 
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
-            if (_bounder == GDStringBoundingChar.SingleQuotas)
+            if (_bounder == GDStringBoundingChar.TripleSingleQuotas || _bounder == GDStringBoundingChar.SingleQuotas)
             {
                 for (int i = 0; i < _boundingCharsCounter; i++)
                     _stringBuilder.Append('\'');
@@ -174,6 +149,7 @@ namespace GDShrapt.Reader
                 for (int i = 0; i < _boundingCharsCounter; i++)
                     _stringBuilder.Append('"');
             }
+
             _boundingCharsCounter = 0;
 
             if (_escapeNextChar)
@@ -183,16 +159,6 @@ namespace GDShrapt.Reader
             }
 
             _escapeNextChar = true;
-
-            //if (_multiline || _escapeNextChar)
-            //    HandleChar('\\', state);
-            //else
-            //{
-            //escapeNextChar = true;
-
-            //    return;
-
-            //}
         }
 
         internal override void HandleSharpChar(GDReadingState state)
@@ -209,7 +175,7 @@ namespace GDShrapt.Reader
             else
                 Owner.HandleReceivedToken(new GDStringPart() { Sequence = _stringBuilder.ToString() });
 
-            if (_bounder == GDStringBoundingChar.SingleQuotas)
+            if (_bounder == GDStringBoundingChar.TripleSingleQuotas || _bounder == GDStringBoundingChar.SingleQuotas)
             {
                 for (int i = 0; i < _boundingCharsCounter; i++)
                     _stringBuilder.Append('\'');
