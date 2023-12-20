@@ -279,6 +279,14 @@ namespace GDShrapt.Reader
             };
         }
 
+        public override GDLiteralToken CloneWith(string stringValue)
+        {
+            return new GDNumber()
+            {
+                Sequence = stringValue
+            };
+        }
+
         public override string ToString()
         {
             return $"{_literalValue}";

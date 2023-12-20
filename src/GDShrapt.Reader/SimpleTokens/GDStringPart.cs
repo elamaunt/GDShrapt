@@ -73,5 +73,13 @@ namespace GDShrapt.Reader
         {
             return $"{Sequence}";
         }
+
+        public override GDLiteralToken CloneWith(string stringValue)
+        {
+            return new GDStringPart()
+            {
+                Sequence = stringValue
+            };
+        }
     }
 }

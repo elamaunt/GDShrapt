@@ -12,5 +12,6 @@ namespace GDShrapt.Reader
         IEnumerable<GDMethodDeclaration> Methods { get; }
         IEnumerable<GDEnumDeclaration> Enums { get; }
         IEnumerable<GDInnerClassDeclaration> InnerClasses { get; }
+        IEnumerable<GDIdentifiableClassMember> IdentifiableMembers { get; }
     }
 }

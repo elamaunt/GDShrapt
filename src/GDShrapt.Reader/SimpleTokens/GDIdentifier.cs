@@ -127,7 +127,7 @@ namespace GDShrapt.Reader
                     {
                         if (isStaticContext.Value)
                         {
-                            foreach (var member in innerClass.Members.OfType<GDIdentifiableClassMember>())
+                            foreach (var member in innerClass.IdentifiableMembers)
                             {
                                 if (member.IsStatic && member.Identifier == this)
                                 {
@@ -138,7 +138,7 @@ namespace GDShrapt.Reader
                         }
                         else
                         {
-                            foreach (var member in innerClass.Members.OfType<GDIdentifiableClassMember>())
+                            foreach (var member in innerClass.IdentifiableMembers)
                             {
                                 if (member.Identifier == this)
                                 {
@@ -154,42 +154,31 @@ namespace GDShrapt.Reader
 
                 if (node is GDClassDeclaration @class)
                 {
-                    if (isStaticContext.HasValue)
+                    if (isStaticContext.HasValue && isStaticContext.Value)
                     {
-                        if (isStaticContext.Value)
+                        foreach (var member in @class.IdentifiableMembers)
                         {
-                            foreach (var member in @class.Members.OfType<GDIdentifiableClassMember>())
+                            if (member.IsStatic && member.Identifier == this)
                             {
-                                if (member.IsStatic && member.Identifier == this)
-                                {
-                                    declaration = member.Identifier;
-                                    return true;
-                                }
+                                declaration = member.Identifier;
+                                return true;
                             }
                         }
-                        else
+                    }
+                    else
+                    {
+                        foreach (var member in @class.IdentifiableMembers)
                         {
-                            foreach (var member in @class.Members.OfType<GDIdentifiableClassMember>())
+                            if (member.Identifier == this)
                             {
-                                if (member.Identifier == this)
-                                {
-                                    declaration = member.Identifier;
-                                    return true;
-                                }
+                                declaration = member.Identifier;
+                                return true;
                             }
                         }
+
                     }
 
                     break;
-                }
-
-                foreach (var item in node.GetMethodScopeDeclarations(startLine))
-                {
-                    if (item == this)
-                    {
-                        declaration = item;
-                        return true;
-                    }
                 }
 
                 if (node is GDMethodDeclaration method)
@@ -204,6 +193,15 @@ namespace GDShrapt.Reader
 
                     node = node.Parent;
                     continue;
+                }
+
+                foreach (var item in node.GetMethodScopeDeclarations(startLine))
+                {
+                    if (item == this)
+                    {
+                        declaration = item;
+                        return true;
+                    }
                 }
 
                 node = node.Parent;

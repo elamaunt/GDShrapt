@@ -45,7 +45,7 @@ namespace GDShrapt.Reader
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
         public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
         public IEnumerable<GDInnerClassDeclaration> InnerClasses => Members.OfType<GDInnerClassDeclaration>();
-
+        public IEnumerable<GDIdentifiableClassMember> IdentifiableMembers => Members.OfType<GDIdentifiableClassMember>();
         public override GDNode CreateEmptyInstance()
         {
             return new GDClassDeclaration();

@@ -12,6 +12,8 @@
             return Sequence?.GetHashCode() ?? base.GetHashCode();
         }
 
+        public abstract GDLiteralToken CloneWith(string stringValue);
+
         public override bool Equals(object obj)
         {
             if (obj is GDLiteralToken other)
