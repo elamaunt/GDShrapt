@@ -20,6 +20,11 @@ namespace GDShrapt.Reader
             Tokens.Add(token);
         }
 
+        public void HandleReceivedToken(GDAttribute token)
+        {
+            Tokens.Add(token);
+        }
+
         public void HandleReceivedToken(GDNewLine token)
         {
             Tokens.Add(token);

@@ -389,6 +389,11 @@ namespace GDShrapt.Reader
             Form.AddBeforeActiveToken(token);
         }
 
+        void ITokenReceiver.HandleReceivedToken(GDAttribute token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
         void ITokenReceiver.HandleReceivedToken(GDSpace token)
         {
             Form.AddBeforeActiveToken(token);

@@ -129,11 +129,10 @@ namespace GDShrapt.Reader
 
             if (sequence[0] == '@')
             {
-                Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold)));
+                Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold, false)));
 
-                if (sequence != null)
-                    for (int i = 0; i < sequence.Length; i++)
-                        state.PassChar(sequence[i]);
+                for (int i = 0; i < sequence.Length; i++)
+                    state.PassChar(sequence[i]);
 
                 return;
             }
@@ -190,6 +189,19 @@ namespace GDShrapt.Reader
 
             switch (sequence)
             {
+                case "tool":
+                case "extends":
+                case "class_name":
+                    {
+                        // Invalid order of the atributes found.
+                        // Handling them as a ClassMemberAttribute instances.
+                        // TODO: rework to GDClassCustomAttribute.
+                        Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold, true)));
+
+                        for (int i = 0; i < sequence.Length; i++)
+                            state.PassChar(sequence[i]);
+                    }
+                    break;
                 case "signal":
                     {
                         var m = new GDSignalDeclaration(LineIntendationThreshold);

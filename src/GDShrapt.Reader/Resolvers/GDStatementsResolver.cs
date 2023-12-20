@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
@@ -46,6 +47,14 @@ namespace GDShrapt.Reader
                 if (IsSpace(c))
                 {
                     Owner.HandleReceivedToken(state.Push(new GDSpace()));
+                    state.PassChar(c);
+                    return;
+                }
+
+                if (c == '@')
+                {
+                    SendIntendationTokensToOwner();
+                    Owner.HandleReceivedToken(state.Push(new GDAttribute()));
                     state.PassChar(c);
                     return;
                 }

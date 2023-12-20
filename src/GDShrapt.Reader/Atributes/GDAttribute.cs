@@ -48,12 +48,20 @@
         }
 
         readonly GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
+        readonly bool _parseWithoutBrackets;
+
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
 
         public GDAttribute()
         {
             _form = new GDTokensForm<State, GDAt, GDIdentifier, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
+        }
+
+        internal GDAttribute(bool parseWithoutBrackets) 
+            : this()
+        {
+            _parseWithoutBrackets = parseWithoutBrackets;
         }
 
         public override GDNode CreateEmptyInstance()
@@ -167,7 +175,7 @@
         {
             if (_form.IsOrLowerState(State.OpenBracket))
             {
-                _form.State = State.Completed;
+                _form.State = _parseWithoutBrackets ? State.Parameters : State.Completed;
                 return;
             }
 

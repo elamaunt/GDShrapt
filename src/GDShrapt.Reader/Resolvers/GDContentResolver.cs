@@ -53,7 +53,9 @@ namespace GDShrapt.Reader
                     case "signal":
                     case "const":
                     case "class":
+                    case "@static_unload":
                     case "static":
+                    case "@onready":
                     case "onready":
                         Owner.HandleReceivedToken(state.Push(new GDInnerClassDeclaration(CalculatedIntendation)));
                         break;
@@ -71,13 +73,17 @@ namespace GDShrapt.Reader
                     case "extends":
                     case "class_name":
                     case "tool":
+                    case "@tool":
                     case "var":
                     case "func":
                     case "const":
                     case "signal":
                     case "export":
+                    case "@export":
                     case "class":
+                    case "@static_unload":
                     case "static":
+                    case "@onready":
                     case "onready":
                         Owner.HandleReceivedToken(state.Push(new GDClassDeclaration()));
                         break;

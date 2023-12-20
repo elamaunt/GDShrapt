@@ -16,13 +16,16 @@
         }
 
         readonly GDTokensForm<State, GDAttribute> _form;
+        readonly bool _parseWithoutBrackets;
+
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDAttribute> TypedForm => _form;
 
-        internal GDClassMemberAttributeDeclaration(int intendation)
+        internal GDClassMemberAttributeDeclaration(int intendation, bool parseWithoutBrackets)
            : base(intendation)
         {
             _form = new GDTokensForm<State, GDAttribute>(this);
+            _parseWithoutBrackets = parseWithoutBrackets;
         }
 
         public GDClassMemberAttributeDeclaration()
@@ -57,7 +60,7 @@
                         return;
                     }
 
-                    Attribute = state.PushAndPass(new GDAttribute(), c);
+                    Attribute = state.PushAndPass(new GDAttribute(_parseWithoutBrackets), c);
                     _form.State = State.Completed;
                     break;
                 default:

@@ -2215,5 +2215,93 @@ if position.x > 200 and position.x < 400 and position.y > 300 and position.y < 4
             AssertHelper.CompareCodeStrings(code, @statementsList.ToString());
             AssertHelper.NoInvalidTokens(@statementsList);
         }
+
+        [TestMethod]
+        public void RpcAttributeTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@rpc
+func fn(): pass
+
+@rpc(""any_peer"", ""unreliable_ordered"")
+func fn_update_pos(): pass
+
+@rpc(""authority"", ""call_remote"", ""unreliable"", 0) # Equivalent to @rpc
+func fn_default(): pass";
+
+            var @class = reader.ParseFileContent(code);
+
+            var attributes = @class.AllNodes.OfType<GDClassMemberAttributeDeclaration>().ToArray();
+
+            Assert.AreEqual(3, attributes.Length);
+
+            Assert.AreEqual("@rpc", attributes[0].ToString());
+            Assert.AreEqual("@rpc(\"any_peer\", \"unreliable_ordered\")", attributes[1].ToString());
+            Assert.AreEqual("@rpc(\"authority\", \"call_remote\", \"unreliable\", 0)", attributes[2].ToString());
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void NewClassAttributesTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@static_unload
+@tool
+extends Node";
+
+            var @class = reader.ParseFileContent(code);
+            var attributes = @class.AllNodes.OfType<GDClassMemberAttributeDeclaration>().ToArray();
+            Assert.AreEqual(3, attributes.Length);
+
+            Assert.AreEqual("@static_unload", attributes[0].ToString());
+            Assert.AreEqual("@tool", attributes[1].ToString());
+            Assert.AreEqual("extends Node", attributes[2].ToString());
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void StatementAtributesTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+	print(""hello"")
+	return
+	@warning_ignore(""unreachable_code"")
+	print(""unreachable"")";
+
+            var @class = reader.ParseFileContent(code);
+
+            var attributes = @class.AllNodes.OfType<GDAttribute>().ToArray();
+            Assert.AreEqual(1, attributes.Length);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void StatementAtributesTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+	print(""hello"")
+	return
+	@warning_ignore(""unreachable_code"") print(""unreachable"")";
+
+            var @class = reader.ParseFileContent(code);
+
+            var attributes = @class.AllNodes.OfType<GDAttribute>().ToArray();
+            Assert.AreEqual(1, attributes.Length);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }

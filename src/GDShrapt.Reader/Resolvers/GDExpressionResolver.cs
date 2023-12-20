@@ -518,6 +518,11 @@
             Owner.HandleReceivedToken(token);
         }
 
+        public void HandleReceivedToken(GDAttribute token)
+        {
+            Owner.HandleReceivedToken(token);
+        }
+
         public void HandleReceivedToken(GDSpace token)
         {
             Owner.HandleReceivedToken(token);

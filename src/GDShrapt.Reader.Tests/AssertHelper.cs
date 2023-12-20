@@ -35,7 +35,7 @@ namespace GDShrapt.Reader.Tests
             }
 #endif
 
-            Assert.AreEqual(s1, s2);
+            Assert.AreEqual(s1, s2, "The code strings are not same");
         }
 
         internal static void NoInvalidTokens(GDNode node)
@@ -47,7 +47,7 @@ namespace GDShrapt.Reader.Tests
             for (int i = 0; i < invalidTokens.Length; i++)
                 messageBuilder.AppendLine((i+1) + ". " + invalidTokens[i]);
 
-            Assert.AreEqual(0, invalidTokens.Length, messageBuilder.ToString());
+            Assert.AreEqual(0, invalidTokens.Length, messageBuilder.ToString(), "There are invalid tokens in the code");
         }
     }
 }
