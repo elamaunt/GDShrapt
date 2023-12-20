@@ -12,7 +12,7 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **3.1.2-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **4.0.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
@@ -55,14 +55,18 @@ Install-Package GDShrapt.Reader -Version 3.1.2-alpha
 | Tree walking and node visiting | YES |
 | Syntax cloning | YES |
 | Syntax factory | YES |
-| Asserts handling | IN PLAN |
-| RPC annotations parsing | IN PLAN |
 | Syntax errors managment and properly handling | IN PLAN |
 | Code formatting | IN PLAN |
 | Custom formatter | IN PLAN |
 | Tree diff tool | IN PLAN |
 
 ## Version history
+
+#### 4.0.0-alpha
+Global rework to support GDScript 2.0 (Godot 4.0+). Older GDScript versions mostly are not supported now.
+Fixed many StackOverflow exceptions during invalid code parsing. Improved sameline expressions parsing. Improved back slash parsing.
+Reworked attributes parsing. Added lambdas support, new properties syntax, complex array types, improved ternary operators and so on. 
+The main target is bugfixing, cover minor GDScript 2.0 features and moving to beta.
 
 #### 3.1.2-alpha
 Small improvements of the declaration search in the node's parents tree.
