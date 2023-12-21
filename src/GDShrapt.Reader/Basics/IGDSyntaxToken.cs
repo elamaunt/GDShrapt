@@ -111,13 +111,13 @@ namespace GDShrapt.Reader
         /// </summary>
         /// <param name="owningMember">The Class member which contains the token</param>
         /// <returns>Enumeration</returns>
-        List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(out GDClassMember owningMember);
+        List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(out GDIdentifiableClassMember owningMember);
 
         /// <summary>
         /// Returns enumeration of visible Identifiers of variables defined before the token.
         /// </summary>
         /// <param name="owningMember">The Class member which contains the token</param>
         /// <returns>Enumeration</returns>
-        List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(int beforeLine, out GDClassMember owningMember);
+        List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(int beforeLine, out GDIdentifiableClassMember owningMember);
     }
 }

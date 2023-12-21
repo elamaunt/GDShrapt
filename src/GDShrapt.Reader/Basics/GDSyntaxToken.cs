@@ -448,7 +448,7 @@ namespace GDShrapt.Reader
         /// </summary>
         /// <param name="owningMember">The Class member which contains the token</param>
         /// <returns>Enumeration</returns>
-        public List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(out GDClassMember owningMember)
+        public List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(out GDIdentifiableClassMember owningMember)
         {
             owningMember = null;
 
@@ -480,7 +480,7 @@ namespace GDShrapt.Reader
         /// </summary>
         /// <param name="owningMember">The Class member which contains the token</param>
         /// <returns>Enumeration</returns>
-        public List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(int beforeLine, out GDClassMember owningMember)
+        public List<GDIdentifier> ExtractAllMethodScopeVisibleDeclarationsFromParents(int beforeLine, out GDIdentifiableClassMember owningMember)
         {
             owningMember = null;
 

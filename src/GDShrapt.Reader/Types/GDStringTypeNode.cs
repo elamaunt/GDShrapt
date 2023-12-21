@@ -82,5 +82,10 @@
 
             throw new GDInvalidStateException();
         }
+
+        public override string BuildName()
+        {
+            return $"{Path}";
+        }
     }
 }
