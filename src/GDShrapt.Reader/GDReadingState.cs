@@ -12,8 +12,6 @@ namespace GDShrapt.Reader
     {
         public GDReadSettings Settings { get; }
 
-        private readonly StackTrace _stackTrace;
-
         /// <summary>
         /// Main reading stack
         /// </summary>
@@ -23,7 +21,6 @@ namespace GDShrapt.Reader
         public GDReadingState(GDReadSettings settings)
         {
             Settings = settings;
-            _stackTrace = new StackTrace(false);
         }
 
         /// <summary>
@@ -121,7 +118,7 @@ namespace GDShrapt.Reader
             if (Settings.MaxReadingStack.HasValue && _readersStack.Count == Settings.MaxReadingStack.Value)
                 throw new StackOverflowException("Maximum reading reading stack is reached.");
 
-            if (Settings.MaxStacktraceFramesCount.HasValue && _stackTrace.FrameCount >= Settings.MaxStacktraceFramesCount.Value)
+            if (Settings.MaxStacktraceFramesCount.HasValue && new StackTrace(false).FrameCount >= Settings.MaxStacktraceFramesCount.Value)
                 throw new StackOverflowException("Maximum stackTrace frames count is reached.");
 
             _readersStack.Push(reader);

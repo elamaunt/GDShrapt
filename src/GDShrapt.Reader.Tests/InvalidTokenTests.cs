@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using FluentAssertions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
 namespace GDShrapt.Reader.Tests
@@ -34,6 +35,26 @@ namespace GDShrapt.Reader.Tests
             Assert.AreEqual(1, declaration.AllInvalidTokens.Count());
             Assert.AreEqual("static", declaration.AllInvalidTokens.First().Sequence);
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
+        }
+
+        [TestMethod]
+        public void InvalidClassNameTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"tool
+class_name 123H+=Ter^5r3_-ain-DataSaver
+extends ResourceFormatSaver
+";
+
+            var @class = reader.ParseFileContent(code);
+            Assert.IsNotNull(@class);
+
+            @class.AllInvalidTokens.Select(x => x.ToString()).Should().BeEquivalentTo(new string[] 
+            {
+                "123",
+                "H+=Ter^5r3_-ain-DataSaver"
+            });
         }
     }
 }

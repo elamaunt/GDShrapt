@@ -64,7 +64,7 @@ namespace GDShrapt.Reader
                     else
                     {
                         SendIntendationTokensToOwner();
-                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x != '@' || char.IsLetter(x) || x.IsSpace() || x.IsNewLine())));
+                        Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x == '@' || char.IsLetter(x) || x.IsSpace() || x.IsNewLine())));
                     }
 
                     state.PassChar(c);
