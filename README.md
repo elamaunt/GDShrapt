@@ -16,7 +16,7 @@ Currently the latest **4.0.0-alpha version** from [Nuget](https://www.nuget.org/
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 3.1.2-alpha
+Install-Package GDShrapt.Reader -Version 4.0.1-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
@@ -61,6 +61,10 @@ Install-Package GDShrapt.Reader -Version 3.1.2-alpha
 | Tree diff tool | IN PLAN |
 
 ## Version history
+
+#### 4.0.1-alpha
+Minor fixes for invalid tokens parsing. Fixed methods to extract visible declarations.
+Added BuildName method to GDTypeNode.
 
 #### 4.0.0-alpha
 Global rework to support GDScript 2.0 (Godot 4.0+). Older GDScript versions mostly are not supported now.
