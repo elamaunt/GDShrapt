@@ -2303,5 +2303,35 @@ extends Node";
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+        [TestMethod]
+        public void ParseGetNodeNewSyntax()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"if Input.is_anything_pressed() == false:
+	%summary.text = ""physical attack: "" + str(Physical_attack_sum) + '\n'";
+
+            var @class = reader.ParseStatement(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseScriptSubtype()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"# Custom init function so that it doesn't error
+func init(t: InventoryItem.Type, cms: Vector2) -> void:
+	type = t
+	custom_minimum_size = cms";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }

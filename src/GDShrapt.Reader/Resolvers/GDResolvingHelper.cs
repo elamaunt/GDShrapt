@@ -29,6 +29,19 @@ namespace GDShrapt.Reader
             state.PushAndPass(new GDKeywordResolver<T>(receiver), c);
         }
 
+        public static bool ResolvePercent(this ITokenOrSkipReceiver<GDPercent> receiver, char c, GDReadingState state)
+        {
+            var result = c == '%';
+            if (result)
+                receiver.HandleReceivedToken(new GDPercent());
+            else
+            {
+                receiver.HandleReceivedTokenSkip();
+                state.PassChar(c);
+            }
+            return result;
+        }
+
         public static bool ResolveDollar(this ITokenOrSkipReceiver<GDDollar> receiver, char c, GDReadingState state)
         {
             var result = c == '$';
@@ -376,7 +389,7 @@ namespace GDShrapt.Reader
         {
             if (IsCommentStartChar(c))
             {
-                receiver.HandleReceivedToken(new GDComment());
+                receiver.HandleReceivedToken(state.Push(new GDComment()));
                 state.PassChar(c);
                 return true;
             }

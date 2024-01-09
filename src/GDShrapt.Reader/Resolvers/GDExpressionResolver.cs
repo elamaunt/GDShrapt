@@ -138,6 +138,13 @@
                     state.PassChar(c);
                     return;
                 }
+
+                if (c == '%')
+                {
+                    PushAndSave(state, new GDGetUniqueNodeExpression());
+                    state.PassChar(c);
+                    return;
+                }
             }
             else
             {

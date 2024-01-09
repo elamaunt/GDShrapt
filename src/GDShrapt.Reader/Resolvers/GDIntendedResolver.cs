@@ -241,8 +241,13 @@ namespace GDShrapt.Reader
 
         protected void PassIntendationSequence(GDReadingState state)
         {
+            if (_intendationTokensSent)
+                return;
+
             for (int i = 0; i < _sequenceBuilder.Length; i++)
                 state.PassChar(_sequenceBuilder[i]);
+
+            ResetIntendation();
         }
 
         protected void ResetIntendation()

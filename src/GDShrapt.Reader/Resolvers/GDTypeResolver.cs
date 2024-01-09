@@ -94,6 +94,15 @@ namespace GDShrapt.Reader
                 Owner.HandleReceivedToken(arrayTypeNode);
 
                 state.Push(arrayTypeNode);
+
+                if (_space != null)
+                {
+                    for (int i = 0; i < _space.Sequence.Length; i++)
+                        state.PassChar(_space.Sequence[i]);
+
+                    _space = null;
+                }
+
                 state.PassChar(c);
                 return;
             }
@@ -101,6 +110,29 @@ namespace GDShrapt.Reader
             if (c.IsSpace())
             {
                 state.PushAndPass(_space = new GDSpace(), c);
+                return;
+            }
+
+            if (c == '.' && _type != null)
+            {
+                var subTypeNode = new GDSubTypeNode();
+                subTypeNode.Add(new GDSingleTypeNode() { Type = _type });
+
+                Owner.HandleReceivedToken(subTypeNode);
+                _type = null;
+                state.Pop();
+
+                state.Push(subTypeNode);
+
+                if (_space != null)
+                {
+                    for (int i = 0; i < _space.Sequence.Length; i++)
+                        state.PassChar(_space.Sequence[i]);
+
+                    _space = null;
+                }
+
+                state.PassChar(c);
                 return;
             }
 
