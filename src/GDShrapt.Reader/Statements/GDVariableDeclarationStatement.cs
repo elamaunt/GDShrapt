@@ -94,7 +94,7 @@ namespace GDShrapt.Reader
                     this.ResolveAssign(c, state);
                     break;
                 case State.Initializer:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, LineIntendation);
                     break;
                 default:
                     state.PopAndPass(c);

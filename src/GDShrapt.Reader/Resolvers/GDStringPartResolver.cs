@@ -33,13 +33,13 @@ namespace GDShrapt.Reader
                     case '\'': _stringBuilder.Append('\\').Append('\''); break;
                     case '"': _stringBuilder.Append('\\').Append('"'); break;
                     case '\\': _stringBuilder.Append('\\').Append('\\'); break;
-                    case 'a': _stringBuilder.Append('\\').Append('\a'); break;
-                    case 'b': _stringBuilder.Append('\\').Append('\b'); break;
-                    case 'f': _stringBuilder.Append('\\').Append('\f'); break;
-                    case 'n': _stringBuilder.Append('\\').Append('\n'); break;
-                    case 'r': _stringBuilder.Append('\\').Append('\r'); break;
-                    case 't': _stringBuilder.Append('\\').Append('\t'); break;
-                    case 'v': _stringBuilder.Append('\\').Append('\v'); break;
+                    case 'a': _stringBuilder.Append('\\').Append('a'); break;
+                    case 'b': _stringBuilder.Append('\\').Append('b'); break;
+                    case 'f': _stringBuilder.Append('\\').Append('f'); break;
+                    case 'n': _stringBuilder.Append('\\').Append('n'); break;
+                    case 'r': _stringBuilder.Append('\\').Append('r'); break;
+                    case 't': _stringBuilder.Append('\\').Append('t'); break;
+                    case 'v': _stringBuilder.Append('\\').Append('v'); break;
                     case 'u': _stringBuilder.Append('\\').Append('u'); break;
                     default:
                         if (_stringBuilder.Length == 0)

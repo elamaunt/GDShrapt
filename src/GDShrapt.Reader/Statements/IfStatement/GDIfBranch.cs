@@ -73,7 +73,7 @@
                 case State.Condition:
                 case State.Expression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.Statements:
                     _form.State = State.Completed;

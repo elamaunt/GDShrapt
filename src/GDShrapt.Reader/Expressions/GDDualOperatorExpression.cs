@@ -38,18 +38,20 @@
             Completed
         }
 
+        readonly int _intendation;
         readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form;
         public bool AllowNewLines { get; }
 
         public override GDTokensForm Form => _form; 
         public GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> TypedForm => _form;
         public GDDualOperatorExpression()
-            : this(true)
+            : this(0, true)
         {
         }
 
-        public GDDualOperatorExpression(bool allowNewLines)
+        public GDDualOperatorExpression(int intendation, bool allowNewLines)
         {
+            _intendation = intendation;
             _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>(this);
             AllowNewLines = allowNewLines;
         }
@@ -60,7 +62,7 @@
             {
                 case State.LeftExpression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.DualOperator:
                     // Indicates that it isn't a normal expression. The parent should handle the state.
@@ -76,7 +78,7 @@
                     break;
                 case State.RightExpression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -160,7 +162,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDDualOperatorExpression(AllowNewLines);
+            return new GDDualOperatorExpression(0, AllowNewLines);
         }
 
         internal override void Visit(IGDVisitor visitor)

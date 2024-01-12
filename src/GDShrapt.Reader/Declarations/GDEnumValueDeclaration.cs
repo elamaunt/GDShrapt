@@ -38,8 +38,17 @@
         }
 
         readonly GDTokensForm<State, GDIdentifier, GDPairToken, GDExpression> _form;
+        readonly int _intendation;
+
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDIdentifier, GDPairToken, GDExpression> TypedForm => _form;
+
+        internal GDEnumValueDeclaration(int intendation)
+        {
+            _form = new GDTokensForm<State, GDIdentifier, GDPairToken, GDExpression>(this);
+            _intendation = intendation;
+        }
+
         public GDEnumValueDeclaration()
         {
             _form = new GDTokensForm<State, GDIdentifier, GDPairToken, GDExpression>(this);
@@ -66,7 +75,7 @@
                         this.ResolveAssign(c, state);
                     break;
                 case State.Value:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, _intendation);
                     break;
                 default:
                     state.PopAndPass(c);

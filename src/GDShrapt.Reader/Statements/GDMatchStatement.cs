@@ -66,7 +66,7 @@
                     state.PushAndPass(new GDKeywordResolver<GDMatchKeyword>(this), c);
                     break;
                 case State.Value:
-                    state.PushAndPass(new GDExpressionResolver(this), c);
+                    state.PushAndPass(new GDExpressionResolver(this, Intendation), c);
                     break;
                 case State.Colon:
                     state.PushAndPass(new GDSingleCharTokenResolver<GDColon>(this), c);

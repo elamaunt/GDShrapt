@@ -43,7 +43,7 @@
             Completed
         }
 
-        private readonly int _intendation;
+        readonly int _intendation;
         readonly GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form; 
         public GDTokensForm<State, GDElifKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
@@ -74,7 +74,7 @@
                     break;
                 case State.Condition:
                 case State.Expression:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.Statements:
                     this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());

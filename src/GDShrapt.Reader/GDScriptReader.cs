@@ -70,7 +70,7 @@ namespace GDShrapt.Reader
             var state = new GDReadingState(Settings);
             var receiver = new GDReceiver();
 
-            state.Push(new GDStartTrimmingResolver(receiver, () => new GDExpressionResolver(receiver)));
+            state.Push(new GDStartTrimmingResolver(receiver, () => new GDExpressionResolver(receiver, 0)));
 
             var buffer = new char[Settings.ReadBufferSize];
             int count = 0;

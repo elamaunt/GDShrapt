@@ -3,9 +3,20 @@
     public sealed class GDExpressionsList : GDCommaSeparatedList<GDExpression>,
         ITokenReceiver<GDExpression>
     {
+        readonly int _intendation;
+
+        internal GDExpressionsList(int intendation)
+        {
+            _intendation = intendation;
+        }
+
+        public GDExpressionsList()
+        {
+        }
+
         internal override GDReader ResolveNode()
         {
-            return new GDExpressionResolver(this);
+            return new GDExpressionResolver(this, _intendation);
         }
 
         internal override bool IsStopChar(char c)

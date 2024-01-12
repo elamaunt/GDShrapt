@@ -63,6 +63,20 @@ namespace GDShrapt.Reader.Tests
         }
 
         [TestMethod]
+        public void BigScriptParsingTest5()
+        {
+            var reader = new GDScriptReader();
+
+            var path = Path.Combine("Scripts", "Sample5.gd");
+            var declaration = reader.ParseFile(path);
+
+            var fileText = File.ReadAllText(path);
+
+            AssertHelper.CompareCodeStrings(fileText, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
         public void ScriptTest1()
         {
             var reader = new GDScriptReader();

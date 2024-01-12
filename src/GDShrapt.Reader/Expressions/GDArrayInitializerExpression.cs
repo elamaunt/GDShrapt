@@ -14,7 +14,7 @@
         }
         public GDExpressionsList Values 
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDExpressionsList());
+            get => _form.Token1 ?? (_form.Token1 = new GDExpressionsList(_intendation));
             set => _form.Token1 = value;
         }
         public GDSquareCloseBracket SquareCloseBracket
@@ -31,9 +31,17 @@
             Completed
         }
 
+        readonly int _intendation;
         readonly GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket> _form;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket> TypedForm => _form;
+
+        internal GDArrayInitializerExpression(int intendation)
+        {
+            _intendation = intendation;
+            _form = new GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket>(this);
+        }
+
         public GDArrayInitializerExpression()
         {
             _form = new GDTokensForm<State, GDSquareOpenBracket, GDExpressionsList, GDSquareCloseBracket>(this);

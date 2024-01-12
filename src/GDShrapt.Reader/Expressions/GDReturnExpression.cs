@@ -25,8 +25,16 @@
         }
 
         readonly GDTokensForm<State, GDReturnKeyword, GDExpression> _form;
+        readonly int _intendation;
+
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDReturnKeyword, GDExpression> TypedForm => _form;
+        public GDReturnExpression(int intendation)
+        {
+            _form = new GDTokensForm<State, GDReturnKeyword, GDExpression>(this);
+            _intendation = intendation;
+        }
+
         public GDReturnExpression()
         {
             _form = new GDTokensForm<State, GDReturnKeyword, GDExpression>(this);
@@ -42,7 +50,7 @@
                     break;
                 case State.Expression:
                     if (!this.ResolveSpaceToken(c, state))
-                        state.PushAndPass(new GDExpressionResolver(this), c);
+                        state.PushAndPass(new GDExpressionResolver(this, _intendation), c);
                     break;
                 default:
                     state.PopAndPass(c);

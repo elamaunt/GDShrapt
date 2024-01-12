@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+
+namespace GDShrapt.Reader
 {
     public sealed class GDIndexerExpression : GDExpression,
         ITokenOrSkipReceiver<GDExpression>,
@@ -39,8 +41,17 @@
 
 
         readonly GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket> _form;
+        readonly int _intendation;
+
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket> TypedForm => _form;
+
+        internal GDIndexerExpression(int intendation)
+        {
+            _form = new GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket>(this);
+            _intendation = intendation;
+        }
+
         public GDIndexerExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDSquareOpenBracket, GDExpression, GDSquareCloseBracket>(this);
@@ -52,7 +63,7 @@
             {
                 case State.Caller:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.SquareOpenBracket:
                     if (!this.ResolveSpaceToken(c, state))
@@ -60,7 +71,7 @@
                     break;
                 case State.Inner:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.SquareCloseBracket:
                     if (!this.ResolveSpaceToken(c, state))

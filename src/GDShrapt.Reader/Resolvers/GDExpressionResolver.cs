@@ -9,24 +9,27 @@
 
         bool _ifExpressionChecked;
         bool _isCompleted;
+        readonly int _intendation;
 
         new ITokenReceiver<GDExpression> Owner { get; }
         ITokenSkipReceiver<GDExpression> OwnerWithSkip { get; }
         INewLineReceiver NewLineReceiver { get; }
         public bool IsCompleted => _isCompleted;
 
-        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner, INewLineReceiver newLineReceiver = null)
+        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner, int intendation, INewLineReceiver newLineReceiver = null)
             : base(owner)
         {
             Owner = owner;
             OwnerWithSkip = owner;
             NewLineReceiver = newLineReceiver;
+            _intendation = intendation;
         }
 
-        public GDExpressionResolver(ITokenReceiver<GDExpression> owner)
+        public GDExpressionResolver(ITokenReceiver<GDExpression> owner, int intendation)
             : base(owner)
         {
             Owner = owner;
+            _intendation = intendation;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -37,7 +40,7 @@
                 _ifExpressionChecked = false;
                 _nextIfKeyword = null;
 
-                var expr = new GDIfExpression(NewLineReceiver != null);
+                var expr = new GDIfExpression(_intendation, NewLineReceiver != null);
                 PushAndSwap(state, expr);
                 expr.Add(keyword);
 
@@ -71,21 +74,21 @@
             {
                 if (c == '[')
                 {
-                    PushAndSave(state, new GDArrayInitializerExpression());
+                    PushAndSave(state, new GDArrayInitializerExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
 
                 if (c == '{')
                 {
-                    PushAndSave(state, new GDDictionaryInitializerExpression());
+                    PushAndSave(state, new GDDictionaryInitializerExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
 
                 if (c == '(')
                 {
-                    PushAndSave(state, new GDBracketExpression());
+                    PushAndSave(state, new GDBracketExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
@@ -127,14 +130,14 @@
 
                 if (c == '.')
                 {
-                    PushAndSwap(state, new GDMemberOperatorExpression());
+                    PushAndSwap(state, new GDMemberOperatorExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
 
                 if (c == '-' || c == '!' || c == '~')
                 {
-                    PushAndSave(state, new GDSingleOperatorExpression());
+                    PushAndSave(state, new GDSingleOperatorExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
@@ -191,26 +194,26 @@
 
                 if (c == '(')
                 {
-                    PushAndSwap(state, new GDCallExpression());
+                    PushAndSwap(state, new GDCallExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
 
                 if (c == '[')
                 {
-                    PushAndSwap(state, new GDIndexerExpression());
+                    PushAndSwap(state, new GDIndexerExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
 
                 if (c == '.')
                 {
-                    PushAndSwap(state, new GDMemberOperatorExpression());
+                    PushAndSwap(state, new GDMemberOperatorExpression(_intendation));
                     state.PassChar(c);
                     return;
                 }
 
-                PushAndSwap(state, new GDDualOperatorExpression(NewLineReceiver != null));
+                PushAndSwap(state, new GDDualOperatorExpression(_intendation, NewLineReceiver != null));
                 state.PassChar(c);
             }
         }
@@ -263,7 +266,7 @@
                         return true;
                     case "not":
                         {
-                            var e = new GDSingleOperatorExpression();
+                            var e = new GDSingleOperatorExpression(_intendation);
                             e.Add(new GDSingleOperator() { OperatorType = GDSingleOperatorType.Not2 });
                             PushAndSave(state, e);
                             return true;
@@ -291,7 +294,7 @@
                         }
                     case "return":
                         {
-                            var e = new GDReturnExpression();
+                            var e = new GDReturnExpression(_intendation);
                             e.Add(new GDReturnKeyword());
                             PushAndSave(state, e);
                             return true;
@@ -319,21 +322,21 @@
                         }
                     case "yield":
                         {
-                            var e = new GDYieldExpression();
+                            var e = new GDYieldExpression(_intendation);
                             e.Add(new GDYieldKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "await":
                         {
-                            var e = new GDAwaitExpression();
+                            var e = new GDAwaitExpression(_intendation);
                             e.Add(new GDAwaitKeyword());
                             PushAndSave(state, e);
                             return true;
                         }
                     case "func":
                         {
-                            var e = new GDMethodExpression();
+                            var e = new GDMethodExpression(_intendation);
                             e.Add(new GDFuncKeyword());
                             PushAndSave(state, e);
                             return true;
@@ -352,7 +355,7 @@
             {
                 if (_expression != null)
                 {
-                    PushAndSwap(state, new GDDualOperatorExpression(true));
+                    PushAndSwap(state, new GDDualOperatorExpression(_intendation, true));
                     state.PassNewLine();
                 }
                 else
@@ -381,7 +384,7 @@
             {
                 if (_expression != null)
                 {
-                    PushAndSwap(state, new GDDualOperatorExpression(true));
+                    PushAndSwap(state, new GDDualOperatorExpression(_intendation, true));
                     state.PassSharpChar();
                 }
                 else
@@ -409,7 +412,7 @@
             {
                 if (_expression != null)
                 {
-                    PushAndSwap(state, new GDDualOperatorExpression(true));
+                    PushAndSwap(state, new GDDualOperatorExpression(_intendation, true));
                     state.PassLeftSlashChar();
                 }
                 else

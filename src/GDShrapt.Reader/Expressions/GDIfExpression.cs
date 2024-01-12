@@ -49,6 +49,9 @@
         readonly GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> _form;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression> TypedForm => _form;
+
+        readonly int _intendation;
+
         public bool AllowNewLines { get; }
 
         public GDIfExpression()
@@ -56,8 +59,9 @@
             _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>(this);
         }
 
-        public GDIfExpression(bool allowNewLines)
+        public GDIfExpression(int intendation, bool allowNewLines)
         {
+            _intendation = intendation;
             AllowNewLines = allowNewLines;
             _form = new GDTokensForm<State, GDExpression, GDIfKeyword, GDExpression, GDElseKeyword, GDExpression>(this);
         }
@@ -69,7 +73,7 @@
                 case State.True:
                     if (!this.ResolveSpaceToken(c, state))
                     {
-                        this.ResolveExpression(c, state, AllowNewLines ? this : null);
+                        this.ResolveExpression(c, state, _intendation, AllowNewLines ? this : null);
                     }
                     break;
                 case State.If:
@@ -81,7 +85,7 @@
                 case State.Condition:
                     if (!this.ResolveSpaceToken(c, state))
                     {
-                        this.ResolveExpression(c, state, AllowNewLines ? this : null);
+                        this.ResolveExpression(c, state, _intendation, AllowNewLines ? this : null);
                     }
                     break;
                 case State.Else:
@@ -93,7 +97,7 @@
                 case State.False:
                     if (!this.ResolveSpaceToken(c, state))
                     {
-                        this.ResolveExpression(c, state, AllowNewLines ? this : null);
+                        this.ResolveExpression(c, state, _intendation, AllowNewLines ? this : null);
                     }
                     break;
                 default:
@@ -172,7 +176,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDIfExpression(AllowNewLines);
+            return new GDIfExpression(0, AllowNewLines);
         }
 
         internal override void Visit(IGDVisitor visitor)

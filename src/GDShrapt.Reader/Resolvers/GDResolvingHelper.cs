@@ -290,10 +290,10 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static void ResolveExpression(this ITokenOrSkipReceiver<GDExpression> receiver, char c, GDReadingState state, INewLineReceiver newLineReceiver = null)
+        public static void ResolveExpression(this ITokenOrSkipReceiver<GDExpression> receiver, char c, GDReadingState state, int intendation, INewLineReceiver newLineReceiver = null)
         {
             if (!IsExpressionStopChar(c))
-                state.Push(new GDExpressionResolver(receiver, newLineReceiver));
+                state.Push(new GDExpressionResolver(receiver, intendation, newLineReceiver));
             else
                 receiver.HandleReceivedTokenSkip();
             state.PassChar(c);
@@ -304,6 +304,20 @@ namespace GDShrapt.Reader
             if (IsIdentifierStartChar(c))
             {
                 receiver.HandleReceivedToken(state.Push(new GDIdentifier()));
+                state.PassChar(c);
+                return true;
+            }
+
+            receiver.HandleReceivedTokenSkip();
+            state.PassChar(c);
+            return false;
+        }
+
+        public static bool ResolveExternalName(this ITokenOrSkipReceiver<GDExternalName> receiver, char c, GDReadingState state)
+        {
+            if (IsExternalNameChar(c))
+            {
+                receiver.HandleReceivedToken(state.Push(new GDExternalName()));
                 state.PassChar(c);
                 return true;
             }
@@ -495,6 +509,7 @@ namespace GDShrapt.Reader
         public static bool IsCommentStartChar(this char c) => c == '#';
         public static bool IsSpace(this char c) => c == ' ' || c == '\t';
         public static bool IsIdentifierStartChar(this char c) => c == '_' || char.IsLetter(c);
+        public static bool IsExternalNameChar(this char c) => c == '_' || char.IsLetter(c) || char.IsDigit(c);
         public static bool IsStringStartChar(this char c) => c == '\'' || c == '\"';
         public static bool IsExpressionStopChar(this char c) => c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c == ';';
         public static bool IsNumberStartChar(this char c) => char.IsDigit(c);

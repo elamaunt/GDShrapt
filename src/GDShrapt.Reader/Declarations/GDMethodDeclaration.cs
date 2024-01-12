@@ -205,7 +205,7 @@ namespace GDShrapt.Reader
                     break;
 
                 case State.Expression:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, Intendation);
                     break;
                 case State.Statements:
                     this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());

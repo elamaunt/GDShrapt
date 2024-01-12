@@ -66,7 +66,7 @@
                     this.ResolveColon(c, state);
                     break;
                 case State.Expression:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.Statements:
                     this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());

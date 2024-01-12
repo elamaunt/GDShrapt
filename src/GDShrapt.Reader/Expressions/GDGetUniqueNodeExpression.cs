@@ -2,9 +2,9 @@
 {
     public sealed class GDGetUniqueNodeExpression : GDExpression,
         ITokenOrSkipReceiver<GDPercent>,
-        ITokenOrSkipReceiver<GDPathList>
+        ITokenOrSkipReceiver<GDExternalName>
     {
-        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetNode);
+        public override int Priority => GDHelper.GetOperationPriority(GDOperationType.GetUniqueNode);
 
         public GDPercent Percent
         {
@@ -12,25 +12,25 @@
             set => _form.Token0 = value;
         }
 
-        public GDPathList Path 
+        public GDExternalName Name 
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDPathList());
+            get => _form.Token1;
             set => _form.Token1 = value;
         }
 
         public enum State
         {
             Percent,
-            Path,
+            Name,
             Completed
         }
 
-        readonly GDTokensForm<State, GDPercent, GDPathList> _form;
+        readonly GDTokensForm<State, GDPercent, GDExternalName> _form;
         public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDPercent, GDPathList> TypedForm => _form;
+        public GDTokensForm<State, GDPercent, GDExternalName> TypedForm => _form;
         public GDGetUniqueNodeExpression()
         {
-            _form = new GDTokensForm<State, GDPercent, GDPathList>(this);
+            _form = new GDTokensForm<State, GDPercent, GDExternalName>(this);
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -42,12 +42,10 @@
                         return;
                     this.ResolvePercent(c, state);
                     break;
-                case State.Path:
-                    _form.State = State.Completed;
-
+                case State.Name:
                     if (this.ResolveSpaceToken(c, state))
                         return;
-                    state.PushAndPass(Path, c);
+                    this.ResolveExternalName(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -79,7 +77,7 @@
         {
             if (_form.IsOrLowerState(State.Percent))
             {
-                _form.State = State.Path;
+                _form.State = State.Name;
                 Percent = token;
                 return;
             }
@@ -91,30 +89,30 @@
         {
             if (_form.IsOrLowerState(State.Percent))
             {
-                _form.State = State.Path;
+                _form.State = State.Name;
                 return;
             }
 
             throw new GDInvalidStateException();
         }
 
-        void ITokenReceiver<GDPathList>.HandleReceivedToken(GDPathList token)
+        void ITokenReceiver<GDExternalName>.HandleReceivedToken(GDExternalName token)
         {
-            if (_form.IsOrLowerState(State.Path))
+            if (_form.IsOrLowerState(State.Name))
             {
-                _form.State = State.Path;
-                Path = token;
+                _form.State = State.Completed;
+                Name = token;
                 return;
             }
 
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDPathList>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDExternalName>.HandleReceivedTokenSkip()
         {
-            if (_form.IsOrLowerState(State.Path))
+            if (_form.IsOrLowerState(State.Name))
             {
-                _form.State = State.Path;
+                _form.State = State.Completed;
                 return;
             }
 
