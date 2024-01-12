@@ -183,6 +183,15 @@ namespace GDShrapt.Reader
 
                 if (node is GDMethodDeclaration method)
                 {
+                    foreach (var item in node.GetMethodScopeDeclarations(startLine))
+                    {
+                        if (item == this)
+                        {
+                            declaration = item;
+                            return true;
+                        }
+                    }
+
                     if (method.Identifier == this)
                     {
                         declaration = method.Identifier;

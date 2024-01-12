@@ -13,7 +13,7 @@
         }
         public GDDictionaryKeyValueDeclarationList KeyValues
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDDictionaryKeyValueDeclarationList());
+            get => _form.Token1 ?? (_form.Token1 = new GDDictionaryKeyValueDeclarationList(_intendation));
             set => _form.Token1 = value;
         }
         public GDFigureCloseBracket FigureCloseBracket
@@ -31,8 +31,17 @@
         }
 
         readonly GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket> _form;
+        readonly int _intendation;
+
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket> TypedForm => _form;
+
+        internal GDDictionaryInitializerExpression(int intendation)
+        {
+            _form = new GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket>(this);
+            _intendation = intendation;
+        }
+
         public GDDictionaryInitializerExpression()
         {
             _form = new GDTokensForm<State, GDFigureOpenBracket, GDDictionaryKeyValueDeclarationList, GDFigureCloseBracket>(this);

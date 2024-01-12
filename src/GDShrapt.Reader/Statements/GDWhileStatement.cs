@@ -78,7 +78,7 @@ namespace GDShrapt.Reader
                     state.PassChar(c);
                     break;
                 case State.Condition:
-                    state.Push(new GDExpressionResolver(this));
+                    state.Push(new GDExpressionResolver(this, Intendation));
                     state.PassChar(c);
                     break;
                 case State.Colon:
@@ -86,7 +86,7 @@ namespace GDShrapt.Reader
                     state.PassChar(c);
                     break;
                 case State.Expression:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, Intendation);
                     break;
                 case State.Statements:
                     this.HandleAsInvalidToken(c, state, x => x.IsNewLine());

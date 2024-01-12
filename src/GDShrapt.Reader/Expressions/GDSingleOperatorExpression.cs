@@ -27,9 +27,17 @@
             Completed
         }
 
+        readonly int _intendation;
         readonly GDTokensForm<State, GDSingleOperator, GDExpression> _form;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDSingleOperator, GDExpression> TypedForm => _form;
+
+        internal GDSingleOperatorExpression(int intendation)
+        {
+            _intendation = intendation;
+            _form = new GDTokensForm<State, GDSingleOperator, GDExpression>(this);
+        }
+
         public GDSingleOperatorExpression()
         {
             _form = new GDTokensForm<State, GDSingleOperator, GDExpression>(this);
@@ -45,7 +53,7 @@
                     break;
                 case State.TargetExpression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 default:
                     state.PopAndPass(c);

@@ -44,8 +44,17 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
+        readonly int _intendation;
+
         public override GDTokensForm Form => _form; 
         public GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
+
+        internal GDCallExpression(int intendation)
+        {
+            _form = new GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
+            _intendation = intendation;
+        }
+
         public GDCallExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
@@ -57,7 +66,7 @@
             {
                 case State.Caller:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.OpenBracket:
                     if (!this.ResolveSpaceToken(c, state))

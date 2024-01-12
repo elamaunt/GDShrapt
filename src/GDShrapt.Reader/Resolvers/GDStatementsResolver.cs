@@ -30,6 +30,12 @@ namespace GDShrapt.Reader
 
                 if (_resolvedAsExpression)
                 {
+                    if (c.IsExpressionStopChar())
+                    {
+                        Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
+                        return;
+                    }
+
                     // Resolving multiple expressions on the same string
                     var statement = new GDExpressionStatement();
                     Owner.HandleReceivedToken(statement);

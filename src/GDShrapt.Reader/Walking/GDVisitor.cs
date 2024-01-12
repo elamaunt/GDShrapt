@@ -352,92 +352,82 @@
             // Nothing
         }
 
-        public void Visit(GDClassMemberAttributeDeclaration d)
+        public virtual void Visit(GDClassMemberAttributeDeclaration d)
         {
             // Nothing
         }
 
-        public void Left(GDClassMemberAttributeDeclaration d)
+        public virtual void Left(GDClassMemberAttributeDeclaration d)
         {
             // Nothing
         }
 
-        public void Visit(GDAttribute a)
+        public virtual void Visit(GDAttribute a)
         {
             // Nothing
         }
 
-        public void Left(GDAttribute a)
+        public virtual void Left(GDAttribute a)
         {
             // Nothing
         }
 
-        public void Visit(GDGetAccessorBodyDeclaration d)
+        public virtual void Visit(GDGetAccessorBodyDeclaration d)
         {
             // Nothing
         }
 
-        public void Left(GDGetAccessorBodyDeclaration d)
+        public virtual void Left(GDGetAccessorBodyDeclaration d)
         {
             // Nothing
         }
 
-        public void Visit(GDSetAccessorBodyDeclaration d)
+        public virtual void Visit(GDSetAccessorBodyDeclaration d)
         {
             // Nothing
         }
 
-        public void Left(GDSetAccessorBodyDeclaration d)
+        public virtual void Left(GDSetAccessorBodyDeclaration d)
         {
             // Nothing
         }
 
-        public void Visit(GDSetAccessorMethodDeclaration d)
+        public virtual void Visit(GDSetAccessorMethodDeclaration d)
         {
             // Nothing
         }
 
-        public void Left(GDSetAccessorMethodDeclaration d)
+        public virtual void Left(GDSetAccessorMethodDeclaration d)
         {
             // Nothing
         }
 
-        public void Visit(GDSingleTypeNode t)
+        public virtual void Visit(GDSingleTypeNode t)
         {
             // Nothing
         }
 
-        public void Left(GDSingleTypeNode t)
+        public virtual void Left(GDSingleTypeNode t)
         {
             // Nothing
         }
 
-        public void Visit(GDArrayTypeNode t)
+        public virtual void Visit(GDArrayTypeNode t)
         {
             // Nothing
         }
 
-        public void Left(GDArrayTypeNode t)
+        public virtual void Left(GDArrayTypeNode t)
         {
             // Nothing
         }
 
-        public void Visit(GDGetAccessorMethodDeclaration d)
+        public virtual void Visit(GDGetAccessorMethodDeclaration d)
         {
             // Nothing
         }
 
-        public void Left(GDGetAccessorMethodDeclaration d)
-        {
-            // Nothing
-        }
-
-        public virtual void DidLeft(GDExpression expr)
-        {
-            // Nothing
-        }
-
-        public virtual void WillVisit(GDExpression expr)
+        public virtual void Left(GDGetAccessorMethodDeclaration d)
         {
             // Nothing
         }

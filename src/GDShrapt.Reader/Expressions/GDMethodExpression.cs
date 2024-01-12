@@ -149,7 +149,7 @@
                     break;
 
                 case State.Expression:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, Intendation);
                     break;
                 case State.Statements:
                     if (c.IsExpressionStopChar())

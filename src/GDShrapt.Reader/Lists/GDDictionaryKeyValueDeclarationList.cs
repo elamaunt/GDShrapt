@@ -3,9 +3,20 @@
     public sealed class GDDictionaryKeyValueDeclarationList : GDCommaSeparatedList<GDDictionaryKeyValueDeclaration>,
         ITokenReceiver<GDDictionaryKeyValueDeclaration>
     {
+        readonly int _intendation;
+
+        internal GDDictionaryKeyValueDeclarationList(int intendation)
+        {
+            _intendation = intendation;
+        }
+
+        public GDDictionaryKeyValueDeclarationList()
+        {
+        }
+
         internal override GDReader ResolveNode()
         {
-            var node = new GDDictionaryKeyValueDeclaration();
+            var node = new GDDictionaryKeyValueDeclaration(_intendation);
             ListForm.AddToEnd(node);
             return node;
         }

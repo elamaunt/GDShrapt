@@ -4,6 +4,7 @@
         ITokenOrSkipReceiver<GDStringPart>,
         ITokenOrSkipReceiver<GDMultiLineSplitToken>
     {
+        bool _firstSlashChecking;
         bool _ended;
         readonly GDStringBoundingChar _bounder;
 
@@ -35,6 +36,13 @@
 
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
+            if (Count == 0)
+            {
+                _firstSlashChecking = true;
+                this.ResolveStringPart('\\', state, _bounder);
+                return;
+            }
+
             _ended = false;
             ListForm.AddToEnd(state.Push(new GDMultiLineSplitToken()));
             state.PassLeftSlashChar();
@@ -62,7 +70,10 @@
 
         void ITokenSkipReceiver<GDStringPart>.HandleReceivedTokenSkip()
         {
-            _ended = true;
+            if (!_firstSlashChecking)
+                _ended = true;
+            else
+                _firstSlashChecking = false;
         }
 
         void ITokenReceiver<GDMultiLineSplitToken>.HandleReceivedToken(GDMultiLineSplitToken token)

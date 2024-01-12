@@ -22,7 +22,7 @@
         }
         public GDExpressionsList Parameters
         {
-            get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList());
+            get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList(_intendation));
             set => _form.Token2 = value;
         }
         public GDCloseBracket CloseBracket
@@ -40,9 +40,17 @@
             Completed
         }
 
+        readonly int _intendation;
         readonly GDTokensForm<State, GDAwaitKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> _form;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDAwaitKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket> TypedForm => _form;
+
+        internal GDAwaitExpression(int intendation)
+        {
+            _intendation = intendation;
+            _form = new GDTokensForm<State, GDAwaitKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
+        }
+
         public GDAwaitExpression()
         {
             _form = new GDTokensForm<State, GDAwaitKeyword, GDOpenBracket, GDExpressionsList, GDCloseBracket>(this);
@@ -88,7 +96,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDYieldExpression();
+            return new GDAwaitExpression();
         }
 
         internal override void Visit(IGDVisitor visitor)

@@ -162,5 +162,9 @@
         void Visit(GDTripleDoubleQuotasStringNode sn);
         void Visit(GDDoubleQuotasStringNode sn);
         void Visit(GDSingleQuotasStringNode sn);
+        void Visit(GDGetUniqueNodeExpression e);
+        void Left(GDGetUniqueNodeExpression e);
+        void Visit(GDSubTypeNode t);
+        void Left(GDSubTypeNode t);
     }
 }

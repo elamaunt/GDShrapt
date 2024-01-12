@@ -14,6 +14,7 @@
         Pass,
         MatchCaseVariable,
         DictionaryInitializer,
+        GetUniqueNode,
         GetNode,
         NodePath,
         If,

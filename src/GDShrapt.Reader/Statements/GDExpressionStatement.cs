@@ -43,7 +43,7 @@
             {
                 case State.Expression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, LineIntendation);
                     break;
                 case State.SemiColon:
                     if (!this.ResolveSpaceToken(c, state))

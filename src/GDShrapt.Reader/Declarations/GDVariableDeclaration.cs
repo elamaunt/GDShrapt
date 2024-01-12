@@ -155,7 +155,7 @@
                     state.PushAndPass(new GDSingleCharTokenResolver<GDAssign>(this), c);
                     break;
                 case State.Initializer:
-                    state.PushAndPass(new GDExpressionResolver(this), c);
+                    state.PushAndPass(new GDExpressionResolver(this, Intendation), c);
                     break;
                 case State.FirstAccessorDeclarationNode:
                     state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, true, Intendation + 1), c);

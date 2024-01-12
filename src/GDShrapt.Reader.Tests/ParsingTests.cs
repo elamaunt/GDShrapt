@@ -2303,5 +2303,98 @@ extends Node";
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+        [TestMethod]
+        public void ParseGetNodeNewSyntax()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"if Input.is_anything_pressed() == false:
+	%summary.text = ""physical attack: "" + str(Physical_attack_sum) + '\n'";
+
+            var @class = reader.ParseStatement(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseScriptSubtype()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"# Custom init function so that it doesn't error
+func init(t: InventoryItem.Type, cms: Vector2) -> void:
+	type = t
+	custom_minimum_size = cms";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseLambdaExpressionWithStatementTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+class_name Helper
+ 
+func print_hello():
+    var messageGenerator = func(): return ""Hello, World!""
+
+    print(messageGenerator())
+";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.AreEqual(2, @class.Methods.First().Statements.Count);
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseMatchInMethodTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+class_name Helper
+
+func switch(x):
+    match x:
+        1:
+		    print(""It's one!"")
+        2:
+            print(""It's one times two!"")
+        var new_var:
+            print(""It's not 1 or 2, it's "", new_var)
+";
+
+            var @class = reader.ParseFileContent(code);
+            Assert.AreEqual(1, @class.Methods.Count());
+
+            var method = @class.Methods.First();
+            Assert.AreEqual(1, method.Statements.Count);
+
+            var statement = method.Statements.First();
+
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var match = (GDMatchStatement)statement;
+
+            Assert.AreEqual(3, match.Cases.Count);
+
+            for (int i = 0; i < match.Cases.Count; i++)
+            {
+                var @case = match.Cases[i];
+                Assert.AreEqual(1, @case.Statements.Count);
+            }
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }

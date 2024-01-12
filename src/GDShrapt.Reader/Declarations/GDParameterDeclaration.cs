@@ -44,8 +44,16 @@
         }
 
         readonly GDTokensForm<State, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression> _form;
+        readonly int _intendation;
+
         public override GDTokensForm Form => _form; 
         public GDTokensForm<State, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression> TypedForm => _form;
+        internal GDParameterDeclaration(int intendation)
+        {
+            _form = new GDTokensForm<State, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression>(this);
+            _intendation = intendation;
+        }
+
         public GDParameterDeclaration()
         {
             _form = new GDTokensForm<State, GDIdentifier, GDColon, GDTypeNode, GDAssign, GDExpression>(this);
@@ -71,7 +79,7 @@
                     this.ResolveAssign(c, state);
                     break;
                 case State.DefaultValue:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, _intendation);
                     break;
                 default:
                     state.PopAndPass(c);

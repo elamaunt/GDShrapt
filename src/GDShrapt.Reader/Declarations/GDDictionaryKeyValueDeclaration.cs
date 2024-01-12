@@ -37,6 +37,13 @@
         }
 
         readonly GDTokensForm<State, GDExpression, GDPairToken, GDExpression> _form;
+        readonly int _intendation;
+
+        internal GDDictionaryKeyValueDeclaration(int intendation)
+        {
+            _form = new GDTokensForm<State, GDExpression, GDPairToken, GDExpression>(this);
+            _intendation = intendation;
+        }
 
         public GDDictionaryKeyValueDeclaration()
         {
@@ -53,7 +60,7 @@
             switch (_form.State)
             {
                 case State.Key:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.ColonOrAssign:
                     if (!_checkedColon)
@@ -62,7 +69,7 @@
                         this.ResolveAssign(c, state);
                     break;
                 case State.Value:
-                    this.ResolveExpression(c, state);
+                    this.ResolveExpression(c, state, _intendation);
                     break;
                 default:
                     state.PopAndPass(c);

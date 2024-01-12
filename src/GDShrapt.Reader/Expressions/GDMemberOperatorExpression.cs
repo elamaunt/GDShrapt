@@ -31,9 +31,17 @@
             Completed
         }
 
+        readonly int _intendation;
         readonly GDTokensForm<State, GDExpression, GDPoint, GDIdentifier> _form;
         public override GDTokensForm Form => _form; 
         public GDTokensForm<State, GDExpression, GDPoint, GDIdentifier> TypedForm => _form;
+
+        internal GDMemberOperatorExpression(int intendation)
+        {
+            _intendation = intendation;
+            _form = new GDTokensForm<State, GDExpression, GDPoint, GDIdentifier>(this);
+        }
+
         public GDMemberOperatorExpression()
         {
             _form = new GDTokensForm<State, GDExpression, GDPoint, GDIdentifier>(this);
@@ -45,7 +53,7 @@
             {
                 case State.CallerExpression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state);
+                        this.ResolveExpression(c, state, _intendation);
                     break;
                 case State.Point:
                     if (!this.ResolveSpaceToken(c, state))
