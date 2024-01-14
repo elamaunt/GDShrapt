@@ -1,12 +1,12 @@
 ﻿namespace GDShrapt.Reader
 {
-    public sealed class GDIfKeyword : GDKeyword
+    public sealed class GDWhileKeyword : GDKeyword
     {
-        public override string Sequence => "if";
+        public override string Sequence => "while";
 
         public override GDSyntaxToken Clone()
         {
-            return new GDIfKeyword();
+            return new GDWhileKeyword();
         }
     }
 }

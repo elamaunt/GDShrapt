@@ -233,19 +233,20 @@
                 {
                     case "if":
                     case "else":
+                    case "when":
                         {
                             _expression = null;
 
-                            if (_lastSpace != null)
-                            {
-                                Owner.HandleReceivedToken(_lastSpace);
-                                _lastSpace = null;
-                            }
+                            var space = _lastSpace;
+                            _lastSpace = null;
 
                             CompleteExpression(state);
 
                             for (int i = 0; i < s.Length; i++)
                                 state.PassChar(s[i]);
+
+                            if (space != null)
+                                state.PassString(space.Sequence);
                         }
                         return true;
                     case "setget":
@@ -282,6 +283,13 @@
                         {
                             var e = new GDPassExpression();
                             e.Add(new GDPassKeyword());
+                            PushAndSave(state, e);
+                            return true;
+                        }
+                    case "break":
+                        {
+                            var e = new GDBreakExpression();
+                            e.Add(new GDBreakKeyword());
                             PushAndSave(state, e);
                             return true;
                         }

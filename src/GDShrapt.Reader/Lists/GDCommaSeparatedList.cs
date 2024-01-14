@@ -6,6 +6,8 @@
         ITokenReceiver<GDComma>
         where NODE : GDSyntaxToken
     {
+        bool _completed;
+
         internal abstract GDReader ResolveNode();
         internal abstract bool IsStopChar(char c);
 
@@ -25,7 +27,7 @@
             }
             else
             {
-                if (!IsStopChar(c))
+                if (!_completed && !IsStopChar(c))
                 {
                     state.PushAndPass(ResolveNode(), c);
                     return;
@@ -38,6 +40,11 @@
         internal override void HandleNewLineChar(GDReadingState state)
         {
             ListForm.AddToEnd(new GDNewLine());
+        }
+
+        internal void SetAsCompleted()
+        {
+            _completed = true;
         }
 
         void INewLineReceiver.HandleReceivedToken(GDNewLine token)

@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDExpressionsList : GDCommaSeparatedList<GDExpression>,
-        ITokenReceiver<GDExpression>
+        ITokenOrSkipReceiver<GDExpression>
     {
         readonly int _intendation;
 
@@ -42,6 +42,11 @@
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             ListForm.AddToEnd(token);
+        }
+
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
+        {
+            SetAsCompleted();
         }
     }
 }

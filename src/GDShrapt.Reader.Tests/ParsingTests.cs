@@ -1,5 +1,8 @@
+using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Threading;
+using static GDShrapt.Reader.GD;
 
 namespace GDShrapt.Reader.Tests
 {
@@ -532,6 +535,190 @@ else:
             Assert.AreEqual(1, matchStatement.Cases[0].Statements.Count);
             Assert.AreEqual(1, matchStatement.Cases[1].Statements.Count);
             Assert.AreEqual(1, matchStatement.Cases[2].Statements.Count);
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
+        }
+
+        [TestMethod]
+        public void MatchStatementMultiplePatternsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"match x:
+	1, 2, 3:
+		print(""It's 1 - 3"")
+	""Sword"", ""Splash potion"", ""Fist"":
+		print(""Yep, you've taken damage"")";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            matchStatement.Cases.Select(x => x.Conditions.ToString()).Should().BeEquivalentTo(new string[]
+            {
+                "1, 2, 3",
+                "\"Sword\", \"Splash potion\", \"Fist\""
+            });
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
+        }
+
+        [TestMethod]
+        public void MatchStatementWildcardPatternTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"match x:
+	1:
+		print(""It's one!"")
+	2:
+		print(""It's one times two!"")
+	_:
+		print(""It's not 1 or 2. I don't care to be honest."")";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            matchStatement.Cases.Select(x => x.Conditions.ToString()).Should().BeEquivalentTo(new string[]
+            {
+                "1",
+                "2",
+                "_"
+            });
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
+        }
+    
+        [TestMethod]
+        public void MatchStatementArrayPatternTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"match x:
+	[]:
+		print(""Empty array"")
+	[1, 3, ""test"", null]:
+		print(""Very specific array"")
+	[var start, _, ""test""]:
+		print(""First element is "", start, "", and the last is \""test\"""")
+	[42, ..]:
+		print(""Open ended array"")";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            matchStatement.Cases.Select(x => x.Conditions.ToString()).Should().BeEquivalentTo(new string[]
+            {
+                "[]",
+                "[1, 3, \"test\", null]",
+                "[var start, _, \"test\"]",
+                "[42, ..]"
+            });
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
+        }
+
+        [TestMethod]
+        public void MatchStatementDictionaryPatternTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"match x:
+	{}:
+		print(""Empty dict"")
+	{""name"": ""Dennis""}:
+		print(""The name is Dennis"")
+	{""name"": ""Dennis"", ""age"": var age}:
+		print(""Dennis is "", age, "" years old."")
+	{""name"", ""age""}:
+		print(""Has a name and an age, but it's not Dennis :("")
+	{""key"": ""godotisawesome"", ..}:
+		print(""I only checked for one entry and ignored the rest"")";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            matchStatement.Cases.Select(x => x.Conditions.ToString()).Should().BeEquivalentTo(new string[]
+            {
+                "{}",
+                "{\"name\": \"Dennis\"}",
+                "{\"name\": \"Dennis\", \"age\": var age}",
+                "{\"name\", \"age\"}",
+                "{\"key\": \"godotisawesome\", ..}"
+            });
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
+        }
+
+        [TestMethod]
+        public void MatchStatementPatternGuardTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"match point:
+	[0, 0]:
+		print(""Origin"")
+	[_, 0]:
+		print(""Point on X-axis"")
+	[0, _]:
+		print(""Point on Y-axis"")
+	[var x, var y] when y == x:
+		print(""Point on line y = x"")
+	[var x, var y] when y == -x:
+		print(""Point on line y = -x"")
+	[var x, var y]:
+		print(""Point (%s, %s)"" % [x, y])";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDMatchStatement));
+
+            var matchStatement = (GDMatchStatement)statement;
+
+            var cases = matchStatement.Cases;
+
+            Assert.AreEqual(6, cases.Count);
+
+            var one = cases[3];
+
+            Assert.IsNotNull(one.When);
+            Assert.IsNotNull(one.GuardCondition);
+            Assert.AreEqual("y == x", one.GuardCondition.ToString());
+            Assert.AreEqual("[var x, var y] ", one.Conditions.ToString());
+
+            var two = cases[4];
+
+            Assert.IsNotNull(two.When);
+            Assert.IsNotNull(two.GuardCondition);
+            Assert.AreEqual("y == -x", two.GuardCondition.ToString());
+            Assert.AreEqual("[var x, var y] ", two.Conditions.ToString());
+
+            var three = cases[5];
+            Assert.AreEqual("[var x, var y]", three.Conditions.ToString());
+
+            Assert.AreEqual(1, three.Statements.Count);
+            Assert.AreEqual("print(\"Point (%s, %s)\" % [x, y])", three.Statements[0].ToString());
 
             AssertHelper.CompareCodeStrings(code, statement.ToString());
             AssertHelper.NoInvalidTokens(statement);
