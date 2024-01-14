@@ -12,11 +12,11 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **4.0.1-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **4.1.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 4.0.1-alpha
+Install-Package GDShrapt.Reader -Version 4.1.0-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
@@ -60,58 +60,14 @@ Install-Package GDShrapt.Reader -Version 4.0.1-alpha
 | Custom formatter | IN PLAN |
 | Tree diff tool | IN PLAN |
 
-## Version history
+## Last updates
 
-#### 4.0.1-alpha
-Minor fixes for invalid tokens parsing. Fixed methods to extract visible declarations.
-Added BuildName method to GDTypeNode.
-
-#### 4.0.0-alpha
-Global rework to support GDScript 2.0 (Godot 4.0+). Older GDScript versions mostly are not supported now.
-Fixed many StackOverflow exceptions during invalid code parsing. Improved sameline expressions parsing. Improved back slash parsing.
-Reworked attributes parsing. Added lambdas support, new properties syntax, complex array types, improved ternary operators and so on. 
-The main target is bugfixing, cover minor GDScript 2.0 features and moving to beta.
-
-#### 3.1.2-alpha
-Small improvements of the declaration search in the node's parents tree.
-
-#### 3.1.1-alpha
-Fixed parsing of the dual expression splitting.
-Fixed some parsing errors.
-Added Global next and previous tokens search.
-
-#### 3.1.0-alpha
-Improved parsing NodePath. 
-Fixed issues with 'elif' branches and some expressions sort order.
-Improved inner classes parsing. 
-Improved node walking and visiting.
-Fixed small parsing errors.
-
-#### 3.0.0-alpha
-Many small fixes with the if-elif-else branches parsing. Improved tree managment.
-Fixed 'newline' character parsing in multiline expressions and initializers.
-Fixed Yield parsing.
-Most of internal methods are public now. 'Form' of every node is now accessible from users code.
-Implemented two styles of codegeneration.
-Implemented many additional properties for tokens and nodes (like a 'StartLine', 'Length' and so on).
-Implemented method for parsing unspecified content.
-
-#### 2.1.0-alpha
-Implemented 'clone' methods for every token type. Now you can clone the lexical tree with all it's structure.
-Changed the project type to Net.Standart 2.0 (Because this version is supported by Godot).
-Small fix with the 'ToString' method of GDIndexerExpression.
-
-#### 2.0.0-alpha
-The project is now in Net.Standart 2.1 and was 
-totally reworked with tokenization layer. The parser now performs token extraction and lexical tree construction at the same time.
-No style data loss. Possibility to manage every token in code.
-Implemented specific node parsing like NodePath, short form of 'get_node'.
-Properly handling of comments and spaces.
-
-#### 1.0.0-prealpha
-.NET 5.0 version
-Implemented all basic nodes and a lexical tree building with a style data loss.
-Has limitations in specific situations.
+#### 4.1.0-alpha
+Fixed lambdas and match cases intendation bugs.
+Fixed bug with multiline split token.
+Fixed Unique node expression parsing.
+Fixed subtype resolving.
+Minor improvements.
 
 ## Reading samples
 
