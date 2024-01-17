@@ -16,7 +16,7 @@ Currently the latest **4.1.1-alpha version** from [Nuget](https://www.nuget.org/
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 4.1.0-alpha
+Install-Package GDShrapt.Reader -Version 4.1.1-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
