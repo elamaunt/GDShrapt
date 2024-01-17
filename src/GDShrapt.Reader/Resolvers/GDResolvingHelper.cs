@@ -134,6 +134,19 @@ namespace GDShrapt.Reader
             return result;
         }
 
+        public static bool ResolveParameter(this ITokenOrSkipReceiver<GDParameterDeclaration> receiver, char c, GDReadingState state)
+        {
+            if (c.IsIdentifierStartChar())
+            {
+                receiver.HandleReceivedToken(state.PushAndPass(new GDParameterDeclaration(), c));
+                return true;
+            }
+
+            receiver.HandleReceivedTokenSkip();
+            state.PassChar(c);
+            return false;
+        }
+
         public static bool ResolveCloseBracket(this ITokenOrSkipReceiver<GDCloseBracket> receiver, char c, GDReadingState state)
         {
             var result = c == ')';

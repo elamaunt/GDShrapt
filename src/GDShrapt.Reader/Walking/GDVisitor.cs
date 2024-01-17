@@ -1,6 +1,6 @@
 ﻿namespace GDShrapt.Reader
 {
-    public abstract class GDVisitor : GDBaseVisitor
+    public abstract class GDVisitor : GDBaseVisitor, IGDVisitor
     {
         public virtual void DidLeft(GDNode expr)
         {
@@ -688,6 +688,106 @@
         }
 
         public virtual void DidLeftExpression(GDExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDAwaitExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDStringTypeNode type)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDClassCustomAttribute a)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDStringPartsList list)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDAwaitExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDStringTypeNode type)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDClassCustomAttribute a)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDStringPartsList list)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDTripleDoubleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDTripleSingleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDDoubleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDSingleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDTripleSingleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDTripleDoubleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDDoubleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDSingleQuotasStringNode sn)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDGetUniqueNodeExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDGetUniqueNodeExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDSubTypeNode t)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDSubTypeNode t)
         {
             // Nothing
         }

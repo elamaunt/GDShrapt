@@ -23,12 +23,15 @@
                 "set=",
 
                 "get:",
-                "set:"
+                "set("
             };
         }
 
         protected override void PatternMatched(string pattern, GDReadingState state)
         {
+            if (pattern != null)
+                SendIntendationTokensToOwner();
+
             switch (pattern)
             {
                 case "set":
@@ -46,8 +49,9 @@
                         state.Push(accessor);
                         break;
                     }
-                case "set:":
+                case "set(":
                     {
+                        // TODO: check spaces
                         var accessor = new GDSetAccessorBodyDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);

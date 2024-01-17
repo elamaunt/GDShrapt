@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using static GDShrapt.Reader.GD;
 
@@ -2228,6 +2229,7 @@ func _getter():
             AssertHelper.NoInvalidTokens(@class);
         }
 
+        [TestMethod]
         public void ParseNewProperiesSyntaxTest2()
         {
             var reader = new GDScriptReader();
@@ -2249,26 +2251,7 @@ func _update_score_display():
             AssertHelper.NoInvalidTokens(@class);
         }
 
-        public void ParseNewProperiesSyntaxTest3()
-        {
-            var reader = new GDScriptReader();
-
-            var code = @"var score: int:
-    get:
-        return score
-    set(value: int):
-        score = value
-        update_score_display()
-
-func update_score_display():
-	pass # Do something to update the displayed score";
-
-            var @class = reader.ParseFileContent(code);
-
-            AssertHelper.CompareCodeStrings(code, @class.ToString());
-            AssertHelper.NoInvalidTokens(@class);
-        }
-
+        [TestMethod]
         public void ParseNewExportsTest()
         {
             var reader = new GDScriptReader();

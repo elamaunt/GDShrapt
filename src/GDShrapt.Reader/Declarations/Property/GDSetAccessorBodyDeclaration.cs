@@ -6,6 +6,7 @@
         ITokenOrSkipReceiver<GDParameterDeclaration>,
         ITokenOrSkipReceiver<GDCloseBracket>,
         ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDStatementsList>
     {
         public GDSetKeyword SetKeyword
@@ -38,10 +39,16 @@
             set => _form.Token4 = value;
         }
 
+        public GDExpression Expression
+        {
+            get => _form.Token5;
+            set => _form.Token5 = value;
+        }
+
         public GDStatementsList Statements
         {
-            get => _form.Token5 ?? (_form.Token5 = new GDStatementsList(Intendation + 1));
-            set => _form.Token5 = value;
+            get => _form.Token6 ?? (_form.Token6 = new GDStatementsList(Intendation + 1));
+            set => _form.Token6 = value;
         }
 
         public enum State
@@ -51,23 +58,24 @@
             Parameter,
             CloseBracket,
             Colon,
+            Expression,
             Statements,
             Completed
         }
 
-        readonly GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDStatementsList> TypedForm => _form;
+        public GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         public GDSetAccessorBodyDeclaration()
         {
-            _form = new GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDSetAccessorBodyDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDSetKeyword, GDOpenBracket, GDParameterDeclaration, GDCloseBracket, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -93,9 +101,25 @@
                     if (!this.ResolveSpaceToken(c, state))
                         this.ResolveKeyword<GDSetKeyword>(c, state);
                     break;
+                case State.OpenBracket:
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveOpenBracket(c, state);
+                    break;
+                case State.Parameter:
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveParameter(c, state);
+                    break;
+                case State.CloseBracket:
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveCloseBracket(c, state);
+                    break;
                 case State.Colon:
                     if (!this.ResolveSpaceToken(c, state))
                         this.ResolveColon(c, state);
+                    break;
+                case State.Expression:
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveExpression(c, state, Intendation);
                     break;
                 case State.Statements:
                     this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
@@ -110,11 +134,15 @@
         {
             switch (_form.State)
             {
-                case State.Set:
-                case State.OpenBracket:
                 case State.Parameter:
                 case State.CloseBracket:
+                    _form.AddBeforeActiveToken(new GDNewLine());
+                    break;
+
+                case State.Set:
+                case State.OpenBracket:
                 case State.Colon:
+                case State.Expression:
                 case State.Statements:
                     _form.State = State.Completed;
                     state.PushAndPassNewLine(Statements);
@@ -130,7 +158,7 @@
             if (_form.State == State.Set)
             {
                 SetKeyword = token;
-                _form.State = State.Colon;
+                _form.State = State.OpenBracket;
                 return;
             }
 
@@ -222,7 +250,7 @@
             if (_form.State == State.Colon)
             {
                 Colon = token;
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 return;
             }
 
@@ -232,6 +260,29 @@
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Colon)
+            {
+                _form.State = State.Expression;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
+        {
+            if (_form.State == State.Expression)
+            {
+                Expression = token;
+                _form.State = State.Statements;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.Expression)
             {
                 _form.State = State.Statements;
                 return;
@@ -262,7 +313,5 @@
 
             throw new GDInvalidStateException();
         }
-
-       
     }
 }

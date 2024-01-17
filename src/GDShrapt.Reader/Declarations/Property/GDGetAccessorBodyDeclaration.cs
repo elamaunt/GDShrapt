@@ -3,6 +3,7 @@
     public class GDGetAccessorBodyDeclaration : GDAccessorDeclaration,
         ITokenOrSkipReceiver<GDGetKeyword>,
         ITokenOrSkipReceiver<GDColon>,
+        ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDStatementsList>
     {
         public GDGetKeyword GetKeyword
@@ -16,34 +17,40 @@
             get => _form.Token1;
             set => _form.Token1 = value;
         }
+        public GDExpression Expression
+        {
+            get => _form.Token2;
+            set => _form.Token2 = value;
+        }
 
         public GDStatementsList Statements
         {
-            get => _form.Token2 ?? (_form.Token2 = new GDStatementsList(Intendation + 1));
-            set => _form.Token2 = value;
+            get => _form.Token3 ?? (_form.Token3 = new GDStatementsList(Intendation + 1));
+            set => _form.Token3 = value;
         }
 
         public enum State
         {
             Get,
             Colon,
+            Expression,
             Statements,
             Completed
         }
 
-        readonly GDTokensForm<State, GDGetKeyword, GDColon, GDStatementsList> _form;
+        readonly GDTokensForm<State, GDGetKeyword, GDColon, GDExpression, GDStatementsList> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDGetKeyword, GDColon, GDStatementsList> TypedForm => _form;
+        public GDTokensForm<State, GDGetKeyword, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
         public GDGetAccessorBodyDeclaration()
         {
-            _form = new GDTokensForm<State, GDGetKeyword, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDGetKeyword, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public GDGetAccessorBodyDeclaration(int intendation)
             : base(intendation)
         {
-            _form = new GDTokensForm<State, GDGetKeyword, GDColon, GDStatementsList>(this);
+            _form = new GDTokensForm<State, GDGetKeyword, GDColon, GDExpression, GDStatementsList>(this);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -73,6 +80,10 @@
                     if (!this.ResolveSpaceToken(c, state))
                         this.ResolveColon(c, state);
                     break;
+                case State.Expression:
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveExpression(c, state, Intendation);
+                    break;
                 case State.Statements:
                     this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                     break;
@@ -88,6 +99,7 @@
             {
                 case State.Get:
                 case State.Colon:
+                case State.Expression:
                 case State.Statements:
                     _form.State = State.Completed;
                     state.PushAndPassNewLine(Statements);
@@ -126,7 +138,7 @@
             if (_form.State == State.Colon)
             {
                 Colon = token;
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 return;
             }
 
@@ -136,6 +148,28 @@
         void ITokenSkipReceiver<GDColon>.HandleReceivedTokenSkip()
         {
             if (_form.State == State.Colon)
+            {
+                _form.State = State.Expression;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+        void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
+        {
+            if (_form.State == State.Expression)
+            {
+                Expression = token;
+                _form.State = State.Statements;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
+        {
+            if (_form.State == State.Expression)
             {
                 _form.State = State.Statements;
                 return;
