@@ -12,7 +12,7 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **4.1.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **4.1.1-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
@@ -62,11 +62,9 @@ Install-Package GDShrapt.Reader -Version 4.1.0-alpha
 
 ## Last updates
 
-#### 4.1.0-alpha
-Fixed lambdas and match cases intendation bugs.
-Fixed bug with multiline split token.
-Fixed Unique node expression parsing.
-Fixed subtype resolving.
+#### 4.1.1-alpha
+Fixed properties parsing
+Fixed guard condition parsing
 Minor improvements.
 
 ## Reading samples
