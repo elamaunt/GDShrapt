@@ -37,7 +37,7 @@ namespace GDShrapt.Reader
                     }
 
                     // Resolving multiple expressions on the same string
-                    var statement = new GDExpressionStatement();
+                    var statement = new GDExpressionStatement(LineIntendationThreshold);
                     Owner.HandleReceivedToken(statement);
                     state.PushAndPass(statement, c);
                 }
@@ -211,7 +211,7 @@ namespace GDShrapt.Reader
 
         private GDExpressionStatement CompleteAsExpressionStatement(GDReadingState state)
         {
-            var statement = new GDExpressionStatement();
+            var statement = new GDExpressionStatement(LineIntendationThreshold);
 
             SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(statement);

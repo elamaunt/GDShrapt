@@ -599,7 +599,7 @@ else:
             AssertHelper.CompareCodeStrings(code, statement.ToString());
             AssertHelper.NoInvalidTokens(statement);
         }
-    
+
         [TestMethod]
         public void MatchStatementArrayPatternTest()
         {
@@ -1343,7 +1343,7 @@ var node = get_node(node_path)
                 "**",
                 "**=",
                 "<<=",
-                ">>=", 
+                ">>=",
                 "^=",
                 "%=")]
         public void DualOperatorsTest(params string[] operators)
@@ -2562,6 +2562,60 @@ func switch(x):
                 var @case = match.Cases[i];
                 Assert.AreEqual(1, @case.Statements.Count);
             }
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseCurryingTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+class_name Helper
+ 
+func curry_test(f):
+    var sum_all = func(x, y, z):
+	    return x + y + z
+
+    var curry = func(f):
+        return func(x):
+            return func(y):
+                return func(z):
+                    return f.call(x, y, z)
+        
+    var curried_sum = curry.call(sum_all)
+    var partial_sum_x = curried_sum.call(1)
+    var partial_sum_y = partial_sum_x.call(2)
+
+    print(partial_sum_y.call(3))
+    print(curried_sum.call(1).call(2).call(3))";
+
+            var @class = reader.ParseFileContent(code);
+
+            var method = @class.Methods.First();
+
+            var statements = method.Statements.ToArray();
+            var second = statements[1];
+
+            Assert.AreEqual(7, statements.Length);
+
+            var declaration = (GDVariableDeclarationStatement)second;
+
+            var methodExpr = (GDMethodExpression)declaration.Initializer;
+
+            var returnExpr = (GDReturnExpression)((GDExpressionStatement)methodExpr.Statements.First()).Expression;
+            var method2Expr = (GDMethodExpression)returnExpr.Expression;
+
+            var return2Expr = (GDReturnExpression)((GDExpressionStatement)method2Expr.Statements.First()).Expression;
+            var method3Expr = (GDMethodExpression)return2Expr.Expression;
+
+            var return3Expr = (GDReturnExpression)((GDExpressionStatement)method3Expr.Statements.First()).Expression;
+            var method4Expr = (GDMethodExpression)return3Expr.Expression;
+
+            Assert.AreEqual(1, method4Expr.Statements.Count);
+            Assert.AreEqual("\n                    return f.call(x, y, z)", method4Expr.Statements.ToString());
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
