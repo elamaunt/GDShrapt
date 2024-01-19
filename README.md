@@ -1,6 +1,6 @@
 # GDShrapt
 
-GDShrapt is object-oriented one-pass parser of GDScript. Now the main goal is production-ready parser, lexical analyzer. 
+GDShrapt is object-oriented one-pass parser of GDScript 2.0. Now the main goal is production-ready parser, lexical analyzer. 
 The project written in C# and free to use. 
 GDScript is the main language of [Godot Engine](https://github.com/godotengine/godot)
 
@@ -12,11 +12,11 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **4.1.1-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **4.1.2-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 4.1.1-alpha
+Install-Package GDShrapt.Reader -Version 4.1.2-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
@@ -61,6 +61,9 @@ Install-Package GDShrapt.Reader -Version 4.1.1-alpha
 | Tree diff tool | IN PLAN |
 
 ## Last updates
+
+#### 4.1.2-alpha
+Fixed lambda intendation parsing
 
 #### 4.1.1-alpha
 Fixed properties parsing
