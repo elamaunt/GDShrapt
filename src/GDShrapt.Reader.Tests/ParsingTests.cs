@@ -2620,5 +2620,35 @@ func curry_test(f):
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+        [TestMethod]
+        public void ParseStaticsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+class_name A
+
+static var a = ""Hello""
+
+static func my_int_function() -> int:
+    return 0";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.AreEqual(2, @class.Members.Count);
+
+            var variable = (GDVariableDeclaration)@class.Members[0];
+            var method = (GDMethodDeclaration)@class.Members[1];
+
+            Assert.AreEqual(true, variable.IsStatic);
+            Assert.AreEqual(true, method.IsStatic);
+
+            Assert.AreEqual("static var a = \"Hello\"", variable.ToString());
+            Assert.AreEqual("my_int_function", method.Identifier.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }

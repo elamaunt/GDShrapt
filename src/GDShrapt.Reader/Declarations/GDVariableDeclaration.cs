@@ -87,7 +87,7 @@
         }
 
         public bool IsConstant => ConstKeyword != null;
-        public override bool IsStatic => false;
+        public override bool IsStatic => StaticKeyword != null;
 
         public enum State
         { 
@@ -226,7 +226,7 @@
         {
             if (_form.IsOrLowerState(State.Const))
             {
-                _form.State = State.Var;
+                _form.State = State.Static;
                 return;
             }
 

@@ -185,6 +185,8 @@ namespace GDShrapt.Reader
                         _spaceAfterStatic = null;
                     }
                 }
+
+                _staticMet = false;
             }
 
             switch (sequence)
