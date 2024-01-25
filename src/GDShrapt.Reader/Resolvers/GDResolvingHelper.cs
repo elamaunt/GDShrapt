@@ -303,10 +303,10 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public static void ResolveExpression(this ITokenOrSkipReceiver<GDExpression> receiver, char c, GDReadingState state, int intendation, INewLineReceiver newLineReceiver = null)
+        public static void ResolveExpression(this ITokenOrSkipReceiver<GDExpression> receiver, char c, GDReadingState state, int intendation, INewLineReceiver newLineReceiver = null, bool allowAssignment = true)
         {
             if (!IsExpressionStopChar(c))
-                state.Push(new GDExpressionResolver(receiver, intendation, newLineReceiver));
+                state.Push(new GDExpressionResolver(receiver, intendation, newLineReceiver, allowAssignment));
             else
                 receiver.HandleReceivedTokenSkip();
             state.PassChar(c);

@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
+using System.Xml.Linq;
 using static GDShrapt.Reader.GD;
 
 namespace GDShrapt.Reader.Tests
@@ -2646,6 +2647,38 @@ static func my_int_function() -> int:
 
             Assert.AreEqual("static var a = \"Hello\"", variable.ToString());
             Assert.AreEqual("my_int_function", method.Identifier.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void DictionaryTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+static var a = { a = 1, b = 2 }";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.AreEqual(1, @class.Members.Count);
+
+            var variable = (GDVariableDeclaration)@class.Members[0];
+
+            Assert.IsInstanceOfType(variable.Initializer, typeof(GDDictionaryInitializerExpression));
+
+            var dictionary = (GDDictionaryInitializerExpression)variable.Initializer;
+
+            Assert.AreEqual(2, dictionary.KeyValues.Count);
+
+            foreach (var node in dictionary.KeyValues)
+            {
+                Assert.IsNotNull(node.Key);
+                Assert.IsNotNull(node.Assign);
+                Assert.IsNotNull(node.Value);
+                Assert.IsInstanceOfType(node.Value, typeof(GDNumberExpression));
+            }
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);

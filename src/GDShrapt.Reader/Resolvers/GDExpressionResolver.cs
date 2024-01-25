@@ -10,26 +10,21 @@
         bool _ifExpressionChecked;
         bool _isCompleted;
         readonly int _intendation;
+        readonly bool _allowAssignment;
 
         new ITokenReceiver<GDExpression> Owner { get; }
         ITokenSkipReceiver<GDExpression> OwnerWithSkip { get; }
         INewLineReceiver NewLineReceiver { get; }
         public bool IsCompleted => _isCompleted;
 
-        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner, int intendation, INewLineReceiver newLineReceiver = null)
+        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner, int intendation, INewLineReceiver newLineReceiver = null, bool allowAssignment = true)
             : base(owner)
         {
             Owner = owner;
             OwnerWithSkip = owner;
             NewLineReceiver = newLineReceiver;
             _intendation = intendation;
-        }
-
-        public GDExpressionResolver(ITokenReceiver<GDExpression> owner, int intendation)
-            : base(owner)
-        {
-            Owner = owner;
-            _intendation = intendation;
+            _allowAssignment = allowAssignment;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -209,6 +204,13 @@
                 if (c == '.')
                 {
                     PushAndSwap(state, new GDMemberOperatorExpression(_intendation));
+                    state.PassChar(c);
+                    return;
+                }
+
+                if (c == '=' && !_allowAssignment)
+                {
+                    CompleteExpression(state);
                     state.PassChar(c);
                     return;
                 }

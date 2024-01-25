@@ -60,7 +60,7 @@
             switch (_form.State)
             {
                 case State.Key:
-                    this.ResolveExpression(c, state, _intendation);
+                    this.ResolveExpression(c, state, _intendation, allowAssignment: false);
                     break;
                 case State.ColonOrAssign:
                     if (!_checkedColon)
