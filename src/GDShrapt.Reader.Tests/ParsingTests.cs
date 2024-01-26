@@ -1167,7 +1167,7 @@ var node = get_node(node_path)
         {
             var reader = new GDScriptReader();
 
-            var code = "class_name Test, \"res://interface/icons/item.png\"";
+            var code = "class_name Test";
             var classDeclaration = reader.ParseFileContent(code);
 
             Assert.IsNotNull(classDeclaration);
@@ -1175,9 +1175,6 @@ var node = get_node(node_path)
             Assert.IsNotNull(classDeclaration.ClassName.Identifier);
             Assert.AreEqual(1, classDeclaration.Atributes.Count);
             Assert.AreEqual("Test", classDeclaration.ClassName.Identifier.Sequence);
-
-            Assert.IsNotNull(classDeclaration.ClassName.Icon);
-            Assert.AreEqual("res://interface/icons/item.png", classDeclaration.ClassName.Icon.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
@@ -2679,6 +2676,26 @@ static var a = { a = 1, b = 2 }";
                 Assert.IsNotNull(node.Value);
                 Assert.IsInstanceOfType(node.Value, typeof(GDNumberExpression));
             }
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+
+        [TestMethod]
+        public void ParseAttributesTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+@tool
+@static_unload
+class_name MyClass extends Node
+@export var a = ""Hello""
+@onready @export var b = ""init_value_b""
+";
+
+            var @class = reader.ParseFileContent(code);
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);

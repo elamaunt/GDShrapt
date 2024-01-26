@@ -51,7 +51,7 @@
                         return;
                     }
 
-                    Attribute = state.PushAndPass(new GDAttribute(), c);
+                    Attribute = state.PushAndPass(new GDAttribute(true), c);
                     _form.State = State.Completed;
                     break;
                 default:

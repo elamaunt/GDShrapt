@@ -35,7 +35,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            if (c == '@' || char.IsLetter(c))
+            if (c == '@' || char.IsLetter(c) || c == '_')
             {
                 _sequenceBuilder.Append(c);
             }
@@ -129,7 +129,7 @@ namespace GDShrapt.Reader
 
             if (sequence[0] == '@')
             {
-                Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold, false)));
+                Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold, true)));
 
                 for (int i = 0; i < sequence.Length; i++)
                     state.PassChar(sequence[i]);

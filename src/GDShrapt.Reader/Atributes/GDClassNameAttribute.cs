@@ -2,9 +2,7 @@
 {
     public sealed class GDClassNameAttribute : GDClassAttribute,
         ITokenOrSkipReceiver<GDClassNameKeyword>,
-        ITokenOrSkipReceiver<GDIdentifier>,
-        ITokenOrSkipReceiver<GDComma>,
-        ITokenOrSkipReceiver<GDStringNode>
+        ITokenOrSkipReceiver<GDIdentifier>
     {
         public GDClassNameKeyword ClassNameKeyword
         {
@@ -18,24 +16,10 @@
             set => _form.Token1 = value;
         }
 
-        public GDComma Comma
-        {
-            get => _form.Token2;
-            set => _form.Token2 = value;
-        }
-
-        public GDStringNode Icon
-        {
-            get => _form.Token3;
-            set => _form.Token3 = value;
-        }
-
         public enum State
         {
             ClassName,
             Identifier,
-            Comma,
-            Icon,
             Completed
         }
 
@@ -50,22 +34,15 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveSpaceToken(c, state))
-                return;
-
             switch (_form.State)
             {
                 case State.ClassName:
-                    this.ResolveKeyword<GDClassNameKeyword>(c, state);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveKeyword<GDClassNameKeyword>(c, state);
                     break;
                 case State.Identifier:
-                    this.ResolveIdentifier(c, state);
-                    break;
-                case State.Comma:
-                    this.ResolveComma(c, state);
-                    break;
-                case State.Icon:
-                    this.ResolveString(c, state);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveIdentifier(c, state);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -120,7 +97,7 @@
         {
             if (_form.IsOrLowerState(State.Identifier))
             {
-                _form.State = State.Comma;
+                _form.State = State.Completed;
                 Identifier = token;
                 return;
             }
@@ -131,52 +108,6 @@
         void ITokenSkipReceiver<GDIdentifier>.HandleReceivedTokenSkip()
         {
             if (_form.IsOrLowerState(State.Identifier))
-            {
-                _form.State = State.Comma;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-
-        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
-        {
-            if (_form.IsOrLowerState(State.Comma))
-            {
-                _form.State = State.Icon;
-                Comma = token;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-
-        void ITokenSkipReceiver<GDComma>.HandleReceivedTokenSkip()
-        {
-            if (_form.IsOrLowerState(State.Comma))
-            {
-                _form.State = State.Icon;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-
-        void ITokenReceiver<GDStringNode>.HandleReceivedToken(GDStringNode token)
-        {
-            if (_form.IsOrLowerState(State.Icon))
-            {
-                _form.State = State.Completed;
-                Icon = token;
-                return;
-            }
-
-            throw new GDInvalidStateException();
-        }
-
-        void ITokenSkipReceiver<GDStringNode>.HandleReceivedTokenSkip()
-        {
-            if (_form.IsOrLowerState(State.Icon))
             {
                 _form.State = State.Completed;
                 return;
