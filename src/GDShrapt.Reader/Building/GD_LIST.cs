@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 
 namespace GDShrapt.Reader
 {
@@ -130,18 +131,20 @@ namespace GDShrapt.Reader
 
                 bool previousMemberIsAttribute = false;
                 bool currentMemberIsAttribute = false;
+                bool isCustomAttribute = false;
+                bool isNotAttributeMet = false;
+
+
 
                 for (int i = 0; i < members.Length; i++)
                 {
                     var member = members[i];
 
-                    currentMemberIsAttribute = member is GDClassMemberAttributeDeclaration;
+                    currentMemberIsAttribute = member is GDClassAttribute;
+                    //isCustomAttribute = member is GDCustomAttribute custom;
+                    isNotAttributeMet = isNotAttributeMet || !(member is GDClassAttribute);
 
-                    if (!currentMemberIsAttribute && previousMemberIsAttribute)
-                    {
-                        list.Form.AddToEnd(Syntax.Space());
-                    }
-                    else
+                    if (!previousMemberIsAttribute)
                     {
                         if (i > 0)
                         {
@@ -149,6 +152,32 @@ namespace GDShrapt.Reader
                             list.Form.AddToEnd(new GDNewLine());
                         }
                     }
+                    else
+                    {
+                        list.Form.AddToEnd(new GDNewLine());
+                    }
+
+                    /*if (i > 0)
+                    {
+                        if (isNotAttributeMet)
+                        {
+                            if (!previousMemberIsAttribute)
+                            {
+                                list.Form.AddToEnd(new GDNewLine());
+                                list.Form.AddToEnd(new GDNewLine());
+                            }
+                            else
+                            {
+
+                            }
+                        }
+                        else
+                        {
+                            if (!currentMemberIsAttribute)
+                                list.Form.AddToEnd(new GDNewLine());
+                            list.Form.AddToEnd(new GDNewLine());
+                        }
+                    }*/
 
                     list.Form.AddToEnd(Syntax.Intendation());
                     previousMemberIsAttribute = currentMemberIsAttribute;
@@ -158,26 +187,6 @@ namespace GDShrapt.Reader
                 return list;
             }
 
-            public static GDClassAtributesList Atributes() => new GDClassAtributesList();
-            public static GDClassAtributesList Atributes(Func<GDClassAtributesList, GDClassAtributesList> setup) => setup(new GDClassAtributesList());
-            public static GDClassAtributesList Atributes(params GDSyntaxToken[] unsafeTokens) => new GDClassAtributesList() { FormTokensSetter = unsafeTokens };
-            public static GDClassAtributesList Atributes(params GDClassAttribute[] atributes)
-            {
-                if (atributes == null || atributes.Length == 0)
-                    return new GDClassAtributesList();
-
-                var list = new GDClassAtributesList();
-
-                for (int i = 0; i < atributes.Length; i++)
-                {
-                    if (i > 0)
-                        list.Form.AddToEnd(new GDNewLine());
-                    list.Form.AddToEnd(Syntax.Intendation());
-                    list.Add(atributes[i]);
-                }
-
-                return list;
-            }
 
             public static GDEnumValuesList EnumValues() => new GDEnumValuesList();
             public static GDEnumValuesList EnumValues(Func<GDEnumValuesList, GDEnumValuesList> setup) => setup(new GDEnumValuesList());

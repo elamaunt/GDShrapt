@@ -44,8 +44,8 @@ func save(path, resource, flags):
             Assert.AreEqual("HTerrainDataSaver", @class.ClassName?.Identifier?.Sequence);
             Assert.AreEqual(true, @class.IsTool);
 
-            Assert.AreEqual(3, @class.Atributes.Count);
-            Assert.AreEqual(4, @class.Members.Count);
+            Assert.AreEqual(3, @class.Attributes.Count());
+            Assert.AreEqual(7, @class.Members.Count);
             Assert.AreEqual(1, @class.Variables.Count());
             Assert.AreEqual(3, @class.Methods.Count());
             Assert.AreEqual(2, @class.Methods.ElementAt(0).Statements.Count);
@@ -1069,7 +1069,7 @@ var node = get_node(node_path)
 
             Assert.IsNotNull(classDeclaration);
 
-            var exports = classDeclaration.AllNodes.OfType<GDClassMemberAttributeDeclaration>().ToArray();
+            var exports = classDeclaration.AllNodes.OfType<GDCustomAttribute>().ToArray();
 
             Assert.AreEqual(24, exports.Length);
 
@@ -1173,7 +1173,7 @@ var node = get_node(node_path)
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.ClassName);
             Assert.IsNotNull(classDeclaration.ClassName.Identifier);
-            Assert.AreEqual(1, classDeclaration.Atributes.Count);
+            Assert.AreEqual(1, classDeclaration.Attributes.Count());
             Assert.AreEqual("Test", classDeclaration.ClassName.Identifier.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
@@ -1191,7 +1191,7 @@ var node = get_node(node_path)
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Type);
-            Assert.AreEqual(1, classDeclaration.Atributes.Count);
+            Assert.AreEqual(1, classDeclaration.Attributes.Count());
             Assert.AreEqual("Test", (classDeclaration.Extends.Type as GDSingleTypeNode).Type.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
@@ -1209,7 +1209,7 @@ var node = get_node(node_path)
             Assert.IsNotNull(classDeclaration);
             Assert.IsNotNull(classDeclaration.Extends);
             Assert.IsNotNull(classDeclaration.Extends.Type is GDStringTypeNode);
-            Assert.AreEqual(1, classDeclaration.Atributes.Count);
+            Assert.AreEqual(1, classDeclaration.Attributes.Count());
             Assert.AreEqual("res://path/to/character.gd", (classDeclaration.Extends.Type as GDStringTypeNode).Path.Sequence);
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
@@ -2400,7 +2400,7 @@ func fn_default(): pass";
 
             var @class = reader.ParseFileContent(code);
 
-            var attributes = @class.AllNodes.OfType<GDClassMemberAttributeDeclaration>().ToArray();
+            var attributes = @class.AllNodes.OfType<GDCustomAttribute>().ToArray();
 
             Assert.AreEqual(3, attributes.Length);
 
@@ -2422,7 +2422,7 @@ func fn_default(): pass";
 extends Node";
 
             var @class = reader.ParseFileContent(code);
-            var attributes = @class.AllNodes.OfType<GDClassMemberAttributeDeclaration>().ToArray();
+            var attributes = @class.AllNodes.OfType<GDClassAttribute>().ToArray();
             Assert.AreEqual(3, attributes.Length);
 
             Assert.AreEqual("@static_unload", attributes[0].ToString());
@@ -2634,10 +2634,10 @@ static func my_int_function() -> int:
 
             var @class = reader.ParseFileContent(code);
 
-            Assert.AreEqual(2, @class.Members.Count);
+            Assert.AreEqual(3, @class.Members.Count);
 
-            var variable = (GDVariableDeclaration)@class.Members[0];
-            var method = (GDMethodDeclaration)@class.Members[1];
+            var variable = (GDVariableDeclaration)@class.Members[1];
+            var method = (GDMethodDeclaration)@class.Members[2];
 
             Assert.AreEqual(true, variable.IsStatic);
             Assert.AreEqual(true, method.IsStatic);
@@ -2692,8 +2692,7 @@ static var a = { a = 1, b = 2 }";
 @static_unload
 class_name MyClass extends Node
 @export var a = ""Hello""
-@onready @export var b = ""init_value_b""
-";
+@onready @export var b = ""init_value_b""";
 
             var @class = reader.ParseFileContent(code);
 

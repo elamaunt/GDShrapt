@@ -59,16 +59,16 @@ namespace GDShrapt.Reader
                 Type = new GDStringTypeNode() { Path = path }
             };*/
 
-            public static GDClassMemberAttributeDeclaration MemberAttribute() => new GDClassMemberAttributeDeclaration();
-            public static GDClassMemberAttributeDeclaration MemberAttribute(Func<GDClassMemberAttributeDeclaration, GDClassMemberAttributeDeclaration> setup) => setup(new GDClassMemberAttributeDeclaration());
-            public static GDClassMemberAttributeDeclaration MemberAttribute(params GDSyntaxToken[] unsafeTokens) => new GDClassMemberAttributeDeclaration() { FormTokensSetter = unsafeTokens };
+            public static GDCustomAttribute Custom() => new GDCustomAttribute();
+            public static GDCustomAttribute Custom(Func<GDCustomAttribute, GDCustomAttribute> setup) => setup(new GDCustomAttribute());
+            public static GDCustomAttribute Custom(params GDSyntaxToken[] unsafeTokens) => new GDCustomAttribute() { FormTokensSetter = unsafeTokens };
            
-            public static GDClassMemberAttributeDeclaration MemberAttribute(GDAttribute attribute) => new GDClassMemberAttributeDeclaration()
+            public static GDCustomAttribute Custom(GDAttribute attribute) => new GDCustomAttribute()
             { 
                 Attribute = attribute
             };
 
-            public static GDClassMemberAttributeDeclaration MemberAttribute(GDIdentifier identifier) => new GDClassMemberAttributeDeclaration()
+            public static GDCustomAttribute Custom(GDIdentifier identifier) => new GDCustomAttribute()
             {
                 Attribute = new GDAttribute() 
                 { 

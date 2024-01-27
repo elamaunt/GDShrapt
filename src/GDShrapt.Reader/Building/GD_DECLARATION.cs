@@ -12,10 +12,8 @@ namespace GDShrapt.Reader
             public static GDClassDeclaration Class() => new GDClassDeclaration();
             public static GDClassDeclaration Class(Func<GDClassDeclaration, GDClassDeclaration> setup) => setup(new GDClassDeclaration());
             public static GDClassDeclaration Class(params GDSyntaxToken[] unsafeTokens) => new GDClassDeclaration() { FormTokensSetter = unsafeTokens };
-            public static GDClassDeclaration Class(GDClassAtributesList atributes, GDClassMembersList members) => new GDClassDeclaration()
+            public static GDClassDeclaration Class(GDClassMembersList members) => new GDClassDeclaration()
             {
-                Atributes = atributes,
-                [1] = new GDNewLine(),
                 Members = members
             };
 
@@ -49,11 +47,8 @@ namespace GDShrapt.Reader
                 Members = members
             };
 
-            public static GDClassDeclaration Class(GDClassAtributesList atributes, params GDClassMember[] members) => new GDClassDeclaration()
+            public static GDClassDeclaration Class(params GDClassMember[] members) => new GDClassDeclaration()
             {
-                Atributes = atributes,
-                [1] = new GDNewLine(),
-                [1] = new GDNewLine(),
                 Members = List.Members(members)
             };
 
@@ -563,15 +558,6 @@ namespace GDShrapt.Reader
                 Assign = new GDAssign(),
                 [7] = Syntax.Space(),
                 Initializer = initializer
-            };
-
-            public static GDClassMemberAttributeDeclaration MemberAttribute(string name) => new GDClassMemberAttributeDeclaration()
-            {
-                Attribute = new GDAttribute() 
-                { 
-                    At = new GDAt(),
-                    Name = name
-                }
             };
         }
     }

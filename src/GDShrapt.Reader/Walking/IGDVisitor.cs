@@ -18,8 +18,6 @@
         void Visit(GDIfBranch b);
         void Visit(GDElseBranch b);
         void Visit(GDElifBranch b);
-
-        void Visit(GDClassAtributesList list);
         void Visit(GDClassMembersList list);
         void Visit(GDDictionaryKeyValueDeclarationList list);
         void Visit(GDElifBranchesList list);
@@ -41,8 +39,6 @@
         void Visit(GDMatchStatement s);
         void Visit(GDVariableDeclarationStatement s);
         void Visit(GDWhileStatement s);
-
-        void Visit(GDClassMemberAttributeDeclaration d);
         void Visit(GDGetAccessorBodyDeclaration d);
         void Visit(GDAttribute attr);
         void Visit(GDSetAccessorBodyDeclaration d);
@@ -70,7 +66,6 @@
         void Left(GDEnumValueDeclaration decl);
         void Left(GDMatchCaseDeclaration decl);
         void Left(GDSignalDeclaration decl);
-        void Left(GDClassAtributesList list);
         void Left(GDClassMembersList list);
         void Left(GDDictionaryKeyValueDeclarationList list);
         void Left(GDElifBranchesList list);
@@ -84,7 +79,6 @@
         void Left(GDIfBranch branch);
         void Left(GDElseBranch branch);
         void Left(GDElifBranch branch);
-        void Left(GDClassMemberAttributeDeclaration d);
         void Left(GDAttribute attr);
         void Left(GDGetAccessorBodyDeclaration d);
         void Left(GDSetAccessorBodyDeclaration d);
@@ -126,7 +120,7 @@
         void Visit(GDAwaitExpression e);
         void Visit(GDMethodExpression e);
         void Visit(GDStringTypeNode type);
-        void Visit(GDClassCustomAttribute a);
+        void Visit(GDCustomAttribute a);
         void Visit(GDStringPartsList list);
         void Left(GDBracketExpression e);
         void Left(GDYieldExpression e);
@@ -152,7 +146,7 @@
         void Left(GDAwaitExpression e);
         void Left(GDMethodExpression e);
         void Left(GDStringTypeNode type);
-        void Left(GDClassCustomAttribute a);
+        void Left(GDCustomAttribute a);
         void Left(GDStringPartsList list);
         void Left(GDTripleDoubleQuotasStringNode sn);
         void Left(GDTripleSingleQuotasStringNode sn);

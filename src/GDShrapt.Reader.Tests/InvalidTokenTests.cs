@@ -52,8 +52,7 @@ extends ResourceFormatSaver
 
             @class.AllInvalidTokens.Select(x => x.ToString()).Should().BeEquivalentTo(new string[] 
             {
-                "123",
-                "H+=Ter^5r3_-ain-DataSaver"
+                "123H+=Ter^5r3_-ain-DataSaver"
             });
         }
     }

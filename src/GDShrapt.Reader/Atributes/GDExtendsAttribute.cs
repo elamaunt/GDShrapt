@@ -32,16 +32,15 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveSpaceToken(c, state))
-                return;
-
             switch (_form.State)
             {
                 case State.Extends:
-                    this.ResolveKeyword<GDExtendsKeyword>(c, state);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveKeyword<GDExtendsKeyword>(c, state);
                     break;
                 case State.Type:
-                    this.ResolveType(c, state);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveType(c, state);
                     break;
                 default:
                     state.PopAndPass(c);

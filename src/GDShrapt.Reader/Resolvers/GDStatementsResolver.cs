@@ -60,7 +60,7 @@ namespace GDShrapt.Reader
                 if (c == '@')
                 {
                     SendIntendationTokensToOwner();
-                    Owner.HandleReceivedToken(state.Push(new GDAttribute(true)));
+                    Owner.HandleReceivedToken(state.Push(new GDAttribute()));
                     state.PassChar(c);
                     return;
                 }

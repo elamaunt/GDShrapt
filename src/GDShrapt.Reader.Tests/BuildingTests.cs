@@ -9,13 +9,12 @@ namespace GDShrapt.Reader.Tests
         public void ClassBuildingTest()
         {
             var declaration = GD.Declaration.Class(
-                GD.List.Atributes(
-                    GD.Atribute.Tool(),
-                    GD.Atribute.ClassName("Generated"),
-                    GD.Atribute.Extends("Node2D")),
+                GD.Atribute.Tool(),
+                GD.Atribute.ClassName("Generated"),
+                GD.Atribute.Extends("Node2D"),
 
                 GD.Declaration.Const("my_constant", GD.Expression.String("Hello World")),
-                GD.Declaration.MemberAttribute("onready"),
+                GD.Atribute.Custom("onready"),
                 GD.Declaration.Variable("parameter", GD.Expression.True()),
 
                 GD.Declaration.Method("_start",
@@ -27,7 +26,7 @@ namespace GDShrapt.Reader.Tests
 
             var code = declaration.ToString();
 
-            var codeToCompare = "tool\nclass_name Generated\nextends Node2D\n\nconst my_constant = \"Hello World\"\n\n@onready var parameter = true\n\nfunc _start():\n\tprint(\"Hello world\")";
+            var codeToCompare = "tool\nclass_name Generated\nextends Node2D\nconst my_constant = \"Hello World\"\n\n@onready\nvar parameter = true\n\nfunc _start():\n\tprint(\"Hello world\")";
 
             AssertHelper.CompareCodeStrings(codeToCompare, code);
         }
@@ -36,15 +35,14 @@ namespace GDShrapt.Reader.Tests
         public void CustomStyleTest()
         {
             var declaration = GD.Declaration.Class()
-                .AddAtributes(x => x
+                .AddMembers(x => x
                     .AddToolAtribute()
                     .AddNewLine()
                     .AddClassNameAtribute("Generated")
                     .AddNewLine()
-                    .AddExtendsAtribute("Node2D"))
-                .AddNewLine()
-                .AddNewLine()
-                .AddMembers(x => x
+                    .AddExtendsAtribute("Node2D")
+                    .AddNewLine()
+                    .AddNewLine()
                     .AddVariable("a")
                     .AddNewLine()
                     .AddConst("message", GD.Expression.String("Hello"))
@@ -79,12 +77,11 @@ namespace GDShrapt.Reader.Tests
         public void CustomStyleTest2()
         {
             var declaration = GD.Declaration.Class(
-                GD.List.Atributes(
-                    GD.Atribute.Tool(),
-                    GD.Syntax.NewLine,
-                    GD.Atribute.ClassName("Generated"),
-                    GD.Syntax.NewLine,
-                    GD.Atribute.Extends("Node2D")),
+                GD.Atribute.Tool(),
+                GD.Syntax.NewLine,
+                GD.Atribute.ClassName("Generated"),
+                GD.Syntax.NewLine,
+                GD.Atribute.Extends("Node2D"),
 
                 GD.Syntax.NewLine,
                 GD.Syntax.NewLine,

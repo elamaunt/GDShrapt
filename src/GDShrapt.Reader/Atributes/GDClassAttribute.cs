@@ -1,6 +1,14 @@
 ﻿namespace GDShrapt.Reader
 {
-    public abstract class GDClassAttribute : GDNode
+    public abstract class GDClassAttribute : GDClassMember
     {
+        internal GDClassAttribute()
+        {
+        }
+
+        internal GDClassAttribute(int intendation) 
+            : base(intendation)
+        {
+        }
     }
 }

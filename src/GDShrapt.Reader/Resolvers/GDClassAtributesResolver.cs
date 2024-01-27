@@ -108,7 +108,7 @@ namespace GDShrapt.Reader
             switch (sequence)
             {
                 case "@icon":
-                    return new GDClassCustomAttribute();
+                    return new GDCustomAttribute();
                 case "class_name":
                     return new GDClassNameAttribute();
                 case "extends":

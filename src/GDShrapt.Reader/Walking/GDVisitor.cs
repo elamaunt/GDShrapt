@@ -107,11 +107,6 @@
             // Nothing
         }
 
-        public virtual void Left(GDClassAtributesList list)
-        {
-            // Nothing
-        }
-
         public virtual void Left(GDClassMembersList list)
         {
             // Nothing
@@ -237,11 +232,6 @@
             // Nothing
         }
 
-        public virtual void Visit(GDClassAtributesList list)
-        {
-            // Nothing
-        }
-
         public virtual void Visit(GDClassMembersList list)
         {
             // Nothing
@@ -348,16 +338,6 @@
         }
 
         public virtual void LeftListChild(GDNode node)
-        {
-            // Nothing
-        }
-
-        public virtual void Visit(GDClassMemberAttributeDeclaration d)
-        {
-            // Nothing
-        }
-
-        public virtual void Left(GDClassMemberAttributeDeclaration d)
         {
             // Nothing
         }
@@ -702,7 +682,7 @@
             // Nothing
         }
 
-        public virtual void Visit(GDClassCustomAttribute a)
+        public virtual void Visit(GDCustomAttribute a)
         {
             // Nothing
         }
@@ -722,7 +702,7 @@
             // Nothing
         }
 
-        public virtual void Left(GDClassCustomAttribute a)
+        public virtual void Left(GDCustomAttribute a)
         {
             // Nothing
         }

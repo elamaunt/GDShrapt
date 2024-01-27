@@ -32,34 +32,6 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        public static T AddAtributes<T>(this T receiver, GDClassAtributesList list)
-            where T : ITokenReceiver<GDClassAtributesList>
-        {
-            receiver.HandleReceivedToken(list);
-            return receiver;
-        }
-
-        public static T AddAtributes<T>(this T receiver, Func<GDClassAtributesList, GDClassAtributesList> setup)
-            where T : ITokenReceiver<GDClassAtributesList>
-        {
-            receiver.HandleReceivedToken(setup(new GDClassAtributesList()));
-            return receiver;
-        }
-
-        public static T AddAtributes<T>(this T receiver, params GDClassAttribute[] atributes)
-            where T : ITokenReceiver<GDClassAtributesList>
-        {
-            receiver.HandleReceivedToken(GD.List.Atributes(atributes));
-            return receiver;
-        }
-
-        public static T AddAtributes<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
-            where T : ITokenReceiver<GDClassAtributesList>
-        {
-            receiver.HandleReceivedToken(GD.List.Atributes(unsafeTokens));
-            return receiver;
-        }
-
         public static T AddMembers<T>(this T receiver, params GDClassMember[] members)
             where T : ITokenReceiver<GDClassMembersList>
         {

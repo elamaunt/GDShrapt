@@ -129,7 +129,7 @@ namespace GDShrapt.Reader
 
             if (sequence[0] == '@')
             {
-                Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold, true)));
+                Owner.HandleReceivedToken(state.Push(new GDCustomAttribute(LineIntendationThreshold)));
 
                 for (int i = 0; i < sequence.Length; i++)
                     state.PassChar(sequence[i]);
@@ -191,15 +191,30 @@ namespace GDShrapt.Reader
 
             switch (sequence)
             {
-                case "tool":
-                case "extends":
+                case "@icon":
+                    {
+                        Owner.HandleReceivedToken(state.Push(new GDCustomAttribute()));
+                        for (int i = 0; i < sequence.Length; i++)
+                            state.PassChar(sequence[i]);
+                    }
+                    break;
                 case "class_name":
                     {
-                        // Invalid order of the atributes found.
-                        // Handling them as a ClassMemberAttribute instances.
-                        // TODO: rework to GDClassCustomAttribute.
-                        Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold, true)));
-
+                        Owner.HandleReceivedToken(state.Push(new GDClassNameAttribute()));
+                        for (int i = 0; i < sequence.Length; i++)
+                            state.PassChar(sequence[i]);
+                    }
+                    break;
+                case "extends":
+                    {
+                        Owner.HandleReceivedToken(state.Push(new GDExtendsAttribute()));
+                        for (int i = 0; i < sequence.Length; i++)
+                            state.PassChar(sequence[i]);
+                    }
+                    break;
+                case "tool":
+                    {
+                        Owner.HandleReceivedToken(state.Push(new GDToolAttribute()));
                         for (int i = 0; i < sequence.Length; i++)
                             state.PassChar(sequence[i]);
                     }
