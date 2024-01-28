@@ -5,7 +5,7 @@ namespace GDShrapt.Reader
 {
     internal class GDClassMembersResolver : GDIntendedResolver
     {
-        bool _memberResolved;
+        bool _handleEndOfTheLineAsInvalid;
 
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
@@ -22,7 +22,7 @@ namespace GDShrapt.Reader
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
-            if (_memberResolved)
+            if (_handleEndOfTheLineAsInvalid)
             {
                 if (IsSpace(c))
                 {
@@ -83,7 +83,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            _memberResolved = false;
+            _handleEndOfTheLineAsInvalid = false;
             ResetIntendation();
             state.PassNewLine();
         }
@@ -137,7 +137,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            _memberResolved = true;
+            _handleEndOfTheLineAsInvalid = true;
 
             void HandleStaticIfMet(ITokenReceiver<GDSpace> spaceReceiver, Action push, bool invalid = true)
             {
@@ -193,30 +193,38 @@ namespace GDShrapt.Reader
             {
                 case "@icon":
                     {
-                        Owner.HandleReceivedToken(state.Push(new GDCustomAttribute()));
-                        for (int i = 0; i < sequence.Length; i++)
-                            state.PassChar(sequence[i]);
+                        var a = new GDCustomAttribute();
+                        HandleStaticIfMet(a, () => Owner.HandleReceivedToken(state.Push(a)));
+                        a.Add(new GDAttribute().AddAt().Add(new GDIdentifier() { Sequence = "icon" }));
+
+                        _handleEndOfTheLineAsInvalid = false;
                     }
                     break;
                 case "class_name":
                     {
-                        Owner.HandleReceivedToken(state.Push(new GDClassNameAttribute()));
-                        for (int i = 0; i < sequence.Length; i++)
-                            state.PassChar(sequence[i]);
+                        var a = new GDClassNameAttribute();
+                        HandleStaticIfMet(a, () => Owner.HandleReceivedToken(state.Push(a)));
+                        a.Add(new GDClassNameKeyword());
+
+                        _handleEndOfTheLineAsInvalid = false;
                     }
                     break;
                 case "extends":
                     {
-                        Owner.HandleReceivedToken(state.Push(new GDExtendsAttribute()));
-                        for (int i = 0; i < sequence.Length; i++)
-                            state.PassChar(sequence[i]);
+                        var a = new GDExtendsAttribute();
+                        HandleStaticIfMet(a, () => Owner.HandleReceivedToken(state.Push(a)));
+                        a.Add(new GDExtendsKeyword());
+
+                        _handleEndOfTheLineAsInvalid = false;
                     }
                     break;
                 case "tool":
                     {
-                        Owner.HandleReceivedToken(state.Push(new GDToolAttribute()));
-                        for (int i = 0; i < sequence.Length; i++)
-                            state.PassChar(sequence[i]);
+                        var a = new GDToolAttribute();
+                        HandleStaticIfMet(a, () => Owner.HandleReceivedToken(state.Push(a)));
+                        a.Add(new GDToolKeyword());
+
+                        _handleEndOfTheLineAsInvalid = false;
                     }
                     break;
                 case "signal":
@@ -235,7 +243,7 @@ namespace GDShrapt.Reader
                     break;
                 case "static":
                     {
-                        _memberResolved = false;
+                        _handleEndOfTheLineAsInvalid = false;
                         _sequenceBuilder.Clear();
 
                         if (_staticMet)
@@ -259,30 +267,6 @@ namespace GDShrapt.Reader
                         m.Add(new GDFuncKeyword());
                     }
                     break;
-                /* case "export":
-                     {
-                         var m = new GDMethodDeclaration(LineIntendationThreshold);
-                         _memberResolved = false;
-                         Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold)));
-
-                         if (sequence != null)
-                             for (int i = 0; i < sequence.Length; i++)
-                                 state.PassChar(sequence[i]);
-
-                         return;
-                     }
-                 case "onready":
-                     {
-                         var m = new GDMethodDeclaration(LineIntendationThreshold);
-                         _memberResolved = false;
-                         Owner.HandleReceivedToken(state.Push(new GDClassMemberAttributeDeclaration(LineIntendationThreshold)));
-
-                         if (sequence != null)
-                             for (int i = 0; i < sequence.Length; i++)
-                                 state.PassChar(sequence[i]);
-
-                         return;
-                     }*/
                 case "const":
                     {
                         var m = new GDVariableDeclaration(LineIntendationThreshold);
@@ -306,7 +290,7 @@ namespace GDShrapt.Reader
                     break;
                 default:
                     {
-                        _memberResolved = false;
+                        _handleEndOfTheLineAsInvalid = false;
 
                         HandleStaticIfMet(null, () => Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsSpace() || x.IsNewLine()))));
 
@@ -329,7 +313,7 @@ namespace GDShrapt.Reader
                 return;
             }
 
-            if (!_memberResolved)
+            if (!_handleEndOfTheLineAsInvalid)
                 SendIntendationTokensToOwner();
             base.ForceComplete(state);
         }
