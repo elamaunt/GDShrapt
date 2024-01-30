@@ -103,6 +103,13 @@ namespace GDShrapt.Reader
             base.HandleSharpChar(state);
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            if (_builder.Length > 0)
+                Sequence = _builder.ToString();
+            base.HandleLeftSlashChar(state);
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             if (_builder.Length > 0)

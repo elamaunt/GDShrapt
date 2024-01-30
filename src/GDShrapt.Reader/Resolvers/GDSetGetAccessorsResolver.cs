@@ -1,94 +1,209 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Text;
+
+namespace GDShrapt.Reader
 {
-    internal class GDSetGetAccessorsResolver<T> : GDIntendedPatternResolver
+    internal class GDSetGetAccessorsResolver<T> : GDIntendedResolver
         where T : IIntendedTokenOrSkipReceiver<GDAccessorDeclaration>
     {
         public new T Owner { get; }
 
+        readonly StringBuilder _sequenceBuilder = new StringBuilder(8);
+
+        State _state = State.Initial;
+        bool _ignoreNewLine;
+
+        private enum State
+        {
+            Initial,
+            GotSetKeyword,
+            GotGetKeyword,
+        }
+
         public GDSetGetAccessorsResolver(T owner, bool allowZeroIntendationOnFirstLine, int lineIntendation)
-            : base(owner, lineIntendation)
+                : base(owner, lineIntendation)
         {
             AllowZeroIntendationOnFirstLine = allowZeroIntendationOnFirstLine;
             Owner = owner;
         }
 
-        public override string[] GeneratePatterns()
+        internal override void HandleCharAfterIntendation(char c, GDReadingState state)
         {
-            return new string[] 
-            { 
-                "get",
-                "set",
-
-                "get=",
-                "set=",
-
-                "get:",
-                "set("
-            };
-        }
-
-        protected override void PatternMatched(string pattern, GDReadingState state)
-        {
-            if (pattern != null)
-                SendIntendationTokensToOwner();
-
-            switch (pattern)
+            switch (_sequenceBuilder.Length)
             {
-                case "set":
+                case 0:
+                    if (c == 's')
                     {
-                        // TODO: check the colon
-                        var accessor = new GDSetAccessorMethodDeclaration(LineIntendationThreshold);
-                        Owner.HandleReceivedToken(accessor);
-                        state.Push(accessor);
-                        break;
+                        _sequenceBuilder.Append(c);
+                        _state = State.GotSetKeyword;
                     }
-                case "set=":
+                    else if (c == 'g')
                     {
-                        var accessor = new GDSetAccessorMethodDeclaration(LineIntendationThreshold);
-                        Owner.HandleReceivedToken(accessor);
-                        state.Push(accessor);
-                        break;
+                        _sequenceBuilder.Append(c);
+                        _state = State.GotGetKeyword;
                     }
-                case "set(":
+                    else
                     {
-                        // TODO: check spaces
-                        var accessor = new GDSetAccessorBodyDeclaration(LineIntendationThreshold);
-                        Owner.HandleReceivedToken(accessor);
-                        state.Push(accessor);
-                        break;
+                        Owner.HandleReceivedTokenSkip();
+                        state.Pop();
+                        PassIntendationSequence(state);
+                        state.PassChar(c);
                     }
-                case "get":
+                    break;
+                case 1:
+                    if (c == 'e')
                     {
-                        // TODO: check the colon
-                        var accessor = new GDGetAccessorMethodDeclaration(LineIntendationThreshold);
-                        Owner.HandleReceivedToken(accessor);
-                        state.Push(accessor);
-                        break;
+                        _sequenceBuilder.Append(c);
                     }
-                case "get=":
+                    else
                     {
-                        var accessor = new GDGetAccessorMethodDeclaration(LineIntendationThreshold);
-                        Owner.HandleReceivedToken(accessor);
-                        state.Push(accessor);
-                        break;
+                        Owner.HandleReceivedTokenSkip();
+
+                        state.Pop();
+                        PassIntendationSequence(state);
+                        state.PassChar(_sequenceBuilder[0]);
+                        state.PassChar(c);
                     }
-                case "get:":
+                    break;
+                case 2:
+                    if (c == 't')
                     {
+                        _sequenceBuilder.Append(c);
+                    }
+                    else
+                    {
+                        Owner.HandleReceivedTokenSkip();
+                        state.Pop();
+                        PassIntendationSequence(state);
+                        state.PassChar(_sequenceBuilder[0]);
+                        state.PassChar(_sequenceBuilder[1]);
+                        state.PassChar(c);
+                    }
+                    break;
+                default:
+                    if (c.IsSpace())
+                    {
+                        _sequenceBuilder.Append(c);
+                        return;
+                    }
+
+                    if (_state == State.GotGetKeyword && c == ':')
+                    {
+                        SendIntendationTokensToOwner();
+                        state.Pop();
                         var accessor = new GDGetAccessorBodyDeclaration(LineIntendationThreshold);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
-                        break;
+                        PassStoredSequence(state);
+                        state.PassChar(c);
+                        return;
                     }
-                default:
+
+                    if (_state == State.GotSetKeyword && c == '(')
+                    {
+                        SendIntendationTokensToOwner();
+                        state.Pop();
+                        var accessor = new GDSetAccessorBodyDeclaration(LineIntendationThreshold);
+                        Owner.HandleReceivedToken(accessor);
+                        state.Push(accessor);
+                        PassStoredSequence(state);
+                        state.PassChar(c);
+                        return;
+                    }
+
+                    if (c == '=')
+                    {
+                        SendIntendationTokensToOwner();
+                        state.Pop();
+
+                        GDReader reader;
+                        if (_state == State.GotGetKeyword)
+                        {
+                            var accessor = new GDGetAccessorMethodDeclaration(LineIntendationThreshold);
+                            Owner.HandleReceivedToken(accessor);
+                            reader = accessor;
+                        }
+                        else
+                        {
+                            var accessor = new GDSetAccessorMethodDeclaration(LineIntendationThreshold);
+                            Owner.HandleReceivedToken(accessor);
+                            reader = accessor;
+                        }
+
+                        state.Push(reader);
+                        PassStoredSequence(state);
+                        state.PassChar(c);
+
+                        return;
+                    }
+
                     Owner.HandleReceivedTokenSkip();
-                    break;
+                    state.Pop();
+                    PassIntendationSequence(state);
+                    PassStoredSequence(state);
+                    state.PassChar(c);
+                    return;
+            }
+        }
+
+        protected override void OnIntendationThresholdMet(GDReadingState state)
+        {
+            Owner.HandleReceivedTokenSkip();
+            base.OnIntendationThresholdMet(state);
+        }
+
+        internal override void HandleNewLineAfterIntendation(GDReadingState state)
+        {
+            if (_ignoreNewLine)
+            {
+                _sequenceBuilder.Append('\n');
+                _ignoreNewLine = false;
+                return;
             }
 
-            if (pattern != null)
+            Owner.HandleReceivedTokenSkip();
+            state.Pop();
+            PassIntendationSequence(state);
+            PassStoredSequence(state);
+            state.PassNewLine();
+        }
+
+        internal override void HandleSharpCharAfterIntendation(GDReadingState state)
+        {
+            Owner.HandleReceivedTokenSkip();
+            state.Pop();
+            PassIntendationSequence(state);
+            PassStoredSequence(state);
+            state.PassSharpChar();
+        }
+
+        internal override void HandleLeftSlashCharAfterIntendation(GDReadingState state)
+        {
+            if (_sequenceBuilder.Length < 3)
             {
-                for (int i = 0; i < pattern.Length; i++)
-                    state.PassChar(pattern[i]);
+                Owner.HandleReceivedTokenSkip();
+                state.Pop();
+                PassIntendationSequence(state);
+                PassStoredSequence(state);
+                state.PassLeftSlashChar();
+                return;
             }
+
+            _sequenceBuilder.Append('\\');
+            _ignoreNewLine = true;
+        }
+
+        private void PassStoredSequence(GDReadingState state)
+        {
+            for (int i = 0; i < _sequenceBuilder.Length; i++)
+                state.PassChar(_sequenceBuilder[i]);
+        }
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            base.ForceComplete(state);
+            Owner.HandleReceivedTokenSkip();
+            PassIntendationSequence(state);
+            PassStoredSequence(state);
         }
     }
 }

@@ -169,6 +169,12 @@
                     this.ResolveComma(c, state);
                     break;
                 case State.SecondAccessorDeclarationNode:
+                    if (c == ',' && Comma == null)
+                    {
+                        Comma = new GDComma();
+                        return;
+                    }
+
                     state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, !_skipComma, Intendation + 1), c);
                     break;
                 default:
@@ -193,6 +199,15 @@
             }
 
             state.PopAndPassNewLine();
+        }
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
+            {
+                _skipComma = true;
+            }
+
+            base.HandleLeftSlashChar(state);
         }
 
         public override GDNode CreateEmptyInstance()

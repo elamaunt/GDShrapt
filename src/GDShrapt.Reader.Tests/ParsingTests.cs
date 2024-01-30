@@ -1,10 +1,6 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
-using System.Security.Claims;
-using System.Threading;
-using System.Xml.Linq;
-using static GDShrapt.Reader.GD;
 
 namespace GDShrapt.Reader.Tests
 {
@@ -2242,6 +2238,34 @@ var score: int:
 
 func _update_score_display():
 	pass # Do something to update the displayed score";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseNewProperiesSyntaxTest3()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var prop: 
+	set    ( value ) :
+		print(value)
+	get  :
+		return 0
+
+var prop2: 
+	set  =  _setter,
+	get   =   _getter
+	
+var prop3: set=_setter, \
+get=_getter
+
+var prop4: set\
+=_setter, get\
+=_getter";
 
             var @class = reader.ParseFileContent(code);
 
