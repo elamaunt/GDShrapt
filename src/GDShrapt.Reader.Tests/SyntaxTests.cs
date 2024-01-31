@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace GDShrapt.Reader.Tests
 {
@@ -413,6 +414,52 @@ func _process(delta) -> void:
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void AttributesDeclaredBeforeTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+@tool
+@static_unload
+class_name MyClass extends Node
+@export var a = ""Hello""
+@onready @export var b = ""init_value_b""";
+
+            var @class = reader.ParseFileContent(code);
+
+            var members = @class.Members.ToArray();
+
+            Assert.AreEqual(9, members.Length);
+
+            members[8].AttributesDeclaredBefore.Select(x => x.ToString()).Should().BeEquivalentTo(new[]
+            {
+                "@export ",
+                "@onready "
+            });
+
+            members[8].AttributesDeclaredBeforeFromStartOfTheClass.Select(x => x.ToString()).Should().BeEquivalentTo(new[]
+            {
+                "@export ",
+                "@onready ",
+                "@export ",
+                "@static_unload",
+                "@tool"
+            });
+
+            members[5].AttributesDeclaredBeforeFromStartOfTheClass.Select(x => x.ToString()).Should().BeEquivalentTo(new[]
+            {
+                "@export ",
+                "@static_unload",
+                "@tool"
+            });
+
+            members[5].AttributesDeclaredBefore.Select(x => x.ToString()).Should().BeEquivalentTo(new[]
+            {
+                "@export "
+            });
         }
     }
 }

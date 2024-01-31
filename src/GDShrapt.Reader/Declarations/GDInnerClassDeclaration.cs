@@ -16,6 +16,7 @@ namespace GDShrapt.Reader
         public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
         public IEnumerable<GDInnerClassDeclaration> InnerClasses => Members.OfType<GDInnerClassDeclaration>();
         public IEnumerable<GDIdentifiableClassMember> IdentifiableMembers => Members.OfType<GDIdentifiableClassMember>();
+        public IEnumerable<GDCustomAttribute> CustomAttributes => Members.OfType<GDCustomAttribute>();
 
         public GDClassKeyword ClassKeyword
         {

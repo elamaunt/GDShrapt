@@ -8,7 +8,7 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Basic GDScript node, may contains multiple tokens
     /// </summary>
-    public abstract class GDNode : GDSyntaxToken,
+    public abstract class GDNode : GDSyntaxToken, IGDNode,
         ITokenReceiver<GDComment>,
         ITokenReceiver<GDSpace>
     {
@@ -21,7 +21,6 @@ namespace GDShrapt.Reader
         {
             set => Form.SetFormUnsafe(value);
         }
-             
 
         public IEnumerable<GDSyntaxToken> Tokens => Form.Direct();
         public IEnumerable<GDSyntaxToken> TokensReversed => Form.Reversed();

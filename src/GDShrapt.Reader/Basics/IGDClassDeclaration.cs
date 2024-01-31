@@ -2,7 +2,7 @@
 
 namespace GDShrapt.Reader
 {
-    public interface IGDClassDeclaration : IGDSyntaxToken
+    public interface IGDClassDeclaration : IGDNode
     {
         GDIdentifier Identifier { get; }
         GDClassMembersList Members { get; }
@@ -13,5 +13,6 @@ namespace GDShrapt.Reader
         IEnumerable<GDEnumDeclaration> Enums { get; }
         IEnumerable<GDInnerClassDeclaration> InnerClasses { get; }
         IEnumerable<GDIdentifiableClassMember> IdentifiableMembers { get; }
+        IEnumerable<GDCustomAttribute> CustomAttributes { get; }
     }
 }

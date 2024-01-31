@@ -35,6 +35,8 @@ namespace GDShrapt.Reader
         public bool IsTool => Attributes.OfType<GDToolAttribute>().Any();
 
         public IEnumerable<GDClassAttribute> Attributes => Members.OfType<GDClassAttribute>();
+        public IEnumerable<GDCustomAttribute> CustomAttributes => Members.OfType<GDCustomAttribute>();
+
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
         public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
