@@ -2228,7 +2228,7 @@ func _getter():
         {
             var reader = new GDScriptReader();
 
-            var code = @"var _score: int
+            var code = @"
 var score: int:
     get:
         return _score
@@ -2254,6 +2254,71 @@ func _update_score_display():
 	set    ( value ) :
 		print(value)
 	get  :
+		return 0";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseNewProperiesSyntaxTest4()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+var prop2: 
+	set  =  _setter,
+	get   =   _getter";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseNewProperiesSyntaxTest5()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+var prop4: set\
+=_setter   , get\
+=_getter";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseNewProperiesSyntaxTest6()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+var prop3: set=_setter, \
+get=_getter";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseNewProperiesSyntaxTest7()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+var prop: 
+	set    ( value ) :
+		print(value)
+	get  :
 		return 0
 
 var prop2: 
@@ -2264,7 +2329,7 @@ var prop3: set=_setter, \
 get=_getter
 
 var prop4: set\
-=_setter, get\
+=_setter   , get\
 =_getter";
 
             var @class = reader.ParseFileContent(code);

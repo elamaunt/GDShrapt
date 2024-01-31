@@ -12,8 +12,6 @@
         IIntendedTokenOrSkipReceiver<GDAccessorDeclaration>,
         ITokenOrSkipReceiver<GDComma>
     {
-        private bool _skipComma;
-
         public GDConstKeyword ConstKeyword 
         {
             get => _form.Token0;
@@ -158,25 +156,14 @@
                     state.PushAndPass(new GDExpressionResolver(this, Intendation), c);
                     break;
                 case State.FirstAccessorDeclarationNode:
-                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, true, Intendation + 1), c);
+                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, true, false, Intendation + 1), c);
                     break;
                 case State.Comma:
-                    if (_skipComma)
-                    {
-                        state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, false, Intendation + 1), c);
-                        return;
-                    }
-                    this.ResolveComma(c, state);
-                    break;
-                case State.SecondAccessorDeclarationNode:
-                    if (c == ',' && Comma == null)
-                    {
-                        Comma = new GDComma();
-                        return;
-                    }
-
-                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, !_skipComma, Intendation + 1), c);
-                    break;
+                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, true, true, Intendation + 1), c);
+                    return;
+                //case State.SecondAccessorDeclarationNode:
+                //    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, Comma != null, false, Intendation + 1), c);
+                //    break;
                 default:
                     this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
                     break;
@@ -187,27 +174,23 @@
         {
             if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
             {
-                _skipComma = true;
-                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, false, Intendation + 1));
+                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, false, false, Intendation + 1));
                 return;
             }
 
-            if (_form.State == State.SecondAccessorDeclarationNode)
+            if (_form.State == State.Comma)
             {
-                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, false, Intendation + 1));
+                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, false, true, Intendation + 1));
                 return;
             }
+
+            /*if (_form.State == State.SecondAccessorDeclarationNode)
+            {
+                state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, Comma != null, false, Intendation + 1));
+                return;
+            }*/
 
             state.PopAndPassNewLine();
-        }
-        internal override void HandleLeftSlashChar(GDReadingState state)
-        {
-            if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
-            {
-                _skipComma = true;
-            }
-
-            base.HandleLeftSlashChar(state);
         }
 
         public override GDNode CreateEmptyInstance()
@@ -461,7 +444,7 @@
             if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
             {
                 FirstAccessorDeclarationNode = token;
-                _form.State = _skipComma ? State.SecondAccessorDeclarationNode : State.Comma;
+                _form.State = State.Comma;
                 return;
             }
 
@@ -479,7 +462,7 @@
         {
             if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
             {
-                _form.State = _skipComma ? State.Completed : State.Comma;
+                _form.State = State.Completed;
                 return;
             }
 

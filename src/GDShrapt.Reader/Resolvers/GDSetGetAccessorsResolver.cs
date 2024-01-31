@@ -6,11 +6,13 @@ namespace GDShrapt.Reader
         where T : IIntendedTokenOrSkipReceiver<GDAccessorDeclaration>
     {
         public new T Owner { get; }
+        public ITokenOrSkipReceiver<GDComma> CommaReceiver { get; }
 
         readonly StringBuilder _sequenceBuilder = new StringBuilder(8);
 
         State _state = State.Initial;
         bool _ignoreNewLine;
+        bool _checkComma;
 
         private enum State
         {
@@ -19,11 +21,13 @@ namespace GDShrapt.Reader
             GotGetKeyword,
         }
 
-        public GDSetGetAccessorsResolver(T owner, bool allowZeroIntendationOnFirstLine, int lineIntendation)
+        public GDSetGetAccessorsResolver(T owner, ITokenOrSkipReceiver<GDComma> commaReceiver, bool allowZeroIntendationOnFirstLine, bool checkCommaAtStart, int lineIntendation)
                 : base(owner, lineIntendation)
         {
             AllowZeroIntendationOnFirstLine = allowZeroIntendationOnFirstLine;
             Owner = owner;
+            CommaReceiver = commaReceiver;
+            _checkComma = checkCommaAtStart;
         }
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
@@ -31,7 +35,28 @@ namespace GDShrapt.Reader
             switch (_sequenceBuilder.Length)
             {
                 case 0:
-                    if (c == 's')
+                    if (_checkComma)
+                    {
+                        _checkComma = false;
+
+                        if (c == ',')
+                        {
+                            SendIntendationTokensToOwner();
+                            ResetIntendation();
+                            CommaReceiver.HandleReceivedToken(new GDComma());
+                            return;
+                        }
+                        else
+                        {
+                            CommaReceiver.HandleReceivedTokenSkip();
+                        }
+                    }
+
+                    if (c.IsSpace())
+                    {
+                        Owner.HandleReceivedToken(state.PushAndPass(new GDSpace(), c));
+                    }
+                    else if (c == 's')
                     {
                         _sequenceBuilder.Append(c);
                         _state = State.GotSetKeyword;
@@ -147,6 +172,12 @@ namespace GDShrapt.Reader
 
         protected override void OnIntendationThresholdMet(GDReadingState state)
         {
+            if (_checkComma)
+            {
+                _checkComma = false;
+                CommaReceiver.HandleReceivedTokenSkip();
+            }
+
             Owner.HandleReceivedTokenSkip();
             base.OnIntendationThresholdMet(state);
         }
@@ -158,6 +189,12 @@ namespace GDShrapt.Reader
                 _sequenceBuilder.Append('\n');
                 _ignoreNewLine = false;
                 return;
+            }
+
+            if (_checkComma)
+            {
+                _checkComma = false;
+                CommaReceiver.HandleReceivedTokenSkip();
             }
 
             Owner.HandleReceivedTokenSkip();

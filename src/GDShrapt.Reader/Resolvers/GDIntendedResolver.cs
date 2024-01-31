@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net.Sockets;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
@@ -17,6 +18,7 @@ namespace GDShrapt.Reader
         int _spaceCounter;
         bool _inComment;
         bool _intendationTokensSent;
+        bool _lineSplitted;
 
         new IIntendedTokenReceiver Owner { get; }
 
@@ -44,7 +46,10 @@ namespace GDShrapt.Reader
 
         bool HandleIntendation(char c, GDReadingState state)
         {
-            if (AllowZeroIntendationOnFirstLine && _firstLine && !c.IsSpace())
+            if (_lineIntendationEnded)
+                return false;
+
+            if (AllowZeroIntendationOnFirstLine && _firstLine && !c.IsSpace() && !c.IsNewLine() && c != '#' && c != '\\')
             {
                 _lineIntendationEnded = true;
                 return false;
@@ -55,16 +60,29 @@ namespace GDShrapt.Reader
             {
                 if (c == '\n')
                 {
-                    _firstLine = false;
-                    _inComment = false;
-                    _spaceCounter = 0;
-                    _lineIntendation = 0;
+                    if (_lineSplitted)
+                        _lineSplitted = false;
+                    else
+                    {
+                        _firstLine = false;
+                        _inComment = false;
+                        _spaceCounter = 0;
+                        _lineIntendation = 0;
+                    }
+
                     _sequenceBuilder.Append(c);
                     return true;
                 }
 
                 if (_inComment)
                 {
+                    _sequenceBuilder.Append(c);
+                    return true;
+                }
+
+                if (c == '\\')
+                {
+                    _lineSplitted = true;
                     _sequenceBuilder.Append(c);
                     return true;
                 }
@@ -154,7 +172,6 @@ namespace GDShrapt.Reader
                 HandleLeftSlashCharAfterIntendation(state);
             else
             {
-                _inComment = true;
                 HandleIntendation('\\', state);
             }
         }
@@ -168,6 +185,7 @@ namespace GDShrapt.Reader
 
             GDComment comment = null;
             GDSpace space = null;
+            GDMultiLineSplitToken split = null;
 
             for (int i = 0; i < _sequenceBuilder.Length; i++)
             {
@@ -176,7 +194,9 @@ namespace GDShrapt.Reader
                 {
                     case '\t':
                     case ' ':
-                        if (comment != null)
+                        if (split != null)
+                            split.Append(c);
+                        else if (comment != null)
                             comment.Append(c);
                         else
                         {
@@ -186,18 +206,50 @@ namespace GDShrapt.Reader
                         }
                         break;
                     case '#':
-                        if (space != null)
+                        if (split != null)
+                            split.Append(c);
+                        else
                         {
-                            space.Complete();
-                            Owner.HandleReceivedToken(space);
-                            space = null;
-                        }
+                            if (space != null)
+                            {
+                                space.Complete();
+                                Owner.HandleReceivedToken(space);
+                                space = null;
+                            }
 
-                        if (comment == null)
-                            comment = new GDComment();
-                        comment.Append(c);
+                            if (comment == null)
+                                comment = new GDComment();
+                            comment.Append(c);
+                        }
                         break;
                     case '\n':
+                        if (split != null)
+                        {
+                            split.Append(c);
+                            split.Complete();
+                            Owner.HandleReceivedToken(split);
+                            split = null;
+                        }
+                        else
+                        {
+                            if (space != null)
+                            {
+                                space.Complete();
+                                Owner.HandleReceivedToken(space);
+                                space = null;
+                            }
+
+                            if (comment != null)
+                            {
+                                comment.Complete();
+                                Owner.HandleReceivedToken(comment);
+                                comment = null;
+                            }
+
+                            Owner.HandleReceivedToken(new GDNewLine());
+                        }
+                        break;
+                    case '\\':
                         if (space != null)
                         {
                             space.Complete();
@@ -207,17 +259,36 @@ namespace GDShrapt.Reader
 
                         if (comment != null)
                         {
-                            comment.Complete();
-                            Owner.HandleReceivedToken(comment);
-                            comment = null;
+                            comment.Append(c);
                         }
-
-                        Owner.HandleReceivedToken(new GDNewLine());
+                        else
+                        {
+                            if (split == null)
+                                split = new GDMultiLineSplitToken();
+                            split.Append(c);
+                        }
                         break;
                     default:
-                        comment.Append(c);
+                        if (split != null)
+                            split.Append(c);
+                        else
+                            comment.Append(c);
                         break;
                 }
+            }
+
+            if (split != null)
+            {
+                split.Complete();
+                Owner.HandleReceivedToken(split);
+                split = null;
+            }
+
+            if (comment != null)
+            {
+                comment.Complete();
+                Owner.HandleReceivedToken(comment);
+                comment = null;
             }
 
             if (space != null)
@@ -231,6 +302,9 @@ namespace GDShrapt.Reader
             }
             else
             {
+                if (_firstLine && AllowZeroIntendationOnFirstLine)
+                    return;
+
                 Owner.HandleReceivedToken(new GDIntendation()
                 {
                     Sequence = string.Empty,
