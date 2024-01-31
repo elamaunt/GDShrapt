@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>4.1.5-alpha</Version>
+    <Version>4.2.0-alpha</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt</Product>
     <Description>GDShrapt.Reader is .Net library and object-oriented one-pass parser of GDScript. It can build a lexical tree of GDScript code or generate a new code from scratch.
@@ -16,8 +16,8 @@ Usage: Just create a GDScriptReader instance and call methods from it.</Descript
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>GDShrapt GDScript reader parser codegeneration Godot lexical analyzer</PackageTags>
-    <AssemblyVersion>4.1.5</AssemblyVersion>
-    <FileVersion>4.1.5</FileVersion>
+    <AssemblyVersion>4.2.0</AssemblyVersion>
+    <FileVersion>4.2.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
