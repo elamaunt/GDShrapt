@@ -14,12 +14,12 @@
         }
         public GDColon Colon
         {
-            get => (GDColon)_form.Token1;
+            get => _form.Token1 as GDColon;
             set => _form.Token1 = value;
         }
         public GDAssign Assign
         {
-            get => (GDAssign)_form.Token1;
+            get => _form.Token1 as GDAssign;
             set => _form.Token1 = value;
         }
         public GDExpression Value
