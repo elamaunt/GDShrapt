@@ -1895,17 +1895,17 @@ func _init(
     }
 
         match b:
-		0:
+		    0:
 
-            pass
-        var t:
-			for i in range(10) :
+                pass
+            var t:
+			    for i in range(10) :
 
-                var c = b + a + i + t
+                    var c = b + a + i + t
 
-                new_method()
+                    new_method()
 
-                print(c)
+                    print(c)
 
 
     print(""done"")
@@ -2562,7 +2562,7 @@ extends Node";
         }
 
         [TestMethod]
-        public void ParseGetNodeNewSyntax()
+        public void ParseGetUniqueNodeTest()
         {
             var reader = new GDScriptReader();
 
@@ -2784,6 +2784,69 @@ class_name MyClass extends Node
 @onready @export var b = ""init_value_b""";
 
             var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseGetNodeWithOnreadyTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@onready var sprite2d = $Sprite2D
+@onready var animation_player = $ShieldBar/AnimationPlayer";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseDifferentIntendationsTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var prop4: 
+         set=_setter,
+         get = _getter
+	
+func _setter(x):
+  var f = func():
+   pass
+	
+  var f2 = func():
+               var x2 = 10
+               var f3 = func():
+                pass
+               pass
+  var f5 = func():
+   pass
+  pass
+	
+	
+func _getter():
+            return 0
+
+func _init(x):
+   pass
+			
+# Called when the node enters the scene tree for the first time.
+func _ready():
+                    pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+  pass
+";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.AreEqual(1, @class.Variables.Count());
+            Assert.AreEqual(4, @class.AllNodes.Where(x => x is GDMethodExpression).Count());
+            Assert.AreEqual(5, @class.Methods.Count());
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);

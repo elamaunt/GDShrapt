@@ -37,7 +37,7 @@ namespace GDShrapt.Reader
                     }
 
                     // Resolving multiple expressions on the same string
-                    var statement = new GDExpressionStatement(LineIntendationThreshold);
+                    var statement = new GDExpressionStatement(CurrentResolvedIntendationInSpaces);
                     Owner.HandleReceivedToken(statement);
                     state.PushAndPass(statement, c);
                 }
@@ -163,35 +163,35 @@ namespace GDShrapt.Reader
                     }
                 case "if":
                     {
-                        var s = new GDIfStatement(LineIntendationThreshold);
+                        var s = new GDIfStatement(CurrentResolvedIntendationInSpaces);
                         s.IfBranch.Add(new GDIfKeyword());
                         statement = s;
                         break;
                     }
                 case "for":
                     {
-                        var s = new GDForStatement(LineIntendationThreshold);
+                        var s = new GDForStatement(CurrentResolvedIntendationInSpaces);
                         s.Add(new GDForKeyword());
                         statement = s;
                         break;
                     }
                 case "while":
                     {
-                        var s = new GDWhileStatement(LineIntendationThreshold);
+                        var s = new GDWhileStatement(CurrentResolvedIntendationInSpaces);
                         s.Add(new GDWhileKeyword());
                         statement = s;
                         break;
                     }
                 case "match":
                     {
-                        var s = new GDMatchStatement(LineIntendationThreshold);
+                        var s = new GDMatchStatement(CurrentResolvedIntendationInSpaces);
                         s.Add(new GDMatchKeyword());
                         statement = s;
                         break;
                     }
                 case "var":
                     {
-                        var s = new GDVariableDeclarationStatement(LineIntendationThreshold);
+                        var s = new GDVariableDeclarationStatement(CurrentResolvedIntendationInSpaces);
                         s.Add(new GDVarKeyword());
                         statement = s;
                         break;
@@ -211,7 +211,7 @@ namespace GDShrapt.Reader
 
         private GDExpressionStatement CompleteAsExpressionStatement(GDReadingState state)
         {
-            var statement = new GDExpressionStatement(LineIntendationThreshold);
+            var statement = new GDExpressionStatement(CurrentResolvedIntendationInSpaces);
 
             SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(statement);

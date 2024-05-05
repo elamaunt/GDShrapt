@@ -1,11 +1,11 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
     public sealed class GDIntendation : GDSimpleSyntaxToken
     {
-        int _lineIntendation;
-        int _spaceCounter;
+        int _lineIntendationInSpaces;
 
         internal StringBuilder _sequenceBuilder = new StringBuilder();
 
@@ -16,32 +16,20 @@ namespace GDShrapt.Reader
         {
             if (c == '\t')
             {
-                if (_spaceCounter > 0)
-                    throw new GDInvalidStateException();
-
-                _spaceCounter = 0;
-
                 _sequenceBuilder.Append(c);
-                _lineIntendation++;
+                _lineIntendationInSpaces += state.Settings.SingleTabSpacesCost;
                 return;
             }
 
-            if (c == ' ' && state.Settings.ReadFourSpacesAsIntendation)
+            if (c == ' ')
             {
-                _spaceCounter++;
                 _sequenceBuilder.Append(c);
-
-                if (_spaceCounter == 4)
-                {
-                    _spaceCounter = 0;
-                    _lineIntendation++;
-                }
-
+                _lineIntendationInSpaces++;
                 return;
             }
 
             Sequence = _sequenceBuilder.ToString();
-            LineIntendationThreshold = _lineIntendation;
+            LineIntendationThreshold = _lineIntendationInSpaces;
 
             state.PopAndPass(c);
         }
@@ -53,13 +41,22 @@ namespace GDShrapt.Reader
                 Sequence = Sequence
             };
         }
-
         /// <summary>
         /// Counts all <see cref="GDIntendedNode"/> in parents and updates <see cref="LineIntendationThreshold"/> with the count.
         /// Also updates the <see cref="Sequence"/>.
         /// </summary>
-        public void Update()
+        /// <param name="pattern">Whitespace pattern. Used as a single intendation. If null, a single \t character is used.</param>
+        /// <exception cref="ArgumentException">If used not a whitespace pattern</exception>
+        public void Update(string pattern = null)
         {
+            if (pattern == null)
+                pattern = "\t";
+
+            if (string.IsNullOrEmpty(pattern))
+                throw new ArgumentException("Intendation pattern must not be empty.");
+            if (!string.IsNullOrWhiteSpace(pattern))
+                throw new ArgumentException("Intendation pattern must be a whitespace.");
+
             var p = Parent;
             int intendation = 0;
 
@@ -72,7 +69,20 @@ namespace GDShrapt.Reader
             }
 
             LineIntendationThreshold = intendation;
-            Sequence = new string('\t', intendation);
+
+            if (intendation == 0)
+                Sequence = string.Empty;
+            else if (intendation == 1)
+                Sequence = pattern;
+            else
+            {
+                var builder = new StringBuilder(pattern.Length * intendation);
+
+                for (int i = 0; i < intendation; i++)
+                    builder.Append(pattern);
+
+                Sequence = builder.ToString();
+            }
         }
 
         public override string ToString()

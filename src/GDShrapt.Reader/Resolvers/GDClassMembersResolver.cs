@@ -129,7 +129,7 @@ namespace GDShrapt.Reader
 
             if (sequence[0] == '@')
             {
-                Owner.HandleReceivedToken(state.Push(new GDCustomAttribute(LineIntendationThreshold)));
+                Owner.HandleReceivedToken(state.Push(new GDCustomAttribute(CurrentResolvedIntendationInSpaces)));
 
                 for (int i = 0; i < sequence.Length; i++)
                     state.PassChar(sequence[i]);
@@ -229,14 +229,14 @@ namespace GDShrapt.Reader
                     break;
                 case "signal":
                     {
-                        var m = new GDSignalDeclaration(LineIntendationThreshold);
+                        var m = new GDSignalDeclaration(CurrentResolvedIntendationInSpaces);
                         HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDSignalKeyword());
                     }
                     break;
                 case "enum":
                     {
-                        var m = new GDEnumDeclaration(LineIntendationThreshold);
+                        var m = new GDEnumDeclaration(CurrentResolvedIntendationInSpaces);
                         HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDEnumKeyword());
                     }
@@ -262,28 +262,28 @@ namespace GDShrapt.Reader
                     break;
                 case "func":
                     {
-                        var m = new GDMethodDeclaration(LineIntendationThreshold);
+                        var m = new GDMethodDeclaration(CurrentResolvedIntendationInSpaces);
                         HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)), false);
                         m.Add(new GDFuncKeyword());
                     }
                     break;
                 case "const":
                     {
-                        var m = new GDVariableDeclaration(LineIntendationThreshold);
+                        var m = new GDVariableDeclaration(CurrentResolvedIntendationInSpaces);
                         HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDConstKeyword());
                     }
                     break;
                 case "var":
                     {
-                        var m = new GDVariableDeclaration(LineIntendationThreshold);
+                        var m = new GDVariableDeclaration(CurrentResolvedIntendationInSpaces);
                         HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)), false);
                         m.Add(new GDVarKeyword());
                     }
                     break;
                 case "class":
                     {
-                        var m = new GDInnerClassDeclaration(LineIntendationThreshold);
+                        var m = new GDInnerClassDeclaration(CurrentResolvedIntendationInSpaces);
                         HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
                         m.Add(new GDClassKeyword());
                     }

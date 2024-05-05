@@ -161,9 +161,9 @@
                 case State.Comma:
                     state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, true, true, Intendation + 1), c);
                     return;
-                //case State.SecondAccessorDeclarationNode:
-                //    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, Comma != null, false, Intendation + 1), c);
-                //    break;
+                case State.SecondAccessorDeclarationNode:
+                    state.PushAndPass(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, Comma != null, false, Intendation + 1), c);
+                    break;
                 default:
                     this.HandleAsInvalidToken(c, state, x => x.IsNewLine());
                     break;
@@ -184,11 +184,11 @@
                 return;
             }
 
-            /*if (_form.State == State.SecondAccessorDeclarationNode)
+            if (_form.State == State.SecondAccessorDeclarationNode)
             {
                 state.PushAndPassNewLine(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, Comma != null, false, Intendation + 1));
                 return;
-            }*/
+            }
 
             state.PopAndPassNewLine();
         }

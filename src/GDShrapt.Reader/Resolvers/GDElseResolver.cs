@@ -19,7 +19,7 @@
 
         protected override void OnMatch(GDReadingState state)
         {
-            var branch = new GDElseBranch(LineIntendationThreshold);
+            var branch = new GDElseBranch(CurrentResolvedIntendationInSpaces);
 
             branch.Add(new GDElseKeyword());
 

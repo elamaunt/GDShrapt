@@ -3,10 +3,10 @@
     public class GDReadSettings
     {
         /// <summary>
-        /// Read 4 spaces when intendation is calculated into tabs.
-        /// Default value is TRUE
+        /// Amount of spaces that equals a single tabulation
+        /// Default value is 4
         /// </summary>
-        public bool ReadFourSpacesAsIntendation { get; set; } = true;
+        public int SingleTabSpacesCost { get; set; } = 4;
 
         public int ReadBufferSize { get; set; } = 1024;
 

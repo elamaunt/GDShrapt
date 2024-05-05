@@ -18,6 +18,11 @@ namespace GDShrapt.Reader
         readonly Stack<GDReader> _readersStack = new Stack<GDReader>(64);
         GDReader CurrentReader => _readersStack.PeekOrDefault();
 
+        /// <summary>
+        /// The first intendation in the code is used for the next ones as a pattern like in the Godot's editor.
+        /// </summary>
+        public int? IntendationInSpacesCount { get; set; } = null;
+
         public GDReadingState(GDReadSettings settings)
         {
             Settings = settings;

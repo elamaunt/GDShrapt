@@ -45,7 +45,10 @@ namespace GDShrapt.Reader.Tests
 
             messageBuilder.AppendLine();
             for (int i = 0; i < invalidTokens.Length; i++)
-                messageBuilder.AppendLine((i+1) + ". " + invalidTokens[i]);
+            {
+                var token = invalidTokens[i];
+                messageBuilder.AppendLine($"{token.StartLine}.{token.StartColumn}: " + token);
+            }
 
             Assert.AreEqual(0, invalidTokens.Length, messageBuilder.ToString(), "There are invalid tokens in the code");
         }

@@ -1,11 +1,11 @@
-﻿using System.Net.Sockets;
-using System.Text;
+﻿using System.Text;
 
 namespace GDShrapt.Reader
 {
     internal abstract class GDIntendedResolver : GDResolver
     {
-        public int LineIntendationThreshold { get; }
+        public int CurrentResolvedIntendationInSpaces { get; private set; }
+        public int LineIntendationInSpacesThreshold { get; }
 
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
@@ -15,7 +15,6 @@ namespace GDShrapt.Reader
         public int CalculatedIntendation => _lineIntendation;
 
         bool _lineIntendationEnded;
-        int _spaceCounter;
         bool _inComment;
         bool _intendationTokensSent;
         bool _lineSplitted;
@@ -24,11 +23,11 @@ namespace GDShrapt.Reader
 
         public bool AllowZeroIntendationOnFirstLine { get; set; }
 
-        public GDIntendedResolver(IIntendedTokenReceiver owner, int lineIntendation)
+        public GDIntendedResolver(IIntendedTokenReceiver owner, int lineIntendationInSpaces)
             : base(owner)
         {
             Owner = owner;
-            LineIntendationThreshold = lineIntendation;
+            LineIntendationInSpacesThreshold = lineIntendationInSpaces;
         }
 
         internal sealed override void HandleChar(char c, GDReadingState state)
@@ -49,6 +48,12 @@ namespace GDShrapt.Reader
             if (_lineIntendationEnded)
                 return false;
 
+            //int singleIntendationSpacesCount = 4;
+            //bool singleIntendationResolved = state.IntendationInSpacesCount.HasValue;
+
+            //if (singleIntendationResolved)
+            //    singleIntendationSpacesCount = state.IntendationInSpacesCount.Value;
+
             if (AllowZeroIntendationOnFirstLine && _firstLine && !c.IsSpace() && !c.IsNewLine() && c != '#' && c != '\\')
             {
                 _lineIntendationEnded = true;
@@ -66,7 +71,6 @@ namespace GDShrapt.Reader
                     {
                         _firstLine = false;
                         _inComment = false;
-                        _spaceCounter = 0;
                         _lineIntendation = 0;
                     }
 
@@ -89,27 +93,15 @@ namespace GDShrapt.Reader
 
                 if (c == '\t')
                 {
-                    if (_spaceCounter > 0)
-                    {
-                        // TODO: warning spaces before tabs
-                    }
-
-                    _spaceCounter = 0;
-                    _lineIntendation++;
+                    _lineIntendation += state.Settings.SingleTabSpacesCost;
                     _sequenceBuilder.Append(c);
                     return true;
                 }
 
-                if (c == ' ' && state.Settings.ReadFourSpacesAsIntendation)
+                if (c == ' ')
                 {
-                    _spaceCounter++;
+                    _lineIntendation++;
                     _sequenceBuilder.Append(c);
-
-                    if (_spaceCounter == 4)
-                    {
-                        _spaceCounter = 0;
-                        _lineIntendation++;
-                    }
 
                     return true;
                 }
@@ -118,7 +110,7 @@ namespace GDShrapt.Reader
                     _lineIntendationEnded = true;
 
                     // The 'end of the block' condition
-                    if (LineIntendationThreshold > _lineIntendation)
+                    if (LineIntendationInSpacesThreshold > _lineIntendation)
                     {
                         OnIntendationThresholdMet(state);
                         state.Pop();
@@ -131,10 +123,7 @@ namespace GDShrapt.Reader
                         return true;
                     }
 
-                    if (LineIntendationThreshold < _lineIntendation)
-                    {
-                        // TODO: warning invalid extra intendation
-                    }
+                    CurrentResolvedIntendationInSpaces = _lineIntendation;
                 }
             }
 
@@ -297,7 +286,7 @@ namespace GDShrapt.Reader
                 Owner.HandleReceivedToken(new GDIntendation()
                 {
                     Sequence = space.Sequence,
-                    LineIntendationThreshold = LineIntendationThreshold
+                    LineIntendationThreshold = CurrentResolvedIntendationInSpaces
                 });
             }
             else
@@ -308,7 +297,7 @@ namespace GDShrapt.Reader
                 Owner.HandleReceivedToken(new GDIntendation()
                 {
                     Sequence = string.Empty,
-                    LineIntendationThreshold = LineIntendationThreshold
+                    LineIntendationThreshold = CurrentResolvedIntendationInSpaces
                 });
             }
         }
@@ -329,7 +318,6 @@ namespace GDShrapt.Reader
             _sequenceBuilder.Clear();
             _lineIntendation = 0;
             _lineIntendationEnded = false;
-            _spaceCounter = 0;
             _intendationTokensSent = false;
             _firstLine = true;
         }

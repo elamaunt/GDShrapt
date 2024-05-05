@@ -29,7 +29,7 @@
                 _lastSpace = null;
             }
 
-            Owner.HandleReceivedToken(state.Push(new GDMatchCaseDeclaration(LineIntendationThreshold)));
+            Owner.HandleReceivedToken(state.Push(new GDMatchCaseDeclaration(CurrentResolvedIntendationInSpaces)));
             state.PassChar(c);
         }
 

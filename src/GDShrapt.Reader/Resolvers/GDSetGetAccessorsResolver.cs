@@ -115,7 +115,7 @@ namespace GDShrapt.Reader
                     {
                         SendIntendationTokensToOwner();
                         state.Pop();
-                        var accessor = new GDGetAccessorBodyDeclaration(LineIntendationThreshold);
+                        var accessor = new GDGetAccessorBodyDeclaration(CurrentResolvedIntendationInSpaces);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         PassStoredSequence(state);
@@ -127,7 +127,7 @@ namespace GDShrapt.Reader
                     {
                         SendIntendationTokensToOwner();
                         state.Pop();
-                        var accessor = new GDSetAccessorBodyDeclaration(LineIntendationThreshold);
+                        var accessor = new GDSetAccessorBodyDeclaration(CurrentResolvedIntendationInSpaces);
                         Owner.HandleReceivedToken(accessor);
                         state.Push(accessor);
                         PassStoredSequence(state);
@@ -143,13 +143,13 @@ namespace GDShrapt.Reader
                         GDReader reader;
                         if (_state == State.GotGetKeyword)
                         {
-                            var accessor = new GDGetAccessorMethodDeclaration(LineIntendationThreshold);
+                            var accessor = new GDGetAccessorMethodDeclaration(CurrentResolvedIntendationInSpaces);
                             Owner.HandleReceivedToken(accessor);
                             reader = accessor;
                         }
                         else
                         {
-                            var accessor = new GDSetAccessorMethodDeclaration(LineIntendationThreshold);
+                            var accessor = new GDSetAccessorMethodDeclaration(CurrentResolvedIntendationInSpaces);
                             Owner.HandleReceivedToken(accessor);
                             reader = accessor;
                         }

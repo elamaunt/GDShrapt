@@ -490,8 +490,6 @@ namespace GDShrapt.Reader
 
             while (true)
             {
-                node = node.Parent;
-
                 if (node == null || node is GDClassDeclaration || node is GDInnerClassDeclaration)
                     break;
 
@@ -500,6 +498,8 @@ namespace GDShrapt.Reader
 
                 foreach (var item in node.GetMethodScopeDeclarations(beforeLine))
                     results.Add(item);
+
+                node = node.Parent;
             }
 
             return results;
