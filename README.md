@@ -1,6 +1,6 @@
 # GDShrapt
 
-GDShrapt is object-oriented one-pass parser of GDScript 2.0. Now the main goal is production-ready parser, lexical analyzer. 
+GDShrapt is an object-oriented one-pass parser of GDScript 2.0. Now the main goal is a production-ready parser, lexical analyzer. 
 The project written in C# and free to use. 
 GDScript is the main language of [Godot Engine](https://github.com/godotengine/godot)
 
@@ -12,7 +12,7 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **4.2.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **4.3.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
@@ -62,9 +62,13 @@ Install-Package GDShrapt.Reader -Version 4.2.0-alpha
 
 ## Last updates
 
+#### 4.3.0-alpha
+Improved intendation and space tokens parsing. 
+Now it works similar to Godot.
+
 #### 4.2.0-alpha
 Reworked attributes parsing.
-Improved properties and intendatino tokens parsing.
+Improved properties and intendation tokens parsing.
 Fixed comma bugs.
 Added new methods for attributes enumeration.
 
@@ -305,10 +309,10 @@ var code = declaration.ToString(); // Get the string representation
 ### Custom style initialization
 
 ```csharp
-// The sample of a For statement initizalization with predefined style. It is how GD.Statement.For method works.
+// The sample of a For statement initizalization with a predefined style. It is how the GD.Statement.For method works.
 // You must know the 'form' to use this format. 
-// For example a code line like "[1] = GD.Syntax.Space()" will insert space token BEFORE the first static point in the nodes form.
-// In the code below the first point of the For statement is the iterators variable name.
+// For example a code line like "[1] = GD.Syntax.Space()" will insert a space token BEFORE the first static point in the nodes form.
+// In the code below the first point of the For statement is the iterator's variable name.
 public static GDForStatement For(GDIdentifier variable, GDExpression collection, GDExpression body) => new GDForStatement()
             {
                 ForKeyword = new GDForKeyword(),
