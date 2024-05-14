@@ -527,7 +527,7 @@
             // Nothing
         }
 
-        public void Left(GDMethodExpression e)
+        public virtual void Left(GDMethodExpression e)
         {
             // Nothing
         }
@@ -652,7 +652,7 @@
             // Nothing
         }
 
-        public void Visit(GDMethodExpression e)
+        public virtual void Visit(GDMethodExpression e)
         {
             // Nothing
         }
