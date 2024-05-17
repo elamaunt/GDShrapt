@@ -1,4 +1,7 @@
-﻿namespace GDShrapt.Reader
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace GDShrapt.Reader
 {
     public class GDMethodExpression : GDExpression,
          ITokenOrSkipReceiver<GDFuncKeyword>,
@@ -194,7 +197,10 @@
         {
             visitor.Left(this);
         }
-
+        public override IEnumerable<GDIdentifier> GetMethodScopeDeclarations(int? beforeLine = null)
+        {
+            return Parameters.Select(x => x.Identifier).Where(x => x != null);
+        }
         void ITokenReceiver<GDFuncKeyword>.HandleReceivedToken(GDFuncKeyword token)
         {
             if (_form.IsOrLowerState(State.Func))

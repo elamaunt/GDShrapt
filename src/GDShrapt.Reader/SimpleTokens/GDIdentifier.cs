@@ -204,6 +204,27 @@ namespace GDShrapt.Reader
                     continue;
                 }
 
+                if (node is GDMethodExpression methodExpr)
+                {
+                    foreach (var item in node.GetMethodScopeDeclarations(startLine))
+                    {
+                        if (item == this)
+                        {
+                            declaration = item;
+                            return true;
+                        }
+                    }
+
+                    if (methodExpr.Identifier == this)
+                    {
+                        declaration = methodExpr.Identifier;
+                        return true;
+                    }
+
+                    node = node.Parent;
+                    continue;
+                }
+
                 foreach (var item in node.GetMethodScopeDeclarations(startLine))
                 {
                     if (item == this)
