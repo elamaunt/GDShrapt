@@ -234,15 +234,15 @@ namespace GDShrapt.Reader
                 return list;
             }
 
-            public static GDLayersList LayersList() => new GDLayersList();
-            public static GDLayersList LayersList(Func<GDLayersList, GDLayersList> setup) => setup(new GDLayersList());
-            public static GDLayersList LayersList(params GDSyntaxToken[] unsafeTokens) => new GDLayersList() { FormTokensSetter = unsafeTokens };
+            public static GDLayersList LayersList() => new GDLayersList(true);
+            public static GDLayersList LayersList(Func<GDLayersList, GDLayersList> setup) => setup(new GDLayersList(true));
+            public static GDLayersList LayersList(params GDSyntaxToken[] unsafeTokens) => new GDLayersList(true) { FormTokensSetter = unsafeTokens };
             public static GDLayersList LayersList(params GDPathSpecifier[] pathSpecifiers)
             {
                 if (pathSpecifiers == null || pathSpecifiers.Length == 0)
-                    return new GDLayersList();
+                    return new GDLayersList(true);
 
-                var list = new GDLayersList();
+                var list = new GDLayersList(true);
 
                 for (int i = 0; i < pathSpecifiers.Length; i++)
                 {

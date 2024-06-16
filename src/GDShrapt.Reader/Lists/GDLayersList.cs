@@ -7,6 +7,12 @@
     {
         bool _switch;
         bool _ended;
+        readonly bool _allowNonStringIdentifiers;
+
+        public GDLayersList(bool allowNonStringIdentifiers)
+        {
+            _allowNonStringIdentifiers = allowNonStringIdentifiers;
+        }
 
         internal override void HandleChar(char c, GDReadingState state)
         {
@@ -20,7 +26,7 @@
             }
 
             if (!_switch)
-                this.ResolvePathSpecifier(c, state);
+                this.ResolvePathSpecifier(c, state, _allowNonStringIdentifiers);
             else
                 this.ResolveColon(c, state);
         }
@@ -33,7 +39,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDLayersList();
+            return new GDLayersList(_allowNonStringIdentifiers);
         }
 
         internal override void Visit(IGDVisitor visitor)

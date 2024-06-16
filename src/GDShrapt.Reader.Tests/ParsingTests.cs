@@ -1788,8 +1788,8 @@ var node = get_node(node_path)
 
             Assert.IsNotNull(expression);
 
-            var getNodeExpression = expression.CastOrAssert<GDGetNodeExpression>();
-            Assert.AreEqual("Animation/Root/ _345/ end .CallMethod()", getNodeExpression.Path.ToString());
+            var getNodeExpression = expression.CastOrAssert<GDCallExpression>();
+            Assert.AreEqual("$Animation/Root/ _345/ end .CallMethod", getNodeExpression.CallerExpression.ToString());
 
             AssertHelper.CompareCodeStrings(code, expression.ToString());
             AssertHelper.NoInvalidTokens(expression);

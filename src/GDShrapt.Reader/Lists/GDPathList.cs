@@ -24,7 +24,7 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                if (c.IsExpressionStopChar() && BoundingChar == GDPathBoundingChar.None)
+                if ((c.IsExpressionStopChar() || c == '.') && BoundingChar == GDPathBoundingChar.None)
                 {
                     _ended = true;
                     state.PopAndPass(c);
@@ -82,7 +82,7 @@ namespace GDShrapt.Reader
             }
 
             if (!_switch)
-                this.ResolveLayersList(c, state);
+                this.ResolveLayersList(c, state, BoundingChar != GDPathBoundingChar.None);
             else
                 this.ResolveRightSlash(c, state);
         }

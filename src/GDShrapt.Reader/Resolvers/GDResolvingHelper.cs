@@ -437,11 +437,11 @@ namespace GDShrapt.Reader
             return false;
         }
 
-        public static bool ResolveLayersList(this ITokenOrSkipReceiver<GDLayersList> receiver, char c, GDReadingState state)
+        public static bool ResolveLayersList(this ITokenOrSkipReceiver<GDLayersList> receiver, char c, GDReadingState state, bool allowNonStringIdentifiers)
         {
             if (IsIdentifierStartChar(c) || c == ':' || c == '.')
             {
-                receiver.HandleReceivedToken(state.Push(new GDLayersList()));
+                receiver.HandleReceivedToken(state.Push(new GDLayersList(allowNonStringIdentifiers)));
                 state.PassChar(c);
                 return true;
             }
@@ -452,9 +452,9 @@ namespace GDShrapt.Reader
         }
 
 
-        public static void ResolvePathSpecifier(this ITokenOrSkipReceiver<GDPathSpecifier> receiver, char c, GDReadingState state)
+        public static void ResolvePathSpecifier(this ITokenOrSkipReceiver<GDPathSpecifier> receiver, char c, GDReadingState state, bool allowNonStringIdentifiers)
         {
-            state.PushAndPass(new GDPathSpecifierResolver(receiver), c);
+            state.PushAndPass(new GDPathSpecifierResolver(receiver, allowNonStringIdentifiers), c);
         }
 
         public static bool ResolveType(this ITokenOrSkipReceiver<GDType> receiver, char c, GDReadingState state)

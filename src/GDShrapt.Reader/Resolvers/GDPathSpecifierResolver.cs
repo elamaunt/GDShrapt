@@ -6,11 +6,14 @@ namespace GDShrapt.Reader
     {
         private GDPathSpecifierType? _type;
         private StringBuilder _identifierBuilder;
+        private readonly bool _allowNonStringIdentifiers;
+
         public new ITokenOrSkipReceiver<GDPathSpecifier> Owner { get; }
-        public GDPathSpecifierResolver(ITokenOrSkipReceiver<GDPathSpecifier> owner)
+        public GDPathSpecifierResolver(ITokenOrSkipReceiver<GDPathSpecifier> owner, bool allowNonStringIdentifiers)
             : base(owner)
         {
             Owner = owner;
+            _allowNonStringIdentifiers = allowNonStringIdentifiers;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -25,6 +28,12 @@ namespace GDShrapt.Reader
             {
                 if (c == '.')
                 {
+                    if (!_allowNonStringIdentifiers)
+                    {
+                        Complete(c, state);
+                        return;
+                    }
+
                     switch (_type.Value)
                     {
                         case GDPathSpecifierType.Current:
