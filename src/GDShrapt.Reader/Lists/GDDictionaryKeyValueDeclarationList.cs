@@ -1,7 +1,7 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDDictionaryKeyValueDeclarationList : GDCommaSeparatedList<GDDictionaryKeyValueDeclaration>,
-        ITokenReceiver<GDDictionaryKeyValueDeclaration>
+        ITokenOrSkipReceiver<GDDictionaryKeyValueDeclaration>
     {
         readonly int _intendation;
 
@@ -16,9 +16,7 @@
 
         internal override GDReader ResolveNode()
         {
-            var node = new GDDictionaryKeyValueDeclaration(_intendation);
-            ListForm.AddToEnd(node);
-            return node;
+            return new GDDictionaryKeyValueResolver(this, this, _intendation);
         }
 
         internal override bool IsStopChar(char c)
@@ -44,6 +42,11 @@
         void ITokenReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedToken(GDDictionaryKeyValueDeclaration token)
         {
             ListForm.AddToEnd(token);
+        }
+
+        void ITokenSkipReceiver<GDDictionaryKeyValueDeclaration>.HandleReceivedTokenSkip()
+        {
+            SetAsCompleted();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -7,6 +8,8 @@ namespace GDShrapt.Reader
     {
         bool _statementResolved;
         bool _resolvedAsExpression;
+        GDStatement _resolvedStatement;
+
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         new IIntendedTokenReceiver<GDStatement> Owner { get; }
@@ -36,9 +39,17 @@ namespace GDShrapt.Reader
                         return;
                     }
 
+                    if (_resolvedStatement.Form.IsCompleted && _resolvedStatement.Form.FirstToken == null)
+                    {
+                        _resolvedStatement.RemoveFromParent();
+                        state.PopAndPass(c);
+                        return;
+                    }
+
                     // Resolving multiple expressions on the same string
                     var statement = new GDExpressionStatement(CurrentResolvedIntendationInSpaces);
                     Owner.HandleReceivedToken(statement);
+                    _resolvedStatement = statement;
                     state.PushAndPass(statement, c);
                 }
                 else
@@ -156,6 +167,7 @@ namespace GDShrapt.Reader
                 case "else":
                     {
                         _statementResolved = false;
+                        _resolvedStatement = null;
                         SendIntendationTokensToOwner();
                         Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsSpace() || x.IsNewLine() || x.IsExpressionStopChar())));
                         state.PassString(sequence);
@@ -199,13 +211,15 @@ namespace GDShrapt.Reader
                 default:
                     {
                         _resolvedAsExpression = true;
-                        return CompleteAsExpressionStatement(state, sequence);
+                        return _resolvedStatement = CompleteAsExpressionStatement(state, sequence);
                     }
             }
 
             SendIntendationTokensToOwner();
             Owner.HandleReceivedToken(statement);
             state.Push(statement);
+
+            _resolvedStatement = statement;
             return statement;
         }
 

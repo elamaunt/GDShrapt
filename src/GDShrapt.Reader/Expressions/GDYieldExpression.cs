@@ -108,7 +108,6 @@
         {
             visitor.Left(this);
         }
-
         void ITokenReceiver<GDYieldKeyword>.HandleReceivedToken(GDYieldKeyword token)
         {
             if (_form.IsOrLowerState(State.Yield))

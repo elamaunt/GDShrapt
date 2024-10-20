@@ -48,6 +48,11 @@
             state.PassLeftSlashChar();
         }
 
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            HandleChar('#', state);
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDStringPartsList();

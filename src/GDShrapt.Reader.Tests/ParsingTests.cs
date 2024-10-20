@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Security.Claims;
 
 namespace GDShrapt.Reader.Tests
 {
@@ -2847,6 +2848,99 @@ func _process(delta):
             Assert.AreEqual(1, @class.Variables.Count());
             Assert.AreEqual(4, @class.AllNodes.Where(x => x is GDMethodExpression).Count());
             Assert.AreEqual(5, @class.Methods.Count());
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseSharpInTextNodeTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+	                 extends Node
+	                 
+	                 func _ready():
+	                 	if(color.r >= 0.99):
+	                 		# was left, became right
+	                 		color = Color(""#AAAAAA"")
+	                 		global_position -= legsSwitchDifference
+	                 	else:
+	                 		# was right, became left
+	                 		color = Color.white
+	                 		global_position += legsSwitchDifference
+	                 ";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseYieldTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+	                 extends Node
+	                 func _ready():
+	                 	result = yield(self, ""translation_ready"") #System.InvalidOperationException: Operation is not valid due to the current state of the object.
+	                 ";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseBigBlock()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+                     extends Control
+                     
+                     
+                     # Copied from https://github.com/Orama-Interactive/Pixelorama/blob/master/src/Autoload/HTML5FileExchange.gd
+                     # Thanks to Pixelorama devs
+                     func _define_js():
+                     	# Define JS script
+                     	JavaScript.eval(
+                     		""""""
+                     	var fileData;
+                     	var fileType;
+                     	var fileName;
+                     	var canceled;
+                     	function upload_save() {
+                     		canceled = true;
+                     		var input = document.createElement('INPUT');
+                     		input.setAttribute(""type"", ""file"");
+                     		input.setAttribute(""accept"", "".save"");
+                     		input.click();
+                     		input.addEventListener('change', event => {
+                     			if (event.target.files.length > 0){
+                     				canceled = false;}
+                     			var file = event.target.files[0];
+                     			var reader = new FileReader();
+                     			fileType = file.type;
+                     			fileName = file.name;
+                     			reader.readAsText(file);
+                     			reader.onloadend = function (evt) {
+                     				if (evt.target.readyState == FileReader.DONE) {
+                     					fileData = evt.target.result;
+                     				}
+                     			}
+                     		});
+                     	}
+                     	"""""",
+                     		true
+                     	)
+                     ";
+
+            var @class = reader.ParseFileContent(code);
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);

@@ -78,6 +78,7 @@ namespace GDShrapt.Reader
                 case GDOperationType.Call: return 19;
                 case GDOperationType.Identifier: return 21;
                 case GDOperationType.Method: return 21;
+                case GDOperationType.Yeild: return 21;
                 default:
                     return -1;
             }

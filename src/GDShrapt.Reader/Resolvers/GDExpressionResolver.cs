@@ -52,6 +52,12 @@
 
             if (IsExpressionStopChar(c))
             {
+                if (_isCompleted)
+                {
+                    state.PopAndPass(c);
+                    return;
+                }
+
                 if (!CheckKeywords(state))
                     CompleteExpression(state);
 
@@ -143,6 +149,14 @@
                     state.PassChar(c);
                     return;
                 }
+
+                if (_lastSpace != null)
+                {
+                    Owner.HandleReceivedToken(_lastSpace);
+                    _lastSpace = null;
+                }
+
+                Owner.HandleAsInvalidToken(c, state, x => c != x);
             }
             else
             {

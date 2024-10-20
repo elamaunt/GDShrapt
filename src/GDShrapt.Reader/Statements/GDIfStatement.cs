@@ -59,7 +59,7 @@
                     state.PushAndPass(ElifBranchesList, c);
                     break;
                 case State.ElseBranch:
-                    state.PushAndPassNewLine(new GDElseResolver(this, LineIntendation));
+                    state.PushAndPass(new GDElseResolver(this, LineIntendation), c);
                     break;
                 default:
                     if (!this.ResolveSpaceToken(c, state))
