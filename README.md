@@ -12,11 +12,11 @@ GDShrapt.Reader allows to build a lexical tree or generate a new code from scrat
 
 ### How to install
 
-Currently the latest **4.3.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+Currently the latest **4.3.1-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
 
 Installation from Nuget console:
 ```
-Install-Package GDShrapt.Reader -Version 4.2.0-alpha
+Install-Package GDShrapt.Reader -Version 4.3.1-alpha
 ```
 ## Capabilities, plan and what can be parsed
 
@@ -62,29 +62,16 @@ Install-Package GDShrapt.Reader -Version 4.2.0-alpha
 
 ## Last updates
 
+#### 4.3.1-alpha
+Fixed ovewflows.
+Fixed dictionary parsing if it contains invalid characters.
+Fixed multiline string parsing if it starts with new line character.
+Fixed some cases in expression and statements resolving.
+Fixed yield expression.
+
 #### 4.3.0-alpha
 Improved intendation and space tokens parsing. 
 Now it works similar to Godot.
-
-#### 4.2.0-alpha
-Reworked attributes parsing.
-Improved properties and intendation tokens parsing.
-Fixed comma bugs.
-Added new methods for attributes enumeration.
-
-#### 4.1.4-alpha
-Fixed dictionary with assignment parsing
-
-#### 4.1.3-alpha
-Fixed statics parsing
-
-#### 4.1.2-alpha
-Fixed lambda intendation parsing
-
-#### 4.1.1-alpha
-Fixed properties parsing
-Fixed guard condition parsing
-Minor improvements.
 
 ## Reading samples
 
