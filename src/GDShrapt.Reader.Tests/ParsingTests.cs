@@ -2995,5 +2995,21 @@ func _process(delta):
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+        [TestMethod]
+        public void ParseAnotherYield()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"  
+                     extends Node
+	                 func _ready():
+	                 	result = yield(self, ""translation_ready"") #System.InvalidOperationException: Operation is not valid due to the current state of the object.";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
     }
 }
