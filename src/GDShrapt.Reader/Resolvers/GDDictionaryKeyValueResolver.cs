@@ -6,7 +6,7 @@
         bool _keyExpressionChecked;
 
         ITokenReceiver _receiver;
-        GDDictionaryKeyValueDeclaration _activeDeclaration = new GDDictionaryKeyValueDeclaration();
+        GDDictionaryKeyValueDeclaration _activeDeclaration;
 
         private new ITokenOrSkipReceiver<GDDictionaryKeyValueDeclaration> Owner { get; }
         public INewLineReceiver NewLineReceiver { get; }
@@ -35,7 +35,8 @@
             else
             {
                 state.Pop();
-                Owner.HandleReceivedToken(state.PushAndPass(_activeDeclaration, c));
+                Owner.HandleReceivedToken(_activeDeclaration);
+                state .PushAndPass(_activeDeclaration, c);
             }
         }
 
@@ -55,7 +56,8 @@
             else
             {
                 state.Pop();
-                Owner.HandleReceivedToken(state.PushAndPassNewLine(_activeDeclaration));
+                Owner.HandleReceivedToken(_activeDeclaration);
+                state.PushAndPassNewLine(_activeDeclaration);
             }
         }
 

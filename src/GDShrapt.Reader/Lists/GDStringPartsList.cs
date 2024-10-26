@@ -30,8 +30,13 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            _ended = true;
-            state.PopAndPassNewLine();
+            if (_ended)
+            {
+                state.PopAndPassNewLine();
+                return;
+            }
+
+            this.ResolveStringPart('\n', state, _bounder);
         }
 
         internal override void HandleLeftSlashChar(GDReadingState state)

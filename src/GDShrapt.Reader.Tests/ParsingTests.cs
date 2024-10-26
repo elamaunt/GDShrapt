@@ -2896,7 +2896,57 @@ func _process(delta):
         }
 
         [TestMethod]
-        public void ParseBigBlock()
+        public void ParseMassiveInvalidCode()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+                     extends Control
+                     
+                     
+                     # Copied from https://github.com/Orama-Interactive/Pixelorama/blob/master/src/Autoload/HTML5FileExchange.gd
+                     # Thanks to Pixelorama devs
+                     func _define_js():
+                     	# Define JS script
+                     	JavaScript.eval(
+                     		""""
+                     	var fileData;
+                     	var fileType;
+                     	var fileName;
+                     	var canceled;
+                     	function upload_save() {
+                     		canceled = true;
+                     		var input = document.createElement('INPUT');
+                     		input.setAttribute(""type"", ""file"");
+                     		input.setAttribute(""accept"", "".save"");
+                     		input.click();
+                     		input.addEventListener('change', event => {
+                     			if (event.target.files.length > 0){
+                     				canceled = false;}
+                     			var file = event.target.files[0];
+                     			var reader = new FileReader();
+                     			fileType = file.type;
+                     			fileName = file.name;
+                     			reader.readAsText(file);
+                     			reader.onloadend = function (evt) {
+                     				if (evt.target.readyState == FileReader.DONE) {
+                     					fileData = evt.target.result;
+                     				}
+                     			}
+                     		});
+                     	}
+                     	"""",
+                     		true
+                     	)
+                     ";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+        }
+
+        [TestMethod]
+        public void ParseBigStringParameter()
         {
             var reader = new GDScriptReader();
 

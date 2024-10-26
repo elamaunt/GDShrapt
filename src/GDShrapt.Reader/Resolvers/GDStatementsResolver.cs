@@ -84,6 +84,7 @@ namespace GDShrapt.Reader
                 {
                     if (c.IsExpressionStopChar())
                     {
+                        SendIntendationTokensToOwner();
                         Owner.HandleReceivedToken(new GDInvalidToken(c.ToString()));
                     }
                     else
