@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Linq;
 using System.Security.Claims;
 
@@ -1198,6 +1199,39 @@ c
         }
 
         [TestMethod]
+        public void EnumLineBreakTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"enum State
+{
+	STATE_IDLE
+	,
+	STATE_JUMP
+	=
+	1
+	<<
+	3
+	,
+	STATE_SHOOT
+}";
+
+            var classDeclaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDEnumDeclaration));
+
+            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members[0];
+
+            Assert.AreEqual("State", enumDeclaration.Identifier.Sequence);
+            Assert.AreEqual(3, enumDeclaration.Values.Count);
+
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
+        }
+
+        [TestMethod]
         public void ClassNameTest()
         {
             var reader = new GDScriptReader();
@@ -1840,6 +1874,38 @@ string
             Assert.IsNotNull(passStatement);
             Assert.AreEqual(1, passStatement.Tokens.Count());
 
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void MethodDeclarationLineBreakTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func _test_func(
+	m
+	:
+	float
+		= 
+	10.5
+	+
+	2
+	,
+	m2
+	= null, m3 = 1 << 3
+) -> int:
+	return a*m + State.STATE_JUMP;";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+            Assert.AreEqual(1, @class.Methods.Count());
+
+            var method = @class.Methods.First();
+            Assert.IsNotNull(method);
+
+           
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
@@ -2829,6 +2895,45 @@ static func my_int_function() -> int:
 
             var code = @"
 static var a = { a = 1, b = 2 }";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.AreEqual(1, @class.Members.Count);
+
+            var variable = (GDVariableDeclaration)@class.Members[0];
+
+            Assert.IsInstanceOfType(variable.Initializer, typeof(GDDictionaryInitializerExpression));
+
+            var dictionary = (GDDictionaryInitializerExpression)variable.Initializer;
+
+            Assert.AreEqual(2, dictionary.KeyValues.Count);
+
+            foreach (var node in dictionary.KeyValues)
+            {
+                Assert.IsNotNull(node.Key);
+                Assert.IsNotNull(node.Assign);
+                Assert.IsNotNull(node.Value);
+                Assert.IsInstanceOfType(node.Value, typeof(GDNumberExpression));
+            }
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void DictionaryTest3()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+static var a = {
+a 
+=
+1,
+b 
+=
+2 
+}";
 
             var @class = reader.ParseFileContent(code);
 
