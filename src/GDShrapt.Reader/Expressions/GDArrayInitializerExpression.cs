@@ -90,6 +90,11 @@
 
             state.PopAndPassNewLine();
         }
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            _form.AddBeforeActiveToken(state.Push(new GDComment()));
+            state.PassSharpChar();
+        }
 
         public override GDNode CreateEmptyInstance()
         {
