@@ -113,8 +113,7 @@
         {
             if (_form.IsOrLowerState(State.Values))
             {
-                _form.State = State.FigureCloseBracket;
-                state.PushAndPassNewLine(Values);
+                _form.AddBeforeActiveToken(new GDNewLine());
                 return;
             }
 

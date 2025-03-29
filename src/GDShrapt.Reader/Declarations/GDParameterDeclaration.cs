@@ -5,7 +5,9 @@
         ITokenOrSkipReceiver<GDColon>,
         ITokenOrSkipReceiver<GDTypeNode>,
         ITokenOrSkipReceiver<GDAssign>,
-        ITokenOrSkipReceiver<GDExpression>
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenReceiver<GDNewLine>,
+        INewLineReceiver
     {
         public GDIdentifier Identifier
         {
@@ -79,7 +81,7 @@
                     this.ResolveAssign(c, state);
                     break;
                 case State.DefaultValue:
-                    this.ResolveExpression(c, state, _intendation);
+                    this.ResolveExpression(c, state, _intendation, this);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -89,7 +91,7 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            state.PopAndPassNewLine();
+            _form.AddBeforeActiveToken(new GDNewLine());
         }
 
         public override GDNode CreateEmptyInstance()
@@ -216,6 +218,28 @@
             if (_form.IsOrLowerState(State.DefaultValue))
             {
                 _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 

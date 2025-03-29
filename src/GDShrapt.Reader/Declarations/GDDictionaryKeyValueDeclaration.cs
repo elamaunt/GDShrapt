@@ -3,7 +3,9 @@
     public sealed class GDDictionaryKeyValueDeclaration : GDNode,
         ITokenOrSkipReceiver<GDExpression>,
         ITokenOrSkipReceiver<GDColon>,
-        ITokenOrSkipReceiver<GDAssign>
+        ITokenOrSkipReceiver<GDAssign>,
+        ITokenReceiver<GDNewLine>,
+        INewLineReceiver
     {
         bool _checkedColon;
 
@@ -60,7 +62,7 @@
             switch (_form.State)
             {
                 case State.Key:
-                    this.ResolveExpression(c, state, _intendation, allowAssignment: false);
+                    this.ResolveExpression(c, state, _intendation, this, allowAssignment: false);
                     break;
                 case State.ColonOrAssign:
                     if (!_checkedColon)
@@ -69,7 +71,7 @@
                         this.ResolveAssign(c, state);
                     break;
                 case State.Value:
-                    this.ResolveExpression(c, state, _intendation);
+                    this.ResolveExpression(c, state, _intendation, this);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -177,6 +179,28 @@
             if (_form.IsOrLowerState(State.ColonOrAssign))
             {
                 _form.State = State.Value;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 

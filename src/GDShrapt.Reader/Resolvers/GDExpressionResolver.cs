@@ -484,8 +484,20 @@
 
                     Owner.HandleReceivedToken(last.RebuildRootOfPriorityIfNeeded());
 
-                    // Send all tokens after Single operator to current reader
+                    // Send all tokens after Single operator to the current reader
                     foreach (var token in operatorExpression.Form.GetAllTokensAfter(1))
+                        state.PassString(token.ToString());
+                }
+                else if (last is GDDualOperatorExpression dualOperatorExpression &&
+                    dualOperatorExpression.RightExpression == null &&
+                    dualOperatorExpression.Operator == null)
+                {
+                    last = dualOperatorExpression.LeftExpression;
+
+                    Owner.HandleReceivedToken(last.RebuildRootOfPriorityIfNeeded());
+
+                    // Send all tokens after Left expression to the current reader
+                    foreach (var token in dualOperatorExpression.Form.GetAllTokensAfter(0))
                         state.PassString(token.ToString());
                 }
                 else

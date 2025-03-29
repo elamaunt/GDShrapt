@@ -4,7 +4,9 @@
         ITokenOrSkipReceiver<GDIdentifier>,
         ITokenOrSkipReceiver<GDColon>,
         ITokenOrSkipReceiver<GDAssign>,
-        ITokenOrSkipReceiver<GDExpression>
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenReceiver<GDNewLine>,
+        INewLineReceiver
     {
         bool _checkedColon;
 
@@ -75,7 +77,7 @@
                         this.ResolveAssign(c, state);
                     break;
                 case State.Value:
-                    this.ResolveExpression(c, state, _intendation);
+                    this.ResolveExpression(c, state, _intendation, this);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -193,6 +195,28 @@
             if (_form.IsOrLowerState(State.Value))
             {
                 _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNewLine>.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void INewLineReceiver.HandleReceivedToken(GDNewLine token)
+        {
+            if (_form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(token);
                 return;
             }
 
