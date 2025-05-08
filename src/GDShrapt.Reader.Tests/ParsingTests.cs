@@ -2514,11 +2514,20 @@ var prop4: set\
             var reader = new GDScriptReader();
 
             var code = @"
-var array1: Array[int] = [3]
+var array1: Array[ int ] = [3]
 var array2: Array = [3]
 var array3: [int] = [3]";
 
             var @class = reader.ParseFileContent(code);
+
+            Assert.IsInstanceOfType(@class.Members[0], typeof(GDVariableDeclaration));
+            GDVariableDeclaration array1 = @class.Members[0] as GDVariableDeclaration;
+
+            Assert.IsInstanceOfType(array1.Type, typeof(GDArrayTypeNode));
+            GDArrayTypeNode array1Type = array1.Type as GDArrayTypeNode;
+
+            Assert.IsInstanceOfType(array1Type.InnerType, typeof(GDSingleTypeNode));
+            Assert.IsTrue(((GDSingleTypeNode)array1Type.InnerType).Type.IsInt);
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
@@ -2954,6 +2963,69 @@ b
                 Assert.IsNotNull(node.Value);
                 Assert.IsInstanceOfType(node.Value, typeof(GDNumberExpression));
             }
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+
+        [TestMethod]
+        public void ParseTypedDictionaryTest()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+var dict1: Dictionary
+var dict2: Dictionary[ String , float ]
+var dict3: Dictionary[ int , bool ] = {
+	1 : true,
+	2 : false,
+	3 : false
+}";
+
+            var @class = reader.ParseFileContent(code);
+
+            GDVariableDeclaration dictVar;
+            GDDictionaryTypeNode dictType;
+
+            Assert.IsInstanceOfType(@class.Members[0], typeof(GDVariableDeclaration));
+            dictVar = @class.Members[0] as GDVariableDeclaration;
+
+            Assert.IsInstanceOfType(dictVar.Type, typeof(GDSingleTypeNode));
+            Assert.IsTrue(((GDSingleTypeNode)dictVar.Type).Type.IsDictionary);
+
+            Assert.IsInstanceOfType(@class.Members[1], typeof(GDVariableDeclaration));
+            dictVar = @class.Members[1] as GDVariableDeclaration;
+
+            Assert.IsInstanceOfType(dictVar.Type, typeof(GDDictionaryTypeNode));
+            dictType = dictVar.Type as GDDictionaryTypeNode;
+
+            Assert.IsNotNull(dictType.KeyType);
+            Assert.IsNotNull(dictType.ValueType);
+
+            Assert.IsInstanceOfType(dictType.KeyType, typeof(GDSingleTypeNode));
+            Assert.IsTrue(((GDSingleTypeNode)dictType.KeyType).Type.Sequence.Equals("String"));
+
+            Assert.IsInstanceOfType(dictType.ValueType, typeof(GDSingleTypeNode));
+            Assert.IsTrue(((GDSingleTypeNode)dictType.ValueType).Type.IsFloat);
+
+            Assert.IsInstanceOfType(@class.Members[2], typeof(GDVariableDeclaration));
+            dictVar = @class.Members[2] as GDVariableDeclaration;
+
+            Assert.IsInstanceOfType(dictVar.Type, typeof(GDDictionaryTypeNode));
+            dictType = dictVar.Type as GDDictionaryTypeNode;
+
+            Assert.IsNotNull(dictType.KeyType);
+            Assert.IsNotNull(dictType.ValueType);
+
+            Assert.IsInstanceOfType(dictType.KeyType, typeof(GDSingleTypeNode));
+            Assert.IsTrue(((GDSingleTypeNode)dictType.KeyType).Type.IsInt);
+
+            Assert.IsInstanceOfType(dictType.ValueType, typeof(GDSingleTypeNode));
+            Assert.IsTrue(((GDSingleTypeNode)dictType.ValueType).Type.IsBool);
+
+            Assert.IsInstanceOfType(dictVar.Initializer, typeof(GDDictionaryInitializerExpression));
+            Assert.AreEqual(3, ((GDDictionaryInitializerExpression)dictVar.Initializer).KeyValues.Count);
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
