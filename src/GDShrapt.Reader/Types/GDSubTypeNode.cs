@@ -44,7 +44,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDArrayTypeNode();
+            return new GDSubTypeNode();
         }
 
         internal override void Visit(IGDVisitor visitor)
