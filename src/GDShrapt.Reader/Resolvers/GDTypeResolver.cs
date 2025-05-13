@@ -69,6 +69,32 @@ namespace GDShrapt.Reader
                         _type = null;
                         return;
                     }
+                    else if (_type.IsDictionary)
+                    {
+                        var dictionaryTypeNode = new GDDictionaryTypeNode();
+
+                        state.Pop();
+
+                        Owner.HandleReceivedToken(dictionaryTypeNode);
+
+                        state.Push(dictionaryTypeNode);
+
+                        var sequence = _type.Sequence;
+                        for (int i = 0; i < sequence.Length; i++)
+                            state.PassChar(sequence[i]);
+
+                        if (_space != null)
+                        {
+                            for (int i = 0; i < _space.Sequence.Length; i++)
+                                state.PassChar(_space.Sequence[i]);
+
+                            _space = null;
+                        }
+
+                        state.PassChar(c);
+                        _type = null;
+                        return;
+                    }
                     else
                     {
                         Owner.HandleReceivedToken(new GDSingleTypeNode() { Type = _type });

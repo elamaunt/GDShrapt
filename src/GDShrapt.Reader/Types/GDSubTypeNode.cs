@@ -6,7 +6,7 @@
         ITokenOrSkipReceiver<GDType>
     {
         public override bool IsArray => false;
-        public override GDTypeNode SubType => null;
+        public override bool IsDictionary => false;
         public GDTypeNode OverType
         {
             get => _form.Token0;

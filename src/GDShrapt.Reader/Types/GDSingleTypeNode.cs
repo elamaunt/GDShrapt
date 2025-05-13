@@ -3,9 +3,9 @@
     public class GDSingleTypeNode : GDTypeNode,
         ITokenOrSkipReceiver<GDType>
     {
-        public override GDTypeNode SubType => null;
         public override bool IsArray => Type?.IsArray ?? false;
-       
+        public override bool IsDictionary => Type?.IsDictionary ?? false;
+
         public GDType Type
         {
             get => _form.Token0;
