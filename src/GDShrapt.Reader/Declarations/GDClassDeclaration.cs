@@ -39,6 +39,7 @@ namespace GDShrapt.Reader
 
         public IEnumerable<GDVariableDeclaration> Variables => Members.OfType<GDVariableDeclaration>();
         public IEnumerable<GDMethodDeclaration> Methods => Members.OfType<GDMethodDeclaration>();
+        public IEnumerable<GDSignalDeclaration> Signals => Members.OfType<GDSignalDeclaration>();
         public IEnumerable<GDEnumDeclaration> Enums => Members.OfType<GDEnumDeclaration>();
         public IEnumerable<GDInnerClassDeclaration> InnerClasses => Members.OfType<GDInnerClassDeclaration>();
         public IEnumerable<GDIdentifiableClassMember> IdentifiableMembers => Members.OfType<GDIdentifiableClassMember>();
