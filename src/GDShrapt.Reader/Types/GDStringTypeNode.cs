@@ -29,7 +29,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDSingleTypeNode();
+            return new GDStringTypeNode();
         }
 
         internal override void HandleChar(char c, GDReadingState state)

@@ -60,7 +60,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDGetNodeExpression();
+            return new GDGetUniqueNodeExpression();
         }
 
         internal override void Visit(IGDVisitor visitor)

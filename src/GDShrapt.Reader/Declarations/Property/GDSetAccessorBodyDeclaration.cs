@@ -80,7 +80,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDGetAccessorMethodDeclaration();
+            return new GDSetAccessorBodyDeclaration();
         }
 
         internal override void Visit(IGDVisitor visitor)
