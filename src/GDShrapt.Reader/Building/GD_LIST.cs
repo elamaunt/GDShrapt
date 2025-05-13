@@ -131,7 +131,7 @@ namespace GDShrapt.Reader
 
                 bool previousMemberIsAttribute = false;
                 bool currentMemberIsAttribute = false;
-                bool isCustomAttribute = false;
+                //bool isCustomAttribute = false;
                 bool isNotAttributeMet = false;
 
 
