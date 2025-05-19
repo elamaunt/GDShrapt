@@ -789,6 +789,7 @@ else:
             AssertHelper.NoInvalidTokens(statement);
         }
 
+
         [TestMethod]
         public void StringTest()
         {
@@ -3031,6 +3032,32 @@ var dict3: Dictionary[ int , bool ] = {
             AssertHelper.NoInvalidTokens(@class);
         }
 
+
+        [TestMethod]
+        public void ParseTypedDictionaryTest2()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+@export var typed_key_value: Dictionary[int, String ] = { 1: ""first value"", 2: ""second value"", 3: ""etc"" }
+@export var typed_key: Dictionary[ int, Variant] = { 0: ""any value"", 10: 3.14, 100: null }
+@export var typed_value: Dictionary [ Variant , int ] = { ""any value"": 0, 123: 456, null: -1 }";
+
+            var @class = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(@class);
+
+            var types = @class.AllNodes.OfType<GDDictionaryTypeNode>();
+            
+            types.Select(x => x.ToString()).Should().BeEquivalentTo(new[] {
+                "Dictionary[int, String ]",
+                "Dictionary[ int, Variant]",
+                "Dictionary [ Variant , int ]"
+            });
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
 
         [TestMethod]
         public void ParseAttributesTest()
