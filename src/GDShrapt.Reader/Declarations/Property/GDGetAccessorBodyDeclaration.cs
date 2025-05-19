@@ -55,7 +55,7 @@
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDGetAccessorMethodDeclaration();
+            return new GDGetAccessorBodyDeclaration();
         }
 
         internal override void Visit(IGDVisitor visitor)
