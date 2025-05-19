@@ -6,7 +6,7 @@
 
         public override GDSyntaxToken Clone()
         {
-            return new GDAwaitKeyword();
+            return new GDArrayKeyword();
         }
     }
 }

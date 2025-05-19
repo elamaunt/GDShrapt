@@ -389,15 +389,25 @@
 
         public virtual void Left(GDSingleTypeNode t)
         {
-            // Nothing
-        }
+			// Nothing
+		}
 
-        public virtual void Visit(GDArrayTypeNode t)
+		public virtual void Visit(GDArrayTypeNode t)
+		{
+			// Nothing
+		}
+
+        public virtual void Visit(GDDictionaryTypeNode t)
         {
             // Nothing
         }
 
         public virtual void Left(GDArrayTypeNode t)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDDictionaryTypeNode t)
         {
             // Nothing
         }

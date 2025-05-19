@@ -1,15 +1,21 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GDShrapt.Reader
 {
-    public class GDArrayTypeNode : GDTypeNode, 
-        ITokenOrSkipReceiver<GDArrayKeyword>,
+    public class GDDictionaryTypeNode : GDTypeNode,
+        ITokenOrSkipReceiver<GDDictionaryKeyword>,
         ITokenOrSkipReceiver<GDSquareOpenBracket>,
+        ITokenOrSkipReceiver<GDComma>,
         ITokenOrSkipReceiver<GDSquareCloseBracket>,
         ITokenOrSkipReceiver<GDTypeNode>
     {
-        public override bool IsArray => true;
-        public override bool IsDictionary => false;
+        public override bool IsArray => false;
 
-        public GDArrayKeyword ArrayKeyword
+        public override bool IsDictionary => true;
+
+        public GDDictionaryKeyword DictionaryKeyword
         {
             get => _form.Token0;
             set => _form.Token0 = value;
@@ -21,39 +27,53 @@
             set => _form.Token1 = value;
         }
 
-        public GDTypeNode InnerType
+        public GDTypeNode KeyType
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
 
-        public GDSquareCloseBracket SquareCloseBracket
+        public GDComma Comma
         {
             get => _form.Token3;
             set => _form.Token3 = value;
         }
 
+        public GDTypeNode ValueType
+        {
+            get => _form.Token4;
+            set => _form.Token4 = value;
+        }
+
+        public GDSquareCloseBracket SquareCloseBracket
+        {
+            get => _form.Token5;
+            set => _form.Token5 = value;
+        }
+
         public enum State
         {
-            Array,
+            Dictionary,
             SquareOpenBracket,
-            InnerType,
+            KeyType,
+            Comma,
+            ValueType,
             SquareCloseBracket,
             Completed
         }
 
-        readonly GDTokensForm<State, GDArrayKeyword, GDSquareOpenBracket, GDTypeNode, GDSquareCloseBracket> _form;
+        readonly GDTokensForm<State, GDDictionaryKeyword, GDSquareOpenBracket, GDTypeNode, GDComma, GDTypeNode, GDSquareCloseBracket> _form;
         public override GDTokensForm Form => _form;
-        public GDTokensForm<State, GDArrayKeyword, GDSquareOpenBracket, GDTypeNode, GDSquareCloseBracket> TypedForm => _form;
+        public GDTokensForm<State, GDDictionaryKeyword, GDSquareOpenBracket, GDTypeNode, GDComma, GDTypeNode, GDSquareCloseBracket> TypedForm => _form;
 
-        public GDArrayTypeNode()
+        public GDDictionaryTypeNode()
         {
-            _form = new GDTokensForm<State, GDArrayKeyword, GDSquareOpenBracket, GDTypeNode, GDSquareCloseBracket>(this);
+            _form = new GDTokensForm<State, GDDictionaryKeyword, GDSquareOpenBracket, GDTypeNode, GDComma, GDTypeNode, GDSquareCloseBracket>(this);
         }
 
         public override GDNode CreateEmptyInstance()
         {
-            return new GDArrayTypeNode();
+            return new GDDictionaryTypeNode();
         }
 
         internal override void Visit(IGDVisitor visitor)
@@ -70,15 +90,23 @@
         {
             switch (_form.State)
             {
-                case State.Array:
+                case State.Dictionary:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveKeyword<GDArrayKeyword>(c, state);
+                        this.ResolveKeyword<GDDictionaryKeyword>(c, state);
                     break;
                 case State.SquareOpenBracket:
                     if (!this.ResolveSpaceToken(c, state))
                         this.ResolveSquareOpenBracket(c, state);
                     break;
-                case State.InnerType:
+                case State.KeyType:
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveType(c, state);
+                    break;
+                case State.Comma:
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveComma(c, state);
+                    break;
+                case State.ValueType:
                     if (!this.ResolveSpaceToken(c, state))
                         this.ResolveType(c, state);
                     break;
@@ -98,21 +126,21 @@
             state.PopAndPassNewLine();
         }
 
-        void ITokenReceiver<GDArrayKeyword>.HandleReceivedToken(GDArrayKeyword token)
+        void ITokenReceiver<GDDictionaryKeyword>.HandleReceivedToken(GDDictionaryKeyword token)
         {
-            if (_form.State == State.Array)
+            if (_form.State == State.Dictionary)
             {
                 _form.State = State.SquareOpenBracket;
-                ArrayKeyword = token;
+                DictionaryKeyword = token;
                 return;
             }
 
             throw new GDInvalidStateException();
         }
 
-        void ITokenSkipReceiver<GDArrayKeyword>.HandleReceivedTokenSkip()
+        void ITokenSkipReceiver<GDDictionaryKeyword>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.Array)
+            if (_form.State == State.Dictionary)
             {
                 _form.State = State.SquareOpenBracket;
                 return;
@@ -125,7 +153,7 @@
         {
             if (_form.IsOrLowerState(State.SquareOpenBracket))
             {
-                _form.State = State.InnerType;
+                _form.State = State.KeyType;
                 SquareOpenBracket = token;
                 return;
             }
@@ -137,7 +165,7 @@
         {
             if (_form.IsOrLowerState(State.SquareOpenBracket))
             {
-                _form.State = State.InnerType;
+                _form.State = State.KeyType;
                 return;
             }
 
@@ -146,10 +174,16 @@
 
         void ITokenReceiver<GDTypeNode>.HandleReceivedToken(GDTypeNode token)
         {
-            if (_form.State == State.InnerType)
+            if (_form.State == State.KeyType)
+            {
+                _form.State = State.Comma;
+                KeyType = token;
+                return;
+            }
+            else if (_form.State == State.ValueType)
             {
                 _form.State = State.SquareCloseBracket;
-                InnerType = token;
+                ValueType = token;
                 return;
             }
 
@@ -158,9 +192,37 @@
 
         void ITokenSkipReceiver<GDTypeNode>.HandleReceivedTokenSkip()
         {
-            if (_form.State == State.InnerType)
+            if (_form.State == State.KeyType)
+            {
+                _form.State = State.Comma;
+                return;
+            }
+            else if (_form.State == State.ValueType)
             {
                 _form.State = State.SquareCloseBracket;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDComma>.HandleReceivedToken(GDComma token)
+        {
+            if (_form.IsOrLowerState(State.SquareCloseBracket))
+            {
+                _form.State = State.ValueType;
+                Comma = token;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDComma>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.SquareCloseBracket))
+            {
+                _form.State = State.ValueType;
                 return;
             }
 
@@ -192,7 +254,7 @@
 
         public override string BuildName()
         {
-            return $"Array[{InnerType?.BuildName()}]";
+            return $"Dictionary[{KeyType?.BuildName()},{ValueType?.BuildName()}]";
         }
     }
 }

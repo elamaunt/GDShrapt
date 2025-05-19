@@ -3,8 +3,8 @@
     public class GDStringTypeNode : GDTypeNode,
         ITokenOrSkipReceiver<GDStringNode>
     {
-        public override GDTypeNode SubType => null;
         public override bool IsArray => false;
+        public override bool IsDictionary => false;
 
         public GDStringNode Path
         {

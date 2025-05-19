@@ -45,6 +45,7 @@
         void Visit(GDSetAccessorMethodDeclaration d);
         void Visit(GDSingleTypeNode type);
         void Visit(GDArrayTypeNode type);
+        void Visit(GDDictionaryTypeNode type);
         void Visit(GDGetAccessorMethodDeclaration d);
 
         void Left(GDWhileStatement s);
@@ -85,6 +86,7 @@
         void Left(GDSetAccessorMethodDeclaration d);
         void Left(GDSingleTypeNode type);
         void Left(GDArrayTypeNode type);
+        void Left(GDDictionaryTypeNode type);
         void Left(GDGetAccessorMethodDeclaration d);
 
         void EnterListChild(GDNode node);
