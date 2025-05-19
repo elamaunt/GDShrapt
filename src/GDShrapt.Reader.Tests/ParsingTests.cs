@@ -20,6 +20,7 @@ extends ResourceFormatSaver
 
 const HTerrainData = preload(""./ hterrain_data.gd"")
 
+signal on_save
 
 func get_recognized_extensions(res):
 	if res != null and res is HTerrainData:
@@ -33,6 +34,7 @@ func recognize(res):
 
 func save(path, resource, flags):
 	resource.save_data(path.get_base_dir())
+    on_save.emit();
 ";
 
             var @class = reader.ParseFileContent(code);
@@ -43,12 +45,13 @@ func save(path, resource, flags):
             Assert.AreEqual(true, @class.IsTool);
 
             Assert.AreEqual(3, @class.Attributes.Count());
-            Assert.AreEqual(7, @class.Members.Count);
+            Assert.AreEqual(8, @class.Members.Count);
             Assert.AreEqual(1, @class.Variables.Count());
             Assert.AreEqual(3, @class.Methods.Count());
+            Assert.AreEqual(1, @class.Signals.Count());
             Assert.AreEqual(2, @class.Methods.ElementAt(0).Statements.Count);
             Assert.AreEqual(1, @class.Methods.ElementAt(1).Statements.Count);
-            Assert.AreEqual(1, @class.Methods.ElementAt(2).Statements.Count);
+            Assert.AreEqual(2, @class.Methods.ElementAt(2).Statements.Count);
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
