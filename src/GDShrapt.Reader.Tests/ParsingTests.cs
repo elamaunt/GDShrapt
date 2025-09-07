@@ -1132,36 +1132,36 @@ var node = get_node(node_path)
 
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
-		}
+        }
 
-		[TestMethod]
-		public void EnumTest2()
-		{
-			var reader = new GDScriptReader();
+        [TestMethod]
+        public void EnumTest2()
+        {
+            var reader = new GDScriptReader();
 
-			var code = @"enum {a,b,c = 10}";
+            var code = @"enum {a,b,c = 10}";
 
-			var classDeclaration = reader.ParseFileContent(code);
+            var classDeclaration = reader.ParseFileContent(code);
 
-			Assert.IsNotNull(classDeclaration);
-			Assert.AreEqual(1, classDeclaration.Members.Count);
-			Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDEnumDeclaration));
+            Assert.IsNotNull(classDeclaration);
+            Assert.AreEqual(1, classDeclaration.Members.Count);
+            Assert.IsInstanceOfType(classDeclaration.Members[0], typeof(GDEnumDeclaration));
 
-			var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members[0];
+            var enumDeclaration = (GDEnumDeclaration)classDeclaration.Members[0];
 
-			Assert.IsNull(enumDeclaration.Identifier);
-			Assert.AreEqual(3, enumDeclaration.Values.Count);
+            Assert.IsNull(enumDeclaration.Identifier);
+            Assert.AreEqual(3, enumDeclaration.Values.Count);
 
-			Assert.AreEqual("a", enumDeclaration.Values[0].Identifier?.ToString());
-			Assert.AreEqual("b", enumDeclaration.Values[1].Identifier?.ToString());
-			Assert.AreEqual("c", enumDeclaration.Values[2].Identifier?.ToString());
+            Assert.AreEqual("a", enumDeclaration.Values[0].Identifier?.ToString());
+            Assert.AreEqual("b", enumDeclaration.Values[1].Identifier?.ToString());
+            Assert.AreEqual("c", enumDeclaration.Values[2].Identifier?.ToString());
 
-			Assert.IsNull(enumDeclaration.Values[0].Value);
-			Assert.IsNull(enumDeclaration.Values[1].Value);
-			Assert.IsNotNull(enumDeclaration.Values[2].Value);
+            Assert.IsNull(enumDeclaration.Values[0].Value);
+            Assert.IsNull(enumDeclaration.Values[1].Value);
+            Assert.IsNotNull(enumDeclaration.Values[2].Value);
 
-			AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
-			AssertHelper.NoInvalidTokens(classDeclaration);
+            AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
+            AssertHelper.NoInvalidTokens(classDeclaration);
         }
 
         [TestMethod]
@@ -1784,57 +1784,57 @@ c
             AssertHelper.NoInvalidTokens(expression);
         }
 
-		[TestMethod]
-		public void BaseMethodCallTest()
-		{
-			var reader = new GDScriptReader();
+        [TestMethod]
+        public void BaseMethodCallTest()
+        {
+            var reader = new GDScriptReader();
 
-			var code = @"func _init(res : string = ""Hello world"").(res) -> void:
+            var code = @"func _init(res : string = ""Hello world"").(res) -> void:
 	._init(""1234"");
     pass";
 
-			var @class = reader.ParseFileContent(code);
+            var @class = reader.ParseFileContent(code);
 
-			Assert.IsNotNull(@class);
-			Assert.AreEqual(1, @class.Methods.Count());
+            Assert.IsNotNull(@class);
+            Assert.AreEqual(1, @class.Methods.Count());
 
-			var method = @class.Methods.First();
-			Assert.IsNotNull(method);
+            var method = @class.Methods.First();
+            Assert.IsNotNull(method);
 
-			Assert.IsTrue((method.ReturnType as GDSingleTypeNode).Type.IsVoid);
-			Assert.AreEqual("_init", method.Identifier.Sequence);
-			Assert.AreEqual(1, method.Parameters.Count);
-			Assert.AreEqual(1, method.BaseCallParameters.Count);
+            Assert.IsTrue((method.ReturnType as GDSingleTypeNode).Type.IsVoid);
+            Assert.AreEqual("_init", method.Identifier.Sequence);
+            Assert.AreEqual(1, method.Parameters.Count);
+            Assert.AreEqual(1, method.BaseCallParameters.Count);
 
-			var parameter = method.Parameters[0];
-			Assert.IsNotNull(parameter);
+            var parameter = method.Parameters[0];
+            Assert.IsNotNull(parameter);
 
-			Assert.AreEqual("res", parameter.Identifier.Sequence);
-			Assert.AreEqual("string", (parameter.Type as GDSingleTypeNode)?.Type?.Sequence);
-			Assert.AreEqual("\"Hello world\"", parameter.DefaultValue.ToString());
+            Assert.AreEqual("res", parameter.Identifier.Sequence);
+            Assert.AreEqual("string", (parameter.Type as GDSingleTypeNode)?.Type?.Sequence);
+            Assert.AreEqual("\"Hello world\"", parameter.DefaultValue.ToString());
 
-			var baseCallParameter = method.BaseCallParameters[0];
+            var baseCallParameter = method.BaseCallParameters[0];
 
-			Assert.AreEqual("res", baseCallParameter.ToString());
+            Assert.AreEqual("res", baseCallParameter.ToString());
 
-			Assert.AreEqual(2, method.Statements.Count);
+            Assert.AreEqual(2, method.Statements.Count);
 
-			var callStatement = method.Statements[0].CastOrAssert<GDExpressionStatement>();
+            var callStatement = method.Statements[0].CastOrAssert<GDExpressionStatement>();
 
-			Assert.IsInstanceOfType(callStatement.Tokens.Last(), typeof(GDSemiColon));
+            Assert.IsInstanceOfType(callStatement.Tokens.Last(), typeof(GDSemiColon));
 
-			var callExpression = callStatement.Expression.CastOrAssert<GDCallExpression>();
+            var callExpression = callStatement.Expression.CastOrAssert<GDCallExpression>();
 
-			Assert.AreEqual("._init", callExpression.CallerExpression.ToString());
-			Assert.AreEqual("\"1234\"", callExpression.Parameters.ToString());
+            Assert.AreEqual("._init", callExpression.CallerExpression.ToString());
+            Assert.AreEqual("\"1234\"", callExpression.Parameters.ToString());
 
-			var passStatement = method.Statements[1].CastOrAssert<GDExpressionStatement>().Expression.CastOrAssert<GDPassExpression>();
+            var passStatement = method.Statements[1].CastOrAssert<GDExpressionStatement>().Expression.CastOrAssert<GDPassExpression>();
 
-			Assert.IsNotNull(passStatement);
-			Assert.AreEqual(1, passStatement.Tokens.Count());
+            Assert.IsNotNull(passStatement);
+            Assert.AreEqual(1, passStatement.Tokens.Count());
 
-			AssertHelper.CompareCodeStrings(code, @class.ToString());
-			AssertHelper.NoInvalidTokens(@class);
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
         }
 
         [TestMethod]
@@ -1909,7 +1909,7 @@ string
             var method = @class.Methods.First();
             Assert.IsNotNull(method);
 
-           
+
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
@@ -3051,7 +3051,7 @@ var dict3: Dictionary[ int , bool ] = {
             Assert.IsNotNull(@class);
 
             var types = @class.AllNodes.OfType<GDDictionaryTypeNode>();
-            
+
             types.Select(x => x.ToString()).Should().BeEquivalentTo(new[] {
                 "Dictionary[int, String ]",
                 "Dictionary[ int, Variant]",
@@ -3295,6 +3295,26 @@ func _process(delta):
                      extends Node
 	                 func _ready():
 	                 	result = yield(self, ""translation_ready"") #System.InvalidOperationException: Operation is not valid due to the current state of the object.";
+
+            var @class = reader.ParseFileContent(code);
+
+            AssertHelper.CompareCodeStrings(code, @class.ToString());
+            AssertHelper.NoInvalidTokens(@class);
+        }
+
+        [TestMethod]
+        public void ParseGetWithoutSet()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"
+                    class_name TestState
+
+                    var _val: int = 0
+
+                    var val: int:
+	                    get: return _val
+	                    # set(value): _val = value";
 
             var @class = reader.ParseFileContent(code);
 

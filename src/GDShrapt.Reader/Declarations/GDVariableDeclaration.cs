@@ -466,7 +466,7 @@
                 return;
             }
 
-            if (_form.State == State.SecondAccessorDeclarationNode)
+            if (_form.IsOrLowerState(State.SecondAccessorDeclarationNode))
             {
                 _form.State = State.Completed;
                 return;
