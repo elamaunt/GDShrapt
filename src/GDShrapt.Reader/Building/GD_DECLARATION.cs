@@ -559,6 +559,73 @@ namespace GDShrapt.Reader
                 [7] = Syntax.Space(),
                 Initializer = initializer
             };
+
+            public static GDEnumDeclaration Enum() => new GDEnumDeclaration();
+            public static GDEnumDeclaration Enum(Func<GDEnumDeclaration, GDEnumDeclaration> setup) => setup(new GDEnumDeclaration());
+            public static GDEnumDeclaration Enum(params GDSyntaxToken[] unsafeTokens) => new GDEnumDeclaration() { FormTokensSetter = unsafeTokens };
+            public static GDEnumDeclaration Enum(string name, params GDEnumValueDeclaration[] values) => new GDEnumDeclaration()
+            {
+                EnumKeyword = new GDEnumKeyword(),
+                [1] = Syntax.Space(),
+                Identifier = Syntax.Identifier(name),
+                [2] = Syntax.Space(),
+                FigureOpenBracket = new GDFigureOpenBracket(),
+                Values = List.EnumValues(values),
+                FigureCloseBracket = new GDFigureCloseBracket()
+            };
+
+            public static GDEnumDeclaration Enum(GDIdentifier identifier, params GDEnumValueDeclaration[] values) => new GDEnumDeclaration()
+            {
+                EnumKeyword = new GDEnumKeyword(),
+                [1] = Syntax.Space(),
+                Identifier = identifier,
+                [2] = Syntax.Space(),
+                FigureOpenBracket = new GDFigureOpenBracket(),
+                Values = List.EnumValues(values),
+                FigureCloseBracket = new GDFigureCloseBracket()
+            };
+
+            public static GDEnumDeclaration Enum(GDIdentifier identifier, GDEnumValuesList values) => new GDEnumDeclaration()
+            {
+                EnumKeyword = new GDEnumKeyword(),
+                [1] = Syntax.Space(),
+                Identifier = identifier,
+                [2] = Syntax.Space(),
+                FigureOpenBracket = new GDFigureOpenBracket(),
+                Values = values,
+                FigureCloseBracket = new GDFigureCloseBracket()
+            };
+
+            public static GDEnumValueDeclaration EnumValue() => new GDEnumValueDeclaration();
+            public static GDEnumValueDeclaration EnumValue(Func<GDEnumValueDeclaration, GDEnumValueDeclaration> setup) => setup(new GDEnumValueDeclaration());
+            public static GDEnumValueDeclaration EnumValue(params GDSyntaxToken[] unsafeTokens) => new GDEnumValueDeclaration() { FormTokensSetter = unsafeTokens };
+            public static GDEnumValueDeclaration EnumValue(string name) => new GDEnumValueDeclaration()
+            {
+                Identifier = Syntax.Identifier(name)
+            };
+
+            public static GDEnumValueDeclaration EnumValue(GDIdentifier identifier) => new GDEnumValueDeclaration()
+            {
+                Identifier = identifier
+            };
+
+            public static GDEnumValueDeclaration EnumValue(string name, GDExpression value) => new GDEnumValueDeclaration()
+            {
+                Identifier = Syntax.Identifier(name),
+                [1] = Syntax.Space(),
+                Assign = new GDAssign(),
+                [2] = Syntax.Space(),
+                Value = value
+            };
+
+            public static GDEnumValueDeclaration EnumValue(GDIdentifier identifier, GDExpression value) => new GDEnumValueDeclaration()
+            {
+                Identifier = identifier,
+                [1] = Syntax.Space(),
+                Assign = new GDAssign(),
+                [2] = Syntax.Space(),
+                Value = value
+            };
         }
     }
 }

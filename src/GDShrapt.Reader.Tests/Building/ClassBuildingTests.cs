@@ -1,12 +1,15 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Reader.Tests
+namespace GDShrapt.Reader.Tests.Building
 {
+    /// <summary>
+    /// Tests for building class declarations programmatically.
+    /// </summary>
     [TestClass]
-    public class BuildingTests
+    public class ClassBuildingTests
     {
         [TestMethod]
-        public void ClassBuildingTest()
+        public void BuildClass_WithToolAndMethod()
         {
             var declaration = GD.Declaration.Class(
                 GD.Atribute.Tool(),
@@ -32,7 +35,7 @@ namespace GDShrapt.Reader.Tests
         }
 
         [TestMethod]
-        public void CustomStyleTest()
+        public void BuildClass_WithFluentStyle()
         {
             var declaration = GD.Declaration.Class()
                 .AddMembers(x => x
@@ -74,7 +77,7 @@ namespace GDShrapt.Reader.Tests
         }
 
         [TestMethod]
-        public void CustomStyleTest2()
+        public void BuildClass_WithTokenStyle()
         {
             var declaration = GD.Declaration.Class(
                 GD.Atribute.Tool(),

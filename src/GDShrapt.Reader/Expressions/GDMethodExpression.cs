@@ -411,7 +411,9 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.Expression))
             {
-                _form.State = State.Statements;
+                // Inline lambda (func(x): expr) is complete after receiving expression
+                // Multi-line lambdas transition to Statements via HandleNewLineChar
+                _form.State = State.Completed;
                 Expression = token;
                 return;
             }

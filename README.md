@@ -1,341 +1,311 @@
 # GDShrapt
 
-GDShrapt is an object-oriented one-pass parser of GDScript 2.0. Now the main goal is a production-ready parser, lexical analyzer. 
-The project written in C# and free to use. 
-GDScript is the main language of [Godot Engine](https://github.com/godotengine/godot)
+[![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**The project is created on personal initiative and on enthusiasm.**
+**GDShrapt** is a high-performance, object-oriented one-pass parser for GDScript 2.0 (Godot 4.x). It can build a lexical tree from GDScript code or generate new code programmatically.
 
-## GDShrapt.Reader
+GDScript is the main scripting language of [Godot Engine](https://github.com/godotengine/godot).
 
-GDShrapt.Reader allows to build a lexical tree or generate a new code from scratch.
+## Features
 
-### How to install
+- **Full GDScript 4.x Support** - Lambdas, await, typed arrays/dictionaries, pattern matching, all annotations
+- **AST Validation** - Compiler-style diagnostics with error codes (GD1xxx-GD5xxx)
+- **One-Pass Parsing** - High-performance lexical analysis
+- **Code Generation** - Fluent Building API for creating GDScript code programmatically
+- **Helper Classes** - Convenient utilities for annotations, virtual methods, and expressions
+- **Format Preservation** - Comments and formatting are preserved during parsing
+- **Tree Walking** - Visitor pattern support for AST traversal
 
-Currently the latest **4.4.0-alpha version** from [Nuget](https://www.nuget.org/packages/GDShrapt.Reader).
+## Installation
 
-Installation from Nuget console:
-```
-Install-Package GDShrapt.Reader -Version 4.4.0-alpha
-```
-## Capabilities, plan and what can be parsed
+Install from [NuGet](https://www.nuget.org/packages/GDShrapt.Reader):
 
-| Capability  | Is completed |
-| ------------- | ------------- |
-| One pass parsing | YES |
-| Lexical tree structure | YES |
-| Class declaration parsing | YES |
-| Methods declaration parsing | YES |
-| Enums parsing | YES |
-| Atributes declaration parsing | YES |
-| Variables declaration parsing | YES |
-| Export block parsing | YES |
-| Arrays parsing | YES |
-| Dictionary parsing | YES |
-| 'Match' statement parsing | YES |
-| 'For' statement parsing | YES |
-| 'While' statement parsing | YES |
-| 'If-Elif-Else' statement parsing | YES |
-| 'Yield' statement parsing | YES |
-| Ternar 'If' expression parsing | YES |
-| Signals parsing | YES |
-| Strings parsing | YES |
-| Numbers parsing | YES |
-| Methods calls parsing | YES |
-| Single operators parsing | YES |
-| Dual operators parsing | YES |
-| Static types parsing | YES |
-| Expressions priority sorting | YES |
-| Basic tokenization managment | YES |
-| Save formatting while parsing | YES |
-| Save comments while parsing | YES |
-| Moving from tokens to parent | YES |
-| NodePath and GetNode short syntax parsing | YES |
-| Inner class parsing | YES |
-| Tree walking and node visiting | YES |
-| Syntax cloning | YES |
-| Syntax factory | YES |
-| Syntax errors managment and properly handling | IN PLAN |
-| Code formatting | IN PLAN |
-| Custom formatter | IN PLAN |
-| Tree diff tool | IN PLAN |
-
-## Last updates
-
-#### 4.4.0-alpha
-Added typed Dictionaries support (thanks to dougVanny).
-Some QoL updates and bugfixes.
-
-#### 4.3.2-alpha
-Fixed line breaks inside brackets, enums, dictionaries, arrays. Fixed comments parsing inside brackets.
-
-#### 4.3.1-alpha
-Fixed ovewflows.
-Fixed dictionary parsing if it contains invalid characters.
-Fixed multiline string parsing if it starts with new line character.
-Fixed some cases in expression and statements resolving.
-Fixed yield expression.
-
-## Reading samples
-
-### Parse class
-
-GDScript input:
-
-```gdscript
-tool
-class_name HTerrainDataSaver
-extends ResourceFormatSaver
-
-const HTerrainData = preload("./ hterrain_data.gd")
-
-
-func get_recognized_extensions(res):
-	if res != null and res is HTerrainData:
-		return PoolStringArray([HTerrainData.META_EXTENSION])
-	return PoolStringArray()
-
-
-func recognize(res):
-	return res is HTerrainData
-
-
-func save(path, resource, flags):
-	resource.save_data(path.get_base_dir())
+```bash
+dotnet add package GDShrapt.Reader
 ```
 
-Parser usage:
+Or via Package Manager Console:
+
+```powershell
+Install-Package GDShrapt.Reader
+```
+
+## Quick Start
+
+### Parsing GDScript
 
 ```csharp
- // Initialize a reader instance
- var reader = new GDScriptReader();
- 
- // Parse the raw code
- var @class = reader.ParseFileContent(code); // returns instance of type GDClassDeclaration 
- 
- // Get 'extends' atribute information
- Console.WriteLine(@class.Extends.Type.Sequence); // outputs base class name "ResourceFormatSaver"
- 
- // Get 'class_name' atribute information
- Console.WriteLine(@class.ClassName.Type.Sequence); // outputs current class name "HTerrainDataSaver"
- 
- // Check 'tool' atribute 
- Console.WriteLine(@class.IsTool); // outputs true 
- 
- // Enumerates all class variables
- foreach(GDVariableDeclaration variable in @class.Variables)
- {
-    Console.WriteLine(method.Identifier.Sequence); // outputs variables's name
- }
- 
- // Enumerates all class methods
- foreach(GDMethodDeclaration method in @class.Methods)
- {
-    Console.WriteLine(method.Identifier.Sequence); // outputs method's name
-    
-    // Enumerates all method statements
-    foreach(GDStatement st in method.Statements)
-    {
-        // ... your code
-    }
- }
-```
+using GDShrapt.Reader;
 
-
-### Get comments from GDScript code
-
-```csharp
- var @class = reader.ParseFileContent(code);
- 
- // Add 'using System.Linq;'
- var comments = @class.AllTokens
-                .OfType<GDComment>()
-                .Select(x => x.ToString()) // Convert token to string
-                .ToArray();
-```
-
-## Tree building samples or GDScript runtime generation
-
-GDShrapt supports many styles to simplify a code generation process. Just use the GD static class to create a token or a node. 
-
-### Short style
-
-```csharp
-// Build a custom class. Safe code generation. Dont control a code style
-var declaration = GD.Declaration.Class(
-                GD.List.Atributes(
-                    GD.Atribute.Tool(),
-                    GD.Atribute.ClassName("Generated"),
-                    GD.Atribute.Extends("Node2D")),
-
-                GD.Declaration.Const("my_constant", GD.Expression.String("Hello World")),
-                GD.Declaration.OnreadyVariable("parameter", GD.Expression.True()),
-
-                GD.Declaration.Method("_start",
-                    GD.Expression.Call(GD.Expression.Identifier("print"), GD.Expression.String("Hello world"))
-                    )
-                );
-
-declaration.UpdateIntendation(); // Auto update tabs (recursively)
-
-var code = declaration.ToString(); // Get the string representation
-```
-
-The result is code like:
-
-```gdscript
-tool
-class_name Generated
+var reader = new GDScriptReader();
+var code = @"
 extends Node2D
 
-const my_constant = "Hello World"
+@export var health: int = 100
 
-onready var parameter = true
+func _ready():
+    print(""Hello, Godot 4!"")
+";
 
-func _start():
-	print("Hello world")
+var classDecl = reader.ParseFileContent(code);
+
+// Access class information
+Console.WriteLine(classDecl.Extends?.Type); // "Node2D"
+Console.WriteLine(classDecl.Variables.First().Identifier); // "health"
+Console.WriteLine(classDecl.Methods.First().Identifier); // "_ready"
 ```
 
-### Methods chain style
+### Building GDScript
 
 ```csharp
-// Build a custom class. Full tokens control, but unsafe for exceptions
-var declaration = GD.Declaration.Class()
-                .AddAtributes(x => x
-                    .AddToolAtribute()
-                    .AddNewLine()
-                    .AddClassNameAtribute("Generated")
-                    .AddNewLine()
-                    .AddExtendsAtribute("Node2D"))
-                .AddNewLine()
-                .AddNewLine()
-                .AddMembers(x => x
-                    .AddVariable("a")
-                    .AddNewLine()
-                    .AddConst("message", GD.Expression.String("Hello"))
-                    .AddNewLine()
-                    .AddNewLine()
-                    .AddMethod(x => x
-                        .AddFuncKeyword()
-                        .AddSpace()
-                        .Add("_start")
-                        .AddOpenBracket()
-                        .AddCloseBracket()
-                        .AddStatements(x => x
-                            .AddNewLine()
-                            .AddNewLine()
-                            .AddIntendation()
-                            .AddCall(GD.Expression.Identifier("print"), GD.Expression.String("Hello world"))
-                            .AddNewLine()
-                            .AddNewLine()
-                            .AddIntendation()
-                            .AddPass())));
+using GDShrapt.Reader;
 
-declaration.UpdateIntendation(); // Auto update tabs (recursively)
+var classDecl = GD.Declaration.Class(
+    GD.Atribute.Extends("Node2D"),
+    GD.Atribute.Export(),
+    GD.Declaration.Variable("health", "int", GD.Expression.Number(100)),
+    GD.Declaration.Method(GD.Syntax.Identifier("_ready"),
+        GD.Expression.Call(GD.Expression.Identifier("print"),
+            GD.Expression.String("Hello, Godot 4!")).ToStatement()
+    )
+);
 
-var code = declaration.ToString(); // Get the string representation
+classDecl.UpdateIntendation();
+Console.WriteLine(classDecl.ToString());
 ```
 
-### Tokens list style
+### Using Helper Classes
 
 ```csharp
-// Build a custom class. Full tokens control but unsafe for types
-var declaration = GD.Declaration.Class(
-                GD.List.Atributes(
-                    GD.Atribute.Tool(),
-                    GD.Syntax.NewLine,
-                    GD.Atribute.ClassName("Generated"),
-                    GD.Syntax.NewLine,
-                    GD.Atribute.Extends("Node2D")),
+// Check if a method is a lifecycle callback
+var method = classDecl.Methods.First();
+if (GDSpecialMethodHelper.IsReady(method))
+    Console.WriteLine("This is the _ready method");
 
-                GD.Syntax.NewLine,
-                GD.Syntax.NewLine,
+// Check annotation types
+var attr = variable.AttributesDeclaredBefore.First().Attribute;
+if (GDAnnotationHelper.IsExport(attr))
+    Console.WriteLine("This variable is exported");
 
-                GD.Declaration.Variable(
-                     GD.Keyword.Const,
-                     GD.Syntax.OneSpace,
-                     GD.Syntax.Identifier("my_constant"),
-                     GD.Syntax.OneSpace,
-                     GD.Syntax.Assign,
-                     GD.Syntax.OneSpace,
-                     GD.Syntax.String("Hello World")),
-
-                GD.Syntax.NewLine,
-                GD.Syntax.NewLine,
-
-                GD.Declaration.Variable(
-                    GD.Keyword.Onready,
-                    GD.Syntax.OneSpace,
-                    GD.Keyword.Var,
-                    GD.Syntax.OneSpace,
-                    GD.Syntax.Identifier("parameter"),
-                    GD.Syntax.OneSpace,
-                    GD.Syntax.Assign,
-                    GD.Syntax.OneSpace,
-                    GD.Expression.True()),
-
-                GD.Syntax.NewLine,
-                GD.Syntax.NewLine,
-
-                GD.Declaration.Method(
-                    GD.Keyword.Func,
-                    GD.Syntax.OneSpace,
-                    GD.Syntax.Identifier("_start"),
-                    GD.Syntax.OpenBracket,
-                    GD.Syntax.CloseBracket,
-                    GD.Syntax.Colon,
-
-                    GD.Syntax.NewLine,
-                    GD.Syntax.Intendation(1),
-                    GD.Expression.Call(
-                        GD.Expression.Identifier("print"),
-                        GD.Syntax.OpenBracket,
-                        GD.List.Expressions(GD.Expression.String("Hello world")),
-                        GD.Syntax.CloseBracket)));
-
-var code = declaration.ToString(); // Get the string representation
+// Analyze expressions
+var expr = reader.ParseExpression("preload(\"res://scene.tscn\")") as GDCallExpression;
+if (GDExpressionHelper.IsPreload(expr))
+    Console.WriteLine("This is a preload call");
 ```
 
-### Custom style initialization
+### Validating GDScript
 
 ```csharp
-// The sample of a For statement initizalization with a predefined style. It is how the GD.Statement.For method works.
-// You must know the 'form' to use this format. 
-// For example a code line like "[1] = GD.Syntax.Space()" will insert a space token BEFORE the first static point in the nodes form.
-// In the code below the first point of the For statement is the iterator's variable name.
-public static GDForStatement For(GDIdentifier variable, GDExpression collection, GDExpression body) => new GDForStatement()
-            {
-                ForKeyword = new GDForKeyword(),
-                [1] = GD.Syntax.Space(),
-                Variable = variable,
-                [2] = GD.Syntax.Space(),
-                InKeyword = new GDInKeyword(),
-                [3] = GD.Syntax.Space(),
-                Collection = collection,
-                Colon = new GDColon(),
-                [5] = GD.Syntax.Space(),
-                Expression = body
-            };
+using GDShrapt.Reader;
+
+var reader = new GDScriptReader();
+var code = @"
+func test():
+    break  # Error: break outside loop
+    print(undefined_var)  # Error: undefined variable
+";
+
+var tree = reader.ParseFileContent(code);
+var validator = new GDValidator();
+var result = validator.Validate(tree);
+
+if (!result.IsValid)
+{
+    foreach (var error in result.Errors)
+    {
+        // Output: "error GD5001: 'break' can only be used inside a loop (3:4)"
+        Console.WriteLine(error.ToString());
+    }
+}
 ```
 
-You may use a combination of the styles.
+## Supported GDScript Features
 
-### Calculating properties
+| Feature | Status |
+|---------|--------|
+| Class declarations | Supported |
+| Methods (func, static func) | Supported |
+| Variables (var, const, static var) | Supported |
+| Properties (get/set) | Supported |
+| Signals | Supported |
+| Enums | Supported |
+| Inner classes | Supported |
+| Annotations (@export, @onready, @tool, etc.) | Supported |
+| Typed arrays and dictionaries | Supported |
+| Lambda expressions | Supported |
+| Await expressions | Supported |
+| Pattern matching (match/when) | Supported |
+| All statements (if/elif/else, for, while, match) | Supported |
+| All expressions and operators | Supported |
+| Comments preservation | Supported |
+| GetNode ($) and GetUniqueNode (%) | Supported |
+
+## Validation
+
+The `GDValidator` class provides comprehensive AST validation with compiler-style diagnostics.
+
+### Diagnostic Categories
+
+| Category | Code Range | Description |
+|----------|------------|-------------|
+| Syntax | GD1xxx | Invalid tokens, missing brackets, unexpected tokens |
+| Scope | GD2xxx | Undefined variables, duplicate declarations, undefined functions |
+| Type | GD3xxx | Type mismatches, invalid operand types |
+| Call | GD4xxx | Wrong argument counts, method not found |
+| Control Flow | GD5xxx | break/continue outside loops, return outside functions |
+
+### Validation Options
 
 ```csharp
+var options = new GDValidationOptions
+{
+    CheckSyntax = true,      // GD1xxx errors
+    CheckScope = true,       // GD2xxx errors
+    CheckTypes = true,       // GD3xxx warnings
+    CheckCalls = true,       // GD4xxx errors
+    CheckControlFlow = true  // GD5xxx errors
+};
 
-GDSyntaxToken token = null; // any token
-
-token.StartLine // calculate the start line of the token in the code
-token.EndLine // calculate the end line of the token in the code
-token.Length // calculate the length of the token
-token.StartColumn // calculate the start column in the line
-token.EndColumn // calculate the end column in the line
-token.NewLinesCount // calculate new line characters in the token. 
-
-token.ClassMember // find the nearest class member from parents
-token.MainClassDeclaration // find the main class contains the token
-token.Parents // enumerate all parents of the token
+var result = validator.Validate(tree, options);
 ```
 
-For more samples see the [tests](src/GDShrapt.Reader.Tests/ParsingTests.cs).
+### Working with Results
+
+```csharp
+var result = validator.Validate(tree);
+
+// Check overall status
+if (result.IsValid) { /* No errors */ }
+if (result.HasErrors) { /* Has errors */ }
+if (result.HasWarnings) { /* Has warnings */ }
+
+// Filter by severity
+foreach (var error in result.Errors) { ... }
+foreach (var warning in result.Warnings) { ... }
+
+// Detailed location info
+var diag = result.Diagnostics.First();
+Console.WriteLine(diag.CodeString);        // "GD5001"
+Console.WriteLine(diag.ToString());        // "error GD5001: message (3:4)"
+Console.WriteLine(diag.ToDetailedString()); // "error GD5001 at 3:4-3:9: message"
+```
+
+## Building API Examples
+
+### Creating Annotations
+
+```csharp
+GD.Atribute.Export()                                    // @export
+GD.Atribute.ExportRange(GD.Expression.Number(0),
+                        GD.Expression.Number(100))      // @export_range(0, 100)
+GD.Atribute.Onready()                                   // @onready
+GD.Atribute.ExportGroup("Stats")                        // @export_group("Stats")
+GD.Atribute.Rpc(GD.Expression.String("any_peer"))       // @rpc("any_peer")
+```
+
+### Creating Declarations
+
+```csharp
+// Enum
+GD.Declaration.Enum("State",
+    GD.Declaration.EnumValue("IDLE"),
+    GD.Declaration.EnumValue("RUNNING"),
+    GD.Declaration.EnumValue("JUMPING", GD.Expression.Number(10))
+);
+
+// Signal
+GD.Declaration.Signal("health_changed",
+    GD.Declaration.Parameter("new_health", GD.Syntax.TypeNode("int")));
+```
+
+### Creating Expressions
+
+```csharp
+GD.Expression.GetUniqueNode("Player")                   // %Player
+GD.Expression.GetNode(GD.Syntax.Identifier("Sprite"))   // $Sprite
+GD.Expression.Lambda(GD.Expression.Identifier("x"))     // func(): x
+GD.Expression.Await(GD.Expression.Identifier("signal")) // await(signal)
+```
+
+## API Reference
+
+### Core Classes
+
+- `GDScriptReader` - Main parser class
+- `GDClassDeclaration` - Represents a GDScript file/class
+- `GDMethodDeclaration` - Method declaration
+- `GDVariableDeclaration` - Variable/constant declaration
+- `GDExpression` - Base class for all expressions
+- `GDStatement` - Base class for all statements
+
+### Helper Classes
+
+- `GDAnnotationHelper` - Identify annotation types (@export, @onready, etc.)
+- `GDSpecialMethodHelper` - Identify virtual methods (_ready, _process, etc.)
+- `GDExpressionHelper` - Analyze expressions (preload, print, math functions, etc.)
+
+### Building API
+
+- `GD.Declaration` - Create declarations (Class, Method, Variable, Enum, Signal)
+- `GD.Expression` - Create expressions (Call, Array, Dictionary, Lambda, etc.)
+- `GD.Statement` - Create statements (If, For, While, Match, Return, etc.)
+- `GD.Atribute` - Create annotations (Export, Onready, Tool, etc.)
+- `GD.List` - Create lists (Parameters, Expressions, Statements)
+- `GD.Syntax` - Create syntax tokens (Identifiers, Types, Operators)
+
+### Validation Classes
+
+- `GDValidator` - Main validation class
+- `GDValidationResult` - Collection of diagnostics with filtering
+- `GDDiagnostic` - Single diagnostic with location and message
+- `GDDiagnosticCode` - Enum of all diagnostic codes (GD1001-GD5006)
+- `GDDiagnosticSeverity` - Error, Warning, Hint
+- `GDValidationOptions` - Configure which validators to run
+
+## Examples
+
+For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
+- [ParsingTests.cs](src/GDShrapt.Reader.Tests/ParsingTests.cs) - Parsing examples
+- [BuildingTests.cs](src/GDShrapt.Reader.Tests/BuildingTests.cs) - Code generation examples
+- [HelperTests.cs](src/GDShrapt.Reader.Tests/HelperTests.cs) - Helper classes examples
+- [ValidationTests.cs](src/GDShrapt.Reader.Tests/ValidationTests.cs) - Validation examples
+
+## Changelog
+
+### 5.0.0
+- **NEW: AST Validation System** with compiler-style diagnostics
+  - Syntax validation (GD1xxx): Invalid tokens, missing brackets
+  - Scope validation (GD2xxx): Undefined variables, duplicate declarations
+  - Type validation (GD3xxx): Type mismatches, invalid operands
+  - Call validation (GD4xxx): Wrong argument counts for built-in functions
+  - Control flow validation (GD5xxx): break/continue outside loops, return outside functions
+- Comprehensive test coverage (198 tests)
+
+### 4.5.0
+- Full GDScript 4.x support
+- Fixed property get/set parsing (Issues #10, #11)
+- Added typed dictionaries support (Godot 4.4)
+- Added helper classes: `GDAnnotationHelper`, `GDSpecialMethodHelper`, `GDExpressionHelper`
+- Extended Building API: `GetUniqueNode`, `Enum`, `EnumValue`, Export annotations
+
+### 4.4.0-alpha
+- Added typed Dictionaries support (thanks to dougVanny)
+- Various QoL updates and bugfixes
+
+### 4.3.2-alpha
+- Fixed line breaks inside brackets, enums, dictionaries, arrays
+- Fixed comments parsing inside brackets
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Godot Engine](https://godotengine.org/) team for the amazing game engine
+- All contributors who have helped improve this project

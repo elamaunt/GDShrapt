@@ -70,12 +70,74 @@ namespace GDShrapt.Reader
 
             public static GDCustomAttribute Custom(GDIdentifier identifier) => new GDCustomAttribute()
             {
-                Attribute = new GDAttribute() 
-                { 
+                Attribute = new GDAttribute()
+                {
                     At = new GDAt(),
                     Name = identifier
                 }
             };
+
+            public static GDCustomAttribute Custom(string name, params GDExpression[] parameters) => new GDCustomAttribute()
+            {
+                Attribute = new GDAttribute()
+                {
+                    At = new GDAt(),
+                    Name = Syntax.Identifier(name),
+                    OpenBracket = parameters.Length > 0 ? new GDOpenBracket() : null,
+                    Parameters = List.Expressions(parameters),
+                    CloseBracket = parameters.Length > 0 ? new GDCloseBracket() : null
+                }
+            };
+
+            public static GDCustomAttribute Export() => Custom("export");
+            public static GDCustomAttribute Export(params GDExpression[] parameters) => Custom("export", parameters);
+
+            public static GDCustomAttribute ExportRange(GDExpression min, GDExpression max) => Custom("export_range", min, max);
+            public static GDCustomAttribute ExportRange(GDExpression min, GDExpression max, GDExpression step) => Custom("export_range", min, max, step);
+
+            public static GDCustomAttribute ExportEnum(params GDExpression[] values) => Custom("export_enum", values);
+
+            public static GDCustomAttribute ExportFlags(params GDExpression[] flags) => Custom("export_flags", flags);
+
+            public static GDCustomAttribute ExportFile(string filter = null) => filter != null
+                ? Custom("export_file", Expression.String(filter))
+                : Custom("export_file");
+
+            public static GDCustomAttribute ExportDir() => Custom("export_dir");
+
+            public static GDCustomAttribute ExportMultiline() => Custom("export_multiline");
+
+            public static GDCustomAttribute ExportPlaceholder(string placeholder) => Custom("export_placeholder", Expression.String(placeholder));
+
+            public static GDCustomAttribute ExportColorNoAlpha() => Custom("export_color_no_alpha");
+
+            public static GDCustomAttribute ExportNodePath(params GDExpression[] types) => Custom("export_node_path", types);
+
+            public static GDCustomAttribute ExportGroup(string name, string prefix = null) => prefix != null
+                ? Custom("export_group", Expression.String(name), Expression.String(prefix))
+                : Custom("export_group", Expression.String(name));
+
+            public static GDCustomAttribute ExportSubgroup(string name, string prefix = null) => prefix != null
+                ? Custom("export_subgroup", Expression.String(name), Expression.String(prefix))
+                : Custom("export_subgroup", Expression.String(name));
+
+            public static GDCustomAttribute ExportCategory(string name) => Custom("export_category", Expression.String(name));
+
+            public static GDCustomAttribute Onready() => Custom("onready");
+
+            public static GDCustomAttribute Icon(string path) => Custom("icon", Expression.String(path));
+
+            public static GDCustomAttribute WarningIgnore(params string[] warnings)
+            {
+                var expressions = new GDExpression[warnings.Length];
+                for (int i = 0; i < warnings.Length; i++)
+                    expressions[i] = Expression.String(warnings[i]);
+                return Custom("warning_ignore", expressions);
+            }
+
+            public static GDCustomAttribute Rpc(params GDExpression[] parameters) => Custom("rpc", parameters);
+
+            public static GDCustomAttribute StaticUnload() => Custom("static_unload");
         }
     }
 }

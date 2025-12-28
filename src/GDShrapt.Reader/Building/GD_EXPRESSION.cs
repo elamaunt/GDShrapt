@@ -256,6 +256,55 @@ namespace GDShrapt.Reader
             {
                 DefaultToken = new GDDefaultToken()
             };
+
+            public static GDGetUniqueNodeExpression GetUniqueNode() => new GDGetUniqueNodeExpression();
+            public static GDGetUniqueNodeExpression GetUniqueNode(Func<GDGetUniqueNodeExpression, GDGetUniqueNodeExpression> setup) => setup(new GDGetUniqueNodeExpression());
+            public static GDGetUniqueNodeExpression GetUniqueNode(params GDSyntaxToken[] unsafeTokens) => new GDGetUniqueNodeExpression() { FormTokensSetter = unsafeTokens };
+            public static GDGetUniqueNodeExpression GetUniqueNode(string name) => new GDGetUniqueNodeExpression()
+            {
+                Percent = new GDPercent(),
+                Name = new GDExternalName() { Sequence = name }
+            };
+
+            public static GDGetUniqueNodeExpression GetUniqueNode(GDExternalName name) => new GDGetUniqueNodeExpression()
+            {
+                Percent = new GDPercent(),
+                Name = name
+            };
+
+            public static GDAwaitExpression Await() => new GDAwaitExpression();
+            public static GDAwaitExpression Await(Func<GDAwaitExpression, GDAwaitExpression> setup) => setup(new GDAwaitExpression());
+            public static GDAwaitExpression Await(params GDSyntaxToken[] unsafeTokens) => new GDAwaitExpression() { FormTokensSetter = unsafeTokens };
+            public static GDAwaitExpression Await(GDExpression expression) => new GDAwaitExpression()
+            {
+                AwaitKeyword = new GDAwaitKeyword(),
+                Expression = expression,
+            };
+
+            public static GDMethodExpression Lambda() => new GDMethodExpression();
+            public static GDMethodExpression Lambda(Func<GDMethodExpression, GDMethodExpression> setup) => setup(new GDMethodExpression());
+            public static GDMethodExpression Lambda(params GDSyntaxToken[] unsafeTokens) => new GDMethodExpression() { FormTokensSetter = unsafeTokens };
+            public static GDMethodExpression Lambda(GDParametersList parameters, GDExpression body) => new GDMethodExpression()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket(),
+                [4] = Syntax.Space(),
+                Colon = new GDColon(),
+                [5] = Syntax.Space(),
+                Expression = body
+            };
+
+            public static GDMethodExpression Lambda(GDExpression body) => new GDMethodExpression()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                CloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                [5] = Syntax.Space(),
+                Expression = body
+            };
         }
     }
 }

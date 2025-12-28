@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(git show:*)",
+      "Bash(ls:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dir:*)",
+      "Bash(dotnet run --project src/GDShrapt.Reader.Tests -- -c \"\nusing GDShrapt.Reader;\nusing System;\nusing System.Linq;\n\nvar code = @\"\"\nfunc test\\(\\):\n    break\n\"\";\n\nvar reader = new GDScriptReader\\(\\);\nvar tree = reader.ParseFileContent\\(code\\);\n\n// Print the tree structure\nvoid PrintTree\\(GDNode node, string indent = \"\"\"\"\\)\n{\n    Console.WriteLine\\(indent + node.GetType\\(\\).Name\\);\n    foreach \\(var child in node.Nodes\\)\n    {\n        PrintTree\\(child, indent + \"\"  \"\"\\);\n    }\n}\n\nPrintTree\\(tree\\);\n\")",
+      "Bash(dotnet run --project src/GDShrapt.Reader.Tests -- -c \"\nusing GDShrapt.Reader;\nusing System;\n\nvar reader = new GDScriptReader\\(\\);\nvar code = \"\"! a\"\";\nvar expression = reader.ParseExpression\\(code\\);\nConsole.WriteLine\\(\"\"Expression type: \"\" + expression.GetType\\(\\).Name\\);\nConsole.WriteLine\\(\"\"Expression: \"\" + expression.ToString\\(\\)\\);\n\")",
+      "Bash(find:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet clean:*)"
+    ]
+  }
+}
