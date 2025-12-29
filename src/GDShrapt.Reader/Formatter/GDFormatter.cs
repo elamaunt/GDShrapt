@@ -51,24 +51,23 @@ namespace GDShrapt.Reader
 
         /// <summary>
         /// Registers the default formatting rules.
-        /// Note: Some rules are currently disabled until they can be made idempotent.
         /// </summary>
         private void RegisterDefaultRules()
         {
-            // GDIndentationFormatRule - FIXED: now uses ConvertPattern instead of Update
+            // GDIndentationFormatRule - Uses ConvertPattern for idempotent indentation
             AddRule(new GDIndentationFormatRule());
 
-            // GDBlankLinesFormatRule - DISABLED: causes round-trip issues with inner classes
-            // AddRule(new GDBlankLinesFormatRule());
+            // GDBlankLinesFormatRule - Uses state stack for inner class handling
+            AddRule(new GDBlankLinesFormatRule());
 
-            // GDSpacingFormatRule - DISABLED: spacing with nested expressions not fully idempotent
-            // AddRule(new GDSpacingFormatRule());
+            // GDSpacingFormatRule - Handles operator, colon, comma spacing
+            AddRule(new GDSpacingFormatRule());
 
-            // GDTrailingWhitespaceFormatRule - FIXED: removes trailing spaces from lines
+            // GDTrailingWhitespaceFormatRule - Removes trailing spaces from lines
             // EOF newline handling moved to FormatCode post-processing
             AddRule(new GDTrailingWhitespaceFormatRule());
 
-            // GDNewLineFormatRule - Keep enabled (should be safe)
+            // GDNewLineFormatRule - Placeholder for future line ending rules
             AddRule(new GDNewLineFormatRule());
         }
 

@@ -59,6 +59,13 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 **Validation** (`src/GDShrapt.Reader/Validation/`) - AST validation
 - `GDValidationRule` base class extending `GDVisitor`
 - Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx)
+- `Runtime/` subfolder: Type inference system with external provider support
+
+**Runtime Provider** (`src/GDShrapt.Reader/Validation/Runtime/`) - External type information
+- `IGDRuntimeProvider` - Interface for providing type info from external sources (Godot, custom interpreters)
+- `GDDefaultRuntimeProvider` - Built-in GDScript types (int, float, String, Vector2, etc.) and global functions
+- `GDCachingRuntimeProvider` - Caching wrapper for performance
+- `GDTypeInferenceEngine` - Infers expression types using scope and RuntimeProvider
 
 **Linter** (`src/GDShrapt.Reader/Linter/`) - Style checking
 - `GDLintRule` base class extending `GDVisitor`
@@ -110,3 +117,21 @@ Assertion helpers:
 - GDVisitor doesn't have Visit methods for simple tokens (GDIntendation, GDComma, GDSpace) - iterate through `node.Form` directly
 - Line ending conversion happens as post-processing in formatter (AST normalizes to LF)
 - Token manipulation: `form.AddBeforeToken()`, `form.AddAfterToken()`, `form.Remove()`, `form.PreviousTokenBefore()`, `form.NextTokenAfter()`
+
+## Validation Architecture
+
+The validator uses a two-pass approach in `GDScopeValidator`:
+1. **Collection pass** - Collects class-level declarations (methods, variables, signals, enums) to enable forward references
+2. **Validation pass** - Validates identifier usage, checks for undefined variables, duplicate declarations
+
+Type inference via `GDTypeInferenceEngine`:
+- Uses `IGDRuntimeProvider` for external type information
+- Falls back to `GDDefaultRuntimeProvider` if none provided
+- Scope stack (`GDScopeStack`) tracks declared symbols with their types
+
+Custom runtime providers allow integrating with Godot's actual type system:
+```csharp
+var provider = new GDCachingRuntimeProvider(new MyGodotProvider());
+var options = new GDValidationOptions { RuntimeProvider = provider };
+validator.Validate(tree, options);
+```

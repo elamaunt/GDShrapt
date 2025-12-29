@@ -53,14 +53,8 @@ func _die() -> void:
             var tree = _reader.ParseFileContent(code);
             tree.Should().NotBeNull();
 
-            // Validate (skip scope checking - forward references would be reported as undefined)
-            var validationOptions = new GDValidationOptions
-            {
-                CheckSyntax = true,
-                CheckScope = false, // Forward references not supported yet
-                CheckCalls = true,
-                CheckControlFlow = true
-            };
+            // Skip scope check: code uses Godot methods (queue_free) not in default RuntimeProvider
+            var validationOptions = new GDValidationOptions { CheckScope = false };
             var validationResult = _validator.Validate(tree, validationOptions);
             validationResult.HasErrors.Should().BeFalse(
                 $"Validation errors: {string.Join(", ", validationResult.Errors.Select(e => e.Message))}");
@@ -146,14 +140,8 @@ func take_damage(amount: int) -> void:
             tree.Enums.Should().HaveCount(1);
             tree.Methods.Should().HaveCountGreaterOrEqualTo(7);
 
-            // Validate (skip scope checking - forward references would be reported as undefined)
-            var validationOptions = new GDValidationOptions
-            {
-                CheckSyntax = true,
-                CheckScope = false, // Forward references not supported yet
-                CheckCalls = true,
-                CheckControlFlow = true
-            };
+            // Skip scope check: code uses Godot types (CharacterBody2D, Input, etc.) not in default RuntimeProvider
+            var validationOptions = new GDValidationOptions { CheckScope = false };
             var validationResult = _validator.Validate(tree, validationOptions);
             validationResult.HasErrors.Should().BeFalse(
                 $"Validation errors: {string.Join(", ", validationResult.Errors.Select(e => e.Message))}");
@@ -217,8 +205,6 @@ func _ready() -> void:
         public void TwoPassValidation_UserFunctionArgCount_Validates()
         {
             // Two-pass validation correctly validates argument counts for user-defined functions
-            // Note: Scope validation may still report forward references as undefined.
-            // The CallValidator's two-pass approach is specifically for argument count validation.
             var code = @"extends Node
 
 func my_helper():
@@ -228,16 +214,7 @@ func _ready():
     my_helper()
 ";
 
-            // Use options that skip scope check to focus on call validation
-            var options = new GDValidationOptions
-            {
-                CheckSyntax = true,
-                CheckScope = false, // Skip scope - focus on call validation
-                CheckCalls = true,
-                CheckControlFlow = true
-            };
-
-            var result = _validator.ValidateCode(code, options);
+            var result = _validator.ValidateCode(code);
 
             // No argument count errors for correctly called function
             result.Errors.Where(e => e.Code == GDDiagnosticCode.WrongArgumentCount)
@@ -483,16 +460,15 @@ func test():
                 return;
             }
 
-            // Use options that skip problematic checks:
-            // - Scope: sample scripts use Godot types not in our built-in list
-            // - ControlFlow: property getters/setters may have false positives for return statements
+            // Skip scope check: sample scripts use Godot types (Node2D, Sprite2D, etc.) not in default RuntimeProvider
+            // Skip control flow: property getters/setters have return statements that trigger false positives
             var options = new GDValidationOptions
             {
                 CheckSyntax = true,
                 CheckScope = false,
                 CheckTypes = true,
                 CheckCalls = true,
-                CheckControlFlow = false, // Properties have return statements outside function context
+                CheckControlFlow = false,
                 CheckIndentation = true
             };
 

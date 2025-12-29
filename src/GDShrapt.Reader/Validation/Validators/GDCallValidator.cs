@@ -1,27 +1,11 @@
-using System.Collections.Generic;
-using System.Linq;
-
 namespace GDShrapt.Reader
 {
     /// <summary>
     /// Validates function calls in GDScript.
-    /// Pass 1: Collects all user-defined function declarations.
-    /// Pass 2: Validates calls against both built-in and user-defined functions.
+    /// Uses function signatures collected by GDDeclarationCollector.
     /// </summary>
     public class GDCallValidator : GDValidationVisitor
     {
-        private readonly Dictionary<string, FunctionInfo> _userFunctions = new Dictionary<string, FunctionInfo>();
-        private bool _isCollectionPass;
-
-        private class FunctionInfo
-        {
-            public string Name { get; set; }
-            public int MinParameters { get; set; }
-            public int MaxParameters { get; set; }
-            public bool HasVarArgs { get; set; }
-            public GDMethodDeclaration Declaration { get; set; }
-        }
-
         public GDCallValidator(GDValidationContext context) : base(context)
         {
         }
@@ -31,57 +15,13 @@ namespace GDShrapt.Reader
             if (node == null)
                 return;
 
-            // Pass 1: Collect user-defined functions
-            _isCollectionPass = true;
-            _userFunctions.Clear();
+            // Function signatures are already collected by GDDeclarationCollector
+            // Just walk the tree and validate calls
             node.WalkIn(this);
-
-            // Pass 2: Validate calls
-            _isCollectionPass = false;
-            node.WalkIn(this);
-        }
-
-        public override void Visit(GDMethodDeclaration methodDeclaration)
-        {
-            if (!_isCollectionPass)
-                return;
-
-            var methodName = methodDeclaration.Identifier?.Sequence;
-            if (string.IsNullOrEmpty(methodName))
-                return;
-
-            // Don't override if already declared (could be inherited/overridden)
-            if (_userFunctions.ContainsKey(methodName))
-                return;
-
-            var parameters = methodDeclaration.Parameters?.ToList() ?? new List<GDParameterDeclaration>();
-
-            // Count required and optional parameters
-            int minParams = 0;
-            int maxParams = parameters.Count;
-
-            foreach (var param in parameters)
-            {
-                // If param has a default value, it's optional
-                if (param.DefaultValue == null)
-                    minParams++;
-            }
-
-            _userFunctions[methodName] = new FunctionInfo
-            {
-                Name = methodName,
-                MinParameters = minParams,
-                MaxParameters = maxParams,
-                HasVarArgs = false, // GDScript doesn't have varargs for user functions
-                Declaration = methodDeclaration
-            };
         }
 
         public override void Visit(GDCallExpression callExpression)
         {
-            if (_isCollectionPass)
-                return;
-
             var caller = callExpression.CallerExpression;
             var parameters = callExpression.Parameters;
             var argCount = parameters?.Count ?? 0;
@@ -127,7 +67,9 @@ namespace GDShrapt.Reader
 
         private void ValidateUserFunctionCall(string name, int argCount, GDCallExpression call)
         {
-            if (!_userFunctions.TryGetValue(name, out var funcInfo))
+            // Use function signatures from context (collected by GDDeclarationCollector)
+            var funcInfo = Context.GetUserFunction(name);
+            if (funcInfo == null)
             {
                 // Function not found - could be inherited or a method on another object
                 // Don't report an error here - the scope validator handles undefined identifiers

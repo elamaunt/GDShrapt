@@ -2,6 +2,7 @@ namespace GDShrapt.Reader
 {
     /// <summary>
     /// Infers types of expressions using the RuntimeProvider and scope information.
+    /// Supports generic types like Array[T] and Dictionary[K,V].
     /// </summary>
     public class GDTypeInferenceEngine
     {
@@ -18,10 +19,19 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Infers the type of an expression.
+        /// Infers the type of an expression as a string.
         /// Returns null if the type cannot be determined.
         /// </summary>
         public string InferType(GDExpression expression)
+        {
+            return InferTypeNode(expression)?.BuildName();
+        }
+
+        /// <summary>
+        /// Infers the full type node of an expression, including generic type arguments.
+        /// Returns null if the type cannot be determined.
+        /// </summary>
+        public GDTypeNode InferTypeNode(GDExpression expression)
         {
             if (expression == null)
                 return null;
@@ -30,70 +40,70 @@ namespace GDShrapt.Reader
             {
                 // Literals - known types
                 case GDNumberExpression numExpr:
-                    return InferNumberType(numExpr);
+                    return CreateSimpleType(InferNumberType(numExpr));
 
                 case GDStringExpression _:
-                    return "String";
+                    return CreateSimpleType("String");
 
                 case GDBoolExpression _:
-                    return "bool";
+                    return CreateSimpleType("bool");
 
                 case GDArrayInitializerExpression _:
-                    return "Array";
+                    return CreateSimpleType("Array");
 
                 case GDDictionaryInitializerExpression _:
-                    return "Dictionary";
+                    return CreateSimpleType("Dictionary");
 
                 // Identifiers - look up in scope or RuntimeProvider
                 case GDIdentifierExpression identExpr:
-                    return InferIdentifierType(identExpr);
+                    return InferIdentifierTypeNode(identExpr);
 
                 // Call expressions - return type from function/method
                 case GDCallExpression callExpr:
-                    return InferCallType(callExpr);
+                    return CreateSimpleType(InferCallType(callExpr));
 
                 // Member access - property type from RuntimeProvider
                 case GDMemberOperatorExpression memberExpr:
-                    return InferMemberType(memberExpr);
+                    return CreateSimpleType(InferMemberType(memberExpr));
 
-                // Index access - element type
-                case GDIndexerExpression _:
-                    return null; // Would need generic type info
+                // Index access - element type from generic container
+                case GDIndexerExpression indexerExpr:
+                    return InferIndexerTypeNode(indexerExpr);
 
                 // Operators
                 case GDDualOperatorExpression dualOp:
-                    return InferDualOperatorType(dualOp);
+                    return CreateSimpleType(InferDualOperatorType(dualOp));
 
                 case GDSingleOperatorExpression singleOp:
-                    return InferSingleOperatorType(singleOp);
+                    return CreateSimpleType(InferSingleOperatorType(singleOp));
 
                 // Ternary (if expression)
                 case GDIfExpression ifExpr:
-                    return InferIfExpressionType(ifExpr);
+                    return InferTypeNode(ifExpr.TrueExpression);
 
                 // Bracket (parenthesized)
                 case GDBracketExpression bracketExpr:
-                    return InferType(bracketExpr.InnerExpression);
+                    return InferTypeNode(bracketExpr.InnerExpression);
 
                 // Lambda - Callable
                 case GDMethodExpression _:
-                    return "Callable";
+                    return CreateSimpleType("Callable");
 
                 // Await - same as inner expression
                 case GDAwaitExpression awaitExpr:
-                    return InferType(awaitExpr.Expression);
+                    return InferTypeNode(awaitExpr.Expression);
 
                 // Yield - Signal (in Godot 4)
                 case GDYieldExpression _:
-                    return "Signal";
+                    return CreateSimpleType("Signal");
 
                 // Get node ($) - Node
                 case GDGetNodeExpression _:
-                    return "Node";
+                    return CreateSimpleType("Node");
 
                 // Get unique node (%) - Node
                 case GDGetUniqueNodeExpression _:
-                    return "Node";
+                    return CreateSimpleType("Node");
 
                 // Match case variable - bound type from pattern
                 case GDMatchCaseVariableExpression _:
@@ -101,11 +111,88 @@ namespace GDShrapt.Reader
 
                 // Pass expression
                 case GDPassExpression _:
-                    return "void";
+                    return CreateSimpleType("void");
 
                 default:
                     return null;
             }
+        }
+
+        /// <summary>
+        /// Infers the element type when indexing into a container.
+        /// </summary>
+        private GDTypeNode InferIndexerTypeNode(GDIndexerExpression indexerExpr)
+        {
+            var containerTypeNode = InferTypeNode(indexerExpr.CallerExpression);
+            if (containerTypeNode == null)
+                return null;
+
+            // For typed arrays: Array[T] -> T
+            if (containerTypeNode is GDArrayTypeNode arrayType)
+            {
+                return arrayType.InnerType;
+            }
+
+            // For typed dictionaries: Dictionary[K, V] -> V
+            if (containerTypeNode is GDDictionaryTypeNode dictType)
+            {
+                return dictType.ValueType;
+            }
+
+            // Untyped containers return null (unknown element type)
+            return null;
+        }
+
+        private GDTypeNode InferIdentifierTypeNode(GDIdentifierExpression identExpr)
+        {
+            var name = identExpr.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            // Check built-in constants
+            switch (name)
+            {
+                case "true":
+                case "false":
+                    return CreateSimpleType("bool");
+                case "null":
+                    return CreateSimpleType("null");
+                case "PI":
+                case "TAU":
+                case "INF":
+                case "NAN":
+                    return CreateSimpleType("float");
+                case "self":
+                    return CreateSimpleType("self");
+                case "super":
+                    return CreateSimpleType("super");
+            }
+
+            // Check scope for declared symbols with full TypeNode
+            if (_scopes != null)
+            {
+                var symbol = _scopes.Lookup(name);
+                if (symbol != null)
+                {
+                    // Prefer TypeNode if available (has generic type info)
+                    if (symbol.TypeNode != null)
+                        return symbol.TypeNode;
+                    // Fall back to TypeName
+                    if (!string.IsNullOrEmpty(symbol.TypeName))
+                        return CreateSimpleType(symbol.TypeName);
+                }
+            }
+
+            // Check if it's a known type (type as value, like Vector2)
+            if (_runtimeProvider.IsKnownType(name))
+                return CreateSimpleType(name);
+
+            // Check global class
+            var globalClass = _runtimeProvider.GetGlobalClass(name);
+            if (globalClass != null)
+                return CreateSimpleType(name);
+
+            return null;
         }
 
         private string InferNumberType(GDNumberExpression numExpr)
@@ -119,51 +206,6 @@ namespace GDShrapt.Reader
                 return "float";
 
             return "int";
-        }
-
-        private string InferIdentifierType(GDIdentifierExpression identExpr)
-        {
-            var name = identExpr.Identifier?.Sequence;
-            if (string.IsNullOrEmpty(name))
-                return null;
-
-            // Check built-in constants
-            switch (name)
-            {
-                case "true":
-                case "false":
-                    return "bool";
-                case "null":
-                    return "null";
-                case "PI":
-                case "TAU":
-                case "INF":
-                case "NAN":
-                    return "float";
-                case "self":
-                    return "self"; // Special marker
-                case "super":
-                    return "super"; // Special marker
-            }
-
-            // Check scope for declared symbols
-            if (_scopes != null)
-            {
-                var symbol = _scopes.Lookup(name);
-                if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
-                    return symbol.TypeName;
-            }
-
-            // Check if it's a known type (type as value, like Vector2)
-            if (_runtimeProvider.IsKnownType(name))
-                return name;
-
-            // Check global class
-            var globalClass = _runtimeProvider.GetGlobalClass(name);
-            if (globalClass != null)
-                return name;
-
-            return null;
         }
 
         private string InferCallType(GDCallExpression callExpr)
@@ -317,12 +359,6 @@ namespace GDShrapt.Reader
             }
         }
 
-        private string InferIfExpressionType(GDIfExpression ifExpr)
-        {
-            // Return type of true expression (assuming both branches have same type)
-            return InferType(ifExpr.TrueExpression);
-        }
-
         /// <summary>
         /// Checks if two types are compatible for assignment.
         /// </summary>
@@ -340,6 +376,17 @@ namespace GDShrapt.Reader
 
             // Use RuntimeProvider for detailed compatibility check
             return _runtimeProvider.IsAssignableTo(sourceType, targetType);
+        }
+
+        /// <summary>
+        /// Creates a simple type node for a type name without generic arguments.
+        /// </summary>
+        private GDSingleTypeNode CreateSimpleType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return null;
+
+            return new GDSingleTypeNode { Type = new GDType { Sequence = typeName } };
         }
     }
 }

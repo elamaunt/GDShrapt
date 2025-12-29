@@ -13,7 +13,12 @@ namespace GDShrapt.Reader
         public bool IsStatic { get; }
         public bool IsConst => Kind == GDSymbolKind.Constant;
 
-        public GDSymbol(string name, GDSymbolKind kind, GDNode declaration, GDType type = null, string typeName = null, bool isStatic = false)
+        /// <summary>
+        /// The full type node from AST (includes generic type arguments for Array[T], Dictionary[K,V]).
+        /// </summary>
+        public GDTypeNode TypeNode { get; }
+
+        public GDSymbol(string name, GDSymbolKind kind, GDNode declaration, GDType type = null, string typeName = null, bool isStatic = false, GDTypeNode typeNode = null)
         {
             Name = name;
             Kind = kind;
@@ -21,17 +26,18 @@ namespace GDShrapt.Reader
             Type = type;
             TypeName = typeName;
             IsStatic = isStatic;
+            TypeNode = typeNode;
         }
 
         // Factory methods for common symbol types
-        public static GDSymbol Variable(string name, GDNode declaration, GDType type = null, string typeName = null, bool isStatic = false)
-            => new GDSymbol(name, GDSymbolKind.Variable, declaration, type, typeName, isStatic);
+        public static GDSymbol Variable(string name, GDNode declaration, GDType type = null, string typeName = null, bool isStatic = false, GDTypeNode typeNode = null)
+            => new GDSymbol(name, GDSymbolKind.Variable, declaration, type, typeName, isStatic, typeNode);
 
-        public static GDSymbol Constant(string name, GDNode declaration, GDType type = null, string typeName = null)
-            => new GDSymbol(name, GDSymbolKind.Constant, declaration, type, typeName);
+        public static GDSymbol Constant(string name, GDNode declaration, GDType type = null, string typeName = null, GDTypeNode typeNode = null)
+            => new GDSymbol(name, GDSymbolKind.Constant, declaration, type, typeName, typeNode: typeNode);
 
-        public static GDSymbol Parameter(string name, GDNode declaration, GDType type = null, string typeName = null)
-            => new GDSymbol(name, GDSymbolKind.Parameter, declaration, type, typeName);
+        public static GDSymbol Parameter(string name, GDNode declaration, GDType type = null, string typeName = null, GDTypeNode typeNode = null)
+            => new GDSymbol(name, GDSymbolKind.Parameter, declaration, type, typeName, typeNode: typeNode);
 
         public static GDSymbol Method(string name, GDNode declaration, bool isStatic = false)
             => new GDSymbol(name, GDSymbolKind.Method, declaration, isStatic: isStatic);
@@ -51,8 +57,8 @@ namespace GDShrapt.Reader
         /// <summary>
         /// For-loop iterator variable.
         /// </summary>
-        public static GDSymbol Iterator(string name, GDNode declaration, GDType type = null, string typeName = null)
-            => new GDSymbol(name, GDSymbolKind.Iterator, declaration, type, typeName);
+        public static GDSymbol Iterator(string name, GDNode declaration, GDType type = null, string typeName = null, GDTypeNode typeNode = null)
+            => new GDSymbol(name, GDSymbolKind.Iterator, declaration, type, typeName, typeNode: typeNode);
 
         public override string ToString() => $"{Kind}: {Name}";
     }

@@ -44,7 +44,9 @@ namespace GDShrapt.Reader
         #region Helper Methods for Token Manipulation
 
         /// <summary>
-        /// Ensures there is a single space before the specified token.
+        /// Ensures there is at least one space before the specified token.
+        /// Idempotent: preserves existing multi-space formatting for alignment.
+        /// Also checks if the previous token (e.g., a child expression) has trailing space.
         /// </summary>
         protected void EnsureSpaceBefore(GDSyntaxToken token, GDNode parent)
         {
@@ -52,23 +54,37 @@ namespace GDShrapt.Reader
                 return;
 
             var form = parent.Form;
+            if (form == null)
+                return;
+
             var prevToken = form.PreviousTokenBefore(token);
 
-            if (prevToken is GDSpace space)
+            if (prevToken is GDSpace)
             {
-                // Already has space, ensure it's a single space
-                if (space.Sequence != " ")
-                    space.Sequence = " ";
+                // Already has space - preserve it as-is for idempotency
+                // (user may have multi-space for alignment)
+            }
+            else if (prevToken is GDNode prevNode)
+            {
+                // Previous token is a child node (e.g., expression).
+                // Check if it has trailing space in its own form.
+                if (!HasTrailingSpace(prevNode))
+                {
+                    form.AddBeforeToken(new GDSpace() { Sequence = " " }, token);
+                }
             }
             else if (prevToken != null && !(prevToken is GDNewLine) && !(prevToken is GDIntendation))
             {
                 // No space exists, add one
                 form.AddBeforeToken(new GDSpace() { Sequence = " " }, token);
             }
+            // If prevToken is null, NewLine, or Indentation - don't add space
         }
 
         /// <summary>
         /// Ensures there is a single space after the specified token.
+        /// Idempotent: does nothing if a proper space already exists.
+        /// Also checks if the next token (e.g., a child expression) has leading space.
         /// </summary>
         protected void EnsureSpaceAfter(GDSyntaxToken token, GDNode parent)
         {
@@ -76,19 +92,80 @@ namespace GDShrapt.Reader
                 return;
 
             var form = parent.Form;
+            if (form == null)
+                return;
+
             var nextToken = form.NextTokenAfter(token);
 
-            if (nextToken is GDSpace space)
+            if (nextToken is GDSpace)
             {
-                // Already has space, ensure it's a single space
-                if (space.Sequence != " ")
-                    space.Sequence = " ";
+                // Already has space - preserve it as-is for idempotency
+                // (user may have multi-space for alignment)
+            }
+            else if (nextToken is GDNode nextNode)
+            {
+                // Next token is a child node (e.g., expression).
+                // Check if it has leading space in its own form.
+                if (!HasLeadingSpace(nextNode))
+                {
+                    form.AddAfterToken(new GDSpace() { Sequence = " " }, token);
+                }
             }
             else if (nextToken != null && !(nextToken is GDNewLine) && !(nextToken is GDIntendation))
             {
                 // No space exists, add one
                 form.AddAfterToken(new GDSpace() { Sequence = " " }, token);
             }
+            // If nextToken is null, NewLine, or Indentation - don't add space
+        }
+
+        /// <summary>
+        /// Checks if a node has trailing whitespace in its form.
+        /// </summary>
+        private bool HasTrailingSpace(GDNode node)
+        {
+            if (node?.Form == null)
+                return false;
+
+            GDSyntaxToken lastToken = null;
+            foreach (var t in node.Form)
+            {
+                lastToken = t;
+            }
+
+            if (lastToken is GDSpace)
+                return true;
+
+            // Recursively check the last child node
+            if (lastToken is GDNode childNode)
+                return HasTrailingSpace(childNode);
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if a node has leading whitespace in its form.
+        /// </summary>
+        private bool HasLeadingSpace(GDNode node)
+        {
+            if (node?.Form == null)
+                return false;
+
+            GDSyntaxToken firstToken = null;
+            foreach (var t in node.Form)
+            {
+                firstToken = t;
+                break;
+            }
+
+            if (firstToken is GDSpace)
+                return true;
+
+            // Recursively check the first child node
+            if (firstToken is GDNode childNode)
+                return HasLeadingSpace(childNode);
+
+            return false;
         }
 
         /// <summary>
@@ -127,6 +204,8 @@ namespace GDShrapt.Reader
 
         /// <summary>
         /// Ensures a specific number of blank lines before the token.
+        /// For tokens inside indented blocks (inner classes, etc.), adds proper indentation
+        /// after blank lines to preserve the block structure during reparsing.
         /// </summary>
         protected void EnsureBlankLinesBefore(GDSyntaxToken token, GDNode parent, int count)
         {
@@ -162,13 +241,86 @@ namespace GDShrapt.Reader
 
             if (existingBlankLines < neededBlankLines)
             {
-                // Add more newlines
+                // Calculate indentation level for this token
+                int indentLevel = CalculateIndentationLevel(token);
+                string indentPattern = GetIndentationPattern();
+
+                // Add more newlines with proper indentation
                 for (int i = existingBlankLines; i < neededBlankLines; i++)
                 {
+                    // Add the newline
                     form.AddBeforeToken(new GDNewLine(), token);
+
+                    // Add indentation after the newline if we're inside an indented block
+                    // This is critical for GDScript parsing - blank lines inside inner classes
+                    // must have proper indentation, otherwise the parser will think
+                    // the following content belongs to the outer scope
+                    if (indentLevel > 0)
+                    {
+                        var indent = CreateIndentation(indentLevel, indentPattern);
+                        form.AddBeforeToken(indent, token);
+                    }
                 }
             }
             // Note: We don't remove extra newlines in this method to preserve user formatting
+        }
+
+        /// <summary>
+        /// Calculates the indentation level for a token by counting GDIntendedNode ancestors.
+        /// </summary>
+        private int CalculateIndentationLevel(GDSyntaxToken token)
+        {
+            int level = 0;
+            var node = token.Parent;
+
+            while (node != null)
+            {
+                if (node is GDIntendedNode)
+                    level++;
+                node = node.Parent;
+            }
+
+            return level;
+        }
+
+        /// <summary>
+        /// Gets the indentation pattern from options (tab or spaces).
+        /// </summary>
+        private string GetIndentationPattern()
+        {
+            if (Options == null || Options.IndentStyle == IndentStyle.Tabs)
+                return "\t";
+
+            return new string(' ', Options.IndentSize);
+        }
+
+        /// <summary>
+        /// Creates a GDIntendation token with the specified level and pattern.
+        /// </summary>
+        private GDIntendation CreateIndentation(int level, string pattern)
+        {
+            var indent = new GDIntendation();
+
+            if (level <= 0)
+            {
+                indent.Sequence = string.Empty;
+                indent.LineIntendationThreshold = 0;
+            }
+            else if (level == 1)
+            {
+                indent.Sequence = pattern;
+                indent.LineIntendationThreshold = 1;
+            }
+            else
+            {
+                var builder = new System.Text.StringBuilder(pattern.Length * level);
+                for (int i = 0; i < level; i++)
+                    builder.Append(pattern);
+                indent.Sequence = builder.ToString();
+                indent.LineIntendationThreshold = level;
+            }
+
+            return indent;
         }
 
         /// <summary>

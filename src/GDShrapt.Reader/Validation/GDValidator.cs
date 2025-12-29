@@ -14,6 +14,14 @@ namespace GDShrapt.Reader
             options = options ?? GDValidationOptions.Default;
             var context = new GDValidationContext(options.RuntimeProvider);
 
+            // Phase 0: Collect all declarations first (enables forward references)
+            // This must run before scope/call validation to ensure all symbols are available
+            if (options.CheckScope || options.CheckCalls)
+            {
+                var collector = new GDDeclarationCollector();
+                collector.Collect(node, context);
+            }
+
             if (options.CheckSyntax)
             {
                 var syntaxValidator = new GDSyntaxValidator(context);

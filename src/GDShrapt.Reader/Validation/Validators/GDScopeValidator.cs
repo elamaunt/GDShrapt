@@ -3,13 +3,11 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Tracks declarations, detects undefined identifiers and duplicates.
     /// Manages scope stack for classes, methods, loops, etc.
-    /// Uses two-pass approach: first collects class-level declarations,
-    /// then validates identifier usage (supports forward references).
+    /// Note: Class-level declarations are collected by GDDeclarationCollector before this runs.
+    /// This validator only handles local scopes and identifier validation.
     /// </summary>
     public class GDScopeValidator : GDValidationVisitor
     {
-        private bool _isCollectionPass;
-
         public GDScopeValidator(GDValidationContext context) : base(context)
         {
         }
@@ -19,18 +17,9 @@ namespace GDShrapt.Reader
             if (node == null)
                 return;
 
-            // Pass 1: Collect all class-level declarations (methods, variables, signals, enums)
-            // This enables forward references within a class
-            _isCollectionPass = true;
+            // Class-level symbols are already collected by GDDeclarationCollector
+            // We just need to enter global scope and validate
             EnterScope(GDScopeType.Global, node);
-            node.WalkIn(this);
-            // Don't exit Global scope - we need symbols for pass 2
-
-            // Reset to just Global scope (keeping all collected class-level symbols)
-            Context.Scopes.ResetToGlobal();
-
-            // Pass 2: Validate identifier usage
-            _isCollectionPass = false;
             node.WalkIn(this);
             ExitScope();
         }
@@ -39,21 +28,17 @@ namespace GDShrapt.Reader
 
         public override void Visit(GDClassDeclaration classDeclaration)
         {
-            // In first pass, we stay in Global scope to collect all class-level symbols
-            // In second pass, Global scope already has all symbols collected
+            // Global scope already has all class-level symbols from GDDeclarationCollector
         }
 
         public override void Left(GDClassDeclaration classDeclaration)
         {
-            // Nothing to do - symbols stay in Global scope
+            // Nothing to do
         }
 
         // Validate extends clause
         public override void Visit(GDExtendsAttribute extendsAttribute)
         {
-            if (_isCollectionPass)
-                return;
-
             var typeNode = extendsAttribute.Type;
             if (typeNode == null)
                 return;
@@ -76,17 +61,8 @@ namespace GDShrapt.Reader
 
         public override void Visit(GDInnerClassDeclaration innerClass)
         {
-            if (_isCollectionPass)
-            {
-                // Register inner class name in current scope
-                var className = innerClass.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(className))
-                {
-                    TryDeclareSymbol(GDSymbol.Class(className, innerClass));
-                }
-            }
+            // Inner class is already registered by GDDeclarationCollector
             // Don't enter inner class scope - inner classes are separate units
-            // that would need their own validation pass
         }
 
         public override void Left(GDInnerClassDeclaration innerClass)
@@ -96,35 +72,24 @@ namespace GDShrapt.Reader
 
         #endregion
 
-        #region Class-level declarations (collected in first pass)
+        #region Methods
 
-        // Methods - declared at class level, supports forward references
         public override void Visit(GDMethodDeclaration methodDeclaration)
         {
-            if (_isCollectionPass)
-            {
-                // First pass: register method declaration
-                var methodName = methodDeclaration.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(methodName))
-                {
-                    TryDeclareSymbol(GDSymbol.Method(methodName, methodDeclaration, methodDeclaration.IsStatic));
-                }
-            }
-            else
-            {
-                // Second pass: enter method scope and register parameters
-                EnterScope(GDScopeType.Method, methodDeclaration);
+            // Enter method scope and register parameters
+            EnterScope(GDScopeType.Method, methodDeclaration);
 
-                var parameters = methodDeclaration.Parameters;
-                if (parameters != null)
+            var parameters = methodDeclaration.Parameters;
+            if (parameters != null)
+            {
+                foreach (var param in parameters)
                 {
-                    foreach (var param in parameters)
+                    var paramName = param.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(paramName))
                     {
-                        var paramName = param.Identifier?.Sequence;
-                        if (!string.IsNullOrEmpty(paramName))
-                        {
-                            TryDeclareSymbol(GDSymbol.Parameter(paramName, param));
-                        }
+                        var typeNode = param.Type;
+                        var typeName = typeNode?.BuildName();
+                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
                     }
                 }
             }
@@ -132,192 +97,121 @@ namespace GDShrapt.Reader
 
         public override void Left(GDMethodDeclaration methodDeclaration)
         {
-            if (!_isCollectionPass)
-            {
-                ExitScope();
-            }
-        }
-
-        // Variables (class-level) - declared at class level, supports forward references
-        public override void Visit(GDVariableDeclaration variableDeclaration)
-        {
-            if (_isCollectionPass)
-            {
-                var varName = variableDeclaration.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(varName))
-                {
-                    if (variableDeclaration.ConstKeyword != null)
-                    {
-                        TryDeclareSymbol(GDSymbol.Constant(varName, variableDeclaration));
-                    }
-                    else
-                    {
-                        TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration, isStatic: variableDeclaration.IsStatic));
-                    }
-                }
-            }
-        }
-
-        // Signals - declared at class level
-        public override void Visit(GDSignalDeclaration signalDeclaration)
-        {
-            if (_isCollectionPass)
-            {
-                var signalName = signalDeclaration.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(signalName))
-                {
-                    TryDeclareSymbol(GDSymbol.Signal(signalName, signalDeclaration));
-                }
-            }
-        }
-
-        // Enums - declared at class level
-        public override void Visit(GDEnumDeclaration enumDeclaration)
-        {
-            if (_isCollectionPass)
-            {
-                var enumName = enumDeclaration.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(enumName))
-                {
-                    TryDeclareSymbol(GDSymbol.Enum(enumName, enumDeclaration));
-                }
-
-                var values = enumDeclaration.Values;
-                if (values != null)
-                {
-                    foreach (var value in values)
-                    {
-                        var valueName = value.Identifier?.Sequence;
-                        if (!string.IsNullOrEmpty(valueName))
-                        {
-                            TryDeclareSymbol(GDSymbol.EnumValue(valueName, value));
-                        }
-                    }
-                }
-            }
+            ExitScope();
         }
 
         #endregion
 
-        #region Local declarations (processed in second pass only)
+        #region Variables (class-level are already collected, we skip them)
+
+        public override void Visit(GDVariableDeclaration variableDeclaration)
+        {
+            // Class-level variables are already collected by GDDeclarationCollector
+            // Nothing to do here
+        }
+
+        public override void Visit(GDSignalDeclaration signalDeclaration)
+        {
+            // Already collected by GDDeclarationCollector
+        }
+
+        public override void Visit(GDEnumDeclaration enumDeclaration)
+        {
+            // Already collected by GDDeclarationCollector
+        }
+
+        #endregion
+
+        #region Local declarations
 
         // Local variables (inside methods)
         public override void Visit(GDVariableDeclarationStatement variableDeclaration)
         {
-            if (!_isCollectionPass)
+            var varName = variableDeclaration.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
             {
-                var varName = variableDeclaration.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(varName))
-                {
-                    TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration));
-                }
+                var typeNode = variableDeclaration.Type;
+                var typeName = typeNode?.BuildName();
+                TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration, typeName: typeName, typeNode: typeNode));
             }
         }
 
         // For loop - creates scope, declares iterator
         public override void Visit(GDForStatement forStatement)
         {
-            if (!_isCollectionPass)
-            {
-                EnterScope(GDScopeType.ForLoop, forStatement);
+            EnterScope(GDScopeType.ForLoop, forStatement);
 
-                var iteratorName = forStatement.Variable?.Sequence;
-                if (!string.IsNullOrEmpty(iteratorName))
-                {
-                    Context.Declare(GDSymbol.Iterator(iteratorName, forStatement));
-                }
+            var iteratorName = forStatement.Variable?.Sequence;
+            if (!string.IsNullOrEmpty(iteratorName))
+            {
+                Context.Declare(GDSymbol.Iterator(iteratorName, forStatement));
             }
         }
 
         public override void Left(GDForStatement forStatement)
         {
-            if (!_isCollectionPass)
-            {
-                ExitScope();
-            }
+            ExitScope();
         }
 
         // While loop
         public override void Visit(GDWhileStatement whileStatement)
         {
-            if (!_isCollectionPass)
-            {
-                EnterScope(GDScopeType.WhileLoop, whileStatement);
-            }
+            EnterScope(GDScopeType.WhileLoop, whileStatement);
         }
 
         public override void Left(GDWhileStatement whileStatement)
         {
-            if (!_isCollectionPass)
-            {
-                ExitScope();
-            }
+            ExitScope();
         }
 
         // Conditionals
         public override void Visit(GDIfStatement ifStatement)
         {
-            if (!_isCollectionPass)
-            {
-                EnterScope(GDScopeType.Conditional, ifStatement);
-            }
+            EnterScope(GDScopeType.Conditional, ifStatement);
         }
 
         public override void Left(GDIfStatement ifStatement)
         {
-            if (!_isCollectionPass)
-            {
-                ExitScope();
-            }
+            ExitScope();
         }
 
         // Match
         public override void Visit(GDMatchStatement matchStatement)
         {
-            if (!_isCollectionPass)
-            {
-                EnterScope(GDScopeType.Match, matchStatement);
-            }
+            EnterScope(GDScopeType.Match, matchStatement);
         }
 
         public override void Left(GDMatchStatement matchStatement)
         {
-            if (!_isCollectionPass)
-            {
-                ExitScope();
-            }
+            ExitScope();
         }
 
         // Match case variable binding (var x in pattern)
         public override void Visit(GDMatchCaseVariableExpression matchCaseVariable)
         {
-            if (!_isCollectionPass)
+            var varName = matchCaseVariable.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
             {
-                var varName = matchCaseVariable.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(varName))
-                {
-                    TryDeclareSymbol(GDSymbol.Variable(varName, matchCaseVariable));
-                }
+                TryDeclareSymbol(GDSymbol.Variable(varName, matchCaseVariable));
             }
         }
 
         // Lambdas
         public override void Visit(GDMethodExpression methodExpression)
         {
-            if (!_isCollectionPass)
-            {
-                EnterScope(GDScopeType.Lambda, methodExpression);
+            EnterScope(GDScopeType.Lambda, methodExpression);
 
-                var parameters = methodExpression.Parameters;
-                if (parameters != null)
+            var parameters = methodExpression.Parameters;
+            if (parameters != null)
+            {
+                foreach (var param in parameters)
                 {
-                    foreach (var param in parameters)
+                    var paramName = param.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(paramName))
                     {
-                        var paramName = param.Identifier?.Sequence;
-                        if (!string.IsNullOrEmpty(paramName))
-                        {
-                            TryDeclareSymbol(GDSymbol.Parameter(paramName, param));
-                        }
+                        var typeNode = param.Type;
+                        var typeName = typeNode?.BuildName();
+                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
                     }
                 }
             }
@@ -325,42 +219,50 @@ namespace GDShrapt.Reader
 
         public override void Left(GDMethodExpression methodExpression)
         {
-            if (!_isCollectionPass)
-            {
-                ExitScope();
-            }
+            ExitScope();
         }
 
         #endregion
 
-        #region Identifier validation (second pass only)
+        #region Identifier validation
 
         // Identifier usage - check if declared
         public override void Visit(GDIdentifierExpression identifierExpression)
         {
-            if (_isCollectionPass)
+            var name = identifierExpression.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(name))
                 return;
 
-            var name = identifierExpression.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(name) && !Context.RuntimeProvider.IsBuiltIn(name))
-            {
-                var symbol = LookupSymbol(name);
-                if (symbol == null)
-                {
-                    ReportError(
-                        GDDiagnosticCode.UndefinedVariable,
-                        $"Undefined identifier: '{name}'",
-                        identifierExpression);
-                }
-            }
+            // Skip built-in identifiers
+            if (Context.RuntimeProvider.IsBuiltIn(name))
+                return;
+
+            // Check if it's a known type (used as value, e.g., Vector2)
+            if (Context.RuntimeProvider.IsKnownType(name))
+                return;
+
+            // Check scope (includes class-level symbols collected by GDDeclarationCollector)
+            var symbol = LookupSymbol(name);
+            if (symbol != null)
+                return;
+
+            // Check if it's a user-defined function (forward reference support)
+            if (Context.IsFunctionDeclared(name))
+                return;
+
+            // Check if it's a global class/singleton
+            if (Context.RuntimeProvider.GetGlobalClass(name) != null)
+                return;
+
+            ReportError(
+                GDDiagnosticCode.UndefinedVariable,
+                $"Undefined identifier: '{name}'",
+                identifierExpression);
         }
 
         // Check for constant reassignment
         public override void Visit(GDDualOperatorExpression dualOperator)
         {
-            if (_isCollectionPass)
-                return;
-
             var opType = dualOperator.Operator?.OperatorType;
             if (opType == null)
                 return;

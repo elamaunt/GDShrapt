@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GDShrapt.Reader
 {
     /// <summary>
     /// Formats blank lines between functions, classes, and member types.
+    /// Uses a state stack to correctly handle inner classes.
     /// </summary>
     public class GDBlankLinesFormatRule : GDFormatRule
     {
@@ -11,21 +13,73 @@ namespace GDShrapt.Reader
         public override string Name => "blank-lines";
         public override string Description => "Format blank lines between functions and member groups";
 
-        private GDClassMember _previousMember;
-        private bool _afterClassDeclaration;
+        // State for each class level (outer class, inner classes)
+        private class ClassState
+        {
+            public GDClassMember PreviousMember { get; set; }
+            public bool AfterClassDeclaration { get; set; }
+        }
+
+        private readonly Stack<ClassState> _stateStack = new Stack<ClassState>();
+        private ClassState _currentState;
 
         public override void Visit(GDClassDeclaration classDeclaration)
         {
             if (classDeclaration == null)
                 return;
 
-            _previousMember = null;
-            _afterClassDeclaration = false;
+            // Push new state for this class
+            _currentState = new ClassState
+            {
+                PreviousMember = null,
+                AfterClassDeclaration = false
+            };
+            _stateStack.Push(_currentState);
 
             // Check if there's an extends or class_name
             if (classDeclaration.Extends != null || classDeclaration.ClassName != null)
             {
-                _afterClassDeclaration = true;
+                _currentState.AfterClassDeclaration = true;
+            }
+        }
+
+        public override void Left(GDClassDeclaration classDeclaration)
+        {
+            // Pop state when leaving class
+            if (_stateStack.Count > 0)
+            {
+                _stateStack.Pop();
+                _currentState = _stateStack.Count > 0 ? _stateStack.Peek() : null;
+            }
+        }
+
+        public override void Visit(GDInnerClassDeclaration innerClassDeclaration)
+        {
+            // Process inner class as a member of parent class
+            ProcessMember(innerClassDeclaration, MemberType.InnerClass);
+
+            // Push new state for inner class
+            _currentState = new ClassState
+            {
+                PreviousMember = null,
+                AfterClassDeclaration = false
+            };
+            _stateStack.Push(_currentState);
+
+            // Check if inner class has extends
+            if (innerClassDeclaration.Extends != null)
+            {
+                _currentState.AfterClassDeclaration = true;
+            }
+        }
+
+        public override void Left(GDInnerClassDeclaration innerClassDeclaration)
+        {
+            // Pop state when leaving inner class
+            if (_stateStack.Count > 0)
+            {
+                _stateStack.Pop();
+                _currentState = _stateStack.Count > 0 ? _stateStack.Peek() : null;
             }
         }
 
@@ -71,14 +125,9 @@ namespace GDShrapt.Reader
             ProcessMember(customAttribute, MemberType.CustomAttribute);
         }
 
-        public override void Visit(GDInnerClassDeclaration innerClassDeclaration)
-        {
-            ProcessMember(innerClassDeclaration, MemberType.InnerClass);
-        }
-
         private void ProcessMember(GDClassMember member, MemberType currentType)
         {
-            if (member?.Parent == null)
+            if (member?.Parent == null || _currentState == null)
                 return;
 
             var parent = member.Parent as GDNode;
@@ -93,7 +142,7 @@ namespace GDShrapt.Reader
             // They are part of the following declaration and should stay attached
             if (currentType == MemberType.CustomAttribute)
             {
-                _previousMember = member;
+                _currentState.PreviousMember = member;
                 return;
             }
 
@@ -101,7 +150,7 @@ namespace GDShrapt.Reader
             // They should NOT trigger blank line insertion and should be skipped
             if (currentType == MemberType.ClassAttribute)
             {
-                _previousMember = member;
+                _currentState.PreviousMember = member;
                 return;
             }
 
@@ -115,17 +164,17 @@ namespace GDShrapt.Reader
             int targetBlankLines = 0;
 
             // Check if previous member was a class attribute - if so, this is the first real member
-            var prevType = _previousMember != null ? GetMemberType(_previousMember) : MemberType.Other;
-            bool afterClassAttrs = _afterClassDeclaration &&
-                                   (_previousMember == null || prevType == MemberType.ClassAttribute);
+            var prevType = _currentState.PreviousMember != null ? GetMemberType(_currentState.PreviousMember) : MemberType.Other;
+            bool afterClassAttrs = _currentState.AfterClassDeclaration &&
+                                   (_currentState.PreviousMember == null || prevType == MemberType.ClassAttribute);
 
             if (afterClassAttrs)
             {
                 // First member after class declaration (extends, class_name, tool)
                 targetBlankLines = Options.BlankLinesAfterClassDeclaration;
-                _afterClassDeclaration = false;
+                _currentState.AfterClassDeclaration = false;
             }
-            else if (_previousMember != null)
+            else if (_currentState.PreviousMember != null)
             {
                 // Skip class attributes when determining previous type for spacing
                 if (prevType == MemberType.ClassAttribute)
@@ -145,6 +194,11 @@ namespace GDShrapt.Reader
                     // Function to function or function to other
                     targetBlankLines = Options.BlankLinesBetweenFunctions;
                 }
+                else if (currentType == MemberType.InnerClass || prevType == MemberType.InnerClass)
+                {
+                    // Inner class to other or other to inner class - treat like functions
+                    targetBlankLines = Options.BlankLinesBetweenFunctions;
+                }
                 else if (currentType != prevType)
                 {
                     // Different member types
@@ -157,7 +211,7 @@ namespace GDShrapt.Reader
                 EnsureBlankLinesBefore(targetToken, parent, targetBlankLines);
             }
 
-            _previousMember = member;
+            _currentState.PreviousMember = member;
         }
 
         private MemberType GetMemberType(GDClassMember member)
@@ -181,13 +235,6 @@ namespace GDShrapt.Reader
                 default:
                     return MemberType.Other;
             }
-        }
-
-        public override void Left(GDClassDeclaration classDeclaration)
-        {
-            // Reset state after leaving class
-            _previousMember = null;
-            _afterClassDeclaration = false;
         }
 
         private enum MemberType

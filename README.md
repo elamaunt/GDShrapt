@@ -200,17 +200,21 @@ The `GDValidator` class provides comprehensive AST validation with compiler-styl
 | Type | GD3xxx | Type mismatches, invalid operand types |
 | Call | GD4xxx | Wrong argument counts, method not found |
 | Control Flow | GD5xxx | break/continue outside loops, return outside functions |
+| Indentation | GD6xxx | Inconsistent indentation (mixed tabs/spaces) |
+
+**Note:** The validator uses two-pass analysis for scope validation, which fully supports forward references. Methods, variables, signals, and enums can be used before they are declared in the file.
 
 ### Validation Options
 
 ```csharp
 var options = new GDValidationOptions
 {
-    CheckSyntax = true,      // GD1xxx errors
-    CheckScope = true,       // GD2xxx errors
-    CheckTypes = true,       // GD3xxx warnings
-    CheckCalls = true,       // GD4xxx errors
-    CheckControlFlow = true  // GD5xxx errors
+    CheckSyntax = true,       // GD1xxx errors
+    CheckScope = true,        // GD2xxx errors
+    CheckTypes = true,        // GD3xxx warnings
+    CheckCalls = true,        // GD4xxx errors
+    CheckControlFlow = true,  // GD5xxx errors
+    CheckIndentation = true   // GD6xxx warnings
 };
 
 var result = validator.Validate(tree, options);
@@ -237,6 +241,32 @@ Console.WriteLine(diag.ToString());        // "error GD5001: message (3:4)"
 Console.WriteLine(diag.ToDetailedString()); // "error GD5001 at 3:4-3:9: message"
 ```
 
+### Custom Runtime Provider
+
+For advanced type checking, you can provide custom runtime type information via `IGDRuntimeProvider`. This allows integration with Godot's actual type system or custom interpreters.
+
+```csharp
+// Implement custom provider for your runtime environment
+public class GodotRuntimeProvider : IGDRuntimeProvider
+{
+    public bool IsKnownType(string typeName) => /* check Godot types */;
+    public GDRuntimeTypeInfo GetTypeInfo(string typeName) => /* return type info */;
+    public GDRuntimeMemberInfo GetMember(string typeName, string memberName) => /* return member */;
+    public string GetBaseType(string typeName) => /* return base type */;
+    public bool IsAssignableTo(string sourceType, string targetType) => /* check compatibility */;
+    public GDRuntimeFunctionInfo GetGlobalFunction(string name) => /* return function info */;
+    public GDRuntimeTypeInfo GetGlobalClass(string name) => /* return singleton info */;
+    public bool IsBuiltIn(string identifier) => /* check built-in identifiers */;
+}
+
+// Use with caching for better performance
+var provider = new GDCachingRuntimeProvider(new GodotRuntimeProvider());
+var options = new GDValidationOptions { RuntimeProvider = provider };
+var result = validator.Validate(tree, options);
+```
+
+The default `GDDefaultRuntimeProvider` includes basic GDScript types (int, float, String, Array, Dictionary, Vector2, Vector3, etc.) and common global functions (print, range, load, etc.).
+
 ## Linter
 
 The `GDLinter` class enforces the GDScript style guide with configurable rules.
@@ -246,8 +276,8 @@ The `GDLinter` class enforces the GDScript style guide with configurable rules.
 | Category | Rules |
 |----------|-------|
 | Naming | ClassNameCaseRule, FunctionNameCaseRule, VariableNameCaseRule, ConstantNameCaseRule, SignalNameCaseRule, EnumNameCaseRule, EnumValueCaseRule, PrivatePrefixRule |
-| Style | LineLengthRule |
-| Best Practices | UnusedVariableRule, UnusedParameterRule, EmptyFunctionRule, TypeHintRule |
+| Style | LineLengthRule, MemberOrderingRule |
+| Best Practices | UnusedVariableRule, UnusedParameterRule, UnusedSignalRule, EmptyFunctionRule, TypeHintRule, MaxParametersRule, MaxFunctionLengthRule |
 
 ### Linter Options
 
@@ -444,6 +474,17 @@ GD.Expression.Await(GD.Expression.Identifier("signal")) // await(signal)
 - `GDDiagnosticSeverity` - Error, Warning, Hint
 - `GDValidationOptions` - Configure which validators to run
 
+### Runtime Provider Classes
+
+- `IGDRuntimeProvider` - Interface for external type information
+- `GDDefaultRuntimeProvider` - Built-in GDScript types and functions
+- `GDCachingRuntimeProvider` - Caching wrapper for performance
+- `GDTypeInferenceEngine` - Type inference for expressions
+- `GDRuntimeTypeInfo` - Type information (name, base type, members)
+- `GDRuntimeMemberInfo` - Member information (methods, properties, signals)
+- `GDRuntimeFunctionInfo` - Global function information
+- `GDRuntimeParameterInfo` - Parameter information (name, type, default)
+
 ### Linter Classes
 
 - `GDLinter` - Main linter class
@@ -482,6 +523,12 @@ For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
   - Type validation (GD3xxx): Type mismatches, invalid operands
   - Call validation (GD4xxx): Wrong argument counts for built-in functions
   - Control flow validation (GD5xxx): break/continue outside loops, return outside functions
+- **NEW: Type Inference System** with external runtime provider
+  - `IGDRuntimeProvider` interface for custom type information
+  - `GDDefaultRuntimeProvider` with built-in GDScript types
+  - `GDCachingRuntimeProvider` for performance optimization
+  - `GDTypeInferenceEngine` for expression type inference
+  - Validates extends clauses, method calls, assignments
 - **NEW: Style Linter** with configurable rules
   - Naming conventions: snake_case, PascalCase, SCREAMING_SNAKE_CASE
   - Best practices: unused variables, unused parameters, empty functions
@@ -495,14 +542,12 @@ For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
   - Line ending normalization (LF, CRLF, Platform)
   - Style extraction from sample code ("format by example")
   - Presets: Default, GDScriptStyleGuide, Minimal
-- Comprehensive test coverage (621 tests)
-
-### 4.5.0
 - Full GDScript 4.x support
 - Fixed property get/set parsing (Issues #10, #11)
 - Added typed dictionaries support (Godot 4.4)
 - Added helper classes: `GDAnnotationHelper`, `GDSpecialMethodHelper`, `GDExpressionHelper`
 - Extended Building API: `GetUniqueNode`, `Enum`, `EnumValue`, Export annotations
+- Comprehensive test coverage (662 tests)
 
 ### 4.4.0-alpha
 - Added typed Dictionaries support (thanks to dougVanny)

@@ -11,18 +11,21 @@
 Features:
 - Full GDScript 4.x support (lambdas, await, typed arrays/dictionaries, pattern matching, annotations)
 - AST Validation system with compiler-style diagnostics (GD1xxx-GD5xxx error codes)
+- Type inference with external runtime provider (IGDRuntimeProvider)
+- Style linter with configurable naming conventions
+- Code formatter with style extraction
 - Scope analysis, type checking, control flow validation
 - Helper classes for annotations, virtual methods, and expression analysis
 - Fluent Building API for code generation
 - High-performance one-pass parsing
 
-Usage: Create a GDScriptReader instance and call ParseFileContent() or ParseExpression() methods. Use GDValidator to validate the AST.</Description>
+Usage: Create a GDScriptReader instance and call ParseFileContent() or ParseExpression() methods. Use GDValidator to validate, GDLinter to lint, GDFormatter to format.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>GDShrapt GDScript reader parser codegeneration Godot lexical analyzer GDScript2 Godot4 validation linter</PackageTags>
+    <PackageTags>GDShrapt GDScript reader parser codegeneration Godot lexical analyzer GDScript2 Godot4 validation linter formatter</PackageTags>
     <AssemblyVersion>5.0.0</AssemblyVersion>
     <FileVersion>5.0.0</FileVersion>
     <PackageReleaseNotes>
@@ -33,14 +36,15 @@ Version 5.0.0:
   - Type validation (GD3xxx): Type mismatches, invalid operands
   - Call validation (GD4xxx): Wrong argument counts for built-in functions
   - Control flow validation (GD5xxx): break/continue outside loops, return outside functions
-- Comprehensive test coverage (198 tests)
-
-Version 4.5.0:
-- Full GDScript 4.x support
-- Fixed property get/set parsing (Issues #10, #11)
-- Added typed dictionaries support (Godot 4.4)
-- Added helper classes: GDAnnotationHelper, GDSpecialMethodHelper, GDExpressionHelper
-- Extended Building API: GetUniqueNode, Enum, EnumValue, Export annotations
+- NEW: Type Inference with external runtime provider
+  - IGDRuntimeProvider interface for custom type information
+  - GDDefaultRuntimeProvider with built-in GDScript types
+  - GDCachingRuntimeProvider for performance optimization
+- NEW: Style Linter with naming conventions and best practices
+- NEW: Code Formatter with rule-based formatting and style extraction
+- Full GDScript 4.x support, typed dictionaries (Godot 4.4)
+- Helper classes: GDAnnotationHelper, GDSpecialMethodHelper, GDExpressionHelper
+- Comprehensive test coverage (655 tests)
     </PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
