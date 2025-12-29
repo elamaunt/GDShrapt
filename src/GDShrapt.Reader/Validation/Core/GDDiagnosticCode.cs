@@ -89,6 +89,36 @@ namespace GDShrapt.Reader
         /// </summary>
         TypeAnnotationMismatch = 3004,
 
+        /// <summary>
+        /// Unknown type in extends clause.
+        /// </summary>
+        UnknownBaseType = 3005,
+
+        /// <summary>
+        /// Unknown type in type annotation.
+        /// </summary>
+        UnknownType = 3006,
+
+        /// <summary>
+        /// Incompatible return type.
+        /// </summary>
+        IncompatibleReturnType = 3007,
+
+        /// <summary>
+        /// Cannot access member on type.
+        /// </summary>
+        MemberNotAccessible = 3008,
+
+        /// <summary>
+        /// Property not found on type.
+        /// </summary>
+        PropertyNotFound = 3009,
+
+        /// <summary>
+        /// Argument type mismatch in function call.
+        /// </summary>
+        ArgumentTypeMismatch = 3010,
+
         // Call errors (4xxx)
         /// <summary>
         /// Wrong number of arguments in a function call.

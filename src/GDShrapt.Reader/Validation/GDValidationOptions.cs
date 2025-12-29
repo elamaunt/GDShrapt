@@ -6,6 +6,12 @@ namespace GDShrapt.Reader
     public class GDValidationOptions
     {
         /// <summary>
+        /// Runtime provider for external type information.
+        /// If null, uses GDDefaultRuntimeProvider.
+        /// </summary>
+        public IGDRuntimeProvider RuntimeProvider { get; set; }
+
+        /// <summary>
         /// Whether to check for syntax errors (invalid tokens).
         /// Default: true
         /// </summary>

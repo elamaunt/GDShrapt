@@ -11,6 +11,8 @@ GDScript is the main scripting language of [Godot Engine](https://github.com/god
 
 - **Full GDScript 4.x Support** - Lambdas, await, typed arrays/dictionaries, pattern matching, all annotations
 - **AST Validation** - Compiler-style diagnostics with error codes (GD1xxx-GD5xxx)
+- **Style Linter** - GDScript style guide enforcement with configurable naming conventions
+- **Code Formatter** - Automatic code formatting with style extraction from samples
 - **One-Pass Parsing** - High-performance lexical analysis
 - **Code Generation** - Fluent Building API for creating GDScript code programmatically
 - **Helper Classes** - Convenient utilities for annotations, virtual methods, and expressions
@@ -120,6 +122,50 @@ if (!result.IsValid)
 }
 ```
 
+### Linting GDScript
+
+```csharp
+using GDShrapt.Reader;
+
+var code = @"
+var MyVariable = 10  # Should be snake_case
+const lowercase = 5  # Should be SCREAMING_SNAKE_CASE
+
+func BadName():  # Should be snake_case
+    pass
+";
+
+var linter = new GDLinter();
+var result = linter.LintCode(code);
+
+foreach (var issue in result.Issues)
+{
+    // Output: "warning GDL101: Variable 'MyVariable' should use snake_case (2:4)"
+    Console.WriteLine(issue.ToString());
+}
+```
+
+### Formatting GDScript
+
+```csharp
+using GDShrapt.Reader;
+
+var code = @"func test():
+	var x=10+5
+	print(x)
+";
+
+var formatter = new GDFormatter();
+var formatted = formatter.FormatCode(code);
+// Result: properly spaced "var x = 10 + 5"
+
+// Format using style extracted from sample code
+var sampleCode = @"func sample():
+    var y = 20  # Uses 4-space indentation
+";
+var formattedWithStyle = formatter.FormatCodeWithStyle(code, sampleCode);
+```
+
 ## Supported GDScript Features
 
 | Feature | Status |
@@ -189,6 +235,141 @@ var diag = result.Diagnostics.First();
 Console.WriteLine(diag.CodeString);        // "GD5001"
 Console.WriteLine(diag.ToString());        // "error GD5001: message (3:4)"
 Console.WriteLine(diag.ToDetailedString()); // "error GD5001 at 3:4-3:9: message"
+```
+
+## Linter
+
+The `GDLinter` class enforces the GDScript style guide with configurable rules.
+
+### Lint Rules
+
+| Category | Rules |
+|----------|-------|
+| Naming | ClassNameCaseRule, FunctionNameCaseRule, VariableNameCaseRule, ConstantNameCaseRule, SignalNameCaseRule, EnumNameCaseRule, EnumValueCaseRule, PrivatePrefixRule |
+| Style | LineLengthRule |
+| Best Practices | UnusedVariableRule, UnusedParameterRule, EmptyFunctionRule, TypeHintRule |
+
+### Linter Options
+
+```csharp
+var options = new GDLinterOptions
+{
+    // Naming conventions
+    ClassNameCase = NamingCase.PascalCase,      // MyClass
+    FunctionNameCase = NamingCase.SnakeCase,    // my_function
+    VariableNameCase = NamingCase.SnakeCase,    // my_variable
+    ConstantNameCase = NamingCase.ScreamingSnakeCase,  // MY_CONSTANT
+    RequireUnderscoreForPrivate = true,         // _private_member
+
+    // Style
+    MaxLineLength = 100,
+
+    // Best practices
+    WarnUnusedVariables = true,
+    WarnUnusedParameters = true,
+    WarnEmptyFunctions = true,
+    SuggestTypeHints = false
+};
+
+var linter = new GDLinter(options);
+```
+
+### Presets
+
+```csharp
+// Default: Standard GDScript style guide
+var linter = new GDLinter(GDLinterOptions.Default);
+
+// Strict: All rules enabled including type hints
+var linter = new GDLinter(GDLinterOptions.Strict);
+
+// Minimal: Only critical rules
+var linter = new GDLinter(GDLinterOptions.Minimal);
+```
+
+## Formatter
+
+The `GDFormatter` class provides automatic code formatting with style extraction.
+
+### Format Rules
+
+| Rule ID | Name | Description |
+|---------|------|-------------|
+| GDF001 | indentation | Format indentation using tabs or spaces |
+| GDF002 | blank-lines | Format blank lines between functions and members |
+| GDF003 | spacing | Format spacing around operators, commas, colons |
+| GDF004 | trailing-whitespace | Remove trailing whitespace, handle EOF newlines |
+| GDF005 | newline | Normalize line endings |
+
+### Formatter Options
+
+```csharp
+var options = new GDFormatterOptions
+{
+    // Indentation
+    IndentStyle = IndentStyle.Tabs,  // or IndentStyle.Spaces
+    IndentSize = 4,                  // spaces per indent level
+
+    // Line endings
+    LineEnding = LineEndingStyle.LF,  // LF, CRLF, or Platform
+
+    // Blank lines
+    BlankLinesBetweenFunctions = 2,
+    BlankLinesAfterClassDeclaration = 1,
+    BlankLinesBetweenMemberTypes = 1,
+
+    // Spacing
+    SpaceAroundOperators = true,     // x = 10 + 5
+    SpaceAfterComma = true,          // func(a, b, c)
+    SpaceAfterColon = true,          // var x: int
+    SpaceBeforeColon = false,        // var x: int (not x : int)
+    SpaceInsideParentheses = false,  // (a, b) not ( a, b )
+    SpaceInsideBrackets = false,     // [1, 2] not [ 1, 2 ]
+    SpaceInsideBraces = true,        // { "a": 1 }
+
+    // Trailing whitespace
+    RemoveTrailingWhitespace = true,
+    EnsureTrailingNewline = true,
+    RemoveMultipleTrailingNewlines = true
+};
+
+var formatter = new GDFormatter(options);
+```
+
+### Format by Example
+
+Extract formatting style from sample code and apply to other code:
+
+```csharp
+var formatter = new GDFormatter();
+
+// Sample code with 2-space indentation
+var sampleCode = @"func sample():
+  var x = 10
+  print(x)
+";
+
+// Code to format (currently uses tabs)
+var codeToFormat = @"func test():
+	var y = 20
+	print(y)
+";
+
+// Will format using extracted 2-space indentation style
+var result = formatter.FormatCodeWithStyle(codeToFormat, sampleCode);
+```
+
+### Presets
+
+```csharp
+// Default: Standard formatting
+var formatter = new GDFormatter(GDFormatterOptions.Default);
+
+// GDScript style guide compliant
+var formatter = new GDFormatter(GDFormatterOptions.GDScriptStyleGuide);
+
+// Minimal: Only essential cleanup (trailing whitespace, EOF newline)
+var formatter = new GDFormatter(GDFormatterOptions.Minimal);
 ```
 
 ## Building API Examples
@@ -263,13 +444,34 @@ GD.Expression.Await(GD.Expression.Identifier("signal")) // await(signal)
 - `GDDiagnosticSeverity` - Error, Warning, Hint
 - `GDValidationOptions` - Configure which validators to run
 
+### Linter Classes
+
+- `GDLinter` - Main linter class
+- `GDLintResult` - Collection of lint issues
+- `GDLintIssue` - Single lint issue with location and message
+- `GDLintRule` - Base class for lint rules
+- `GDLintSeverity` - Error, Warning, Info, Hint
+- `GDLinterOptions` - Configure naming conventions and rules
+- `NamingCase` - SnakeCase, PascalCase, CamelCase, ScreamingSnakeCase
+
+### Formatter Classes
+
+- `GDFormatter` - Main formatter class
+- `GDFormatRule` - Base class for format rules
+- `GDFormatterOptions` - Configure formatting style
+- `GDFormatterStyleExtractor` - Extract style from sample code
+- `IndentStyle` - Tabs, Spaces
+- `LineEndingStyle` - LF, CRLF, Platform
+
 ## Examples
 
 For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
-- [ParsingTests.cs](src/GDShrapt.Reader.Tests/ParsingTests.cs) - Parsing examples
-- [BuildingTests.cs](src/GDShrapt.Reader.Tests/BuildingTests.cs) - Code generation examples
-- [HelperTests.cs](src/GDShrapt.Reader.Tests/HelperTests.cs) - Helper classes examples
-- [ValidationTests.cs](src/GDShrapt.Reader.Tests/ValidationTests.cs) - Validation examples
+- [Parsing/](src/GDShrapt.Reader.Tests/Parsing/) - Parsing examples
+- [Building/](src/GDShrapt.Reader.Tests/Building/) - Code generation examples
+- [Helpers/](src/GDShrapt.Reader.Tests/Helpers/) - Helper classes examples
+- [Validation/](src/GDShrapt.Reader.Tests/Validation/) - Validation examples
+- [Linting/](src/GDShrapt.Reader.Tests/Linting/) - Linter examples
+- [Formatting/](src/GDShrapt.Reader.Tests/Formatting/) - Formatter examples
 
 ## Changelog
 
@@ -280,7 +482,20 @@ For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
   - Type validation (GD3xxx): Type mismatches, invalid operands
   - Call validation (GD4xxx): Wrong argument counts for built-in functions
   - Control flow validation (GD5xxx): break/continue outside loops, return outside functions
-- Comprehensive test coverage (198 tests)
+- **NEW: Style Linter** with configurable rules
+  - Naming conventions: snake_case, PascalCase, SCREAMING_SNAKE_CASE
+  - Best practices: unused variables, unused parameters, empty functions
+  - Style rules: line length, private member prefix
+  - Presets: Default, Strict, Minimal
+- **NEW: Code Formatter** with rule-based formatting
+  - Indentation: tabs or spaces with configurable size
+  - Blank lines: between functions, after class declaration
+  - Spacing: around operators, after commas, colons
+  - Trailing whitespace removal, EOF newline handling
+  - Line ending normalization (LF, CRLF, Platform)
+  - Style extraction from sample code ("format by example")
+  - Presets: Default, GDScriptStyleGuide, Minimal
+- Comprehensive test coverage (621 tests)
 
 ### 4.5.0
 - Full GDScript 4.x support

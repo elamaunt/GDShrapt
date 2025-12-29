@@ -11,7 +11,9 @@
       "Bash(dotnet run --project src/GDShrapt.Reader.Tests -- -c \"\nusing GDShrapt.Reader;\nusing System;\n\nvar reader = new GDScriptReader\\(\\);\nvar code = \"\"! a\"\";\nvar expression = reader.ParseExpression\\(code\\);\nConsole.WriteLine\\(\"\"Expression type: \"\" + expression.GetType\\(\\).Name\\);\nConsole.WriteLine\\(\"\"Expression: \"\" + expression.ToString\\(\\)\\);\n\")",
       "Bash(find:*)",
       "Bash(dotnet run:*)",
-      "Bash(dotnet clean:*)"
+      "Bash(dotnet clean:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)"
     ]
   }
 }

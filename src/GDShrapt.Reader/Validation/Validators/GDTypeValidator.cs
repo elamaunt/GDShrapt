@@ -1,17 +1,21 @@
 namespace GDShrapt.Reader
 {
     /// <summary>
-    /// Basic type checking for operators. Reports warnings for type mismatches.
-    /// Only infers types for literals (numbers, strings, bools, arrays, dicts).
+    /// Type checking for expressions and statements.
+    /// Uses GDTypeInferenceEngine for type inference via RuntimeProvider.
     /// </summary>
     public class GDTypeValidator : GDValidationVisitor
     {
+        private GDTypeInferenceEngine _typeInference;
+
         public GDTypeValidator(GDValidationContext context) : base(context)
         {
         }
 
         public void Validate(GDNode node)
         {
+            // Create type inference engine with runtime provider and scope stack
+            _typeInference = new GDTypeInferenceEngine(Context.RuntimeProvider, Context.Scopes);
             node?.WalkIn(this);
         }
 
@@ -103,6 +107,30 @@ namespace GDShrapt.Reader
                         }
                     }
                     break;
+
+                // Assignment operators - check type compatibility
+                case GDDualOperatorType.Assignment:
+                    ValidateAssignment(left, right, leftType, rightType, expr);
+                    break;
+            }
+        }
+
+        private void ValidateAssignment(GDExpression target, GDExpression value, string targetType, string valueType, GDNode reportOn)
+        {
+            if (targetType == "Unknown" || valueType == "Unknown")
+                return;
+
+            // Skip if types match
+            if (targetType == valueType)
+                return;
+
+            // Use type inference engine for compatibility check
+            if (_typeInference != null && !_typeInference.AreTypesCompatible(valueType, targetType))
+            {
+                ReportWarning(
+                    GDDiagnosticCode.TypeMismatch,
+                    $"Type mismatch in assignment: cannot assign '{valueType}' to '{targetType}'",
+                    reportOn);
             }
         }
 
@@ -143,38 +171,13 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Infers type from literal expressions only.
+        /// Infers type using the type inference engine.
+        /// Returns "Unknown" if type cannot be determined.
         /// </summary>
         private string InferSimpleType(GDExpression expr)
         {
-            switch (expr)
-            {
-                case GDNumberExpression numExpr:
-                    var num = numExpr.Number;
-                    if (num != null)
-                    {
-                        var seq = num.Sequence;
-                        if (seq != null && (seq.Contains(".") || seq.Contains("e") || seq.Contains("E")))
-                            return "float";
-                        return "int";
-                    }
-                    return "Unknown";
-
-                case GDStringExpression _:
-                    return "String";
-
-                case GDBoolExpression _:
-                    return "bool";
-
-                case GDArrayInitializerExpression _:
-                    return "Array";
-
-                case GDDictionaryInitializerExpression _:
-                    return "Dictionary";
-
-                default:
-                    return "Unknown";
-            }
+            var type = _typeInference?.InferType(expr);
+            return type ?? "Unknown";
         }
 
         private bool AreTypesCompatibleForArithmetic(string left, string right)

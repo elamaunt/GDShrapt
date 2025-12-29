@@ -107,5 +107,20 @@ namespace GDShrapt.Reader
         {
             return Current?.GetSymbolsOfKind(kind) ?? Enumerable.Empty<GDSymbol>();
         }
+
+        /// <summary>
+        /// Resets stack to only contain the Global scope (keeping its symbols).
+        /// Used for two-pass validation.
+        /// </summary>
+        public void ResetToGlobal()
+        {
+            while (_stack.Count > 0)
+            {
+                var scope = _stack.Peek();
+                if (scope == Global)
+                    break;
+                _stack.Pop();
+            }
+        }
     }
 }

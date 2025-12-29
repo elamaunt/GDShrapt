@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace GDShrapt.Reader
 {
     /// <summary>
-    /// Shared state for all validators: scope stack and diagnostics collection.
+    /// Shared state for all validators: scope stack, diagnostics collection, and runtime provider.
     /// </summary>
     public class GDValidationContext
     {
@@ -12,14 +12,24 @@ namespace GDShrapt.Reader
         public GDScopeStack Scopes { get; }
         public IReadOnlyList<GDDiagnostic> Diagnostics => _diagnostics;
 
+        /// <summary>
+        /// The runtime provider for type information.
+        /// </summary>
+        public IGDRuntimeProvider RuntimeProvider { get; }
+
         public bool IsInLoop => Scopes.IsInLoop;
         public bool IsInFunction => Scopes.IsInFunction;
         public bool IsInClass => Scopes.IsInClass;
 
-        public GDValidationContext()
+        public GDValidationContext() : this(null)
+        {
+        }
+
+        public GDValidationContext(IGDRuntimeProvider runtimeProvider)
         {
             _diagnostics = new List<GDDiagnostic>();
             Scopes = new GDScopeStack();
+            RuntimeProvider = runtimeProvider ?? GDDefaultRuntimeProvider.Instance;
         }
 
         public void AddError(GDDiagnosticCode code, string message, GDNode node)

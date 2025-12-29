@@ -44,6 +44,24 @@ namespace GDShrapt.Reader
 
         public override void Left(GDMethodExpression methodExpression) => _functionDepth--;
 
+        // Property getter body - acts like a function
+        public override void Visit(GDGetAccessorBodyDeclaration getterBody)
+        {
+            _functionDepth++;
+            CheckUnreachableCode(getterBody.Statements);
+        }
+
+        public override void Left(GDGetAccessorBodyDeclaration getterBody) => _functionDepth--;
+
+        // Property setter body - acts like a function
+        public override void Visit(GDSetAccessorBodyDeclaration setterBody)
+        {
+            _functionDepth++;
+            CheckUnreachableCode(setterBody.Statements);
+        }
+
+        public override void Left(GDSetAccessorBodyDeclaration setterBody) => _functionDepth--;
+
         // Track loop nesting
         public override void Visit(GDForStatement forStatement)
         {

@@ -12,7 +12,7 @@ namespace GDShrapt.Reader
         public GDValidationResult Validate(GDNode node, GDValidationOptions options = null)
         {
             options = options ?? GDValidationOptions.Default;
-            var context = new GDValidationContext();
+            var context = new GDValidationContext(options.RuntimeProvider);
 
             if (options.CheckSyntax)
             {

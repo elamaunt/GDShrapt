@@ -3,67 +3,128 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Tracks declarations, detects undefined identifiers and duplicates.
     /// Manages scope stack for classes, methods, loops, etc.
+    /// Uses two-pass approach: first collects class-level declarations,
+    /// then validates identifier usage (supports forward references).
     /// </summary>
     public class GDScopeValidator : GDValidationVisitor
     {
+        private bool _isCollectionPass;
+
         public GDScopeValidator(GDValidationContext context) : base(context)
         {
         }
 
         public void Validate(GDNode node)
         {
+            if (node == null)
+                return;
+
+            // Pass 1: Collect all class-level declarations (methods, variables, signals, enums)
+            // This enables forward references within a class
+            _isCollectionPass = true;
             EnterScope(GDScopeType.Global, node);
-            node?.WalkIn(this);
+            node.WalkIn(this);
+            // Don't exit Global scope - we need symbols for pass 2
+
+            // Reset to just Global scope (keeping all collected class-level symbols)
+            Context.Scopes.ResetToGlobal();
+
+            // Pass 2: Validate identifier usage
+            _isCollectionPass = false;
+            node.WalkIn(this);
             ExitScope();
         }
 
-        // Classes
+        #region Classes
+
         public override void Visit(GDClassDeclaration classDeclaration)
         {
-            EnterScope(GDScopeType.Class, classDeclaration);
+            // In first pass, we stay in Global scope to collect all class-level symbols
+            // In second pass, Global scope already has all symbols collected
         }
 
         public override void Left(GDClassDeclaration classDeclaration)
         {
-            ExitScope();
+            // Nothing to do - symbols stay in Global scope
+        }
+
+        // Validate extends clause
+        public override void Visit(GDExtendsAttribute extendsAttribute)
+        {
+            if (_isCollectionPass)
+                return;
+
+            var typeNode = extendsAttribute.Type;
+            if (typeNode == null)
+                return;
+
+            var typeName = typeNode.BuildName();
+            if (string.IsNullOrEmpty(typeName))
+                return;
+
+            // Check if base type is known (either built-in type, inner class, or from RuntimeProvider)
+            if (!Context.RuntimeProvider.IsKnownType(typeName) &&
+                !Context.RuntimeProvider.IsBuiltIn(typeName) &&
+                LookupSymbol(typeName) == null)
+            {
+                ReportWarning(
+                    GDDiagnosticCode.UnknownBaseType,
+                    $"Unknown base type: '{typeName}'",
+                    extendsAttribute);
+            }
         }
 
         public override void Visit(GDInnerClassDeclaration innerClass)
         {
-            var className = innerClass.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(className))
+            if (_isCollectionPass)
             {
-                TryDeclareSymbol(GDSymbol.Class(className, innerClass));
+                // Register inner class name in current scope
+                var className = innerClass.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(className))
+                {
+                    TryDeclareSymbol(GDSymbol.Class(className, innerClass));
+                }
             }
-
-            EnterScope(GDScopeType.Class, innerClass);
+            // Don't enter inner class scope - inner classes are separate units
+            // that would need their own validation pass
         }
 
         public override void Left(GDInnerClassDeclaration innerClass)
         {
-            ExitScope();
+            // Nothing to do
         }
 
-        // Methods
+        #endregion
+
+        #region Class-level declarations (collected in first pass)
+
+        // Methods - declared at class level, supports forward references
         public override void Visit(GDMethodDeclaration methodDeclaration)
         {
-            var methodName = methodDeclaration.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(methodName))
+            if (_isCollectionPass)
             {
-                TryDeclareSymbol(GDSymbol.Method(methodName, methodDeclaration, methodDeclaration.IsStatic));
-            }
-
-            EnterScope(GDScopeType.Method, methodDeclaration);
-
-            var parameters = methodDeclaration.Parameters;
-            if (parameters != null)
-            {
-                foreach (var param in parameters)
+                // First pass: register method declaration
+                var methodName = methodDeclaration.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(methodName))
                 {
-                    var paramName = param.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(paramName))
+                    TryDeclareSymbol(GDSymbol.Method(methodName, methodDeclaration, methodDeclaration.IsStatic));
+                }
+            }
+            else
+            {
+                // Second pass: enter method scope and register parameters
+                EnterScope(GDScopeType.Method, methodDeclaration);
+
+                var parameters = methodDeclaration.Parameters;
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
                     {
-                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param));
+                        var paramName = param.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(paramName))
+                        {
+                            TryDeclareSymbol(GDSymbol.Parameter(paramName, param));
+                        }
                     }
                 }
             }
@@ -71,65 +132,84 @@ namespace GDShrapt.Reader
 
         public override void Left(GDMethodDeclaration methodDeclaration)
         {
-            ExitScope();
+            if (!_isCollectionPass)
+            {
+                ExitScope();
+            }
         }
 
-        // Variables (class-level)
+        // Variables (class-level) - declared at class level, supports forward references
         public override void Visit(GDVariableDeclaration variableDeclaration)
         {
-            var varName = variableDeclaration.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(varName))
+            if (_isCollectionPass)
             {
-                if (variableDeclaration.ConstKeyword != null)
+                var varName = variableDeclaration.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(varName))
                 {
-                    TryDeclareSymbol(GDSymbol.Constant(varName, variableDeclaration));
-                }
-                else
-                {
-                    TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration, isStatic: variableDeclaration.IsStatic));
+                    if (variableDeclaration.ConstKeyword != null)
+                    {
+                        TryDeclareSymbol(GDSymbol.Constant(varName, variableDeclaration));
+                    }
+                    else
+                    {
+                        TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration, isStatic: variableDeclaration.IsStatic));
+                    }
                 }
             }
         }
+
+        // Signals - declared at class level
+        public override void Visit(GDSignalDeclaration signalDeclaration)
+        {
+            if (_isCollectionPass)
+            {
+                var signalName = signalDeclaration.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(signalName))
+                {
+                    TryDeclareSymbol(GDSymbol.Signal(signalName, signalDeclaration));
+                }
+            }
+        }
+
+        // Enums - declared at class level
+        public override void Visit(GDEnumDeclaration enumDeclaration)
+        {
+            if (_isCollectionPass)
+            {
+                var enumName = enumDeclaration.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(enumName))
+                {
+                    TryDeclareSymbol(GDSymbol.Enum(enumName, enumDeclaration));
+                }
+
+                var values = enumDeclaration.Values;
+                if (values != null)
+                {
+                    foreach (var value in values)
+                    {
+                        var valueName = value.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(valueName))
+                        {
+                            TryDeclareSymbol(GDSymbol.EnumValue(valueName, value));
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region Local declarations (processed in second pass only)
 
         // Local variables (inside methods)
         public override void Visit(GDVariableDeclarationStatement variableDeclaration)
         {
-            var varName = variableDeclaration.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(varName))
+            if (!_isCollectionPass)
             {
-                TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration));
-            }
-        }
-
-        // Signals
-        public override void Visit(GDSignalDeclaration signalDeclaration)
-        {
-            var signalName = signalDeclaration.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(signalName))
-            {
-                TryDeclareSymbol(GDSymbol.Signal(signalName, signalDeclaration));
-            }
-        }
-
-        // Enums (also registers enum values as symbols)
-        public override void Visit(GDEnumDeclaration enumDeclaration)
-        {
-            var enumName = enumDeclaration.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(enumName))
-            {
-                TryDeclareSymbol(GDSymbol.Enum(enumName, enumDeclaration));
-            }
-
-            var values = enumDeclaration.Values;
-            if (values != null)
-            {
-                foreach (var value in values)
+                var varName = variableDeclaration.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(varName))
                 {
-                    var valueName = value.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(valueName))
-                    {
-                        TryDeclareSymbol(GDSymbol.EnumValue(valueName, value));
-                    }
+                    TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration));
                 }
             }
         }
@@ -137,77 +217,107 @@ namespace GDShrapt.Reader
         // For loop - creates scope, declares iterator
         public override void Visit(GDForStatement forStatement)
         {
-            EnterScope(GDScopeType.ForLoop, forStatement);
-
-            var iteratorName = forStatement.Variable?.Sequence;
-            if (!string.IsNullOrEmpty(iteratorName))
+            if (!_isCollectionPass)
             {
-                Context.Declare(GDSymbol.Iterator(iteratorName, forStatement));
+                EnterScope(GDScopeType.ForLoop, forStatement);
+
+                var iteratorName = forStatement.Variable?.Sequence;
+                if (!string.IsNullOrEmpty(iteratorName))
+                {
+                    Context.Declare(GDSymbol.Iterator(iteratorName, forStatement));
+                }
             }
         }
 
         public override void Left(GDForStatement forStatement)
         {
-            ExitScope();
+            if (!_isCollectionPass)
+            {
+                ExitScope();
+            }
         }
 
         // While loop
         public override void Visit(GDWhileStatement whileStatement)
         {
-            EnterScope(GDScopeType.WhileLoop, whileStatement);
+            if (!_isCollectionPass)
+            {
+                EnterScope(GDScopeType.WhileLoop, whileStatement);
+            }
         }
 
         public override void Left(GDWhileStatement whileStatement)
         {
-            ExitScope();
+            if (!_isCollectionPass)
+            {
+                ExitScope();
+            }
         }
 
         // Conditionals
         public override void Visit(GDIfStatement ifStatement)
         {
-            EnterScope(GDScopeType.Conditional, ifStatement);
+            if (!_isCollectionPass)
+            {
+                EnterScope(GDScopeType.Conditional, ifStatement);
+            }
         }
 
         public override void Left(GDIfStatement ifStatement)
         {
-            ExitScope();
+            if (!_isCollectionPass)
+            {
+                ExitScope();
+            }
         }
 
         // Match
         public override void Visit(GDMatchStatement matchStatement)
         {
-            EnterScope(GDScopeType.Match, matchStatement);
+            if (!_isCollectionPass)
+            {
+                EnterScope(GDScopeType.Match, matchStatement);
+            }
         }
 
         public override void Left(GDMatchStatement matchStatement)
         {
-            ExitScope();
+            if (!_isCollectionPass)
+            {
+                ExitScope();
+            }
         }
 
         // Match case variable binding (var x in pattern)
         public override void Visit(GDMatchCaseVariableExpression matchCaseVariable)
         {
-            var varName = matchCaseVariable.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(varName))
+            if (!_isCollectionPass)
             {
-                TryDeclareSymbol(GDSymbol.Variable(varName, matchCaseVariable));
+                var varName = matchCaseVariable.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(varName))
+                {
+                    TryDeclareSymbol(GDSymbol.Variable(varName, matchCaseVariable));
+                }
             }
         }
 
         // Lambdas
         public override void Visit(GDMethodExpression methodExpression)
         {
-            EnterScope(GDScopeType.Lambda, methodExpression);
-
-            var parameters = methodExpression.Parameters;
-            if (parameters != null)
+            if (!_isCollectionPass)
             {
-                foreach (var param in parameters)
+                EnterScope(GDScopeType.Lambda, methodExpression);
+
+                var parameters = methodExpression.Parameters;
+                if (parameters != null)
                 {
-                    var paramName = param.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(paramName))
+                    foreach (var param in parameters)
                     {
-                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param));
+                        var paramName = param.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(paramName))
+                        {
+                            TryDeclareSymbol(GDSymbol.Parameter(paramName, param));
+                        }
                     }
                 }
             }
@@ -215,14 +325,24 @@ namespace GDShrapt.Reader
 
         public override void Left(GDMethodExpression methodExpression)
         {
-            ExitScope();
+            if (!_isCollectionPass)
+            {
+                ExitScope();
+            }
         }
+
+        #endregion
+
+        #region Identifier validation (second pass only)
 
         // Identifier usage - check if declared
         public override void Visit(GDIdentifierExpression identifierExpression)
         {
+            if (_isCollectionPass)
+                return;
+
             var name = identifierExpression.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(name) && !IsBuiltIn(name))
+            if (!string.IsNullOrEmpty(name) && !Context.RuntimeProvider.IsBuiltIn(name))
             {
                 var symbol = LookupSymbol(name);
                 if (symbol == null)
@@ -238,6 +358,9 @@ namespace GDShrapt.Reader
         // Check for constant reassignment
         public override void Visit(GDDualOperatorExpression dualOperator)
         {
+            if (_isCollectionPass)
+                return;
+
             var opType = dualOperator.Operator?.OperatorType;
             if (opType == null)
                 return;
@@ -248,6 +371,8 @@ namespace GDShrapt.Reader
                 CheckConstantReassignment(dualOperator.LeftExpression, dualOperator);
             }
         }
+
+        #endregion
 
         private bool IsAssignmentOperator(GDDualOperatorType opType)
         {
@@ -290,119 +415,5 @@ namespace GDShrapt.Reader
             }
         }
 
-        /// <summary>
-        /// GDScript built-in constants, types, functions, and globals.
-        /// </summary>
-        private bool IsBuiltIn(string name)
-        {
-            switch (name)
-            {
-                // Constants
-                case "null":
-                case "true":
-                case "false":
-                case "self":
-                case "super":
-                case "PI":
-                case "TAU":
-                case "INF":
-                case "NAN":
-                // Types
-                case "int":
-                case "float":
-                case "bool":
-                case "String":
-                case "Vector2":
-                case "Vector2i":
-                case "Vector3":
-                case "Vector3i":
-                case "Vector4":
-                case "Vector4i":
-                case "Rect2":
-                case "Rect2i":
-                case "Transform2D":
-                case "Transform3D":
-                case "Plane":
-                case "Quaternion":
-                case "AABB":
-                case "Basis":
-                case "Projection":
-                case "Color":
-                case "NodePath":
-                case "RID":
-                case "Object":
-                case "Callable":
-                case "Signal":
-                case "Dictionary":
-                case "Array":
-                case "PackedByteArray":
-                case "PackedInt32Array":
-                case "PackedInt64Array":
-                case "PackedFloat32Array":
-                case "PackedFloat64Array":
-                case "PackedStringArray":
-                case "PackedVector2Array":
-                case "PackedVector3Array":
-                case "PackedColorArray":
-                case "StringName":
-                case "Node":
-                case "Node2D":
-                case "Node3D":
-                case "Control":
-                case "Resource":
-                // Functions
-                case "print":
-                case "prints":
-                case "printt":
-                case "printraw":
-                case "printerr":
-                case "push_error":
-                case "push_warning":
-                case "str":
-                case "range":
-                case "load":
-                case "preload":
-                case "assert":
-                case "abs":
-                case "ceil":
-                case "floor":
-                case "round":
-                case "sign":
-                case "sqrt":
-                case "pow":
-                case "log":
-                case "exp":
-                case "sin":
-                case "cos":
-                case "tan":
-                case "asin":
-                case "acos":
-                case "atan":
-                case "atan2":
-                case "min":
-                case "max":
-                case "clamp":
-                case "lerp":
-                case "typeof":
-                case "weakref":
-                case "randomize":
-                case "randi":
-                case "randf":
-                case "hash":
-                case "get_tree":
-                case "get_node":
-                case "queue_free":
-                case "is_instance_valid":
-                // Globals
-                case "Input":
-                case "Engine":
-                case "OS":
-                case "ResourceLoader":
-                case "Time":
-                    return true;
-            }
-
-            return false;
-        }
     }
 }
