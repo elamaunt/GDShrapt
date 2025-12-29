@@ -504,6 +504,11 @@ GD.Expression.Await(GD.Expression.Identifier("signal")) // await(signal)
 - `IndentStyle` - Tabs, Spaces
 - `LineEndingStyle` - LF, CRLF, Platform
 
+### Exception Classes
+
+- `GDInvalidStateException` - Thrown when parser reaches invalid internal state
+- `GDStackOverflowException` - Thrown when parsing depth limits are exceeded (configurable via `GDReadSettings`)
+
 ## Examples
 
 For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
@@ -547,7 +552,8 @@ For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
 - Added typed dictionaries support (Godot 4.4)
 - Added helper classes: `GDAnnotationHelper`, `GDSpecialMethodHelper`, `GDExpressionHelper`
 - Extended Building API: `GetUniqueNode`, `Enum`, `EnumValue`, Export annotations
-- Comprehensive test coverage (662 tests)
+- Comprehensive test coverage (667 tests)
+- Custom `GDStackOverflowException` for controlled stack depth limits
 
 ### 4.4.0-alpha
 - Added typed Dictionaries support (thanks to dougVanny)

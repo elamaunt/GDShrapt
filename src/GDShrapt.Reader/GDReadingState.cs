@@ -120,11 +120,15 @@ namespace GDShrapt.Reader
             if (reader == null)
                 throw new ArgumentNullException(nameof(reader));
 
-            if (Settings.MaxReadingStack.HasValue && _readersStack.Count == Settings.MaxReadingStack.Value)
-                throw new StackOverflowException("Maximum reading reading stack is reached.");
+            if (Settings.MaxReadingStack.HasValue && _readersStack.Count >= Settings.MaxReadingStack.Value)
+                throw new GDStackOverflowException(_readersStack.Count, Settings.MaxReadingStack.Value, GDStackOverflowType.ReadingStack);
 
-            if (Settings.MaxStacktraceFramesCount.HasValue && new StackTrace(false).FrameCount >= Settings.MaxStacktraceFramesCount.Value)
-                throw new StackOverflowException("Maximum stackTrace frames count is reached.");
+            if (Settings.MaxStacktraceFramesCount.HasValue)
+            {
+                var frameCount = new StackTrace(false).FrameCount;
+                if (frameCount >= Settings.MaxStacktraceFramesCount.Value)
+                    throw new GDStackOverflowException(frameCount, Settings.MaxStacktraceFramesCount.Value, GDStackOverflowType.StackTraceFrames);
+            }
 
             _readersStack.Push(reader);
             return reader;

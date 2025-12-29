@@ -32,7 +32,7 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
   - `ParseExpression()` - Parse expressions
   - `ParseStatement()` / `ParseStatements()` - Parse statements
 
-- **GDValidator** (`src/GDShrapt.Reader/Validation/GDValidator.cs`) - AST validation with compiler-style diagnostics (GD1xxx-GD5xxx)
+- **GDValidator** (`src/GDShrapt.Reader/Validation/GDValidator.cs`) - AST validation with compiler-style diagnostics (GD1xxx-GD6xxx)
 
 - **GDLinter** (`src/GDShrapt.Reader/Linter/GDLinter.cs`) - Style guide enforcement with configurable rules (GDLxxx)
 
@@ -58,7 +58,7 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 **Validation** (`src/GDShrapt.Reader/Validation/`) - AST validation
 - `GDValidationRule` base class extending `GDVisitor`
-- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx)
+- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx), Indentation (GD6xxx)
 - `Runtime/` subfolder: Type inference system with external provider support
 
 **Runtime Provider** (`src/GDShrapt.Reader/Validation/Runtime/`) - External type information
@@ -135,3 +135,10 @@ var provider = new GDCachingRuntimeProvider(new MyGodotProvider());
 var options = new GDValidationOptions { RuntimeProvider = provider };
 validator.Validate(tree, options);
 ```
+
+## Error Handling
+
+- **Parser error recovery**: Invalid syntax creates `GDInvalidToken` nodes instead of throwing exceptions; parsing continues
+- **Stack depth protection**: `GDStackOverflowException` thrown when parsing exceeds configurable limits (`GDReadSettings.MaxReadingStack`, `MaxStacktraceFramesCount`)
+- **Invalid state detection**: `GDInvalidStateException` for internal parser errors
+- Access invalid tokens via `node.InvalidTokens` or `node.AllInvalidTokens`
