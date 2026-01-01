@@ -162,5 +162,7 @@
         void Left(GDGetUniqueNodeExpression e);
         void Visit(GDSubTypeNode t);
         void Left(GDSubTypeNode t);
+        void Visit(GDRestExpression e);
+        void Left(GDRestExpression e);
     }
 }

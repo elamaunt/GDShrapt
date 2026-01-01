@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -15,14 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
+    <ProjectReference Include="..\GDShrapt.Validator\GDShrapt.Validator.csproj" />
     <ProjectReference Include="..\GDShrapt.Tests.Common\GDShrapt.Tests.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Scripts\*.gd">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace GDShrapt.Reader
 {
+
     public class GDTokensForm<STATE, T0> : GDTokensForm<STATE>
         where STATE : struct, System.Enum
         where T0 : GDSyntaxToken
@@ -1005,10 +1006,10 @@ namespace GDShrapt.Reader
         public STATE State
         {
             get => (STATE)(object)StateIndex;
-            set => StateIndex = (int)(object)value;
+            set => StateIndex = Convert.ToInt32(value);
         }
 
-        public bool IsOrLowerState(STATE state) => StateIndex <= (int)(object)state;
+        public bool IsOrLowerState(STATE state) => StateIndex <= Convert.ToInt32(state);
     }
 
     /// <summary>

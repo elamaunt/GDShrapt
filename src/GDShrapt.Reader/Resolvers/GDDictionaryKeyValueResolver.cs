@@ -23,7 +23,7 @@
         {
             if (!_keyExpressionChecked)
             {
-                this.ResolveExpression(c, state, _lineIntendationInSpaces, allowAssignment: false);
+                this.ResolveExpression(c, state, _lineIntendationInSpaces, NewLineReceiver, allowAssignment: false);
                 return;
             }
 
@@ -36,7 +36,7 @@
             {
                 state.Pop();
                 Owner.HandleReceivedToken(_activeDeclaration);
-                state .PushAndPass(_activeDeclaration, c);
+                state.PushAndPass(_activeDeclaration, c);
             }
         }
 
@@ -69,6 +69,8 @@
             _keyExpressionChecked = true;
         }
 
+        bool ITokenReceiver.IsCompleted => _keyExpressionChecked = true;
+
         void ITokenSkipReceiver<GDExpression>.HandleReceivedTokenSkip()
         {
             _keyExpressionChecked = true;
@@ -92,7 +94,7 @@
 
         public void HandleReceivedToken(GDSpace token)
         {
-            if (_activeDeclaration == null)
+            if ( _activeDeclaration == null)
                 Owner.HandleReceivedToken(token);
             else
                 _receiver.HandleReceivedToken(token);

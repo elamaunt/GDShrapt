@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Version>5.0.0</Version>
+    <Authors>elamaunt</Authors>
+    <Product>GDShrapt.Builder</Product>
+    <Description>GDShrapt.Builder provides a fluent API for programmatic GDScript code generation.
+
+Features:
+- Fluent Building API for creating GDScript AST nodes
+- Factory methods for declarations, expressions, statements
+- Three building styles: Short, Fluent, and Token-based
+- Extension methods for AST manipulation
+
+Usage: Use the GD static class with methods like GD.Class(), GD.Method(), GD.Variable() to build AST nodes programmatically.</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
+    <Copyright>elamaunt</Copyright>
+    <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>GDShrapt GDScript builder codegeneration Godot</PackageTags>
+    <AssemblyVersion>5.0.0</AssemblyVersion>
+    <FileVersion>5.0.0</FileVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

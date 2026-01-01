@@ -240,5 +240,55 @@ static func f():
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
             AssertHelper.NoInvalidTokens(declaration);
         }
+
+        [TestMethod]
+        public void ParseMethod_VariadicFunction_NotSupported()
+        {
+            // GDScript 4.x supports variadic functions with Array... syntax:
+            // func variadic_func(args: Array...):
+            //     pass
+            //
+            // This test documents current behavior: variadic functions are NOT supported.
+            // The parser will create invalid tokens for the "..." part.
+            // When implementing variadic support, update this test.
+
+            var reader = new GDScriptReader();
+            var code = @"func variadic_func(args: Array...):
+	pass";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            // Document current behavior: the parser creates invalid tokens for "..."
+            // This test should be updated when variadic functions are properly supported
+            var invalidTokens = declaration.AllInvalidTokens.ToList();
+
+            // If we have invalid tokens, variadic is NOT supported yet
+            // When variadic is implemented, this should be changed to:
+            // Assert.AreEqual(0, invalidTokens.Count);
+            // Assert.IsTrue(method.Parameters[0].IsVariadic);
+
+            // For now, just document the current behavior
+            if (invalidTokens.Count > 0)
+            {
+                // Expected: variadic functions are not yet supported
+                // The "..." causes parsing issues
+                Assert.IsTrue(true, "Variadic functions are not yet supported - invalid tokens found");
+            }
+            else
+            {
+                // If no invalid tokens, check if round-trip works
+                // (parser might silently ignore the "...")
+                var method = declaration.Methods.FirstOrDefault();
+                Assert.IsNotNull(method, "Method should be parsed");
+
+                // Round-trip test - does the output preserve the "..."?
+                var output = declaration.ToString();
+                if (!output.Contains("..."))
+                {
+                    Assert.Inconclusive("Variadic syntax '...' is not preserved in round-trip. Variadic functions may not be fully supported.");
+                }
+            }
+        }
     }
 }

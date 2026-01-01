@@ -10,6 +10,8 @@ namespace GDShrapt.Reader
     {
         public List<GDSyntaxToken> Tokens { get; } = new List<GDSyntaxToken>();
 
+        public bool IsCompleted => false;
+
         public void HandleReceivedToken(GDStatement token)
         {
             Tokens.Add(token);

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GDShrapt.Reader
+﻿namespace GDShrapt.Reader
 {
     internal class GDTypeResolver : GDResolver, ITokenOrSkipReceiver<GDStringNode>
     {
@@ -10,6 +8,7 @@ namespace GDShrapt.Reader
         bool _completed;
 
         public new ITokenOrSkipReceiver<GDTypeNode> Owner { get; }
+        public bool IsCompleted => true;
 
         public GDTypeResolver(ITokenOrSkipReceiver<GDTypeNode> owner)
             : base(owner)

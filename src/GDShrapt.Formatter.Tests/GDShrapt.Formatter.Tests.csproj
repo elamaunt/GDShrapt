@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -15,14 +14,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
+    <ProjectReference Include="..\GDShrapt.Formatter\GDShrapt.Formatter.csproj" />
     <ProjectReference Include="..\GDShrapt.Tests.Common\GDShrapt.Tests.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Scripts\*.gd">
+    <Content Include="..\GDShrapt.Reader.Tests\Scripts\*.gd" Link="Scripts\%(Filename)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 
 </Project>

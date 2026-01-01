@@ -1,11 +1,18 @@
-﻿namespace GDShrapt.Reader
+﻿using System;
+using System.Collections.Generic;
+
+namespace GDShrapt.Reader
 {
-    internal class GDExpressionResolver : GDResolver, 
-        ITokenOrSkipReceiver<GDIfKeyword>
+    internal class GDExpressionResolver : GDResolver,
+        ITokenOrSkipReceiver<GDIfKeyword>,
+        ITokenOrSkipReceiver<GDDoubleDot>
     {
         GDExpression _expression;
         GDIfKeyword _nextIfKeyword;
-        GDSpace _lastSpace;
+        GDDoubleDot _nextDoubleDot;
+        bool _singleDotDetected;
+
+        List<GDCharSequence> _lastSplitTokens;
 
         bool _ifExpressionChecked;
         bool _isCompleted;
@@ -43,9 +50,23 @@
                 return;
             }
 
+            if (_nextDoubleDot != null)
+            {
+                var doubleDot = _nextDoubleDot;
+                _nextDoubleDot = null;
+
+                var expr = new GDRestExpression();
+                ((ITokenReceiver<GDDoubleDot>)expr).HandleReceivedToken(doubleDot);
+                PushAndSave(state, expr);
+
+                state.PassChar(c);
+                return;
+            }
+
             if (IsSpace(c))
             {
-                state.Push(_lastSpace = new GDSpace());
+
+                state.Push(AddLastSplitToken(new GDSpace()));
                 state.PassChar(c);
                 return;
             }
@@ -61,11 +82,7 @@
                 if (!CheckKeywords(state))
                     CompleteExpression(state);
 
-                if (_lastSpace != null)
-                {
-                    Owner.HandleReceivedToken(_lastSpace);
-                    _lastSpace = null;
-                }
+                FlushSplitTokens(state);
 
                 state.PassChar(c);
                 return;
@@ -131,8 +148,18 @@
 
                 if (c == '.')
                 {
-                    PushAndSwap(state, new GDMemberOperatorExpression(_intendation));
-                    state.PassChar(c);
+                    if (_singleDotDetected)
+                    {
+                        // We already checked for ".." and it was just "." - create member operator
+                        _singleDotDetected = false;
+                        PushAndSwap(state, new GDMemberOperatorExpression(_intendation));
+                        state.PassChar(c);
+                        return;
+                    }
+
+                    // Could be ".." (rest operator) or just "." (member access without caller)
+                    // Try to resolve as ".." first
+                    state.PushAndPass(new GDSequenceTokenResolver<GDDoubleDot>(this), c);
                     return;
                 }
 
@@ -150,11 +177,7 @@
                     return;
                 }
 
-                if (_lastSpace != null)
-                {
-                    Owner.HandleReceivedToken(_lastSpace);
-                    _lastSpace = null;
-                }
+                FlushSplitTokens(state);
 
                 Owner.HandleAsInvalidToken(c, state, x => c != x);
             }
@@ -234,6 +257,102 @@
             }
         }
 
+        private T AddLastSplitToken<T>(T splitToken) where T : GDCharSequence
+        {
+            if (_lastSplitTokens == null)
+                _lastSplitTokens = new List<GDCharSequence>();
+
+            _lastSplitTokens.Add(splitToken);
+            return splitToken;
+        }
+
+        /// <summary>
+        /// Отправляет токен в ITokenReceiver (Owner или NewLineReceiver)
+        /// </summary>
+        private void SendTokenToReceiver(ITokenReceiver receiver, GDCharSequence token)
+        {
+            if (token is GDSpace space)
+                receiver.HandleReceivedToken(space);
+            else if (token is GDMultiLineSplitToken multiLine)
+                receiver.HandleReceivedToken(multiLine);
+        }
+
+        /// <summary>
+        /// Сливает накопленные токены в Owner (выражение продолжается)
+        /// </summary>
+        private void FlushSplitTokensToOwner()
+        {
+            if (_lastSplitTokens == null)
+                return;
+
+            foreach (var token in _lastSplitTokens)
+                SendTokenToReceiver(Owner, token);
+
+            _lastSplitTokens.Clear();
+        }
+
+        /// <summary>
+        /// Сливает накопленные токены в state через PassChar (выражение завершено)
+        /// </summary>
+        private void FlushSplitTokensToState(GDReadingState state)
+        {
+            if (_lastSplitTokens == null)
+                return;
+
+            foreach (var token in _lastSplitTokens)
+            {
+                var seq = token.Sequence;
+                for (int i = 0; i < seq.Length; i++)
+                    state.PassChar(seq[i]);
+            }
+
+            _lastSplitTokens.Clear();
+        }
+
+        /// <summary>
+        /// Сливает токены: в Owner если не завершен, иначе в state
+        /// </summary>
+        private void FlushSplitTokens(GDReadingState state)
+        {
+            if (_lastSplitTokens == null)
+                return;
+
+            if (!Owner.IsCompleted)
+                FlushSplitTokensToOwner();
+            else
+                FlushSplitTokensToState(state);
+        }
+
+        /// <summary>
+        /// Сливает токены в expression node (для PushAndSwap/PushAndSave)
+        /// </summary>
+        private void FlushSplitTokensToNode(GDExpression node)
+        {
+            if (_lastSplitTokens == null)
+                return;
+
+            // Используем ITokenReceiver для вызова правильных перегрузок
+            ITokenReceiver receiver = node;
+            foreach (var token in _lastSplitTokens)
+                SendTokenToReceiver(receiver, token);
+
+            _lastSplitTokens.Clear();
+        }
+
+        /// <summary>
+        /// Сливает токены в NewLineReceiver
+        /// </summary>
+        private void FlushSplitTokensToNewLineReceiver()
+        {
+            if (_lastSplitTokens == null || NewLineReceiver == null)
+                return;
+
+            foreach (var token in _lastSplitTokens)
+                SendTokenToReceiver(NewLineReceiver, token);
+
+            _lastSplitTokens.Clear();
+        }
+
         private bool CheckKeywords(GDReadingState state)
         {
             if (_expression is GDMethodExpression)
@@ -253,32 +372,36 @@
                         {
                             _expression = null;
 
-                            var space = _lastSpace;
-                            _lastSpace = null;
+                            // Сохраняем токены для передачи в state после CompleteExpression
+                            var savedTokens = _lastSplitTokens;
+                            _lastSplitTokens = null;
 
                             CompleteExpression(state);
 
                             for (int i = 0; i < s.Length; i++)
                                 state.PassChar(s[i]);
 
-                            if (space != null)
-                                state.PassString(space.Sequence);
+                            if (savedTokens != null)
+                            {
+                                foreach (var token in savedTokens)
+                                    state.PassString(token.Sequence);
+                            }
                         }
                         return true;
                     case "setget":
                         {
                             _expression = null;
 
-                            if (_lastSpace != null)
-                            {
-                                Owner.HandleReceivedToken(_lastSpace);
-                                _lastSpace = null;
-                            }
+                            if (!Owner.IsCompleted)
+                                FlushSplitTokensToOwner();
 
                             CompleteExpression(state);
 
                             for (int i = 0; i < s.Length; i++)
                                 state.PassChar(s[i]);
+
+                            if (Owner.IsCompleted)
+                                FlushSplitTokensToState(state);
                         }
                         return true;
                     case "not":
@@ -384,12 +507,7 @@
                 }
                 else
                 {
-                    if (_lastSpace != null)
-                    {
-                        NewLineReceiver.HandleReceivedToken(_lastSpace);
-                        _lastSpace = null;
-                    }
-
+                    FlushSplitTokensToNewLineReceiver();
                     NewLineReceiver.HandleReceivedToken(new GDNewLine());
                 }
             }
@@ -399,27 +517,32 @@
                     CompleteExpression(state);
                 state.PassNewLine();
             }
-            
         }
 
         internal override void HandleSharpChar(GDReadingState state)
         {
             if (NewLineReceiver != null)
             {
-                if (_expression != null)
+                if (!NewLineReceiver.IsCompleted)
                 {
-                    PushAndSwap(state, new GDDualOperatorExpression(_intendation, true));
-                    state.PassSharpChar();
+                    if (_expression != null)
+                    {
+                        PushAndSwap(state, new GDDualOperatorExpression(_intendation, true));
+                        state.PassSharpChar();
+                    }
+                    else
+                    {
+                        FlushSplitTokensToNewLineReceiver();
+                        NewLineReceiver.HandleReceivedToken(state.PushAndPass(new GDComment(), '#'));
+                    }
                 }
                 else
                 {
-                    if (_lastSpace != null)
-                    {
-                        NewLineReceiver.HandleReceivedToken(_lastSpace);
-                        _lastSpace = null;
-                    }
+                    state.Pop();
+                    state.Pop();
 
-                    NewLineReceiver.HandleReceivedToken(state.PushAndPass(new GDComment(), '#'));
+                    FlushSplitTokensToState(state);
+                    state.PassSharpChar();
                 }
             }
             else
@@ -441,20 +564,17 @@
                 }
                 else
                 {
-                    if (_lastSpace != null)
-                    {
-                        NewLineReceiver.HandleReceivedToken(_lastSpace);
-                        _lastSpace = null;
-                    }
-
+                    FlushSplitTokensToNewLineReceiver();
                     NewLineReceiver.HandleReceivedToken(state.PushAndPass(new GDMultiLineSplitToken(), '\\'));
                 }
             }
             else
             {
-                if (!CheckKeywords(state))
-                    CompleteExpression(state);
+                state.Push(AddLastSplitToken(new GDMultiLineSplitToken()));
                 state.PassLeftSlashChar();
+                //if (!CheckKeywords(state))
+                //    CompleteExpression(state);
+                //state.PassLeftSlashChar();
             }
         }
 
@@ -508,11 +628,7 @@
             else
                 OwnerWithSkip?.HandleReceivedTokenSkip();
 
-            if (_lastSpace != null)
-            {
-                Owner.HandleReceivedToken(_lastSpace);
-                _lastSpace = null;
-            }
+            FlushSplitTokens(state);
         }
 
         private void PushAndSwap<T>(GDReadingState state, T node)
@@ -523,11 +639,7 @@
             else
                 node.HandleReceivedTokenSkip();
 
-            if (_lastSpace != null)
-            {
-                node.HandleReceivedToken(_lastSpace);
-                _lastSpace = null;
-            }
+            FlushSplitTokensToNode(node);
 
             state.Push(_expression = node);
         }
@@ -540,12 +652,7 @@
 
         private void PushAndSave(GDReadingState state, GDExpression node)
         {
-            if (_lastSpace != null)
-            {
-                node.Add(_lastSpace);
-                _lastSpace = null;
-            }
-
+            FlushSplitTokensToNode(node);
             state.Push(_expression = node);
         }
 
@@ -582,6 +689,18 @@
         public void HandleReceivedToken(GDMultiLineSplitToken token)
         {
             Owner.HandleReceivedToken(token);
+        }
+
+        void ITokenReceiver<GDDoubleDot>.HandleReceivedToken(GDDoubleDot token)
+        {
+            _nextDoubleDot = token;
+        }
+
+        void ITokenSkipReceiver<GDDoubleDot>.HandleReceivedTokenSkip()
+        {
+            // ".." was not matched, it's just a single "." - mark it so HandleChar creates member operator
+            // The first "." character will be re-passed by the GDSequenceResolver
+            _singleDotDetected = true;
         }
     }
 }

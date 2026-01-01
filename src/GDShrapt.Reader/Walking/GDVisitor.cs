@@ -781,5 +781,15 @@
         {
             // Nothing
         }
+
+        public virtual void Visit(GDRestExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDRestExpression e)
+        {
+            // Nothing
+        }
     }
 }

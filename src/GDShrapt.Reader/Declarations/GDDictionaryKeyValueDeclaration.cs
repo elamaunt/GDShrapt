@@ -56,22 +56,24 @@
         public GDTokensForm<State, GDExpression, GDPairToken, GDExpression> TypedForm => _form;
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveSpaceToken(c, state))
-                return;
-
             switch (_form.State)
             {
                 case State.Key:
-                    this.ResolveExpression(c, state, _intendation, this, allowAssignment: false);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveExpression(c, state, _intendation, this, allowAssignment: false);
                     break;
                 case State.ColonOrAssign:
-                    if (!_checkedColon)
-                        this.ResolveColon(c, state);
-                    else
-                        this.ResolveAssign(c, state);
+                    if (!this.ResolveSpaceToken(c, state))
+                    {
+                        if (!_checkedColon)
+                            this.ResolveColon(c, state);
+                        else
+                            this.ResolveAssign(c, state);
+                    }
                     break;
                 case State.Value:
-                    this.ResolveExpression(c, state, _intendation, this);
+                    if (!this.ResolveSpaceToken(c, state))
+                        this.ResolveExpression(c, state, _intendation, this);
                     break;
                 default:
                     state.PopAndPass(c);
@@ -106,8 +108,14 @@
         {
             if (_form.IsOrLowerState(State.Key))
             {
-                _form.State = State.ColonOrAssign;
                 Key = token;
+
+                // Rest expression ".." is a terminal - it doesn't have colon or value
+                if (token is GDRestExpression)
+                    _form.State = State.Completed;
+                else
+                    _form.State = State.ColonOrAssign;
+
                 return;
             }
 

@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Version>5.0.0</Version>
+    <Authors>elamaunt</Authors>
+    <Product>GDShrapt.Linter</Product>
+    <Description>GDShrapt.Linter provides style checking for GDScript with configurable rules.
+
+Features:
+- Naming conventions (PascalCase, snake_case, SCREAMING_SNAKE_CASE)
+- Class, function, variable, constant, signal, enum naming rules
+- Private member prefix checking
+- Line length limits
+- Member ordering enforcement
+- Unused variable/parameter/signal detection
+- Empty function warnings
+- Type hint recommendations
+- Max parameters and function length limits
+
+Usage: Create a GDLinter instance with GDLinterOptions and call Lint() on a parsed AST to get lint issues.</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
+    <Copyright>elamaunt</Copyright>
+    <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>GDShrapt GDScript linter style Godot</PackageTags>
+    <AssemblyVersion>5.0.0</AssemblyVersion>
+    <FileVersion>5.0.0</FileVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

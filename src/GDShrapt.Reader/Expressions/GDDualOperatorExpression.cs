@@ -62,7 +62,7 @@
             {
                 case State.LeftExpression:
                     if (!this.ResolveSpaceToken(c, state))
-                        this.ResolveExpression(c, state, _intendation);
+                        this.ResolveExpression(c, state, _intendation, this);
                     break;
                 case State.DualOperator:
                     // Indicates that it isn't a normal expression. The parent should handle the state.

@@ -84,7 +84,9 @@
                     this.ResolveExpression(c, state, _intendation, this);
                     break;
                 default:
-                    state.PopAndPass(c);
+                    state.Pop();
+                    FlushEndingSplitTokens(state);
+                    state.PassChar(c);
                     break;
             }
         }

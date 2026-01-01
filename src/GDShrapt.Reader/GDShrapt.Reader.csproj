@@ -6,20 +6,21 @@
     <Version>5.0.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt</Product>
-    <Description>GDShrapt.Reader is .Net library and object-oriented one-pass parser of GDScript 2.0 (Godot 4.x). It can build a lexical tree of GDScript code or generate new code from scratch.
+    <Description>GDShrapt.Reader is .Net library and object-oriented one-pass parser of GDScript 2.0 (Godot 4.x). It provides AST nodes, visitor pattern, and parsing infrastructure.
 
 Features:
 - Full GDScript 4.x support (lambdas, await, typed arrays/dictionaries, pattern matching, annotations)
-- AST Validation system with compiler-style diagnostics (GD1xxx-GD5xxx error codes)
-- Type inference with external runtime provider (IGDRuntimeProvider)
-- Style linter with configurable naming conventions
-- Code formatter with style extraction
-- Scope analysis, type checking, control flow validation
+- High-performance one-pass parsing with error recovery
 - Helper classes for annotations, virtual methods, and expression analysis
-- Fluent Building API for code generation
-- High-performance one-pass parsing
+- Comprehensive AST with position tracking and cloning support
 
-Usage: Create a GDScriptReader instance and call ParseFileContent() or ParseExpression() methods. Use GDValidator to validate, GDLinter to lint, GDFormatter to format.</Description>
+For full functionality, also install:
+- GDShrapt.Builder - Code generation with fluent API
+- GDShrapt.Validator - AST validation with compiler-style diagnostics
+- GDShrapt.Linter - Style checking with naming conventions
+- GDShrapt.Formatter - Code formatting with style extraction
+
+Usage: Create a GDScriptReader instance and call ParseFileContent() or ParseExpression() methods.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
@@ -30,21 +31,15 @@ Usage: Create a GDScriptReader instance and call ParseFileContent() or ParseExpr
     <FileVersion>5.0.0</FileVersion>
     <PackageReleaseNotes>
 Version 5.0.0:
-- NEW: AST Validation system with compiler-style diagnostics
-  - Syntax validation (GD1xxx): Invalid tokens, missing brackets
-  - Scope validation (GD2xxx): Undefined variables, duplicate declarations
-  - Type validation (GD3xxx): Type mismatches, invalid operands
-  - Call validation (GD4xxx): Wrong argument counts for built-in functions
-  - Control flow validation (GD5xxx): break/continue outside loops, return outside functions
-- NEW: Type Inference with external runtime provider
-  - IGDRuntimeProvider interface for custom type information
-  - GDDefaultRuntimeProvider with built-in GDScript types
-  - GDCachingRuntimeProvider for performance optimization
-- NEW: Style Linter with naming conventions and best practices
-- NEW: Code Formatter with rule-based formatting and style extraction
+- BREAKING: Split into multiple packages for modularity
+  - GDShrapt.Reader - Core parsing and AST (this package)
+  - GDShrapt.Builder - Code generation
+  - GDShrapt.Validator - AST validation
+  - GDShrapt.Linter - Style checking
+  - GDShrapt.Formatter - Code formatting
 - Full GDScript 4.x support, typed dictionaries (Godot 4.4)
 - Helper classes: GDAnnotationHelper, GDSpecialMethodHelper, GDExpressionHelper
-- Comprehensive test coverage (655 tests)
+- Comprehensive test coverage (667 tests)
     </PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>

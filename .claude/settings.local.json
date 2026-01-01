@@ -13,7 +13,13 @@
       "Bash(dotnet run:*)",
       "Bash(dotnet clean:*)",
       "Bash(wc:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(tree:*)",
+      "Bash(cd:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(xargs:*)",
+      "Bash(findstr:*)",
+      "Bash(Select-String \"Всего тестов\")"
     ]
   }
 }

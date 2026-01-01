@@ -24,6 +24,7 @@
         Break,
         Yeild,
         Await,
-        Method
+        Method,
+        Rest
     }
 }
