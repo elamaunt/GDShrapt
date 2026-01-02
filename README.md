@@ -18,6 +18,8 @@ GDScript is the main scripting language of [Godot Engine](https://github.com/god
 | **GDShrapt.Linter** | Style checking and naming conventions | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Linter.svg)](https://www.nuget.org/packages/GDShrapt.Linter) |
 | **GDShrapt.Formatter** | Code formatting with type inference | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Formatter.svg)](https://www.nuget.org/packages/GDShrapt.Formatter) |
 
+[View all packages on NuGet](https://www.nuget.org/packages?q=GDShrapt)
+
 ## Features
 
 - **Full GDScript 4.x Support** - Lambdas, await, typed arrays/dictionaries, pattern matching, all annotations
@@ -32,16 +34,27 @@ GDScript is the main scripting language of [Godot Engine](https://github.com/god
 
 ## Installation
 
-Install from [NuGet](https://www.nuget.org/packages/GDShrapt.Reader):
+Install from [NuGet](https://www.nuget.org/packages?q=GDShrapt):
 
 ```bash
+# Core parser (required)
 dotnet add package GDShrapt.Reader
+
+# Optional packages
+dotnet add package GDShrapt.Builder      # Fluent code generation
+dotnet add package GDShrapt.Validator    # AST validation with diagnostics
+dotnet add package GDShrapt.Linter       # Style checking
+dotnet add package GDShrapt.Formatter    # Code formatting
 ```
 
 Or via Package Manager Console:
 
 ```powershell
 Install-Package GDShrapt.Reader
+Install-Package GDShrapt.Builder
+Install-Package GDShrapt.Validator
+Install-Package GDShrapt.Linter
+Install-Package GDShrapt.Formatter
 ```
 
 ## Quick Start
