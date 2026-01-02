@@ -141,36 +141,6 @@ namespace GDShrapt.Reader
             state.PassLeftSlashChar();
         }
 
-        /// <summary>
-        /// Removes trailing split tokens (GDSpace, GDMultiLineSplitToken) from the end of this node's form
-        /// and passes their characters to the state for reprocessing by the parent reader.
-        /// </summary>
-        internal void FlushEndingSplitTokens(GDReadingState state)
-        {
-            var lastNonSplit = Form.LastToken;
-            while (lastNonSplit is GDSpace || lastNonSplit is GDMultiLineSplitToken)
-                lastNonSplit = Form.PreviousTokenBefore(lastNonSplit);
-
-            GDSyntaxToken firstSplit;
-            if (lastNonSplit != null)
-                firstSplit = Form.NextTokenAfter(lastNonSplit);
-            else
-                firstSplit = Form.FirstToken;
-
-            while (firstSplit != null)
-            {
-                var next = Form.NextTokenAfter(firstSplit);
-                Form.Remove(firstSplit);
-
-                var seq = ((GDCharSequence)firstSplit).Sequence;
-
-                for (int i = 0; i < seq.Length; i++)
-                   state.PassChar(seq[i]);
-
-                firstSplit = next;
-            }
-        }
-
         public override void AppendTo(StringBuilder builder)
         {
             foreach (var token in Form)

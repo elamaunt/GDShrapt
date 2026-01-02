@@ -33,13 +33,8 @@ namespace GDShrapt.Reader
             if (node == null)
                 return;
 
-            // Collect all intendation tokens from AllTokens (not AllNodes, as GDIntendation is a token)
-            var intendations = node.AllTokens
-                .OfType<GDIntendation>()
-                .OrderBy(i => i.StartLine)
-                .ToList();
-
-            foreach (var intendation in intendations)
+            // AllTokens already iterates in source order, no need to sort or materialize
+            foreach (var intendation in node.AllTokens.OfType<GDIntendation>())
             {
                 ValidateIntendation(intendation);
             }

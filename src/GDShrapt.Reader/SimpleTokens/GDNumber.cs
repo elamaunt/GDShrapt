@@ -173,6 +173,20 @@ namespace GDShrapt.Reader
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleLeftSlashChar(GDReadingState state)
+        {
+            CompleteString();
+            state.Pop();
+            state.PassLeftSlashChar();
+        }
+
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            CompleteString();
+            state.Pop();
+            state.PassSharpChar();
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             CompleteString();

@@ -201,6 +201,7 @@ The `GDValidator` class provides comprehensive AST validation with compiler-styl
 | Call | GD4xxx | Wrong argument counts, method not found |
 | Control Flow | GD5xxx | break/continue outside loops, return outside functions |
 | Indentation | GD6xxx | Inconsistent indentation (mixed tabs/spaces) |
+| Await | GD7xxx | Await structure issues |
 
 **Note:** The validator uses two-pass analysis for scope validation, which fully supports forward references. Methods, variables, signals, and enums can be used before they are declared in the file.
 
@@ -214,7 +215,8 @@ var options = new GDValidationOptions
     CheckTypes = true,        // GD3xxx warnings
     CheckCalls = true,        // GD4xxx errors
     CheckControlFlow = true,  // GD5xxx errors
-    CheckIndentation = true   // GD6xxx warnings
+    CheckIndentation = true,  // GD6xxx warnings
+    CheckAwait = true         // GD7xxx errors
 };
 
 var result = validator.Validate(tree, options);
@@ -330,6 +332,7 @@ The `GDFormatter` class provides automatic code formatting with style extraction
 | GDF003 | spacing | Format spacing around operators, commas, colons |
 | GDF004 | trailing-whitespace | Remove trailing whitespace, handle EOF newlines |
 | GDF005 | newline | Normalize line endings |
+| GDF006 | line-wrap | Automatic line wrapping for long lines |
 
 ### Formatter Options
 
@@ -360,7 +363,13 @@ var options = new GDFormatterOptions
     // Trailing whitespace
     RemoveTrailingWhitespace = true,
     EnsureTrailingNewline = true,
-    RemoveMultipleTrailingNewlines = true
+    RemoveMultipleTrailingNewlines = true,
+
+    // Line wrapping
+    MaxLineLength = 100,             // 0 to disable
+    WrapLongLines = true,
+    LineWrapStyle = LineWrapStyle.AfterOpeningBracket,
+    ContinuationIndentSize = 1
 };
 
 var formatter = new GDFormatter(options);
@@ -470,7 +479,7 @@ GD.Expression.Await(GD.Expression.Identifier("signal")) // await(signal)
 - `GDValidator` - Main validation class
 - `GDValidationResult` - Collection of diagnostics with filtering
 - `GDDiagnostic` - Single diagnostic with location and message
-- `GDDiagnosticCode` - Enum of all diagnostic codes (GD1001-GD5006)
+- `GDDiagnosticCode` - Enum of all diagnostic codes (GD1001-GD7xxx)
 - `GDDiagnosticSeverity` - Error, Warning, Hint
 - `GDValidationOptions` - Configure which validators to run
 
@@ -503,6 +512,7 @@ GD.Expression.Await(GD.Expression.Identifier("signal")) // await(signal)
 - `GDFormatterStyleExtractor` - Extract style from sample code
 - `IndentStyle` - Tabs, Spaces
 - `LineEndingStyle` - LF, CRLF, Platform
+- `LineWrapStyle` - AfterOpeningBracket, BeforeElements
 
 ### Exception Classes
 
@@ -511,13 +521,13 @@ GD.Expression.Await(GD.Expression.Identifier("signal")) // await(signal)
 
 ## Examples
 
-For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
-- [Parsing/](src/GDShrapt.Reader.Tests/Parsing/) - Parsing examples
-- [Building/](src/GDShrapt.Reader.Tests/Building/) - Code generation examples
-- [Helpers/](src/GDShrapt.Reader.Tests/Helpers/) - Helper classes examples
-- [Validation/](src/GDShrapt.Reader.Tests/Validation/) - Validation examples
-- [Linting/](src/GDShrapt.Reader.Tests/Linting/) - Linter examples
-- [Formatting/](src/GDShrapt.Reader.Tests/Formatting/) - Formatter examples
+For more examples, see the test projects:
+- [GDShrapt.Reader.Tests](src/GDShrapt.Reader.Tests/) - Parsing examples
+- [GDShrapt.Builder.Tests](src/GDShrapt.Builder.Tests/) - Code generation examples
+- [GDShrapt.Validator.Tests](src/GDShrapt.Validator.Tests/) - Validation examples
+- [GDShrapt.Linter.Tests](src/GDShrapt.Linter.Tests/) - Linter examples
+- [GDShrapt.Formatter.Tests](src/GDShrapt.Formatter.Tests/) - Formatter examples
+- [GDShrapt.Integration.Tests](src/GDShrapt.Integration.Tests/) - Cross-component examples
 
 ## Changelog
 
@@ -528,6 +538,8 @@ For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
   - Type validation (GD3xxx): Type mismatches, invalid operands
   - Call validation (GD4xxx): Wrong argument counts for built-in functions
   - Control flow validation (GD5xxx): break/continue outside loops, return outside functions
+  - Indentation validation (GD6xxx): Mixed tabs/spaces, inconsistent indentation
+  - Await validation (GD7xxx): Await structure issues
 - **NEW: Type Inference System** with external runtime provider
   - `IGDRuntimeProvider` interface for custom type information
   - `GDDefaultRuntimeProvider` with built-in GDScript types
@@ -545,6 +557,7 @@ For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
   - Spacing: around operators, after commas, colons
   - Trailing whitespace removal, EOF newline handling
   - Line ending normalization (LF, CRLF, Platform)
+  - Line wrapping for long lines
   - Style extraction from sample code ("format by example")
   - Presets: Default, GDScriptStyleGuide, Minimal
 - Full GDScript 4.x support
@@ -552,7 +565,7 @@ For more examples, see the [test files](src/GDShrapt.Reader.Tests/):
 - Added typed dictionaries support (Godot 4.4)
 - Added helper classes: `GDAnnotationHelper`, `GDSpecialMethodHelper`, `GDExpressionHelper`
 - Extended Building API: `GetUniqueNode`, `Enum`, `EnumValue`, Export annotations
-- Comprehensive test coverage (667 tests)
+- Comprehensive test coverage (955 tests)
 - Custom `GDStackOverflowException` for controlled stack depth limits
 
 ### 4.4.0-alpha

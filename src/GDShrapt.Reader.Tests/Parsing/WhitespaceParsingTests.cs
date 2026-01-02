@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Text;
 
 namespace GDShrapt.Reader.Tests.Parsing
 {
@@ -931,6 +932,36 @@ namespace GDShrapt.Reader.Tests.Parsing
             var code = "var arr = [\\\n\t1,\\\n\t2\\\n]\n";
             var tree = reader.ParseFileContent(code);
 
+            // Debug output
+            System.Console.WriteLine($"All GDNumberExpression count: {tree.AllNodes.OfType<GDNumberExpression>().Count()}");
+            foreach (var numExpr in tree.AllNodes.OfType<GDNumberExpression>())
+            {
+                System.Console.WriteLine($"  GDNumberExpression: '{numExpr}', Number='{numExpr.Number?.Sequence}'");
+            }
+
+            var varDecl = tree.AllNodes.OfType<GDVariableDeclaration>().First();
+            var arrayExpr = varDecl.Initializer as GDArrayInitializerExpression;
+            System.Console.WriteLine($"Array Values count: {arrayExpr.Values.Count}");
+            int idx = 0;
+            foreach (var value in arrayExpr.Values)
+            {
+                System.Console.WriteLine($"Value[{idx}]: type={value.GetType().Name}, str='{value}'");
+                if (value is GDNumberExpression numExpr)
+                {
+                    System.Console.WriteLine($"  NumberExpr.Form tokens:");
+                    foreach (var t in numExpr.Form)
+                    {
+                        System.Console.WriteLine($"    {t.GetType().Name} = '{t}'");
+                    }
+                }
+                idx++;
+            }
+            System.Console.WriteLine($"Array Values ListForm count: {arrayExpr.Values.ListForm.Count}");
+            foreach (var token in arrayExpr.Values.ListForm)
+            {
+                System.Console.WriteLine($"  Token: {token.GetType().Name} = '{token}'");
+            }
+
             var output = tree.ToString();
             output.Should().Be(code, "round-trip should preserve line continuation in arrays");
         }
@@ -1702,6 +1733,704 @@ namespace GDShrapt.Reader.Tests.Parsing
 
             var output = tree.ToString();
             output.Should().Be(code, "round-trip should preserve Space + MultiLineSplit + Space sequences");
+        }
+
+        #endregion
+
+        #region GDSpace Validation Tests - Multiple Spaces and Content Verification
+
+        /// <summary>
+        /// Helper method to verify that a GDSpace token contains only whitespace characters (spaces and tabs).
+        /// </summary>
+        private static void AssertGDSpaceContainsOnlyWhitespace(GDSpace space, string context)
+        {
+            space.Should().NotBeNull($"GDSpace should not be null ({context})");
+            space.Sequence.Should().NotBeNullOrEmpty($"GDSpace.Sequence should not be empty ({context})");
+
+            foreach (var c in space.Sequence)
+            {
+                c.Should().Match<char>(ch => ch == ' ' || ch == '\t',
+                    $"GDSpace should only contain spaces or tabs, but found '{c}' (code {(int)c}) in '{space.Sequence}' ({context})");
+            }
+        }
+
+        /// <summary>
+        /// Helper method to find all GDSpace tokens in a syntax tree and verify they contain only whitespace.
+        /// </summary>
+        private static void AssertAllGDSpacesContainOnlyWhitespace(GDNode root)
+        {
+            int spaceCount = 0;
+            foreach (var token in root.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    spaceCount++;
+                    AssertGDSpaceContainsOnlyWhitespace(space, $"token #{spaceCount} at line {space.StartLine}");
+                }
+            }
+            spaceCount.Should().BeGreaterThan(0, "at least one GDSpace should be found");
+        }
+
+        [TestMethod]
+        public void Parser_ParameterWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            // Multiple spaces should accumulate into a single GDSpace, not create separate tokens
+            var reader = new GDScriptReader();
+            var code = "func test(   a   ,   b   ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            // Verify round-trip
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces");
+
+            // Verify all GDSpaces contain only whitespace
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+
+            // Verify GDSpace tokens have proper length (multiple spaces)
+            var method = tree.Methods.First();
+            bool foundMultiSpaceToken = false;
+            foreach (var token in method.Parameters.Form)
+            {
+                if (token is GDSpace space && space.Sequence.Length > 1)
+                {
+                    foundMultiSpaceToken = true;
+                    break;
+                }
+            }
+            foundMultiSpaceToken.Should().BeTrue("should have GDSpace with multiple spaces");
+        }
+
+        [TestMethod]
+        public void Parser_EnumWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            // Multiple spaces in enum should accumulate into single GDSpace tokens
+            var reader = new GDScriptReader();
+            var code = "enum MyEnum {   A   =   1   ,   B   =   2   }\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in enum");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_ArrayWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var arr = [   1   ,   2   ,   3   ]\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in array");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_DictionaryWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var dict = {   \"a\"   :   1   ,   \"b\"   :   2   }\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in dictionary");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_CallWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tfunc_call(   a   ,   b   ,   c   )\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in call");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_TypedParameterWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test(   a   :   int   ,   b   :   String   ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in typed parameters");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_ParameterWithDefaultAndMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test(   a   =   10   ,   b   =   20   ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in parameters with defaults");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_TypedParameterWithDefaultAndMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test(   a   :   int   =   10   ,   b   :   String   =   \"hello\"   ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in typed parameters with defaults");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_BinaryExpressionWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var x   =   a   +   b   *   c\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in binary expression");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_SignalWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "signal my_signal(   arg1   :   int   ,   arg2   :   String   )\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in signal");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_LambdaWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var f = func(   a   ,   b   ):   return   a   +   b\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in lambda");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_AttributeWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "@export_range(   0   ,   100   )   var   value   :   int\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in attribute");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_IndexerWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tvar x = arr[   index   ]\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in indexer");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_BracketExpressionWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var x = (   a   +   b   )\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in brackets");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_IfExpressionWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var x =   a   if   condition   else   b\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in if expression");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_GenericTypeWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var arr:   Array[   int   ]\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in generic type");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_DictionaryTypeWithMultipleSpaces_SpacesShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "var dict:   Dictionary[   String   ,   int   ]\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple spaces in dictionary type");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_TabsInsteadOfSpaces_ShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test(\t\ta\t\t,\t\tb\t\t):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve tabs");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_MixedTabsAndSpaces_ShouldAccumulate()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test( \t a \t , \t b \t ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve mixed tabs and spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_NestedStructuresWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "var x = {   \"arr\"   :   [   1   ,   2   ,   3   ]   ,   \"val\"   :   10   }\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve nested structures with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_ComplexExpressionWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "var x   =   (   a   +   b   )   *   (   c   -   d   )   /   e\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve complex expression with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_ChainedCallsWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tvar x = obj.method(   a   ).another(   b   ,   c   )\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve chained calls with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_ReturnWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\treturn   value   +   1\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve return with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_AwaitWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tawait   some_signal\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve await with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_ForLoopWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tfor   i   in   range(   0   ,   10   ):\n\t\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve for loop with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_WhileLoopWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\twhile   condition   :\n\t\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve while loop with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_IfStatementWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tif   a   and   b   :\n\t\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve if statement with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_MatchStatementWithMultipleSpaces_AllGDSpacesValid()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test(x):\n\tmatch   x   :\n\t\t1   :\n\t\t\tpass\n\t\t_   :\n\t\t\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve match statement with multiple spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainIdentifiers()
+        {
+            // Verify identifiers don't leak into GDSpace
+            var reader = new GDScriptReader();
+            var code = "func test( abc , def ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("abc", "identifier should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("def", "identifier should not leak into GDSpace");
+                    space.Sequence.Should().NotContainAny(new[] { "a", "b", "c", "d", "e", "f" },
+                        "letters should not leak into GDSpace");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainNumbers()
+        {
+            // Verify numbers don't leak into GDSpace
+            var reader = new GDScriptReader();
+            var code = "var x = 123 + 456\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContainAny(new[] { "1", "2", "3", "4", "5", "6", "0", "7", "8", "9" },
+                        "digits should not leak into GDSpace");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainOperators()
+        {
+            // Verify operators don't leak into GDSpace
+            var reader = new GDScriptReader();
+            var code = "var x = a + b - c * d / e\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContainAny(new[] { "+", "-", "*", "/", "=", ":", ",", "(", ")", "[", "]", "{", "}" },
+                        "operators should not leak into GDSpace");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainStringContent()
+        {
+            // Verify string content doesn't leak into GDSpace
+            var reader = new GDScriptReader();
+            var code = "var s = \"hello world\"\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("hello", "string content should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("world", "string content should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("\"", "quotes should not leak into GDSpace");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainKeywords()
+        {
+            // Verify keywords don't leak into GDSpace
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tif true:\n\t\treturn false\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("func", "keyword should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("if", "keyword should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("true", "keyword should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("return", "keyword should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("false", "keyword should not leak into GDSpace");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainBackslash()
+        {
+            // Verify backslash (multiline split token) doesn't leak into GDSpace
+            var reader = new GDScriptReader();
+            var code = "var x = a + \\\n b\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("\\", "backslash should not leak into GDSpace");
+                }
+            }
+
+            // Also verify round-trip
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiline split");
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainBackslash_MultipleLineContinuations()
+        {
+            // Verify backslash doesn't leak into GDSpace with multiple line continuations
+            var reader = new GDScriptReader();
+            var code = "var x = a + \\\n\tb + \\\n\tc\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("\\", "backslash should not leak into GDSpace");
+                }
+            }
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve multiple line continuations");
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainBackslash_InFunctionCall()
+        {
+            // Verify backslash doesn't leak into GDSpace in function calls
+            var reader = new GDScriptReader();
+            var code = "func test():\n\tcall(a, \\\n\t     b)\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("\\", "backslash should not leak into GDSpace in function call");
+                }
+            }
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve line continuation in call");
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainBackslash_InArray()
+        {
+            // Verify backslash doesn't leak into GDSpace in arrays
+            var reader = new GDScriptReader();
+            var code = "var arr = [\\\n\t1,\\\n\t2\\\n]\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("\\", "backslash should not leak into GDSpace in array");
+                }
+            }
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve line continuation in array");
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainBackslash_InDictionary()
+        {
+            // Verify backslash doesn't leak into GDSpace in dictionaries
+            var reader = new GDScriptReader();
+            var code = "var dict = {\\\n\t\"a\": 1,\\\n\t\"b\": 2\\\n}\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("\\", "backslash should not leak into GDSpace in dictionary");
+                }
+            }
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve line continuation in dictionary");
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainBackslash_SpaceBeforeAndAfter()
+        {
+            // Verify backslash doesn't leak when there are spaces before and after the line continuation
+            var reader = new GDScriptReader();
+            var code = "var x = a \\\n b \\\n c\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("\\", "backslash should not leak into GDSpace");
+                    // Verify only whitespace
+                    foreach (var c in space.Sequence)
+                    {
+                        (c == ' ' || c == '\t').Should().BeTrue(
+                            $"GDSpace should only contain spaces or tabs, but found '{c}' (code {(int)c})");
+                    }
+                }
+            }
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve spaces around line continuations");
+        }
+
+        [TestMethod]
+        public void Parser_GDSpaceDoesNotContainNewline()
+        {
+            // Verify newlines don't leak into GDSpace
+            var reader = new GDScriptReader();
+            var code = "func test( a ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space)
+                {
+                    space.Sequence.Should().NotContain("\n", "newline should not leak into GDSpace");
+                    space.Sequence.Should().NotContain("\r", "carriage return should not leak into GDSpace");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Parser_VeryLongSpaceSequence_ShouldAccumulate()
+        {
+            // Test with very long sequence of spaces (10+)
+            var reader = new GDScriptReader();
+            var code = "func test(          a          ,          b          ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve very long space sequences");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
+
+            // Verify there are GDSpace tokens with 10 spaces
+            bool foundLongSpace = false;
+            foreach (var token in tree.AllTokens)
+            {
+                if (token is GDSpace space && space.Sequence.Length >= 10)
+                {
+                    foundLongSpace = true;
+                    break;
+                }
+            }
+            foundLongSpace.Should().BeTrue("should have GDSpace with 10+ spaces");
+        }
+
+        [TestMethod]
+        public void Parser_SingleSpace_GDSpaceValid()
+        {
+            // Single space should also work correctly
+            var reader = new GDScriptReader();
+            var code = "func test( a ):\n\tpass\n";
+            var tree = reader.ParseFileContent(code);
+
+            var output = tree.ToString();
+            output.Should().Be(code, "round-trip should preserve single spaces");
+
+            AssertAllGDSpacesContainOnlyWhitespace(tree);
         }
 
         #endregion

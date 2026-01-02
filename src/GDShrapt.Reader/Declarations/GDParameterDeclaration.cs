@@ -63,30 +63,61 @@
 
         internal override void HandleChar(char c, GDReadingState state)
         {
-            if (this.ResolveSpaceToken(c, state))
-                return;
-
             switch (_form.State)
             {
                 case State.Identifier:
+                    if (this.ResolveSpaceToken(c, state))
+                        return;
                     this.ResolveIdentifier(c, state);
                     break;
                 case State.Colon:
-                    this.ResolveColon(c, state);
+                    if (IsSpace(c))
+                    {
+                        // Buffer spaces - they may be trailing
+                        if (!state.IsRepassingChars)
+                        {
+                            state.AddPendingChar(c);
+                            return;
+                        }
+                        // On repass - use standard space token handling (accumulates into one GDSpace)
+                        this.ResolveSpaceToken(c, state);
+                        return;
+                    }
+                    // Non-space - determine if it's colon, assign, or stop char
+                    if (c == ':' || c == '=')
+                    {
+                        // Continuation - spaces go to form
+                        state.RepassPendingChars();
+                        // Complete any GDSpace that was created during repass
+                        state.CompleteActiveCharSequence();
+                        this.ResolveColon(c, state);
+                    }
+                    else
+                    {
+                        // Stop char - spaces are trailing, pass to parent
+                        _form.State = State.Completed;
+                        state.Pop();
+                        state.RepassPendingChars();
+                        state.PassChar(c);
+                    }
                     break;
                 case State.Type:
+                    if (this.ResolveSpaceToken(c, state))
+                        return;
                     this.ResolveType(c, state);
                     break;
                 case State.Assign:
+                    if (this.ResolveSpaceToken(c, state))
+                        return;
                     this.ResolveAssign(c, state);
                     break;
                 case State.DefaultValue:
+                    if (this.ResolveSpaceToken(c, state))
+                        return;
                     this.ResolveExpression(c, state, _intendation, this);
                     break;
                 default:
-                    state.Pop();
-                    FlushEndingSplitTokens(state);
-                    state.PassChar(c);
+                    state.PopAndPass(c);
                     break;
             }
         }
@@ -94,6 +125,13 @@
         internal override void HandleNewLineChar(GDReadingState state)
         {
             _form.AddBeforeActiveToken(new GDNewLine());
+        }
+
+        internal override void HandleSharpChar(GDReadingState state)
+        {
+            // Spaces before comment are not trailing, they're part of formatting
+            state.RepassPendingChars();
+            base.HandleSharpChar(state);
         }
 
         public override GDNode CreateEmptyInstance()

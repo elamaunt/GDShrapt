@@ -87,7 +87,7 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 **Validator** (`src/GDShrapt.Validator/`)
 - `GDValidationRule` base class extending `GDVisitor`
-- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx), Indentation (GD6xxx)
+- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx), Indentation (GD6xxx), Await (GD7xxx)
 - `Runtime/IGDRuntimeProvider` - Interface for providing type info from external sources
 - `Runtime/GDDefaultRuntimeProvider` - Built-in GDScript types
 - `Runtime/GDTypeInferenceEngine` - Infers expression types
@@ -141,9 +141,11 @@ Test projects are organized by component:
 
 Test organization in `GDShrapt.Reader.Tests`:
 - `Parsing/` - Parsing tests
-- `Syntax/` - Syntax validation tests
+- `Syntax/` - Syntax tests
 - `Helpers/` - Helper class tests
 - `Scripts/` - Sample GDScript files for testing
+
+Total test count: 955 tests across all projects.
 
 Assertion helpers (in `GDShrapt.Tests.Common`):
 - `AssertHelper.CompareCodeStrings()` - Compare code ignoring whitespace differences
@@ -153,12 +155,14 @@ Assertion helpers (in `GDShrapt.Tests.Common`):
 ## Key Implementation Notes
 
 - `GDReadingState` manages the parsing stack through recursive calls
+- `GDReadingState` has char-buffer mechanism for buffering pending characters during parsing
 - Auto-update indentation with `declaration.UpdateIntendation()`
 - Clone syntax trees with the cloning support built into nodes
 - Position tracking available via `StartLine`, `EndLine`, `StartColumn`, `EndColumn` properties on tokens
 - GDVisitor doesn't have Visit methods for simple tokens (GDIntendation, GDComma, GDSpace) - iterate through `node.Form` directly
 - Line ending conversion happens as post-processing in formatter (AST normalizes to LF)
 - Token manipulation: `form.AddBeforeToken()`, `form.AddAfterToken()`, `form.Remove()`, `form.PreviousTokenBefore()`, `form.NextTokenAfter()`
+- `AllTokens` is a lazy IEnumerable that iterates tokens in source code order - no need to sort or materialize
 
 ## Formatter Line Wrapping
 

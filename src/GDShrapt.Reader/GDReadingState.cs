@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
@@ -22,6 +23,106 @@ namespace GDShrapt.Reader
         /// The first intendation in the code is used for the next ones as a pattern like in the Godot's editor.
         /// </summary>
         public int? IntendationInSpacesCount { get; set; } = null;
+
+        #region Pending Chars Buffering
+
+        /// <summary>
+        /// Pending characters (spaces, split tokens) that haven't found a home yet.
+        /// Used when a node completes and trailing whitespace should go to parent.
+        /// </summary>
+        private StringBuilder _pendingChars;
+
+        /// <summary>
+        /// Set to true when repassing chars. Nodes should not re-buffer during repass.
+        /// </summary>
+        internal bool IsRepassingChars { get; private set; }
+
+        /// <summary>
+        /// Check if there are pending characters.
+        /// </summary>
+        internal bool HasPendingChars => _pendingChars != null && _pendingChars.Length > 0;
+
+        /// <summary>
+        /// Add a character to the pending buffer.
+        /// </summary>
+        internal void AddPendingChar(char c)
+        {
+            if (_pendingChars == null)
+                _pendingChars = new StringBuilder();
+
+            _pendingChars.Append(c);
+        }
+
+        /// <summary>
+        /// Add a string to the pending buffer.
+        /// </summary>
+        internal void AddPendingString(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return;
+
+            if (_pendingChars == null)
+                _pendingChars = new StringBuilder();
+
+            _pendingChars.Append(s);
+        }
+
+        /// <summary>
+        /// Re-pass pending characters to the current reader.
+        /// Used when a node completes and whitespace should go to parent.
+        /// </summary>
+        internal void RepassPendingChars()
+        {
+            if (_pendingChars == null || _pendingChars.Length == 0)
+                return;
+
+            var length = _pendingChars.Length;
+
+            // Copy to buffer since PassChar may modify _pendingChars
+            // For typical case (1-2 spaces) reuse static buffer to avoid allocations
+            char[] buffer;
+            if (length <= _repassBuffer.Length)
+            {
+                buffer = _repassBuffer;
+            }
+            else
+            {
+                buffer = new char[length];
+            }
+
+            for (int i = 0; i < length; i++)
+                buffer[i] = _pendingChars[i];
+
+            _pendingChars.Clear();
+
+            IsRepassingChars = true;
+            try
+            {
+                for (int i = 0; i < length; i++)
+                    PassChar(buffer[i]);
+            }
+            finally
+            {
+                IsRepassingChars = false;
+            }
+        }
+
+        // Static buffer for typical cases (avoids allocations)
+        static readonly char[] _repassBuffer = new char[16];
+
+        /// <summary>
+        /// If the current reader is a GDCharSequence (like GDSpace), completes it and pops from stack.
+        /// Used after repass to finalize any char sequence tokens that were created during repass.
+        /// </summary>
+        internal void CompleteActiveCharSequence()
+        {
+            if (CurrentReader is GDCharSequence charSeq)
+            {
+                charSeq.CompleteSequence(this);
+            }
+        }
+
+        #endregion
 
         public GDReadingState(GDReadSettings settings)
         {
