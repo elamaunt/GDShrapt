@@ -6,23 +6,32 @@
     <Version>5.0.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt.Formatter</Product>
-    <Description>GDShrapt.Formatter provides code formatting for GDScript with configurable rules.
+    <Description>GDShrapt.Formatter provides configurable code formatting for GDScript 2.0 (Godot 4.x) with auto type inference.
 
-Features:
-- Indentation formatting (tabs/spaces, indent size)
-- Blank lines management
-- Spacing around operators and keywords
-- Trailing whitespace removal
-- Line ending normalization (LF/CRLF)
-- Style extraction from sample code
+Format Rules:
+- Indentation (GDF001): Tabs or spaces with configurable size
+- Blank Lines (GDF002): Between functions, after class declaration, between member types
+- Spacing (GDF003): Around operators, after commas/colons, inside brackets
+- Trailing Whitespace (GDF004): Remove trailing spaces, ensure EOF newline
+- Line Endings (GDF005): Normalize to LF, CRLF, or Platform
+- Line Wrapping (GDF006): Automatic wrapping for long lines
+- Auto Type Hints (GDF007): Automatically add inferred type hints (opt-in)
+- Code Reorder (GDF008): Reorder class members by type (opt-in)
 
-Usage: Create a GDFormatter instance with GDFormatterOptions and call FormatCode() to format GDScript source code.</Description>
+Key Features:
+- Style extraction from sample code ("format by example")
+- LSP compatible options (tabSize, insertSpaces, trimTrailingWhitespace, etc.)
+- Uses GDTypeInferenceEngine for automatic type hints
+- Presets: Default, GDScriptStyleGuide, Minimal
+
+Usage: new GDFormatter(options).FormatCode(code)
+Requires: GDShrapt.Reader, GDShrapt.Validator</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>GDShrapt GDScript formatter Godot</PackageTags>
+    <PackageTags>GDShrapt GDScript formatter Godot Godot4 code-formatter LSP type-inference auto-format</PackageTags>
     <AssemblyVersion>5.0.0</AssemblyVersion>
     <FileVersion>5.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -30,6 +39,7 @@ Usage: Create a GDFormatter instance with GDFormatterOptions and call FormatCode
 
   <ItemGroup>
     <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
+    <ProjectReference Include="..\GDShrapt.Validator\GDShrapt.Validator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

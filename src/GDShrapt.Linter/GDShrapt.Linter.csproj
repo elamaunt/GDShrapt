@@ -6,26 +6,28 @@
     <Version>5.0.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt.Linter</Product>
-    <Description>GDShrapt.Linter provides style checking for GDScript with configurable rules.
+    <Description>GDShrapt.Linter provides configurable style checking for GDScript 2.0 (Godot 4.x) with gdtoolkit-compatible suppression.
 
-Features:
-- Naming conventions (PascalCase, snake_case, SCREAMING_SNAKE_CASE)
-- Class, function, variable, constant, signal, enum naming rules
-- Private member prefix checking
-- Line length limits
-- Member ordering enforcement
-- Unused variable/parameter/signal detection
-- Empty function warnings
-- Type hint recommendations
-- Max parameters and function length limits
+Rule Categories:
+- Naming: PascalCase, snake_case, SCREAMING_SNAKE_CASE for classes/functions/variables/constants/signals/enums
+- Style: Line length limits, member ordering, private member prefix (_underscore)
+- Best Practices: Unused variables/parameters/signals, empty functions, type hint suggestions
+- Strict Typing (GDL215): Per-element configurable severity for required type hints
 
-Usage: Create a GDLinter instance with GDLinterOptions and call Lint() on a parsed AST to get lint issues.</Description>
+Key Features:
+- Comment-based rule suppression (gdtoolkit compatible): gdlint:ignore, gdlint:disable/enable
+- Configurable severity per rule and per element type
+- Presets: Default, Strict, Minimal
+- Support for both rule IDs (GDL001) and names (variable-name) in suppressions
+
+Usage: new GDLinter(options).Lint(tree) or LintCode(code)
+Requires: GDShrapt.Reader</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>GDShrapt GDScript linter style Godot</PackageTags>
+    <PackageTags>GDShrapt GDScript linter style Godot Godot4 code-style naming-conventions gdtoolkit</PackageTags>
     <AssemblyVersion>5.0.0</AssemblyVersion>
     <FileVersion>5.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

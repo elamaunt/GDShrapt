@@ -29,6 +29,9 @@ namespace GDShrapt.Reader
 
         public override void Visit(GDVariableDeclaration variableDeclaration)
         {
+            // Handle type colon (var x: Type)
+            HandleColonSpacing(variableDeclaration.TypeColon, variableDeclaration);
+            // Handle property accessor colon (var x: get/set)
             HandleColonSpacing(variableDeclaration.Colon, variableDeclaration);
             HandleAssignSpacing(variableDeclaration.Assign, variableDeclaration);
         }

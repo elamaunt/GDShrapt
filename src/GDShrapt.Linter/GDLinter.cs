@@ -82,6 +82,7 @@ namespace GDShrapt.Reader
             AddRule(new GDAwaitInLoopRule());
             AddRule(new GDSelfComparisonRule());
             AddRule(new GDDuplicateDictKeyRule());
+            AddRule(new GDStrictTypingRule());
 
             // Style rules
             AddRule(new GDTrailingCommaRule());
@@ -127,12 +128,25 @@ namespace GDShrapt.Reader
             if (node == null)
                 return result;
 
+            // Parse suppression directives from comments
+            GDSuppressionContext suppressionContext = null;
+            if (Options.EnableCommentSuppression)
+            {
+                suppressionContext = GDSuppressionParser.Parse(node);
+            }
+
             foreach (var rule in _rules)
             {
                 if (Options.IsRuleEnabled(rule))
                 {
                     rule.Run(node, result, Options);
                 }
+            }
+
+            // Filter out suppressed issues
+            if (suppressionContext != null)
+            {
+                result.FilterSuppressed(suppressionContext);
             }
 
             return result;

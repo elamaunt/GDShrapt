@@ -54,6 +54,10 @@ namespace GDShrapt.Reader
         /// </summary>
         private void RegisterDefaultRules()
         {
+            // GDAutoTypeInferenceFormatRule - Adds type hints using type inference (opt-in, disabled by default)
+            // Must run BEFORE spacing rule so spacing is applied to the new tokens
+            AddRule(new GDAutoTypeInferenceFormatRule());
+
             // GDIndentationFormatRule - Uses ConvertPattern for idempotent indentation
             AddRule(new GDIndentationFormatRule());
 

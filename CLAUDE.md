@@ -19,7 +19,7 @@ GDShrapt.Reader (base)
        └── GDShrapt.Formatter - Code formatting
 ```
 
-All packages depend only on `GDShrapt.Reader`. The namespace `GDShrapt.Reader` is used across all packages for backward compatibility.
+All packages depend only on `GDShrapt.Reader` (except `GDShrapt.Formatter` which also depends on `GDShrapt.Validator` for type inference). The namespace `GDShrapt.Reader` is used across all packages for backward compatibility.
 
 ## Build Commands
 
@@ -56,7 +56,7 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - Three styles: Short (simple), Fluent (chained), Tokens (manual control)
 
 **GDShrapt.Validator** (`src/GDShrapt.Validator/`) - AST validation
-- `GDValidator.cs` - Validator with compiler-style diagnostics (GD1xxx-GD6xxx)
+- `GDValidator.cs` - Validator with compiler-style diagnostics (GD1xxx-GD7xxx)
 - `Runtime/` - Type inference system with external provider support
 
 **GDShrapt.Linter** (`src/GDShrapt.Linter/`) - Style checking
@@ -96,19 +96,23 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `GDLintRule` base class extending `GDVisitor`
 - `Rules/Naming/` - Naming convention rules
 - `Rules/Style/` - Style rules
-- `Rules/BestPractices/` - Best practice rules
+- `Rules/BestPractices/` - Best practice rules (including `GDStrictTypingRule` GDL215)
+- `Suppression/` - Comment-based rule suppression (`gdlint:ignore`, `gdlint:disable/enable`)
 
 **Formatter** (`src/GDShrapt.Formatter/`)
 - `GDFormatRule` base class extending `GDVisitor`
 - `Rules/` - Formatting rules:
+  - `GDAutoTypeInferenceFormatRule` (GDF007) - Auto-add type hints using inference (opt-in)
   - `GDIndentationFormatRule` (GDF001) - Tab/space indentation
   - `GDBlankLinesFormatRule` (GDF002) - Blank lines between members
   - `GDSpacingFormatRule` (GDF003) - Spacing around operators
   - `GDTrailingWhitespaceFormatRule` (GDF004) - Remove trailing whitespace
   - `GDNewLineFormatRule` (GDF005) - Line ending handling
   - `GDLineWrapFormatRule` (GDF006) - Line wrapping for long lines
+  - `GDCodeReorderFormatRule` (GDF008) - Reorder class members (opt-in)
 - `GDFormatterStyleExtractor` - Extracts style from sample code
 - **LSP Compatible**: `GDFormatterOptions` covers all LSP `textDocument/formatting` options
+- **Rule Execution Order**: `GDAutoTypeInferenceFormatRule` runs first so spacing is applied to new tokens
 
 ### Design Patterns
 
@@ -145,7 +149,7 @@ Test organization in `GDShrapt.Reader.Tests`:
 - `Helpers/` - Helper class tests
 - `Scripts/` - Sample GDScript files for testing
 
-Total test count: 955 tests across all projects.
+Total test count: 1052 tests across all projects.
 
 Assertion helpers (in `GDShrapt.Tests.Common`):
 - `AssertHelper.CompareCodeStrings()` - Compare code ignoring whitespace differences
@@ -216,3 +220,38 @@ validator.Validate(tree, options);
 - **Stack depth protection**: `GDStackOverflowException` thrown when parsing exceeds configurable limits (`GDReadSettings.MaxReadingStack`, `MaxStacktraceFramesCount`)
 - **Invalid state detection**: `GDInvalidStateException` for internal parser errors
 - Access invalid tokens via `node.InvalidTokens` or `node.AllInvalidTokens`
+
+## Linter Comment Suppression
+
+The linter supports gdtoolkit-compatible comment directives:
+
+```gdscript
+# gdlint:ignore = rule-name     # Ignore next line
+# gdlint: disable=rule-name     # Disable until enable or EOF
+# gdlint: enable=rule-name      # Re-enable rule
+# gdlint:ignore                 # Ignore all rules for next line
+```
+
+Implementation in `Suppression/`:
+- `GDSuppressionParser` - Parses comments for directives
+- `GDSuppressionContext` - Tracks active suppressions
+- `GDSuppressionDirective` - Single suppression directive
+- Supports both rule IDs (`GDL001`) and names (`variable-name`)
+
+## Strict Typing and Auto Type Inference
+
+**Linter - GDStrictTypingRule (GDL215)**:
+- Per-element configurable severity via nullable `GDLintSeverity?` options
+- `StrictTypingClassVariables`, `StrictTypingLocalVariables`, `StrictTypingParameters`, `StrictTypingReturnTypes`
+- Auto-enables when any option is set (no need to manually enable the rule)
+- Skips constants and inferred assignments (`:=`)
+
+**Formatter - GDAutoTypeInferenceFormatRule (GDF007)**:
+- Uses `GDTypeInferenceEngine` from `GDShrapt.Validator`
+- Options: `AutoAddTypeHints` (master), per-element flags, `UnknownTypeFallback`
+- Inserts `TypeColon` and `Type` tokens directly (not via `form.AddAfterToken()`)
+- Runs before spacing rule to ensure proper formatting of new tokens
+
+Key distinction in `GDVariableDeclaration`:
+- `TypeColon` (Token4) - Colon for type hints (`: int`)
+- `Colon` (Token8) - Colon for property accessors (`: set = ...`)

@@ -945,6 +945,318 @@ func test():
 
         #endregion
 
+        #region StrictTypingRule (GDL215)
+
+        [TestMethod]
+        public void StrictTyping_DisabledByDefault_NoIssue()
+        {
+            var code = @"
+var my_var = 10
+
+func test(x):
+    var local = 20
+    return x + local
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StrictTyping_ClassVariable_WithType_NoIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingClassVariables = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"var my_var: int = 10";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StrictTyping_ClassVariable_WithoutType_ReportsIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingClassVariables = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"var my_var = 10";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i =>
+                i.RuleId == "GDL215" &&
+                i.Severity == GDLintSeverity.Error &&
+                i.Message.Contains("my_var"));
+        }
+
+        [TestMethod]
+        public void StrictTyping_Constant_NoIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingClassVariables = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"const MY_CONST = 10";
+
+            var result = linter.LintCode(code);
+
+            // Constants are skipped
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StrictTyping_LocalVariable_WithType_NoIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingLocalVariables = GDLintSeverity.Warning
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x: int = 10
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StrictTyping_LocalVariable_WithoutType_ReportsIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingLocalVariables = GDLintSeverity.Warning
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x = 10
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i =>
+                i.RuleId == "GDL215" &&
+                i.Severity == GDLintSeverity.Warning &&
+                i.Message.Contains("x"));
+        }
+
+        [TestMethod]
+        public void StrictTyping_Parameter_WithType_NoIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingParameters = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x: int):
+    print(x)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StrictTyping_Parameter_WithoutType_ReportsIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingParameters = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    print(x)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i =>
+                i.RuleId == "GDL215" &&
+                i.Severity == GDLintSeverity.Error &&
+                i.Message.Contains("x"));
+        }
+
+        [TestMethod]
+        public void StrictTyping_ReturnType_WithType_NoIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingReturnTypes = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+func test() -> int:
+    return 42
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StrictTyping_ReturnType_WithoutType_ReportsIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingReturnTypes = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+func my_func():
+    return 42
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i =>
+                i.RuleId == "GDL215" &&
+                i.Severity == GDLintSeverity.Error &&
+                i.Message.Contains("my_func"));
+        }
+
+        [TestMethod]
+        public void StrictTyping_VirtualMethod_NoIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingReturnTypes = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+func _ready():
+    pass
+
+func _process(delta):
+    pass
+";
+
+            var result = linter.LintCode(code);
+
+            // Virtual methods should not report missing return types
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StrictTyping_MixedSeverities()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingParameters = GDLintSeverity.Error,
+                StrictTypingReturnTypes = GDLintSeverity.Error,
+                StrictTypingLocalVariables = GDLintSeverity.Hint,
+                StrictTypingClassVariables = null // Disabled
+            };
+            var linter = new GDLinter(options);
+            var code = @"
+var class_var = 10
+
+func my_func(param):
+    var local = 20
+    return param + local
+";
+
+            var result = linter.LintCode(code);
+
+            // Class variable should not be reported (disabled)
+            result.Issues.Where(i => i.RuleId == "GDL215" && i.Message.Contains("class_var")).Should().BeEmpty();
+
+            // Parameter should be Error
+            result.Issues.Should().Contain(i =>
+                i.RuleId == "GDL215" &&
+                i.Severity == GDLintSeverity.Error &&
+                i.Message.Contains("param"));
+
+            // Return type should be Error
+            result.Issues.Should().Contain(i =>
+                i.RuleId == "GDL215" &&
+                i.Severity == GDLintSeverity.Error &&
+                i.Message.Contains("my_func"));
+
+            // Local variable should be Hint
+            result.Issues.Should().Contain(i =>
+                i.RuleId == "GDL215" &&
+                i.Severity == GDLintSeverity.Hint &&
+                i.Message.Contains("local"));
+        }
+
+        [TestMethod]
+        public void StrictTyping_EnableStrictTypingWarnings()
+        {
+            var options = new GDLinterOptions();
+            options.EnableStrictTypingWarnings();
+            var linter = new GDLinter(options);
+            var code = @"
+var my_var = 10
+
+func test(x):
+    var local = 20
+    return x
+";
+
+            var result = linter.LintCode(code);
+
+            // All should be warnings
+            var issues = result.Issues.Where(i => i.RuleId == "GDL215").ToList();
+            issues.Should().NotBeEmpty();
+            issues.Should().OnlyContain(i => i.Severity == GDLintSeverity.Warning);
+        }
+
+        [TestMethod]
+        public void StrictTyping_EnableStrictTypingForMethods()
+        {
+            var options = new GDLinterOptions();
+            options.EnableStrictTypingForMethods();
+            var linter = new GDLinter(options);
+            var code = @"
+var my_var = 10
+
+func test(x):
+    var local = 20
+    return x
+";
+
+            var result = linter.LintCode(code);
+
+            // Only parameter and return type should be reported
+            result.Issues.Where(i => i.RuleId == "GDL215" && i.Message.Contains("my_var")).Should().BeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL215" && i.Message.Contains("local")).Should().BeEmpty();
+            result.Issues.Should().Contain(i => i.RuleId == "GDL215" && i.Severity == GDLintSeverity.Error && i.Message.Contains("x"));
+            result.Issues.Should().Contain(i => i.RuleId == "GDL215" && i.Severity == GDLintSeverity.Error && i.Message.Contains("test"));
+        }
+
+        [TestMethod]
+        public void StrictTyping_InferredType_NoIssue()
+        {
+            var options = new GDLinterOptions
+            {
+                StrictTypingClassVariables = GDLintSeverity.Error
+            };
+            var linter = new GDLinter(options);
+            var code = @"var my_var := 10";
+
+            var result = linter.LintCode(code);
+
+            // Inferred types have type info
+            result.Issues.Where(i => i.RuleId == "GDL215").Should().BeEmpty();
+        }
+
+        #endregion
+
         #region Combined Tests
 
         [TestMethod]

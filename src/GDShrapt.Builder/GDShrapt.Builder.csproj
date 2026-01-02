@@ -6,21 +6,23 @@
     <Version>5.0.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt.Builder</Product>
-    <Description>GDShrapt.Builder provides a fluent API for programmatic GDScript code generation.
+    <Description>GDShrapt.Builder provides a fluent API for programmatic GDScript 2.0 (Godot 4.x) code generation.
 
-Features:
-- Fluent Building API for creating GDScript AST nodes
-- Factory methods for declarations, expressions, statements
-- Three building styles: Short, Fluent, and Token-based
-- Extension methods for AST manipulation
+Key Features:
+- Fluent building API for creating complete GDScript AST nodes
+- Factory methods for all declarations, expressions, and statements
+- Three building styles: Short (GD.Class), Fluent (chained calls), Token-based (manual control)
+- Extension methods for AST manipulation and code generation
+- Full support for GDScript 4.x constructs: lambdas, annotations, typed arrays, enums
 
-Usage: Use the GD static class with methods like GD.Class(), GD.Method(), GD.Variable() to build AST nodes programmatically.</Description>
+Usage: GD.Declaration.Class(...), GD.Expression.Call(...), GD.Statement.If(...)
+Requires: GDShrapt.Reader</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>GDShrapt GDScript builder codegeneration Godot</PackageTags>
+    <PackageTags>GDShrapt GDScript builder code-generation Godot Godot4 fluent-api AST</PackageTags>
     <AssemblyVersion>5.0.0</AssemblyVersion>
     <FileVersion>5.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

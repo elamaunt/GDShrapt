@@ -153,6 +153,54 @@ namespace GDShrapt.Reader
         /// </summary>
         public bool EnforceMemberOrdering { get; set; } = false;
 
+        // Suppression options
+        /// <summary>
+        /// Whether to process inline suppression comments (gdlint:ignore, gdlint:disable).
+        /// Compatible with gdtoolkit/gdlint syntax.
+        /// </summary>
+        public bool EnableCommentSuppression { get; set; } = true;
+
+        // Strict typing options
+        /// <summary>
+        /// Severity for missing type hints on class variables. Null to disable.
+        /// </summary>
+        public GDLintSeverity? StrictTypingClassVariables { get; set; } = null;
+
+        /// <summary>
+        /// Severity for missing type hints on local variables. Null to disable.
+        /// </summary>
+        public GDLintSeverity? StrictTypingLocalVariables { get; set; } = null;
+
+        /// <summary>
+        /// Severity for missing type hints on function parameters. Null to disable.
+        /// </summary>
+        public GDLintSeverity? StrictTypingParameters { get; set; } = null;
+
+        /// <summary>
+        /// Severity for missing return type hints on functions. Null to disable.
+        /// </summary>
+        public GDLintSeverity? StrictTypingReturnTypes { get; set; } = null;
+
+        /// <summary>
+        /// Enables strict typing with Warning severity for all elements.
+        /// </summary>
+        public void EnableStrictTypingWarnings()
+        {
+            StrictTypingClassVariables = GDLintSeverity.Warning;
+            StrictTypingLocalVariables = GDLintSeverity.Warning;
+            StrictTypingParameters = GDLintSeverity.Warning;
+            StrictTypingReturnTypes = GDLintSeverity.Warning;
+        }
+
+        /// <summary>
+        /// Enables strict typing for methods (parameters and return types) with Error severity.
+        /// </summary>
+        public void EnableStrictTypingForMethods()
+        {
+            StrictTypingParameters = GDLintSeverity.Error;
+            StrictTypingReturnTypes = GDLintSeverity.Error;
+        }
+
         /// <summary>
         /// Disables a rule by its ID.
         /// </summary>
@@ -190,6 +238,15 @@ namespace GDShrapt.Reader
             if (_enabledRules.Contains(rule.RuleId))
                 return true;
 
+            // Auto-enable strict typing rule when any strict typing option is set
+            if (rule.RuleId == "GDL215")
+            {
+                return StrictTypingClassVariables.HasValue ||
+                       StrictTypingLocalVariables.HasValue ||
+                       StrictTypingParameters.HasValue ||
+                       StrictTypingReturnTypes.HasValue;
+            }
+
             return rule.EnabledByDefault;
         }
 
@@ -220,7 +277,11 @@ namespace GDShrapt.Reader
             WarnMagicNumbers = true,
             WarnVariableShadowing = true,
             WarnAwaitInLoop = true,
-            RequireTrailingComma = true
+            RequireTrailingComma = true,
+            StrictTypingClassVariables = GDLintSeverity.Warning,
+            StrictTypingLocalVariables = GDLintSeverity.Warning,
+            StrictTypingParameters = GDLintSeverity.Warning,
+            StrictTypingReturnTypes = GDLintSeverity.Warning
         };
 
         /// <summary>

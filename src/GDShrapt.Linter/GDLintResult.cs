@@ -106,5 +106,17 @@ namespace GDShrapt.Reader
         /// Gets all warnings.
         /// </summary>
         public IEnumerable<GDLintIssue> GetWarnings() => GetIssuesBySeverity(GDLintSeverity.Warning);
+
+        /// <summary>
+        /// Removes issues that are suppressed by inline comments.
+        /// </summary>
+        /// <param name="context">The suppression context containing parsed directives.</param>
+        internal void FilterSuppressed(GDSuppressionContext context)
+        {
+            if (context == null)
+                return;
+
+            _issues.RemoveAll(issue => context.IsSuppressed(issue));
+        }
     }
 }

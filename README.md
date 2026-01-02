@@ -2,10 +2,21 @@
 
 [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-1052%20passed-brightgreen.svg)]()
 
-**GDShrapt** is a high-performance, object-oriented one-pass parser for GDScript 2.0 (Godot 4.x). It can build a lexical tree from GDScript code or generate new code programmatically.
+**GDShrapt** is a high-performance, object-oriented one-pass parser for GDScript 2.0 (Godot 4.x). It provides a complete toolkit for parsing, validating, linting, and formatting GDScript code programmatically.
 
 GDScript is the main scripting language of [Godot Engine](https://github.com/godotengine/godot).
+
+## Packages
+
+| Package | Description | NuGet |
+|---------|-------------|-------|
+| **GDShrapt.Reader** | Core parser and AST | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader) |
+| **GDShrapt.Builder** | Fluent API for code generation | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Builder.svg)](https://www.nuget.org/packages/GDShrapt.Builder) |
+| **GDShrapt.Validator** | AST validation with diagnostics | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Validator.svg)](https://www.nuget.org/packages/GDShrapt.Validator) |
+| **GDShrapt.Linter** | Style checking and naming conventions | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Linter.svg)](https://www.nuget.org/packages/GDShrapt.Linter) |
+| **GDShrapt.Formatter** | Code formatting with type inference | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Formatter.svg)](https://www.nuget.org/packages/GDShrapt.Formatter) |
 
 ## Features
 
@@ -279,7 +290,35 @@ The `GDLinter` class enforces the GDScript style guide with configurable rules.
 |----------|-------|
 | Naming | ClassNameCaseRule, FunctionNameCaseRule, VariableNameCaseRule, ConstantNameCaseRule, SignalNameCaseRule, EnumNameCaseRule, EnumValueCaseRule, PrivatePrefixRule |
 | Style | LineLengthRule, MemberOrderingRule |
-| Best Practices | UnusedVariableRule, UnusedParameterRule, UnusedSignalRule, EmptyFunctionRule, TypeHintRule, MaxParametersRule, MaxFunctionLengthRule |
+| Best Practices | UnusedVariableRule, UnusedParameterRule, UnusedSignalRule, EmptyFunctionRule, TypeHintRule, MaxParametersRule, MaxFunctionLengthRule, StrictTypingRule |
+
+### Strict Typing Rule (GDL215)
+
+Enforce strict type hints with configurable severity per element:
+
+```csharp
+var options = new GDLinterOptions();
+options.StrictTypingClassVariables = GDLintSeverity.Warning;
+options.StrictTypingLocalVariables = GDLintSeverity.Hint;
+options.StrictTypingParameters = GDLintSeverity.Error;
+options.StrictTypingReturnTypes = GDLintSeverity.Error;
+
+var linter = new GDLinter(options);
+```
+
+### Comment-Based Suppression
+
+Suppress linter warnings using inline comments (gdtoolkit compatible):
+
+```gdscript
+# gdlint:ignore = variable-name
+var my_Var = 10  # No warning
+
+# gdlint: disable=function-name
+func BadName():
+    pass
+# gdlint: enable=function-name
+```
 
 ### Linter Options
 
@@ -333,6 +372,8 @@ The `GDFormatter` class provides automatic code formatting with style extraction
 | GDF004 | trailing-whitespace | Remove trailing whitespace, handle EOF newlines |
 | GDF005 | newline | Normalize line endings |
 | GDF006 | line-wrap | Automatic line wrapping for long lines |
+| GDF007 | auto-type-hints | Automatically add inferred type hints (opt-in) |
+| GDF008 | code-reorder | Reorder class members by type (opt-in) |
 
 ### Formatter Options
 
@@ -373,6 +414,27 @@ var options = new GDFormatterOptions
 };
 
 var formatter = new GDFormatter(options);
+```
+
+### Auto Type Inference (GDF007)
+
+Automatically add type hints using type inference:
+
+```csharp
+var options = new GDFormatterOptions
+{
+    AutoAddTypeHints = true,           // Master switch
+    AutoAddTypeHintsToClassVariables = true,
+    AutoAddTypeHintsToLocals = true,
+    AutoAddTypeHintsToParameters = false,
+    UnknownTypeFallback = "Variant"    // Fallback for unknown types
+};
+
+var formatter = new GDFormatter(options);
+var code = "var x = 10\nvar name = \"hello\"";
+var result = formatter.FormatCode(code);
+// Result: var x: int = 10
+//         var name: String = "hello"
 ```
 
 ### Format by Example
@@ -532,41 +594,67 @@ For more examples, see the test projects:
 ## Changelog
 
 ### 5.0.0
-- **NEW: AST Validation System** with compiler-style diagnostics
-  - Syntax validation (GD1xxx): Invalid tokens, missing brackets
-  - Scope validation (GD2xxx): Undefined variables, duplicate declarations
-  - Type validation (GD3xxx): Type mismatches, invalid operands
-  - Call validation (GD4xxx): Wrong argument counts for built-in functions
-  - Control flow validation (GD5xxx): break/continue outside loops, return outside functions
-  - Indentation validation (GD6xxx): Mixed tabs/spaces, inconsistent indentation
-  - Await validation (GD7xxx): Await structure issues
-- **NEW: Type Inference System** with external runtime provider
-  - `IGDRuntimeProvider` interface for custom type information
-  - `GDDefaultRuntimeProvider` with built-in GDScript types
-  - `GDCachingRuntimeProvider` for performance optimization
-  - `GDTypeInferenceEngine` for expression type inference
-  - Validates extends clauses, method calls, assignments
-- **NEW: Style Linter** with configurable rules
-  - Naming conventions: snake_case, PascalCase, SCREAMING_SNAKE_CASE
-  - Best practices: unused variables, unused parameters, empty functions
-  - Style rules: line length, private member prefix
-  - Presets: Default, Strict, Minimal
-- **NEW: Code Formatter** with rule-based formatting
-  - Indentation: tabs or spaces with configurable size
-  - Blank lines: between functions, after class declaration
-  - Spacing: around operators, after commas, colons
-  - Trailing whitespace removal, EOF newline handling
-  - Line ending normalization (LF, CRLF, Platform)
-  - Line wrapping for long lines
-  - Style extraction from sample code ("format by example")
-  - Presets: Default, GDScriptStyleGuide, Minimal
-- Full GDScript 4.x support
+
+**Breaking Changes:**
+- Split into multiple NuGet packages for modularity:
+  - `GDShrapt.Reader` - Core parsing and AST
+  - `GDShrapt.Builder` - Fluent code generation API
+  - `GDShrapt.Validator` - Compiler-style AST validation
+  - `GDShrapt.Linter` - Style checking
+  - `GDShrapt.Formatter` - Code formatting
+
+**New Package: GDShrapt.Validator**
+- AST validation with compiler-style diagnostics (GD1xxx-GD7xxx)
+- Syntax validation (GD1xxx): Invalid tokens, missing brackets, unexpected tokens
+- Scope validation (GD2xxx): Undefined variables, duplicate declarations, forward references
+- Type validation (GD3xxx): Type mismatches, invalid operand types
+- Call validation (GD4xxx): Wrong argument counts for built-in functions
+- Control flow validation (GD5xxx): break/continue outside loops, return outside functions
+- Indentation validation (GD6xxx): Mixed tabs/spaces, inconsistent indentation
+- Await validation (GD7xxx): Await expression structure issues
+- Type inference system with `GDTypeInferenceEngine`
+- `IGDRuntimeProvider` interface for custom type information (integrate with Godot)
+- `GDDefaultRuntimeProvider` with built-in GDScript types and global functions
+- `GDCachingRuntimeProvider` wrapper for performance optimization
+- Two-pass validation with full forward reference support
+
+**New Package: GDShrapt.Linter**
+- Style guide enforcement with configurable naming conventions
+- Naming rules: ClassNameCaseRule, FunctionNameCaseRule, VariableNameCaseRule, ConstantNameCaseRule
+- Signal/enum naming: SignalNameCaseRule, EnumNameCaseRule, EnumValueCaseRule
+- Private member prefix checking (PrivatePrefixRule)
+- Best practices: UnusedVariableRule, UnusedParameterRule, UnusedSignalRule, EmptyFunctionRule
+- Code quality: TypeHintRule, MaxParametersRule, MaxFunctionLengthRule
+- Style rules: LineLengthRule, MemberOrderingRule
+- Strict typing rule (GDL215): Per-element configurable severity for required type hints
+- Comment-based rule suppression (gdtoolkit compatible): `gdlint:ignore`, `gdlint:disable/enable`
+- Support for both rule IDs (GDL001) and names (variable-name) in suppressions
+- Presets: Default, Strict, Minimal
+
+**New Package: GDShrapt.Formatter**
+- Rule-based code formatting (GDF001-GDF008)
+- Indentation (GDF001): Tabs or spaces with configurable size
+- Blank lines (GDF002): Between functions, after class declaration, between member types
+- Spacing (GDF003): Around operators, after commas/colons, inside brackets
+- Trailing whitespace (GDF004): Remove trailing spaces, ensure EOF newline
+- Line endings (GDF005): Normalize to LF, CRLF, or Platform
+- Line wrapping (GDF006): Automatic wrapping for long lines
+- Auto type hints (GDF007): Automatically add inferred type hints using type inference
+- Code reorder (GDF008): Reorder class members by type (opt-in)
+- Style extraction from sample code ("format by example")
+- LSP compatible options (tabSize, insertSpaces, trimTrailingWhitespace, etc.)
+- Presets: Default, GDScriptStyleGuide, Minimal
+
+**Parser Improvements:**
+- Full GDScript 4.x support including typed dictionaries (Godot 4.4)
 - Fixed property get/set parsing (Issues #10, #11)
-- Added typed dictionaries support (Godot 4.4)
-- Added helper classes: `GDAnnotationHelper`, `GDSpecialMethodHelper`, `GDExpressionHelper`
-- Extended Building API: `GetUniqueNode`, `Enum`, `EnumValue`, Export annotations
-- Comprehensive test coverage (955 tests)
 - Custom `GDStackOverflowException` for controlled stack depth limits
+- Configurable parsing limits via `GDReadSettings`
+
+**New Features:**
+- Helper classes: `GDAnnotationHelper`, `GDSpecialMethodHelper`, `GDExpressionHelper`
+- Extended Building API: `GetUniqueNode`, `Enum`, `EnumValue`, Export annotations
+- Comprehensive test coverage (1052 tests across all packages)
 
 ### 4.4.0-alpha
 - Added typed Dictionaries support (thanks to dougVanny)

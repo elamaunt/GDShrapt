@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Common output directory for all NuGet packages -->
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\nupkg</PackageOutputPath>
+  </PropertyGroup>
+</Project>

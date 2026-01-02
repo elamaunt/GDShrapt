@@ -6,27 +6,32 @@
     <Version>5.0.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt.Validator</Product>
-    <Description>GDShrapt.Validator provides AST validation for GDScript with compiler-style diagnostics.
+    <Description>GDShrapt.Validator provides compiler-style AST validation for GDScript 2.0 (Godot 4.x) with type inference.
 
-Features:
-- Syntax validation (GD1xxx): Invalid tokens, missing brackets
-- Scope validation (GD2xxx): Undefined variables, duplicate declarations
-- Type validation (GD3xxx): Type mismatches, invalid operands
-- Call validation (GD4xxx): Wrong argument counts for built-in functions
-- Control flow validation (GD5xxx): break/continue outside loops, return outside functions
-- Indentation validation (GD6xxx): Indentation level errors
-- Type inference with external runtime provider (IGDRuntimeProvider)
-- GDDefaultRuntimeProvider with built-in GDScript types
-- GDCachingRuntimeProvider for performance optimization
-- Two-pass validation with forward reference support
+Diagnostic Categories:
+- Syntax (GD1xxx): Invalid tokens, missing brackets, unexpected tokens
+- Scope (GD2xxx): Undefined variables, duplicate declarations, forward references
+- Type (GD3xxx): Type mismatches, invalid operand types
+- Call (GD4xxx): Wrong argument counts for built-in functions
+- Control Flow (GD5xxx): break/continue outside loops, return outside functions
+- Indentation (GD6xxx): Mixed tabs/spaces, inconsistent indentation
+- Await (GD7xxx): Await expression structure issues
 
-Usage: Create a GDValidator instance and call Validate() on a parsed AST to get diagnostics.</Description>
+Type Inference System:
+- IGDRuntimeProvider interface for custom type information (integrate with Godot)
+- GDDefaultRuntimeProvider with built-in GDScript types and global functions
+- GDCachingRuntimeProvider wrapper for performance optimization
+- GDTypeInferenceEngine for expression type inference
+- Two-pass validation with full forward reference support
+
+Usage: new GDValidator().Validate(tree, options)
+Requires: GDShrapt.Reader</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>GDShrapt GDScript validator validation Godot diagnostics</PackageTags>
+    <PackageTags>GDShrapt GDScript validator validation Godot Godot4 diagnostics type-inference static-analysis</PackageTags>
     <AssemblyVersion>5.0.0</AssemblyVersion>
     <FileVersion>5.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
