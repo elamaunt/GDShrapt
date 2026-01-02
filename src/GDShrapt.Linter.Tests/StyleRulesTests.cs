@@ -175,6 +175,105 @@ func test():
 
         #endregion
 
+        #region TrailingCommaRule (GDL302)
+
+        [TestMethod]
+        public void TrailingComma_SingleLineArray_NoIssue()
+        {
+            var options = new GDLinterOptions { RequireTrailingComma = true };
+            options.EnableRule("GDL302");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var arr = [1, 2, 3]
+";
+
+            var result = linter.LintCode(code);
+
+            // Single-line arrays don't need trailing comma
+            result.Issues.Where(i => i.RuleId == "GDL302").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void TrailingComma_MultilineArrayWithComma_NoIssue()
+        {
+            var options = new GDLinterOptions { RequireTrailingComma = true };
+            options.EnableRule("GDL302");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var arr = [
+        1,
+        2,
+        3,
+    ]
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL302").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void TrailingComma_MultilineArrayWithoutComma_ReportsIssue()
+        {
+            var options = new GDLinterOptions { RequireTrailingComma = true };
+            options.EnableRule("GDL302");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var arr = [
+        1,
+        2,
+        3
+    ]
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL302" && i.Message.Contains("array"));
+        }
+
+        [TestMethod]
+        public void TrailingComma_MultilineDictWithoutComma_ReportsIssue()
+        {
+            var options = new GDLinterOptions { RequireTrailingComma = true };
+            options.EnableRule("GDL302");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var dict = {
+        ""a"": 1,
+        ""b"": 2
+    }
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL302" && i.Message.Contains("dictionary"));
+        }
+
+        [TestMethod]
+        public void TrailingComma_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { RequireTrailingComma = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var arr = [
+        1,
+        2,
+        3
+    ]
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL302").Should().BeEmpty();
+        }
+
+        #endregion
+
         #region Issue Properties Tests
 
         [TestMethod]

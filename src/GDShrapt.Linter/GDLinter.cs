@@ -75,6 +75,16 @@ namespace GDShrapt.Reader
             AddRule(new GDMaxParametersRule());
             AddRule(new GDMaxFunctionLengthRule());
             AddRule(new GDUnusedSignalRule());
+            AddRule(new GDCyclomaticComplexityRule());
+            AddRule(new GDMagicNumberRule());
+            AddRule(new GDDeadCodeRule());
+            AddRule(new GDVariableShadowingRule());
+            AddRule(new GDAwaitInLoopRule());
+            AddRule(new GDSelfComparisonRule());
+            AddRule(new GDDuplicateDictKeyRule());
+
+            // Style rules
+            AddRule(new GDTrailingCommaRule());
 
             // Organization rules
             AddRule(new GDMemberOrderingRule());

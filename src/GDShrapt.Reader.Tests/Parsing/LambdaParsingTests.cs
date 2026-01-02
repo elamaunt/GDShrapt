@@ -311,9 +311,7 @@ func process_with_transform(data, transform = null):
         {
             var reader = new GDScriptReader();
 
-            // await followed by a new function - this test demonstrates an existing parser bug
-            // where await + empty line + more code + next function causes issues
-            // TODO: This is a pre-existing bug in await parsing, not related to lambda fix
+            // await followed by a new function
             var code = @"func async_operation() -> void:
 	var on_complete := func(result):
 		print(""Async operation completed with: "", result)
@@ -331,8 +329,7 @@ func process_with_transform(data, transform = null):
             Assert.IsNotNull(declaration);
 
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
-            // Known issue: await parsing bug - uncomment when fixed:
-            // AssertHelper.NoInvalidTokens(declaration);
+            AssertHelper.NoInvalidTokens(declaration);
         }
 
         [TestMethod]
@@ -340,7 +337,7 @@ func process_with_transform(data, transform = null):
         {
             var reader = new GDScriptReader();
 
-            // Known issue: await + empty line + code + next function causes issues
+            // await + empty line + code + next function
             var code = @"func async_operation() -> void:
 	await get_tree().create_timer(1.0).timeout
 	print(""done"")
@@ -355,8 +352,7 @@ func next_function(data, transform = null):
             Assert.IsNotNull(declaration);
 
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
-            // Known await bug - uncomment when fixed:
-            // AssertHelper.NoInvalidTokens(declaration);
+            AssertHelper.NoInvalidTokens(declaration);
         }
 
         [TestMethod]

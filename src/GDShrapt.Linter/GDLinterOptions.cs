@@ -110,6 +110,43 @@ namespace GDShrapt.Reader
         /// </summary>
         public int MaxFunctionLength { get; set; } = 50;
 
+        // Complexity options
+        /// <summary>
+        /// Maximum cyclomatic complexity allowed in a function. 0 to disable. Default: 10.
+        /// </summary>
+        public int MaxCyclomaticComplexity { get; set; } = 10;
+
+        /// <summary>
+        /// Whether to warn about magic numbers (numeric literals that should be constants).
+        /// </summary>
+        public bool WarnMagicNumbers { get; set; } = false;
+
+        /// <summary>
+        /// Set of magic numbers that are allowed without being constants.
+        /// </summary>
+        public HashSet<string> AllowedMagicNumbers { get; set; } = new HashSet<string>
+        {
+            "0", "1", "-1", "2",
+            "0.0", "1.0", "0.5", "-1.0",
+            "0x0", "0x1", "0b0", "0b1"
+        };
+
+        /// <summary>
+        /// Whether to warn when local variables shadow class-level variables.
+        /// </summary>
+        public bool WarnVariableShadowing { get; set; } = true;
+
+        /// <summary>
+        /// Whether to warn about await expressions inside loops.
+        /// </summary>
+        public bool WarnAwaitInLoop { get; set; } = true;
+
+        // Style options
+        /// <summary>
+        /// Whether to require trailing comma in multiline arrays and dictionaries.
+        /// </summary>
+        public bool RequireTrailingComma { get; set; } = false;
+
         // Organization options
         /// <summary>
         /// Whether to enforce member ordering (signals, enums, constants, vars, funcs).
@@ -179,7 +216,11 @@ namespace GDShrapt.Reader
         {
             SuggestTypeHints = true,
             WarnUnusedSignals = true,
-            EnforceMemberOrdering = true
+            EnforceMemberOrdering = true,
+            WarnMagicNumbers = true,
+            WarnVariableShadowing = true,
+            WarnAwaitInLoop = true,
+            RequireTrailingComma = true
         };
 
         /// <summary>

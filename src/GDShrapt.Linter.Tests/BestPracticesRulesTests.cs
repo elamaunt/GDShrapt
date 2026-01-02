@@ -410,6 +410,541 @@ func my_func():
 
         #endregion
 
+        #region CyclomaticComplexityRule (GDL208)
+
+        [TestMethod]
+        public void CyclomaticComplexity_SimpleFunction_NoIssue()
+        {
+            var options = new GDLinterOptions { MaxCyclomaticComplexity = 10 };
+            options.EnableRule("GDL208");
+            var linter = new GDLinter(options);
+            var code = @"
+func simple():
+    var x = 10
+    return x
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL208").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void CyclomaticComplexity_ComplexFunction_ReportsIssue()
+        {
+            var options = new GDLinterOptions { MaxCyclomaticComplexity = 3 };
+            options.EnableRule("GDL208");
+            var linter = new GDLinter(options);
+            var code = @"
+func complex(a, b, c):
+    if a > 0:
+        if b > 0:
+            if c > 0:
+                return 1
+            else:
+                return 2
+        else:
+            return 3
+    else:
+        return 4
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL208" && i.Message.Contains("complex"));
+        }
+
+        [TestMethod]
+        public void CyclomaticComplexity_CountsAndOr_ReportsIssue()
+        {
+            var options = new GDLinterOptions { MaxCyclomaticComplexity = 2 };
+            options.EnableRule("GDL208");
+            var linter = new GDLinter(options);
+            var code = @"
+func check(a, b, c):
+    if a > 0 and b > 0 or c > 0:
+        return true
+    return false
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL208");
+        }
+
+        [TestMethod]
+        public void CyclomaticComplexity_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { MaxCyclomaticComplexity = 0 };
+            var linter = new GDLinter(options);
+            var code = @"
+func complex(a, b, c, d, e):
+    if a: pass
+    if b: pass
+    if c: pass
+    if d: pass
+    if e: pass
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL208").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region MagicNumberRule (GDL209)
+
+        [TestMethod]
+        public void MagicNumber_AllowedNumber_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnMagicNumbers = true };
+            options.EnableRule("GDL209");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x = 0
+    var y = 1
+    var z = -1
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL209").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void MagicNumber_MagicNumber_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnMagicNumbers = true };
+            options.EnableRule("GDL209");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var timeout = 3600
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL209" && i.Message.Contains("3600"));
+        }
+
+        [TestMethod]
+        public void MagicNumber_InConstant_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnMagicNumbers = true };
+            options.EnableRule("GDL209");
+            var linter = new GDLinter(options);
+            var code = @"const TIMEOUT = 3600";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL209").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void MagicNumber_ArrayIndex_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnMagicNumbers = true };
+            options.EnableRule("GDL209");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var arr = [1, 2, 3]
+    return arr[5]
+";
+
+            var result = linter.LintCode(code);
+
+            // Array index with magic number should be allowed
+            result.Issues.Where(i => i.RuleId == "GDL209" && i.Message.Contains("5")).Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void MagicNumber_InEnum_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnMagicNumbers = true };
+            options.EnableRule("GDL209");
+            var linter = new GDLinter(options);
+            var code = @"
+enum Values {
+    FIRST = 100,
+    SECOND = 200
+}
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL209").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void MagicNumber_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnMagicNumbers = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x = 12345
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL209").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region DeadCodeRule (GDL210)
+
+        [TestMethod]
+        public void DeadCode_NoDeadCode_NoIssue()
+        {
+            var code = @"
+func test():
+    var x = 10
+    return x
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL210").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void DeadCode_AfterReturn_ReportsIssue()
+        {
+            var code = @"
+func test():
+    return 10
+    var x = 20
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL210");
+        }
+
+        [TestMethod]
+        public void DeadCode_AfterBreak_ReportsIssue()
+        {
+            var code = @"
+func test():
+    for i in range(10):
+        break
+        print(i)
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL210");
+        }
+
+        [TestMethod]
+        public void DeadCode_AfterContinue_ReportsIssue()
+        {
+            var code = @"
+func test():
+    for i in range(10):
+        continue
+        print(i)
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL210");
+        }
+
+        [TestMethod]
+        public void DeadCode_ReturnInIfBranch_NoIssue()
+        {
+            var code = @"
+func test(x):
+    if x > 0:
+        return x
+    return 0
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL210").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region VariableShadowingRule (GDL211)
+
+        [TestMethod]
+        public void VariableShadowing_NoShadowing_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnVariableShadowing = true };
+            var linter = new GDLinter(options);
+            var code = @"
+var class_var = 10
+
+func test():
+    var local_var = 20
+    print(local_var)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL211").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void VariableShadowing_LocalShadows_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnVariableShadowing = true };
+            var linter = new GDLinter(options);
+            var code = @"
+var my_var = 10
+
+func test():
+    var my_var = 20
+    print(my_var)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL211" && i.Message.Contains("my_var"));
+        }
+
+        [TestMethod]
+        public void VariableShadowing_ForLoopShadows_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnVariableShadowing = true };
+            var linter = new GDLinter(options);
+            var code = @"
+var i = 10
+
+func test():
+    for i in range(10):
+        print(i)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL211" && i.Message.Contains("'i'"));
+        }
+
+        [TestMethod]
+        public void VariableShadowing_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnVariableShadowing = false };
+            var linter = new GDLinter(options);
+            var code = @"
+var my_var = 10
+
+func test():
+    var my_var = 20
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL211").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region AwaitInLoopRule (GDL212)
+
+        [TestMethod]
+        public void AwaitInLoop_OutsideLoop_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnAwaitInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    await some_signal
+    print(""done"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL212").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void AwaitInLoop_InsideForLoop_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnAwaitInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    for i in range(10):
+        await some_signal
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL212");
+        }
+
+        [TestMethod]
+        public void AwaitInLoop_InsideWhileLoop_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnAwaitInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    while true:
+        await some_signal
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL212");
+        }
+
+        [TestMethod]
+        public void AwaitInLoop_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnAwaitInLoop = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    for i in range(10):
+        await some_signal
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL212").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region SelfComparisonRule (GDL213)
+
+        [TestMethod]
+        public void SelfComparison_DifferentOperands_NoIssue()
+        {
+            var code = @"
+func test():
+    var a = 10
+    var b = 20
+    if a == b:
+        pass
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL213").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void SelfComparison_SameVariable_ReportsIssue()
+        {
+            var code = @"
+func test():
+    var x = 10
+    if x == x:
+        pass
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL213" && i.Message.Contains("x"));
+        }
+
+        [TestMethod]
+        public void SelfComparison_NotEqual_ReportsIssue()
+        {
+            var code = @"
+func test():
+    var x = 10
+    if x != x:
+        pass
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL213");
+        }
+
+        [TestMethod]
+        public void SelfComparison_MemberAccess_ReportsIssue()
+        {
+            var code = @"
+func test():
+    if self.value == self.value:
+        pass
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL213");
+        }
+
+        #endregion
+
+        #region DuplicateDictKeyRule (GDL214)
+
+        [TestMethod]
+        public void DuplicateDictKey_UniqueKeys_NoIssue()
+        {
+            var code = @"
+func test():
+    var dict = {
+        ""a"": 1,
+        ""b"": 2,
+        ""c"": 3
+    }
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL214").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void DuplicateDictKey_DuplicateStringKey_ReportsIssue()
+        {
+            var code = @"
+func test():
+    var dict = {
+        ""key"": 1,
+        ""key"": 2
+    }
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL214" && i.Message.Contains("key"));
+        }
+
+        [TestMethod]
+        public void DuplicateDictKey_DuplicateNumericKey_ReportsIssue()
+        {
+            var code = @"
+func test():
+    var dict = {
+        1: ""a"",
+        1: ""b""
+    }
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL214");
+        }
+
+        [TestMethod]
+        public void DuplicateDictKey_InlineDict_ReportsIssue()
+        {
+            var code = @"
+func test():
+    var dict = {""a"": 1, ""a"": 2}
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL214");
+        }
+
+        #endregion
+
         #region Combined Tests
 
         [TestMethod]
