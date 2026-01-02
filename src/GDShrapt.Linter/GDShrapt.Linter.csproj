@@ -31,6 +31,7 @@ Requires: GDShrapt.Reader</Description>
     <AssemblyVersion>5.0.0</AssemblyVersion>
     <FileVersion>5.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,6 +42,10 @@ Requires: GDShrapt.Reader</Description>
     <None Include="..\..\LICENSE">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
+    </None>
+    <None Include="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
