@@ -3,6 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-1052%20passed-brightgreen.svg)]()
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20GDShrapt-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/elamaunt)
 
 **GDShrapt** is a set of C# libraries for working with [GDScript](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_basics.html) code — the scripting language of [Godot Engine](https://godotengine.org/). Whether you need to parse, analyze, transform, validate, lint, or format GDScript source code, GDShrapt provides the building blocks to do it programmatically.
 
@@ -130,6 +131,14 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## Support
+
+If GDShrapt helps your project, consider supporting its development:
+
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/elamaunt)
+
+Your support helps maintain these tools and build new features for the Godot community.
 
 ## License
 
