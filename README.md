@@ -140,6 +140,14 @@ If GDShrapt helps your project, consider supporting its development:
 
 Your support helps maintain these tools and build new features for the Godot community.
 
+## Ecosystem
+
+Related projects:
+
+| Project | Description |
+|---------|-------------|
+| [GDShrapt.TypesMap](https://github.com/elamaunt/GDShrapt.TypesMap) | Runtime type provider for Godot classes and global functions |
+
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
