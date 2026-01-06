@@ -1,21 +1,60 @@
+using System.Collections.Generic;
+
 namespace GDShrapt.Reader
 {
     /// <summary>
     /// Infers types of expressions using the RuntimeProvider and scope information.
     /// Supports generic types like Array[T] and Dictionary[K,V].
+    /// Supports bidirectional type inference (forward and backward).
     /// </summary>
     public class GDTypeInferenceEngine
     {
         private readonly IGDRuntimeProvider _runtimeProvider;
         private readonly GDScopeStack _scopes;
+        private readonly IGDRuntimeTypeInjector _typeInjector;
+        private readonly GDTypeInjectionContext _injectionContext;
+
+        // Cache for computed types to avoid recomputation
+        private readonly Dictionary<GDNode, string> _typeCache;
+        private readonly Dictionary<GDNode, GDTypeNode> _typeNodeCache;
+
+        /// <summary>
+        /// Gets the runtime provider.
+        /// </summary>
+        public IGDRuntimeProvider RuntimeProvider => _runtimeProvider;
+
+        /// <summary>
+        /// Gets the scope stack.
+        /// </summary>
+        public GDScopeStack Scopes => _scopes;
 
         /// <summary>
         /// Creates a new type inference engine.
         /// </summary>
         public GDTypeInferenceEngine(IGDRuntimeProvider runtimeProvider, GDScopeStack scopes = null)
+            : this(runtimeProvider, scopes, null, null)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new type inference engine with optional type injector.
+        /// </summary>
+        /// <param name="runtimeProvider">Runtime type provider</param>
+        /// <param name="scopes">Scope stack for symbol lookup</param>
+        /// <param name="typeInjector">Optional injector for runtime-derived types</param>
+        /// <param name="injectionContext">Context for type injection</param>
+        public GDTypeInferenceEngine(
+            IGDRuntimeProvider runtimeProvider,
+            GDScopeStack scopes,
+            IGDRuntimeTypeInjector typeInjector,
+            GDTypeInjectionContext injectionContext)
         {
             _runtimeProvider = runtimeProvider ?? GDDefaultRuntimeProvider.Instance;
             _scopes = scopes;
+            _typeInjector = typeInjector;
+            _injectionContext = injectionContext ?? new GDTypeInjectionContext();
+            _typeCache = new Dictionary<GDNode, string>();
+            _typeNodeCache = new Dictionary<GDNode, GDTypeNode>();
         }
 
         /// <summary>
@@ -388,5 +427,312 @@ namespace GDShrapt.Reader
 
             return new GDSingleTypeNode { Type = new GDType { Sequence = typeName } };
         }
+
+        #region Extended Type Inference API
+
+        /// <summary>
+        /// Gets the inferred type for any AST node.
+        /// Supports expressions, declarations, statements, and other node types.
+        /// </summary>
+        /// <param name="node">The AST node to get the type for</param>
+        /// <returns>The inferred type name, or null if cannot be determined</returns>
+        public string GetTypeForNode(GDNode node)
+        {
+            if (node == null)
+                return null;
+
+            // Check cache first
+            if (_typeCache.TryGetValue(node, out var cachedType))
+                return cachedType;
+
+            // Try type injector first
+            if (_typeInjector != null)
+            {
+                var injectedType = _typeInjector.InjectType(node, _injectionContext);
+                if (injectedType != null)
+                {
+                    _typeCache[node] = injectedType;
+                    return injectedType;
+                }
+            }
+
+            string type = null;
+
+            // Handle expressions
+            if (node is GDExpression expression)
+            {
+                type = InferType(expression);
+            }
+            // Handle declarations
+            else if (node is GDVariableDeclaration varDecl)
+            {
+                type = varDecl.Type?.BuildName();
+                if (string.IsNullOrEmpty(type) && varDecl.Initializer != null)
+                    type = InferType(varDecl.Initializer);
+            }
+            else if (node is GDVariableDeclarationStatement varStmt)
+            {
+                type = varStmt.Type?.BuildName();
+                if (string.IsNullOrEmpty(type) && varStmt.Initializer != null)
+                    type = InferType(varStmt.Initializer);
+            }
+            else if (node is GDParameterDeclaration paramDecl)
+            {
+                type = paramDecl.Type?.BuildName();
+                if (string.IsNullOrEmpty(type) && paramDecl.DefaultValue != null)
+                    type = InferType(paramDecl.DefaultValue);
+            }
+            else if (node is GDMethodDeclaration methodDecl)
+            {
+                type = methodDecl.ReturnType?.BuildName() ?? "void";
+            }
+            else if (node is GDSignalDeclaration)
+            {
+                type = "Signal";
+            }
+            else if (node is GDEnumDeclaration enumDecl)
+            {
+                type = enumDecl.Identifier?.Sequence ?? "int";
+            }
+            else if (node is GDEnumValueDeclaration)
+            {
+                type = "int";
+            }
+            else if (node is GDInnerClassDeclaration innerClass)
+            {
+                type = innerClass.Identifier?.Sequence;
+            }
+            // Handle return expression
+            else if (node is GDReturnExpression returnExpr)
+            {
+                type = returnExpr.Expression != null ? InferType(returnExpr.Expression) : "void";
+            }
+            else if (node is GDExpressionStatement exprStmt)
+            {
+                type = InferType(exprStmt.Expression);
+            }
+
+            // Cache and return
+            if (type != null)
+                _typeCache[node] = type;
+
+            return type;
+        }
+
+        /// <summary>
+        /// Gets the full type node for any AST node.
+        /// </summary>
+        /// <param name="node">The AST node</param>
+        /// <returns>The type node with generic type information, or null</returns>
+        public GDTypeNode GetTypeNodeForNode(GDNode node)
+        {
+            if (node == null)
+                return null;
+
+            // Check cache first
+            if (_typeNodeCache.TryGetValue(node, out var cachedTypeNode))
+                return cachedTypeNode;
+
+            GDTypeNode typeNode = null;
+
+            if (node is GDExpression expression)
+            {
+                typeNode = InferTypeNode(expression);
+            }
+            else if (node is GDVariableDeclaration varDecl)
+            {
+                typeNode = varDecl.Type;
+                if (typeNode == null && varDecl.Initializer != null)
+                    typeNode = InferTypeNode(varDecl.Initializer);
+            }
+            else if (node is GDVariableDeclarationStatement varStmt)
+            {
+                typeNode = varStmt.Type;
+                if (typeNode == null && varStmt.Initializer != null)
+                    typeNode = InferTypeNode(varStmt.Initializer);
+            }
+            else if (node is GDParameterDeclaration paramDecl)
+            {
+                typeNode = paramDecl.Type;
+                if (typeNode == null && paramDecl.DefaultValue != null)
+                    typeNode = InferTypeNode(paramDecl.DefaultValue);
+            }
+            else if (node is GDMethodDeclaration methodDecl)
+            {
+                typeNode = methodDecl.ReturnType ?? CreateSimpleType("void");
+            }
+
+            // Cache and return
+            if (typeNode != null)
+                _typeNodeCache[node] = typeNode;
+
+            return typeNode;
+        }
+
+        /// <summary>
+        /// Infers the expected type at a position based on context (reverse type inference).
+        /// This is useful for autocomplete and type checking when assigning to a typed variable.
+        /// </summary>
+        /// <param name="targetNode">The node where a value is expected</param>
+        /// <returns>The expected type, or null if any type is accepted</returns>
+        public string InferExpectedType(GDNode targetNode)
+        {
+            if (targetNode == null)
+                return null;
+
+            // Get parent to understand context
+            var parent = targetNode.Parent;
+            if (parent == null)
+                return null;
+
+            // Assignment: right side should match left side type
+            if (parent is GDDualOperatorExpression dualOp)
+            {
+                var opType = dualOp.Operator?.OperatorType;
+                if (opType != null && IsAssignmentOperator(opType.Value))
+                {
+                    if (targetNode == dualOp.RightExpression)
+                    {
+                        return InferType(dualOp.LeftExpression);
+                    }
+                }
+            }
+
+            // Variable initialization: should match declared type
+            if (parent is GDVariableDeclaration varDecl && targetNode == varDecl.Initializer)
+            {
+                return varDecl.Type?.BuildName();
+            }
+
+            if (parent is GDVariableDeclarationStatement varStmt && targetNode == varStmt.Initializer)
+            {
+                return varStmt.Type?.BuildName();
+            }
+
+            // Function argument: should match parameter type
+            if (parent is GDExpressionsList exprList)
+            {
+                var callParent = exprList.Parent;
+                if (callParent is GDCallExpression callExpr)
+                {
+                    var argIndex = GetIndexInList(exprList, targetNode);
+                    if (argIndex >= 0)
+                    {
+                        return InferParameterType(callExpr, argIndex);
+                    }
+                }
+            }
+
+            // Return expression: should match method return type
+            if (parent is GDReturnExpression)
+            {
+                var methodScope = _scopes?.GetEnclosingFunction();
+                if (methodScope?.Node is GDMethodDeclaration methodDecl)
+                {
+                    return methodDecl.ReturnType?.BuildName();
+                }
+            }
+
+            // Array element: should match array element type
+            if (parent is GDArrayInitializerExpression arrayInit)
+            {
+                var arrayType = InferTypeNode(arrayInit);
+                if (arrayType is GDArrayTypeNode typedArray)
+                {
+                    return typedArray.InnerType?.BuildName();
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Clears the type cache. Call when AST or scope changes.
+        /// </summary>
+        public void ClearCache()
+        {
+            _typeCache.Clear();
+            _typeNodeCache.Clear();
+        }
+
+        private int GetIndexInList(GDExpressionsList list, GDNode node)
+        {
+            int index = 0;
+            foreach (var item in list)
+            {
+                if (item == node)
+                    return index;
+                index++;
+            }
+            return -1;
+        }
+
+        private string InferParameterType(GDCallExpression callExpr, int argIndex)
+        {
+            var caller = callExpr.CallerExpression;
+
+            // Direct function call
+            if (caller is GDIdentifierExpression identExpr)
+            {
+                var funcName = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(funcName))
+                {
+                    var funcInfo = _runtimeProvider.GetGlobalFunction(funcName);
+                    if (funcInfo?.Parameters != null && argIndex < funcInfo.Parameters.Count)
+                    {
+                        return funcInfo.Parameters[argIndex].Type;
+                    }
+                }
+            }
+            // Method call
+            else if (caller is GDMemberOperatorExpression memberExpr)
+            {
+                var methodName = memberExpr.Identifier?.Sequence;
+                var callerType = InferType(memberExpr.CallerExpression);
+
+                if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(methodName))
+                {
+                    var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
+                    if (memberInfo?.Kind == GDRuntimeMemberKind.Method)
+                    {
+                        // Type injector may know the parameter types
+                        if (_typeInjector != null)
+                        {
+                            var paramTypes = _typeInjector.GetSignalParameterTypes(methodName, callerType);
+                            if (paramTypes != null && argIndex < paramTypes.Count)
+                            {
+                                return paramTypes[argIndex];
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsAssignmentOperator(GDDualOperatorType opType)
+        {
+            switch (opType)
+            {
+                case GDDualOperatorType.Assignment:
+                case GDDualOperatorType.AddAndAssign:
+                case GDDualOperatorType.SubtractAndAssign:
+                case GDDualOperatorType.MultiplyAndAssign:
+                case GDDualOperatorType.DivideAndAssign:
+                case GDDualOperatorType.ModAndAssign:
+                case GDDualOperatorType.BitwiseAndAndAssign:
+                case GDDualOperatorType.BitwiseOrAndAssign:
+                case GDDualOperatorType.PowerAndAssign:
+                case GDDualOperatorType.BitShiftLeftAndAssign:
+                case GDDualOperatorType.BitShiftRightAndAssign:
+                case GDDualOperatorType.XorAndAssign:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        #endregion
     }
 }
