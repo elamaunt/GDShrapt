@@ -418,14 +418,29 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Creates a simple type node for a type name without generic arguments.
+        /// Parser for parsing type strings into type nodes.
         /// </summary>
-        private GDSingleTypeNode CreateSimpleType(string typeName)
+        private static readonly GDScriptReader TypeParser = new GDScriptReader();
+
+        /// <summary>
+        /// Creates a type node for a type name. Supports both simple types and generic types.
+        /// </summary>
+        /// <param name="typeName">The type name (e.g., "int", "Array[int]", "Dictionary[String, int]")</param>
+        /// <returns>The appropriate GDTypeNode, or null if typeName is null/empty</returns>
+        private GDTypeNode CreateSimpleType(string typeName)
         {
             if (string.IsNullOrEmpty(typeName))
                 return null;
 
-            return new GDSingleTypeNode { Type = new GDType { Sequence = typeName } };
+            // Check if this is a simple type (no generic brackets or dots)
+            // Simple types can be created directly for performance
+            if (typeName.IndexOf('[') < 0 && typeName.IndexOf('.') < 0)
+            {
+                return new GDSingleTypeNode { Type = new GDType { Sequence = typeName } };
+            }
+
+            // Complex types (generics, nested types) need to be parsed
+            return TypeParser.ParseType(typeName);
         }
 
         #region Extended Type Inference API
