@@ -90,8 +90,18 @@ namespace GDShrapt.Reader
                         var typeNode = param.Type;
                         var typeName = typeNode?.BuildName();
                         TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
+
+                        // Validate parameter type annotation
+                        ValidateTypeAnnotation(typeNode, param);
                     }
                 }
+            }
+
+            // Validate return type annotation
+            var returnType = methodDeclaration.ReturnType;
+            if (returnType != null)
+            {
+                ValidateTypeAnnotation(returnType, methodDeclaration);
             }
         }
 
@@ -102,12 +112,17 @@ namespace GDShrapt.Reader
 
         #endregion
 
-        #region Variables (class-level are already collected, we skip them)
+        #region Variables (class-level are already collected, we validate type annotations)
 
         public override void Visit(GDVariableDeclaration variableDeclaration)
         {
             // Class-level variables are already collected by GDDeclarationCollector
-            // Nothing to do here
+            // But we still need to validate type annotations
+            var typeNode = variableDeclaration.Type;
+            if (typeNode != null)
+            {
+                ValidateTypeAnnotation(typeNode, variableDeclaration);
+            }
         }
 
         public override void Visit(GDSignalDeclaration signalDeclaration)
@@ -133,6 +148,9 @@ namespace GDShrapt.Reader
                 var typeNode = variableDeclaration.Type;
                 var typeName = typeNode?.BuildName();
                 TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration, typeName: typeName, typeNode: typeNode));
+
+                // Validate type annotation
+                ValidateTypeAnnotation(typeNode, variableDeclaration);
             }
         }
 
@@ -212,8 +230,18 @@ namespace GDShrapt.Reader
                         var typeNode = param.Type;
                         var typeName = typeNode?.BuildName();
                         TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
+
+                        // Validate lambda parameter type annotation
+                        ValidateTypeAnnotation(typeNode, param);
                     }
                 }
+            }
+
+            // Validate lambda return type annotation
+            var returnType = methodExpression.ReturnType;
+            if (returnType != null)
+            {
+                ValidateTypeAnnotation(returnType, methodExpression);
             }
         }
 
@@ -316,6 +344,52 @@ namespace GDShrapt.Reader
                 }
             }
         }
+
+        #region Type Annotation Validation
+
+        // GDScript built-in primitive type names
+        private static readonly System.Collections.Generic.HashSet<string> _primitiveTypes = new System.Collections.Generic.HashSet<string>
+        {
+            "void", "bool", "int", "float", "String",
+            "Array", "Dictionary", "Callable", "Signal", "Variant"
+        };
+
+        /// <summary>
+        /// Validates that a type annotation refers to a known type.
+        /// </summary>
+        private void ValidateTypeAnnotation(GDTypeNode typeNode, GDNode reportOn)
+        {
+            if (typeNode == null)
+                return;
+
+            var typeName = typeNode.BuildName();
+            if (string.IsNullOrEmpty(typeName))
+                return;
+
+            // Skip primitive types (always valid)
+            if (_primitiveTypes.Contains(typeName))
+                return;
+
+            // Skip generic array/dictionary syntax (Array[T], Dictionary[K,V])
+            if (typeNode.IsArray || typeNode.IsDictionary)
+                return;
+
+            // Check if type is known:
+            // 1. Built-in runtime types (Vector2, Node, etc.)
+            // 2. Types registered via RuntimeProvider (project types)
+            // 3. Inner classes declared in current scope
+            if (!Context.RuntimeProvider.IsKnownType(typeName) &&
+                !Context.RuntimeProvider.IsBuiltIn(typeName) &&
+                LookupSymbol(typeName) == null)
+            {
+                ReportWarning(
+                    GDDiagnosticCode.UnknownType,
+                    $"Unknown type: '{typeName}'",
+                    reportOn);
+            }
+        }
+
+        #endregion
 
     }
 }

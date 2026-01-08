@@ -105,8 +105,12 @@ namespace GDShrapt.Reader
                 var memberInfo = Context.RuntimeProvider.GetMember(typeName, methodName);
                 if (memberInfo == null)
                 {
-                    // Method not found - could be inherited or unknown
-                    // Don't report error for now, as we don't have full type hierarchy
+                    // Method not found on known global class - report warning
+                    // Using warning since method could be inherited from types we don't fully know
+                    ReportWarning(
+                        GDDiagnosticCode.MethodNotFound,
+                        $"Method '{methodName}' not found on '{typeName}'",
+                        call);
                     return;
                 }
 
@@ -139,7 +143,18 @@ namespace GDShrapt.Reader
             else if (Context.RuntimeProvider.IsKnownType(typeName))
             {
                 var memberInfo = Context.RuntimeProvider.GetMember(typeName, methodName);
-                if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
+                if (memberInfo == null)
+                {
+                    // Method not found on known type - report warning
+                    // Using warning since type hierarchy may be incomplete
+                    ReportWarning(
+                        GDDiagnosticCode.MethodNotFound,
+                        $"Method '{methodName}' not found on type '{typeName}'",
+                        call);
+                    return;
+                }
+
+                if (memberInfo.Kind == GDRuntimeMemberKind.Method)
                 {
                     if (argCount < memberInfo.MinArgs)
                     {
