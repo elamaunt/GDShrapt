@@ -1,0 +1,6 @@
+<svg height="128" width="128" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="124" height="124" rx="14" fill="#363d52" stroke="#212532" stroke-width="4"/>
+  <g transform="translate(20, 20)">
+    <text x="44" y="70" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="#8da5f3" text-anchor="middle">G</text>
+  </g>
+</svg>

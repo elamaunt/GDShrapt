@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>GDShrapt.Semantics</RootNamespace>
+    <AssemblyName>GDShrapt.Semantics</AssemblyName>
+    <Version>1.0.0</Version>
+    <Description>Godot-independent semantic analysis library for GDScript</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GDShrapt.Abstractions\GDShrapt.Abstractions.csproj" />
+    <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
+    <ProjectReference Include="..\GDShrapt.Validator\GDShrapt.Validator.csproj" />
+    <ProjectReference Include="..\GDShrapt.Linter\GDShrapt.Linter.csproj" />
+    <ProjectReference Include="..\..\submodules\GDShrapt.TypesMap\src\GDShrapt.TypesMap\GDShrapt.TypesMap.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GDShrapt.Semantics.Tests" />
+  </ItemGroup>
+
+</Project>

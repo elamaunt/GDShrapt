@@ -1,0 +1,133 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+
+# Test Project
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.TestProject", "GDShrapt.TestProject.csproj", "{391E7D09-4FD3-4525-9472-0A15B655088E}"
+EndProject
+
+# Plugin Project
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Plugin", "..\..\src\GDShrapt.Plugin\GDShrapt.Plugin.csproj", "{0DC51ACC-6118-408F-9683-034521FB333A}"
+EndProject
+
+# Submodules Folder
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{D4509882-552C-46BB-92BA-8703E8E757BA}"
+EndProject
+
+# GDShrapt Libraries
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GDShrapt", "GDShrapt", "{A1B2C3D4-1234-5678-9ABC-DEF012345678}"
+EndProject
+
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Reader", "..\..\submodules\GDShrapt\src\GDShrapt.Reader\GDShrapt.Reader.csproj", "{EFE92321-F6A6-4657-B928-13BA68C837A0}"
+EndProject
+
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Builder", "..\..\submodules\GDShrapt\src\GDShrapt.Builder\GDShrapt.Builder.csproj", "{B1234567-1234-5678-9ABC-DEF012345671}"
+EndProject
+
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Formatter", "..\..\submodules\GDShrapt\src\GDShrapt.Formatter\GDShrapt.Formatter.csproj", "{B1234567-1234-5678-9ABC-DEF012345672}"
+EndProject
+
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Linter", "..\..\submodules\GDShrapt\src\GDShrapt.Linter\GDShrapt.Linter.csproj", "{B1234567-1234-5678-9ABC-DEF012345673}"
+EndProject
+
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Validator", "..\..\submodules\GDShrapt\src\GDShrapt.Validator\GDShrapt.Validator.csproj", "{B1234567-1234-5678-9ABC-DEF012345674}"
+EndProject
+
+# TypesMap
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GDShrapt.TypesMap", "GDShrapt.TypesMap", "{C1234567-1234-5678-9ABC-DEF012345678}"
+EndProject
+
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.TypesMap", "..\..\submodules\GDShrapt.TypesMap\src\GDShrapt.TypesMap\GDShrapt.TypesMap.csproj", "{C1234567-1234-5678-9ABC-DEF012345679}"
+EndProject
+
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		ExportDebug|Any CPU = ExportDebug|Any CPU
+		ExportRelease|Any CPU = ExportRelease|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{391E7D09-4FD3-4525-9472-0A15B655088E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345671}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345672}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345673}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1234567-1234-5678-9ABC-DEF012345674}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1234567-1234-5678-9ABC-DEF012345679}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A1B2C3D4-1234-5678-9ABC-DEF012345678} = {D4509882-552C-46BB-92BA-8703E8E757BA}
+		{C1234567-1234-5678-9ABC-DEF012345678} = {D4509882-552C-46BB-92BA-8703E8E757BA}
+		{EFE92321-F6A6-4657-B928-13BA68C837A0} = {A1B2C3D4-1234-5678-9ABC-DEF012345678}
+		{B1234567-1234-5678-9ABC-DEF012345671} = {A1B2C3D4-1234-5678-9ABC-DEF012345678}
+		{B1234567-1234-5678-9ABC-DEF012345672} = {A1B2C3D4-1234-5678-9ABC-DEF012345678}
+		{B1234567-1234-5678-9ABC-DEF012345673} = {A1B2C3D4-1234-5678-9ABC-DEF012345678}
+		{B1234567-1234-5678-9ABC-DEF012345674} = {A1B2C3D4-1234-5678-9ABC-DEF012345678}
+		{C1234567-1234-5678-9ABC-DEF012345679} = {C1234567-1234-5678-9ABC-DEF012345678}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AAAABBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF}
+	EndGlobalSection
+EndGlobal

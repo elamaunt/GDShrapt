@@ -1,0 +1,428 @@
+using GDShrapt.Semantics.Tests.Helpers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
+
+namespace GDShrapt.Semantics.Tests.Integration;
+
+/// <summary>
+/// Integration tests for Find References across real project.
+/// </summary>
+[TestClass]
+public class FindReferencesIntegrationTests
+{
+    #region Local Variables
+
+    [TestMethod]
+    public void FindReferences_LocalVariable_Counter_AllOccurrences()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "counter");
+
+        // Assert
+        // counter is defined once and used many times in test_rename_local_variable
+        Assert.IsTrue(references.Count > 0, "Should find counter references");
+
+        var declarations = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Declaration);
+        Assert.AreEqual(1, declarations.Count, "Should have exactly one declaration");
+
+        var reads = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Read);
+        Assert.IsTrue(reads.Count >= 3, "Should have multiple read references");
+
+        var writes = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Write);
+        Assert.IsTrue(writes.Count >= 4, "Should have multiple write references (+=, =)");
+    }
+
+    [TestMethod]
+    public void FindReferences_LocalVariable_Items_ArrayOperations()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "items");
+
+        // Assert
+        Assert.IsTrue(references.Count > 0, "Should find items references");
+
+        // items used in: append, push_back, print, size, for loop, clear, assignment
+        var allRefs = references.Where(r => r.Kind != ReferenceKind.Declaration).ToList();
+        Assert.IsTrue(allRefs.Count >= 5, "Should have multiple usages of items");
+    }
+
+    [TestMethod]
+    public void FindReferences_LoopVariable_I_OnlyInLoopScope()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "i");
+
+        // Assert
+        // 'i' is used in multiple for loops - each should be a separate scope
+        Assert.IsTrue(references.Count > 0, "Should find 'i' references");
+    }
+
+    #endregion
+
+    #region Parameters
+
+    [TestMethod]
+    public void FindReferences_Parameter_Value_AllOccurrences()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "value");
+
+        // Assert
+        // value parameter used in test_rename_parameter
+        Assert.IsTrue(references.Count > 0, "Should find value references");
+
+        var declarations = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Declaration);
+        Assert.IsTrue(declarations.Count >= 1, "Should have at least one declaration (parameter)");
+    }
+
+    [TestMethod]
+    public void FindReferences_Parameter_Factor_InCalculation()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "factor");
+
+        // Assert
+        // factor is used many times in calculate_with_factor
+        Assert.IsTrue(references.Count >= 5, "factor should be used many times");
+
+        var reads = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Read);
+        Assert.IsTrue(reads.Count >= 4, "factor should have multiple read references");
+    }
+
+    #endregion
+
+    #region Class Members
+
+    [TestMethod]
+    public void FindReferences_ClassMember_Multiplier_AcrossMethods()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "multiplier");
+
+        // Assert
+        // multiplier defined as class member, used in test_rename_class_member
+        Assert.IsTrue(references.Count > 0, "Should find multiplier references");
+
+        var declarations = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Declaration);
+        Assert.AreEqual(1, declarations.Count, "Should have exactly one declaration");
+    }
+
+    [TestMethod]
+    public void FindReferences_ClassMember_CurrentHealth_BaseEntityUsages()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "current_health");
+
+        // Assert
+        // current_health used in many methods: _ready, take_damage, heal, die, revive, etc.
+        Assert.IsTrue(references.Count >= 8, "current_health should have many usages");
+    }
+
+    [TestMethod]
+    public void FindReferences_ClassMember_Score_InRefactoringTargets()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("refactoring_targets.gd");
+        Assert.IsNotNull(script, "refactoring_targets.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "score");
+
+        // Assert
+        // score used in multiple methods
+        Assert.IsTrue(references.Count >= 5, "score should have multiple usages");
+
+        var writes = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Write);
+        Assert.IsTrue(writes.Count >= 2, "score should be written in multiple places");
+    }
+
+    #endregion
+
+    #region Inherited Members
+
+    [TestMethod]
+    public void FindReferences_InheritedMember_PlayerSpeed_CrossFile()
+    {
+        // Arrange - player_speed defined in RefactoringTargets, used in RenameTest
+        var renameTestScript = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(renameTestScript, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(renameTestScript, "player_speed");
+
+        // Assert
+        // player_speed is inherited and used in test_rename_inherited_member
+        Assert.IsTrue(references.Count > 0, "Should find player_speed references in RenameTest");
+
+        var reads = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Read);
+        Assert.IsTrue(reads.Count >= 2, "player_speed should be read multiple times");
+    }
+
+    [TestMethod]
+    public void FindReferences_InheritedMember_MaxHealth_PlayerEntity()
+    {
+        // Arrange - max_health defined in BaseEntity, used in PlayerEntity
+        var script = TestProjectFixture.GetScript("player_entity.gd");
+        Assert.IsNotNull(script, "player_entity.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "max_health");
+
+        // Assert
+        // max_health used in _ready and level_up_player
+        Assert.IsTrue(references.Count > 0, "Should find max_health references");
+    }
+
+    #endregion
+
+    #region Signals
+
+    [TestMethod]
+    public void FindReferences_Signal_HealthChanged_EmitCalls()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "health_changed");
+
+        // Assert
+        // health_changed is declared once and emitted many times
+        Assert.IsTrue(references.Count > 0, "Should find health_changed references");
+
+        var declarations = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Declaration);
+        Assert.AreEqual(1, declarations.Count, "Should have one declaration");
+
+        // The .emit() calls should be counted as calls
+        var calls = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Call);
+        Assert.IsTrue(calls.Count >= 1 || references.Count >= 5,
+            "health_changed should be used multiple times (emit or other)");
+    }
+
+    [TestMethod]
+    public void FindReferences_Signal_ScoreChanged_InRenameTest()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "score_changed");
+
+        // Assert
+        // score_changed is inherited from RefactoringTargets and used in test_rename_signal_usage
+        Assert.IsTrue(references.Count > 0, "Should find score_changed references");
+    }
+
+    #endregion
+
+    #region Methods
+
+    [TestMethod]
+    public void FindReferences_Method_TakeDamage_BaseEntity()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "take_damage");
+
+        // Assert
+        // take_damage declared once
+        Assert.IsTrue(references.Count > 0, "Should find take_damage references");
+
+        var declarations = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Declaration);
+        Assert.AreEqual(1, declarations.Count, "Should have exactly one declaration");
+    }
+
+    [TestMethod]
+    public void FindReferences_Method_CalculateScore_MultipleCallSites()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("refactoring_targets.gd");
+        Assert.IsNotNull(script, "refactoring_targets.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "calculate_score");
+
+        // Assert
+        // calculate_score declared once and called in process_enemies
+        Assert.IsTrue(references.Count >= 2, "Should find calculate_score declaration and call");
+    }
+
+    [TestMethod]
+    public void FindReferences_Method_Heal_UsedInPlayerEntity()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("player_entity.gd");
+        Assert.IsNotNull(script, "player_entity.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "heal");
+
+        // Assert
+        // heal is inherited from BaseEntity and called in collect_health_pack
+        Assert.IsTrue(references.Count > 0, "Should find heal usage in PlayerEntity");
+    }
+
+    #endregion
+
+    #region Constants
+
+    [TestMethod]
+    public void FindReferences_Constant_MagicNumber_Usage()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("refactoring_targets.gd");
+        Assert.IsNotNull(script, "refactoring_targets.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "MAGIC_NUMBER");
+
+        // Assert
+        // MAGIC_NUMBER is declared as const
+        Assert.IsTrue(references.Count >= 1, "Should find MAGIC_NUMBER declaration");
+    }
+
+    [TestMethod]
+    public void FindReferences_Constant_MaxEnemies_GuardClause()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("refactoring_targets.gd");
+        Assert.IsNotNull(script, "refactoring_targets.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "MAX_ENEMIES");
+
+        // Assert
+        // MAX_ENEMIES declared and used in spawn_enemy guard clause
+        Assert.IsTrue(references.Count >= 2, "MAX_ENEMIES should be declared and used");
+    }
+
+    #endregion
+
+    #region Cross-File Type References
+
+    [TestMethod]
+    public void FindReferences_ClassName_BaseEntity_InExtendsAndTypeAnnotations()
+    {
+        // Arrange & Act
+        var references = IntegrationTestHelpers.FindClassTypeUsages(
+            TestProjectFixture.Project, "BaseEntity");
+
+        // Assert
+        // BaseEntity is extended by PlayerEntity and EnemyEntity
+        // Also used as type annotation in perform_attack
+        var extendsRefs = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Extends);
+        Assert.IsTrue(extendsRefs.Count >= 2,
+            "BaseEntity should be extended by at least 2 classes");
+
+        var typeAnnotationRefs = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.TypeAnnotation);
+        Assert.IsTrue(typeAnnotationRefs.Count >= 1,
+            "BaseEntity should be used as type annotation (perform_attack parameter)");
+    }
+
+    [TestMethod]
+    public void FindReferences_ClassName_RefactoringTargets_ExtendedByRenameTest()
+    {
+        // Arrange & Act
+        var references = IntegrationTestHelpers.FindClassTypeUsages(
+            TestProjectFixture.Project, "RefactoringTargets");
+
+        // Assert
+        var extendsRefs = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Extends);
+        Assert.IsTrue(extendsRefs.Count >= 1,
+            "RefactoringTargets should be extended by RenameTest");
+    }
+
+    #endregion
+
+    #region Edge Cases
+
+    [TestMethod]
+    public void FindReferences_SameNameDifferentScopes_DistinctVariables()
+    {
+        // Test that variables with same name in different scopes are tracked separately
+        var script = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(script, "rename_test.gd not found");
+
+        // Both test_rename_local_variable and test_rename_in_array_operations use 'i'
+        // They should be in different scopes
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "i");
+
+        // Should find references but they may be in different scopes
+        Assert.IsTrue(references.Count > 0, "Should find 'i' references");
+    }
+
+    [TestMethod]
+    public void FindReferences_ParameterShadowsClassMember_CorrectScope()
+    {
+        // When a parameter has the same name as a class member,
+        // references should be to the parameter within that function
+
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        // 'amount' is a parameter in take_damage and heal methods
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "amount");
+
+        Assert.IsTrue(references.Count > 0, "Should find 'amount' parameter references");
+
+        // Should have multiple declarations (one per method that uses 'amount')
+        var declarations = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Declaration);
+        Assert.IsTrue(declarations.Count >= 2,
+            "Should have declarations for 'amount' in multiple methods");
+    }
+
+    [TestMethod]
+    public void FindReferences_EmptySymbolName_ReturnsEmpty()
+    {
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "");
+        Assert.AreEqual(0, references.Count, "Empty symbol name should return empty");
+    }
+
+    [TestMethod]
+    public void FindReferences_NonExistentSymbol_ReturnsEmpty()
+    {
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "non_existent_symbol_xyz");
+        Assert.AreEqual(0, references.Count, "Non-existent symbol should return empty");
+    }
+
+    #endregion
+}

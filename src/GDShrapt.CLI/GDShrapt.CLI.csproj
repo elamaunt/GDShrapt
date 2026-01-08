@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>GDShrapt.CLI</RootNamespace>
+    <AssemblyName>gdshrapt</AssemblyName>
+
+    <!-- NuGet Tool Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>gdshrapt</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+
+    <!-- Package Metadata -->
+    <PackageId>GDShrapt.CLI</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>elamaunt</Authors>
+    <Description>GDScript analysis and refactoring CLI tool for Godot Engine</Description>
+    <PackageTags>godot;gdscript;linter;analyzer;cli;refactoring</PackageTags>
+    <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GDShrapt.CLI.Core\GDShrapt.CLI.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GDShrapt.CLI.Tests" />
+  </ItemGroup>
+
+</Project>

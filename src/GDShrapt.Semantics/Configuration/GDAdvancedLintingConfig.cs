@@ -1,0 +1,175 @@
+namespace GDShrapt.Semantics;
+
+/// <summary>
+/// Advanced linting configuration using GDShrapt.Linter.
+/// Maps to GDLinterOptions from GDShrapt.Linter library.
+/// </summary>
+public class GDAdvancedLintingConfig
+{
+    // Naming conventions
+    /// <summary>
+    /// Expected case for class names. Default: PascalCase.
+    /// </summary>
+    public GDNamingCase ClassNameCase { get; set; } = GDNamingCase.PascalCase;
+
+    /// <summary>
+    /// Expected case for function names. Default: SnakeCase.
+    /// </summary>
+    public GDNamingCase FunctionNameCase { get; set; } = GDNamingCase.SnakeCase;
+
+    /// <summary>
+    /// Expected case for variable names. Default: SnakeCase.
+    /// </summary>
+    public GDNamingCase VariableNameCase { get; set; } = GDNamingCase.SnakeCase;
+
+    /// <summary>
+    /// Expected case for constant names. Default: ScreamingSnakeCase.
+    /// </summary>
+    public GDNamingCase ConstantNameCase { get; set; } = GDNamingCase.ScreamingSnakeCase;
+
+    /// <summary>
+    /// Expected case for signal names. Default: SnakeCase.
+    /// </summary>
+    public GDNamingCase SignalNameCase { get; set; } = GDNamingCase.SnakeCase;
+
+    /// <summary>
+    /// Expected case for enum names. Default: PascalCase.
+    /// </summary>
+    public GDNamingCase EnumNameCase { get; set; } = GDNamingCase.PascalCase;
+
+    /// <summary>
+    /// Expected case for enum values. Default: ScreamingSnakeCase.
+    /// </summary>
+    public GDNamingCase EnumValueCase { get; set; } = GDNamingCase.ScreamingSnakeCase;
+
+    /// <summary>
+    /// Whether private members should be prefixed with underscore. Default: true.
+    /// </summary>
+    public bool RequireUnderscoreForPrivate { get; set; } = true;
+
+    // Best practices
+    /// <summary>
+    /// Warn about unused variables. Default: true.
+    /// </summary>
+    public bool WarnUnusedVariables { get; set; } = true;
+
+    /// <summary>
+    /// Warn about unused parameters. Default: true.
+    /// </summary>
+    public bool WarnUnusedParameters { get; set; } = true;
+
+    /// <summary>
+    /// Warn about unused signals. Default: false.
+    /// </summary>
+    public bool WarnUnusedSignals { get; set; } = false;
+
+    /// <summary>
+    /// Warn about empty functions. Default: true.
+    /// </summary>
+    public bool WarnEmptyFunctions { get; set; } = true;
+
+    /// <summary>
+    /// Warn about magic numbers. Default: false.
+    /// </summary>
+    public bool WarnMagicNumbers { get; set; } = false;
+
+    /// <summary>
+    /// Warn about variable shadowing. Default: true.
+    /// </summary>
+    public bool WarnVariableShadowing { get; set; } = true;
+
+    /// <summary>
+    /// Warn about await in loops. Default: true.
+    /// </summary>
+    public bool WarnAwaitInLoop { get; set; } = true;
+
+    // Limits
+    /// <summary>
+    /// Maximum parameters in a function. 0 to disable. Default: 5.
+    /// </summary>
+    public int MaxParameters { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum statements in a function. 0 to disable. Default: 50.
+    /// </summary>
+    public int MaxFunctionLength { get; set; } = 50;
+
+    /// <summary>
+    /// Maximum cyclomatic complexity. 0 to disable. Default: 10.
+    /// </summary>
+    public int MaxCyclomaticComplexity { get; set; } = 10;
+
+    // Strict typing
+    /// <summary>
+    /// Severity for missing type hints on class variables. Null to disable.
+    /// </summary>
+    public GDStrictTypingSeverity? StrictTypingClassVariables { get; set; } = null;
+
+    /// <summary>
+    /// Severity for missing type hints on local variables. Null to disable.
+    /// </summary>
+    public GDStrictTypingSeverity? StrictTypingLocalVariables { get; set; } = null;
+
+    /// <summary>
+    /// Severity for missing type hints on parameters. Null to disable.
+    /// </summary>
+    public GDStrictTypingSeverity? StrictTypingParameters { get; set; } = null;
+
+    /// <summary>
+    /// Severity for missing return type hints. Null to disable.
+    /// </summary>
+    public GDStrictTypingSeverity? StrictTypingReturnTypes { get; set; } = null;
+
+    // Comment suppression
+    /// <summary>
+    /// Process inline suppression comments (gdlint:ignore, gdlint:disable). Default: true.
+    /// </summary>
+    public bool EnableCommentSuppression { get; set; } = true;
+}
+
+/// <summary>
+/// Naming case conventions.
+/// </summary>
+public enum GDNamingCase
+{
+    /// <summary>
+    /// snake_case
+    /// </summary>
+    SnakeCase,
+
+    /// <summary>
+    /// PascalCase
+    /// </summary>
+    PascalCase,
+
+    /// <summary>
+    /// camelCase
+    /// </summary>
+    CamelCase,
+
+    /// <summary>
+    /// SCREAMING_SNAKE_CASE
+    /// </summary>
+    ScreamingSnakeCase,
+
+    /// <summary>
+    /// Any case is allowed.
+    /// </summary>
+    Any
+}
+
+/// <summary>
+/// Severity level for strict typing rules.
+/// </summary>
+public enum GDStrictTypingSeverity
+{
+    /// <summary>
+    /// Report as warning.
+    /// </summary>
+    Warning,
+
+    /// <summary>
+    /// Report as error.
+    /// </summary>
+    Error
+}

@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://test_level"]
+
+[ext_resource type="PackedScene" uid="uid://test_player" path="res://Scenes/Player.tscn" id="1_player_scene"]
+[ext_resource type="Script" path="res://Scripts/Enemy.gd" id="2_enemy"]
+
+[node name="Level" type="Node2D"]
+
+[node name="Player" parent="." instance=ExtResource("1_player_scene")]
+position = Vector2(100, 100)
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="Enemy1" type="CharacterBody2D" parent="Enemies"]
+script = ExtResource("2_enemy")
+position = Vector2(300, 100)
+
+[node name="Enemy2" type="CharacterBody2D" parent="Enemies"]
+script = ExtResource("2_enemy")
+position = Vector2(500, 200)

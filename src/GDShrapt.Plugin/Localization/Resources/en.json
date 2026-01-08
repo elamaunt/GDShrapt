@@ -1,0 +1,66 @@
+{
+    "plugin.name": "GDShrapt",
+    "plugin.description": "Professional GDScript IDE features for Godot",
+
+    "menu.format": "Format Code",
+    "menu.rename": "Rename",
+    "menu.go_to_definition": "Go to Definition",
+    "menu.find_references": "Find References",
+    "menu.extract_method": "Extract Method",
+    "menu.remove_comments": "Remove Comments",
+    "menu.settings": "Settings",
+    "menu.about": "About",
+
+    "settings.title": "GDShrapt Settings",
+    "settings.logging": "Logging",
+    "settings.log_level": "Log Level",
+    "settings.log_to_file": "Log to File",
+    "settings.log_file_path": "Log File Path",
+    "settings.language": "Language",
+    "settings.save": "Save",
+    "settings.reset": "Reset to Defaults",
+
+    "log_level.debug": "Debug",
+    "log_level.info": "Info",
+    "log_level.warning": "Warning",
+    "log_level.error": "Error",
+
+    "output.title": "GDShrapt Output",
+    "output.clear": "Clear",
+    "output.save": "Save Log",
+    "output.auto_scroll": "Auto-scroll",
+    "output.level": "Level",
+
+    "dialog.rename": "Rename Symbol",
+    "dialog.rename_prompt": "Enter new name:",
+    "dialog.extract_method": "Extract Method",
+    "dialog.extract_method_prompt": "Enter method name:",
+    "dialog.ok": "OK",
+    "dialog.cancel": "Cancel",
+
+    "message.settings_saved": "Settings saved successfully",
+    "message.settings_reset": "Settings reset to defaults",
+    "message.log_saved": "Log saved to: {0}",
+    "message.no_selection": "No text selected",
+    "message.operation_complete": "Operation completed successfully",
+    "message.operation_failed": "Operation failed: {0}",
+
+    "error.file_not_found": "File not found: {0}",
+    "error.invalid_syntax": "Invalid syntax at line {0}",
+    "error.unknown_type": "Unknown type: {0}",
+
+    "about.version": "Version: {0}",
+    "about.author": "Author: elamaunt",
+    "about.github": "GitHub",
+    "about.donate": "Support Development",
+
+    "support.button": "☕ Support GDShrapt",
+
+    "references.copy_list": "Copy List",
+    "references.no_results": "No references found",
+
+    "todo_tags.title": "TODO Tags",
+    "todo_tags.refresh": "Refresh",
+    "todo_tags.no_results": "No TODO tags found",
+    "todo_tags.settings": "Settings"
+}

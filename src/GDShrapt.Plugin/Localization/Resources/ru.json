@@ -1,0 +1,66 @@
+{
+    "plugin.name": "GDShrapt",
+    "plugin.description": "Профессиональные инструменты для GDScript в Godot",
+
+    "menu.format": "Форматировать код",
+    "menu.rename": "Переименовать",
+    "menu.go_to_definition": "Перейти к определению",
+    "menu.find_references": "Найти ссылки",
+    "menu.extract_method": "Извлечь метод",
+    "menu.remove_comments": "Удалить комментарии",
+    "menu.settings": "Настройки",
+    "menu.about": "О плагине",
+
+    "settings.title": "Настройки GDShrapt",
+    "settings.logging": "Логирование",
+    "settings.log_level": "Уровень логов",
+    "settings.log_to_file": "Записывать в файл",
+    "settings.log_file_path": "Путь к файлу логов",
+    "settings.language": "Язык",
+    "settings.save": "Сохранить",
+    "settings.reset": "Сбросить настройки",
+
+    "log_level.debug": "Отладка",
+    "log_level.info": "Информация",
+    "log_level.warning": "Предупреждение",
+    "log_level.error": "Ошибка",
+
+    "output.title": "Вывод GDShrapt",
+    "output.clear": "Очистить",
+    "output.save": "Сохранить лог",
+    "output.auto_scroll": "Автопрокрутка",
+    "output.level": "Уровень",
+
+    "dialog.rename": "Переименование символа",
+    "dialog.rename_prompt": "Введите новое имя:",
+    "dialog.extract_method": "Извлечение метода",
+    "dialog.extract_method_prompt": "Введите имя метода:",
+    "dialog.ok": "ОК",
+    "dialog.cancel": "Отмена",
+
+    "message.settings_saved": "Настройки сохранены",
+    "message.settings_reset": "Настройки сброшены",
+    "message.log_saved": "Лог сохранён в: {0}",
+    "message.no_selection": "Текст не выделен",
+    "message.operation_complete": "Операция выполнена успешно",
+    "message.operation_failed": "Ошибка операции: {0}",
+
+    "error.file_not_found": "Файл не найден: {0}",
+    "error.invalid_syntax": "Ошибка синтаксиса в строке {0}",
+    "error.unknown_type": "Неизвестный тип: {0}",
+
+    "about.version": "Версия: {0}",
+    "about.author": "Автор: elamaunt",
+    "about.github": "GitHub",
+    "about.donate": "Поддержать разработку",
+
+    "support.button": "☕ Поддержать GDShrapt",
+
+    "references.copy_list": "Копировать список",
+    "references.no_results": "Ссылки не найдены",
+
+    "todo_tags.title": "TODO теги",
+    "todo_tags.refresh": "Обновить",
+    "todo_tags.no_results": "TODO теги не найдены",
+    "todo_tags.settings": "Настройки"
+}

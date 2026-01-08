@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GodotSharp" Version="4.5.1" />
+    <PackageReference Include="GodotSharpEditor" Version="4.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GDShrapt.Semantics\GDShrapt.Semantics.csproj" />
+    <ProjectReference Include="..\GDShrapt.Abstractions\GDShrapt.Abstractions.csproj" />
+    <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
+    <ProjectReference Include="..\GDShrapt.Builder\GDShrapt.Builder.csproj" />
+    <ProjectReference Include="..\GDShrapt.Validator\GDShrapt.Validator.csproj" />
+    <ProjectReference Include="..\GDShrapt.Formatter\GDShrapt.Formatter.csproj" />
+    <ProjectReference Include="..\GDShrapt.Linter\GDShrapt.Linter.csproj" />
+    <ProjectReference Include="..\..\submodules\GDShrapt.TypesMap\src\GDShrapt.TypesMap\GDShrapt.TypesMap.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GDShrapt.Plugin.Tests" />
+  </ItemGroup>
+
+</Project>

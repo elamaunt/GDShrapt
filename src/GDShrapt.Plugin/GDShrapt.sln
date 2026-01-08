@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31321.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GDShrapt.Plugin", "GDShrapt.Plugin.csproj", "{0DC51ACC-6118-408F-9683-034521FB333A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDShrapt.Plugin.Tests", "..\GDShrapt.Plugin.Tests\GDShrapt.Plugin.Tests.csproj", "{320E961E-1F5A-49AC-9486-8824932032B9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodules", "submodules", "{D4509882-552C-46BB-92BA-8703E8E757BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDShrapt.Reader", "..\..\submodules\GDShrapt\src\GDShrapt.Reader\GDShrapt.Reader.csproj", "{EFE92321-F6A6-4657-B928-13BA68C837A0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		ExportDebug|Any CPU = ExportDebug|Any CPU
+		ExportRelease|Any CPU = ExportRelease|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DC51ACC-6118-408F-9683-034521FB333A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{320E961E-1F5A-49AC-9486-8824932032B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportRelease|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.ExportRelease|Any CPU.Build.0 = Debug|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFE92321-F6A6-4657-B928-13BA68C837A0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6560ABEA-6276-4A6A-9930-0B2340A25E84}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EFE92321-F6A6-4657-B928-13BA68C837A0} = {D4509882-552C-46BB-92BA-8703E8E757BA}
+	EndGlobalSection
+EndGlobal

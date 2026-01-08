@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>GDShrapt.CLI.Core</RootNamespace>
+    <AssemblyName>GDShrapt.CLI.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GDShrapt.Semantics\GDShrapt.Semantics.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GDShrapt.CLI" />
+    <InternalsVisibleTo Include="GDShrapt.CLI.Tests" />
+  </ItemGroup>
+
+</Project>

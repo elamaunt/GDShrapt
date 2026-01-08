@@ -1,0 +1,137 @@
+[gd_scene load_steps=3 format=3 uid="uid://ui_test_scene"]
+
+[ext_resource type="Script" path="res://test_scripts/completion_test.gd" id="1_completion"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font_size = 24
+
+[node name="UITest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_completion")
+
+[node name="ChildSprite" type="Sprite2D" parent="."]
+position = Vector2(100, 100)
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 1.0
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="UI"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 20.0
+offset_right = 150.0
+offset_bottom = 60.0
+grow_horizontal = 2
+text = "Completion Test Scene"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="UI"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -50.0
+offset_right = 100.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Status: Ready"
+horizontal_alignment = 1
+
+[node name="TestButton" type="Button" parent="UI"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -75.0
+offset_top = -25.0
+offset_right = 75.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Run Tests"
+
+[node name="ProgressBar" type="ProgressBar" parent="UI"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -80.0
+offset_right = 150.0
+offset_bottom = -55.0
+grow_horizontal = 2
+grow_vertical = 0
+value = 75.0
+
+[node name="TextEdit" type="TextEdit" parent="UI"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_top = -150.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+placeholder_text = "Enter text here..."
+
+[node name="OptionButton" type="OptionButton" parent="UI"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 170.0
+offset_bottom = 50.0
+item_count = 3
+popup/item_0/text = "Option 1"
+popup/item_1/text = "Option 2"
+popup/item_1/id = 1
+popup/item_2/text = "Option 3"
+popup/item_2/id = 2
+
+[node name="CheckBox" type="CheckBox" parent="UI"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 150.0
+offset_bottom = 90.0
+text = "Enable Feature"
+
+[node name="SpinBox" type="SpinBox" parent="UI"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 100.0
+offset_right = 120.0
+offset_bottom = 130.0
+max_value = 1000.0
+value = 100.0

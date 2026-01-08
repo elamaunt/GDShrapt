@@ -1,0 +1,51 @@
+[gd_scene load_steps=4 format=3 uid="uid://entity_test_scene"]
+
+[ext_resource type="Script" path="res://test_scripts/base_entity.gd" id="1_base"]
+[ext_resource type="Script" path="res://test_scripts/player_entity.gd" id="2_player"]
+[ext_resource type="Script" path="res://test_scripts/enemy_entity.gd" id="3_enemy"]
+
+[node name="EntityTest" type="Node2D"]
+
+[node name="Player" type="Node2D" parent="."]
+position = Vector2(400, 300)
+script = ExtResource("2_player")
+max_health = 150
+armor = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="Player"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="Enemy1" type="Node2D" parent="Enemies"]
+position = Vector2(100, 200)
+script = ExtResource("3_enemy")
+attack_power = 15
+attack_range = 50.0
+detection_range = 200.0
+
+[node name="Sprite2D" type="Sprite2D" parent="Enemies/Enemy1"]
+
+[node name="Enemy2" type="Node2D" parent="Enemies"]
+position = Vector2(700, 400)
+script = ExtResource("3_enemy")
+attack_power = 20
+attack_range = 75.0
+detection_range = 250.0
+
+[node name="Sprite2D" type="Sprite2D" parent="Enemies/Enemy2"]
+
+[node name="Enemy3" type="Node2D" parent="Enemies"]
+position = Vector2(300, 500)
+script = ExtResource("3_enemy")
+attack_power = 10
+attack_range = 30.0
+detection_range = 150.0
+
+[node name="Sprite2D" type="Sprite2D" parent="Enemies/Enemy3"]
+
+[node name="BaseEntity" type="Node2D" parent="."]
+position = Vector2(600, 100)
+script = ExtResource("1_base")
+max_health = 100

@@ -1,0 +1,411 @@
+using GDShrapt.Reader;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+namespace GDShrapt.Semantics;
+
+/// <summary>
+/// Service for planning and executing rename operations across a GDScript project.
+/// </summary>
+public class GDRenameService
+{
+    private readonly GDScriptProject _project;
+
+    /// <summary>
+    /// Reserved GDScript keywords that cannot be used as identifiers.
+    /// </summary>
+    private static readonly HashSet<string> ReservedKeywords = new HashSet<string>(StringComparer.Ordinal)
+    {
+        // Control flow
+        "if", "elif", "else", "for", "while", "match", "break", "continue", "pass", "return", "await",
+        // Declarations
+        "class", "class_name", "extends", "func", "signal", "var", "const", "enum", "static",
+        // Types
+        "void", "bool", "int", "float",
+        // Operators
+        "and", "or", "not", "in", "is", "as",
+        // Special
+        "self", "super", "true", "false", "null", "PI", "TAU", "INF", "NAN",
+        // Modifiers
+        "setget", "onready", "export", "tool", "master", "puppet", "slave", "remote", "sync", "remotesync", "mastersync", "puppetsync"
+    };
+
+    /// <summary>
+    /// Built-in type names that should not be used as identifiers.
+    /// </summary>
+    private static readonly HashSet<string> BuiltInTypes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "Array", "Dictionary", "String", "Vector2", "Vector3", "Vector4",
+        "Color", "Rect2", "Transform2D", "Transform3D", "Basis", "Quaternion",
+        "AABB", "Plane", "NodePath", "RID", "Object", "Callable", "Signal",
+        "StringName", "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
+        "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
+    };
+
+    public GDRenameService(GDScriptProject project)
+    {
+        _project = project ?? throw new ArgumentNullException(nameof(project));
+    }
+
+    /// <summary>
+    /// Plans a rename operation for a symbol.
+    /// </summary>
+    /// <param name="symbol">The symbol to rename.</param>
+    /// <param name="newName">The new name for the symbol.</param>
+    /// <returns>The rename result with all required edits.</returns>
+    public GDRenameResult PlanRename(GDSymbol symbol, string newName)
+    {
+        if (symbol == null)
+            return GDRenameResult.Failed("Symbol is null");
+
+        // Validate the new name
+        if (!ValidateIdentifier(newName, out var validationError))
+            return GDRenameResult.Failed(validationError!);
+
+        // Check for conflicts
+        var conflicts = CheckConflicts(symbol, newName);
+        if (conflicts.Count > 0)
+            return GDRenameResult.WithConflicts(conflicts);
+
+        var oldName = symbol.Name;
+        var edits = new List<GDTextEdit>();
+        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Find the script containing this symbol
+        var containingScript = FindScriptContainingSymbol(symbol);
+        if (containingScript != null)
+        {
+            var scriptEdits = CollectEditsFromScript(containingScript, symbol, oldName, newName);
+            edits.AddRange(scriptEdits);
+            if (scriptEdits.Count > 0)
+                filesModified.Add(containingScript.FullPath!);
+        }
+
+        // For class members, also search other scripts that might reference this symbol
+        if (IsClassMemberSymbol(symbol))
+        {
+            foreach (var script in _project.ScriptFiles)
+            {
+                if (script == containingScript)
+                    continue;
+
+                var crossFileEdits = CollectCrossFileEdits(script, oldName, newName);
+                edits.AddRange(crossFileEdits);
+                if (crossFileEdits.Count > 0)
+                    filesModified.Add(script.FullPath!);
+            }
+        }
+
+        if (edits.Count == 0)
+            return GDRenameResult.NoOccurrences(oldName);
+
+        // Sort edits by file, then by position (reverse order for applying)
+        var sortedEdits = edits
+            .OrderBy(e => e.FilePath)
+            .ThenByDescending(e => e.Line)
+            .ThenByDescending(e => e.Column)
+            .ToList();
+
+        return GDRenameResult.Successful(sortedEdits, filesModified.Count);
+    }
+
+    /// <summary>
+    /// Plans a rename operation by symbol name.
+    /// </summary>
+    /// <param name="oldName">Current symbol name.</param>
+    /// <param name="newName">New symbol name.</param>
+    /// <param name="filterFilePath">Optional file path to limit the search.</param>
+    /// <returns>The rename result with all required edits.</returns>
+    public GDRenameResult PlanRename(string oldName, string newName, string? filterFilePath = null)
+    {
+        if (string.IsNullOrEmpty(oldName))
+            return GDRenameResult.Failed("Old name is empty");
+
+        // Validate the new name
+        if (!ValidateIdentifier(newName, out var validationError))
+            return GDRenameResult.Failed(validationError!);
+
+        var edits = new List<GDTextEdit>();
+        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var script in _project.ScriptFiles)
+        {
+            // If file filter is specified, only process that file
+            if (!string.IsNullOrEmpty(filterFilePath))
+            {
+                var fullPath = Path.GetFullPath(filterFilePath);
+                if (!script.FullPath!.Equals(fullPath, StringComparison.OrdinalIgnoreCase))
+                    continue;
+            }
+
+            var fileEdits = CollectEditsFromScriptByName(script, oldName, newName);
+            if (fileEdits.Count > 0)
+            {
+                edits.AddRange(fileEdits);
+                filesModified.Add(script.FullPath!);
+            }
+        }
+
+        if (edits.Count == 0)
+            return GDRenameResult.NoOccurrences(oldName);
+
+        // Sort edits by file, then by position (reverse order for applying)
+        var sortedEdits = edits
+            .OrderBy(e => e.FilePath)
+            .ThenByDescending(e => e.Line)
+            .ThenByDescending(e => e.Column)
+            .ToList();
+
+        return GDRenameResult.Successful(sortedEdits, filesModified.Count);
+    }
+
+    /// <summary>
+    /// Checks for naming conflicts before rename.
+    /// </summary>
+    /// <param name="symbol">The symbol being renamed.</param>
+    /// <param name="newName">The proposed new name.</param>
+    /// <returns>List of conflicts, empty if none.</returns>
+    public IReadOnlyList<GDRenameConflict> CheckConflicts(GDSymbol symbol, string newName)
+    {
+        var conflicts = new List<GDRenameConflict>();
+
+        // Check reserved keywords
+        if (ReservedKeywords.Contains(newName))
+        {
+            conflicts.Add(new GDRenameConflict(
+                newName,
+                $"'{newName}' is a reserved GDScript keyword",
+                GDRenameConflictType.ReservedKeyword));
+        }
+
+        // Check built-in types
+        if (BuiltInTypes.Contains(newName))
+        {
+            conflicts.Add(new GDRenameConflict(
+                newName,
+                $"'{newName}' is a built-in type name",
+                GDRenameConflictType.BuiltInType));
+        }
+
+        // Find the script containing this symbol
+        var containingScript = FindScriptContainingSymbol(symbol);
+        if (containingScript?.Analyzer == null)
+            return conflicts;
+
+        // Check if new name already exists in the same scope
+        var existingSymbol = containingScript.Analyzer.FindSymbol(newName);
+        if (existingSymbol != null && existingSymbol != symbol)
+        {
+            conflicts.Add(new GDRenameConflict(
+                newName,
+                $"A symbol named '{newName}' already exists",
+                GDRenameConflictType.NameAlreadyExists,
+                existingSymbol));
+        }
+
+        return conflicts;
+    }
+
+    /// <summary>
+    /// Validates that a name is a valid GDScript identifier.
+    /// </summary>
+    /// <param name="name">The name to validate.</param>
+    /// <param name="errorMessage">Error message if invalid.</param>
+    /// <returns>True if valid, false otherwise.</returns>
+    public bool ValidateIdentifier(string name, out string? errorMessage)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            errorMessage = "Identifier cannot be empty";
+            return false;
+        }
+
+        // Must start with letter or underscore
+        if (!char.IsLetter(name[0]) && name[0] != '_')
+        {
+            errorMessage = "Identifier must start with a letter or underscore";
+            return false;
+        }
+
+        // Rest must be letters, digits, or underscores
+        for (int i = 1; i < name.Length; i++)
+        {
+            if (!char.IsLetterOrDigit(name[i]) && name[i] != '_')
+            {
+                errorMessage = $"Invalid character '{name[i]}' in identifier";
+                return false;
+            }
+        }
+
+        // Check reserved keywords (not blocking, but could be added as warning)
+        // For now, we block them in CheckConflicts
+
+        errorMessage = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Applies edits to a file content string.
+    /// </summary>
+    /// <param name="content">The original file content.</param>
+    /// <param name="edits">The edits to apply (must be sorted in reverse order).</param>
+    /// <returns>The modified content.</returns>
+    public string ApplyEdits(string content, IEnumerable<GDTextEdit> edits)
+    {
+        var lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
+
+        foreach (var edit in edits)
+        {
+            if (edit.Line < 1 || edit.Line > lines.Count)
+                continue;
+
+            var lineIndex = edit.Line - 1;
+            var line = lines[lineIndex];
+            var column = edit.Column - 1;
+
+            if (column < 0 || column >= line.Length)
+                continue;
+
+            // Find the identifier at this position
+            var endColumn = column + edit.OldText.Length;
+            if (endColumn > line.Length)
+                continue;
+
+            var found = line.Substring(column, edit.OldText.Length);
+            if (found != edit.OldText)
+                continue;
+
+            // Replace
+            lines[lineIndex] = line.Substring(0, column) + edit.NewText + line.Substring(endColumn);
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    /// <summary>
+    /// Applies edits directly to a file.
+    /// </summary>
+    /// <param name="filePath">The file to modify.</param>
+    /// <param name="edits">The edits to apply.</param>
+    public void ApplyEditsToFile(string filePath, IEnumerable<GDTextEdit> edits)
+    {
+        var content = File.ReadAllText(filePath, Encoding.UTF8);
+        var modified = ApplyEdits(content, edits);
+        File.WriteAllText(filePath, modified, Encoding.UTF8);
+    }
+
+    #region Private helpers
+
+    private GDScriptFile? FindScriptContainingSymbol(GDSymbol symbol)
+    {
+        foreach (var script in _project.ScriptFiles)
+        {
+            if (script.Analyzer == null)
+                continue;
+
+            if (script.Analyzer.Symbols.Contains(symbol))
+                return script;
+        }
+        return null;
+    }
+
+    private static bool IsClassMemberSymbol(GDSymbol symbol)
+    {
+        return symbol.Kind switch
+        {
+            GDSymbolKind.Method => true,
+            GDSymbolKind.Signal => true,
+            GDSymbolKind.Variable when symbol.Declaration is GDVariableDeclaration => true,
+            GDSymbolKind.Constant when symbol.Declaration is GDVariableDeclaration => true,
+            GDSymbolKind.Enum => true,
+            GDSymbolKind.EnumValue => true,
+            GDSymbolKind.Class => true,
+            _ => false
+        };
+    }
+
+    private List<GDTextEdit> CollectEditsFromScript(GDScriptFile script, GDSymbol symbol, string oldName, string newName)
+    {
+        var edits = new List<GDTextEdit>();
+        var analyzer = script.Analyzer;
+        var filePath = script.FullPath;
+
+        if (analyzer == null || filePath == null)
+            return edits;
+
+        // Add declaration
+        if (symbol.Declaration != null)
+        {
+            edits.Add(new GDTextEdit(filePath, symbol.Declaration.StartLine, symbol.Declaration.StartColumn, oldName, newName));
+        }
+
+        // Add all references
+        var refs = analyzer.GetReferencesTo(symbol);
+        foreach (var reference in refs)
+        {
+            var node = reference.ReferenceNode;
+            if (node == null)
+                continue;
+
+            // Skip if it's the declaration (already added)
+            if (node == symbol.Declaration)
+                continue;
+
+            edits.Add(new GDTextEdit(filePath, node.StartLine, node.StartColumn, oldName, newName));
+        }
+
+        return edits;
+    }
+
+    private List<GDTextEdit> CollectEditsFromScriptByName(GDScriptFile script, string oldName, string newName)
+    {
+        var edits = new List<GDTextEdit>();
+        var analyzer = script.Analyzer;
+        var filePath = script.FullPath;
+
+        if (analyzer == null || filePath == null)
+            return edits;
+
+        var symbol = analyzer.FindSymbol(oldName);
+        if (symbol == null)
+            return edits;
+
+        return CollectEditsFromScript(script, symbol, oldName, newName);
+    }
+
+    private List<GDTextEdit> CollectCrossFileEdits(GDScriptFile script, string symbolName, string newName)
+    {
+        // For cross-file references, we need to search for usages of the symbol name
+        // This is a simplified implementation - full implementation would need type resolution
+        var edits = new List<GDTextEdit>();
+        var analyzer = script.Analyzer;
+        var filePath = script.FullPath;
+
+        if (analyzer == null || filePath == null)
+            return edits;
+
+        // Search for identifier usages that match the name
+        // Note: This may include false positives without full type resolution
+        var symbols = analyzer.FindSymbols(symbolName);
+        foreach (var symbol in symbols)
+        {
+            var refs = analyzer.GetReferencesTo(symbol);
+            foreach (var reference in refs)
+            {
+                var node = reference.ReferenceNode;
+                if (node == null)
+                    continue;
+
+                edits.Add(new GDTextEdit(filePath, node.StartLine, node.StartColumn, symbolName, newName));
+            }
+        }
+
+        return edits;
+    }
+
+    #endregion
+}
