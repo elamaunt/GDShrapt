@@ -1257,6 +1257,203 @@ func test(x):
 
         #endregion
 
+#region PrivateMethodCallRule (GDL218)
+
+        [TestMethod]
+        public void PrivateMethodCall_ExternalCall_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = get_node(""."")
+    node._private_method()
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL218");
+        }
+
+        [TestMethod]
+        public void PrivateMethodCall_InternalCall_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    _my_private_method()
+
+func _my_private_method():
+    pass
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL218").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void PrivateMethodCall_SelfCall_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    self._my_private_method()
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL218").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void PrivateMethodCall_DisabledByDefault_NoIssue()
+        {
+            var code = @"
+func test():
+    var node = get_node(""."")
+    node._private_method()
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL218").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void PrivateMethodCall_PublicMethod_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = get_node(""."")
+    node.public_method()
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL218").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void PrivateMethodCall_ChainedCall_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    get_node(""."").get_child(0)._private_method()
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL218");
+        }
+
+        #endregion
+
+        #region DuplicatedLoadRule (GDL219)
+
+        [TestMethod]
+        public void DuplicatedLoad_SamePathTwice_ReportsIssue()
+        {
+            var code = @"
+var Scene1 = load(""res://scene.tscn"")
+var Scene2 = load(""res://scene.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL219");
+        }
+
+        [TestMethod]
+        public void DuplicatedLoad_DifferentPaths_NoIssue()
+        {
+            var code = @"
+var Scene1 = load(""res://scene1.tscn"")
+var Scene2 = load(""res://scene2.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL219").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void DuplicatedLoad_PreloadSamePath_ReportsIssue()
+        {
+            var code = @"
+const Scene1 = preload(""res://scene.tscn"")
+const Scene2 = preload(""res://scene.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL219");
+        }
+
+        [TestMethod]
+        public void DuplicatedLoad_LoadAndPreloadSamePath_ReportsIssue()
+        {
+            var code = @"
+const Scene1 = preload(""res://scene.tscn"")
+var Scene2 = load(""res://scene.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL219");
+        }
+
+        [TestMethod]
+        public void DuplicatedLoad_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnDuplicatedLoad = false };
+            var linter = new GDLinter(options);
+            var code = @"
+var Scene1 = load(""res://scene.tscn"")
+var Scene2 = load(""res://scene.tscn"")
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL219").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void DuplicatedLoad_SingleLoad_NoIssue()
+        {
+            var code = @"
+var Scene = load(""res://scene.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL219").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void DuplicatedLoad_MultipleLoads_ReportsCorrectPath()
+        {
+            var code = @"
+var Scene1 = load(""res://first.tscn"")
+var Scene2 = load(""res://duplicate.tscn"")
+var Scene3 = load(""res://duplicate.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            var duplicateIssue = result.Issues.FirstOrDefault(i => i.RuleId == "GDL219");
+            duplicateIssue.Should().NotBeNull();
+            duplicateIssue.Message.Should().Contain("duplicate.tscn");
+        }
+
+        [TestMethod]
+        public void DuplicatedLoad_InsideFunction_ReportsIssue()
+        {
+            var code = @"
+func test():
+    var a = load(""res://resource.tres"")
+    var b = load(""res://resource.tres"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL219");
+        }
+
+        #endregion
+
         #region Combined Tests
 
         [TestMethod]

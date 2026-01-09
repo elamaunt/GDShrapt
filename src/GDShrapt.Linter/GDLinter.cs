@@ -63,9 +63,13 @@ namespace GDShrapt.Reader
             AddRule(new GDEnumNameCaseRule());
             AddRule(new GDEnumValueCaseRule());
             AddRule(new GDPrivatePrefixRule());
+            AddRule(new GDInnerClassNameCaseRule());
 
             // Style rules
             AddRule(new GDLineLengthRule());
+            AddRule(new GDMaxFileLinesRule());
+            AddRule(new GDNoElifReturnRule());
+            AddRule(new GDNoElseReturnRule());
 
             // Best practices rules
             AddRule(new GDUnusedVariableRule());
@@ -83,6 +87,8 @@ namespace GDShrapt.Reader
             AddRule(new GDSelfComparisonRule());
             AddRule(new GDDuplicateDictKeyRule());
             AddRule(new GDStrictTypingRule());
+            AddRule(new GDPrivateMethodCallRule());
+            AddRule(new GDDuplicatedLoadRule());
 
             // Style rules
             AddRule(new GDTrailingCommaRule());

@@ -450,5 +450,83 @@ func _process(delta):
         }
 
         #endregion
+
+        #region InnerClassNameCaseRule (GDL009)
+
+        [TestMethod]
+        public void InnerClassName_PascalCase_NoIssue()
+        {
+            var code = @"
+class MyInnerClass:
+    var value = 0
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void InnerClassName_SnakeCase_ReportsIssue()
+        {
+            var code = @"
+class my_inner_class:
+    pass
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL009");
+        }
+
+        [TestMethod]
+        public void InnerClassName_CamelCase_ReportsIssue()
+        {
+            var code = @"
+class myInnerClass:
+    pass
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL009");
+        }
+
+        [TestMethod]
+        public void InnerClassName_WithExtends_PascalCase_NoIssue()
+        {
+            var code = @"
+class MyInnerClass extends Node:
+    pass
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void InnerClassName_PrivateWithUnderscore_NoIssue()
+        {
+            var code = @"
+class _PrivateInner:
+    pass
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void InnerClassName_CustomCase_NoIssue()
+        {
+            var options = new GDLinterOptions { InnerClassNameCase = NamingCase.Any };
+            var linter = new GDLinter(options);
+            var code = @"
+class any_name_works:
+    pass
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        #endregion
     }
 }

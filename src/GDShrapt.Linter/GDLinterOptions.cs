@@ -181,6 +181,37 @@ namespace GDShrapt.Reader
         /// </summary>
         public GDLintSeverity? StrictTypingReturnTypes { get; set; } = null;
 
+        // New rules options
+        /// <summary>
+        /// Maximum allowed file lines. 0 to disable. Default: 1000.
+        /// </summary>
+        public int MaxFileLines { get; set; } = 1000;
+
+        /// <summary>
+        /// Expected case for inner class names. Default: PascalCase.
+        /// </summary>
+        public NamingCase InnerClassNameCase { get; set; } = NamingCase.PascalCase;
+
+        /// <summary>
+        /// Whether to warn when elif follows an if block that ends with return.
+        /// </summary>
+        public bool WarnNoElifReturn { get; set; } = false;
+
+        /// <summary>
+        /// Whether to warn when else follows an if block that ends with return.
+        /// </summary>
+        public bool WarnNoElseReturn { get; set; } = false;
+
+        /// <summary>
+        /// Whether to warn when calling private methods (prefixed with _) from outside the class.
+        /// </summary>
+        public bool WarnPrivateMethodCall { get; set; } = false;
+
+        /// <summary>
+        /// Whether to warn about duplicated load()/preload() calls with the same path.
+        /// </summary>
+        public bool WarnDuplicatedLoad { get; set; } = true;
+
         /// <summary>
         /// Enables strict typing with Warning severity for all elements.
         /// </summary>
@@ -246,6 +277,22 @@ namespace GDShrapt.Reader
                        StrictTypingParameters.HasValue ||
                        StrictTypingReturnTypes.HasValue;
             }
+
+            // Auto-enable rules when their specific option is set
+            if (rule.RuleId == "GDL102") // max-file-lines
+                return MaxFileLines > 0;
+
+            if (rule.RuleId == "GDL216") // no-elif-return
+                return WarnNoElifReturn;
+
+            if (rule.RuleId == "GDL217") // no-else-return
+                return WarnNoElseReturn;
+
+            if (rule.RuleId == "GDL218") // private-method-call
+                return WarnPrivateMethodCall;
+
+            if (rule.RuleId == "GDL219") // duplicated-load
+                return WarnDuplicatedLoad;
 
             return rule.EnabledByDefault;
         }

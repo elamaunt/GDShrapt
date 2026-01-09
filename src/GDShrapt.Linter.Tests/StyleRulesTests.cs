@@ -320,5 +320,261 @@ func test():
         }
 
         #endregion
+
+        #region MaxFileLinesRule (GDL102)
+
+        [TestMethod]
+        public void MaxFileLines_UnderLimit_NoIssue()
+        {
+            var options = new GDLinterOptions { MaxFileLines = 10 };
+            var linter = new GDLinter(options);
+            var code = @"extends Node
+var x = 1
+var y = 2
+var z = 3";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL102").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void MaxFileLines_OverLimit_ReportsIssue()
+        {
+            var options = new GDLinterOptions { MaxFileLines = 3 };
+            var linter = new GDLinter(options);
+            var code = @"extends Node
+var a = 1
+var b = 2
+var c = 3
+var d = 4";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL102");
+        }
+
+        [TestMethod]
+        public void MaxFileLines_ExactlyAtLimit_NoIssue()
+        {
+            var options = new GDLinterOptions { MaxFileLines = 5 };
+            var linter = new GDLinter(options);
+            var code = @"extends Node
+var a = 1
+var b = 2
+var c = 3
+var d = 4";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL102").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void MaxFileLines_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { MaxFileLines = 0 };
+            var linter = new GDLinter(options);
+            var lines = new string[100];
+            lines[0] = "extends Node";
+            for (int i = 1; i < 100; i++)
+                lines[i] = $"var x{i} = {i}";
+            var code = string.Join("\n", lines);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL102").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void MaxFileLines_ReportsCorrectLineCount()
+        {
+            var options = new GDLinterOptions { MaxFileLines = 5 };
+            var linter = new GDLinter(options);
+            var lines = new string[10];
+            lines[0] = "extends Node";
+            for (int i = 1; i < 10; i++)
+                lines[i] = $"var x{i} = {i}";
+            var code = string.Join("\n", lines);
+
+            var result = linter.LintCode(code);
+
+            var issue = result.Issues.FirstOrDefault(i => i.RuleId == "GDL102");
+            issue.Should().NotBeNull();
+            issue.Message.Should().Contain("5"); // Contains max limit
+        }
+
+        #endregion
+
+        #region NoElifReturnRule (GDL216)
+
+        [TestMethod]
+        public void NoElifReturn_IfReturnsWithElif_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnNoElifReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL216");
+        }
+
+        [TestMethod]
+        public void NoElifReturn_IfDoesNotReturn_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnNoElifReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        print(""positive"")
+    elif x < 0:
+        return -1
+    return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL216").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NoElifReturn_MultipleElifs_ReportsAll()
+        {
+            var options = new GDLinterOptions { WarnNoElifReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 10:
+        return 2
+    elif x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    return 0
+";
+            var result = linter.LintCode(code);
+
+            var elifIssues = result.Issues.Where(i => i.RuleId == "GDL216").ToList();
+            elifIssues.Count.Should().Be(2);
+        }
+
+        [TestMethod]
+        public void NoElifReturn_DisabledByDefault_NoIssue()
+        {
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    return 0
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL216").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region NoElseReturnRule (GDL217)
+
+        [TestMethod]
+        public void NoElseReturn_IfReturnsWithElse_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnNoElseReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    else:
+        return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL217");
+        }
+
+        [TestMethod]
+        public void NoElseReturn_IfDoesNotReturn_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnNoElseReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        print(""positive"")
+    else:
+        return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL217").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NoElseReturn_AllBranchesReturn_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnNoElseReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL217");
+        }
+
+        [TestMethod]
+        public void NoElseReturn_DisabledByDefault_NoIssue()
+        {
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    else:
+        return 0
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL217").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NoElseReturn_NestedIf_ReportsCorrectly()
+        {
+            var options = new GDLinterOptions { WarnNoElseReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x, y):
+    if x > 0:
+        if y > 0:
+            return 1
+        else:
+            return 2
+    else:
+        return 0
+";
+            var result = linter.LintCode(code);
+
+            // Should report both else blocks since their parent ifs all end with return
+            var elseIssues = result.Issues.Where(i => i.RuleId == "GDL217").ToList();
+            elseIssues.Count.Should().BeGreaterOrEqualTo(1);
+        }
+
+        #endregion
     }
 }

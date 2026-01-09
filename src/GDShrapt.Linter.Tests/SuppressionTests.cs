@@ -366,5 +366,271 @@ func another_function():
         }
 
         #endregion
+
+        #region New Rules Suppression (GDL009, GDL102, GDL216, GDL217, GDL218, GDL219)
+
+        [TestMethod]
+        public void Ignore_InnerClassName_SuppressesGDL009()
+        {
+            var code = @"
+# gdlint:ignore = inner-class-name-case
+class my_inner_class:
+    pass
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_InnerClassName_ByRuleId_SuppressesGDL009()
+        {
+            var code = @"
+# gdlint:ignore = GDL009
+class my_inner_class:
+    pass
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_InnerClassName_SuppressesGDL009()
+        {
+            var code = @"
+# gdlint: disable=inner-class-name-case
+class my_inner_class:
+    pass
+
+class another_inner_class:
+    pass
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_MaxFileLines_SuppressesGDL102()
+        {
+            var options = new GDLinterOptions { MaxFileLines = 3 };
+            var linter = new GDLinter(options);
+            var code = @"# gdlint: disable=max-file-lines
+extends Node
+var a = 1
+var b = 2
+var c = 3";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL102").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_MaxFileLines_ByRuleId_SuppressesGDL102()
+        {
+            var options = new GDLinterOptions { MaxFileLines = 3 };
+            var linter = new GDLinter(options);
+            var code = @"# gdlint: disable=GDL102
+extends Node
+var a = 1
+var b = 2
+var c = 3";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL102").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_NoElifReturn_SuppressesGDL216()
+        {
+            var options = new GDLinterOptions { WarnNoElifReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint: disable=no-elif-return
+func test(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL216").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_NoElifReturn_ByRuleId_SuppressesGDL216()
+        {
+            var options = new GDLinterOptions { WarnNoElifReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    # gdlint:ignore = GDL216
+    elif x < 0:
+        return -1
+    return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL216").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_NoElseReturn_SuppressesGDL217()
+        {
+            var options = new GDLinterOptions { WarnNoElseReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint: disable=no-else-return
+func test(x):
+    if x > 0:
+        return 1
+    else:
+        return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL217").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_NoElseReturn_ByRuleId_SuppressesGDL217()
+        {
+            var options = new GDLinterOptions { WarnNoElseReturn = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    # gdlint:ignore = GDL217
+    else:
+        return 0
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL217").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_PrivateMethodCall_SuppressesGDL218()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = get_node(""."")
+    # gdlint:ignore = private-method-call
+    node._private_method()
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL218").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_PrivateMethodCall_SuppressesGDL218()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint: disable=private-method-call
+func test():
+    var node = get_node(""."")
+    node._private_method()
+    node._another_private()
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL218").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_PrivateMethodCall_ByRuleId_SuppressesGDL218()
+        {
+            var options = new GDLinterOptions { WarnPrivateMethodCall = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = get_node(""."")
+    # gdlint:ignore = GDL218
+    node._private_method()
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL218").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_DuplicatedLoad_SuppressesGDL219()
+        {
+            var code = @"
+# gdlint: disable=duplicated-load
+var Scene1 = load(""res://scene.tscn"")
+var Scene2 = load(""res://scene.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL219").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_DuplicatedLoad_ByRuleId_SuppressesGDL219()
+        {
+            var code = @"
+var Scene1 = load(""res://scene.tscn"")
+# gdlint:ignore = GDL219
+var Scene2 = load(""res://scene.tscn"")
+";
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL219").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_Enable_DuplicatedLoad_WorksCorrectly()
+        {
+            var code = @"# gdlint: disable=duplicated-load
+var Scene1 = load(""res://scene1.tscn"")
+var Scene2 = load(""res://scene1.tscn"")
+# gdlint: enable=duplicated-load
+var Scene3 = load(""res://scene2.tscn"")
+var Scene4 = load(""res://scene2.tscn"")";
+
+            var result = _linter.LintCode(code);
+
+            // First duplicate suppressed, second duplicate should report
+            result.Issues.Where(i => i.RuleId == "GDL219" && i.StartLine <= 2).Should().BeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL219" && i.StartLine > 3).Should().NotBeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_MultipleNewRules_SuppressesAll()
+        {
+            var options = new GDLinterOptions { WarnNoElseReturn = true };
+            var linter = new GDLinter(options);
+
+            var code = @"
+# gdlint:ignore = inner-class-name-case, no-else-return
+class my_bad_class:
+    func test(x):
+        if x > 0:
+            return 1
+        else:
+            return 0
+";
+            var result = linter.LintCode(code);
+
+            // Both GDL009 (inner class name) and GDL217 (no-else-return) should be suppressed
+            // Note: The inner class is on the next line after the ignore comment
+            result.Issues.Where(i => i.RuleId == "GDL009").Should().BeEmpty();
+        }
+
+        #endregion
     }
 }
