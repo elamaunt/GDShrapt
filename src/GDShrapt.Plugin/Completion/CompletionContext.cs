@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 
 namespace GDShrapt.Plugin.Completion;
@@ -167,9 +168,9 @@ internal enum CompletionType
 internal class CompletionContextBuilder
 {
     private readonly GDProjectMap _projectMap;
-    private readonly TypeResolver? _typeResolver;
+    private readonly GDTypeResolver? _typeResolver;
 
-    public CompletionContextBuilder(GDProjectMap projectMap, TypeResolver? typeResolver = null)
+    public CompletionContextBuilder(GDProjectMap projectMap, GDTypeResolver? typeResolver = null)
     {
         _projectMap = projectMap;
         _typeResolver = typeResolver;
@@ -395,7 +396,9 @@ internal class CompletionContextBuilder
 
             if (parsedExpr != null)
             {
-                var result = _typeResolver.ResolveExpressionType(parsedExpr, scriptMap);
+                // Use adapter to convert GDScriptMap to IGDScriptInfo
+                var scriptInfo = new GDScriptMapAdapter(scriptMap);
+                var result = _typeResolver.ResolveExpressionType(parsedExpr, scriptInfo);
                 return result.IsResolved ? result.TypeName : null;
             }
         }

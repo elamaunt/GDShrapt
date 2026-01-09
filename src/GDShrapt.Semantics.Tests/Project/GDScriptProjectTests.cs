@@ -160,4 +160,65 @@ func test() -> void:
 
         Assert.IsNull(pointer);
     }
+
+    [TestMethod]
+    public void CreateTypeResolver_WithAutoloads_ResolvesAutoloadTypes()
+    {
+        var globalScript = @"
+extends Node
+
+var player_data: Dictionary = {}
+signal game_started
+
+func start_game() -> void:
+    pass
+";
+
+        var mainScript = @"
+extends Node
+
+func _ready() -> void:
+    Global.start_game()
+";
+
+        var project = new GDScriptProject(globalScript, mainScript);
+
+        // Manually add autoload entry (in real project this comes from project.godot)
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "Global", Path = "res://global.gd", Enabled = true }
+        };
+        var autoloadsProvider = new GDAutoloadsProvider(autoloads, project);
+
+        var resolver = new GDTypeResolver(
+            new GDGodotTypesProvider(),
+            new GDProjectTypesProvider(project),
+            autoloadsProvider);
+
+        // Check that autoload is resolved as global class
+        var globalInfo = resolver.RuntimeProvider.GetGlobalClass("Global");
+        Assert.IsNotNull(globalInfo, "Global autoload should be resolved");
+        Assert.AreEqual("Global", globalInfo.Name);
+    }
+
+    [TestMethod]
+    public void CreateTypeResolver_AutoloadMembers_AreAccessible()
+    {
+        // This test uses mock objects for detailed member extraction testing.
+        // For in-memory scripts, FullPath is null, so GDAutoloadsProvider can't find them.
+        // See GDAutoloadsProviderTests.GetGlobalClass_WithScriptProvider_ExtractsMembers for full member test.
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "Global", Path = "res://global.gd", Enabled = true }
+        };
+
+        // Without matching script provider, autoload returns basic Node type
+        var autoloadsProvider = new GDAutoloadsProvider(autoloads);
+        var globalInfo = autoloadsProvider.GetGlobalClass("Global");
+
+        Assert.IsNotNull(globalInfo);
+        Assert.AreEqual("Global", globalInfo.Name);
+        Assert.AreEqual("Node", globalInfo.BaseType, "Without script provider, base type should default to Node");
+    }
 }

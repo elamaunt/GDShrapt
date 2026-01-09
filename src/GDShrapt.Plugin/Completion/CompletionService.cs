@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace GDShrapt.Plugin.Completion;
 internal class CompletionService
 {
     private readonly GDProjectMap _projectMap;
-    private readonly TypeResolver _typeResolver;
-    private readonly GodotTypesProvider _godotTypesProvider;
+    private readonly GDTypeResolver _typeResolver;
+    private readonly GDGodotTypesProvider _godotTypesProvider;
 
     // GDScript keywords
     private static readonly string[] Keywords = {
@@ -49,7 +50,7 @@ internal class CompletionService
         "Node", "Node2D", "Node3D", "Control", "Resource", "RefCounted"
     };
 
-    public CompletionService(GDProjectMap projectMap, TypeResolver typeResolver, GodotTypesProvider godotTypesProvider)
+    public CompletionService(GDProjectMap projectMap, GDTypeResolver typeResolver, GDGodotTypesProvider godotTypesProvider)
     {
         _projectMap = projectMap;
         _typeResolver = typeResolver;

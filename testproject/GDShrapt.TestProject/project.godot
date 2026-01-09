@@ -20,6 +20,10 @@ config/icon="res://icon.svg"
 
 project/assembly_name="GDShrapt.TestProject"
 
+[autoload]
+
+Global="*res://test_scripts/global.gd"
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gdshrapt/plugin.cfg")

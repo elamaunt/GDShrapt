@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
-internal class GDProjectMap : IDisposable
+internal class GDProjectMap : IDisposable, IGDScriptProvider
     {
         readonly ConcurrentDictionary<ScriptReference, GDScriptMap> _maps = new ConcurrentDictionary<ScriptReference, GDScriptMap>();
         FileSystemWatcher _scriptsWatcher;
@@ -211,6 +211,20 @@ internal class GDProjectMap : IDisposable
         }
 
         public GDScriptMap GetScriptMapByTypeName(string type) => _maps.FirstOrDefault(x => x.Value.TypeName == type).Value;
+
+        #region IGDScriptProvider Implementation
+
+        IEnumerable<IGDScriptInfo> IGDScriptProvider.Scripts =>
+            _maps.Values.Select(m => new GDScriptMapAdapter(m));
+
+        IGDScriptInfo? IGDScriptProvider.GetScriptByTypeName(string typeName) =>
+            GetScriptMapByTypeName(typeName) is { } map ? new GDScriptMapAdapter(map) : null;
+
+        IGDScriptInfo? IGDScriptProvider.GetScriptByPath(string path) =>
+            GetScriptMap(path) is { } map ? new GDScriptMapAdapter(map) : null;
+
+        #endregion
+
         public GDScriptMap GetScriptMapByResourcePath(string resourcePath)
         {
             var globalPath = ProjectSettings.GlobalizePath(resourcePath);
@@ -223,6 +237,29 @@ internal class GDProjectMap : IDisposable
         internal IGDRuntimeProvider CreateRuntimeProvider()
         {
             return new GDProjectRuntimeProvider(this);
+        }
+
+        /// <summary>
+        /// Creates a fully configured type resolver with all providers including autoloads.
+        /// Mirrors GDScriptProject.CreateTypeResolver() pattern.
+        /// </summary>
+        public GDTypeResolver CreateTypeResolver()
+        {
+            var godotTypesProvider = new GDGodotTypesProvider();
+            var projectTypesProvider = new GDProjectTypesProvider(this);
+            projectTypesProvider.RebuildCache();
+
+            // Load autoloads from project.godot
+            var projectGodotPath = System.IO.Path.Combine(ProjectPath, "project.godot");
+            var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath);
+            var autoloadsProvider = new GDAutoloadsProvider(autoloads, this);
+
+            return new GDTypeResolver(
+                godotTypesProvider,
+                projectTypesProvider,
+                autoloadsProvider,
+                SceneTypesProvider,
+                SemanticLoggerAdapter.Instance);
         }
 
         public GDScriptMap GetScriptMapByClass(GDClassDeclaration classDecl)

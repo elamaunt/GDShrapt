@@ -7,6 +7,7 @@ using GDShrapt.Plugin.Diagnostics;
 using GDShrapt.Plugin.Refactoring;
 using GDShrapt.Plugin.TodoTags;
 using GDShrapt.Plugin.UI;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -57,9 +58,8 @@ public partial class GDShraptPlugin : EditorPlugin
     // Formatting service
     private Formatting.FormattingService _formattingService;
 
-    // Type inference for completion
-    private GodotTypesProvider _godotTypesProvider;
-    private TypeResolver _typeResolver;
+    // Type inference for completion (using Semantics)
+    private GDTypeResolver _typeResolver;
 
     // UI dialogs
     private AboutPanel _aboutPanel;
@@ -73,8 +73,8 @@ public partial class GDShraptPlugin : EditorPlugin
     internal RefactoringActionProvider RefactoringActionProvider => _refactoringActionProvider;
     internal Formatting.FormattingService FormattingService => _formattingService;
     internal QuickFixHandler QuickFixHandler => _quickFixHandler;
-    internal GodotTypesProvider GodotTypesProvider => _godotTypesProvider;
-    internal TypeResolver TypeResolver => _typeResolver;
+    internal GDGodotTypesProvider GodotTypesProvider => _typeResolver?.GodotTypesProvider;
+    internal GDTypeResolver TypeResolver => _typeResolver;
 
     public override void _Ready()
     {
@@ -122,10 +122,9 @@ public partial class GDShraptPlugin : EditorPlugin
             // Initialize formatting service
             _formattingService = new Formatting.FormattingService(_configManager);
 
-            // Initialize type resolver for completion
-            _godotTypesProvider = new GodotTypesProvider();
-            var projectTypesProvider = new ProjectTypesProvider(_projectMap);
-            _typeResolver = new TypeResolver(_godotTypesProvider, projectTypesProvider, _projectMap.SceneTypesProvider);
+            // Initialize type resolver for completion (using Semantics)
+            // Includes all providers: Godot types, project types, autoloads, and scene types
+            _typeResolver = _projectMap.CreateTypeResolver();
 
             // Initialize UI and commands after all services are ready
             Init();

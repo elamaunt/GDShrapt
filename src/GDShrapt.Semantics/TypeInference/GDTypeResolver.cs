@@ -44,6 +44,11 @@ public class GDTypeResolver
     public IGDRuntimeProvider RuntimeProvider => _compositeProvider;
 
     /// <summary>
+    /// Gets the Godot types provider for direct access to Godot API type information.
+    /// </summary>
+    public GDGodotTypesProvider GodotTypesProvider => _godotTypesProvider;
+
+    /// <summary>
     /// Resolves the type of an expression within a given context.
     /// </summary>
     public GDTypeResolutionResult ResolveExpressionType(GDExpression expression, IGDScriptInfo? scriptInfo = null)
