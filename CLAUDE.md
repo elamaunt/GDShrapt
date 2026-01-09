@@ -112,6 +112,20 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `Rules/Style/` - Style rules
 - `Rules/BestPractices/` - Best practice rules (including `GDStrictTypingRule` GDL215)
 - `Suppression/` - Comment-based rule suppression (`gdlint:ignore`, `gdlint:disable/enable`)
+- `Configuration/` - Config file parsing (`GDLintrcParser` for `.gdlintrc`)
+
+**Rule Auto-Enable Logic:**
+Rules can be enabled in three ways:
+1. Explicitly enabled in config: `{ "GDL102": { "enabled": true } }`
+2. Via `EnabledByDefault` property on the rule class
+3. **Auto-enabled** when their specific option is set:
+   - `MaxFileLines > 0` auto-enables GDL102 (max-file-lines)
+   - `WarnNoElifReturn = true` auto-enables GDL216
+   - `WarnNoElseReturn = true` auto-enables GDL217
+   - `WarnPrivateMethodCall = true` auto-enables GDL218
+   - Any strict typing option set auto-enables GDL215
+
+Explicit disable in config always takes precedence.
 
 **Formatter** (`src/GDShrapt.Formatter/`)
 - `GDFormatRule` base class extending `GDVisitor`
@@ -237,6 +251,24 @@ configManager.OnConfigChanged += (config) => { /* reload */ };
     "exclude": ["addons/**", "test/**"]
   }
 }
+```
+
+### Configuration Override Hierarchy
+
+Configuration values are resolved in this order (later overrides earlier):
+1. **Defaults** - Hardcoded default values in `GDLinterOptions.Default`, `GDFormatterOptions.Default`
+2. **Config file** - `.gdshrapt.json` or `.gdlintrc` in project root
+3. **CLI flags** - Command-line arguments take highest precedence
+
+CLI override classes (`GDShrapt.CLI.Core/Options/`):
+- `GDLinterOptionsOverrides` - Nullable overrides for all linter options
+- `GDFormatterOptionsOverrides` - Nullable overrides for all formatter options
+- `GDValidationCheckOverrides` - Nullable overrides for validation checks
+
+Null values in overrides mean "use config file value". This enables selective CLI overrides:
+```bash
+# Override only max-line-length, use config for everything else
+gdshrapt lint --max-line-length 120
 ```
 
 ### Unified Diagnostics System
@@ -416,6 +448,45 @@ Implementation in `Suppression/`:
 - `GDSuppressionDirective` - Single suppression directive
 - Supports both rule IDs (`GDL001`) and names (`variable-name`)
 
+## gdlintrc Configuration Support
+
+The linter supports gdtoolkit-compatible `.gdlintrc` configuration files for seamless migration from gdtoolkit.
+
+**Supported Directives:**
+```yaml
+# Disable specific rules
+disable:
+  - function-name
+  - class-name
+
+# Naming convention patterns (auto-detected)
+class-name: "([A-Z][a-z0-9]*)+$"           # PascalCase
+function-name: "(_?[a-z][a-z0-9]*(_[a-z0-9]+)*_?|_+)$"  # snake_case
+
+# Numeric limits
+max-line-length: 100
+max-file-lines: 1000
+function-arguments-number: 10
+```
+
+**Rule Name Mapping:**
+gdtoolkit rule names are automatically mapped to GDShrapt rule IDs:
+- `class-name` → GDL001
+- `function-name` → GDL002
+- `variable-name` → GDL003
+- `max-line-length` → GDL101
+- `max-file-lines` → GDL102
+- etc.
+
+**Naming Case Detection:**
+The parser auto-detects naming conventions from regex patterns:
+- `([A-Z][a-z0-9]*)+` → PascalCase
+- `[a-z][a-z0-9]*(_[a-z0-9]+)*` → snake_case
+- `[A-Z][A-Z0-9]*(_[A-Z0-9]+)*` → SCREAMING_SNAKE_CASE
+- `[a-z][a-zA-Z0-9]*` → camelCase
+
+Implementation: `GDLintrcParser` in `Configuration/`
+
 ## Strict Typing and Auto Type Inference
 
 **Linter - GDStrictTypingRule (GDL215)**:
@@ -537,15 +608,33 @@ var options = new GDLinterOptions {
     FunctionNameCase = NamingCase.SnakeCase,
     VariableNameCase = NamingCase.SnakeCase,
     ConstantNameCase = NamingCase.ScreamingSnakeCase,
+    SignalNameCase = NamingCase.SnakeCase,
+    EnumNameCase = NamingCase.PascalCase,
+    EnumValueCase = NamingCase.ScreamingSnakeCase,
+    InnerClassNameCase = NamingCase.PascalCase,  // NEW
+    RequireUnderscorePrivate = false,
 
-    // Style
+    // Style limits
     MaxLineLength = 100,
+    MaxFileLines = 1000,  // NEW: 0 to disable
 
     // Best practices
     WarnUnusedVariables = true,
     WarnUnusedParameters = true,
+    WarnUnusedSignals = true,
+    WarnEmptyFunctions = true,
+    WarnMagicNumbers = false,
+    WarnVariableShadowing = true,
+    WarnAwaitInLoop = true,
     MaxParameters = 5,
     MaxFunctionLength = 50,
+    MaxComplexity = 10,
+
+    // NEW: Additional warnings
+    WarnNoElifReturn = false,       // GDL216
+    WarnNoElseReturn = false,       // GDL217
+    WarnPrivateMethodCall = false,  // GDL218
+    WarnDuplicatedLoad = true,      // GDL219
 
     // Strict typing (per-element severity, null = disabled)
     StrictTypingClassVariables = GDLintSeverity.Warning,
@@ -881,8 +970,12 @@ GDIdentifier id = "myVariable";
 | GDL006 | enum-name-case | Naming | On | Enum names should use PascalCase |
 | GDL007 | enum-value-case | Naming | On | Enum values should use SCREAMING_SNAKE_CASE |
 | GDL008 | private-prefix | Naming | Off | Private members should start with underscore |
+| GDL009 | inner-class-name-case | Naming | On | Inner class names should use PascalCase |
 | **Style** | | | | |
 | GDL101 | line-length | Style | On | Lines should not exceed max length (default 100) |
+| GDL102 | max-file-lines | Style | Off | Warn when file exceeds max lines (default 1000) |
+| GDL216 | no-elif-return | Style | Off | Warn when elif follows if block ending with return |
+| GDL217 | no-else-return | Style | Off | Warn when else follows if block ending with return |
 | GDL301 | member-ordering | Style | Off | Class members should follow ordering |
 | GDL302 | trailing-comma | Style | Off | Enforce trailing comma in multiline collections |
 | **Best Practices** | | | | |
@@ -901,6 +994,8 @@ GDIdentifier id = "myVariable";
 | GDL213 | self-comparison | BestPractices | On | Warn when comparing value with itself |
 | GDL214 | duplicate-dict-key | BestPractices | On | Warn about duplicate dictionary keys |
 | GDL215 | strict-typing | BestPractices | Off | Require explicit type hints |
+| GDL218 | private-method-call | BestPractices | Off | Warn when calling private methods externally |
+| GDL219 | duplicated-load | BestPractices | On | Warn about duplicate load()/preload() calls |
 
 ### Formatter Rules (GDFxxx)
 
@@ -929,10 +1024,51 @@ gdshrapt check [project-path] [--quiet] [--format text|json]
     # CI/CD friendly: returns exit code 0 (success) or 1 (errors)
     # --quiet suppresses output
 
-gdshrapt lint [project-path] [--rules GDL001,GDL003] [--category naming|style|best-practices] [--format text|json]
+gdshrapt lint [project-path] [options]
     # Lint-only analysis (style and best practices)
-    # --rules filters to specific rule IDs
-    # --category filters to rule category
+
+    # Filtering
+    --rules, -r              Comma-separated rule IDs (GDL001,GDL003)
+    --category               Category filter (naming, style, best-practices)
+    --format                 Output format (text, json)
+
+    # Naming Conventions
+    --class-name-case        Case style (pascal, snake, camel, screaming)
+    --function-name-case     Case style for functions
+    --variable-name-case     Case style for variables
+    --constant-name-case     Case style for constants
+    --signal-name-case       Case style for signals
+    --enum-name-case         Case style for enum names
+    --enum-value-case        Case style for enum values
+    --inner-class-name-case  Case style for inner classes
+    --require-underscore-private  Require _ prefix for private members
+
+    # Limits
+    --max-line-length        Max line length, 0 to disable (default: 100)
+    --max-file-lines         Max file lines, 0 to disable (default: 1000)
+    --max-parameters         Max function parameters, 0 to disable (default: 5)
+    --max-function-length    Max function lines, 0 to disable (default: 50)
+    --max-complexity         Max cyclomatic complexity, 0 to disable (default: 10)
+
+    # Warnings (boolean flags)
+    --warn-unused-variables       Warn about unused local variables
+    --warn-unused-parameters      Warn about unused function parameters
+    --warn-unused-signals         Warn about signals never emitted
+    --warn-empty-functions        Warn about empty or pass-only functions
+    --warn-magic-numbers          Warn about magic numbers
+    --warn-variable-shadowing     Warn when local shadows class variable
+    --warn-await-in-loop          Warn when await is used inside a loop
+    --warn-no-elif-return         Warn when elif follows if ending with return
+    --warn-no-else-return         Warn when else follows if ending with return
+    --warn-private-method-call    Warn when calling private methods externally
+    --warn-duplicated-load        Warn about duplicate load()/preload() calls
+
+    # Strict Typing
+    --strict-typing               Set all strict typing (error, warning, off)
+    --strict-typing-class-vars    Severity for class variables
+    --strict-typing-local-vars    Severity for local variables
+    --strict-typing-params        Severity for function parameters
+    --strict-typing-return-types  Severity for return types
 
 gdshrapt validate [project-path] [--checks syntax,scope,types,calls,controlflow,indentation] [--strict] [--format text|json]
     # Validate-only analysis (syntax and semantics)
@@ -949,10 +1085,50 @@ gdshrapt rename <old-name> <new-name> [--project path] [--file path] [--dry-run]
     # Safe symbol renaming across entire project
     # --dry-run shows changes without applying
 
-gdshrapt format [path] [--check] [--dry-run] [--format text|json]
+gdshrapt format [path] [options]
     # Format GDScript files
-    # --check validates files are formatted (CI/CD mode)
-    # --dry-run shows changes without applying
+
+    # Mode
+    --dry-run, -n                Show changes without applying
+    --check, -c                  CI/CD check mode (exit code 1 if not formatted)
+    --format                     Output format (text, json)
+
+    # Indentation
+    --indent-style               Indentation style (tabs, spaces)
+    --indent-size                Spaces per indent level (default: 4)
+
+    # Line Endings
+    --line-ending                Line ending style (lf, crlf, platform)
+
+    # Line Wrapping
+    --max-line-length            Max line length, 0 to disable (default: 100)
+    --wrap-long-lines            Enable automatic line wrapping
+    --line-wrap-style            Wrap style (afteropen, before)
+    --continuation-indent        Additional indent for wrapped lines
+    --use-backslash              Use backslash for method chain continuation
+
+    # Spacing
+    --space-around-operators     Add spaces around operators
+    --space-after-comma          Add space after commas
+    --space-after-colon          Add space after colons
+    --space-before-colon         Add space before colons
+    --space-inside-parens        Add spaces inside parentheses
+    --space-inside-brackets      Add spaces inside brackets
+    --space-inside-braces        Add spaces inside braces
+
+    # Blank Lines
+    --blank-lines-between-functions   Blank lines between functions (default: 2)
+    --blank-lines-after-class         Blank lines after class declaration
+    --blank-lines-between-members     Blank lines between class members
+
+    # Cleanup
+    --remove-trailing-whitespace Remove trailing whitespace
+    --ensure-trailing-newline    Ensure file ends with newline
+    --remove-multiple-newlines   Remove multiple consecutive blank lines
+
+    # Advanced (opt-in)
+    --auto-add-type-hints        Auto-add inferred type hints (GDF007)
+    --reorder-code               Reorder class members by category (GDF008)
 
 gdshrapt parse <file> [--output tree|json|tokens] [--positions] [--format text|json]
     # Parse GDScript file and output AST structure
