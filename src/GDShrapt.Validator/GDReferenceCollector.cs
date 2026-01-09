@@ -42,6 +42,57 @@ namespace GDShrapt.Reader
         /// True if this is a read of the symbol.
         /// </summary>
         public bool IsRead { get; set; }
+
+        /// <summary>
+        /// The confidence level of this reference.
+        /// </summary>
+        public GDReferenceConfidence Confidence { get; set; } = GDReferenceConfidence.NameMatch;
+
+        /// <summary>
+        /// The resolved type of the caller expression (for member access/calls).
+        /// Null if type could not be resolved.
+        /// </summary>
+        public string CallerResolvedType { get; set; }
+
+        /// <summary>
+        /// The expected declaring type of the symbol being referenced.
+        /// Used for cross-file type matching.
+        /// </summary>
+        public string ExpectedDeclaringType { get; set; }
+
+        /// <summary>
+        /// Duck type information if the caller is untyped.
+        /// </summary>
+        public GDDuckType CallerDuckType { get; set; }
+
+        /// <summary>
+        /// Reason for the confidence determination (for debugging/UI).
+        /// </summary>
+        public string ConfidenceReason { get; set; }
+    }
+
+    /// <summary>
+    /// Indicates the confidence level of a reference being a true reference to the target symbol.
+    /// </summary>
+    public enum GDReferenceConfidence
+    {
+        /// <summary>
+        /// The reference is confirmed via resolved type information.
+        /// The caller's type is known and matches the symbol's declaring type.
+        /// </summary>
+        Strict,
+
+        /// <summary>
+        /// The reference may be correct but type cannot be fully resolved.
+        /// Examples: Variant-typed variables, duck-typed access, untyped parameters.
+        /// </summary>
+        Potential,
+
+        /// <summary>
+        /// The reference is based on name matching only.
+        /// The caller's type is incompatible or cannot be determined.
+        /// </summary>
+        NameMatch
     }
 
     /// <summary>

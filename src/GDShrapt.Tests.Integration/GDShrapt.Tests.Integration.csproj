@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <AssemblyName>GDShrapt.Tests.Integration</AssemblyName>
+    <RootNamespace>GDShrapt.Reader.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

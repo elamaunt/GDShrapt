@@ -58,6 +58,12 @@ namespace GDShrapt.Reader
                 indentationValidator.Validate(node);
             }
 
+            if (options.CheckDuckTyping)
+            {
+                var duckTypingValidator = new GDDuckTypingValidator(context, options.DuckTypingSeverity);
+                duckTypingValidator.Validate(node);
+            }
+
             return context.BuildResult();
         }
 

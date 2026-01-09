@@ -57,12 +57,14 @@ public class GDRenameHandler
         if (!result.Success || result.Conflicts.Count > 0)
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        // If no edits, return null
-        if (result.Edits.Count == 0)
+        // LSP uses only strict edits (type-confirmed references)
+        // Potential edits are excluded to avoid false positives
+        // They can be handled separately in plugin UI with user confirmation
+        if (result.StrictEdits.Count == 0)
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        // Convert GDTextEdit to LSP workspace edit
-        var changes = ConvertToWorkspaceEdit(result.Edits);
+        // Convert GDTextEdit to LSP workspace edit (strict only)
+        var changes = ConvertToWorkspaceEdit(result.StrictEdits);
 
         return Task.FromResult<GDWorkspaceEdit?>(new GDWorkspaceEdit
         {

@@ -101,10 +101,12 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 **Validator** (`src/GDShrapt.Validator/`)
 - `GDValidationRule` base class extending `GDVisitor`
-- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx), Indentation (GD6xxx), Await (GD7xxx)
+- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx), Indentation (GD6xxx), DuckTyping (GD7xxx)
 - `Runtime/IGDRuntimeProvider` - Interface for providing type info from external sources
 - `Runtime/GDDefaultRuntimeProvider` - Built-in GDScript types
 - `Runtime/GDTypeInferenceEngine` - Infers expression types
+- `Runtime/GDDuckTypeSystem.cs` - Duck typing and type narrowing analysis
+- `Validators/GDDuckTypingValidator.cs` - Validates member access on untyped variables
 
 **Linter** (`src/GDShrapt.Linter/`)
 - `GDLintRule` base class extending `GDVisitor`
@@ -158,7 +160,10 @@ Explicit disable in config always takes precedence.
   - `GDGodotTypesProvider` - Godot built-in types (uses TypesMap submodule)
   - `GDProjectTypesProvider` - User-defined types from project scripts
   - `GDCompositeRuntimeProvider` - Combines multiple providers
-- `Refactoring/` - Refactoring operations (rename, extract method, etc.)
+- `Refactoring/` - Refactoring operations with confidence levels:
+  - `GDReferenceConfidence` - Strict (type confirmed), Potential (duck-typed), NameMatch (name only)
+  - `GDRenameResult.StrictEdits` / `PotentialEdits` - Edits separated by confidence
+  - `GDRenameResult.GetStrictEditsByFile()` / `GetPotentialEditsByFile()` - Group edits by file
 - `Configuration/` - Unified configuration system (see below)
 - `Diagnostics/` - Unified diagnostics service for CLI, LSP, Plugin
 
@@ -505,6 +510,88 @@ Key distinction in `GDVariableDeclaration`:
 - `TypeColon` (Token4) - Colon for type hints (`: int`)
 - `Colon` (Token8) - Colon for property accessors (`: set = ...`)
 
+## Duck Typing Validation
+
+GDShrapt provides optional duck typing validation via `GDDuckTypingValidator` (GD7xxx codes). This feature warns when accessing members on untyped variables without proper type guards.
+
+**Enabling Duck Typing Checks:**
+```csharp
+var options = new GDValidationOptions
+{
+    CheckDuckTyping = true,
+    DuckTypingSeverity = GDDiagnosticSeverity.Warning  // or Error, Hint
+};
+```
+
+**Type Guards Recognized:**
+- `is` checks: `if obj is Node2D: obj.position`
+- `has_method()`: `if obj.has_method("attack"): obj.attack()`
+- `has_signal()`: `if obj.has_signal("died"): obj.emit_signal("died")`
+- `has()`: `if obj.has("health"): obj.health`
+
+**Example - No Warning (guarded access):**
+```gdscript
+func process(obj):
+    if obj is Node2D:
+        obj.position = Vector2.ZERO  # OK - type narrowed to Node2D
+
+    if obj.has_method("attack"):
+        obj.attack()  # OK - method guaranteed by has_method
+```
+
+**Example - Warning (unguarded access):**
+```gdscript
+func process(obj):
+    obj.attack()  # Warning: Calling method 'attack' on untyped variable 'obj' without type guard
+```
+
+**Built-in Object Methods (always allowed):**
+`has_method`, `has_signal`, `has`, `get`, `set`, `call`, `callv`, `connect`, `disconnect`, `emit_signal`, `is_connected`, `get_class`, `is_class`, `get_property_list`, `get_method_list`, `notification`, `to_string`, `free`, `queue_free`
+
+### Type Narrowing System
+
+The `GDTypeNarrowingAnalyzer` performs flow-sensitive type analysis, tracking type constraints through control flow:
+
+**Components** (`GDShrapt.Validator/Runtime/GDDuckTypeSystem.cs`):
+- `GDDuckType` - Represents a duck type with required methods/properties/signals
+- `GDTypeNarrowingContext` - Tracks narrowed types within a scope
+- `GDTypeNarrowingAnalyzer` - Analyzes conditions for type narrowing
+
+**GDDuckType Properties:**
+```csharp
+public class GDDuckType
+{
+    public HashSet<string> RequiredMethods { get; }     // Methods from has_method checks
+    public HashSet<string> RequiredProperties { get; }  // Properties from has checks
+    public HashSet<string> RequiredSignals { get; }     // Signals from has_signal checks
+    public HashSet<string> PossibleTypes { get; }       // Types from 'is' checks
+    public HashSet<string> ExcludedTypes { get; }       // Types excluded (else branches)
+
+    bool IsCompatibleWith(string typeName, IGDRuntimeProvider provider);
+}
+```
+
+**Type Narrowing Patterns:**
+```gdscript
+# 'is' check - narrows to concrete type
+if entity is Player:
+    # entity.PossibleTypes = {"Player"}
+
+# 'has_method' check - adds required method
+if obj.has_method("attack"):
+    # obj.RequiredMethods = {"attack"}
+
+# Combined 'and' conditions
+if obj is Entity and obj.has_method("attack"):
+    # obj.PossibleTypes = {"Entity"}, obj.RequiredMethods = {"attack"}
+
+# Else branch - excludes type
+if entity is Player:
+    pass
+else:
+    # entity.ExcludedTypes = {"Player"}
+```
+
 ## Package Usage
 
 ### GDShrapt.Reader
@@ -584,7 +671,9 @@ var options = new GDValidationOptions {
     CheckTypes = true,                 // GD3xxx - Type compatibility
     CheckCalls = true,                 // GD4xxx - Function calls
     CheckControlFlow = true,           // GD5xxx - break/continue/return
-    CheckIndentation = true            // GD6xxx - Indentation
+    CheckIndentation = true,           // GD6xxx - Indentation
+    CheckDuckTyping = false,           // GD7xxx - Duck typing (opt-in)
+    DuckTypingSeverity = GDDiagnosticSeverity.Warning
 };
 
 // Presets
@@ -906,7 +995,7 @@ GDIdentifier id = "myVariable";
 
 ## All Diagnostic Codes
 
-### Validator Rules (GD1xxx-GD6xxx)
+### Validator Rules (GD1xxx-GD7xxx)
 
 | Code | Name | Description |
 |------|------|-------------|
@@ -956,6 +1045,11 @@ GDIdentifier id = "myVariable";
 | GD6003 | ExpectedIndent | Expected indentation not found |
 | GD6004 | UnexpectedDedent | Unexpected indentation decrease |
 | GD6005 | IndentationMismatch | Indentation not consistent with previous |
+| **Duck Typing (GD7xxx)** | | |
+| GD7001 | UnguardedMethodAccess | Member access on untyped variable without guard |
+| GD7002 | UnguardedPropertyAccess | Property access on untyped variable without guard |
+| GD7003 | UnguardedMethodCall | Method call on untyped variable without guard |
+| GD7004 | MemberNotGuaranteed | Member not guaranteed by type guards |
 
 ### Linter Rules (GDLxxx)
 

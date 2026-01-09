@@ -215,7 +215,28 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Indentation amount is not consistent with previous levels.
         /// </summary>
-        IndentationMismatch = 6005
+        IndentationMismatch = 6005,
+
+        // Duck typing errors (7xxx)
+        /// <summary>
+        /// Accessing a method on an untyped variable without type guard.
+        /// </summary>
+        UnguardedMethodAccess = 7001,
+
+        /// <summary>
+        /// Accessing a property on an untyped variable without type guard.
+        /// </summary>
+        UnguardedPropertyAccess = 7002,
+
+        /// <summary>
+        /// Calling a method on an untyped variable without type guard.
+        /// </summary>
+        UnguardedMethodCall = 7003,
+
+        /// <summary>
+        /// Member access on variable where no known type has that member.
+        /// </summary>
+        MemberNotGuaranteed = 7004
     }
 
     /// <summary>

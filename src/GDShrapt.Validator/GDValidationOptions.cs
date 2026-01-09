@@ -48,6 +48,20 @@ namespace GDShrapt.Reader
         public bool CheckIndentation { get; set; } = true;
 
         /// <summary>
+        /// Whether to check duck typing safety (unguarded member access on untyped variables).
+        /// When enabled, warns when accessing members on variables without type guards (is, has_method, etc.).
+        /// Default: false (opt-in)
+        /// </summary>
+        public bool CheckDuckTyping { get; set; } = false;
+
+        /// <summary>
+        /// Severity level for duck typing violations.
+        /// Only applies when CheckDuckTyping is true.
+        /// Default: Warning
+        /// </summary>
+        public GDDiagnosticSeverity DuckTypingSeverity { get; set; } = GDDiagnosticSeverity.Warning;
+
+        /// <summary>
         /// Default validation options with all checks enabled.
         /// </summary>
         public static GDValidationOptions Default => new GDValidationOptions();

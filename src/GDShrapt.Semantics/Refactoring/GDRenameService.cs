@@ -72,45 +72,85 @@ public class GDRenameService
             return GDRenameResult.WithConflicts(conflicts);
 
         var oldName = symbol.Name;
-        var edits = new List<GDTextEdit>();
+        var strictEdits = new List<GDTextEdit>();
+        var potentialEdits = new List<GDTextEdit>();
         var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // Find the script containing this symbol
         var containingScript = FindScriptContainingSymbol(symbol);
         if (containingScript != null)
         {
+            // Same-file edits are always Strict confidence
             var scriptEdits = CollectEditsFromScript(containingScript, symbol, oldName, newName);
-            edits.AddRange(scriptEdits);
+            strictEdits.AddRange(scriptEdits);
             if (scriptEdits.Count > 0)
                 filesModified.Add(containingScript.FullPath!);
         }
 
         // For class members, also search other scripts that might reference this symbol
-        if (IsClassMemberSymbol(symbol))
+        if (IsClassMemberSymbol(symbol) && containingScript != null)
         {
-            foreach (var script in _project.ScriptFiles)
+            var crossFileFinder = new GDCrossFileReferenceFinder(_project);
+            var crossFileRefs = crossFileFinder.FindReferences(symbol, containingScript);
+
+            // Process strict references
+            foreach (var r in crossFileRefs.StrictReferences)
             {
-                if (script == containingScript)
+                var filePath = r.FilePath;
+                if (string.IsNullOrEmpty(filePath))
                     continue;
 
-                var crossFileEdits = CollectCrossFileEdits(script, oldName, newName);
-                edits.AddRange(crossFileEdits);
-                if (crossFileEdits.Count > 0)
-                    filesModified.Add(script.FullPath!);
+                strictEdits.Add(new GDTextEdit(
+                    filePath,
+                    r.Line,
+                    r.Column,
+                    oldName,
+                    newName,
+                    GDReferenceConfidence.Strict,
+                    r.Reason));
+                filesModified.Add(filePath);
+            }
+
+            // Process potential references
+            foreach (var r in crossFileRefs.PotentialReferences)
+            {
+                var filePath = r.FilePath;
+                if (string.IsNullOrEmpty(filePath))
+                    continue;
+
+                potentialEdits.Add(new GDTextEdit(
+                    filePath,
+                    r.Line,
+                    r.Column,
+                    oldName,
+                    newName,
+                    GDReferenceConfidence.Potential,
+                    r.Reason));
+                filesModified.Add(filePath);
             }
         }
 
-        if (edits.Count == 0)
+        if (strictEdits.Count == 0 && potentialEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
 
         // Sort edits by file, then by position (reverse order for applying)
-        var sortedEdits = edits
+        var sortedStrict = SortEditsReverse(strictEdits);
+        var sortedPotential = SortEditsReverse(potentialEdits);
+
+        return GDRenameResult.SuccessfulWithConfidence(sortedStrict, sortedPotential, filesModified.Count);
+    }
+
+    /// <summary>
+    /// Sorts edits in reverse order (by file, then by line desc, then by column desc).
+    /// This ensures edits can be applied safely without shifting positions.
+    /// </summary>
+    private static List<GDTextEdit> SortEditsReverse(List<GDTextEdit> edits)
+    {
+        return edits
             .OrderBy(e => e.FilePath)
             .ThenByDescending(e => e.Line)
             .ThenByDescending(e => e.Column)
             .ToList();
-
-        return GDRenameResult.Successful(sortedEdits, filesModified.Count);
     }
 
     /// <summary>
@@ -375,36 +415,6 @@ public class GDRenameService
             return edits;
 
         return CollectEditsFromScript(script, symbol, oldName, newName);
-    }
-
-    private List<GDTextEdit> CollectCrossFileEdits(GDScriptFile script, string symbolName, string newName)
-    {
-        // For cross-file references, we need to search for usages of the symbol name
-        // This is a simplified implementation - full implementation would need type resolution
-        var edits = new List<GDTextEdit>();
-        var analyzer = script.Analyzer;
-        var filePath = script.FullPath;
-
-        if (analyzer == null || filePath == null)
-            return edits;
-
-        // Search for identifier usages that match the name
-        // Note: This may include false positives without full type resolution
-        var symbols = analyzer.FindSymbols(symbolName);
-        foreach (var symbol in symbols)
-        {
-            var refs = analyzer.GetReferencesTo(symbol);
-            foreach (var reference in refs)
-            {
-                var node = reference.ReferenceNode;
-                if (node == null)
-                    continue;
-
-                edits.Add(new GDTextEdit(filePath, node.StartLine, node.StartColumn, symbolName, newName));
-            }
-        }
-
-        return edits;
     }
 
     #endregion

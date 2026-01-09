@@ -285,6 +285,15 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Gets all variable names that have narrowing information in this context.
+        /// Does not include parent context variables.
+        /// </summary>
+        public IEnumerable<string> GetNarrowedVariables()
+        {
+            return _narrowedTypes.Keys;
+        }
+
+        /// <summary>
         /// Merges type information from two branches (for if/else convergence).
         /// </summary>
         public static GDTypeNarrowingContext MergeBranches(
@@ -401,8 +410,9 @@ namespace GDShrapt.Reader
                     AnalyzeConditionInto(singleOp.TargetExpression, context, !isNegated);
                     break;
 
-                // condition and condition
-                case GDDualOperatorExpression andOp when andOp.Operator?.OperatorType == GDDualOperatorType.And:
+                // condition and condition (both && and 'and' keyword)
+                case GDDualOperatorExpression andOp when andOp.Operator?.OperatorType == GDDualOperatorType.And ||
+                                                         andOp.Operator?.OperatorType == GDDualOperatorType.And2:
                     if (!isNegated)
                     {
                         // Both must be true
@@ -412,8 +422,9 @@ namespace GDShrapt.Reader
                     // In negated case (else branch), we can't conclude much
                     break;
 
-                // condition or condition
-                case GDDualOperatorExpression orOp when orOp.Operator?.OperatorType == GDDualOperatorType.Or:
+                // condition or condition (both || and 'or' keyword)
+                case GDDualOperatorExpression orOp when orOp.Operator?.OperatorType == GDDualOperatorType.Or ||
+                                                        orOp.Operator?.OperatorType == GDDualOperatorType.Or2:
                     if (isNegated)
                     {
                         // Both must be false
@@ -522,10 +533,8 @@ namespace GDShrapt.Reader
             var firstArg = args.FirstOrDefault();
             if (firstArg is GDStringExpression strExpr)
             {
-                // Remove quotes
-                var seq = strExpr.String?.Sequence;
-                if (seq != null && seq.Length >= 2)
-                    return seq.Substring(1, seq.Length - 2);
+                // GDStringNode.Sequence returns content without quotes
+                return strExpr.String?.Sequence;
             }
 
             return null;
