@@ -64,6 +64,12 @@ namespace GDShrapt.Reader
                 duckTypingValidator.Validate(node);
             }
 
+            if (options.CheckAbstract)
+            {
+                var abstractValidator = new GDAbstractValidator(context);
+                abstractValidator.Validate(node);
+            }
+
             return context.BuildResult();
         }
 

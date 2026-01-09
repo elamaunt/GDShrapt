@@ -39,6 +39,7 @@ namespace GDShrapt.Reader
         public const string WarningIgnore = "warning_ignore";
         public const string Rpc = "rpc";
         public const string Static_Unload = "static_unload";
+        public const string Abstract = "abstract";
 
         /// <summary>
         /// Checks if the attribute is any type of export annotation
@@ -185,6 +186,14 @@ namespace GDShrapt.Reader
         public static bool IsStaticUnload(this GDAttribute attribute)
         {
             return attribute?.Name?.Sequence == Static_Unload;
+        }
+
+        /// <summary>
+        /// Checks if the attribute is @abstract (Godot 4.5+)
+        /// </summary>
+        public static bool IsAbstract(this GDAttribute attribute)
+        {
+            return attribute?.Name?.Sequence == Abstract;
         }
 
         /// <summary>

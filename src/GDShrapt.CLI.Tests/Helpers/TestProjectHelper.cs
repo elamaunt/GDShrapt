@@ -263,4 +263,103 @@ func test(a,b,c):
     return z
 "));
     }
+
+    // === Abstract class test scenarios ===
+
+    /// <summary>
+    /// Creates a project with valid abstract class.
+    /// No errors expected.
+    /// </summary>
+    public static string CreateProjectWithValidAbstractClass()
+    {
+        return CreateTempProject(("abstract_class.gd", @"@abstract
+class_name AbstractEntity
+extends Node
+
+@abstract
+func process_entity() -> void
+
+func get_name() -> String:
+    return ""entity""
+"));
+    }
+
+    /// <summary>
+    /// Creates a project with abstract method but class not marked @abstract.
+    /// GD8002: ClassNotAbstract
+    /// </summary>
+    public static string CreateProjectWithMissingAbstractClass()
+    {
+        return CreateTempProject(("missing_abstract.gd", @"class_name MyClass
+extends Node
+
+@abstract
+func do_something() -> void
+"));
+    }
+
+    /// <summary>
+    /// Creates a project with abstract method that has body.
+    /// GD8001: AbstractMethodHasBody
+    /// </summary>
+    public static string CreateProjectWithAbstractMethodBody()
+    {
+        return CreateTempProject(("abstract_body.gd", @"@abstract
+class_name MyAbstractClass
+extends Node
+
+@abstract
+func do_something() -> void:
+    print(""should not have body"")
+"));
+    }
+
+    /// <summary>
+    /// Creates a project with super() call in abstract method.
+    /// GD8004: SuperInAbstractMethod
+    /// </summary>
+    public static string CreateProjectWithSuperInAbstractMethod()
+    {
+        return CreateTempProject(("super_in_abstract.gd", @"@abstract
+class_name MyAbstractClass
+extends Node
+
+@abstract
+func do_something() -> void:
+    super()
+"));
+    }
+
+    /// <summary>
+    /// Creates a project with abstract inner class.
+    /// No errors expected.
+    /// </summary>
+    public static string CreateProjectWithAbstractInnerClass()
+    {
+        return CreateTempProject(("inner_abstract.gd", @"extends Node
+
+@abstract
+class InnerAbstract:
+    @abstract
+    func abstract_method() -> void
+
+class ConcreteInner extends InnerAbstract:
+    func abstract_method() -> void:
+        pass
+"));
+    }
+
+    /// <summary>
+    /// Creates a project with inner class that has abstract method but is not marked @abstract.
+    /// GD8002: ClassNotAbstract (for inner class)
+    /// </summary>
+    public static string CreateProjectWithMissingAbstractInnerClass()
+    {
+        return CreateTempProject(("missing_inner_abstract.gd", @"extends Node
+
+class InnerClass:
+    @abstract
+    func abstract_method() -> void
+"));
+    }
 }

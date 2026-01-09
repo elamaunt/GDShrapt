@@ -70,7 +70,7 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - Three styles: Short (simple), Fluent (chained), Tokens (manual control)
 
 **GDShrapt.Validator** (`src/GDShrapt.Validator/`) - AST validation
-- `GDValidator.cs` - Validator with compiler-style diagnostics (GD1xxx-GD7xxx)
+- `GDValidator.cs` - Validator with compiler-style diagnostics (GD1xxx-GD8xxx)
 - `Runtime/` - Type inference system with external provider support
 
 **GDShrapt.Linter** (`src/GDShrapt.Linter/`) - Style checking
@@ -101,7 +101,7 @@ The solution is at `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 **Validator** (`src/GDShrapt.Validator/`)
 - `GDValidationRule` base class extending `GDVisitor`
-- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx), Indentation (GD6xxx), DuckTyping (GD7xxx)
+- Rules: Syntax (GD1xxx), Scope (GD2xxx), Type (GD3xxx), Call (GD4xxx), ControlFlow (GD5xxx), Indentation (GD6xxx), DuckTyping (GD7xxx), Abstract (GD8xxx)
 - `Runtime/IGDRuntimeProvider` - Interface for providing type info from external sources
 - `Runtime/GDDefaultRuntimeProvider` - Built-in GDScript types
 - `Runtime/GDTypeInferenceEngine` - Infers expression types
@@ -421,6 +421,11 @@ Type inference via `GDTypeInferenceEngine`:
 - Uses `IGDRuntimeProvider` for external type information
 - Falls back to `GDDefaultRuntimeProvider` if none provided
 - Scope stack (`GDScopeStack`) tracks declared symbols with their types
+- **Node path inference**: `$NodePath` and `get_node()` resolve to actual node types from scene files
+- **Preload inference**: `preload("res://...")` returns typed resource based on file extension
+- **Await/yield inference**: `await signal` returns signal emission type, `await coroutine()` returns return type
+  - 0 params → `void`, 1 param → param type, multiple params → `Array`
+  - Supports both Godot signals (via TypesMap) and user-defined signals
 
 Custom runtime providers allow integrating with Godot's actual type system:
 ```csharp
@@ -673,6 +678,7 @@ var options = new GDValidationOptions {
     CheckControlFlow = true,           // GD5xxx - break/continue/return
     CheckIndentation = true,           // GD6xxx - Indentation
     CheckDuckTyping = false,           // GD7xxx - Duck typing (opt-in)
+    CheckAbstract = true,              // GD8xxx - Abstract classes/methods
     DuckTypingSeverity = GDDiagnosticSeverity.Warning
 };
 
@@ -1050,6 +1056,12 @@ GDIdentifier id = "myVariable";
 | GD7002 | UnguardedPropertyAccess | Property access on untyped variable without guard |
 | GD7003 | UnguardedMethodCall | Method call on untyped variable without guard |
 | GD7004 | MemberNotGuaranteed | Member not guaranteed by type guards |
+| **Abstract (GD8xxx)** | | |
+| GD8001 | AbstractMethodHasBody | Abstract method has implementation body |
+| GD8002 | ClassNotAbstract | Class contains abstract methods but not marked @abstract |
+| GD8003 | AbstractMethodNotImplemented | Non-abstract class doesn't implement inherited abstract method |
+| GD8004 | SuperInAbstractMethod | Cannot call super() in an abstract method |
+| GD8005 | AbstractClassInstantiation | Cannot instantiate abstract class |
 
 ### Linter Rules (GDLxxx)
 
@@ -1090,6 +1102,8 @@ GDIdentifier id = "myVariable";
 | GDL215 | strict-typing | BestPractices | Off | Require explicit type hints |
 | GDL218 | private-method-call | BestPractices | Off | Warn when calling private methods externally |
 | GDL219 | duplicated-load | BestPractices | On | Warn about duplicate load()/preload() calls |
+| GDL220 | abstract-method-body | BestPractices | On | Abstract method should not have body |
+| GDL221 | abstract-class-required | BestPractices | On | Class with abstract methods needs @abstract |
 
 ### Formatter Rules (GDFxxx)
 

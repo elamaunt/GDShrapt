@@ -48,6 +48,11 @@ namespace GDShrapt.Reader
         public bool IsVarArgs { get; set; }
 
         /// <summary>
+        /// For methods: true if this is an abstract method (Godot 4.5+).
+        /// </summary>
+        public bool IsAbstract { get; set; }
+
+        /// <summary>
         /// Creates a new member info.
         /// </summary>
         public GDRuntimeMemberInfo(string name, GDRuntimeMemberKind kind, string type = null)
@@ -60,14 +65,15 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Creates a method member info.
         /// </summary>
-        public static GDRuntimeMemberInfo Method(string name, string returnType, int minArgs, int maxArgs, bool isVarArgs = false, bool isStatic = false)
+        public static GDRuntimeMemberInfo Method(string name, string returnType, int minArgs, int maxArgs, bool isVarArgs = false, bool isStatic = false, bool isAbstract = false)
         {
             return new GDRuntimeMemberInfo(name, GDRuntimeMemberKind.Method, returnType)
             {
                 MinArgs = minArgs,
                 MaxArgs = maxArgs,
                 IsVarArgs = isVarArgs,
-                IsStatic = isStatic
+                IsStatic = isStatic,
+                IsAbstract = isAbstract
             };
         }
 

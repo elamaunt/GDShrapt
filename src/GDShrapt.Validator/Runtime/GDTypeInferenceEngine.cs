@@ -128,9 +128,9 @@ namespace GDShrapt.Reader
                 case GDMethodExpression _:
                     return CreateSimpleType("Callable");
 
-                // Await - same as inner expression
+                // Await - returns signal emission type or coroutine return type
                 case GDAwaitExpression awaitExpr:
-                    return InferTypeNode(awaitExpr.Expression);
+                    return InferAwaitType(awaitExpr);
 
                 // Yield - Signal (in Godot 4)
                 case GDYieldExpression _:
@@ -416,6 +416,168 @@ namespace GDShrapt.Reader
                 default:
                     return null;
             }
+        }
+
+        /// <summary>
+        /// Infers the type of an await expression.
+        /// For signals: returns the emission type (first param, void for no params, Array for multiple params).
+        /// For coroutines: returns the function's return type.
+        /// </summary>
+        private GDTypeNode InferAwaitType(GDAwaitExpression awaitExpr)
+        {
+            var innerExpr = awaitExpr.Expression;
+            if (innerExpr == null)
+                return CreateSimpleType("Variant");
+
+            // 1. Call expression - coroutine or method returning Signal
+            if (innerExpr is GDCallExpression callExpr)
+            {
+                // Get the return type of the called function/method
+                var returnType = InferCallType(callExpr);
+
+                // If it returns a Signal, we can't know the emission type without more context
+                if (returnType == "Signal")
+                    return CreateSimpleType("Variant");
+
+                // Otherwise, return the function's return type (coroutine semantics)
+                return CreateSimpleType(returnType ?? "Variant");
+            }
+
+            // 2. Identifier - local signal (signal defined in current class)
+            if (innerExpr is GDIdentifierExpression identExpr)
+            {
+                var signalName = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(signalName))
+                {
+                    // Look for signal declaration in current class
+                    var signalDecl = FindLocalSignalDeclaration(signalName, awaitExpr);
+                    if (signalDecl != null)
+                    {
+                        return CreateSimpleType(GetSignalEmissionTypeFromDecl(signalDecl));
+                    }
+
+                    // Try type injector for inherited/Godot signals
+                    if (_typeInjector != null)
+                    {
+                        var currentType = _injectionContext?.CurrentClass ?? "self";
+                        var paramTypes = _typeInjector.GetSignalParameterTypes(signalName, currentType);
+                        if (paramTypes != null)
+                        {
+                            return CreateSimpleType(GetSignalEmissionType(paramTypes));
+                        }
+                    }
+                }
+            }
+
+            // 3. Member access - signal on an object (obj.signal_name)
+            if (innerExpr is GDMemberOperatorExpression memberExpr)
+            {
+                var signalName = memberExpr.Identifier?.Sequence;
+                var callerType = InferType(memberExpr.CallerExpression);
+
+                if (!string.IsNullOrEmpty(signalName) && !string.IsNullOrEmpty(callerType))
+                {
+                    // Check if it's a signal via runtime provider
+                    var memberInfo = _runtimeProvider.GetMember(callerType, signalName);
+                    if (memberInfo?.Kind == GDRuntimeMemberKind.Signal)
+                    {
+                        // Try type injector for signal parameter types
+                        if (_typeInjector != null)
+                        {
+                            var paramTypes = _typeInjector.GetSignalParameterTypes(signalName, callerType);
+                            if (paramTypes != null)
+                            {
+                                return CreateSimpleType(GetSignalEmissionType(paramTypes));
+                            }
+                        }
+                        // Signal exists but we can't determine emission type
+                        return CreateSimpleType("Variant");
+                    }
+
+                    // Check if member type is Signal
+                    if (memberInfo?.Type == "Signal")
+                    {
+                        // Try type injector for signal parameter types
+                        if (_typeInjector != null)
+                        {
+                            var paramTypes = _typeInjector.GetSignalParameterTypes(signalName, callerType);
+                            if (paramTypes != null)
+                            {
+                                return CreateSimpleType(GetSignalEmissionType(paramTypes));
+                            }
+                        }
+                        return CreateSimpleType("Variant");
+                    }
+                }
+            }
+
+            // 4. Fallback - Variant
+            return CreateSimpleType("Variant");
+        }
+
+        /// <summary>
+        /// Finds a signal declaration in the current class context.
+        /// </summary>
+        private GDSignalDeclaration FindLocalSignalDeclaration(string signalName, GDNode context)
+        {
+            var classDecl = context.RootClassDeclaration;
+            if (classDecl == null)
+                return null;
+
+            foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
+            {
+                if (member is GDSignalDeclaration signalDecl &&
+                    signalDecl.Identifier?.Sequence == signalName)
+                {
+                    return signalDecl;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the emission type from a signal declaration.
+        /// 0 params = "void", 1 param = param type, multiple params = "Array".
+        /// </summary>
+        private string GetSignalEmissionTypeFromDecl(GDSignalDeclaration signalDecl)
+        {
+            var parameters = signalDecl.Parameters;
+            if (parameters == null)
+                return "void";
+
+            var paramCount = 0;
+            GDParameterDeclaration firstParam = null;
+
+            foreach (var param in parameters)
+            {
+                if (paramCount == 0)
+                    firstParam = param;
+                paramCount++;
+                if (paramCount > 1)
+                    return "Array";
+            }
+
+            if (paramCount == 0)
+                return "void";
+
+            // Single parameter - return its type
+            return firstParam?.Type?.BuildName() ?? "Variant";
+        }
+
+        /// <summary>
+        /// Gets the emission type from signal parameter types list.
+        /// 0 params = "void", 1 param = param type, multiple params = "Array".
+        /// </summary>
+        private string GetSignalEmissionType(IReadOnlyList<string> paramTypes)
+        {
+            if (paramTypes == null || paramTypes.Count == 0)
+                return "void";
+
+            if (paramTypes.Count == 1)
+                return paramTypes[0];
+
+            return "Array";
         }
 
         /// <summary>

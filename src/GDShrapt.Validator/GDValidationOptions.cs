@@ -62,6 +62,14 @@ namespace GDShrapt.Reader
         public GDDiagnosticSeverity DuckTypingSeverity { get; set; } = GDDiagnosticSeverity.Warning;
 
         /// <summary>
+        /// Whether to check @abstract annotation rules (Godot 4.5+).
+        /// Validates that abstract methods have no body, classes with abstract methods are marked @abstract,
+        /// and abstract classes cannot be instantiated.
+        /// Default: true
+        /// </summary>
+        public bool CheckAbstract { get; set; } = true;
+
+        /// <summary>
         /// Default validation options with all checks enabled.
         /// </summary>
         public static GDValidationOptions Default => new GDValidationOptions();

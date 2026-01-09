@@ -9,22 +9,25 @@ namespace GDShrapt.Semantics;
 // IGDRuntimeTypeInjector and GDTypeInjectionContext are defined in GDShrapt.Reader namespace
 
 /// <summary>
-/// Type injector for $NodePath, %UniqueNode, get_node() and preload() expressions.
-/// Uses scene information to determine precise node types.
+/// Type injector for $NodePath, %UniqueNode, get_node(), preload() expressions and signal types.
+/// Uses scene information to determine precise node types and TypesMap for signal parameters.
 /// </summary>
 public class GDNodeTypeInjector : IGDRuntimeTypeInjector
 {
     private readonly GDSceneTypesProvider? _sceneProvider;
     private readonly IGDScriptProvider? _scriptProvider;
+    private readonly GDGodotTypesProvider? _godotTypesProvider;
     private readonly IGDSemanticLogger? _logger;
 
     public GDNodeTypeInjector(
         GDSceneTypesProvider? sceneProvider = null,
         IGDScriptProvider? scriptProvider = null,
+        GDGodotTypesProvider? godotTypesProvider = null,
         IGDSemanticLogger? logger = null)
     {
         _sceneProvider = sceneProvider;
         _scriptProvider = scriptProvider;
+        _godotTypesProvider = godotTypesProvider;
         _logger = logger;
     }
 
@@ -229,6 +232,54 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
 
     // IGDRuntimeTypeInjector - other methods
     public string? NarrowVariantType(GDExpression expression, GDTypeInjectionContext context) => null;
-    public IReadOnlyList<string>? GetSignalParameterTypes(string signalName, string emitterType) => null;
+
+    public IReadOnlyList<string>? GetSignalParameterTypes(string signalName, string? emitterType)
+    {
+        // 1. For Godot types - use TypesMap
+        if (_godotTypesProvider != null && !string.IsNullOrEmpty(emitterType))
+        {
+            var signals = _godotTypesProvider.GetSignals(emitterType);
+            if (signals?.TryGetValue(signalName, out var signalData) == true)
+            {
+                if (signalData.Parameters == null || signalData.Parameters.Length == 0)
+                    return Array.Empty<string>();
+
+                return signalData.Parameters
+                    .Select(p => p.GDScriptTypeName ?? "Variant")
+                    .ToArray();
+            }
+        }
+
+        // 2. For project types - search in scripts via IGDScriptProvider
+        if (_scriptProvider != null && !string.IsNullOrEmpty(emitterType))
+        {
+            var scriptInfo = _scriptProvider.GetScriptByTypeName(emitterType);
+            if (scriptInfo?.Class != null)
+            {
+                var signalDecl = scriptInfo.Class.Members?
+                    .OfType<GDSignalDeclaration>()
+                    .FirstOrDefault(s => s.Identifier?.Sequence == signalName);
+
+                if (signalDecl != null)
+                {
+                    return ExtractSignalParameterTypes(signalDecl);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private IReadOnlyList<string> ExtractSignalParameterTypes(GDSignalDeclaration signalDecl)
+    {
+        var parameters = signalDecl.Parameters?.ToList();
+        if (parameters == null || parameters.Count == 0)
+            return Array.Empty<string>();
+
+        return parameters
+            .Select(p => p.Type?.BuildName() ?? "Variant")
+            .ToArray();
+    }
+
     public string? GetMethodReturnType(string methodName, string receiverType, IReadOnlyList<string> argumentTypes) => null;
 }

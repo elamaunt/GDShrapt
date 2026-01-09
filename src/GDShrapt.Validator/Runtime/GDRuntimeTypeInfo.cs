@@ -33,6 +33,11 @@ namespace GDShrapt.Reader
         public bool IsRefCounted { get; set; }
 
         /// <summary>
+        /// True if this is an abstract class (Godot 4.5+).
+        /// </summary>
+        public bool IsAbstract { get; set; }
+
+        /// <summary>
         /// Members of this type (methods, properties, signals, constants).
         /// </summary>
         public IReadOnlyList<GDRuntimeMemberInfo> Members { get; set; }

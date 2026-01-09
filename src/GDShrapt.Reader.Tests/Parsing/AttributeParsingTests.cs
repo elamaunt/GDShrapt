@@ -229,5 +229,151 @@ var node = get_node(node_path)
             AssertHelper.CompareCodeStrings(code, classDeclaration.ToString());
             AssertHelper.NoInvalidTokens(classDeclaration);
         }
+
+        #region Abstract Method Parsing Tests
+
+        [TestMethod]
+        public void ParseAttribute_AbstractMethodNoBody()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@abstract
+func do_something(param: int) -> void";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            Assert.AreEqual(1, declaration.Methods.Count());
+            var method = declaration.Methods.First();
+
+            // Verify @abstract attribute
+            var attributes = method.AttributesDeclaredBefore.ToArray();
+            Assert.AreEqual(1, attributes.Length);
+            Assert.AreEqual("abstract", attributes[0].Attribute.Name?.Sequence);
+
+            // Verify method structure
+            Assert.AreEqual("do_something", method.Identifier?.Sequence);
+            Assert.AreEqual("void", method.ReturnType?.BuildName());
+            Assert.AreEqual(1, method.Parameters.Count);
+
+            // Verify method has no colon and no body
+            // Note: If this fails, parser needs fixing (user will fix)
+            Assert.IsNull(method.Colon, "Abstract method without body should not have Colon");
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseAttribute_AbstractMethodNoBodyNoReturnType()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@abstract
+func do_something(param: int)";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            Assert.AreEqual(1, declaration.Methods.Count());
+            var method = declaration.Methods.First();
+
+            Assert.IsNull(method.Colon, "Abstract method without body should not have Colon");
+            Assert.IsNull(method.ReturnType);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseAttribute_AbstractClassWithAbstractMethod()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@abstract
+class_name AbstractEntity
+extends Node
+
+@abstract
+func process_entity() -> void
+
+func concrete_method() -> void:
+    print(""concrete"")";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            Assert.AreEqual(2, declaration.Methods.Count());
+
+            var abstractMethod = declaration.Methods.First();
+            var concreteMethod = declaration.Methods.Last();
+
+            // Abstract method has no colon
+            Assert.IsNull(abstractMethod.Colon, "Abstract method should not have Colon");
+
+            // Concrete method has colon and body
+            Assert.IsNotNull(concreteMethod.Colon);
+            Assert.IsTrue(concreteMethod.Statements.Any());
+
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseAttribute_AbstractMethodWithParameters()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@abstract
+func process(a: int, b: String, c: Vector2) -> float";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            var method = declaration.Methods.First();
+
+            Assert.IsNull(method.Colon);
+            Assert.AreEqual(3, method.Parameters.Count);
+            Assert.AreEqual("float", method.ReturnType?.BuildName());
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseAttribute_MultipleAbstractMethods()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"@abstract
+class_name MyAbstract
+extends Node
+
+@abstract
+func method_one() -> void
+
+@abstract
+func method_two(x: int) -> int
+
+func concrete() -> void:
+    pass";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            Assert.AreEqual(3, declaration.Methods.Count());
+
+            var methods = declaration.Methods.ToList();
+
+            // First two methods are abstract (no colon)
+            Assert.IsNull(methods[0].Colon);
+            Assert.IsNull(methods[1].Colon);
+
+            // Last method is concrete (has colon)
+            Assert.IsNotNull(methods[2].Colon);
+
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        #endregion
     }
 }

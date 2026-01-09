@@ -8,6 +8,9 @@ namespace GDShrapt.Reader
     /// - GD3xxx: Type errors
     /// - GD4xxx: Call errors
     /// - GD5xxx: Control flow errors
+    /// - GD6xxx: Indentation errors
+    /// - GD7xxx: Duck typing errors
+    /// - GD8xxx: Abstract errors
     /// </summary>
     public enum GDDiagnosticCode
     {
@@ -236,7 +239,33 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Member access on variable where no known type has that member.
         /// </summary>
-        MemberNotGuaranteed = 7004
+        MemberNotGuaranteed = 7004,
+
+        // Abstract errors (8xxx)
+        /// <summary>
+        /// Abstract method has an implementation body.
+        /// </summary>
+        AbstractMethodHasBody = 8001,
+
+        /// <summary>
+        /// Class contains abstract methods but is not marked @abstract.
+        /// </summary>
+        ClassNotAbstract = 8002,
+
+        /// <summary>
+        /// Non-abstract class does not implement inherited abstract method.
+        /// </summary>
+        AbstractMethodNotImplemented = 8003,
+
+        /// <summary>
+        /// Cannot call super() in an abstract method.
+        /// </summary>
+        SuperInAbstractMethod = 8004,
+
+        /// <summary>
+        /// Cannot instantiate abstract class.
+        /// </summary>
+        AbstractClassInstantiation = 8005
     }
 
     /// <summary>

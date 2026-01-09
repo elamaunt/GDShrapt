@@ -41,12 +41,13 @@ public class GDTypeResolver
             _autoloadsProvider,
             _sceneTypesProvider);
 
-        // Create node type injector for $NodePath, get_node(), preload() type inference
-        if (_sceneTypesProvider != null || _scriptProvider != null)
+        // Create node type injector for $NodePath, get_node(), preload(), and signal type inference
+        if (_sceneTypesProvider != null || _scriptProvider != null || _godotTypesProvider != null)
         {
             _nodeTypeInjector = new GDNodeTypeInjector(
                 _sceneTypesProvider,
                 _scriptProvider,
+                _godotTypesProvider,
                 _logger);
         }
     }

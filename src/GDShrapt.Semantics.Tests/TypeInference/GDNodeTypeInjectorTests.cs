@@ -580,4 +580,202 @@ script = ExtResource(""1"")
 
         Assert.AreEqual("Resource", type);
     }
+
+    #region GetSignalParameterTypes Tests
+
+    [TestMethod]
+    public void GetSignalParameterTypes_GodotSignal_Timeout_ReturnsEmpty()
+    {
+        // Timer.timeout has no parameters
+        var godotProvider = new GDGodotTypesProvider();
+        var injector = new GDNodeTypeInjector(godotTypesProvider: godotProvider);
+
+        var paramTypes = injector.GetSignalParameterTypes("timeout", "Timer");
+
+        Assert.IsNotNull(paramTypes);
+        Assert.AreEqual(0, paramTypes.Count, "timeout signal should have no parameters");
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_GodotSignal_ChildEnteredTree_ReturnsNode()
+    {
+        // Node.child_entered_tree(node: Node)
+        var godotProvider = new GDGodotTypesProvider();
+        var injector = new GDNodeTypeInjector(godotTypesProvider: godotProvider);
+
+        var paramTypes = injector.GetSignalParameterTypes("child_entered_tree", "Node");
+
+        Assert.IsNotNull(paramTypes);
+        Assert.AreEqual(1, paramTypes.Count, "child_entered_tree should have 1 parameter");
+        Assert.AreEqual("Node", paramTypes[0]);
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_GodotSignal_TreeEntered_ReturnsEmpty()
+    {
+        // Node.tree_entered has no parameters
+        var godotProvider = new GDGodotTypesProvider();
+        var injector = new GDNodeTypeInjector(godotTypesProvider: godotProvider);
+
+        var paramTypes = injector.GetSignalParameterTypes("tree_entered", "Node");
+
+        Assert.IsNotNull(paramTypes);
+        Assert.AreEqual(0, paramTypes.Count, "tree_entered signal should have no parameters");
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_UnknownSignal_ReturnsNull()
+    {
+        var godotProvider = new GDGodotTypesProvider();
+        var injector = new GDNodeTypeInjector(godotTypesProvider: godotProvider);
+
+        var paramTypes = injector.GetSignalParameterTypes("unknown_signal", "Node");
+
+        Assert.IsNull(paramTypes);
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_UnknownType_ReturnsNull()
+    {
+        var godotProvider = new GDGodotTypesProvider();
+        var injector = new GDNodeTypeInjector(godotTypesProvider: godotProvider);
+
+        var paramTypes = injector.GetSignalParameterTypes("timeout", "UnknownType");
+
+        Assert.IsNull(paramTypes);
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_NoGodotProvider_ReturnsNull()
+    {
+        var injector = new GDNodeTypeInjector();
+
+        var paramTypes = injector.GetSignalParameterTypes("timeout", "Timer");
+
+        Assert.IsNull(paramTypes);
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_NullEmitterType_ReturnsNull()
+    {
+        var godotProvider = new GDGodotTypesProvider();
+        var injector = new GDNodeTypeInjector(godotTypesProvider: godotProvider);
+
+        var paramTypes = injector.GetSignalParameterTypes("timeout", null);
+
+        Assert.IsNull(paramTypes);
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_EmptyEmitterType_ReturnsNull()
+    {
+        var godotProvider = new GDGodotTypesProvider();
+        var injector = new GDNodeTypeInjector(godotTypesProvider: godotProvider);
+
+        var paramTypes = injector.GetSignalParameterTypes("timeout", "");
+
+        Assert.IsNull(paramTypes);
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_ProjectScript_ReturnsSignalParams()
+    {
+        // Create a mock script provider with a script that has a signal
+        var mockScriptProvider = new MockScriptProviderWithSignal();
+
+        // Parse a script with a signal declaration
+        var code = @"
+extends Node
+signal health_changed(new_value: int)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        mockScriptProvider.AddScript("TestScript", classDecl);
+
+        var injector = new GDNodeTypeInjector(
+            scriptProvider: mockScriptProvider,
+            godotTypesProvider: new GDGodotTypesProvider());
+
+        var paramTypes = injector.GetSignalParameterTypes("health_changed", "TestScript");
+
+        Assert.IsNotNull(paramTypes);
+        Assert.AreEqual(1, paramTypes.Count, "health_changed should have 1 parameter");
+        Assert.AreEqual("int", paramTypes[0]);
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_ProjectScript_NoParams_ReturnsEmpty()
+    {
+        var mockScriptProvider = new MockScriptProviderWithSignal();
+
+        var code = @"
+extends Node
+signal ready_custom()
+";
+        var classDecl = _reader.ParseFileContent(code);
+        mockScriptProvider.AddScript("TestScript", classDecl);
+
+        var injector = new GDNodeTypeInjector(
+            scriptProvider: mockScriptProvider,
+            godotTypesProvider: new GDGodotTypesProvider());
+
+        var paramTypes = injector.GetSignalParameterTypes("ready_custom", "TestScript");
+
+        Assert.IsNotNull(paramTypes);
+        Assert.AreEqual(0, paramTypes.Count, "ready_custom should have no parameters");
+    }
+
+    [TestMethod]
+    public void GetSignalParameterTypes_ProjectScript_MultipleParams_ReturnsAll()
+    {
+        var mockScriptProvider = new MockScriptProviderWithSignal();
+
+        var code = @"
+extends Node
+signal position_changed(x: float, y: float)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        mockScriptProvider.AddScript("TestScript", classDecl);
+
+        var injector = new GDNodeTypeInjector(
+            scriptProvider: mockScriptProvider,
+            godotTypesProvider: new GDGodotTypesProvider());
+
+        var paramTypes = injector.GetSignalParameterTypes("position_changed", "TestScript");
+
+        Assert.IsNotNull(paramTypes);
+        Assert.AreEqual(2, paramTypes.Count, "position_changed should have 2 parameters");
+        Assert.AreEqual("float", paramTypes[0]);
+        Assert.AreEqual("float", paramTypes[1]);
+    }
+
+    private class MockScriptProviderWithSignal : IGDScriptProvider
+    {
+        private readonly Dictionary<string, IGDScriptInfo> _scripts = new();
+
+        public void AddScript(string typeName, GDClassDeclaration classDecl)
+        {
+            _scripts[typeName] = new MockScriptInfoWithClass
+            {
+                TypeName = typeName,
+                Class = classDecl
+            };
+        }
+
+        public IEnumerable<IGDScriptInfo> Scripts => _scripts.Values;
+
+        public IGDScriptInfo? GetScriptByTypeName(string typeName) =>
+            _scripts.TryGetValue(typeName, out var script) ? script : null;
+
+        public IGDScriptInfo? GetScriptByPath(string path) => null;
+    }
+
+    private class MockScriptInfoWithClass : IGDScriptInfo
+    {
+        public string? TypeName { get; set; }
+        public string? FullPath { get; set; }
+        public GDClassDeclaration? Class { get; set; }
+        public bool IsGlobal { get; set; }
+    }
+
+    #endregion
 }

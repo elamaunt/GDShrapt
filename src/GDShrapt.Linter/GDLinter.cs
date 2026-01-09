@@ -89,6 +89,8 @@ namespace GDShrapt.Reader
             AddRule(new GDStrictTypingRule());
             AddRule(new GDPrivateMethodCallRule());
             AddRule(new GDDuplicatedLoadRule());
+            AddRule(new GDAbstractMethodBodyRule());
+            AddRule(new GDAbstractClassRequiredRule());
 
             // Style rules
             AddRule(new GDTrailingCommaRule());

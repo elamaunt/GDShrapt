@@ -44,11 +44,17 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     private GDProjectTypeInfo BuildTypeInfo(IGDScriptInfo scriptInfo)
     {
         var classDecl = scriptInfo.Class!;
+
+        // Check if class is marked @abstract
+        var isClassAbstract = classDecl.CustomAttributes
+            .Any(attr => attr.Attribute?.IsAbstract() == true);
+
         var info = new GDProjectTypeInfo
         {
             Name = scriptInfo.TypeName ?? "",
             ScriptPath = scriptInfo.FullPath,
-            BaseTypeName = classDecl.Extends?.Type?.BuildName()
+            BaseTypeName = classDecl.Extends?.Type?.BuildName(),
+            IsAbstract = isClassAbstract
         };
 
         // Extract members
@@ -57,11 +63,16 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             switch (member)
             {
                 case GDMethodDeclaration method when method.Identifier != null:
+                    // Check if method is marked @abstract
+                    var isMethodAbstract = method.AttributesDeclaredBefore
+                        .Any(attr => attr.Attribute?.IsAbstract() == true);
+
                     info.Methods[method.Identifier.Sequence] = new GDProjectMethodInfo
                     {
                         Name = method.Identifier.Sequence,
                         ReturnTypeName = method.ReturnType?.BuildName() ?? "Variant",
                         IsStatic = method.IsStatic,
+                        IsAbstract = isMethodAbstract,
                         Parameters = method.Parameters?
                             .Where(p => p.Identifier != null)
                             .Select(p => new GDProjectParameterInfo
@@ -138,7 +149,8 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
         return new GDRuntimeTypeInfo(projectType.Name, projectType.BaseTypeName)
         {
-            Members = members
+            Members = members,
+            IsAbstract = projectType.IsAbstract
         };
     }
 
@@ -154,7 +166,8 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 method.Parameters.Count,
                 method.Parameters.Count,
                 isVarArgs: false,
-                isStatic: method.IsStatic));
+                isStatic: method.IsStatic,
+                isAbstract: method.IsAbstract));
         }
 
         foreach (var prop in typeInfo.Properties.Values)
@@ -195,7 +208,8 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 method.Parameters.Count,
                 method.Parameters.Count,
                 isVarArgs: false,
-                isStatic: method.IsStatic);
+                isStatic: method.IsStatic,
+                isAbstract: method.IsAbstract);
         }
 
         // Check properties
@@ -315,6 +329,7 @@ public class GDProjectTypeInfo
     public string Name { get; init; } = "";
     public string? ScriptPath { get; init; }
     public string? BaseTypeName { get; init; }
+    public bool IsAbstract { get; init; }
     public Dictionary<string, GDProjectMethodInfo> Methods { get; } = new();
     public Dictionary<string, GDProjectPropertyInfo> Properties { get; } = new();
     public Dictionary<string, GDProjectSignalInfo> Signals { get; } = new();
@@ -327,6 +342,7 @@ public class GDProjectMethodInfo
     public string Name { get; init; } = "";
     public string ReturnTypeName { get; init; } = "Variant";
     public bool IsStatic { get; init; }
+    public bool IsAbstract { get; init; }
     public List<GDProjectParameterInfo> Parameters { get; init; } = new();
 }
 
