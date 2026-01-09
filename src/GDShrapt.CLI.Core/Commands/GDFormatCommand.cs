@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
 
@@ -28,14 +29,48 @@ public class GDFormatCommand : IGDCommand
         TextWriter? output = null,
         bool dryRun = false,
         bool checkOnly = false,
-        GDFormatterOptions? formatterOptions = null)
+        GDFormatterOptions? formatterOptions = null,
+        GDFormatterOptionsOverrides? optionsOverrides = null)
     {
         _path = path;
         _outputFormatter = formatter;
         _output = output ?? Console.Out;
         _dryRun = dryRun;
         _checkOnly = checkOnly;
-        _codeFormatter = new GDFormatter(formatterOptions ?? new GDFormatterOptions());
+
+        // Start with provided options or try to load from config
+        var options = formatterOptions ?? LoadFormatterOptions();
+
+        // Apply CLI overrides on top
+        optionsOverrides?.ApplyTo(options);
+
+        _codeFormatter = new GDFormatter(options);
+    }
+
+    private GDFormatterOptions LoadFormatterOptions()
+    {
+        try
+        {
+            // Try to find project root and load config
+            var fullPath = Path.GetFullPath(_path);
+            var searchPath = File.Exists(fullPath) ? Path.GetDirectoryName(fullPath) : fullPath;
+
+            if (searchPath != null)
+            {
+                var projectRoot = GDProjectLoader.FindProjectRoot(searchPath);
+                if (projectRoot != null)
+                {
+                    var config = GDConfigLoader.LoadConfig(projectRoot);
+                    return GDFormatterOptionsFactory.FromConfig(config);
+                }
+            }
+        }
+        catch
+        {
+            // Fall through to default
+        }
+
+        return new GDFormatterOptions();
     }
 
     public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)

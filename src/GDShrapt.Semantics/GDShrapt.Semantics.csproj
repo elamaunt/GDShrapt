@@ -16,6 +16,7 @@
     <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
     <ProjectReference Include="..\GDShrapt.Validator\GDShrapt.Validator.csproj" />
     <ProjectReference Include="..\GDShrapt.Linter\GDShrapt.Linter.csproj" />
+    <ProjectReference Include="..\GDShrapt.Formatter\GDShrapt.Formatter.csproj" />
     <ProjectReference Include="..\..\submodules\GDShrapt.TypesMap\src\GDShrapt.TypesMap\GDShrapt.TypesMap.csproj" />
   </ItemGroup>
 

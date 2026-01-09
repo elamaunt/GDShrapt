@@ -43,6 +43,11 @@ public class GDAdvancedLintingConfig
     public GDNamingCase EnumValueCase { get; set; } = GDNamingCase.ScreamingSnakeCase;
 
     /// <summary>
+    /// Expected case for inner class names. Default: PascalCase.
+    /// </summary>
+    public GDNamingCase InnerClassNameCase { get; set; } = GDNamingCase.PascalCase;
+
+    /// <summary>
     /// Whether private members should be prefixed with underscore. Default: true.
     /// </summary>
     public bool RequireUnderscoreForPrivate { get; set; } = true;
@@ -83,6 +88,26 @@ public class GDAdvancedLintingConfig
     /// </summary>
     public bool WarnAwaitInLoop { get; set; } = true;
 
+    /// <summary>
+    /// Warn about unnecessary elif after return. Default: false.
+    /// </summary>
+    public bool WarnNoElifReturn { get; set; } = false;
+
+    /// <summary>
+    /// Warn about unnecessary else after return. Default: false.
+    /// </summary>
+    public bool WarnNoElseReturn { get; set; } = false;
+
+    /// <summary>
+    /// Warn about calling private methods on external objects. Default: false.
+    /// </summary>
+    public bool WarnPrivateMethodCall { get; set; } = false;
+
+    /// <summary>
+    /// Warn about duplicated load/preload calls. Default: true.
+    /// </summary>
+    public bool WarnDuplicatedLoad { get; set; } = true;
+
     // Limits
     /// <summary>
     /// Maximum parameters in a function. 0 to disable. Default: 5.
@@ -98,6 +123,11 @@ public class GDAdvancedLintingConfig
     /// Maximum cyclomatic complexity. 0 to disable. Default: 10.
     /// </summary>
     public int MaxCyclomaticComplexity { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum lines per file. 0 to disable. Default: 1000.
+    /// </summary>
+    public int MaxFileLines { get; set; } = 1000;
 
     // Strict typing
     /// <summary>

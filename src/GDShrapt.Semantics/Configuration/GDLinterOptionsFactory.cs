@@ -36,6 +36,7 @@ public static class GDLinterOptionsFactory
             SignalNameCase = MapNamingCase(advanced.SignalNameCase),
             EnumNameCase = MapNamingCase(advanced.EnumNameCase),
             EnumValueCase = MapNamingCase(advanced.EnumValueCase),
+            InnerClassNameCase = MapNamingCase(advanced.InnerClassNameCase),
             RequireUnderscoreForPrivate = advanced.RequireUnderscoreForPrivate,
 
             // Best practices
@@ -46,12 +47,17 @@ public static class GDLinterOptionsFactory
             WarnMagicNumbers = advanced.WarnMagicNumbers,
             WarnVariableShadowing = advanced.WarnVariableShadowing,
             WarnAwaitInLoop = advanced.WarnAwaitInLoop,
+            WarnNoElifReturn = advanced.WarnNoElifReturn,
+            WarnNoElseReturn = advanced.WarnNoElseReturn,
+            WarnPrivateMethodCall = advanced.WarnPrivateMethodCall,
+            WarnDuplicatedLoad = advanced.WarnDuplicatedLoad,
 
             // Limits
             MaxParameters = advanced.MaxParameters,
             MaxFunctionLength = advanced.MaxFunctionLength,
             MaxCyclomaticComplexity = advanced.MaxCyclomaticComplexity,
             MaxLineLength = maxLineLength,
+            MaxFileLines = advanced.MaxFileLines,
 
             // Strict typing
             StrictTypingClassVariables = MapStrictTypingSeverity(advanced.StrictTypingClassVariables),

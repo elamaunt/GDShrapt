@@ -22,6 +22,7 @@ public class GDLintCommand : IGDCommand
     private readonly HashSet<string>? _onlyRules;
     private readonly HashSet<GDLintCategory>? _categories;
     private readonly GDLintSeverity? _minSeverity;
+    private readonly GDLinterOptionsOverrides? _optionsOverrides;
 
     public string Name => "lint";
     public string Description => "Lint GDScript files for style and best practices";
@@ -36,6 +37,7 @@ public class GDLintCommand : IGDCommand
     /// <param name="onlyRules">Only run these specific rules (e.g., "GDL001,GDL003").</param>
     /// <param name="categories">Only run rules in these categories.</param>
     /// <param name="minSeverity">Minimum severity to report.</param>
+    /// <param name="optionsOverrides">CLI options overrides.</param>
     public GDLintCommand(
         string projectPath,
         IGDOutputFormatter formatter,
@@ -43,14 +45,47 @@ public class GDLintCommand : IGDCommand
         GDProjectConfig? config = null,
         IEnumerable<string>? onlyRules = null,
         IEnumerable<GDLintCategory>? categories = null,
-        GDLintSeverity? minSeverity = null)
+        GDLintSeverity? minSeverity = null,
+        GDLinterOptionsOverrides? optionsOverrides = null)
     {
         _projectPath = projectPath;
         _formatter = formatter;
         _output = output ?? Console.Out;
         _config = config;
-        _onlyRules = onlyRules?.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        _categories = categories?.ToHashSet();
+        _optionsOverrides = optionsOverrides;
+
+        // Rules and categories can come from overrides or direct parameters
+        if (optionsOverrides?.Rules != null)
+        {
+            _onlyRules = optionsOverrides.Rules
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        else
+        {
+            _onlyRules = onlyRules?.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        if (optionsOverrides?.Category != null)
+        {
+            _categories = optionsOverrides.Category
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(c => c.ToLowerInvariant() switch
+                {
+                    "naming" => GDLintCategory.Naming,
+                    "style" => GDLintCategory.Style,
+                    "best-practices" or "bestpractices" => GDLintCategory.BestPractices,
+                    "organization" => GDLintCategory.Organization,
+                    "documentation" => GDLintCategory.Documentation,
+                    _ => GDLintCategory.Naming
+                })
+                .ToHashSet();
+        }
+        else
+        {
+            _categories = categories?.ToHashSet();
+        }
+
         _minSeverity = minSeverity;
     }
 
@@ -107,6 +142,10 @@ public class GDLintCommand : IGDCommand
 
         // Create linter with options from config (using factory from Semantics)
         var linterOptions = GDLinterOptionsFactory.FromConfig(config);
+
+        // Apply CLI overrides on top of config
+        _optionsOverrides?.ApplyTo(linterOptions);
+
         var linter = new GDLinter(linterOptions);
 
         // If specific rules are requested, filter them
