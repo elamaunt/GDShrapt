@@ -1,6 +1,7 @@
 using Godot;
 using GDShrapt.Plugin.Config;
 using GDShrapt.Plugin.Diagnostics;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -132,7 +133,7 @@ internal partial class QuickFixesPopup : PopupMenu
 
     private void PopulateMenu()
     {
-        DiagnosticSeverity? lastSeverity = null;
+        GDDiagnosticSeverity? lastSeverity = null;
         var index = 0;
 
         foreach (var fixItem in _currentFixes)
@@ -281,19 +282,19 @@ internal partial class QuickFixesPopup : PopupMenu
         FixApplied?.Invoke(newCode);
     }
 
-    private static string GetSeverityPrefix(DiagnosticSeverity severity)
+    private static string GetSeverityPrefix(GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            DiagnosticSeverity.Error => "[E]",
-            DiagnosticSeverity.Warning => "[W]",
-            DiagnosticSeverity.Info => "[I]",
-            DiagnosticSeverity.Hint => "[H]",
+            GDDiagnosticSeverity.Error => "[E]",
+            GDDiagnosticSeverity.Warning => "[W]",
+            GDDiagnosticSeverity.Info => "[I]",
+            GDDiagnosticSeverity.Hint => "[H]",
             _ => "[ ]"
         };
     }
 
-    private Texture2D? GetSeverityIcon(DiagnosticSeverity severity)
+    private Texture2D? GetSeverityIcon(GDDiagnosticSeverity severity)
     {
         // Try to get themed icons from editor
         try
@@ -305,10 +306,10 @@ internal partial class QuickFixesPopup : PopupMenu
 
             var iconName = severity switch
             {
-                DiagnosticSeverity.Error => "StatusError",
-                DiagnosticSeverity.Warning => "StatusWarning",
-                DiagnosticSeverity.Info => "Popup",
-                DiagnosticSeverity.Hint => "Info",
+                GDDiagnosticSeverity.Error => "StatusError",
+                GDDiagnosticSeverity.Warning => "StatusWarning",
+                GDDiagnosticSeverity.Info => "Popup",
+                GDDiagnosticSeverity.Hint => "Info",
                 _ => null
             };
 

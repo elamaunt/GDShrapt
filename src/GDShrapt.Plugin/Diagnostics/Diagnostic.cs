@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 
@@ -22,7 +23,7 @@ internal class Diagnostic
     /// <summary>
     /// Severity level of the diagnostic.
     /// </summary>
-    public DiagnosticSeverity Severity { get; init; } = DiagnosticSeverity.Warning;
+    public GDDiagnosticSeverity Severity { get; init; } = GDDiagnosticSeverity.Warning;
 
     /// <summary>
     /// Category for grouping and filtering.
@@ -87,7 +88,7 @@ internal class DiagnosticBuilder
 {
     private readonly string _ruleId;
     private readonly string _message;
-    private DiagnosticSeverity _severity = DiagnosticSeverity.Warning;
+    private GDDiagnosticSeverity _severity = GDDiagnosticSeverity.Warning;
     private DiagnosticCategory _category = DiagnosticCategory.Style;
     private ScriptReference? _script;
     private int _startLine;
@@ -104,7 +105,7 @@ internal class DiagnosticBuilder
         _message = message;
     }
 
-    public DiagnosticBuilder WithSeverity(DiagnosticSeverity severity)
+    public DiagnosticBuilder WithSeverity(GDDiagnosticSeverity severity)
     {
         _severity = severity;
         return this;

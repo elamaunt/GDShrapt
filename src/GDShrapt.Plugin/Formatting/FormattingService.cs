@@ -1,5 +1,6 @@
 using GDShrapt.Plugin.Config;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using Reader = GDShrapt.Reader;
 
@@ -100,7 +101,7 @@ internal class FormattingService
         return new GDFormatterOptions
         {
             // Indentation
-            IndentStyle = config.IndentStyle == IndentationStyle.Tabs
+            IndentStyle = config.IndentStyle == GDIndentationStyle.Tabs
                 ? IndentStyle.Tabs
                 : IndentStyle.Spaces,
             IndentSize = config.IndentSize,
@@ -142,23 +143,23 @@ internal class FormattingService
         };
     }
 
-    private static Reader.LineEndingStyle MapLineEnding(Config.LineEndingStyle style)
+    private static Reader.LineEndingStyle MapLineEnding(GDLineEndingStyle style)
     {
         return style switch
         {
-            Config.LineEndingStyle.LF => Reader.LineEndingStyle.LF,
-            Config.LineEndingStyle.CRLF => Reader.LineEndingStyle.CRLF,
-            Config.LineEndingStyle.Platform => Reader.LineEndingStyle.Platform,
+            GDLineEndingStyle.LF => Reader.LineEndingStyle.LF,
+            GDLineEndingStyle.CRLF => Reader.LineEndingStyle.CRLF,
+            GDLineEndingStyle.Platform => Reader.LineEndingStyle.Platform,
             _ => Reader.LineEndingStyle.LF
         };
     }
 
-    private static Reader.LineWrapStyle MapLineWrapStyle(Config.LineWrapStyle style)
+    private static Reader.LineWrapStyle MapLineWrapStyle(GDLineWrapStyle style)
     {
         return style switch
         {
-            Config.LineWrapStyle.AfterOpeningBracket => Reader.LineWrapStyle.AfterOpeningBracket,
-            Config.LineWrapStyle.BeforeElements => Reader.LineWrapStyle.BeforeElements,
+            GDLineWrapStyle.AfterOpeningBracket => Reader.LineWrapStyle.AfterOpeningBracket,
+            GDLineWrapStyle.BeforeElements => Reader.LineWrapStyle.BeforeElements,
             _ => Reader.LineWrapStyle.AfterOpeningBracket
         };
     }

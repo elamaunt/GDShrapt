@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 
 namespace GDShrapt.Plugin.Diagnostics.Rules.Formatting;
@@ -11,12 +12,12 @@ internal class TrailingWhitespaceRule : FormattingRule
     public override string RuleId => "GDS002";
     public override string Name => "Trailing Whitespace";
     public override string Description => "Remove trailing whitespace at end of lines";
-    public override FormattingLevel RequiredFormattingLevel => FormattingLevel.Light;
+    public override GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Light;
 
     public override IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig)
     {
         var lines = SplitLines(content);

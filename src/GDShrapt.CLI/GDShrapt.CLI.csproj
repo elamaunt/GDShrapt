@@ -16,7 +16,7 @@
 
     <!-- Package Metadata -->
     <PackageId>GDShrapt.CLI</PackageId>
-    <Version>1.0.0</Version>
+    <Version>5.1.0</Version>
     <Authors>elamaunt</Authors>
     <Description>GDScript analysis and refactoring CLI tool for Godot Engine</Description>
     <PackageTags>godot;gdscript;linter;analyzer;cli;refactoring</PackageTags>

@@ -1,5 +1,7 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
+using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
 namespace GDShrapt.Plugin.Diagnostics.Rules;
 
@@ -31,13 +33,13 @@ internal interface ILintRule
     /// <summary>
     /// Default severity if not overridden by config.
     /// </summary>
-    DiagnosticSeverity DefaultSeverity { get; }
+    GDDiagnosticSeverity DefaultSeverity { get; }
 
     /// <summary>
     /// Minimum formatting level required for this rule to run.
     /// Only applies to Formatting category rules.
     /// </summary>
-    FormattingLevel RequiredFormattingLevel { get; }
+    GDFormattingLevel RequiredFormattingLevel { get; }
 
     /// <summary>
     /// Analyzes a script and returns diagnostics.
@@ -50,6 +52,6 @@ internal interface ILintRule
     IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig);
 }

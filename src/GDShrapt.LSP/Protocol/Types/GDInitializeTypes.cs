@@ -209,6 +209,12 @@ public class GDServerCapabilities
     public bool? RenameProvider { get; set; }
 
     /// <summary>
+    /// The server provides document formatting support.
+    /// </summary>
+    [JsonPropertyName("documentFormattingProvider")]
+    public bool? DocumentFormattingProvider { get; set; }
+
+    /// <summary>
     /// The server provides completion support.
     /// </summary>
     [JsonPropertyName("completionProvider")]

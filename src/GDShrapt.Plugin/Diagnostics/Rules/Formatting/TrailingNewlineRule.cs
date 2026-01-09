@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 
 namespace GDShrapt.Plugin.Diagnostics.Rules.Formatting;
@@ -11,12 +12,12 @@ internal class TrailingNewlineRule : FormattingRule
     public override string RuleId => "GDS003";
     public override string Name => "Trailing Newline";
     public override string Description => "Ensure file ends with exactly one newline";
-    public override FormattingLevel RequiredFormattingLevel => FormattingLevel.Light;
+    public override GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Light;
 
     public override IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig)
     {
         if (string.IsNullOrEmpty(content))

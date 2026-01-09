@@ -69,6 +69,7 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnRequest<GDDocumentSymbolParams, GDLspDocumentSymbol[]?>("textDocument/documentSymbol", HandleDocumentSymbolAsync);
         _transport.OnRequest<GDCompletionParams, GDLspCompletionList?>("textDocument/completion", HandleCompletionAsync);
         _transport.OnRequest<GDRenameParams, GDWorkspaceEdit?>("textDocument/rename", HandleRenameAsync);
+        _transport.OnRequest<GDDocumentFormattingParams, GDLspTextEdit[]?>("textDocument/formatting", HandleFormattingAsync);
     }
 
     #region Lifecycle Handlers
@@ -82,19 +83,27 @@ public class GDLanguageServer : IGDLanguageServer
 
         if (!string.IsNullOrEmpty(rootPath))
         {
+            GDScriptProject? project = null;
             try
             {
                 var projectRoot = GDProjectLoader.FindProjectRoot(rootPath);
                 if (projectRoot != null)
                 {
-                    _project = GDProjectLoader.LoadProject(projectRoot);
-                    _documentManager = new GDDocumentManager(_project);
-                    _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, _project);
+                    project = GDProjectLoader.LoadProject(projectRoot);
+                    _documentManager = new GDDocumentManager(project);
+                    _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, project);
+                    _project = project;
+                    project = null; // Successfully transferred ownership
                 }
             }
             catch (Exception)
             {
                 // Failed to load project, will work without project context
+            }
+            finally
+            {
+                // Dispose partially created project on error
+                project?.Dispose();
             }
         }
 
@@ -113,6 +122,7 @@ public class GDLanguageServer : IGDLanguageServer
                 ReferencesProvider = true,
                 DocumentSymbolProvider = true,
                 RenameProvider = true,
+                DocumentFormattingProvider = true,
                 CompletionProvider = new GDCompletionOptions
                 {
                     TriggerCharacters = [".", ":", "("],
@@ -254,6 +264,15 @@ public class GDLanguageServer : IGDLanguageServer
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
         var handler = new GDRenameHandler(_project);
+        return handler.HandleAsync(@params, ct);
+    }
+
+    private Task<GDLspTextEdit[]?> HandleFormattingAsync(GDDocumentFormattingParams @params, CancellationToken ct)
+    {
+        if (_project == null)
+            return Task.FromResult<GDLspTextEdit[]?>(null);
+
+        var handler = new GDFormattingHandler(_project);
         return handler.HandleAsync(@params, ct);
     }
 

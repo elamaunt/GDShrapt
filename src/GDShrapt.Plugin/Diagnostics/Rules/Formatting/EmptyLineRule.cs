@@ -1,5 +1,6 @@
 using GDShrapt.Plugin.Config;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,8 +14,8 @@ internal class EmptyLineRule : FormattingRule
     public override string RuleId => "GDS013";
     public override string Name => "Empty Lines Between Functions";
     public override string Description => "Ensure consistent spacing between function definitions";
-    public override FormattingLevel RequiredFormattingLevel => FormattingLevel.Full;
-    public override DiagnosticSeverity DefaultSeverity => DiagnosticSeverity.Hint;
+    public override GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Full;
+    public override Semantics.GDDiagnosticSeverity DefaultSeverity => Semantics.GDDiagnosticSeverity.Hint;
 
     private const int RequiredEmptyLinesBetweenFunctions = 2;
     private const int RequiredEmptyLinesAfterClassVars = 1;
@@ -22,7 +23,7 @@ internal class EmptyLineRule : FormattingRule
     public override IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig)
     {
         if (scriptMap?.Class == null)

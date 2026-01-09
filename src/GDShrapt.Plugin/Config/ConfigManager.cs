@@ -1,4 +1,5 @@
 using Godot;
+using GDShrapt.Semantics;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -146,7 +147,7 @@ internal class ConfigManager : IDisposable
     /// <summary>
     /// Gets a rule configuration, returning defaults if not specified.
     /// </summary>
-    public RuleConfig GetRuleConfig(string ruleId, DiagnosticSeverity defaultSeverity)
+    public GDRuleConfig GetRuleConfig(string ruleId, GDDiagnosticSeverity defaultSeverity)
     {
         if (_config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig))
         {
@@ -154,7 +155,7 @@ internal class ConfigManager : IDisposable
         }
 
         // Return default config
-        return new RuleConfig
+        return new GDRuleConfig
         {
             Enabled = true,
             Severity = defaultSeverity
@@ -173,7 +174,7 @@ internal class ConfigManager : IDisposable
         // Check formatting level for formatting rules
         if (category == DiagnosticCategory.Formatting)
         {
-            if (_config.Linting.FormattingLevel == FormattingLevel.Off)
+            if (_config.Linting.FormattingLevel == GDFormattingLevel.Off)
                 return false;
         }
 
@@ -189,7 +190,7 @@ internal class ConfigManager : IDisposable
     /// <summary>
     /// Gets the effective severity for a rule.
     /// </summary>
-    public DiagnosticSeverity GetRuleSeverity(string ruleId, DiagnosticSeverity defaultSeverity)
+    public GDDiagnosticSeverity GetRuleSeverity(string ruleId, GDDiagnosticSeverity defaultSeverity)
     {
         if (_config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig) && ruleConfig.Severity.HasValue)
         {
@@ -295,40 +296,4 @@ internal class ConfigManager : IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
-}
-
-/// <summary>
-/// Diagnostic category for rule classification.
-/// </summary>
-internal enum DiagnosticCategory
-{
-    /// <summary>
-    /// Syntax errors from parser.
-    /// </summary>
-    Syntax,
-
-    /// <summary>
-    /// Formatting issues (whitespace, indentation).
-    /// </summary>
-    Formatting,
-
-    /// <summary>
-    /// Style issues (naming conventions).
-    /// </summary>
-    Style,
-
-    /// <summary>
-    /// Best practice recommendations.
-    /// </summary>
-    BestPractice,
-
-    /// <summary>
-    /// Performance-related suggestions.
-    /// </summary>
-    Performance,
-
-    /// <summary>
-    /// Potential correctness issues.
-    /// </summary>
-    Correctness
 }

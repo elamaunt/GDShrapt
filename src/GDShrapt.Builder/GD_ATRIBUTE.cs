@@ -52,13 +52,6 @@ namespace GDShrapt.Reader
                 Type = new GDStringTypeNode() { Path = path }
             };
 
-            /*public static GDExtendsAttribute ExtendsPath(string path) => new GDExtendsAttribute()
-            {
-                ExtendsKeyword = new GDExtendsKeyword(),
-                [1] = Syntax.Space(),
-                Type = new GDStringTypeNode() { Path = path }
-            };*/
-
             public static GDCustomAttribute Custom() => new GDCustomAttribute();
             public static GDCustomAttribute Custom(Func<GDCustomAttribute, GDCustomAttribute> setup) => setup(new GDCustomAttribute());
             public static GDCustomAttribute Custom(params GDSyntaxToken[] unsafeTokens) => new GDCustomAttribute() { FormTokensSetter = unsafeTokens };

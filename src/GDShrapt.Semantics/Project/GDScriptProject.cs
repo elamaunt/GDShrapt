@@ -231,9 +231,15 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         var projectTypesProvider = new GDProjectTypesProvider(this);
         projectTypesProvider.RebuildCache();
 
+        // Load autoloads from project.godot
+        var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
+        var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
+        var autoloadsProvider = new GDAutoloadsProvider(autoloads, this);
+
         return new GDCompositeRuntimeProvider(
             godotTypesProvider,
             projectTypesProvider,
+            autoloadsProvider,
             _sceneTypesProvider);
     }
 
@@ -246,9 +252,15 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         var projectTypesProvider = new GDProjectTypesProvider(this);
         projectTypesProvider.RebuildCache();
 
+        // Load autoloads from project.godot
+        var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
+        var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
+        var autoloadsProvider = new GDAutoloadsProvider(autoloads, this);
+
         return new GDTypeResolver(
             godotTypesProvider,
             projectTypesProvider,
+            autoloadsProvider,
             _sceneTypesProvider,
             _logger);
     }

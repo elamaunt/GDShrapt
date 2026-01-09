@@ -13,6 +13,7 @@ public class GDTypeResolver
 {
     private readonly GDGodotTypesProvider _godotTypesProvider;
     private readonly GDProjectTypesProvider? _projectTypesProvider;
+    private readonly GDAutoloadsProvider? _autoloadsProvider;
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
     private readonly GDCompositeRuntimeProvider _compositeProvider;
     private readonly IGDSemanticLogger _logger;
@@ -20,17 +21,20 @@ public class GDTypeResolver
     public GDTypeResolver(
         GDGodotTypesProvider? godotTypesProvider = null,
         GDProjectTypesProvider? projectTypesProvider = null,
+        GDAutoloadsProvider? autoloadsProvider = null,
         GDSceneTypesProvider? sceneTypesProvider = null,
         IGDSemanticLogger? logger = null)
     {
         _godotTypesProvider = godotTypesProvider ?? new GDGodotTypesProvider();
         _projectTypesProvider = projectTypesProvider;
+        _autoloadsProvider = autoloadsProvider;
         _sceneTypesProvider = sceneTypesProvider;
         _logger = logger ?? GDNullLogger.Instance;
 
         _compositeProvider = new GDCompositeRuntimeProvider(
             _godotTypesProvider,
             _projectTypesProvider,
+            _autoloadsProvider,
             _sceneTypesProvider);
     }
 

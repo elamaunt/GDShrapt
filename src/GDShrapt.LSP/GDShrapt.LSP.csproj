@@ -8,12 +8,13 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>GDShrapt.LSP</RootNamespace>
     <AssemblyName>GDShrapt.LSP</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>5.1.0</Version>
     <Description>Language Server Protocol implementation for GDScript</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GDShrapt.Semantics\GDShrapt.Semantics.csproj" />
+    <ProjectReference Include="..\GDShrapt.Formatter\GDShrapt.Formatter.csproj" />
   </ItemGroup>
 
   <ItemGroup>

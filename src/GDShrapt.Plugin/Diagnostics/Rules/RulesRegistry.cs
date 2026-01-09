@@ -1,9 +1,11 @@
 using GDShrapt.Plugin.Config;
 using GDShrapt.Plugin.Diagnostics.Rules.Formatting;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
 namespace GDShrapt.Plugin.Diagnostics.Rules;
 
@@ -88,7 +90,7 @@ internal static class RulesRegistry
     /// <summary>
     /// Gets rules that apply at a specific formatting level.
     /// </summary>
-    public static IEnumerable<ILintRule> GetRulesForFormattingLevel(FormattingLevel level)
+    public static IEnumerable<ILintRule> GetRulesForFormattingLevel(GDFormattingLevel level)
     {
         return _rules.Where(r =>
             r.Category == DiagnosticCategory.Formatting &&
@@ -142,6 +144,6 @@ internal class RuleInfo
     public required string Name { get; init; }
     public required string Description { get; init; }
     public DiagnosticCategory Category { get; init; }
-    public DiagnosticSeverity DefaultSeverity { get; init; }
-    public FormattingLevel RequiredFormattingLevel { get; init; }
+    public GDDiagnosticSeverity DefaultSeverity { get; init; }
+    public GDFormattingLevel RequiredFormattingLevel { get; init; }
 }

@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -12,7 +13,7 @@ internal class SpaceAroundOperatorsRule : FormattingRule
     public override string RuleId => "GDS010";
     public override string Name => "Space Around Operators";
     public override string Description => "Ensure single space around binary operators";
-    public override FormattingLevel RequiredFormattingLevel => FormattingLevel.Full;
+    public override GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Full;
 
     // Binary operators that should have space around them
     private static readonly string[] BinaryOperators = { "==", "!=", "<=", ">=", "&&", "||", "+=", "-=", "*=", "/=", "%=", "<<", ">>", "->", "<", ">", "+", "-", "*", "/", "%", "=", "and", "or" };
@@ -25,7 +26,7 @@ internal class SpaceAroundOperatorsRule : FormattingRule
     public override IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig)
     {
         var lines = SplitLines(content);
@@ -55,7 +56,7 @@ internal class SpaceAroundOperatorsRule : FormattingRule
                             $"Missing space before '{op}'",
                             scriptMap.Reference)
                         .AtLocation(i, insertCol)
-                        .WithSeverity(DiagnosticSeverity.Hint)
+                        .WithSeverity(GDDiagnosticSeverity.Hint)
                         .WithFix(CreateReplacementFix(
                             $"Add space before '{op}'",
                             i, insertCol, insertCol, " "))
@@ -76,7 +77,7 @@ internal class SpaceAroundOperatorsRule : FormattingRule
                             $"Missing space after '{op}'",
                             scriptMap.Reference)
                         .AtLocation(i, insertCol)
-                        .WithSeverity(DiagnosticSeverity.Hint)
+                        .WithSeverity(GDDiagnosticSeverity.Hint)
                         .WithFix(CreateReplacementFix(
                             $"Add space after '{op}'",
                             i, insertCol, insertCol, " "))

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Security.Cryptography;
 
 namespace GDShrapt.Reader
 {
@@ -131,17 +130,13 @@ namespace GDShrapt.Reader
 
                 bool previousMemberIsAttribute = false;
                 bool currentMemberIsAttribute = false;
-                //bool isCustomAttribute = false;
                 bool isNotAttributeMet = false;
-
-
 
                 for (int i = 0; i < members.Length; i++)
                 {
                     var member = members[i];
 
                     currentMemberIsAttribute = member is GDClassAttribute;
-                    //isCustomAttribute = member is GDCustomAttribute custom;
                     isNotAttributeMet = isNotAttributeMet || !(member is GDClassAttribute);
 
                     if (!previousMemberIsAttribute)
@@ -156,28 +151,6 @@ namespace GDShrapt.Reader
                     {
                         list.Form.AddToEnd(new GDNewLine());
                     }
-
-                    /*if (i > 0)
-                    {
-                        if (isNotAttributeMet)
-                        {
-                            if (!previousMemberIsAttribute)
-                            {
-                                list.Form.AddToEnd(new GDNewLine());
-                                list.Form.AddToEnd(new GDNewLine());
-                            }
-                            else
-                            {
-
-                            }
-                        }
-                        else
-                        {
-                            if (!currentMemberIsAttribute)
-                                list.Form.AddToEnd(new GDNewLine());
-                            list.Form.AddToEnd(new GDNewLine());
-                        }
-                    }*/
 
                     list.Form.AddToEnd(Syntax.Intendation());
                     previousMemberIsAttribute = currentMemberIsAttribute;

@@ -4,13 +4,13 @@ using System.Threading.Tasks;
 using GDShrapt.LSP.Adapters;
 using GDShrapt.LSP.Protocol.Types;
 using GDShrapt.LSP.Server;
-using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.LSP.Handlers;
 
 /// <summary>
 /// Handles textDocument/rename requests.
+/// Uses GDRenameService from GDShrapt.Semantics for rename operations.
 /// </summary>
 public class GDRenameHandler
 {
@@ -47,151 +47,64 @@ public class GDRenameHandler
         if (string.IsNullOrWhiteSpace(newName))
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        // Collect all edits grouped by file URI
-        var changes = new Dictionary<string, List<GDLspTextEdit>>();
+        // Use GDRenameService for the rename operation
+        var renameService = new GDRenameService(_project);
 
-        // Add declaration edit
-        if (symbol.Declaration != null)
-        {
-            var declIdentifier = GetIdentifierFromDeclaration(symbol.Declaration);
-            if (declIdentifier != null)
-            {
-                AddEdit(changes, filePath, declIdentifier, newName);
-            }
-        }
+        // Plan the rename
+        var result = renameService.PlanRename(symbol, newName);
 
-        // Get all references to this symbol in the current file
-        var references = script.Analyzer.GetReferencesTo(symbol);
-        foreach (var reference in references)
-        {
-            var refNode = reference.ReferenceNode;
-            if (refNode == null)
-                continue;
-
-            // Skip declaration (already added)
-            if (refNode == symbol.Declaration)
-                continue;
-
-            var identifier = GetIdentifierFromNode(refNode);
-            if (identifier != null)
-            {
-                AddEdit(changes, filePath, identifier, newName);
-            }
-        }
-
-        // Also search in other files for cross-file references
-        foreach (var otherScript in _project.ScriptFiles)
-        {
-            if (otherScript.Reference.FullPath == filePath)
-                continue;
-
-            if (otherScript.Analyzer == null)
-                continue;
-
-            var otherRefs = otherScript.Analyzer.GetReferencesTo(symbol);
-            foreach (var reference in otherRefs)
-            {
-                var otherNode = reference.ReferenceNode;
-                if (otherNode == null)
-                    continue;
-
-                var identifier = GetIdentifierFromNode(otherNode);
-                if (identifier != null)
-                {
-                    AddEdit(changes, otherScript.Reference.FullPath, identifier, newName);
-                }
-            }
-        }
-
-        if (changes.Count == 0)
+        // If rename failed or has conflicts, return null
+        if (!result.Success || result.Conflicts.Count > 0)
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        // Convert to arrays
-        var changesDict = new Dictionary<string, GDLspTextEdit[]>();
-        foreach (var kvp in changes)
-        {
-            var uri = GDDocumentManager.PathToUri(kvp.Key);
-            changesDict[uri] = kvp.Value.ToArray();
-        }
+        // If no edits, return null
+        if (result.Edits.Count == 0)
+            return Task.FromResult<GDWorkspaceEdit?>(null);
+
+        // Convert GDTextEdit to LSP workspace edit
+        var changes = ConvertToWorkspaceEdit(result.Edits);
 
         return Task.FromResult<GDWorkspaceEdit?>(new GDWorkspaceEdit
         {
-            Changes = changesDict
+            Changes = changes
         });
     }
 
-    private void AddEdit(Dictionary<string, List<GDLspTextEdit>> changes, string filePath, GDSyntaxToken token, string newName)
+    private static Dictionary<string, GDLspTextEdit[]> ConvertToWorkspaceEdit(IReadOnlyList<GDTextEdit> edits)
     {
-        if (!changes.TryGetValue(filePath, out var edits))
-        {
-            edits = new List<GDLspTextEdit>();
-            changes[filePath] = edits;
-        }
+        var changesByFile = new Dictionary<string, List<GDLspTextEdit>>();
 
-        var range = GDLocationAdapter.RangeFromToken(token);
-        if (range != null)
+        foreach (var edit in edits)
         {
-            edits.Add(new GDLspTextEdit
+            var uri = GDDocumentManager.PathToUri(edit.FilePath);
+
+            if (!changesByFile.TryGetValue(uri, out var fileEdits))
             {
-                Range = range,
-                NewText = newName
+                fileEdits = new List<GDLspTextEdit>();
+                changesByFile[uri] = fileEdits;
+            }
+
+            // Convert 1-based line/column to 0-based LSP positions
+            // GDTextEdit has OldText which gives us the length for the end position
+            var startLine = edit.Line - 1;
+            var startColumn = edit.Column - 1;
+            var endLine = startLine;
+            var endColumn = startColumn + edit.OldText.Length;
+
+            fileEdits.Add(new GDLspTextEdit
+            {
+                Range = new GDLspRange(startLine, startColumn, endLine, endColumn),
+                NewText = edit.NewText
             });
         }
-    }
 
-    private GDSyntaxToken? GetIdentifierFromDeclaration(GDNode declaration)
-    {
-        // For method declarations, get the identifier
-        if (declaration is GDMethodDeclaration method)
-            return method.Identifier;
-
-        // For variable declarations, get the identifier
-        if (declaration is GDVariableDeclaration variable)
-            return variable.Identifier;
-
-        // For parameter declarations
-        if (declaration is GDParameterDeclaration parameter)
-            return parameter.Identifier;
-
-        // For class declarations
-        if (declaration is GDInnerClassDeclaration innerClass)
-            return innerClass.Identifier;
-
-        // For signal declarations
-        if (declaration is GDSignalDeclaration signal)
-            return signal.Identifier;
-
-        // For enum declarations
-        if (declaration is GDEnumDeclaration enumDecl)
-            return enumDecl.Identifier;
-
-        // For enum values
-        if (declaration is GDEnumValueDeclaration enumValue)
-            return enumValue.Identifier;
-
-        return null;
-    }
-
-    private GDSyntaxToken? GetIdentifierFromNode(GDNode node)
-    {
-        // For identifier expressions
-        if (node is GDIdentifierExpression identExpr)
-            return identExpr.Identifier;
-
-        // For member access, get the identifier part
-        if (node is GDMemberOperatorExpression memberOp)
-            return memberOp.Identifier;
-
-        // For call expressions, get the identifier
-        if (node is GDCallExpression call)
+        // Convert to arrays
+        var result = new Dictionary<string, GDLspTextEdit[]>();
+        foreach (var kvp in changesByFile)
         {
-            if (call.CallerExpression is GDIdentifierExpression callIdent)
-                return callIdent.Identifier;
-            if (call.CallerExpression is GDMemberOperatorExpression callMember)
-                return callMember.Identifier;
+            result[kvp.Key] = kvp.Value.ToArray();
         }
 
-        // Try to get identifier from declarations
-        return GetIdentifierFromDeclaration(node);
+        return result;
     }
 }

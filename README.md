@@ -1,7 +1,7 @@
 # GDShrapt
 
 [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Tests](https://img.shields.io/badge/tests-1052%20passed-brightgreen.svg)]()
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20GDShrapt-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/elamaunt)
 
@@ -30,6 +30,8 @@ The libraries are designed to be used together or independently: from a lightwei
 
 ## Packages
 
+### Core Libraries
+
 | Package | Description | NuGet |
 |---------|-------------|-------|
 | [GDShrapt.Reader](src/GDShrapt.Reader/) | Core parser and AST | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader) |
@@ -37,6 +39,16 @@ The libraries are designed to be used together or independently: from a lightwei
 | [GDShrapt.Validator](src/GDShrapt.Validator/) | AST validation with diagnostics | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Validator.svg)](https://www.nuget.org/packages/GDShrapt.Validator) |
 | [GDShrapt.Linter](src/GDShrapt.Linter/) | Style checking and naming conventions | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Linter.svg)](https://www.nuget.org/packages/GDShrapt.Linter) |
 | [GDShrapt.Formatter](src/GDShrapt.Formatter/) | Code formatting with type inference | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Formatter.svg)](https://www.nuget.org/packages/GDShrapt.Formatter) |
+
+### Ecosystem Tools
+
+| Package | Description |
+|---------|-------------|
+| [GDShrapt.CLI](src/GDShrapt.CLI/) | Command-line tool for analysis and refactoring |
+| [GDShrapt.LSP](src/GDShrapt.LSP/) | Language Server Protocol implementation |
+| [GDShrapt.Semantics](src/GDShrapt.Semantics/) | Godot-independent semantic analysis |
+| [GDShrapt.Abstractions](src/GDShrapt.Abstractions/) | Base interfaces for extensibility |
+| [GDShrapt.Plugin](src/GDShrapt.Plugin/) | Godot Editor plugin |
 
 ## Installation
 
@@ -150,7 +162,9 @@ Related projects:
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 — see the [LICENSE](LICENSE) file for details.
+
+**Note:** Versions 5.0.0 and earlier were released under the MIT License. Starting from version 5.1.0, GDShrapt is licensed under the Apache License 2.0.
 
 ## Acknowledgments
 

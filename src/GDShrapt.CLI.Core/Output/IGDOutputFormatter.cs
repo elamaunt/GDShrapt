@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using GDShrapt.Reader;
+using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
 
@@ -112,4 +114,56 @@ public class GDReferenceInfo
     public string? Context { get; set; }
     public bool IsDeclaration { get; set; }
     public bool IsWrite { get; set; }
+}
+
+/// <summary>
+/// Helpers for converting severity types to CLI's GDSeverity.
+/// Uses GDSeverityMapper from Semantics to avoid duplication.
+/// </summary>
+public static class GDSeverityHelper
+{
+    /// <summary>
+    /// Converts linter severity to CLI severity.
+    /// </summary>
+    public static GDSeverity FromLinter(GDLintSeverity severity)
+        => FromIndex(GDSeverityMapper.ToCliSeverityIndex(severity));
+
+    /// <summary>
+    /// Converts validator severity to CLI severity.
+    /// </summary>
+    public static GDSeverity FromValidator(Reader.GDDiagnosticSeverity severity)
+        => FromIndex(GDSeverityMapper.ToCliSeverityIndex(severity));
+
+    /// <summary>
+    /// Converts unified severity to CLI severity.
+    /// </summary>
+    public static GDSeverity FromUnified(Semantics.GDDiagnosticSeverity severity)
+        => FromIndex(GDSeverityMapper.ToCliSeverityIndex(severity));
+
+    /// <summary>
+    /// Gets configured severity from config or returns default.
+    /// </summary>
+    public static GDSeverity GetConfigured(
+        GDProjectConfig config,
+        string ruleId,
+        GDSeverity defaultSeverity)
+    {
+        if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig) && ruleConfig.Severity.HasValue)
+        {
+            return FromUnified(ruleConfig.Severity.Value);
+        }
+        return defaultSeverity;
+    }
+
+    private static GDSeverity FromIndex(int index)
+    {
+        return index switch
+        {
+            0 => GDSeverity.Error,
+            1 => GDSeverity.Warning,
+            2 => GDSeverity.Information,
+            3 => GDSeverity.Hint,
+            _ => GDSeverity.Information
+        };
+    }
 }

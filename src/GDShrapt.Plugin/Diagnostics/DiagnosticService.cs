@@ -1,6 +1,7 @@
 using GDShrapt.Plugin.Cache;
 using GDShrapt.Plugin.Config;
 using GDShrapt.Plugin.Diagnostics.Rules;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -78,9 +79,9 @@ internal class DiagnosticService : IDisposable
 
         return new DiagnosticSummary
         {
-            ErrorCount = all.Count(d => d.Severity == DiagnosticSeverity.Error),
-            WarningCount = all.Count(d => d.Severity == DiagnosticSeverity.Warning),
-            HintCount = all.Count(d => d.Severity == DiagnosticSeverity.Hint || d.Severity == DiagnosticSeverity.Info),
+            ErrorCount = all.Count(d => d.Severity == GDDiagnosticSeverity.Error),
+            WarningCount = all.Count(d => d.Severity == GDDiagnosticSeverity.Warning),
+            HintCount = all.Count(d => d.Severity == GDDiagnosticSeverity.Hint || d.Severity == GDDiagnosticSeverity.Info),
             AffectedFileCount = _diagnostics.Count(kv => kv.Value.Count > 0),
             HasFormattingIssues = all.Any(d => d.Category == DiagnosticCategory.Formatting && d.Fixes.Count > 0)
         };
@@ -95,9 +96,9 @@ internal class DiagnosticService : IDisposable
 
         return new DiagnosticSummary
         {
-            ErrorCount = diagnostics.Count(d => d.Severity == DiagnosticSeverity.Error),
-            WarningCount = diagnostics.Count(d => d.Severity == DiagnosticSeverity.Warning),
-            HintCount = diagnostics.Count(d => d.Severity == DiagnosticSeverity.Hint || d.Severity == DiagnosticSeverity.Info),
+            ErrorCount = diagnostics.Count(d => d.Severity == GDDiagnosticSeverity.Error),
+            WarningCount = diagnostics.Count(d => d.Severity == GDDiagnosticSeverity.Warning),
+            HintCount = diagnostics.Count(d => d.Severity == GDDiagnosticSeverity.Hint || d.Severity == GDDiagnosticSeverity.Info),
             AffectedFileCount = diagnostics.Count > 0 ? 1 : 0,
             HasFormattingIssues = diagnostics.Any(d => d.Category == DiagnosticCategory.Formatting && d.Fixes.Count > 0)
         };

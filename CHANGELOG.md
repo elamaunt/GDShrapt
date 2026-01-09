@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.1.0] - 2026-01-08
+
+### Breaking Changes
+
+- **License Change**: License changed from MIT to Apache License 2.0
+  - Versions 5.0.0 and earlier remain under MIT License
+  - Starting from 5.1.0, all code is under Apache License 2.0
+  - Added NOTICE file as required by Apache 2.0
+
+### New Packages
+
+- **GDShrapt.Abstractions** - Base interfaces for file system, project context, and logging abstractions
+  - `IGDFileSystem` - File system abstraction for testing and flexible integration
+  - `IGDProjectContext` - Godot project context with path resolution
+  - `IGDSemanticLogger` - Logging abstraction for semantic analysis
+
+- **GDShrapt.Semantics** - Godot-independent semantic analysis library
+  - `GDScriptProject` - Project-level GDScript analysis
+  - `GDTypeResolver` - Type inference and resolution
+  - `GDSceneTypesProvider` - Node types from .tscn files
+  - `GDProjectTypesProvider` - User-defined types from project scripts
+  - `GDGodotTypesProvider` - Built-in Godot types from TypesMap
+  - `GDRenameService` - Safe symbol renaming with conflict detection
+
+- **GDShrapt.CLI** - Command-line tool for GDScript analysis
+  - `analyze` - Analyze project and output diagnostics
+  - `check` - CI/CD friendly error checking with exit codes
+  - `symbols` - List symbols in a file
+  - `find-refs` - Find references to a symbol
+  - `rename` - Rename symbol across project
+  - `format` - Format GDScript files
+
+- **GDShrapt.LSP** - Language Server Protocol implementation
+  - Code completion with type inference
+  - Go to definition
+  - Find all references
+  - Hover information
+  - Document symbols
+  - Rename refactoring
+  - Real-time diagnostics
+
+- **GDShrapt.Plugin** - Godot Editor plugin (not published to NuGet)
+  - Integration with Godot Editor
+  - Auto-completion, go-to-definition, find references
+  - Refactoring actions (extract method/variable, surround with)
+  - Real-time diagnostics
+  - TODO tags scanning
+
+### Improvements
+
+- Validator improvements for better error messages
+- Type parsing enhancements in inference engine
+- Added TypesMap submodule for Godot type information
+
+### Internal
+
+- Monorepo structure with all tools in single solution
+- Removed commented/dead code
+- Code cleanup and unused import removal
+
 ## [5.0.0] - 2026-01-02
 
 ### Breaking Changes

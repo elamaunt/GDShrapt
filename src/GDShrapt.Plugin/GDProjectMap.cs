@@ -138,6 +138,30 @@ internal class GDProjectMap : IDisposable
         internal CodePointer FindStaticDeclarationIdentifier(string name)
         {
             Logger.Debug($"FindStaticDeclarationIdentifier: {name}");
+
+            // Support "ClassName.member_name" format for static members
+            var dotIndex = name.IndexOf('.');
+            if (dotIndex > 0)
+            {
+                var className = name.Substring(0, dotIndex);
+                var memberName = name.Substring(dotIndex + 1);
+                var scriptMap = GetScriptMapByTypeName(className);
+                if (scriptMap?.Analyzer != null)
+                {
+                    var symbol = scriptMap.Analyzer.FindSymbol(memberName);
+                    if (symbol != null && symbol.IsStatic)
+                    {
+                        var identifier = (symbol.Declaration as GDIdentifiableClassMember)?.Identifier;
+                        return new CodePointer()
+                        {
+                            ScriptReference = scriptMap.Reference,
+                            DeclarationIdentifier = identifier
+                        };
+                    }
+                }
+            }
+
+            // Search for class_name declarations
             foreach (var scriptMap in Scripts)
             {
                 if (scriptMap.TypeName == name)
@@ -147,10 +171,6 @@ internal class GDProjectMap : IDisposable
                         ScriptReference = scriptMap.Reference,
                         DeclarationIdentifier = scriptMap.Class?.ClassName?.Identifier
                     };
-                }
-                else
-                {
-                    // TODO: static methods
                 }
             }
 

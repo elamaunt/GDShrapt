@@ -1,7 +1,9 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
 namespace GDShrapt.Plugin.Diagnostics.Rules;
 
@@ -14,13 +16,13 @@ internal abstract class LintRule : ILintRule
     public abstract string Name { get; }
     public abstract string Description { get; }
     public abstract DiagnosticCategory Category { get; }
-    public virtual DiagnosticSeverity DefaultSeverity => DiagnosticSeverity.Warning;
-    public virtual FormattingLevel RequiredFormattingLevel => FormattingLevel.Light;
+    public virtual GDDiagnosticSeverity DefaultSeverity => GDDiagnosticSeverity.Warning;
+    public virtual GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Light;
 
     public abstract IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig);
 
     /// <summary>
@@ -165,7 +167,7 @@ internal abstract class LintRule : ILintRule
 internal abstract class FormattingRule : LintRule
 {
     public override DiagnosticCategory Category => DiagnosticCategory.Formatting;
-    public override DiagnosticSeverity DefaultSeverity => DiagnosticSeverity.Warning;
+    public override GDDiagnosticSeverity DefaultSeverity => GDDiagnosticSeverity.Warning;
 }
 
 /// <summary>
@@ -174,6 +176,6 @@ internal abstract class FormattingRule : LintRule
 internal abstract class StyleRule : LintRule
 {
     public override DiagnosticCategory Category => DiagnosticCategory.Style;
-    public override DiagnosticSeverity DefaultSeverity => DiagnosticSeverity.Hint;
-    public override FormattingLevel RequiredFormattingLevel => FormattingLevel.Off; // Style rules always run
+    public override GDDiagnosticSeverity DefaultSeverity => GDDiagnosticSeverity.Hint;
+    public override GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Off; // Style rules always run
 }

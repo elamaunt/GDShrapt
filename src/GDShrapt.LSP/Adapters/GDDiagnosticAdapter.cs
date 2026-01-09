@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.LSP.Protocol.Types;
 using GDShrapt.LSP.Server;
 using GDShrapt.Reader;
@@ -42,38 +43,51 @@ public static class GDDiagnosticAdapter
 
     /// <summary>
     /// Converts GDShrapt script analysis to LSP diagnostics.
+    /// Uses default validation without linting.
     /// </summary>
     public static GDLspDiagnostic[] FromScript(GDScriptFile script)
     {
-        var diagnostics = new List<GDLspDiagnostic>();
+        // Use default diagnostics service (validator only, no linter)
+        var service = new GDDiagnosticsService();
+        return FromScript(script, service);
+    }
 
-        // Add parse errors (invalid tokens)
-        if (script.Class != null)
+    /// <summary>
+    /// Converts GDShrapt script analysis to LSP diagnostics using a diagnostics service.
+    /// This method uses GDDiagnosticsService which includes both validator and linter.
+    /// </summary>
+    public static GDLspDiagnostic[] FromScript(GDScriptFile script, GDDiagnosticsService service)
+    {
+        var result = service.Diagnose(script);
+        return result.Diagnostics.Select(d => FromUnifiedDiagnostic(d)).ToArray();
+    }
+
+    /// <summary>
+    /// Converts a unified diagnostic to LSP diagnostic.
+    /// </summary>
+    public static GDLspDiagnostic FromUnifiedDiagnostic(GDUnifiedDiagnostic diagnostic)
+    {
+        var severity = diagnostic.Severity switch
         {
-            diagnostics.AddRange(FromInvalidTokens(script.Class, script.Reference.FullPath));
-        }
+            Semantics.GDDiagnosticSeverity.Error => GDLspDiagnosticSeverity.Error,
+            Semantics.GDDiagnosticSeverity.Warning => GDLspDiagnosticSeverity.Warning,
+            Semantics.GDDiagnosticSeverity.Info => GDLspDiagnosticSeverity.Information,
+            Semantics.GDDiagnosticSeverity.Hint => GDLspDiagnosticSeverity.Hint,
+            _ => GDLspDiagnosticSeverity.Information
+        };
 
-        // Add read errors
-        if (script.WasReadError)
+        return new GDLspDiagnostic
         {
-            diagnostics.Add(new GDLspDiagnostic
-            {
-                Range = new GDLspRange(0, 0, 0, 0),
-                Severity = GDLspDiagnosticSeverity.Error,
-                Source = "gdshrapt",
-                Code = "GDS000",
-                Message = "Failed to read or parse file"
-            });
-        }
-
-        // Add semantic diagnostics from Validator
-        var validationResult = script.Validate();
-        if (validationResult != null)
-        {
-            diagnostics.AddRange(FromValidation(validationResult));
-        }
-
-        return diagnostics.ToArray();
+            Range = GDLocationAdapter.ToLspRange(
+                diagnostic.StartLine,
+                diagnostic.StartColumn,
+                diagnostic.EndLine,
+                diagnostic.EndColumn),
+            Severity = severity,
+            Source = "gdshrapt",
+            Code = diagnostic.Code,
+            Message = diagnostic.Message
+        };
     }
 
     /// <summary>

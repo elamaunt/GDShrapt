@@ -1,12 +1,12 @@
-using System;
-using System.IO;
 using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
+using SemanticProjectLoader = GDShrapt.Semantics.GDProjectLoader;
 
 namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Helper for loading GDScript projects.
+/// This is a thin wrapper over GDProjectLoader from Semantics for backwards compatibility.
 /// </summary>
 public static class GDProjectLoader
 {
@@ -18,26 +18,7 @@ public static class GDProjectLoader
     /// <returns>Loaded and analyzed project.</returns>
     public static GDScriptProject LoadProject(string projectPath, IGDSemanticLogger? logger = null)
     {
-        var fullPath = Path.GetFullPath(projectPath);
-
-        if (!Directory.Exists(fullPath))
-        {
-            throw new DirectoryNotFoundException($"Project directory not found: {fullPath}");
-        }
-
-        var context = new GDDefaultProjectContext(fullPath);
-        var options = new GDScriptProjectOptions
-        {
-            Logger = logger,
-            EnableSceneTypesProvider = true
-        };
-
-        var project = new GDScriptProject(context, options);
-        project.LoadScripts();
-        project.LoadScenes();
-        project.AnalyzeAll();
-
-        return project;
+        return SemanticProjectLoader.LoadProject(projectPath, logger);
     }
 
     /// <summary>
@@ -47,29 +28,6 @@ public static class GDProjectLoader
     /// <returns>Project root path or null if not found.</returns>
     public static string? FindProjectRoot(string startPath)
     {
-        var current = Path.GetFullPath(startPath);
-
-        // If it's a file, start from its directory
-        if (File.Exists(current))
-        {
-            current = Path.GetDirectoryName(current)!;
-        }
-
-        while (!string.IsNullOrEmpty(current))
-        {
-            var projectFile = Path.Combine(current, "project.godot");
-            if (File.Exists(projectFile))
-            {
-                return current;
-            }
-
-            var parent = Path.GetDirectoryName(current);
-            if (parent == current)
-                break;
-
-            current = parent;
-        }
-
-        return null;
+        return SemanticProjectLoader.FindProjectRoot(startPath);
     }
 }

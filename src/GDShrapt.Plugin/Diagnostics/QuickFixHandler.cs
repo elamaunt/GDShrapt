@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -203,10 +204,10 @@ internal class QuickFixItem
     /// </summary>
     public string SeverityIcon => Diagnostic.Severity switch
     {
-        DiagnosticSeverity.Error => "X",
-        DiagnosticSeverity.Warning => "!",
-        DiagnosticSeverity.Info => "i",
-        DiagnosticSeverity.Hint => "?",
+        GDDiagnosticSeverity.Error => "X",
+        GDDiagnosticSeverity.Warning => "!",
+        GDDiagnosticSeverity.Info => "i",
+        GDDiagnosticSeverity.Hint => "?",
         _ => " "
     };
 

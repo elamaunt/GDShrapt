@@ -421,9 +421,17 @@ public partial class GDShraptPlugin : EditorPlugin
         return _projectMap.GetScriptMapByResourcePath(path);
     }
 
+    /// <summary>
+    /// Stops all background activities including analysis and TODO scanning.
+    /// Call this method when the plugin needs to gracefully stop all background work.
+    /// </summary>
     public void StopAllActivities()
     {
-        // TODO
+        // Stop background analyzer (cancels pending work and waits for completion)
+        _backgroundAnalyzer?.Stop();
+
+        // Clear all diagnostics to reset state
+        _diagnosticService?.ClearAllDiagnostics();
     }
 
     private void Init()

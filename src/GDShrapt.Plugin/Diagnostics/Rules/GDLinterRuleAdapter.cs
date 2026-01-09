@@ -1,7 +1,9 @@
 using GDShrapt.Plugin.Config;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
+using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
 namespace GDShrapt.Plugin.Diagnostics.Rules;
 
@@ -30,12 +32,12 @@ internal class GDLinterRuleAdapter : ILintRule
     public string Name => _linterRule.Name;
     public string Description => _linterRule.Description;
     public DiagnosticCategory Category => MapCategory(_linterRule.Category);
-    public DiagnosticSeverity DefaultSeverity => MapSeverity(_linterRule.DefaultSeverity);
+    public GDDiagnosticSeverity DefaultSeverity => MapSeverity(_linterRule.DefaultSeverity);
 
     /// <summary>
     /// GDLinter rules don't have formatting levels - they always run when enabled.
     /// </summary>
-    public FormattingLevel RequiredFormattingLevel => FormattingLevel.Off;
+    public GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Off;
 
     /// <summary>
     /// Whether the underlying rule is enabled by default.
@@ -45,14 +47,14 @@ internal class GDLinterRuleAdapter : ILintRule
     public IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig)
     {
         if (scriptMap?.Class == null || string.IsNullOrEmpty(content))
             yield break;
 
-        // Create linter options from plugin config
-        var options = LinterOptionsMapper.CreateOptions(projectConfig?.AdvancedLinting);
+        // Create linter options from plugin config using Semantics factory
+        var options = GDLinterOptionsFactory.FromConfig(projectConfig?.Core ?? new GDProjectConfig());
 
         // Create a single-rule linter
         var linter = GDLinter.CreateEmpty();
@@ -117,15 +119,15 @@ internal class GDLinterRuleAdapter : ILintRule
         };
     }
 
-    private static DiagnosticSeverity MapSeverity(GDLintSeverity severity)
+    private static GDDiagnosticSeverity MapSeverity(GDLintSeverity severity)
     {
         return severity switch
         {
-            GDLintSeverity.Hint => DiagnosticSeverity.Hint,
-            GDLintSeverity.Info => DiagnosticSeverity.Info,
-            GDLintSeverity.Warning => DiagnosticSeverity.Warning,
-            GDLintSeverity.Error => DiagnosticSeverity.Error,
-            _ => DiagnosticSeverity.Warning
+            GDLintSeverity.Hint => GDDiagnosticSeverity.Hint,
+            GDLintSeverity.Info => GDDiagnosticSeverity.Info,
+            GDLintSeverity.Warning => GDDiagnosticSeverity.Warning,
+            GDLintSeverity.Error => GDDiagnosticSeverity.Error,
+            _ => GDDiagnosticSeverity.Warning
         };
     }
 }

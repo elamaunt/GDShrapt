@@ -63,7 +63,7 @@ public class GDCheckCommand : IGDCommand
 
             if (config.Linting.Enabled)
             {
-                linter = new GDLinter(GDAnalyzeCommand.CreateLinterOptionsFromConfig(config));
+                linter = new GDLinter(GDLinterOptionsFactory.FromConfig(config));
                 validator = new GDValidator();
                 validationOptions = new GDValidationOptions
                 {

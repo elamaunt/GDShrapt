@@ -7,6 +7,39 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>GDShrapt.Abstractions</RootNamespace>
     <AssemblyName>GDShrapt.Abstractions</AssemblyName>
+    <Version>5.1.0</Version>
+    <Authors>elamaunt</Authors>
+    <Product>GDShrapt.Abstractions</Product>
+    <Description>GDShrapt.Abstractions provides base interfaces for GDScript semantic analysis tooling.
+
+Interfaces:
+- IGDFileSystem - File system abstraction for testing and flexible integration
+- IGDProjectContext - Godot project context with path resolution
+- IGDSemanticLogger - Logging abstraction for semantic analysis
+
+Default Implementations:
+- GDDefaultFileSystem - Standard System.IO implementation
+- GDDefaultProjectContext - Default project context
+- GDConsoleLogger / GDNullLogger - Console and null loggers
+
+Used by: GDShrapt.Semantics, GDShrapt.CLI, GDShrapt.Plugin</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
+    <Copyright>elamaunt</Copyright>
+    <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>GDShrapt GDScript abstractions Godot interfaces file-system logging</PackageTags>
+    <AssemblyVersion>5.1.0</AssemblyVersion>
+    <FileVersion>5.1.0</FileVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>

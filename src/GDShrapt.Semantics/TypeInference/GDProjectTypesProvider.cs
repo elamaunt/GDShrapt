@@ -152,7 +152,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 method.Name,
                 method.ReturnTypeName,
                 method.Parameters.Count,
-                method.Parameters.Count));
+                method.Parameters.Count,
+                isVarArgs: false,
+                isStatic: method.IsStatic));
         }
 
         foreach (var prop in typeInfo.Properties.Values)
@@ -191,7 +193,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 method.Name,
                 method.ReturnTypeName,
                 method.Parameters.Count,
-                method.Parameters.Count);
+                method.Parameters.Count,
+                isVarArgs: false,
+                isStatic: method.IsStatic);
         }
 
         // Check properties

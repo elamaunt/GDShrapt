@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 
@@ -116,7 +117,7 @@ internal class SerializedDiagnostic
         {
             RuleId = RuleId,
             Message = Message,
-            Severity = (DiagnosticSeverity)Severity,
+            Severity = (GDDiagnosticSeverity)Severity,
             Category = (DiagnosticCategory)Category,
             Script = script,
             StartLine = StartLine,

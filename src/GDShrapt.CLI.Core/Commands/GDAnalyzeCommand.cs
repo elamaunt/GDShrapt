@@ -81,8 +81,8 @@ public class GDAnalyzeCommand : IGDCommand
         var totalWarnings = 0;
         var totalHints = 0;
 
-        // Create linter with options from config
-        var linterOptions = CreateLinterOptionsFromConfig(config);
+        // Create linter with options from config (using factory from Semantics)
+        var linterOptions = GDLinterOptionsFactory.FromConfig(config);
         var linter = new GDLinter(linterOptions);
 
         // Create validator
@@ -145,25 +145,28 @@ public class GDAnalyzeCommand : IGDCommand
                 var validationResult = validator.Validate(script.Class, validationOptions);
                 foreach (var diagnostic in validationResult.Diagnostics)
                 {
-                    var severity = MapValidatorSeverity(diagnostic.Severity);
+                    var unifiedSeverity = GDSeverityMapper.FromValidator(diagnostic.Severity);
+                    var severity = MapToOutputSeverity(unifiedSeverity);
 
                     // Check if rule is enabled in config
                     var ruleId = diagnostic.CodeString;
-                    if (!IsRuleEnabled(config, ruleId, severity))
+                    if (!IsRuleEnabled(config, ruleId))
                         continue;
+
+                    var finalSeverity = GetConfiguredSeverity(config, ruleId, severity);
 
                     fileDiags.Diagnostics.Add(new GDDiagnosticInfo
                     {
                         Code = ruleId,
                         Message = diagnostic.Message,
-                        Severity = GetConfiguredSeverity(config, ruleId, severity),
+                        Severity = finalSeverity,
                         Line = diagnostic.StartLine,
                         Column = diagnostic.StartColumn,
                         EndLine = diagnostic.EndLine,
                         EndColumn = diagnostic.EndColumn
                     });
 
-                    UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, severity);
+                    UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, finalSeverity);
                 }
 
                 // Run linter
@@ -172,24 +175,27 @@ public class GDAnalyzeCommand : IGDCommand
                     var lintResult = linter.Lint(script.Class);
                     foreach (var issue in lintResult.Issues)
                     {
-                        var severity = MapLinterSeverity(issue.Severity);
+                        var unifiedSeverity = GDSeverityMapper.FromLinter(issue.Severity);
+                        var severity = MapToOutputSeverity(unifiedSeverity);
 
                         // Check if rule is enabled in config
-                        if (!IsRuleEnabled(config, issue.RuleId, severity))
+                        if (!IsRuleEnabled(config, issue.RuleId))
                             continue;
+
+                        var finalSeverity = GetConfiguredSeverity(config, issue.RuleId, severity);
 
                         fileDiags.Diagnostics.Add(new GDDiagnosticInfo
                         {
                             Code = issue.RuleId,
                             Message = issue.Message,
-                            Severity = GetConfiguredSeverity(config, issue.RuleId, severity),
+                            Severity = finalSeverity,
                             Line = issue.StartLine,
                             Column = issue.StartColumn,
                             EndLine = issue.EndLine,
                             EndColumn = issue.EndColumn
                         });
 
-                        UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, severity);
+                        UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, finalSeverity);
                     }
                 }
             }
@@ -210,100 +216,21 @@ public class GDAnalyzeCommand : IGDCommand
     }
 
     /// <summary>
-    /// Creates linter options from project configuration.
+    /// Maps unified severity from Semantics to CLI output severity.
     /// </summary>
-    public static GDLinterOptions CreateLinterOptionsFromConfig(GDProjectConfig config)
-    {
-        var advanced = config.AdvancedLinting;
-
-        return new GDLinterOptions
-        {
-            // Naming conventions
-            ClassNameCase = MapNamingCase(advanced.ClassNameCase),
-            FunctionNameCase = MapNamingCase(advanced.FunctionNameCase),
-            VariableNameCase = MapNamingCase(advanced.VariableNameCase),
-            ConstantNameCase = MapNamingCase(advanced.ConstantNameCase),
-            SignalNameCase = MapNamingCase(advanced.SignalNameCase),
-            EnumNameCase = MapNamingCase(advanced.EnumNameCase),
-            EnumValueCase = MapNamingCase(advanced.EnumValueCase),
-            RequireUnderscoreForPrivate = advanced.RequireUnderscoreForPrivate,
-
-            // Best practices
-            WarnUnusedVariables = advanced.WarnUnusedVariables,
-            WarnUnusedParameters = advanced.WarnUnusedParameters,
-            WarnUnusedSignals = advanced.WarnUnusedSignals,
-            WarnEmptyFunctions = advanced.WarnEmptyFunctions,
-            WarnMagicNumbers = advanced.WarnMagicNumbers,
-            WarnVariableShadowing = advanced.WarnVariableShadowing,
-            WarnAwaitInLoop = advanced.WarnAwaitInLoop,
-
-            // Limits
-            MaxParameters = advanced.MaxParameters,
-            MaxFunctionLength = advanced.MaxFunctionLength,
-            MaxCyclomaticComplexity = advanced.MaxCyclomaticComplexity,
-            MaxLineLength = config.Linting.MaxLineLength,
-
-            // Strict typing
-            StrictTypingClassVariables = MapStrictTypingSeverity(advanced.StrictTypingClassVariables),
-            StrictTypingLocalVariables = MapStrictTypingSeverity(advanced.StrictTypingLocalVariables),
-            StrictTypingParameters = MapStrictTypingSeverity(advanced.StrictTypingParameters),
-            StrictTypingReturnTypes = MapStrictTypingSeverity(advanced.StrictTypingReturnTypes),
-
-            // Comment suppression
-            EnableCommentSuppression = advanced.EnableCommentSuppression
-        };
-    }
-
-    private static NamingCase MapNamingCase(GDNamingCase namingCase)
-    {
-        return namingCase switch
-        {
-            GDNamingCase.SnakeCase => NamingCase.SnakeCase,
-            GDNamingCase.PascalCase => NamingCase.PascalCase,
-            GDNamingCase.CamelCase => NamingCase.CamelCase,
-            GDNamingCase.ScreamingSnakeCase => NamingCase.ScreamingSnakeCase,
-            GDNamingCase.Any => NamingCase.Any,
-            _ => NamingCase.SnakeCase
-        };
-    }
-
-    private static GDLintSeverity? MapStrictTypingSeverity(GDStrictTypingSeverity? severity)
-    {
-        if (!severity.HasValue)
-            return null;
-
-        return severity.Value switch
-        {
-            GDStrictTypingSeverity.Warning => GDLintSeverity.Warning,
-            GDStrictTypingSeverity.Error => GDLintSeverity.Error,
-            _ => GDLintSeverity.Warning
-        };
-    }
-
-    private static GDSeverity MapValidatorSeverity(Reader.GDDiagnosticSeverity severity)
+    private static GDSeverity MapToOutputSeverity(Semantics.GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            Reader.GDDiagnosticSeverity.Error => GDSeverity.Error,
-            Reader.GDDiagnosticSeverity.Warning => GDSeverity.Warning,
-            Reader.GDDiagnosticSeverity.Hint => GDSeverity.Hint,
+            Semantics.GDDiagnosticSeverity.Error => GDSeverity.Error,
+            Semantics.GDDiagnosticSeverity.Warning => GDSeverity.Warning,
+            Semantics.GDDiagnosticSeverity.Info => GDSeverity.Information,
+            Semantics.GDDiagnosticSeverity.Hint => GDSeverity.Hint,
             _ => GDSeverity.Information
         };
     }
 
-    private static GDSeverity MapLinterSeverity(GDLintSeverity severity)
-    {
-        return severity switch
-        {
-            GDLintSeverity.Error => GDSeverity.Error,
-            GDLintSeverity.Warning => GDSeverity.Warning,
-            GDLintSeverity.Info => GDSeverity.Information,
-            GDLintSeverity.Hint => GDSeverity.Hint,
-            _ => GDSeverity.Information
-        };
-    }
-
-    private static bool IsRuleEnabled(GDProjectConfig config, string ruleId, GDSeverity defaultSeverity)
+    private static bool IsRuleEnabled(GDProjectConfig config, string ruleId)
     {
         if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig))
         {
@@ -316,14 +243,7 @@ public class GDAnalyzeCommand : IGDCommand
     {
         if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig) && ruleConfig.Severity.HasValue)
         {
-            return ruleConfig.Severity.Value switch
-            {
-                Semantics.GDDiagnosticSeverity.Error => GDSeverity.Error,
-                Semantics.GDDiagnosticSeverity.Warning => GDSeverity.Warning,
-                Semantics.GDDiagnosticSeverity.Info => GDSeverity.Information,
-                Semantics.GDDiagnosticSeverity.Hint => GDSeverity.Hint,
-                _ => defaultSeverity
-            };
+            return MapToOutputSeverity(ruleConfig.Severity.Value);
         }
         return defaultSeverity;
     }

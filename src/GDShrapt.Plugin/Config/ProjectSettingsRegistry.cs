@@ -1,4 +1,5 @@
 using Godot;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 
@@ -141,12 +142,12 @@ internal class ProjectSettingsRegistry
 
             // Code Style (merged linting + formatting)
             config.Linting.Enabled = GetBool("code_style/linting_enabled", config.Linting.Enabled);
-            config.Linting.FormattingLevel = (FormattingLevel)GetInt("code_style/formatting_level", (int)config.Linting.FormattingLevel);
-            config.Linting.IndentationStyle = (IndentationStyle)GetInt("code_style/indentation_style", (int)config.Linting.IndentationStyle);
+            config.Linting.FormattingLevel = (GDFormattingLevel)GetInt("code_style/formatting_level", (int)config.Linting.FormattingLevel);
+            config.Linting.IndentationStyle = (GDIndentationStyle)GetInt("code_style/indentation_style", (int)config.Linting.IndentationStyle);
             config.Linting.TabWidth = GetInt("code_style/tab_width", config.Linting.TabWidth);
             config.Linting.MaxLineLength = GetInt("code_style/max_line_length", config.Linting.MaxLineLength);
             config.Formatter.IndentSize = GetInt("code_style/indent_size", config.Formatter.IndentSize);
-            config.Formatter.LineEnding = (LineEndingStyle)GetInt("code_style/line_ending", (int)config.Formatter.LineEnding);
+            config.Formatter.LineEnding = (GDLineEndingStyle)GetInt("code_style/line_ending", (int)config.Formatter.LineEnding);
             config.Formatter.BlankLinesBetweenFunctions = GetInt("code_style/blank_lines_between_functions", config.Formatter.BlankLinesBetweenFunctions);
             config.Formatter.SpaceAroundOperators = GetBool("code_style/space_around_operators", config.Formatter.SpaceAroundOperators);
             config.Formatter.SpaceAfterComma = GetBool("code_style/space_after_comma", config.Formatter.SpaceAfterComma);
@@ -156,10 +157,10 @@ internal class ProjectSettingsRegistry
             config.Formatter.WrapLongLines = GetBool("code_style/wrap_long_lines", config.Formatter.WrapLongLines);
 
             // Naming Conventions
-            config.AdvancedLinting.ClassNameCase = (NamingCase)GetInt("naming/class_name_case", (int)config.AdvancedLinting.ClassNameCase);
-            config.AdvancedLinting.FunctionNameCase = (NamingCase)GetInt("naming/function_name_case", (int)config.AdvancedLinting.FunctionNameCase);
-            config.AdvancedLinting.VariableNameCase = (NamingCase)GetInt("naming/variable_name_case", (int)config.AdvancedLinting.VariableNameCase);
-            config.AdvancedLinting.ConstantNameCase = (NamingCase)GetInt("naming/constant_name_case", (int)config.AdvancedLinting.ConstantNameCase);
+            config.AdvancedLinting.ClassNameCase = (GDNamingCase)GetInt("naming/class_name_case", (int)config.AdvancedLinting.ClassNameCase);
+            config.AdvancedLinting.FunctionNameCase = (GDNamingCase)GetInt("naming/function_name_case", (int)config.AdvancedLinting.FunctionNameCase);
+            config.AdvancedLinting.VariableNameCase = (GDNamingCase)GetInt("naming/variable_name_case", (int)config.AdvancedLinting.VariableNameCase);
+            config.AdvancedLinting.ConstantNameCase = (GDNamingCase)GetInt("naming/constant_name_case", (int)config.AdvancedLinting.ConstantNameCase);
             config.AdvancedLinting.RequireUnderscoreForPrivate = GetBool("naming/require_underscore_for_private", config.AdvancedLinting.RequireUnderscoreForPrivate);
             config.AdvancedLinting.WarnUnusedVariables = GetBool("naming/warn_unused_variables", config.AdvancedLinting.WarnUnusedVariables);
             config.AdvancedLinting.WarnUnusedParameters = GetBool("naming/warn_unused_parameters", config.AdvancedLinting.WarnUnusedParameters);
@@ -171,7 +172,7 @@ internal class ProjectSettingsRegistry
             config.Notifications.Enabled = GetBool("notifications/enabled", config.Notifications.Enabled);
             config.Notifications.ShowExpandedOnFirstOpen = GetBool("notifications/show_expanded_on_first_open", config.Notifications.ShowExpandedOnFirstOpen);
             config.Notifications.AutoHideSeconds = GetInt("notifications/auto_hide_seconds", config.Notifications.AutoHideSeconds);
-            config.Notifications.MinSeverity = (DiagnosticSeverity)GetInt("notifications/min_severity", (int)config.Notifications.MinSeverity);
+            config.Notifications.MinSeverity = (GDDiagnosticSeverity)GetInt("notifications/min_severity", (int)config.Notifications.MinSeverity);
 
             // TODO Tags
             config.TodoTags.Enabled = GetBool("todo_tags/enabled", config.TodoTags.Enabled);

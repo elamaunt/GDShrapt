@@ -2,9 +2,11 @@ using Godot;
 using GDShrapt.Plugin.Config;
 using GDShrapt.Plugin.Diagnostics;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
 namespace GDShrapt.Plugin.UI;
 
@@ -207,10 +209,10 @@ internal partial class ErrorLensOverlay : Control
                 Message = $"[{diag.RuleId}] {diag.Message}",
                 Severity = diag.Severity switch
                 {
-                    DiagnosticSeverity.Error => ErrorSeverity.Error,
-                    DiagnosticSeverity.Warning => ErrorSeverity.Warning,
-                    DiagnosticSeverity.Info => ErrorSeverity.Info,
-                    DiagnosticSeverity.Hint => ErrorSeverity.Hint,
+                    GDDiagnosticSeverity.Error => ErrorSeverity.Error,
+                    GDDiagnosticSeverity.Warning => ErrorSeverity.Warning,
+                    GDDiagnosticSeverity.Info => ErrorSeverity.Info,
+                    GDDiagnosticSeverity.Hint => ErrorSeverity.Hint,
                     _ => ErrorSeverity.Info
                 }
             };

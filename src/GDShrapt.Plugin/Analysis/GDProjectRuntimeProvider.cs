@@ -74,7 +74,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
             var symbol = scriptMap.Analyzer.FindSymbol(memberName);
             if (symbol != null)
             {
-                return new GDRuntimeMemberInfo(memberName, ConvertSymbolKind(symbol.Kind), symbol.TypeName);
+                return new GDRuntimeMemberInfo(memberName, ConvertSymbolKind(symbol.Kind), symbol.TypeName)
+                {
+                    IsStatic = symbol.IsStatic
+                };
             }
         }
 

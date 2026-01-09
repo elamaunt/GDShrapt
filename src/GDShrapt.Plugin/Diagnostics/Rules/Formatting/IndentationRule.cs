@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -13,7 +14,7 @@ internal class IndentationRule : FormattingRule
     public override string RuleId => "GDS001";
     public override string Name => "Indentation Consistency";
     public override string Description => "Ensure consistent use of tabs or spaces for indentation";
-    public override FormattingLevel RequiredFormattingLevel => FormattingLevel.Light;
+    public override GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Light;
 
     // Regex to detect spaces used for indentation (at start of line, 2+ spaces followed by code)
     private static readonly Regex SpaceIndentPattern = new(@"^( {2,})(?=\S)", RegexOptions.Compiled);
@@ -25,12 +26,12 @@ internal class IndentationRule : FormattingRule
     public override IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig)
     {
         var lines = SplitLines(content);
         var lintingConfig = projectConfig.Linting;
-        var preferTabs = lintingConfig.IndentationStyle == IndentationStyle.Tabs;
+        var preferTabs = lintingConfig.IndentationStyle == GDIndentationStyle.Tabs;
         var tabWidth = lintingConfig.TabWidth;
 
         for (int i = 0; i < lines.Length; i++)

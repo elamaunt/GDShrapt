@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,10 +13,11 @@ namespace GDShrapt.CLI.Core;
 public class GDFormatCommand : IGDCommand
 {
     private readonly string _path;
-    private readonly IGDOutputFormatter _formatter;
+    private readonly IGDOutputFormatter _outputFormatter;
     private readonly TextWriter _output;
     private readonly bool _dryRun;
     private readonly bool _checkOnly;
+    private readonly GDFormatter _codeFormatter;
 
     public string Name => "format";
     public string Description => "Format GDScript files";
@@ -27,13 +27,15 @@ public class GDFormatCommand : IGDCommand
         IGDOutputFormatter formatter,
         TextWriter? output = null,
         bool dryRun = false,
-        bool checkOnly = false)
+        bool checkOnly = false,
+        GDFormatterOptions? formatterOptions = null)
     {
         _path = path;
-        _formatter = formatter;
+        _outputFormatter = formatter;
         _output = output ?? Console.Out;
         _dryRun = dryRun;
         _checkOnly = checkOnly;
+        _codeFormatter = new GDFormatter(formatterOptions ?? new GDFormatterOptions());
     }
 
     public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -52,13 +54,13 @@ public class GDFormatCommand : IGDCommand
             }
             else
             {
-                _formatter.WriteError(_output, $"Path not found: {fullPath}");
+                _outputFormatter.WriteError(_output, $"Path not found: {fullPath}");
                 return Task.FromResult(2);
             }
         }
         catch (Exception ex)
         {
-            _formatter.WriteError(_output, ex.Message);
+            _outputFormatter.WriteError(_output, ex.Message);
             return Task.FromResult(2);
         }
     }
@@ -67,46 +69,46 @@ public class GDFormatCommand : IGDCommand
     {
         if (!filePath.EndsWith(".gd", StringComparison.OrdinalIgnoreCase))
         {
-            _formatter.WriteError(_output, $"Not a GDScript file: {filePath}");
+            _outputFormatter.WriteError(_output, $"Not a GDScript file: {filePath}");
             return 2;
         }
 
         var content = File.ReadAllText(filePath, Encoding.UTF8);
-        var reader = new GDScriptReader();
-        var classDecl = reader.ParseFileContent(content);
 
-        if (classDecl == null)
+        string formatted;
+        try
         {
-            _formatter.WriteError(_output, $"Failed to parse: {filePath}");
+            formatted = _codeFormatter.FormatCode(content);
+        }
+        catch (Exception ex)
+        {
+            _outputFormatter.WriteError(_output, $"Failed to format: {filePath} - {ex.Message}");
             return 1;
         }
-
-        // Use the built-in formatter
-        var formatted = classDecl.ToString();
 
         if (content == formatted)
         {
             if (!_checkOnly)
             {
-                _formatter.WriteMessage(_output, $"Already formatted: {filePath}");
+                _outputFormatter.WriteMessage(_output, $"Already formatted: {filePath}");
             }
             return 0;
         }
 
         if (_checkOnly)
         {
-            _formatter.WriteMessage(_output, $"Would format: {filePath}");
+            _outputFormatter.WriteMessage(_output, $"Would format: {filePath}");
             return 1;
         }
 
         if (_dryRun)
         {
-            _formatter.WriteMessage(_output, $"[Dry run] Would format: {filePath}");
+            _outputFormatter.WriteMessage(_output, $"[Dry run] Would format: {filePath}");
             return 0;
         }
 
         File.WriteAllText(filePath, formatted, Encoding.UTF8);
-        _formatter.WriteMessage(_output, $"Formatted: {filePath}");
+        _outputFormatter.WriteMessage(_output, $"Formatted: {filePath}");
         return 0;
     }
 
@@ -116,7 +118,7 @@ public class GDFormatCommand : IGDCommand
 
         if (files.Length == 0)
         {
-            _formatter.WriteMessage(_output, $"No GDScript files found in: {dirPath}");
+            _outputFormatter.WriteMessage(_output, $"No GDScript files found in: {dirPath}");
             return 0;
         }
 
@@ -145,17 +147,17 @@ public class GDFormatCommand : IGDCommand
         {
             if (wouldFormatCount > 0)
             {
-                _formatter.WriteMessage(_output, $"{wouldFormatCount} file(s) need formatting.");
+                _outputFormatter.WriteMessage(_output, $"{wouldFormatCount} file(s) need formatting.");
                 return 1;
             }
             else
             {
-                _formatter.WriteMessage(_output, $"All {files.Length} file(s) are properly formatted.");
+                _outputFormatter.WriteMessage(_output, $"All {files.Length} file(s) are properly formatted.");
                 return 0;
             }
         }
 
-        _formatter.WriteMessage(_output, $"Processed {files.Length} file(s): {formattedCount} formatted, {errorCount} error(s).");
+        _outputFormatter.WriteMessage(_output, $"Processed {files.Length} file(s): {formattedCount} formatted, {errorCount} error(s).");
         return errorCount > 0 ? 1 : 0;
     }
 }

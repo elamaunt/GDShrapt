@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>5.0.0</Version>
+    <Version>5.1.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt</Product>
     <Description>GDShrapt.Reader is a .NET library and object-oriented one-pass parser for GDScript 2.0 (Godot 4.x). It provides complete AST, visitor pattern, and parsing infrastructure for building GDScript tooling.
@@ -22,14 +22,14 @@ Related Packages:
 - GDShrapt.Formatter - Code formatting with auto type inference and style extraction
 
 Usage: new GDScriptReader().ParseFileContent(code) or ParseExpression(expr)</Description>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>GDShrapt GDScript parser AST Godot Godot4 GDScript2 lexical-analysis code-analysis tooling</PackageTags>
-    <AssemblyVersion>5.0.0</AssemblyVersion>
-    <FileVersion>5.0.0</FileVersion>
+    <AssemblyVersion>5.1.0</AssemblyVersion>
+    <FileVersion>5.1.0</FileVersion>
     <PackageReleaseNotes>
 Version 5.0.0:
 - BREAKING: Split into multiple packages for modularity
@@ -55,10 +55,6 @@ Version 5.0.0:
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
     <None Include="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

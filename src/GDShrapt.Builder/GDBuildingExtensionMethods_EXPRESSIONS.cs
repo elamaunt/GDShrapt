@@ -11,13 +11,6 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        /*public static T AddStringExpression<T>(this T receiver, string value, bool multiline = false, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas)
-           where T : ITokenReceiver<GDStringExpression>
-        {
-            receiver.HandleReceivedToken(GD.Expression.String(value, multiline, boundingChar));
-            return receiver;
-        }*/
-
         public static T AddNumberExpression<T>(this T receiver, string value)
            where T : ITokenReceiver<GDNumberExpression>
         {

@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -12,7 +13,7 @@ internal class SpaceAfterCommaRule : FormattingRule
     public override string RuleId => "GDS011";
     public override string Name => "Space After Comma";
     public override string Description => "Ensure space after commas in lists and function calls";
-    public override FormattingLevel RequiredFormattingLevel => FormattingLevel.Full;
+    public override GDFormattingLevel RequiredFormattingLevel => GDFormattingLevel.Full;
 
     // Pattern to find commas not followed by space or end of line
     private static readonly Regex MissingSpaceAfterComma = new(@",(?![\s\n\r]|$)", RegexOptions.Compiled);
@@ -20,7 +21,7 @@ internal class SpaceAfterCommaRule : FormattingRule
     public override IEnumerable<Diagnostic> Analyze(
         GDScriptMap scriptMap,
         string content,
-        RuleConfig ruleConfig,
+        GDRuleConfig ruleConfig,
         ProjectConfig projectConfig)
     {
         var lines = SplitLines(content);
@@ -47,7 +48,7 @@ internal class SpaceAfterCommaRule : FormattingRule
                             "Missing space after comma",
                             scriptMap.Reference)
                         .AtLocation(i, col)
-                        .WithSeverity(DiagnosticSeverity.Hint)
+                        .WithSeverity(GDDiagnosticSeverity.Hint)
                         .WithFix(CreateReplacementFix("Add space after comma", i, col, col + 1, ", "))
                         .Build();
                 }

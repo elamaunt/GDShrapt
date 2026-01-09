@@ -183,3 +183,57 @@ public class GDWorkspaceEdit
     [JsonPropertyName("changes")]
     public System.Collections.Generic.Dictionary<string, GDLspTextEdit[]>? Changes { get; set; }
 }
+
+/// <summary>
+/// Document formatting request parameters.
+/// </summary>
+public class GDDocumentFormattingParams
+{
+    /// <summary>
+    /// The document to format.
+    /// </summary>
+    [JsonPropertyName("textDocument")]
+    public GDLspTextDocumentIdentifier TextDocument { get; set; } = new();
+
+    /// <summary>
+    /// The format options.
+    /// </summary>
+    [JsonPropertyName("options")]
+    public GDFormattingOptions Options { get; set; } = new();
+}
+
+/// <summary>
+/// Value-object describing what options formatting should use.
+/// </summary>
+public class GDFormattingOptions
+{
+    /// <summary>
+    /// Size of a tab in spaces.
+    /// </summary>
+    [JsonPropertyName("tabSize")]
+    public int TabSize { get; set; } = 4;
+
+    /// <summary>
+    /// Prefer spaces over tabs.
+    /// </summary>
+    [JsonPropertyName("insertSpaces")]
+    public bool InsertSpaces { get; set; } = false;
+
+    /// <summary>
+    /// Trim trailing whitespace on a line.
+    /// </summary>
+    [JsonPropertyName("trimTrailingWhitespace")]
+    public bool? TrimTrailingWhitespace { get; set; }
+
+    /// <summary>
+    /// Insert a newline character at the end of the file if one does not exist.
+    /// </summary>
+    [JsonPropertyName("insertFinalNewline")]
+    public bool? InsertFinalNewline { get; set; }
+
+    /// <summary>
+    /// Trim all newlines after the final newline at the end of the file.
+    /// </summary>
+    [JsonPropertyName("trimFinalNewlines")]
+    public bool? TrimFinalNewlines { get; set; }
+}

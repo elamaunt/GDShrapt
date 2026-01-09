@@ -1,6 +1,7 @@
 using Godot;
 using GDShrapt.Plugin.Config;
 using GDShrapt.Plugin.Diagnostics;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +24,7 @@ internal partial class ProblemsDock : Control
     private DiagnosticService? _diagnosticService;
     private GDProjectMap? _projectMap;
     private ProblemsGroupingMode _groupingMode = ProblemsGroupingMode.ByFile;
-    private DiagnosticSeverity? _filterSeverity; // null = all severities
+    private GDDiagnosticSeverity? _filterSeverity; // null = all severities
 
     /// <summary>
     /// Event fired when user wants to navigate to a diagnostic.
@@ -227,8 +228,8 @@ internal partial class ProblemsDock : Control
         foreach (var fileGroup in byFile)
         {
             var fileName = System.IO.Path.GetFileName(fileGroup.Key);
-            var errorCount = fileGroup.Count(d => d.Severity == DiagnosticSeverity.Error);
-            var warningCount = fileGroup.Count(d => d.Severity == DiagnosticSeverity.Warning);
+            var errorCount = fileGroup.Count(d => d.Severity == GDDiagnosticSeverity.Error);
+            var warningCount = fileGroup.Count(d => d.Severity == GDDiagnosticSeverity.Warning);
 
             var fileItem = _resultsTree.CreateItem(root);
             fileItem.SetText(0, "");
@@ -253,7 +254,7 @@ internal partial class ProblemsDock : Control
 
     private void DisplayGroupedBySeverity(TreeItem root, IEnumerable<Diagnostic> diagnostics)
     {
-        var severities = new[] { DiagnosticSeverity.Error, DiagnosticSeverity.Warning, DiagnosticSeverity.Info, DiagnosticSeverity.Hint };
+        var severities = new[] { GDDiagnosticSeverity.Error, GDDiagnosticSeverity.Warning, GDDiagnosticSeverity.Info, GDDiagnosticSeverity.Hint };
 
         foreach (var severity in severities)
         {
@@ -360,9 +361,9 @@ internal partial class ProblemsDock : Control
         _filterSeverity = index switch
         {
             0 => null,
-            1 => DiagnosticSeverity.Error,
-            2 => DiagnosticSeverity.Warning,
-            3 => DiagnosticSeverity.Hint,
+            1 => GDDiagnosticSeverity.Error,
+            2 => GDDiagnosticSeverity.Warning,
+            3 => GDDiagnosticSeverity.Hint,
             _ => null
         };
         RefreshDisplay();
@@ -392,38 +393,38 @@ internal partial class ProblemsDock : Control
         _statusLabel.Text = status;
     }
 
-    private static string GetSeverityText(DiagnosticSeverity severity)
+    private static string GetSeverityText(GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            DiagnosticSeverity.Error => "Error",
-            DiagnosticSeverity.Warning => "Warning",
-            DiagnosticSeverity.Info => "Info",
-            DiagnosticSeverity.Hint => "Hint",
+            GDDiagnosticSeverity.Error => "Error",
+            GDDiagnosticSeverity.Warning => "Warning",
+            GDDiagnosticSeverity.Info => "Info",
+            GDDiagnosticSeverity.Hint => "Hint",
             _ => "Unknown"
         };
     }
 
-    private static Color GetSeverityColor(DiagnosticSeverity severity)
+    private static Color GetSeverityColor(GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            DiagnosticSeverity.Error => new Color(1.0f, 0.4f, 0.4f),
-            DiagnosticSeverity.Warning => new Color(1.0f, 0.8f, 0.2f),
-            DiagnosticSeverity.Info => new Color(0.6f, 0.8f, 1.0f),
-            DiagnosticSeverity.Hint => new Color(0.6f, 0.8f, 1.0f),
+            GDDiagnosticSeverity.Error => new Color(1.0f, 0.4f, 0.4f),
+            GDDiagnosticSeverity.Warning => new Color(1.0f, 0.8f, 0.2f),
+            GDDiagnosticSeverity.Info => new Color(0.6f, 0.8f, 1.0f),
+            GDDiagnosticSeverity.Hint => new Color(0.6f, 0.8f, 1.0f),
             _ => new Color(0.8f, 0.8f, 0.8f)
         };
     }
 
-    private static string GetSeverityIcon(DiagnosticSeverity severity)
+    private static string GetSeverityIcon(GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            DiagnosticSeverity.Error => "StatusError",
-            DiagnosticSeverity.Warning => "StatusWarning",
-            DiagnosticSeverity.Info => "StatusSuccess",
-            DiagnosticSeverity.Hint => "StatusSuccess",
+            GDDiagnosticSeverity.Error => "StatusError",
+            GDDiagnosticSeverity.Warning => "StatusWarning",
+            GDDiagnosticSeverity.Info => "StatusSuccess",
+            GDDiagnosticSeverity.Hint => "StatusSuccess",
             _ => "StatusSuccess"
         };
     }

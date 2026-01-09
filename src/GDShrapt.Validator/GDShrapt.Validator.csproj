@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>5.0.0</Version>
+    <Version>5.1.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt.Validator</Product>
     <Description>GDShrapt.Validator provides compiler-style AST validation for GDScript 2.0 (Godot 4.x) with type inference.
@@ -26,14 +26,14 @@ Type Inference System:
 
 Usage: new GDValidator().Validate(tree, options)
 Requires: GDShrapt.Reader</Description>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
     <Copyright>elamaunt</Copyright>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>GDShrapt GDScript validator validation Godot Godot4 diagnostics type-inference static-analysis</PackageTags>
-    <AssemblyVersion>5.0.0</AssemblyVersion>
-    <FileVersion>5.0.0</FileVersion>
+    <AssemblyVersion>5.1.0</AssemblyVersion>
+    <FileVersion>5.1.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -43,10 +43,6 @@ Requires: GDShrapt.Reader</Description>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
     <None Include="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

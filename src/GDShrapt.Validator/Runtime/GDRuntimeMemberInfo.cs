@@ -60,13 +60,14 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Creates a method member info.
         /// </summary>
-        public static GDRuntimeMemberInfo Method(string name, string returnType, int minArgs, int maxArgs, bool isVarArgs = false)
+        public static GDRuntimeMemberInfo Method(string name, string returnType, int minArgs, int maxArgs, bool isVarArgs = false, bool isStatic = false)
         {
             return new GDRuntimeMemberInfo(name, GDRuntimeMemberKind.Method, returnType)
             {
                 MinArgs = minArgs,
                 MaxArgs = maxArgs,
-                IsVarArgs = isVarArgs
+                IsVarArgs = isVarArgs,
+                IsStatic = isStatic
             };
         }
 

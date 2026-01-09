@@ -39,13 +39,6 @@ namespace GDShrapt.Reader
             return receiver;
         }
 
-        /*public static T AddExtendsWithPathAtribute<T>(this T receiver, string path)
-            where T : ITokenReceiver<GDExtendsAttribute>
-        {
-            receiver.HandleReceivedToken(GD.Atribute.ExtendsPath(path));
-            return receiver;
-        }*/
-
         public static T AddVariable<T>(this T receiver, Func<GDVariableDeclaration, GDVariableDeclaration> setup)
             where T : ITokenReceiver<GDVariableDeclaration>
         {
