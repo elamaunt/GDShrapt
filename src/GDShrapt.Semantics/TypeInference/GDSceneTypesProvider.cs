@@ -121,6 +121,29 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Gets the type of a unique node (marked with unique_name_in_owner = true) by name.
+    /// </summary>
+    /// <param name="scenePath">Resource path of the scene.</param>
+    /// <param name="nodeName">Name of the unique node (without % prefix).</param>
+    /// <returns>The node type if found, or null.</returns>
+    public string? GetUniqueNodeType(string scenePath, string nodeName)
+    {
+        if (!_sceneCache.TryGetValue(scenePath, out var sceneInfo))
+            return null;
+
+        // Find unique node by name
+        var node = sceneInfo.UniqueNodes.FirstOrDefault(n => n.Name == nodeName);
+        if (node != null)
+        {
+            return node.ScriptTypeName ?? node.NodeType;
+        }
+
+        // Fallback: search by name in all nodes (for scenes where unique_name_in_owner wasn't parsed)
+        var fallbackNode = sceneInfo.Nodes.FirstOrDefault(n => n.Name == nodeName);
+        return fallbackNode != null ? (fallbackNode.ScriptTypeName ?? fallbackNode.NodeType) : null;
+    }
+
     private GDSceneInfo ParseSceneFile(string content, string scenePath)
     {
         var fullPath = GetFullPath(scenePath);
@@ -244,7 +267,35 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             }
         }
 
+        // Parse unique nodes (marked with unique_name_in_owner = true)
+        var uniqueNodeRegex = new Regex(@"unique_name_in_owner\s*=\s*true", RegexOptions.Multiline);
+        var uniqueNodes = new List<GDNodeTypeInfo>();
+
+        foreach (Match uniqueMatch in uniqueNodeRegex.Matches(content))
+        {
+            var uniquePos = uniqueMatch.Index;
+
+            // Find which node this belongs to by finding the last node defined before this attribute
+            for (int i = nodeMatches.Count - 1; i >= 0; i--)
+            {
+                if (nodeMatches[i].Index < uniquePos)
+                {
+                    // Check if next node is after unique attribute (meaning this node owns it)
+                    if (i + 1 >= nodeMatches.Count || nodeMatches[i + 1].Index > uniquePos)
+                    {
+                        if (i < nodes.Count)
+                        {
+                            nodes[i].IsUnique = true;
+                            uniqueNodes.Add(nodes[i]);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         sceneInfo.Nodes = nodes;
+        sceneInfo.UniqueNodes = uniqueNodes;
         return sceneInfo;
     }
 
@@ -332,16 +383,19 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
     /// <summary>
     /// Finds all scenes that use a specific script.
     /// </summary>
-    /// <param name="scriptPath">Resource path of the script (e.g., "res://scripts/player.gd").</param>
+    /// <param name="scriptPath">Path to the script (can be resource path like "res://scripts/player.gd" or full filesystem path).</param>
     /// <returns>Tuples of (scene resource path, node path within scene).</returns>
     public IEnumerable<(string scenePath, string nodePath)> GetScenesForScript(string scriptPath)
     {
         if (string.IsNullOrEmpty(scriptPath))
             yield break;
 
+        // Normalize to resource path for comparison
+        var resourcePath = ToResourcePath(scriptPath);
+
         foreach (var scene in _sceneCache.Values)
         {
-            if (scene.ScriptToNodePath.TryGetValue(scriptPath, out var nodePath))
+            if (scene.ScriptToNodePath.TryGetValue(resourcePath, out var nodePath))
             {
                 yield return (scene.ScenePath, nodePath);
             }
@@ -349,7 +403,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             // Also check nodes directly
             foreach (var node in scene.Nodes)
             {
-                if (node.ScriptPath == scriptPath)
+                if (node.ScriptPath == resourcePath)
                 {
                     yield return (scene.ScenePath, node.Path);
                 }
@@ -706,8 +760,21 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         _logger.Debug($"Captured snapshot for {scenePath} with {snapshot.NodesByLine.Count} nodes");
     }
 
-    private string ToResourcePath(string fullPath)
+    /// <summary>
+    /// Converts a full filesystem path to a Godot resource path (res://...).
+    /// If the path is already a resource path or not within the project, returns it unchanged.
+    /// </summary>
+    /// <param name="fullPath">Full filesystem path or resource path.</param>
+    /// <returns>Resource path (res://...) or the original path if conversion is not possible.</returns>
+    public string ToResourcePath(string fullPath)
     {
+        if (string.IsNullOrEmpty(fullPath))
+            return fullPath;
+
+        // Already a resource path
+        if (fullPath.StartsWith("res://"))
+            return fullPath;
+
         var projectPath = _projectPath.Replace('\\', '/').TrimEnd('/');
         var normalizedPath = fullPath.Replace('\\', '/');
 
@@ -757,6 +824,11 @@ public class GDSceneInfo
     public IReadOnlyList<GDNodeTypeInfo> Nodes { get; set; } = Array.Empty<GDNodeTypeInfo>();
 
     /// <summary>
+    /// Nodes marked with unique_name_in_owner = true (accessible via %NodeName).
+    /// </summary>
+    public IReadOnlyList<GDNodeTypeInfo> UniqueNodes { get; set; } = Array.Empty<GDNodeTypeInfo>();
+
+    /// <summary>
     /// Maps script resource paths to the node paths that use them.
     /// </summary>
     public Dictionary<string, string> ScriptToNodePath { get; } = new();
@@ -792,6 +864,11 @@ public class GDNodeTypeInfo
     /// The original line content from the scene file.
     /// </summary>
     public string? OriginalLine { get; set; }
+
+    /// <summary>
+    /// Whether this node has unique_name_in_owner = true (accessible via %NodeName).
+    /// </summary>
+    public bool IsUnique { get; set; }
 }
 
 /// <summary>

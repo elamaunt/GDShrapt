@@ -259,6 +259,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
                 projectTypesProvider,
                 autoloadsProvider,
                 SceneTypesProvider,
+                this, // IGDScriptProvider for preload type inference
                 SemanticLoggerAdapter.Instance);
         }
 

@@ -15,7 +15,9 @@ public class GDTypeResolver
     private readonly GDProjectTypesProvider? _projectTypesProvider;
     private readonly GDAutoloadsProvider? _autoloadsProvider;
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
+    private readonly IGDScriptProvider? _scriptProvider;
     private readonly GDCompositeRuntimeProvider _compositeProvider;
+    private readonly GDNodeTypeInjector? _nodeTypeInjector;
     private readonly IGDSemanticLogger _logger;
 
     public GDTypeResolver(
@@ -23,12 +25,14 @@ public class GDTypeResolver
         GDProjectTypesProvider? projectTypesProvider = null,
         GDAutoloadsProvider? autoloadsProvider = null,
         GDSceneTypesProvider? sceneTypesProvider = null,
+        IGDScriptProvider? scriptProvider = null,
         IGDSemanticLogger? logger = null)
     {
         _godotTypesProvider = godotTypesProvider ?? new GDGodotTypesProvider();
         _projectTypesProvider = projectTypesProvider;
         _autoloadsProvider = autoloadsProvider;
         _sceneTypesProvider = sceneTypesProvider;
+        _scriptProvider = scriptProvider;
         _logger = logger ?? GDNullLogger.Instance;
 
         _compositeProvider = new GDCompositeRuntimeProvider(
@@ -36,6 +40,15 @@ public class GDTypeResolver
             _projectTypesProvider,
             _autoloadsProvider,
             _sceneTypesProvider);
+
+        // Create node type injector for $NodePath, get_node(), preload() type inference
+        if (_sceneTypesProvider != null || _scriptProvider != null)
+        {
+            _nodeTypeInjector = new GDNodeTypeInjector(
+                _sceneTypesProvider,
+                _scriptProvider,
+                _logger);
+        }
     }
 
     /// <summary>
@@ -61,8 +74,17 @@ public class GDTypeResolver
             // Build scope stack from script context
             var scopeStack = BuildScopeStack(expression, scriptInfo);
 
-            // Use the validator's type inference engine
-            var engine = new GDTypeInferenceEngine(_compositeProvider, scopeStack);
+            // Create injection context with script path for scene resolution
+            var injectionContext = new GDTypeInjectionContext
+            {
+                ScriptPath = scriptInfo?.FullPath
+            };
+
+            // Use the validator's type inference engine with node type injector
+            var engine = _nodeTypeInjector != null
+                ? new GDTypeInferenceEngine(_compositeProvider, scopeStack, _nodeTypeInjector, injectionContext)
+                : new GDTypeInferenceEngine(_compositeProvider, scopeStack);
+
             var typeName = engine.InferType(expression);
             var typeNode = engine.InferTypeNode(expression);
 

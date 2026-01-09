@@ -262,6 +262,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             projectTypesProvider,
             autoloadsProvider,
             _sceneTypesProvider,
+            this, // IGDScriptProvider for preload type inference
             _logger);
     }
 

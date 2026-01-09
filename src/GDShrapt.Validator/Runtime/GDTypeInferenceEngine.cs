@@ -136,12 +136,24 @@ namespace GDShrapt.Reader
                 case GDYieldExpression _:
                     return CreateSimpleType("Signal");
 
-                // Get node ($) - Node
-                case GDGetNodeExpression _:
+                // Get node ($) - try type injector first, fallback to Node
+                case GDGetNodeExpression getNodeExpr:
+                    if (_typeInjector != null)
+                    {
+                        var injectedType = _typeInjector.InjectType(getNodeExpr, _injectionContext);
+                        if (!string.IsNullOrEmpty(injectedType))
+                            return CreateSimpleType(injectedType);
+                    }
                     return CreateSimpleType("Node");
 
-                // Get unique node (%) - Node
-                case GDGetUniqueNodeExpression _:
+                // Get unique node (%) - try type injector first, fallback to Node
+                case GDGetUniqueNodeExpression getUniqueExpr:
+                    if (_typeInjector != null)
+                    {
+                        var injectedType = _typeInjector.InjectType(getUniqueExpr, _injectionContext);
+                        if (!string.IsNullOrEmpty(injectedType))
+                            return CreateSimpleType(injectedType);
+                    }
                     return CreateSimpleType("Node");
 
                 // Match case variable - bound type from pattern
@@ -249,6 +261,14 @@ namespace GDShrapt.Reader
 
         private string InferCallType(GDCallExpression callExpr)
         {
+            // Try type injector first for preload(), load(), get_node(), etc.
+            if (_typeInjector != null)
+            {
+                var injectedType = _typeInjector.InjectType(callExpr, _injectionContext);
+                if (!string.IsNullOrEmpty(injectedType))
+                    return injectedType;
+            }
+
             var caller = callExpr.CallerExpression;
 
             // Direct function call
