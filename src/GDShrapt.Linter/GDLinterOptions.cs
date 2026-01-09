@@ -212,6 +212,85 @@ namespace GDShrapt.Reader
         /// </summary>
         public bool WarnDuplicatedLoad { get; set; } = true;
 
+        // Complexity options (new rules)
+        /// <summary>
+        /// Maximum number of public methods allowed in a class. 0 to disable. Default: 20.
+        /// </summary>
+        public int MaxPublicMethods { get; set; } = 20;
+
+        /// <summary>
+        /// Maximum number of return statements allowed in a function. 0 to disable. Default: 6.
+        /// </summary>
+        public int MaxReturns { get; set; } = 6;
+
+        /// <summary>
+        /// Maximum nesting depth (if/for/while/match) allowed in a function. 0 to disable. Default: 4.
+        /// </summary>
+        public int MaxNestingDepth { get; set; } = 4;
+
+        /// <summary>
+        /// Maximum number of local variables allowed in a function. 0 to disable. Default: 15.
+        /// </summary>
+        public int MaxLocalVariables { get; set; } = 15;
+
+        /// <summary>
+        /// Maximum number of class variables allowed. 0 to disable. Default: 20.
+        /// </summary>
+        public int MaxClassVariables { get; set; } = 20;
+
+        /// <summary>
+        /// Maximum number of branches (if/elif/else/match cases) allowed in a function. 0 to disable. Default: 12.
+        /// </summary>
+        public int MaxBranches { get; set; } = 12;
+
+        /// <summary>
+        /// Maximum number of boolean expressions in a single condition. 0 to disable. Default: 5.
+        /// </summary>
+        public int MaxBooleanExpressions { get; set; } = 5;
+
+        /// <summary>
+        /// Maximum number of inner classes allowed in a file. 0 to disable. Default: 5.
+        /// </summary>
+        public int MaxInnerClasses { get; set; } = 5;
+
+        // BestPractices options (new rules)
+        /// <summary>
+        /// Whether to warn when expression result is not assigned (conservative mode).
+        /// </summary>
+        public bool WarnExpressionNotAssigned { get; set; } = false;
+
+        /// <summary>
+        /// Whether to warn when assigned value is never read before being overwritten.
+        /// </summary>
+        public bool WarnUselessAssignment { get; set; } = false;
+
+        /// <summary>
+        /// Whether to warn when function has inconsistent return statements.
+        /// </summary>
+        public bool WarnInconsistentReturn { get; set; } = false;
+
+        // Style options (new rules)
+        /// <summary>
+        /// Whether to warn when if is the only statement in else block.
+        /// </summary>
+        public bool WarnNoLonelyIf { get; set; } = false;
+
+        // Member ordering options
+        /// <summary>
+        /// Position of abstract methods: "first", "last", or "none" (no constraint). Default: "none".
+        /// </summary>
+        public string AbstractMethodPosition { get; set; } = "none";
+
+        /// <summary>
+        /// Position of private methods: "after_public", "before_public", or "none". Default: "after_public".
+        /// </summary>
+        public string PrivateMethodPosition { get; set; } = "after_public";
+
+        /// <summary>
+        /// Position of static methods: "first", "after_constants", or "none". Default: "none".
+        /// </summary>
+        public string StaticMethodPosition { get; set; } = "none";
+
         /// <summary>
         /// Enables strict typing with Warning severity for all elements.
         /// </summary>
@@ -293,6 +372,45 @@ namespace GDShrapt.Reader
 
             if (rule.RuleId == "GDL219") // duplicated-load
                 return WarnDuplicatedLoad;
+
+            // New complexity rules (auto-enable when their max value is set > 0)
+            if (rule.RuleId == "GDL222") // max-public-methods
+                return MaxPublicMethods > 0;
+
+            if (rule.RuleId == "GDL223") // max-returns
+                return MaxReturns > 0;
+
+            if (rule.RuleId == "GDL225") // max-nesting-depth
+                return MaxNestingDepth > 0;
+
+            if (rule.RuleId == "GDL226") // max-local-variables
+                return MaxLocalVariables > 0;
+
+            if (rule.RuleId == "GDL227") // max-class-variables
+                return MaxClassVariables > 0;
+
+            if (rule.RuleId == "GDL228") // max-branches
+                return MaxBranches > 0;
+
+            if (rule.RuleId == "GDL229") // max-boolean-expressions
+                return MaxBooleanExpressions > 0;
+
+            if (rule.RuleId == "GDL232") // max-inner-classes
+                return MaxInnerClasses > 0;
+
+            // New best practices rules (auto-enable when their warn flag is set)
+            if (rule.RuleId == "GDL224") // expression-not-assigned
+                return WarnExpressionNotAssigned;
+
+            if (rule.RuleId == "GDL231") // useless-assignment
+                return WarnUselessAssignment;
+
+            if (rule.RuleId == "GDL234") // consistent-return
+                return WarnInconsistentReturn;
+
+            // New style rules
+            if (rule.RuleId == "GDL233") // no-lonely-if
+                return WarnNoLonelyIf;
 
             return rule.EnabledByDefault;
         }

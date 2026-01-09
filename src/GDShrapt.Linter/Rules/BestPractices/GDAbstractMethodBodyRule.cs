@@ -33,7 +33,7 @@ namespace GDShrapt.Reader
                 var methodName = methodDeclaration.Identifier?.Sequence ?? "<unknown>";
                 ReportIssue(
                     $"Abstract method '{methodName}' should not have implementation body",
-                    methodDeclaration.Identifier ?? methodDeclaration.FuncKeyword,
+                    (GDSyntaxToken)methodDeclaration.Identifier ?? methodDeclaration.FuncKeyword,
                     "Remove the implementation body from abstract method");
             }
         }

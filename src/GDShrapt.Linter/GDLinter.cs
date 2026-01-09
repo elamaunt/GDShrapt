@@ -91,9 +91,24 @@ namespace GDShrapt.Reader
             AddRule(new GDDuplicatedLoadRule());
             AddRule(new GDAbstractMethodBodyRule());
             AddRule(new GDAbstractClassRequiredRule());
+            AddRule(new GDExpressionNotAssignedRule());
+            AddRule(new GDNoSelfAssignRule());
+            AddRule(new GDUselessAssignmentRule());
+            AddRule(new GDConsistentReturnRule());
 
             // Style rules
             AddRule(new GDTrailingCommaRule());
+            AddRule(new GDNoLonelyIfRule());
+
+            // Complexity rules
+            AddRule(new GDMaxPublicMethodsRule());
+            AddRule(new GDMaxReturnsRule());
+            AddRule(new GDMaxNestingDepthRule());
+            AddRule(new GDMaxLocalVariablesRule());
+            AddRule(new GDMaxClassVariablesRule());
+            AddRule(new GDMaxBranchesRule());
+            AddRule(new GDMaxBooleanExpressionsRule());
+            AddRule(new GDMaxInnerClassesRule());
 
             // Organization rules
             AddRule(new GDMemberOrderingRule());

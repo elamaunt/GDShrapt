@@ -28,6 +28,11 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Documentation and comments rules
         /// </summary>
-        Documentation
+        Documentation,
+
+        /// <summary>
+        /// Complexity metrics rules (max methods, max nesting, etc.)
+        /// </summary>
+        Complexity
     }
 }

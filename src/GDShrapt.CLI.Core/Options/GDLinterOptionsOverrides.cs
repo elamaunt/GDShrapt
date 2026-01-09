@@ -29,6 +29,16 @@ public class GDLinterOptionsOverrides
     public int? MaxFunctionLength { get; set; }
     public int? MaxCyclomaticComplexity { get; set; }
 
+    // Complexity limits (new rules)
+    public int? MaxPublicMethods { get; set; }
+    public int? MaxReturns { get; set; }
+    public int? MaxNestingDepth { get; set; }
+    public int? MaxLocalVariables { get; set; }
+    public int? MaxClassVariables { get; set; }
+    public int? MaxBranches { get; set; }
+    public int? MaxBooleanExpressions { get; set; }
+    public int? MaxInnerClasses { get; set; }
+
     // Warnings
     public bool? WarnUnusedVariables { get; set; }
     public bool? WarnUnusedParameters { get; set; }
@@ -42,6 +52,12 @@ public class GDLinterOptionsOverrides
     public bool? WarnPrivateMethodCall { get; set; }
     public bool? WarnDuplicatedLoad { get; set; }
 
+    // New warnings (new rules)
+    public bool? WarnExpressionNotAssigned { get; set; }
+    public bool? WarnUselessAssignment { get; set; }
+    public bool? WarnInconsistentReturn { get; set; }
+    public bool? WarnNoLonelyIf { get; set; }
+
     // Strict typing
     public GDLintSeverity? StrictTypingClassVariables { get; set; }
     public GDLintSeverity? StrictTypingLocalVariables { get; set; }
@@ -50,6 +66,11 @@ public class GDLinterOptionsOverrides
 
     // Comment suppression
     public bool? EnableCommentSuppression { get; set; }
+
+    // Member ordering
+    public string? AbstractMethodPosition { get; set; }
+    public string? PrivateMethodPosition { get; set; }
+    public string? StaticMethodPosition { get; set; }
 
     /// <summary>
     /// Applies overrides to the given linter options.
@@ -88,6 +109,24 @@ public class GDLinterOptionsOverrides
         if (MaxCyclomaticComplexity.HasValue)
             options.MaxCyclomaticComplexity = MaxCyclomaticComplexity.Value;
 
+        // Complexity limits (new rules)
+        if (MaxPublicMethods.HasValue)
+            options.MaxPublicMethods = MaxPublicMethods.Value;
+        if (MaxReturns.HasValue)
+            options.MaxReturns = MaxReturns.Value;
+        if (MaxNestingDepth.HasValue)
+            options.MaxNestingDepth = MaxNestingDepth.Value;
+        if (MaxLocalVariables.HasValue)
+            options.MaxLocalVariables = MaxLocalVariables.Value;
+        if (MaxClassVariables.HasValue)
+            options.MaxClassVariables = MaxClassVariables.Value;
+        if (MaxBranches.HasValue)
+            options.MaxBranches = MaxBranches.Value;
+        if (MaxBooleanExpressions.HasValue)
+            options.MaxBooleanExpressions = MaxBooleanExpressions.Value;
+        if (MaxInnerClasses.HasValue)
+            options.MaxInnerClasses = MaxInnerClasses.Value;
+
         // Warnings
         if (WarnUnusedVariables.HasValue)
             options.WarnUnusedVariables = WarnUnusedVariables.Value;
@@ -112,6 +151,16 @@ public class GDLinterOptionsOverrides
         if (WarnDuplicatedLoad.HasValue)
             options.WarnDuplicatedLoad = WarnDuplicatedLoad.Value;
 
+        // New warnings (new rules)
+        if (WarnExpressionNotAssigned.HasValue)
+            options.WarnExpressionNotAssigned = WarnExpressionNotAssigned.Value;
+        if (WarnUselessAssignment.HasValue)
+            options.WarnUselessAssignment = WarnUselessAssignment.Value;
+        if (WarnInconsistentReturn.HasValue)
+            options.WarnInconsistentReturn = WarnInconsistentReturn.Value;
+        if (WarnNoLonelyIf.HasValue)
+            options.WarnNoLonelyIf = WarnNoLonelyIf.Value;
+
         // Strict typing
         if (StrictTypingClassVariables.HasValue)
             options.StrictTypingClassVariables = StrictTypingClassVariables.Value;
@@ -125,5 +174,13 @@ public class GDLinterOptionsOverrides
         // Comment suppression
         if (EnableCommentSuppression.HasValue)
             options.EnableCommentSuppression = EnableCommentSuppression.Value;
+
+        // Member ordering
+        if (AbstractMethodPosition != null)
+            options.AbstractMethodPosition = AbstractMethodPosition;
+        if (PrivateMethodPosition != null)
+            options.PrivateMethodPosition = PrivateMethodPosition;
+        if (StaticMethodPosition != null)
+            options.StaticMethodPosition = StaticMethodPosition;
     }
 }

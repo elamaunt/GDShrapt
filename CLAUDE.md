@@ -725,11 +725,22 @@ var options = new GDLinterOptions {
     MaxFunctionLength = 50,
     MaxComplexity = 10,
 
-    // NEW: Additional warnings
+    // Additional warnings
     WarnNoElifReturn = false,       // GDL216
     WarnNoElseReturn = false,       // GDL217
     WarnPrivateMethodCall = false,  // GDL218
     WarnDuplicatedLoad = true,      // GDL219
+    WarnInconsistentReturn = false, // GDL234
+
+    // Complexity limits (0 to disable)
+    MaxPublicMethods = 20,          // GDL222
+    MaxReturns = 6,                 // GDL223
+    MaxNestingDepth = 4,            // GDL225
+    MaxLocalVariables = 15,         // GDL226
+    MaxClassVariables = 20,         // GDL227
+    MaxBranches = 12,               // GDL228
+    MaxBooleanExpressions = 5,      // GDL229
+    MaxInnerClasses = 5,            // GDL232
 
     // Strict typing (per-element severity, null = disabled)
     StrictTypingClassVariables = GDLintSeverity.Warning,
@@ -1104,6 +1115,20 @@ GDIdentifier id = "myVariable";
 | GDL219 | duplicated-load | BestPractices | On | Warn about duplicate load()/preload() calls |
 | GDL220 | abstract-method-body | BestPractices | On | Abstract method should not have body |
 | GDL221 | abstract-class-required | BestPractices | On | Class with abstract methods needs @abstract |
+| GDL224 | expression-not-assigned | BestPractices | Off | Warn when expression result is not used |
+| GDL230 | no-self-assign | BestPractices | On | Warn about self-assignment (x = x) |
+| GDL231 | useless-assignment | BestPractices | Off | Warn when assignment is never read |
+| GDL234 | consistent-return | BestPractices | Off | All returns should return value or none |
+| **Complexity** | | | | |
+| GDL222 | max-public-methods | Complexity | Off | Max public methods in class (default 20) |
+| GDL223 | max-returns | Complexity | Off | Max return statements in function (default 6) |
+| GDL225 | max-nesting-depth | Complexity | Off | Max nesting depth if/for/while/match (default 4) |
+| GDL226 | max-local-variables | Complexity | Off | Max local variables in function (default 15) |
+| GDL227 | max-class-variables | Complexity | Off | Max variables in class (default 20) |
+| GDL228 | max-branches | Complexity | Off | Max branches in function (default 12) |
+| GDL229 | max-boolean-expressions | Complexity | Off | Max conditions in single if (default 5) |
+| GDL232 | max-inner-classes | Complexity | Off | Max inner classes in file (default 5) |
+| GDL233 | no-lonely-if | Style | Off | Warn when if is only statement in else |
 
 ### Formatter Rules (GDFxxx)
 
@@ -1157,6 +1182,16 @@ gdshrapt lint [project-path] [options]
     --max-parameters         Max function parameters, 0 to disable (default: 5)
     --max-function-length    Max function lines, 0 to disable (default: 50)
     --max-complexity         Max cyclomatic complexity, 0 to disable (default: 10)
+
+    # Complexity Limits (0 to disable)
+    --max-public-methods     Max public methods in class (default: 20)
+    --max-returns            Max return statements in function (default: 6)
+    --max-nesting-depth      Max nesting depth if/for/while/match (default: 4)
+    --max-local-variables    Max local variables in function (default: 15)
+    --max-class-variables    Max variables in class (default: 20)
+    --max-branches           Max branches in function (default: 12)
+    --max-boolean-expressions Max conditions in single if (default: 5)
+    --max-inner-classes      Max inner classes in file (default: 5)
 
     # Warnings (boolean flags)
     --warn-unused-variables       Warn about unused local variables

@@ -108,6 +108,27 @@ public class GDAdvancedLintingConfig
     /// </summary>
     public bool WarnDuplicatedLoad { get; set; } = true;
 
+    // New warn flags (added rules)
+    /// <summary>
+    /// Warn when expression result is not assigned. Default: false.
+    /// </summary>
+    public bool WarnExpressionNotAssigned { get; set; } = false;
+
+    /// <summary>
+    /// Warn when assigned value is never read. Default: false.
+    /// </summary>
+    public bool WarnUselessAssignment { get; set; } = false;
+
+    /// <summary>
+    /// Warn when function has inconsistent return statements. Default: false.
+    /// </summary>
+    public bool WarnInconsistentReturn { get; set; } = false;
+
+    /// <summary>
+    /// Warn when if is the only statement in else block. Default: false.
+    /// </summary>
+    public bool WarnNoLonelyIf { get; set; } = false;
+
     // Limits
     /// <summary>
     /// Maximum parameters in a function. 0 to disable. Default: 5.
@@ -128,6 +149,47 @@ public class GDAdvancedLintingConfig
     /// Maximum lines per file. 0 to disable. Default: 1000.
     /// </summary>
     public int MaxFileLines { get; set; } = 1000;
+
+    // Complexity limits (new rules)
+    /// <summary>
+    /// Maximum public methods in a class. 0 to disable. Default: 20.
+    /// </summary>
+    public int MaxPublicMethods { get; set; } = 20;
+
+    /// <summary>
+    /// Maximum return statements in a function. 0 to disable. Default: 6.
+    /// </summary>
+    public int MaxReturns { get; set; } = 6;
+
+    /// <summary>
+    /// Maximum nesting depth (if/for/while/match). 0 to disable. Default: 4.
+    /// </summary>
+    public int MaxNestingDepth { get; set; } = 4;
+
+    /// <summary>
+    /// Maximum local variables in a function. 0 to disable. Default: 15.
+    /// </summary>
+    public int MaxLocalVariables { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum class variables. 0 to disable. Default: 20.
+    /// </summary>
+    public int MaxClassVariables { get; set; } = 20;
+
+    /// <summary>
+    /// Maximum branches (if/elif/else/match cases) in a function. 0 to disable. Default: 12.
+    /// </summary>
+    public int MaxBranches { get; set; } = 12;
+
+    /// <summary>
+    /// Maximum boolean expressions in a single condition. 0 to disable. Default: 5.
+    /// </summary>
+    public int MaxBooleanExpressions { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum inner classes in a file. 0 to disable. Default: 5.
+    /// </summary>
+    public int MaxInnerClasses { get; set; } = 5;
 
     // Strict typing
     /// <summary>
@@ -155,6 +217,22 @@ public class GDAdvancedLintingConfig
     /// Process inline suppression comments (gdlint:ignore, gdlint:disable). Default: true.
     /// </summary>
     public bool EnableCommentSuppression { get; set; } = true;
+
+    // Member ordering options
+    /// <summary>
+    /// Position of abstract methods: "first", "last", or "none" (no constraint). Default: "none".
+    /// </summary>
+    public string AbstractMethodPosition { get; set; } = "none";
+
+    /// <summary>
+    /// Position of private methods: "after_public", "before_public", or "none". Default: "after_public".
+    /// </summary>
+    public string PrivateMethodPosition { get; set; } = "after_public";
+
+    /// <summary>
+    /// Position of static methods: "first", "after_constants", or "none". Default: "none".
+    /// </summary>
+    public string StaticMethodPosition { get; set; } = "none";
 }
 
 /// <summary>

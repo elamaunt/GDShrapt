@@ -36,7 +36,7 @@ namespace GDShrapt.Reader
 
                 ReportIssue(
                     $"Inner class '{className}' contains abstract method '{methodName}' but is not marked @abstract",
-                    innerClass.Identifier ?? innerClass.ClassKeyword,
+                    (GDSyntaxToken)innerClass.Identifier ?? innerClass.ClassKeyword,
                     "Add @abstract annotation before the class declaration");
             }
         }
@@ -60,12 +60,12 @@ namespace GDShrapt.Reader
                 var methodName = firstAbstractMethod.Identifier?.Sequence ?? "<unknown>";
 
                 // Get class name from class_name attribute if present
-                var classNameAttr = classDecl.ClassNameAttribute;
-                var className = classNameAttr?.Type?.Identifier?.Sequence ?? "<anonymous>";
+                var classNameAttr = classDecl.ClassName;
+                var className = classNameAttr?.Identifier?.Sequence ?? "<anonymous>";
 
                 ReportIssue(
                     $"Class '{className}' contains abstract method '{methodName}' but is not marked @abstract",
-                    firstAbstractMethod.Identifier ?? firstAbstractMethod.FuncKeyword,
+                    (GDSyntaxToken)firstAbstractMethod.Identifier ?? firstAbstractMethod.FuncKeyword,
                     "Add @abstract annotation before the class_name declaration");
             }
         }

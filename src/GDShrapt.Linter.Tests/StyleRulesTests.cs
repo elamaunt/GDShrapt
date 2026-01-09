@@ -576,5 +576,108 @@ func test(x, y):
         }
 
         #endregion
+
+        #region NoLonelyIfRule (GDL233)
+
+        [TestMethod]
+        public void NoLonelyIf_IfNotInElse_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnNoLonelyIf = true };
+            options.EnableRule("GDL233");
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    return 0
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL233").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NoLonelyIf_ElseWithMultipleStatements_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnNoLonelyIf = true };
+            options.EnableRule("GDL233");
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    else:
+        print(""negative"")
+        if x < -10:
+            return -2
+        return -1
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL233").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NoLonelyIf_LonelyIfInElse_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnNoLonelyIf = true };
+            options.EnableRule("GDL233");
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    else:
+        if x < -10:
+            return -2
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL233");
+        }
+
+        [TestMethod]
+        public void NoLonelyIf_Disabled_NoIssue()
+        {
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    else:
+        if x < -10:
+            return -2
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL233").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NoLonelyIf_SuggestsElif()
+        {
+            var options = new GDLinterOptions { WarnNoLonelyIf = true };
+            options.EnableRule("GDL233");
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    else:
+        if x < 0:
+            return -1
+";
+
+            var result = linter.LintCode(code);
+
+            var issue = result.Issues.FirstOrDefault(i => i.RuleId == "GDL233");
+            issue.Should().NotBeNull();
+            issue.Suggestion.Should().Contain("elif");
+        }
+
+        #endregion
     }
 }

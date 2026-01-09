@@ -51,6 +51,10 @@ public static class GDLinterOptionsFactory
             WarnNoElseReturn = advanced.WarnNoElseReturn,
             WarnPrivateMethodCall = advanced.WarnPrivateMethodCall,
             WarnDuplicatedLoad = advanced.WarnDuplicatedLoad,
+            WarnExpressionNotAssigned = advanced.WarnExpressionNotAssigned,
+            WarnUselessAssignment = advanced.WarnUselessAssignment,
+            WarnInconsistentReturn = advanced.WarnInconsistentReturn,
+            WarnNoLonelyIf = advanced.WarnNoLonelyIf,
 
             // Limits
             MaxParameters = advanced.MaxParameters,
@@ -59,6 +63,16 @@ public static class GDLinterOptionsFactory
             MaxLineLength = maxLineLength,
             MaxFileLines = advanced.MaxFileLines,
 
+            // Complexity limits
+            MaxPublicMethods = advanced.MaxPublicMethods,
+            MaxReturns = advanced.MaxReturns,
+            MaxNestingDepth = advanced.MaxNestingDepth,
+            MaxLocalVariables = advanced.MaxLocalVariables,
+            MaxClassVariables = advanced.MaxClassVariables,
+            MaxBranches = advanced.MaxBranches,
+            MaxBooleanExpressions = advanced.MaxBooleanExpressions,
+            MaxInnerClasses = advanced.MaxInnerClasses,
+
             // Strict typing
             StrictTypingClassVariables = MapStrictTypingSeverity(advanced.StrictTypingClassVariables),
             StrictTypingLocalVariables = MapStrictTypingSeverity(advanced.StrictTypingLocalVariables),
@@ -66,7 +80,12 @@ public static class GDLinterOptionsFactory
             StrictTypingReturnTypes = MapStrictTypingSeverity(advanced.StrictTypingReturnTypes),
 
             // Comment suppression
-            EnableCommentSuppression = advanced.EnableCommentSuppression
+            EnableCommentSuppression = advanced.EnableCommentSuppression,
+
+            // Member ordering
+            AbstractMethodPosition = advanced.AbstractMethodPosition,
+            PrivateMethodPosition = advanced.PrivateMethodPosition,
+            StaticMethodPosition = advanced.StaticMethodPosition
         };
     }
 

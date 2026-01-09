@@ -80,8 +80,10 @@ namespace GDShrapt.Reader
 
         private void ValidateAbstractClass(GDClassDeclaration classDecl)
         {
-            bool isClassAbstract = classDecl.CustomAttributes
-                .Any(attr => attr.Attribute?.IsAbstract() == true);
+            bool isClassAbstract = classDecl.ClassName?.AttributesDeclaredBefore
+                .Any(attr => attr.Attribute?.IsAbstract() == true) == true
+                || classDecl.Extends?.AttributesDeclaredBefore
+                .Any(attr => attr.Attribute?.IsAbstract() == true) == true;
 
             var abstractMethods = classDecl.Methods
                 .Where(m => IsMethodAbstract(m))

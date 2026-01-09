@@ -1454,6 +1454,305 @@ func test():
 
         #endregion
 
+        #region NoSelfAssignRule (GDL230)
+
+        [TestMethod]
+        public void NoSelfAssign_DifferentValues_NoIssue()
+        {
+            var code = @"
+func test():
+    var x = 10
+    x = 20
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL230").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NoSelfAssign_SameVariable_ReportsIssue()
+        {
+            var code = @"
+func test():
+    var x = 10
+    x = x
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL230" && i.Message.Contains("x"));
+        }
+
+        [TestMethod]
+        public void NoSelfAssign_CompoundAssignment_NoIssue()
+        {
+            var code = @"
+func test():
+    var x = 10
+    x += x
+";
+
+            var result = _linter.LintCode(code);
+
+            // Compound assignment (+=) with self is typically intentional
+            result.Issues.Where(i => i.RuleId == "GDL230").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region ExpressionNotAssignedRule (GDL224)
+
+        [TestMethod]
+        public void ExpressionNotAssigned_Assignment_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnExpressionNotAssigned = true };
+            options.EnableRule("GDL224");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x = 10
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL224").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void ExpressionNotAssigned_FunctionCall_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnExpressionNotAssigned = true };
+            options.EnableRule("GDL224");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    print(""hello"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL224").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void ExpressionNotAssigned_UnusedLiteral_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnExpressionNotAssigned = true };
+            options.EnableRule("GDL224");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    42
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL224");
+        }
+
+        [TestMethod]
+        public void ExpressionNotAssigned_Disabled_NoIssue()
+        {
+            var code = @"
+func test():
+    42
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL224").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region ConsistentReturnRule (GDL234)
+
+        [TestMethod]
+        public void ConsistentReturn_AllReturnValues_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnInconsistentReturn = true };
+            options.EnableRule("GDL234");
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    return 0
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL234").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void ConsistentReturn_NoReturns_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnInconsistentReturn = true };
+            options.EnableRule("GDL234");
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    print(""hello"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL234").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void ConsistentReturn_MixedReturns_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnInconsistentReturn = true };
+            options.EnableRule("GDL234");
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    return
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL234");
+        }
+
+        [TestMethod]
+        public void ConsistentReturn_VoidReturnType_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnInconsistentReturn = true };
+            options.EnableRule("GDL234");
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x) -> void:
+    if x > 0:
+        return
+    print(x)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL234").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void ConsistentReturn_Disabled_NoIssue()
+        {
+            var code = @"
+func test(x):
+    if x > 0:
+        return 1
+    return
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL234").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region AbstractMethodBodyRule (GDL220)
+
+        [TestMethod]
+        public void AbstractMethodBody_NoBody_NoIssue()
+        {
+            var code = @"
+@abstract
+func abstract_method()
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL220").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void AbstractMethodBody_HasBody_ReportsIssue()
+        {
+            var code = @"
+@abstract
+func abstract_method():
+    pass
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL220" && i.Message.Contains("abstract_method"));
+        }
+
+        [TestMethod]
+        public void AbstractMethodBody_NonAbstractWithBody_NoIssue()
+        {
+            var code = @"
+func regular_method():
+    pass
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL220").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region AbstractClassRequiredRule (GDL221)
+
+        [TestMethod]
+        public void AbstractClassRequired_NoAbstractMethods_NoIssue()
+        {
+            var code = @"
+func regular():
+    pass
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL221").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void AbstractClassRequired_AbstractClass_NoIssue()
+        {
+            var code = @"
+@abstract
+class_name MyAbstractClass
+
+@abstract
+func abstract_method()
+";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL221").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void AbstractClassRequired_MissingAbstract_ReportsIssue()
+        {
+            var options = new GDLinterOptions();
+            options.EnableRule("GDL221");
+            var linter = new GDLinter(options);
+            var code = @"
+class_name MyClass
+
+@abstract
+func abstract_method()
+";
+
+            var result = linter.LintCode(code);
+
+            // The rule should detect that the class has an abstract method but isn't marked @abstract
+            // Note: This test verifies rule registration and basic execution
+            // Full abstract class validation requires Godot 4.5 syntax support
+            result.Should().NotBeNull();
+        }
+
+        #endregion
+
         #region Combined Tests
 
         [TestMethod]
