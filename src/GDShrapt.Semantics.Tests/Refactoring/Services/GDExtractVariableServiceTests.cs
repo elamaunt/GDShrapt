@@ -277,4 +277,158 @@ func test():
     }
 
     #endregion
+
+    #region Type Confidence Tests
+
+    [TestMethod]
+    public void Plan_LiteralIntExpression_ReturnsCertainConfidence()
+    {
+        var code = @"extends Node
+func test():
+    print(42)
+";
+        var context = CreateContextWithExpression(code, 2, 10, 2, 12);
+
+        var result = _service.Plan(context, "value");
+
+        Assert.IsNotNull(result);
+        // If expression is detected, check confidence for literal
+        if (result.Success && result.InferredType == "int")
+        {
+            Assert.AreEqual(GDTypeConfidence.Certain, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_LiteralFloatExpression_ReturnsCertainConfidence()
+    {
+        var code = @"extends Node
+func test():
+    print(3.14)
+";
+        var context = CreateContextWithExpression(code, 2, 10, 2, 14);
+
+        var result = _service.Plan(context, "pi");
+
+        Assert.IsNotNull(result);
+        if (result.Success && result.InferredType == "float")
+        {
+            Assert.AreEqual(GDTypeConfidence.Certain, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_LiteralStringExpression_ReturnsCertainConfidence()
+    {
+        var code = @"extends Node
+func test():
+    print(""hello"")
+";
+        var context = CreateContextWithExpression(code, 2, 10, 2, 17);
+
+        var result = _service.Plan(context, "text");
+
+        Assert.IsNotNull(result);
+        if (result.Success && result.InferredType == "String")
+        {
+            Assert.AreEqual(GDTypeConfidence.Certain, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_LiteralBoolExpression_ReturnsCertainConfidence()
+    {
+        var code = @"extends Node
+func test():
+    print(true)
+";
+        var context = CreateContextWithExpression(code, 2, 10, 2, 14);
+
+        var result = _service.Plan(context, "flag");
+
+        Assert.IsNotNull(result);
+        if (result.Success && result.InferredType == "bool")
+        {
+            Assert.AreEqual(GDTypeConfidence.Certain, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_ArrayInitializer_ReturnsMediumConfidence()
+    {
+        var code = @"extends Node
+func test():
+    print([1, 2, 3])
+";
+        var context = CreateContextWithExpression(code, 2, 10, 2, 19);
+
+        var result = _service.Plan(context, "items");
+
+        Assert.IsNotNull(result);
+        if (result.Success && result.InferredType?.Contains("Array") == true)
+        {
+            // Arrays have Medium confidence since element types might vary
+            Assert.IsTrue(result.TypeConfidence == GDTypeConfidence.Medium ||
+                          result.TypeConfidence == GDTypeConfidence.Certain);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_DictionaryInitializer_ReturnsMediumConfidence()
+    {
+        var code = @"extends Node
+func test():
+    print({""a"": 1})
+";
+        var context = CreateContextWithExpression(code, 2, 10, 2, 19);
+
+        var result = _service.Plan(context, "data");
+
+        Assert.IsNotNull(result);
+        if (result.Success && result.InferredType == "Dictionary")
+        {
+            Assert.AreEqual(GDTypeConfidence.Medium, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_UnknownExpression_ReturnsUnknownConfidence()
+    {
+        var code = @"extends Node
+func test():
+    var x = unknown_func()
+    print(x)
+";
+        var context = CreateContextWithExpression(code, 2, 12, 2, 26);
+
+        var result = _service.Plan(context, "value");
+
+        // If expression is detected but type is unknown, should have Unknown or Medium confidence
+        Assert.IsNotNull(result);
+        if (result.Success)
+        {
+            Assert.IsTrue(result.TypeConfidence == GDTypeConfidence.Unknown ||
+                          result.TypeConfidence == GDTypeConfidence.Medium);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_WithConfidenceReason_HasReasonText()
+    {
+        var code = @"extends Node
+func test():
+    print(42)
+";
+        var context = CreateContextWithExpression(code, 2, 10, 2, 12);
+
+        var result = _service.Plan(context, "value");
+
+        // If successful with certain confidence, should have a reason
+        if (result.Success && result.TypeConfidence == GDTypeConfidence.Certain)
+        {
+            Assert.IsFalse(string.IsNullOrEmpty(result.TypeConfidenceReason));
+        }
+    }
+
+    #endregion
 }

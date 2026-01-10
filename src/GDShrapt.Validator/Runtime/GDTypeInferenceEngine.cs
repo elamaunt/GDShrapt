@@ -284,19 +284,89 @@ namespace GDShrapt.Reader
                     // Could be type constructor (Vector2(), Color(), etc.)
                     if (_runtimeProvider.IsKnownType(funcName))
                         return funcName;
+
+                    // Try to find local method declaration for return type
+                    var methodDecl = FindLocalMethodDeclaration(funcName, callExpr);
+                    if (methodDecl?.ReturnType != null)
+                        return methodDecl.ReturnType.BuildName();
+                }
+            }
+            // Chained call: obj.method1().method2() - inner call is also a GDCallExpression
+            else if (caller is GDCallExpression innerCall)
+            {
+                // First infer the type of the inner call
+                var innerType = InferCallType(innerCall);
+                if (!string.IsNullOrEmpty(innerType))
+                {
+                    // The outer call is on the result of inner call
+                    // But we need to check if there's a member access between them
+                    // This case handles: get_something().method()
+                    // The caller would be the call expression, but we need the method being called
+                    // Actually this pattern is: (call).identifier() which is GDMemberOperatorExpression(call, identifier)
+                    // So this branch handles direct call chaining like func()() which is rare in GDScript
+                    return innerType;
                 }
             }
             // Method call on object
             else if (caller is GDMemberOperatorExpression memberExpr)
             {
                 var methodName = memberExpr.Identifier?.Sequence;
-                var callerType = InferType(memberExpr.CallerExpression);
+
+                // Handle .new() constructor - returns the class type itself
+                if (methodName == "new")
+                {
+                    var constructorType = InferType(memberExpr.CallerExpression);
+                    if (!string.IsNullOrEmpty(constructorType))
+                    {
+                        // Verify it's a valid class type that can be instantiated
+                        if (_runtimeProvider.IsKnownType(constructorType) ||
+                            _runtimeProvider.GetGlobalClass(constructorType) != null)
+                        {
+                            return constructorType;
+                        }
+                        // Even for unknown types, .new() likely returns that type
+                        // (e.g., user-defined classes not yet in runtime provider)
+                        return constructorType;
+                    }
+                }
+
+                // Handle chained calls: obj.a().b() where memberExpr.CallerExpression is a call
+                string callerType;
+                if (memberExpr.CallerExpression is GDCallExpression innerCallExpr)
+                {
+                    callerType = InferCallType(innerCallExpr);
+                }
+                else
+                {
+                    callerType = InferType(memberExpr.CallerExpression);
+                }
 
                 if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(methodName))
                 {
                     var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
                     if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                         return memberInfo.Type;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Finds a method declaration in the current class context.
+        /// </summary>
+        private GDMethodDeclaration FindLocalMethodDeclaration(string methodName, GDNode context)
+        {
+            var classDecl = context.RootClassDeclaration;
+            if (classDecl == null)
+                return null;
+
+            foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
+            {
+                if (member is GDMethodDeclaration methodDecl &&
+                    methodDecl.Identifier?.Sequence == methodName)
+                {
+                    return methodDecl;
                 }
             }
 

@@ -87,17 +87,18 @@ public class GDAddTypeAnnotationService
         if (!CanExecute(context))
             return GDAddTypeAnnotationResult.Failed("Cannot add type annotation at this position");
 
+        var helper = new GDTypeInferenceHelper(context.GetAnalyzer());
+
         // Try class-level variable
         var varDecl = GetVariableDeclaration(context);
         if (varDecl?.Type == null && varDecl?.Identifier != null)
         {
-            var typeName = InferType(varDecl.Initializer, context);
-            if (!string.IsNullOrEmpty(typeName))
+            var inferredType = helper.InferVariableType(varDecl);
+            if (!inferredType.IsUnknown)
             {
-                return new GDAddTypeAnnotationResult(
-                    true, null,
+                return GDAddTypeAnnotationResult.FromInferredType(
                     varDecl.Identifier.Sequence ?? "variable",
-                    typeName,
+                    inferredType,
                     TypeAnnotationTarget.ClassVariable);
             }
         }
@@ -106,13 +107,12 @@ public class GDAddTypeAnnotationService
         var localVar = GetLocalVariableDeclaration(context);
         if (localVar?.Type == null && localVar?.Identifier != null)
         {
-            var typeName = InferType(localVar.Initializer, context);
-            if (!string.IsNullOrEmpty(typeName))
+            var inferredType = helper.InferVariableType(localVar);
+            if (!inferredType.IsUnknown)
             {
-                return new GDAddTypeAnnotationResult(
-                    true, null,
+                return GDAddTypeAnnotationResult.FromInferredType(
                     localVar.Identifier.Sequence ?? "variable",
-                    typeName,
+                    inferredType,
                     TypeAnnotationTarget.LocalVariable);
             }
         }
@@ -121,14 +121,14 @@ public class GDAddTypeAnnotationService
         var param = GetParameterDeclaration(context);
         if (param?.Type == null && param?.Identifier != null)
         {
-            var typeName = param.DefaultValue != null
-                ? InferType(param.DefaultValue, context) ?? "Variant"
-                : "Variant";
+            var inferredType = helper.InferParameterType(param);
 
-            return new GDAddTypeAnnotationResult(
-                true, null,
+            // For parameters without default values, we return Variant with Unknown confidence
+            return GDAddTypeAnnotationResult.FromInferredType(
                 param.Identifier.Sequence ?? "parameter",
-                typeName,
+                inferredType.IsUnknown
+                    ? GDInferredType.Low("Variant", "Parameter has no type annotation or default value")
+                    : inferredType,
                 TypeAnnotationTarget.Parameter);
         }
 
@@ -344,18 +344,49 @@ public class GDAddTypeAnnotationResult
     public string TypeName { get; }
     public TypeAnnotationTarget Target { get; }
 
+    /// <summary>
+    /// Confidence level of the type inference.
+    /// </summary>
+    public GDTypeConfidence Confidence { get; }
+
+    /// <summary>
+    /// Reason for the confidence level.
+    /// </summary>
+    public string? ConfidenceReason { get; }
+
     public GDAddTypeAnnotationResult(
         bool success,
         string? errorMessage,
         string identifierName,
         string typeName,
-        TypeAnnotationTarget target)
+        TypeAnnotationTarget target,
+        GDTypeConfidence confidence = GDTypeConfidence.Unknown,
+        string? confidenceReason = null)
     {
         Success = success;
         ErrorMessage = errorMessage;
         IdentifierName = identifierName;
         TypeName = typeName;
         Target = target;
+        Confidence = confidence;
+        ConfidenceReason = confidenceReason;
+    }
+
+    /// <summary>
+    /// Creates a result from an inferred type with confidence.
+    /// </summary>
+    public static GDAddTypeAnnotationResult FromInferredType(
+        string identifierName,
+        GDInferredType inferredType,
+        TypeAnnotationTarget target)
+    {
+        return new GDAddTypeAnnotationResult(
+            true, null,
+            identifierName,
+            inferredType?.TypeName ?? "Variant",
+            target,
+            inferredType?.Confidence ?? GDTypeConfidence.Unknown,
+            inferredType?.Reason);
     }
 
     public static GDAddTypeAnnotationResult Failed(string errorMessage)

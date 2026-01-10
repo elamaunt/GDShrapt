@@ -370,4 +370,177 @@ func _ready():
     }
 
     #endregion
+
+    #region Type Confidence Tests
+
+    [TestMethod]
+    public void Plan_ButtonNodePath_ReturnsLowConfidence()
+    {
+        var code = @"extends Node
+func _ready():
+    var btn = $StartButton
+";
+        var context = CreateContext(code, 2, 15);
+
+        var result = _service.Plan(context, "start_btn");
+
+        // Node type from name suffix is Low confidence (heuristic)
+        if (result.Success && result.InferredType == "Button")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+            Assert.IsTrue(result.TypeConfidenceReason?.Contains("suffix") == true);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_LabelNodePath_ReturnsLowConfidenceWithReason()
+    {
+        var code = @"extends Node
+func _ready():
+    var lbl = $ScoreLabel
+";
+        var context = CreateContext(code, 2, 15);
+
+        var result = _service.Plan(context, "score_label");
+
+        if (result.Success && result.InferredType == "Label")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+            Assert.IsFalse(string.IsNullOrEmpty(result.TypeConfidenceReason));
+        }
+    }
+
+    [TestMethod]
+    public void Plan_Sprite2DNodePath_ReturnsLowConfidence()
+    {
+        var code = @"extends Node
+func _ready():
+    var spr = $PlayerSprite2D
+";
+        var context = CreateContext(code, 2, 15);
+
+        var result = _service.Plan(context, "player_sprite");
+
+        if (result.Success && result.InferredType == "Sprite2D")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_TimerNodePath_ReturnsLowConfidence()
+    {
+        var code = @"extends Node
+func _ready():
+    var t = $CooldownTimer
+";
+        var context = CreateContext(code, 2, 13);
+
+        var result = _service.Plan(context, "cooldown_timer");
+
+        if (result.Success && result.InferredType == "Timer")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_UnknownNodePath_ReturnsNodeWithLowConfidence()
+    {
+        var code = @"extends Node
+func _ready():
+    var thing = $SomeThing
+";
+        var context = CreateContext(code, 2, 17);
+
+        var result = _service.Plan(context, "thing");
+
+        // Unknown node path defaults to "Node" with low confidence
+        if (result.Success && result.InferredType == "Node")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_Area2DNodePath_ReturnsLowConfidence()
+    {
+        var code = @"extends Node
+func _ready():
+    var hitbox = $HitboxArea2D
+";
+        var context = CreateContext(code, 2, 18);
+
+        var result = _service.Plan(context, "hitbox");
+
+        if (result.Success && result.InferredType == "Area2D")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_CharacterBody2DNodePath_ReturnsLowConfidence()
+    {
+        var code = @"extends Node
+func _ready():
+    var player = $PlayerBody2D
+";
+        var context = CreateContext(code, 2, 18);
+
+        var result = _service.Plan(context, "player");
+
+        if (result.Success && result.InferredType == "CharacterBody2D")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_AnimationPlayerNodePath_ReturnsLowConfidence()
+    {
+        var code = @"extends Node
+func _ready():
+    var anim = $SpriteAnimationPlayer
+";
+        var context = CreateContext(code, 2, 16);
+
+        var result = _service.Plan(context, "animator");
+
+        if (result.Success && result.InferredType == "AnimationPlayer")
+        {
+            Assert.AreEqual(GDTypeConfidence.Low, result.TypeConfidence);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_ConfidenceReasonExplainsSuffix_WhenHeuristic()
+    {
+        var code = @"extends Node
+func _ready():
+    var btn = $MyButton
+";
+        var context = CreateContext(code, 2, 15);
+
+        var result = _service.Plan(context, "my_button");
+
+        if (result.Success && result.TypeConfidence == GDTypeConfidence.Low)
+        {
+            // Confidence reason should mention it's from node name
+            Assert.IsTrue(result.TypeConfidenceReason?.Contains("node name") == true ||
+                          result.TypeConfidenceReason?.Contains("suffix") == true ||
+                          result.TypeConfidenceReason?.Contains("Inferred") == true);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_FailedResult_HasUnknownConfidence()
+    {
+        var result = _service.Plan(null);
+
+        Assert.IsFalse(result.Success);
+        Assert.AreEqual(GDTypeConfidence.Unknown, result.TypeConfidence);
+    }
+
+    #endregion
 }

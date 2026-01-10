@@ -40,10 +40,11 @@ public class GDGenerateOnreadyService
         var normalizedName = NormalizeVariableName(variableName, nodePath);
         var inferredType = InferNodeType(context, nodePath);
 
+        // Use the overload that accepts GDInferredType with confidence
         return GDGenerateOnreadyResult.Planned(
             normalizedName,
             nodePath,
-            inferredType);
+            inferredType);  // Now returns GDInferredType with confidence
     }
 
     /// <summary>
@@ -72,8 +73,8 @@ public class GDGenerateOnreadyService
 
         var edits = new List<GDTextEdit>();
 
-        // Build the @onready declaration
-        var onreadyDecl = BuildOnreadyDeclaration(normalizedName, inferredType, nodePath);
+        // Build the @onready declaration using the type name from GDInferredType
+        var onreadyDecl = BuildOnreadyDeclaration(normalizedName, inferredType.TypeName, nodePath);
 
         // Find insertion point for @onready (after class declarations, before methods)
         var insertionLine = FindOnreadyInsertionLine(context.ClassDeclaration);
@@ -222,37 +223,46 @@ public class GDGenerateOnreadyService
         return expr is GDNodePathExpression || expr is GDGetNodeExpression;
     }
 
-    private string InferNodeType(GDRefactoringContext context, string nodePath)
+    private GDInferredType InferNodeType(GDRefactoringContext context, string nodePath)
     {
-        // Try to infer type from analyzer
+        // Try to infer type from analyzer (would have scene information)
         if (context.Script?.Analyzer != null)
         {
-            // The analyzer might have scene information
-            // For now, return a generic type
+            // The analyzer might have scene information - high confidence
+            // Check if there's scene type resolution available
+            var nodeExpr = FindNodeExpression(context);
+            if (nodeExpr != null)
+            {
+                var analyzerType = context.Script.Analyzer.GetTypeForNode(nodeExpr);
+                if (!string.IsNullOrEmpty(analyzerType) && analyzerType != "Variant" && analyzerType != "Node")
+                {
+                    return GDInferredType.High(analyzerType, "From scene type resolution");
+                }
+            }
         }
 
-        // Derive from node name if possible
+        // Derive from node name if possible - low confidence (heuristic)
         var nodeName = nodePath?.Split('/')?.LastOrDefault();
         if (!string.IsNullOrEmpty(nodeName))
         {
-            // Common patterns
+            // Common patterns - Low confidence since it's just a naming heuristic
             if (nodeName.EndsWith("Button"))
-                return "Button";
+                return GDInferredType.Low("Button", "Inferred from node name suffix 'Button'");
             if (nodeName.EndsWith("Label"))
-                return "Label";
+                return GDInferredType.Low("Label", "Inferred from node name suffix 'Label'");
             if (nodeName.EndsWith("Sprite") || nodeName.EndsWith("Sprite2D"))
-                return "Sprite2D";
+                return GDInferredType.Low("Sprite2D", "Inferred from node name suffix 'Sprite'");
             if (nodeName.EndsWith("Body2D"))
-                return "CharacterBody2D";
+                return GDInferredType.Low("CharacterBody2D", "Inferred from node name suffix 'Body2D'");
             if (nodeName.EndsWith("Area2D"))
-                return "Area2D";
+                return GDInferredType.Low("Area2D", "Inferred from node name suffix 'Area2D'");
             if (nodeName.EndsWith("Timer"))
-                return "Timer";
+                return GDInferredType.Low("Timer", "Inferred from node name suffix 'Timer'");
             if (nodeName.EndsWith("AnimationPlayer"))
-                return "AnimationPlayer";
+                return GDInferredType.Low("AnimationPlayer", "Inferred from node name suffix 'AnimationPlayer'");
         }
 
-        return "Node";
+        return GDInferredType.Low("Node", "Default node type - actual type depends on scene");
     }
 
     private string NormalizeVariableName(string name, string nodePath)
@@ -374,18 +384,32 @@ public class GDGenerateOnreadyResult : GDRefactoringResult
     /// </summary>
     public string InferredType { get; }
 
+    /// <summary>
+    /// Confidence level of the type inference.
+    /// </summary>
+    public GDTypeConfidence TypeConfidence { get; }
+
+    /// <summary>
+    /// Reason for the confidence level.
+    /// </summary>
+    public string? TypeConfidenceReason { get; }
+
     private GDGenerateOnreadyResult(
         bool success,
         string errorMessage,
         IReadOnlyList<GDTextEdit> edits,
         string variableName,
         string nodePath,
-        string inferredType)
+        string inferredType,
+        GDTypeConfidence typeConfidence,
+        string? typeConfidenceReason)
         : base(success, errorMessage, edits)
     {
         VariableName = variableName;
         NodePath = nodePath;
         InferredType = inferredType;
+        TypeConfidence = typeConfidence;
+        TypeConfidenceReason = typeConfidenceReason;
     }
 
     /// <summary>
@@ -398,7 +422,24 @@ public class GDGenerateOnreadyResult : GDRefactoringResult
     {
         return new GDGenerateOnreadyResult(
             true, null, null,
-            variableName, nodePath, inferredType);
+            variableName, nodePath, inferredType,
+            GDTypeConfidence.Unknown, null);
+    }
+
+    /// <summary>
+    /// Creates a planned result with preview information and confidence level.
+    /// </summary>
+    public static GDGenerateOnreadyResult Planned(
+        string variableName,
+        string nodePath,
+        GDInferredType inferredType)
+    {
+        return new GDGenerateOnreadyResult(
+            true, null, null,
+            variableName, nodePath,
+            inferredType?.TypeName ?? "Node",
+            inferredType?.Confidence ?? GDTypeConfidence.Unknown,
+            inferredType?.Reason);
     }
 
     /// <summary>
@@ -408,6 +449,7 @@ public class GDGenerateOnreadyResult : GDRefactoringResult
     {
         return new GDGenerateOnreadyResult(
             false, errorMessage, null,
-            null, null, null);
+            null, null, null,
+            GDTypeConfidence.Unknown, null);
     }
 }

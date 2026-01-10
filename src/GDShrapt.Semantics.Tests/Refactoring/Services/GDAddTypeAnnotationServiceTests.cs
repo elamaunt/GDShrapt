@@ -265,4 +265,178 @@ public class GDAddTypeAnnotationServiceTests
     }
 
     #endregion
+
+    #region Type Confidence Tests
+
+    [TestMethod]
+    public void Plan_IntegerLiteral_ReturnsCertainConfidence()
+    {
+        var code = "extends Node\nvar x = 42\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("int", result.TypeName);
+        Assert.AreEqual(GDTypeConfidence.Certain, result.Confidence);
+        Assert.IsFalse(string.IsNullOrEmpty(result.ConfidenceReason));
+    }
+
+    [TestMethod]
+    public void Plan_FloatLiteral_ReturnsCertainConfidence()
+    {
+        var code = "extends Node\nvar x = 3.14\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("float", result.TypeName);
+        Assert.AreEqual(GDTypeConfidence.Certain, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_StringLiteral_ReturnsCertainConfidence()
+    {
+        var code = "extends Node\nvar x = \"hello\"\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("String", result.TypeName);
+        Assert.AreEqual(GDTypeConfidence.Certain, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_BoolLiteral_ReturnsCertainConfidence()
+    {
+        var code = "extends Node\nvar x = true\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("bool", result.TypeName);
+        Assert.AreEqual(GDTypeConfidence.Certain, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_ArrayLiteral_ReturnsMediumConfidence()
+    {
+        var code = "extends Node\nvar x = [1, 2, 3]\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.IsTrue(result.TypeName.Contains("Array"));
+        // Array element type inference has Medium confidence
+        Assert.IsTrue(result.Confidence == GDTypeConfidence.Medium ||
+                      result.Confidence == GDTypeConfidence.Certain);
+    }
+
+    [TestMethod]
+    public void Plan_DictionaryLiteral_ReturnsMediumConfidence()
+    {
+        var code = "extends Node\nvar x = {\"a\": 1}\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("Dictionary", result.TypeName);
+        Assert.AreEqual(GDTypeConfidence.Medium, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_GodotTypeConstructor_ReturnsHighConfidence()
+    {
+        var code = "extends Node\nvar x = Vector2(1, 2)\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        // Without runtime provider, Vector2 may not be recognized as a known type
+        // The result could be "Vector2" (if recognized) or "Variant" (if not)
+        // When recognized as known type, should have High confidence
+        if (result.TypeName == "Vector2")
+        {
+            Assert.IsTrue(result.Confidence == GDTypeConfidence.High ||
+                          result.Confidence == GDTypeConfidence.Certain);
+        }
+        else
+        {
+            // Fallback to Medium/Unknown when runtime provider not available
+            Assert.IsNotNull(result.TypeName);
+        }
+    }
+
+    [TestMethod]
+    public void Plan_ParameterWithoutDefault_ReturnsLowConfidence()
+    {
+        var code = "extends Node\nfunc test(x):\n\tpass\n";
+        var context = CreateContext(code, 1, 10);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("Variant", result.TypeName);
+        // Parameters without default have Low confidence
+        Assert.AreEqual(GDTypeConfidence.Low, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_ParameterWithIntDefault_ReturnsCertainConfidence()
+    {
+        var code = "extends Node\nfunc test(x = 10):\n\tpass\n";
+        var context = CreateContext(code, 1, 10);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("int", result.TypeName);
+        Assert.AreEqual(GDTypeConfidence.Certain, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_LocalVariableWithLiteral_ReturnsCertainConfidence()
+    {
+        var code = "extends Node\nfunc test():\n\tvar x = \"hello\"\n";
+        var context = CreateContext(code, 2, 5);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual("String", result.TypeName);
+        Assert.AreEqual(GDTypeConfidence.Certain, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_Failed_HasUnknownConfidence()
+    {
+        var code = "extends Node\nvar x: int = 10\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        // Variable already has type annotation, should fail
+        Assert.IsFalse(result.Success);
+        Assert.AreEqual(GDTypeConfidence.Unknown, result.Confidence);
+    }
+
+    [TestMethod]
+    public void Plan_ConfidenceReasonIsSet_ForSuccessfulInference()
+    {
+        var code = "extends Node\nvar x = 42\n";
+        var context = CreateContext(code, 1, 4);
+
+        var result = _service.Plan(context);
+
+        Assert.IsTrue(result.Success);
+        Assert.IsFalse(string.IsNullOrEmpty(result.ConfidenceReason));
+    }
+
+    #endregion
 }

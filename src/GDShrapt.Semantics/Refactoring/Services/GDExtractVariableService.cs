@@ -39,7 +39,10 @@ public class GDExtractVariableService
             return GDExtractVariableResult.Failed("No expression selected");
 
         var normalizedName = NormalizeVariableName(variableName);
-        var inferredType = context.InferType(expression);
+
+        // Infer type with confidence level
+        var helper = new GDTypeInferenceHelper(context.GetAnalyzer());
+        var inferredType = helper.InferExpressionType(expression);
 
         // Count occurrences of the same expression
         var occurrences = FindOccurrences(context.ClassDeclaration, expression);
@@ -75,9 +78,10 @@ public class GDExtractVariableService
         if (containingStatement == null)
             return GDRefactoringResult.Failed("Could not find containing statement");
 
-        // Build the variable declaration
-        var inferredType = context.InferType(expression);
-        var varDecl = BuildVariableDeclaration(normalizedName, inferredType, expression.ToString());
+        // Build the variable declaration with inferred type
+        var helper = new GDTypeInferenceHelper(context.GetAnalyzer());
+        var inferredType = helper.InferExpressionType(expression);
+        var varDecl = BuildVariableDeclaration(normalizedName, inferredType.TypeName, expression.ToString());
 
         var edits = new List<GDTextEdit>();
 
@@ -303,6 +307,16 @@ public class GDExtractVariableResult : GDRefactoringResult
     public string InferredType { get; }
 
     /// <summary>
+    /// Confidence level of the type inference.
+    /// </summary>
+    public GDTypeConfidence TypeConfidence { get; }
+
+    /// <summary>
+    /// Reason for the confidence level.
+    /// </summary>
+    public string? TypeConfidenceReason { get; }
+
+    /// <summary>
     /// Number of occurrences of the same expression found.
     /// </summary>
     public int OccurrencesCount { get; }
@@ -318,12 +332,16 @@ public class GDExtractVariableResult : GDRefactoringResult
         IReadOnlyList<GDTextEdit> edits,
         string suggestedName,
         string inferredType,
+        GDTypeConfidence typeConfidence,
+        string? typeConfidenceReason,
         int occurrencesCount,
         string expressionText)
         : base(success, errorMessage, edits)
     {
         SuggestedName = suggestedName;
         InferredType = inferredType;
+        TypeConfidence = typeConfidence;
+        TypeConfidenceReason = typeConfidenceReason;
         OccurrencesCount = occurrencesCount;
         ExpressionText = expressionText;
     }
@@ -339,7 +357,26 @@ public class GDExtractVariableResult : GDRefactoringResult
     {
         return new GDExtractVariableResult(
             true, null, null,
-            suggestedName, inferredType, occurrencesCount, expressionText);
+            suggestedName, inferredType, GDTypeConfidence.Unknown, null, occurrencesCount, expressionText);
+    }
+
+    /// <summary>
+    /// Creates a planned result with preview information and confidence level.
+    /// </summary>
+    public static GDExtractVariableResult Planned(
+        string suggestedName,
+        GDInferredType inferredType,
+        int occurrencesCount,
+        string expressionText)
+    {
+        return new GDExtractVariableResult(
+            true, null, null,
+            suggestedName,
+            inferredType?.TypeName,
+            inferredType?.Confidence ?? GDTypeConfidence.Unknown,
+            inferredType?.Reason,
+            occurrencesCount,
+            expressionText);
     }
 
     /// <summary>
@@ -349,6 +386,6 @@ public class GDExtractVariableResult : GDRefactoringResult
     {
         return new GDExtractVariableResult(
             false, errorMessage, null,
-            null, null, 0, null);
+            null, null, GDTypeConfidence.Unknown, null, 0, null);
     }
 }
