@@ -30,5 +30,14 @@
         public static T AddVarKeyword<T>(this T receiver) where T : ITokenReceiver<GDVarKeyword> => receiver.Add(new GDVarKeyword());
         public static T AddWhileKeyword<T>(this T receiver) where T : ITokenReceiver<GDWhileKeyword> => receiver.Add(new GDWhileKeyword());
         public static T AddYieldKeyword<T>(this T receiver) where T : ITokenReceiver<GDYieldKeyword> => receiver.Add(new GDYieldKeyword());
+
+        // Additional keyword extensions
+        public static T AddArrayKeyword<T>(this T receiver) where T : ITokenReceiver<GDArrayKeyword> => receiver.Add(new GDArrayKeyword());
+        public static T AddAwaitKeyword<T>(this T receiver) where T : ITokenReceiver<GDAwaitKeyword> => receiver.Add(new GDAwaitKeyword());
+        public static T AddDictionaryKeyword<T>(this T receiver) where T : ITokenReceiver<GDDictionaryKeyword> => receiver.Add(new GDDictionaryKeyword());
+        public static T AddGetKeyword<T>(this T receiver) where T : ITokenReceiver<GDGetKeyword> => receiver.Add(new GDGetKeyword());
+        public static T AddSetKeyword<T>(this T receiver) where T : ITokenReceiver<GDSetKeyword> => receiver.Add(new GDSetKeyword());
+        public static T AddReturnTypeKeyword<T>(this T receiver) where T : ITokenReceiver<GDReturnTypeKeyword> => receiver.Add(new GDReturnTypeKeyword());
+        public static T AddWhenKeyword<T>(this T receiver) where T : ITokenReceiver<GDWhenKeyword> => receiver.Add(new GDWhenKeyword());
     }
 }

@@ -6,6 +6,12 @@ namespace GDShrapt.Reader
     {
         bool _facedNewLineToken;
 
+        public new string Sequence
+        {
+            get => base.Sequence;
+            set => base.Sequence = value;
+        }
+
         public override GDSyntaxToken Clone()
         {
             return new GDMultiLineSplitToken()

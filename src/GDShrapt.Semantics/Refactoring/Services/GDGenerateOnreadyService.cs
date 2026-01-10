@@ -1,0 +1,413 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using GDShrapt.Reader;
+
+namespace GDShrapt.Semantics;
+
+/// <summary>
+/// Service for generating @onready variables from get_node() calls or $NodePath expressions.
+/// </summary>
+public class GDGenerateOnreadyService
+{
+    /// <summary>
+    /// Checks if the generate @onready refactoring can be executed at the given context.
+    /// </summary>
+    public bool CanExecute(GDRefactoringContext context)
+    {
+        if (context?.ClassDeclaration == null)
+            return false;
+
+        // Must be on a get_node() call or $NodePath expression
+        return context.IsOnGetNodeCall || context.IsOnNodePath;
+    }
+
+    /// <summary>
+    /// Plans the generate @onready refactoring without applying changes.
+    /// </summary>
+    /// <param name="context">The refactoring context</param>
+    /// <param name="variableName">Name for the new variable (optional)</param>
+    /// <returns>Plan result with preview information</returns>
+    public GDGenerateOnreadyResult Plan(GDRefactoringContext context, string variableName = null)
+    {
+        if (!CanExecute(context))
+            return GDGenerateOnreadyResult.Failed("Cannot generate @onready at this position");
+
+        var nodePath = ExtractNodePath(context);
+        if (string.IsNullOrEmpty(nodePath))
+            return GDGenerateOnreadyResult.Failed("Could not determine node path");
+
+        var normalizedName = NormalizeVariableName(variableName, nodePath);
+        var inferredType = InferNodeType(context, nodePath);
+
+        return GDGenerateOnreadyResult.Planned(
+            normalizedName,
+            nodePath,
+            inferredType);
+    }
+
+    /// <summary>
+    /// Executes the generate @onready refactoring.
+    /// </summary>
+    /// <param name="context">The refactoring context</param>
+    /// <param name="variableName">Name for the new variable</param>
+    /// <returns>Result with text edits to apply</returns>
+    public GDRefactoringResult Execute(GDRefactoringContext context, string variableName)
+    {
+        if (!CanExecute(context))
+            return GDRefactoringResult.Failed("Cannot generate @onready at this position");
+
+        var nodePath = ExtractNodePath(context);
+        if (string.IsNullOrEmpty(nodePath))
+            return GDRefactoringResult.Failed("Could not determine node path");
+
+        var normalizedName = NormalizeVariableName(variableName, nodePath);
+        var filePath = context.Script.Reference.FullPath;
+        var inferredType = InferNodeType(context, nodePath);
+
+        // Find the expression to replace
+        var nodeExpression = FindNodeExpression(context);
+        if (nodeExpression == null)
+            return GDRefactoringResult.Failed("Could not find node expression");
+
+        var edits = new List<GDTextEdit>();
+
+        // Build the @onready declaration
+        var onreadyDecl = BuildOnreadyDeclaration(normalizedName, inferredType, nodePath);
+
+        // Find insertion point for @onready (after class declarations, before methods)
+        var insertionLine = FindOnreadyInsertionLine(context.ClassDeclaration);
+
+        // Edit 1: Insert @onready declaration at class level
+        var insertEdit = new GDTextEdit(
+            filePath,
+            insertionLine,
+            0,
+            "",
+            onreadyDecl + "\n");
+        edits.Add(insertEdit);
+
+        // Edit 2: Replace the get_node/$NodePath expression with variable reference
+        var replaceEdit = new GDTextEdit(
+            filePath,
+            nodeExpression.StartLine,
+            nodeExpression.StartColumn,
+            nodeExpression.ToString(),
+            normalizedName);
+        edits.Add(replaceEdit);
+
+        return GDRefactoringResult.Succeeded(edits);
+    }
+
+    /// <summary>
+    /// Converts an existing variable assignment to @onready.
+    /// </summary>
+    public GDRefactoringResult ConvertToOnready(GDRefactoringContext context)
+    {
+        if (context?.ClassDeclaration == null)
+            return GDRefactoringResult.Failed("Invalid context");
+
+        // Find variable declaration at cursor
+        var varDecl = context.GetVariableDeclaration();
+        if (varDecl == null)
+            return GDRefactoringResult.Failed("No variable declaration at cursor");
+
+        // Check if it already has @onready
+        var hasOnready = varDecl.AttributesDeclaredBefore
+            .Any(a => a.Attribute?.Name?.Sequence == "onready");
+
+        if (hasOnready)
+            return GDRefactoringResult.Failed("Variable already has @onready");
+
+        // Check if the initializer is a get_node() or $NodePath
+        var initializer = varDecl.Initializer;
+        if (initializer == null)
+            return GDRefactoringResult.Failed("Variable has no initializer");
+
+        if (!IsGetNodeExpression(initializer) && !IsNodePathExpression(initializer))
+            return GDRefactoringResult.Failed("Initializer is not a get_node() or $NodePath expression");
+
+        var filePath = context.Script.Reference.FullPath;
+
+        // Insert @onready before var
+        var varKeyword = varDecl.VarKeyword;
+        if (varKeyword == null)
+            return GDRefactoringResult.Failed("Could not find var keyword");
+
+        var edit = new GDTextEdit(
+            filePath,
+            varKeyword.StartLine,
+            varKeyword.StartColumn,
+            "var",
+            "@onready var");
+
+        return GDRefactoringResult.Succeeded(edit);
+    }
+
+    #region Helper Methods
+
+    private string ExtractNodePath(GDRefactoringContext context)
+    {
+        // First try $NodePath expression
+        if (context.IsOnNodePath)
+        {
+            var nodePathExpr = context.FindParent<GDNodePathExpression>();
+            if (nodePathExpr != null)
+            {
+                return nodePathExpr.Path?.ToString()?.Trim('"') ?? "";
+            }
+
+            var getNodeExpr = context.FindParent<GDGetNodeExpression>();
+            if (getNodeExpr != null)
+            {
+                return getNodeExpr.Path?.ToString()?.Trim('"') ?? "";
+            }
+        }
+
+        // Try get_node() call
+        if (context.IsOnGetNodeCall)
+        {
+            var callExpr = context.FindParent<GDCallExpression>();
+            if (callExpr != null && IsGetNodeCall(callExpr))
+            {
+                var firstParam = callExpr.Parameters.FirstOrDefault();
+                if (firstParam is GDStringExpression strExpr)
+                {
+                    return strExpr.String?.Sequence?.Trim('"') ?? "";
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private GDNode FindNodeExpression(GDRefactoringContext context)
+    {
+        if (context.IsOnNodePath)
+        {
+            var nodePathExpr = context.FindParent<GDNodePathExpression>();
+            if (nodePathExpr != null)
+                return nodePathExpr;
+
+            var getNodeExpr = context.FindParent<GDGetNodeExpression>();
+            if (getNodeExpr != null)
+                return getNodeExpr;
+        }
+
+        if (context.IsOnGetNodeCall)
+        {
+            return context.FindParent<GDCallExpression>();
+        }
+
+        return null;
+    }
+
+    private bool IsGetNodeCall(GDCallExpression call)
+    {
+        var callerStr = call.CallerExpression?.ToString();
+        return callerStr == "get_node" || callerStr == "get_node_or_null";
+    }
+
+    private bool IsGetNodeExpression(GDExpression expr)
+    {
+        if (expr is GDCallExpression call)
+        {
+            return IsGetNodeCall(call);
+        }
+        return false;
+    }
+
+    private bool IsNodePathExpression(GDExpression expr)
+    {
+        return expr is GDNodePathExpression || expr is GDGetNodeExpression;
+    }
+
+    private string InferNodeType(GDRefactoringContext context, string nodePath)
+    {
+        // Try to infer type from analyzer
+        if (context.Script?.Analyzer != null)
+        {
+            // The analyzer might have scene information
+            // For now, return a generic type
+        }
+
+        // Derive from node name if possible
+        var nodeName = nodePath?.Split('/')?.LastOrDefault();
+        if (!string.IsNullOrEmpty(nodeName))
+        {
+            // Common patterns
+            if (nodeName.EndsWith("Button"))
+                return "Button";
+            if (nodeName.EndsWith("Label"))
+                return "Label";
+            if (nodeName.EndsWith("Sprite") || nodeName.EndsWith("Sprite2D"))
+                return "Sprite2D";
+            if (nodeName.EndsWith("Body2D"))
+                return "CharacterBody2D";
+            if (nodeName.EndsWith("Area2D"))
+                return "Area2D";
+            if (nodeName.EndsWith("Timer"))
+                return "Timer";
+            if (nodeName.EndsWith("AnimationPlayer"))
+                return "AnimationPlayer";
+        }
+
+        return "Node";
+    }
+
+    private string NormalizeVariableName(string name, string nodePath)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return ToSnakeCase(name);
+        }
+
+        // Derive from node path
+        var nodeName = nodePath?.Split('/')?.LastOrDefault();
+        if (!string.IsNullOrEmpty(nodeName))
+        {
+            return ToSnakeCase(nodeName);
+        }
+
+        return "node";
+    }
+
+    private string ToSnakeCase(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return "node";
+
+        var result = new StringBuilder();
+        for (int i = 0; i < name.Length; i++)
+        {
+            var c = name[i];
+            if (char.IsUpper(c))
+            {
+                if (i > 0 && !char.IsUpper(name[i - 1]))
+                    result.Append('_');
+                result.Append(char.ToLowerInvariant(c));
+            }
+            else if (char.IsLetterOrDigit(c) || c == '_')
+            {
+                result.Append(char.ToLowerInvariant(c));
+            }
+        }
+
+        var normalized = result.ToString().TrimStart('_');
+        if (string.IsNullOrEmpty(normalized) || char.IsDigit(normalized[0]))
+            return "node";
+
+        return normalized;
+    }
+
+    private string BuildOnreadyDeclaration(string name, string type, string nodePath)
+    {
+        if (!string.IsNullOrEmpty(type) && type != "Node")
+        {
+            return $"@onready var {name}: {type} = ${nodePath}";
+        }
+        return $"@onready var {name} = ${nodePath}";
+    }
+
+    private int FindOnreadyInsertionLine(GDClassDeclaration classDecl)
+    {
+        // Find the best line to insert @onready declaration
+        // Prefer: after signals, before methods
+
+        var lastSignalLine = 0;
+        var firstMethodLine = int.MaxValue;
+        var lastVarLine = 0;
+
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDSignalDeclaration signal)
+            {
+                if (signal.EndLine > lastSignalLine)
+                    lastSignalLine = signal.EndLine;
+            }
+            else if (member is GDMethodDeclaration method)
+            {
+                if (method.StartLine < firstMethodLine)
+                    firstMethodLine = method.StartLine;
+            }
+            else if (member is GDVariableDeclaration varDecl)
+            {
+                if (varDecl.EndLine > lastVarLine)
+                    lastVarLine = varDecl.EndLine;
+            }
+        }
+
+        // Insert after last variable, before first method
+        if (lastVarLine > 0)
+            return lastVarLine + 1;
+
+        if (lastSignalLine > 0)
+            return lastSignalLine + 1;
+
+        // Default: after extends/class_name
+        var extendsLine = classDecl.Extends?.EndLine ?? 0;
+        var classNameLine = classDecl.ClassName?.EndLine ?? 0;
+
+        return System.Math.Max(extendsLine, classNameLine) + 1;
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Result of generate @onready planning operation.
+/// </summary>
+public class GDGenerateOnreadyResult : GDRefactoringResult
+{
+    /// <summary>
+    /// The variable name that will be used.
+    /// </summary>
+    public string VariableName { get; }
+
+    /// <summary>
+    /// The node path extracted from the expression.
+    /// </summary>
+    public string NodePath { get; }
+
+    /// <summary>
+    /// The inferred type of the node (e.g., "Sprite2D", "Button").
+    /// </summary>
+    public string InferredType { get; }
+
+    private GDGenerateOnreadyResult(
+        bool success,
+        string errorMessage,
+        IReadOnlyList<GDTextEdit> edits,
+        string variableName,
+        string nodePath,
+        string inferredType)
+        : base(success, errorMessage, edits)
+    {
+        VariableName = variableName;
+        NodePath = nodePath;
+        InferredType = inferredType;
+    }
+
+    /// <summary>
+    /// Creates a planned result with preview information.
+    /// </summary>
+    public static GDGenerateOnreadyResult Planned(
+        string variableName,
+        string nodePath,
+        string inferredType)
+    {
+        return new GDGenerateOnreadyResult(
+            true, null, null,
+            variableName, nodePath, inferredType);
+    }
+
+    /// <summary>
+    /// Creates a failed result.
+    /// </summary>
+    public new static GDGenerateOnreadyResult Failed(string errorMessage)
+    {
+        return new GDGenerateOnreadyResult(
+            false, errorMessage, null,
+            null, null, null);
+    }
+}

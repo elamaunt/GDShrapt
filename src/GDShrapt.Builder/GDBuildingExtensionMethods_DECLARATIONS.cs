@@ -150,5 +150,54 @@ namespace GDShrapt.Reader
             receiver.HandleReceivedToken(GD.Declaration.Method(name, baseCallParameters, statements));
             return receiver;
         }
+
+        public static T AddAbstract<T>(this T receiver)
+            where T : ITokenReceiver<GDCustomAttribute>
+        {
+            receiver.HandleReceivedToken(GD.Atribute.Abstract());
+            return receiver;
+        }
+
+        public static T AddAbstractMethod<T>(this T receiver, string name)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.AbstractMethod(name));
+            return receiver;
+        }
+
+        public static T AddAbstractMethod<T>(this T receiver, string name, GDParametersList parameters)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.AbstractMethod(name, parameters));
+            return receiver;
+        }
+
+        public static T AddAbstractMethod<T>(this T receiver, string name, GDTypeNode returnType)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.AbstractMethod(name, returnType));
+            return receiver;
+        }
+
+        public static T AddAbstractMethod<T>(this T receiver, string name, GDParametersList parameters, GDTypeNode returnType)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.AbstractMethod(name, parameters, returnType));
+            return receiver;
+        }
+
+        public static T AddAbstractMethod<T>(this T receiver, string name, string returnType)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.AbstractMethod(name, GD.ParseTypeNode(returnType)));
+            return receiver;
+        }
+
+        public static T AddAbstractMethod<T>(this T receiver, string name, GDParametersList parameters, string returnType)
+            where T : ITokenReceiver<GDMethodDeclaration>
+        {
+            receiver.HandleReceivedToken(GD.Declaration.AbstractMethod(name, parameters, GD.ParseTypeNode(returnType)));
+            return receiver;
+        }
     }
 }

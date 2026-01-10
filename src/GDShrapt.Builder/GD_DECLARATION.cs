@@ -626,6 +626,159 @@ namespace GDShrapt.Reader
                 [2] = Syntax.Space(),
                 Value = value
             };
+
+            // Abstract method factories (no body, just declaration)
+            public static GDMethodDeclaration AbstractMethod(string name) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = Syntax.Identifier(name),
+                OpenBracket = new GDOpenBracket(),
+                CloseBracket = new GDCloseBracket()
+            };
+
+            public static GDMethodDeclaration AbstractMethod(string name, GDParametersList parameters) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = Syntax.Identifier(name),
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket()
+            };
+
+            public static GDMethodDeclaration AbstractMethod(string name, GDTypeNode returnType) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = Syntax.Identifier(name),
+                OpenBracket = new GDOpenBracket(),
+                CloseBracket = new GDCloseBracket(),
+                [10] = Syntax.Space(),
+                ReturnTypeKeyword = new GDReturnTypeKeyword(),
+                [11] = Syntax.Space(),
+                ReturnType = returnType
+            };
+
+            public static GDMethodDeclaration AbstractMethod(string name, GDParametersList parameters, GDTypeNode returnType) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = Syntax.Identifier(name),
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket(),
+                [10] = Syntax.Space(),
+                ReturnTypeKeyword = new GDReturnTypeKeyword(),
+                [11] = Syntax.Space(),
+                ReturnType = returnType
+            };
+
+            public static GDMethodDeclaration AbstractMethod(GDIdentifier identifier) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = identifier,
+                OpenBracket = new GDOpenBracket(),
+                CloseBracket = new GDCloseBracket()
+            };
+
+            public static GDMethodDeclaration AbstractMethod(GDIdentifier identifier, GDParametersList parameters) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = identifier,
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket()
+            };
+
+            public static GDMethodDeclaration AbstractMethod(GDIdentifier identifier, GDTypeNode returnType) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = identifier,
+                OpenBracket = new GDOpenBracket(),
+                CloseBracket = new GDCloseBracket(),
+                [10] = Syntax.Space(),
+                ReturnTypeKeyword = new GDReturnTypeKeyword(),
+                [11] = Syntax.Space(),
+                ReturnType = returnType
+            };
+
+            public static GDMethodDeclaration AbstractMethod(GDIdentifier identifier, GDParametersList parameters, GDTypeNode returnType) => new GDMethodDeclaration()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                [2] = Syntax.Space(),
+                Identifier = identifier,
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket(),
+                [10] = Syntax.Space(),
+                ReturnTypeKeyword = new GDReturnTypeKeyword(),
+                [11] = Syntax.Space(),
+                ReturnType = returnType
+            };
+
+            // Property accessor body factories
+            public static GDGetAccessorBodyDeclaration GetAccessorBody() => new GDGetAccessorBodyDeclaration();
+            public static GDGetAccessorBodyDeclaration GetAccessorBody(Func<GDGetAccessorBodyDeclaration, GDGetAccessorBodyDeclaration> setup) => setup(new GDGetAccessorBodyDeclaration());
+            public static GDGetAccessorBodyDeclaration GetAccessorBody(params GDSyntaxToken[] unsafeTokens) => new GDGetAccessorBodyDeclaration() { FormTokensSetter = unsafeTokens };
+            public static GDGetAccessorBodyDeclaration GetAccessorBody(params GDStatement[] statements) => new GDGetAccessorBodyDeclaration()
+            {
+                GetKeyword = new GDGetKeyword(),
+                Colon = new GDColon(),
+                Statements = List.Statements(statements)
+            };
+
+            public static GDGetAccessorBodyDeclaration GetAccessorBody(GDStatementsList statements) => new GDGetAccessorBodyDeclaration()
+            {
+                GetKeyword = new GDGetKeyword(),
+                Colon = new GDColon(),
+                Statements = statements
+            };
+
+            public static GDGetAccessorBodyDeclaration GetAccessorBody(GDExpression expression) => new GDGetAccessorBodyDeclaration()
+            {
+                GetKeyword = new GDGetKeyword(),
+                Colon = new GDColon(),
+                [2] = Syntax.Space(),
+                Expression = expression
+            };
+
+            public static GDSetAccessorBodyDeclaration SetAccessorBody() => new GDSetAccessorBodyDeclaration();
+            public static GDSetAccessorBodyDeclaration SetAccessorBody(Func<GDSetAccessorBodyDeclaration, GDSetAccessorBodyDeclaration> setup) => setup(new GDSetAccessorBodyDeclaration());
+            public static GDSetAccessorBodyDeclaration SetAccessorBody(params GDSyntaxToken[] unsafeTokens) => new GDSetAccessorBodyDeclaration() { FormTokensSetter = unsafeTokens };
+            public static GDSetAccessorBodyDeclaration SetAccessorBody(string parameterName, params GDStatement[] statements) => new GDSetAccessorBodyDeclaration()
+            {
+                SetKeyword = new GDSetKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                Parameter = new GDParameterDeclaration() { Identifier = Syntax.Identifier(parameterName) },
+                CloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                Statements = List.Statements(statements)
+            };
+
+            public static GDSetAccessorBodyDeclaration SetAccessorBody(GDParameterDeclaration parameter, GDStatementsList statements) => new GDSetAccessorBodyDeclaration()
+            {
+                SetKeyword = new GDSetKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                Parameter = parameter,
+                CloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                Statements = statements
+            };
+
+            public static GDSetAccessorBodyDeclaration SetAccessorBody(string parameterName, GDExpression expression) => new GDSetAccessorBodyDeclaration()
+            {
+                SetKeyword = new GDSetKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                Parameter = new GDParameterDeclaration() { Identifier = Syntax.Identifier(parameterName) },
+                CloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                [5] = Syntax.Space(),
+                Expression = expression
+            };
         }
     }
 }

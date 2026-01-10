@@ -19,17 +19,16 @@ internal class GoToDefinitionCommand : Command
         Logger.Info($"GoToDefinition requested {{{line}, {column}}}");
 
         var @class = scriptEditor.GetClass();
-
-        GDSyntaxToken? nameToken = null;
-
-        foreach (var id in @class.AllTokens.OfType<GDIdentifier>())
+        if (@class == null)
         {
-            if (id.ContainsPosition(line, column))
-            {
-                nameToken = id;
-                break;
-            }
+            Logger.Info("GoToDefinition cancelled: no class declaration");
+            scriptEditor.RequestGodotLookup();
+            return;
         }
+
+        // Use GDPositionFinder for optimized identifier lookup (TryGetTokenByPosition with early exit)
+        var finder = new GDPositionFinder(@class);
+        var nameToken = finder.FindIdentifierAtPosition(line, column) as GDSyntaxToken;
 
         if (nameToken == null)
         {
@@ -151,14 +150,7 @@ internal class GoToDefinitionCommand : Command
 
     private static T? FindParentOfType<T>(GDSyntaxToken token) where T : GDNode
     {
-        var parent = token.Parent;
-        while (parent != null)
-        {
-            if (parent is T result)
-                return result;
-            parent = parent.Parent;
-        }
-        return null;
+        return GDPositionFinder.FindParent<T>(token);
     }
 
     private void GoToType(IScriptEditor scriptEditor, string nameToken)

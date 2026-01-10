@@ -40,16 +40,9 @@ internal class FindReferencesCommand : Command
             return Task.CompletedTask;
         }
 
-        GDIdentifier identifier = null;
-
-        foreach (var item in @class.AllTokens)
-        {
-            if ((item is GDIdentifier id) && item.ContainsPosition(line, column))
-            {
-                identifier = id;
-                break;
-            }
-        }
+        // Use GDPositionFinder for optimized identifier lookup (TryGetTokenByPosition with early exit)
+        var finder = new GDPositionFinder(@class);
+        var identifier = finder.FindIdentifierAtPosition(line, column);
 
         if (identifier == null)
         {
@@ -554,14 +547,7 @@ internal class FindReferencesCommand : Command
 
     private static T FindParentOfType<T>(GDSyntaxToken token) where T : GDNode
     {
-        var parent = token.Parent;
-        while (parent != null)
-        {
-            if (parent is T result)
-                return result;
-            parent = parent.Parent;
-        }
-        return null;
+        return GDPositionFinder.FindParent<T>(token);
     }
 
     private GDIdentifiableClassMember FindClassMemberDeclaration(string name, GDScriptMap script)

@@ -164,6 +164,24 @@ Explicit disable in config always takes precedence.
   - `GDReferenceConfidence` - Strict (type confirmed), Potential (duck-typed), NameMatch (name only)
   - `GDRenameResult.StrictEdits` / `PotentialEdits` - Edits separated by confidence
   - `GDRenameResult.GetStrictEditsByFile()` / `GetPotentialEditsByFile()` - Group edits by file
+  - `Context/` - Godot-independent refactoring context types:
+    - `GDRefactoringContext` - Cursor position, selection, script info, node context
+    - `GDCursorPosition`, `GDSelectionInfo` - Position records
+  - `Services/` - Refactoring service implementations:
+    - `GDRenameService` - Symbol renaming with confidence levels
+    - `GDInvertConditionService` - Invert if/elif/while conditions using De Morgan's laws
+    - `GDConvertForToWhileService` - Convert for loops to while loops
+    - `GDAddTypeAnnotationService` - Add type annotations based on type inference
+    - `GDFormatCodeService` - Code formatting (FormatFile, FormatSelection, FormatRange)
+    - `GDExtractVariableService` - Extract expression to local variable
+    - `GDExtractMethodService` - Extract statements to new method
+    - `GDRemoveCommentsService` - Remove comments from code
+    - `GDSnippetService` - Code snippets/templates for keywords
+    - `GDReorderMembersService` - Reorder class members by category
+    - `GDSurroundWithService` - Surround code with if/for/while/match/func
+    - `GDGenerateOnreadyService` - Convert get_node() to @onready var
+- `Utilities/` - Helper utilities:
+  - `GDPositionFinder` - Optimized token/node lookup using `TryGetTokenByPosition`
 - `Configuration/` - Unified configuration system (see below)
 - `Diagnostics/` - Unified diagnostics service for CLI, LSP, Plugin
 
@@ -208,6 +226,7 @@ Explicit disable in config always takes precedence.
 - Validation rules: `GD<Name>ValidationRule`
 - Lint rules: `<Name>Rule` (in Linter/Rules)
 - Format rules: `GD<Name>FormatRule`
+- Refactoring services: `GD<Name>Service` (in Semantics/Refactoring/Services)
 
 ### Unified Configuration System
 
@@ -364,7 +383,7 @@ Test organization in `GDShrapt.Reader.Tests`:
 - `Helpers/` - Helper class tests
 - `Scripts/` - Sample GDScript files for testing
 
-Total test count: 1442 tests across all projects.
+Total test count: 2049 tests across all projects.
 
 Assertion helpers (in `GDShrapt.Tests.Common`):
 - `AssertHelper.CompareCodeStrings()` - Compare code ignoring whitespace differences
@@ -652,12 +671,28 @@ var variable = GD.Declaration.Variable(
 );
 
 // Factory categories:
-// GD.Declaration - Class, Method, Variable, Parameter, Signal, Enum, Const
-// GD.Expression  - Identifier, Number, String, Bool, Array, Dictionary, Call, etc.
+// GD.Declaration - Class, Method, Variable, Parameter, Signal, Enum, Const, AbstractMethod, GetAccessorBody, SetAccessorBody
+// GD.Expression  - Identifier, Number, String, Bool, Array, Dictionary, Call, Rest, MultilineString, etc.
 // GD.Statement   - Expression, If, For, While, Match, Variable
-// GD.Syntax      - Identifier, Type, Number, Space, NewLine, Comment, operators
+// GD.Syntax      - Identifier, Type, Number, Space, NewLine, Comment, LineContinuation, MultilineString, operators
 // GD.List        - Statements, Expressions, Parameters, Members, etc.
-// GD.Atribute    - Tool, ClassName, Extends, Export, Custom
+// GD.Atribute    - Tool, ClassName, Extends, Export, Custom, Abstract
+// GD.Keyword     - Var, Func, Class, If, For, While, Array, Await, Dictionary, Get, Set, ReturnType, When, etc.
+// GD.Type        - Single, Array, UntypedArray, Dictionary, UntypedDictionary
+
+// Abstract class example
+var abstractClass = GD.Declaration.Class();
+abstractClass.Members = GD.List.Members(
+    GD.Atribute.Abstract(),
+    GD.Declaration.AbstractMethod("process", GD.Type.Single("void"))
+);
+
+// Line continuation
+var lineCont = GD.Syntax.LineContinuation();  // Creates "\\\n"
+
+// Typed arrays and dictionaries
+var arrayType = GD.Type.Array("int");           // Array[int]
+var dictType = GD.Type.Dictionary("String", "int"); // Dictionary[String, int]
 ```
 
 ### GDShrapt.Validator
@@ -796,6 +831,18 @@ var extractor = new GDFormatterStyleExtractor();
 var options = extractor.ExtractStyleFromCode(sampleCode);
 string formatted = formatter.FormatCodeWithStyle(code, sampleCode);
 
+// Extracted options include:
+// - IndentStyle, IndentSize (with nesting level tracking)
+// - LineEnding (LF/CRLF from raw code analysis)
+// - MaxLineLength (95th percentile, rounded to 80/100/120/0)
+// - LineWrapStyle, ContinuationIndentSize
+// - UseBackslashContinuation
+// - RemoveTrailingWhitespace (10% threshold)
+// - EnsureTrailingNewline, RemoveMultipleTrailingNewlines
+// - BlankLinesBetweenFunctions, BlankLinesAfterClassDeclaration
+// - SpaceAroundOperators, SpaceAfterComma, SpaceAfterColon, etc.
+// - MemberOrder (category order extraction)
+
 // Check if already formatted
 if (!formatter.IsFormatted(code)) {
     var result = formatter.Check(code);
@@ -841,6 +888,27 @@ var result = renameService.PlanRename(symbol, "newName");
 if (result.Success) {
     renameService.ApplyEdits(content, result.Edits);
 }
+
+// Format code service
+var formatService = new GDFormatCodeService();
+formatService.FormatFile(context);           // Format entire file
+formatService.FormatSelection(context);      // Format selection only (error if no selection)
+formatService.FormatRange(context, 1, 10);   // Format line range
+formatService.PlanFormatFile(context);       // Preview formatting
+formatService.PlanFormatSelection(context);  // Preview selection formatting
+
+// Snippet service
+var snippetService = new GDSnippetService();
+var snippet = snippetService.GetSnippetForKeyword("for");
+var result = snippetService.PlanApplySnippet(context, snippet);  // Preview with placeholders
+
+// Reorder members service
+var reorderService = new GDReorderMembersService();
+var result = reorderService.Plan(context);   // Preview with OriginalCode/ReorderedCode
+
+// Invert condition service
+var invertService = new GDInvertConditionService();
+var result = invertService.Plan(context);    // Preview with OriginalCondition/InvertedCondition
 
 // File watching
 project.EnableFileWatcher();

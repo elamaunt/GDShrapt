@@ -131,6 +131,8 @@ namespace GDShrapt.Reader
             public static GDCustomAttribute Rpc(params GDExpression[] parameters) => Custom("rpc", parameters);
 
             public static GDCustomAttribute StaticUnload() => Custom("static_unload");
+
+            public static GDCustomAttribute Abstract() => Custom("abstract");
         }
     }
 }

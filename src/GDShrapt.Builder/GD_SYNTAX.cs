@@ -97,6 +97,29 @@ namespace GDShrapt.Reader
             {
                 OperatorType = type
             };
+
+            /// <summary>
+            /// Creates a line continuation token (backslash followed by newline)
+            /// </summary>
+            public static GDMultiLineSplitToken LineContinuation() => new GDMultiLineSplitToken() { Sequence = "\\\n" };
+
+            /// <summary>
+            /// Creates a line continuation with optional trailing content (e.g., spaces before newline)
+            /// </summary>
+            public static GDMultiLineSplitToken LineContinuation(string trailing) => new GDMultiLineSplitToken()
+            {
+                Sequence = "\\" + trailing + "\n"
+            };
+
+            /// <summary>
+            /// Creates a multiline string using triple double quotes
+            /// </summary>
+            public static GDStringNode MultilineString(string content) => String(content, GDStringBoundingChar.TripleDoubleQuotas);
+
+            /// <summary>
+            /// Creates a multiline string using triple single quotes
+            /// </summary>
+            public static GDStringNode MultilineStringSingleQuote(string content) => String(content, GDStringBoundingChar.TripleSingleQuotas);
         }
     }
 }

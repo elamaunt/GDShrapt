@@ -1,6 +1,4 @@
 using Godot;
-using GDShrapt.Plugin.Api;
-using GDShrapt.Plugin.Api.Internal;
 using GDShrapt.Plugin.Cache;
 using GDShrapt.Plugin.Config;
 using GDShrapt.Plugin.Diagnostics;
@@ -32,8 +30,6 @@ public partial class GDShraptPlugin : EditorPlugin
 
     private ReferencesDock _referencesDock;
     private Control _referencesDockButton;
-    private ApiDocumentationDock _documentationDock;
-    private Control _documentationDockButton;
     private TodoTagsDock _todoTagsDock;
     private Control _todoTagsDockButton;
     private TodoTagsScanner _todoTagsScanner;
@@ -108,10 +104,6 @@ public partial class GDShraptPlugin : EditorPlugin
             // Initialize quick fix handler
             _quickFixHandler = new QuickFixHandler(_diagnosticService);
 
-            // Initialize public API
-            var services = new GDShraptServicesImpl(_projectMap);
-            GDShraptApi.Initialize(services);
-
             // Initialize scene file watching using GDSceneTypesProvider from Semantics
             _projectMap.SceneTypesProvider.NodeRenameDetected += OnNodeRenameDetected;
             _projectMap.SceneTypesProvider.EnableFileWatcher();
@@ -151,9 +143,6 @@ public partial class GDShraptPlugin : EditorPlugin
 
     public override void _ExitTree()
     {
-        // Shutdown public API first
-        GDShraptApi.Shutdown();
-
         // Unsubscribe from ScriptEditor events to prevent memory leak
         try
         {
@@ -323,13 +312,6 @@ public partial class GDShraptPlugin : EditorPlugin
             _referencesDock = null;
         }
 
-        if (_documentationDock != null)
-        {
-            RemoveControlFromBottomPanel(_documentationDock);
-            _documentationDock.QueueFree();
-            _documentationDock = null;
-        }
-
         if (_todoTagsDock != null)
         {
             _todoTagsDock.NavigateToItem -= OnNavigateToTodoItem;
@@ -447,10 +429,6 @@ public partial class GDShraptPlugin : EditorPlugin
         _referencesDock = new ReferencesDock();
         _referencesDock.NavigateToReference += OnNavigateToReference;
         _referencesDockButton = AddControlToBottomPanel(_referencesDock, "Find References");
-
-        // Create the API documentation dock
-        _documentationDock = new ApiDocumentationDock();
-        _documentationDockButton = AddControlToBottomPanel(_documentationDock, "API Documentation");
 
         // Create the TODO tags dock
         _todoTagsScanner = new TodoTagsScanner(_projectMap, _configManager);

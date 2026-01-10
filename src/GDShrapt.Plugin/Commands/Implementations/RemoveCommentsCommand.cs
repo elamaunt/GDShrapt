@@ -1,14 +1,18 @@
-using GDShrapt.Reader;
-using System.Linq;
+using GDShrapt.Plugin.Refactoring;
+using GDShrapt.Semantics;
 using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
 internal class RemoveCommentsCommand : Command
 {
+    private readonly GDRemoveCommentsService _service = new();
+    private readonly RefactoringContextBuilder _contextBuilder;
+
     public RemoveCommentsCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
+        _contextBuilder = new RefactoringContextBuilder(plugin.ProjectMap);
     }
 
     public override async Task Execute(IScriptEditor controller)
@@ -21,28 +25,50 @@ internal class RemoveCommentsCommand : Command
             return;
         }
 
-        var @class = controller.GetClass();
+        // Build semantic context
+        var context = _contextBuilder.BuildSemanticsContext(controller);
 
-        @class = (GDClassDeclaration)@class.Clone();
+        if (context == null)
+        {
+            Logger.Info("Remove comments cancelled: Could not build context");
+            return;
+        }
 
-        var comments = @class.AllTokens.OfType<GDComment>().ToArray();
+        // Check if operation is possible
+        if (!_service.CanExecute(context))
+        {
+            Logger.Info("Remove comments cancelled: No comments to remove");
+            return;
+        }
 
-        Logger.Info($"Removing comments {comments.Length}");
+        // Get comment count for logging
+        var commentCount = _service.GetCommentCount(context);
+        Logger.Info($"Removing comments {commentCount}");
 
-        for (int i = 0; i < comments.Length; i++)
-            comments[i].RemoveFromParent();
+        // Execute the service
+        var result = _service.Execute(context);
 
-        var newCode = @class.ToString();
+        if (!result.Success)
+        {
+            Logger.Warning($"Remove comments failed: {result.ErrorMessage}");
+            return;
+        }
 
-        Logger.Info($"Resulted code length now {newCode.Length}");
+        // Apply the edits - we get a single edit that replaces the entire content
+        if (result.Edits.Count > 0)
+        {
+            var edit = result.Edits[0];
 
-        var lineBefore = controller.CursorLine;
-        var columnBefore = controller.CursorColumn;
+            var lineBefore = controller.CursorLine;
+            var columnBefore = controller.CursorColumn;
 
-        controller.Text = @class.ToString();
-        controller.CursorLine = lineBefore;
-        controller.CursorColumn = columnBefore;
+            controller.Text = edit.NewText;
+            controller.CursorLine = lineBefore;
+            controller.CursorColumn = columnBefore;
 
-        Logger.Info($"All comments have been removed");
+            Logger.Info($"All comments have been removed");
+        }
+
+        await Task.CompletedTask;
     }
 }

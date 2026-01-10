@@ -305,6 +305,33 @@ namespace GDShrapt.Reader
                 [5] = Syntax.Space(),
                 Expression = body
             };
+
+            /// <summary>
+            /// Creates a rest/spread expression (..) used in pattern matching
+            /// </summary>
+            public static GDRestExpression Rest() => new GDRestExpression()
+            {
+                DoubleDot = new GDDoubleDot()
+            };
+
+            public static GDRestExpression Rest(Func<GDRestExpression, GDRestExpression> setup) => setup(new GDRestExpression());
+            public static GDRestExpression Rest(params GDSyntaxToken[] unsafeTokens) => new GDRestExpression() { FormTokensSetter = unsafeTokens };
+
+            /// <summary>
+            /// Creates a multiline string expression using triple double quotes
+            /// </summary>
+            public static GDStringExpression MultilineString(string value) => new GDStringExpression()
+            {
+                String = Syntax.MultilineString(value)
+            };
+
+            /// <summary>
+            /// Creates a multiline string expression using triple single quotes
+            /// </summary>
+            public static GDStringExpression MultilineStringSingleQuote(string value) => new GDStringExpression()
+            {
+                String = Syntax.MultilineStringSingleQuote(value)
+            };
         }
     }
 }

@@ -32,6 +32,15 @@
             public static GDVarKeyword Var => new GDVarKeyword();
             public static GDWhileKeyword While => new GDWhileKeyword();
             public static GDYieldKeyword Yield => new GDYieldKeyword();
+
+            // Additional keywords
+            public static GDArrayKeyword Array => new GDArrayKeyword();
+            public static GDAwaitKeyword Await => new GDAwaitKeyword();
+            public static GDDictionaryKeyword Dictionary => new GDDictionaryKeyword();
+            public static GDGetKeyword Get => new GDGetKeyword();
+            public static GDSetKeyword Set => new GDSetKeyword();
+            public static GDReturnTypeKeyword ReturnType => new GDReturnTypeKeyword();
+            public static GDWhenKeyword When => new GDWhenKeyword();
         }
     }
 }

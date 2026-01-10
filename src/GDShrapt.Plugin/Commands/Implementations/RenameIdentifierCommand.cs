@@ -33,17 +33,15 @@ internal class RenameIdentifierCommand : Command
         var column = controller.CursorColumn;
 
         var @class = controller.GetClass();
-
-        GDIdentifier identifier = null;
-
-        foreach (var item in @class.AllTokens)
+        if (@class == null)
         {
-            if ((item is GDIdentifier id) && item.ContainsPosition(line, column))
-            {
-                identifier = id;
-                break;
-            }
+            Logger.Info("Renaming cancelled: no class declaration");
+            return;
         }
+
+        // Use GDPositionFinder for optimized identifier lookup (TryGetTokenByPosition with early exit)
+        var finder = new GDPositionFinder(@class);
+        var identifier = finder.FindIdentifierAtPosition(line, column);
 
         if (identifier == null)
         {
