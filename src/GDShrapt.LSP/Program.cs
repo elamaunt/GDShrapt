@@ -46,9 +46,8 @@ class Program
         }
         else
         {
-            // TODO: Implement socket transport
-            Console.Error.WriteLine("Socket transport not yet implemented");
-            return 1;
+            var serializer = new GDSystemTextJsonSerializer();
+            transport = new GDSocketJsonRpcTransport(serializer, port);
         }
 
         // Create and run server
