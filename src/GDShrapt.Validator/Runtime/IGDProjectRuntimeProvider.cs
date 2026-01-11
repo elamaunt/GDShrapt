@@ -39,6 +39,36 @@ namespace GDShrapt.Reader
         /// <param name="resourcePath">The resource path</param>
         /// <returns>The type of the preloaded resource, or null</returns>
         string GetPreloadType(string resourcePath);
+
+        /// <summary>
+        /// Checks if a resource exists at the given path.
+        /// </summary>
+        /// <param name="resourcePath">Resource path (res://...)</param>
+        /// <returns>True if resource exists</returns>
+        bool ResourceExists(string resourcePath);
+
+        /// <summary>
+        /// Gets signal information for a type (including inherited signals).
+        /// </summary>
+        /// <param name="typeName">The type name</param>
+        /// <param name="signalName">The signal name</param>
+        /// <returns>Signal info or null if not found</returns>
+        GDSignalInfo GetSignal(string typeName, string signalName);
+
+        /// <summary>
+        /// Gets all signals declared on a type (including inherited).
+        /// </summary>
+        /// <param name="typeName">The type name</param>
+        /// <returns>Collection of signal infos</returns>
+        IEnumerable<GDSignalInfo> GetSignals(string typeName);
+
+        /// <summary>
+        /// Gets signal connections from scene files for a method.
+        /// </summary>
+        /// <param name="scriptPath">Path to the script being analyzed.</param>
+        /// <param name="methodName">The method name to search for.</param>
+        /// <returns>Signal connections targeting this method.</returns>
+        IEnumerable<GDSceneSignalConnection> GetSignalConnectionsForMethod(string scriptPath, string methodName);
     }
 
     /// <summary>
@@ -176,6 +206,37 @@ namespace GDShrapt.Reader
         /// <param name="argumentTypes">The types of the arguments</param>
         /// <returns>The return type, or null to use default inference</returns>
         string GetMethodReturnType(string methodName, string receiverType, IReadOnlyList<string> argumentTypes);
+    }
+
+    /// <summary>
+    /// Information about a signal connection from a scene file.
+    /// </summary>
+    public class GDSceneSignalConnection
+    {
+        /// <summary>
+        /// Path to the scene file containing this connection.
+        /// </summary>
+        public string ScenePath { get; set; }
+
+        /// <summary>
+        /// The signal name being connected.
+        /// </summary>
+        public string SignalName { get; set; }
+
+        /// <summary>
+        /// Node path of the signal source.
+        /// </summary>
+        public string SourceNodePath { get; set; }
+
+        /// <summary>
+        /// Type of the node emitting the signal.
+        /// </summary>
+        public string SourceNodeType { get; set; }
+
+        /// <summary>
+        /// Line number in the .tscn file.
+        /// </summary>
+        public int LineNumber { get; set; }
     }
 
     /// <summary>
@@ -374,6 +435,51 @@ namespace GDShrapt.Reader
                     return type;
             }
             return null;
+        }
+
+        public bool ResourceExists(string resourcePath)
+        {
+            foreach (var provider in _projectProviders)
+            {
+                if (provider.ResourceExists(resourcePath))
+                    return true;
+            }
+            return false;
+        }
+
+        public GDSignalInfo GetSignal(string typeName, string signalName)
+        {
+            foreach (var provider in _projectProviders)
+            {
+                var signal = provider.GetSignal(typeName, signalName);
+                if (signal != null)
+                    return signal;
+            }
+            return null;
+        }
+
+        public IEnumerable<GDSignalInfo> GetSignals(string typeName)
+        {
+            var seen = new HashSet<string>();
+            foreach (var provider in _projectProviders)
+            {
+                foreach (var signal in provider.GetSignals(typeName))
+                {
+                    if (signal.Name != null && seen.Add(signal.Name))
+                        yield return signal;
+                }
+            }
+        }
+
+        public IEnumerable<GDSceneSignalConnection> GetSignalConnectionsForMethod(string scriptPath, string methodName)
+        {
+            foreach (var provider in _projectProviders)
+            {
+                foreach (var connection in provider.GetSignalConnectionsForMethod(scriptPath, methodName))
+                {
+                    yield return connection;
+                }
+            }
         }
     }
 }

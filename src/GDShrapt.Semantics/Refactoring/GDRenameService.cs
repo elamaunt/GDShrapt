@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -201,6 +202,164 @@ public class GDRenameService
             .ToList();
 
         return GDRenameResult.Successful(sortedEdits, filesModified.Count);
+    }
+
+    /// <summary>
+    /// Plans a rename operation at cursor position using GDRefactoringContext.
+    /// This method uses GDFindReferencesService to determine scope and find references.
+    /// </summary>
+    /// <param name="context">The refactoring context with cursor position.</param>
+    /// <param name="newName">The new name for the symbol.</param>
+    /// <returns>The rename result with all required edits.</returns>
+    public GDRenameResult PlanRenameAtCursor(GDRefactoringContext context, string newName)
+    {
+        if (context == null)
+            return GDRenameResult.Failed("Context is null");
+
+        var findRefsService = new GDFindReferencesService();
+        var scope = findRefsService.DetermineSymbolScope(context);
+
+        if (scope == null)
+            return GDRenameResult.Failed("No symbol at cursor position");
+
+        return PlanRenameInScope(context, scope, newName);
+    }
+
+    /// <summary>
+    /// Plans a rename operation for a known symbol scope.
+    /// </summary>
+    /// <param name="context">The refactoring context.</param>
+    /// <param name="scope">The symbol scope determined by GDFindReferencesService.</param>
+    /// <param name="newName">The new name for the symbol.</param>
+    /// <returns>The rename result with all required edits.</returns>
+    public GDRenameResult PlanRenameInScope(GDRefactoringContext context, GDSymbolScope scope, string newName)
+    {
+        if (context == null)
+            return GDRenameResult.Failed("Context is null");
+
+        if (scope == null)
+            return GDRenameResult.Failed("Scope is null");
+
+        // Validate the new name
+        if (!ValidateIdentifier(newName, out var validationError))
+            return GDRenameResult.Failed(validationError!);
+
+        var oldName = scope.SymbolName;
+
+        // Check for reserved keywords
+        if (ReservedKeywords.Contains(newName))
+            return GDRenameResult.WithConflicts(new List<GDRenameConflict> {
+                new GDRenameConflict(newName, $"'{newName}' is a reserved GDScript keyword", GDRenameConflictType.ReservedKeyword)
+            });
+
+        // Find references using the service
+        var findRefsService = new GDFindReferencesService();
+        var refsResult = findRefsService.FindReferencesForScope(context, scope);
+
+        if (!refsResult.Success)
+            return GDRenameResult.Failed(refsResult.ErrorMessage ?? "Failed to find references");
+
+        // Convert references to text edits
+        var strictEdits = new List<GDTextEdit>();
+        var potentialEdits = new List<GDTextEdit>();
+        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var reference in refsResult.StrictReferences)
+        {
+            var filePath = reference.FilePath;
+            if (string.IsNullOrEmpty(filePath))
+                continue;
+
+            strictEdits.Add(new GDTextEdit(
+                filePath,
+                reference.Line,
+                reference.Column,
+                oldName,
+                newName,
+                GDReferenceConfidence.Strict,
+                reference.ConfidenceReason));
+            filesModified.Add(filePath);
+        }
+
+        foreach (var reference in refsResult.PotentialReferences)
+        {
+            var filePath = reference.FilePath;
+            if (string.IsNullOrEmpty(filePath))
+                continue;
+
+            potentialEdits.Add(new GDTextEdit(
+                filePath,
+                reference.Line,
+                reference.Column,
+                oldName,
+                newName,
+                GDReferenceConfidence.Potential,
+                reference.ConfidenceReason));
+            filesModified.Add(filePath);
+        }
+
+        // For class members and external members, also search other scripts
+        if ((scope.Type == GDSymbolScopeType.ClassMember ||
+             scope.Type == GDSymbolScopeType.ExternalMember ||
+             scope.Type == GDSymbolScopeType.ProjectWide) &&
+            scope.ContainingScript != null)
+        {
+            var crossFileFinder = new GDCrossFileReferenceFinder(_project);
+            var containingScript = scope.ContainingScript;
+
+            // Create a temporary symbol for cross-file search
+            if (scope.DeclarationNode is GDIdentifiableClassMember identifiable)
+            {
+                var symbol = containingScript.Analyzer?.FindSymbol(oldName);
+                if (symbol != null)
+                {
+                    var crossFileRefs = crossFileFinder.FindReferences(symbol, containingScript);
+
+                    foreach (var r in crossFileRefs.StrictReferences)
+                    {
+                        var filePath = r.FilePath;
+                        if (string.IsNullOrEmpty(filePath) || filesModified.Contains(filePath))
+                            continue;
+
+                        strictEdits.Add(new GDTextEdit(
+                            filePath,
+                            r.Line,
+                            r.Column,
+                            oldName,
+                            newName,
+                            GDReferenceConfidence.Strict,
+                            r.Reason));
+                        filesModified.Add(filePath);
+                    }
+
+                    foreach (var r in crossFileRefs.PotentialReferences)
+                    {
+                        var filePath = r.FilePath;
+                        if (string.IsNullOrEmpty(filePath) || filesModified.Contains(filePath))
+                            continue;
+
+                        potentialEdits.Add(new GDTextEdit(
+                            filePath,
+                            r.Line,
+                            r.Column,
+                            oldName,
+                            newName,
+                            GDReferenceConfidence.Potential,
+                            r.Reason));
+                        filesModified.Add(filePath);
+                    }
+                }
+            }
+        }
+
+        if (strictEdits.Count == 0 && potentialEdits.Count == 0)
+            return GDRenameResult.NoOccurrences(oldName);
+
+        // Sort edits in reverse order for safe application
+        var sortedStrict = SortEditsReverse(strictEdits);
+        var sortedPotential = SortEditsReverse(potentialEdits);
+
+        return GDRenameResult.SuccessfulWithConfidence(sortedStrict, sortedPotential, filesModified.Count);
     }
 
     /// <summary>

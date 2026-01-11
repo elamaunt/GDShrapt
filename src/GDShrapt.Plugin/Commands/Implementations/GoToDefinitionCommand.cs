@@ -1,4 +1,6 @@
+using GDShrapt.Plugin.Refactoring;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -6,6 +8,8 @@ namespace GDShrapt.Plugin;
 
 internal class GoToDefinitionCommand : Command
 {
+    private readonly GDGoToDefinitionService _service = new();
+
     public GoToDefinitionCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
@@ -26,138 +30,80 @@ internal class GoToDefinitionCommand : Command
             return;
         }
 
-        // Use GDPositionFinder for optimized identifier lookup (TryGetTokenByPosition with early exit)
-        var finder = new GDPositionFinder(@class);
-        var nameToken = finder.FindIdentifierAtPosition(line, column) as GDSyntaxToken;
+        // Build refactoring context for semantics service
+        var contextBuilder = new RefactoringContextBuilder(Plugin.ProjectMap);
+        var semanticsContext = contextBuilder.BuildSemanticsContext(scriptEditor);
 
-        if (nameToken == null)
+        if (semanticsContext == null)
         {
-            Logger.Info("GoToDefinition cancelled: no identifier");
+            Logger.Info("GoToDefinition cancelled: could not build refactoring context");
             scriptEditor.RequestGodotLookup();
             return;
         }
 
-        Logger.Info($"GoToDefinition identifier '{nameToken}'");
+        // Use service to resolve definition
+        var result = _service.GoToDefinition(semanticsContext);
 
-        var parent = nameToken.Parent;
-
-        if (parent == null)
+        if (!result.Success)
         {
-            Logger.Info("GoToDefinition cancelled: Parent not found");
+            Logger.Info($"GoToDefinition cancelled: {result.ErrorMessage}");
             scriptEditor.RequestGodotLookup();
             return;
         }
 
-        Logger.Info($"Parent '{parent.TypeName}'");
+        Logger.Info($"GoToDefinition: {result.DefinitionType}, Symbol: {result.SymbolName}");
 
-        switch (parent.TypeName)
+        // Handle results based on type
+        switch (result.DefinitionType)
         {
-            case nameof(GDIdentifierExpression):
-                GoToIdentifier(scriptEditor, (GDIdentifier)nameToken, (GDIdentifierExpression)parent);
+            case GDDefinitionType.LocalVariable:
+            case GDDefinitionType.MethodParameter:
+            case GDDefinitionType.ForLoopVariable:
+            case GDDefinitionType.ClassMember:
+                // Definition in current file - navigate to it
+                if (result.DeclarationIdentifier != null)
+                {
+                    scriptEditor.SelectToken(result.DeclarationIdentifier);
+                    Logger.Info($"GoToDefinition completed ({result.DefinitionType})");
+                }
                 break;
-            case nameof(GDExtendsAttribute):
-                GoToType(scriptEditor, nameToken.ToString());
+
+            case GDDefinitionType.TypeDeclaration:
+            case GDDefinitionType.ExternalType:
+                // Search in project files
+                GoToType(scriptEditor, result.SymbolName);
                 break;
-            case nameof(GDInnerClassDeclaration):
-                if (nameToken is GDTypeNode type)
-                    GoToType(scriptEditor, type.BuildName());
-                else if (nameToken is GDStringNode stringNode)
-                    GoToResource(scriptEditor, stringNode.Sequence);
+
+            case GDDefinitionType.ExternalMember:
+                // Need to resolve member in external type
+                GoToExternalMember(scriptEditor, result.SymbolName);
                 break;
-            case nameof(GDPathList):
-                GoToNode(scriptEditor, (GDPathList)parent);
-                break;
-            case nameof(GDNodePathExpression):
-                GoToNode(scriptEditor, ((GDNodePathExpression)parent).Path?.ToString() ?? "");
-                break;
-            case nameof(GDMemberOperatorExpression):
-                GoToMember(scriptEditor, (GDIdentifier)nameToken, (GDMemberOperatorExpression)parent);
-                break;
-            default:
-                Logger.Info("GoToDefinition: Unknown parent type, delegating to Godot");
+
+            case GDDefinitionType.BuiltInType:
+                // Delegate to Godot for built-in types
+                Logger.Info($"GoToDefinition: Built-in type '{result.TypeName}', delegating to Godot");
                 scriptEditor.RequestGodotLookup();
-                return;
+                break;
+
+            case GDDefinitionType.NodePath:
+            case GDDefinitionType.ResourcePath:
+                // Delegate to Godot for runtime lookups
+                Logger.Info($"GoToDefinition: {result.DefinitionType} '{result.SymbolName}', delegating to Godot");
+                scriptEditor.RequestGodotLookup();
+                break;
+
+            default:
+                Logger.Info("GoToDefinition: Unknown type, delegating to Godot");
+                scriptEditor.RequestGodotLookup();
+                break;
         }
     }
 
-    private void GoToIdentifier(IScriptEditor scriptEditor, GDIdentifier identifier, GDIdentifierExpression expr)
+    private void GoToType(IScriptEditor scriptEditor, string typeName)
     {
-        Logger.Info("GoToDefinition: Searching in the method scope");
+        Logger.Info($"GoToDefinition: Searching in files for type '{typeName}'");
 
-        // Search for declaration in the method scope first - find enclosing method by walking up parents
-        var methodScope = FindParentOfType<GDMethodDeclaration>(identifier);
-        if (methodScope != null)
-        {
-            // Search in method parameters
-            foreach (var param in methodScope.Parameters?.OfType<GDParameterDeclaration>() ?? Enumerable.Empty<GDParameterDeclaration>())
-            {
-                if (param.Identifier?.Sequence == identifier.Sequence)
-                {
-                    scriptEditor.SelectToken(param.Identifier);
-                    Logger.Info("GoToDefinition completed (method parameter)");
-                    return;
-                }
-            }
-
-            // Search in local variable declarations within the method
-            foreach (var varDecl in methodScope.AllNodes.OfType<GDVariableDeclarationStatement>())
-            {
-                if (varDecl.Identifier?.Sequence == identifier.Sequence &&
-                    varDecl.StartLine < identifier.StartLine)
-                {
-                    scriptEditor.SelectToken(varDecl.Identifier);
-                    Logger.Info("GoToDefinition completed (local variable)");
-                    return;
-                }
-            }
-
-            // Search in for loop variables
-            foreach (var forStmt in methodScope.AllNodes.OfType<GDForStatement>())
-            {
-                if (forStmt.Variable?.Sequence == identifier.Sequence &&
-                    forStmt.StartLine <= identifier.StartLine)
-                {
-                    scriptEditor.SelectToken(forStmt.Variable);
-                    Logger.Info("GoToDefinition completed (for loop variable)");
-                    return;
-                }
-            }
-        }
-
-        Logger.Info("GoToDefinition: Searching in the type");
-
-        var @nearestClass = identifier.ClassDeclaration;
-
-        if (@nearestClass == null)
-        {
-            Logger.Info("GoToDefinition: There is no nearest class declaration");
-            scriptEditor.RequestGodotLookup();
-            return;
-        }
-
-        foreach (var classMember in @nearestClass.Members.OfType<GDIdentifiableClassMember>())
-        {
-            if (classMember.Identifier?.Sequence == identifier.Sequence)
-            {
-                scriptEditor.SelectToken(classMember.Identifier);
-                Logger.Info("GoToDefinition completed (class member)");
-                return;
-            }
-        }
-
-        GoToType(scriptEditor, identifier.ToString());
-    }
-
-    private static T? FindParentOfType<T>(GDSyntaxToken token) where T : GDNode
-    {
-        return GDPositionFinder.FindParent<T>(token);
-    }
-
-    private void GoToType(IScriptEditor scriptEditor, string nameToken)
-    {
-        Logger.Info("GoToDefinition: Searching in files");
-
-        var pointer = Map.FindStaticDeclarationIdentifier(nameToken.ToString());
+        var pointer = Map.FindStaticDeclarationIdentifier(typeName);
 
         if (pointer != null && pointer.ScriptReference != null)
         {
@@ -170,7 +116,7 @@ internal class GoToDefinitionCommand : Command
             {
                 if (pointer.DeclarationIdentifier != null)
                     tabController.Editor.SelectToken(pointer.DeclarationIdentifier);
-                Logger.Info("GoToDefinition completed");
+                Logger.Info("GoToDefinition completed (external type)");
                 return;
             }
 
@@ -178,110 +124,75 @@ internal class GoToDefinitionCommand : Command
         }
         else
         {
-            Logger.Info("GoToDefinition: There is no project's declaration for the selected identifier");
-
+            Logger.Info("GoToDefinition: No project declaration found");
             scriptEditor.RequestGodotLookup();
         }
     }
 
-    private void GoToResource(IScriptEditor scriptEditor, string path)
+    private void GoToExternalMember(IScriptEditor scriptEditor, string memberName)
     {
-        Logger.Info("GoToDefinition: Opening resource path");
-        scriptEditor.RequestGodotLookup();
-    }
+        Logger.Info($"GoToDefinition: Searching for external member '{memberName}'");
 
-    private void GoToNode(IScriptEditor scriptEditor, GDPathList path)
-    {
-        if (path == null)
+        // Get the identifier at cursor to determine the caller type
+        var @class = scriptEditor.GetClass();
+        if (@class == null)
         {
-            Logger.Info("GoToDefinition: Node path is null");
-            return;
-        }
-
-        var pathString = path.ToString();
-        GoToNode(scriptEditor, pathString);
-    }
-
-    private void GoToNode(IScriptEditor scriptEditor, string path)
-    {
-        if (string.IsNullOrEmpty(path))
-        {
-            Logger.Info("GoToDefinition: Node path is empty");
-            return;
-        }
-
-        Logger.Info($"GoToDefinition: Looking up node path '{path}'");
-
-        // Try to find the associated scene file
-        var scriptPath = scriptEditor.ScriptPath;
-        if (string.IsNullOrEmpty(scriptPath))
-        {
-            Logger.Info("GoToDefinition: Cannot determine script path");
             scriptEditor.RequestGodotLookup();
             return;
         }
 
-        // Node path navigation is best handled by Godot's built-in lookup
-        // as it requires access to the scene tree which is runtime information
-        Logger.Info("GoToDefinition: Delegating node path lookup to Godot");
-        scriptEditor.RequestGodotLookup();
-    }
+        var finder = new GDPositionFinder(@class);
+        var token = finder.FindIdentifierAtPosition(scriptEditor.CursorLine, scriptEditor.CursorColumn);
 
-    private void GoToMember(IScriptEditor scriptEditor, GDIdentifier identifier, GDMemberOperatorExpression expr)
-    {
-        if (expr.CallerExpression == null)
+        if (token?.Parent is GDMemberOperatorExpression memberExpr && memberExpr.CallerExpression != null)
         {
-            Logger.Info("GoToDefinition: Searching base class member");
-            return;
-        }
+            var analyzer = scriptEditor.ScriptMap.Analyzer;
 
-        Logger.Info("GoToDefinition: Searching type member");
-
-        var analyzer = scriptEditor.ScriptMap.Analyzer;
-
-        if (analyzer == null)
-        {
-            Logger.Info("GoToDefinition: The script's analyzer hasn't completed the job yet.");
-            return;
-        }
-
-        var callerType = analyzer.GetTypeForNode(expr.CallerExpression);
-
-        if (string.IsNullOrEmpty(callerType))
-        {
-            Logger.Info("GoToDefinition: Could not determine caller type.");
-            return;
-        }
-
-        Logger.Info($"GoToDefinition: Caller type is '{callerType}'");
-
-        // Try to find the member in project classes
-        var memberName = identifier.Sequence;
-        var typeMap = Map.GetScriptMapByTypeName(callerType);
-
-        if (typeMap?.Analyzer != null)
-        {
-            var symbol = typeMap.Analyzer.FindSymbol(memberName);
-            if (symbol?.Declaration != null)
+            if (analyzer == null)
             {
-                // Find the identifier in the declaration
-                var declIdentifier = symbol.Declaration switch
-                {
-                    GDMethodDeclaration method => method.Identifier,
-                    GDVariableDeclaration variable => variable.Identifier,
-                    GDSignalDeclaration signal => signal.Identifier,
-                    GDEnumDeclaration enumDecl => enumDecl.Identifier,
-                    _ => null
-                };
+                Logger.Info("GoToDefinition: Analyzer not available");
+                scriptEditor.RequestGodotLookup();
+                return;
+            }
 
-                if (declIdentifier != null)
+            var callerType = analyzer.GetTypeForNode(memberExpr.CallerExpression);
+
+            if (string.IsNullOrEmpty(callerType))
+            {
+                Logger.Info("GoToDefinition: Could not determine caller type");
+                scriptEditor.RequestGodotLookup();
+                return;
+            }
+
+            Logger.Info($"GoToDefinition: Caller type is '{callerType}'");
+
+            // Try to find the member in project classes
+            var typeMap = Map.GetScriptMapByTypeName(callerType);
+
+            if (typeMap?.Analyzer != null)
+            {
+                var symbol = typeMap.Analyzer.FindSymbol(memberName);
+                if (symbol?.Declaration != null)
                 {
-                    var tabController = Plugin.OpenScript(typeMap);
-                    if (tabController?.Editor != null)
+                    // Find the identifier in the declaration
+                    var declIdentifier = symbol.Declaration switch
                     {
-                        tabController.Editor.SelectToken(declIdentifier);
-                        Logger.Info("GoToDefinition completed");
-                        return;
+                        GDMethodDeclaration method => method.Identifier,
+                        GDVariableDeclaration variable => variable.Identifier,
+                        GDSignalDeclaration signal => signal.Identifier,
+                        GDEnumDeclaration enumDecl => enumDecl.Identifier,
+                        _ => null
+                    };
+
+                    if (declIdentifier != null)
+                    {
+                        var tabController = Plugin.OpenScript(typeMap);
+                        if (tabController?.Editor != null)
+                        {
+                            tabController.Editor.SelectToken(declIdentifier);
+                            Logger.Info("GoToDefinition completed (external member)");
+                            return;
+                        }
                     }
                 }
             }

@@ -229,6 +229,102 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         return null;
     }
 
+    public bool ResourceExists(string resourcePath)
+    {
+        if (string.IsNullOrEmpty(resourcePath))
+            return false;
+
+        // Convert res:// path to actual file path if needed
+        var filePath = resourcePath;
+        if (resourcePath.StartsWith("res://") && _projectMap?.ProjectPath != null)
+        {
+            filePath = System.IO.Path.Combine(_projectMap.ProjectPath, resourcePath.Substring(6).Replace("/", System.IO.Path.DirectorySeparatorChar.ToString()));
+        }
+
+        return System.IO.File.Exists(filePath);
+    }
+
+    public GDSignalInfo GetSignal(string typeName, string signalName)
+    {
+        if (string.IsNullOrEmpty(signalName))
+            return null;
+
+        // Check project scripts first
+        if (!string.IsNullOrEmpty(typeName) && typeName != "self")
+        {
+            var scriptMap = _projectMap?.GetScriptMapByTypeName(typeName);
+            if (scriptMap?.Analyzer != null)
+            {
+                var symbol = scriptMap.Analyzer.FindSymbol(signalName);
+                if (symbol?.Kind == GDSymbolKind.Signal)
+                {
+                    return BuildSignalInfo(symbol);
+                }
+            }
+        }
+
+        // Check built-in types
+        var typeInfo = _builtInProvider.GetTypeInfo(typeName);
+        if (typeInfo?.Members != null)
+        {
+            var signalMember = typeInfo.Members.FirstOrDefault(m =>
+                m.Kind == GDRuntimeMemberKind.Signal && m.Name == signalName);
+            if (signalMember != null)
+            {
+                return new GDSignalInfo
+                {
+                    Name = signalName,
+                    Parameters = signalMember.Parameters
+                };
+            }
+        }
+
+        return null;
+    }
+
+    public IEnumerable<GDSignalInfo> GetSignals(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            yield break;
+
+        // Check project scripts
+        var scriptMap = _projectMap?.GetScriptMapByTypeName(typeName);
+        if (scriptMap?.Analyzer != null)
+        {
+            foreach (var symbol in scriptMap.Analyzer.Symbols)
+            {
+                if (symbol.Kind == GDSymbolKind.Signal)
+                {
+                    yield return BuildSignalInfo(symbol);
+                }
+            }
+        }
+
+        // Check built-in types
+        var typeInfo = _builtInProvider.GetTypeInfo(typeName);
+        if (typeInfo?.Members != null)
+        {
+            foreach (var member in typeInfo.Members)
+            {
+                if (member.Kind == GDRuntimeMemberKind.Signal)
+                {
+                    yield return new GDSignalInfo
+                    {
+                        Name = member.Name,
+                        Parameters = member.Parameters
+                    };
+                }
+            }
+        }
+    }
+
+    public IEnumerable<GDSceneSignalConnection> GetSignalConnectionsForMethod(string scriptPath, string methodName)
+    {
+        // TODO: Implement scene-based signal connection lookup
+        // This would require parsing .tscn files for [connection] blocks
+        yield break;
+    }
+
     #endregion
 
     #region Helpers

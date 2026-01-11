@@ -70,6 +70,20 @@ namespace GDShrapt.Reader
         public bool CheckAbstract { get; set; } = true;
 
         /// <summary>
+        /// Whether to validate signal operations (emit_signal, connect).
+        /// Requires IGDProjectRuntimeProvider with signal information.
+        /// Default: true
+        /// </summary>
+        public bool CheckSignals { get; set; } = true;
+
+        /// <summary>
+        /// Whether to validate resource paths in load/preload calls.
+        /// Requires IGDProjectRuntimeProvider with resource information.
+        /// Default: true
+        /// </summary>
+        public bool CheckResourcePaths { get; set; } = true;
+
+        /// <summary>
         /// Default validation options with all checks enabled.
         /// </summary>
         public static GDValidationOptions Default => new GDValidationOptions();

@@ -143,6 +143,26 @@ namespace GDShrapt.Reader
         /// </summary>
         NotCallable = 4004,
 
+        /// <summary>
+        /// emit_signal called with wrong number of arguments.
+        /// </summary>
+        EmitSignalWrongArgCount = 4005,
+
+        /// <summary>
+        /// Signal not found on type.
+        /// </summary>
+        UndefinedSignalEmit = 4006,
+
+        /// <summary>
+        /// connect callback has wrong signature.
+        /// </summary>
+        ConnectCallbackMismatch = 4007,
+
+        /// <summary>
+        /// A resource path in load/preload does not exist.
+        /// </summary>
+        ResourceNotFound = 4008,
+
         // Control flow errors (5xxx)
         /// <summary>
         /// A break statement is used outside of a loop.

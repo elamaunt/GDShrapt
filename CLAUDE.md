@@ -156,10 +156,13 @@ Explicit disable in config always takes precedence.
 - `GDScriptProject` - Project-level analysis orchestrator
 - `GDScriptFile` / `GDScriptAnalyzer` - File-level analysis with references
 - `GDTypeResolver` - Cross-file type resolution
-- `TypeInference/` - Type providers:
+- `TypeInference/` - Type providers and confidence tracking:
   - `GDGodotTypesProvider` - Godot built-in types (uses TypesMap submodule)
   - `GDProjectTypesProvider` - User-defined types from project scripts
   - `GDCompositeRuntimeProvider` - Combines multiple providers
+  - `GDTypeInferenceHelper` - Centralized inference with confidence tracking
+  - `GDTypeConfidence` - Confidence levels: `Certain`, `High`, `Medium`, `Low`, `Unknown`
+  - `GDInferredType` - Wraps type name with confidence and reason
 - `Refactoring/` - Refactoring operations with confidence levels:
   - `GDReferenceConfidence` - Strict (type confirmed), Potential (duck-typed), NameMatch (name only)
   - `GDRenameResult.StrictEdits` / `PotentialEdits` - Edits separated by confidence
@@ -171,15 +174,15 @@ Explicit disable in config always takes precedence.
     - `GDRenameService` - Symbol renaming with confidence levels
     - `GDInvertConditionService` - Invert if/elif/while conditions using De Morgan's laws
     - `GDConvertForToWhileService` - Convert for loops to while loops
-    - `GDAddTypeAnnotationService` - Add type annotations based on type inference
+    - `GDAddTypeAnnotationService` - Add type annotations with `TypeConfidence`
     - `GDFormatCodeService` - Code formatting (FormatFile, FormatSelection, FormatRange)
-    - `GDExtractVariableService` - Extract expression to local variable
+    - `GDExtractVariableService` - Extract expression to local variable with `TypeConfidence`
     - `GDExtractMethodService` - Extract statements to new method
     - `GDRemoveCommentsService` - Remove comments from code
     - `GDSnippetService` - Code snippets/templates for keywords
     - `GDReorderMembersService` - Reorder class members by category
     - `GDSurroundWithService` - Surround code with if/for/while/match/func
-    - `GDGenerateOnreadyService` - Convert get_node() to @onready var
+    - `GDGenerateOnreadyService` - Convert get_node() to @onready var with `TypeConfidence`
 - `Utilities/` - Helper utilities:
   - `GDPositionFinder` - Optimized token/node lookup using `TryGetTokenByPosition`
 - `Configuration/` - Unified configuration system (see below)
@@ -452,6 +455,30 @@ var provider = new GDCachingRuntimeProvider(new MyGodotProvider());
 var options = new GDValidationOptions { RuntimeProvider = provider };
 validator.Validate(tree, options);
 ```
+
+### Project-Level Validation
+
+With `IGDProjectRuntimeProvider`, the validator can perform project-aware checks:
+
+**Signal Validation** (`GDSignalValidator`):
+- `emit_signal("signal_name", args...)` - validates signal exists and argument count
+- `connect("signal_name", callable)` - validates signal exists and callback signature
+- Requires `CheckSignals = true` in options (default: true)
+
+**Resource Path Validation**:
+- `load("res://...")` and `preload("res://...")` - validates resource exists
+- Only static string paths are checked; dynamic paths skipped
+- Requires `CheckResourcePaths = true` and `IGDProjectRuntimeProvider`
+
+**Extends Path Validation**:
+- `extends "res://path/script.gd"` - validates script file exists
+- Falls back to `ResourceExists()` if script info unavailable
+
+**Scene Signal Connections** (`GDSceneTypesProvider`):
+- Parses `[connection signal="..." from="..." to="..." method="..."]` from .tscn files
+- `GetSignalConnections(scenePath)` - all connections in a scene
+- `GetConnectionsToMethod(scenePath, methodName)` - connections targeting a method
+- `GetSignalConnectionsForScriptMethod(scriptPath, methodName)` - cross-scene lookup
 
 ## Error Handling
 

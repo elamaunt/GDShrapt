@@ -43,6 +43,13 @@ namespace GDShrapt.Reader
             if (typeNode == null)
                 return;
 
+            // Handle string path extends: extends "res://path/script.gd"
+            if (typeNode is GDStringTypeNode stringType)
+            {
+                ValidateExtendsPath(stringType, extendsAttribute);
+                return;
+            }
+
             var typeName = typeNode.BuildName();
             if (string.IsNullOrEmpty(typeName))
                 return;
@@ -56,6 +63,34 @@ namespace GDShrapt.Reader
                     GDDiagnosticCode.UnknownBaseType,
                     $"Unknown base type: '{typeName}'",
                     extendsAttribute);
+            }
+        }
+
+        /// <summary>
+        /// Validates an extends clause with a string path (e.g., extends "res://base.gd").
+        /// </summary>
+        private void ValidateExtendsPath(GDStringTypeNode stringType, GDExtendsAttribute extendsAttribute)
+        {
+            var path = stringType.Path?.Sequence;
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            // Check through project runtime provider if available
+            if (Context.RuntimeProvider is IGDProjectRuntimeProvider projectProvider)
+            {
+                // First check if we can get script type info
+                var scriptInfo = projectProvider.GetScriptType(path);
+                if (scriptInfo != null)
+                    return; // Script exists and is known
+
+                // Fallback: check if resource exists
+                if (!projectProvider.ResourceExists(path))
+                {
+                    ReportWarning(
+                        GDDiagnosticCode.UnknownBaseType,
+                        $"Base script not found: '{path}'",
+                        extendsAttribute);
+                }
             }
         }
 

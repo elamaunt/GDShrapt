@@ -296,7 +296,60 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
 
         sceneInfo.Nodes = nodes;
         sceneInfo.UniqueNodes = uniqueNodes;
+
+        // Parse signal connections
+        sceneInfo.SignalConnections = ParseSignalConnections(content, nodes);
+
         return sceneInfo;
+    }
+
+    /// <summary>
+    /// Parses signal connections from scene file content.
+    /// Format: [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+    /// </summary>
+    private List<GDSignalConnectionInfo> ParseSignalConnections(string content, List<GDNodeTypeInfo> nodes)
+    {
+        var connections = new List<GDSignalConnectionInfo>();
+
+        // Match [connection signal="..." from="..." to="..." method="..."]
+        var connectionRegex = new Regex(
+            @"\[connection\s+" +
+            @"signal=""([^""]+)""\s+" +
+            @"from=""([^""]+)""\s+" +
+            @"to=""([^""]+)""\s+" +
+            @"method=""([^""]+)""" +
+            @"[^\]]*\]",
+            RegexOptions.Multiline);
+
+        foreach (Match match in connectionRegex.Matches(content))
+        {
+            var lineNumber = content.Substring(0, match.Index).Count(c => c == '\n') + 1;
+            var fromNode = match.Groups[2].Value;
+
+            // Resolve source node type
+            string? sourceNodeType = null;
+            var sourceNode = nodes.FirstOrDefault(n =>
+                n.Path == fromNode ||
+                n.Name == fromNode ||
+                (fromNode == "." && n.Path == "."));
+
+            if (sourceNode != null)
+            {
+                sourceNodeType = sourceNode.ScriptTypeName ?? sourceNode.NodeType;
+            }
+
+            connections.Add(new GDSignalConnectionInfo
+            {
+                SignalName = match.Groups[1].Value,
+                FromNode = fromNode,
+                ToNode = match.Groups[3].Value,
+                Method = match.Groups[4].Value,
+                LineNumber = lineNumber,
+                SourceNodeType = sourceNodeType
+            });
+        }
+
+        return connections;
     }
 
     private string GetTypeNameFromScriptPath(string scriptPath)
@@ -460,6 +513,80 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
     /// Gets all cached scenes.
     /// </summary>
     public IEnumerable<GDSceneInfo> AllScenes => _sceneCache.Values;
+
+    /// <summary>
+    /// Gets all signal connections for a scene.
+    /// </summary>
+    public IEnumerable<GDSignalConnectionInfo> GetSignalConnections(string scenePath)
+    {
+        if (_sceneCache.TryGetValue(scenePath, out var info))
+            return info.SignalConnections;
+        return Array.Empty<GDSignalConnectionInfo>();
+    }
+
+    /// <summary>
+    /// Gets signal connections where the target method matches the specified name.
+    /// Used to validate that the method exists and matches signal signature.
+    /// </summary>
+    public IEnumerable<GDSignalConnectionInfo> GetConnectionsToMethod(string scenePath, string methodName)
+    {
+        return GetSignalConnections(scenePath)
+            .Where(c => c.Method == methodName);
+    }
+
+    /// <summary>
+    /// Gets all signal connections that use a specific signal across all loaded scenes.
+    /// </summary>
+    public IEnumerable<(string scenePath, GDSignalConnectionInfo connection)> GetConnectionsBySignal(string signalName)
+    {
+        foreach (var scene in _sceneCache.Values)
+        {
+            foreach (var conn in scene.SignalConnections)
+            {
+                if (conn.SignalName == signalName)
+                    yield return (scene.ScenePath, conn);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets all signal connections targeting methods in scripts that match the given script path.
+    /// </summary>
+    /// <param name="scriptPath">Path to the script.</param>
+    /// <param name="methodName">Method name to search for.</param>
+    /// <returns>Signal connections targeting this method.</returns>
+    public IEnumerable<GDSignalConnectionInfo> GetSignalConnectionsForScriptMethod(string scriptPath, string methodName)
+    {
+        if (string.IsNullOrEmpty(scriptPath) || string.IsNullOrEmpty(methodName))
+            yield break;
+
+        var resourcePath = ToResourcePath(scriptPath);
+
+        foreach (var scene in _sceneCache.Values)
+        {
+            // Collect node paths that use this script
+            var nodePathsWithScript = new HashSet<string>();
+            foreach (var node in scene.Nodes)
+            {
+                if (node.ScriptPath == resourcePath)
+                {
+                    nodePathsWithScript.Add(node.Path);
+                }
+            }
+
+            if (nodePathsWithScript.Count == 0)
+                continue;
+
+            // Find connections targeting any of these nodes
+            foreach (var conn in scene.SignalConnections)
+            {
+                if (conn.Method == methodName && nodePathsWithScript.Contains(conn.ToNode))
+                {
+                    yield return conn;
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the full filesystem path from a resource path.
@@ -832,6 +959,47 @@ public class GDSceneInfo
     /// Maps script resource paths to the node paths that use them.
     /// </summary>
     public Dictionary<string, string> ScriptToNodePath { get; } = new();
+
+    /// <summary>
+    /// Signal connections defined in this scene file.
+    /// </summary>
+    public IReadOnlyList<GDSignalConnectionInfo> SignalConnections { get; set; } = Array.Empty<GDSignalConnectionInfo>();
+}
+
+/// <summary>
+/// Information about a signal connection in a scene file.
+/// </summary>
+public class GDSignalConnectionInfo
+{
+    /// <summary>
+    /// Signal name (e.g., "pressed").
+    /// </summary>
+    public string SignalName { get; set; } = "";
+
+    /// <summary>
+    /// Node path emitting the signal (e.g., "Button").
+    /// </summary>
+    public string FromNode { get; set; } = "";
+
+    /// <summary>
+    /// Node path receiving the signal (e.g., ".").
+    /// </summary>
+    public string ToNode { get; set; } = "";
+
+    /// <summary>
+    /// Method name to call (e.g., "_on_button_pressed").
+    /// </summary>
+    public string Method { get; set; } = "";
+
+    /// <summary>
+    /// Line number (1-based) in the .tscn file.
+    /// </summary>
+    public int LineNumber { get; set; }
+
+    /// <summary>
+    /// Type of the node emitting the signal (resolved from scene nodes).
+    /// </summary>
+    public string? SourceNodeType { get; set; }
 }
 
 /// <summary>

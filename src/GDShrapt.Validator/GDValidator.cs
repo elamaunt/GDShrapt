@@ -42,7 +42,7 @@ namespace GDShrapt.Reader
 
             if (options.CheckCalls)
             {
-                var callValidator = new GDCallValidator(context);
+                var callValidator = new GDCallValidator(context, options.CheckResourcePaths);
                 callValidator.Validate(node);
             }
 
@@ -68,6 +68,12 @@ namespace GDShrapt.Reader
             {
                 var abstractValidator = new GDAbstractValidator(context);
                 abstractValidator.Validate(node);
+            }
+
+            if (options.CheckSignals)
+            {
+                var signalValidator = new GDSignalValidator(context);
+                signalValidator.Validate(node);
             }
 
             return context.BuildResult();

@@ -271,6 +271,11 @@ namespace GDShrapt.Reader
 
             var caller = callExpr.CallerExpression;
 
+            // Check for emit_signal and connect calls - they have known return types
+            var signalCallType = InferSignalCallType(callExpr, caller);
+            if (signalCallType != null)
+                return signalCallType;
+
             // Direct function call
             if (caller is GDIdentifierExpression identExpr)
             {
@@ -350,6 +355,62 @@ namespace GDShrapt.Reader
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Infers the type for signal-related calls (emit_signal, connect, disconnect, etc.).
+        /// </summary>
+        private string InferSignalCallType(GDCallExpression callExpr, GDExpression caller)
+        {
+            string methodName = null;
+
+            // Check for direct call: emit_signal(...), connect(...)
+            if (caller is GDIdentifierExpression identExpr)
+            {
+                methodName = identExpr.Identifier?.Sequence;
+            }
+            // Check for method call: obj.emit_signal(...), obj.connect(...)
+            else if (caller is GDMemberOperatorExpression memberExpr)
+            {
+                methodName = memberExpr.Identifier?.Sequence;
+            }
+
+            if (string.IsNullOrEmpty(methodName))
+                return null;
+
+            switch (methodName)
+            {
+                case "emit_signal":
+                    // emit_signal returns void (it triggers signal handlers)
+                    return "void";
+
+                case "connect":
+                    // connect returns Error (int enum in Godot 4)
+                    return "Error";
+
+                case "disconnect":
+                    // disconnect returns void
+                    return "void";
+
+                case "is_connected":
+                    // is_connected returns bool
+                    return "bool";
+
+                case "get_signal_connection_list":
+                    // Returns Array of Dictionaries with connection info
+                    return "Array";
+
+                case "get_signal_list":
+                    // Returns Array of Dictionaries with signal info
+                    return "Array";
+
+                case "has_signal":
+                    // has_signal returns bool
+                    return "bool";
+
+                default:
+                    return null;
+            }
         }
 
         /// <summary>

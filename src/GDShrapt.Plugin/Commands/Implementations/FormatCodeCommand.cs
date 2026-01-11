@@ -1,4 +1,5 @@
 using GDShrapt.Plugin.Config;
+using GDShrapt.Plugin.Refactoring;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System;
@@ -6,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
+/// <summary>
+/// Formats GDScript code.
+/// Delegates to GDFormatCodeService in Semantics.
+/// </summary>
 internal class FormatCodeCommand : Command
 {
     public FormatCodeCommand(GDShraptPlugin plugin)
@@ -32,21 +37,52 @@ internal class FormatCodeCommand : Command
 
         try
         {
-            // Create formatter with options from configuration
+            // Build refactoring context using the builder
+            var contextBuilder = new RefactoringContextBuilder(Map);
+            var semanticsContext = contextBuilder.BuildSemanticsContext(controller);
+
+            if (semanticsContext == null)
+            {
+                Logger.Info("Format code cancelled: Could not build context");
+                return;
+            }
+
+            // Create service with options from configuration
             var options = CreateFormatterOptions();
-            var formatter = new GDFormatter(options);
+            var service = new GDFormatCodeService(options);
 
-            // Format the code
-            var formatted = formatter.FormatCode(content);
+            // Check if formatting is possible
+            if (!service.CanExecute(semanticsContext))
+            {
+                Logger.Info("Format code cancelled: Cannot format at this position");
+                return;
+            }
 
-            if (formatted == content)
+            // Execute formatting based on selection
+            GDRefactoringResult result;
+            if (controller.HasSelection)
+            {
+                result = service.FormatSelection(semanticsContext);
+            }
+            else
+            {
+                result = service.FormatFile(semanticsContext);
+            }
+
+            if (!result.Success)
+            {
+                Logger.Error($"Format failed: {result.ErrorMessage}");
+                return;
+            }
+
+            if (result.Edits == null || result.Edits.Count == 0)
             {
                 Logger.Info("Code is already properly formatted");
                 return;
             }
 
-            // Replace content in editor
-            controller.Text = formatted;
+            // Apply the edits
+            ApplyEdits(controller, result);
 
             Logger.Info("Code formatted successfully");
         }
@@ -57,6 +93,63 @@ internal class FormatCodeCommand : Command
         }
 
         await Task.CompletedTask;
+    }
+
+    private void ApplyEdits(IScriptEditor controller, GDRefactoringResult result)
+    {
+        if (result.Edits == null || result.Edits.Count == 0)
+            return;
+
+        // For formatting, we typically get a single whole-file edit
+        // Apply edits in reverse order to preserve line numbers
+        var sortedEdits = new System.Collections.Generic.List<GDTextEdit>(result.Edits);
+        sortedEdits.Sort((a, b) =>
+        {
+            var lineCmp = b.Line.CompareTo(a.Line);
+            return lineCmp != 0 ? lineCmp : b.Column.CompareTo(a.Column);
+        });
+
+        foreach (var edit in sortedEdits)
+        {
+            ApplySingleEdit(controller, edit);
+        }
+
+        controller.ReloadScriptFromText();
+    }
+
+    private void ApplySingleEdit(IScriptEditor controller, GDTextEdit edit)
+    {
+        if (string.IsNullOrEmpty(edit.OldText))
+        {
+            // Insertion
+            controller.CursorLine = edit.Line;
+            controller.CursorColumn = edit.Column;
+            controller.InsertTextAtCursor(edit.NewText);
+        }
+        else
+        {
+            // Replacement - for whole-file format, replace entire content
+            if (edit.Line == 0 && edit.Column == 0)
+            {
+                controller.Text = edit.NewText;
+            }
+            else
+            {
+                // Partial replacement - select old text and replace
+                var endColumn = edit.Column + edit.OldText.Length;
+                var lines = edit.OldText.Split('\n');
+                var endLine = edit.Line + lines.Length - 1;
+
+                if (lines.Length > 1)
+                {
+                    endColumn = lines[^1].Length;
+                }
+
+                controller.Select(edit.Line, edit.Column, endLine, endColumn);
+                controller.Cut();
+                controller.InsertTextAtCursor(edit.NewText);
+            }
+        }
     }
 
     /// <summary>

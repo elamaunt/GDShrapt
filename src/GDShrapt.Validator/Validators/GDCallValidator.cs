@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace GDShrapt.Reader
 {
     /// <summary>
@@ -6,8 +8,11 @@ namespace GDShrapt.Reader
     /// </summary>
     public class GDCallValidator : GDValidationVisitor
     {
-        public GDCallValidator(GDValidationContext context) : base(context)
+        private readonly bool _checkResourcePaths;
+
+        public GDCallValidator(GDValidationContext context, bool checkResourcePaths = true) : base(context)
         {
+            _checkResourcePaths = checkResourcePaths;
         }
 
         public void Validate(GDNode node)
@@ -32,6 +37,12 @@ namespace GDShrapt.Reader
                 var name = identifierExpr.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(name))
                 {
+                    // Check load/preload path validation
+                    if (_checkResourcePaths && (name == "load" || name == "preload"))
+                    {
+                        ValidateLoadCall(callExpression, name);
+                    }
+
                     // First check built-in via RuntimeProvider, then user-defined
                     if (!ValidateGlobalFunctionCall(name, argCount, callExpression))
                     {
@@ -211,6 +222,49 @@ namespace GDShrapt.Reader
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Validates load/preload calls by checking if the resource path exists.
+        /// </summary>
+        private void ValidateLoadCall(GDCallExpression callExpr, string funcName)
+        {
+            var args = callExpr.Parameters;
+            if (args == null || args.Count == 0)
+                return;
+
+            // Get path from first argument
+            var pathArg = args.FirstOrDefault();
+            var resourcePath = ExtractStaticString(pathArg);
+
+            if (resourcePath == null)
+                return; // Dynamic path - cannot validate
+
+            // Check through project runtime provider if available
+            if (Context.RuntimeProvider is IGDProjectRuntimeProvider projectProvider)
+            {
+                if (!projectProvider.ResourceExists(resourcePath))
+                {
+                    ReportWarning(
+                        GDDiagnosticCode.ResourceNotFound,
+                        $"Resource not found: '{resourcePath}'",
+                        callExpr);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extracts a static string value from an expression.
+        /// Returns null if the string is dynamic or cannot be determined.
+        /// </summary>
+        private string ExtractStaticString(GDExpression expr)
+        {
+            if (expr is GDStringExpression stringExpr)
+            {
+                return stringExpr.String?.Sequence;
+            }
+
+            return null;
         }
     }
 }
