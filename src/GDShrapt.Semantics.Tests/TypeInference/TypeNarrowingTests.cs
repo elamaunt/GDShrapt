@@ -2,7 +2,7 @@ using GDShrapt.Reader;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.TypeInference;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Tests for type narrowing analysis (flow-sensitive type analysis).

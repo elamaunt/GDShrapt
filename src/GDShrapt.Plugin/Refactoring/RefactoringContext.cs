@@ -1,7 +1,7 @@
 using GDShrapt.Reader;
 using Godot;
 
-namespace GDShrapt.Plugin.Refactoring;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Context for determining refactoring availability and execution.

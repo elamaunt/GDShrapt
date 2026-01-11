@@ -1,4 +1,6 @@
-﻿namespace GDShrapt.Reader
+﻿using GDShrapt.Reader;
+
+namespace GDShrapt.Builder
 {
     public static partial class GD
     {

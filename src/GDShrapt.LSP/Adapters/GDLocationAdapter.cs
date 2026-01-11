@@ -1,8 +1,6 @@
-using GDShrapt.LSP.Protocol.Types;
-using GDShrapt.LSP.Server;
 using GDShrapt.Reader;
 
-namespace GDShrapt.LSP.Adapters;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Adapts GDShrapt locations to LSP locations.

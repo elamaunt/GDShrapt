@@ -1,8 +1,7 @@
-using GDShrapt.Semantics.Tests.Integration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Services;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Tests for GDNodePathReferenceFinder.

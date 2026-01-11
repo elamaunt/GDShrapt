@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GDShrapt.LSP.Protocol;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Abstraction for JSON-RPC transport layer.

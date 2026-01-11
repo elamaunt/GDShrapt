@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// AST Viewer dock for visualizing the syntax tree of GDScript files.

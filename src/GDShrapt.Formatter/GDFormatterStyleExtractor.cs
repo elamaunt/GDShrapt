@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Extracts formatting style from sample GDScript code.
@@ -35,10 +36,6 @@ namespace GDShrapt.Reader
 
         private GDClassMember _previousMember;
 
-        // Member order extraction
-        private readonly List<GDMemberCategory> _memberOrder = new List<GDMemberCategory>();
-        private readonly HashSet<GDMemberCategory> _seenCategories = new HashSet<GDMemberCategory>();
-
         // New: Raw code analysis statistics
         private int _lfCount;
         private int _crlfCount;
@@ -57,11 +54,6 @@ namespace GDShrapt.Reader
         // New: Indent size calculation with nesting
         private readonly Dictionary<int, int> _indentLevelToSize = new Dictionary<int, int>();
         private int _currentNestingLevel;
-
-        /// <summary>
-        /// Whether to extract member order from sample code. Default: true.
-        /// </summary>
-        public bool ExtractMemberOrder { get; set; } = true;
 
         /// <summary>
         /// Extracts formatting style from a parsed GDScript node.
@@ -213,8 +205,6 @@ namespace GDShrapt.Reader
             _spaceInsideBracesCount = 0;
             _noSpaceInsideBracesCount = 0;
             _previousMember = null;
-            _memberOrder.Clear();
-            _seenCategories.Clear();
 
             // Reset new statistics
             _lfCount = 0;
@@ -322,12 +312,6 @@ namespace GDShrapt.Reader
             options.SpaceInsideBrackets = _spaceInsideBracketsCount > _noSpaceInsideBracketsCount;
             options.SpaceInsideBraces = _spaceInsideBracesCount >= _noSpaceInsideBracesCount;
 
-            // Member order - only set if we extracted meaningful order
-            if (ExtractMemberOrder && _memberOrder.Count > 1)
-            {
-                options.MemberOrder = new List<GDMemberCategory>(_memberOrder);
-            }
-
             return options;
         }
 
@@ -421,7 +405,6 @@ namespace GDShrapt.Reader
             AnalyzeMemberBlankLines(methodDeclaration, true);
             AnalyzeMethodSpacing(methodDeclaration);
             AnalyzeMultilineMethod(methodDeclaration);
-            RecordMemberCategory(methodDeclaration);
         }
 
         public override void Left(GDMethodDeclaration methodDeclaration)
@@ -474,39 +457,16 @@ namespace GDShrapt.Reader
             AnalyzeMemberBlankLines(variableDeclaration, false);
             AnalyzeColonSpacing(variableDeclaration.Colon, variableDeclaration);
             AnalyzeAssignSpacing(variableDeclaration.Assign, variableDeclaration);
-            RecordMemberCategory(variableDeclaration);
         }
 
         public override void Visit(GDSignalDeclaration signalDeclaration)
         {
             AnalyzeMemberBlankLines(signalDeclaration, false);
-            RecordMemberCategory(signalDeclaration);
         }
 
         public override void Visit(GDEnumDeclaration enumDeclaration)
         {
             AnalyzeMemberBlankLines(enumDeclaration, false);
-            RecordMemberCategory(enumDeclaration);
-        }
-
-        public override void Visit(GDInnerClassDeclaration innerClassDeclaration)
-        {
-            RecordMemberCategory(innerClassDeclaration);
-        }
-
-        public override void Visit(GDClassNameAttribute classNameAttribute)
-        {
-            RecordMemberCategory(classNameAttribute);
-        }
-
-        public override void Visit(GDExtendsAttribute extendsAttribute)
-        {
-            RecordMemberCategory(extendsAttribute);
-        }
-
-        public override void Visit(GDToolAttribute toolAttribute)
-        {
-            RecordMemberCategory(toolAttribute);
         }
 
         public override void Visit(GDDualOperatorExpression expression)
@@ -846,28 +806,6 @@ namespace GDShrapt.Reader
                     _spaceInsideBracesCount++;
                 else if (prevToken != null && !(prevToken is GDNewLine) && !(prevToken is GDFigureOpenBracket))
                     _noSpaceInsideBracesCount++;
-            }
-        }
-
-        #endregion
-
-        #region Member Order Extraction
-
-        /// <summary>
-        /// Records the category of a class member for order extraction.
-        /// </summary>
-        private void RecordMemberCategory(GDClassMember member)
-        {
-            if (!ExtractMemberOrder || member == null)
-                return;
-
-            var category = GDCodeReorderFormatRule.GetCategory(member);
-
-            // Only record first occurrence of each category
-            if (!_seenCategories.Contains(category))
-            {
-                _seenCategories.Add(category);
-                _memberOrder.Add(category);
             }
         }
 

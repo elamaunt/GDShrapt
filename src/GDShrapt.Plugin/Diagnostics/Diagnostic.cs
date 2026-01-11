@@ -1,9 +1,8 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 
-namespace GDShrapt.Plugin.Diagnostics;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Represents a single diagnostic (error, warning, hint) for a script.

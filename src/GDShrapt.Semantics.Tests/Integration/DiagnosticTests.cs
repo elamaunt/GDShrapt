@@ -1,9 +1,8 @@
-using GDShrapt.Semantics.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Integration;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Diagnostic tests to verify the test project loading correctly.

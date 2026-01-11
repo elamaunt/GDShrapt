@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using GDShrapt.LSP.Protocol.Types;
-using GDShrapt.LSP.Server;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
-namespace GDShrapt.LSP.Adapters;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Adapts GDShrapt validation results to LSP diagnostics.

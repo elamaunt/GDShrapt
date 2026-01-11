@@ -1,6 +1,6 @@
 using GDShrapt.Reader;
 
-namespace GDShrapt.Semantics.Tests.Helpers;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Information about a reference to a symbol.

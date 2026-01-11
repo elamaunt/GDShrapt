@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Custom Tree control with syntax highlighting support for reference display.

@@ -1,9 +1,5 @@
-using GDShrapt.Plugin.Config;
-using GDShrapt.Semantics;
-using System.Collections.Generic;
-using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Interface for lint rules that analyze GDScript code.

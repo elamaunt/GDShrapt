@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace GDShrapt.LSP.Protocol.Types;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// DidOpenTextDocument notification parameters.

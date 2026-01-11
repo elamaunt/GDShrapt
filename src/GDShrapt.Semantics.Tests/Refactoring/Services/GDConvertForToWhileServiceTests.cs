@@ -1,7 +1,7 @@
 using GDShrapt.Reader;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Semantics.Tests.Refactoring.Services;
+namespace GDShrapt.Semantics.Tests;
 
 [TestClass]
 public class GDConvertForToWhileServiceTests

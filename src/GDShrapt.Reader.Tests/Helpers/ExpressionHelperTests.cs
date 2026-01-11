@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Reader.Tests.Helpers
+namespace GDShrapt.Reader.Tests
 {
     /// <summary>
     /// Tests for GDExpressionHelper.

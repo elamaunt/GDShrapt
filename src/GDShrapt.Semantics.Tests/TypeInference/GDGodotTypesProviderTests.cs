@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Semantics.Tests.TypeInference;
+namespace GDShrapt.Semantics.Tests;
 
 [TestClass]
 public class GDGodotTypesProviderTests

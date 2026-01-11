@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
 using Xunit;
 
-namespace GDShrapt.CLI.Tests.Commands;
+namespace GDShrapt.CLI.Tests;
 
 public class GDSymbolsCommandTests
 {

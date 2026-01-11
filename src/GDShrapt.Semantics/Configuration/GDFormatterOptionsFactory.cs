@@ -55,16 +55,7 @@ public static class GDFormatterOptionsFactory
             // Line wrapping
             MaxLineLength = formatter.MaxLineLength,
             WrapLongLines = formatter.WrapLongLines,
-            LineWrapStyle = MapLineWrapStyle(formatter.LineWrapStyle),
-
-            // Auto type hints
-            AutoAddTypeHints = formatter.AutoAddTypeHints,
-            AutoAddTypeHintsToLocals = formatter.AutoAddTypeHintsToLocals,
-            AutoAddTypeHintsToClassVariables = formatter.AutoAddTypeHintsToClassVariables,
-            AutoAddTypeHintsToParameters = formatter.AutoAddTypeHintsToParameters,
-
-            // Code reordering
-            ReorderCode = formatter.ReorderCode
+            LineWrapStyle = MapLineWrapStyle(formatter.LineWrapStyle)
         };
     }
 

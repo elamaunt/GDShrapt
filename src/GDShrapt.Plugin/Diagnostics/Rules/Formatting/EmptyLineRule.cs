@@ -1,10 +1,9 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules.Formatting;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// GDS013: Checks for consistent empty lines between functions and classes.

@@ -1,9 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.LSP.Protocol;
 
-namespace GDShrapt.LSP.Server;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Interface for the GDScript language server.

@@ -1,8 +1,7 @@
 using Godot;
-using GDShrapt.Plugin.Localization;
 using System;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// About panel displaying plugin information, version, and links.

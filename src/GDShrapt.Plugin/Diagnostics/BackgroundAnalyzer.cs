@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Diagnostics;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Manages background analysis of scripts with debouncing and prioritization.

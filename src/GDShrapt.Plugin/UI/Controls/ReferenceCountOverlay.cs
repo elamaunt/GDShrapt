@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Overlay control that displays reference counts above declarations in the editor.

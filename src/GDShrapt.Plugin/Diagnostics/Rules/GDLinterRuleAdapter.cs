@@ -1,11 +1,5 @@
-using GDShrapt.Plugin.Config;
-using GDShrapt.Reader;
-using GDShrapt.Semantics;
-using System;
-using System.Collections.Generic;
-using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Adapter that wraps GDShrapt.Linter rules to work with the plugin's ILintRule interface.

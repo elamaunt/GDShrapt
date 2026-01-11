@@ -1,4 +1,6 @@
-namespace GDShrapt.Reader
+using GDShrapt.Reader;
+
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Warns when code has too many levels of nesting (if/for/while/match).

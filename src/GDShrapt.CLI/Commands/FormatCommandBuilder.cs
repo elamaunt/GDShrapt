@@ -4,7 +4,7 @@ using System.CommandLine.Invocation;
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 
-namespace GDShrapt.CLI.Commands;
+namespace GDShrapt.CLI;
 
 /// <summary>
 /// Builder for the format command.
@@ -125,16 +125,6 @@ public static class FormatCommandBuilder
         command.AddOption(ensureTrailingNewlineOption);
         command.AddOption(removeMultipleNewlinesOption);
 
-        // Advanced options
-        var autoAddTypeHintsOption = new Option<bool?>(
-            new[] { "--auto-add-type-hints" },
-            "Automatically add inferred type hints");
-        var reorderCodeOption = new Option<bool?>(
-            new[] { "--reorder-code" },
-            "Reorder class members by category");
-        command.AddOption(autoAddTypeHintsOption);
-        command.AddOption(reorderCodeOption);
-
         command.SetHandler(async (InvocationContext context) =>
         {
             var path = context.ParseResult.GetValueForArgument(pathArg);
@@ -188,10 +178,6 @@ public static class FormatCommandBuilder
             overrides.RemoveTrailingWhitespace = context.ParseResult.GetValueForOption(removeTrailingWhitespaceOption);
             overrides.EnsureTrailingNewline = context.ParseResult.GetValueForOption(ensureTrailingNewlineOption);
             overrides.RemoveMultipleTrailingNewlines = context.ParseResult.GetValueForOption(removeMultipleNewlinesOption);
-
-            // Advanced
-            overrides.AutoAddTypeHints = context.ParseResult.GetValueForOption(autoAddTypeHintsOption);
-            overrides.ReorderCode = context.ParseResult.GetValueForOption(reorderCodeOption);
 
             var cmd = new GDFormatCommand(path, formatter, dryRun: dryRun, checkOnly: check, optionsOverrides: overrides);
             Environment.ExitCode = await cmd.ExecuteAsync();

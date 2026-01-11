@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Represents a single suppression directive parsed from a comment.

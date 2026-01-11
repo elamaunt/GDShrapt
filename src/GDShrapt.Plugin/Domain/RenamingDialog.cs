@@ -1,5 +1,3 @@
-using GDShrapt.Plugin.Localization;
-using GDShrapt.Plugin.UI;
 using GDShrapt.Reader;
 using Godot;
 using System;

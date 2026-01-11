@@ -1,4 +1,6 @@
-namespace GDShrapt.Reader
+using GDShrapt.Reader;
+
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Suggests adding type hints to variables and function parameters.

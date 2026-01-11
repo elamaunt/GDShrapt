@@ -1,8 +1,7 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Semantics;
 using System.Collections.Generic;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules.Formatting;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// GDS003: Ensures file ends with a single newline.

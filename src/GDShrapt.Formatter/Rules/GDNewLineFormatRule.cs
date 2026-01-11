@@ -1,4 +1,6 @@
-namespace GDShrapt.Reader
+using GDShrapt.Reader;
+
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Handles line ending normalization.

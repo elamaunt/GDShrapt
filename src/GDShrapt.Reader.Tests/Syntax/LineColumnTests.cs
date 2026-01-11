@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Reader.Tests.Syntax
+namespace GDShrapt.Reader.Tests
 {
     /// <summary>
     /// Tests for line and column position tracking.

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace GDShrapt.CLI.Tests.Helpers;
+namespace GDShrapt.CLI.Tests;
 
 /// <summary>
 /// Helper class for creating temporary GDScript projects for testing.

@@ -1,12 +1,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.LSP.Adapters;
-using GDShrapt.LSP.Protocol.Types;
-using GDShrapt.LSP.Server;
 using GDShrapt.Semantics;
 
-namespace GDShrapt.LSP.Handlers;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Handles textDocument/references requests.

@@ -339,6 +339,71 @@ public class GDReorderMembersService
     }
 
     #endregion
+
+    #region Single File Planning
+
+    /// <summary>
+    /// Plans member reordering for a single file.
+    /// </summary>
+    /// <param name="file">The script file to analyze.</param>
+    /// <param name="memberOrder">Custom member order (optional, uses default if null).</param>
+    /// <returns>File reorder plan, or null if no class found.</returns>
+    public GDFileReorderPlan? PlanFile(GDScriptFile file, List<GDMemberCategory>? memberOrder = null)
+    {
+        if (file?.Class == null)
+            return null;
+
+        return PlanFileInternal(file, file.Class, memberOrder ?? DefaultMemberOrder);
+    }
+
+    private GDFileReorderPlan? PlanFileInternal(GDScriptFile file, GDClassDeclaration classDecl, List<GDMemberCategory> order)
+    {
+        var members = classDecl.Members?.ToList();
+        if (members == null || members.Count <= 1)
+            return null;
+
+        var categorized = CategorizeMembersWithContext(members);
+        var sorted = SortByCategory(categorized, order);
+
+        var originalCode = classDecl.ToString();
+
+        if (!HasOrderChanged(members, sorted))
+            return new GDFileReorderPlan(file.FullPath, new List<GDMemberReorderChange>(), null, originalCode, originalCode, null);
+
+        var reorderedCode = BuildReorderedCode(classDecl, sorted);
+
+        // Build change list
+        var changes = new List<GDMemberReorderChange>();
+        for (int newIndex = 0; newIndex < sorted.Count; newIndex++)
+        {
+            var item = sorted[newIndex];
+            if (item.OriginalIndex != newIndex)
+            {
+                changes.Add(new GDMemberReorderChange(
+                    item.Member,
+                    item.Category,
+                    item.OriginalIndex,
+                    newIndex));
+            }
+        }
+
+        var edit = new GDTextEdit(
+            file.FullPath,
+            classDecl.StartLine,
+            classDecl.StartColumn,
+            originalCode,
+            reorderedCode);
+
+        return new GDFileReorderPlan(
+            file.FullPath,
+            changes,
+            sorted.Select(s => s.Member).ToList(),
+            originalCode,
+            reorderedCode,
+            edit);
+    }
+
+    #endregion
 }
 
 /// <summary>

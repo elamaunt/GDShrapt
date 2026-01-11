@@ -1,6 +1,6 @@
 using System;
 
-namespace GDShrapt.Plugin.Completion;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Represents a single completion item in the autocomplete list.

@@ -1,6 +1,3 @@
-using GDShrapt.Plugin.Cache;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Diagnostics.Rules;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Concurrent;
@@ -9,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Diagnostics;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Central service for collecting and managing diagnostics across the project.

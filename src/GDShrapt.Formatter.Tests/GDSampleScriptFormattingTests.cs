@@ -1,3 +1,4 @@
+using GDShrapt.Formatter;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GDShrapt.Reader.Tests.Formatting

@@ -1,5 +1,3 @@
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Refactoring;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System;
@@ -195,37 +193,28 @@ internal class FormatCodeCommand : Command
             // Line wrapping
             MaxLineLength = config.MaxLineLength,
             WrapLongLines = config.WrapLongLines,
-            LineWrapStyle = MapLineWrapStyle(config.LineWrapStyle),
-
-            // Auto type hints
-            AutoAddTypeHints = config.AutoAddTypeHints,
-            AutoAddTypeHintsToLocals = config.AutoAddTypeHintsToLocals,
-            AutoAddTypeHintsToClassVariables = config.AutoAddTypeHintsToClassVariables,
-            AutoAddTypeHintsToParameters = config.AutoAddTypeHintsToParameters,
-
-            // Code reordering
-            ReorderCode = config.ReorderCode
+            LineWrapStyle = MapLineWrapStyle(config.LineWrapStyle)
         };
     }
 
-    private static Reader.LineEndingStyle MapLineEnding(GDLineEndingStyle style)
+    private static LineEndingStyle MapLineEnding(GDLineEndingStyle style)
     {
         return style switch
         {
-            GDLineEndingStyle.LF => Reader.LineEndingStyle.LF,
-            GDLineEndingStyle.CRLF => Reader.LineEndingStyle.CRLF,
-            GDLineEndingStyle.Platform => Reader.LineEndingStyle.Platform,
-            _ => Reader.LineEndingStyle.LF
+            GDLineEndingStyle.LF => LineEndingStyle.LF,
+            GDLineEndingStyle.CRLF => LineEndingStyle.CRLF,
+            GDLineEndingStyle.Platform => LineEndingStyle.Platform,
+            _ => LineEndingStyle.LF
         };
     }
 
-    private static Reader.LineWrapStyle MapLineWrapStyle(GDLineWrapStyle style)
+    private static LineWrapStyle MapLineWrapStyle(GDLineWrapStyle style)
     {
         return style switch
         {
-            GDLineWrapStyle.AfterOpeningBracket => Reader.LineWrapStyle.AfterOpeningBracket,
-            GDLineWrapStyle.BeforeElements => Reader.LineWrapStyle.BeforeElements,
-            _ => Reader.LineWrapStyle.AfterOpeningBracket
+            GDLineWrapStyle.AfterOpeningBracket => LineWrapStyle.AfterOpeningBracket,
+            GDLineWrapStyle.BeforeElements => LineWrapStyle.BeforeElements,
+            _ => LineWrapStyle.AfterOpeningBracket
         };
     }
 }

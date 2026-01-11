@@ -1,5 +1,4 @@
 using Godot;
-using GDShrapt.Plugin.Localization;
 
 namespace GDShrapt.Plugin;
 

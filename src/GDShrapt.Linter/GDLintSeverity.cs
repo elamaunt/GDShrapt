@@ -1,4 +1,6 @@
-namespace GDShrapt.Reader
+using GDShrapt.Reader;
+
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Severity level for lint issues.

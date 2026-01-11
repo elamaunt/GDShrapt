@@ -2,13 +2,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
-using GDShrapt.LSP.Handlers;
-using GDShrapt.LSP.Protocol.Types;
-using GDShrapt.LSP.Server;
+using GDShrapt.LSP;
 using GDShrapt.Semantics;
 using Xunit;
 
-namespace GDShrapt.LSP.Tests.Handlers;
+namespace GDShrapt.LSP.Tests;
 
 public class GDRenameHandlerTests
 {

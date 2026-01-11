@@ -1,7 +1,7 @@
 using GDShrapt.Reader;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Convert;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Inverts an if/elif/while condition and swaps the branches if applicable.

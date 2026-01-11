@@ -1,4 +1,4 @@
-namespace GDShrapt.Plugin.Tests.Mocks;
+namespace GDShrapt.Plugin.Tests;
 
 /// <summary>
 /// Mock interface for Godot's ScriptEditor.

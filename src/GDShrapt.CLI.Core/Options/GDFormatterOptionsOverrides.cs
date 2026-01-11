@@ -40,14 +40,6 @@ public class GDFormatterOptionsOverrides
     public bool? EnsureTrailingNewline { get; set; }
     public bool? RemoveMultipleTrailingNewlines { get; set; }
 
-    // Advanced
-    public bool? AutoAddTypeHints { get; set; }
-    public bool? AutoAddTypeHintsToLocals { get; set; }
-    public bool? AutoAddTypeHintsToClassVariables { get; set; }
-    public bool? AutoAddTypeHintsToParameters { get; set; }
-    public string? UnknownTypeFallback { get; set; }
-    public bool? ReorderCode { get; set; }
-
     /// <summary>
     /// Applies overrides to the given formatter options.
     /// </summary>
@@ -106,19 +98,5 @@ public class GDFormatterOptionsOverrides
             options.EnsureTrailingNewline = EnsureTrailingNewline.Value;
         if (RemoveMultipleTrailingNewlines.HasValue)
             options.RemoveMultipleTrailingNewlines = RemoveMultipleTrailingNewlines.Value;
-
-        // Advanced
-        if (AutoAddTypeHints.HasValue)
-            options.AutoAddTypeHints = AutoAddTypeHints.Value;
-        if (AutoAddTypeHintsToLocals.HasValue)
-            options.AutoAddTypeHintsToLocals = AutoAddTypeHintsToLocals.Value;
-        if (AutoAddTypeHintsToClassVariables.HasValue)
-            options.AutoAddTypeHintsToClassVariables = AutoAddTypeHintsToClassVariables.Value;
-        if (AutoAddTypeHintsToParameters.HasValue)
-            options.AutoAddTypeHintsToParameters = AutoAddTypeHintsToParameters.Value;
-        if (UnknownTypeFallback != null)
-            options.UnknownTypeFallback = UnknownTypeFallback;
-        if (ReorderCode.HasValue)
-            options.ReorderCode = ReorderCode.Value;
     }
 }

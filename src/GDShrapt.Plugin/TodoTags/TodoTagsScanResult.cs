@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.TodoTags;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Result of scanning the project for TODO tags.

@@ -1,4 +1,4 @@
-namespace GDShrapt.Plugin.TodoTags;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Represents a single TODO/FIXME tag found in a comment.

@@ -1,9 +1,8 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Semantics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules.Formatting;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// GDS011: Checks for space after commas.

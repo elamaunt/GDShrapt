@@ -1,4 +1,6 @@
-namespace GDShrapt.Reader
+using GDShrapt.Reader;
+
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Requires strict type hints on variables, parameters, and return types.

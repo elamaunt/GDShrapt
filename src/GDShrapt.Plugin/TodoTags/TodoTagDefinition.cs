@@ -1,4 +1,4 @@
-namespace GDShrapt.Plugin.TodoTags;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Defines a TODO tag type with its display properties.

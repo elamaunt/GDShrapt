@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Bottom panel dock that displays log output from the plugin.

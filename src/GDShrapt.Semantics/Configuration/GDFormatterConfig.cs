@@ -101,33 +101,6 @@ public class GDFormatterConfig
     /// Style of line wrapping. Default: AfterOpeningBracket.
     /// </summary>
     public GDLineWrapStyle LineWrapStyle { get; set; } = GDLineWrapStyle.AfterOpeningBracket;
-
-    // Auto type hints
-    /// <summary>
-    /// Automatically add inferred type hints. Default: false.
-    /// </summary>
-    public bool AutoAddTypeHints { get; set; } = false;
-
-    /// <summary>
-    /// Add type hints to local variables. Default: true.
-    /// </summary>
-    public bool AutoAddTypeHintsToLocals { get; set; } = true;
-
-    /// <summary>
-    /// Add type hints to class variables. Default: true.
-    /// </summary>
-    public bool AutoAddTypeHintsToClassVariables { get; set; } = true;
-
-    /// <summary>
-    /// Add type hints to function parameters. Default: false.
-    /// </summary>
-    public bool AutoAddTypeHintsToParameters { get; set; } = false;
-
-    // Code reordering
-    /// <summary>
-    /// Enable code member reordering. Default: false.
-    /// </summary>
-    public bool ReorderCode { get; set; } = false;
 }
 
 /// <summary>

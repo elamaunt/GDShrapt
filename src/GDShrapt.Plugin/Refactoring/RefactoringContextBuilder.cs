@@ -2,7 +2,7 @@ using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using Godot;
 
-namespace GDShrapt.Plugin.Refactoring;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Builds RefactoringContext from editor state.

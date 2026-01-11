@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Configuration options for the GDScript formatter.
@@ -142,63 +143,6 @@ namespace GDShrapt.Reader
         /// </summary>
         public bool UseBackslashContinuation { get; set; } = false;
 
-        // Auto type hints options
-
-        /// <summary>
-        /// Automatically add inferred type hints to untyped variables.
-        /// Requires GDShrapt.Validator for type inference. Default: false.
-        /// </summary>
-        public bool AutoAddTypeHints { get; set; } = false;
-
-        /// <summary>
-        /// Add type hints to local variables (when AutoAddTypeHints is enabled). Default: true.
-        /// </summary>
-        public bool AutoAddTypeHintsToLocals { get; set; } = true;
-
-        /// <summary>
-        /// Add type hints to class variables (when AutoAddTypeHints is enabled). Default: true.
-        /// </summary>
-        public bool AutoAddTypeHintsToClassVariables { get; set; } = true;
-
-        /// <summary>
-        /// Add type hints to function parameters (when AutoAddTypeHints is enabled). Default: false.
-        /// </summary>
-        public bool AutoAddTypeHintsToParameters { get; set; } = false;
-
-        /// <summary>
-        /// Fallback type when inference fails. Default: "Variant".
-        /// Set to null to skip adding type hints when inference fails.
-        /// </summary>
-        public string UnknownTypeFallback { get; set; } = "Variant";
-
-        // Code reordering options
-
-        /// <summary>
-        /// Enable code member reordering according to MemberOrder. Default: false.
-        /// When enabled, class members will be reordered according to the specified category order.
-        /// </summary>
-        public bool ReorderCode { get; set; } = false;
-
-        /// <summary>
-        /// Order of member categories for code reordering.
-        /// Default follows GDScript style guide.
-        /// </summary>
-        public List<GDMemberCategory> MemberOrder { get; set; } = new List<GDMemberCategory>
-        {
-            GDMemberCategory.ClassAttribute,
-            GDMemberCategory.Signal,
-            GDMemberCategory.Enum,
-            GDMemberCategory.Constant,
-            GDMemberCategory.ExportVariable,
-            GDMemberCategory.PublicVariable,
-            GDMemberCategory.PrivateVariable,
-            GDMemberCategory.OnreadyVariable,
-            GDMemberCategory.BuiltinMethod,
-            GDMemberCategory.PublicMethod,
-            GDMemberCategory.PrivateMethod,
-            GDMemberCategory.InnerClass
-        };
-
         // Rule management
 
         /// <summary>
@@ -229,12 +173,6 @@ namespace GDShrapt.Reader
 
             if (_enabledRules.Contains(rule.RuleId))
                 return true;
-
-            // Auto-enable auto type hints rule when AutoAddTypeHints is set
-            if (rule.RuleId == "GDF007")
-            {
-                return AutoAddTypeHints;
-            }
 
             return rule.EnabledByDefault;
         }

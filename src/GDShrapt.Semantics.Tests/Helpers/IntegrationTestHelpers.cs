@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Helpers;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Helper methods for integration tests.

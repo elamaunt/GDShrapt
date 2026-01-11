@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Base class for refactoring actions that provides common error handling,

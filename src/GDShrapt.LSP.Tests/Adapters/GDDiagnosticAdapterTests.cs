@@ -1,9 +1,8 @@
-using GDShrapt.LSP.Adapters;
-using GDShrapt.LSP.Protocol.Types;
+using GDShrapt.LSP;
 using GDShrapt.Reader;
 using Xunit;
 
-namespace GDShrapt.LSP.Tests.Adapters;
+namespace GDShrapt.LSP.Tests;
 
 public class GDDiagnosticAdapterTests
 {

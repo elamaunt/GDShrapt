@@ -1,11 +1,6 @@
-using GDShrapt.Plugin.Config;
-using GDShrapt.Semantics;
-using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Base class for lint rules with common functionality.

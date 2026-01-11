@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Warns when the same resource is loaded multiple times with load() or preload().

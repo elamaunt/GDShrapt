@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using GDShrapt.Plugin.TodoTags;
 using GDShrapt.Semantics;
 
-namespace GDShrapt.Plugin.Config;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Plugin-specific configuration (UI, notifications, cache, todo tags).

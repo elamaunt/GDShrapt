@@ -2,12 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
-using GDShrapt.LSP.Handlers;
-using GDShrapt.LSP.Protocol;
-using GDShrapt.LSP.Protocol.Types;
 using GDShrapt.Semantics;
 
-namespace GDShrapt.LSP.Server;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// GDScript Language Server implementation.

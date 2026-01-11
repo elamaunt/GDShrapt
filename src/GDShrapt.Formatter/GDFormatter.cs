@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// GDScript formatter that applies formatting rules to code.
@@ -54,10 +55,6 @@ namespace GDShrapt.Reader
         /// </summary>
         private void RegisterDefaultRules()
         {
-            // GDAutoTypeInferenceFormatRule - Adds type hints using type inference (opt-in, disabled by default)
-            // Must run BEFORE spacing rule so spacing is applied to the new tokens
-            AddRule(new GDAutoTypeInferenceFormatRule());
-
             // GDIndentationFormatRule - Uses ConvertPattern for idempotent indentation
             AddRule(new GDIndentationFormatRule());
 
@@ -76,9 +73,6 @@ namespace GDShrapt.Reader
 
             // GDLineWrapFormatRule - Wraps long lines exceeding MaxLineLength
             AddRule(new GDLineWrapFormatRule());
-
-            // GDCodeReorderFormatRule - Reorders class members (opt-in, disabled by default)
-            AddRule(new GDCodeReorderFormatRule());
         }
 
         /// <summary>
@@ -332,12 +326,7 @@ namespace GDShrapt.Reader
                 WrapLongLines = baseOptions.WrapLongLines,
                 LineWrapStyle = baseOptions.LineWrapStyle,
                 ContinuationIndentSize = baseOptions.ContinuationIndentSize,
-                UseBackslashContinuation = baseOptions.UseBackslashContinuation,
-                // Code reordering - use extracted if available
-                ReorderCode = baseOptions.ReorderCode,
-                MemberOrder = extractedOptions.MemberOrder?.Count > 0
-                    ? extractedOptions.MemberOrder
-                    : baseOptions.MemberOrder
+                UseBackslashContinuation = baseOptions.UseBackslashContinuation
             };
         }
     }

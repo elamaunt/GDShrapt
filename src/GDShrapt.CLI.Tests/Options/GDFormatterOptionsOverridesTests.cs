@@ -2,7 +2,7 @@ using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 using Xunit;
 
-namespace GDShrapt.CLI.Tests.Options;
+namespace GDShrapt.CLI.Tests;
 
 public class GDFormatterOptionsOverridesTests
 {
@@ -136,33 +136,6 @@ public class GDFormatterOptionsOverridesTests
         Assert.False(options.RemoveTrailingWhitespace);
         Assert.False(options.EnsureTrailingNewline);
         Assert.False(options.RemoveMultipleTrailingNewlines);
-    }
-
-    [Fact]
-    public void ApplyTo_Advanced_OverridesValues()
-    {
-        // Arrange
-        var options = new GDFormatterOptions();
-        var overrides = new GDFormatterOptionsOverrides
-        {
-            AutoAddTypeHints = true,
-            AutoAddTypeHintsToLocals = false,
-            AutoAddTypeHintsToClassVariables = false,
-            AutoAddTypeHintsToParameters = true,
-            UnknownTypeFallback = "Object",
-            ReorderCode = true
-        };
-
-        // Act
-        overrides.ApplyTo(options);
-
-        // Assert
-        Assert.True(options.AutoAddTypeHints);
-        Assert.False(options.AutoAddTypeHintsToLocals);
-        Assert.False(options.AutoAddTypeHintsToClassVariables);
-        Assert.True(options.AutoAddTypeHintsToParameters);
-        Assert.Equal("Object", options.UnknownTypeFallback);
-        Assert.True(options.ReorderCode);
     }
 
     [Fact]

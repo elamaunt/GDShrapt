@@ -1,3 +1,4 @@
+using GDShrapt.Builder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GDShrapt.Reader.Tests.Building

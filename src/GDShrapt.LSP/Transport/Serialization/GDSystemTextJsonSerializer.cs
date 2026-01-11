@@ -1,9 +1,8 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using GDShrapt.LSP.Protocol;
 
-namespace GDShrapt.LSP.Transport.Serialization;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// System.Text.Json implementation of message serializer.

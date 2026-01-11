@@ -1,4 +1,6 @@
-namespace GDShrapt.Reader
+using GDShrapt.Reader;
+
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Formats spacing around operators, commas, colons, and brackets.

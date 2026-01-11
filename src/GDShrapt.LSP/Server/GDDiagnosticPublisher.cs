@@ -2,12 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.LSP.Adapters;
-using GDShrapt.LSP.Protocol;
-using GDShrapt.LSP.Protocol.Types;
 using GDShrapt.Semantics;
 
-namespace GDShrapt.LSP.Server;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Publishes diagnostics to the LSP client.

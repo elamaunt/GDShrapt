@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Manages suppression state for a file during linting.

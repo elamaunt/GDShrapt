@@ -95,30 +95,70 @@ public class GDRenameCommand : IGDCommand
 
             if (_dryRun)
             {
+                // Show all edits in dry-run mode
                 _formatter.WriteMessage(_output, $"[Dry run] Would rename {result.Edits.Count} occurrence(s) in {result.FileCount} file(s):");
 
-                // Group edits by file for display
-                var editsByFile = result.Edits.GroupBy(e => e.FilePath);
-                foreach (var fileGroup in editsByFile)
+                // Show strict edits
+                if (result.StrictEdits.Count > 0)
                 {
-                    var relativePath = GetRelativePath(fileGroup.Key, projectRoot);
-                    _formatter.WriteMessage(_output, $"  {relativePath}: {fileGroup.Count()} edit(s)");
-                    foreach (var edit in fileGroup)
+                    _formatter.WriteMessage(_output, $"\n  Strict references ({result.StrictEdits.Count}):");
+                    var strictByFile = result.StrictEdits.GroupBy(e => e.FilePath);
+                    foreach (var fileGroup in strictByFile)
                     {
-                        _formatter.WriteMessage(_output, $"    Line {edit.Line}: {edit.OldText} -> {edit.NewText}");
+                        var relativePath = GetRelativePath(fileGroup.Key, projectRoot);
+                        _formatter.WriteMessage(_output, $"    {relativePath}:");
+                        foreach (var edit in fileGroup)
+                        {
+                            _formatter.WriteMessage(_output, $"      Line {edit.Line}: {edit.OldText} -> {edit.NewText}");
+                        }
+                    }
+                }
+
+                // Show potential edits (Pro-only)
+                if (result.PotentialEdits.Count > 0)
+                {
+                    _formatter.WriteMessage(_output, $"\n  Potential references ({result.PotentialEdits.Count}) [Pro only]:");
+                    var potentialByFile = result.PotentialEdits.GroupBy(e => e.FilePath);
+                    foreach (var fileGroup in potentialByFile)
+                    {
+                        var relativePath = GetRelativePath(fileGroup.Key, projectRoot);
+                        _formatter.WriteMessage(_output, $"    {relativePath}:");
+                        foreach (var edit in fileGroup)
+                        {
+                            _formatter.WriteMessage(_output, $"      Line {edit.Line}: {edit.OldText} -> {edit.NewText} ({edit.ConfidenceReason ?? "duck-typed"})");
+                        }
                     }
                 }
             }
             else
             {
-                // Apply the edits using GDRenameService
-                var editsByFile = result.Edits.GroupBy(e => e.FilePath);
-                foreach (var fileGroup in editsByFile)
+                // Base CLI: Apply only Strict edits (Potential/NameMatch require Pro)
+                if (result.StrictEdits.Count == 0)
+                {
+                    _formatter.WriteMessage(_output, $"No confirmed references found for '{_oldName}'.");
+                    if (result.PotentialEdits.Count > 0)
+                    {
+                        _formatter.WriteMessage(_output, $"{result.PotentialEdits.Count} potential reference(s) found. Use GDShrapt Pro to apply them.");
+                    }
+                    return Task.FromResult(0);
+                }
+
+                // Apply Strict edits only
+                var strictByFile = result.StrictEdits.GroupBy(e => e.FilePath);
+                foreach (var fileGroup in strictByFile)
                 {
                     renameService.ApplyEditsToFile(fileGroup.Key, fileGroup);
                 }
 
-                _formatter.WriteMessage(_output, $"Renamed {result.Edits.Count} occurrence(s) in {result.FileCount} file(s).");
+                var strictFileCount = result.StrictEdits.Select(e => e.FilePath).Distinct().Count();
+                _formatter.WriteMessage(_output, $"Renamed {result.StrictEdits.Count} confirmed reference(s) in {strictFileCount} file(s).");
+
+                // Inform about Potential edits (Pro-only)
+                if (result.PotentialEdits.Count > 0)
+                {
+                    _formatter.WriteMessage(_output, $"\n{result.PotentialEdits.Count} additional potential reference(s) found.");
+                    _formatter.WriteMessage(_output, "Use GDShrapt Pro with --confidence=potential to apply them.");
+                }
             }
 
             return Task.FromResult(0);

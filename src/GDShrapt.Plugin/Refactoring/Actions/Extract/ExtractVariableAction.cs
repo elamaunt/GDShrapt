@@ -1,8 +1,7 @@
-using GDShrapt.Plugin.Refactoring.UI;
 using GDShrapt.Reader;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Extract;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Extracts an expression into a local variable.

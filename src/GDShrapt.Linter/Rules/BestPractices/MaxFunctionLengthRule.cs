@@ -1,6 +1,7 @@
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Checks that functions don't have too many lines.

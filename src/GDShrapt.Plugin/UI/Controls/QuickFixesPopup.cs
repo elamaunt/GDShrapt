@@ -1,12 +1,10 @@
 using Godot;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Diagnostics;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI.Controls;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Popup menu for quick fixes (Ctrl+.).

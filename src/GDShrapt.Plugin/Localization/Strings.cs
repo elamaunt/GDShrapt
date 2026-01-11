@@ -1,4 +1,4 @@
-namespace GDShrapt.Plugin.Localization;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// String key constants for localization.

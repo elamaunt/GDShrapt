@@ -2,7 +2,7 @@ using GDShrapt.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Project;
+namespace GDShrapt.Semantics.Tests;
 
 [TestClass]
 public class GDScriptFileTests

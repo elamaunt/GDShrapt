@@ -3,7 +3,7 @@ using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 
-namespace GDShrapt.Plugin.Config;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Registers GDShrapt settings in Godot's Project Settings window.

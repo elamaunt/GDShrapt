@@ -1,10 +1,9 @@
-using GDShrapt.Plugin.Refactoring.UI;
 using GDShrapt.Reader;
 using Godot;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Generate;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Generates getter and setter for a class variable.

@@ -1,13 +1,7 @@
-using GDShrapt.Plugin.Refactoring.Actions.Convert;
-using GDShrapt.Plugin.Refactoring.Actions.Extract;
-using GDShrapt.Plugin.Refactoring.Actions.Generate;
-using GDShrapt.Plugin.Refactoring.Actions.Move;
-using GDShrapt.Plugin.Refactoring.Actions.Organize;
-using GDShrapt.Plugin.Refactoring.Actions.Surround;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.Refactoring;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Registry and provider for refactoring actions.

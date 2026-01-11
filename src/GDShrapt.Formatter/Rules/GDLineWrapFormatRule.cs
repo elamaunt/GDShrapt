@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Formats line wrapping for long lines exceeding MaxLineLength.

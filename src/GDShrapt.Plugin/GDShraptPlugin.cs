@@ -1,10 +1,4 @@
 using Godot;
-using GDShrapt.Plugin.Cache;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Diagnostics;
-using GDShrapt.Plugin.Refactoring;
-using GDShrapt.Plugin.TodoTags;
-using GDShrapt.Plugin.UI;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
@@ -14,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("GDShrapt.Plugin.Tests")]
+[assembly: InternalsVisibleTo("GDShrapt.Pro.Plugin")]
 
 namespace GDShrapt.Plugin;
 
@@ -52,7 +47,7 @@ public partial class GDShraptPlugin : EditorPlugin
     private RefactoringActionProvider _refactoringActionProvider;
 
     // Formatting service
-    private Formatting.FormattingService _formattingService;
+    private FormattingService _formattingService;
 
     // Type inference for completion (using Semantics)
     private GDTypeResolver _typeResolver;
@@ -67,7 +62,7 @@ public partial class GDShraptPlugin : EditorPlugin
     internal DiagnosticService DiagnosticService => _diagnosticService;
     internal ConfigManager ConfigManager => _configManager;
     internal RefactoringActionProvider RefactoringActionProvider => _refactoringActionProvider;
-    internal Formatting.FormattingService FormattingService => _formattingService;
+    internal FormattingService FormattingService => _formattingService;
     internal QuickFixHandler QuickFixHandler => _quickFixHandler;
     internal GDGodotTypesProvider GodotTypesProvider => _typeResolver?.GodotTypesProvider;
     internal GDTypeResolver TypeResolver => _typeResolver;
@@ -112,7 +107,7 @@ public partial class GDShraptPlugin : EditorPlugin
             _refactoringActionProvider = new RefactoringActionProvider();
 
             // Initialize formatting service
-            _formattingService = new Formatting.FormattingService(_configManager);
+            _formattingService = new FormattingService(_configManager);
 
             // Initialize type resolver for completion (using Semantics)
             // Includes all providers: Godot types, project types, autoloads, and scene types
@@ -668,40 +663,40 @@ public partial class GDShraptPlugin : EditorPlugin
         }
     }
 
-    private static UI.ReferenceKind DetermineReferenceKind(GDShrapt.Reader.GDIdentifier identifier)
+    private static ReferenceKind DetermineReferenceKind(GDShrapt.Reader.GDIdentifier identifier)
     {
         var parent = identifier.Parent;
 
         // Check if it's a declaration
         if (parent is GDShrapt.Reader.GDMethodDeclaration)
-            return UI.ReferenceKind.Declaration;
+            return ReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDVariableDeclaration)
-            return UI.ReferenceKind.Declaration;
+            return ReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDVariableDeclarationStatement)
-            return UI.ReferenceKind.Declaration;
+            return ReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDSignalDeclaration)
-            return UI.ReferenceKind.Declaration;
+            return ReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDParameterDeclaration)
-            return UI.ReferenceKind.Declaration;
+            return ReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDEnumDeclaration)
-            return UI.ReferenceKind.Declaration;
+            return ReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDInnerClassDeclaration)
-            return UI.ReferenceKind.Declaration;
+            return ReferenceKind.Declaration;
 
         // Check if it's a call
         if (parent is GDShrapt.Reader.GDIdentifierExpression idExpr)
         {
             if (idExpr.Parent is GDShrapt.Reader.GDCallExpression)
-                return UI.ReferenceKind.Call;
+                return ReferenceKind.Call;
         }
 
         if (parent is GDShrapt.Reader.GDMemberOperatorExpression memberOp)
         {
             if (memberOp.Parent is GDShrapt.Reader.GDCallExpression)
-                return UI.ReferenceKind.Call;
+                return ReferenceKind.Call;
         }
 
-        return UI.ReferenceKind.Read;
+        return ReferenceKind.Read;
     }
 
     private static string GetContext(GDShrapt.Reader.GDIdentifier identifier)

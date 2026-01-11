@@ -1,6 +1,6 @@
 using System;
 
-namespace GDShrapt.LSP.Protocol;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Abstraction for message serialization.

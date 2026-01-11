@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Refactoring.Results;
+namespace GDShrapt.Semantics.Tests;
 
 [TestClass]
 public class GDRefactoringResultTests

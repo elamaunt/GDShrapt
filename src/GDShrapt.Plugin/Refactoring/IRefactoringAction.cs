@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Interface for refactoring actions that can be displayed in context menus

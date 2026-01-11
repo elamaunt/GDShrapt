@@ -1,11 +1,10 @@
-using GDShrapt.Plugin.Refactoring.UI;
 using GDShrapt.Reader;
 using Godot;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Move;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Moves a get_node() call or $NodePath expression from inside a method

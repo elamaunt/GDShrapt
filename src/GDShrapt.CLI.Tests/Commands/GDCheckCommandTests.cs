@@ -2,11 +2,10 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
-using GDShrapt.CLI.Tests.Helpers;
 using GDShrapt.Semantics;
 using Xunit;
 
-namespace GDShrapt.CLI.Tests.Commands;
+namespace GDShrapt.CLI.Tests;
 
 public class GDCheckCommandTests : IDisposable
 {

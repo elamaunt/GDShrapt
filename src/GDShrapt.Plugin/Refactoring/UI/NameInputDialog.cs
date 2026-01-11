@@ -2,7 +2,7 @@ using Godot;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Generic dialog for entering a name (constant, variable, etc.).

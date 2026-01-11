@@ -1,14 +1,6 @@
 using Godot;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Diagnostics;
-using GDShrapt.Reader;
-using GDShrapt.Semantics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Overlay control that displays inline errors at the end of lines (Error Lens style).

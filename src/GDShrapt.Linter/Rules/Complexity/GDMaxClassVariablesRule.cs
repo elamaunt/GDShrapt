@@ -1,6 +1,7 @@
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Warns when a class has too many member variables.

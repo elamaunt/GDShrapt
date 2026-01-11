@@ -2,7 +2,7 @@ using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System;
 
-namespace GDShrapt.Plugin.Completion;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Represents the context for code completion at a specific cursor position.

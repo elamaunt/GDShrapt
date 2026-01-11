@@ -1,12 +1,10 @@
 using Godot;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Diagnostics;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Bottom dock panel for displaying all diagnostics (errors, warnings, hints) from the project.

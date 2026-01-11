@@ -1,6 +1,7 @@
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Checks for consistent trailing comma usage in multiline arrays and dictionaries.

@@ -1,4 +1,4 @@
-namespace GDShrapt.Semantics.Tests.Helpers;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Type of reference to a symbol.

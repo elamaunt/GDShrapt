@@ -1,7 +1,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace GDShrapt.LSP.Protocol.Types;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Position in a text document expressed as zero-based line and character offset.

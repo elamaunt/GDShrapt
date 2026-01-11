@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Text;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Checks that lines don't exceed the maximum length.

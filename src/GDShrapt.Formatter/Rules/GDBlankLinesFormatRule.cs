@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Formats blank lines between functions, classes, and member types.

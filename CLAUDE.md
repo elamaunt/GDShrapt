@@ -62,11 +62,12 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - Suppression: `# gdlint:ignore`, `# gdlint:disable/enable`
 - Supports `.gdlintrc` (gdtoolkit-compatible)
 
-**Formatter** - Code formatting
+**Formatter** - Code formatting (safe, cosmetic only)
 - `GDFormatRule` extends `GDVisitor`
 - Rules: indentation, spacing, blank lines, line wrapping
-- Opt-in: auto type hints (GDF007), member reordering (GDF008)
+- Safe formatting only (no code transformations)
 - `GDFormatterStyleExtractor` - Extract style from sample code
+- Note: Auto type hints and member reordering moved to refactoring commands
 
 **Semantics** - Project-level analysis
 - `GDScriptProject` - Project orchestrator

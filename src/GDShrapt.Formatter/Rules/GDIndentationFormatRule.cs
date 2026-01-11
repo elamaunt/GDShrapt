@@ -1,4 +1,6 @@
-namespace GDShrapt.Reader
+using GDShrapt.Reader;
+
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Formats indentation according to the configured style (tabs or spaces).

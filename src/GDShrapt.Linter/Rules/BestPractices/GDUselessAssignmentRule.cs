@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Warns when a variable is assigned but never read before being reassigned or going out of scope.

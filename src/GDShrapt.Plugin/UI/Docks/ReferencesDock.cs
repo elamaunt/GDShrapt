@@ -1,11 +1,10 @@
 using Godot;
-using GDShrapt.Plugin.Localization;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Dock panel for displaying find references results.

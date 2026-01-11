@@ -1,10 +1,9 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.Diagnostics;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Handles finding and applying quick fixes for diagnostics.

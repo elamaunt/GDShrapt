@@ -1,7 +1,7 @@
 using GDShrapt.Reader;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Surround;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Surrounds selected statements with an if statement.

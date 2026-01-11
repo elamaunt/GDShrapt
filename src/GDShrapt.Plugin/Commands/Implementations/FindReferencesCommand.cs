@@ -1,5 +1,3 @@
-using GDShrapt.Plugin.Refactoring;
-using GDShrapt.Plugin.UI;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System.Collections.Generic;

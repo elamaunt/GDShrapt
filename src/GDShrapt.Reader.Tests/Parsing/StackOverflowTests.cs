@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace GDShrapt.Reader.Tests.Parsing
+namespace GDShrapt.Reader.Tests
 {
     [TestClass]
     public class StackOverflowTests

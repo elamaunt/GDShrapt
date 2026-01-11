@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Helpers;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Mock implementation of IGDScriptProvider for testing.

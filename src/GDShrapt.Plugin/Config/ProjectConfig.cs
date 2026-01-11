@@ -1,6 +1,6 @@
 using GDShrapt.Semantics;
 
-namespace GDShrapt.Plugin.Config;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Combined project configuration for GDShrapt plugin.

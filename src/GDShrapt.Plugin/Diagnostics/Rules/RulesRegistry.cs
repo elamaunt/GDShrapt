@@ -1,13 +1,5 @@
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Diagnostics.Rules.Formatting;
-using GDShrapt.Reader;
-using GDShrapt.Semantics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Registry of all available lint rules.

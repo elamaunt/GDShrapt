@@ -1,7 +1,6 @@
-using GDShrapt.Semantics.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Semantics.Tests.Configuration;
+namespace GDShrapt.Semantics.Tests;
 
 [TestClass]
 public class GDGodotProjectParserTests

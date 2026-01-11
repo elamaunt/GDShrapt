@@ -1,7 +1,7 @@
 using GDShrapt.CLI.Core;
 using Xunit;
 
-namespace GDShrapt.CLI.Tests.Options;
+namespace GDShrapt.CLI.Tests;
 
 public class GDValidationCheckOverridesTests
 {

@@ -1,9 +1,8 @@
 using GDShrapt.Reader;
-using GDShrapt.Semantics.Tests.Integration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.TypeInference;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Tests for complex type inference: Array[T], Dictionary[K,V], nested generics.

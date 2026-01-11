@@ -1,10 +1,4 @@
 using Godot;
-using GDShrapt.Plugin.Completion;
-using GDShrapt.Plugin.Diagnostics;
-using GDShrapt.Plugin.Refactoring;
-using GDShrapt.Plugin.Refactoring.UI;
-using GDShrapt.Plugin.UI;
-using GDShrapt.Plugin.UI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;

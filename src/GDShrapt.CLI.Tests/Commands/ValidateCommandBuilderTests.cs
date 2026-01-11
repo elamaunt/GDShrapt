@@ -1,10 +1,10 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Linq;
-using GDShrapt.CLI.Commands;
+using GDShrapt.CLI;
 using Xunit;
 
-namespace GDShrapt.CLI.Tests.Commands;
+namespace GDShrapt.CLI.Tests;
 
 public class ValidateCommandBuilderTests
 {

@@ -1,9 +1,8 @@
 using GDShrapt.Reader;
-using GDShrapt.Semantics.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.TypeInference;
+namespace GDShrapt.Semantics.Tests;
 
 [TestClass]
 public class GDAutoloadsProviderTests

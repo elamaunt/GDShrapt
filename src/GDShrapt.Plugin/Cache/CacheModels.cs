@@ -1,9 +1,8 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 
-namespace GDShrapt.Plugin.Cache;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Index of all cached files for quick lookup.
@@ -92,7 +91,7 @@ internal class SerializedDiagnostic
     /// <summary>
     /// Converts from Diagnostic to serializable form.
     /// </summary>
-    public static SerializedDiagnostic FromDiagnostic(Diagnostics.Diagnostic diag)
+    public static SerializedDiagnostic FromDiagnostic(Diagnostic diag)
     {
         return new SerializedDiagnostic
         {
@@ -111,9 +110,9 @@ internal class SerializedDiagnostic
     /// <summary>
     /// Converts to Diagnostic (without fixes - those must be regenerated).
     /// </summary>
-    public Diagnostics.Diagnostic ToDiagnostic(ScriptReference? script = null)
+    public Diagnostic ToDiagnostic(ScriptReference? script = null)
     {
-        return new Diagnostics.Diagnostic
+        return new Diagnostic
         {
             RuleId = RuleId,
             Message = Message,
@@ -125,7 +124,7 @@ internal class SerializedDiagnostic
             EndLine = EndLine,
             EndColumn = EndColumn,
             SourceText = SourceText,
-            Fixes = Array.Empty<Diagnostics.CodeFix>() // Fixes need to be regenerated
+            Fixes = Array.Empty<CodeFix>() // Fixes need to be regenerated
         };
     }
 }

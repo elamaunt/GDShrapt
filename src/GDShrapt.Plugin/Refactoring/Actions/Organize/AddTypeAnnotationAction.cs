@@ -1,7 +1,7 @@
 using GDShrapt.Reader;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Organize;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Adds type annotation to a variable or parameter declaration based on inferred type.

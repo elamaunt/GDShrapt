@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.Threading.Tasks;
-using GDShrapt.CLI.Commands;
 
 namespace GDShrapt.CLI;
 

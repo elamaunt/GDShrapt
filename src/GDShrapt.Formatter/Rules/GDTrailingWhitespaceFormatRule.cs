@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Formatter
 {
     /// <summary>
     /// Removes trailing whitespace from lines.

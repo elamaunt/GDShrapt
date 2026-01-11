@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Settings panel for configuring GDShrapt plugin options.

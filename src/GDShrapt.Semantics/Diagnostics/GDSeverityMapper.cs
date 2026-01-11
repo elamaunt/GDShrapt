@@ -27,14 +27,14 @@ public static class GDSeverityMapper
     /// </summary>
     /// <param name="severity">Linter issue severity.</param>
     /// <returns>Unified severity.</returns>
-    public static GDDiagnosticSeverity FromLinter(Reader.GDLintSeverity severity)
+    public static GDDiagnosticSeverity FromLinter(GDLintSeverity severity)
     {
         return severity switch
         {
-            Reader.GDLintSeverity.Error => GDDiagnosticSeverity.Error,
-            Reader.GDLintSeverity.Warning => GDDiagnosticSeverity.Warning,
-            Reader.GDLintSeverity.Info => GDDiagnosticSeverity.Info,
-            Reader.GDLintSeverity.Hint => GDDiagnosticSeverity.Hint,
+            GDLintSeverity.Error => GDDiagnosticSeverity.Error,
+            GDLintSeverity.Warning => GDDiagnosticSeverity.Warning,
+            GDLintSeverity.Info => GDDiagnosticSeverity.Info,
+            GDLintSeverity.Hint => GDDiagnosticSeverity.Hint,
             _ => GDDiagnosticSeverity.Info
         };
     }
@@ -70,15 +70,15 @@ public static class GDSeverityMapper
     /// <summary>
     /// Converts unified severity to linter severity.
     /// </summary>
-    public static Reader.GDLintSeverity ToLinter(GDDiagnosticSeverity severity)
+    public static GDLintSeverity ToLinter(GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            GDDiagnosticSeverity.Error => Reader.GDLintSeverity.Error,
-            GDDiagnosticSeverity.Warning => Reader.GDLintSeverity.Warning,
-            GDDiagnosticSeverity.Info => Reader.GDLintSeverity.Info,
-            GDDiagnosticSeverity.Hint => Reader.GDLintSeverity.Hint,
-            _ => Reader.GDLintSeverity.Info
+            GDDiagnosticSeverity.Error => GDLintSeverity.Error,
+            GDDiagnosticSeverity.Warning => GDLintSeverity.Warning,
+            GDDiagnosticSeverity.Info => GDLintSeverity.Info,
+            GDDiagnosticSeverity.Hint => GDLintSeverity.Hint,
+            _ => GDLintSeverity.Info
         };
     }
 
@@ -89,14 +89,14 @@ public static class GDSeverityMapper
     /// Returns int to avoid circular dependency with CLI.Core.
     /// Maps to: 0=Error, 1=Warning, 2=Information, 3=Hint
     /// </remarks>
-    public static int ToCliSeverityIndex(Reader.GDLintSeverity severity)
+    public static int ToCliSeverityIndex(GDLintSeverity severity)
     {
         return severity switch
         {
-            Reader.GDLintSeverity.Error => 0,
-            Reader.GDLintSeverity.Warning => 1,
-            Reader.GDLintSeverity.Info => 2,
-            Reader.GDLintSeverity.Hint => 3,
+            GDLintSeverity.Error => 0,
+            GDLintSeverity.Warning => 1,
+            GDLintSeverity.Info => 2,
+            GDLintSeverity.Hint => 3,
             _ => 2
         };
     }

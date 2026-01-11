@@ -6,9 +6,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.LSP.Protocol;
 
-namespace GDShrapt.LSP.Transport.Stdio;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// JSON-RPC transport over stdio (stdin/stdout).

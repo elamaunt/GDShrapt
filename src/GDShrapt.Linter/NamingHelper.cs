@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Helper class for checking naming conventions.

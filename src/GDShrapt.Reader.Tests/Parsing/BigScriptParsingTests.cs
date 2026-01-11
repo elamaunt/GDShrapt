@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 
-namespace GDShrapt.Reader.Tests.Parsing
+namespace GDShrapt.Reader.Tests
 {
     /// <summary>
     /// Tests for parsing large real-world scripts.

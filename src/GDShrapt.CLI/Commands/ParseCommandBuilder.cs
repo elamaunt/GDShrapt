@@ -3,7 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using GDShrapt.CLI.Core;
 
-namespace GDShrapt.CLI.Commands;
+namespace GDShrapt.CLI;
 
 /// <summary>
 /// Builder for the parse command.

@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Reader.Tests.Helpers
+namespace GDShrapt.Reader.Tests
 {
     /// <summary>
     /// Tests for GDSpecialMethodHelper.

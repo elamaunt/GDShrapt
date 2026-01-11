@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using GDShrapt.Semantics;
 
-namespace GDShrapt.LSP.Server;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Manages open documents in the language server.

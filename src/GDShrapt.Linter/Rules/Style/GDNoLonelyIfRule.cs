@@ -1,6 +1,7 @@
 using System.Linq;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Warns when an if statement is the only statement inside an else block.

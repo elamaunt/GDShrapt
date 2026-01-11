@@ -1,8 +1,7 @@
-using GDShrapt.Semantics.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Integration;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Integration tests for Rename Refactoring validation.

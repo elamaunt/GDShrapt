@@ -1,12 +1,9 @@
 using Godot;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Localization;
-using GDShrapt.Plugin.TodoTags;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Bottom dock panel for displaying TODO/FIXME tags from the project.

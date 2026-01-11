@@ -1,11 +1,10 @@
-using GDShrapt.Semantics.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace GDShrapt.Semantics.Tests.Integration;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Integration tests for scene file parsing and script-scene relationships.

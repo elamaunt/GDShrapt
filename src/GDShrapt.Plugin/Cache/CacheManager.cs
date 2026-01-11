@@ -1,4 +1,3 @@
-using GDShrapt.Plugin.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace GDShrapt.Plugin.Cache;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Manages caching of lint results to improve performance.

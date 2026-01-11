@@ -1,8 +1,7 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Semantics;
 using System.Collections.Generic;
 
-namespace GDShrapt.Plugin.Diagnostics.Rules.Formatting;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// GDS002: Detects trailing whitespace at end of lines.

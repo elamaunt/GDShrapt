@@ -1,13 +1,6 @@
-using GDShrapt.Plugin.Refactoring.UI;
-using GDShrapt.Reader;
-using Godot;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using GD = GDShrapt.Reader.GD;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Extract;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Extracts a literal value (number, string, bool) into a constant at class level.
@@ -419,7 +412,7 @@ internal class ExtractConstantAction : IRefactoringAction
     {
         // Clone the expression to avoid modifying the original AST
         var clonedValue = (GDExpression)value.Clone();
-        return GD.Declaration.Const(name, clonedValue);
+        return GDShrapt.Builder.GD.Declaration.Const(name, clonedValue);
     }
 
     private int FindConstantInsertionLine(GDClassDeclaration @class)

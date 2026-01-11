@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Reader.Tests.Syntax
+namespace GDShrapt.Reader.Tests
 {
     /// <summary>
     /// Tests for AST cloning.

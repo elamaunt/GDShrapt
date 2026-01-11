@@ -1,7 +1,6 @@
-using GDShrapt.Semantics.Tests.Integration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Semantics.Tests.Services;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Tests for GDNodePathRenamer.

@@ -1,10 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.LSP.Protocol;
-using GDShrapt.LSP.Server;
-using GDShrapt.LSP.Transport.Serialization;
-using GDShrapt.LSP.Transport.Stdio;
 
 namespace GDShrapt.LSP;
 

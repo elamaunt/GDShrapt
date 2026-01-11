@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace GDShrapt.LSP.Protocol;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Base JSON-RPC message.

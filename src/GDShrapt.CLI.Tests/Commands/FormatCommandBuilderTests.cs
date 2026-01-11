@@ -1,10 +1,10 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Linq;
-using GDShrapt.CLI.Commands;
+using GDShrapt.CLI;
 using Xunit;
 
-namespace GDShrapt.CLI.Tests.Commands;
+namespace GDShrapt.CLI.Tests;
 
 public class FormatCommandBuilderTests
 {
@@ -85,13 +85,6 @@ public class FormatCommandBuilderTests
         Assert.Contains(_command.Options, o => o.Name == "remove-trailing-whitespace");
         Assert.Contains(_command.Options, o => o.Name == "ensure-trailing-newline");
         Assert.Contains(_command.Options, o => o.Name == "remove-multiple-newlines");
-    }
-
-    [Fact]
-    public void Build_HasAdvancedOptions()
-    {
-        Assert.Contains(_command.Options, o => o.Name == "auto-add-type-hints");
-        Assert.Contains(_command.Options, o => o.Name == "reorder-code");
     }
 
     [Fact]

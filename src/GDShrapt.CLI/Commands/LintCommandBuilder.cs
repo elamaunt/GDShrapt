@@ -4,7 +4,7 @@ using System.CommandLine.Invocation;
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 
-namespace GDShrapt.CLI.Commands;
+namespace GDShrapt.CLI;
 
 /// <summary>
 /// Builder for the lint command.

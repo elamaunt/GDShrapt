@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Linter
 {
     /// <summary>
     /// Configuration options for the GDScript linter.

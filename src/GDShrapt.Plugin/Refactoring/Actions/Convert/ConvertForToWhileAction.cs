@@ -2,7 +2,7 @@ using GDShrapt.Reader;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.Refactoring.Actions.Convert;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Converts a for loop to an equivalent while loop with explicit index management.

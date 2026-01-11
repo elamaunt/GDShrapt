@@ -1,11 +1,10 @@
 using GDShrapt.Abstractions;
-using GDShrapt.Semantics.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests.Integration;
+namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Shared fixture for integration tests that loads the test project once.

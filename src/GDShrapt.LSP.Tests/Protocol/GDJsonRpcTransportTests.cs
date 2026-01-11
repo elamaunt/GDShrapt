@@ -3,12 +3,10 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.LSP.Protocol;
-using GDShrapt.LSP.Transport.Serialization;
-using GDShrapt.LSP.Transport.Stdio;
+using GDShrapt.LSP;
 using Xunit;
 
-namespace GDShrapt.LSP.Tests.Protocol;
+namespace GDShrapt.LSP.Tests;
 
 public class GDJsonRpcTransportTests
 {

@@ -1,9 +1,4 @@
 using GDShrapt.Plugin;
-using GDShrapt.Plugin.Refactoring;
-using GDShrapt.Plugin.Refactoring.Actions.Convert;
-using GDShrapt.Plugin.Refactoring.Actions.Extract;
-using GDShrapt.Plugin.Refactoring.Actions.Organize;
-using GDShrapt.Plugin.Refactoring.Actions.Surround;
 using GDShrapt.Reader;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;

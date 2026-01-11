@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace GDShrapt.Plugin.Localization;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Manages localization for the GDShrapt plugin.

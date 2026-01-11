@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.Refactoring.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Popup menu for quick actions (Ctrl+.).

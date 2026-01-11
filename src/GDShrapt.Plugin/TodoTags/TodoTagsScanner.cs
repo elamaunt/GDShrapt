@@ -1,4 +1,3 @@
-using GDShrapt.Plugin.Config;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Concurrent;
@@ -8,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GDShrapt.Plugin.TodoTags;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Scans GDScript comments for TODO/FIXME tags.

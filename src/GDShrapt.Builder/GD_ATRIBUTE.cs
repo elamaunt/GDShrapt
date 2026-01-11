@@ -1,6 +1,7 @@
 ﻿using System;
+using GDShrapt.Reader;
 
-namespace GDShrapt.Reader
+namespace GDShrapt.Builder
 {
     public partial class GD
     {

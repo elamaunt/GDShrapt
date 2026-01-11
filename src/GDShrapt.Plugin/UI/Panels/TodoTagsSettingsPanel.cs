@@ -1,11 +1,9 @@
 using Godot;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.TodoTags;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Settings panel for configuring TODO tags.

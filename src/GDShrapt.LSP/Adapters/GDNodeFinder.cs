@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using GDShrapt.Reader;
 
-namespace GDShrapt.LSP.Adapters;
+namespace GDShrapt.LSP;
 
 /// <summary>
 /// Utility for finding AST nodes at specific positions.

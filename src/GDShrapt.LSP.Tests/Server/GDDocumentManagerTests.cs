@@ -1,10 +1,10 @@
 using System.IO;
 using GDShrapt.Abstractions;
-using GDShrapt.LSP.Server;
+using GDShrapt.LSP;
 using GDShrapt.Semantics;
 using Xunit;
 
-namespace GDShrapt.LSP.Tests.Server;
+namespace GDShrapt.LSP.Tests;
 
 public class GDDocumentManagerTests
 {

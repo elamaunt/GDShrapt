@@ -1,11 +1,8 @@
 using Godot;
-using GDShrapt.Plugin.Config;
-using GDShrapt.Plugin.Diagnostics;
-using GDShrapt.Plugin.Localization;
 using System;
 using System.Collections.Generic;
 
-namespace GDShrapt.Plugin.UI;
+namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Floating notification panel that shows diagnostic summary.

@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Reader.Tests.Parsing
+namespace GDShrapt.Reader.Tests
 {
     /// <summary>
     /// Tests for edge cases in the parser covering whitespace, brackets, newlines,
