@@ -33,7 +33,7 @@ namespace GDShrapt.Reader.Tests
 
             // The parser should allow over-indentation
             var method = tree.Methods.First();
-            method.Statements.Should().HaveCountGreaterOrEqualTo(1);
+            method.Statements.Should().HaveCountGreaterThanOrEqualTo(1);
         }
 
         [TestMethod]

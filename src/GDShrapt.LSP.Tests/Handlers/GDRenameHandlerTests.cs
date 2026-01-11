@@ -4,10 +4,12 @@ using System.Threading.Tasks;
 using GDShrapt.Abstractions;
 using GDShrapt.LSP;
 using GDShrapt.Semantics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentAssertions;
 
 namespace GDShrapt.LSP.Tests;
 
+[TestClass]
 public class GDRenameHandlerTests
 {
     private static readonly string TestProjectPath = GetTestProjectPath();
@@ -20,7 +22,7 @@ public class GDRenameHandlerTests
         return System.IO.Path.Combine(projectRoot, "testproject", "GDShrapt.TestProject");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_RenameVariable_ReturnsWorkspaceEdit()
     {
         // Arrange
@@ -55,7 +57,7 @@ public class GDRenameHandlerTests
         // This test verifies no crash occurs
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_InvalidFile_ReturnsNull()
     {
         // Arrange
@@ -79,10 +81,10 @@ public class GDRenameHandlerTests
         var result = await handler.HandleAsync(@params, CancellationToken.None);
 
         // Assert
-        Assert.Null(result);
+        result.Should().BeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_EmptyNewName_ReturnsNull()
     {
         // Arrange
@@ -108,10 +110,10 @@ public class GDRenameHandlerTests
         var result = await handler.HandleAsync(@params, CancellationToken.None);
 
         // Assert
-        Assert.Null(result);
+        result.Should().BeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_WhitespaceNewName_ReturnsNull()
     {
         // Arrange
@@ -137,10 +139,10 @@ public class GDRenameHandlerTests
         var result = await handler.HandleAsync(@params, CancellationToken.None);
 
         // Assert
-        Assert.Null(result);
+        result.Should().BeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_NoSymbolAtPosition_ReturnsNull()
     {
         // Arrange

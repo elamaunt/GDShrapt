@@ -1,14 +1,16 @@
 using GDShrapt.LSP;
 using GDShrapt.Reader;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentAssertions;
 
 namespace GDShrapt.LSP.Tests;
 
+[TestClass]
 public class GDLocationAdapterTests
 {
     private static readonly GDScriptReader Reader = new();
 
-    [Fact]
+    [TestMethod]
     public void ToLspRange_ValidPosition_ConvertsToZeroBased()
     {
         // Arrange - GDShrapt uses 1-based, LSP uses 0-based
@@ -22,14 +24,14 @@ public class GDLocationAdapterTests
         var range = GDLocationAdapter.ToLspRange(startLine, startColumn, endLine, endColumn);
 
         // Assert
-        Assert.NotNull(range);
-        Assert.Equal(0, range.Start.Line);       // 1-based -> 0-based
-        Assert.Equal(0, range.Start.Character);  // 1-based -> 0-based
-        Assert.Equal(0, range.End.Line);
-        Assert.Equal(10, range.End.Character);   // End character is exclusive in LSP
+        range.Should().NotBeNull();
+        range.Start.Line.Should().Be(0);       // 1-based -> 0-based
+        range.Start.Character.Should().Be(0);  // 1-based -> 0-based
+        range.End.Line.Should().Be(0);
+        range.End.Character.Should().Be(10);   // End character is exclusive in LSP
     }
 
-    [Fact]
+    [TestMethod]
     public void FromNode_VariableDeclaration_ReturnsValidLocation()
     {
         // Arrange
@@ -41,12 +43,12 @@ public class GDLocationAdapterTests
         var location = GDLocationAdapter.FromNode(classDecl, filePath);
 
         // Assert
-        Assert.NotNull(location);
-        Assert.Equal(GDDocumentManager.PathToUri(filePath), location.Uri);
-        Assert.NotNull(location.Range);
+        location.Should().NotBeNull();
+        location.Uri.Should().Be(GDDocumentManager.PathToUri(filePath));
+        location.Range.Should().NotBeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public void FromNode_MethodDeclaration_ReturnsValidLocation()
     {
         // Arrange
@@ -61,11 +63,11 @@ func test_method():
         var location = GDLocationAdapter.FromNode(classDecl, filePath);
 
         // Assert
-        Assert.NotNull(location);
-        Assert.Equal(GDDocumentManager.PathToUri(filePath), location.Uri);
+        location.Should().NotBeNull();
+        location.Uri.Should().Be(GDDocumentManager.PathToUri(filePath));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromNode_NullNode_ReturnsNull()
     {
         // Arrange
@@ -75,6 +77,6 @@ func test_method():
         var location = GDLocationAdapter.FromNode(node!, "/test/script.gd");
 
         // Assert
-        Assert.Null(location);
+        location.Should().BeNull();
     }
 }

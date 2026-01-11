@@ -140,7 +140,7 @@ func take_damage(amount: int) -> void:
             tree.ClassName.Should().NotBeNull();
             tree.Signals.Should().HaveCount(2);
             tree.Enums.Should().HaveCount(1);
-            tree.Methods.Should().HaveCountGreaterOrEqualTo(7);
+            tree.Methods.Should().HaveCountGreaterThanOrEqualTo(7);
 
             // Skip scope check: code uses Godot types (CharacterBody2D, Input, etc.) not in default RuntimeProvider
             var validationOptions = new GDValidationOptions { CheckScope = false };

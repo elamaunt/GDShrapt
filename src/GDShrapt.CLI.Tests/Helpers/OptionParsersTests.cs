@@ -1,270 +1,270 @@
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class OptionParsersTests
 {
     #region ParseNamingCase
 
-    [Theory]
-    [InlineData("pascal", NamingCase.PascalCase)]
-    [InlineData("PascalCase", NamingCase.PascalCase)]
-    [InlineData("snake", NamingCase.SnakeCase)]
-    [InlineData("snake_case", NamingCase.SnakeCase)]
-    [InlineData("snakecase", NamingCase.SnakeCase)]
-    [InlineData("camel", NamingCase.CamelCase)]
-    [InlineData("camelCase", NamingCase.CamelCase)]
-    [InlineData("screaming", NamingCase.ScreamingSnakeCase)]
-    [InlineData("screamingsnake", NamingCase.ScreamingSnakeCase)]
-    [InlineData("screaming_snake_case", NamingCase.ScreamingSnakeCase)]
-    [InlineData("any", NamingCase.Any)]
+    [DataTestMethod]
+    [DataRow("pascal", NamingCase.PascalCase)]
+    [DataRow("PascalCase", NamingCase.PascalCase)]
+    [DataRow("snake", NamingCase.SnakeCase)]
+    [DataRow("snake_case", NamingCase.SnakeCase)]
+    [DataRow("snakecase", NamingCase.SnakeCase)]
+    [DataRow("camel", NamingCase.CamelCase)]
+    [DataRow("camelCase", NamingCase.CamelCase)]
+    [DataRow("screaming", NamingCase.ScreamingSnakeCase)]
+    [DataRow("screamingsnake", NamingCase.ScreamingSnakeCase)]
+    [DataRow("screaming_snake_case", NamingCase.ScreamingSnakeCase)]
+    [DataRow("any", NamingCase.Any)]
     public void ParseNamingCase_ValidInput_ReturnsCorrectCase(string input, NamingCase expected)
     {
         var result = OptionParsers.ParseNamingCase(input);
-        Assert.Equal(expected, result);
+        result.Should().Be(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseNamingCase_NullInput_ReturnsSnakeCase()
     {
         var result = OptionParsers.ParseNamingCase(null);
-        Assert.Equal(NamingCase.SnakeCase, result);
+        result.Should().Be(NamingCase.SnakeCase);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseNamingCase_EmptyInput_ReturnsSnakeCase()
     {
         var result = OptionParsers.ParseNamingCase("");
-        Assert.Equal(NamingCase.SnakeCase, result);
+        result.Should().Be(NamingCase.SnakeCase);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseNamingCase_InvalidInput_ReturnsSnakeCase()
     {
         var result = OptionParsers.ParseNamingCase("invalid");
-        Assert.Equal(NamingCase.SnakeCase, result);
+        result.Should().Be(NamingCase.SnakeCase);
     }
 
     #endregion
 
     #region ParseIndentStyle
 
-    [Theory]
-    [InlineData("tabs", IndentStyle.Tabs)]
-    [InlineData("tab", IndentStyle.Tabs)]
-    [InlineData("spaces", IndentStyle.Spaces)]
-    [InlineData("space", IndentStyle.Spaces)]
+    [DataTestMethod]
+    [DataRow("tabs", IndentStyle.Tabs)]
+    [DataRow("tab", IndentStyle.Tabs)]
+    [DataRow("spaces", IndentStyle.Spaces)]
+    [DataRow("space", IndentStyle.Spaces)]
     public void ParseIndentStyle_ValidInput_ReturnsCorrectStyle(string input, IndentStyle expected)
     {
         var result = OptionParsers.ParseIndentStyle(input);
-        Assert.Equal(expected, result);
+        result.Should().Be(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseIndentStyle_NullInput_ReturnsTabs()
     {
         var result = OptionParsers.ParseIndentStyle(null);
-        Assert.Equal(IndentStyle.Tabs, result);
+        result.Should().Be(IndentStyle.Tabs);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseIndentStyle_InvalidInput_ReturnsTabs()
     {
         var result = OptionParsers.ParseIndentStyle("invalid");
-        Assert.Equal(IndentStyle.Tabs, result);
+        result.Should().Be(IndentStyle.Tabs);
     }
 
     #endregion
 
     #region ParseLineEnding
 
-    [Theory]
-    [InlineData("lf", LineEndingStyle.LF)]
-    [InlineData("unix", LineEndingStyle.LF)]
-    [InlineData("crlf", LineEndingStyle.CRLF)]
-    [InlineData("windows", LineEndingStyle.CRLF)]
-    [InlineData("platform", LineEndingStyle.Platform)]
-    [InlineData("auto", LineEndingStyle.Platform)]
+    [DataTestMethod]
+    [DataRow("lf", LineEndingStyle.LF)]
+    [DataRow("unix", LineEndingStyle.LF)]
+    [DataRow("crlf", LineEndingStyle.CRLF)]
+    [DataRow("windows", LineEndingStyle.CRLF)]
+    [DataRow("platform", LineEndingStyle.Platform)]
+    [DataRow("auto", LineEndingStyle.Platform)]
     public void ParseLineEnding_ValidInput_ReturnsCorrectStyle(string input, LineEndingStyle expected)
     {
         var result = OptionParsers.ParseLineEnding(input);
-        Assert.Equal(expected, result);
+        result.Should().Be(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseLineEnding_NullInput_ReturnsLF()
     {
         var result = OptionParsers.ParseLineEnding(null);
-        Assert.Equal(LineEndingStyle.LF, result);
+        result.Should().Be(LineEndingStyle.LF);
     }
 
     #endregion
 
     #region ParseSeverity
 
-    [Theory]
-    [InlineData("error", GDLintSeverity.Error)]
-    [InlineData("warning", GDLintSeverity.Warning)]
-    [InlineData("warn", GDLintSeverity.Warning)]
-    [InlineData("info", GDLintSeverity.Info)]
-    [InlineData("information", GDLintSeverity.Info)]
-    [InlineData("hint", GDLintSeverity.Hint)]
+    [DataTestMethod]
+    [DataRow("error", GDLintSeverity.Error)]
+    [DataRow("warning", GDLintSeverity.Warning)]
+    [DataRow("warn", GDLintSeverity.Warning)]
+    [DataRow("info", GDLintSeverity.Info)]
+    [DataRow("information", GDLintSeverity.Info)]
+    [DataRow("hint", GDLintSeverity.Hint)]
     public void ParseSeverity_ValidInput_ReturnsCorrectSeverity(string input, GDLintSeverity expected)
     {
         var result = OptionParsers.ParseSeverity(input);
-        Assert.Equal(expected, result);
+        result.Should().Be(expected);
     }
 
-    [Theory]
-    [InlineData("off")]
-    [InlineData("none")]
-    [InlineData("disable")]
+    [DataTestMethod]
+    [DataRow("off")]
+    [DataRow("none")]
+    [DataRow("disable")]
     public void ParseSeverity_DisableKeywords_ReturnsNull(string input)
     {
         var result = OptionParsers.ParseSeverity(input);
-        Assert.Null(result);
+        result.Should().BeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseSeverity_NullInput_ReturnsNull()
     {
         var result = OptionParsers.ParseSeverity(null);
-        Assert.Null(result);
+        result.Should().BeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseSeverity_InvalidInput_ReturnsNull()
     {
         var result = OptionParsers.ParseSeverity("invalid");
-        Assert.Null(result);
+        result.Should().BeNull();
     }
 
     #endregion
 
     #region ParseCategories
 
-    [Fact]
+    [TestMethod]
     public void ParseCategories_SingleCategory_ReturnsArray()
     {
         var result = OptionParsers.ParseCategories("naming");
-        Assert.Single(result);
-        Assert.Equal(GDLintCategory.Naming, result[0]);
+        result.Should().ContainSingle();
+        result[0].Should().Be(GDLintCategory.Naming);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseCategories_MultipleCategories_ReturnsArray()
     {
         var result = OptionParsers.ParseCategories("naming,style,best-practices");
-        Assert.Equal(3, result.Length);
-        Assert.Contains(GDLintCategory.Naming, result);
-        Assert.Contains(GDLintCategory.Style, result);
-        Assert.Contains(GDLintCategory.BestPractices, result);
+        result.Length.Should().Be(3);
+        result.Should().Contain(GDLintCategory.Naming);
+        result.Should().Contain(GDLintCategory.Style);
+        result.Should().Contain(GDLintCategory.BestPractices);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseCategories_WithSpaces_TrimsCorrectly()
     {
         var result = OptionParsers.ParseCategories("naming , style , organization");
-        Assert.Equal(3, result.Length);
-        Assert.Contains(GDLintCategory.Naming, result);
-        Assert.Contains(GDLintCategory.Style, result);
-        Assert.Contains(GDLintCategory.Organization, result);
+        result.Length.Should().Be(3);
+        result.Should().Contain(GDLintCategory.Naming);
+        result.Should().Contain(GDLintCategory.Style);
+        result.Should().Contain(GDLintCategory.Organization);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseCategories_NullInput_ReturnsEmptyArray()
     {
         var result = OptionParsers.ParseCategories(null);
-        Assert.Empty(result);
+        result.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseCategories_EmptyInput_ReturnsEmptyArray()
     {
         var result = OptionParsers.ParseCategories("");
-        Assert.Empty(result);
+        result.Should().BeEmpty();
     }
 
     #endregion
 
     #region ParseValidationChecks
 
-    [Fact]
+    [TestMethod]
     public void ParseValidationChecks_All_ReturnsAll()
     {
         var result = OptionParsers.ParseValidationChecks("all");
-        Assert.Equal(GDValidationChecks.All, result);
+        result.Should().Be(GDValidationChecks.All);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseValidationChecks_AllCaseInsensitive_ReturnsAll()
     {
         var result = OptionParsers.ParseValidationChecks("ALL");
-        Assert.Equal(GDValidationChecks.All, result);
+        result.Should().Be(GDValidationChecks.All);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseValidationChecks_SingleCheck_ReturnsFlag()
     {
         var result = OptionParsers.ParseValidationChecks("syntax");
-        Assert.Equal(GDValidationChecks.Syntax, result);
+        result.Should().Be(GDValidationChecks.Syntax);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseValidationChecks_MultipleChecks_ReturnsCombinedFlags()
     {
         var result = OptionParsers.ParseValidationChecks("syntax,scope,types");
-        Assert.True(result.HasFlag(GDValidationChecks.Syntax));
-        Assert.True(result.HasFlag(GDValidationChecks.Scope));
-        Assert.True(result.HasFlag(GDValidationChecks.Types));
+        result.HasFlag(GDValidationChecks.Syntax).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Scope).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Types).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseValidationChecks_ControlFlow_BothFormats()
     {
         var result1 = OptionParsers.ParseValidationChecks("controlflow");
         var result2 = OptionParsers.ParseValidationChecks("control-flow");
-        Assert.Equal(GDValidationChecks.ControlFlow, result1);
-        Assert.Equal(GDValidationChecks.ControlFlow, result2);
+        result1.Should().Be(GDValidationChecks.ControlFlow);
+        result2.Should().Be(GDValidationChecks.ControlFlow);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseValidationChecks_NullInput_ReturnsAll()
     {
         var result = OptionParsers.ParseValidationChecks(null);
-        Assert.Equal(GDValidationChecks.All, result);
+        result.Should().Be(GDValidationChecks.All);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseValidationChecks_EmptyInput_ReturnsAll()
     {
         var result = OptionParsers.ParseValidationChecks("");
-        Assert.Equal(GDValidationChecks.All, result);
+        result.Should().Be(GDValidationChecks.All);
     }
 
     #endregion
 
     #region ParseLineWrapStyle
 
-    [Theory]
-    [InlineData("afteropen", LineWrapStyle.AfterOpeningBracket)]
-    [InlineData("afteropening", LineWrapStyle.AfterOpeningBracket)]
-    [InlineData("afteropeningbracket", LineWrapStyle.AfterOpeningBracket)]
-    [InlineData("before", LineWrapStyle.BeforeElements)]
-    [InlineData("beforeelements", LineWrapStyle.BeforeElements)]
+    [DataTestMethod]
+    [DataRow("afteropen", LineWrapStyle.AfterOpeningBracket)]
+    [DataRow("afteropening", LineWrapStyle.AfterOpeningBracket)]
+    [DataRow("afteropeningbracket", LineWrapStyle.AfterOpeningBracket)]
+    [DataRow("before", LineWrapStyle.BeforeElements)]
+    [DataRow("beforeelements", LineWrapStyle.BeforeElements)]
     public void ParseLineWrapStyle_ValidInput_ReturnsCorrectStyle(string input, LineWrapStyle expected)
     {
         var result = OptionParsers.ParseLineWrapStyle(input);
-        Assert.Equal(expected, result);
+        result.Should().Be(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseLineWrapStyle_NullInput_ReturnsAfterOpeningBracket()
     {
         var result = OptionParsers.ParseLineWrapStyle(null);
-        Assert.Equal(LineWrapStyle.AfterOpeningBracket, result);
+        result.Should().Be(LineWrapStyle.AfterOpeningBracket);
     }
 
     #endregion

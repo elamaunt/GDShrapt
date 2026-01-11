@@ -2,102 +2,103 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Linq;
 using GDShrapt.CLI;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class ValidateCommandBuilderTests
 {
-    private readonly Command _command;
-    private readonly Option<string> _formatOption;
+    private Command _command = null!;
+    private Option<string> _formatOption = null!;
 
-    public ValidateCommandBuilderTests()
+    [TestInitialize]
+    public void Setup()
     {
         _formatOption = new Option<string>("--format", () => "text");
         _command = ValidateCommandBuilder.Build(_formatOption);
     }
 
-    [Fact]
+    [TestMethod]
     public void Build_ReturnsCommand_WithCorrectName()
     {
-        Assert.Equal("validate", _command.Name);
+        _command.Name.Should().Be("validate");
     }
 
-    [Fact]
+    [TestMethod]
     public void Build_HasPathArgument()
     {
-        Assert.Single(_command.Arguments.Where(a => a.Name == "project-path"));
+        _command.Arguments.Where(a => a.Name == "project-path").Should().ContainSingle();
     }
 
-    [Fact]
+    [TestMethod]
     public void Build_HasChecksOption()
     {
-        Assert.Contains(_command.Options, o => o.Name == "checks");
+        _command.Options.Should().Contain(o => o.Name == "checks");
     }
 
-    [Fact]
+    [TestMethod]
     public void Build_HasStrictOption()
     {
-        Assert.Contains(_command.Options, o => o.Name == "strict");
+        _command.Options.Should().Contain(o => o.Name == "strict");
     }
 
-    [Fact]
+    [TestMethod]
     public void Build_HasIndividualCheckOptions()
     {
-        Assert.Contains(_command.Options, o => o.Name == "check-syntax");
-        Assert.Contains(_command.Options, o => o.Name == "check-scope");
-        Assert.Contains(_command.Options, o => o.Name == "check-types");
-        Assert.Contains(_command.Options, o => o.Name == "check-calls");
-        Assert.Contains(_command.Options, o => o.Name == "check-control-flow");
-        Assert.Contains(_command.Options, o => o.Name == "check-indentation");
+        _command.Options.Should().Contain(o => o.Name == "check-syntax");
+        _command.Options.Should().Contain(o => o.Name == "check-scope");
+        _command.Options.Should().Contain(o => o.Name == "check-types");
+        _command.Options.Should().Contain(o => o.Name == "check-calls");
+        _command.Options.Should().Contain(o => o.Name == "check-control-flow");
+        _command.Options.Should().Contain(o => o.Name == "check-indentation");
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ChecksOption_ParsesCorrectly()
     {
         var result = _command.Parse("validate . --checks syntax,scope");
-        Assert.Empty(result.Errors);
+        result.Errors.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_StrictOption_ParsesCorrectly()
     {
         var result = _command.Parse("validate . --strict");
-        Assert.Empty(result.Errors);
+        result.Errors.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_IndividualCheckOption_True_ParsesCorrectly()
     {
         var result = _command.Parse("validate . --check-types true");
-        Assert.Empty(result.Errors);
+        result.Errors.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_IndividualCheckOption_False_ParsesCorrectly()
     {
         var result = _command.Parse("validate . --check-types false");
-        Assert.Empty(result.Errors);
+        result.Errors.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_MultipleIndividualChecks_ParsesCorrectly()
     {
         var result = _command.Parse("validate . --check-syntax true --check-types false --check-scope true");
-        Assert.Empty(result.Errors);
+        result.Errors.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ChecksAll_ParsesCorrectly()
     {
         var result = _command.Parse("validate . --checks all");
-        Assert.Empty(result.Errors);
+        result.Errors.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_CombinedOptions_ParsesCorrectly()
     {
         var result = _command.Parse("validate . --checks syntax,scope --strict --check-types false");
-        Assert.Empty(result.Errors);
+        result.Errors.Should().BeEmpty();
     }
 }

@@ -2,15 +2,16 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
-public class GDAnalyzeCommandTests : IDisposable
+[TestClass]
+public class GDAnalyzeCommandTests
 {
     private string? _tempProjectPath;
 
-    public void Dispose()
+    [TestCleanup]
+    public void Cleanup()
     {
         if (_tempProjectPath != null)
         {
@@ -25,7 +26,7 @@ public class GDAnalyzeCommandTests : IDisposable
         return testProjectPath;
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithValidProject_ReturnsZero()
     {
         // Arrange
@@ -44,10 +45,10 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("Analysis", outputText);
+        outputText.Should().Contain("Analysis");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithInvalidPath_ReturnsTwo()
     {
         // Arrange
@@ -59,10 +60,10 @@ public class GDAnalyzeCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(2, result);
+        result.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithJsonFormatter_OutputsJson()
     {
         // Arrange
@@ -81,11 +82,11 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("{", outputText);
-        Assert.Contains("\"projectPath\"", outputText);
+        outputText.Should().Contain("{");
+        outputText.Should().Contain("\"projectPath\"");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithValidProject_ContainsScriptInfo()
     {
         // Arrange
@@ -104,10 +105,10 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("scripts", outputText.ToLower());
+        outputText.ToLower().Should().Contain("scripts");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_JsonOutput_IsValidJson()
     {
         // Arrange
@@ -127,11 +128,11 @@ public class GDAnalyzeCommandTests : IDisposable
         // Assert
         var outputText = output.ToString();
         // Basic JSON structure validation
-        Assert.StartsWith("{", outputText.Trim());
-        Assert.EndsWith("}", outputText.Trim());
+        outputText.Trim().Should().StartWith("{");
+        outputText.Trim().Should().EndWith("}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_EmptyDirectory_HandlesGracefully()
     {
         // Arrange
@@ -148,7 +149,7 @@ public class GDAnalyzeCommandTests : IDisposable
             var result = await command.ExecuteAsync();
 
             // Assert - should not crash on empty directory
-            Assert.True(result == 0 || result == 2, "Empty directory should return 0 or 2");
+            (result == 0 || result == 2).Should().BeTrue("Empty directory should return 0 or 2");
         }
         finally
         {
@@ -158,7 +159,7 @@ public class GDAnalyzeCommandTests : IDisposable
 
     // === Linter integration tests ===
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_ClassNameViolation_ReportsGDL001()
     {
         // Arrange
@@ -172,10 +173,10 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("GDL001", outputText);
+        outputText.Should().Contain("GDL001");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_VariableNameViolation_ReportsGDL003()
     {
         // Arrange
@@ -189,13 +190,13 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("GDL003", outputText);
+        outputText.Should().Contain("GDL003");
     }
 
-    [Theory]
-    [InlineData("class_name badName\nextends Node\n", "GDL001")]
-    [InlineData("extends Node\nvar BadVariable = 1\n", "GDL003")]
-    [InlineData("extends Node\nconst bad_const = 1\n", "GDL004")]
+    [DataTestMethod]
+    [DataRow("class_name badName\nextends Node\n", "GDL001")]
+    [DataRow("extends Node\nvar BadVariable = 1\n", "GDL003")]
+    [DataRow("extends Node\nconst bad_const = 1\n", "GDL004")]
     public async Task ExecuteAsync_NamingViolation_ReportsExpectedRule(string code, string expectedRuleId)
     {
         // Arrange
@@ -209,12 +210,12 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains(expectedRuleId, outputText);
+        outputText.Should().Contain(expectedRuleId);
     }
 
     // === Validator integration tests ===
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_BreakOutsideLoop_ReportsGD5001()
     {
         // Arrange
@@ -228,10 +229,10 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("GD5001", outputText);
+        outputText.Should().Contain("GD5001");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_ContinueOutsideLoop_ReportsGD5002()
     {
         // Arrange
@@ -245,10 +246,10 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("GD5002", outputText);
+        outputText.Should().Contain("GD5002");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_SyntaxError_ReportsGD0002()
     {
         // Arrange
@@ -263,13 +264,13 @@ public class GDAnalyzeCommandTests : IDisposable
         // Assert
         var outputText = output.ToString();
         // Should report either GD0001 (parse failure) or GD0002 (invalid token)
-        Assert.True(outputText.Contains("GD0001") || outputText.Contains("GD0002"),
+        (outputText.Contains("GD0001") || outputText.Contains("GD0002")).Should().BeTrue(
             $"Expected GD0001 or GD0002 in output: {outputText}");
     }
 
     // === Clean project test ===
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_CleanProject_ReturnsZero()
     {
         // Arrange
@@ -282,10 +283,10 @@ public class GDAnalyzeCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_CleanProject_JsonFormat_ReturnsValidJson()
     {
         // Arrange
@@ -299,12 +300,12 @@ public class GDAnalyzeCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString().Trim();
-        Assert.StartsWith("{", outputText);
-        Assert.EndsWith("}", outputText);
-        Assert.Contains("\"totalErrors\"", outputText);
+        outputText.Should().StartWith("{");
+        outputText.Should().EndWith("}");
+        outputText.Should().Contain("\"totalErrors\"");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_MultiFileProject_AnalyzesAllFiles()
     {
         // Arrange
@@ -319,7 +320,7 @@ public class GDAnalyzeCommandTests : IDisposable
         // Assert
         var outputText = output.ToString().ToLower();
         // Should mention multiple files were analyzed
-        Assert.Contains("3", outputText); // 3 scripts
+        outputText.Should().Contain("3"); // 3 scripts
     }
 }
 

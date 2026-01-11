@@ -2,10 +2,12 @@ using System.IO;
 using GDShrapt.Abstractions;
 using GDShrapt.LSP;
 using GDShrapt.Semantics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentAssertions;
 
 namespace GDShrapt.LSP.Tests;
 
+[TestClass]
 public class GDDocumentManagerTests
 {
     private static string GetTestProjectPath()
@@ -15,7 +17,7 @@ public class GDDocumentManagerTests
         return testProjectPath;
     }
 
-    [Fact]
+    [TestMethod]
     public void UriToPath_WindowsPath_ConvertsCorrectly()
     {
         // Arrange
@@ -25,10 +27,10 @@ public class GDDocumentManagerTests
         var path = GDDocumentManager.UriToPath(uri);
 
         // Assert
-        Assert.Equal("C:\\Users\\test\\project\\script.gd", path);
+        path.Should().Be("C:\\Users\\test\\project\\script.gd");
     }
 
-    [Fact]
+    [TestMethod]
     public void UriToPath_UnixPath_ConvertsCorrectly()
     {
         // Arrange
@@ -38,10 +40,10 @@ public class GDDocumentManagerTests
         var path = GDDocumentManager.UriToPath(uri);
 
         // Assert
-        Assert.Equal("/home/user/project/script.gd", path);
+        path.Should().Be("/home/user/project/script.gd");
     }
 
-    [Fact]
+    [TestMethod]
     public void PathToUri_WindowsPath_ConvertsCorrectly()
     {
         // Arrange
@@ -51,10 +53,10 @@ public class GDDocumentManagerTests
         var uri = GDDocumentManager.PathToUri(path);
 
         // Assert
-        Assert.Equal("file:///C:/Users/test/project/script.gd", uri);
+        uri.Should().Be("file:///C:/Users/test/project/script.gd");
     }
 
-    [Fact]
+    [TestMethod]
     public void PathToUri_UnixPath_ConvertsCorrectly()
     {
         // Arrange
@@ -64,10 +66,10 @@ public class GDDocumentManagerTests
         var uri = GDDocumentManager.PathToUri(path);
 
         // Assert
-        Assert.Equal("file:///home/user/project/script.gd", uri);
+        uri.Should().Be("file:///home/user/project/script.gd");
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenDocument_ValidContent_StoresDocument()
     {
         // Arrange
@@ -91,13 +93,13 @@ public class GDDocumentManagerTests
 
         // Assert
         var doc = manager.GetDocument(uri);
-        Assert.NotNull(doc);
-        Assert.Equal(uri, doc.Uri);
-        Assert.Equal(content, doc.Content);
-        Assert.Equal(version, doc.Version);
+        doc.Should().NotBeNull();
+        doc.Uri.Should().Be(uri);
+        doc.Content.Should().Be(content);
+        doc.Version.Should().Be(version);
     }
 
-    [Fact]
+    [TestMethod]
     public void UpdateDocument_ExistingDocument_UpdatesContent()
     {
         // Arrange
@@ -119,12 +121,12 @@ public class GDDocumentManagerTests
 
         // Assert
         var doc = manager.GetDocument(uri);
-        Assert.NotNull(doc);
-        Assert.Equal("var x = 2", doc.Content);
-        Assert.Equal(2, doc.Version);
+        doc.Should().NotBeNull();
+        doc.Content.Should().Be("var x = 2");
+        doc.Version.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public void CloseDocument_ExistingDocument_RemovesDocument()
     {
         // Arrange
@@ -146,10 +148,10 @@ public class GDDocumentManagerTests
 
         // Assert
         var doc = manager.GetDocument(uri);
-        Assert.Null(doc);
+        doc.Should().BeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public void GetAllDocuments_MultipleDocuments_ReturnsAll()
     {
         // Arrange
@@ -172,6 +174,6 @@ public class GDDocumentManagerTests
 
         // Assert
         var list = new System.Collections.Generic.List<GDOpenDocument>(docs);
-        Assert.Equal(3, list.Count);
+        list.Count.Should().Be(3);
     }
 }

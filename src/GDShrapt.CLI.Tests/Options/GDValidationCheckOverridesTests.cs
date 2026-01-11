@@ -1,11 +1,11 @@
 using GDShrapt.CLI.Core;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class GDValidationCheckOverridesTests
 {
-    [Fact]
+    [TestMethod]
     public void ApplyTo_EnableSyntax_AddsFlag()
     {
         // Arrange
@@ -16,10 +16,10 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.True(result.HasFlag(GDValidationChecks.Syntax));
+        result.HasFlag(GDValidationChecks.Syntax).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_DisableSyntax_RemovesFlag()
     {
         // Arrange
@@ -30,10 +30,10 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.False(result.HasFlag(GDValidationChecks.Syntax));
+        result.HasFlag(GDValidationChecks.Syntax).Should().BeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_EnableMultipleChecks_AddsFlags()
     {
         // Arrange
@@ -49,12 +49,12 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.True(result.HasFlag(GDValidationChecks.Syntax));
-        Assert.True(result.HasFlag(GDValidationChecks.Scope));
-        Assert.True(result.HasFlag(GDValidationChecks.Types));
+        result.HasFlag(GDValidationChecks.Syntax).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Scope).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Types).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_DisableMultipleChecks_RemovesFlags()
     {
         // Arrange
@@ -70,16 +70,16 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.False(result.HasFlag(GDValidationChecks.Types));
-        Assert.False(result.HasFlag(GDValidationChecks.Calls));
-        Assert.False(result.HasFlag(GDValidationChecks.ControlFlow));
+        result.HasFlag(GDValidationChecks.Types).Should().BeFalse();
+        result.HasFlag(GDValidationChecks.Calls).Should().BeFalse();
+        result.HasFlag(GDValidationChecks.ControlFlow).Should().BeFalse();
         // Others should be preserved
-        Assert.True(result.HasFlag(GDValidationChecks.Syntax));
-        Assert.True(result.HasFlag(GDValidationChecks.Scope));
-        Assert.True(result.HasFlag(GDValidationChecks.Indentation));
+        result.HasFlag(GDValidationChecks.Syntax).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Scope).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Indentation).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_MixedEnableDisable_CorrectlyModifiesFlags()
     {
         // Arrange
@@ -95,13 +95,13 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.False(result.HasFlag(GDValidationChecks.Syntax));
-        Assert.True(result.HasFlag(GDValidationChecks.Scope)); // Preserved
-        Assert.True(result.HasFlag(GDValidationChecks.Types));
-        Assert.True(result.HasFlag(GDValidationChecks.Calls));
+        result.HasFlag(GDValidationChecks.Syntax).Should().BeFalse();
+        result.HasFlag(GDValidationChecks.Scope).Should().BeTrue(); // Preserved
+        result.HasFlag(GDValidationChecks.Types).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Calls).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_NoOverrides_PreservesOriginalFlags()
     {
         // Arrange
@@ -112,10 +112,10 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert - should be unchanged
-        Assert.Equal(checks, result);
+        result.Should().Be(checks);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_AllChecksEnabled_ReturnsAllFlags()
     {
         // Arrange
@@ -134,10 +134,10 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.Equal(GDValidationChecks.All, result);
+        result.Should().Be(GDValidationChecks.All);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_AllChecksDisabled_ReturnsNone()
     {
         // Arrange
@@ -156,10 +156,10 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.Equal(GDValidationChecks.None, result);
+        result.Should().Be(GDValidationChecks.None);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_ControlFlowCheck_WorksCorrectly()
     {
         // Arrange
@@ -170,10 +170,10 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.True(result.HasFlag(GDValidationChecks.ControlFlow));
+        result.HasFlag(GDValidationChecks.ControlFlow).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_IndentationCheck_WorksCorrectly()
     {
         // Arrange
@@ -184,6 +184,6 @@ public class GDValidationCheckOverridesTests
         var result = overrides.ApplyTo(checks);
 
         // Assert
-        Assert.False(result.HasFlag(GDValidationChecks.Indentation));
+        result.HasFlag(GDValidationChecks.Indentation).Should().BeFalse();
     }
 }

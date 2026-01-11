@@ -1,12 +1,12 @@
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class GDLinterOptionsOverridesTests
 {
-    [Fact]
+    [TestMethod]
     public void ApplyTo_NamingConventions_OverridesValues()
     {
         // Arrange
@@ -23,13 +23,13 @@ public class GDLinterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.Equal(NamingCase.SnakeCase, options.ClassNameCase);
-        Assert.Equal(NamingCase.PascalCase, options.FunctionNameCase);
-        Assert.Equal(NamingCase.CamelCase, options.VariableNameCase);
-        Assert.Equal(NamingCase.PascalCase, options.ConstantNameCase);
+        options.ClassNameCase.Should().Be(NamingCase.SnakeCase);
+        options.FunctionNameCase.Should().Be(NamingCase.PascalCase);
+        options.VariableNameCase.Should().Be(NamingCase.CamelCase);
+        options.ConstantNameCase.Should().Be(NamingCase.PascalCase);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_Limits_OverridesValues()
     {
         // Arrange
@@ -47,14 +47,14 @@ public class GDLinterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.Equal(80, options.MaxLineLength);
-        Assert.Equal(500, options.MaxFileLines);
-        Assert.Equal(3, options.MaxParameters);
-        Assert.Equal(25, options.MaxFunctionLength);
-        Assert.Equal(5, options.MaxCyclomaticComplexity);
+        options.MaxLineLength.Should().Be(80);
+        options.MaxFileLines.Should().Be(500);
+        options.MaxParameters.Should().Be(3);
+        options.MaxFunctionLength.Should().Be(25);
+        options.MaxCyclomaticComplexity.Should().Be(5);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_Warnings_OverridesValues()
     {
         // Arrange
@@ -72,14 +72,14 @@ public class GDLinterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.False(options.WarnUnusedVariables);
-        Assert.True(options.WarnNoElifReturn);
-        Assert.True(options.WarnNoElseReturn);
-        Assert.True(options.WarnPrivateMethodCall);
-        Assert.False(options.WarnDuplicatedLoad);
+        options.WarnUnusedVariables.Should().BeFalse();
+        options.WarnNoElifReturn.Should().BeTrue();
+        options.WarnNoElseReturn.Should().BeTrue();
+        options.WarnPrivateMethodCall.Should().BeTrue();
+        options.WarnDuplicatedLoad.Should().BeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_StrictTyping_OverridesValues()
     {
         // Arrange
@@ -96,13 +96,13 @@ public class GDLinterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.Equal(GDLintSeverity.Error, options.StrictTypingClassVariables);
-        Assert.Equal(GDLintSeverity.Warning, options.StrictTypingLocalVariables);
-        Assert.Equal(GDLintSeverity.Error, options.StrictTypingParameters);
-        Assert.Equal(GDLintSeverity.Warning, options.StrictTypingReturnTypes);
+        options.StrictTypingClassVariables.Should().Be(GDLintSeverity.Error);
+        options.StrictTypingLocalVariables.Should().Be(GDLintSeverity.Warning);
+        options.StrictTypingParameters.Should().Be(GDLintSeverity.Error);
+        options.StrictTypingReturnTypes.Should().Be(GDLintSeverity.Warning);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_NullOverrides_PreservesOriginalValues()
     {
         // Arrange
@@ -121,12 +121,12 @@ public class GDLinterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert - other values preserved
-        Assert.Equal(100, options.MaxLineLength);
-        Assert.True(options.WarnUnusedVariables);
-        Assert.Equal(200, options.MaxFileLines);
+        options.MaxLineLength.Should().Be(100);
+        options.WarnUnusedVariables.Should().BeTrue();
+        options.MaxFileLines.Should().Be(200);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_CommentSuppression_OverridesValue()
     {
         // Arrange
@@ -140,6 +140,6 @@ public class GDLinterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.False(options.EnableCommentSuppression);
+        options.EnableCommentSuppression.Should().BeFalse();
     }
 }

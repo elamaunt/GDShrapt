@@ -573,7 +573,7 @@ func test(x, y):
 
             // Should report both else blocks since their parent ifs all end with return
             var elseIssues = result.Issues.Where(i => i.RuleId == "GDL217").ToList();
-            elseIssues.Count.Should().BeGreaterOrEqualTo(1);
+            elseIssues.Count.Should().BeGreaterThanOrEqualTo(1);
         }
 
         #endregion

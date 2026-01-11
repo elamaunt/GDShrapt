@@ -1,14 +1,16 @@
 using GDShrapt.LSP;
 using GDShrapt.Reader;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentAssertions;
 
 namespace GDShrapt.LSP.Tests;
 
+[TestClass]
 public class GDNodeFinderTests
 {
     private static readonly GDScriptReader Reader = new();
 
-    [Fact]
+    [TestMethod]
     public void FindNodeAtPosition_VariableDeclaration_FindsNode()
     {
         // Arrange
@@ -25,7 +27,7 @@ public class GDNodeFinderTests
         // This test verifies no crash occurs
     }
 
-    [Fact]
+    [TestMethod]
     public void FindNodeAtPosition_Method_FindsMethodDeclaration()
     {
         // Arrange
@@ -39,10 +41,10 @@ func take_damage(amount: int) -> void:
         var node = GDNodeFinder.FindNodeAtPosition(classDecl, 2, 6);
 
         // Assert
-        Assert.NotNull(node);
+        node.Should().NotBeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public void FindIdentifierAtPosition_VariableName_FindsIdentifier()
     {
         // Arrange
@@ -53,13 +55,13 @@ func take_damage(amount: int) -> void:
         var identifiers = GDNodeFinder.FindIdentifiersByName(classDecl, "my_variable");
 
         // Assert - should find the identifier by name at least
-        Assert.NotNull(identifiers);
+        identifiers.Should().NotBeNull();
         var list = new System.Collections.Generic.List<GDIdentifier>(identifiers);
-        Assert.Single(list);
-        Assert.Equal("my_variable", list[0].ToString());
+        list.Should().ContainSingle();
+        list[0].ToString().Should().Be("my_variable");
     }
 
-    [Fact]
+    [TestMethod]
     public void FindIdentifiersByName_MultipleOccurrences_FindsAll()
     {
         // Arrange
@@ -76,12 +78,12 @@ func increment():
         var identifiers = GDNodeFinder.FindIdentifiersByName(classDecl, "counter");
 
         // Assert
-        Assert.NotNull(identifiers);
+        identifiers.Should().NotBeNull();
         var list = new System.Collections.Generic.List<GDIdentifier>(identifiers);
-        Assert.True(list.Count >= 2, $"Expected at least 2 occurrences of 'counter', found {list.Count}");
+        list.Count.Should().BeGreaterThanOrEqualTo(2, $"Expected at least 2 occurrences of 'counter', found {list.Count}");
     }
 
-    [Fact]
+    [TestMethod]
     public void FindNodeAtPosition_OutsideBounds_ReturnsNull()
     {
         // Arrange
@@ -92,10 +94,10 @@ func increment():
         var node = GDNodeFinder.FindNodeAtPosition(classDecl, 100, 100);
 
         // Assert
-        Assert.Null(node);
+        node.Should().BeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public void FindIdentifierExpressionAtPosition_Expression_FindsExpression()
     {
         // Arrange

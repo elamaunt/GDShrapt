@@ -4,10 +4,12 @@ using System.Threading.Tasks;
 using GDShrapt.Abstractions;
 using GDShrapt.LSP;
 using GDShrapt.Semantics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentAssertions;
 
 namespace GDShrapt.LSP.Tests;
 
+[TestClass]
 public class GDCompletionHandlerTests
 {
     private static readonly string TestProjectPath = GetTestProjectPath();
@@ -20,7 +22,7 @@ public class GDCompletionHandlerTests
         return System.IO.Path.Combine(projectRoot, "testproject", "GDShrapt.TestProject");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_GeneralCompletion_IncludesKeywords()
     {
         // Arrange
@@ -43,18 +45,18 @@ public class GDCompletionHandlerTests
         var result = await handler.HandleAsync(@params, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result.Items);
+        result.Should().NotBeNull();
+        result.Items.Should().NotBeEmpty();
 
         // Should contain keywords
         var keywords = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Keyword).ToList();
-        Assert.NotEmpty(keywords);
-        Assert.Contains(keywords, k => k.Label == "func");
-        Assert.Contains(keywords, k => k.Label == "var");
-        Assert.Contains(keywords, k => k.Label == "if");
+        keywords.Should().NotBeEmpty();
+        keywords.Should().Contain(k => k.Label == "func");
+        keywords.Should().Contain(k => k.Label == "var");
+        keywords.Should().Contain(k => k.Label == "if");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_GeneralCompletion_IncludesBuiltinTypes()
     {
         // Arrange
@@ -77,17 +79,17 @@ public class GDCompletionHandlerTests
         var result = await handler.HandleAsync(@params, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
+        result.Should().NotBeNull();
 
         // Should contain built-in types
         var types = result.Items.Where(i => i.Detail == "built-in type").ToList();
-        Assert.NotEmpty(types);
-        Assert.Contains(types, t => t.Label == "int");
-        Assert.Contains(types, t => t.Label == "String");
-        Assert.Contains(types, t => t.Label == "Vector2");
+        types.Should().NotBeEmpty();
+        types.Should().Contain(t => t.Label == "int");
+        types.Should().Contain(t => t.Label == "String");
+        types.Should().Contain(t => t.Label == "Vector2");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_GeneralCompletion_IncludesLocalSymbols()
     {
         // Arrange
@@ -110,17 +112,17 @@ public class GDCompletionHandlerTests
         var result = await handler.HandleAsync(@params, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
+        result.Should().NotBeNull();
 
         // Should contain local methods/variables from the script
         var methods = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Method).ToList();
         var variables = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Variable).ToList();
 
         // The exact symbols depend on the test project content
-        Assert.True(methods.Count > 0 || variables.Count > 0, "Should have local symbols");
+        (methods.Count > 0 || variables.Count > 0).Should().BeTrue("Should have local symbols");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_MemberAccess_TriggerCharacterDot()
     {
         // Arrange
@@ -149,10 +151,10 @@ public class GDCompletionHandlerTests
 
         // Assert - member access completion may return empty if no type context
         // This test verifies no crash occurs
-        Assert.NotNull(result);
+        result.Should().NotBeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HandleAsync_InvalidFile_ReturnsEmptyList()
     {
         // Arrange
@@ -175,6 +177,6 @@ public class GDCompletionHandlerTests
         var result = await handler.HandleAsync(@params, CancellationToken.None);
 
         // Assert - should return list with at least keywords even for invalid file
-        Assert.NotNull(result);
+        result.Should().NotBeNull();
     }
 }

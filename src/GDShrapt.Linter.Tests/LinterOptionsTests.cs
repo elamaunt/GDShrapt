@@ -268,7 +268,7 @@ var BadName2 = 20
 
             var result = linter.LintCode(code);
 
-            result.TotalCount.Should().BeGreaterOrEqualTo(2);
+            result.TotalCount.Should().BeGreaterThanOrEqualTo(2);
         }
 
         #endregion

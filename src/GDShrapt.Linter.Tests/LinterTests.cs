@@ -17,7 +17,7 @@ namespace GDShrapt.Reader.Tests.Linting
             var linter = new GDLinter();
 
             linter.Rules.Should().NotBeEmpty();
-            linter.Rules.Count.Should().BeGreaterOrEqualTo(12);
+            linter.Rules.Count.Should().BeGreaterThanOrEqualTo(12);
         }
 
         [TestMethod]

@@ -3,16 +3,17 @@ using System.IO;
 using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
-public class GDFormatCommandTests : IDisposable
+[TestClass]
+public class GDFormatCommandTests
 {
     private string? _tempFilePath;
     private string? _tempProjectPath;
 
-    public void Dispose()
+    [TestCleanup]
+    public void Cleanup()
     {
         if (_tempFilePath != null && File.Exists(_tempFilePath))
         {
@@ -24,7 +25,7 @@ public class GDFormatCommandTests : IDisposable
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithNonexistentPath_ReturnsTwo()
     {
         // Arrange
@@ -36,10 +37,10 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(2, result);
+        result.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithNonGdFile_ReturnsTwo()
     {
         // Arrange
@@ -54,8 +55,8 @@ public class GDFormatCommandTests : IDisposable
             var result = await command.ExecuteAsync();
 
             // Assert
-            Assert.Equal(2, result);
-            Assert.Contains("Not a GDScript file", output.ToString());
+            result.Should().Be(2);
+            output.ToString().Should().Contain("Not a GDScript file");
         }
         finally
         {
@@ -63,7 +64,7 @@ public class GDFormatCommandTests : IDisposable
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_CheckOnly_ReturnsOneIfNeedsFormatting()
     {
         // Arrange
@@ -82,7 +83,7 @@ public class GDFormatCommandTests : IDisposable
 
             // Assert
             // Returns 0 if already formatted, 1 if needs formatting
-            Assert.True(result == 0 || result == 1);
+            (result == 0 || result == 1).Should().BeTrue();
         }
         finally
         {
@@ -91,7 +92,7 @@ public class GDFormatCommandTests : IDisposable
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_DryRun_DoesNotModifyFile()
     {
         // Arrange
@@ -110,7 +111,7 @@ public class GDFormatCommandTests : IDisposable
 
             // Assert
             var contentAfter = File.ReadAllText(tempFile);
-            Assert.Equal(originalContent, contentAfter);
+            contentAfter.Should().Be(originalContent);
         }
         finally
         {
@@ -121,7 +122,7 @@ public class GDFormatCommandTests : IDisposable
 
     // === New tests with TestProjectHelper ===
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_AppliesSpaceAroundOperators()
     {
         // Arrange - code without spaces around operator
@@ -134,13 +135,13 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var formattedContent = File.ReadAllText(_tempFilePath);
         // Should have spaces around = and +
-        Assert.Contains("= 1", formattedContent);
+        formattedContent.Should().Contain("= 1");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_AppliesSpaceAfterComma()
     {
         // Arrange - function with no space after comma
@@ -153,13 +154,13 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var formattedContent = File.ReadAllText(_tempFilePath);
         // Should have spaces after commas
-        Assert.Contains("a, b, c", formattedContent);
+        formattedContent.Should().Contain("a, b, c");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_AlreadyFormatted_ReturnsZero()
     {
         // Arrange - properly formatted code
@@ -172,10 +173,10 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_CheckOnly_AlreadyFormatted_ReturnsZeroOrOne()
     {
         // Arrange - well formatted code (may still need minor adjustments depending on rules)
@@ -188,10 +189,10 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert - 0 means formatted, 1 means needs formatting (depends on rule settings)
-        Assert.True(result == 0 || result == 1, "Check-only should return 0 or 1");
+        (result == 0 || result == 1).Should().BeTrue("Check-only should return 0 or 1");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_CheckOnly_NeedsFormatting_ReturnsOne_DoesNotModify()
     {
         // Arrange - code that needs formatting
@@ -205,13 +206,13 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(1, result);
+        result.Should().Be(1);
         // File should not be modified
         var contentAfter = File.ReadAllText(_tempFilePath);
-        Assert.Equal(originalContent, contentAfter);
+        contentAfter.Should().Be(originalContent);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_PreservesComments()
     {
         // Arrange - code with comments
@@ -224,13 +225,13 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var formattedContent = File.ReadAllText(_tempFilePath);
-        Assert.Contains("# This is a comment", formattedContent);
-        Assert.Contains("# inline comment", formattedContent);
+        formattedContent.Should().Contain("# This is a comment");
+        formattedContent.Should().Contain("# inline comment");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_SyntaxError_HandlesGracefully()
     {
         // Arrange - code with syntax error
@@ -244,12 +245,12 @@ public class GDFormatCommandTests : IDisposable
 
         // Assert
         // Should not crash, returns 0 or 1
-        Assert.True(result == 0 || result == 1 || result == 2);
+        (result == 0 || result == 1 || result == 2).Should().BeTrue();
     }
 
-    [Theory]
-    [InlineData(true)]  // spaces
-    [InlineData(false)] // tabs
+    [DataTestMethod]
+    [DataRow(true)]  // spaces
+    [DataRow(false)] // tabs
     public async Task ExecuteAsync_RespectsIndentStyle(bool insertSpaces)
     {
         // Arrange
@@ -267,19 +268,19 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var formattedContent = File.ReadAllText(_tempFilePath);
         if (insertSpaces)
         {
-            Assert.Contains("    pass", formattedContent); // 4 spaces
+            formattedContent.Should().Contain("    pass"); // 4 spaces
         }
         else
         {
-            Assert.Contains("\tpass", formattedContent); // tab
+            formattedContent.Should().Contain("\tpass"); // tab
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_Directory_FormatsAllGdFiles()
     {
         // Arrange - project with multiple files
@@ -292,13 +293,13 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var outputText = output.ToString();
         // Should mention multiple files were formatted
-        Assert.Contains("3", outputText); // 3 scripts
+        outputText.Should().Contain("3"); // 3 scripts
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_RemovesTrailingWhitespace()
     {
         // Arrange - code with trailing whitespace
@@ -312,13 +313,13 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert - should complete successfully (trailing whitespace removal is optional rule)
-        Assert.True(result == 0 || result == 1, "Format should complete without error");
+        (result == 0 || result == 1).Should().BeTrue("Format should complete without error");
         // Verify file was processed
         var formattedContent = File.ReadAllText(_tempFilePath);
-        Assert.NotEmpty(formattedContent);
+        formattedContent.Should().NotBeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_JsonOutput_ContainsFormattedStatus()
     {
         // Arrange
@@ -331,12 +332,12 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var outputText = output.ToString();
-        Assert.Contains("{", outputText);
+        outputText.Should().Contain("{");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_EmptyFile_HandlesGracefully()
     {
         // Arrange - empty GDScript file
@@ -350,10 +351,10 @@ public class GDFormatCommandTests : IDisposable
 
         // Assert
         // Should not crash on empty file
-        Assert.True(result == 0 || result == 1 || result == 2);
+        (result == 0 || result == 1 || result == 2).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_AddBlankLinesBetweenFunctions()
     {
         // Arrange - code without blank lines between functions
@@ -367,10 +368,10 @@ public class GDFormatCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         // File should have blank lines between functions
         var formattedContent = File.ReadAllText(_tempFilePath);
         // At minimum, there should be blank lines between functions
-        Assert.True(formattedContent.Contains("\n\nfunc") || formattedContent.Contains("\r\n\r\nfunc"));
+        (formattedContent.Contains("\n\nfunc") || formattedContent.Contains("\r\n\r\nfunc")).Should().BeTrue();
     }
 }

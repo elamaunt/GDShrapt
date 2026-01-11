@@ -3,15 +3,16 @@ using System.IO;
 using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
-public class GDCheckCommandTests : IDisposable
+[TestClass]
+public class GDCheckCommandTests
 {
     private string? _tempProjectPath;
 
-    public void Dispose()
+    [TestCleanup]
+    public void Cleanup()
     {
         if (_tempProjectPath != null)
         {
@@ -26,7 +27,7 @@ public class GDCheckCommandTests : IDisposable
         return testProjectPath;
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithValidProject_ReturnsZeroOrOne()
     {
         // Arrange
@@ -44,10 +45,10 @@ public class GDCheckCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.True(result == 0 || result == 1, "Exit code should be 0 (success) or 1 (errors found)");
+        (result == 0 || result == 1).Should().BeTrue("Exit code should be 0 (success) or 1 (errors found)");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithInvalidPath_ReturnsTwo()
     {
         // Arrange
@@ -59,10 +60,10 @@ public class GDCheckCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(2, result);
+        result.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_QuietMode_NoOutput()
     {
         // Arrange
@@ -81,12 +82,12 @@ public class GDCheckCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Empty(outputText.Trim());
+        outputText.Trim().Should().BeEmpty();
     }
 
     // === New tests with TestProjectHelper ===
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_CleanProject_ReturnsZero()
     {
         // Arrange
@@ -99,11 +100,11 @@ public class GDCheckCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
-        Assert.Contains("OK", output.ToString());
+        result.Should().Be(0);
+        output.ToString().Should().Contain("OK");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithErrors_ReturnsOne()
     {
         // Arrange - break outside loop is an error
@@ -116,11 +117,11 @@ public class GDCheckCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(1, result);
-        Assert.Contains("FAILED", output.ToString());
+        result.Should().Be(1);
+        output.ToString().Should().Contain("FAILED");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithLinterWarnings_ReturnsZeroByDefault()
     {
         // Arrange - naming violation is a warning by default
@@ -135,10 +136,10 @@ public class GDCheckCommandTests : IDisposable
         // Assert
         // Warnings don't fail check by default (only errors do)
         // Result depends on default severity configuration
-        Assert.True(result == 0 || result == 1);
+        (result == 0 || result == 1).Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithWarnings_FailOnWarning_ReturnsOne()
     {
         // Arrange - naming violation with FailOnWarning config
@@ -155,10 +156,10 @@ public class GDCheckCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(1, result);
+        result.Should().Be(1);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_SyntaxError_ReturnsOne()
     {
         // Arrange
@@ -171,10 +172,10 @@ public class GDCheckCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(1, result);
+        result.Should().Be(1);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_MultiFileProject_CountsAllFiles()
     {
         // Arrange
@@ -188,10 +189,10 @@ public class GDCheckCommandTests : IDisposable
 
         // Assert
         var outputText = output.ToString();
-        Assert.Contains("3 files", outputText); // 3 scripts in multi-file project
+        outputText.Should().Contain("3 files"); // 3 scripts in multi-file project
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_QuietMode_WithErrors_StillReturnsOne()
     {
         // Arrange
@@ -204,11 +205,11 @@ public class GDCheckCommandTests : IDisposable
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(1, result);
-        Assert.Empty(output.ToString().Trim()); // No output in quiet mode
+        result.Should().Be(1);
+        output.ToString().Trim().Should().BeEmpty(); // No output in quiet mode
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_LintingDisabled_SkipsLinterRules()
     {
         // Arrange - naming violation but linting disabled
@@ -226,6 +227,6 @@ public class GDCheckCommandTests : IDisposable
 
         // Assert
         // With linting disabled, naming violations should not be reported
-        Assert.Equal(0, result);
+        result.Should().Be(0);
     }
 }

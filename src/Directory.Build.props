@@ -3,4 +3,12 @@
     <!-- Common output directory for all NuGet packages -->
     <PackageOutputPath>$(MSBuildThisFileDirectory)..\nupkg</PackageOutputPath>
   </PropertyGroup>
+
+  <!-- Centralized test package versions -->
+  <PropertyGroup>
+    <MSTestVersion>3.7.3</MSTestVersion>
+    <TestSdkVersion>17.13.0</TestSdkVersion>
+    <FluentAssertionsVersion>8.2.0</FluentAssertionsVersion>
+    <CoverletVersion>6.0.4</CoverletVersion>
+  </PropertyGroup>
 </Project>

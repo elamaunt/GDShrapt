@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class GDSymbolsCommandTests
 {
     private static string GetTestProjectPath()
@@ -15,7 +15,7 @@ public class GDSymbolsCommandTests
         return testProjectPath;
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithValidFile_ReturnsZero()
     {
         // Arrange
@@ -39,12 +39,12 @@ public class GDSymbolsCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var outputText = output.ToString();
-        Assert.NotEmpty(outputText);
+        outputText.Should().NotBeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithNonexistentFile_ReturnsTwo()
     {
         // Arrange
@@ -56,10 +56,10 @@ public class GDSymbolsCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(2, result);
+        result.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithJsonFormatter_OutputsJson()
     {
         // Arrange
@@ -83,8 +83,8 @@ public class GDSymbolsCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var outputText = output.ToString();
-        Assert.Contains("[", outputText);
+        outputText.Should().Contain("[");
     }
 }

@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class GDFindRefsCommandTests
 {
     private static string GetTestProjectPath()
@@ -15,7 +15,7 @@ public class GDFindRefsCommandTests
         return testProjectPath;
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithInvalidPath_ReturnsTwo()
     {
         // Arrange
@@ -27,10 +27,10 @@ public class GDFindRefsCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(2, result);
+        result.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithValidSymbol_ReturnsZero()
     {
         // Arrange
@@ -48,10 +48,10 @@ public class GDFindRefsCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithJsonFormatter_OutputsJson()
     {
         // Arrange
@@ -69,8 +69,8 @@ public class GDFindRefsCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var outputText = output.ToString();
-        Assert.Contains("[", outputText);
+        outputText.Should().Contain("[");
     }
 }

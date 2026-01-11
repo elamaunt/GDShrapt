@@ -1,14 +1,16 @@
 using GDShrapt.LSP;
 using GDShrapt.Reader;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentAssertions;
 
 namespace GDShrapt.LSP.Tests;
 
+[TestClass]
 public class GDDiagnosticAdapterTests
 {
     private static readonly GDScriptReader Reader = new();
 
-    [Fact]
+    [TestMethod]
     public void FromInvalidTokens_NoInvalidTokens_ReturnsEmpty()
     {
         // Arrange
@@ -19,10 +21,10 @@ public class GDDiagnosticAdapterTests
         var diagnostics = GDDiagnosticAdapter.FromInvalidTokens(classDecl, "/test/script.gd");
 
         // Assert
-        Assert.Empty(diagnostics);
+        diagnostics.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void FromInvalidTokens_WithInvalidTokens_ReturnsDiagnostics()
     {
         // Arrange - invalid GDScript syntax
@@ -34,20 +36,20 @@ public class GDDiagnosticAdapterTests
 
         // Assert - parser may create invalid tokens for malformed code
         // The exact behavior depends on parser implementation
-        Assert.NotNull(diagnostics);
+        diagnostics.Should().NotBeNull();
     }
 
-    [Fact]
+    [TestMethod]
     public void FromInvalidTokens_NullNode_ReturnsEmpty()
     {
         // Act
         var diagnostics = GDDiagnosticAdapter.FromInvalidTokens(null!, "/test/script.gd");
 
         // Assert
-        Assert.Empty(diagnostics);
+        diagnostics.Should().BeEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void FromInvalidTokens_DiagnosticHasCorrectSeverity()
     {
         // Arrange - deliberately malformed code
@@ -61,9 +63,9 @@ public class GDDiagnosticAdapterTests
         // Assert
         foreach (var diag in diagnostics)
         {
-            Assert.Equal(GDLspDiagnosticSeverity.Error, diag.Severity);
-            Assert.Equal("gdshrapt", diag.Source);
-            Assert.Equal("GDS001", diag.Code);
+            diag.Severity.Should().Be(GDLspDiagnosticSeverity.Error);
+            diag.Source.Should().Be("gdshrapt");
+            diag.Code.Should().Be("GDS001");
         }
     }
 }

@@ -4,13 +4,15 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.LSP;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using FluentAssertions;
 
 namespace GDShrapt.LSP.Tests;
 
+[TestClass]
 public class GDJsonRpcTransportTests
 {
-    [Fact]
+    [TestMethod]
     public void Serialize_InitializeResult_ProducesValidJson()
     {
         // Arrange
@@ -25,12 +27,12 @@ public class GDJsonRpcTransportTests
         var json = serializer.Serialize(result);
 
         // Assert
-        Assert.Contains("\"jsonrpc\":\"2.0\"", json);
-        Assert.Contains("\"id\":\"1\"", json);
-        Assert.Contains("\"test\":\"value\"", json);
+        json.Should().Contain("\"jsonrpc\":\"2.0\"");
+        json.Should().Contain("\"id\":\"1\"");
+        json.Should().Contain("\"test\":\"value\"");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Transport_SendNotification_WritesContentLengthHeader()
     {
         // Arrange
@@ -45,11 +47,11 @@ public class GDJsonRpcTransportTests
 
         // Assert
         var written = output.ToString();
-        Assert.Contains("Content-Length:", written);
-        Assert.Contains("test/method", written);
+        written.Should().Contain("Content-Length:");
+        written.Should().Contain("test/method");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Transport_SendResponse_WritesValidJson()
     {
         // Arrange
@@ -64,11 +66,11 @@ public class GDJsonRpcTransportTests
 
         // Assert
         var written = output.ToString();
-        Assert.Contains("\"id\":\"123\"", written);
-        Assert.Contains("result", written);
+        written.Should().Contain("\"id\":\"123\"");
+        written.Should().Contain("result");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Transport_SendError_WritesErrorResponse()
     {
         // Arrange
@@ -83,9 +85,9 @@ public class GDJsonRpcTransportTests
 
         // Assert
         var written = output.ToString();
-        Assert.Contains("\"id\":\"456\"", written);
-        Assert.Contains("\"error\"", written);
-        Assert.Contains("-32600", written);
-        Assert.Contains("Invalid Request", written);
+        written.Should().Contain("\"id\":\"456\"");
+        written.Should().Contain("\"error\"");
+        written.Should().Contain("-32600");
+        written.Should().Contain("Invalid Request");
     }
 }

@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using GDShrapt.CLI.Core;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class GDRenameCommandTests
 {
     private static string GetTestProjectPath()
@@ -15,7 +15,7 @@ public class GDRenameCommandTests
         return testProjectPath;
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithInvalidPath_ReturnsTwo()
     {
         // Arrange
@@ -27,10 +27,10 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(2, result);
+        result.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_DryRun_DoesNotModifyFiles()
     {
         // Arrange
@@ -58,11 +58,11 @@ public class GDRenameCommandTests
 
         // Assert
         var contentAfter = File.ReadAllText(testFile);
-        Assert.Equal(originalContent, contentAfter);
-        Assert.True(result == 0 || result == 1, "Dry run should succeed or report no matches");
+        contentAfter.Should().Be(originalContent);
+        (result == 0 || result == 1).Should().BeTrue("Dry run should succeed or report no matches");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_WithJsonFormatter_OutputsJson()
     {
         // Arrange
@@ -80,10 +80,10 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_SymbolNotFound_ReturnsAppropriateCode()
     {
         // Arrange
@@ -101,10 +101,10 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert - should return 1 (no matches found)
-        Assert.True(result == 0 || result == 1, "Non-existent symbol should return 0 or 1");
+        (result == 0 || result == 1).Should().BeTrue("Non-existent symbol should return 0 or 1");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_EmptyOldName_ReturnsError()
     {
         // Arrange
@@ -122,10 +122,10 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.True(result >= 1, "Empty old name should return error");
+        (result >= 1).Should().BeTrue("Empty old name should return error");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_EmptyNewName_ReturnsError()
     {
         // Arrange
@@ -143,10 +143,10 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.True(result >= 1, "Empty new name should return error");
+        (result >= 1).Should().BeTrue("Empty new name should return error");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_SameOldAndNewName_ReturnsZero()
     {
         // Arrange
@@ -164,10 +164,10 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert - same name should be handled gracefully
-        Assert.True(result == 0 || result == 1, "Same name rename should be handled gracefully");
+        (result == 0 || result == 1).Should().BeTrue("Same name rename should be handled gracefully");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExecuteAsync_CrossFileReference_FindsAllOccurrences()
     {
         // Arrange
@@ -186,9 +186,9 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        Assert.Equal(0, result);
+        result.Should().Be(0);
         var outputText = output.ToString();
         // Should find references in multiple files if max_health exists
-        Assert.True(outputText.Length > 0, "Should produce output for cross-file symbol");
+        (outputText.Length > 0).Should().BeTrue("Should produce output for cross-file symbol");
     }
 }

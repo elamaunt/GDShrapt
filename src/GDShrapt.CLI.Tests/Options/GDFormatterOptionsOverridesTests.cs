@@ -1,12 +1,12 @@
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
-using Xunit;
 
 namespace GDShrapt.CLI.Tests;
 
+[TestClass]
 public class GDFormatterOptionsOverridesTests
 {
-    [Fact]
+    [TestMethod]
     public void ApplyTo_Indentation_OverridesValues()
     {
         // Arrange
@@ -21,11 +21,11 @@ public class GDFormatterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.Equal(IndentStyle.Spaces, options.IndentStyle);
-        Assert.Equal(2, options.IndentSize);
+        options.IndentStyle.Should().Be(IndentStyle.Spaces);
+        options.IndentSize.Should().Be(2);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_LineEnding_OverridesValue()
     {
         // Arrange
@@ -39,10 +39,10 @@ public class GDFormatterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.Equal(LineEndingStyle.CRLF, options.LineEnding);
+        options.LineEnding.Should().Be(LineEndingStyle.CRLF);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_LineWrapping_OverridesValues()
     {
         // Arrange
@@ -60,14 +60,14 @@ public class GDFormatterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.Equal(80, options.MaxLineLength);
-        Assert.True(options.WrapLongLines);
-        Assert.Equal(LineWrapStyle.BeforeElements, options.LineWrapStyle);
-        Assert.Equal(2, options.ContinuationIndentSize);
-        Assert.True(options.UseBackslashContinuation);
+        options.MaxLineLength.Should().Be(80);
+        options.WrapLongLines.Should().BeTrue();
+        options.LineWrapStyle.Should().Be(LineWrapStyle.BeforeElements);
+        options.ContinuationIndentSize.Should().Be(2);
+        options.UseBackslashContinuation.Should().BeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_Spacing_OverridesValues()
     {
         // Arrange
@@ -87,16 +87,16 @@ public class GDFormatterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.False(options.SpaceAroundOperators);
-        Assert.False(options.SpaceAfterComma);
-        Assert.False(options.SpaceAfterColon);
-        Assert.True(options.SpaceBeforeColon);
-        Assert.True(options.SpaceInsideParentheses);
-        Assert.True(options.SpaceInsideBrackets);
-        Assert.False(options.SpaceInsideBraces);
+        options.SpaceAroundOperators.Should().BeFalse();
+        options.SpaceAfterComma.Should().BeFalse();
+        options.SpaceAfterColon.Should().BeFalse();
+        options.SpaceBeforeColon.Should().BeTrue();
+        options.SpaceInsideParentheses.Should().BeTrue();
+        options.SpaceInsideBrackets.Should().BeTrue();
+        options.SpaceInsideBraces.Should().BeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_BlankLines_OverridesValues()
     {
         // Arrange
@@ -112,12 +112,12 @@ public class GDFormatterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.Equal(1, options.BlankLinesBetweenFunctions);
-        Assert.Equal(2, options.BlankLinesAfterClassDeclaration);
-        Assert.Equal(0, options.BlankLinesBetweenMemberTypes);
+        options.BlankLinesBetweenFunctions.Should().Be(1);
+        options.BlankLinesAfterClassDeclaration.Should().Be(2);
+        options.BlankLinesBetweenMemberTypes.Should().Be(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_Cleanup_OverridesValues()
     {
         // Arrange
@@ -133,12 +133,12 @@ public class GDFormatterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert
-        Assert.False(options.RemoveTrailingWhitespace);
-        Assert.False(options.EnsureTrailingNewline);
-        Assert.False(options.RemoveMultipleTrailingNewlines);
+        options.RemoveTrailingWhitespace.Should().BeFalse();
+        options.EnsureTrailingNewline.Should().BeFalse();
+        options.RemoveMultipleTrailingNewlines.Should().BeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTo_NullOverrides_PreservesOriginalValues()
     {
         // Arrange
@@ -158,9 +158,9 @@ public class GDFormatterOptionsOverridesTests
         overrides.ApplyTo(options);
 
         // Assert - other values preserved
-        Assert.Equal(IndentStyle.Tabs, options.IndentStyle);
-        Assert.Equal(4, options.IndentSize);
-        Assert.Equal(100, options.MaxLineLength);
-        Assert.Equal(3, options.BlankLinesBetweenFunctions);
+        options.IndentStyle.Should().Be(IndentStyle.Tabs);
+        options.IndentSize.Should().Be(4);
+        options.MaxLineLength.Should().Be(100);
+        options.BlankLinesBetweenFunctions.Should().Be(3);
     }
 }

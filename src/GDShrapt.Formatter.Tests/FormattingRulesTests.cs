@@ -487,7 +487,7 @@ namespace GDShrapt.Reader.Tests.Formatting
             // Note: Some rules are currently disabled due to idempotency issues.
             // Only GDNewLineFormatRule (GDF005) is registered by default.
             // When the other rules are fixed, they will be re-enabled and this test updated.
-            formatter.Rules.Should().HaveCountGreaterOrEqualTo(1);
+            formatter.Rules.Should().HaveCountGreaterThanOrEqualTo(1);
             formatter.GetRule("GDF005").Should().NotBeNull(); // Only this rule is guaranteed
         }
 

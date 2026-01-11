@@ -142,7 +142,7 @@ var b = 2
             var @class = reader.ParseFileContent(code);
 
             var members = @class.Members.ToList();
-            members.Should().HaveCountGreaterOrEqualTo(2);
+            members.Should().HaveCountGreaterThanOrEqualTo(2);
 
             // First variable should have @warning_ignore_start before it
             var firstVar = members.OfType<GDVariableDeclaration>().First();
