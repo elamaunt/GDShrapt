@@ -446,6 +446,32 @@ internal partial class StyledReferencesTree : Tree
     }
 
     /// <summary>
+    /// Gets all reference items that are currently checked.
+    /// </summary>
+    public List<ReferenceItem> GetCheckedReferences()
+    {
+        var result = new List<ReferenceItem>();
+
+        foreach (var kvp in _itemToReference)
+        {
+            if (kvp.Key.IsChecked(0))
+            {
+                result.Add(kvp.Value);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets count of checked reference items (excluding file headers).
+    /// </summary>
+    public int GetCheckedCount()
+    {
+        return _itemToReference.Count(kvp => kvp.Key.IsChecked(0));
+    }
+
+    /// <summary>
     /// Layout data for cell custom drawing.
     /// </summary>
     internal partial class CellLayoutData : GodotObject

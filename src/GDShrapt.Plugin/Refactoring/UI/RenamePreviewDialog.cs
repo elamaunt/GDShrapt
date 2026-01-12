@@ -52,6 +52,11 @@ public class RenamePreviewResult
     /// Selected confidence mode.
     /// </summary>
     public GDConfidenceMode SelectedConfidence { get; set; }
+
+    /// <summary>
+    /// Selected (checked) references for renaming.
+    /// </summary>
+    public List<ReferenceItem> SelectedReferences { get; set; }
 }
 
 /// <summary>
@@ -97,6 +102,7 @@ internal partial class RenamePreviewDialog : Window
     private HSeparator _buttonsSeparator;
     private HBoxContainer _buttonsLayout;
     private Control _buttonsSpacer;
+    private Button _copyButton;
     private Button _cancelButton;
     private Button _applyButton;
 
@@ -110,13 +116,15 @@ internal partial class RenamePreviewDialog : Window
     private List<ReferenceItem> _nameMatchRefs = new();
 
     // Constants
-    private const int DialogWidth = 700;
-    private const int DialogHeight = 550;
+    private const int DialogWidth = 900;
+    private const int DialogHeight = 650;
+    private const int MinDialogWidth = 700;
+    private const int MinDialogHeight = 500;
 
-    // Colors for confidence levels
-    private static readonly Color StrictColor = new Color(0.4f, 0.8f, 0.4f, 0.3f);    // Green
-    private static readonly Color PotentialColor = new Color(0.9f, 0.8f, 0.2f, 0.3f); // Yellow
-    private static readonly Color NameMatchColor = new Color(0.9f, 0.4f, 0.4f, 0.3f); // Red
+    // Colors for confidence levels (bright, alpha 0.5 for visibility)
+    private static readonly Color StrictColor = new Color(0.3f, 0.9f, 0.3f, 0.5f);    // Bright Green
+    private static readonly Color PotentialColor = new Color(1.0f, 0.85f, 0.0f, 0.5f); // Bright Yellow
+    private static readonly Color NameMatchColor = new Color(1.0f, 0.3f, 0.3f, 0.5f); // Bright Red
 
     public RenamePreviewDialog()
     {
@@ -125,6 +133,7 @@ internal partial class RenamePreviewDialog : Window
         Transient = true;
         WrapControls = true;
         Unresizable = false;
+        MinSize = new Vector2I(MinDialogWidth, MinDialogHeight);
 
         CreateUI();
         ConnectSignals();
@@ -316,6 +325,15 @@ internal partial class RenamePreviewDialog : Window
         };
         _buttonsLayout.AddChild(_buttonsSpacer);
 
+        // Copy Changes button
+        _copyButton = new Button
+        {
+            Text = "Copy Changes",
+            CustomMinimumSize = new Vector2(100, 0),
+            TooltipText = "Copy changes to clipboard for manual editing"
+        };
+        _buttonsLayout.AddChild(_copyButton);
+
         // Cancel button
         _cancelButton = new Button
         {
@@ -342,6 +360,7 @@ internal partial class RenamePreviewDialog : Window
         _confidenceOption.ItemSelected += OnConfidenceChanged;
         _selectAllButton.Pressed += OnSelectAll;
         _deselectAllButton.Pressed += OnDeselectAll;
+        _copyButton.Pressed += OnCopyChanges;
         _cancelButton.Pressed += OnCancelled;
         _applyButton.Pressed += OnApply;
         CloseRequested += OnCancelled;
@@ -405,6 +424,75 @@ internal partial class RenamePreviewDialog : Window
         tree?.DeselectAll();
     }
 
+    /// <summary>
+    /// Gets selected (checked) references from the currently active tree.
+    /// </summary>
+    public List<ReferenceItem> GetSelectedReferences()
+    {
+        var currentTab = _referenceTabs.CurrentTab;
+        var tree = currentTab switch
+        {
+            0 => _strictTree,
+            1 => _potentialTree,
+            2 => _nameMatchTree,
+            _ => _strictTree
+        };
+
+        return tree?.GetCheckedReferences() ?? new List<ReferenceItem>();
+    }
+
+    private void OnCopyChanges()
+    {
+        var newName = _nameEdit.Text?.Trim();
+        if (string.IsNullOrEmpty(newName))
+        {
+            Logger.Warning("RenamePreviewDialog: New name is empty");
+            return;
+        }
+
+        var selectedRefs = GetSelectedReferences();
+        if (selectedRefs.Count == 0)
+        {
+            Logger.Warning("RenamePreviewDialog: No references selected");
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Rename: \"{_oldName}\" -> \"{newName}\"");
+        sb.AppendLine();
+        sb.AppendLine("References to update:");
+        sb.AppendLine();
+
+        // Group by file
+        var grouped = selectedRefs
+            .GroupBy(r => r.FilePath ?? "Unknown")
+            .OrderBy(g => g.Key);
+
+        foreach (var fileGroup in grouped)
+        {
+            var fileName = GetFileName(fileGroup.Key);
+            sb.AppendLine($"=== {fileName} ===");
+            sb.AppendLine($"    Path: {fileGroup.Key}");
+
+            foreach (var refItem in fileGroup.OrderBy(r => r.Line))
+            {
+                sb.AppendLine($"    Line {refItem.Line + 1}: {refItem.ContextLine?.Trim() ?? ""}");
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine($"Total: {selectedRefs.Count} references in {grouped.Count()} files");
+
+        DisplayServer.ClipboardSet(sb.ToString());
+
+        Logger.Info($"RenamePreviewDialog: Copied {selectedRefs.Count} references to clipboard");
+
+        // Brief visual feedback
+        _copyButton.Text = "Copied!";
+        var timer = GetTree().CreateTimer(1.5);
+        timer.Timeout += () => _copyButton.Text = "Copy Changes";
+    }
+
     private void OnCancelled()
     {
         _completion?.TrySetResult(new RenamePreviewResult
@@ -440,7 +528,8 @@ internal partial class RenamePreviewDialog : Window
             ShouldApply = true,
             Cancelled = false,
             NewName = newName,
-            SelectedConfidence = confidence
+            SelectedConfidence = confidence,
+            SelectedReferences = GetSelectedReferences()
         });
         Hide();
     }
