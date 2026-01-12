@@ -1,4 +1,5 @@
 using Godot;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal partial class TodoTagsSettingsPanel : Window
 {
-    private ConfigManager? _configManager;
+    private GDConfigManager? _configManager;
     private ItemList _tagList;
     private LineEdit _newTagName;
     private ColorPickerButton _newTagColor;
@@ -27,7 +28,7 @@ internal partial class TodoTagsSettingsPanel : Window
     private Button _resetButton;
     private Button _cancelButton;
 
-    private List<TodoTagDefinition> _workingTags = new();
+    private List<GDTodoTagDefinition> _workingTags = new();
 
     /// <summary>
     /// Event fired when settings are saved.
@@ -44,7 +45,7 @@ internal partial class TodoTagsSettingsPanel : Window
         CreateUI();
     }
 
-    public void Initialize(ConfigManager configManager)
+    public void Initialize(GDConfigManager configManager)
     {
         _configManager = configManager;
         LoadFromConfig();
@@ -192,14 +193,14 @@ internal partial class TodoTagsSettingsPanel : Window
         if (_configManager == null)
             return;
 
-        var config = _configManager.Config.TodoTags;
+        var config = _configManager.Config.Plugin?.TodoTags ?? new GDTodoTagsConfig();
 
         _enabledToggle.ButtonPressed = config.Enabled;
         _scanOnStartupToggle.ButtonPressed = config.ScanOnStartup;
         _autoRefreshToggle.ButtonPressed = config.AutoRefresh;
         _caseSensitiveToggle.ButtonPressed = config.CaseSensitive;
 
-        _workingTags = config.Tags.Select(t => new TodoTagDefinition
+        _workingTags = config.Tags.Select(t => new GDTodoTagDefinition
         {
             Name = t.Name,
             Color = t.Color,
@@ -296,12 +297,12 @@ internal partial class TodoTagsSettingsPanel : Window
             return;
         }
 
-        _workingTags.Add(new TodoTagDefinition
+        _workingTags.Add(new GDTodoTagDefinition
         {
             Name = name,
             Color = ColorToHex(_newTagColor.Color),
             Enabled = true,
-            DefaultPriority = TodoPriority.Normal
+            DefaultPriority = GDTodoPriority.Normal
         });
 
         _newTagName.Text = "";
@@ -360,7 +361,11 @@ internal partial class TodoTagsSettingsPanel : Window
         if (_configManager == null)
             return;
 
-        var config = _configManager.Config.TodoTags;
+        // Ensure Plugin section exists
+        _configManager.Config.Plugin ??= new GDPluginConfig();
+        _configManager.Config.Plugin.TodoTags ??= new GDTodoTagsConfig();
+
+        var config = _configManager.Config.Plugin.TodoTags;
 
         config.Enabled = _enabledToggle.ButtonPressed;
         config.ScanOnStartup = _scanOnStartupToggle.ButtonPressed;
@@ -377,14 +382,14 @@ internal partial class TodoTagsSettingsPanel : Window
 
     private void OnResetPressed()
     {
-        _workingTags = new List<TodoTagDefinition>
+        _workingTags = new List<GDTodoTagDefinition>
         {
-            new("TODO", "#4FC3F7", TodoPriority.Normal),
-            new("FIXME", "#FF8A65", TodoPriority.High),
-            new("HACK", "#FFD54F", TodoPriority.Normal),
-            new("NOTE", "#81C784", TodoPriority.Low),
-            new("BUG", "#EF5350", TodoPriority.High),
-            new("XXX", "#CE93D8", TodoPriority.Low)
+            new("TODO", "#4FC3F7", GDTodoPriority.Normal),
+            new("FIXME", "#FF8A65", GDTodoPriority.High),
+            new("HACK", "#FFD54F", GDTodoPriority.Normal),
+            new("NOTE", "#81C784", GDTodoPriority.Low),
+            new("BUG", "#EF5350", GDTodoPriority.High),
+            new("XXX", "#CE93D8", GDTodoPriority.Low)
         };
 
         _enabledToggle.ButtonPressed = true;

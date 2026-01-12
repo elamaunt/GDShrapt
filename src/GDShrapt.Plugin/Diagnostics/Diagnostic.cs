@@ -27,7 +27,7 @@ internal class Diagnostic
     /// <summary>
     /// Category for grouping and filtering.
     /// </summary>
-    public DiagnosticCategory Category { get; init; } = DiagnosticCategory.Style;
+    public GDDiagnosticCategory Category { get; init; } = GDDiagnosticCategory.Style;
 
     /// <summary>
     /// Reference to the script containing the issue.
@@ -88,7 +88,7 @@ internal class DiagnosticBuilder
     private readonly string _ruleId;
     private readonly string _message;
     private GDDiagnosticSeverity _severity = GDDiagnosticSeverity.Warning;
-    private DiagnosticCategory _category = DiagnosticCategory.Style;
+    private GDDiagnosticCategory _category = GDDiagnosticCategory.Style;
     private ScriptReference? _script;
     private int _startLine;
     private int _startColumn;
@@ -110,7 +110,7 @@ internal class DiagnosticBuilder
         return this;
     }
 
-    public DiagnosticBuilder WithCategory(DiagnosticCategory category)
+    public DiagnosticBuilder WithCategory(GDDiagnosticCategory category)
     {
         _category = category;
         return this;

@@ -88,6 +88,35 @@ namespace GDShrapt.Linter
             }
         }
 
+        /// <summary>
+        /// Creates a lint issue with explicit line/column coordinates (1-based).
+        /// Used for text-based rules that don't have AST tokens.
+        /// </summary>
+        public GDLintIssue(
+            string ruleId,
+            string ruleName,
+            GDLintSeverity severity,
+            GDLintCategory category,
+            string message,
+            int startLine,
+            int startColumn,
+            int endLine,
+            int endColumn,
+            string suggestion = null)
+        {
+            RuleId = ruleId;
+            RuleName = ruleName;
+            Severity = severity;
+            Category = category;
+            Message = message;
+            Suggestion = suggestion;
+            Token = null;
+            StartLine = startLine;
+            StartColumn = startColumn;
+            EndLine = endLine;
+            EndColumn = endColumn;
+        }
+
         public override string ToString()
         {
             var location = StartLine > 0 ? $"({StartLine}:{StartColumn}) " : "";

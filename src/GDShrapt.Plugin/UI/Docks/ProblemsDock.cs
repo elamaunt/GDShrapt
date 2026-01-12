@@ -427,16 +427,16 @@ internal partial class ProblemsDock : Control
         };
     }
 
-    private static string GetCategoryText(DiagnosticCategory category)
+    private static string GetCategoryText(GDDiagnosticCategory category)
     {
         return category switch
         {
-            DiagnosticCategory.Syntax => "Syntax",
-            DiagnosticCategory.Style => "Style",
-            DiagnosticCategory.Formatting => "Formatting",
-            DiagnosticCategory.Performance => "Performance",
-            DiagnosticCategory.BestPractice => "Best Practice",
-            DiagnosticCategory.Correctness => "Correctness",
+            GDDiagnosticCategory.Syntax => "Syntax",
+            GDDiagnosticCategory.Style => "Style",
+            GDDiagnosticCategory.Formatting => "Formatting",
+            GDDiagnosticCategory.Performance => "Performance",
+            GDDiagnosticCategory.BestPractice => "Best Practice",
+            GDDiagnosticCategory.Correctness => "Correctness",
             _ => "Other"
         };
     }

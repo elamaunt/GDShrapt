@@ -164,7 +164,7 @@ internal class FormatCodeCommand : Command
         return new GDFormatterOptions
         {
             // Indentation
-            IndentStyle = config.IndentStyle == GDIndentationStyle.Tabs
+            IndentStyle = config.IndentStyle == Semantics.GDIndentationStyle.Tabs
                 ? IndentStyle.Tabs
                 : IndentStyle.Spaces,
             IndentSize = config.IndentSize,

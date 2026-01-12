@@ -48,7 +48,7 @@ namespace GDShrapt.Linter
         /// <summary>
         /// Runs this rule on the given node.
         /// </summary>
-        internal void Run(GDNode node, GDLintResult result, GDLinterOptions options)
+        internal virtual void Run(GDNode node, GDLintResult result, GDLinterOptions options)
         {
             _result = result;
             _options = options;

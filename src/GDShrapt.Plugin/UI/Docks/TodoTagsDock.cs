@@ -1,4 +1,5 @@
 using Godot;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +21,9 @@ internal partial class TodoTagsDock : Control
     private Label _statusLabel;
 
     private TodoTagsScanner? _scanner;
-    private ConfigManager? _configManager;
+    private GDConfigManager? _configManager;
     private TodoTagsScanResult? _currentResult;
-    private TodoGroupingMode _groupingMode = TodoGroupingMode.ByFile;
+    private GDTodoGroupingMode _groupingMode = GDTodoGroupingMode.ByFile;
     private string? _filterTag; // null = all tags
 
     private readonly Dictionary<string, Color> _tagColors = new();
@@ -46,7 +47,7 @@ internal partial class TodoTagsDock : Control
     /// <summary>
     /// Initializes the dock with required dependencies.
     /// </summary>
-    public void Initialize(TodoTagsScanner scanner, ConfigManager configManager)
+    public void Initialize(TodoTagsScanner scanner, GDConfigManager configManager)
     {
         _scanner = scanner;
         _configManager = configManager;
@@ -59,17 +60,20 @@ internal partial class TodoTagsDock : Control
         _scanner.OnScanCompleted += OnScanCompleted;
         _scanner.OnFileScanned += OnFileScanned;
 
+        // Get TODO tags config (or defaults)
+        var todoConfig = configManager.Config.Plugin?.TodoTags ?? new GDTodoTagsConfig();
+
         // Load tag colors from config
-        LoadTagColors(configManager.Config.TodoTags);
+        LoadTagColors(todoConfig);
 
         // Subscribe to config changes
-        configManager.OnConfigChanged += config => LoadTagColors(config.TodoTags);
+        configManager.OnConfigChanged += config => LoadTagColors(config.Plugin?.TodoTags ?? new GDTodoTagsConfig());
 
         // Populate filter dropdown
-        PopulateFilterDropdown(configManager.Config.TodoTags);
+        PopulateFilterDropdown(todoConfig);
 
         // Set initial grouping from config
-        _groupingMode = configManager.Config.TodoTags.DefaultGrouping;
+        _groupingMode = todoConfig.DefaultGrouping;
         _groupByOption?.Select((int)_groupingMode);
     }
 
@@ -98,8 +102,8 @@ internal partial class TodoTagsDock : Control
         // Group by dropdown
         toolbar.AddChild(new Label { Text = "Group:" });
         _groupByOption = new OptionButton();
-        _groupByOption.AddItem("By File", (int)TodoGroupingMode.ByFile);
-        _groupByOption.AddItem("By Tag", (int)TodoGroupingMode.ByTag);
+        _groupByOption.AddItem("By File", (int)GDTodoGroupingMode.ByFile);
+        _groupByOption.AddItem("By Tag", (int)GDTodoGroupingMode.ByTag);
         _groupByOption.ItemSelected += OnGroupByChanged;
         toolbar.AddChild(_groupByOption);
 
@@ -179,7 +183,7 @@ internal partial class TodoTagsDock : Control
         CustomMinimumSize = new Vector2(400, 200);
     }
 
-    private void LoadTagColors(TodoTagsConfig config)
+    private void LoadTagColors(GDTodoTagsConfig config)
     {
         _tagColors.Clear();
         foreach (var tag in config.Tags)
@@ -218,7 +222,7 @@ internal partial class TodoTagsDock : Control
         }
     }
 
-    private void PopulateFilterDropdown(TodoTagsConfig config)
+    private void PopulateFilterDropdown(GDTodoTagsConfig config)
     {
         _filterByTagOption.Clear();
         _filterByTagOption.AddItem("All Tags", 0);
@@ -265,7 +269,7 @@ internal partial class TodoTagsDock : Control
 
         var root = _resultsTree.CreateItem();
 
-        if (_groupingMode == TodoGroupingMode.ByFile)
+        if (_groupingMode == GDTodoGroupingMode.ByFile)
         {
             DisplayGroupedByFile(root, filteredItems);
         }
@@ -348,8 +352,8 @@ internal partial class TodoTagsDock : Control
         // Set icon based on priority
         var iconName = item.Priority switch
         {
-            TodoPriority.High => "StatusError",
-            TodoPriority.Normal => "StatusWarning",
+            GDTodoPriority.High => "StatusError",
+            GDTodoPriority.Normal => "StatusWarning",
             _ => "StatusSuccess"
         };
         row.SetIcon(0, GetThemeIcon(iconName, "EditorIcons"));
@@ -375,7 +379,7 @@ internal partial class TodoTagsDock : Control
 
     private void OnGroupByChanged(long index)
     {
-        _groupingMode = (TodoGroupingMode)index;
+        _groupingMode = (GDTodoGroupingMode)index;
         RefreshDisplay();
     }
 

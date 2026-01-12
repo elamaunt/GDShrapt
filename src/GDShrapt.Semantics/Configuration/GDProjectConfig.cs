@@ -28,6 +28,12 @@ public class GDProjectConfig
     /// CLI-specific settings.
     /// </summary>
     public GDCliConfig Cli { get; set; } = new();
+
+    /// <summary>
+    /// Plugin-specific settings (UI, notifications, cache, etc.).
+    /// Only used by the Godot editor plugin, ignored by CLI/LSP.
+    /// </summary>
+    public GDPluginConfig? Plugin { get; set; }
 }
 
 /// <summary>

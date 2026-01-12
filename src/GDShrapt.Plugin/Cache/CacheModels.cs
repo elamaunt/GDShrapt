@@ -117,7 +117,7 @@ internal class SerializedDiagnostic
             RuleId = RuleId,
             Message = Message,
             Severity = (GDDiagnosticSeverity)Severity,
-            Category = (DiagnosticCategory)Category,
+            Category = (GDDiagnosticCategory)Category,
             Script = script,
             StartLine = StartLine,
             StartColumn = StartColumn,

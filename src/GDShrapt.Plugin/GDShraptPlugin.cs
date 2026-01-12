@@ -34,7 +34,7 @@ public partial class GDShraptPlugin : EditorPlugin
     private Control _astViewerDockButton;
 
     // Diagnostics system
-    private ConfigManager _configManager;
+    private GDConfigManager _configManager;
     private CacheManager _cacheManager;
     private DiagnosticService _diagnosticService;
     private BackgroundAnalyzer _backgroundAnalyzer;
@@ -60,7 +60,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
     internal GDProjectMap ProjectMap => _projectMap;
     internal DiagnosticService DiagnosticService => _diagnosticService;
-    internal ConfigManager ConfigManager => _configManager;
+    internal GDConfigManager ConfigManager => _configManager;
     internal RefactoringActionProvider RefactoringActionProvider => _refactoringActionProvider;
     internal FormattingService FormattingService => _formattingService;
     internal QuickFixHandler QuickFixHandler => _quickFixHandler;
@@ -74,7 +74,7 @@ public partial class GDShraptPlugin : EditorPlugin
             _projectMap = new GDProjectMap();
 
             // Initialize configuration
-            _configManager = new ConfigManager(_projectMap.ProjectPath);
+            _configManager = new GDConfigManager(_projectMap.ProjectPath, watchForChanges: true);
 
             // Initialize Project Settings integration
             _settingsRegistry = new ProjectSettingsRegistry(_configManager);
@@ -83,7 +83,7 @@ public partial class GDShraptPlugin : EditorPlugin
             ProjectSettings.Save();
 
             // Initialize caching
-            if (_configManager.Config.Cache.Enabled)
+            if (_configManager.Config.Plugin?.Cache?.Enabled ?? true)
             {
                 _cacheManager = new CacheManager(_projectMap.ProjectPath);
             }
@@ -97,7 +97,7 @@ public partial class GDShraptPlugin : EditorPlugin
             _backgroundAnalyzer = new BackgroundAnalyzer(_diagnosticService, _projectMap);
 
             // Initialize quick fix handler
-            _quickFixHandler = new QuickFixHandler(_diagnosticService);
+            _quickFixHandler = new QuickFixHandler(_diagnosticService, _configManager);
 
             // Initialize scene file watching using GDSceneTypesProvider from Semantics
             _projectMap.SceneTypesProvider.NodeRenameDetected += OnNodeRenameDetected;
@@ -248,7 +248,7 @@ public partial class GDShraptPlugin : EditorPlugin
         Logger.Info($"Project analysis completed: {args.Summary} ({args.FilesAnalyzed} files in {args.Duration.TotalMilliseconds:F0}ms)");
 
         // Show notification if there are issues
-        if (args.Summary.HasIssues && _configManager?.Config.Notifications.ShowProjectSummaryOnStartup == true)
+        if (args.Summary.HasIssues && (_configManager?.Config.Plugin?.Notifications?.ShowProjectSummaryOnStartup ?? true))
         {
             UpdateNotificationPanel(null, args.Summary);
         }
@@ -256,7 +256,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
     private void UpdateNotificationPanel(string? scriptPath, DiagnosticSummary summary)
     {
-        if (_notificationPanel == null || !_configManager.Config.Notifications.Enabled)
+        if (_notificationPanel == null || !(_configManager.Config.Plugin?.Notifications?.Enabled ?? true))
             return;
 
         // Must update UI from main thread
@@ -446,7 +446,8 @@ public partial class GDShraptPlugin : EditorPlugin
         _astViewerDockButton = AddControlToBottomPanel(_astViewerDock, "AST Viewer");
 
         // Start TODO tags scan if enabled
-        if (_configManager.Config.TodoTags.Enabled && _configManager.Config.TodoTags.ScanOnStartup)
+        var todoConfig = _configManager.Config.Plugin?.TodoTags;
+        if ((todoConfig?.Enabled ?? true) && (todoConfig?.ScanOnStartup ?? true))
         {
             _ = _todoTagsScanner.ScanProjectAsync();
         }
@@ -486,7 +487,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
     private void CreateNotificationPanel()
     {
-        if (!_configManager.Config.Notifications.Enabled)
+        if (!(_configManager.Config.Plugin?.Notifications?.Enabled ?? true))
             return;
 
         var editor = EditorInterface.Singleton.GetScriptEditor();

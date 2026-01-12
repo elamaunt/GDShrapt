@@ -10,9 +10,9 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal class FormattingService
 {
-    private readonly ConfigManager _configManager;
+    private readonly GDConfigManager _configManager;
 
-    public FormattingService(ConfigManager configManager)
+    public FormattingService(GDConfigManager configManager)
     {
         _configManager = configManager;
     }
@@ -100,7 +100,7 @@ internal class FormattingService
         return new GDFormatterOptions
         {
             // Indentation
-            IndentStyle = config.IndentStyle == GDIndentationStyle.Tabs
+            IndentStyle = config.IndentStyle == Semantics.GDIndentationStyle.Tabs
                 ? IndentStyle.Tabs
                 : IndentStyle.Spaces,
             IndentSize = config.IndentSize,

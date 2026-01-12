@@ -13,14 +13,14 @@ internal class ProjectSettingsRegistry
 {
     private const string Prefix = "gdshrapt/";
 
-    private readonly ConfigManager _configManager;
+    private readonly GDConfigManager _configManager;
     private bool _isSyncing = false;
     private DateTime _lastSyncTime = DateTime.MinValue;
 
     // Track registered settings to avoid duplicates
     private readonly HashSet<string> _registeredSettings = new();
 
-    public ProjectSettingsRegistry(ConfigManager configManager)
+    public ProjectSettingsRegistry(GDConfigManager configManager)
     {
         _configManager = configManager;
     }
@@ -53,20 +53,22 @@ internal class ProjectSettingsRegistry
         try
         {
             var config = _configManager.Config;
+            var plugin = config.Plugin ?? new GDPluginConfig();
 
-            // General
-            SetSetting("general/cache_enabled", config.Cache.Enabled);
+            // General (plugin-specific)
+            SetSetting("general/cache_enabled", plugin.Cache?.Enabled ?? true);
 
-            // UI
-            SetSetting("ui/ast_viewer_enabled", config.UI.AstViewerEnabled);
-            SetSetting("ui/code_lens_enabled", config.UI.CodeLensEnabled);
-            SetSetting("ui/references_counter_enabled", config.UI.ReferencesCounterEnabled);
-            SetSetting("ui/problems_dock_enabled", config.UI.ProblemsDockEnabled);
-            SetSetting("ui/todo_tags_dock_enabled", config.UI.TodoTagsDockEnabled);
-            SetSetting("ui/api_documentation_dock_enabled", config.UI.ApiDocumentationDockEnabled);
-            SetSetting("ui/find_references_dock_enabled", config.UI.FindReferencesDockEnabled);
+            // UI (plugin-specific)
+            var ui = plugin.UI ?? new GDUIConfig();
+            SetSetting("ui/ast_viewer_enabled", ui.AstViewerEnabled);
+            SetSetting("ui/code_lens_enabled", ui.CodeLensEnabled);
+            SetSetting("ui/references_counter_enabled", ui.ReferencesCounterEnabled);
+            SetSetting("ui/problems_dock_enabled", ui.ProblemsDockEnabled);
+            SetSetting("ui/todo_tags_dock_enabled", ui.TodoTagsDockEnabled);
+            SetSetting("ui/api_documentation_dock_enabled", ui.ApiDocumentationDockEnabled);
+            SetSetting("ui/find_references_dock_enabled", ui.FindReferencesDockEnabled);
 
-            // Code Style (merged linting + formatting)
+            // Code Style (core config - linting + formatting)
             SetSetting("code_style/linting_enabled", config.Linting.Enabled);
             SetSetting("code_style/formatting_level", (int)config.Linting.FormattingLevel);
             SetSetting("code_style/indentation_style", (int)config.Linting.IndentationStyle);
@@ -82,7 +84,7 @@ internal class ProjectSettingsRegistry
             SetSetting("code_style/ensure_trailing_newline", config.Formatter.EnsureTrailingNewline);
             SetSetting("code_style/wrap_long_lines", config.Formatter.WrapLongLines);
 
-            // Naming Conventions
+            // Naming Conventions (core config)
             SetSetting("naming/class_name_case", (int)config.AdvancedLinting.ClassNameCase);
             SetSetting("naming/function_name_case", (int)config.AdvancedLinting.FunctionNameCase);
             SetSetting("naming/variable_name_case", (int)config.AdvancedLinting.VariableNameCase);
@@ -94,18 +96,20 @@ internal class ProjectSettingsRegistry
             SetSetting("naming/max_function_length", config.AdvancedLinting.MaxFunctionLength);
             SetSetting("naming/max_cyclomatic_complexity", config.AdvancedLinting.MaxCyclomaticComplexity);
 
-            // Notifications
-            SetSetting("notifications/enabled", config.Notifications.Enabled);
-            SetSetting("notifications/show_expanded_on_first_open", config.Notifications.ShowExpandedOnFirstOpen);
-            SetSetting("notifications/auto_hide_seconds", config.Notifications.AutoHideSeconds);
-            SetSetting("notifications/min_severity", (int)config.Notifications.MinSeverity);
+            // Notifications (plugin-specific)
+            var notifications = plugin.Notifications ?? new GDNotificationConfig();
+            SetSetting("notifications/enabled", notifications.Enabled);
+            SetSetting("notifications/show_expanded_on_first_open", notifications.ShowExpandedOnFirstOpen);
+            SetSetting("notifications/auto_hide_seconds", notifications.AutoHideSeconds);
+            SetSetting("notifications/min_severity", (int)notifications.MinSeverity);
 
-            // TODO Tags
-            SetSetting("todo_tags/enabled", config.TodoTags.Enabled);
-            SetSetting("todo_tags/scan_on_startup", config.TodoTags.ScanOnStartup);
-            SetSetting("todo_tags/auto_refresh", config.TodoTags.AutoRefresh);
-            SetSetting("todo_tags/case_sensitive", config.TodoTags.CaseSensitive);
-            SetSetting("todo_tags/default_grouping", (int)config.TodoTags.DefaultGrouping);
+            // TODO Tags (plugin-specific)
+            var todoTags = plugin.TodoTags ?? new GDTodoTagsConfig();
+            SetSetting("todo_tags/enabled", todoTags.Enabled);
+            SetSetting("todo_tags/scan_on_startup", todoTags.ScanOnStartup);
+            SetSetting("todo_tags/auto_refresh", todoTags.AutoRefresh);
+            SetSetting("todo_tags/case_sensitive", todoTags.CaseSensitive);
+            SetSetting("todo_tags/default_grouping", (int)todoTags.DefaultGrouping);
 
             _lastSyncTime = DateTime.UtcNow;
             Logger.Debug("Synced config to ProjectSettings");
@@ -128,22 +132,29 @@ internal class ProjectSettingsRegistry
         {
             var config = _configManager.Config;
 
-            // General
-            config.Cache.Enabled = GetBool("general/cache_enabled", config.Cache.Enabled);
+            // Ensure Plugin section exists
+            config.Plugin ??= new GDPluginConfig();
+            config.Plugin.UI ??= new GDUIConfig();
+            config.Plugin.Cache ??= new GDCacheConfig();
+            config.Plugin.Notifications ??= new GDNotificationConfig();
+            config.Plugin.TodoTags ??= new GDTodoTagsConfig();
 
-            // UI
-            config.UI.AstViewerEnabled = GetBool("ui/ast_viewer_enabled", config.UI.AstViewerEnabled);
-            config.UI.CodeLensEnabled = GetBool("ui/code_lens_enabled", config.UI.CodeLensEnabled);
-            config.UI.ReferencesCounterEnabled = GetBool("ui/references_counter_enabled", config.UI.ReferencesCounterEnabled);
-            config.UI.ProblemsDockEnabled = GetBool("ui/problems_dock_enabled", config.UI.ProblemsDockEnabled);
-            config.UI.TodoTagsDockEnabled = GetBool("ui/todo_tags_dock_enabled", config.UI.TodoTagsDockEnabled);
-            config.UI.ApiDocumentationDockEnabled = GetBool("ui/api_documentation_dock_enabled", config.UI.ApiDocumentationDockEnabled);
-            config.UI.FindReferencesDockEnabled = GetBool("ui/find_references_dock_enabled", config.UI.FindReferencesDockEnabled);
+            // General (plugin-specific)
+            config.Plugin.Cache.Enabled = GetBool("general/cache_enabled", config.Plugin.Cache.Enabled);
 
-            // Code Style (merged linting + formatting)
+            // UI (plugin-specific)
+            config.Plugin.UI.AstViewerEnabled = GetBool("ui/ast_viewer_enabled", config.Plugin.UI.AstViewerEnabled);
+            config.Plugin.UI.CodeLensEnabled = GetBool("ui/code_lens_enabled", config.Plugin.UI.CodeLensEnabled);
+            config.Plugin.UI.ReferencesCounterEnabled = GetBool("ui/references_counter_enabled", config.Plugin.UI.ReferencesCounterEnabled);
+            config.Plugin.UI.ProblemsDockEnabled = GetBool("ui/problems_dock_enabled", config.Plugin.UI.ProblemsDockEnabled);
+            config.Plugin.UI.TodoTagsDockEnabled = GetBool("ui/todo_tags_dock_enabled", config.Plugin.UI.TodoTagsDockEnabled);
+            config.Plugin.UI.ApiDocumentationDockEnabled = GetBool("ui/api_documentation_dock_enabled", config.Plugin.UI.ApiDocumentationDockEnabled);
+            config.Plugin.UI.FindReferencesDockEnabled = GetBool("ui/find_references_dock_enabled", config.Plugin.UI.FindReferencesDockEnabled);
+
+            // Code Style (core config - linting + formatting)
             config.Linting.Enabled = GetBool("code_style/linting_enabled", config.Linting.Enabled);
             config.Linting.FormattingLevel = (GDFormattingLevel)GetInt("code_style/formatting_level", (int)config.Linting.FormattingLevel);
-            config.Linting.IndentationStyle = (GDIndentationStyle)GetInt("code_style/indentation_style", (int)config.Linting.IndentationStyle);
+            config.Linting.IndentationStyle = (Semantics.GDIndentationStyle)GetInt("code_style/indentation_style", (int)config.Linting.IndentationStyle);
             config.Linting.TabWidth = GetInt("code_style/tab_width", config.Linting.TabWidth);
             config.Linting.MaxLineLength = GetInt("code_style/max_line_length", config.Linting.MaxLineLength);
             config.Formatter.IndentSize = GetInt("code_style/indent_size", config.Formatter.IndentSize);
@@ -156,7 +167,7 @@ internal class ProjectSettingsRegistry
             config.Formatter.EnsureTrailingNewline = GetBool("code_style/ensure_trailing_newline", config.Formatter.EnsureTrailingNewline);
             config.Formatter.WrapLongLines = GetBool("code_style/wrap_long_lines", config.Formatter.WrapLongLines);
 
-            // Naming Conventions
+            // Naming Conventions (core config)
             config.AdvancedLinting.ClassNameCase = (GDNamingCase)GetInt("naming/class_name_case", (int)config.AdvancedLinting.ClassNameCase);
             config.AdvancedLinting.FunctionNameCase = (GDNamingCase)GetInt("naming/function_name_case", (int)config.AdvancedLinting.FunctionNameCase);
             config.AdvancedLinting.VariableNameCase = (GDNamingCase)GetInt("naming/variable_name_case", (int)config.AdvancedLinting.VariableNameCase);
@@ -168,18 +179,18 @@ internal class ProjectSettingsRegistry
             config.AdvancedLinting.MaxFunctionLength = GetInt("naming/max_function_length", config.AdvancedLinting.MaxFunctionLength);
             config.AdvancedLinting.MaxCyclomaticComplexity = GetInt("naming/max_cyclomatic_complexity", config.AdvancedLinting.MaxCyclomaticComplexity);
 
-            // Notifications
-            config.Notifications.Enabled = GetBool("notifications/enabled", config.Notifications.Enabled);
-            config.Notifications.ShowExpandedOnFirstOpen = GetBool("notifications/show_expanded_on_first_open", config.Notifications.ShowExpandedOnFirstOpen);
-            config.Notifications.AutoHideSeconds = GetInt("notifications/auto_hide_seconds", config.Notifications.AutoHideSeconds);
-            config.Notifications.MinSeverity = (GDDiagnosticSeverity)GetInt("notifications/min_severity", (int)config.Notifications.MinSeverity);
+            // Notifications (plugin-specific)
+            config.Plugin.Notifications.Enabled = GetBool("notifications/enabled", config.Plugin.Notifications.Enabled);
+            config.Plugin.Notifications.ShowExpandedOnFirstOpen = GetBool("notifications/show_expanded_on_first_open", config.Plugin.Notifications.ShowExpandedOnFirstOpen);
+            config.Plugin.Notifications.AutoHideSeconds = GetInt("notifications/auto_hide_seconds", config.Plugin.Notifications.AutoHideSeconds);
+            config.Plugin.Notifications.MinSeverity = (GDDiagnosticSeverity)GetInt("notifications/min_severity", (int)config.Plugin.Notifications.MinSeverity);
 
-            // TODO Tags
-            config.TodoTags.Enabled = GetBool("todo_tags/enabled", config.TodoTags.Enabled);
-            config.TodoTags.ScanOnStartup = GetBool("todo_tags/scan_on_startup", config.TodoTags.ScanOnStartup);
-            config.TodoTags.AutoRefresh = GetBool("todo_tags/auto_refresh", config.TodoTags.AutoRefresh);
-            config.TodoTags.CaseSensitive = GetBool("todo_tags/case_sensitive", config.TodoTags.CaseSensitive);
-            config.TodoTags.DefaultGrouping = (TodoGroupingMode)GetInt("todo_tags/default_grouping", (int)config.TodoTags.DefaultGrouping);
+            // TODO Tags (plugin-specific)
+            config.Plugin.TodoTags.Enabled = GetBool("todo_tags/enabled", config.Plugin.TodoTags.Enabled);
+            config.Plugin.TodoTags.ScanOnStartup = GetBool("todo_tags/scan_on_startup", config.Plugin.TodoTags.ScanOnStartup);
+            config.Plugin.TodoTags.AutoRefresh = GetBool("todo_tags/auto_refresh", config.Plugin.TodoTags.AutoRefresh);
+            config.Plugin.TodoTags.CaseSensitive = GetBool("todo_tags/case_sensitive", config.Plugin.TodoTags.CaseSensitive);
+            config.Plugin.TodoTags.DefaultGrouping = (GDTodoGroupingMode)GetInt("todo_tags/default_grouping", (int)config.Plugin.TodoTags.DefaultGrouping);
 
             // Save to JSON
             _configManager.SaveConfig();
@@ -200,20 +211,24 @@ internal class ProjectSettingsRegistry
     {
         // Compare a few key settings to detect changes
         var config = _configManager.Config;
+        var plugin = config.Plugin ?? new GDPluginConfig();
 
         if (GetBool("code_style/linting_enabled", config.Linting.Enabled) != config.Linting.Enabled)
             return true;
 
-        if (GetBool("notifications/enabled", config.Notifications.Enabled) != config.Notifications.Enabled)
+        var notifications = plugin.Notifications ?? new GDNotificationConfig();
+        if (GetBool("notifications/enabled", notifications.Enabled) != notifications.Enabled)
             return true;
 
-        if (GetBool("todo_tags/enabled", config.TodoTags.Enabled) != config.TodoTags.Enabled)
+        var todoTags = plugin.TodoTags ?? new GDTodoTagsConfig();
+        if (GetBool("todo_tags/enabled", todoTags.Enabled) != todoTags.Enabled)
             return true;
 
-        if (GetBool("ui/ast_viewer_enabled", config.UI.AstViewerEnabled) != config.UI.AstViewerEnabled)
+        var ui = plugin.UI ?? new GDUIConfig();
+        if (GetBool("ui/ast_viewer_enabled", ui.AstViewerEnabled) != ui.AstViewerEnabled)
             return true;
 
-        if (GetBool("ui/code_lens_enabled", config.UI.CodeLensEnabled) != config.UI.CodeLensEnabled)
+        if (GetBool("ui/code_lens_enabled", ui.CodeLensEnabled) != ui.CodeLensEnabled)
             return true;
 
         return false;

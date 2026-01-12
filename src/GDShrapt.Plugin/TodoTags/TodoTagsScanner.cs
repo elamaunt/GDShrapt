@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ namespace GDShrapt.Plugin;
 internal class TodoTagsScanner : IDisposable
 {
     private readonly GDProjectMap _projectMap;
-    private readonly ConfigManager _configManager;
+    private readonly GDConfigManager _configManager;
     private readonly ConcurrentDictionary<string, List<TodoItem>> _cache = new();
 
     private Regex? _tagPattern;
@@ -32,7 +33,7 @@ internal class TodoTagsScanner : IDisposable
     /// </summary>
     public event Action<string, List<TodoItem>>? OnFileScanned;
 
-    public TodoTagsScanner(GDProjectMap projectMap, ConfigManager configManager)
+    public TodoTagsScanner(GDProjectMap projectMap, GDConfigManager configManager)
     {
         _projectMap = projectMap;
         _configManager = configManager;
@@ -43,7 +44,7 @@ internal class TodoTagsScanner : IDisposable
         _configManager.OnConfigChanged += OnConfigChanged;
     }
 
-    private void OnConfigChanged(ProjectConfig config)
+    private void OnConfigChanged(GDProjectConfig config)
     {
         RebuildPattern();
     }
@@ -53,7 +54,7 @@ internal class TodoTagsScanner : IDisposable
     /// </summary>
     private void RebuildPattern()
     {
-        var config = _configManager.Config.TodoTags;
+        var config = _configManager.Config.Plugin?.TodoTags ?? new GDTodoTagsConfig();
         var enabledTags = config.Tags
             .Where(t => t.Enabled)
             .Select(t => Regex.Escape(t.Name))
@@ -88,7 +89,7 @@ internal class TodoTagsScanner : IDisposable
             ScanTime = DateTime.UtcNow
         };
 
-        var config = _configManager.Config.TodoTags;
+        var config = _configManager.Config.Plugin?.TodoTags ?? new GDTodoTagsConfig();
         if (!config.Enabled || _tagPattern == null)
         {
             OnScanCompleted?.Invoke(result);
@@ -124,7 +125,7 @@ internal class TodoTagsScanner : IDisposable
         if (script?.Class == null || _tagPattern == null)
             return Task.FromResult(items);
 
-        var config = _configManager.Config.TodoTags;
+        var config = _configManager.Config.Plugin?.TodoTags ?? new GDTodoTagsConfig();
 
         // Get all comments from the AST
         var comments = script.Class.AllTokens.OfType<GDComment>().ToArray();
@@ -151,7 +152,7 @@ internal class TodoTagsScanner : IDisposable
                     Line = comment.StartLine,
                     Column = comment.StartColumn,
                     RawComment = comment.Sequence,
-                    Priority = tagDef?.DefaultPriority ?? TodoPriority.Normal
+                    Priority = tagDef?.DefaultPriority ?? GDTodoPriority.Normal
                 };
 
                 items.Add(item);
@@ -199,7 +200,7 @@ internal class TodoTagsScanner : IDisposable
         return result;
     }
 
-    private bool IsExcluded(string fullPath, TodoTagsConfig config)
+    private bool IsExcluded(string fullPath, GDTodoTagsConfig config)
     {
         var projectPath = _projectMap.ProjectPath;
         var relativePath = fullPath.Replace(projectPath, "").TrimStart('/', '\\');

@@ -113,6 +113,14 @@ namespace GDShrapt.Linter
 
             // Organization rules
             AddRule(new GDMemberOrderingRule());
+
+            // Formatting rules (text-based)
+            AddRule(new GDIndentationConsistencyRule());
+            AddRule(new GDTrailingWhitespaceRule());
+            AddRule(new GDTrailingNewlineRule());
+            AddRule(new GDSpaceAroundOperatorsRule());
+            AddRule(new GDSpaceAfterCommaRule());
+            AddRule(new GDEmptyLinesRule());
         }
 
         /// <summary>

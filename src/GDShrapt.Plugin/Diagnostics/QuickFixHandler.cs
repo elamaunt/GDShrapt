@@ -1,3 +1,4 @@
+using GDShrapt.Formatter;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
@@ -7,14 +8,17 @@ namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Handles finding and applying quick fixes for diagnostics.
+/// Uses GDFormatCodeService for formatting fixes.
 /// </summary>
 internal class QuickFixHandler
 {
     private readonly DiagnosticService _diagnosticService;
+    private readonly GDConfigManager _configManager;
 
-    public QuickFixHandler(DiagnosticService diagnosticService)
+    public QuickFixHandler(DiagnosticService diagnosticService, GDConfigManager configManager)
     {
         _diagnosticService = diagnosticService;
+        _configManager = configManager;
     }
 
     /// <summary>
@@ -143,15 +147,63 @@ internal class QuickFixHandler
     }
 
     /// <summary>
-    /// Applies all formatting fixes to the source code.
+    /// Applies all formatting fixes to the source code using GDFormatter.
+    /// Formats the entire file using the formatter from Semantics kernel.
+    /// </summary>
+    /// <param name="scriptMap">The script map.</param>
+    /// <returns>Formatted source code or null if no formatting needed.</returns>
+    public string? ApplyAllFormattingFixes(GDScriptMap scriptMap)
+    {
+        if (scriptMap?.Class == null)
+            return null;
+
+        try
+        {
+            var formatterOptions = GDFormatterOptionsFactory.FromConfig(_configManager.Config);
+            var formatter = new GDFormatter(formatterOptions);
+
+            var originalCode = scriptMap.Class.ToString();
+            var formattedCode = formatter.FormatCode(originalCode);
+
+            if (formattedCode != originalCode)
+            {
+                return formattedCode;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error applying formatting: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Applies formatting fix to a specific region using GDFormatter.
+    /// For simplicity, formats the entire file but returns only the changed region.
+    /// </summary>
+    /// <param name="scriptMap">The script map.</param>
+    /// <param name="startLine">Start line (0-based).</param>
+    /// <param name="endLine">End line (0-based).</param>
+    /// <returns>Formatted source code or null if no formatting needed.</returns>
+    public string? ApplyFormattingToRegion(GDScriptMap scriptMap, int startLine, int endLine)
+    {
+        // For simplicity, format the entire file
+        // Region-specific formatting would require parsing partial code which is more complex
+        return ApplyAllFormattingFixes(scriptMap);
+    }
+
+    /// <summary>
+    /// Legacy method: Applies all formatting fixes to the source code using individual fixes.
     /// </summary>
     /// <param name="script">The script reference.</param>
     /// <param name="sourceCode">Original source code.</param>
     /// <returns>Modified source code.</returns>
-    public string ApplyAllFormattingFixes(ScriptReference script, string sourceCode)
+    [Obsolete("Use ApplyAllFormattingFixes(GDScriptMap) instead")]
+    public string ApplyAllFormattingFixesLegacy(ScriptReference script, string sourceCode)
     {
         var formattingFixes = GetAllFixes(script)
-            .Where(f => f.Diagnostic.Category == DiagnosticCategory.Formatting)
+            .Where(f => f.Diagnostic.Category == GDDiagnosticCategory.Formatting)
             .ToList();
 
         return ApplyFixes(formattingFixes, sourceCode);

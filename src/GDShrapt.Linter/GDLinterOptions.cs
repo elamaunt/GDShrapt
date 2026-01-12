@@ -13,6 +13,47 @@ namespace GDShrapt.Linter
         private readonly HashSet<string> _enabledRules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, GDLintSeverity> _severityOverrides = new Dictionary<string, GDLintSeverity>(StringComparer.OrdinalIgnoreCase);
 
+        // Formatting options
+        /// <summary>
+        /// Expected indentation style. Default: Tabs.
+        /// </summary>
+        public GDIndentationStyle IndentationStyle { get; set; } = GDIndentationStyle.Tabs;
+
+        /// <summary>
+        /// Tab width in spaces (used for conversion). Default: 4.
+        /// </summary>
+        public int TabWidth { get; set; } = 4;
+
+        /// <summary>
+        /// Whether to check for trailing whitespace. Default: true.
+        /// </summary>
+        public bool CheckTrailingWhitespace { get; set; } = true;
+
+        /// <summary>
+        /// Whether to check for trailing newline at end of file. Default: true.
+        /// </summary>
+        public bool CheckTrailingNewline { get; set; } = true;
+
+        /// <summary>
+        /// Whether to check for space around operators. Default: false.
+        /// </summary>
+        public bool CheckSpaceAroundOperators { get; set; } = false;
+
+        /// <summary>
+        /// Whether to check for space after commas. Default: false.
+        /// </summary>
+        public bool CheckSpaceAfterComma { get; set; } = false;
+
+        /// <summary>
+        /// Required number of empty lines between functions. Default: 2.
+        /// </summary>
+        public int EmptyLinesBetweenFunctions { get; set; } = 2;
+
+        /// <summary>
+        /// Maximum consecutive empty lines allowed. 0 to disable. Default: 3.
+        /// </summary>
+        public int MaxConsecutiveEmptyLines { get; set; } = 3;
+
         // Naming options
         /// <summary>
         /// Expected case for class names. Default: PascalCase.
@@ -413,6 +454,22 @@ namespace GDShrapt.Linter
             if (rule.RuleId == "GDL233") // no-lonely-if
                 return WarnNoLonelyIf;
 
+            // Formatting rules (text-based)
+            if (rule.RuleId == "GDL502") // trailing-whitespace
+                return CheckTrailingWhitespace;
+
+            if (rule.RuleId == "GDL503") // trailing-newline
+                return CheckTrailingNewline;
+
+            if (rule.RuleId == "GDL510") // space-around-operators
+                return CheckSpaceAroundOperators;
+
+            if (rule.RuleId == "GDL511") // space-after-comma
+                return CheckSpaceAfterComma;
+
+            if (rule.RuleId == "GDL513") // empty-lines
+                return EmptyLinesBetweenFunctions > 0 || MaxConsecutiveEmptyLines > 0;
+
             return rule.EnabledByDefault;
         }
 
@@ -460,6 +517,22 @@ namespace GDShrapt.Linter
             WarnEmptyFunctions = false,
             MaxLineLength = 0
         };
+    }
+
+    /// <summary>
+    /// Indentation style conventions.
+    /// </summary>
+    public enum GDIndentationStyle
+    {
+        /// <summary>
+        /// Use tabs for indentation (GDScript default).
+        /// </summary>
+        Tabs,
+
+        /// <summary>
+        /// Use spaces for indentation.
+        /// </summary>
+        Spaces
     }
 
     /// <summary>

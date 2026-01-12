@@ -1,3 +1,5 @@
+using GDShrapt.Semantics;
+
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -38,7 +40,7 @@ internal class TodoItem
     /// <summary>
     /// Priority level (derived from tag type or explicit priority markers).
     /// </summary>
-    public TodoPriority Priority { get; set; } = TodoPriority.Normal;
+    public GDTodoPriority Priority { get; set; } = GDTodoPriority.Normal;
 
     /// <summary>
     /// The original comment text.
@@ -58,24 +60,14 @@ internal class TodoItem
         Priority = DeterminePriority(tag);
     }
 
-    private static TodoPriority DeterminePriority(string tag)
+    private static GDTodoPriority DeterminePriority(string tag)
     {
         return tag.ToUpperInvariant() switch
         {
-            "FIXME" or "BUG" => TodoPriority.High,
-            "TODO" or "HACK" => TodoPriority.Normal,
-            "NOTE" or "XXX" => TodoPriority.Low,
-            _ => TodoPriority.Normal
+            "FIXME" or "BUG" => GDTodoPriority.High,
+            "TODO" or "HACK" => GDTodoPriority.Normal,
+            "NOTE" or "XXX" => GDTodoPriority.Low,
+            _ => GDTodoPriority.Normal
         };
     }
-}
-
-/// <summary>
-/// Priority level for TODO items.
-/// </summary>
-internal enum TodoPriority
-{
-    Low = 0,
-    Normal = 1,
-    High = 2
 }

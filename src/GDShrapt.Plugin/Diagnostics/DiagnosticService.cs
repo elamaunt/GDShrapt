@@ -15,7 +15,7 @@ namespace GDShrapt.Plugin;
 internal class DiagnosticService : IDisposable
 {
     private readonly GDProjectMap _projectMap;
-    private readonly ConfigManager _configManager;
+    private readonly GDConfigManager _configManager;
     private readonly CacheManager? _cacheManager;
 
     private readonly ConcurrentDictionary<ScriptReference, IReadOnlyList<Diagnostic>> _diagnostics = new();
@@ -36,7 +36,7 @@ internal class DiagnosticService : IDisposable
     /// <summary>
     /// Creates a new DiagnosticService.
     /// </summary>
-    public DiagnosticService(GDProjectMap projectMap, ConfigManager configManager, CacheManager? cacheManager = null)
+    public DiagnosticService(GDProjectMap projectMap, GDConfigManager configManager, CacheManager? cacheManager = null)
     {
         _projectMap = projectMap;
         _configManager = configManager;
@@ -80,7 +80,7 @@ internal class DiagnosticService : IDisposable
             WarningCount = all.Count(d => d.Severity == GDDiagnosticSeverity.Warning),
             HintCount = all.Count(d => d.Severity == GDDiagnosticSeverity.Hint || d.Severity == GDDiagnosticSeverity.Info),
             AffectedFileCount = _diagnostics.Count(kv => kv.Value.Count > 0),
-            HasFormattingIssues = all.Any(d => d.Category == DiagnosticCategory.Formatting && d.Fixes.Count > 0)
+            HasFormattingIssues = all.Any(d => d.Category == GDDiagnosticCategory.Formatting && d.Fixes.Count > 0)
         };
     }
 
@@ -97,12 +97,13 @@ internal class DiagnosticService : IDisposable
             WarningCount = diagnostics.Count(d => d.Severity == GDDiagnosticSeverity.Warning),
             HintCount = diagnostics.Count(d => d.Severity == GDDiagnosticSeverity.Hint || d.Severity == GDDiagnosticSeverity.Info),
             AffectedFileCount = diagnostics.Count > 0 ? 1 : 0,
-            HasFormattingIssues = diagnostics.Any(d => d.Category == DiagnosticCategory.Formatting && d.Fixes.Count > 0)
+            HasFormattingIssues = diagnostics.Any(d => d.Category == GDDiagnosticCategory.Formatting && d.Fixes.Count > 0)
         };
     }
 
     /// <summary>
     /// Analyzes a single script and updates diagnostics.
+    /// Uses GDDiagnosticsService from Semantics kernel for unified diagnostics.
     /// </summary>
     public async Task AnalyzeScriptAsync(GDScriptMap scriptMap, CancellationToken cancellationToken = default)
     {
@@ -133,42 +134,26 @@ internal class DiagnosticService : IDisposable
                 return;
             }
 
-            // Run all enabled rules
-            var diagnostics = new List<Diagnostic>();
-            var rules = RulesRegistry.GetAllRules();
+            // Wait for script to be parsed
+            await scriptMap.GetOrWaitAnalyzer();
 
-            foreach (var rule in rules)
+            if (scriptMap.Class == null)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (!_configManager.IsRuleEnabled(rule.RuleId, rule.Category))
-                    continue;
-
-                // Check formatting level for formatting rules
-                if (rule.Category == DiagnosticCategory.Formatting)
-                {
-                    if (rule.RequiredFormattingLevel > _configManager.Config.Linting.FormattingLevel)
-                        continue;
-                }
-
-                try
-                {
-                    var ruleConfig = _configManager.GetRuleConfig(rule.RuleId, rule.DefaultSeverity);
-                    var ruleDiagnostics = rule.Analyze(scriptMap, content, ruleConfig, _configManager.Config);
-
-                    // Override severity if configured
-                    var effectiveSeverity = _configManager.GetRuleSeverity(rule.RuleId, rule.DefaultSeverity);
-
-                    foreach (var diag in ruleDiagnostics)
-                    {
-                        diagnostics.Add(diag);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error($"Rule {rule.RuleId} failed: {ex.Message}");
-                }
+                ClearDiagnostics(scriptMap.Reference);
+                return;
             }
+
+            // Create diagnostics service from config and run analysis asynchronously
+            var diagnosticsService = GDDiagnosticsService.FromConfig(_configManager.Config);
+
+            var result = await Task.Run(() =>
+                diagnosticsService.Diagnose(scriptMap.Class),
+                cancellationToken);
+
+            // Convert to Plugin diagnostics
+            var diagnostics = result.Diagnostics
+                .Select(d => PluginDiagnosticAdapter.Convert(d, scriptMap.Reference))
+                .ToList();
 
             // Store results
             _diagnostics[scriptMap.Reference] = diagnostics;
@@ -264,7 +249,7 @@ internal class DiagnosticService : IDisposable
     {
         var diagnostics = GetDiagnostics(scriptMap.Reference);
         var formattingDiags = diagnostics
-            .Where(d => d.Category == DiagnosticCategory.Formatting && d.Fixes.Count > 0)
+            .Where(d => d.Category == GDDiagnosticCategory.Formatting && d.Fixes.Count > 0)
             .ToList();
 
         if (formattingDiags.Count == 0)
@@ -332,7 +317,7 @@ internal class DiagnosticService : IDisposable
         });
     }
 
-    private void OnConfigChanged(ProjectConfig config)
+    private void OnConfigChanged(GDProjectConfig config)
     {
         Logger.Debug("Configuration changed, re-analyzing project...");
         // Clear cache when config changes
