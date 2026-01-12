@@ -89,14 +89,14 @@ internal partial class ReferencesDock : Control
     /// <summary>
     /// Shows references for the given symbol.
     /// </summary>
-    internal void ShowReferences(string symbolName, IEnumerable<MemberReference> references)
+    internal void ShowReferences(string symbolName, IEnumerable<GDMemberReference> references)
     {
         _currentSymbol = symbolName;
         _references.Clear();
 
         foreach (var reference in references)
         {
-            var item = ReferenceItem.FromMemberReference(reference);
+            var item = ReferenceItem.FromGDMemberReference(reference);
             // Recalculate highlight with explicit symbolName for precision
             CalculateHighlightPosition(item, symbolName);
             _references.Add(item);
@@ -294,7 +294,7 @@ internal partial class ReferenceItem : GodotObject
         HighlightEnd = highlightEnd > 0 ? highlightEnd : context?.Length ?? 0;
     }
 
-    internal static ReferenceItem FromMemberReference(MemberReference memberRef)
+    internal static ReferenceItem FromGDMemberReference(GDMemberReference memberRef)
     {
         var contextLine = GetContextLine(memberRef);
         var symbolName = memberRef.Identifier?.Sequence;
@@ -326,7 +326,7 @@ internal partial class ReferenceItem : GodotObject
         };
     }
 
-    private static ReferenceKind DetermineKind(MemberReference memberRef)
+    private static ReferenceKind DetermineKind(GDMemberReference memberRef)
     {
         if (memberRef.Member != null)
             return ReferenceKind.Declaration;
@@ -341,7 +341,7 @@ internal partial class ReferenceItem : GodotObject
         return ReferenceKind.Read;
     }
 
-    private static string GetContextLine(MemberReference memberRef)
+    private static string GetContextLine(GDMemberReference memberRef)
     {
         // Get the line containing the identifier for context
         if (memberRef.Identifier == null)

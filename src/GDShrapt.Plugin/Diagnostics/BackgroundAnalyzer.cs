@@ -69,7 +69,7 @@ internal class BackgroundAnalyzer : IDisposable
     /// <summary>
     /// Queues a script for analysis with debouncing.
     /// </summary>
-    public void QueueScriptAnalysis(ScriptReference script, bool priority = false)
+    public void QueueScriptAnalysis(GDPluginScriptReference script, bool priority = false)
     {
         if (_cts.IsCancellationRequested)
             return;
@@ -117,7 +117,7 @@ internal class BackgroundAnalyzer : IDisposable
     /// <summary>
     /// Sets the priority script (currently open file).
     /// </summary>
-    public void SetPriorityScript(ScriptReference? script)
+    public void SetPriorityScript(GDPluginScriptReference? script)
     {
         _priorityScript = script?.FullPath;
     }
@@ -173,8 +173,8 @@ internal class BackgroundAnalyzer : IDisposable
     {
         try
         {
-            var scriptMap = _projectMap.GetScriptMap(request.Script);
-            if (scriptMap == null)
+            var binding = _projectMap.GetBinding(request.Script);
+            if (binding == null)
                 return;
 
             // Check if this is priority (process immediately)
@@ -186,7 +186,7 @@ internal class BackgroundAnalyzer : IDisposable
                 await Task.Delay(50, _cts.Token);
             }
 
-            await _diagnosticService.AnalyzeScriptAsync(scriptMap, _cts.Token);
+            await _diagnosticService.AnalyzeScriptAsync(binding, _cts.Token);
 
             // Remove from pending
             _pendingScripts.TryRemove(request.Script.FullPath, out _);
@@ -224,7 +224,7 @@ internal class BackgroundAnalyzer : IDisposable
 
     private class AnalysisRequest
     {
-        public required ScriptReference Script { get; init; }
+        public required GDPluginScriptReference Script { get; init; }
         public DateTime QueuedAt { get; init; }
         public bool IsPriority { get; init; }
     }

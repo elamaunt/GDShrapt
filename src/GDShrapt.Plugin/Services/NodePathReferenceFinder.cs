@@ -11,12 +11,12 @@ namespace GDShrapt.Plugin;
 /// Finds all references to node paths in GDScript files and scene files.
 /// Used for the rename node path refactoring feature.
 /// </summary>
-internal class NodePathReferenceFinder
+internal class GDNodePathReferenceFinder
 {
     private readonly GDProjectMap _projectMap;
     private readonly GDSceneTypesProvider _sceneProvider;
 
-    public NodePathReferenceFinder(GDProjectMap projectMap, GDSceneTypesProvider sceneProvider)
+    public GDNodePathReferenceFinder(GDProjectMap projectMap, GDSceneTypesProvider sceneProvider)
     {
         _projectMap = projectMap;
         _sceneProvider = sceneProvider;
@@ -28,7 +28,7 @@ internal class NodePathReferenceFinder
     /// </summary>
     /// <param name="nodeName">The node name to search for.</param>
     /// <returns>List of references found in GDScript files.</returns>
-    public IEnumerable<NodePathReference> FindGDScriptReferences(string nodeName)
+    public IEnumerable<GDNodePathReference> FindGDScriptReferences(string nodeName)
     {
         if (string.IsNullOrEmpty(nodeName))
             yield break;
@@ -54,9 +54,9 @@ internal class NodePathReferenceFinder
                         if (specifier.Type == GDPathSpecifierType.Identifier &&
                             specifier.IdentifierValue == nodeName)
                         {
-                            yield return new NodePathReference
+                            yield return new GDNodePathReference
                             {
-                                Type = NodePathReference.RefType.GDScript,
+                                Type = GDNodePathReference.RefType.GDScript,
                                 FilePath = scriptMap.Reference?.FullPath,
                                 ResourcePath = scriptMap.Reference?.ResourcePath,
                                 LineNumber = specifier.StartLine + 1,
@@ -96,9 +96,9 @@ internal class NodePathReferenceFinder
                     {
                         if (parts[i] == nodeName)
                         {
-                            yield return new NodePathReference
+                            yield return new GDNodePathReference
                             {
-                                Type = NodePathReference.RefType.GDScript,
+                                Type = GDNodePathReference.RefType.GDScript,
                                 FilePath = scriptMap.Reference?.FullPath,
                                 ResourcePath = scriptMap.Reference?.ResourcePath,
                                 LineNumber = strExpr.StartLine + 1,
@@ -121,7 +121,7 @@ internal class NodePathReferenceFinder
     /// <param name="scenePath">Resource path of the scene.</param>
     /// <param name="nodeName">The node name to search for.</param>
     /// <returns>List of references found in the scene file.</returns>
-    public IEnumerable<NodePathReference> FindSceneReferences(string scenePath, string nodeName)
+    public IEnumerable<GDNodePathReference> FindSceneReferences(string scenePath, string nodeName)
     {
         if (string.IsNullOrEmpty(scenePath) || string.IsNullOrEmpty(nodeName))
             yield break;
@@ -134,9 +134,9 @@ internal class NodePathReferenceFinder
         var node = sceneInfo.Nodes.FirstOrDefault(n => n.Name == nodeName);
         if (node != null)
         {
-            yield return new NodePathReference
+            yield return new GDNodePathReference
             {
-                Type = NodePathReference.RefType.SceneNodeName,
+                Type = GDNodePathReference.RefType.SceneNodeName,
                 FilePath = sceneInfo.FullPath,
                 ResourcePath = scenePath,
                 LineNumber = node.LineNumber,
@@ -149,9 +149,9 @@ internal class NodePathReferenceFinder
         // Find all nodes that have this node in their parent path
         foreach (var childNode in _sceneProvider.GetNodesWithParentContaining(scenePath, nodeName))
         {
-            yield return new NodePathReference
+            yield return new GDNodePathReference
             {
-                Type = NodePathReference.RefType.SceneParentPath,
+                Type = GDNodePathReference.RefType.SceneParentPath,
                 FilePath = sceneInfo.FullPath,
                 ResourcePath = scenePath,
                 LineNumber = childNode.LineNumber,
@@ -183,7 +183,7 @@ internal class NodePathReferenceFinder
     /// <summary>
     /// Finds all references (both GDScript and scene) to a node name within specific scenes.
     /// </summary>
-    public IEnumerable<NodePathReference> FindAllReferences(IEnumerable<string> scenePaths, string nodeName)
+    public IEnumerable<GDNodePathReference> FindAllReferences(IEnumerable<string> scenePaths, string nodeName)
     {
         // Get GDScript references
         foreach (var reference in FindGDScriptReferences(nodeName))

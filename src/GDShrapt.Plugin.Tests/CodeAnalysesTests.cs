@@ -95,36 +95,37 @@ func updateSample(obj):
 ";
 
     [TestMethod]
-    public async Task Test1()
+    public void Test1()
     {
-        var reference = new ScriptReference("");
+        var reference = new GDPluginScriptReference("");
         var map = new GDScriptMap(reference);
-        await map.Reload(_test1Code);
+        map.Reload(_test1Code);
     }
 
     [TestMethod]
-    public async Task Test2()
+    public void Test2()
     {
-        var reference = new ScriptReference("");
+        var reference = new GDPluginScriptReference("");
         var map = new GDScriptMap(reference);
-        await map.Reload(_test2Code);
+        map.Reload(_test2Code);
     }
 
     [TestMethod]
-    public async Task Test3()
+    public void Test3()
     {
-        var reference = new ScriptReference("");
+        var reference = new GDPluginScriptReference("");
         var map = new GDScriptMap(reference);
-        await map.Reload(_test3Code);
+        map.Reload(_test3Code);
     }
 
     [TestMethod]
-    public async Task Test4()
+    public void Test4()
     {
         var project = new GDProjectMap(_test1Code, _test3Code);
 
         var map = project.GetScriptMapByTypeName("Usage");
 
-        var visitor = await map.GetOrWaitFullReload();
+        // Synchronous analysis (async coordination is in UIBinding for real plugin)
+        map?.BuildAnalyzerIfNeeded();
     }
 }

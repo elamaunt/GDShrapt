@@ -35,7 +35,7 @@ internal partial class NodeRenamingDialog : Window
     private Button _okButton;
 
     private TaskCompletionSource<NodeRenamingParameters?> _showCompletion;
-    private List<NodePathReference> _references = new();
+    private List<GDNodePathReference> _references = new();
     private readonly List<NodeReferenceCell> _referenceCells = new();
 
     // Constants
@@ -269,7 +269,7 @@ internal partial class NodeRenamingDialog : Window
         }
     }
 
-    public Task<NodeRenamingParameters?> ShowForResult(string nodeName, IEnumerable<NodePathReference> references)
+    public Task<NodeRenamingParameters?> ShowForResult(string nodeName, IEnumerable<GDNodePathReference> references)
     {
         _showCompletion = new TaskCompletionSource<NodeRenamingParameters?>();
 
@@ -292,7 +292,7 @@ internal partial class NodeRenamingDialog : Window
         return _showCompletion.Task;
     }
 
-    public void SetReferencesList(IEnumerable<NodePathReference> references)
+    public void SetReferencesList(IEnumerable<GDNodePathReference> references)
     {
         _references = references.ToList();
         _referenceCells.Clear();
@@ -306,10 +306,10 @@ internal partial class NodeRenamingDialog : Window
 
         // Group references by type
         var sceneRefs = _references.Where(r =>
-            r.Type == NodePathReference.RefType.SceneNodeName ||
-            r.Type == NodePathReference.RefType.SceneParentPath).ToList();
+            r.Type == GDNodePathReference.RefType.SceneNodeName ||
+            r.Type == GDNodePathReference.RefType.SceneParentPath).ToList();
         var scriptRefs = _references.Where(r =>
-            r.Type == NodePathReference.RefType.GDScript).ToList();
+            r.Type == GDNodePathReference.RefType.GDScript).ToList();
 
         int totalCount = sceneRefs.Count + scriptRefs.Count;
         _referencesLabel.Text = $"Affected files ({totalCount}):";
@@ -361,7 +361,7 @@ internal partial class NodeRenamingDialog : Window
         Size = new Vector2I(DialogWidth, totalHeight);
     }
 
-    public IEnumerable<NodePathReference> GetSelectedReferences()
+    public IEnumerable<GDNodePathReference> GetSelectedReferences()
     {
         return _referenceCells
             .Where(c => c.IsSelected)
@@ -379,10 +379,10 @@ internal partial class NodeRenamingDialog : Window
         private readonly Label _lineLabel;
         private readonly Label _contextLabel;
 
-        public NodePathReference Reference { get; }
+        public GDNodePathReference Reference { get; }
         public bool IsSelected => _checkBox.ButtonPressed;
 
-        public NodeReferenceCell(NodePathReference reference)
+        public NodeReferenceCell(GDNodePathReference reference)
         {
             Reference = reference;
 
@@ -445,15 +445,15 @@ internal partial class NodeRenamingDialog : Window
             AddChild(_contextLabel);
         }
 
-        private void SetIconForReference(NodePathReference reference)
+        private void SetIconForReference(GDNodePathReference reference)
         {
             try
             {
                 string iconName = reference.Type switch
                 {
-                    NodePathReference.RefType.SceneNodeName => "PackedScene",
-                    NodePathReference.RefType.SceneParentPath => "NodePath",
-                    NodePathReference.RefType.GDScript => "Script",
+                    GDNodePathReference.RefType.SceneNodeName => "PackedScene",
+                    GDNodePathReference.RefType.SceneParentPath => "NodePath",
+                    GDNodePathReference.RefType.GDScript => "Script",
                     _ => "Script"
                 };
 
@@ -466,13 +466,13 @@ internal partial class NodeRenamingDialog : Window
             }
         }
 
-        private Color GetColorForType(NodePathReference.RefType type)
+        private Color GetColorForType(GDNodePathReference.RefType type)
         {
             return type switch
             {
-                NodePathReference.RefType.SceneNodeName => new Color(0.9f, 0.7f, 0.5f),
-                NodePathReference.RefType.SceneParentPath => new Color(0.8f, 0.6f, 0.4f),
-                NodePathReference.RefType.GDScript => new Color(0.7f, 0.85f, 1.0f),
+                GDNodePathReference.RefType.SceneNodeName => new Color(0.9f, 0.7f, 0.5f),
+                GDNodePathReference.RefType.SceneParentPath => new Color(0.8f, 0.6f, 0.4f),
+                GDNodePathReference.RefType.GDScript => new Color(0.7f, 0.85f, 1.0f),
                 _ => new Color(0.8f, 0.8f, 0.8f)
             };
         }
@@ -490,5 +490,5 @@ internal partial class NodeRenamingDialog : Window
 internal class NodeRenamingParameters
 {
     public string NewName { get; set; }
-    public List<NodePathReference> SelectedReferences { get; set; } = new();
+    public List<GDNodePathReference> SelectedReferences { get; set; } = new();
 }

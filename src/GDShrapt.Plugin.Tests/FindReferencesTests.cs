@@ -353,11 +353,11 @@ func test():
 
     #region Helper Methods
 
-    private async Task<GDScriptMap> CreateScriptMap(string code, string path = "test.gd")
+    private GDScriptMap CreateScriptMap(string code, string path = "test.gd")
     {
-        var reference = new ScriptReference(path);
+        var reference = new GDPluginScriptReference(path);
         var map = new GDScriptMap(reference);
-        await map.Reload(code);
+        map.Reload(code);
         return map;
     }
 
@@ -694,7 +694,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_LocalVariable_OnlyInMethod()
     {
-        var scriptMap = await CreateScriptMap(LocalVariableCode);
+        var scriptMap = CreateScriptMap(LocalVariableCode);
         var method = FindMethod(scriptMap, "test_local");
 
         Assert.IsNotNull(method);
@@ -713,7 +713,7 @@ func test():
     public async Task FindReferences_LocalVariable_DeclarationPlusUsages()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(LocalVariableCode);
+        var scriptMap = CreateScriptMap(LocalVariableCode);
         var method = FindMethod(scriptMap, "test_local");
 
         Assert.IsNotNull(method);
@@ -730,7 +730,7 @@ func test():
     public async Task FindReferences_LocalVariable_NestedScopes_AllResolved()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(LocalVariableNestedScopesCode);
+        var scriptMap = CreateScriptMap(LocalVariableNestedScopesCode);
         var method = FindMethod(scriptMap, "test_nested");
 
         Assert.IsNotNull(method);
@@ -750,7 +750,7 @@ func test():
     public async Task FindReferences_LocalVariable_OnlyAfterDeclaration()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(LocalVariableUsedBeforeDeclarationCode);
+        var scriptMap = CreateScriptMap(LocalVariableUsedBeforeDeclarationCode);
         var method = FindMethod(scriptMap, "test_order");
 
         Assert.IsNotNull(method);
@@ -770,7 +770,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_Parameter_OnlyInMethod()
     {
-        var scriptMap = await CreateScriptMap(ParameterCode);
+        var scriptMap = CreateScriptMap(ParameterCode);
         var method = FindMethod(scriptMap, "calculate");
 
         Assert.IsNotNull(method);
@@ -794,7 +794,7 @@ func test():
     public async Task FindReferences_Parameter_DeclarationPlusUsages()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ParameterWithAssignmentCode);
+        var scriptMap = CreateScriptMap(ParameterWithAssignmentCode);
         var method = FindMethod(scriptMap, "calculate");
 
         Assert.IsNotNull(method);
@@ -813,7 +813,7 @@ func test():
     public async Task FindReferences_Parameter_ShadowedByLocal_SeparateScopes()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ParameterWithSameNamedLocalCode);
+        var scriptMap = CreateScriptMap(ParameterWithSameNamedLocalCode);
         var method = FindMethod(scriptMap, "process");
 
         Assert.IsNotNull(method);
@@ -829,7 +829,7 @@ func test():
     public async Task FindReferences_Parameter_OptionalWithDefaults()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ParameterOptionalWithDefaultCode);
+        var scriptMap = CreateScriptMap(ParameterOptionalWithDefaultCode);
         var method = FindMethod(scriptMap, "greet");
 
         Assert.IsNotNull(method);
@@ -850,7 +850,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_ClassMember_AcrossMethods()
     {
-        var scriptMap = await CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptMap(ClassMemberCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -867,7 +867,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_ClassMember_DeclarationFound()
     {
-        var scriptMap = await CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptMap(ClassMemberCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -884,7 +884,7 @@ func test():
     public async Task FindReferences_ClassVariable_AllReferences()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptMap(ClassMemberCode);
 
         // Act
         var healthRefs = CollectClassMemberReferences(scriptMap, "health");
@@ -898,7 +898,7 @@ func test():
     public async Task FindReferences_ClassMethod_AllCallSites()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ClassMemberMethodCode);
+        var scriptMap = CreateScriptMap(ClassMemberMethodCode);
 
         // Act
         var helperRefs = CollectClassMemberReferences(scriptMap, "helper");
@@ -913,7 +913,7 @@ func test():
     public async Task FindReferences_Signal_EmitAndDeclaration()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ClassMemberSignalCode);
+        var scriptMap = CreateScriptMap(ClassMemberSignalCode);
 
         // Act
         var healthChangedRefs = CollectClassMemberReferences(scriptMap, "health_changed");
@@ -928,7 +928,7 @@ func test():
     public async Task FindReferences_Constant_AllUsages()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ClassMemberConstantCode);
+        var scriptMap = CreateScriptMap(ClassMemberConstantCode);
 
         // Act
         var maxHealthRefs = CollectClassMemberReferences(scriptMap, "MAX_HEALTH");
@@ -943,7 +943,7 @@ func test():
     public async Task FindReferences_Enum_TypeAndValues()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ClassMemberEnumCode);
+        var scriptMap = CreateScriptMap(ClassMemberEnumCode);
 
         // Act
         var stateRefs = CollectClassMemberReferences(scriptMap, "State");
@@ -956,7 +956,7 @@ func test():
     public async Task FindReferences_InnerClass_TypeUsage()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ClassMemberInnerClassCode);
+        var scriptMap = CreateScriptMap(ClassMemberInnerClassCode);
 
         // Act
         var innerDataRefs = CollectClassMemberReferences(scriptMap, "InnerData");
@@ -972,7 +972,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_ForLoopVariable_OnlyInLoop()
     {
-        var scriptMap = await CreateScriptMap(ForLoopVariableCode);
+        var scriptMap = CreateScriptMap(ForLoopVariableCode);
         var method = FindMethod(scriptMap, "process_items");
 
         Assert.IsNotNull(method);
@@ -998,7 +998,7 @@ func test():
     public async Task FindReferences_ForLoopVariable_DeclarationPlusUsages()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ForLoopVariableCode);
+        var scriptMap = CreateScriptMap(ForLoopVariableCode);
         var method = FindMethod(scriptMap, "process_items");
         var forStmt = FindForStatement(method);
 
@@ -1016,7 +1016,7 @@ func test():
     public async Task FindReferences_ForLoopVariable_NestedLoops_DistinctScopes()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ForLoopNestedCode);
+        var scriptMap = CreateScriptMap(ForLoopNestedCode);
         var method = FindMethod(scriptMap, "matrix_process");
 
         Assert.IsNotNull(method);
@@ -1040,7 +1040,7 @@ func test():
     public async Task FindReferences_ForLoopVariable_ShadowsClassMember()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ForLoopSameVariableNameCode);
+        var scriptMap = CreateScriptMap(ForLoopSameVariableNameCode);
 
         // Check class member exists
         var classMemberRefs = CollectClassMemberReferences(scriptMap, "item");
@@ -1065,7 +1065,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_SameNameDifferentScopes_AreDistinct()
     {
-        var scriptMap = await CreateScriptMap(ComplexScopesCode);
+        var scriptMap = CreateScriptMap(ComplexScopesCode);
 
         // Find both methods with "local_var"
         var outerMethod = FindMethod(scriptMap, "outer_func");
@@ -1092,7 +1092,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_GlobalVariable_UsedInMultipleMethods()
     {
-        var scriptMap = await CreateScriptMap(ComplexScopesCode);
+        var scriptMap = CreateScriptMap(ComplexScopesCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -1113,7 +1113,7 @@ func test():
     [TestMethod]
     public async Task ScriptMap_ParsesClassMembers_Correctly()
     {
-        var scriptMap = await CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptMap(ClassMemberCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -1140,7 +1140,7 @@ func test():
     [TestMethod]
     public async Task ScriptMap_ParsesMethodParameters_Correctly()
     {
-        var scriptMap = await CreateScriptMap(ParameterCode);
+        var scriptMap = CreateScriptMap(ParameterCode);
         var method = FindMethod(scriptMap, "calculate");
 
         Assert.IsNotNull(method);
@@ -1168,7 +1168,7 @@ func test():
     public async Task FindReferences_MemberAccess_ChainedAccess()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ChainedMemberAccessCode);
+        var scriptMap = CreateScriptMap(ChainedMemberAccessCode);
 
         // Act - find "name" references (accessed via chain)
         var nameRefs = CollectMemberAccessReferences(scriptMap, "name");
@@ -1181,7 +1181,7 @@ func test():
     public async Task FindReferences_BuiltInType_ArrayMethods()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(BuiltInTypeMemberCode);
+        var scriptMap = CreateScriptMap(BuiltInTypeMemberCode);
 
         // Act - member access patterns on built-in types
         var appendRefs = CollectMemberAccessReferences(scriptMap, "append");
@@ -1263,7 +1263,7 @@ func test():
     public async Task FindReferences_DetectsDeclaration()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
 
         // Act
         var counterRefs = CollectClassMemberReferences(scriptMap, "counter");
@@ -1278,7 +1278,7 @@ func test():
     public async Task FindReferences_DetectsRead()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
 
         // Act
         var counterRefs = CollectClassMemberReferences(scriptMap, "counter");
@@ -1292,7 +1292,7 @@ func test():
     public async Task FindReferences_DetectsWrite()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
 
         // Act
         var counterRefs = CollectClassMemberReferences(scriptMap, "counter");
@@ -1306,7 +1306,7 @@ func test():
     public async Task FindReferences_DetectsCall()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
 
         // Act
         var helperRefs = CollectClassMemberReferences(scriptMap, "helper");
@@ -1324,7 +1324,7 @@ func test():
     public async Task FindReferences_SameNameAllLevels_CorrectScopeResolution()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(SameNameAllLevelsCode);
+        var scriptMap = CreateScriptMap(SameNameAllLevelsCode);
 
         // Act - find all references to "value" in the class
         var allValueRefs = CollectClassMemberReferences(scriptMap, "value");
@@ -1339,7 +1339,7 @@ func test():
     public async Task FindReferences_GetterSetter_PropertyAccess()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(GetterSetterCode);
+        var scriptMap = CreateScriptMap(GetterSetterCode);
 
         // Act
         var healthRefs = CollectClassMemberReferences(scriptMap, "health");
@@ -1354,7 +1354,7 @@ func test():
     public async Task FindReferences_Lambda_CapturedVariables()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(LambdaCode);
+        var scriptMap = CreateScriptMap(LambdaCode);
 
         // Act
         var multiplierRefs = CollectClassMemberReferences(scriptMap, "multiplier");
@@ -1367,7 +1367,7 @@ func test():
     public async Task FindReferences_AnnotatedVariables()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(AnnotationCode);
+        var scriptMap = CreateScriptMap(AnnotationCode);
 
         // Act
         var speedRefs = CollectClassMemberReferences(scriptMap, "speed");
@@ -1382,7 +1382,7 @@ func test():
     public async Task FindReferences_StringInterpolation()
     {
         // Arrange
-        var scriptMap = await CreateScriptMap(StringInterpolationCode);
+        var scriptMap = CreateScriptMap(StringInterpolationCode);
 
         // Act
         var nameRefs = CollectClassMemberReferences(scriptMap, "name");

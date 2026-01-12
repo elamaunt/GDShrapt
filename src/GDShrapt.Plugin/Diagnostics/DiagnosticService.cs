@@ -18,7 +18,7 @@ internal class DiagnosticService : IDisposable
     private readonly GDConfigManager _configManager;
     private readonly CacheManager? _cacheManager;
 
-    private readonly ConcurrentDictionary<ScriptReference, IReadOnlyList<Diagnostic>> _diagnostics = new();
+    private readonly ConcurrentDictionary<GDPluginScriptReference, IReadOnlyList<Diagnostic>> _diagnostics = new();
     private readonly SemaphoreSlim _analysisLock = new(1, 1);
 
     private bool _disposedValue;
@@ -49,7 +49,7 @@ internal class DiagnosticService : IDisposable
     /// <summary>
     /// Gets diagnostics for a specific script.
     /// </summary>
-    public IReadOnlyList<Diagnostic> GetDiagnostics(ScriptReference script)
+    public IReadOnlyList<Diagnostic> GetDiagnostics(GDPluginScriptReference script)
     {
         if (_diagnostics.TryGetValue(script, out var diagnostics))
         {
@@ -87,7 +87,7 @@ internal class DiagnosticService : IDisposable
     /// <summary>
     /// Gets a summary for a specific script.
     /// </summary>
-    public DiagnosticSummary GetScriptSummary(ScriptReference script)
+    public DiagnosticSummary GetScriptSummary(GDPluginScriptReference script)
     {
         var diagnostics = GetDiagnostics(script);
 
@@ -105,8 +105,10 @@ internal class DiagnosticService : IDisposable
     /// Analyzes a single script and updates diagnostics.
     /// Uses GDDiagnosticsService from Semantics kernel for unified diagnostics.
     /// </summary>
-    public async Task AnalyzeScriptAsync(GDScriptMap scriptMap, CancellationToken cancellationToken = default)
+    public async Task AnalyzeScriptAsync(GDScriptMapUIBinding binding, CancellationToken cancellationToken = default)
     {
+        var scriptMap = binding.ScriptMap;
+
         if (!_configManager.Config.Linting.Enabled)
         {
             ClearDiagnostics(scriptMap.Reference);
@@ -117,7 +119,7 @@ internal class DiagnosticService : IDisposable
         {
             await _analysisLock.WaitAsync(cancellationToken);
 
-            var content = await GetScriptContent(scriptMap);
+            var content = await GetScriptContent(binding);
             if (string.IsNullOrEmpty(content))
             {
                 ClearDiagnostics(scriptMap.Reference);
@@ -135,7 +137,7 @@ internal class DiagnosticService : IDisposable
             }
 
             // Wait for script to be parsed
-            await scriptMap.GetOrWaitAnalyzer();
+            await binding.GetOrWaitAnalyzer();
 
             if (scriptMap.Class == null)
             {
@@ -191,13 +193,13 @@ internal class DiagnosticService : IDisposable
 
         try
         {
-            var scripts = _projectMap.Scripts.ToList();
+            var bindings = _projectMap.Bindings.ToList();
 
-            foreach (var script in scripts)
+            foreach (var binding in bindings)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await AnalyzeScriptAsync(script, cancellationToken);
+                await AnalyzeScriptAsync(binding, cancellationToken);
                 filesAnalyzed++;
             }
 
@@ -226,7 +228,7 @@ internal class DiagnosticService : IDisposable
     /// <summary>
     /// Clears diagnostics for a script.
     /// </summary>
-    public void ClearDiagnostics(ScriptReference script)
+    public void ClearDiagnostics(GDPluginScriptReference script)
     {
         if (_diagnostics.TryRemove(script, out _))
         {
@@ -245,8 +247,9 @@ internal class DiagnosticService : IDisposable
     /// <summary>
     /// Applies all available formatting fixes to a script.
     /// </summary>
-    public async Task<string?> ApplyFormattingFixesAsync(GDScriptMap scriptMap)
+    public async Task<string?> ApplyFormattingFixesAsync(GDScriptMapUIBinding binding)
     {
+        var scriptMap = binding.ScriptMap;
         var diagnostics = GetDiagnostics(scriptMap.Reference);
         var formattingDiags = diagnostics
             .Where(d => d.Category == GDDiagnosticCategory.Formatting && d.Fixes.Count > 0)
@@ -255,7 +258,7 @@ internal class DiagnosticService : IDisposable
         if (formattingDiags.Count == 0)
             return null;
 
-        var content = await GetScriptContent(scriptMap);
+        var content = await GetScriptContent(binding);
         if (string.IsNullOrEmpty(content))
             return null;
 
@@ -278,12 +281,13 @@ internal class DiagnosticService : IDisposable
         return content;
     }
 
-    private async Task<string?> GetScriptContent(GDScriptMap scriptMap)
+    private async Task<string?> GetScriptContent(GDScriptMapUIBinding binding)
     {
+        var scriptMap = binding.ScriptMap;
         try
         {
             // Wait for script to be parsed
-            await scriptMap.GetOrWaitAnalyzer();
+            await binding.GetOrWaitAnalyzer();
 
             // Read current content from disk
             if (System.IO.File.Exists(scriptMap.Reference.FullPath))
@@ -307,7 +311,7 @@ internal class DiagnosticService : IDisposable
         return Convert.ToBase64String(hash);
     }
 
-    private void NotifyDiagnosticsChanged(ScriptReference script, IReadOnlyList<Diagnostic> diagnostics)
+    private void NotifyDiagnosticsChanged(GDPluginScriptReference script, IReadOnlyList<Diagnostic> diagnostics)
     {
         OnDiagnosticsChanged?.Invoke(new DiagnosticsChangedEventArgs
         {

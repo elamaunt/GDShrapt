@@ -67,11 +67,11 @@ func test_loops():
 
     #region Helper Methods
 
-    private async Task<GDScriptMap> CreateScriptMap(string code)
+    private GDScriptMap CreateScriptMap(string code)
     {
-        var reference = new ScriptReference("test.gd");
+        var reference = new GDPluginScriptReference("test.gd");
         var map = new GDScriptMap(reference);
-        await map.Reload(code);
+        map.Reload(code);
         return map;
     }
 
@@ -128,7 +128,7 @@ func test_loops():
     [TestMethod]
     public async Task InvertCondition_IsAvailable_OnIfStatement_ReturnsTrue()
     {
-        var scriptMap = await CreateScriptMap(ConditionCode);
+        var scriptMap = CreateScriptMap(ConditionCode);
         var action = new InvertConditionAction();
 
         // Line with "if x == y:"
@@ -144,7 +144,7 @@ func test_loops():
     [TestMethod]
     public async Task InvertCondition_IsAvailable_OutsideCondition_ReturnsFalse()
     {
-        var scriptMap = await CreateScriptMap(SimpleClassCode);
+        var scriptMap = CreateScriptMap(SimpleClassCode);
         var action = new InvertConditionAction();
 
         // Line with variable declaration (no if statement)
@@ -160,7 +160,7 @@ func test_loops():
     [TestMethod]
     public async Task ConvertForToWhile_IsAvailable_OnForLoop_ReturnsTrue()
     {
-        var scriptMap = await CreateScriptMap(ForLoopCode);
+        var scriptMap = CreateScriptMap(ForLoopCode);
         var action = new ConvertForToWhileAction();
 
         Assert.AreEqual("convert_for_to_while", action.Id);
@@ -171,7 +171,7 @@ func test_loops():
     [TestMethod]
     public async Task ConvertForToWhile_IsAvailable_OutsideForLoop_ReturnsFalse()
     {
-        var scriptMap = await CreateScriptMap(SimpleClassCode);
+        var scriptMap = CreateScriptMap(SimpleClassCode);
         var action = new ConvertForToWhileAction();
 
         // Line with variable declaration (no for loop)
@@ -199,7 +199,7 @@ func test_loops():
     [TestMethod]
     public async Task ExtractVariable_IsAvailable_WithoutMethod_ReturnsFalse()
     {
-        var scriptMap = await CreateScriptMap(SimpleClassCode);
+        var scriptMap = CreateScriptMap(SimpleClassCode);
         var action = new ExtractVariableAction();
 
         // Class-level variable (not inside method)
@@ -226,7 +226,7 @@ func test_loops():
     [TestMethod]
     public async Task SurroundWithIf_IsAvailable_WithoutMethod_ReturnsFalse()
     {
-        var scriptMap = await CreateScriptMap(SimpleClassCode);
+        var scriptMap = CreateScriptMap(SimpleClassCode);
         var action = new SurroundWithIfAction();
 
         // Class-level (not inside method)
@@ -252,7 +252,7 @@ func test_loops():
     [TestMethod]
     public async Task AddTypeAnnotation_IsAvailable_OnTypedVariable_ReturnsFalse()
     {
-        var scriptMap = await CreateScriptMap(SimpleClassCode);
+        var scriptMap = CreateScriptMap(SimpleClassCode);
         var action = new AddTypeAnnotationAction();
 
         // Variable already has type annotation (speed: float)

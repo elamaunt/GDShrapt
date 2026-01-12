@@ -12,16 +12,21 @@ namespace GDShrapt.Plugin;
 
 internal class GDProjectMap : IDisposable, IGDScriptProvider
     {
-        readonly ConcurrentDictionary<ScriptReference, GDScriptMap> _maps = new ConcurrentDictionary<ScriptReference, GDScriptMap>();
-        FileSystemWatcher _scriptsWatcher;
+        readonly ConcurrentDictionary<GDPluginScriptReference, GDScriptMapUIBinding> _bindings = new ConcurrentDictionary<GDPluginScriptReference, GDScriptMapUIBinding>();
+        FileSystemWatcher? _scriptsWatcher;
         bool _disposedValue;
-        GDSceneTypesProvider _sceneTypesProvider;
+        GDSceneTypesProvider? _sceneTypesProvider;
 
-        public GDScriptMap GetScriptMap(string fullPath) => _maps.GetOrDefault(new ScriptReference(fullPath));
+        public GDScriptMap? GetScriptMap(string fullPath) => _bindings.GetOrDefault(new GDPluginScriptReference(fullPath))?.ScriptMap;
 
-        public GDScriptMap GetScriptMap(ScriptReference reference) => _maps.GetOrDefault(reference);
+        public GDScriptMap? GetScriptMap(GDPluginScriptReference reference) => _bindings.GetOrDefault(reference)?.ScriptMap;
 
-        public IEnumerable<GDScriptMap> Scripts => _maps.Values;
+        public GDScriptMapUIBinding? GetBinding(string fullPath) => _bindings.GetOrDefault(new GDPluginScriptReference(fullPath));
+
+        public GDScriptMapUIBinding? GetBinding(GDPluginScriptReference reference) => _bindings.GetOrDefault(reference);
+
+        public IEnumerable<GDScriptMap> Scripts => _bindings.Values.Select(b => b.ScriptMap);
+        public IEnumerable<GDScriptMapUIBinding> Bindings => _bindings.Values;
         public string ProjectPath => ProjectSettings.GlobalizePath("res://");
 
         /// <summary>
@@ -53,7 +58,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             LoadScripts(projectPath);
             WatchScripts(projectPath);
 
-            Logger.Info($"Project loaded: {_maps.Count} scripts");
+            Logger.Info($"Project loaded: {_bindings.Count} scripts");
         }
 
         public GDProjectMap(params string[] contents)
@@ -62,9 +67,10 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
 
             for (int i = 0; i < contents.Length; i++)
             {
-                var reference = new ScriptReference(i.ToString());
+                var reference = new GDPluginScriptReference(i.ToString());
                 var map = new GDScriptMap(this, reference);
-                _maps.TryAdd(reference, map);
+                var binding = new GDScriptMapUIBinding(map);
+                _bindings.TryAdd(reference, binding);
                 map.Reload(contents[i]);
             }
 
@@ -81,9 +87,10 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
 
                 Logger.Debug($"Loading script '{System.IO.Path.GetFileName(scriptFile)}'");
 
-                var reference = new ScriptReference(scriptFile);
+                var reference = new GDPluginScriptReference(scriptFile);
                 var map = new GDScriptMap(this, reference);
-                _maps.TryAdd(reference, map);
+                var binding = new GDScriptMapUIBinding(map);
+                _bindings.TryAdd(reference, binding);
                 map.Reload();
             }
         }
@@ -106,7 +113,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
         private void OnDeleted(object sender, FileSystemEventArgs e)
         {
             Logger.Debug($"Script deleted: {e.Name}");
-            _maps.TryRemove(new ScriptReference(e.Name), out var map);
+            _bindings.TryRemove(new GDPluginScriptReference(e.Name), out _);
         }
 
         private void OnChanged(object sender, FileSystemEventArgs e)
@@ -118,24 +125,25 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
 
             if (!System.IO.File.Exists(e.Name))
             {
-                _maps.TryRemove(new ScriptReference(e.Name), out var removedMap);
+                _bindings.TryRemove(new GDPluginScriptReference(e.Name), out _);
                 return;
             }
 
-            var reference = new ScriptReference(e.Name);
-            if (_maps.TryGetValue(reference, out var map))
+            var reference = new GDPluginScriptReference(e.Name);
+            if (_bindings.TryGetValue(reference, out var binding))
             {
-                map.Reload();
+                binding.ScriptMap.Reload();
             }
             else
             {
                 var newMap = new GDScriptMap(this, reference);
-                _maps[reference] = newMap;
+                var newBinding = new GDScriptMapUIBinding(newMap);
+                _bindings[reference] = newBinding;
                 newMap.Reload();
             }
         }
 
-        internal CodePointer FindStaticDeclarationIdentifier(string name)
+        internal GDCodePointer? FindStaticDeclarationIdentifier(string name)
         {
             Logger.Debug($"FindStaticDeclarationIdentifier: {name}");
 
@@ -152,7 +160,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
                     if (symbol != null && symbol.IsStatic)
                     {
                         var identifier = (symbol.Declaration as GDIdentifiableClassMember)?.Identifier;
-                        return new CodePointer()
+                        return new GDCodePointer()
                         {
                             ScriptReference = scriptMap.Reference,
                             DeclarationIdentifier = identifier
@@ -166,7 +174,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             {
                 if (scriptMap.TypeName == name)
                 {
-                    return new CodePointer()
+                    return new GDCodePointer()
                     {
                         ScriptReference = scriptMap.Reference,
                         DeclarationIdentifier = scriptMap.Class?.ClassName?.Identifier
@@ -182,9 +190,10 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
         private void OnCreated(object sender, FileSystemEventArgs e)
         {
             Logger.Debug($"Script created: {e.Name}");
-            var reference = new ScriptReference(e.Name);
+            var reference = new GDPluginScriptReference(e.Name);
             var newMap = new GDScriptMap(this, reference);
-            _maps.TryAdd(reference, newMap);
+            var newBinding = new GDScriptMapUIBinding(newMap);
+            _bindings.TryAdd(reference, newBinding);
             newMap.Reload();
         }
 
@@ -192,43 +201,49 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
         {
             Logger.Debug($"Script renamed: {e.OldName} -> {e.Name}");
 
-            var oldReference = new ScriptReference(e.OldName);
+            var oldReference = new GDPluginScriptReference(e.OldName);
 
-            if (_maps.TryGetValue(oldReference, out var map))
+            if (_bindings.TryGetValue(oldReference, out var binding))
             {
-                _maps.TryRemove(oldReference, out var removedMap);
-                var newReference = new ScriptReference(e.Name);
-                _maps.TryAdd(newReference, map);
-                map.ChangeReference(newReference);
+                _bindings.TryRemove(oldReference, out _);
+                var newReference = new GDPluginScriptReference(e.Name);
+                _bindings.TryAdd(newReference, binding);
+                binding.ScriptMap.ChangeReference(newReference);
             }
             else
             {
-                var newReference = new ScriptReference(e.Name);
-                map = new GDScriptMap(this, newReference);
-                _maps.TryAdd(newReference, map);
-                map.Reload();
+                var newReference = new GDPluginScriptReference(e.Name);
+                var newMap = new GDScriptMap(this, newReference);
+                var newBinding = new GDScriptMapUIBinding(newMap);
+                _bindings.TryAdd(newReference, newBinding);
+                newMap.Reload();
             }
         }
 
-        public GDScriptMap GetScriptMapByTypeName(string type) => _maps.FirstOrDefault(x => x.Value.TypeName == type).Value;
+        public GDScriptMap? GetScriptMapByTypeName(string type) => _bindings.FirstOrDefault(x => x.Value.ScriptMap.TypeName == type).Value?.ScriptMap;
+
+        public GDScriptMapUIBinding? GetBindingByTypeName(string type) => _bindings.FirstOrDefault(x => x.Value.ScriptMap.TypeName == type).Value;
 
         #region IGDScriptProvider Implementation
 
-        IEnumerable<IGDScriptInfo> IGDScriptProvider.Scripts =>
-            _maps.Values.Select(m => new GDScriptMapAdapter(m));
+        IEnumerable<IGDScriptInfo> IGDScriptProvider.Scripts => Scripts;
 
-        IGDScriptInfo? IGDScriptProvider.GetScriptByTypeName(string typeName) =>
-            GetScriptMapByTypeName(typeName) is { } map ? new GDScriptMapAdapter(map) : null;
+        IGDScriptInfo? IGDScriptProvider.GetScriptByTypeName(string typeName) => GetScriptMapByTypeName(typeName);
 
-        IGDScriptInfo? IGDScriptProvider.GetScriptByPath(string path) =>
-            GetScriptMap(path) is { } map ? new GDScriptMapAdapter(map) : null;
+        IGDScriptInfo? IGDScriptProvider.GetScriptByPath(string path) => GetScriptMap(path);
 
         #endregion
 
-        public GDScriptMap GetScriptMapByResourcePath(string resourcePath)
+        public GDScriptMap? GetScriptMapByResourcePath(string resourcePath)
         {
             var globalPath = ProjectSettings.GlobalizePath(resourcePath);
-            return GetScriptMap(new ScriptReference(globalPath));
+            return GetScriptMap(new GDPluginScriptReference(globalPath));
+        }
+
+        public GDScriptMapUIBinding? GetBindingByResourcePath(string resourcePath)
+        {
+            var globalPath = ProjectSettings.GlobalizePath(resourcePath);
+            return GetBinding(new GDPluginScriptReference(globalPath));
         }
 
         /// <summary>
@@ -263,10 +278,16 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
                 SemanticLoggerAdapter.Instance);
         }
 
-        public GDScriptMap GetScriptMapByClass(GDClassDeclaration classDecl)
+        public GDScriptMap? GetScriptMapByClass(GDClassDeclaration classDecl)
         {
             if (classDecl == null) return null;
-            return _maps.FirstOrDefault(x => x.Value.Class == classDecl).Value;
+            return _bindings.FirstOrDefault(x => x.Value.ScriptMap.Class == classDecl).Value?.ScriptMap;
+        }
+
+        public GDScriptMapUIBinding? GetBindingByClass(GDClassDeclaration classDecl)
+        {
+            if (classDecl == null) return null;
+            return _bindings.FirstOrDefault(x => x.Value.ScriptMap.Class == classDecl).Value;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -274,7 +295,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             if (!_disposedValue)
             {
                 if (disposing)
-                    _maps.Clear();
+                    _bindings.Clear();
 
                 _scriptsWatcher?.Dispose();
                 _scriptsWatcher = null;

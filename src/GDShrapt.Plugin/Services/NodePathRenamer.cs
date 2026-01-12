@@ -33,7 +33,7 @@ internal class NodePathRenamer
             var refs = group.ToList();
             var firstRef = refs.First();
 
-            if (firstRef.Type == NodePathReference.RefType.GDScript)
+            if (firstRef.Type == GDNodePathReference.RefType.GDScript)
             {
                 // For GDScript, we modify the AST directly (already done via PathSpecifier)
                 // The caller is responsible for saving the modified script
@@ -50,7 +50,7 @@ internal class NodePathRenamer
     /// <summary>
     /// Renames node references in GDScript by modifying the AST.
     /// </summary>
-    private void RenameInGDScriptReferences(List<NodePathReference> references, string newName)
+    private void RenameInGDScriptReferences(List<GDNodePathReference> references, string newName)
     {
         foreach (var reference in references)
         {
@@ -139,13 +139,13 @@ internal class NodePathRenamer
     /// <summary>
     /// Gets the set of GDScript files that were modified and need to be saved.
     /// </summary>
-    public HashSet<GDScriptMap> GetModifiedScripts(IEnumerable<NodePathReference> references)
+    public HashSet<GDScriptMap> GetModifiedScripts(IEnumerable<GDNodePathReference> references)
     {
         var scripts = new HashSet<GDScriptMap>();
 
         foreach (var reference in references)
         {
-            if (reference.Type == NodePathReference.RefType.GDScript && reference.ScriptMap != null)
+            if (reference.Type == GDNodePathReference.RefType.GDScript && reference.ScriptMap != null)
             {
                 scripts.Add(reference.ScriptMap);
             }

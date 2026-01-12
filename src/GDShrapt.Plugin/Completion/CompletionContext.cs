@@ -396,9 +396,8 @@ internal class CompletionContextBuilder
 
             if (parsedExpr != null)
             {
-                // Use adapter to convert GDScriptMap to IGDScriptInfo
-                var scriptInfo = new GDScriptMapAdapter(scriptMap);
-                var result = _typeResolver.ResolveExpressionType(parsedExpr, scriptInfo);
+                // GDScriptMap implements IGDScriptInfo directly
+                var result = _typeResolver.ResolveExpressionType(parsedExpr, scriptMap);
                 return result.IsResolved ? result.TypeName : null;
             }
         }

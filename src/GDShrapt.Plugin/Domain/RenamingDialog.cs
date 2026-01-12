@@ -35,7 +35,7 @@ internal partial class RenamingDialog : Window
     private Button _okButton;
 
     private TaskCompletionSource<RenamingParameters?> _showCompletion;
-    private LinkedList<MemberReference>? _references;
+    private LinkedList<GDMemberReference>? _references;
     private readonly List<ReferenceItem> _referenceItems = new();
     private readonly Dictionary<TreeItem, ReferenceItem> _treeItemToReference = new();
 
@@ -323,7 +323,7 @@ internal partial class RenamingDialog : Window
         return _showCompletion.Task;
     }
 
-    public void SetReferencesList(LinkedList<MemberReference>? references)
+    public void SetReferencesList(LinkedList<GDMemberReference>? references)
     {
         _references = references;
         _referenceItems.Clear();
@@ -343,10 +343,10 @@ internal partial class RenamingDialog : Window
             return;
         }
 
-        // Convert MemberReference to ReferenceItem with highlight info
+        // Convert GDMemberReference to ReferenceItem with highlight info
         foreach (var memberRef in references)
         {
-            var refItem = ReferenceItem.FromMemberReference(memberRef);
+            var refItem = ReferenceItem.FromGDMemberReference(memberRef);
             // Calculate highlight position
             CalculateHighlightPosition(refItem, memberRef.Identifier?.Sequence);
             _referenceItems.Add(refItem);
@@ -419,7 +419,7 @@ internal partial class RenamingDialog : Window
     /// <summary>
     /// Gets the list of selected references for renaming.
     /// </summary>
-    public IEnumerable<MemberReference> GetSelectedReferences()
+    public IEnumerable<GDMemberReference> GetSelectedReferences()
     {
         if (_references == null)
             yield break;
@@ -429,7 +429,7 @@ internal partial class RenamingDialog : Window
         // Collect selected items from tree
         CollectSelectedItems(_referencesTree?.GetRoot(), selectedItems);
 
-        // Match back to MemberReference
+        // Match back to GDMemberReference
         foreach (var memberRef in _references)
         {
             var matchingItem = _referenceItems.FirstOrDefault(r =>
@@ -484,10 +484,10 @@ internal partial class RenamingDialog : Window
     /// </summary>
     private class ReferenceCell
     {
-        public MemberReference Reference { get; }
+        public GDMemberReference Reference { get; }
         public bool IsSelected { get; private set; }
 
-        public ReferenceCell(MemberReference reference)
+        public ReferenceCell(GDMemberReference reference)
         {
             Reference = reference;
             IsSelected = true;

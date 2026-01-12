@@ -1,268 +1,153 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
-internal class GDScriptMap
+/// <summary>
+/// Represents a GDScript file with its parsed AST and analysis information.
+/// This is the data-only class implementing IGDScriptInfo.
+/// UI-specific state (TabController, async waiters) is in GDScriptMapUIBinding.
+/// </summary>
+internal class GDScriptMap : IGDScriptInfo
 {
-    bool _referencesBuilt;
+    private static readonly GDScriptReader Reader = new GDScriptReader();
 
-    ScriptReference _reference;
-
-    public GDClassDeclaration Class { get; private set; }
-    static GDScriptReader Reader { get; } = new GDScriptReader();
-
-    public ScriptReference Reference => _reference;
+    private GDPluginScriptReference _reference;
+    private bool _referencesBuilt;
 
     /// <summary>
-    /// Script analyzer using GDShrapt.Validator.
+    /// Creates a script map with owner and reference.
     /// </summary>
-    public GDScriptAnalyzer Analyzer { get; private set; }
-
-    TaskCompletionSource<GDScriptAnalyzer> _analyzerCompletion = new TaskCompletionSource<GDScriptAnalyzer>();
-    TaskCompletionSource<GDScriptAnalyzer> _reloadCompletion = new TaskCompletionSource<GDScriptAnalyzer>();
-
-    public bool IsGlobal { get; private set; }
-    public string TypeName { get; private set; }
-
-    readonly Dictionary<string, LinkedList<MemberReference>> _memberReferences = new Dictionary<string, LinkedList<MemberReference>>();
-
-    public bool WasReadError { get; private set; }
-
-    readonly WeakReference<TabController> _tabWeakRef = new WeakReference<TabController>(null);
-    public GDProjectMap Owner { get; }
-    public TabController TabController
-    {
-        get => _tabWeakRef.GetOrDefault();
-        set => _tabWeakRef.SetTarget(value);
-    }
-
-    public GDScriptMap(GDProjectMap owner, ScriptReference reference)
+    public GDScriptMap(GDProjectMap? owner, GDPluginScriptReference reference)
     {
         Owner = owner;
-        _reference = reference;
+        _reference = reference ?? throw new ArgumentNullException(nameof(reference));
     }
 
-    public GDScriptMap(ScriptReference reference)
+    /// <summary>
+    /// Creates a standalone script map without owner.
+    /// </summary>
+    public GDScriptMap(GDPluginScriptReference reference)
     {
-        _reference = reference;
+        _reference = reference ?? throw new ArgumentNullException(nameof(reference));
     }
 
-    public async Task Reload(string editorContent = null)
+    /// <summary>
+    /// The project map that owns this script (if any).
+    /// </summary>
+    public GDProjectMap? Owner { get; }
+
+    /// <summary>
+    /// Reference to the script file.
+    /// </summary>
+    public GDPluginScriptReference Reference => _reference;
+
+    /// <summary>
+    /// The parsed class declaration.
+    /// </summary>
+    public GDClassDeclaration? Class { get; private set; }
+
+    /// <summary>
+    /// Script analyzer for type inference and reference collection.
+    /// </summary>
+    public GDScriptAnalyzer? Analyzer { get; private set; }
+
+    /// <summary>
+    /// Whether this script is global (has class_name declaration).
+    /// </summary>
+    public bool IsGlobal { get; private set; }
+
+    /// <summary>
+    /// The type name (from class_name or filename).
+    /// </summary>
+    public string? TypeName { get; private set; }
+
+    /// <summary>
+    /// Whether a read error occurred during parsing.
+    /// </summary>
+    public bool WasReadError { get; private set; }
+
+    // IGDScriptInfo implementation
+    string? IGDScriptInfo.FullPath => _reference.FullPath;
+    string? IGDScriptInfo.TypeName => TypeName;
+    GDClassDeclaration? IGDScriptInfo.Class => Class;
+    bool IGDScriptInfo.IsGlobal => IsGlobal;
+
+    /// <summary>
+    /// Reloads the script from file or editor content.
+    /// This is the synchronous parsing part - async coordination is handled by UIBinding.
+    /// </summary>
+    /// <param name="editorContent">Optional editor content to parse instead of file.</param>
+    /// <returns>True if parsing succeeded, false otherwise.</returns>
+    public bool Reload(string? editorContent = null)
     {
         WasReadError = false;
-
-        var newReloadWaiter = new TaskCompletionSource<GDScriptAnalyzer>();
-        var oldReloadWaiter = Interlocked.Exchange(ref _reloadCompletion, newReloadWaiter);
-        newReloadWaiter.ConnectWith(oldReloadWaiter);
-
-        var newAnalyzerWaiter = new TaskCompletionSource<GDScriptAnalyzer>();
-        var oldAnalyzerWaiter = Interlocked.Exchange(ref _analyzerCompletion, newAnalyzerWaiter);
-        newAnalyzerWaiter.ConnectWith(oldAnalyzerWaiter);
+        _referencesBuilt = false;
+        Analyzer = null;
 
         try
         {
-            _referencesBuilt = false;
-            _memberReferences.Clear();
-
             Logger.Debug($"Parsing: {Path.GetFileName(_reference.FullPath)}");
 
             if (editorContent != null)
-                @Class = Reader.ParseFileContent(editorContent);
+                Class = Reader.ParseFileContent(editorContent);
             else
-                @Class = Reader.ParseFile(_reference.FullPath);
+                Class = Reader.ParseFile(_reference.FullPath);
 
-            TypeName = @Class?.ClassName?.Identifier?.Sequence ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
-            IsGlobal = (@Class?.ClassName?.Identifier?.Sequence) != null;
+            TypeName = Class?.ClassName?.Identifier?.Sequence
+                ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
+            IsGlobal = Class?.ClassName?.Identifier?.Sequence != null;
 
-            await BuildReferencesIfNeeded(newAnalyzerWaiter);
-            newReloadWaiter.TrySetResult(Analyzer);
             Logger.Debug($"Loaded: {TypeName}");
-        }
-        catch (OperationCanceledException)
-        {
-            newReloadWaiter.TrySetCanceled();
-            newAnalyzerWaiter.TrySetCanceled();
-            Logger.Debug($"Cancelled: {Path.GetFileName(_reference.FullPath)}");
+            return true;
         }
         catch (Exception ex)
         {
             WasReadError = true;
-            newReloadWaiter.TrySetException(ex);
-            newAnalyzerWaiter.TrySetException(ex);
             Logger.Warning($"Parse error in {Path.GetFileName(_reference.FullPath)}: {ex.Message}");
+            return false;
         }
     }
 
     /// <summary>
-    /// Waits for the analyzer to be ready.
+    /// Builds analyzer if not already built.
     /// </summary>
-    internal Task<GDScriptAnalyzer> GetOrWaitAnalyzer()
-    {
-        return _analyzerCompletion.Task;
-    }
-
-    /// <summary>
-    /// Waits for a full reload to complete.
-    /// </summary>
-    internal Task<GDScriptAnalyzer> GetOrWaitFullReload()
-    {
-        return _reloadCompletion.Task;
-    }
-
-    internal void ChangeReference(ScriptReference newReference)
-    {
-        _reference = newReference;
-    }
-
-    internal IEnumerable<MemberReference> GetReferencesToTypeMember(string type, string member)
-    {
-        if (_memberReferences.TryGetValue(type, out LinkedList<MemberReference> references))
-            return references;
-        else
-            return null;
-    }
-
-    private Task BuildReferencesIfNeeded(TaskCompletionSource<GDScriptAnalyzer> analyzerCompletion)
+    /// <returns>The analyzer, or null if build failed.</returns>
+    public GDScriptAnalyzer? BuildAnalyzerIfNeeded()
     {
         if (_referencesBuilt && Analyzer != null)
-        {
-            analyzerCompletion.TrySetResult(Analyzer);
-            return Task.CompletedTask;
-        }
+            return Analyzer;
 
         Analyzer = null;
 
-        // Build analyzer using GDShrapt.Validator
         try
         {
             var analyzer = new GDScriptAnalyzer(this);
             var runtimeProvider = Owner?.CreateRuntimeProvider();
             analyzer.Analyze(runtimeProvider);
             Analyzer = analyzer;
-            analyzerCompletion.TrySetResult(analyzer);
         }
         catch (Exception ex)
         {
             Logger.Warning($"Analysis failed: {ex.Message}");
-            analyzerCompletion.TrySetException(ex);
         }
 
         _referencesBuilt = true;
-
-        return Task.CompletedTask;
+        return Analyzer;
     }
 
-    private void HandleMembers(GDClassMembersList members)
+    /// <summary>
+    /// Changes the reference to this script.
+    /// </summary>
+    internal void ChangeReference(GDPluginScriptReference newReference)
     {
-        foreach (var member in members)
-        {
-            if (member is GDVariableDeclaration varDec)
-            {
-                HandleVariable(varDec);
-                continue;
-            }
-
-            if (member is GDEnumDeclaration enumDec)
-            {
-                HandleEnum(enumDec);
-                continue;
-            }
-
-            if (member is GDMethodDeclaration methodDec)
-            {
-                HandleMethod(methodDec);
-                continue;
-            }
-
-            if (member is GDInnerClassDeclaration classDec)
-            {
-                HandleMembers(classDec.Members);
-                continue;
-            }
-        }
+        _reference = newReference ?? throw new ArgumentNullException(nameof(newReference));
     }
 
-    private void HandleVariable(GDVariableDeclaration varDec)
+    public override string ToString()
     {
-        HandleExpression(varDec.Initializer);
-
-        // Handle accessor method identifiers (get/set)
-        if (varDec.FirstAccessorDeclarationNode is GDGetAccessorMethodDeclaration getMethod)
-            HandleLocalIdentifierReference(getMethod.Identifier);
-        if (varDec.FirstAccessorDeclarationNode is GDSetAccessorMethodDeclaration setMethod)
-            HandleLocalIdentifierReference(setMethod.Identifier);
-        if (varDec.SecondAccessorDeclarationNode is GDGetAccessorMethodDeclaration getMethod2)
-            HandleLocalIdentifierReference(getMethod2.Identifier);
-        if (varDec.SecondAccessorDeclarationNode is GDSetAccessorMethodDeclaration setMethod2)
-            HandleLocalIdentifierReference(setMethod2.Identifier);
-    }
-
-    private void HandleLocalIdentifierReference(GDIdentifier identifier)
-    {
-        if (identifier == null)
-            return;
-
-        var member = Class.Members
-            .OfType<GDIdentifiableClassMember>()
-            .FirstOrDefault(x => x.Identifier == identifier);
-
-        if (member == null)
-            return;
-
-        _memberReferences.GetOrAdd(TypeName).AddLast(new MemberReference()
-        {
-            Script = this,
-            Identifier = identifier,
-            Member = member
-        });
-    }
-
-    private void HandleEnum(GDEnumDeclaration enumDec)
-    {
-        for (int i = 0; i < enumDec.Values.Count; i++)
-        {
-            var v = enumDec.Values[i];
-            HandleExpression(v.Value);
-        }
-    }
-
-    private void HandleMethod(GDMethodDeclaration methodDec)
-    {
-        for (int i = 0; i < methodDec.Parameters.Count; i++)
-        {
-            var par = methodDec.Parameters[i];
-            HandleExpression(par.DefaultValue);
-        }
-
-        for (int i = 0; i < methodDec.BaseCallParameters.Count; i++)
-        {
-            var par = methodDec.BaseCallParameters[i];
-
-            HandleExpression(par);
-        }
-
-        for (int i = 0; i < methodDec.Statements.Count; i++)
-        {
-            var statement = methodDec.Statements[i];
-            HandleStatement(statement);
-        }
-    }
-
-    private void HandleStatement(GDStatement statement)
-    {
-        if (statement == null)
-            return;
-    }
-
-    private void HandleExpression(GDExpression expr)
-    {
-        if (expr == null)
-            return;
+        return $"{TypeName} ({_reference.FullPath})";
     }
 }

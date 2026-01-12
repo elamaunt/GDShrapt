@@ -233,7 +233,7 @@ public partial class GDShraptPlugin : EditorPlugin
         foreach (var kvp in _weakTabControllersTable)
         {
             var controller = _weakTabControllersTable.GetValue(kvp, _ => null);
-            if (controller?.ScriptReference?.FullPath == args.Script.FullPath)
+            if (controller?.GDPluginScriptReference?.FullPath == args.Script.FullPath)
             {
                 controller.UpdateDiagnostics(args.Script);
             }
@@ -543,30 +543,38 @@ public partial class GDShraptPlugin : EditorPlugin
         if (script == null)
             return;
 
-        var map = _projectMap.GetScriptMapByResourcePath(script.ResourcePath);
+        var binding = _projectMap.GetBindingByResourcePath(script.ResourcePath);
 
-        if (map != null)
+        if (binding != null)
         {
-            map.TabController = controller;
+            binding.TabController = controller;
 
             // Queue priority analysis for current file
-            _backgroundAnalyzer?.QueueScriptAnalysis(map.Reference, priority: true);
+            _backgroundAnalyzer?.QueueScriptAnalysis(binding.ScriptMap.Reference, priority: true);
         }
 
         controller.SetControlledScript(script);
     }
 
-    internal TabController OpenScript(GDScriptMap map)
+    internal TabController? OpenScript(GDScriptMap map)
     {
         Logger.Debug($"OpenTabForScript '{map.Reference.FullPath}'");
         AttachTabControllersIfNeeded();
 
-        var controller = map.TabController;
+        var binding = _projectMap.GetBinding(map.Reference);
+        if (binding == null)
+        {
+            Logger.Debug("OpenScript: binding not found");
+            return null;
+        }
+
+        var controller = binding.TabController;
 
         if (controller == null || !controller.IsInTree)
         {
             Logger.Debug($"Controller for this Script map is null or not in the tree.");
-            controller = map.TabController = OpenNewScriptTab(map);
+            controller = OpenNewScriptTab(binding);
+            binding.TabController = controller;
         }
 
         SelectTabForController(controller);
@@ -583,14 +591,14 @@ public partial class GDShraptPlugin : EditorPlugin
         _tabContainer.CurrentTab = newIndex;
     }
 
-    internal TabController OpenNewScriptTab(GDScriptMap map)
+    internal TabController? OpenNewScriptTab(GDScriptMapUIBinding binding)
     {
-        Logger.Debug($"OpenNewScript '{map.Reference.FullPath}'");
-        var res = ResourceLoader.Load(map.Reference.FullPath);
+        Logger.Debug($"OpenNewScript '{binding.ScriptMap.Reference.FullPath}'");
+        var res = ResourceLoader.Load(binding.ScriptMap.Reference.FullPath);
         EditorInterface.Singleton.EditResource(res);
         AttachTabControllersIfNeeded();
         UpdateCurrentTabScript();
-        return map.TabController;
+        return binding.TabController;
     }
 
     private void AttachTabControllersIfNeeded()
@@ -1146,7 +1154,7 @@ public partial class GDShraptPlugin : EditorPlugin
     private async System.Threading.Tasks.Task ProcessNodeRename(GDShrapt.Semantics.GDDetectedNodeRename rename)
     {
         // Find all GDScript references to the old name
-        var referenceFinder = new NodePathReferenceFinder(_projectMap, _projectMap.SceneTypesProvider);
+        var referenceFinder = new GDNodePathReferenceFinder(_projectMap, _projectMap.SceneTypesProvider);
         var references = referenceFinder
             .FindGDScriptReferences(rename.OldName)
             .ToList();

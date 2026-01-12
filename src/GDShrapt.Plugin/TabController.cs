@@ -34,7 +34,7 @@ internal partial class TabController : GodotObject
     /// </summary>
     public event Action<string, int>? ReferenceCountClicked;
 
-    public ScriptReference? ScriptReference
+    public GDPluginScriptReference? GDPluginScriptReference
     {
         get
         {
@@ -487,7 +487,7 @@ internal partial class TabController : GodotObject
     /// <summary>
     /// Updates the error lens overlay with diagnostics from DiagnosticService.
     /// </summary>
-    internal void UpdateDiagnostics(ScriptReference script)
+    internal void UpdateDiagnostics(GDPluginScriptReference script)
     {
         if (_errorLensOverlay == null)
             return;
@@ -661,7 +661,7 @@ internal partial class TabController : GodotObject
         if (quickFixHandler == null)
             return false;
 
-        var scriptRef = ScriptReference;
+        var scriptRef = GDPluginScriptReference;
         if (scriptRef == null)
             return false;
 
@@ -717,7 +717,7 @@ internal partial class TabController : GodotObject
             return;
         }
 
-        var scriptRef = ScriptReference;
+        var scriptRef = GDPluginScriptReference;
         if (scriptRef == null)
         {
             Logger.Info("TabController: Cannot show quick fixes - no script reference");
@@ -750,11 +750,11 @@ internal partial class TabController : GodotObject
         // Trigger re-analysis of the script
         if (_script != null)
         {
-            var scriptMap = _plugin.ProjectMap.GetScriptMapByResourcePath(_script.ResourcePath);
-            if (scriptMap != null)
+            var binding = _plugin.ProjectMap.GetBindingByResourcePath(_script.ResourcePath);
+            if (binding != null)
             {
                 // Re-analyze in background
-                _ = _plugin.DiagnosticService?.AnalyzeScriptAsync(scriptMap);
+                _ = _plugin.DiagnosticService?.AnalyzeScriptAsync(binding);
             }
         }
     }

@@ -10,7 +10,7 @@ internal class RenameIdentifierCommand : Command
 {
     RenamingDialog _renamingDialog;
     NodeRenamingDialog _nodeRenamingDialog;
-    NodePathReferenceFinder _referenceFinder;
+    GDNodePathReferenceFinder _referenceFinder;
     NodePathRenamer _renamer;
 
     public RenameIdentifierCommand(GDShraptPlugin plugin)
@@ -194,7 +194,7 @@ internal class RenameIdentifierCommand : Command
                 Logger.Info("Scene types provider not available");
                 return false;
             }
-            _referenceFinder = new NodePathReferenceFinder(Map, sceneProvider);
+            _referenceFinder = new GDNodePathReferenceFinder(Map, sceneProvider);
         }
 
         // Get the current script
@@ -209,7 +209,7 @@ internal class RenameIdentifierCommand : Command
         var scenes = _referenceFinder.GetScenesForScript(scriptMap).ToList();
 
         // Collect all references
-        var allReferences = new List<NodePathReference>();
+        var allReferences = new List<GDNodePathReference>();
 
         // Add GDScript references
         allReferences.AddRange(_referenceFinder.FindGDScriptReferences(nodeName));
@@ -342,10 +342,10 @@ internal class RenameIdentifierCommand : Command
         var scriptMap = Map.GetScriptMapByClass(parentClass);
 
         // Collect all references to this inner class
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
 
         // Add the inner class declaration itself
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Member = innerClass,
@@ -358,7 +358,7 @@ internal class RenameIdentifierCommand : Command
             // Check if parent is a type context
             if (token.Parent is GDSingleTypeNode && token.Sequence == innerClassName && token != identifier)
             {
-                references.AddLast(new MemberReference
+                references.AddLast(new GDMemberReference
                 {
                     Identifier = token,
                     Script = scriptMap
@@ -374,7 +374,7 @@ internal class RenameIdentifierCommand : Command
                 memberOp.CallerExpression is GDIdentifierExpression idExpr &&
                 idExpr.Identifier?.Sequence == innerClassName)
             {
-                references.AddLast(new MemberReference
+                references.AddLast(new GDMemberReference
                 {
                     Identifier = idExpr.Identifier,
                     Script = scriptMap
@@ -434,8 +434,8 @@ internal class RenameIdentifierCommand : Command
         var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
 
         // Collect references - signal parameters typically only have the declaration
-        var references = new LinkedList<MemberReference>();
-        references.AddLast(new MemberReference
+        var references = new LinkedList<GDMemberReference>();
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Script = scriptMap
@@ -456,12 +456,12 @@ internal class RenameIdentifierCommand : Command
         var parameterName = identifier.Sequence;
 
         // Collect all references to this parameter within the method
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
         var classDecl = method.ClassDeclaration as GDClassDeclaration;
         var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
 
         // Add the parameter declaration itself as a reference
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Script = scriptMap
@@ -474,7 +474,7 @@ internal class RenameIdentifierCommand : Command
             {
                 if (usage.Identifier?.Sequence == parameterName)
                 {
-                    references.AddLast(new MemberReference
+                    references.AddLast(new GDMemberReference
                     {
                         Identifier = usage.Identifier,
                         Script = scriptMap
@@ -532,11 +532,11 @@ internal class RenameIdentifierCommand : Command
             return false;
         }
 
-        var allReferences = new LinkedList<MemberReference>();
+        var allReferences = new LinkedList<GDMemberReference>();
 
-        foreach (var scriptMap in Map.Scripts.OrderBy(x => x.TypeName))
+        foreach (var binding in Map.Bindings.OrderBy(x => x.ScriptMap.TypeName))
         {
-            var references = scriptMap.GetReferencesToTypeMember(type, memberName);
+            var references = binding.GetReferencesToTypeMember(type, memberName);
 
             if (references == null)
                 continue;
@@ -612,10 +612,10 @@ internal class RenameIdentifierCommand : Command
         var scriptMap = Map.GetScriptMapByClass(classDecl);
 
         // Collect all references to this enum
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
 
         // Add the enum declaration itself
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Member = enumDeclaration,
@@ -627,7 +627,7 @@ internal class RenameIdentifierCommand : Command
         {
             if (usage.Identifier?.Sequence == enumName)
             {
-                references.AddLast(new MemberReference
+                references.AddLast(new GDMemberReference
                 {
                     Identifier = usage.Identifier,
                     Script = scriptMap
@@ -661,12 +661,12 @@ internal class RenameIdentifierCommand : Command
         var variableName = identifier.Sequence;
 
         // Collect all references to this for loop variable
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
         var classDecl = forStatement.ClassDeclaration as GDClassDeclaration;
         var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
 
         // Add the variable declaration itself as a reference
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Script = scriptMap
@@ -679,7 +679,7 @@ internal class RenameIdentifierCommand : Command
             {
                 if (usage.Identifier?.Sequence == variableName)
                 {
-                    references.AddLast(new MemberReference
+                    references.AddLast(new GDMemberReference
                     {
                         Identifier = usage.Identifier,
                         Script = scriptMap
@@ -717,10 +717,10 @@ internal class RenameIdentifierCommand : Command
         var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
 
         // Collect all references to this match case variable
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
 
         // Add the variable declaration itself
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Script = scriptMap
@@ -738,7 +738,7 @@ internal class RenameIdentifierCommand : Command
                     {
                         if (usage.Identifier?.Sequence == variableName)
                         {
-                            references.AddLast(new MemberReference
+                            references.AddLast(new GDMemberReference
                             {
                                 Identifier = usage.Identifier,
                                 Script = scriptMap
@@ -787,10 +787,10 @@ internal class RenameIdentifierCommand : Command
         var scriptMap = Map.GetScriptMapByClass(classDecl);
 
         // Collect all references to this method
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
 
         // Add the method declaration itself
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Member = method,
@@ -803,7 +803,7 @@ internal class RenameIdentifierCommand : Command
             if (call.CallerExpression is GDIdentifierExpression idExpr &&
                 idExpr.Identifier?.Sequence == methodName)
             {
-                references.AddLast(new MemberReference
+                references.AddLast(new GDMemberReference
                 {
                     Identifier = idExpr.Identifier,
                     Script = scriptMap
@@ -860,14 +860,14 @@ internal class RenameIdentifierCommand : Command
         }
 
         // Collect references from analyzer
-        var memberReferences = new LinkedList<MemberReference>();
+        var memberReferences = new LinkedList<GDMemberReference>();
         var analyzerRefs = scriptMap.Analyzer.GetReferencesTo(symbol);
         foreach (var reference in analyzerRefs)
         {
             var refNode = reference.ReferenceNode;
             if (refNode is GDIdentifierExpression refExpr && refExpr.Identifier != null)
             {
-                memberReferences.AddLast(new MemberReference
+                memberReferences.AddLast(new GDMemberReference
                 {
                     Identifier = refExpr.Identifier,
                     Script = scriptMap
@@ -880,7 +880,7 @@ internal class RenameIdentifierCommand : Command
                 {
                     if (token is GDIdentifier id && id.Sequence == variableName)
                     {
-                        memberReferences.AddLast(new MemberReference
+                        memberReferences.AddLast(new GDMemberReference
                         {
                             Identifier = id,
                             Script = scriptMap
@@ -894,7 +894,7 @@ internal class RenameIdentifierCommand : Command
         // Add the declaration if it exists
         if (symbol.Declaration is GDVariableDeclaration varDecl && varDecl.Identifier != null)
         {
-            memberReferences.AddFirst(new MemberReference
+            memberReferences.AddFirst(new GDMemberReference
             {
                 Identifier = varDecl.Identifier,
                 Member = varDecl,
@@ -947,10 +947,10 @@ internal class RenameIdentifierCommand : Command
         var scriptMap = Map.GetScriptMapByClass(classDecl);
 
         // Collect all references to this class-level variable
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
 
         // Add the variable declaration itself
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Member = variable,
@@ -962,7 +962,7 @@ internal class RenameIdentifierCommand : Command
         {
             if (usage.Identifier?.Sequence == variableName)
             {
-                references.AddLast(new MemberReference
+                references.AddLast(new GDMemberReference
                 {
                     Identifier = usage.Identifier,
                     Script = scriptMap
@@ -1009,12 +1009,12 @@ internal class RenameIdentifierCommand : Command
         }
 
         // Collect all references to this local variable
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
         var classDecl = variableStatement.ClassDeclaration as GDClassDeclaration;
         var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
 
         // Add the variable declaration itself as a reference
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Script = scriptMap
@@ -1038,7 +1038,7 @@ internal class RenameIdentifierCommand : Command
                     {
                         if (usage.Identifier?.Sequence == variableName)
                         {
-                            references.AddLast(new MemberReference
+                            references.AddLast(new GDMemberReference
                             {
                                 Identifier = usage.Identifier,
                                 Script = scriptMap
@@ -1094,10 +1094,10 @@ internal class RenameIdentifierCommand : Command
         var scriptMap = Map.GetScriptMapByClass(classDecl);
 
         // Collect all references to this signal
-        var references = new LinkedList<MemberReference>();
+        var references = new LinkedList<GDMemberReference>();
 
         // Add the signal declaration itself
-        references.AddLast(new MemberReference
+        references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
             Member = signal,
@@ -1112,7 +1112,7 @@ internal class RenameIdentifierCommand : Command
                 memberOp2.CallerExpression is GDIdentifierExpression signalIdExpr &&
                 signalIdExpr.Identifier?.Sequence == signalName)
             {
-                references.AddLast(new MemberReference
+                references.AddLast(new GDMemberReference
                 {
                     Identifier = signalIdExpr.Identifier,
                     Script = scriptMap
@@ -1148,7 +1148,7 @@ internal class RenameIdentifierCommand : Command
         return true;
     }
 
-    private async Task<RenamingParameters?> AskParametersAndPrepareIdentifier(string sequence, LinkedList<MemberReference>? references = null)
+    private async Task<RenamingParameters?> AskParametersAndPrepareIdentifier(string sequence, LinkedList<GDMemberReference>? references = null)
     {
         var parameters = await AskRenamingParameters(sequence, references);
 
@@ -1171,7 +1171,7 @@ internal class RenameIdentifierCommand : Command
         return parameters;
     }
 
-    private async Task<RenamingParameters> AskRenamingParameters(string currentName, LinkedList<MemberReference>? references = null)
+    private async Task<RenamingParameters> AskRenamingParameters(string currentName, LinkedList<GDMemberReference>? references = null)
     {
         var scriptEditor = Editor;
 

@@ -28,7 +28,7 @@ internal class QuickFixHandler
     /// <param name="line">Cursor line (0-based).</param>
     /// <param name="column">Cursor column (0-based).</param>
     /// <returns>List of available fixes with their parent diagnostics.</returns>
-    public IReadOnlyList<QuickFixItem> GetFixesAtPosition(ScriptReference script, int line, int column)
+    public IReadOnlyList<QuickFixItem> GetFixesAtPosition(GDPluginScriptReference script, int line, int column)
     {
         var diagnostics = _diagnosticService.GetDiagnostics(script);
         var result = new List<QuickFixItem>();
@@ -57,7 +57,7 @@ internal class QuickFixHandler
     /// <param name="script">The script reference.</param>
     /// <param name="line">Line number (0-based).</param>
     /// <returns>List of available fixes with their parent diagnostics.</returns>
-    public IReadOnlyList<QuickFixItem> GetFixesOnLine(ScriptReference script, int line)
+    public IReadOnlyList<QuickFixItem> GetFixesOnLine(GDPluginScriptReference script, int line)
     {
         var diagnostics = _diagnosticService.GetDiagnostics(script);
         var result = new List<QuickFixItem>();
@@ -84,7 +84,7 @@ internal class QuickFixHandler
     /// </summary>
     /// <param name="script">The script reference.</param>
     /// <returns>List of all available fixes.</returns>
-    public IReadOnlyList<QuickFixItem> GetAllFixes(ScriptReference script)
+    public IReadOnlyList<QuickFixItem> GetAllFixes(GDPluginScriptReference script)
     {
         var diagnostics = _diagnosticService.GetDiagnostics(script);
         var result = new List<QuickFixItem>();
@@ -200,7 +200,7 @@ internal class QuickFixHandler
     /// <param name="sourceCode">Original source code.</param>
     /// <returns>Modified source code.</returns>
     [Obsolete("Use ApplyAllFormattingFixes(GDScriptMap) instead")]
-    public string ApplyAllFormattingFixesLegacy(ScriptReference script, string sourceCode)
+    public string ApplyAllFormattingFixesLegacy(GDPluginScriptReference script, string sourceCode)
     {
         var formattingFixes = GetAllFixes(script)
             .Where(f => f.Diagnostic.Category == GDDiagnosticCategory.Formatting)
