@@ -37,6 +37,7 @@ internal partial class AstViewerDock : Control
 
     public override void _Ready()
     {
+        Logger.Info("AstViewerDock._Ready() called");
         CreateUI();
 
         // If Initialize was called before _Ready, populate now
@@ -48,19 +49,26 @@ internal partial class AstViewerDock : Control
 
     public void Initialize(GDShraptPlugin plugin, GDProjectMap projectMap)
     {
+        Logger.Info("AstViewerDock.Initialize() called");
         _plugin = plugin;
         _projectMap = projectMap;
         _initialized = true;
 
-        // Only populate if UI is ready
-        if (_scriptSelector != null)
-        {
-            PopulateScriptSelector();
-        }
+        // Ensure UI is created (since _Ready may not be called)
+        if (_scriptSelector == null)
+            CreateUI();
+
+        PopulateScriptSelector();
     }
 
     private void CreateUI()
     {
+        // Prevent double creation
+        if (_scriptSelector != null)
+            return;
+
+        Logger.Info($"AstViewerDock.CreateUI() called, GetChildCount={GetChildCount()}");
+
         var mainVBox = new VBoxContainer();
         mainVBox.SetAnchorsPreset(LayoutPreset.FullRect);
         mainVBox.AddThemeConstantOverride("separation", 4);
@@ -300,7 +308,9 @@ internal partial class AstViewerDock : Control
     {
         bool showTokens = _showTokensToggle.ButtonPressed;
 
-        foreach (var child in node.AllNodes)
+        // Use Nodes (direct children only) instead of AllNodes (recursive)
+        // to avoid double traversal since we call AddNodeToTree recursively
+        foreach (var child in node.Nodes)
         {
             if (!showTokens && IsTokenNode(child))
                 continue;

@@ -14,7 +14,6 @@ internal partial class ReferencesDock : Control
 {
     private Label _headerLabel;
     private StyledReferencesTree _referencesTree;
-    private Button _closeButton;
 
     private string _currentSymbol;
     private List<ReferenceItem> _references = new();
@@ -26,6 +25,16 @@ internal partial class ReferencesDock : Control
 
     public override void _Ready()
     {
+        Logger.Info("ReferencesDock._Ready() called");
+        EnsureUICreated();
+    }
+
+    /// <summary>
+    /// Initializes the dock. Call this after creation to ensure UI is ready.
+    /// </summary>
+    public void Initialize()
+    {
+        Logger.Info("ReferencesDock.Initialize() called");
         EnsureUICreated();
     }
 
@@ -39,6 +48,8 @@ internal partial class ReferencesDock : Control
 
     private void CreateUI()
     {
+        Logger.Info($"ReferencesDock.CreateUI() called, GetChildCount={GetChildCount()}");
+
         // Main container
         var mainVBox = new VBoxContainer();
         mainVBox.SetAnchorsPreset(LayoutPreset.FullRect);
@@ -66,21 +77,6 @@ internal partial class ReferencesDock : Control
         _referencesTree.ItemActivated += OnTreeItemActivated;
         _referencesTree.ItemSelected += OnTreeItemSelected;
         mainVBox.AddChild(_referencesTree);
-
-        // Buttons row
-        var buttonsRow = new HBoxContainer();
-        buttonsRow.AddThemeConstantOverride("separation", 8);
-        mainVBox.AddChild(buttonsRow);
-
-        // Spacer to push close button to the right
-        buttonsRow.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
-
-        _closeButton = new Button
-        {
-            Text = LocalizationManager.Tr(Strings.DialogCancel)
-        };
-        _closeButton.Pressed += OnClosePressed;
-        buttonsRow.AddChild(_closeButton);
 
         // Set minimum size
         CustomMinimumSize = new Vector2(250, 150);
@@ -250,12 +246,6 @@ internal partial class ReferencesDock : Control
     {
         // Navigate on single click (same logic as double click)
         OnTreeItemActivated();
-    }
-
-    private void OnClosePressed()
-    {
-        ClearReferences();
-        Hide();
     }
 }
 

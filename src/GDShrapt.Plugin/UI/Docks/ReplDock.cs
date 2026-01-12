@@ -32,12 +32,18 @@ internal partial class ReplDock : Control
 
     public override void _Ready()
     {
+        Logger.Info("ReplDock._Ready() called");
         CreateUI();
     }
 
     public void Initialize(GDShraptPlugin plugin)
     {
+        Logger.Info("ReplDock.Initialize() called");
         _plugin = plugin;
+
+        // Ensure UI is created (since _Ready may not be called)
+        if (_nodeSelector == null)
+            CreateUI();
     }
 
     public override void _Notification(int what)
@@ -54,6 +60,12 @@ internal partial class ReplDock : Control
 
     private void CreateUI()
     {
+        // Prevent double creation
+        if (_nodeSelector != null)
+            return;
+
+        Logger.Info($"ReplDock.CreateUI() called, GetChildCount={GetChildCount()}");
+
         var mainVBox = new VBoxContainer();
         mainVBox.SetAnchorsPreset(LayoutPreset.FullRect);
         mainVBox.AddThemeConstantOverride("separation", 4);

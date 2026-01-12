@@ -111,23 +111,32 @@ internal class DiagnosticService : IDisposable
 
         if (!_configManager.Config.Linting.Enabled)
         {
+            Logger.Debug($"Linting disabled, skipping {scriptMap.Reference.FullPath}");
             ClearDiagnostics(scriptMap.Reference);
             return;
         }
 
         try
         {
+            Logger.Info("Wait for lock..");
+
             await _analysisLock.WaitAsync(cancellationToken);
+            Logger.Info("Lock entered");
 
             var content = await GetScriptContent(binding);
+            Logger.Info("Got script content");
+
             if (string.IsNullOrEmpty(content))
             {
+                Logger.Info("The content is empty");
                 ClearDiagnostics(scriptMap.Reference);
                 return;
             }
 
             // Check cache first
             var contentHash = ComputeHash(content);
+
+            Logger.Info("Content hash " + contentHash);
             if (_cacheManager != null && _cacheManager.TryGetLintCache(scriptMap.Reference, contentHash, out var cached))
             {
                 _diagnostics[scriptMap.Reference] = cached;
@@ -136,21 +145,34 @@ internal class DiagnosticService : IDisposable
                 return;
             }
 
+            Logger.Info("Wait for binding");
+
             // Wait for script to be parsed
             await binding.GetOrWaitAnalyzer();
 
+            Logger.Info("Ready");
+
             if (scriptMap.Class == null)
             {
+                Logger.Debug($"Script has no AST class, skipping {scriptMap.Reference.FullPath}");
                 ClearDiagnostics(scriptMap.Reference);
                 return;
             }
 
+            Logger.Info("Get service");
             // Create diagnostics service from config and run analysis asynchronously
             var diagnosticsService = GDDiagnosticsService.FromConfig(_configManager.Config);
+           
+            Logger.Info("Diagnosing initialised");
 
             var result = await Task.Run(() =>
-                diagnosticsService.Diagnose(scriptMap.Class),
+                {
+                    Logger.Info("Diagnosing started");
+                    return diagnosticsService.Diagnose(scriptMap.Class);
+                },
                 cancellationToken);
+          
+            Logger.Info("Diagnosing finished");
 
             // Convert to Plugin diagnostics
             var diagnostics = result.Diagnostics
@@ -189,17 +211,27 @@ internal class DiagnosticService : IDisposable
         var startTime = DateTime.UtcNow;
         var filesAnalyzed = 0;
 
-        Logger.Debug("Starting project-wide analysis...");
+        Logger.Info("Starting project-wide analysis...");
 
         try
         {
             var bindings = _projectMap.Bindings.ToList();
+            Logger.Info($"Found {bindings.Count} scripts to analyze");
 
+            if (bindings.Count == 0)
+            {
+                Logger.Info("No scripts found in project map. Skipping analysis.");
+                return;
+            }
+
+            int i = 0;
             foreach (var binding in bindings)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                Logger.Info("Script analysing.. " + i++);
                 await AnalyzeScriptAsync(binding, cancellationToken);
+                Logger.Info("Script complete " + (i - 1));
                 filesAnalyzed++;
             }
 
@@ -286,8 +318,11 @@ internal class DiagnosticService : IDisposable
         var scriptMap = binding.ScriptMap;
         try
         {
+            Logger.Debug($"Wait for binding");
             // Wait for script to be parsed
             await binding.GetOrWaitAnalyzer();
+
+            Logger.Debug($"Binding ready");
 
             // Read current content from disk
             if (System.IO.File.Exists(scriptMap.Reference.FullPath))

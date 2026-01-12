@@ -431,6 +431,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
         // Create the references dock
         _referencesDock = new ReferencesDock();
+        _referencesDock.Initialize();
         _referencesDock.NavigateToReference += OnNavigateToReference;
         _referencesDockButton = AddControlToBottomPanel(_referencesDock, "Find References");
 

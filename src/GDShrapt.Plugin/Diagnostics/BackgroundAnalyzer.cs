@@ -171,6 +171,7 @@ internal class BackgroundAnalyzer : IDisposable
 
     private async Task ProcessRequest(AnalysisRequest request)
     {
+        Logger.Debug("ProcessRequest called for " + request.Script.FileName);
         try
         {
             var binding = _projectMap.GetBinding(request.Script);

@@ -100,6 +100,8 @@ internal class GDScriptMap : IGDScriptInfo
                 ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
             IsGlobal = Class?.ClassName?.Identifier?.Sequence != null;
 
+            BuildAnalyzerIfNeeded();
+
             Logger.Debug($"Loaded: {TypeName}");
             return true;
         }

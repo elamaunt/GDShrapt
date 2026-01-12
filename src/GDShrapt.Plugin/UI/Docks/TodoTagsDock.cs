@@ -40,6 +40,7 @@ internal partial class TodoTagsDock : Control
 
     public override void _Ready()
     {
+        Logger.Info("TodoTagsDock._Ready() called");
         Name = "TODO Tags";
         CreateUI();
     }
@@ -79,6 +80,12 @@ internal partial class TodoTagsDock : Control
 
     private void CreateUI()
     {
+        // Prevent double creation
+        if (_resultsTree != null)
+            return;
+
+        Logger.Info($"TodoTagsDock.CreateUI() called, GetChildCount={GetChildCount()}");
+
         // Main container
         var mainVBox = new VBoxContainer();
         mainVBox.SetAnchorsPreset(LayoutPreset.FullRect);

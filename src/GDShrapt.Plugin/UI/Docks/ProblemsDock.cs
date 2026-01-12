@@ -31,6 +31,7 @@ internal partial class ProblemsDock : Control
 
     public override void _Ready()
     {
+        Logger.Info("ProblemsDock._Ready() called");
         Name = "Problems";
         CreateUI();
     }
@@ -40,10 +41,11 @@ internal partial class ProblemsDock : Control
     /// </summary>
     public void Initialize(DiagnosticService diagnosticService, GDProjectMap projectMap)
     {
+        Logger.Info("ProblemsDock.Initialize() called");
         _diagnosticService = diagnosticService;
         _projectMap = projectMap;
 
-        // Ensure UI is created
+        // Ensure UI is created (since _Ready may not be called)
         if (_filterBySeverityOption == null)
             CreateUI();
 
@@ -57,6 +59,12 @@ internal partial class ProblemsDock : Control
 
     private void CreateUI()
     {
+        // Prevent double creation
+        if (_resultsTree != null)
+            return;
+
+        Logger.Info($"ProblemsDock.CreateUI() called, GetChildCount={GetChildCount()}");
+
         // Main container
         var mainVBox = new VBoxContainer();
         mainVBox.SetAnchorsPreset(LayoutPreset.FullRect);

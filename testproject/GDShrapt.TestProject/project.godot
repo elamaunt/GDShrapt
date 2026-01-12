@@ -16,13 +16,13 @@ run/main_scene="res://test_scenes/main.tscn"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
-[dotnet]
-
-project/assembly_name="GDShrapt.TestProject"
-
 [autoload]
 
 Global="*res://test_scripts/global.gd"
+
+[dotnet]
+
+project/assembly_name="GDShrapt.TestProject"
 
 [editor_plugins]
 

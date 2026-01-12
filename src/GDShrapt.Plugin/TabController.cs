@@ -69,7 +69,7 @@ internal partial class TabController : GodotObject
         if (!FindCodePopupMenu())
         {
             // PopupMenu might be created later, try again after a short delay
-            CallDeferred(nameof(TryFindPopupMenuDeferred));
+            Callable.From(TryFindPopupMenuDeferred).CallDeferred();
         }
     }
 
@@ -299,12 +299,18 @@ internal partial class TabController : GodotObject
             if (keyEvent.Keycode == Key.Period && !keyEvent.CtrlPressed && !keyEvent.AltPressed)
             {
                 // Delay to allow the '.' to be inserted first
-                CallDeferred(nameof(TriggerMemberCompletion));
+                Callable.From(TriggerMemberCompletion).CallDeferred();
             }
             // Trigger completion on Ctrl+Space
             else if (keyEvent.Keycode == Key.Space && keyEvent.CtrlPressed && !keyEvent.AltPressed)
             {
                 TriggerCompletion();
+                _textEdit?.GetViewport()?.SetInputAsHandled();
+            }
+            // Quick Actions on Ctrl+.
+            else if (keyEvent.Keycode == Key.Period && keyEvent.CtrlPressed && !keyEvent.AltPressed)
+            {
+                ShowQuickActions();
                 _textEdit?.GetViewport()?.SetInputAsHandled();
             }
             // Close completion on Escape
