@@ -32,6 +32,8 @@ public partial class GDShraptPlugin : EditorPlugin
     private Control _problemsDockButton;
     private AstViewerDock _astViewerDock;
     private Control _astViewerDockButton;
+    private ReplDock _replDock;
+    private Control _replDockButton;
 
     // Diagnostics system
     private GDConfigManager _configManager;
@@ -332,6 +334,13 @@ public partial class GDShraptPlugin : EditorPlugin
             _astViewerDock = null;
         }
 
+        if (_replDock != null)
+        {
+            RemoveControlFromBottomPanel(_replDock);
+            _replDock.QueueFree();
+            _replDock = null;
+        }
+
         _todoTagsScanner?.Dispose();
         _todoTagsScanner = null;
     }
@@ -444,6 +453,11 @@ public partial class GDShraptPlugin : EditorPlugin
         _astViewerDock.Initialize(this, _projectMap);
         _astViewerDock.NavigateToCode += OnNavigateToReference;
         _astViewerDockButton = AddControlToBottomPanel(_astViewerDock, "AST Viewer");
+
+        // Create the REPL dock
+        _replDock = new ReplDock();
+        _replDock.Initialize(this);
+        _replDockButton = AddControlToBottomPanel(_replDock, "REPL");
 
         // Start TODO tags scan if enabled
         var todoConfig = _configManager.Config.Plugin?.TodoTags;
