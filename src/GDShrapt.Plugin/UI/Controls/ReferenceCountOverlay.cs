@@ -1,5 +1,6 @@
 using Godot;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,7 @@ internal partial class ReferenceCountOverlay : Control
     private GDScriptMap _scriptMap;
 
     private readonly Dictionary<int, ReferenceCountInfo> _referenceCountCache = new();
+    private readonly GDFindReferencesService _findReferencesService = new();
     private bool _needsRefresh = true;
     private double _refreshTimer = 0;
     private const double RefreshDelay = 1.0; // Debounce delay in seconds
@@ -127,8 +129,8 @@ internal partial class ReferenceCountOverlay : Control
             if (string.IsNullOrEmpty(decl.Name))
                 continue;
 
-            // Count references across all scripts
-            int count = CountReferences(decl.Name);
+            // Count references using semantic engine for accurate scope-aware counting
+            int count = CountReferencesWithSemantics(decl);
 
             if (count > 0)
             {
@@ -173,7 +175,9 @@ internal partial class ReferenceCountOverlay : Control
                 declarations.Add(new DeclarationInfo
                 {
                     Name = identifier.Sequence,
-                    Line = identifier.StartLine
+                    Line = identifier.StartLine,
+                    Column = identifier.StartColumn,
+                    Identifier = identifier
                 });
             }
         }
@@ -185,7 +189,107 @@ internal partial class ReferenceCountOverlay : Control
             .ToList();
     }
 
-    private int CountReferences(string symbolName)
+    /// <summary>
+    /// Counts references using the semantic engine for accurate scope-aware counting.
+    /// </summary>
+    private int CountReferencesWithSemantics(DeclarationInfo decl)
+    {
+        if (_scriptMap?.Class == null || decl.Identifier == null)
+            return CountReferencesSimple(decl.Name);
+
+        // Create a GDScriptFile wrapper for refactoring context
+        var reference = new GDScriptReference(_scriptMap.Reference?.FullPath ?? "unknown.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(_scriptMap.Class.ToString());
+
+        // Build cursor position and selection info for the context
+        var cursor = new GDCursorPosition(decl.Line, decl.Column);
+        var selection = GDSelectionInfo.None;
+
+        // Create refactoring context for semantics service
+        var context = new GDRefactoringContext(
+            scriptFile,
+            _scriptMap.Class,
+            cursor,
+            selection);
+
+        // Determine symbol scope using the identifier from declaration
+        var scope = _findReferencesService.DetermineSymbolScope(decl.Identifier, context);
+        if (scope == null)
+            return CountReferencesSimple(decl.Name);
+
+        // For local/parameter/for-loop scope - count only within their scope
+        if (scope.Type == GDSymbolScopeType.LocalVariable ||
+            scope.Type == GDSymbolScopeType.MethodParameter ||
+            scope.Type == GDSymbolScopeType.ForLoopVariable ||
+            scope.Type == GDSymbolScopeType.MatchCaseVariable)
+        {
+            var result = _findReferencesService.FindReferencesForScope(context, scope);
+            return result.TotalCount;
+        }
+
+        // For class members - use cross-file search with type awareness
+        if (scope.Type == GDSymbolScopeType.ClassMember)
+        {
+            return CountClassMemberReferences(scope, decl.Name);
+        }
+
+        // Fallback for project-wide symbols
+        return CountReferencesSimple(decl.Name);
+    }
+
+    /// <summary>
+    /// Counts references for a class member, including cross-file references with type inference.
+    /// </summary>
+    private int CountClassMemberReferences(GDSymbolScope scope, string symbolName)
+    {
+        int count = 0;
+
+        // Count in current file (all identifiers with this name)
+        if (scope.ContainingClass != null)
+        {
+            count += scope.ContainingClass.AllTokens.OfType<GDIdentifier>()
+                .Count(i => i.Sequence == symbolName);
+        }
+
+        // For public members, also count cross-file references with type checking
+        if (scope.IsPublic && !string.IsNullOrEmpty(_scriptMap?.TypeName))
+        {
+            var typeName = _scriptMap.TypeName;
+
+            foreach (var script in _projectMap.Scripts)
+            {
+                if (script == _scriptMap || script.Class == null)
+                    continue;
+
+                var analyzer = script.Analyzer;
+
+                // Find member access expressions like: instance.symbolName
+                foreach (var memberOp in script.Class.AllNodes.OfType<GDMemberOperatorExpression>())
+                {
+                    if (memberOp.Identifier?.Sequence != symbolName)
+                        continue;
+
+                    // Use type inference to verify this is actually a reference to our type
+                    if (analyzer != null)
+                    {
+                        var callerType = analyzer.GetTypeForNode(memberOp.CallerExpression);
+                        if (callerType == typeName)
+                        {
+                            count++;
+                        }
+                    }
+                }
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Simple fallback counting by name (used when semantic analysis is not available).
+    /// </summary>
+    private int CountReferencesSimple(string symbolName)
     {
         int count = 0;
 
@@ -305,6 +409,8 @@ internal partial class ReferenceCountOverlay : Control
     {
         public string Name;
         public int Line;
+        public int Column;
+        public GDIdentifier Identifier;
     }
 
     private struct ReferenceCountInfo

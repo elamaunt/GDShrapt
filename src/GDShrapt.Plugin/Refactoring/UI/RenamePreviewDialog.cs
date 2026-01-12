@@ -31,7 +31,7 @@ public enum GDConfidenceMode
 /// <summary>
 /// Result from the rename preview dialog.
 /// </summary>
-public class RenamePreviewResult
+internal class RenamePreviewResult
 {
     /// <summary>
     /// True if user clicked Apply.

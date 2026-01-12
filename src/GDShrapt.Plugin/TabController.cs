@@ -172,6 +172,16 @@ internal partial class TabController : GodotObject
         if (_textEdit == null || _referenceOverlay != null)
             return;
 
+        // Check if reference counter is enabled in settings
+        var config = _plugin.ConfigManager?.Config;
+        if (config?.Plugin?.UI?.ReferencesCounterEnabled == false)
+        {
+            Logger.Debug("Reference count overlay disabled in settings");
+            // Still create error lens if enabled
+            CreateErrorLensOverlay(container);
+            return;
+        }
+
         Logger.Debug("Creating reference count overlay");
 
         _referenceOverlay = new ReferenceCountOverlay();
@@ -202,7 +212,15 @@ internal partial class TabController : GodotObject
         if (_textEdit == null || _errorLensOverlay != null)
             return;
 
-        Logger.Info("Creating error lens overlay");
+        // Check if error lens is enabled in settings
+        var config = _plugin.ConfigManager?.Config;
+        if (config?.Plugin?.UI?.CodeLensEnabled == false)
+        {
+            Logger.Debug("Error lens overlay disabled in settings");
+            return;
+        }
+
+        Logger.Debug("Creating error lens overlay");
 
         _errorLensOverlay = new ErrorLensOverlay();
         container.AddChild(_errorLensOverlay);
