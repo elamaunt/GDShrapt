@@ -1,13 +1,16 @@
-using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Extracts an expression into a local variable.
+/// Delegates to GDExtractVariableService for the actual logic.
 /// </summary>
 internal class ExtractVariableAction : RefactoringActionBase
 {
+    private readonly GDExtractVariableService _service = new();
+
     public override string Id => "extract_variable";
     public override string DisplayName => "Extract Variable";
     public override RefactoringCategory Category => RefactoringCategory.Extract;
@@ -19,29 +22,8 @@ internal class ExtractVariableAction : RefactoringActionBase
         if (context?.ContainingMethod == null)
             return false;
 
-        // Must have a selected expression or be on an expression
-        if (context.HasSelection && context.SelectedExpression != null)
-            return true;
-
-        // Check if cursor is on an expression that can be extracted
-        if (context.NodeAtCursor is GDExpression expr && CanExtract(expr))
-            return true;
-
-        return false;
-    }
-
-    private bool CanExtract(GDExpression expr)
-    {
-        // Don't extract simple identifiers (already variables)
-        if (expr is GDIdentifierExpression)
-            return false;
-
-        // Don't extract literals that are too simple
-        // (unless they're in complex expressions)
-        if (expr.Parent is GDVariableDeclaration || expr.Parent is GDVariableDeclarationStatement)
-            return false;
-
-        return true;
+        var semanticsContext = context.BuildSemanticsContext();
+        return semanticsContext != null && _service.CanExecute(semanticsContext);
     }
 
     protected override string ValidateContext(RefactoringContext context)
@@ -52,8 +34,11 @@ internal class ExtractVariableAction : RefactoringActionBase
         if (context.ContainingMethod == null)
             return "Not inside a method";
 
-        var expression = GetExpressionToExtract(context);
-        if (expression == null)
+        var semanticsContext = context.BuildSemanticsContext();
+        if (semanticsContext == null)
+            return "Failed to build refactoring context";
+
+        if (!_service.CanExecute(semanticsContext))
             return "No expression found to extract";
 
         return null;
@@ -61,29 +46,32 @@ internal class ExtractVariableAction : RefactoringActionBase
 
     protected override async Task ExecuteInternalAsync(RefactoringContext context)
     {
-        var editor = context.Editor;
-        var method = context.ContainingMethod;
+        var semanticsContext = context.BuildSemanticsContext();
+        if (semanticsContext == null)
+            throw new RefactoringException("Failed to build refactoring context");
 
-        // Get the expression to extract
-        GDExpression expression = GetExpressionToExtract(context);
+        // Get the expression to extract and suggest a name
+        var expression = semanticsContext.SelectedExpression;
         if (expression == null)
-        {
             throw new RefactoringException("No expression found to extract");
-        }
 
-        var exprText = expression.ToString();
-        Logger.Info($"ExtractVariableAction: Extracting expression '{exprText}'");
+        var suggestedName = _service.SuggestVariableName(expression);
 
-        // Suggest a variable name based on expression type
-        var suggestedName = SuggestVariableName(expression, context);
+        // Plan the refactoring with suggested name
+        var plan = _service.Plan(semanticsContext, suggestedName);
+        if (!plan.Success)
+            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan extract variable");
 
-        // Show dialog for variable name
-        var dialog = new NameInputDialog();
-        context.DialogParent?.AddChild(dialog);
+        // Show name input dialog first
+        var nameDialog = new NameInputDialog();
+        context.DialogParent?.AddChild(nameDialog);
 
-        var varName = await dialog.ShowForResult("Extract Variable", suggestedName, $"var {suggestedName} = {exprText}");
+        var varName = await nameDialog.ShowForResult(
+            "Extract Variable",
+            plan.SuggestedName,
+            $"var {plan.SuggestedName} = {plan.ExpressionText}");
 
-        dialog.QueueFree();
+        nameDialog.QueueFree();
 
         if (string.IsNullOrEmpty(varName))
         {
@@ -91,218 +79,97 @@ internal class ExtractVariableAction : RefactoringActionBase
             return;
         }
 
-        varName = ValidateVariableName(varName);
-        Logger.Info($"ExtractVariableAction: Using variable name '{varName}'");
+        // Re-plan with the user-provided name
+        plan = _service.Plan(semanticsContext, varName);
+        if (!plan.Success)
+            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan extract variable");
 
-        // Get position info for the expression
-        var startLine = expression.StartLine;
-        var startColumn = expression.StartColumn;
-        var endLine = expression.EndLine;
-        var endColumn = expression.EndColumn;
+        // Build preview info
+        var originalCode = plan.ExpressionText;
+        var resultCode = BuildPreviewCode(plan);
 
-        // Find the statement containing this expression
-        var containingStatement = FindContainingStatement(expression);
-        if (containingStatement == null)
+        // Show preview dialog
+        var previewDialog = new RefactoringPreviewDialog();
+        context.DialogParent?.AddChild(previewDialog);
+
+        try
         {
-            Logger.Info("ExtractVariableAction: Could not find containing statement");
-            return;
+            var title = plan.OccurrencesCount > 1
+                ? $"Extract Variable ({plan.OccurrencesCount} occurrences found)"
+                : "Extract Variable";
+
+            // In Base Plugin: Apply is disabled (Pro required)
+            var canApply = false;
+            var proMessage = "GDShrapt Pro required to apply this refactoring";
+
+            var result = await previewDialog.ShowForResult(
+                title,
+                $"// Expression: {originalCode}\n// Type: {plan.InferredType ?? "Variant"} ({plan.TypeConfidence})",
+                resultCode,
+                canApply,
+                "Apply",
+                proMessage);
+
+            if (result.ShouldApply && canApply)
+            {
+                // Execute the refactoring
+                var executeResult = _service.Execute(semanticsContext, varName, replaceAll: false);
+                if (!executeResult.Success)
+                    throw new RefactoringException(executeResult.ErrorMessage ?? "Failed to execute extract variable");
+
+                // Apply edits to the editor
+                ApplyEdits(context, executeResult);
+            }
         }
+        finally
+        {
+            previewDialog.QueueFree();
+        }
+    }
 
-        // Calculate indentation from the containing statement
-        var statementLine = containingStatement.StartLine;
-        var lineText = editor.GetLine(statementLine);
-        var indent = GetIndentation(lineText);
+    private string BuildPreviewCode(GDExtractVariableResult plan)
+    {
+        var typeAnnotation = !string.IsNullOrEmpty(plan.InferredType) && plan.InferredType != "Variant"
+            ? $": {plan.InferredType}"
+            : "";
 
-        // Create the variable declaration
-        var varDecl = $"{indent}var {varName} = {exprText}\n";
+        var varDecl = $"var {plan.SuggestedName}{typeAnnotation} = {plan.ExpressionText}";
 
-        // Insert the variable declaration before the containing statement
-        editor.CursorLine = statementLine;
-        editor.CursorColumn = 0;
-        editor.InsertTextAtCursor(varDecl);
+        return $"{varDecl}\n\n// ... {plan.SuggestedName} used in place of the expression";
+    }
 
-        // Adjust positions because we inserted a line
-        var adjustedStartLine = startLine + 1;
-        var adjustedEndLine = endLine + 1;
+    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    {
+        var editor = context.Editor;
 
-        // Replace the expression with the variable name
-        editor.Select(adjustedStartLine, startColumn, adjustedEndLine, endColumn);
-        editor.Cut();
-        editor.InsertTextAtCursor(varName);
+        // Sort edits by line descending to avoid line number shifts
+        var sortedEdits = new System.Collections.Generic.List<GDTextEdit>(result.Edits);
+        sortedEdits.Sort((a, b) => b.Line.CompareTo(a.Line));
+
+        foreach (var edit in sortedEdits)
+        {
+            if (string.IsNullOrEmpty(edit.OldText))
+            {
+                // Insert only
+                editor.CursorLine = edit.Line;
+                editor.CursorColumn = edit.Column;
+                editor.InsertTextAtCursor(edit.NewText);
+            }
+            else
+            {
+                // Replace
+                var oldTextLines = edit.OldText.Split('\n');
+                var endLine = edit.Line + oldTextLines.Length - 1;
+                var endColumn = oldTextLines.Length > 1
+                    ? oldTextLines[^1].Length
+                    : edit.Column + edit.OldText.Length;
+
+                editor.Select(edit.Line, edit.Column, endLine, endColumn);
+                editor.Cut();
+                editor.InsertTextAtCursor(edit.NewText);
+            }
+        }
 
         editor.ReloadScriptFromText();
-
-        Logger.Info("ExtractVariableAction: Completed successfully");
-    }
-
-    private GDExpression GetExpressionToExtract(RefactoringContext context)
-    {
-        if (context.SelectedExpression != null)
-            return context.SelectedExpression;
-
-        if (context.NodeAtCursor is GDExpression expr)
-            return expr;
-
-        // Walk up to find an expression
-        var node = context.NodeAtCursor;
-        while (node != null)
-        {
-            if (node is GDExpression e && CanExtract(e))
-                return e;
-            node = node.Parent as GDNode;
-        }
-
-        return null;
-    }
-
-    private string SuggestVariableName(GDExpression expr, RefactoringContext context)
-    {
-        // Try to infer a name based on expression type
-        if (expr is GDCallExpression call)
-        {
-            // Use method name: get_node() -> node, calculate_damage() -> damage
-            var methodName = GetCallMethodName(call);
-            if (!string.IsNullOrEmpty(methodName))
-            {
-                if (methodName.StartsWith("get_"))
-                    return methodName.Substring(4);
-                if (methodName.StartsWith("is_") || methodName.StartsWith("has_") || methodName.StartsWith("can_"))
-                    return methodName;
-                return methodName + "_result";
-            }
-        }
-
-        if (expr is GDMemberOperatorExpression memberOp)
-        {
-            // Use member name: player.health -> health
-            return memberOp.Identifier?.Sequence ?? "value";
-        }
-
-        if (expr is GDIndexerExpression)
-        {
-            return "item";
-        }
-
-        if (expr is GDDualOperatorExpression dualOp)
-        {
-            // For arithmetic: a + b -> sum, a - b -> diff, a * b -> product
-            if (dualOp.OperatorType == GDDualOperatorType.Addition)
-                return "sum";
-            if (dualOp.OperatorType == GDDualOperatorType.Subtraction)
-                return "difference";
-            if (dualOp.OperatorType == GDDualOperatorType.Multiply)
-                return "product";
-            if (dualOp.OperatorType == GDDualOperatorType.Division)
-                return "quotient";
-            // For comparison: a == b -> is_equal
-            if (IsComparisonOperator(dualOp.OperatorType))
-                return "result";
-        }
-
-        if (expr is GDArrayInitializerExpression)
-            return "items";
-
-        if (expr is GDDictionaryInitializerExpression)
-            return "dict";
-
-        // Try to get type information from analyzer
-        var analyzer = context.ScriptMap?.Analyzer;
-        if (analyzer != null)
-        {
-            var typeName = analyzer.GetTypeForNode(expr);
-            if (!string.IsNullOrEmpty(typeName))
-            {
-                return ToSnakeCase(typeName);
-            }
-        }
-
-        return "value";
-    }
-
-    private string GetCallMethodName(GDCallExpression call)
-    {
-        if (call.CallerExpression is GDIdentifierExpression idExpr)
-            return idExpr.Identifier?.Sequence;
-
-        if (call.CallerExpression is GDMemberOperatorExpression memberOp)
-            return memberOp.Identifier?.Sequence;
-
-        return null;
-    }
-
-    private bool IsComparisonOperator(GDDualOperatorType opType)
-    {
-        return opType == GDDualOperatorType.Equal ||
-               opType == GDDualOperatorType.NotEqual ||
-               opType == GDDualOperatorType.LessThan ||
-               opType == GDDualOperatorType.LessThanOrEqual ||
-               opType == GDDualOperatorType.MoreThan ||
-               opType == GDDualOperatorType.MoreThanOrEqual;
-    }
-
-    private string ToSnakeCase(string input)
-    {
-        if (string.IsNullOrEmpty(input))
-            return "value";
-
-        var result = new System.Text.StringBuilder();
-        for (int i = 0; i < input.Length; i++)
-        {
-            var c = input[i];
-            if (char.IsUpper(c) && i > 0)
-            {
-                result.Append('_');
-            }
-            result.Append(char.ToLowerInvariant(c));
-        }
-
-        var str = result.ToString();
-        // Remove common prefixes like "GD" or "GDScript"
-        if (str.StartsWith("g_d_"))
-            str = str.Substring(4);
-
-        return str;
-    }
-
-    private string ValidateVariableName(string name)
-    {
-        name = name.Trim();
-
-        // Replace invalid characters
-        name = System.Text.RegularExpressions.Regex.Replace(name, @"[^a-zA-Z0-9_]", "_");
-
-        // Ensure starts with letter or underscore
-        if (!string.IsNullOrEmpty(name) && char.IsDigit(name[0]))
-            name = "_" + name;
-
-        // Convert to snake_case (lowercase)
-        name = name.ToLowerInvariant();
-
-        return string.IsNullOrEmpty(name) ? "value" : name;
-    }
-
-    private GDStatement FindContainingStatement(GDExpression expr)
-    {
-        var node = expr as GDNode;
-        while (node != null)
-        {
-            if (node is GDStatement stmt)
-                return stmt;
-            node = node.Parent as GDNode;
-        }
-        return null;
-    }
-
-    private string GetIndentation(string lineText)
-    {
-        var indent = new System.Text.StringBuilder();
-        foreach (var c in lineText)
-        {
-            if (c == ' ' || c == '\t')
-                indent.Append(c);
-            else
-                break;
-        }
-        return indent.ToString();
     }
 }

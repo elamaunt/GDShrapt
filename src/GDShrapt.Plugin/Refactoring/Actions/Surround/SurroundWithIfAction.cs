@@ -1,13 +1,18 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Surrounds selected statements with an if statement.
+/// Delegates to GDSurroundWithService for the actual logic.
+/// This is a "safe" operation that can be applied directly in Base.
 /// </summary>
 internal class SurroundWithIfAction : RefactoringActionBase
 {
+    private readonly GDSurroundWithService _service = new();
+
     public override string Id => "surround_with_if";
     public override string DisplayName => "Surround with if";
     public override RefactoringCategory Category => RefactoringCategory.Surround;
@@ -85,7 +90,56 @@ internal class SurroundWithIfAction : RefactoringActionBase
             return;
         }
 
-        Logger.Info($"SurroundWithIfAction: Surrounding lines {startLine}-{endLine}");
+        // Try to use service if we have a valid semantics context
+        var semanticsContext = context.BuildSemanticsContext();
+        if (semanticsContext != null && semanticsContext.HasSelection)
+        {
+            var plan = _service.PlanSurroundWithIf(semanticsContext, "condition");
+
+            if (plan.Success)
+            {
+                // Show preview dialog (safe operation - Apply is enabled in Base)
+                var previewDialog = new RefactoringPreviewDialog();
+                context.DialogParent?.AddChild(previewDialog);
+
+                try
+                {
+                    // Safe operation: canApply = true in Base
+                    var canApply = true;
+
+                    var result = await previewDialog.ShowForResult(
+                        "Surround with if",
+                        plan.OriginalCode,
+                        plan.ResultCode,
+                        canApply,
+                        "Apply");
+
+                    if (result.ShouldApply)
+                    {
+                        // Execute the surround operation
+                        var executeResult = _service.SurroundWithIf(semanticsContext, "condition");
+                        if (executeResult.Success && executeResult.Edits != null)
+                        {
+                            ApplyEdits(context, executeResult);
+                            Logger.Info("SurroundWithIfAction: Completed via service");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        Logger.Info("SurroundWithIfAction: Cancelled by user");
+                        return;
+                    }
+                }
+                finally
+                {
+                    previewDialog.QueueFree();
+                }
+            }
+        }
+
+        // Fallback to direct implementation if service fails
+        Logger.Info($"SurroundWithIfAction: Using fallback, surrounding lines {startLine}-{endLine}");
 
         // Get indentation from the first line
         var firstLine = editor.GetLine(startLine);
@@ -96,15 +150,15 @@ internal class SurroundWithIfAction : RefactoringActionBase
         var indentedCode = IndentCode(selectedCode, tabIndent);
 
         // Build the if statement
-        var result = new System.Text.StringBuilder();
-        result.Append(baseIndent);
-        result.AppendLine("if condition:");
-        result.Append(indentedCode);
+        var resultCode = new System.Text.StringBuilder();
+        resultCode.Append(baseIndent);
+        resultCode.AppendLine("if condition:");
+        resultCode.Append(indentedCode);
 
         // Select and replace the code
         editor.Select(startLine, 0, endLine, editor.GetLine(endLine).Length);
         editor.Cut();
-        editor.InsertTextAtCursor(result.ToString());
+        editor.InsertTextAtCursor(resultCode.ToString());
 
         // Position cursor at 'condition' for easy editing
         editor.CursorLine = startLine;
@@ -115,9 +169,44 @@ internal class SurroundWithIfAction : RefactoringActionBase
 
         editor.ReloadScriptFromText();
 
-        Logger.Info("SurroundWithIfAction: Completed successfully");
+        Logger.Info("SurroundWithIfAction: Completed successfully (fallback)");
 
         await Task.CompletedTask;
+    }
+
+    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    {
+        var editor = context.Editor;
+
+        // Sort edits by line descending to avoid line number shifts
+        var sortedEdits = new System.Collections.Generic.List<GDTextEdit>(result.Edits);
+        sortedEdits.Sort((a, b) => b.Line.CompareTo(a.Line));
+
+        foreach (var edit in sortedEdits)
+        {
+            if (string.IsNullOrEmpty(edit.OldText))
+            {
+                // Insert only
+                editor.CursorLine = edit.Line;
+                editor.CursorColumn = edit.Column;
+                editor.InsertTextAtCursor(edit.NewText);
+            }
+            else
+            {
+                // Replace
+                var oldTextLines = edit.OldText.Split('\n');
+                var endLine = edit.Line + oldTextLines.Length - 1;
+                var endColumn = oldTextLines.Length > 1
+                    ? oldTextLines[^1].Length
+                    : edit.Column + edit.OldText.Length;
+
+                editor.Select(edit.Line, edit.Column, endLine, endColumn);
+                editor.Cut();
+                editor.InsertTextAtCursor(edit.NewText);
+            }
+        }
+
+        editor.ReloadScriptFromText();
     }
 
     private GDStatement FindContainingStatement(RefactoringContext context)

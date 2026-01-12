@@ -1,6 +1,5 @@
-using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using Godot;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
@@ -8,185 +7,142 @@ namespace GDShrapt.Plugin;
 /// <summary>
 /// Generates getter and setter for a class variable.
 /// Supports both GDScript 4.x property syntax and traditional method syntax.
+/// Delegates to GDGenerateGetterSetterService for the actual logic.
 /// </summary>
-internal class GenerateGetterSetterAction : IRefactoringAction
+internal class GenerateGetterSetterAction : RefactoringActionBase
 {
-    public string Id => "generate_getter_setter";
-    public string DisplayName => "Generate Getter/Setter";
-    public RefactoringCategory Category => RefactoringCategory.Generate;
-    public string Shortcut => "Ctrl+Alt+G";
-    public int Priority => 10;
+    private readonly GDGenerateGetterSetterService _service = new();
 
-    public bool IsAvailable(RefactoringContext context)
+    public override string Id => "generate_getter_setter";
+    public override string DisplayName => "Generate Getter/Setter";
+    public override RefactoringCategory Category => RefactoringCategory.Generate;
+    public override string Shortcut => "Ctrl+Alt+G";
+    public override int Priority => 10;
+
+    public override bool IsAvailable(RefactoringContext context)
     {
         if (context?.ContainingClass == null)
             return false;
 
-        // Available when cursor is on a class-level variable declaration
         if (!context.IsOnClassVariable)
             return false;
 
-        var varDecl = context.GetVariableDeclaration();
-        if (varDecl == null)
-            return false;
-
-        // Don't offer for constants
-        if (varDecl.ConstKeyword != null)
-            return false;
-
-        // Don't offer if already has getters/setters
-        if (varDecl.FirstAccessorDeclarationNode != null || varDecl.SecondAccessorDeclarationNode != null)
-            return false;
-
-        return true;
+        var semanticsContext = context.BuildSemanticsContext();
+        return semanticsContext != null && _service.CanExecute(semanticsContext);
     }
 
-    public async Task ExecuteAsync(RefactoringContext context)
+    protected override string ValidateContext(RefactoringContext context)
     {
-        Logger.Info("GenerateGetterSetterAction: Starting execution");
+        var baseError = base.ValidateContext(context);
+        if (baseError != null) return baseError;
 
-        var editor = context.Editor;
-        var varDecl = context.GetVariableDeclaration();
+        var semanticsContext = context.BuildSemanticsContext();
+        if (semanticsContext == null)
+            return "Failed to build refactoring context";
 
-        if (varDecl == null)
-        {
-            Logger.Info("GenerateGetterSetterAction: No variable declaration found");
-            return;
-        }
+        if (!_service.CanExecute(semanticsContext))
+            return "No suitable variable declaration found";
 
-        var varName = varDecl.Identifier?.ToString();
-        var varType = varDecl.Type?.ToString();
-        var hasInitializer = varDecl.Initializer != null;
-        var initializerText = varDecl.Initializer?.ToString();
+        return null;
+    }
 
-        Logger.Info($"GenerateGetterSetterAction: Variable '{varName}' type '{varType}'");
+    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    {
+        var semanticsContext = context.BuildSemanticsContext();
+        if (semanticsContext == null)
+            throw new RefactoringException("Failed to build refactoring context");
 
         // Show options dialog
-        var dialog = new GetterSetterOptionsDialog();
-        context.DialogParent?.AddChild(dialog);
+        var optionsDialog = new GetterSetterOptionsDialog();
+        context.DialogParent?.AddChild(optionsDialog);
 
-        var options = await dialog.ShowForResult(varName);
-        dialog.QueueFree();
+        var varDecl = context.GetVariableDeclaration();
+        var varName = varDecl?.Identifier?.ToString() ?? "variable";
 
-        if (options == null)
+        var pluginOptions = await optionsDialog.ShowForResult(varName);
+        optionsDialog.QueueFree();
+
+        if (pluginOptions == null)
         {
             Logger.Info("GenerateGetterSetterAction: Cancelled by user");
             return;
         }
 
-        // Generate the code
-        string generatedCode;
-        if (options.UsePropertySyntax)
+        // Convert plugin options to semantics options
+        var options = new GDGetterSetterOptions
         {
-            generatedCode = GeneratePropertySyntax(varName, varType, initializerText, options);
-        }
-        else
+            GenerateGetter = pluginOptions.GenerateGetter,
+            GenerateSetter = pluginOptions.GenerateSetter,
+            UsePropertySyntax = pluginOptions.UsePropertySyntax,
+            UseBackingField = pluginOptions.UseBackingField
+        };
+
+        // Plan the refactoring
+        var plan = _service.Plan(semanticsContext, options);
+        if (!plan.Success)
+            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan getter/setter generation");
+
+        // Show preview dialog
+        var previewDialog = new RefactoringPreviewDialog();
+        context.DialogParent?.AddChild(previewDialog);
+
+        try
         {
-            generatedCode = GenerateMethodSyntax(varName, varType, options);
+            var syntaxType = options.UsePropertySyntax ? "property syntax" : "method syntax";
+            var title = $"Generate Getter/Setter ({syntaxType})";
+
+            // In Base Plugin: Apply is disabled (Pro required)
+            var canApply = false;
+            var proMessage = "GDShrapt Pro required to apply this refactoring";
+
+            var result = await previewDialog.ShowForResult(
+                title,
+                plan.OriginalCode,
+                plan.ResultCode,
+                canApply,
+                "Apply",
+                proMessage);
+
+            if (result.ShouldApply && canApply)
+            {
+                // Execute the refactoring
+                var executeResult = _service.Execute(semanticsContext, options);
+                if (!executeResult.Success)
+                    throw new RefactoringException(executeResult.ErrorMessage ?? "Failed to execute getter/setter generation");
+
+                // Apply edits to the editor
+                ApplyEdits(context, executeResult);
+            }
         }
+        finally
+        {
+            previewDialog.QueueFree();
+        }
+    }
 
-        // Get position to replace the variable declaration
-        var startLine = varDecl.StartLine;
-        var startColumn = varDecl.StartColumn;
-        var endLine = varDecl.EndLine;
-        var endColumn = varDecl.EndColumn;
+    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    {
+        var editor = context.Editor;
 
-        Logger.Info($"GenerateGetterSetterAction: Replacing at ({startLine}:{startColumn}) - ({endLine}:{endColumn})");
+        foreach (var edit in result.Edits)
+        {
+            var oldTextLines = edit.OldText.Split('\n');
+            var endLine = edit.Line + oldTextLines.Length - 1;
+            var endColumn = oldTextLines.Length > 1
+                ? oldTextLines[^1].Length
+                : edit.Column + edit.OldText.Length;
 
-        // Replace the variable declaration
-        editor.Select(startLine, startColumn, endLine, endColumn);
-        editor.Cut();
-        editor.InsertTextAtCursor(generatedCode);
+            editor.Select(edit.Line, edit.Column, endLine, endColumn);
+            editor.Cut();
+            editor.InsertTextAtCursor(edit.NewText);
+        }
 
         editor.ReloadScriptFromText();
-        Logger.Info("GenerateGetterSetterAction: Completed successfully");
-    }
-
-    private string GeneratePropertySyntax(string varName, string varType, string initializer, GetterSetterOptions options)
-    {
-        var sb = new StringBuilder();
-        var backingField = options.UseBackingField ? $"_{varName}" : null;
-
-        // Generate backing field if needed
-        if (options.UseBackingField)
-        {
-            sb.Append($"var {backingField}");
-            if (!string.IsNullOrEmpty(varType))
-                sb.Append($": {varType}");
-            if (!string.IsNullOrEmpty(initializer))
-                sb.Append($" = {initializer}");
-            sb.AppendLine();
-            sb.AppendLine();
-        }
-
-        // Generate property with get/set
-        sb.Append($"var {varName}");
-        if (!string.IsNullOrEmpty(varType))
-            sb.Append($": {varType}");
-        if (!options.UseBackingField && !string.IsNullOrEmpty(initializer))
-            sb.Append($" = {initializer}");
-        sb.AppendLine(":");
-
-        // Getter
-        if (options.GenerateGetter)
-        {
-            if (options.UseBackingField)
-                sb.AppendLine($"\tget: return {backingField}");
-            else
-                sb.AppendLine($"\tget: return {varName}");
-        }
-
-        // Setter
-        if (options.GenerateSetter)
-        {
-            if (options.UseBackingField)
-                sb.AppendLine($"\tset(value): {backingField} = value");
-            else
-                sb.AppendLine($"\tset(value): {varName} = value");
-        }
-
-        return sb.ToString().TrimEnd();
-    }
-
-    private string GenerateMethodSyntax(string varName, string varType, GetterSetterOptions options)
-    {
-        var sb = new StringBuilder();
-        var backingField = $"_{varName}";
-
-        // Generate backing field (always needed for method syntax)
-        sb.Append($"var {backingField}");
-        if (!string.IsNullOrEmpty(varType))
-            sb.Append($": {varType}");
-        sb.AppendLine();
-
-        // Getter method
-        if (options.GenerateGetter)
-        {
-            sb.AppendLine();
-            sb.Append($"func get_{varName}()");
-            if (!string.IsNullOrEmpty(varType))
-                sb.Append($" -> {varType}");
-            sb.AppendLine(":");
-            sb.AppendLine($"\treturn {backingField}");
-        }
-
-        // Setter method
-        if (options.GenerateSetter)
-        {
-            sb.AppendLine();
-            sb.Append($"func set_{varName}(value");
-            if (!string.IsNullOrEmpty(varType))
-                sb.Append($": {varType}");
-            sb.AppendLine("):");
-            sb.AppendLine($"\t{backingField} = value");
-        }
-
-        return sb.ToString().TrimEnd();
     }
 }
 
 /// <summary>
-/// Options for getter/setter generation.
+/// Options for getter/setter generation (Plugin-side).
 /// </summary>
 internal class GetterSetterOptions
 {

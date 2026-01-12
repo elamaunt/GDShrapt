@@ -1,10 +1,12 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Adds type annotation to a variable or parameter declaration based on inferred type.
+/// Uses GDTypeInferenceHelper for type inference and shows preview before applying.
 /// </summary>
 internal class AddTypeAnnotationAction : RefactoringActionBase
 {
@@ -21,35 +23,26 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
         // Check if cursor is on a variable declaration without type annotation
         var varDecl = GetVariableDeclaration(context);
         if (varDecl != null && varDecl.Type == null)
-        {
-            // Check if we can infer the type
             return CanInferType(varDecl, context);
-        }
 
         // Check if on a local variable declaration
         var localVar = GetLocalVariableDeclaration(context);
         if (localVar != null && localVar.Type == null)
-        {
             return CanInferType(localVar, context);
-        }
 
         // Check if on a parameter declaration
         var param = GetParameterDeclaration(context);
         if (param != null && param.Type == null)
-        {
-            return true; // Parameters can always have type hints added
-        }
+            return true;
 
         return false;
     }
 
     private bool CanInferType(GDVariableDeclaration varDecl, RefactoringContext context)
     {
-        // Can infer if there's an initializer
         if (varDecl.Initializer != null)
             return true;
 
-        // Check if analyzer has type info
         var analyzer = context.ScriptMap?.Analyzer;
         if (analyzer != null)
         {
@@ -63,11 +56,7 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
 
     private bool CanInferType(GDVariableDeclarationStatement localVar, RefactoringContext context)
     {
-        // Can infer if there's an initializer
-        if (localVar.Initializer != null)
-            return true;
-
-        return false;
+        return localVar.Initializer != null;
     }
 
     protected override string ValidateContext(RefactoringContext context)
@@ -87,13 +76,11 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
 
     protected override async Task ExecuteInternalAsync(RefactoringContext context)
     {
-        var editor = context.Editor;
-
         // Try class-level variable
         var varDecl = GetVariableDeclaration(context);
         if (varDecl != null)
         {
-            await AddTypeToVariableDeclaration(varDecl, context, editor);
+            await AddTypeWithPreview(varDecl, context);
             return;
         }
 
@@ -101,7 +88,7 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
         var localVar = GetLocalVariableDeclaration(context);
         if (localVar != null)
         {
-            await AddTypeToLocalVariable(localVar, context, editor);
+            await AddTypeWithPreview(localVar, context);
             return;
         }
 
@@ -109,178 +96,165 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
         var param = GetParameterDeclaration(context);
         if (param != null)
         {
-            await AddTypeToParameter(param, context, editor);
+            await AddTypeWithPreview(param, context);
             return;
         }
 
         Logger.Info("AddTypeAnnotationAction: No suitable declaration found");
     }
 
-    private async Task AddTypeToVariableDeclaration(GDVariableDeclaration varDecl, RefactoringContext context, IScriptEditor editor)
+    private async Task AddTypeWithPreview(GDVariableDeclaration varDecl, RefactoringContext context)
     {
-        var typeName = InferType(varDecl.Initializer, context);
-        if (string.IsNullOrEmpty(typeName))
+        // Use null analyzer - GDTypeInferenceHelper works with expression-based inference
+        var helper = new GDTypeInferenceHelper((GDShrapt.Semantics.GDScriptAnalyzer?)null);
+        var inferredType = varDecl.Initializer != null
+            ? helper.InferExpressionType(varDecl.Initializer)
+            : GDInferredType.Unknown("No initializer");
+
+        if (inferredType.IsUnknown)
         {
             Logger.Info("AddTypeAnnotationAction: Could not infer type");
             return;
         }
-
-        Logger.Info($"AddTypeAnnotationAction: Inferred type '{typeName}'");
 
         var identifier = varDecl.Identifier;
         if (identifier == null) return;
 
-        // Insert ": TypeName" after the identifier
-        var line = identifier.EndLine;
-        var column = identifier.EndColumn;
+        var originalCode = varDecl.ToString();
+        var typeName = inferredType.TypeName ?? "Variant";
+        var resultCode = BuildResultCode(varDecl, typeName);
 
-        editor.CursorLine = line;
-        editor.CursorColumn = column;
-        editor.InsertTextAtCursor($": {typeName}");
-
-        editor.ReloadScriptFromText();
-
-        Logger.Info("AddTypeAnnotationAction: Completed successfully");
-        await Task.CompletedTask;
+        await ShowPreviewAndApply(context, identifier, typeName, originalCode, resultCode, inferredType);
     }
 
-    private async Task AddTypeToLocalVariable(GDVariableDeclarationStatement localVar, RefactoringContext context, IScriptEditor editor)
+    private async Task AddTypeWithPreview(GDVariableDeclarationStatement localVar, RefactoringContext context)
     {
-        var typeName = InferType(localVar.Initializer, context);
-        if (string.IsNullOrEmpty(typeName))
+        // Use null analyzer - GDTypeInferenceHelper works with expression-based inference
+        var helper = new GDTypeInferenceHelper((GDShrapt.Semantics.GDScriptAnalyzer?)null);
+        var inferredType = localVar.Initializer != null
+            ? helper.InferExpressionType(localVar.Initializer)
+            : GDInferredType.Unknown("No initializer");
+
+        if (inferredType.IsUnknown)
         {
             Logger.Info("AddTypeAnnotationAction: Could not infer type");
             return;
         }
 
-        Logger.Info($"AddTypeAnnotationAction: Inferred type '{typeName}'");
-
         var identifier = localVar.Identifier;
         if (identifier == null) return;
 
-        // Insert ": TypeName" after the identifier
-        var line = identifier.EndLine;
-        var column = identifier.EndColumn;
+        var originalCode = localVar.ToString();
+        var typeName = inferredType.TypeName ?? "Variant";
+        var resultCode = BuildResultCode(localVar, typeName);
 
-        editor.CursorLine = line;
-        editor.CursorColumn = column;
-        editor.InsertTextAtCursor($": {typeName}");
-
-        editor.ReloadScriptFromText();
-
-        Logger.Info("AddTypeAnnotationAction: Completed successfully");
-        await Task.CompletedTask;
+        await ShowPreviewAndApply(context, identifier, typeName, originalCode, resultCode, inferredType);
     }
 
-    private async Task AddTypeToParameter(GDParameterDeclaration param, RefactoringContext context, IScriptEditor editor)
+    private async Task AddTypeWithPreview(GDParameterDeclaration param, RefactoringContext context)
     {
-        // For parameters without a default value, we can't infer the type
-        // Prompt user or use Variant
-        var typeName = "Variant";
-
-        if (param.DefaultValue != null)
-        {
-            typeName = InferType(param.DefaultValue, context) ?? "Variant";
-        }
-
-        Logger.Info($"AddTypeAnnotationAction: Using type '{typeName}' for parameter");
+        // Use null analyzer - GDTypeInferenceHelper works with expression-based inference
+        var helper = new GDTypeInferenceHelper((GDShrapt.Semantics.GDScriptAnalyzer?)null);
+        var inferredType = param.DefaultValue != null
+            ? helper.InferExpressionType(param.DefaultValue)
+            : GDInferredType.FromType("Variant", GDTypeConfidence.Low, "No default value");
 
         var identifier = param.Identifier;
         if (identifier == null) return;
 
-        // Insert ": TypeName" after the identifier
-        var line = identifier.EndLine;
-        var column = identifier.EndColumn;
+        var originalCode = param.ToString();
+        var typeName = inferredType.TypeName ?? "Variant";
+        var resultCode = BuildResultCode(param, typeName);
 
-        editor.CursorLine = line;
-        editor.CursorColumn = column;
-        editor.InsertTextAtCursor($": {typeName}");
-
-        editor.ReloadScriptFromText();
-
-        Logger.Info("AddTypeAnnotationAction: Completed successfully");
-        await Task.CompletedTask;
+        await ShowPreviewAndApply(context, identifier, typeName, originalCode, resultCode, inferredType);
     }
 
-    private string InferType(GDExpression expr, RefactoringContext context)
+    private async Task ShowPreviewAndApply(
+        RefactoringContext context,
+        GDIdentifier identifier,
+        string typeName,
+        string originalCode,
+        string resultCode,
+        GDInferredType inferredType)
     {
-        if (expr == null)
-            return null;
+        var previewDialog = new RefactoringPreviewDialog();
+        context.DialogParent?.AddChild(previewDialog);
 
-        // Check literals
-        if (expr is GDNumberExpression numExpr)
+        try
         {
-            var numStr = numExpr.ToString();
-            if (numStr.Contains("."))
-                return "float";
-            return "int";
+            var title = $"Add Type Annotation ({inferredType.Confidence})";
+
+            // In Base Plugin: Apply is disabled (Pro required)
+            var canApply = false;
+            var proMessage = "GDShrapt Pro required to apply this refactoring";
+
+            var result = await previewDialog.ShowForResult(
+                title,
+                $"{originalCode}\n\n// Inferred type: {typeName}\n// Confidence: {inferredType.Confidence}\n// Reason: {inferredType.Reason ?? "Type inference"}",
+                resultCode,
+                canApply,
+                "Apply",
+                proMessage);
+
+            if (result.ShouldApply && canApply)
+            {
+                // Apply the annotation
+                var editor = context.Editor;
+                editor.CursorLine = identifier.EndLine;
+                editor.CursorColumn = identifier.EndColumn;
+                editor.InsertTextAtCursor($": {typeName}");
+                editor.ReloadScriptFromText();
+
+                Logger.Info("AddTypeAnnotationAction: Completed successfully");
+            }
         }
-
-        if (expr is GDStringExpression)
-            return "String";
-
-        if (expr is GDBoolExpression)
-            return "bool";
-
-        if (expr is GDArrayInitializerExpression)
-            return "Array";
-
-        if (expr is GDDictionaryInitializerExpression)
-            return "Dictionary";
-
-        if (expr is GDNodePathExpression)
-            return "NodePath";
-
-        // Check constructor calls like Vector2(), Color(), etc.
-        if (expr is GDCallExpression call)
+        finally
         {
-            var methodName = GetCallMethodName(call);
-            if (IsGodotType(methodName))
-                return methodName;
-
-            // Check if it's a typed array: Array[int]()
-            if (methodName == "Array" || methodName == "Dictionary")
-                return methodName;
+            previewDialog.QueueFree();
         }
-
-        // Try to get type from analyzer
-        var analyzer = context.ScriptMap?.Analyzer;
-        if (analyzer != null)
-        {
-            var typeName = analyzer.GetTypeForNode(expr);
-            if (!string.IsNullOrEmpty(typeName))
-                return typeName;
-        }
-
-        return null;
     }
 
-    private string GetCallMethodName(GDCallExpression call)
+    private string BuildResultCode(GDVariableDeclaration varDecl, string typeName)
     {
-        if (call.CallerExpression is GDIdentifierExpression idExpr)
-            return idExpr.Identifier?.Sequence;
-        return null;
+        var sb = new System.Text.StringBuilder();
+
+        if (varDecl.ConstKeyword != null)
+            sb.Append("const ");
+        else if (varDecl.VarKeyword != null)
+            sb.Append("var ");
+
+        sb.Append(varDecl.Identifier?.Sequence ?? "variable");
+        sb.Append($": {typeName}");
+
+        if (varDecl.Initializer != null)
+            sb.Append($" = {varDecl.Initializer}");
+
+        return sb.ToString();
     }
 
-    private bool IsGodotType(string name)
+    private string BuildResultCode(GDVariableDeclarationStatement localVar, string typeName)
     {
-        if (string.IsNullOrEmpty(name))
-            return false;
+        var sb = new System.Text.StringBuilder();
+        sb.Append("var ");
+        sb.Append(localVar.Identifier?.Sequence ?? "variable");
+        sb.Append($": {typeName}");
 
-        // Common Godot types
-        var godotTypes = new[]
-        {
-            "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-            "Rect2", "Rect2i", "Transform2D", "Transform3D",
-            "Color", "Plane", "Quaternion", "AABB", "Basis",
-            "RID", "Callable", "Signal", "StringName", "NodePath",
-            "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-            "PackedFloat32Array", "PackedFloat64Array",
-            "PackedStringArray", "PackedVector2Array", "PackedVector3Array",
-            "PackedColorArray"
-        };
+        if (localVar.Initializer != null)
+            sb.Append($" = {localVar.Initializer}");
 
-        return System.Array.Exists(godotTypes, t => t == name);
+        return sb.ToString();
+    }
+
+    private string BuildResultCode(GDParameterDeclaration param, string typeName)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append(param.Identifier?.Sequence ?? "param");
+        sb.Append($": {typeName}");
+
+        if (param.DefaultValue != null)
+            sb.Append($" = {param.DefaultValue}");
+
+        return sb.ToString();
     }
 
     private GDVariableDeclaration GetVariableDeclaration(RefactoringContext context)

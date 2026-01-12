@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using Godot;
 
 namespace GDShrapt.Plugin;
@@ -250,5 +251,38 @@ internal class RefactoringContext
         if (NodeAtCursor is GDWhileStatement whileStmt)
             return whileStmt;
         return FindParent<GDWhileStatement>();
+    }
+
+    /// <summary>
+    /// Creates a GDRefactoringContext for use with Semantics services.
+    /// </summary>
+    public GDRefactoringContext BuildSemanticsContext()
+    {
+        if (ContainingClass == null)
+            return null;
+
+        // Create a GDScriptFile wrapper for the context
+        var reference = new GDScriptReference(ScriptMap?.Reference?.FullPath ?? "unknown.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(ContainingClass.ToString());
+
+        // Build selection info
+        var selection = HasSelection
+            ? new GDSelectionInfo(
+                SelectionStartLine,
+                SelectionStartColumn,
+                SelectionEndLine,
+                SelectionEndColumn,
+                SelectedText)
+            : GDSelectionInfo.None;
+
+        // Build cursor position
+        var cursor = new GDCursorPosition(CursorLine, CursorColumn);
+
+        return new GDRefactoringContext(
+            scriptFile,
+            ContainingClass,
+            cursor,
+            selection);
     }
 }
