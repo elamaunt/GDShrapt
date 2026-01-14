@@ -1,48 +1,43 @@
-using GDShrapt.Reader;
-using GDShrapt.Semantics;
-using System;
-using System.IO;
+using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Represents a GDScript file with its parsed AST and analysis information.
 /// This is the data-only class implementing IGDScriptInfo.
-/// UI-specific state (TabController, async waiters) is in GDScriptMapUIBinding.
+/// UI-specific state (TabController, async waiters) is in GDScriptFileUIBinding.
 /// </summary>
-internal class GDScriptMap : IGDScriptInfo
+/*
+internal class GDScriptFile : IGDScriptInfo
 {
     private static readonly GDScriptReader Reader = new GDScriptReader();
 
-    private GDPluginScriptReference _reference;
+    private string _fullPath;
     private bool _referencesBuilt;
+
+    private SemaphoreSlim _readingSlim = new (1, 1);
 
     /// <summary>
     /// Creates a script map with owner and reference.
     /// </summary>
-    public GDScriptMap(GDProjectMap? owner, GDPluginScriptReference reference)
+    public GDScriptFile(GDScriptProject? owner, string fullPath)
     {
         Owner = owner;
-        _reference = reference ?? throw new ArgumentNullException(nameof(reference));
+        _fullPath = fullPath;
     }
 
     /// <summary>
     /// Creates a standalone script map without owner.
     /// </summary>
-    public GDScriptMap(GDPluginScriptReference reference)
+    public GDScriptFile(string fullPath)
     {
-        _reference = reference ?? throw new ArgumentNullException(nameof(reference));
+        _fullPath = fullPath;
     }
 
     /// <summary>
     /// The project map that owns this script (if any).
     /// </summary>
-    public GDProjectMap? Owner { get; }
-
-    /// <summary>
-    /// Reference to the script file.
-    /// </summary>
-    public GDPluginScriptReference Reference => _reference;
+    public GDScriptProject? Owner { get; }
 
     /// <summary>
     /// The parsed class declaration.
@@ -53,6 +48,8 @@ internal class GDScriptMap : IGDScriptInfo
     /// Script analyzer for type inference and reference collection.
     /// </summary>
     public GDScriptAnalyzer? Analyzer { get; private set; }
+
+    public TabController? TabController { get; set; }
 
     /// <summary>
     /// Whether this script is global (has class_name declaration).
@@ -69,11 +66,9 @@ internal class GDScriptMap : IGDScriptInfo
     /// </summary>
     public bool WasReadError { get; private set; }
 
-    // IGDScriptInfo implementation
-    string? IGDScriptInfo.FullPath => _reference.FullPath;
-    string? IGDScriptInfo.TypeName => TypeName;
-    GDClassDeclaration? IGDScriptInfo.Class => Class;
-    bool IGDScriptInfo.IsGlobal => IsGlobal;
+    public string FullPath => _fullPath;
+
+    public string ResourcePath => ProjectSettings.LocalizePath(_fullPath);
 
     /// <summary>
     /// Reloads the script from file or editor content.
@@ -81,26 +76,24 @@ internal class GDScriptMap : IGDScriptInfo
     /// </summary>
     /// <param name="editorContent">Optional editor content to parse instead of file.</param>
     /// <returns>True if parsing succeeded, false otherwise.</returns>
-    public bool Reload(string? editorContent = null)
+    public async Task<bool> Reload(string? editorContent = null)
     {
-        WasReadError = false;
-        _referencesBuilt = false;
-        Analyzer = null;
-
         try
         {
-            Logger.Debug($"Parsing: {Path.GetFileName(_reference.FullPath)}");
+            await _readingSlim.WaitAsync();
+
+            Logger.Debug($"Parsing: {Path.GetFileName(_fullPath)}");
 
             if (editorContent != null)
                 Class = Reader.ParseFileContent(editorContent);
             else
-                Class = Reader.ParseFile(_reference.FullPath);
+                Class = Reader.ParseFile(_fullPath);
 
             TypeName = Class?.ClassName?.Identifier?.Sequence
-                ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
+                ?? Path.GetFileNameWithoutExtension(_fullPath);
             IsGlobal = Class?.ClassName?.Identifier?.Sequence != null;
 
-            BuildAnalyzerIfNeeded();
+            Analyzer = null;
 
             Logger.Debug($"Loaded: {TypeName}");
             return true;
@@ -108,7 +101,8 @@ internal class GDScriptMap : IGDScriptInfo
         catch (Exception ex)
         {
             WasReadError = true;
-            Logger.Warning($"Parse error in {Path.GetFileName(_reference.FullPath)}: {ex.Message}");
+            Logger.Warning($"Parse error in {Path.GetFileName(_fullPath)}: {ex.Message}");
+            _readingSlim.Release();
             return false;
         }
     }
@@ -140,16 +134,10 @@ internal class GDScriptMap : IGDScriptInfo
         return Analyzer;
     }
 
-    /// <summary>
-    /// Changes the reference to this script.
-    /// </summary>
-    internal void ChangeReference(GDPluginScriptReference newReference)
-    {
-        _reference = newReference ?? throw new ArgumentNullException(nameof(newReference));
-    }
 
     public override string ToString()
     {
-        return $"{TypeName} ({_reference.FullPath})";
+        return $"{TypeName} ({_fullPath})";
     }
 }
+*/

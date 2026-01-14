@@ -12,7 +12,7 @@ internal class CompletionContext
     /// <summary>
     /// The script map being edited.
     /// </summary>
-    public GDScriptMap ScriptMap { get; init; } = null!;
+    public GDScriptFile ScriptFile { get; init; } = null!;
 
     /// <summary>
     /// Current line number (0-based).
@@ -167,12 +167,12 @@ internal enum CompletionType
 /// </summary>
 internal class CompletionContextBuilder
 {
-    private readonly GDProjectMap _projectMap;
+    private readonly GDScriptProject _ScriptProject;
     private readonly GDTypeResolver? _typeResolver;
 
-    public CompletionContextBuilder(GDProjectMap projectMap, GDTypeResolver? typeResolver = null)
+    public CompletionContextBuilder(GDScriptProject ScriptProject, GDTypeResolver? typeResolver = null)
     {
-        _projectMap = projectMap;
+        _ScriptProject = ScriptProject;
         _typeResolver = typeResolver;
     }
 
@@ -180,7 +180,7 @@ internal class CompletionContextBuilder
     /// Builds a completion context from the current editor state.
     /// </summary>
     public CompletionContext Build(
-        GDScriptMap scriptMap,
+        GDScriptFile ScriptFile,
         string sourceCode,
         int line,
         int column,
@@ -210,13 +210,13 @@ internal class CompletionContextBuilder
             memberAccessExpression = ExtractMemberAccessExpression(textBeforeCursor);
             if (memberAccessExpression != null && _typeResolver != null)
             {
-                memberAccessType = ResolveExpressionType(memberAccessExpression, scriptMap);
+                memberAccessType = ResolveExpressionType(memberAccessExpression, ScriptFile);
             }
         }
 
         return new CompletionContext
         {
-            ScriptMap = scriptMap,
+            ScriptFile = ScriptFile,
             Line = line,
             Column = column,
             SourceCode = sourceCode,
@@ -383,9 +383,9 @@ internal class CompletionContextBuilder
         return beforeDot.Substring(startIndex);
     }
 
-    private string? ResolveExpressionType(string expression, GDScriptMap scriptMap)
+    private string? ResolveExpressionType(string expression, GDScriptFile ScriptFile)
     {
-        if (_typeResolver == null || scriptMap.Analyzer == null)
+        if (_typeResolver == null || ScriptFile.Analyzer == null)
             return null;
 
         try
@@ -396,8 +396,8 @@ internal class CompletionContextBuilder
 
             if (parsedExpr != null)
             {
-                // GDScriptMap implements IGDScriptInfo directly
-                var result = _typeResolver.ResolveExpressionType(parsedExpr, scriptMap);
+                // GDScriptFile implements IGDScriptInfo directly
+                var result = _typeResolver.ResolveExpressionType(parsedExpr, ScriptFile);
                 return result.IsResolved ? result.TypeName : null;
             }
         }
@@ -407,7 +407,7 @@ internal class CompletionContextBuilder
         }
 
         // Fallback: try to find type from local scope
-        var analyzer = scriptMap.Analyzer;
+        var analyzer = ScriptFile.Analyzer;
 
         // Simple identifier lookup
         foreach (var symbol in analyzer.Symbols)

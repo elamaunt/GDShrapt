@@ -28,7 +28,7 @@ internal class GDScriptEditor : IScriptEditor
     /// </summary>
     public bool HasSelection => _textEdit?.HasSelection() ?? false;
 
-    public GDScriptMap ScriptMap => _plugin.GetScriptMap(ScriptPath);
+    public GDScriptFile ScriptFile => _plugin.GetScript(ScriptPath);
     public string ScriptPath => _tabController.ControlledScript?.ResourcePath ?? string.Empty;
     public string Name => _tabController.ControlledScript?.ResourceName ?? string.Empty;
 
@@ -67,11 +67,11 @@ internal class GDScriptEditor : IScriptEditor
 
     public void Cut() => _textEdit?.Cut();
 
-    public GDClassDeclaration? GetClass() => _plugin.GetScriptMap(ScriptPath)?.Class;
+    public GDClassDeclaration? GetClass() => _plugin.GetScript(ScriptPath)?.Class;
 
     public string GetLine(int line) => _textEdit?.GetLine(line) ?? string.Empty;
     public void InsertTextAtCursor(string text) => _textEdit?.InsertTextAtCaret(text);
-    public void ReloadScriptFromText() => _plugin.GetScriptMap(ScriptPath)?.Reload(Text);
+    public void ReloadScriptFromText() => _plugin.GetScript(ScriptPath)?.Reload(Text);
 
     public void RequestGodotLookup()
     {

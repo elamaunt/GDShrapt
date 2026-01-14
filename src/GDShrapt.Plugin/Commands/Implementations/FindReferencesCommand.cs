@@ -55,7 +55,7 @@ internal class FindReferencesCommand : Command
         Logger.Info($"Finding references for '{symbolName}'");
 
         // Build refactoring context for semantics service
-        var contextBuilder = new RefactoringContextBuilder(Plugin.ProjectMap);
+        var contextBuilder = new RefactoringContextBuilder(Plugin.ScriptProject);
         var semanticsContext = contextBuilder.BuildSemanticsContext(controller);
 
         if (semanticsContext == null)
@@ -101,7 +101,7 @@ internal class FindReferencesCommand : Command
             symbolScope.Type == GDSymbolScopeType.ExternalMember ||
             symbolScope.Type == GDSymbolScopeType.ProjectWide)
         {
-            CollectCrossFileReferences(symbolName, symbolScope, controller.ScriptMap, allReferences);
+            CollectCrossFileReferences(symbolName, symbolScope, controller.ScriptFile, allReferences);
         }
 
         if (allReferences.Count == 0)
@@ -163,19 +163,19 @@ internal class FindReferencesCommand : Command
     private void CollectCrossFileReferences(
         string symbolName,
         GDSymbolScope scope,
-        GDScriptMap currentScript,
+        GDScriptFile currentScript,
         List<ReferenceItem> allReferences)
     {
         // Get the type name for class member lookups
         var typeName = currentScript?.TypeName;
         var isPublic = scope.IsPublic;
 
-        foreach (var script in Plugin.ProjectMap.Scripts)
+        foreach (var script in Plugin.ScriptProject.ScriptFiles)
         {
             // Skip current script (already processed by service)
             if (script == currentScript || script.Class == null) continue;
 
-            var filePath = script.Reference?.FullPath;
+            var filePath = script.FullPath;
 
             if (scope.Type == GDSymbolScopeType.ClassMember && isPublic && !string.IsNullOrEmpty(typeName))
             {
@@ -234,10 +234,10 @@ internal class FindReferencesCommand : Command
                 }
 
                 // Also find the declaration in the target type
-                var targetScript = Plugin.ProjectMap.GetScriptMapByTypeName(scope.CallerTypeName);
+                var targetScript = Plugin.ScriptProject.GetScriptByTypeName(scope.CallerTypeName);
                 if (targetScript?.Class != null && targetScript != currentScript)
                 {
-                    var targetFilePath = targetScript.Reference?.FullPath;
+                    var targetFilePath = targetScript.FullPath;
 
                     foreach (var member in targetScript.Class.Members.OfType<GDIdentifiableClassMember>())
                     {

@@ -110,7 +110,7 @@ internal class SerializedDiagnostic
     /// <summary>
     /// Converts to Diagnostic (without fixes - those must be regenerated).
     /// </summary>
-    public Diagnostic ToDiagnostic(GDPluginScriptReference? script = null)
+    public Diagnostic ToDiagnostic(GDScriptFile? script = null)
     {
         return new Diagnostic
         {

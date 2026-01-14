@@ -34,13 +34,13 @@ internal partial class TabController : GodotObject
     /// </summary>
     public event Action<string, int>? ReferenceCountClicked;
 
-    public GDPluginScriptReference? GDPluginScriptReference
+    public GDScriptFile? GDPluginScriptReference
     {
         get
         {
             if (_script == null)
                 return null;
-            return _plugin.ProjectMap.GetScriptMapByResourcePath(_script.ResourcePath)?.Reference;
+            return _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
         }
     }
 
@@ -191,7 +191,7 @@ internal partial class TabController : GodotObject
         _referenceOverlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
 
         // Attach to editor
-        _referenceOverlay.AttachToEditor(_textEdit, _plugin.ProjectMap);
+        _referenceOverlay.AttachToEditor(_textEdit, _plugin.ScriptProject);
 
         // Wire up click event
         _referenceOverlay.ReferenceCountClicked += OnReferenceCountClicked;
@@ -199,8 +199,8 @@ internal partial class TabController : GodotObject
         // Set initial script if available
         if (_script != null)
         {
-            var scriptMap = _plugin.ProjectMap.GetScriptMapByResourcePath(_script.ResourcePath);
-            _referenceOverlay.SetScript(scriptMap);
+            var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
+            _referenceOverlay.SetScript(ScriptFile);
         }
 
         // Create Error Lens overlay
@@ -234,8 +234,8 @@ internal partial class TabController : GodotObject
         // Set initial script if available
         if (_script != null)
         {
-            var scriptMap = _plugin.ProjectMap.GetScriptMapByResourcePath(_script.ResourcePath);
-            _errorLensOverlay.SetScript(scriptMap);
+            var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
+            _errorLensOverlay.SetScript(ScriptFile);
         }
     }
 
@@ -335,8 +335,8 @@ internal partial class TabController : GodotObject
         if (_textEdit == null || _script == null)
             return;
 
-        var scriptMap = _plugin.ProjectMap.GetScriptMapByResourcePath(_script.ResourcePath);
-        if (scriptMap == null)
+        var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
+        if (ScriptFile == null)
             return;
 
         // Initialize completion service if needed
@@ -350,7 +350,7 @@ internal partial class TabController : GodotObject
         var cursorCol = _textEdit.GetCaretColumn();
 
         var context = _completionContextBuilder.Build(
-            scriptMap,
+            ScriptFile,
             sourceCode,
             cursorLine,
             cursorCol,
@@ -409,8 +409,8 @@ internal partial class TabController : GodotObject
             return;
         }
 
-        _completionService = new CompletionService(_plugin.ProjectMap, typeResolver, godotTypesProvider);
-        _completionContextBuilder = new CompletionContextBuilder(_plugin.ProjectMap, typeResolver);
+        _completionService = new CompletionService(_plugin.ScriptProject, typeResolver, godotTypesProvider);
+        _completionContextBuilder = new CompletionContextBuilder(_plugin.ScriptProject, typeResolver);
 
         Logger.Info("TabController: Completion service initialized");
     }
@@ -495,23 +495,23 @@ internal partial class TabController : GodotObject
         _script = script;
         Logger.Debug($"Controlled script updated: '{script.ResourcePath}'");
 
-        var scriptMap = _plugin.ProjectMap.GetScriptMapByResourcePath(script.ResourcePath);
+        var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(script.ResourcePath);
 
         // Update overlays with new script
-        _referenceOverlay?.SetScript(scriptMap);
-        _errorLensOverlay?.SetScript(scriptMap);
+        _referenceOverlay?.SetScript(ScriptFile);
+        _errorLensOverlay?.SetScript(ScriptFile);
 
         // Update diagnostics from DiagnosticService if available
-        if (scriptMap != null)
+        if (ScriptFile != null)
         {
-            UpdateDiagnostics(scriptMap.Reference);
+            UpdateDiagnostics(ScriptFile);
         }
     }
 
     /// <summary>
     /// Updates the error lens overlay with diagnostics from DiagnosticService.
     /// </summary>
-    internal void UpdateDiagnostics(GDPluginScriptReference script)
+    internal void UpdateDiagnostics(GDScriptFile script)
     {
         if (_errorLensOverlay == null)
             return;
@@ -532,10 +532,10 @@ internal partial class TabController : GodotObject
         if (_script == null)
             return;
 
-        var scriptMap = _plugin.ProjectMap.GetScriptMapByResourcePath(_script.ResourcePath);
-        if (scriptMap != null)
+        var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
+        if (ScriptFile != null)
         {
-            UpdateDiagnostics(scriptMap.Reference);
+            UpdateDiagnostics(ScriptFile);
         }
     }
 
@@ -685,18 +685,18 @@ internal partial class TabController : GodotObject
         if (quickFixHandler == null)
             return false;
 
-        var scriptRef = GDPluginScriptReference;
-        if (scriptRef == null)
+        var script = GDPluginScriptReference;
+        if (script == null)
             return false;
 
         var cursorLine = _textEdit.GetCaretLine();
         var cursorCol = _textEdit.GetCaretColumn();
 
         // Check if there are fixes at cursor position or on the line
-        var fixes = quickFixHandler.GetFixesAtPosition(scriptRef, cursorLine, cursorCol);
+        var fixes = quickFixHandler.GetFixesAtPosition(script, cursorLine, cursorCol);
         if (fixes.Count == 0)
         {
-            fixes = quickFixHandler.GetFixesOnLine(scriptRef, cursorLine);
+            fixes = quickFixHandler.GetFixesOnLine(script, cursorLine);
         }
 
         if (fixes.Count == 0)
@@ -715,7 +715,7 @@ internal partial class TabController : GodotObject
         // Show fixes
         var cursorPos = GetCursorScreenPosition();
         var sourceCode = _textEdit.Text;
-        _quickFixesPopup.ShowFixes(scriptRef, cursorLine, cursorCol, sourceCode, cursorPos);
+        _quickFixesPopup.ShowFixes(script, cursorLine, cursorCol, sourceCode, cursorPos);
 
         Logger.Info($"TabController: Showing {fixes.Count} quick fixes");
         return true;
@@ -774,11 +774,11 @@ internal partial class TabController : GodotObject
         // Trigger re-analysis of the script
         if (_script != null)
         {
-            var binding = _plugin.ProjectMap.GetBindingByResourcePath(_script.ResourcePath);
-            if (binding != null)
+            var map = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
+            if (map != null)
             {
                 // Re-analyze in background
-                _ = _plugin.DiagnosticService?.AnalyzeScriptAsync(binding);
+                _ = _plugin.DiagnosticService?.AnalyzeScriptAsync(map);
             }
         }
     }
@@ -806,7 +806,7 @@ internal partial class TabController : GodotObject
         if (_editor == null)
             return null;
 
-        _contextBuilder ??= new RefactoringContextBuilder(_plugin.ProjectMap, _plugin);
+        _contextBuilder ??= new RefactoringContextBuilder(_plugin.ScriptProject, _plugin);
         return _contextBuilder.Build(_editor);
     }
 

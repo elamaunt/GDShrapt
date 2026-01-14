@@ -5,17 +5,17 @@ using System.Linq;
 namespace GDShrapt.Plugin;
 
 /// <summary>
-/// Runtime provider that integrates with GDProjectMap for multi-file type resolution.
+/// Runtime provider that integrates with GDScriptProject for multi-file type resolution.
 /// Combines GDShrapt.TypesMap for Godot built-in types with project script information.
 /// </summary>
 internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
 {
-    private readonly GDProjectMap _projectMap;
+    private readonly GDScriptProject _scriptProject;
     private readonly IGDRuntimeProvider _builtInProvider;
 
-    public GDProjectRuntimeProvider(GDProjectMap projectMap)
+    public GDProjectRuntimeProvider(GDScriptProject ScriptProject)
     {
-        _projectMap = projectMap;
+        _scriptProject = ScriptProject;
         _builtInProvider = GDDefaultRuntimeProvider.Instance;
     }
 
@@ -31,7 +31,7 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
             return true;
 
         // Check project classes
-        if (_projectMap?.GetScriptMapByTypeName(typeName) != null)
+        if (_scriptProject?.GetScriptByTypeName(typeName) != null)
             return true;
 
         return false;
@@ -48,10 +48,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
             return builtIn;
 
         // Try project classes
-        var scriptMap = _projectMap?.GetScriptMapByTypeName(typeName);
-        if (scriptMap != null)
+        var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
+        if (ScriptFile != null)
         {
-            return new GDRuntimeTypeInfo(typeName, GetBaseTypeFromScript(scriptMap));
+            return new GDRuntimeTypeInfo(typeName, GetBaseTypeFromScript(ScriptFile));
         }
 
         return null;
@@ -68,10 +68,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
             return builtIn;
 
         // Try project classes
-        var scriptMap = _projectMap?.GetScriptMapByTypeName(typeName);
-        if (scriptMap?.Analyzer != null)
+        var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
+        if (ScriptFile?.Analyzer != null)
         {
-            var symbol = scriptMap.Analyzer.FindSymbol(memberName);
+            var symbol = ScriptFile.Analyzer.FindSymbol(memberName);
             if (symbol != null)
             {
                 return new GDRuntimeMemberInfo(memberName, ConvertSymbolKind(symbol.Kind), symbol.TypeName)
@@ -95,10 +95,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
             return builtIn;
 
         // Try project classes
-        var scriptMap = _projectMap?.GetScriptMapByTypeName(typeName);
-        if (scriptMap != null)
+        var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
+        if (ScriptFile != null)
         {
-            return GetBaseTypeFromScript(scriptMap);
+            return GetBaseTypeFromScript(ScriptFile);
         }
 
         return null;
@@ -160,11 +160,11 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         if (string.IsNullOrEmpty(scriptPath))
             return null;
 
-        var scriptMap = _projectMap?.GetScriptMapByResourcePath(scriptPath);
-        if (scriptMap == null)
+        var ScriptFile = _scriptProject?.GetScriptByResourcePath(scriptPath);
+        if (ScriptFile == null)
             return null;
 
-        return BuildScriptTypeInfo(scriptMap);
+        return BuildScriptTypeInfo(ScriptFile);
     }
 
     public GDScriptTypeInfo GetProjectClass(string className)
@@ -172,23 +172,23 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         if (string.IsNullOrEmpty(className))
             return null;
 
-        var scriptMap = _projectMap?.GetScriptMapByTypeName(className);
-        if (scriptMap == null)
+        var ScriptFile = _scriptProject?.GetScriptByTypeName(className);
+        if (ScriptFile == null)
             return null;
 
-        return BuildScriptTypeInfo(scriptMap);
+        return BuildScriptTypeInfo(ScriptFile);
     }
 
     public IEnumerable<GDScriptTypeInfo> GetProjectClasses()
     {
-        if (_projectMap == null)
+        if (_scriptProject == null)
             yield break;
 
-        foreach (var scriptMap in _projectMap.Scripts)
+        foreach (var ScriptFile in _scriptProject.ScriptFiles)
         {
-            if (scriptMap.IsGlobal)
+            if (ScriptFile.IsGlobal)
             {
-                yield return BuildScriptTypeInfo(scriptMap);
+                yield return BuildScriptTypeInfo(ScriptFile);
             }
         }
     }
@@ -207,10 +207,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         // Check if it's a script
         if (resourcePath.EndsWith(".gd"))
         {
-            var scriptMap = _projectMap?.GetScriptMapByResourcePath(resourcePath);
-            if (scriptMap != null)
+            var ScriptFile = _scriptProject?.GetScriptByResourcePath(resourcePath);
+            if (ScriptFile != null)
             {
-                return scriptMap.TypeName;
+                return ScriptFile.TypeName;
             }
         }
 
@@ -236,9 +236,9 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
 
         // Convert res:// path to actual file path if needed
         var filePath = resourcePath;
-        if (resourcePath.StartsWith("res://") && _projectMap?.ProjectPath != null)
+        if (resourcePath.StartsWith("res://") && _scriptProject?.ProjectPath != null)
         {
-            filePath = System.IO.Path.Combine(_projectMap.ProjectPath, resourcePath.Substring(6).Replace("/", System.IO.Path.DirectorySeparatorChar.ToString()));
+            filePath = System.IO.Path.Combine(_scriptProject.ProjectPath, resourcePath.Substring(6).Replace("/", System.IO.Path.DirectorySeparatorChar.ToString()));
         }
 
         return System.IO.File.Exists(filePath);
@@ -252,10 +252,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         // Check project scripts first
         if (!string.IsNullOrEmpty(typeName) && typeName != "self")
         {
-            var scriptMap = _projectMap?.GetScriptMapByTypeName(typeName);
-            if (scriptMap?.Analyzer != null)
+            var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
+            if (ScriptFile?.Analyzer != null)
             {
-                var symbol = scriptMap.Analyzer.FindSymbol(signalName);
+                var symbol = ScriptFile.Analyzer.FindSymbol(signalName);
                 if (symbol?.Kind == GDSymbolKind.Signal)
                 {
                     return BuildSignalInfo(symbol);
@@ -288,10 +288,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
             yield break;
 
         // Check project scripts
-        var scriptMap = _projectMap?.GetScriptMapByTypeName(typeName);
-        if (scriptMap?.Analyzer != null)
+        var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
+        if (ScriptFile?.Analyzer != null)
         {
-            foreach (var symbol in scriptMap.Analyzer.Symbols)
+            foreach (var symbol in ScriptFile.Analyzer.Symbols)
             {
                 if (symbol.Kind == GDSymbolKind.Signal)
                 {
@@ -329,9 +329,9 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
 
     #region Helpers
 
-    private string GetBaseTypeFromScript(GDScriptMap scriptMap)
+    private string GetBaseTypeFromScript(GDScriptFile ScriptFile)
     {
-        var extends = scriptMap.Class?.Extends;
+        var extends = ScriptFile.Class?.Extends;
         if (extends?.Type != null)
         {
             return extends.Type.BuildName();
@@ -339,23 +339,23 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         return "RefCounted"; // Default base type
     }
 
-    private GDScriptTypeInfo BuildScriptTypeInfo(GDScriptMap scriptMap)
+    private GDScriptTypeInfo BuildScriptTypeInfo(GDScriptFile ScriptFile)
     {
         var result = new GDScriptTypeInfo
         {
-            ScriptPath = scriptMap.Reference?.FullPath,
-            ClassName = scriptMap.IsGlobal ? scriptMap.TypeName : null,
-            BaseType = GetBaseTypeFromScript(scriptMap)
+            ScriptPath = ScriptFile.FullPath,
+            ClassName = ScriptFile.IsGlobal ? ScriptFile.TypeName : null,
+            BaseType = GetBaseTypeFromScript(ScriptFile)
         };
 
         // Build members from analyzer if available
-        if (scriptMap.Analyzer != null)
+        if (ScriptFile.Analyzer != null)
         {
             var members = new List<GDRuntimeMemberInfo>();
             var methods = new List<GDMethodInfo>();
             var signals = new List<GDSignalInfo>();
 
-            foreach (var symbol in scriptMap.Analyzer.Symbols)
+            foreach (var symbol in ScriptFile.Analyzer.Symbols)
             {
                 switch (symbol.Kind)
                 {

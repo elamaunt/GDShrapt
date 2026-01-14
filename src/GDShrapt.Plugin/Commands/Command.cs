@@ -8,7 +8,7 @@ internal abstract class Command
 {
     public GDShraptPlugin Plugin { get; }
     public Godot.ScriptEditor Editor => EditorInterface.Singleton.GetScriptEditor();
-    public GDProjectMap Map => Plugin.ProjectMap;
+    public GDScriptProject Map => Plugin.ScriptProject;
 
     public Command(GDShraptPlugin plugin)
     {

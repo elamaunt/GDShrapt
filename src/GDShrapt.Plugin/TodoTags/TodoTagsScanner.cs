@@ -16,7 +16,7 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal class TodoTagsScanner : IDisposable
 {
-    private readonly GDProjectMap _projectMap;
+    private readonly GDScriptProject _scriptProject;
     private readonly GDConfigManager _configManager;
     private readonly ConcurrentDictionary<string, List<TodoItem>> _cache = new();
 
@@ -33,9 +33,9 @@ internal class TodoTagsScanner : IDisposable
     /// </summary>
     public event Action<string, List<TodoItem>>? OnFileScanned;
 
-    public TodoTagsScanner(GDProjectMap projectMap, GDConfigManager configManager)
+    public TodoTagsScanner(GDScriptProject ScriptProject, GDConfigManager configManager)
     {
-        _projectMap = projectMap;
+        _scriptProject = ScriptProject;
         _configManager = configManager;
 
         RebuildPattern();
@@ -98,8 +98,8 @@ internal class TodoTagsScanner : IDisposable
 
         _cache.Clear();
 
-        var scripts = _projectMap.Scripts
-            .Where(s => !IsExcluded(s.Reference.FullPath, config))
+        var scripts = _scriptProject.ScriptFiles
+            .Where(s => !IsExcluded(s.FullPath, config))
             .ToList();
 
         foreach (var script in scripts)
@@ -118,7 +118,7 @@ internal class TodoTagsScanner : IDisposable
     /// <summary>
     /// Scans a single script for TODO tags.
     /// </summary>
-    public Task<List<TodoItem>> ScanScriptAsync(GDScriptMap script, CancellationToken cancellationToken = default)
+    public Task<List<TodoItem>> ScanScriptAsync(GDScriptFile script, CancellationToken cancellationToken = default)
     {
         var items = new List<TodoItem>();
 
@@ -147,8 +147,8 @@ internal class TodoTagsScanner : IDisposable
                 {
                     Tag = tag,
                     Description = description,
-                    FilePath = script.Reference.FullPath,
-                    ResourcePath = ToResourcePath(script.Reference.FullPath),
+                    FilePath = script.FullPath,
+                    ResourcePath = ToResourcePath(script.FullPath),
                     Line = comment.StartLine,
                     Column = comment.StartColumn,
                     RawComment = comment.Sequence,
@@ -160,7 +160,7 @@ internal class TodoTagsScanner : IDisposable
         }
 
         // Update cache
-        _cache[script.Reference.FullPath] = items;
+        _cache[script.FullPath] = items;
 
         return Task.FromResult(items);
     }
@@ -170,7 +170,7 @@ internal class TodoTagsScanner : IDisposable
     /// </summary>
     public async Task RefreshFileAsync(string fullPath)
     {
-        var script = _projectMap.GetScriptMap(fullPath);
+        var script = _scriptProject.GetScript(fullPath);
         if (script == null)
         {
             _cache.TryRemove(fullPath, out _);
@@ -202,7 +202,7 @@ internal class TodoTagsScanner : IDisposable
 
     private bool IsExcluded(string fullPath, GDTodoTagsConfig config)
     {
-        var projectPath = _projectMap.ProjectPath;
+        var projectPath = _scriptProject.ProjectPath;
         var relativePath = fullPath.Replace(projectPath, "").TrimStart('/', '\\');
 
         return config.ExcludedDirectories.Any(dir =>
@@ -211,7 +211,7 @@ internal class TodoTagsScanner : IDisposable
 
     private string ToResourcePath(string fullPath)
     {
-        var projectPath = _projectMap.ProjectPath;
+        var projectPath = _scriptProject.ProjectPath;
         if (fullPath.StartsWith(projectPath, StringComparison.OrdinalIgnoreCase))
         {
             return "res://" + fullPath.Substring(projectPath.Length)

@@ -1,8 +1,3 @@
-using GDShrapt.Reader;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -11,7 +6,7 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal class GDScriptAnalyzer
 {
-    private readonly GDScriptMap _map;
+    private readonly GDScriptFile _map;
     private GDReferenceResult _references;
     private GDTypeInferenceEngine _typeEngine;
     private GDValidationContext _validationContext;
@@ -36,7 +31,7 @@ internal class GDScriptAnalyzer
     /// </summary>
     public IEnumerable<GDSymbol> Symbols => _references?.Symbols ?? Enumerable.Empty<GDSymbol>();
 
-    public GDScriptAnalyzer(GDScriptMap map)
+    public GDScriptAnalyzer(GDScriptFile map)
     {
         _map = map;
     }

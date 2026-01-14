@@ -63,7 +63,7 @@ internal class GDNodePathReference
     /// <summary>
     /// For GDScript references: the containing script map.
     /// </summary>
-    public GDScriptMap? ScriptMap { get; set; }
+    public GDScriptFile? ScriptFile { get; set; }
 
     /// <summary>
     /// Display name for the file (just the filename).

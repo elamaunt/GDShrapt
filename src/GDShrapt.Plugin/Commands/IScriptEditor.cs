@@ -4,7 +4,7 @@ namespace GDShrapt.Plugin;
 
 internal interface IScriptEditor
 {
-    GDScriptMap ScriptMap { get; }
+    GDScriptFile ScriptFile { get; }
     string ScriptPath { get; }
     string Name { get; }
 

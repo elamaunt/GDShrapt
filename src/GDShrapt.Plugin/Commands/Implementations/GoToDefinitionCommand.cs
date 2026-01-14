@@ -30,7 +30,7 @@ internal class GoToDefinitionCommand : Command
         }
 
         // Build refactoring context for semantics service
-        var contextBuilder = new RefactoringContextBuilder(Plugin.ProjectMap);
+        var contextBuilder = new RefactoringContextBuilder(Plugin.ScriptProject);
         var semanticsContext = contextBuilder.BuildSemanticsContext(scriptEditor);
 
         if (semanticsContext == null)
@@ -104,11 +104,11 @@ internal class GoToDefinitionCommand : Command
 
         var pointer = Map.FindStaticDeclarationIdentifier(typeName);
 
-        if (pointer != null && pointer.ScriptReference != null)
+        if (pointer != null && pointer.ScriptReference.FullPath != null)
         {
             Logger.Info("GoToDefinition: Pointer found");
 
-            var map = Map.GetScriptMap(pointer.ScriptReference);
+            var map = Map.GetScript(pointer.ScriptReference.FullPath);
             var tabController = Plugin.OpenScript(map);
 
             if (tabController != null && tabController.Editor != null)
@@ -145,7 +145,7 @@ internal class GoToDefinitionCommand : Command
 
         if (token?.Parent is GDMemberOperatorExpression memberExpr && memberExpr.CallerExpression != null)
         {
-            var analyzer = scriptEditor.ScriptMap.Analyzer;
+            var analyzer = scriptEditor.ScriptFile.Analyzer;
 
             if (analyzer == null)
             {
@@ -166,7 +166,7 @@ internal class GoToDefinitionCommand : Command
             Logger.Info($"GoToDefinition: Caller type is '{callerType}'");
 
             // Try to find the member in project classes
-            var typeMap = Map.GetScriptMapByTypeName(callerType);
+            var typeMap = Map.GetScriptByTypeName(callerType);
 
             if (typeMap?.Analyzer != null)
             {

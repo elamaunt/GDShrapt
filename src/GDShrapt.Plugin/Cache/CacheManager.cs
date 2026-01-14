@@ -54,7 +54,7 @@ internal class CacheManager : IDisposable
     /// <summary>
     /// Tries to get cached lint results for a script.
     /// </summary>
-    public bool TryGetLintCache(GDPluginScriptReference script, string contentHash, out IReadOnlyList<Diagnostic> diagnostics)
+    public bool TryGetLintCache(GDScriptFile script, string contentHash, out IReadOnlyList<Diagnostic> diagnostics)
     {
         diagnostics = Array.Empty<Diagnostic>();
 
@@ -102,7 +102,7 @@ internal class CacheManager : IDisposable
     /// <summary>
     /// Stores lint results in cache.
     /// </summary>
-    public void StoreLintCache(GDPluginScriptReference script, string contentHash, IReadOnlyList<Diagnostic> diagnostics)
+    public void StoreLintCache(GDScriptFile script, string contentHash, IReadOnlyList<Diagnostic> diagnostics)
     {
         try
         {
@@ -144,7 +144,7 @@ internal class CacheManager : IDisposable
     /// <summary>
     /// Invalidates cache for a specific script.
     /// </summary>
-    public void Invalidate(GDPluginScriptReference script)
+    public void Invalidate(GDScriptFile script)
     {
         try
         {
@@ -332,7 +332,7 @@ internal class CacheManager : IDisposable
         }
     }
 
-    private static string GetCacheKey(GDPluginScriptReference script)
+    private static string GetCacheKey(GDScriptFile script)
     {
         // Normalize path for consistent keys
         return script.FullPath.Replace('\\', '/').ToLowerInvariant();

@@ -306,7 +306,7 @@ internal partial class ReferenceItem : GodotObject
         return new ReferenceItem
         {
             Identifier = memberRef.Identifier,
-            FilePath = memberRef.Script?.Reference?.FullPath,
+            FilePath = memberRef.Script?.FullPath,
             Line = memberRef.Identifier?.StartLine ?? 0,
             Column = memberRef.Identifier?.StartColumn ?? 0,
             Kind = DetermineKind(memberRef),

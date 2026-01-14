@@ -1,11 +1,6 @@
-using Godot;
 using GDShrapt.Semantics;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("GDShrapt.Plugin.Tests")]
 [assembly: InternalsVisibleTo("GDShrapt.Pro.Plugin")]
@@ -15,10 +10,12 @@ namespace GDShrapt.Plugin;
 public partial class GDShraptPlugin : EditorPlugin
 {
     private bool _inited;
-    private GDProjectMap _projectMap;
+    private GDScriptProject _scriptProject;
     private TabContainer _tabContainer;
     private Dictionary<Commands, Command> _commands;
+
     readonly ConditionalWeakTable<object, TabController> _weakTabControllersTable = new ConditionalWeakTable<object, TabController>();
+    readonly ConditionalWeakTable<GDScriptFile, TabController> _weakScriptTabControllersTable = new ConditionalWeakTable<GDScriptFile, TabController>();
 
     readonly HashSet<MenuButton> _injectedButtons = new HashSet<MenuButton>();
     readonly HashSet<Button> _injectedSupportButtons = new HashSet<Button>();
@@ -60,7 +57,7 @@ public partial class GDShraptPlugin : EditorPlugin
     // Project Settings integration
     private ProjectSettingsRegistry _settingsRegistry;
 
-    internal GDProjectMap ProjectMap => _projectMap;
+    internal GDScriptProject ScriptProject => _scriptProject;
     internal DiagnosticService DiagnosticService => _diagnosticService;
     internal GDConfigManager ConfigManager => _configManager;
     internal RefactoringActionProvider RefactoringActionProvider => _refactoringActionProvider;
@@ -73,10 +70,14 @@ public partial class GDShraptPlugin : EditorPlugin
     {
         try
         {
-            _projectMap = new GDProjectMap();
+            _scriptProject = new GDScriptProject(new GodotEditorProjectContext(), new GDScriptProjectOptions()
+            {
+                EnableSceneTypesProvider = true,
+                EnableFileWatcher = true
+            });
 
             // Initialize configuration
-            _configManager = new GDConfigManager(_projectMap.ProjectPath, watchForChanges: true);
+            _configManager = new GDConfigManager(_scriptProject.ProjectPath, watchForChanges: true);
 
             // Initialize Project Settings integration
             _settingsRegistry = new ProjectSettingsRegistry(_configManager);
@@ -87,23 +88,23 @@ public partial class GDShraptPlugin : EditorPlugin
             // Initialize caching
             if (_configManager.Config.Plugin?.Cache?.Enabled ?? true)
             {
-                _cacheManager = new CacheManager(_projectMap.ProjectPath);
+                _cacheManager = new CacheManager(_scriptProject.ProjectPath);
             }
 
             // Initialize diagnostic service
-            _diagnosticService = new DiagnosticService(_projectMap, _configManager, _cacheManager);
+            _diagnosticService = new DiagnosticService(_scriptProject, _configManager, _cacheManager);
             _diagnosticService.OnDiagnosticsChanged += OnDiagnosticsChanged;
             _diagnosticService.OnProjectAnalysisCompleted += OnProjectAnalysisCompleted;
 
             // Initialize background analyzer
-            _backgroundAnalyzer = new BackgroundAnalyzer(_diagnosticService, _projectMap);
+            _backgroundAnalyzer = new BackgroundAnalyzer(_diagnosticService, _scriptProject);
 
             // Initialize quick fix handler
             _quickFixHandler = new QuickFixHandler(_diagnosticService, _configManager);
 
             // Initialize scene file watching using GDSceneTypesProvider from Semantics
-            _projectMap.SceneTypesProvider.NodeRenameDetected += OnNodeRenameDetected;
-            _projectMap.SceneTypesProvider.EnableFileWatcher();
+            _scriptProject.SceneTypesProvider.NodeRenameDetected += OnNodeRenameDetected;
+            _scriptProject.SceneTypesProvider.EnableFileWatcher();
 
             // Initialize refactoring system
             _refactoringActionProvider = new RefactoringActionProvider();
@@ -111,9 +112,14 @@ public partial class GDShraptPlugin : EditorPlugin
             // Initialize formatting service
             _formattingService = new FormattingService(_configManager);
 
+            _scriptProject.LoadScripts();
+            _scriptProject.LoadScenes();
+
             // Initialize type resolver for completion (using Semantics)
             // Includes all providers: Godot types, project types, autoloads, and scene types
-            _typeResolver = _projectMap.CreateTypeResolver();
+            _typeResolver = _scriptProject.CreateTypeResolver();
+
+            _scriptProject.AnalyzeAll();
 
             // Initialize UI and commands after all services are ready
             Init();
@@ -155,10 +161,10 @@ public partial class GDShraptPlugin : EditorPlugin
         }
 
         // Shutdown scene watcher
-        if (_projectMap?.SceneTypesProvider != null)
+        if (_scriptProject?.SceneTypesProvider != null)
         {
-            _projectMap.SceneTypesProvider.NodeRenameDetected -= OnNodeRenameDetected;
-            _projectMap.SceneTypesProvider.DisableFileWatcher();
+            _scriptProject.SceneTypesProvider.NodeRenameDetected -= OnNodeRenameDetected;
+            _scriptProject.SceneTypesProvider.DisableFileWatcher();
         }
 
         // Shutdown diagnostics system
@@ -188,8 +194,8 @@ public partial class GDShraptPlugin : EditorPlugin
         DetachDocks();
         DetachNotificationPanel();
 
-        _projectMap?.Dispose();
-        _projectMap = null;
+        _scriptProject?.Dispose();
+        _scriptProject = null;
 
         base._ExitTree();
         Logger.Debug("_ExitTree");
@@ -401,9 +407,9 @@ public partial class GDShraptPlugin : EditorPlugin
         }
     }
 
-    internal GDScriptMap GetScriptMap(string path)
+    internal GDScriptFile? GetScript(string path)
     {
-        return _projectMap.GetScriptMapByResourcePath(path);
+        return _scriptProject.GetScriptByResourcePath(path);
     }
 
     /// <summary>
@@ -436,7 +442,7 @@ public partial class GDShraptPlugin : EditorPlugin
         _referencesDockButton = AddControlToBottomPanel(_referencesDock, "Find References");
 
         // Create the TODO tags dock
-        _todoTagsScanner = new TodoTagsScanner(_projectMap, _configManager);
+        _todoTagsScanner = new TodoTagsScanner(_scriptProject, _configManager);
         _todoTagsDock = new TodoTagsDock();
         _todoTagsDock.Initialize(_todoTagsScanner, _configManager);
         _todoTagsDock.NavigateToItem += OnNavigateToTodoItem;
@@ -445,13 +451,13 @@ public partial class GDShraptPlugin : EditorPlugin
 
         // Create the Problems dock
         _problemsDock = new ProblemsDock();
-        _problemsDock.Initialize(_diagnosticService, _projectMap);
+        _problemsDock.Initialize(_diagnosticService, _scriptProject);
         _problemsDock.NavigateToItem += OnNavigateToProblem;
         _problemsDockButton = AddControlToBottomPanel(_problemsDock, "Problems");
 
         // Create the AST Viewer dock (if enabled)
         _astViewerDock = new AstViewerDock();
-        _astViewerDock.Initialize(this, _projectMap);
+        _astViewerDock.Initialize(this, _scriptProject);
         _astViewerDock.NavigateToCode += OnNavigateToReference;
         _astViewerDockButton = AddControlToBottomPanel(_astViewerDock, "AST Viewer");
 
@@ -558,38 +564,32 @@ public partial class GDShraptPlugin : EditorPlugin
         if (script == null)
             return;
 
-        var binding = _projectMap.GetBindingByResourcePath(script.ResourcePath);
+        var map = _scriptProject.GetScriptByResourcePath(script.ResourcePath);
 
-        if (binding != null)
+        if (map != null)
         {
-            binding.TabController = controller;
+            _weakScriptTabControllersTable.AddOrUpdate(map, controller);
 
             // Queue priority analysis for current file
-            _backgroundAnalyzer?.QueueScriptAnalysis(binding.ScriptMap.Reference, priority: true);
+            _backgroundAnalyzer?.QueueScriptAnalysis(map, priority: true);
         }
 
         controller.SetControlledScript(script);
     }
 
-    internal TabController? OpenScript(GDScriptMap map)
+    internal TabController? OpenScript(GDScriptFile map)
     {
-        Logger.Debug($"OpenTabForScript '{map.Reference.FullPath}'");
+        Logger.Debug($"OpenTabForScript '{map.FullPath}'");
         AttachTabControllersIfNeeded();
 
-        var binding = _projectMap.GetBinding(map.Reference);
-        if (binding == null)
-        {
-            Logger.Debug("OpenScript: binding not found");
-            return null;
-        }
 
-        var controller = binding.TabController;
+        var controller = _weakScriptTabControllersTable.GetOrDefault(map);
 
         if (controller == null || !controller.IsInTree)
         {
             Logger.Debug($"Controller for this Script map is null or not in the tree.");
-            controller = OpenNewScriptTab(binding);
-            binding.TabController = controller;
+            controller = OpenNewScriptTab(map);
+            _weakScriptTabControllersTable.AddOrUpdate(map, controller);
         }
 
         SelectTabForController(controller);
@@ -606,14 +606,15 @@ public partial class GDShraptPlugin : EditorPlugin
         _tabContainer.CurrentTab = newIndex;
     }
 
-    internal TabController? OpenNewScriptTab(GDScriptMapUIBinding binding)
+    internal TabController? OpenNewScriptTab(GDScriptFile map)
     {
-        Logger.Debug($"OpenNewScript '{binding.ScriptMap.Reference.FullPath}'");
-        var res = ResourceLoader.Load(binding.ScriptMap.Reference.FullPath);
+        Logger.Debug($"OpenNewScript '{map.FullPath}'");
+        var res = ResourceLoader.Load(map.FullPath);
         EditorInterface.Singleton.EditResource(res);
         AttachTabControllersIfNeeded();
         UpdateCurrentTabScript();
-        return binding.TabController;
+
+        return _weakScriptTabControllersTable.GetOrCreateValue(map);
     }
 
     private void AttachTabControllersIfNeeded()
@@ -653,12 +654,12 @@ public partial class GDShraptPlugin : EditorPlugin
         // Collect references for this symbol across the project
         var references = new List<ReferenceItem>();
 
-        foreach (var script in _projectMap.Scripts)
+        foreach (var script in _scriptProject.ScriptFiles)
         {
             if (script.Class == null)
                 continue;
 
-            var filePath = script.Reference?.FullPath;
+            var filePath = script.FullPath;
 
             foreach (var token in script.Class.AllTokens)
             {
@@ -1169,7 +1170,7 @@ public partial class GDShraptPlugin : EditorPlugin
     private async System.Threading.Tasks.Task ProcessNodeRename(GDShrapt.Semantics.GDDetectedNodeRename rename)
     {
         // Find all GDScript references to the old name
-        var referenceFinder = new GDNodePathReferenceFinder(_projectMap, _projectMap.SceneTypesProvider);
+        var referenceFinder = new GDNodePathReferenceFinder(_scriptProject, _scriptProject.SceneTypesProvider);
         var references = referenceFinder
             .FindGDScriptReferences(rename.OldName)
             .ToList();
@@ -1206,7 +1207,7 @@ public partial class GDShraptPlugin : EditorPlugin
         renamer.ApplyChanges(result, rename.OldName);
 
         // Mark our own write to avoid triggering another rename detection
-        _projectMap.SceneTypesProvider.MarkOwnWrite();
+        _scriptProject.SceneTypesProvider.MarkOwnWrite();
 
         // Save modified scripts
         var modifiedScripts = renamer.GetModifiedScripts(result.SelectedReferences);
@@ -1218,23 +1219,23 @@ public partial class GDShraptPlugin : EditorPlugin
         Logger.Debug($"Applied rename: '{rename.OldName}' -> '{rename.NewName}' to {modifiedScripts.Count} scripts");
     }
 
-    private void SaveModifiedScript(GDScriptMap scriptMap)
+    private void SaveModifiedScript(GDScriptFile ScriptFile)
     {
-        if (scriptMap?.Class == null || scriptMap.Reference == null)
+        if (ScriptFile?.Class == null)
             return;
 
         try
         {
-            var content = scriptMap.Class.ToString();
-            System.IO.File.WriteAllText(scriptMap.Reference.FullPath, content);
-            Logger.Debug($"Saved modified script: {scriptMap.Reference.FullPath}");
+            var content = ScriptFile.Class.ToString();
+            System.IO.File.WriteAllText(ScriptFile.FullPath, content);
+            Logger.Debug($"Saved modified script: {ScriptFile.FullPath}");
 
             // Reload the script in the editor if it's open
-            scriptMap.Reload();
+            ScriptFile.Reload();
         }
         catch (Exception ex)
         {
-            Logger.Error($"Failed to save script {scriptMap.Reference.FullPath}: {ex.Message}");
+            Logger.Error($"Failed to save script {ScriptFile.FullPath}: {ex.Message}");
         }
     }
 

@@ -18,12 +18,12 @@ internal class RefactoringContext
     /// <summary>
     /// The script map containing AST and type information.
     /// </summary>
-    public GDScriptMap ScriptMap { get; init; }
+    public GDScriptFile ScriptFile { get; init; }
 
     /// <summary>
     /// The project map for cross-file operations.
     /// </summary>
-    public GDProjectMap ProjectMap { get; init; }
+    public GDScriptProject ScriptProject { get; init; }
 
     /// <summary>
     /// Parent node for dialogs (typically the plugin node).
@@ -262,7 +262,7 @@ internal class RefactoringContext
             return null;
 
         // Create a GDScriptFile wrapper for the context
-        var reference = new GDScriptReference(ScriptMap?.Reference?.FullPath ?? "unknown.gd");
+        var reference = new GDScriptReference(ScriptFile?.FullPath ?? "unknown.gd");
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(ContainingClass.ToString());
 

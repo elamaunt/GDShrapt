@@ -1,9 +1,3 @@
-using Godot;
-using GDShrapt.Semantics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -13,7 +7,7 @@ namespace GDShrapt.Plugin;
 internal partial class QuickFixesPopup : PopupMenu
 {
     private QuickFixHandler? _handler;
-    private GDPluginScriptReference? _currentScript;
+    private GDScriptFile? _currentScript;
     private List<QuickFixItem> _currentFixes = new();
     private TextEdit? _textEdit;
     private string? _currentSourceCode;
@@ -52,7 +46,7 @@ internal partial class QuickFixesPopup : PopupMenu
     /// <param name="column">Cursor column (0-based).</param>
     /// <param name="sourceCode">Current source code.</param>
     /// <param name="position">Screen position for the popup.</param>
-    public void ShowFixes(GDPluginScriptReference script, int line, int column, string sourceCode, Vector2 position)
+    public void ShowFixes(GDScriptFile script, int line, int column, string sourceCode, Vector2 position)
     {
         _currentScript = script;
         _currentSourceCode = sourceCode;
@@ -93,7 +87,7 @@ internal partial class QuickFixesPopup : PopupMenu
     /// <summary>
     /// Shows all fixes for the current script.
     /// </summary>
-    public void ShowAllFixes(GDPluginScriptReference script, string sourceCode, Vector2 position)
+    public void ShowAllFixes(GDScriptFile script, string sourceCode, Vector2 position)
     {
         _currentScript = script;
         _currentSourceCode = sourceCode;

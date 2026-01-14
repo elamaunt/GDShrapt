@@ -14,8 +14,8 @@ namespace GDShrapt.Plugin;
 internal partial class ReferenceCountOverlay : Control
 {
     private TextEdit _textEdit;
-    private GDProjectMap _projectMap;
-    private GDScriptMap _scriptMap;
+    private GDScriptProject _scriptProject;
+    private GDScriptFile _ScriptFile;
 
     private readonly Dictionary<int, ReferenceCountInfo> _referenceCountCache = new();
     private readonly GDFindReferencesService _findReferencesService = new();
@@ -38,7 +38,7 @@ internal partial class ReferenceCountOverlay : Control
     /// <summary>
     /// Attaches the overlay to a TextEdit control.
     /// </summary>
-    public void AttachToEditor(TextEdit textEdit, GDProjectMap projectMap)
+    public void AttachToEditor(TextEdit textEdit, GDScriptProject ScriptProject)
     {
         if (_textEdit != null)
         {
@@ -46,7 +46,7 @@ internal partial class ReferenceCountOverlay : Control
         }
 
         _textEdit = textEdit;
-        _projectMap = projectMap;
+        _scriptProject = ScriptProject;
 
         if (_textEdit != null)
         {
@@ -66,9 +66,9 @@ internal partial class ReferenceCountOverlay : Control
     /// <summary>
     /// Sets the current script being edited.
     /// </summary>
-    public void SetScript(GDScriptMap scriptMap)
+    public void SetScript(GDScriptFile ScriptFile)
     {
-        _scriptMap = scriptMap;
+        _ScriptFile = ScriptFile;
         _needsRefresh = true;
         QueueRedraw();
     }
@@ -84,7 +84,7 @@ internal partial class ReferenceCountOverlay : Control
             _textEdit = null;
         }
 
-        _scriptMap = null;
+        _ScriptFile = null;
         _referenceCountCache.Clear();
         QueueRedraw();
     }
@@ -118,11 +118,11 @@ internal partial class ReferenceCountOverlay : Control
     {
         _referenceCountCache.Clear();
 
-        if (_scriptMap?.Class == null || _projectMap == null)
+        if (_ScriptFile?.Class == null || _scriptProject == null)
             return;
 
         // Find all declarations in the current script
-        var declarations = FindDeclarations(_scriptMap.Class);
+        var declarations = FindDeclarations(_ScriptFile.Class);
 
         foreach (var decl in declarations)
         {
@@ -194,13 +194,13 @@ internal partial class ReferenceCountOverlay : Control
     /// </summary>
     private int CountReferencesWithSemantics(DeclarationInfo decl)
     {
-        if (_scriptMap?.Class == null || decl.Identifier == null)
+        if (_ScriptFile?.Class == null || decl.Identifier == null)
             return CountReferencesSimple(decl.Name);
 
         // Create a GDScriptFile wrapper for refactoring context
-        var reference = new GDScriptReference(_scriptMap.Reference?.FullPath ?? "unknown.gd");
+        var reference = new GDScriptReference(_ScriptFile.FullPath ?? "unknown.gd");
         var scriptFile = new GDScriptFile(reference);
-        scriptFile.Reload(_scriptMap.Class.ToString());
+        scriptFile.Reload(_ScriptFile.Class.ToString());
 
         // Build cursor position and selection info for the context
         var cursor = new GDCursorPosition(decl.Line, decl.Column);
@@ -209,7 +209,7 @@ internal partial class ReferenceCountOverlay : Control
         // Create refactoring context for semantics service
         var context = new GDRefactoringContext(
             scriptFile,
-            _scriptMap.Class,
+            _ScriptFile.Class,
             cursor,
             selection);
 
@@ -253,13 +253,13 @@ internal partial class ReferenceCountOverlay : Control
         }
 
         // For public members, also count cross-file references with type checking
-        if (scope.IsPublic && !string.IsNullOrEmpty(_scriptMap?.TypeName))
+        if (scope.IsPublic && !string.IsNullOrEmpty(_ScriptFile?.TypeName))
         {
-            var typeName = _scriptMap.TypeName;
+            var typeName = _ScriptFile.TypeName;
 
-            foreach (var script in _projectMap.Scripts)
+            foreach (var script in _scriptProject.ScriptFiles)
             {
-                if (script == _scriptMap || script.Class == null)
+                if (script == _ScriptFile || script.Class == null)
                     continue;
 
                 var analyzer = script.Analyzer;
@@ -293,7 +293,7 @@ internal partial class ReferenceCountOverlay : Control
     {
         int count = 0;
 
-        foreach (var script in _projectMap.Scripts)
+        foreach (var script in _scriptProject.ScriptFiles)
         {
             if (script.Class == null)
                 continue;

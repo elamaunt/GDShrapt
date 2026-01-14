@@ -32,7 +32,7 @@ internal class Diagnostic
     /// <summary>
     /// Reference to the script containing the issue.
     /// </summary>
-    public GDPluginScriptReference? Script { get; init; }
+    public GDScriptFile? Script { get; init; }
 
     /// <summary>
     /// Start line (0-based).
@@ -89,7 +89,7 @@ internal class DiagnosticBuilder
     private readonly string _message;
     private GDDiagnosticSeverity _severity = GDDiagnosticSeverity.Warning;
     private GDDiagnosticCategory _category = GDDiagnosticCategory.Style;
-    private GDPluginScriptReference? _script;
+    private GDScriptFile? _script;
     private int _startLine;
     private int _startColumn;
     private int _endLine;
@@ -116,7 +116,7 @@ internal class DiagnosticBuilder
         return this;
     }
 
-    public DiagnosticBuilder AtScript(GDPluginScriptReference script)
+    public DiagnosticBuilder AtScript(GDScriptFile script)
     {
         _script = script;
         return this;
@@ -329,7 +329,7 @@ internal class DiagnosticsChangedEventArgs : EventArgs
     /// <summary>
     /// Script that was analyzed.
     /// </summary>
-    public GDPluginScriptReference Script { get; init; } = null!;
+    public GDScriptFile Script { get; init; } = null!;
 
     /// <summary>
     /// New diagnostics for the script.

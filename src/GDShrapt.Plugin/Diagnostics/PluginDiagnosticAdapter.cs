@@ -15,7 +15,7 @@ internal static class PluginDiagnosticAdapter
     /// <param name="unified">The unified diagnostic from GDDiagnosticsService.</param>
     /// <param name="script">The script reference for this diagnostic.</param>
     /// <returns>A Plugin diagnostic with 0-based coordinates.</returns>
-    public static Diagnostic Convert(GDUnifiedDiagnostic unified, GDPluginScriptReference script)
+    public static Diagnostic Convert(GDUnifiedDiagnostic unified, GDScriptFile script)
     {
         return new Diagnostic
         {

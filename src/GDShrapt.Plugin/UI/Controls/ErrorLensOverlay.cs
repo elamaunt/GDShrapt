@@ -9,7 +9,7 @@ namespace GDShrapt.Plugin;
 internal partial class ErrorLensOverlay : Control
 {
     private TextEdit _textEdit;
-    private GDScriptMap _scriptMap;
+    private GDScriptFile _ScriptFile;
 
     private readonly List<ErrorInfo> _errors = new();
     private readonly List<Diagnostic> _lintDiagnostics = new();
@@ -56,9 +56,9 @@ internal partial class ErrorLensOverlay : Control
     /// <summary>
     /// Sets the current script being edited.
     /// </summary>
-    public void SetScript(GDScriptMap scriptMap)
+    public void SetScript(GDScriptFile ScriptFile)
     {
-        _scriptMap = scriptMap;
+        _ScriptFile = ScriptFile;
         _needsRefresh = true;
         QueueRedraw();
     }
@@ -74,7 +74,7 @@ internal partial class ErrorLensOverlay : Control
             _textEdit = null;
         }
 
-        _scriptMap = null;
+        _ScriptFile = null;
         _errors.Clear();
         QueueRedraw();
     }
@@ -108,7 +108,7 @@ internal partial class ErrorLensOverlay : Control
     {
         _errors.Clear();
 
-        if (_scriptMap?.Class == null)
+        if (_ScriptFile?.Class == null)
         {
             _needsRefresh = false;
             QueueRedraw();
@@ -125,10 +125,10 @@ internal partial class ErrorLensOverlay : Control
     private void CollectParserErrors()
     {
         // Walk the AST and find invalid tokens or nodes
-        if (_scriptMap?.Class == null)
+        if (_ScriptFile?.Class == null)
             return;
 
-        foreach (var token in _scriptMap.Class.AllTokens)
+        foreach (var token in _ScriptFile.Class.AllTokens)
         {
             // Check for invalid tokens
             if (token is GDInvalidToken invalidToken)

@@ -10,23 +10,17 @@ using System.Threading.Tasks;
 
 namespace GDShrapt.Plugin;
 
-internal class GDProjectMap : IDisposable, IGDScriptProvider
-    {
-        readonly ConcurrentDictionary<GDPluginScriptReference, GDScriptMapUIBinding> _bindings = new ConcurrentDictionary<GDPluginScriptReference, GDScriptMapUIBinding>();
+/*internal class GDScriptProject : IDisposable, IGDScriptProvider
+{
+    readonly ConcurrentDictionary<string, GDScriptFile> _maps = new ConcurrentDictionary<string, GDScriptFile>();
+
         FileSystemWatcher? _scriptsWatcher;
         bool _disposedValue;
         GDSceneTypesProvider? _sceneTypesProvider;
 
-        public GDScriptMap? GetScriptMap(string fullPath) => _bindings.GetOrDefault(new GDPluginScriptReference(fullPath))?.ScriptMap;
+        public GDScriptFile? GetScript(string fullPath) => _maps.GetOrDefault(fullPath);
 
-        public GDScriptMap? GetScriptMap(GDPluginScriptReference reference) => _bindings.GetOrDefault(reference)?.ScriptMap;
-
-        public GDScriptMapUIBinding? GetBinding(string fullPath) => _bindings.GetOrDefault(new GDPluginScriptReference(fullPath));
-
-        public GDScriptMapUIBinding? GetBinding(GDPluginScriptReference reference) => _bindings.GetOrDefault(reference);
-
-        public IEnumerable<GDScriptMap> Scripts => _bindings.Values.Select(b => b.ScriptMap);
-        public IEnumerable<GDScriptMapUIBinding> Bindings => _bindings.Values;
+        public IEnumerable<GDScriptFile> Scripts => _maps.Values;
         public string ProjectPath => ProjectSettings.GlobalizePath("res://");
 
         /// <summary>
@@ -49,7 +43,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             }
         }
 
-        public GDProjectMap()
+        public GDScriptProject()
         {
             Logger.Debug("Project map building");
 
@@ -58,24 +52,9 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             LoadScripts(projectPath);
             WatchScripts(projectPath);
 
-            Logger.Info($"Project loaded: {_bindings.Count} scripts");
+            Logger.Info($"Project loaded: {_maps.Count} scripts");
         }
 
-        public GDProjectMap(params string[] contents)
-        {
-            Logger.Debug("Project map building with custom content");
-
-            for (int i = 0; i < contents.Length; i++)
-            {
-                var reference = new GDPluginScriptReference(i.ToString());
-                var map = new GDScriptMap(this, reference);
-                var binding = new GDScriptMapUIBinding(map);
-                _bindings.TryAdd(reference, binding);
-                map.Reload(contents[i]);
-            }
-
-            Logger.Debug($"Project map built: {contents.Length} scripts");
-        }
 
         private void LoadScripts(string projectPath)
         {
@@ -87,10 +66,8 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
 
                 Logger.Debug($"Loading script '{System.IO.Path.GetFileName(scriptFile)}'");
 
-                var reference = new GDPluginScriptReference(scriptFile);
-                var map = new GDScriptMap(this, reference);
-                var binding = new GDScriptMapUIBinding(map);
-                _bindings.TryAdd(reference, binding);
+                var map = new GDScriptFile(this, scriptFile);
+                _maps.TryAdd(scriptFile, map);
                 map.Reload();
             }
         }
@@ -113,7 +90,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
         private void OnDeleted(object sender, FileSystemEventArgs e)
         {
             Logger.Debug($"Script deleted: {e.Name}");
-            _bindings.TryRemove(new GDPluginScriptReference(e.Name), out _);
+            _maps.TryRemove(e.FullPath, out _);
         }
 
         private void OnChanged(object sender, FileSystemEventArgs e)
@@ -125,20 +102,18 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
 
             if (!System.IO.File.Exists(e.Name))
             {
-                _bindings.TryRemove(new GDPluginScriptReference(e.Name), out _);
+                _maps.TryRemove(e.FullPath, out _);
                 return;
             }
 
-            var reference = new GDPluginScriptReference(e.Name);
-            if (_bindings.TryGetValue(reference, out var binding))
+            if (_maps.TryGetValue(e.FullPath, out var map))
             {
-                binding.ScriptMap.Reload();
+                map.Reload();
             }
             else
             {
-                var newMap = new GDScriptMap(this, reference);
-                var newBinding = new GDScriptMapUIBinding(newMap);
-                _bindings[reference] = newBinding;
+                var newMap = new GDScriptFile(this, e.FullPath);
+                _maps[e.FullPath] = newMap;
                 newMap.Reload();
             }
         }
@@ -153,16 +128,16 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             {
                 var className = name.Substring(0, dotIndex);
                 var memberName = name.Substring(dotIndex + 1);
-                var scriptMap = GetScriptMapByTypeName(className);
-                if (scriptMap?.Analyzer != null)
+                var ScriptFile = GetScriptByTypeName(className);
+                if (ScriptFile?.Analyzer != null)
                 {
-                    var symbol = scriptMap.Analyzer.FindSymbol(memberName);
+                    var symbol = ScriptFile.Analyzer.FindSymbol(memberName);
                     if (symbol != null && symbol.IsStatic)
                     {
                         var identifier = (symbol.Declaration as GDIdentifiableClassMember)?.Identifier;
                         return new GDCodePointer()
                         {
-                            ScriptReference = scriptMap.Reference,
+                            FullPath = ScriptFile.FullPath,
                             DeclarationIdentifier = identifier
                         };
                     }
@@ -170,14 +145,14 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             }
 
             // Search for class_name declarations
-            foreach (var scriptMap in Scripts)
+            foreach (var ScriptFile in Scripts)
             {
-                if (scriptMap.TypeName == name)
+                if (ScriptFile.TypeName == name)
                 {
                     return new GDCodePointer()
                     {
-                        ScriptReference = scriptMap.Reference,
-                        DeclarationIdentifier = scriptMap.Class?.ClassName?.Identifier
+                        FullPath = ScriptFile.FullPath,
+                        DeclarationIdentifier = ScriptFile.Class?.ClassName?.Identifier
                     };
                 }
             }
@@ -190,10 +165,8 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
         private void OnCreated(object sender, FileSystemEventArgs e)
         {
             Logger.Debug($"Script created: {e.Name}");
-            var reference = new GDPluginScriptReference(e.Name);
-            var newMap = new GDScriptMap(this, reference);
-            var newBinding = new GDScriptMapUIBinding(newMap);
-            _bindings.TryAdd(reference, newBinding);
+            var newMap = new GDScriptFile(this, e.FullPath);
+            _maps.TryAdd(e.FullPath, newMap);
             newMap.Reload();
         }
 
@@ -201,49 +174,35 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
         {
             Logger.Debug($"Script renamed: {e.OldName} -> {e.Name}");
 
-            var oldReference = new GDPluginScriptReference(e.OldName);
-
-            if (_bindings.TryGetValue(oldReference, out var binding))
+            if (_maps.TryGetValue(e.OldFullPath, out var map))
             {
-                _bindings.TryRemove(oldReference, out _);
-                var newReference = new GDPluginScriptReference(e.Name);
-                _bindings.TryAdd(newReference, binding);
-                binding.ScriptMap.ChangeReference(newReference);
+                _maps.TryRemove(e.OldFullPath, out _);
+                _maps.TryAdd(e.FullPath, map);
             }
             else
             {
-                var newReference = new GDPluginScriptReference(e.Name);
-                var newMap = new GDScriptMap(this, newReference);
-                var newBinding = new GDScriptMapUIBinding(newMap);
-                _bindings.TryAdd(newReference, newBinding);
+                var newMap = new GDScriptFile(this, e.FullPath);
+                _maps.TryAdd(e.FullPath, newMap);
                 newMap.Reload();
             }
         }
 
-        public GDScriptMap? GetScriptMapByTypeName(string type) => _bindings.FirstOrDefault(x => x.Value.ScriptMap.TypeName == type).Value?.ScriptMap;
-
-        public GDScriptMapUIBinding? GetBindingByTypeName(string type) => _bindings.FirstOrDefault(x => x.Value.ScriptMap.TypeName == type).Value;
+        public GDScriptFile? GetScriptByTypeName(string type) => _maps.FirstOrDefault(x => x.Value.TypeName == type).Value;
 
         #region IGDScriptProvider Implementation
 
         IEnumerable<IGDScriptInfo> IGDScriptProvider.Scripts => Scripts;
 
-        IGDScriptInfo? IGDScriptProvider.GetScriptByTypeName(string typeName) => GetScriptMapByTypeName(typeName);
+        IGDScriptInfo? IGDScriptProvider.GetScriptByTypeName(string typeName) => GetScriptByTypeName(typeName);
 
-        IGDScriptInfo? IGDScriptProvider.GetScriptByPath(string path) => GetScriptMap(path);
+        IGDScriptInfo? IGDScriptProvider.GetScriptByPath(string path) => GetScript(path);
 
         #endregion
 
-        public GDScriptMap? GetScriptMapByResourcePath(string resourcePath)
+        public GDScriptFile? GetScriptByResourcePath(string resourcePath)
         {
             var globalPath = ProjectSettings.GlobalizePath(resourcePath);
-            return GetScriptMap(new GDPluginScriptReference(globalPath));
-        }
-
-        public GDScriptMapUIBinding? GetBindingByResourcePath(string resourcePath)
-        {
-            var globalPath = ProjectSettings.GlobalizePath(resourcePath);
-            return GetBinding(new GDPluginScriptReference(globalPath));
+            return GetScript(globalPath);
         }
 
         /// <summary>
@@ -278,16 +237,12 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
                 SemanticLoggerAdapter.Instance);
         }
 
-        public GDScriptMap? GetScriptMapByClass(GDClassDeclaration classDecl)
+        public GDScriptFile? GetScriptByClass(GDClassDeclaration classDecl)
         {
-            if (classDecl == null) return null;
-            return _bindings.FirstOrDefault(x => x.Value.ScriptMap.Class == classDecl).Value?.ScriptMap;
-        }
+            if (classDecl == null)
+                return null;
 
-        public GDScriptMapUIBinding? GetBindingByClass(GDClassDeclaration classDecl)
-        {
-            if (classDecl == null) return null;
-            return _bindings.FirstOrDefault(x => x.Value.ScriptMap.Class == classDecl).Value;
+            return _maps.FirstOrDefault(x => x.Value.Class == classDecl).Value;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -295,7 +250,7 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             if (!_disposedValue)
             {
                 if (disposing)
-                    _bindings.Clear();
+                    _maps.Clear();
 
                 _scriptsWatcher?.Dispose();
                 _scriptsWatcher = null;
@@ -303,9 +258,8 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
             }
         }
 
-        ~GDProjectMap()
+        ~GDScriptProject()
         {
-            // Не изменяйте этот код. Разместите код очистки в методе "Dispose(bool disposing)".
             Dispose(disposing: false);
         }
 
@@ -314,4 +268,4 @@ internal class GDProjectMap : IDisposable, IGDScriptProvider
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
-}
+}*/

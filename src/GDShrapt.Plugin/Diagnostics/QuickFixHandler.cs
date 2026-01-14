@@ -28,7 +28,7 @@ internal class QuickFixHandler
     /// <param name="line">Cursor line (0-based).</param>
     /// <param name="column">Cursor column (0-based).</param>
     /// <returns>List of available fixes with their parent diagnostics.</returns>
-    public IReadOnlyList<QuickFixItem> GetFixesAtPosition(GDPluginScriptReference script, int line, int column)
+    public IReadOnlyList<QuickFixItem> GetFixesAtPosition(GDScriptFile script, int line, int column)
     {
         var diagnostics = _diagnosticService.GetDiagnostics(script);
         var result = new List<QuickFixItem>();
@@ -57,7 +57,7 @@ internal class QuickFixHandler
     /// <param name="script">The script reference.</param>
     /// <param name="line">Line number (0-based).</param>
     /// <returns>List of available fixes with their parent diagnostics.</returns>
-    public IReadOnlyList<QuickFixItem> GetFixesOnLine(GDPluginScriptReference script, int line)
+    public IReadOnlyList<QuickFixItem> GetFixesOnLine(GDScriptFile script, int line)
     {
         var diagnostics = _diagnosticService.GetDiagnostics(script);
         var result = new List<QuickFixItem>();
@@ -84,7 +84,7 @@ internal class QuickFixHandler
     /// </summary>
     /// <param name="script">The script reference.</param>
     /// <returns>List of all available fixes.</returns>
-    public IReadOnlyList<QuickFixItem> GetAllFixes(GDPluginScriptReference script)
+    public IReadOnlyList<QuickFixItem> GetAllFixes(GDScriptFile script)
     {
         var diagnostics = _diagnosticService.GetDiagnostics(script);
         var result = new List<QuickFixItem>();
@@ -150,11 +150,11 @@ internal class QuickFixHandler
     /// Applies all formatting fixes to the source code using GDFormatter.
     /// Formats the entire file using the formatter from Semantics kernel.
     /// </summary>
-    /// <param name="scriptMap">The script map.</param>
+    /// <param name="ScriptFile">The script map.</param>
     /// <returns>Formatted source code or null if no formatting needed.</returns>
-    public string? ApplyAllFormattingFixes(GDScriptMap scriptMap)
+    public string? ApplyAllFormattingFixes(GDScriptFile ScriptFile)
     {
-        if (scriptMap?.Class == null)
+        if (ScriptFile?.Class == null)
             return null;
 
         try
@@ -162,7 +162,7 @@ internal class QuickFixHandler
             var formatterOptions = GDFormatterOptionsFactory.FromConfig(_configManager.Config);
             var formatter = new GDFormatter(formatterOptions);
 
-            var originalCode = scriptMap.Class.ToString();
+            var originalCode = ScriptFile.Class.ToString();
             var formattedCode = formatter.FormatCode(originalCode);
 
             if (formattedCode != originalCode)
@@ -182,15 +182,15 @@ internal class QuickFixHandler
     /// Applies formatting fix to a specific region using GDFormatter.
     /// For simplicity, formats the entire file but returns only the changed region.
     /// </summary>
-    /// <param name="scriptMap">The script map.</param>
+    /// <param name="ScriptFile">The script map.</param>
     /// <param name="startLine">Start line (0-based).</param>
     /// <param name="endLine">End line (0-based).</param>
     /// <returns>Formatted source code or null if no formatting needed.</returns>
-    public string? ApplyFormattingToRegion(GDScriptMap scriptMap, int startLine, int endLine)
+    public string? ApplyFormattingToRegion(GDScriptFile ScriptFile, int startLine, int endLine)
     {
         // For simplicity, format the entire file
         // Region-specific formatting would require parsing partial code which is more complex
-        return ApplyAllFormattingFixes(scriptMap);
+        return ApplyAllFormattingFixes(ScriptFile);
     }
 
     /// <summary>
@@ -199,8 +199,8 @@ internal class QuickFixHandler
     /// <param name="script">The script reference.</param>
     /// <param name="sourceCode">Original source code.</param>
     /// <returns>Modified source code.</returns>
-    [Obsolete("Use ApplyAllFormattingFixes(GDScriptMap) instead")]
-    public string ApplyAllFormattingFixesLegacy(GDPluginScriptReference script, string sourceCode)
+    [Obsolete("Use ApplyAllFormattingFixes(GDScriptFile) instead")]
+    public string ApplyAllFormattingFixesLegacy(GDScriptFile script, string sourceCode)
     {
         var formattingFixes = GetAllFixes(script)
             .Where(f => f.Diagnostic.Category == GDDiagnosticCategory.Formatting)

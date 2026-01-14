@@ -435,7 +435,7 @@ internal partial class RenamingDialog : Window
             var matchingItem = _referenceItems.FirstOrDefault(r =>
                 r.Line == memberRef.Identifier?.StartLine &&
                 r.Column == memberRef.Identifier?.StartColumn &&
-                r.FilePath == memberRef.Script?.Reference?.FullPath);
+                r.FilePath == memberRef.Script?.FullPath);
 
             if (matchingItem != null && selectedItems.Contains(matchingItem))
             {

@@ -43,7 +43,7 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
         if (varDecl.Initializer != null)
             return true;
 
-        var analyzer = context.ScriptMap?.Analyzer;
+        var analyzer = context.ScriptFile?.Analyzer;
         if (analyzer != null)
         {
             var typeName = analyzer.GetTypeForNode(varDecl);

@@ -198,15 +198,15 @@ internal class RenameIdentifierCommand : Command
         }
 
         // Get the current script
-        var scriptMap = scriptEditor?.ScriptMap;
-        if (scriptMap == null)
+        var ScriptFile = scriptEditor?.ScriptFile;
+        if (ScriptFile == null)
         {
             Logger.Info("Current script not found");
             return false;
         }
 
         // Find scenes that use this script
-        var scenes = _referenceFinder.GetScenesForScript(scriptMap).ToList();
+        var scenes = _referenceFinder.GetScenesForScript(ScriptFile).ToList();
 
         // Collect all references
         var allReferences = new List<GDNodePathReference>();
@@ -339,7 +339,7 @@ internal class RenameIdentifierCommand : Command
         if (parentClass == null)
             return false;
 
-        var scriptMap = Map.GetScriptMapByClass(parentClass);
+        var ScriptFile = Map.GetScriptByClass(parentClass);
 
         // Collect all references to this inner class
         var references = new LinkedList<GDMemberReference>();
@@ -349,7 +349,7 @@ internal class RenameIdentifierCommand : Command
         {
             Identifier = identifier,
             Member = innerClass,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find type references to this inner class within the parent class
@@ -361,7 +361,7 @@ internal class RenameIdentifierCommand : Command
                 references.AddLast(new GDMemberReference
                 {
                     Identifier = token,
-                    Script = scriptMap
+                    Script = ScriptFile
                 });
             }
         }
@@ -377,7 +377,7 @@ internal class RenameIdentifierCommand : Command
                 references.AddLast(new GDMemberReference
                 {
                     Identifier = idExpr.Identifier,
-                    Script = scriptMap
+                    Script = ScriptFile
                 });
             }
         }
@@ -431,14 +431,14 @@ internal class RenameIdentifierCommand : Command
     private async Task<bool> RenameSignalParameter(GDSignalDeclaration signal, GDParameterDeclaration parameter, GDIdentifier identifier)
     {
         var classDecl = signal.ClassDeclaration as GDClassDeclaration;
-        var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
+        var ScriptFile = classDecl != null ? Map.GetScriptByClass(classDecl) : null;
 
         // Collect references - signal parameters typically only have the declaration
         var references = new LinkedList<GDMemberReference>();
         references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         RenamingParameters parameters;
@@ -458,13 +458,13 @@ internal class RenameIdentifierCommand : Command
         // Collect all references to this parameter within the method
         var references = new LinkedList<GDMemberReference>();
         var classDecl = method.ClassDeclaration as GDClassDeclaration;
-        var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
+        var ScriptFile = classDecl != null ? Map.GetScriptByClass(classDecl) : null;
 
         // Add the parameter declaration itself as a reference
         references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find all usages within the method body
@@ -477,7 +477,7 @@ internal class RenameIdentifierCommand : Command
                     references.AddLast(new GDMemberReference
                     {
                         Identifier = usage.Identifier,
-                        Script = scriptMap
+                        Script = ScriptFile
                     });
                 }
             }
@@ -515,7 +515,7 @@ internal class RenameIdentifierCommand : Command
             return false;
         }
 
-        var map = Map.GetScriptMapByTypeName(type);
+        var map = Map.GetScriptByTypeName(type);
 
         if (map == null)
         {
@@ -534,7 +534,8 @@ internal class RenameIdentifierCommand : Command
 
         var allReferences = new LinkedList<GDMemberReference>();
 
-        foreach (var binding in Map.Bindings.OrderBy(x => x.ScriptMap.TypeName))
+        var service = new GDRenameService(Plugin.ScriptProject);
+        /*foreach (var binding in Map.Scripts.OrderBy(x => x.TypeName))
         {
             var references = binding.GetReferencesToTypeMember(type, memberName);
 
@@ -543,7 +544,7 @@ internal class RenameIdentifierCommand : Command
 
             foreach (var reference in references)
                 allReferences.AddLast(reference);
-        }
+        }*/
 
         RenamingParameters parameters;
         if ((parameters = await AskParametersAndPrepareIdentifier(memberName, allReferences)) == null)
@@ -593,11 +594,11 @@ internal class RenameIdentifierCommand : Command
         if (classDecl == null)
             return null;
 
-        var scriptMap = Map.GetScriptMapByClass(classDecl);
-        if (scriptMap?.Analyzer == null)
+        var ScriptFile = Map.GetScriptByClass(classDecl);
+        if (ScriptFile?.Analyzer == null)
             return null;
 
-        return scriptMap.Analyzer.GetTypeForNode(callerExpression);
+        return ScriptFile.Analyzer.GetTypeForNode(callerExpression);
     }
 
     private async Task<bool> RenameEnum(GDEnumDeclaration enumDeclaration, GDIdentifier identifier)
@@ -609,7 +610,7 @@ internal class RenameIdentifierCommand : Command
         if (classDecl == null)
             return false;
 
-        var scriptMap = Map.GetScriptMapByClass(classDecl);
+        var ScriptFile = Map.GetScriptByClass(classDecl);
 
         // Collect all references to this enum
         var references = new LinkedList<GDMemberReference>();
@@ -619,7 +620,7 @@ internal class RenameIdentifierCommand : Command
         {
             Identifier = identifier,
             Member = enumDeclaration,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find all usages within the class (State.IDLE, etc.)
@@ -630,7 +631,7 @@ internal class RenameIdentifierCommand : Command
                 references.AddLast(new GDMemberReference
                 {
                     Identifier = usage.Identifier,
-                    Script = scriptMap
+                    Script = ScriptFile
                 });
             }
         }
@@ -663,13 +664,13 @@ internal class RenameIdentifierCommand : Command
         // Collect all references to this for loop variable
         var references = new LinkedList<GDMemberReference>();
         var classDecl = forStatement.ClassDeclaration as GDClassDeclaration;
-        var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
+        var ScriptFile = classDecl != null ? Map.GetScriptByClass(classDecl) : null;
 
         // Add the variable declaration itself as a reference
         references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find all usages within the for loop body
@@ -682,7 +683,7 @@ internal class RenameIdentifierCommand : Command
                     references.AddLast(new GDMemberReference
                     {
                         Identifier = usage.Identifier,
-                        Script = scriptMap
+                        Script = ScriptFile
                     });
                 }
             }
@@ -714,7 +715,7 @@ internal class RenameIdentifierCommand : Command
 
         var variableName = identifier.Sequence;
         var classDecl = matchCase.ClassDeclaration as GDClassDeclaration;
-        var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
+        var ScriptFile = classDecl != null ? Map.GetScriptByClass(classDecl) : null;
 
         // Collect all references to this match case variable
         var references = new LinkedList<GDMemberReference>();
@@ -723,7 +724,7 @@ internal class RenameIdentifierCommand : Command
         references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find the match statement and collect usages within its branches
@@ -741,7 +742,7 @@ internal class RenameIdentifierCommand : Command
                             references.AddLast(new GDMemberReference
                             {
                                 Identifier = usage.Identifier,
-                                Script = scriptMap
+                                Script = ScriptFile
                             });
                         }
                     }
@@ -784,7 +785,7 @@ internal class RenameIdentifierCommand : Command
         if (classDecl == null)
             return false;
 
-        var scriptMap = Map.GetScriptMapByClass(classDecl);
+        var ScriptFile = Map.GetScriptByClass(classDecl);
 
         // Collect all references to this method
         var references = new LinkedList<GDMemberReference>();
@@ -794,7 +795,7 @@ internal class RenameIdentifierCommand : Command
         {
             Identifier = identifier,
             Member = method,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find all call expressions to this method within the class
@@ -806,7 +807,7 @@ internal class RenameIdentifierCommand : Command
                 references.AddLast(new GDMemberReference
                 {
                     Identifier = idExpr.Identifier,
-                    Script = scriptMap
+                    Script = ScriptFile
                 });
             }
         }
@@ -844,15 +845,15 @@ internal class RenameIdentifierCommand : Command
         if (classDecl == null)
             return false;
 
-        var scriptMap = Map.GetScriptMapByClass(classDecl);
-        if (scriptMap?.Analyzer == null)
+        var ScriptFile = Map.GetScriptByClass(classDecl);
+        if (ScriptFile?.Analyzer == null)
         {
             Logger.Info("Analyzer not available");
             return false;
         }
 
         // Find the symbol for this identifier
-        var symbol = scriptMap.Analyzer.FindSymbol(variableName);
+        var symbol = ScriptFile.Analyzer.FindSymbol(variableName);
         if (symbol == null)
         {
             Logger.Info($"Symbol '{variableName}' not found");
@@ -861,7 +862,7 @@ internal class RenameIdentifierCommand : Command
 
         // Collect references from analyzer
         var memberReferences = new LinkedList<GDMemberReference>();
-        var analyzerRefs = scriptMap.Analyzer.GetReferencesTo(symbol);
+        var analyzerRefs = ScriptFile.Analyzer.GetReferencesTo(symbol);
         foreach (var reference in analyzerRefs)
         {
             var refNode = reference.ReferenceNode;
@@ -870,7 +871,7 @@ internal class RenameIdentifierCommand : Command
                 memberReferences.AddLast(new GDMemberReference
                 {
                     Identifier = refExpr.Identifier,
-                    Script = scriptMap
+                    Script = ScriptFile
                 });
             }
             else if (refNode is GDNode node)
@@ -883,7 +884,7 @@ internal class RenameIdentifierCommand : Command
                         memberReferences.AddLast(new GDMemberReference
                         {
                             Identifier = id,
-                            Script = scriptMap
+                            Script = ScriptFile
                         });
                         break;
                     }
@@ -898,7 +899,7 @@ internal class RenameIdentifierCommand : Command
             {
                 Identifier = varDecl.Identifier,
                 Member = varDecl,
-                Script = scriptMap
+                Script = ScriptFile
             });
         }
 
@@ -944,7 +945,7 @@ internal class RenameIdentifierCommand : Command
         if (classDecl == null)
             return false;
 
-        var scriptMap = Map.GetScriptMapByClass(classDecl);
+        var ScriptFile = Map.GetScriptByClass(classDecl);
 
         // Collect all references to this class-level variable
         var references = new LinkedList<GDMemberReference>();
@@ -954,7 +955,7 @@ internal class RenameIdentifierCommand : Command
         {
             Identifier = identifier,
             Member = variable,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find all usages within the class
@@ -965,7 +966,7 @@ internal class RenameIdentifierCommand : Command
                 references.AddLast(new GDMemberReference
                 {
                     Identifier = usage.Identifier,
-                    Script = scriptMap
+                    Script = ScriptFile
                 });
             }
         }
@@ -1011,13 +1012,13 @@ internal class RenameIdentifierCommand : Command
         // Collect all references to this local variable
         var references = new LinkedList<GDMemberReference>();
         var classDecl = variableStatement.ClassDeclaration as GDClassDeclaration;
-        var scriptMap = classDecl != null ? Map.GetScriptMapByClass(classDecl) : null;
+        var ScriptFile = classDecl != null ? Map.GetScriptByClass(classDecl) : null;
 
         // Add the variable declaration itself as a reference
         references.AddLast(new GDMemberReference
         {
             Identifier = identifier,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         if (method?.Statements != null)
@@ -1041,7 +1042,7 @@ internal class RenameIdentifierCommand : Command
                             references.AddLast(new GDMemberReference
                             {
                                 Identifier = usage.Identifier,
-                                Script = scriptMap
+                                Script = ScriptFile
                             });
                         }
                     }
@@ -1091,7 +1092,7 @@ internal class RenameIdentifierCommand : Command
         if (classDecl == null)
             return false;
 
-        var scriptMap = Map.GetScriptMapByClass(classDecl);
+        var ScriptFile = Map.GetScriptByClass(classDecl);
 
         // Collect all references to this signal
         var references = new LinkedList<GDMemberReference>();
@@ -1101,7 +1102,7 @@ internal class RenameIdentifierCommand : Command
         {
             Identifier = identifier,
             Member = signal,
-            Script = scriptMap
+            Script = ScriptFile
         });
 
         // Find direct signal references (signal.emit(), signal.connect())
@@ -1115,7 +1116,7 @@ internal class RenameIdentifierCommand : Command
                 references.AddLast(new GDMemberReference
                 {
                     Identifier = signalIdExpr.Identifier,
-                    Script = scriptMap
+                    Script = ScriptFile
                 });
             }
         }

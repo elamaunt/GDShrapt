@@ -10,7 +10,7 @@ internal class GDMemberReference
     /// <summary>
     /// The script containing this reference.
     /// </summary>
-    public GDScriptMap? Script { get; set; }
+    public GDScriptFile? Script { get; set; }
 
     /// <summary>
     /// The identifier token of the reference.

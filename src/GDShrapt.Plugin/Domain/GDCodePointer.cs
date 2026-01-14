@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -11,7 +9,7 @@ internal class GDCodePointer
     /// <summary>
     /// Reference to the script containing the declaration.
     /// </summary>
-    public GDPluginScriptReference? ScriptReference { get; set; }
+    public string? FullPath { get; set; }
 
     /// <summary>
     /// The declaration identifier at this location.

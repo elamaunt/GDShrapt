@@ -11,7 +11,7 @@ internal class RemoveCommentsCommand : Command
     public RemoveCommentsCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
-        _contextBuilder = new RefactoringContextBuilder(plugin.ProjectMap);
+        _contextBuilder = new RefactoringContextBuilder(plugin.ScriptProject);
     }
 
     public override async Task Execute(IScriptEditor controller)

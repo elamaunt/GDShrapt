@@ -139,15 +139,15 @@ internal class NodePathRenamer
     /// <summary>
     /// Gets the set of GDScript files that were modified and need to be saved.
     /// </summary>
-    public HashSet<GDScriptMap> GetModifiedScripts(IEnumerable<GDNodePathReference> references)
+    public HashSet<GDScriptFile> GetModifiedScripts(IEnumerable<GDNodePathReference> references)
     {
-        var scripts = new HashSet<GDScriptMap>();
+        var scripts = new HashSet<GDScriptFile>();
 
         foreach (var reference in references)
         {
-            if (reference.Type == GDNodePathReference.RefType.GDScript && reference.ScriptMap != null)
+            if (reference.Type == GDNodePathReference.RefType.GDScript && reference.ScriptFile != null)
             {
-                scripts.Add(reference.ScriptMap);
+                scripts.Add(reference.ScriptFile);
             }
         }
 

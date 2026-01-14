@@ -1,9 +1,3 @@
-using Godot;
-using GDShrapt.Reader;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -13,7 +7,7 @@ namespace GDShrapt.Plugin;
 internal partial class AstViewerDock : Control
 {
     private GDShraptPlugin _plugin;
-    private GDProjectMap _projectMap;
+    private GDScriptProject _scriptProject;
 
     // UI controls
     private OptionButton _scriptSelector;
@@ -25,7 +19,7 @@ internal partial class AstViewerDock : Control
     private Label _statusLabel;
 
     // Current state
-    private GDScriptMap _currentScript;
+    private GDScriptFile _currentScript;
     private Dictionary<TreeItem, GDNode> _treeItemToNode = new();
 
     /// <summary>
@@ -47,11 +41,11 @@ internal partial class AstViewerDock : Control
         }
     }
 
-    public void Initialize(GDShraptPlugin plugin, GDProjectMap projectMap)
+    public void Initialize(GDShraptPlugin plugin, GDScriptProject ScriptProject)
     {
         Logger.Info("AstViewerDock.Initialize() called");
         _plugin = plugin;
-        _projectMap = projectMap;
+        _scriptProject = ScriptProject;
         _initialized = true;
 
         // Ensure UI is created (since _Ready may not be called)
@@ -182,16 +176,16 @@ internal partial class AstViewerDock : Control
         _scriptSelector.Clear();
         _scriptSelector.AddItem("-- Select --", 0);
 
-        if (_projectMap == null)
+        if (_scriptProject == null)
             return;
 
-        var scripts = _projectMap.Scripts.OrderBy(s => s.Reference.FullPath).ToList();
+        var scripts = _scriptProject.ScriptFiles.OrderBy(s => s.FullPath).ToList();
         int index = 1;
         foreach (var script in scripts)
         {
-            var fileName = System.IO.Path.GetFileName(script.Reference.FullPath);
+            var fileName = System.IO.Path.GetFileName(script.FullPath);
             _scriptSelector.AddItem(fileName, index);
-            _scriptSelector.SetItemMetadata(index, script.Reference.FullPath);
+            _scriptSelector.SetItemMetadata(index, script.FullPath);
             index++;
         }
 
@@ -212,7 +206,7 @@ internal partial class AstViewerDock : Control
         if (string.IsNullOrEmpty(path))
             return;
 
-        var script = _projectMap?.Scripts.FirstOrDefault(s => s.Reference.FullPath == path);
+        var script = _scriptProject?.ScriptFiles.FirstOrDefault(s => s.FullPath == path);
         if (script != null)
         {
             _currentScript = script;
@@ -230,7 +224,7 @@ internal partial class AstViewerDock : Control
             var resourcePath = currentScript.ResourcePath;
             var fullPath = ProjectSettings.GlobalizePath(resourcePath);
 
-            var script = _projectMap?.Scripts.FirstOrDefault(s => s.Reference.FullPath == fullPath);
+            var script = _scriptProject?.ScriptFiles.FirstOrDefault(s => s.FullPath == fullPath);
             if (script != null)
             {
                 _currentScript = script;

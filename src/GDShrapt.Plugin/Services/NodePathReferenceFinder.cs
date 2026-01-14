@@ -13,12 +13,12 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal class GDNodePathReferenceFinder
 {
-    private readonly GDProjectMap _projectMap;
+    private readonly GDScriptProject _scriptProject;
     private readonly GDSceneTypesProvider _sceneProvider;
 
-    public GDNodePathReferenceFinder(GDProjectMap projectMap, GDSceneTypesProvider sceneProvider)
+    public GDNodePathReferenceFinder(GDScriptProject ScriptProject, GDSceneTypesProvider sceneProvider)
     {
-        _projectMap = projectMap;
+        _scriptProject = ScriptProject;
         _sceneProvider = sceneProvider;
     }
 
@@ -33,13 +33,13 @@ internal class GDNodePathReferenceFinder
         if (string.IsNullOrEmpty(nodeName))
             yield break;
 
-        foreach (var scriptMap in _projectMap.Scripts)
+        foreach (var ScriptFile in _scriptProject.ScriptFiles)
         {
-            if (scriptMap.Class == null)
+            if (ScriptFile.Class == null)
                 continue;
 
             // Find all path expressions in the script
-            foreach (var pathExpr in scriptMap.Class.AllNodes.OfType<GDGetNodeExpression>())
+            foreach (var pathExpr in ScriptFile.Class.AllNodes.OfType<GDGetNodeExpression>())
             {
                 var pathList = pathExpr.Path;
                 if (pathList == null)
@@ -57,14 +57,14 @@ internal class GDNodePathReferenceFinder
                             yield return new GDNodePathReference
                             {
                                 Type = GDNodePathReference.RefType.GDScript,
-                                FilePath = scriptMap.Reference?.FullPath,
-                                ResourcePath = scriptMap.Reference?.ResourcePath,
+                                FilePath = ScriptFile.FullPath,
+                                ResourcePath = ProjectSettings.LocalizePath(ScriptFile.FullPath),
                                 LineNumber = specifier.StartLine + 1,
                                 NodePath = nodeName,
                                 SegmentIndex = segmentIndex,
                                 PathSpecifier = specifier,
-                                ScriptMap = scriptMap,
-                                DisplayContext = GetLineContext(scriptMap, specifier.StartLine)
+                                ScriptFile = ScriptFile,
+                                DisplayContext = GetLineContext(ScriptFile, specifier.StartLine)
                             };
                         }
                         segmentIndex++;
@@ -73,7 +73,7 @@ internal class GDNodePathReferenceFinder
             }
 
             // Also check get_node() calls with string arguments
-            foreach (var call in scriptMap.Class.AllNodes.OfType<GDCallExpression>())
+            foreach (var call in ScriptFile.Class.AllNodes.OfType<GDCallExpression>())
             {
                 if (!IsGetNodeCall(call))
                     continue;
@@ -99,13 +99,13 @@ internal class GDNodePathReferenceFinder
                             yield return new GDNodePathReference
                             {
                                 Type = GDNodePathReference.RefType.GDScript,
-                                FilePath = scriptMap.Reference?.FullPath,
-                                ResourcePath = scriptMap.Reference?.ResourcePath,
+                                FilePath = ScriptFile.FullPath,
+                                ResourcePath = ScriptFile.Reference.ResourcePath,
                                 LineNumber = strExpr.StartLine + 1,
                                 NodePath = nodeName,
                                 SegmentIndex = i,
-                                ScriptMap = scriptMap,
-                                DisplayContext = GetLineContext(scriptMap, strExpr.StartLine)
+                                ScriptFile = ScriptFile,
+                                DisplayContext = GetLineContext(ScriptFile, strExpr.StartLine)
                             };
                         }
                     }
@@ -165,12 +165,13 @@ internal class GDNodePathReferenceFinder
     /// <summary>
     /// Gets all scenes that use a specific script.
     /// </summary>
-    public IEnumerable<string> GetScenesForScript(GDScriptMap scriptMap)
+    public IEnumerable<string> GetScenesForScript(GDScriptFile ScriptFile)
     {
-        if (scriptMap?.Reference == null)
+        if (ScriptFile == null)
             yield break;
 
-        var scriptPath = scriptMap.Reference.ResourcePath;
+        var scriptPath = ScriptFile.FullPath;
+
         if (string.IsNullOrEmpty(scriptPath))
             yield break;
 
@@ -234,15 +235,15 @@ internal class GDNodePathReferenceFinder
         return 0;
     }
 
-    private string GetLineContext(GDScriptMap scriptMap, int lineIndex)
+    private string GetLineContext(GDScriptFile ScriptFile, int lineIndex)
     {
-        if (scriptMap?.Class == null)
+        if (ScriptFile?.Class == null)
             return "";
 
         try
         {
             // Get the line from the class source
-            var source = scriptMap.Class.ToString();
+            var source = ScriptFile.Class.ToString();
             var lines = source.Split('\n');
             if (lineIndex >= 0 && lineIndex < lines.Length)
             {

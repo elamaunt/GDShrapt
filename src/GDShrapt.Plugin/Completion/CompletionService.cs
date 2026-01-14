@@ -1,9 +1,3 @@
-using GDShrapt.Reader;
-using GDShrapt.Semantics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -11,7 +5,7 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal class CompletionService
 {
-    private readonly GDProjectMap _projectMap;
+    private readonly GDScriptProject _scriptProject;
     private readonly GDTypeResolver _typeResolver;
     private readonly GDGodotTypesProvider _godotTypesProvider;
 
@@ -50,9 +44,9 @@ internal class CompletionService
         "Node", "Node2D", "Node3D", "Control", "Resource", "RefCounted"
     };
 
-    public CompletionService(GDProjectMap projectMap, GDTypeResolver typeResolver, GDGodotTypesProvider godotTypesProvider)
+    public CompletionService(GDScriptProject ScriptProject, GDTypeResolver typeResolver, GDGodotTypesProvider godotTypesProvider)
     {
-        _projectMap = projectMap;
+        _scriptProject = ScriptProject;
         _typeResolver = typeResolver;
         _godotTypesProvider = godotTypesProvider;
     }
@@ -208,11 +202,11 @@ internal class CompletionService
         }
 
         // Add project types
-        foreach (var scriptMap in _projectMap.Scripts)
+        foreach (var ScriptFile in _scriptProject.ScriptFiles)
         {
-            if (!string.IsNullOrEmpty(scriptMap.TypeName))
+            if (!string.IsNullOrEmpty(ScriptFile.TypeName))
             {
-                yield return CompletionItem.Class(scriptMap.TypeName, CompletionSource.Project);
+                yield return CompletionItem.Class(ScriptFile.TypeName, CompletionSource.Project);
             }
         }
     }
@@ -244,11 +238,11 @@ internal class CompletionService
         }
 
         // 4. Project types
-        foreach (var scriptMap in _projectMap.Scripts)
+        foreach (var ScriptFile in _scriptProject.ScriptFiles)
         {
-            if (!string.IsNullOrEmpty(scriptMap.TypeName))
+            if (!string.IsNullOrEmpty(ScriptFile.TypeName))
             {
-                yield return CompletionItem.Class(scriptMap.TypeName, CompletionSource.Project);
+                yield return CompletionItem.Class(ScriptFile.TypeName, CompletionSource.Project);
             }
         }
 
@@ -267,7 +261,7 @@ internal class CompletionService
     /// </summary>
     private IEnumerable<CompletionItem> GetLocalSymbols(CompletionContext context)
     {
-        var analyzer = context.ScriptMap?.Analyzer;
+        var analyzer = context.ScriptFile?.Analyzer;
         if (analyzer == null)
             yield break;
 
@@ -334,11 +328,11 @@ internal class CompletionService
         if (expression == "self")
         {
             // Return the current class type
-            return context.ScriptMap?.TypeName ?? context.ScriptMap?.Class?.Extends?.Type?.BuildName() ?? "RefCounted";
+            return context.ScriptFile?.TypeName ?? context.ScriptFile?.Class?.Extends?.Type?.BuildName() ?? "RefCounted";
         }
 
         // Check local symbols
-        var analyzer = context.ScriptMap?.Analyzer;
+        var analyzer = context.ScriptFile?.Analyzer;
         if (analyzer != null)
         {
             foreach (var symbol in analyzer.Symbols)

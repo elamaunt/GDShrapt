@@ -10,12 +10,12 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal class RefactoringContextBuilder
 {
-    private readonly GDProjectMap _projectMap;
+    private readonly GDScriptProject _ScriptProject;
     private readonly Node _dialogParent;
 
-    public RefactoringContextBuilder(GDProjectMap projectMap, Node dialogParent = null)
+    public RefactoringContextBuilder(GDScriptProject ScriptProject, Node dialogParent = null)
     {
-        _projectMap = projectMap;
+        _ScriptProject = ScriptProject;
         _dialogParent = dialogParent;
     }
 
@@ -27,7 +27,7 @@ internal class RefactoringContextBuilder
         if (editor == null)
             return null;
 
-        var scriptMap = editor.ScriptMap;
+        var ScriptFile = editor.ScriptFile;
         var @class = editor.GetClass();
 
         if (@class == null)
@@ -69,8 +69,8 @@ internal class RefactoringContextBuilder
         return new RefactoringContext
         {
             Editor = editor,
-            ScriptMap = scriptMap,
-            ProjectMap = _projectMap,
+            ScriptFile = ScriptFile,
+            ScriptProject = _ScriptProject,
             DialogParent = _dialogParent,
             CursorLine = cursorLine,
             CursorColumn = cursorColumn,
@@ -148,7 +148,7 @@ internal class RefactoringContextBuilder
             return null;
 
         // Create a GDScriptFile wrapper for the context
-        var reference = new GDScriptReference(pluginContext.ScriptMap?.Reference?.FullPath ?? "unknown.gd");
+        var reference = new GDScriptReference(pluginContext.ScriptFile?.FullPath ?? "unknown.gd");
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(pluginContext.ContainingClass.ToString());
 

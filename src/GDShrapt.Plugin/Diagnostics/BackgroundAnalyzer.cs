@@ -11,7 +11,7 @@ namespace GDShrapt.Plugin;
 internal class BackgroundAnalyzer : IDisposable
 {
     private readonly DiagnosticService _diagnosticService;
-    private readonly GDProjectMap _projectMap;
+    private readonly GDScriptProject _scriptProject;
 
     private readonly ConcurrentQueue<AnalysisRequest> _queue = new();
     private readonly ConcurrentDictionary<string, DateTime> _pendingScripts = new();
@@ -28,10 +28,10 @@ internal class BackgroundAnalyzer : IDisposable
     /// <summary>
     /// Creates a new BackgroundAnalyzer.
     /// </summary>
-    public BackgroundAnalyzer(DiagnosticService diagnosticService, GDProjectMap projectMap)
+    public BackgroundAnalyzer(DiagnosticService diagnosticService, GDScriptProject ScriptProject)
     {
         _diagnosticService = diagnosticService;
-        _projectMap = projectMap;
+        _scriptProject = ScriptProject;
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ internal class BackgroundAnalyzer : IDisposable
     /// <summary>
     /// Queues a script for analysis with debouncing.
     /// </summary>
-    public void QueueScriptAnalysis(GDPluginScriptReference script, bool priority = false)
+    public void QueueScriptAnalysis(GDScriptFile script, bool priority = false)
     {
         if (_cts.IsCancellationRequested)
             return;
@@ -106,9 +106,9 @@ internal class BackgroundAnalyzer : IDisposable
         if (_cts.IsCancellationRequested)
             return;
 
-        foreach (var script in _projectMap.Scripts)
+        foreach (var script in _scriptProject.ScriptFiles)
         {
-            QueueScriptAnalysis(script.Reference, priority: false);
+            QueueScriptAnalysis(script, priority: false);
         }
 
         Logger.Debug("Queued scripts for analysis");
@@ -117,7 +117,7 @@ internal class BackgroundAnalyzer : IDisposable
     /// <summary>
     /// Sets the priority script (currently open file).
     /// </summary>
-    public void SetPriorityScript(GDPluginScriptReference? script)
+    public void SetPriorityScript(GDScriptFile? script)
     {
         _priorityScript = script?.FullPath;
     }
@@ -171,13 +171,9 @@ internal class BackgroundAnalyzer : IDisposable
 
     private async Task ProcessRequest(AnalysisRequest request)
     {
-        Logger.Debug("ProcessRequest called for " + request.Script.FileName);
+        Logger.Debug("ProcessRequest called for " + request.Script.TypeName);
         try
         {
-            var binding = _projectMap.GetBinding(request.Script);
-            if (binding == null)
-                return;
-
             // Check if this is priority (process immediately)
             var isPriority = request.IsPriority || request.Script.FullPath == _priorityScript;
 
@@ -187,7 +183,7 @@ internal class BackgroundAnalyzer : IDisposable
                 await Task.Delay(50, _cts.Token);
             }
 
-            await _diagnosticService.AnalyzeScriptAsync(binding, _cts.Token);
+            await _diagnosticService.AnalyzeScriptAsync(request.Script, _cts.Token);
 
             // Remove from pending
             _pendingScripts.TryRemove(request.Script.FullPath, out _);
@@ -225,7 +221,7 @@ internal class BackgroundAnalyzer : IDisposable
 
     private class AnalysisRequest
     {
-        public required GDPluginScriptReference Script { get; init; }
+        public required GDScriptFile Script { get; init; }
         public DateTime QueuedAt { get; init; }
         public bool IsPriority { get; init; }
     }

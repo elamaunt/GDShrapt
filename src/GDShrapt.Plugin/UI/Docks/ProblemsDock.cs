@@ -20,7 +20,7 @@ internal partial class ProblemsDock : Control
     private Label _statusLabel;
 
     private DiagnosticService? _diagnosticService;
-    private GDProjectMap? _projectMap;
+    private GDScriptProject? _ScriptProject;
     private ProblemsGroupingMode _groupingMode = ProblemsGroupingMode.ByFile;
     private GDDiagnosticSeverity? _filterSeverity; // null = all severities
 
@@ -39,11 +39,11 @@ internal partial class ProblemsDock : Control
     /// <summary>
     /// Initializes the dock with required dependencies.
     /// </summary>
-    public void Initialize(DiagnosticService diagnosticService, GDProjectMap projectMap)
+    public void Initialize(DiagnosticService diagnosticService, GDScriptProject ScriptProject)
     {
         Logger.Info("ProblemsDock.Initialize() called");
         _diagnosticService = diagnosticService;
-        _projectMap = projectMap;
+        _ScriptProject = ScriptProject;
 
         // Ensure UI is created (since _Ready may not be called)
         if (_filterBySeverityOption == null)
@@ -321,7 +321,7 @@ internal partial class ProblemsDock : Control
         row.SetText(3, (diag.StartLine + 1).ToString());
 
         // Store for navigation
-        row.SetMetadata(0, diag.Script?.ResourcePath ?? "");
+        row.SetMetadata(0, ProjectSettings.LocalizePath(diag.Script?.FullPath ?? ""));
         row.SetMetadata(1, diag.StartLine);
         row.SetMetadata(2, diag.StartColumn);
 
