@@ -63,6 +63,14 @@ public class GDDiagnosticsService
     /// <returns>Combined diagnostics result.</returns>
     public GDDiagnosticsResult Diagnose(GDClassDeclaration classDeclaration)
     {
+        return DiagnoseInternal(classDeclaration, _validationOptions);
+    }
+
+    /// <summary>
+    /// Internal method that runs diagnostics with specified options.
+    /// </summary>
+    private GDDiagnosticsResult DiagnoseInternal(GDClassDeclaration classDeclaration, GDValidationOptions options)
+    {
         var result = new GDDiagnosticsResult();
 
         // 1. Check for syntax errors (invalid tokens)
@@ -81,8 +89,8 @@ public class GDDiagnosticsService
             });
         }
 
-        // 2. Run validator
-        var validationResult = _validator.Validate(classDeclaration, _validationOptions);
+        // 2. Run validator with provided options (may include project-aware runtime provider)
+        var validationResult = _validator.Validate(classDeclaration, options);
         foreach (var diagnostic in validationResult.Diagnostics)
         {
             var ruleId = diagnostic.CodeString;
@@ -139,6 +147,7 @@ public class GDDiagnosticsService
 
     /// <summary>
     /// Runs diagnostics on a script file.
+    /// Uses the script's analyzer for enhanced type-aware validation when available.
     /// </summary>
     /// <param name="script">The script file to diagnose.</param>
     /// <returns>Combined diagnostics result.</returns>
@@ -164,11 +173,39 @@ public class GDDiagnosticsService
 
         if (script.Class != null)
         {
-            var classResult = Diagnose(script.Class);
+            // Use semantic model's runtime provider when available for enhanced validation
+            var runtimeProvider = script.Analyzer?.Context?.RuntimeProvider ?? _validationOptions.RuntimeProvider;
+            var options = runtimeProvider != null && runtimeProvider != _validationOptions.RuntimeProvider
+                ? CreateOptionsWithProvider(runtimeProvider)
+                : _validationOptions;
+
+            var classResult = DiagnoseInternal(script.Class, options);
             result.AddRange(classResult.Diagnostics);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Creates validation options with a specific runtime provider.
+    /// </summary>
+    private GDValidationOptions CreateOptionsWithProvider(IGDRuntimeProvider runtimeProvider)
+    {
+        return new GDValidationOptions
+        {
+            RuntimeProvider = runtimeProvider,
+            CheckSyntax = _validationOptions.CheckSyntax,
+            CheckScope = _validationOptions.CheckScope,
+            CheckTypes = _validationOptions.CheckTypes,
+            CheckCalls = _validationOptions.CheckCalls,
+            CheckControlFlow = _validationOptions.CheckControlFlow,
+            CheckIndentation = _validationOptions.CheckIndentation,
+            CheckDuckTyping = _validationOptions.CheckDuckTyping,
+            DuckTypingSeverity = _validationOptions.DuckTypingSeverity,
+            CheckAbstract = _validationOptions.CheckAbstract,
+            CheckSignals = _validationOptions.CheckSignals,
+            CheckResourcePaths = _validationOptions.CheckResourcePaths
+        };
     }
 
     private bool IsRuleEnabled(string ruleId)

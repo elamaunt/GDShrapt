@@ -95,9 +95,9 @@ public class GDSymbolsCommand : IGDCommand
             {
                 Name = method.Name,
                 Kind = "method",
-                Type = method.Type?.ToString(),
-                Line = method.Declaration?.StartLine ?? 0,
-                Column = method.Declaration?.StartColumn ?? 0
+                Type = method.TypeNode?.ToString(),
+                Line = method.DeclarationNode?.StartLine ?? 0,
+                Column = method.DeclarationNode?.StartColumn ?? 0
             });
         }
 
@@ -108,9 +108,9 @@ public class GDSymbolsCommand : IGDCommand
             {
                 Name = variable.Name,
                 Kind = variable.IsStatic ? "constant" : "variable",
-                Type = variable.Type?.ToString(),
-                Line = variable.Declaration?.StartLine ?? 0,
-                Column = variable.Declaration?.StartColumn ?? 0
+                Type = variable.TypeNode?.ToString(),
+                Line = variable.DeclarationNode?.StartLine ?? 0,
+                Column = variable.DeclarationNode?.StartColumn ?? 0
             });
         }
 
@@ -121,8 +121,8 @@ public class GDSymbolsCommand : IGDCommand
             {
                 Name = signal.Name,
                 Kind = "signal",
-                Line = signal.Declaration?.StartLine ?? 0,
-                Column = signal.Declaration?.StartColumn ?? 0
+                Line = signal.DeclarationNode?.StartLine ?? 0,
+                Column = signal.DeclarationNode?.StartColumn ?? 0
             });
         }
 
@@ -133,9 +133,9 @@ public class GDSymbolsCommand : IGDCommand
             {
                 Name = constant.Name,
                 Kind = "constant",
-                Type = constant.Type?.ToString(),
-                Line = constant.Declaration?.StartLine ?? 0,
-                Column = constant.Declaration?.StartColumn ?? 0
+                Type = constant.TypeNode?.ToString(),
+                Line = constant.DeclarationNode?.StartLine ?? 0,
+                Column = constant.DeclarationNode?.StartColumn ?? 0
             });
         }
 
@@ -146,8 +146,8 @@ public class GDSymbolsCommand : IGDCommand
             {
                 Name = enumSymbol.Name,
                 Kind = "enum",
-                Line = enumSymbol.Declaration?.StartLine ?? 0,
-                Column = enumSymbol.Declaration?.StartColumn ?? 0
+                Line = enumSymbol.DeclarationNode?.StartLine ?? 0,
+                Column = enumSymbol.DeclarationNode?.StartColumn ?? 0
             });
         }
 
@@ -158,8 +158,8 @@ public class GDSymbolsCommand : IGDCommand
             {
                 Name = innerClass.Name,
                 Kind = "class",
-                Line = innerClass.Declaration?.StartLine ?? 0,
-                Column = innerClass.Declaration?.StartColumn ?? 0
+                Line = innerClass.DeclarationNode?.StartLine ?? 0,
+                Column = innerClass.DeclarationNode?.StartColumn ?? 0
             });
         }
 

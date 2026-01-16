@@ -9,19 +9,15 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Script analyzer using GDShrapt.Validator for type inference and reference collection.
 /// Godot-independent version for semantic analysis.
+/// Uses GDSemanticModel as the unified API for symbol resolution and references.
 /// </summary>
 public class GDScriptAnalyzer
 {
     private readonly GDScriptFile _scriptFile;
-    private GDReferenceResult? _references;
     private GDTypeInferenceEngine? _typeEngine;
     private GDValidationContext? _validationContext;
+    private GDSemanticModel? _semanticModel;
     private readonly IGDSemanticLogger _logger;
-
-    /// <summary>
-    /// The collected references (forward and back references, types, duck types).
-    /// </summary>
-    public GDReferenceResult? References => _references;
 
     /// <summary>
     /// The type inference engine.
@@ -34,9 +30,15 @@ public class GDScriptAnalyzer
     public GDValidationContext? Context => _validationContext;
 
     /// <summary>
-    /// All declared symbols in the script.
+    /// The semantic model for this script. Provides unified access to symbol resolution,
+    /// references, type queries, and confidence analysis with full inheritance support.
     /// </summary>
-    public IEnumerable<GDSymbol> Symbols => _references?.Symbols ?? Enumerable.Empty<GDSymbol>();
+    public GDSemanticModel? SemanticModel => _semanticModel;
+
+    /// <summary>
+    /// All declared symbol infos in the script (full semantic information).
+    /// </summary>
+    public IEnumerable<GDSymbolInfo> Symbols => _semanticModel?.Symbols ?? Enumerable.Empty<GDSymbolInfo>();
 
     public GDScriptAnalyzer(GDScriptFile scriptFile, IGDSemanticLogger? logger = null)
     {
@@ -61,16 +63,16 @@ public class GDScriptAnalyzer
         var declarationCollector = new GDDeclarationCollector();
         declarationCollector.Collect(classDecl, _validationContext);
 
-        // Collect references
-        var referenceCollector = new GDReferenceCollector();
-        _references = referenceCollector.Collect(classDecl, _validationContext, runtimeProvider);
-
         // Create type inference engine
         _typeEngine = new GDTypeInferenceEngine(
             _validationContext.RuntimeProvider,
             _validationContext.Scopes);
 
-        _logger.Debug($"Analysis complete: {_references.Symbols.Count()} symbols found");
+        // Build semantic model (unified API with inheritance support)
+        var semanticCollector = new GDSemanticReferenceCollector(_scriptFile, runtimeProvider);
+        _semanticModel = semanticCollector.BuildSemanticModel();
+
+        _logger.Debug($"Analysis complete: {_semanticModel.Symbols.Count()} symbols found");
     }
 
     /// <summary>
@@ -81,8 +83,8 @@ public class GDScriptAnalyzer
         if (node == null)
             return null;
 
-        // First try references cache
-        var type = _references?.GetTypeForNode(node);
+        // First try semantic model
+        var type = _semanticModel?.GetTypeForNode(node);
         if (type != null)
             return type;
 
@@ -98,8 +100,8 @@ public class GDScriptAnalyzer
         if (node == null)
             return null;
 
-        // First try references cache
-        var typeNode = _references?.GetTypeNodeForNode(node);
+        // First try semantic model
+        var typeNode = _semanticModel?.GetTypeNodeForNode(node);
         if (typeNode != null)
             return typeNode;
 
@@ -108,19 +110,19 @@ public class GDScriptAnalyzer
     }
 
     /// <summary>
-    /// Gets the symbol that a node references.
+    /// Gets the symbol info that a node references.
     /// </summary>
-    public GDSymbol? GetSymbolForNode(GDNode node)
+    public GDSymbolInfo? GetSymbolForNode(GDNode node)
     {
-        return _references?.GetSymbolForNode(node);
+        return _semanticModel?.GetSymbolForNode(node);
     }
 
     /// <summary>
     /// Gets all references to a symbol.
     /// </summary>
-    public IReadOnlyList<GDReference> GetReferencesTo(GDSymbol symbol)
+    public IReadOnlyList<GDReference> GetReferencesTo(GDSymbolInfo symbol)
     {
-        return _references?.GetReferencesTo(symbol) ?? Array.Empty<GDReference>();
+        return _semanticModel?.GetReferencesTo(symbol) ?? Array.Empty<GDReference>();
     }
 
     /// <summary>
@@ -128,7 +130,7 @@ public class GDScriptAnalyzer
     /// </summary>
     public IReadOnlyList<GDReference> GetReferencesTo(string symbolName)
     {
-        var symbol = _references?.FindSymbol(symbolName);
+        var symbol = _semanticModel?.FindSymbol(symbolName);
         if (symbol == null)
             return Array.Empty<GDReference>();
         return GetReferencesTo(symbol);
@@ -137,15 +139,15 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Finds a symbol by name. Returns the first match.
     /// </summary>
-    public GDSymbol? FindSymbol(string name)
+    public GDSymbolInfo? FindSymbol(string name)
     {
-        return _references?.FindSymbol(name);
+        return _semanticModel?.FindSymbol(name);
     }
 
     /// <summary>
     /// Finds all symbols with the given name (handles same-named symbols in different scopes).
     /// </summary>
-    public IEnumerable<GDSymbol> FindSymbols(string name)
+    public IEnumerable<GDSymbolInfo> FindSymbols(string name)
     {
         return Symbols.Where(s => s.Name == name);
     }
@@ -153,9 +155,9 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets symbols of a specific kind.
     /// </summary>
-    public IEnumerable<GDSymbol> GetSymbolsOfKind(GDSymbolKind kind)
+    public IEnumerable<GDSymbolInfo> GetSymbolsOfKind(GDSymbolKind kind)
     {
-        return _references?.GetSymbolsOfKind(kind) ?? Enumerable.Empty<GDSymbol>();
+        return Symbols.Where(s => s.Kind == kind);
     }
 
     /// <summary>
@@ -171,7 +173,7 @@ public class GDScriptAnalyzer
     /// </summary>
     public GDDuckType? GetDuckType(string variableName)
     {
-        return _references?.GetDuckType(variableName);
+        return _semanticModel?.GetDuckType(variableName);
     }
 
     /// <summary>
@@ -180,7 +182,7 @@ public class GDScriptAnalyzer
     /// </summary>
     public string? GetEffectiveType(string variableName, GDNode? atNode = null)
     {
-        return _references?.GetEffectiveType(variableName, atNode);
+        return _semanticModel?.GetEffectiveType(variableName, atNode);
     }
 
     /// <summary>
@@ -188,7 +190,7 @@ public class GDScriptAnalyzer
     /// </summary>
     public string? GetNarrowedType(string variableName, GDNode atNode)
     {
-        return _references?.GetNarrowedType(variableName, atNode);
+        return _semanticModel?.GetNarrowedType(variableName, atNode);
     }
 
     /// <summary>
@@ -213,13 +215,13 @@ public class GDScriptAnalyzer
     public GDNode? GetDeclaration(string symbolName)
     {
         var symbol = FindSymbol(symbolName);
-        return symbol?.Declaration;
+        return symbol?.DeclarationNode;
     }
 
     /// <summary>
     /// Gets all method symbols.
     /// </summary>
-    public IEnumerable<GDSymbol> GetMethods()
+    public IEnumerable<GDSymbolInfo> GetMethods()
     {
         return GetSymbolsOfKind(GDSymbolKind.Method);
     }
@@ -227,7 +229,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets all variable symbols (class-level).
     /// </summary>
-    public IEnumerable<GDSymbol> GetVariables()
+    public IEnumerable<GDSymbolInfo> GetVariables()
     {
         return GetSymbolsOfKind(GDSymbolKind.Variable);
     }
@@ -235,7 +237,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets all signal symbols.
     /// </summary>
-    public IEnumerable<GDSymbol> GetSignals()
+    public IEnumerable<GDSymbolInfo> GetSignals()
     {
         return GetSymbolsOfKind(GDSymbolKind.Signal);
     }
@@ -243,7 +245,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets all constant symbols.
     /// </summary>
-    public IEnumerable<GDSymbol> GetConstants()
+    public IEnumerable<GDSymbolInfo> GetConstants()
     {
         return GetSymbolsOfKind(GDSymbolKind.Constant);
     }
@@ -251,7 +253,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets all enum symbols.
     /// </summary>
-    public IEnumerable<GDSymbol> GetEnums()
+    public IEnumerable<GDSymbolInfo> GetEnums()
     {
         return GetSymbolsOfKind(GDSymbolKind.Enum);
     }
@@ -259,7 +261,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets all inner class symbols.
     /// </summary>
-    public IEnumerable<GDSymbol> GetInnerClasses()
+    public IEnumerable<GDSymbolInfo> GetInnerClasses()
     {
         return GetSymbolsOfKind(GDSymbolKind.Class);
     }
@@ -270,12 +272,12 @@ public class GDScriptAnalyzer
     /// Gets the scope type where the symbol was declared.
     /// Inferred from the declaration node type.
     /// </summary>
-    public GDScopeType? GetDeclarationScopeType(GDSymbol symbol)
+    public GDScopeType? GetDeclarationScopeType(GDSymbolInfo symbol)
     {
-        if (symbol?.Declaration == null)
+        if (symbol?.DeclarationNode == null)
             return null;
 
-        return symbol.Declaration switch
+        return symbol.DeclarationNode switch
         {
             // Class-level declarations
             GDMethodDeclaration => GDScopeType.Class,
@@ -305,7 +307,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets references to a symbol filtered by scope type.
     /// </summary>
-    public IEnumerable<GDReference> GetReferencesInScope(GDSymbol symbol, GDScopeType scopeType)
+    public IEnumerable<GDReference> GetReferencesInScope(GDSymbolInfo symbol, GDScopeType scopeType)
     {
         var refs = GetReferencesTo(symbol);
         return refs.Where(r => r.Scope?.Type == scopeType);
@@ -314,7 +316,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets references to a symbol filtered by multiple scope types.
     /// </summary>
-    public IEnumerable<GDReference> GetReferencesInScopes(GDSymbol symbol, params GDScopeType[] scopeTypes)
+    public IEnumerable<GDReference> GetReferencesInScopes(GDSymbolInfo symbol, params GDScopeType[] scopeTypes)
     {
         if (scopeTypes == null || scopeTypes.Length == 0)
             return GetReferencesTo(symbol);
@@ -328,7 +330,7 @@ public class GDScriptAnalyzer
     /// Gets references only within method/lambda scope (local references).
     /// This includes Method, Lambda, ForLoop, WhileLoop, Conditional, Match, and Block scopes.
     /// </summary>
-    public IEnumerable<GDReference> GetLocalReferences(GDSymbol symbol)
+    public IEnumerable<GDReference> GetLocalReferences(GDSymbolInfo symbol)
     {
         var refs = GetReferencesTo(symbol);
         return refs.Where(r => IsLocalScope(r.Scope?.Type));
@@ -338,7 +340,7 @@ public class GDScriptAnalyzer
     /// Determines if a symbol is a local variable (declared in method/lambda scope).
     /// Local symbols include: local variables, parameters, for-loop iterators, match case variables.
     /// </summary>
-    public bool IsLocalSymbol(GDSymbol symbol)
+    public bool IsLocalSymbol(GDSymbolInfo symbol)
     {
         if (symbol == null)
             return false;
@@ -354,7 +356,7 @@ public class GDScriptAnalyzer
             case GDSymbolKind.Enum:
             case GDSymbolKind.EnumValue:
             case GDSymbolKind.Class:
-            case GDSymbolKind.Constant when IsClassLevelDeclaration(symbol.Declaration):
+            case GDSymbolKind.Constant when IsClassLevelDeclaration(symbol.DeclarationNode):
                 return false;
         }
 
@@ -367,7 +369,7 @@ public class GDScriptAnalyzer
     /// Determines if a symbol is a class member (declared in class scope).
     /// Class members include: methods, signals, class-level variables, constants, enums, inner classes.
     /// </summary>
-    public bool IsClassMember(GDSymbol symbol)
+    public bool IsClassMember(GDSymbolInfo symbol)
     {
         if (symbol == null)
             return false;
@@ -415,7 +417,7 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Checks if the declaration is at class level.
     /// </summary>
-    private static bool IsClassLevelDeclaration(GDNode declaration)
+    private static bool IsClassLevelDeclaration(GDNode? declaration)
     {
         return declaration is GDVariableDeclaration or
             GDMethodDeclaration or
@@ -444,7 +446,7 @@ public class GDScriptAnalyzer
     /// For local symbols, this returns references in the declaring method only.
     /// For class members, this returns all references.
     /// </summary>
-    public IEnumerable<GDReference> GetReferencesInDeclaringScope(GDSymbol symbol)
+    public IEnumerable<GDReference> GetReferencesInDeclaringScope(GDSymbolInfo symbol)
     {
         if (!IsLocalSymbol(symbol))
         {
@@ -468,13 +470,13 @@ public class GDScriptAnalyzer
     /// <summary>
     /// Gets the method/lambda node that contains the symbol declaration.
     /// </summary>
-    private GDNode? GetDeclaringMethodNode(GDSymbol symbol)
+    private GDNode? GetDeclaringMethodNode(GDSymbolInfo symbol)
     {
-        if (symbol?.Declaration == null)
+        if (symbol?.DeclarationNode == null)
             return null;
 
         // Walk up the AST to find the enclosing method
-        var node = symbol.Declaration;
+        var node = symbol.DeclarationNode;
         while (node != null)
         {
             if (node is GDMethodDeclaration or GDMethodExpression)

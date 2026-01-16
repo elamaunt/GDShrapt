@@ -1,5 +1,6 @@
 using GDShrapt.Plugin;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
@@ -67,17 +68,17 @@ func test_loops():
 
     #region Helper Methods
 
-    private GDScriptMap CreateScriptMap(string code)
+    private GDScriptFile CreateScriptFile(string code)
     {
-        var reference = new GDPluginScriptReference("test.gd");
-        var map = new GDScriptMap(reference);
-        map.Reload(code);
-        return map;
+        var reference = new GDScriptReference("test://virtual/test.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(code);
+        return scriptFile;
     }
 
-    private RefactoringContext CreateContext(GDScriptMap scriptMap, int line, int column)
+    private RefactoringContext CreateContext(GDScriptFile scriptFile, int line, int column)
     {
-        var classDecl = scriptMap.Class;
+        var classDecl = scriptFile.Class;
         GDNode? nodeAtCursor = null;
         GDSyntaxToken? tokenAtCursor = null;
         GDMethodDeclaration? containingMethod = null;
@@ -111,7 +112,7 @@ func test_loops():
 
         return new RefactoringContext
         {
-            ScriptMap = scriptMap,
+            ScriptFile = scriptFile,
             ContainingClass = classDecl,
             ContainingMethod = containingMethod,
             CursorLine = line,
@@ -128,11 +129,11 @@ func test_loops():
     [TestMethod]
     public async Task InvertCondition_IsAvailable_OnIfStatement_ReturnsTrue()
     {
-        var scriptMap = CreateScriptMap(ConditionCode);
+        var scriptFile = CreateScriptFile(ConditionCode);
         var action = new InvertConditionAction();
 
         // Line with "if x == y:"
-        var context = CreateContext(scriptMap, 5, 7);
+        var context = CreateContext(scriptFile, 5, 7);
 
         // Note: IsAvailable requires GetIfStatement to work, which needs proper AST context
         // This test validates the action can be instantiated and has correct properties
@@ -144,11 +145,11 @@ func test_loops():
     [TestMethod]
     public async Task InvertCondition_IsAvailable_OutsideCondition_ReturnsFalse()
     {
-        var scriptMap = CreateScriptMap(SimpleClassCode);
+        var scriptFile = CreateScriptFile(SimpleClassCode);
         var action = new InvertConditionAction();
 
         // Line with variable declaration (no if statement)
-        var context = CreateContext(scriptMap, 2, 0);
+        var context = CreateContext(scriptFile, 2, 0);
 
         Assert.IsFalse(action.IsAvailable(context));
     }
@@ -160,7 +161,7 @@ func test_loops():
     [TestMethod]
     public async Task ConvertForToWhile_IsAvailable_OnForLoop_ReturnsTrue()
     {
-        var scriptMap = CreateScriptMap(ForLoopCode);
+        var scriptFile = CreateScriptFile(ForLoopCode);
         var action = new ConvertForToWhileAction();
 
         Assert.AreEqual("convert_for_to_while", action.Id);
@@ -171,11 +172,11 @@ func test_loops():
     [TestMethod]
     public async Task ConvertForToWhile_IsAvailable_OutsideForLoop_ReturnsFalse()
     {
-        var scriptMap = CreateScriptMap(SimpleClassCode);
+        var scriptFile = CreateScriptFile(SimpleClassCode);
         var action = new ConvertForToWhileAction();
 
         // Line with variable declaration (no for loop)
-        var context = CreateContext(scriptMap, 2, 0);
+        var context = CreateContext(scriptFile, 2, 0);
 
         Assert.IsFalse(action.IsAvailable(context));
     }
@@ -199,11 +200,11 @@ func test_loops():
     [TestMethod]
     public async Task ExtractVariable_IsAvailable_WithoutMethod_ReturnsFalse()
     {
-        var scriptMap = CreateScriptMap(SimpleClassCode);
+        var scriptFile = CreateScriptFile(SimpleClassCode);
         var action = new ExtractVariableAction();
 
         // Class-level variable (not inside method)
-        var context = CreateContext(scriptMap, 2, 5);
+        var context = CreateContext(scriptFile, 2, 5);
 
         Assert.IsFalse(action.IsAvailable(context));
     }
@@ -226,11 +227,11 @@ func test_loops():
     [TestMethod]
     public async Task SurroundWithIf_IsAvailable_WithoutMethod_ReturnsFalse()
     {
-        var scriptMap = CreateScriptMap(SimpleClassCode);
+        var scriptFile = CreateScriptFile(SimpleClassCode);
         var action = new SurroundWithIfAction();
 
         // Class-level (not inside method)
-        var context = CreateContext(scriptMap, 2, 0);
+        var context = CreateContext(scriptFile, 2, 0);
 
         Assert.IsFalse(action.IsAvailable(context));
     }
@@ -252,12 +253,12 @@ func test_loops():
     [TestMethod]
     public async Task AddTypeAnnotation_IsAvailable_OnTypedVariable_ReturnsFalse()
     {
-        var scriptMap = CreateScriptMap(SimpleClassCode);
+        var scriptFile = CreateScriptFile(SimpleClassCode);
         var action = new AddTypeAnnotationAction();
 
         // Variable already has type annotation (speed: float)
         // Line 3: var speed: float = 5.0
-        var context = CreateContext(scriptMap, 3, 5);
+        var context = CreateContext(scriptFile, 3, 5);
 
         // Should not be available since variable already has type
         // Note: This depends on proper AST context detection

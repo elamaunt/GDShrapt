@@ -45,6 +45,7 @@ public class GDNodeTypeInjectorTests
     {
         public string? TypeName { get; set; }
         public string? FullPath { get; set; }
+        public string? ResPath { get; set; }
         public GDClassDeclaration? Class { get; set; }
         public bool IsGlobal { get; set; }
     }
@@ -773,6 +774,7 @@ signal position_changed(x: float, y: float)
     {
         public string? TypeName { get; set; }
         public string? FullPath { get; set; }
+        public string? ResPath { get; set; }
         public GDClassDeclaration? Class { get; set; }
         public bool IsGlobal { get; set; }
     }

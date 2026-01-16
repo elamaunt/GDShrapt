@@ -8,3 +8,4 @@ global using System.Threading.Tasks;
 global using GDShrapt.Reader;
 global using GDShrapt.Linter;
 global using GDShrapt.Formatter;
+global using GDShrapt.Abstractions;

@@ -58,7 +58,7 @@ public class GDRenameService
     /// <param name="symbol">The symbol to rename.</param>
     /// <param name="newName">The new name for the symbol.</param>
     /// <returns>The rename result with all required edits.</returns>
-    public GDRenameResult PlanRename(GDSymbol symbol, string newName)
+    public GDRenameResult PlanRename(GDSymbolInfo symbol, string newName)
     {
         if (symbol == null)
             return GDRenameResult.Failed("Symbol is null");
@@ -368,7 +368,7 @@ public class GDRenameService
     /// <param name="symbol">The symbol being renamed.</param>
     /// <param name="newName">The proposed new name.</param>
     /// <returns>List of conflicts, empty if none.</returns>
-    public IReadOnlyList<GDRenameConflict> CheckConflicts(GDSymbol symbol, string newName)
+    public IReadOnlyList<GDRenameConflict> CheckConflicts(GDSymbolInfo symbol, string newName)
     {
         var conflicts = new List<GDRenameConflict>();
 
@@ -499,7 +499,7 @@ public class GDRenameService
 
     #region Private helpers
 
-    private GDScriptFile? FindScriptContainingSymbol(GDSymbol symbol)
+    private GDScriptFile? FindScriptContainingSymbol(GDSymbolInfo symbol)
     {
         foreach (var script in _project.ScriptFiles)
         {
@@ -512,14 +512,14 @@ public class GDRenameService
         return null;
     }
 
-    private static bool IsClassMemberSymbol(GDSymbol symbol)
+    private static bool IsClassMemberSymbol(GDSymbolInfo symbol)
     {
         return symbol.Kind switch
         {
             GDSymbolKind.Method => true,
             GDSymbolKind.Signal => true,
-            GDSymbolKind.Variable when symbol.Declaration is GDVariableDeclaration => true,
-            GDSymbolKind.Constant when symbol.Declaration is GDVariableDeclaration => true,
+            GDSymbolKind.Variable when symbol.DeclarationNode is GDVariableDeclaration => true,
+            GDSymbolKind.Constant when symbol.DeclarationNode is GDVariableDeclaration => true,
             GDSymbolKind.Enum => true,
             GDSymbolKind.EnumValue => true,
             GDSymbolKind.Class => true,
@@ -527,7 +527,7 @@ public class GDRenameService
         };
     }
 
-    private List<GDTextEdit> CollectEditsFromScript(GDScriptFile script, GDSymbol symbol, string oldName, string newName)
+    private List<GDTextEdit> CollectEditsFromScript(GDScriptFile script, GDSymbolInfo symbol, string oldName, string newName)
     {
         var edits = new List<GDTextEdit>();
         var analyzer = script.Analyzer;
@@ -537,9 +537,9 @@ public class GDRenameService
             return edits;
 
         // Add declaration
-        if (symbol.Declaration != null)
+        if (symbol.DeclarationNode != null)
         {
-            edits.Add(new GDTextEdit(filePath, symbol.Declaration.StartLine, symbol.Declaration.StartColumn, oldName, newName));
+            edits.Add(new GDTextEdit(filePath, symbol.DeclarationNode.StartLine, symbol.DeclarationNode.StartColumn, oldName, newName));
         }
 
         // Add all references
@@ -551,7 +551,7 @@ public class GDRenameService
                 continue;
 
             // Skip if it's the declaration (already added)
-            if (node == symbol.Declaration)
+            if (node == symbol.DeclarationNode)
                 continue;
 
             edits.Add(new GDTextEdit(filePath, node.StartLine, node.StartColumn, oldName, newName));

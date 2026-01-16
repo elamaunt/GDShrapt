@@ -51,9 +51,15 @@ public class GDScriptFile : IGDScriptInfo
     /// </summary>
     public string? FullPath => _reference.FullPath;
 
+    /// <summary>
+    /// The res:// path to the script (Godot resource path).
+    /// </summary>
+    public string? ResPath => _reference.ResourcePath;
+
     // IGDScriptInfo implementation
     string? IGDScriptInfo.TypeName => TypeName;
     string? IGDScriptInfo.FullPath => FullPath;
+    string? IGDScriptInfo.ResPath => ResPath;
     GDClassDeclaration? IGDScriptInfo.Class => Class;
     bool IGDScriptInfo.IsGlobal => IsGlobal;
 

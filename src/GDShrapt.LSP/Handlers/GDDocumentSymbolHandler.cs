@@ -71,55 +71,55 @@ public class GDDocumentSymbolHandler
         // Add methods
         foreach (var method in analyzer.GetMethods())
         {
-            if (method.Declaration == null)
+            if (method.DeclarationNode == null)
                 continue;
 
             yield return new GDLspDocumentSymbol
             {
                 Name = method.Name,
                 Kind = GDLspSymbolKind.Method,
-                Detail = method.Type?.ToString(),
+                Detail = method.TypeNode?.ToString(),
                 Range = GDLocationAdapter.ToLspRange(
-                    method.Declaration.StartLine,
-                    method.Declaration.StartColumn,
-                    method.Declaration.EndLine,
-                    method.Declaration.EndColumn),
+                    method.DeclarationNode.StartLine,
+                    method.DeclarationNode.StartColumn,
+                    method.DeclarationNode.EndLine,
+                    method.DeclarationNode.EndColumn),
                 SelectionRange = GDLocationAdapter.ToLspRange(
-                    method.Declaration.StartLine,
-                    method.Declaration.StartColumn,
-                    method.Declaration.StartLine,
-                    method.Declaration.StartColumn + method.Name.Length)
+                    method.DeclarationNode.StartLine,
+                    method.DeclarationNode.StartColumn,
+                    method.DeclarationNode.StartLine,
+                    method.DeclarationNode.StartColumn + method.Name.Length)
             };
         }
 
         // Add variables
         foreach (var variable in analyzer.GetVariables())
         {
-            if (variable.Declaration == null)
+            if (variable.DeclarationNode == null)
                 continue;
 
             yield return new GDLspDocumentSymbol
             {
                 Name = variable.Name,
                 Kind = variable.IsStatic ? GDLspSymbolKind.Constant : GDLspSymbolKind.Variable,
-                Detail = variable.Type?.ToString(),
+                Detail = variable.TypeNode?.ToString(),
                 Range = GDLocationAdapter.ToLspRange(
-                    variable.Declaration.StartLine,
-                    variable.Declaration.StartColumn,
-                    variable.Declaration.EndLine,
-                    variable.Declaration.EndColumn),
+                    variable.DeclarationNode.StartLine,
+                    variable.DeclarationNode.StartColumn,
+                    variable.DeclarationNode.EndLine,
+                    variable.DeclarationNode.EndColumn),
                 SelectionRange = GDLocationAdapter.ToLspRange(
-                    variable.Declaration.StartLine,
-                    variable.Declaration.StartColumn,
-                    variable.Declaration.StartLine,
-                    variable.Declaration.StartColumn + variable.Name.Length)
+                    variable.DeclarationNode.StartLine,
+                    variable.DeclarationNode.StartColumn,
+                    variable.DeclarationNode.StartLine,
+                    variable.DeclarationNode.StartColumn + variable.Name.Length)
             };
         }
 
         // Add signals
         foreach (var signal in analyzer.GetSignals())
         {
-            if (signal.Declaration == null)
+            if (signal.DeclarationNode == null)
                 continue;
 
             yield return new GDLspDocumentSymbol
@@ -127,46 +127,46 @@ public class GDDocumentSymbolHandler
                 Name = signal.Name,
                 Kind = GDLspSymbolKind.Event,
                 Range = GDLocationAdapter.ToLspRange(
-                    signal.Declaration.StartLine,
-                    signal.Declaration.StartColumn,
-                    signal.Declaration.EndLine,
-                    signal.Declaration.EndColumn),
+                    signal.DeclarationNode.StartLine,
+                    signal.DeclarationNode.StartColumn,
+                    signal.DeclarationNode.EndLine,
+                    signal.DeclarationNode.EndColumn),
                 SelectionRange = GDLocationAdapter.ToLspRange(
-                    signal.Declaration.StartLine,
-                    signal.Declaration.StartColumn,
-                    signal.Declaration.StartLine,
-                    signal.Declaration.StartColumn + signal.Name.Length)
+                    signal.DeclarationNode.StartLine,
+                    signal.DeclarationNode.StartColumn,
+                    signal.DeclarationNode.StartLine,
+                    signal.DeclarationNode.StartColumn + signal.Name.Length)
             };
         }
 
         // Add constants
         foreach (var constant in analyzer.GetConstants())
         {
-            if (constant.Declaration == null)
+            if (constant.DeclarationNode == null)
                 continue;
 
             yield return new GDLspDocumentSymbol
             {
                 Name = constant.Name,
                 Kind = GDLspSymbolKind.Constant,
-                Detail = constant.Type?.ToString(),
+                Detail = constant.TypeNode?.ToString(),
                 Range = GDLocationAdapter.ToLspRange(
-                    constant.Declaration.StartLine,
-                    constant.Declaration.StartColumn,
-                    constant.Declaration.EndLine,
-                    constant.Declaration.EndColumn),
+                    constant.DeclarationNode.StartLine,
+                    constant.DeclarationNode.StartColumn,
+                    constant.DeclarationNode.EndLine,
+                    constant.DeclarationNode.EndColumn),
                 SelectionRange = GDLocationAdapter.ToLspRange(
-                    constant.Declaration.StartLine,
-                    constant.Declaration.StartColumn,
-                    constant.Declaration.StartLine,
-                    constant.Declaration.StartColumn + constant.Name.Length)
+                    constant.DeclarationNode.StartLine,
+                    constant.DeclarationNode.StartColumn,
+                    constant.DeclarationNode.StartLine,
+                    constant.DeclarationNode.StartColumn + constant.Name.Length)
             };
         }
 
         // Add enums
         foreach (var enumSymbol in analyzer.GetEnums())
         {
-            if (enumSymbol.Declaration == null)
+            if (enumSymbol.DeclarationNode == null)
                 continue;
 
             yield return new GDLspDocumentSymbol
@@ -174,22 +174,22 @@ public class GDDocumentSymbolHandler
                 Name = enumSymbol.Name,
                 Kind = GDLspSymbolKind.Enum,
                 Range = GDLocationAdapter.ToLspRange(
-                    enumSymbol.Declaration.StartLine,
-                    enumSymbol.Declaration.StartColumn,
-                    enumSymbol.Declaration.EndLine,
-                    enumSymbol.Declaration.EndColumn),
+                    enumSymbol.DeclarationNode.StartLine,
+                    enumSymbol.DeclarationNode.StartColumn,
+                    enumSymbol.DeclarationNode.EndLine,
+                    enumSymbol.DeclarationNode.EndColumn),
                 SelectionRange = GDLocationAdapter.ToLspRange(
-                    enumSymbol.Declaration.StartLine,
-                    enumSymbol.Declaration.StartColumn,
-                    enumSymbol.Declaration.StartLine,
-                    enumSymbol.Declaration.StartColumn + enumSymbol.Name.Length)
+                    enumSymbol.DeclarationNode.StartLine,
+                    enumSymbol.DeclarationNode.StartColumn,
+                    enumSymbol.DeclarationNode.StartLine,
+                    enumSymbol.DeclarationNode.StartColumn + enumSymbol.Name.Length)
             };
         }
 
         // Add inner classes
         foreach (var innerClass in analyzer.GetInnerClasses())
         {
-            if (innerClass.Declaration == null)
+            if (innerClass.DeclarationNode == null)
                 continue;
 
             yield return new GDLspDocumentSymbol
@@ -197,15 +197,15 @@ public class GDDocumentSymbolHandler
                 Name = innerClass.Name,
                 Kind = GDLspSymbolKind.Class,
                 Range = GDLocationAdapter.ToLspRange(
-                    innerClass.Declaration.StartLine,
-                    innerClass.Declaration.StartColumn,
-                    innerClass.Declaration.EndLine,
-                    innerClass.Declaration.EndColumn),
+                    innerClass.DeclarationNode.StartLine,
+                    innerClass.DeclarationNode.StartColumn,
+                    innerClass.DeclarationNode.EndLine,
+                    innerClass.DeclarationNode.EndColumn),
                 SelectionRange = GDLocationAdapter.ToLspRange(
-                    innerClass.Declaration.StartLine,
-                    innerClass.Declaration.StartColumn,
-                    innerClass.Declaration.StartLine,
-                    innerClass.Declaration.StartColumn + innerClass.Name.Length)
+                    innerClass.DeclarationNode.StartLine,
+                    innerClass.DeclarationNode.StartColumn,
+                    innerClass.DeclarationNode.StartLine,
+                    innerClass.DeclarationNode.StartColumn + innerClass.Name.Length)
             };
         }
     }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
 {
@@ -224,8 +225,8 @@ namespace GDShrapt.Reader
             // Check if member is required by duck type (has_method, has_signal, has checks)
             if (narrowedType != null)
             {
-                if (narrowedType.RequiredProperties.Contains(memberName) ||
-                    narrowedType.RequiredMethods.Contains(memberName))
+                if (narrowedType.RequiredProperties.ContainsKey(memberName) ||
+                    narrowedType.RequiredMethods.ContainsKey(memberName))
                 {
                     return; // Member is guaranteed by has_method/property guard
                 }
@@ -280,7 +281,7 @@ namespace GDShrapt.Reader
             }
 
             // Check if method is guaranteed by has_method guard
-            if (narrowedType != null && narrowedType.RequiredMethods.Contains(methodName))
+            if (narrowedType != null && narrowedType.RequiredMethods.ContainsKey(methodName))
                 return;
 
             // No type guard found
@@ -349,11 +350,11 @@ namespace GDShrapt.Reader
                 foreach (var type in narrowed.ExcludedTypes)
                     target.ExcludeType(varName, type);
 
-                foreach (var method in narrowed.RequiredMethods)
-                    target.RequireMethod(varName, method);
+                foreach (var kv in narrowed.RequiredMethods)
+                    target.RequireMethod(varName, kv.Key);
 
-                foreach (var prop in narrowed.RequiredProperties)
-                    target.RequireProperty(varName, prop);
+                foreach (var kv in narrowed.RequiredProperties)
+                    target.RequireProperty(varName, kv.Key);
 
                 foreach (var signal in narrowed.RequiredSignals)
                     target.RequireSignal(varName, signal);

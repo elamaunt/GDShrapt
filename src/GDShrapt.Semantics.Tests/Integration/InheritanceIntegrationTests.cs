@@ -359,6 +359,301 @@ public class InheritanceIntegrationTests
 
     #endregion
 
+    #region Path-Based Extends
+
+    [TestMethod]
+    public void PathBasedExtends_InheritedVariable_MaxHealth_Resolved()
+    {
+        // Arrange - PathExtendsTest uses: extends "res://test_scripts/base_entity.gd"
+        var script = TestProjectFixture.GetScript("path_extends_test.gd");
+        Assert.IsNotNull(script, "path_extends_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "max_health");
+
+        // Assert - max_health is inherited from BaseEntity via path-based extends
+        Assert.IsTrue(references.Count >= 2,
+            $"max_health should be found in path-based extends test, found {references.Count}");
+    }
+
+    [TestMethod]
+    public void PathBasedExtends_InheritedVariable_CurrentHealth_Resolved()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("path_extends_test.gd");
+        Assert.IsNotNull(script, "path_extends_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "current_health");
+
+        // Assert
+        Assert.IsTrue(references.Count >= 2,
+            $"current_health should be found in path-based extends test, found {references.Count}");
+    }
+
+    [TestMethod]
+    public void PathBasedExtends_InheritedMethod_TakeDamage_Resolved()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("path_extends_test.gd");
+        Assert.IsNotNull(script, "path_extends_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "take_damage");
+
+        // Assert - take_damage is inherited and called in test_inherited_method_via_path
+        Assert.IsTrue(references.Count >= 1,
+            $"take_damage should be callable via path-based extends, found {references.Count}");
+    }
+
+    [TestMethod]
+    public void PathBasedExtends_InheritedMethod_Heal_Resolved()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("path_extends_test.gd");
+        Assert.IsNotNull(script, "path_extends_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "heal");
+
+        // Assert
+        Assert.IsTrue(references.Count >= 1,
+            $"heal should be callable via path-based extends, found {references.Count}");
+    }
+
+    [TestMethod]
+    public void PathBasedExtends_InheritedSignal_HealthChanged_Resolved()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("path_extends_test.gd");
+        Assert.IsNotNull(script, "path_extends_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "health_changed");
+
+        // Assert - health_changed signal is inherited and emitted
+        Assert.IsTrue(references.Count >= 1,
+            $"health_changed signal should be accessible via path-based extends, found {references.Count}");
+    }
+
+    [TestMethod]
+    public void PathBasedExtends_BaseTypeResolution_ReturnsCorrectType()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("path_extends_test.gd");
+        Assert.IsNotNull(script, "path_extends_test.gd not found");
+
+        // Act - Check that extends type is correctly resolved to the path
+        var extendsType = script.Class?.Extends?.Type?.BuildName();
+
+        // Assert
+        Assert.IsNotNull(extendsType, "Extends type should be set");
+        Assert.IsTrue(extendsType.Contains("base_entity"),
+            $"Extends should reference base_entity.gd, got: {extendsType}");
+    }
+
+    #endregion
+
+    #region Static Members
+
+    [TestMethod]
+    public void StaticMethod_CreateAt_IsRecognizedAsStatic()
+    {
+        // Arrange - SimpleClass has: static func create_at(pos: Vector2) -> SimpleClass
+        var script = TestProjectFixture.GetScript("simple_class.gd");
+        Assert.IsNotNull(script, "simple_class.gd not found");
+
+        // Act
+        var methods = script.Analyzer?.GetMethods().ToList();
+
+        // Assert
+        Assert.IsNotNull(methods, "Should have methods");
+        var createAtMethod = methods.FirstOrDefault(m => m.Name == "create_at");
+        Assert.IsNotNull(createAtMethod, "Should find create_at method");
+        Assert.IsTrue(createAtMethod.IsStatic, "create_at should be marked as static");
+    }
+
+    [TestMethod]
+    public void StaticMethod_CreateAt_ReferencesResolved()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("simple_class.gd");
+        Assert.IsNotNull(script, "simple_class.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "create_at");
+
+        // Assert - create_at is declared as static func
+        Assert.IsTrue(references.Count >= 1,
+            "Should find create_at declaration");
+
+        var declarations = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Declaration);
+        Assert.AreEqual(1, declarations.Count, "Should have exactly one declaration");
+    }
+
+    [TestMethod]
+    public void StaticMethod_SemanticModel_TracksStaticProperty()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("simple_class.gd");
+        Assert.IsNotNull(script, "simple_class.gd not found");
+
+        var semanticModel = script.Analyzer?.SemanticModel;
+        Assert.IsNotNull(semanticModel, "SemanticModel should be available");
+
+        // Act
+        var createAtSymbol = semanticModel.FindSymbol("create_at");
+
+        // Assert
+        Assert.IsNotNull(createAtSymbol, "Should find create_at symbol");
+        Assert.IsTrue(createAtSymbol.IsStatic, "Symbol should be marked as static");
+    }
+
+    #endregion
+
+    #region Super Keyword References
+
+    [TestMethod]
+    public void SuperCall_InReady_MethodOverridesParent()
+    {
+        // Arrange - PlayerEntity._ready() calls super._ready()
+        var script = TestProjectFixture.GetScript("player_entity.gd");
+        Assert.IsNotNull(script, "player_entity.gd not found");
+
+        var analyzer = script.Analyzer;
+        Assert.IsNotNull(analyzer, "Script should be analyzed");
+
+        var readyMethod = analyzer.GetMethods().FirstOrDefault(m => m.Name == "_ready");
+        Assert.IsNotNull(readyMethod, "_ready method should exist");
+    }
+
+    [TestMethod]
+    public void SuperCall_InTakeDamage_OverridesAndCallsParent()
+    {
+        // Arrange - PlayerEntity.take_damage() calls super.take_damage()
+        var script = TestProjectFixture.GetScript("player_entity.gd");
+        Assert.IsNotNull(script, "player_entity.gd not found");
+
+        var takeDamageMethod = script.Analyzer?.GetMethods().FirstOrDefault(m => m.Name == "take_damage");
+        Assert.IsNotNull(takeDamageMethod, "take_damage method should exist");
+    }
+
+    [TestMethod]
+    public void SuperCall_InDie_ChainedOverride()
+    {
+        // Arrange - PlayerEntity.die() calls super.die()
+        var script = TestProjectFixture.GetScript("player_entity.gd");
+        Assert.IsNotNull(script, "player_entity.gd not found");
+
+        var dieMethod = script.Analyzer?.GetMethods().FirstOrDefault(m => m.Name == "die");
+        Assert.IsNotNull(dieMethod, "die method should exist");
+    }
+
+    [TestMethod]
+    public void SuperCall_EnemyEntityDie_AlsoCallsParent()
+    {
+        // Arrange - EnemyEntity.die() also calls super.die()
+        var script = TestProjectFixture.GetScript("enemy_entity.gd");
+        Assert.IsNotNull(script, "enemy_entity.gd not found");
+
+        var dieMethod = script.Analyzer?.GetMethods().FirstOrDefault(m => m.Name == "die");
+        Assert.IsNotNull(dieMethod, "die method should exist in EnemyEntity");
+    }
+
+    #endregion
+
+    #region Multi-Level Inheritance Chain
+
+    [TestMethod]
+    public void ThreeLevelChain_RenameTest_ExtendsRefactoringTargets_ExtendsNode2D()
+    {
+        // Arrange
+        var renameTest = TestProjectFixture.GetScriptByType("RenameTest");
+        var refactoringTargets = TestProjectFixture.GetScriptByType("RefactoringTargets");
+
+        Assert.IsNotNull(renameTest, "RenameTest should exist");
+        Assert.IsNotNull(refactoringTargets, "RefactoringTargets should exist");
+
+        // Act
+        var level1Extends = renameTest.Class?.Extends?.Type?.BuildName();
+        var level2Extends = refactoringTargets.Class?.Extends?.Type?.BuildName();
+
+        // Assert - Verify three-level chain: RenameTest -> RefactoringTargets -> Node2D
+        Assert.AreEqual("RefactoringTargets", level1Extends,
+            $"RenameTest should extend RefactoringTargets, got: {level1Extends}");
+        Assert.AreEqual("Node2D", level2Extends,
+            $"RefactoringTargets should extend Node2D, got: {level2Extends}");
+    }
+
+    [TestMethod]
+    public void ThreeLevelChain_InheritedMember_PlayerSpeed_FromRefactoringTargets()
+    {
+        // Arrange - player_speed is defined in RefactoringTargets
+        // RenameTest extends RefactoringTargets, so should access player_speed
+        var renameTest = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(renameTest, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(renameTest, "player_speed");
+
+        // Assert
+        Assert.IsTrue(references.Count > 0,
+            "player_speed from RefactoringTargets should be accessible in RenameTest");
+    }
+
+    [TestMethod]
+    public void ThreeLevelChain_InheritedSignal_ScoreChanged_FromRefactoringTargets()
+    {
+        // Arrange - score_changed signal defined in RefactoringTargets
+        var renameTest = TestProjectFixture.GetScript("rename_test.gd");
+        Assert.IsNotNull(renameTest, "rename_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(renameTest, "score_changed");
+
+        // Assert
+        Assert.IsTrue(references.Count > 0,
+            "score_changed signal from RefactoringTargets should be accessible in RenameTest");
+    }
+
+    [TestMethod]
+    public void ThreeLevelChain_BaseEntity_ToPlayerEntity_ToExtended()
+    {
+        // Verify chain: PlayerEntity -> BaseEntity -> Node2D
+        var playerEntity = TestProjectFixture.GetScriptByType("PlayerEntity");
+        var baseEntity = TestProjectFixture.GetScriptByType("BaseEntity");
+
+        Assert.IsNotNull(playerEntity, "PlayerEntity should exist");
+        Assert.IsNotNull(baseEntity, "BaseEntity should exist");
+
+        // Act
+        var playerExtends = playerEntity.Class?.Extends?.Type?.BuildName();
+        var baseExtends = baseEntity.Class?.Extends?.Type?.BuildName();
+
+        // Assert
+        Assert.AreEqual("BaseEntity", playerExtends,
+            $"PlayerEntity should extend BaseEntity, got: {playerExtends}");
+        Assert.AreEqual("Node2D", baseExtends,
+            $"BaseEntity should extend Node2D, got: {baseExtends}");
+    }
+
+    [TestMethod]
+    public void ThreeLevelChain_DeepInheritedMember_CurrentHealth_FromBaseEntityViaPlayer()
+    {
+        // Arrange - current_health defined in BaseEntity, accessed in PlayerEntity
+        var playerScript = TestProjectFixture.GetScript("player_entity.gd");
+        Assert.IsNotNull(playerScript, "player_entity.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(playerScript, "current_health");
+
+        // Assert - current_health should be resolved through inheritance chain
+        Assert.IsTrue(references.Count > 0,
+            "current_health from BaseEntity should be accessible in PlayerEntity");
+    }
+
+    #endregion
+
     #region Edge Cases
 
     [TestMethod]

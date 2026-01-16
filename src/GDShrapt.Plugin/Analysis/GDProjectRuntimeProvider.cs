@@ -151,6 +151,22 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         return _builtInProvider.IsBuiltIn(identifier);
     }
 
+    public IEnumerable<string> GetAllTypes()
+    {
+        // Combine built-in types with project class names
+        foreach (var type in _builtInProvider.GetAllTypes())
+            yield return type;
+
+        if (_scriptProject != null)
+        {
+            foreach (var scriptFile in _scriptProject.ScriptFiles)
+            {
+                if (scriptFile.IsGlobal && !string.IsNullOrEmpty(scriptFile.TypeName))
+                    yield return scriptFile.TypeName;
+            }
+        }
+    }
+
     #endregion
 
     #region IGDProjectRuntimeProvider
@@ -380,9 +396,9 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         return result;
     }
 
-    private GDMethodInfo BuildMethodInfo(GDSymbol symbol)
+    private GDMethodInfo BuildMethodInfo(GDSymbolInfo symbol)
     {
-        var methodDecl = symbol.Declaration as GDMethodDeclaration;
+        var methodDecl = symbol.DeclarationNode as GDMethodDeclaration;
         var parameters = new List<GDRuntimeParameterInfo>();
 
         if (methodDecl?.Parameters != null)
@@ -405,9 +421,9 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         };
     }
 
-    private GDSignalInfo BuildSignalInfo(GDSymbol symbol)
+    private GDSignalInfo BuildSignalInfo(GDSymbolInfo symbol)
     {
-        var signalDecl = symbol.Declaration as GDSignalDeclaration;
+        var signalDecl = symbol.DeclarationNode as GDSignalDeclaration;
         var parameters = new List<GDRuntimeParameterInfo>();
 
         if (signalDecl?.Parameters != null)

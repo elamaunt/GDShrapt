@@ -41,6 +41,12 @@ public interface IGDScriptInfo
     string? FullPath { get; }
 
     /// <summary>
+    /// The res:// path to the script (Godot resource path).
+    /// Used for path-based extends: extends "res://path/to/script.gd"
+    /// </summary>
+    string? ResPath { get; }
+
+    /// <summary>
     /// The parsed class declaration.
     /// </summary>
     GDClassDeclaration? Class { get; }

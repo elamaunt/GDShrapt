@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader.Tests.Helpers
 {
@@ -111,6 +112,16 @@ namespace GDShrapt.Reader.Tests.Helpers
         public bool IsBuiltIn(string identifier)
         {
             return _builtInProvider.IsBuiltIn(identifier);
+        }
+
+        public IEnumerable<string> GetAllTypes()
+        {
+            // Combine built-in types with registered project classes
+            foreach (var type in _builtInProvider.GetAllTypes())
+                yield return type;
+
+            foreach (var className in _classesByName.Keys)
+                yield return className;
         }
 
         #endregion

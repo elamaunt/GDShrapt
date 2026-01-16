@@ -1,5 +1,6 @@
 using GDShrapt.Plugin;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
@@ -353,28 +354,28 @@ func test():
 
     #region Helper Methods
 
-    private GDScriptMap CreateScriptMap(string code, string path = "test.gd")
+    private GDScriptFile CreateScriptFile(string code, string path = "test.gd")
     {
-        var reference = new GDPluginScriptReference(path);
-        var map = new GDScriptMap(reference);
-        map.Reload(code);
-        return map;
+        var reference = new GDScriptReference($"test://virtual/{path}");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(code);
+        return scriptFile;
     }
 
-    private GDIdentifier? FindIdentifierAtLine(GDScriptMap scriptMap, int line, string name)
+    private GDIdentifier? FindIdentifierAtLine(GDScriptFile scriptFile, int line, string name)
     {
-        if (scriptMap.Class == null) return null;
+        if (scriptFile.Class == null) return null;
 
-        return scriptMap.Class.AllTokens
+        return scriptFile.Class.AllTokens
             .OfType<GDIdentifier>()
             .FirstOrDefault(id => id.StartLine == line && id.Sequence == name);
     }
 
-    private GDMethodDeclaration? FindMethod(GDScriptMap scriptMap, string methodName)
+    private GDMethodDeclaration? FindMethod(GDScriptFile scriptFile, string methodName)
     {
-        if (scriptMap.Class == null) return null;
+        if (scriptFile.Class == null) return null;
 
-        return scriptMap.Class.Members
+        return scriptFile.Class.Members
             .OfType<GDMethodDeclaration>()
             .FirstOrDefault(m => m.Identifier?.Sequence == methodName);
     }
@@ -490,10 +491,10 @@ func test():
     /// <summary>
     /// Collects all identifier references for a class member.
     /// </summary>
-    private List<ReferenceInfo> CollectClassMemberReferences(GDScriptMap scriptMap, string memberName)
+    private List<ReferenceInfo> CollectClassMemberReferences(GDScriptFile scriptFile, string memberName)
     {
         var references = new List<ReferenceInfo>();
-        var classDecl = scriptMap.Class;
+        var classDecl = scriptFile.Class;
         if (classDecl == null) return references;
 
         foreach (var id in classDecl.AllTokens.OfType<GDIdentifier>()
@@ -510,11 +511,11 @@ func test():
     /// <summary>
     /// Collects all identifier references across multiple scripts.
     /// </summary>
-    private List<ReferenceInfo> CollectProjectWideReferences(GDProjectMap project, string symbolName)
+    private List<ReferenceInfo> CollectProjectWideReferences(GDScriptProject project, string symbolName)
     {
         var references = new List<ReferenceInfo>();
 
-        foreach (var script in project.Scripts)
+        foreach (var script in project.ScriptFiles)
         {
             if (script.Class == null) continue;
             var filePath = script.Reference?.FullPath ?? "unknown";
@@ -534,11 +535,11 @@ func test():
     /// <summary>
     /// Collects member access references (obj.member pattern).
     /// </summary>
-    private List<ReferenceInfo> CollectMemberAccessReferences(GDScriptMap scriptMap, string memberName)
+    private List<ReferenceInfo> CollectMemberAccessReferences(GDScriptFile scriptFile, string memberName)
     {
         var references = new List<ReferenceInfo>();
 
-        foreach (var memberOp in scriptMap.Class?.AllNodes.OfType<GDMemberOperatorExpression>()
+        foreach (var memberOp in scriptFile.Class?.AllNodes.OfType<GDMemberOperatorExpression>()
             ?? Enumerable.Empty<GDMemberOperatorExpression>())
         {
             if (memberOp.Identifier?.Sequence == memberName)
@@ -557,11 +558,11 @@ func test():
     /// <summary>
     /// Collects all references to a symbol (text-based, not semantic).
     /// </summary>
-    private List<ReferenceInfo> CollectAllReferences(GDScriptMap scriptMap, string name)
+    private List<ReferenceInfo> CollectAllReferences(GDScriptFile scriptFile, string name)
     {
         var references = new List<ReferenceInfo>();
 
-        foreach (var id in scriptMap.Class?.AllTokens.OfType<GDIdentifier>()
+        foreach (var id in scriptFile.Class?.AllTokens.OfType<GDIdentifier>()
             .Where(i => i.Sequence == name) ?? Enumerable.Empty<GDIdentifier>())
         {
             references.Add(new ReferenceInfo(
@@ -694,7 +695,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_LocalVariable_OnlyInMethod()
     {
-        var scriptMap = CreateScriptMap(LocalVariableCode);
+        var scriptMap = CreateScriptFile(LocalVariableCode);
         var method = FindMethod(scriptMap, "test_local");
 
         Assert.IsNotNull(method);
@@ -713,7 +714,7 @@ func test():
     public async Task FindReferences_LocalVariable_DeclarationPlusUsages()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(LocalVariableCode);
+        var scriptMap = CreateScriptFile(LocalVariableCode);
         var method = FindMethod(scriptMap, "test_local");
 
         Assert.IsNotNull(method);
@@ -730,7 +731,7 @@ func test():
     public async Task FindReferences_LocalVariable_NestedScopes_AllResolved()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(LocalVariableNestedScopesCode);
+        var scriptMap = CreateScriptFile(LocalVariableNestedScopesCode);
         var method = FindMethod(scriptMap, "test_nested");
 
         Assert.IsNotNull(method);
@@ -750,7 +751,7 @@ func test():
     public async Task FindReferences_LocalVariable_OnlyAfterDeclaration()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(LocalVariableUsedBeforeDeclarationCode);
+        var scriptMap = CreateScriptFile(LocalVariableUsedBeforeDeclarationCode);
         var method = FindMethod(scriptMap, "test_order");
 
         Assert.IsNotNull(method);
@@ -770,7 +771,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_Parameter_OnlyInMethod()
     {
-        var scriptMap = CreateScriptMap(ParameterCode);
+        var scriptMap = CreateScriptFile(ParameterCode);
         var method = FindMethod(scriptMap, "calculate");
 
         Assert.IsNotNull(method);
@@ -794,7 +795,7 @@ func test():
     public async Task FindReferences_Parameter_DeclarationPlusUsages()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ParameterWithAssignmentCode);
+        var scriptMap = CreateScriptFile(ParameterWithAssignmentCode);
         var method = FindMethod(scriptMap, "calculate");
 
         Assert.IsNotNull(method);
@@ -813,7 +814,7 @@ func test():
     public async Task FindReferences_Parameter_ShadowedByLocal_SeparateScopes()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ParameterWithSameNamedLocalCode);
+        var scriptMap = CreateScriptFile(ParameterWithSameNamedLocalCode);
         var method = FindMethod(scriptMap, "process");
 
         Assert.IsNotNull(method);
@@ -829,7 +830,7 @@ func test():
     public async Task FindReferences_Parameter_OptionalWithDefaults()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ParameterOptionalWithDefaultCode);
+        var scriptMap = CreateScriptFile(ParameterOptionalWithDefaultCode);
         var method = FindMethod(scriptMap, "greet");
 
         Assert.IsNotNull(method);
@@ -850,7 +851,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_ClassMember_AcrossMethods()
     {
-        var scriptMap = CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptFile(ClassMemberCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -867,7 +868,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_ClassMember_DeclarationFound()
     {
-        var scriptMap = CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptFile(ClassMemberCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -884,7 +885,7 @@ func test():
     public async Task FindReferences_ClassVariable_AllReferences()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptFile(ClassMemberCode);
 
         // Act
         var healthRefs = CollectClassMemberReferences(scriptMap, "health");
@@ -898,7 +899,7 @@ func test():
     public async Task FindReferences_ClassMethod_AllCallSites()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ClassMemberMethodCode);
+        var scriptMap = CreateScriptFile(ClassMemberMethodCode);
 
         // Act
         var helperRefs = CollectClassMemberReferences(scriptMap, "helper");
@@ -913,7 +914,7 @@ func test():
     public async Task FindReferences_Signal_EmitAndDeclaration()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ClassMemberSignalCode);
+        var scriptMap = CreateScriptFile(ClassMemberSignalCode);
 
         // Act
         var healthChangedRefs = CollectClassMemberReferences(scriptMap, "health_changed");
@@ -928,7 +929,7 @@ func test():
     public async Task FindReferences_Constant_AllUsages()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ClassMemberConstantCode);
+        var scriptMap = CreateScriptFile(ClassMemberConstantCode);
 
         // Act
         var maxHealthRefs = CollectClassMemberReferences(scriptMap, "MAX_HEALTH");
@@ -943,7 +944,7 @@ func test():
     public async Task FindReferences_Enum_TypeAndValues()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ClassMemberEnumCode);
+        var scriptMap = CreateScriptFile(ClassMemberEnumCode);
 
         // Act
         var stateRefs = CollectClassMemberReferences(scriptMap, "State");
@@ -956,7 +957,7 @@ func test():
     public async Task FindReferences_InnerClass_TypeUsage()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ClassMemberInnerClassCode);
+        var scriptMap = CreateScriptFile(ClassMemberInnerClassCode);
 
         // Act
         var innerDataRefs = CollectClassMemberReferences(scriptMap, "InnerData");
@@ -972,7 +973,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_ForLoopVariable_OnlyInLoop()
     {
-        var scriptMap = CreateScriptMap(ForLoopVariableCode);
+        var scriptMap = CreateScriptFile(ForLoopVariableCode);
         var method = FindMethod(scriptMap, "process_items");
 
         Assert.IsNotNull(method);
@@ -998,7 +999,7 @@ func test():
     public async Task FindReferences_ForLoopVariable_DeclarationPlusUsages()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ForLoopVariableCode);
+        var scriptMap = CreateScriptFile(ForLoopVariableCode);
         var method = FindMethod(scriptMap, "process_items");
         var forStmt = FindForStatement(method);
 
@@ -1016,7 +1017,7 @@ func test():
     public async Task FindReferences_ForLoopVariable_NestedLoops_DistinctScopes()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ForLoopNestedCode);
+        var scriptMap = CreateScriptFile(ForLoopNestedCode);
         var method = FindMethod(scriptMap, "matrix_process");
 
         Assert.IsNotNull(method);
@@ -1040,7 +1041,7 @@ func test():
     public async Task FindReferences_ForLoopVariable_ShadowsClassMember()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ForLoopSameVariableNameCode);
+        var scriptMap = CreateScriptFile(ForLoopSameVariableNameCode);
 
         // Check class member exists
         var classMemberRefs = CollectClassMemberReferences(scriptMap, "item");
@@ -1065,7 +1066,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_SameNameDifferentScopes_AreDistinct()
     {
-        var scriptMap = CreateScriptMap(ComplexScopesCode);
+        var scriptMap = CreateScriptFile(ComplexScopesCode);
 
         // Find both methods with "local_var"
         var outerMethod = FindMethod(scriptMap, "outer_func");
@@ -1092,7 +1093,7 @@ func test():
     [TestMethod]
     public async Task FindReferences_GlobalVariable_UsedInMultipleMethods()
     {
-        var scriptMap = CreateScriptMap(ComplexScopesCode);
+        var scriptMap = CreateScriptFile(ComplexScopesCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -1113,7 +1114,7 @@ func test():
     [TestMethod]
     public async Task ScriptMap_ParsesClassMembers_Correctly()
     {
-        var scriptMap = CreateScriptMap(ClassMemberCode);
+        var scriptMap = CreateScriptFile(ClassMemberCode);
 
         Assert.IsNotNull(scriptMap.Class);
 
@@ -1140,7 +1141,7 @@ func test():
     [TestMethod]
     public async Task ScriptMap_ParsesMethodParameters_Correctly()
     {
-        var scriptMap = CreateScriptMap(ParameterCode);
+        var scriptMap = CreateScriptFile(ParameterCode);
         var method = FindMethod(scriptMap, "calculate");
 
         Assert.IsNotNull(method);
@@ -1168,7 +1169,7 @@ func test():
     public async Task FindReferences_MemberAccess_ChainedAccess()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ChainedMemberAccessCode);
+        var scriptMap = CreateScriptFile(ChainedMemberAccessCode);
 
         // Act - find "name" references (accessed via chain)
         var nameRefs = CollectMemberAccessReferences(scriptMap, "name");
@@ -1181,7 +1182,7 @@ func test():
     public async Task FindReferences_BuiltInType_ArrayMethods()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(BuiltInTypeMemberCode);
+        var scriptMap = CreateScriptFile(BuiltInTypeMemberCode);
 
         // Act - member access patterns on built-in types
         var appendRefs = CollectMemberAccessReferences(scriptMap, "append");
@@ -1203,56 +1204,92 @@ func test():
     [TestMethod]
     public async Task FindReferences_CrossFile_PublicMember()
     {
-        // Arrange - multi-file project
-        var project = new GDProjectMap(BaseClassCode, UsingClassCode);
+        // Arrange: Load project with BaseEntity, PlayerEntity, EnemyEntity
+        var project = CrossFileTestHelpers.CreateTestProject(enableScenes: false);
 
-        // Act
-        var healthRefs = CollectProjectWideReferences(project, "health");
+        // Act: Find references to "current_health" (declared in BaseEntity, used in children)
+        var references = CrossFileTestHelpers.CollectReferencesInProject(project, "current_health");
 
-        // Assert - should find in BaseEntity and UsingClass
-        Assert.IsTrue(healthRefs.Count >= 2, $"'health' should be found in multiple files, found {healthRefs.Count}");
+        // Assert: Should find references across multiple files
+        Assert.IsTrue(references.Count >= 3, $"Expected at least 3 references to 'current_health', found {references.Count}");
 
-        var uniqueFiles = healthRefs.Select(r => r.FilePath).Distinct().Count();
-        Assert.IsTrue(uniqueFiles >= 1, "References should span files");
+        // Should have declaration in BaseEntity
+        var declarationsInBase = CrossFileTestHelpers.FilterByFile(references, "base_entity.gd")
+            .Where(r => r.Kind == CrossFileReferenceKind.Declaration).ToList();
+        Assert.AreEqual(1, declarationsInBase.Count, "Should have exactly 1 declaration in base_entity.gd");
+
+        // Should be used in child classes
+        var usedInPlayer = CrossFileTestHelpers.FilterByFile(references, "player_entity.gd");
+        var usedInEnemy = CrossFileTestHelpers.FilterByFile(references, "enemy_entity.gd");
+
+        Assert.IsTrue(usedInPlayer.Count >= 1, $"Should be used in player_entity.gd, found {usedInPlayer.Count}");
+        Assert.IsTrue(usedInEnemy.Count >= 1, $"Should be used in enemy_entity.gd, found {usedInEnemy.Count}");
     }
 
     [TestMethod]
     public async Task FindReferences_CrossFile_InheritedMethod()
     {
-        // Arrange
-        var project = new GDProjectMap(BaseClassCode, DerivedClassCode, UsingClassCode);
+        // Arrange: Load project with BaseEntity, PlayerEntity, EnemyEntity
+        var project = CrossFileTestHelpers.CreateTestProject(enableScenes: false);
 
-        // Act
-        var takeDamageRefs = CollectProjectWideReferences(project, "take_damage");
+        // Act: Find references to "take_damage" (declared in BaseEntity, overridden in children)
+        var references = CrossFileTestHelpers.CollectReferencesInProject(project, "take_damage");
 
-        // Assert - decl in Base + call in Derived + call in Using
-        Assert.IsTrue(takeDamageRefs.Count >= 3, $"'take_damage' should have at least 3 refs, found {takeDamageRefs.Count}");
+        // Assert: Should find references across multiple files
+        Assert.IsTrue(references.Count >= 3, $"Expected at least 3 references to 'take_damage', found {references.Count}");
+
+        // Should have multiple files involved
+        var uniqueFiles = CrossFileTestHelpers.GetUniqueFileNames(references);
+        Assert.IsTrue(uniqueFiles.Count >= 2, $"Should span at least 2 files, found: {string.Join(", ", uniqueFiles)}");
+
+        // Should have declarations (base + overrides in children)
+        var declarations = CrossFileTestHelpers.FilterByKind(references, CrossFileReferenceKind.Declaration);
+        Assert.IsTrue(declarations.Count >= 1, $"Should have at least 1 declaration, found {declarations.Count}");
+
+        // Should have calls
+        var calls = CrossFileTestHelpers.FilterByKind(references, CrossFileReferenceKind.Call);
+        Assert.IsTrue(calls.Count >= 1, $"Should have at least 1 call, found {calls.Count}");
     }
 
     [TestMethod]
     public async Task FindReferences_CrossFile_ClassNameAsType()
     {
-        // Arrange
-        var project = new GDProjectMap(BaseClassCode, UsingClassCode);
+        // Arrange: Load project
+        var project = CrossFileTestHelpers.CreateTestProject(enableScenes: false);
 
-        // Act
-        var baseEntityRefs = CollectProjectWideReferences(project, "BaseEntity");
+        // Act: Find type usages of "BaseEntity"
+        var references = CrossFileTestHelpers.FindClassTypeUsages(project, "BaseEntity");
 
-        // Assert - class_name declaration
-        Assert.IsTrue(baseEntityRefs.Count >= 1, $"'BaseEntity' should be found, found {baseEntityRefs.Count}");
+        // Assert: Should find type usages in child classes (extends, type annotations)
+        Assert.IsTrue(references.Count >= 2, $"Expected at least 2 type usages of 'BaseEntity', found {references.Count}");
+
+        // Should have extends usages
+        var extendsUsages = CrossFileTestHelpers.FilterByKind(references, CrossFileReferenceKind.Extends);
+        Assert.IsTrue(extendsUsages.Count >= 2, $"Should have at least 2 extends usages (PlayerEntity, EnemyEntity), found {extendsUsages.Count}");
+
+        // Should span multiple files
+        var uniqueFiles = CrossFileTestHelpers.GetUniqueFileNames(references);
+        Assert.IsTrue(uniqueFiles.Count >= 2, $"Should span at least 2 files, found: {string.Join(", ", uniqueFiles)}");
     }
 
     [TestMethod]
     public async Task FindReferences_CrossFile_PlayerType()
     {
-        // Arrange
-        var project = new GDProjectMap(BaseClassCode, DerivedClassCode, UsingClassCode);
+        // Arrange: Load project
+        var project = CrossFileTestHelpers.CreateTestProject(enableScenes: false);
 
-        // Act
-        var playerRefs = CollectProjectWideReferences(project, "Player");
+        // Act: Find type usages of "PlayerEntity"
+        var references = CrossFileTestHelpers.FindClassTypeUsages(project, "PlayerEntity");
 
-        // Assert - class_name in Derived (type annotation may be parsed differently)
-        Assert.IsTrue(playerRefs.Count >= 1, $"'Player' should have at least 1 ref (class_name), found {playerRefs.Count}");
+        // Assert: Should find type usages (type annotations, is checks)
+        // PlayerEntity is used in enemy_entity.gd for "is PlayerEntity" check
+        var typeChecks = CrossFileTestHelpers.FilterByKind(references, CrossFileReferenceKind.TypeCheck);
+
+        // May have type annotations for parameters
+        var typeAnnotations = CrossFileTestHelpers.FilterByKind(references, CrossFileReferenceKind.TypeAnnotation);
+
+        Assert.IsTrue(references.Count >= 1 || typeChecks.Count >= 1 || typeAnnotations.Count >= 1,
+            $"Expected at least 1 usage of 'PlayerEntity' (type check or annotation), found total: {references.Count}");
     }
 
     #endregion
@@ -1263,7 +1300,7 @@ func test():
     public async Task FindReferences_DetectsDeclaration()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptFile(ReferenceKindTestCode);
 
         // Act
         var counterRefs = CollectClassMemberReferences(scriptMap, "counter");
@@ -1278,7 +1315,7 @@ func test():
     public async Task FindReferences_DetectsRead()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptFile(ReferenceKindTestCode);
 
         // Act
         var counterRefs = CollectClassMemberReferences(scriptMap, "counter");
@@ -1292,7 +1329,7 @@ func test():
     public async Task FindReferences_DetectsWrite()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptFile(ReferenceKindTestCode);
 
         // Act
         var counterRefs = CollectClassMemberReferences(scriptMap, "counter");
@@ -1306,7 +1343,7 @@ func test():
     public async Task FindReferences_DetectsCall()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(ReferenceKindTestCode);
+        var scriptMap = CreateScriptFile(ReferenceKindTestCode);
 
         // Act
         var helperRefs = CollectClassMemberReferences(scriptMap, "helper");
@@ -1324,7 +1361,7 @@ func test():
     public async Task FindReferences_SameNameAllLevels_CorrectScopeResolution()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(SameNameAllLevelsCode);
+        var scriptMap = CreateScriptFile(SameNameAllLevelsCode);
 
         // Act - find all references to "value" in the class
         var allValueRefs = CollectClassMemberReferences(scriptMap, "value");
@@ -1339,7 +1376,7 @@ func test():
     public async Task FindReferences_GetterSetter_PropertyAccess()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(GetterSetterCode);
+        var scriptMap = CreateScriptFile(GetterSetterCode);
 
         // Act
         var healthRefs = CollectClassMemberReferences(scriptMap, "health");
@@ -1354,7 +1391,7 @@ func test():
     public async Task FindReferences_Lambda_CapturedVariables()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(LambdaCode);
+        var scriptMap = CreateScriptFile(LambdaCode);
 
         // Act
         var multiplierRefs = CollectClassMemberReferences(scriptMap, "multiplier");
@@ -1367,7 +1404,7 @@ func test():
     public async Task FindReferences_AnnotatedVariables()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(AnnotationCode);
+        var scriptMap = CreateScriptFile(AnnotationCode);
 
         // Act
         var speedRefs = CollectClassMemberReferences(scriptMap, "speed");
@@ -1382,7 +1419,7 @@ func test():
     public async Task FindReferences_StringInterpolation()
     {
         // Arrange
-        var scriptMap = CreateScriptMap(StringInterpolationCode);
+        var scriptMap = CreateScriptFile(StringInterpolationCode);
 
         // Act
         var nameRefs = CollectClassMemberReferences(scriptMap, "name");

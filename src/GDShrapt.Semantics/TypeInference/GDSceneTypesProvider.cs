@@ -424,6 +424,12 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         return false;
     }
 
+    public IEnumerable<string> GetAllTypes()
+    {
+        // Scene types are resolved through node paths, not as standalone types.
+        return Enumerable.Empty<string>();
+    }
+
     /// <summary>
     /// Clears all cached scene data.
     /// </summary>

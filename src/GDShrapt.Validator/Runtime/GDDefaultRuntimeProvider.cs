@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
 {
@@ -319,6 +320,11 @@ namespace GDShrapt.Reader
         public bool IsBuiltIn(string identifier)
         {
             return identifier != null && _builtInIdentifiers.Contains(identifier);
+        }
+
+        public IEnumerable<string> GetAllTypes()
+        {
+            return _types.Keys;
         }
 
         #endregion

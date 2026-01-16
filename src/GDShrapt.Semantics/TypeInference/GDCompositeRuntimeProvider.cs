@@ -100,4 +100,15 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
         }
         return false;
     }
+
+    public IEnumerable<string> GetAllTypes()
+    {
+        var types = new HashSet<string>();
+        foreach (var provider in _providers)
+        {
+            foreach (var type in provider.GetAllTypes())
+                types.Add(type);
+        }
+        return types;
+    }
 }

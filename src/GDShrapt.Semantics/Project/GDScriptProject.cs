@@ -134,7 +134,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         {
             _logger.Debug($"Loading script '{Path.GetFileName(scriptFile)}'");
 
-            var reference = new GDScriptReference(scriptFile);
+            var reference = new GDScriptReference(scriptFile, _context);
             var script = new GDScriptFile(reference, _fileSystem, _logger);
             _scripts.TryAdd(reference, script);
             script.Reload();
@@ -271,7 +271,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// </summary>
     public GDScriptFile AddScript(string fullPath)
     {
-        var reference = new GDScriptReference(fullPath);
+        var reference = new GDScriptReference(fullPath, _context);
         var script = new GDScriptFile(reference, _fileSystem, _logger);
         _scripts.TryAdd(reference, script);
         script.Reload();
@@ -283,7 +283,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// </summary>
     public GDScriptFile AddScript(string fullPath, string content)
     {
-        var reference = new GDScriptReference(fullPath);
+        var reference = new GDScriptReference(fullPath, _context);
         var script = new GDScriptFile(reference, _fileSystem, _logger);
         _scripts.TryAdd(reference, script);
         script.Reload(content);
@@ -377,7 +377,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
-        var reference = new GDScriptReference(e.FullPath);
+        var reference = new GDScriptReference(e.FullPath, _context);
         if (_scripts.TryGetValue(reference, out var script))
         {
             script.Reload();
@@ -388,7 +388,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
     private void OnFileCreated(object sender, FileSystemEventArgs e)
     {
-        var reference = new GDScriptReference(e.FullPath);
+        var reference = new GDScriptReference(e.FullPath, _context);
         var script = new GDScriptFile(reference, _fileSystem, _logger);
         if (_scripts.TryAdd(reference, script))
         {
@@ -400,7 +400,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
     private void OnFileDeleted(object sender, FileSystemEventArgs e)
     {
-        var reference = new GDScriptReference(e.FullPath);
+        var reference = new GDScriptReference(e.FullPath, _context);
         if (_scripts.TryRemove(reference, out var script))
         {
             _logger.Debug($"Script deleted: {e.Name}");
@@ -410,8 +410,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
     private void OnFileRenamed(object sender, RenamedEventArgs e)
     {
-        var oldReference = new GDScriptReference(e.OldFullPath);
-        var newReference = new GDScriptReference(e.FullPath);
+        var oldReference = new GDScriptReference(e.OldFullPath, _context);
+        var newReference = new GDScriptReference(e.FullPath, _context);
 
         if (_scripts.TryRemove(oldReference, out var script))
         {

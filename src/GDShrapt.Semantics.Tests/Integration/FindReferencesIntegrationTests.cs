@@ -200,6 +200,26 @@ public class FindReferencesIntegrationTests
         Assert.IsTrue(references.Count > 0, "Should find max_health references");
     }
 
+    [TestMethod]
+    public void FindReferences_PathBasedExtends_MaxHealth()
+    {
+        // Arrange - Tests path-based extends: extends "res://test_scripts/base_entity.gd"
+        var script = TestProjectFixture.GetScript("path_extends_test.gd");
+        Assert.IsNotNull(script, "path_extends_test.gd not found");
+
+        // Act
+        var references = IntegrationTestHelpers.CollectReferencesInScript(script, "max_health");
+
+        // Assert
+        // max_health is inherited from BaseEntity via path-based extends
+        Assert.IsTrue(references.Count > 0, "Should find max_health references via path-based extends");
+
+        // Should find usages in test_inherited_member_via_path
+        var reads = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Read);
+        var writes = IntegrationTestHelpers.FilterByKind(references, ReferenceKind.Write);
+        Assert.IsTrue(reads.Count + writes.Count >= 2, "Should have multiple usages of max_health");
+    }
+
     #endregion
 
     #region Signals

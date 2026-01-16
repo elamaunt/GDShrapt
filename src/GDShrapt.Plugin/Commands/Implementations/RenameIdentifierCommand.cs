@@ -893,7 +893,7 @@ internal class RenameIdentifierCommand : Command
         }
 
         // Add the declaration if it exists
-        if (symbol.Declaration is GDVariableDeclaration varDecl && varDecl.Identifier != null)
+        if (symbol.DeclarationNode is GDVariableDeclaration varDecl && varDecl.Identifier != null)
         {
             memberReferences.AddFirst(new GDMemberReference
             {
@@ -930,7 +930,7 @@ internal class RenameIdentifierCommand : Command
         }
 
         // Rename the declaration if it exists
-        if (symbol.Declaration is GDVariableDeclaration varDecl2 && varDecl2.Identifier != null)
+        if (symbol.DeclarationNode is GDVariableDeclaration varDecl2 && varDecl2.Identifier != null)
             varDecl2.Identifier.Sequence = newName;
 
         return true;

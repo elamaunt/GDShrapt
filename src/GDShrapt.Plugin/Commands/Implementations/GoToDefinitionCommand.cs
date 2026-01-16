@@ -171,10 +171,10 @@ internal class GoToDefinitionCommand : Command
             if (typeMap?.Analyzer != null)
             {
                 var symbol = typeMap.Analyzer.FindSymbol(memberName);
-                if (symbol?.Declaration != null)
+                if (symbol?.DeclarationNode != null)
                 {
                     // Find the identifier in the declaration
-                    var declIdentifier = symbol.Declaration switch
+                    var declIdentifier = symbol.DeclarationNode switch
                     {
                         GDMethodDeclaration method => method.Identifier,
                         GDVariableDeclaration variable => variable.Identifier,

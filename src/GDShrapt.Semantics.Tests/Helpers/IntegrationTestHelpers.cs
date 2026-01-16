@@ -62,121 +62,72 @@ public static class IntegrationTestHelpers
 
     /// <summary>
     /// Collects all references to a symbol within a script file.
+    /// Uses GDSemanticModel for symbol resolution including inherited members.
     /// </summary>
     public static List<ReferenceInfo> CollectReferencesInScript(
         GDScriptFile scriptFile,
         string symbolName)
     {
-        var references = new List<ReferenceInfo>();
-
         // Ensure the script is analyzed
         if (scriptFile.Analyzer == null)
         {
             scriptFile.Analyze();
         }
 
-        if (scriptFile.Analyzer?.References == null)
-            return references;
-
-        // Find ALL symbols with this name (handles same-named parameters/variables in different scopes)
-        var matchingSymbols = scriptFile.Analyzer.Symbols
-            .Where(s => s.Name == symbolName)
-            .ToList();
-
-        if (matchingSymbols.Count > 0)
+        // Use SemanticModel (handles inherited members, path-based extends, etc.)
+        var semanticModel = scriptFile.Analyzer?.SemanticModel;
+        if (semanticModel != null)
         {
-            foreach (var symbol in matchingSymbols)
-            {
-                // Add declaration
-                if (symbol.Declaration != null)
-                {
-                    references.Add(new ReferenceInfo
-                    {
-                        SymbolName = symbolName,
-                        Kind = ReferenceKind.Declaration,
-                        FilePath = scriptFile.FullPath,
-                        Line = GetLine(symbol.Declaration),
-                        Column = GetColumn(symbol.Declaration),
-                        Node = symbol.Declaration
-                    });
-                }
-
-                // Add all references
-                foreach (var reference in scriptFile.Analyzer.GetReferencesTo(symbol))
-                {
-                    references.Add(new ReferenceInfo
-                    {
-                        SymbolName = symbolName,
-                        Kind = DetermineReferenceKind(reference),
-                        FilePath = scriptFile.FullPath,
-                        Line = GetLine(reference.ReferenceNode),
-                        Column = GetColumn(reference.ReferenceNode),
-                        Node = reference.ReferenceNode
-                    });
-                }
-            }
-        }
-        else if (scriptFile.Class != null)
-        {
-            // Symbol not found locally - search AST for identifier usages
-            // This catches inherited member accesses
-            var identifierUsages = FindIdentifierUsagesInAst(scriptFile.Class, symbolName, scriptFile.FullPath);
-            references.AddRange(identifierUsages);
+            return CollectReferencesViaSemanticModel(semanticModel, symbolName, scriptFile.FullPath);
         }
 
-        return references;
+        // SemanticModel not available - return empty
+        return new List<ReferenceInfo>();
     }
 
     /// <summary>
-    /// Searches AST for usages of an identifier by name.
-    /// Used to find inherited member accesses when symbol is not in local scope.
+    /// Collects references using the SemanticModel API.
     /// </summary>
-    private static List<ReferenceInfo> FindIdentifierUsagesInAst(GDNode rootNode, string identifierName, string? filePath)
+    private static List<ReferenceInfo> CollectReferencesViaSemanticModel(
+        GDSemanticModel semanticModel,
+        string symbolName,
+        string? filePath)
     {
         var references = new List<ReferenceInfo>();
 
-        foreach (var node in rootNode.AllNodes)
-        {
-            // Check for identifier nodes
-            if (node is GDIdentifierExpression identExpr)
-            {
-                var name = identExpr.Identifier?.Sequence;
-                if (name == identifierName)
-                {
-                    // Determine if it's a read or write
-                    var kind = IsWriteContext(identExpr) ? ReferenceKind.Write : ReferenceKind.Read;
+        // Find symbols with this name (including inherited members)
+        var symbols = semanticModel.FindSymbols(symbolName).ToList();
+        if (symbols.Count == 0)
+            return references;
 
-                    references.Add(new ReferenceInfo
-                    {
-                        SymbolName = identifierName,
-                        Kind = kind,
-                        FilePath = filePath,
-                        Line = GetLine(identExpr),
-                        Column = GetColumn(identExpr),
-                        Node = identExpr
-                    });
-                }
-            }
-            // Check for call expressions (method calls)
-            else if (node is GDCallExpression callExpr)
+        foreach (var symbolInfo in symbols)
+        {
+            // Add declaration
+            if (symbolInfo.DeclarationNode != null)
             {
-                // Check if it's a simple call (not member access)
-                if (callExpr.CallerExpression is GDIdentifierExpression callIdent)
+                references.Add(new ReferenceInfo
                 {
-                    var name = callIdent.Identifier?.Sequence;
-                    if (name == identifierName)
-                    {
-                        references.Add(new ReferenceInfo
-                        {
-                            SymbolName = identifierName,
-                            Kind = ReferenceKind.Call,
-                            FilePath = filePath,
-                            Line = GetLine(callExpr),
-                            Column = GetColumn(callExpr),
-                            Node = callExpr
-                        });
-                    }
-                }
+                    SymbolName = symbolName,
+                    Kind = ReferenceKind.Declaration,
+                    FilePath = filePath,
+                    Line = GetLine(symbolInfo.DeclarationNode),
+                    Column = GetColumn(symbolInfo.DeclarationNode),
+                    Node = symbolInfo.DeclarationNode
+                });
+            }
+
+            // Add all references
+            foreach (var reference in semanticModel.GetReferencesTo(symbolInfo))
+            {
+                references.Add(new ReferenceInfo
+                {
+                    SymbolName = symbolName,
+                    Kind = DetermineReferenceKindFromGDReference(reference),
+                    FilePath = filePath,
+                    Line = GetLine(reference.ReferenceNode),
+                    Column = GetColumn(reference.ReferenceNode),
+                    Node = reference.ReferenceNode
+                });
             }
         }
 
@@ -184,28 +135,23 @@ public static class IntegrationTestHelpers
     }
 
     /// <summary>
-    /// Checks if an identifier is in a write context (assignment target).
+    /// Determines ReferenceKind from a GDReference.
     /// </summary>
-    private static bool IsWriteContext(GDIdentifierExpression identExpr)
+    private static ReferenceKind DetermineReferenceKindFromGDReference(GDReference reference)
     {
-        var parent = identExpr.Parent;
+        var node = reference.ReferenceNode;
+        if (node == null)
+            return ReferenceKind.Read;
 
-        // Check compound assignments
-        if (parent is GDDualOperatorExpression dualOp)
-        {
-            // = += -= etc. are writes if identifier is on left
-            var opType = dualOp.OperatorType;
-            if (opType == GDDualOperatorType.Assignment ||
-                opType == GDDualOperatorType.AddAndAssign ||
-                opType == GDDualOperatorType.SubtractAndAssign ||
-                opType == GDDualOperatorType.MultiplyAndAssign ||
-                opType == GDDualOperatorType.DivideAndAssign)
-            {
-                return dualOp.LeftExpression == identExpr;
-            }
-        }
+        // Check if it's a call expression
+        if (node.Parent is GDCallExpression)
+            return ReferenceKind.Call;
 
-        return false;
+        // Trust reference.IsWrite - it's already correctly computed by SemanticModel
+        if (reference.IsWrite)
+            return ReferenceKind.Write;
+
+        return ReferenceKind.Read;
     }
 
     /// <summary>
@@ -228,6 +174,7 @@ public static class IntegrationTestHelpers
 
     /// <summary>
     /// Finds all usages of a class type (extends, type annotations, is checks).
+    /// Uses GDSemanticModel for type usage collection.
     /// </summary>
     public static List<ReferenceInfo> FindClassTypeUsages(
         GDScriptProject project,
@@ -237,90 +184,47 @@ public static class IntegrationTestHelpers
 
         foreach (var scriptFile in project.ScriptFiles)
         {
-            if (scriptFile.Class == null)
+            // Ensure the script is analyzed
+            if (scriptFile.Analyzer == null)
+            {
+                scriptFile.Analyze();
+            }
+
+            var semanticModel = scriptFile.Analyzer?.SemanticModel;
+            if (semanticModel == null)
                 continue;
 
-            // Check extends
-            var extendsName = scriptFile.Class.Extends?.Type?.BuildName();
-            if (extendsName == className)
+            // Get type usages from SemanticModel
+            var typeUsages = semanticModel.GetTypeUsages(className);
+            foreach (var usage in typeUsages)
             {
                 references.Add(new ReferenceInfo
                 {
                     SymbolName = className,
-                    Kind = ReferenceKind.Extends,
+                    Kind = MapTypeUsageKindToReferenceKind(usage.Kind),
                     FilePath = scriptFile.FullPath,
-                    Line = GetLine(scriptFile.Class.Extends!),
-                    Column = GetColumn(scriptFile.Class.Extends!),
-                    Node = scriptFile.Class.Extends
+                    Line = usage.Line,
+                    Column = usage.Column,
+                    Node = usage.Node
                 });
             }
-
-            // Walk AST for type annotations and is checks
-            var classUsages = FindClassUsagesInNode(scriptFile.Class, className, scriptFile.FullPath);
-            references.AddRange(classUsages);
         }
 
         return references;
     }
 
     /// <summary>
-    /// Determines the kind of reference from a GDReference.
+    /// Maps GDTypeUsageKind to ReferenceKind.
     /// </summary>
-    public static ReferenceKind DetermineReferenceKind(GDReference reference)
+    private static ReferenceKind MapTypeUsageKindToReferenceKind(GDTypeUsageKind kind)
     {
-        var node = reference.ReferenceNode;
-        if (node == null)
-            return ReferenceKind.Read;
-
-        // Check if it's a call expression
-        if (node.Parent is GDCallExpression)
-            return ReferenceKind.Call;
-
-        // Verify if this is actually on the left side of an assignment
-        // The reference.IsWrite can be incorrect when traversing nested expressions
-        if (reference.IsWrite && IsDirectlyOnLeftOfAssignment(node))
-            return ReferenceKind.Write;
-
-        return ReferenceKind.Read;
-    }
-
-    /// <summary>
-    /// Checks if a node is directly on the left side of an assignment operator.
-    /// This is more accurate than relying on reference.IsWrite which can be
-    /// incorrectly set for nested expressions.
-    /// </summary>
-    private static bool IsDirectlyOnLeftOfAssignment(GDNode node)
-    {
-        // Walk up the parent chain to find if we're on the left of an assignment
-        var current = node;
-        while (current != null)
+        return kind switch
         {
-            var parent = current.Parent;
-
-            if (parent is GDDualOperatorExpression dualOp)
-            {
-                var opType = dualOp.OperatorType;
-                bool isAssignment = opType == GDDualOperatorType.Assignment ||
-                                    opType == GDDualOperatorType.AddAndAssign ||
-                                    opType == GDDualOperatorType.SubtractAndAssign ||
-                                    opType == GDDualOperatorType.MultiplyAndAssign ||
-                                    opType == GDDualOperatorType.DivideAndAssign ||
-                                    opType == GDDualOperatorType.ModAndAssign ||
-                                    opType == GDDualOperatorType.BitwiseAndAndAssign ||
-                                    opType == GDDualOperatorType.BitwiseOrAndAssign;
-
-                if (isAssignment)
-                {
-                    // Check if 'current' is on the left side
-                    // The left side is the first expression in the operator
-                    return dualOp.LeftExpression == current;
-                }
-            }
-
-            current = parent;
-        }
-
-        return false;
+            GDTypeUsageKind.TypeAnnotation => ReferenceKind.TypeAnnotation,
+            GDTypeUsageKind.TypeCheck => ReferenceKind.TypeCheck,
+            GDTypeUsageKind.Extends => ReferenceKind.Extends,
+            _ => ReferenceKind.Read
+        };
     }
 
     /// <summary>
@@ -384,54 +288,5 @@ public static class IntegrationTestHelpers
         return project.ScriptFiles.FirstOrDefault(s =>
             s.FullPath != null &&
             Path.GetFileName(s.FullPath).Equals(fileName, StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
-    /// Finds usages of a class type in a node tree.
-    /// </summary>
-    private static List<ReferenceInfo> FindClassUsagesInNode(GDNode rootNode, string className, string? filePath)
-    {
-        var references = new List<ReferenceInfo>();
-
-        foreach (var node in rootNode.AllNodes)
-        {
-            // Check for type annotations
-            if (node is GDTypeNode typeNode)
-            {
-                if (typeNode.BuildName() == className)
-                {
-                    references.Add(new ReferenceInfo
-                    {
-                        SymbolName = className,
-                        Kind = ReferenceKind.TypeAnnotation,
-                        FilePath = filePath,
-                        Line = GetLine(typeNode),
-                        Column = GetColumn(typeNode),
-                        Node = typeNode
-                    });
-                }
-            }
-
-            // Check for is expressions (implemented as GDDualOperatorExpression with Is operator)
-            if (node is GDDualOperatorExpression dualExpr && dualExpr.OperatorType == GDDualOperatorType.Is)
-            {
-                // The right side of 'is' is the type being checked
-                var typeName = dualExpr.RightExpression?.ToString();
-                if (typeName == className)
-                {
-                    references.Add(new ReferenceInfo
-                    {
-                        SymbolName = className,
-                        Kind = ReferenceKind.TypeCheck,
-                        FilePath = filePath,
-                        Line = GetLine(dualExpr),
-                        Column = GetColumn(dualExpr),
-                        Node = dualExpr
-                    });
-                }
-            }
-        }
-
-        return references;
     }
 }

@@ -66,7 +66,7 @@ public class DiagnosticTests
         }
 
         Assert.IsNotNull(script.Analyzer, "Should have analyzer");
-        Assert.IsNotNull(script.Analyzer.References, "Analyzer should have References");
+        Assert.IsNotNull(script.Analyzer.SemanticModel, "Analyzer should have SemanticModel");
 
         var symbols = script.Analyzer.Symbols.ToList();
         Console.WriteLine($"Symbols found: {symbols.Count}");
@@ -89,7 +89,7 @@ public class DiagnosticTests
         {
             Console.WriteLine($"  Name: {symbol.Name}");
             Console.WriteLine($"  Kind: {symbol.Kind}");
-            Console.WriteLine($"  Declaration: {symbol.Declaration != null}");
+            Console.WriteLine($"  Declaration: {symbol.DeclarationNode != null}");
         }
 
         // List all symbols for debugging

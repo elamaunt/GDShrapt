@@ -36,7 +36,7 @@ public class GDDefinitionHandler
 
         // Get the symbol for this node
         var symbol = script.Analyzer.GetSymbolForNode(node);
-        if (symbol?.Declaration == null)
+        if (symbol?.DeclarationNode == null)
             return Task.FromResult<GDLspLocation?>(null);
 
         // Get the file containing the declaration
@@ -44,8 +44,8 @@ public class GDDefinitionHandler
         var declarationFile = filePath;
 
         // If symbol is not declared in this script, search across project
-        if (symbol.Declaration.Parent == null ||
-            !IsDeclarationInScript(symbol.Declaration, script.Class))
+        if (symbol.DeclarationNode.Parent == null ||
+            !IsDeclarationInScript(symbol.DeclarationNode, script.Class))
         {
             // Try to find the script containing this symbol
             var declaringScript = FindScriptWithSymbol(symbol);
@@ -55,7 +55,7 @@ public class GDDefinitionHandler
             }
         }
 
-        var location = GDLocationAdapter.FromNode(symbol.Declaration, declarationFile);
+        var location = GDLocationAdapter.FromNode(symbol.DeclarationNode, declarationFile);
         return Task.FromResult(location);
     }
 
@@ -80,9 +80,9 @@ public class GDDefinitionHandler
     /// <summary>
     /// Finds the script containing a symbol declaration.
     /// </summary>
-    private GDScriptFile? FindScriptWithSymbol(GDSymbol symbol)
+    private GDScriptFile? FindScriptWithSymbol(GDSymbolInfo symbol)
     {
-        if (symbol?.Declaration == null)
+        if (symbol?.DeclarationNode == null)
             return null;
 
         // Search through all scripts in the project
@@ -91,7 +91,7 @@ public class GDDefinitionHandler
             if (script.Class == null)
                 continue;
 
-            if (IsDeclarationInScript(symbol.Declaration, script.Class))
+            if (IsDeclarationInScript(symbol.DeclarationNode, script.Class))
             {
                 return script;
             }

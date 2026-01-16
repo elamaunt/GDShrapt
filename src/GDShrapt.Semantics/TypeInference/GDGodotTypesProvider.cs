@@ -368,4 +368,12 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         return null;
     }
+
+    /// <summary>
+    /// Gets all known type names from this provider.
+    /// </summary>
+    public IEnumerable<string> GetAllTypes()
+    {
+        return _knownTypes;
+    }
 }

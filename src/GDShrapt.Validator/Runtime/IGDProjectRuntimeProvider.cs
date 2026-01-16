@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
 {
@@ -374,6 +375,17 @@ namespace GDShrapt.Reader
                     return true;
             }
             return false;
+        }
+
+        public IEnumerable<string> GetAllTypes()
+        {
+            var types = new HashSet<string>();
+            foreach (var provider in _providers)
+            {
+                foreach (var type in provider.GetAllTypes())
+                    types.Add(type);
+            }
+            return types;
         }
 
         // IGDProjectRuntimeProvider implementation

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
 {
@@ -175,8 +176,6 @@ namespace GDShrapt.Reader
         private GDTypeNode InferIndexerTypeNode(GDIndexerExpression indexerExpr)
         {
             var containerTypeNode = InferTypeNode(indexerExpr.CallerExpression);
-            if (containerTypeNode == null)
-                return null;
 
             // For typed arrays: Array[T] -> T
             if (containerTypeNode is GDArrayTypeNode arrayType)
@@ -190,8 +189,74 @@ namespace GDShrapt.Reader
                 return dictType.ValueType;
             }
 
-            // Untyped containers return null (unknown element type)
+            // For untyped Array/Dictionary, return Variant
+            var containerType = containerTypeNode?.BuildName();
+            if (containerType == "Array" || containerType == "Dictionary")
+            {
+                return CreateVariantTypeNode();
+            }
+
+            // For PackedArrays (PackedByteArray, PackedInt32Array, etc.)
+            if (!string.IsNullOrEmpty(containerType))
+            {
+                var elementType = GetPackedArrayElementType(containerType);
+                if (elementType != null)
+                {
+                    return CreateSimpleType(elementType);
+                }
+            }
+
+            // String indexing returns String (single character)
+            if (containerType == "String")
+            {
+                return CreateSimpleType("String");
+            }
+
+            // Unknown container type - return Variant as safe fallback
+            if (containerTypeNode != null)
+            {
+                return CreateVariantTypeNode();
+            }
+
             return null;
+        }
+
+        /// <summary>
+        /// Gets the element type for packed array types.
+        /// </summary>
+        private static string GetPackedArrayElementType(string packedArrayType)
+        {
+            switch (packedArrayType)
+            {
+                case "PackedByteArray":
+                    return "int";
+                case "PackedInt32Array":
+                    return "int";
+                case "PackedInt64Array":
+                    return "int";
+                case "PackedFloat32Array":
+                    return "float";
+                case "PackedFloat64Array":
+                    return "float";
+                case "PackedStringArray":
+                    return "String";
+                case "PackedVector2Array":
+                    return "Vector2";
+                case "PackedVector3Array":
+                    return "Vector3";
+                case "PackedColorArray":
+                    return "Color";
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Creates a Variant type node.
+        /// </summary>
+        private static GDTypeNode CreateVariantTypeNode()
+        {
+            return new GDSingleTypeNode { Type = new GDType { Sequence = "Variant" } };
         }
 
         private GDTypeNode InferIdentifierTypeNode(GDIdentifierExpression identExpr)
@@ -460,6 +525,11 @@ namespace GDShrapt.Reader
 
             switch (opType)
             {
+                // Type cast operator: obj as Type -> Type (or null if cast fails)
+                case GDDualOperatorType.As:
+                    // The right side is the target type
+                    return rightType;
+
                 // Comparison operators - always bool
                 case GDDualOperatorType.Equal:
                 case GDDualOperatorType.NotEqual:
@@ -473,7 +543,9 @@ namespace GDShrapt.Reader
 
                 // Logical operators - always bool
                 case GDDualOperatorType.And:
+                case GDDualOperatorType.And2:
                 case GDDualOperatorType.Or:
+                case GDDualOperatorType.Or2:
                     return "bool";
 
                 // Arithmetic operators - promote to float if either is float
@@ -742,18 +814,47 @@ namespace GDShrapt.Reader
         /// <returns>The appropriate GDTypeNode, or null if typeName is null/empty</returns>
         private GDTypeNode CreateSimpleType(string typeName)
         {
-            if (string.IsNullOrEmpty(typeName))
+            if (string.IsNullOrEmpty(typeName) || string.IsNullOrWhiteSpace(typeName))
                 return null;
 
             // Check if this is a simple type (no generic brackets or dots)
             // Simple types can be created directly for performance
             if (typeName.IndexOf('[') < 0 && typeName.IndexOf('.') < 0)
             {
-                return new GDSingleTypeNode { Type = new GDType { Sequence = typeName } };
+                // Validate that it's a valid identifier before creating
+                // Must start with letter or underscore, contain only letters, digits, underscores
+                if (IsValidIdentifier(typeName))
+                {
+                    return new GDSingleTypeNode { Type = new GDType { Sequence = typeName } };
+                }
+                // Invalid identifier - return null rather than throwing
+                return null;
             }
 
             // Complex types (generics, nested types) need to be parsed
             return TypeParser.ParseType(typeName);
+        }
+
+        /// <summary>
+        /// Validates that a string is a valid GDScript identifier.
+        /// </summary>
+        private static bool IsValidIdentifier(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            // Must not start with a number
+            if (char.IsDigit(value[0]))
+                return false;
+
+            // Must contain only letters, digits, and underscores
+            foreach (var c in value)
+            {
+                if (!char.IsLetterOrDigit(c) && c != '_')
+                    return false;
+            }
+
+            return true;
         }
 
         #region Extended Type Inference API

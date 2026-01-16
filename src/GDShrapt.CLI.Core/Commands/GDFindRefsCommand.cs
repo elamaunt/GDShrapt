@@ -123,17 +123,17 @@ public class GDFindRefsCommand : IGDCommand
                 FilePath = GetRelativePath(script.Reference.FullPath, projectRoot),
                 Line = node.StartLine,
                 Column = node.StartColumn,
-                IsDeclaration = node == symbol.Declaration,
+                IsDeclaration = node == symbol.DeclarationNode,
                 IsWrite = false // Simplified - can't easily determine write vs read from GDReference
             });
         }
 
         // Also add declaration location if not already included
-        if (symbol.Declaration != null)
+        if (symbol.DeclarationNode != null)
         {
             var declarationIncluded = references.Any(r =>
-                r.Line == symbol.Declaration.StartLine &&
-                r.Column == symbol.Declaration.StartColumn &&
+                r.Line == symbol.DeclarationNode.StartLine &&
+                r.Column == symbol.DeclarationNode.StartColumn &&
                 r.FilePath == GetRelativePath(script.Reference.FullPath, projectRoot));
 
             if (!declarationIncluded)
@@ -141,8 +141,8 @@ public class GDFindRefsCommand : IGDCommand
                 references.Insert(0, new GDReferenceInfo
                 {
                     FilePath = GetRelativePath(script.Reference.FullPath, projectRoot),
-                    Line = symbol.Declaration.StartLine,
-                    Column = symbol.Declaration.StartColumn,
+                    Line = symbol.DeclarationNode.StartLine,
+                    Column = symbol.DeclarationNode.StartColumn,
                     IsDeclaration = true,
                     IsWrite = false
                 });

@@ -12,11 +12,14 @@ public class GDCrossFileReferenceFinder
 {
     private readonly GDScriptProject _project;
     private readonly IGDRuntimeProvider? _runtimeProvider;
+    private readonly GDDuckTypeResolver? _duckTypeResolver;
 
     public GDCrossFileReferenceFinder(GDScriptProject project)
     {
         _project = project;
         _runtimeProvider = project.CreateRuntimeProvider();
+        if (_runtimeProvider != null)
+            _duckTypeResolver = new GDDuckTypeResolver(_runtimeProvider);
     }
 
     /// <summary>
@@ -25,7 +28,7 @@ public class GDCrossFileReferenceFinder
     /// <param name="symbol">The symbol to find references for.</param>
     /// <param name="declaringScript">The script where the symbol is declared.</param>
     /// <returns>Result containing strict and potential references.</returns>
-    public GDCrossFileReferenceResult FindReferences(GDSymbol symbol, GDScriptFile declaringScript)
+    public GDCrossFileReferenceResult FindReferences(GDSymbolInfo symbol, GDScriptFile declaringScript)
     {
         var strict = new List<GDCrossFileReference>();
         var potential = new List<GDCrossFileReference>();
@@ -53,6 +56,7 @@ public class GDCrossFileReferenceFinder
 
     /// <summary>
     /// Finds references to a member name in a single script.
+    /// Uses SemanticModel when available for accurate reference collection.
     /// </summary>
     private IEnumerable<GDCrossFileReference> FindReferencesInScript(
         GDScriptFile script,
@@ -63,6 +67,51 @@ public class GDCrossFileReferenceFinder
         if (analyzer == null)
             yield break;
 
+        // Try using SemanticModel first (preferred)
+        var semanticModel = analyzer.SemanticModel;
+        if (semanticModel != null)
+        {
+            var references = semanticModel.GetReferencesTo(memberName);
+            foreach (var gdRef in references)
+            {
+                if (gdRef.ReferenceNode == null)
+                    continue;
+
+                // We're interested in member accesses on objects (cross-file context)
+                var memberAccess = gdRef.ReferenceNode as GDMemberOperatorExpression
+                    ?? gdRef.ReferenceNode.Parent as GDMemberOperatorExpression;
+
+                if (memberAccess != null)
+                {
+                    // Use confidence from SemanticModel (already computed with type info)
+                    var confidence = gdRef.Confidence;
+
+                    // Skip NameMatch - too weak for cross-file search
+                    if (confidence == GDReferenceConfidence.NameMatch)
+                        continue;
+
+                    // Verify type compatibility for cross-file references
+                    if (confidence == GDReferenceConfidence.Strict)
+                    {
+                        var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
+                        if (!string.IsNullOrEmpty(callerType) && !IsTypeCompatible(callerType, declaringTypeName))
+                        {
+                            // Type is known but incompatible - likely false positive
+                            continue;
+                        }
+                    }
+
+                    yield return new GDCrossFileReference(
+                        script,
+                        gdRef.ReferenceNode,
+                        confidence,
+                        gdRef.ConfidenceReason ?? GetConfidenceReasonFromSemanticModel(memberAccess, confidence, semanticModel, declaringTypeName));
+                }
+            }
+            yield break;
+        }
+
+        // Fallback to manual visitor-based search when SemanticModel is not available
         var classDecl = script.Class;
         if (classDecl == null)
             yield break;
@@ -145,9 +194,9 @@ public class GDCrossFileReferenceFinder
 
             // Check duck type compatibility
             var duckType = analyzer.GetDuckType(varName);
-            if (duckType != null && _runtimeProvider != null)
+            if (duckType != null && _duckTypeResolver != null)
             {
-                if (duckType.IsCompatibleWith(targetTypeName, _runtimeProvider))
+                if (_duckTypeResolver.IsCompatibleWith(duckType, targetTypeName))
                     return GDReferenceConfidence.Potential;
             }
         }
@@ -180,7 +229,7 @@ public class GDCrossFileReferenceFinder
     /// <summary>
     /// Gets the declaring type name for a symbol.
     /// </summary>
-    private string GetDeclaringTypeName(GDScriptFile script, GDSymbol symbol)
+    private string GetDeclaringTypeName(GDScriptFile script, GDSymbolInfo symbol)
     {
         // First check for class_name
         var className = script.Class?.ClassName?.TypeName?.ToString();
@@ -220,6 +269,42 @@ public class GDCrossFileReferenceFinder
             return "Caller expression is null";
 
         var callerType = analyzer.GetTypeForNode(memberAccess.CallerExpression);
+        var varName = GetRootVariableName(memberAccess.CallerExpression);
+
+        return confidence switch
+        {
+            GDReferenceConfidence.Strict when !string.IsNullOrEmpty(callerType) =>
+                $"Caller type '{callerType}' matches target type '{targetTypeName}'",
+
+            GDReferenceConfidence.Strict when varName != null =>
+                $"Variable '{varName}' type narrowed to '{targetTypeName}' by control flow",
+
+            GDReferenceConfidence.Potential when varName != null =>
+                $"Variable '{varName}' is untyped; duck type may be compatible with '{targetTypeName}'",
+
+            GDReferenceConfidence.Potential =>
+                $"Caller expression type unknown; may reference '{targetTypeName}'",
+
+            GDReferenceConfidence.NameMatch when !string.IsNullOrEmpty(callerType) =>
+                $"Caller type '{callerType}' does not match target type '{targetTypeName}'",
+
+            _ => "Unknown confidence reason"
+        };
+    }
+
+    /// <summary>
+    /// Gets a human-readable reason for the confidence determination using SemanticModel.
+    /// </summary>
+    private string GetConfidenceReasonFromSemanticModel(
+        GDMemberOperatorExpression memberAccess,
+        GDReferenceConfidence confidence,
+        GDSemanticModel semanticModel,
+        string targetTypeName)
+    {
+        if (memberAccess.CallerExpression == null)
+            return "Caller expression is null";
+
+        var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
         var varName = GetRootVariableName(memberAccess.CallerExpression);
 
         return confidence switch

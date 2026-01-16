@@ -120,7 +120,7 @@ func process(obj):
         // Assert
         var duckType = narrowingContext.GetNarrowedType("obj");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.RequiredMethods.Contains("attack"), "Method 'attack' should be required");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("attack"), "Method 'attack' should be required");
     }
 
     [TestMethod]
@@ -174,7 +174,7 @@ func process(obj):
         // Assert
         var duckType = narrowingContext.GetNarrowedType("obj");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.RequiredProperties.Contains("health"), "Property 'health' should be required");
+        Assert.IsTrue(duckType.RequiredProperties.ContainsKey("health"), "Property 'health' should be required");
     }
 
     #endregion
@@ -206,7 +206,7 @@ func process(obj):
         var duckType = narrowingContext.GetNarrowedType("obj");
         Assert.IsNotNull(duckType);
         Assert.IsTrue(duckType.PossibleTypes.Contains("Entity"), "Should be narrowed to Entity");
-        Assert.IsTrue(duckType.RequiredMethods.Contains("attack"), "Should require attack method");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("attack"), "Should require attack method");
     }
 
     [TestMethod]
@@ -272,7 +272,7 @@ func process(obj):
         var childNarrowing = child.GetNarrowedType("obj");
         Assert.IsNotNull(childNarrowing);
         // Child's narrowing contains what child added
-        Assert.IsTrue(childNarrowing.RequiredMethods.Contains("attack"));
+        Assert.IsTrue(childNarrowing.RequiredMethods.ContainsKey("attack"));
 
         // Parent's narrowing is still accessible if child doesn't override
         var parentNarrowing = parent.GetNarrowedType("obj");
@@ -302,9 +302,9 @@ func process(obj):
         // Assert - only common requirements survive
         var duckType = merged.GetNarrowedType("obj");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.RequiredMethods.Contains("common"), "Common requirement should survive merge");
-        Assert.IsFalse(duckType.RequiredMethods.Contains("if_only"), "If-only requirement should not survive");
-        Assert.IsFalse(duckType.RequiredMethods.Contains("else_only"), "Else-only requirement should not survive");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("common"), "Common requirement should survive merge");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("if_only"), "If-only requirement should not survive");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("else_only"), "Else-only requirement should not survive");
     }
 
     [TestMethod]

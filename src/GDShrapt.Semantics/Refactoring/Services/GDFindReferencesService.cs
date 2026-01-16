@@ -311,6 +311,7 @@ public class GDFindReferencesResult : GDRefactoringResult
 
 /// <summary>
 /// Service for finding all references to a symbol.
+/// Uses GDSemanticModel for symbol resolution when available.
 /// </summary>
 public class GDFindReferencesService
 {
@@ -322,14 +323,63 @@ public class GDFindReferencesService
         if (context?.ClassDeclaration == null)
             return null;
 
-        // Find identifier at cursor
-        var finder = new GDPositionFinder(context.ClassDeclaration);
-        var identifier = finder.FindIdentifierAtPosition(context.Cursor.Line, context.Cursor.Column);
+        // Use SemanticModel for symbol resolution
+        var semanticModel = context.Script?.Analyzer?.SemanticModel;
+        if (semanticModel != null)
+        {
+            var symbolInfo = semanticModel.GetSymbolAt(context.Cursor.Line, context.Cursor.Column);
+            if (symbolInfo != null)
+            {
+                return ConvertToSymbolScope(symbolInfo, context);
+            }
+        }
 
-        if (identifier == null)
-            return null;
+        // SemanticModel not available or symbol not found
+        return null;
+    }
 
-        return DetermineSymbolScope(identifier, context);
+    /// <summary>
+    /// Converts a GDSymbolInfo to GDSymbolScope for backwards compatibility.
+    /// </summary>
+    private GDSymbolScope ConvertToSymbolScope(GDSymbolInfo symbolInfo, GDRefactoringContext context)
+    {
+        var scopeType = symbolInfo.Kind switch
+        {
+            GDSymbolKind.Parameter => GDSymbolScopeType.MethodParameter,
+            GDSymbolKind.Iterator => GDSymbolScopeType.ForLoopVariable,
+            GDSymbolKind.Variable when symbolInfo.DeclaringTypeName == null => GDSymbolScopeType.LocalVariable,
+            GDSymbolKind.Variable => GDSymbolScopeType.ClassMember,
+            GDSymbolKind.Method => GDSymbolScopeType.ClassMember,
+            GDSymbolKind.Signal => GDSymbolScopeType.ClassMember,
+            GDSymbolKind.Property => GDSymbolScopeType.ClassMember,
+            GDSymbolKind.Constant => GDSymbolScopeType.ClassMember,
+            GDSymbolKind.Enum => GDSymbolScopeType.ClassMember,
+            GDSymbolKind.EnumValue => GDSymbolScopeType.ClassMember,
+            GDSymbolKind.Class => GDSymbolScopeType.ProjectWide,
+            _ => GDSymbolScopeType.ProjectWide
+        };
+
+        // For inherited members, mark as external
+        if (symbolInfo.IsInherited)
+            scopeType = GDSymbolScopeType.ExternalMember;
+
+        var containingMethod = symbolInfo.DeclarationNode != null
+            ? GDPositionFinder.FindParent<GDMethodDeclaration>(symbolInfo.DeclarationNode)
+            : null;
+
+        var containingForLoop = symbolInfo.DeclarationNode as GDForStatement;
+
+        return new GDSymbolScope(
+            scopeType,
+            symbolInfo.Name,
+            declarationNode: symbolInfo.DeclarationNode,
+            containingMethod: containingMethod,
+            containingForLoop: containingForLoop,
+            containingClass: context.ClassDeclaration,
+            containingScript: context.Script,
+            callerTypeName: symbolInfo.DeclaringTypeName,
+            declarationLine: symbolInfo.DeclarationNode?.StartLine ?? 0,
+            isPublic: !symbolInfo.Name.StartsWith("_"));
     }
 
     /// <summary>
@@ -486,6 +536,20 @@ public class GDFindReferencesService
         var strictRefs = new List<GDFoundReference>();
         var potentialRefs = new List<GDFoundReference>();
 
+        // Use SemanticModel for all scope types when available
+        var semanticModel = context.Script?.Analyzer?.SemanticModel;
+        if (semanticModel != null)
+        {
+            var collected = CollectReferencesViaSemanticModel(semanticModel, scope);
+            if (collected != null)
+            {
+                strictRefs.AddRange(collected.Where(r => r.Confidence == GDReferenceConfidence.Strict));
+                potentialRefs.AddRange(collected.Where(r => r.Confidence != GDReferenceConfidence.Strict));
+                return GDFindReferencesResult.Succeeded(scope, strictRefs, potentialRefs);
+            }
+        }
+
+        // Fallback to manual collection only when SemanticModel is not available
         switch (scope.Type)
         {
             case GDSymbolScopeType.LocalVariable:
@@ -519,6 +583,95 @@ public class GDFindReferencesService
         }
 
         return GDFindReferencesResult.Succeeded(scope, strictRefs, potentialRefs);
+    }
+
+    /// <summary>
+    /// Collects references using the SemanticModel when available.
+    /// Returns null if SemanticModel doesn't have the symbol.
+    /// </summary>
+    private List<GDFoundReference>? CollectReferencesViaSemanticModel(GDSemanticModel semanticModel, GDSymbolScope scope)
+    {
+        var symbolInfo = semanticModel.FindSymbol(scope.SymbolName);
+        if (symbolInfo == null)
+            return null;
+
+        var references = semanticModel.GetReferencesTo(symbolInfo);
+        if (references.Count == 0)
+            return null;
+
+        var filePath = scope.ContainingScript?.FullPath;
+        var results = new List<GDFoundReference>();
+
+        foreach (var gdRef in references)
+        {
+            var node = gdRef.ReferenceNode;
+            if (node == null)
+                continue;
+
+            // Find the identifier within the node
+            var identifier = FindIdentifierInNode(node, scope.SymbolName);
+            if (identifier == null)
+                continue;
+
+            var (contextText, hlStart, hlEnd) = GetContextWithHighlight(identifier);
+            var refKind = DetermineReferenceKind(identifier);
+            var confidenceReason = semanticModel.GetConfidenceReason(identifier) ?? "Resolved via SemanticModel";
+
+            results.Add(new GDFoundReference(
+                scope.SymbolName,
+                filePath,
+                identifier.StartLine,
+                identifier.StartColumn,
+                identifier.EndColumn,
+                refKind,
+                gdRef.Confidence,
+                node,
+                contextText,
+                hlStart,
+                hlEnd,
+                confidenceReason));
+        }
+
+        // Also add the declaration if not already included
+        if (symbolInfo.DeclarationNode != null)
+        {
+            var declId = FindIdentifierInNode(symbolInfo.DeclarationNode, scope.SymbolName);
+            if (declId != null && !results.Any(r => r.Line == declId.StartLine && r.Column == declId.StartColumn))
+            {
+                var (contextText, hlStart, hlEnd) = GetContextWithHighlight(declId);
+                results.Add(new GDFoundReference(
+                    scope.SymbolName,
+                    filePath,
+                    declId.StartLine,
+                    declId.StartColumn,
+                    declId.EndColumn,
+                    GDReferenceKind.Declaration,
+                    GDReferenceConfidence.Strict,
+                    symbolInfo.DeclarationNode,
+                    contextText,
+                    hlStart,
+                    hlEnd,
+                    "Symbol declaration"));
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Finds an identifier with the given name within a node.
+    /// </summary>
+    private GDIdentifier? FindIdentifierInNode(GDNode node, string name)
+    {
+        // Check common patterns first for efficiency
+        if (node is GDIdentifierExpression idExpr && idExpr.Identifier?.Sequence == name)
+            return idExpr.Identifier;
+
+        if (node is GDMemberOperatorExpression memberOp && memberOp.Identifier?.Sequence == name)
+            return memberOp.Identifier;
+
+        // Search in all tokens
+        return node.AllTokens.OfType<GDIdentifier>().FirstOrDefault(i => i.Sequence == name);
     }
 
     #region Collection Methods

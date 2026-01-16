@@ -175,9 +175,9 @@ func test():
         #region Untyped Container Tests
 
         [TestMethod]
-        public void InferType_UntypedArrayIndexer_ReturnsNull()
+        public void InferType_UntypedArrayIndexer_ReturnsVariant()
         {
-            // Arrange: Untyped array returns null (unknown element type)
+            // Arrange: Untyped array returns Variant
             var code = @"
 var arr: Array = [1, ""two"", 3.0]
 func test():
@@ -198,14 +198,15 @@ func test():
                 .First();
             var typeNode = engine.InferTypeNode(indexerExpr);
 
-            // Assert: Untyped containers return null (Variant is unknown)
-            typeNode.Should().BeNull();
+            // Assert: Untyped containers return Variant
+            typeNode.Should().NotBeNull();
+            typeNode!.BuildName().Should().Be("Variant");
         }
 
         [TestMethod]
-        public void InferType_UntypedDictionaryIndexer_ReturnsNull()
+        public void InferType_UntypedDictionaryIndexer_ReturnsVariant()
         {
-            // Arrange: Untyped dictionary returns null (unknown value type)
+            // Arrange: Untyped dictionary returns Variant
             var code = @"
 var dict: Dictionary = {""a"": 1}
 func test():
@@ -226,8 +227,9 @@ func test():
                 .First();
             var typeNode = engine.InferTypeNode(indexerExpr);
 
-            // Assert: Untyped containers return null (Variant is unknown)
-            typeNode.Should().BeNull();
+            // Assert: Untyped containers return Variant
+            typeNode.Should().NotBeNull();
+            typeNode!.BuildName().Should().Be("Variant");
         }
 
         #endregion
@@ -251,11 +253,19 @@ func test():
             var collector = new GDDeclarationCollector();
             collector.Collect(classDecl, context);
 
-            // Act & Assert: Should not throw
-            var refCollector = new GDReferenceCollector();
-            var act = () => refCollector.Collect(classDecl, context);
-
+            // Act & Assert: Declaration collection should not throw
+            var act = () => collector.Collect(classDecl, context);
             act.Should().NotThrow<System.ArgumentException>();
+
+            // Also verify type inference engine works
+            var engine = new GDTypeInferenceEngine(
+                GDDefaultRuntimeProvider.Instance,
+                context.Scopes);
+            var indexerExpr = classDecl.AllNodes
+                .OfType<GDIndexerExpression>()
+                .First();
+            var inferAct = () => engine.InferTypeNode(indexerExpr);
+            inferAct.Should().NotThrow<System.ArgumentException>();
         }
 
         [TestMethod]
@@ -270,13 +280,21 @@ func test():
             var classDecl = _reader.ParseFileContent(code);
             var context = new GDValidationContext();
             var collector = new GDDeclarationCollector();
-            collector.Collect(classDecl, context);
 
-            // Act & Assert: Should not throw
-            var refCollector = new GDReferenceCollector();
-            var act = () => refCollector.Collect(classDecl, context);
-
+            // Act & Assert: Declaration collection should not throw
+            var act = () => collector.Collect(classDecl, context);
             act.Should().NotThrow<System.ArgumentException>();
+
+            // Also verify type inference engine works
+            collector.Collect(classDecl, context);
+            var engine = new GDTypeInferenceEngine(
+                GDDefaultRuntimeProvider.Instance,
+                context.Scopes);
+            var indexerExpr = classDecl.AllNodes
+                .OfType<GDIndexerExpression>()
+                .First();
+            var inferAct = () => engine.InferTypeNode(indexerExpr);
+            inferAct.Should().NotThrow<System.ArgumentException>();
         }
 
         [TestMethod]
@@ -292,13 +310,21 @@ func test():
             var classDecl = _reader.ParseFileContent(code);
             var context = new GDValidationContext();
             var collector = new GDDeclarationCollector();
-            collector.Collect(classDecl, context);
 
-            // Act & Assert: Should not throw
-            var refCollector = new GDReferenceCollector();
-            var act = () => refCollector.Collect(classDecl, context);
-
+            // Act & Assert: Declaration collection should not throw
+            var act = () => collector.Collect(classDecl, context);
             act.Should().NotThrow<System.ArgumentException>();
+
+            // Also verify type inference engine works
+            collector.Collect(classDecl, context);
+            var engine = new GDTypeInferenceEngine(
+                GDDefaultRuntimeProvider.Instance,
+                context.Scopes);
+            var indexerExpr = classDecl.AllNodes
+                .OfType<GDIndexerExpression>()
+                .First();
+            var inferAct = () => engine.InferTypeNode(indexerExpr);
+            inferAct.Should().NotThrow<System.ArgumentException>();
         }
 
         #endregion

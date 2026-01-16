@@ -15,7 +15,7 @@ public sealed class GDRenameConflict
     /// <summary>
     /// The existing symbol that conflicts with the new name.
     /// </summary>
-    public GDSymbol? ConflictingSymbol { get; }
+    public GDSymbolInfo? ConflictingSymbol { get; }
 
     /// <summary>
     /// The scope where the conflict occurs.
@@ -36,7 +36,7 @@ public sealed class GDRenameConflict
         string conflictingName,
         string message,
         GDRenameConflictType type,
-        GDSymbol? conflictingSymbol = null,
+        GDSymbolInfo? conflictingSymbol = null,
         GDScope? scope = null)
     {
         ConflictingName = conflictingName;

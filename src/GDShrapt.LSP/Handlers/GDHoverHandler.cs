@@ -50,16 +50,21 @@ public class GDHoverHandler
         sb.Append(symbol.Name);
 
         // Add type if available
-        if (symbol.Type != null)
+        if (symbol.TypeNode != null)
         {
             sb.Append(": ");
-            sb.Append(symbol.Type.ToString());
+            sb.Append(symbol.TypeNode.ToString());
+        }
+        else if (!string.IsNullOrEmpty(symbol.TypeName))
+        {
+            sb.Append(": ");
+            sb.Append(symbol.TypeName);
         }
 
         sb.Append("\n```");
 
         // Add documentation if available
-        var docComment = ExtractDocComment(symbol.Declaration);
+        var docComment = ExtractDocComment(symbol.DeclarationNode);
         if (!string.IsNullOrEmpty(docComment))
         {
             sb.Append("\n\n---\n\n");
@@ -69,19 +74,19 @@ public class GDHoverHandler
         var hover = new GDLspHover
         {
             Contents = GDLspMarkupContent.Markdown(sb.ToString()),
-            Range = symbol.Declaration != null
+            Range = symbol.DeclarationNode != null
                 ? GDLocationAdapter.ToLspRange(
-                    symbol.Declaration.StartLine,
-                    symbol.Declaration.StartColumn,
-                    symbol.Declaration.EndLine,
-                    symbol.Declaration.EndColumn)
+                    symbol.DeclarationNode.StartLine,
+                    symbol.DeclarationNode.StartColumn,
+                    symbol.DeclarationNode.EndLine,
+                    symbol.DeclarationNode.EndColumn)
                 : null
         };
 
         return Task.FromResult<GDLspHover?>(hover);
     }
 
-    private static string GetSymbolKindString(GDSymbol symbol)
+    private static string GetSymbolKindString(GDSymbolInfo symbol)
     {
         return symbol.Kind switch
         {

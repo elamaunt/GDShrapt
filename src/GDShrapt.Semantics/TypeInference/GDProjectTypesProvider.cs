@@ -13,6 +13,8 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 {
     private readonly IGDScriptProvider _scriptProvider;
     private readonly Dictionary<string, GDProjectTypeInfo> _typeCache = new();
+    // Index by script path (for extends "res://path/to/script.gd" support)
+    private readonly Dictionary<string, string> _pathToTypeName = new(StringComparer.OrdinalIgnoreCase);
 
     public GDProjectTypesProvider(IGDScriptProvider scriptProvider)
     {
@@ -26,6 +28,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     public void RebuildCache()
     {
         _typeCache.Clear();
+        _pathToTypeName.Clear();
 
         foreach (var scriptInfo in _scriptProvider.Scripts)
         {
@@ -38,6 +41,22 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
             var typeInfo = BuildTypeInfo(scriptInfo);
             _typeCache[typeName] = typeInfo;
+
+            // Index by script path for "extends 'res://path/to/script.gd'" support
+            if (!string.IsNullOrEmpty(scriptInfo.FullPath))
+            {
+                // Store both the full path and the res:// path
+                _pathToTypeName[scriptInfo.FullPath] = typeName;
+
+                // Also store the res:// path if available
+                var resPath = scriptInfo.ResPath;
+                if (!string.IsNullOrEmpty(resPath))
+                {
+                    _pathToTypeName[resPath] = typeName;
+                    // Also without quotes (in case BuildName returns "res://..." with quotes)
+                    _pathToTypeName[$"\"{resPath}\""] = typeName;
+                }
+            }
         }
     }
 
@@ -134,7 +153,32 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        return _typeCache.ContainsKey(typeName);
+        // Try direct lookup first (class_name)
+        if (_typeCache.ContainsKey(typeName))
+            return true;
+
+        // Try path-based lookup (extends "res://path/to/script.gd")
+        return _pathToTypeName.ContainsKey(typeName);
+    }
+
+    /// <summary>
+    /// Resolves a type name that might be a path to the actual class name.
+    /// Handles both class_name and path-based extends.
+    /// </summary>
+    private string? ResolveTypeName(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return null;
+
+        // Direct class_name lookup
+        if (_typeCache.ContainsKey(typeName))
+            return typeName;
+
+        // Path-based lookup (extends "res://path/to/script.gd")
+        if (_pathToTypeName.TryGetValue(typeName, out var resolvedName))
+            return resolvedName;
+
+        return null;
     }
 
     public GDRuntimeTypeInfo? GetTypeInfo(string typeName)
@@ -142,7 +186,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return null;
 
-        if (!_typeCache.TryGetValue(typeName, out var projectType))
+        // Resolve path-based type names to class_name
+        var resolvedName = ResolveTypeName(typeName);
+        if (resolvedName == null || !_typeCache.TryGetValue(resolvedName, out var projectType))
             return null;
 
         var members = GetAllMembers(projectType);
@@ -193,16 +239,34 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
     public GDRuntimeMemberInfo? GetMember(string typeName, string memberName)
     {
-        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
-            return null;
+        var (member, _) = GetMemberWithDeclaringType(typeName, memberName);
+        return member;
+    }
 
-        if (!_typeCache.TryGetValue(typeName, out var projectType))
-            return null;
+    /// <summary>
+    /// Gets a member and the type that declares it.
+    /// Walks up the inheritance chain to find inherited members.
+    /// </summary>
+    /// <param name="typeName">The type to search in.</param>
+    /// <param name="memberName">The member name to find.</param>
+    /// <returns>A tuple of (member info, declaring type name) or (null, null) if not found.</returns>
+    public (GDRuntimeMemberInfo? Member, string? DeclaringTypeName) GetMemberWithDeclaringType(string typeName, string memberName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
+            return (null, null);
+
+        // Resolve path-based type names to class_name
+        var resolvedName = ResolveTypeName(typeName);
+        if (resolvedName == null || !_typeCache.TryGetValue(resolvedName, out var projectType))
+            return (null, null);
+
+        // Use resolved name for return value (class_name, not path)
+        typeName = resolvedName;
 
         // Check methods
         if (projectType.Methods.TryGetValue(memberName, out var method))
         {
-            return GDRuntimeMemberInfo.Method(
+            var memberInfo = GDRuntimeMemberInfo.Method(
                 method.Name,
                 method.ReturnTypeName,
                 method.Parameters.Count,
@@ -210,36 +274,39 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 isVarArgs: false,
                 isStatic: method.IsStatic,
                 isAbstract: method.IsAbstract);
+            return (memberInfo, typeName);
         }
 
         // Check properties
         if (projectType.Properties.TryGetValue(memberName, out var property))
         {
+            GDRuntimeMemberInfo memberInfo;
             if (property.IsConstant)
-                return GDRuntimeMemberInfo.Constant(property.Name, property.TypeName);
+                memberInfo = GDRuntimeMemberInfo.Constant(property.Name, property.TypeName);
             else
-                return GDRuntimeMemberInfo.Property(property.Name, property.TypeName, property.IsStatic);
+                memberInfo = GDRuntimeMemberInfo.Property(property.Name, property.TypeName, property.IsStatic);
+            return (memberInfo, typeName);
         }
 
         // Check signals
         if (projectType.Signals.TryGetValue(memberName, out var signal))
         {
-            return GDRuntimeMemberInfo.Signal(signal.Name);
+            return (GDRuntimeMemberInfo.Signal(signal.Name), typeName);
         }
 
         // Check enums
         if (projectType.Enums.TryGetValue(memberName, out var enumInfo))
         {
-            return GDRuntimeMemberInfo.Constant(enumInfo.Name, enumInfo.Name);
+            return (GDRuntimeMemberInfo.Constant(enumInfo.Name, enumInfo.Name), typeName);
         }
 
-        // Check base type
+        // Check base type - propagate the declaring type from base
         if (!string.IsNullOrEmpty(projectType.BaseTypeName))
         {
-            return GetMember(projectType.BaseTypeName, memberName);
+            return GetMemberWithDeclaringType(projectType.BaseTypeName, memberName);
         }
 
-        return null;
+        return (null, null);
     }
 
     public string? GetBaseType(string typeName)
@@ -247,7 +314,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return null;
 
-        if (_typeCache.TryGetValue(typeName, out var projectType))
+        // Resolve path-based type names to class_name
+        var resolvedName = ResolveTypeName(typeName);
+        if (resolvedName != null && _typeCache.TryGetValue(resolvedName, out var projectType))
         {
             return projectType.BaseTypeName;
         }
@@ -318,6 +387,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             }
         }
         return null;
+    }
+
+    public IEnumerable<string> GetAllTypes()
+    {
+        return _typeCache.Keys;
     }
 }
 

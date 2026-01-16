@@ -170,16 +170,11 @@ public class ComplexTypesTests
             .FirstOrDefault();
         Assert.IsNotNull(indexerExpr, "Indexer expression should be found");
 
-        // Create fresh validation context and analyze
-        var context = new GDValidationContext();
-        var declCollector = new GDDeclarationCollector();
-        declCollector.Collect(_class!, context);
+        // Use SemanticModel which delegates to Analyzer for local variable type inference
+        var semanticModel = _script!.Analyzer?.SemanticModel;
+        Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
-        var refCollector = new GDReferenceCollector();
-        var references = refCollector.Collect(_class!, context);
-
-        // Get the type from the collected references
-        var typeNode = references.GetTypeNodeForNode(indexerExpr);
+        var typeNode = semanticModel.GetTypeNodeForExpression(indexerExpr);
         Assert.IsNotNull(typeNode, "Type node should be inferred for indexer");
         Assert.AreEqual("int", typeNode.BuildName(), "Element type should be int");
     }
@@ -199,15 +194,11 @@ public class ComplexTypesTests
             .FirstOrDefault();
         Assert.IsNotNull(indexerExpr, "Indexer expression should be found");
 
-        // Create fresh validation context and analyze
-        var context = new GDValidationContext();
-        var declCollector = new GDDeclarationCollector();
-        declCollector.Collect(_class!, context);
+        // Use SemanticModel which delegates to Analyzer for local variable type inference
+        var semanticModel = _script!.Analyzer?.SemanticModel;
+        Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
-        var refCollector = new GDReferenceCollector();
-        var references = refCollector.Collect(_class!, context);
-
-        var typeNode = references.GetTypeNodeForNode(indexerExpr);
+        var typeNode = semanticModel.GetTypeNodeForExpression(indexerExpr);
         Assert.IsNotNull(typeNode, "Type node should be inferred for dictionary indexer");
         Assert.AreEqual("int", typeNode.BuildName(), "Value type should be int");
     }
@@ -228,15 +219,11 @@ public class ComplexTypesTests
             .FirstOrDefault();
         Assert.IsNotNull(indexerExpr, "Indexer expression should be found");
 
-        // Create fresh validation context and analyze
-        var context = new GDValidationContext();
-        var declCollector = new GDDeclarationCollector();
-        declCollector.Collect(_class!, context);
+        // Use SemanticModel which delegates to Analyzer for local variable type inference
+        var semanticModel = _script!.Analyzer?.SemanticModel;
+        Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
-        var refCollector = new GDReferenceCollector();
-        var references = refCollector.Collect(_class!, context);
-
-        var typeNode = references.GetTypeNodeForNode(indexerExpr);
+        var typeNode = semanticModel.GetTypeNodeForExpression(indexerExpr);
         Assert.IsNotNull(typeNode, "Type node should be inferred for nested array indexer");
         Assert.AreEqual("Array[int]", typeNode.BuildName(), "Row type should be Array[int]");
     }

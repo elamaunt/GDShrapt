@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
 {
@@ -145,6 +146,12 @@ namespace GDShrapt.Reader
             result = _inner.IsBuiltIn(identifier);
             _builtInCache[identifier] = result;
             return result;
+        }
+
+        public IEnumerable<string> GetAllTypes()
+        {
+            // Delegate to inner provider - no caching needed for enumeration
+            return _inner.GetAllTypes();
         }
     }
 }

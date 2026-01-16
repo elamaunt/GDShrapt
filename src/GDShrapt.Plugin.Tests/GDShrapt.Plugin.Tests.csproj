@@ -27,4 +27,12 @@
     <ProjectReference Include="..\..\submodules\GDShrapt.TypesMap\src\GDShrapt.TypesMap\GDShrapt.TypesMap.csproj" />
   </ItemGroup>
 
+  <!-- Copy test project to output directory for cross-file tests -->
+  <ItemGroup>
+    <None Include="..\..\testproject\GDShrapt.TestProject\**\*">
+      <Link>TestProject\%(RecursiveDir)%(FileName)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

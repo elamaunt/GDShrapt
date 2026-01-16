@@ -174,4 +174,11 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
 
         return members;
     }
+
+    public IEnumerable<string> GetAllTypes()
+    {
+        // Autoloads are instances (singletons), not types.
+        // They are accessed via GetGlobalClass() by name.
+        return Enumerable.Empty<string>();
+    }
 }

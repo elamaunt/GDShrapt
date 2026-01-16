@@ -42,9 +42,9 @@ public class GDReferencesHandler
         var locations = new List<GDLspLocation>();
 
         // Add declaration if requested
-        if (@params.Context.IncludeDeclaration && symbol.Declaration != null)
+        if (@params.Context.IncludeDeclaration && symbol.DeclarationNode != null)
         {
-            var declLocation = GDLocationAdapter.FromNode(symbol.Declaration, filePath);
+            var declLocation = GDLocationAdapter.FromNode(symbol.DeclarationNode, filePath);
             if (declLocation != null)
             {
                 locations.Add(declLocation);
@@ -60,7 +60,7 @@ public class GDReferencesHandler
                 continue;
 
             // Skip declaration if already added
-            if (@params.Context.IncludeDeclaration && refNode == symbol.Declaration)
+            if (@params.Context.IncludeDeclaration && refNode == symbol.DeclarationNode)
                 continue;
 
             var location = GDLocationAdapter.FromNode(refNode, filePath);
