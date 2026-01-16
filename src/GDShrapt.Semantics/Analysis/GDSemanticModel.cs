@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
@@ -95,6 +96,14 @@ public class GDSemanticModel
 
     // Type usages (type annotations, is checks, extends)
     private readonly Dictionary<string, List<GDTypeUsage>> _typeUsages = new();
+
+    // Union types for Variant variables
+    private readonly Dictionary<string, GDVariableUsageProfile> _variableProfiles = new();
+    private readonly Dictionary<string, GDUnionType> _unionTypeCache = new();
+
+    // Container usage profiles
+    private readonly Dictionary<string, GDContainerUsageProfile> _containerProfiles = new();
+    private readonly Dictionary<string, GDContainerElementType> _containerTypeCache = new();
 
     /// <summary>
     /// The script file this model represents.
@@ -399,15 +408,31 @@ public class GDSemanticModel
 
     /// <summary>
     /// Gets the narrowed type for a variable at a specific location (from if checks).
+    /// Walks up the AST to find the nearest branch with narrowing info.
     /// </summary>
     public string? GetNarrowedType(string variableName, GDNode atLocation)
     {
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        if (_narrowingContexts.TryGetValue(atLocation, out var context))
-            return context.GetConcreteType(variableName);
+        var narrowingContext = FindNarrowingContextForNode(atLocation);
+        return narrowingContext?.GetConcreteType(variableName);
+    }
 
+    /// <summary>
+    /// Finds the narrowing context that applies to a given node location.
+    /// Walks up the AST to find the nearest branch with narrowing info.
+    /// </summary>
+    private GDTypeNarrowingContext? FindNarrowingContextForNode(GDNode node)
+    {
+        var current = node;
+        while (current != null)
+        {
+            if (_narrowingContexts.TryGetValue(current, out var context))
+                return context;
+
+            current = current.Parent;
+        }
         return null;
     }
 
@@ -467,6 +492,130 @@ public class GDSemanticModel
 
     #endregion
 
+    #region Union Type Queries
+
+    /// <summary>
+    /// Gets the variable usage profile for a Variant variable.
+    /// </summary>
+    public GDVariableUsageProfile? GetVariableProfile(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return null;
+
+        return _variableProfiles.TryGetValue(variableName, out var profile) ? profile : null;
+    }
+
+    /// <summary>
+    /// Gets the Union type for a Variant variable, computed from all assignments.
+    /// Returns null if the variable is not a tracked Variant variable.
+    /// </summary>
+    public GDUnionType? GetUnionType(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return null;
+
+        // Check cache first
+        if (_unionTypeCache.TryGetValue(variableName, out var cached))
+            return cached;
+
+        // Compute from profile
+        var profile = GetVariableProfile(variableName);
+        if (profile == null)
+            return null;
+
+        var union = profile.ComputeUnionType();
+
+        // Enrich with common base type if we have a runtime provider
+        if (_runtimeProvider != null && union.IsUnion)
+        {
+            var resolver = new GDUnionTypeResolver(_runtimeProvider);
+            resolver.EnrichUnionType(union);
+        }
+
+        _unionTypeCache[variableName] = union;
+        return union;
+    }
+
+    /// <summary>
+    /// Gets all variable usage profiles (for UI display).
+    /// </summary>
+    public IEnumerable<GDVariableUsageProfile> GetAllVariableProfiles()
+    {
+        return _variableProfiles.Values;
+    }
+
+    /// <summary>
+    /// Gets the member access confidence for a Union type.
+    /// </summary>
+    public GDReferenceConfidence GetUnionMemberConfidence(GDUnionType unionType, string memberName)
+    {
+        if (unionType == null || string.IsNullOrEmpty(memberName) || _runtimeProvider == null)
+            return GDReferenceConfidence.NameMatch;
+
+        var resolver = new GDUnionTypeResolver(_runtimeProvider);
+        return resolver.GetMemberConfidence(unionType, memberName);
+    }
+
+    #endregion
+
+    #region Container Queries
+
+    /// <summary>
+    /// Gets the container usage profile for a variable.
+    /// </summary>
+    public GDContainerUsageProfile? GetContainerProfile(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return null;
+
+        return _containerProfiles.TryGetValue(variableName, out var profile) ? profile : null;
+    }
+
+    /// <summary>
+    /// Gets the inferred container element type.
+    /// </summary>
+    public GDContainerElementType? GetInferredContainerType(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return null;
+
+        // Check cache first
+        if (_containerTypeCache.TryGetValue(variableName, out var cached))
+            return cached;
+
+        // Compute from profile
+        var profile = GetContainerProfile(variableName);
+        if (profile == null)
+            return null;
+
+        var containerType = profile.ComputeInferredType();
+
+        // Enrich with common base type if we have a runtime provider
+        if (_runtimeProvider != null && containerType.ElementUnionType.IsUnion)
+        {
+            var resolver = new GDUnionTypeResolver(_runtimeProvider);
+            resolver.EnrichUnionType(containerType.ElementUnionType);
+        }
+        if (_runtimeProvider != null && containerType.KeyUnionType?.IsUnion == true)
+        {
+            var resolver = new GDUnionTypeResolver(_runtimeProvider);
+            resolver.EnrichUnionType(containerType.KeyUnionType);
+        }
+
+        _containerTypeCache[variableName] = containerType;
+        return containerType;
+    }
+
+    /// <summary>
+    /// Gets all container usage profiles (for UI display).
+    /// </summary>
+    public IEnumerable<GDContainerUsageProfile> GetAllContainerProfiles()
+    {
+        return _containerProfiles.Values;
+    }
+
+    #endregion
+
     #region Confidence Analysis
 
     /// <summary>
@@ -483,13 +632,24 @@ public class GDSemanticModel
         if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" && !callerType.StartsWith("Unknown"))
             return GDReferenceConfidence.Strict;
 
-        // Check for type narrowing
+        // Check for type narrowing and Union types
         var varName = GetRootVariableName(memberAccess.CallerExpression);
         if (!string.IsNullOrEmpty(varName))
         {
             var narrowed = GetNarrowedType(varName, memberAccess);
             if (!string.IsNullOrEmpty(narrowed))
                 return GDReferenceConfidence.Strict;
+
+            // Check Union type (for Variant variables with tracked assignments)
+            var unionType = GetUnionType(varName);
+            if (unionType != null && !unionType.IsEmpty)
+            {
+                var memberName = memberAccess.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(memberName))
+                {
+                    return GetUnionMemberConfidence(unionType, memberName);
+                }
+            }
 
             // Check duck type
             var duckType = GetDuckType(varName);
@@ -678,6 +838,32 @@ public class GDSemanticModel
         }
 
         usages.Add(new GDTypeUsage(typeName, node, kind));
+    }
+
+    /// <summary>
+    /// Sets a variable usage profile (for Union type inference).
+    /// </summary>
+    internal void SetVariableProfile(string variableName, GDVariableUsageProfile profile)
+    {
+        if (!string.IsNullOrEmpty(variableName) && profile != null)
+        {
+            _variableProfiles[variableName] = profile;
+            // Clear cache when profile is updated
+            _unionTypeCache.Remove(variableName);
+        }
+    }
+
+    /// <summary>
+    /// Sets a container usage profile (for container element type inference).
+    /// </summary>
+    internal void SetContainerProfile(string variableName, GDContainerUsageProfile profile)
+    {
+        if (!string.IsNullOrEmpty(variableName) && profile != null)
+        {
+            _containerProfiles[variableName] = profile;
+            // Clear cache when profile is updated
+            _containerTypeCache.Remove(variableName);
+        }
     }
 
     #endregion

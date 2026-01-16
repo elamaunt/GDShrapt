@@ -389,6 +389,34 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         return null;
     }
 
+    /// <summary>
+    /// Gets the type of a member (property or variable) in the specified type.
+    /// </summary>
+    public string? GetMemberType(string typeName, string memberName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
+            return null;
+
+        // Resolve path-based type names to class_name
+        var resolvedName = ResolveTypeName(typeName);
+        if (resolvedName == null || !_typeCache.TryGetValue(resolvedName, out var projectType))
+            return null;
+
+        // Check properties
+        if (projectType.Properties.TryGetValue(memberName, out var property))
+        {
+            return property.TypeName;
+        }
+
+        // Check base type
+        if (!string.IsNullOrEmpty(projectType.BaseTypeName))
+        {
+            return GetMemberType(projectType.BaseTypeName, memberName);
+        }
+
+        return null;
+    }
+
     public IEnumerable<string> GetAllTypes()
     {
         return _typeCache.Keys;

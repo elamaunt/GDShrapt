@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GDShrapt.Abstractions;
 
@@ -18,6 +19,9 @@ namespace GDShrapt.Reader
         // Cache for computed types to avoid recomputation
         private readonly Dictionary<GDNode, string> _typeCache;
         private readonly Dictionary<GDNode, GDTypeNode> _typeNodeCache;
+
+        // Optional provider for inferred container element types
+        private Func<string, GDContainerElementType> _containerTypeProvider;
 
         /// <summary>
         /// Gets the runtime provider.
@@ -56,6 +60,16 @@ namespace GDShrapt.Reader
             _injectionContext = injectionContext ?? new GDTypeInjectionContext();
             _typeCache = new Dictionary<GDNode, string>();
             _typeNodeCache = new Dictionary<GDNode, GDTypeNode>();
+        }
+
+        /// <summary>
+        /// Sets a provider function for inferring container element types.
+        /// Used to integrate with usage-based type inference from semantic analysis.
+        /// </summary>
+        /// <param name="provider">Function that takes a variable name and returns inferred container type, or null</param>
+        public void SetContainerTypeProvider(Func<string, GDContainerElementType> provider)
+        {
+            _containerTypeProvider = provider;
         }
 
         /// <summary>
@@ -189,10 +203,29 @@ namespace GDShrapt.Reader
                 return dictType.ValueType;
             }
 
-            // For untyped Array/Dictionary, return Variant
+            // For untyped Array/Dictionary, try to infer from usage
             var containerType = containerTypeNode?.BuildName();
             if (containerType == "Array" || containerType == "Dictionary")
             {
+                // Try to get inferred element type from container usage analysis
+                if (_containerTypeProvider != null)
+                {
+                    var varName = GetRootVariableName(indexerExpr.CallerExpression);
+                    if (!string.IsNullOrEmpty(varName))
+                    {
+                        var inferredType = _containerTypeProvider(varName);
+                        if (inferredType != null && inferredType.HasElementTypes)
+                        {
+                            var effectiveType = inferredType.EffectiveElementType;
+                            if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant")
+                            {
+                                return CreateSimpleType(effectiveType);
+                            }
+                        }
+                    }
+                }
+
+                // Fallback to Variant
                 return CreateVariantTypeNode();
             }
 
@@ -523,79 +556,8 @@ namespace GDShrapt.Reader
             var leftType = InferType(dualOp.LeftExpression);
             var rightType = InferType(dualOp.RightExpression);
 
-            switch (opType)
-            {
-                // Type cast operator: obj as Type -> Type (or null if cast fails)
-                case GDDualOperatorType.As:
-                    // The right side is the target type
-                    return rightType;
-
-                // Comparison operators - always bool
-                case GDDualOperatorType.Equal:
-                case GDDualOperatorType.NotEqual:
-                case GDDualOperatorType.LessThan:
-                case GDDualOperatorType.MoreThan:
-                case GDDualOperatorType.LessThanOrEqual:
-                case GDDualOperatorType.MoreThanOrEqual:
-                case GDDualOperatorType.Is:
-                case GDDualOperatorType.In:
-                    return "bool";
-
-                // Logical operators - always bool
-                case GDDualOperatorType.And:
-                case GDDualOperatorType.And2:
-                case GDDualOperatorType.Or:
-                case GDDualOperatorType.Or2:
-                    return "bool";
-
-                // Arithmetic operators - promote to float if either is float
-                case GDDualOperatorType.Addition:
-                case GDDualOperatorType.Subtraction:
-                case GDDualOperatorType.Multiply:
-                    if (leftType == "String" || rightType == "String")
-                        return "String"; // String concatenation
-                    if (leftType == "float" || rightType == "float")
-                        return "float";
-                    if (leftType == "int" && rightType == "int")
-                        return "int";
-                    // Could be vector math - return left type
-                    return leftType;
-
-                case GDDualOperatorType.Division:
-                case GDDualOperatorType.Power:
-                    return "float"; // Division always returns float in GDScript
-
-                case GDDualOperatorType.Mod:
-                    if (leftType == "int" && rightType == "int")
-                        return "int";
-                    return "float";
-
-                // Bitwise operators - always int
-                case GDDualOperatorType.BitwiseAnd:
-                case GDDualOperatorType.BitwiseOr:
-                case GDDualOperatorType.Xor:
-                case GDDualOperatorType.BitShiftLeft:
-                case GDDualOperatorType.BitShiftRight:
-                    return "int";
-
-                // Assignment operators - return left type
-                case GDDualOperatorType.Assignment:
-                case GDDualOperatorType.AddAndAssign:
-                case GDDualOperatorType.SubtractAndAssign:
-                case GDDualOperatorType.MultiplyAndAssign:
-                case GDDualOperatorType.DivideAndAssign:
-                case GDDualOperatorType.ModAndAssign:
-                case GDDualOperatorType.BitwiseAndAndAssign:
-                case GDDualOperatorType.BitwiseOrAndAssign:
-                case GDDualOperatorType.PowerAndAssign:
-                case GDDualOperatorType.BitShiftLeftAndAssign:
-                case GDDualOperatorType.BitShiftRightAndAssign:
-                case GDDualOperatorType.XorAndAssign:
-                    return leftType;
-
-                default:
-                    return null;
-            }
+            // Delegate to the centralized operator type resolver
+            return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
         }
 
         private string InferSingleOperatorType(GDSingleOperatorExpression singleOp)
@@ -604,21 +566,10 @@ namespace GDShrapt.Reader
             if (opType == null)
                 return null;
 
-            switch (opType)
-            {
-                case GDSingleOperatorType.Not:
-                case GDSingleOperatorType.Not2:
-                    return "bool";
+            var operandType = InferType(singleOp.TargetExpression);
 
-                case GDSingleOperatorType.Negate:
-                    return InferType(singleOp.TargetExpression);
-
-                case GDSingleOperatorType.BitwiseNegate:
-                    return "int";
-
-                default:
-                    return null;
-            }
+            // Delegate to the centralized operator type resolver
+            return GDOperatorTypeResolver.ResolveSingleOperatorType(opType.Value, operandType);
         }
 
         /// <summary>
@@ -855,6 +806,22 @@ namespace GDShrapt.Reader
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Gets the root variable name from an expression chain.
+        /// Traverses through member and indexer expressions to find the base identifier.
+        /// </summary>
+        /// <param name="expr">The expression to analyze</param>
+        /// <returns>The root variable name, or null if not an identifier-based expression</returns>
+        private static string GetRootVariableName(GDExpression expr)
+        {
+            while (expr is GDMemberOperatorExpression member)
+                expr = member.CallerExpression;
+            while (expr is GDIndexerExpression indexer)
+                expr = indexer.CallerExpression;
+
+            return (expr as GDIdentifierExpression)?.Identifier?.Sequence;
         }
 
         #region Extended Type Inference API

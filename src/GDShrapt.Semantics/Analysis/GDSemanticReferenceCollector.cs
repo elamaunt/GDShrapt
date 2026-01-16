@@ -93,6 +93,13 @@ public class GDSemanticReferenceCollector : GDVisitor
 
         _model = new GDSemanticModel(_scriptFile, _runtimeProvider, validationContext, _typeEngine);
 
+        // Connect container type provider to type engine for usage-based inference
+        // This must be done before walking the AST so that indexer type inference works
+        if (_typeEngine != null)
+        {
+            _typeEngine.SetContainerTypeProvider(varName => _model.GetInferredContainerType(varName));
+        }
+
         // Collect extends type usage
         var extendsType = _scriptFile.Class.Extends?.Type;
         if (extendsType != null)
@@ -121,6 +128,9 @@ public class GDSemanticReferenceCollector : GDVisitor
 
         // Collect duck types (pass scopes to filter out typed variables)
         CollectDuckTypes(_scriptFile.Class, validationContext);
+
+        // Collect variable usage profiles for Union type inference
+        CollectVariableUsageProfiles(_scriptFile.Class, validationContext);
 
         return _model;
     }
@@ -359,15 +369,8 @@ public class GDSemanticReferenceCollector : GDVisitor
     {
         PushScope(GDScopeType.Conditional, ifStatement);
 
-        // Analyze condition for type narrowing
-        var condition = ifStatement.IfBranch?.Condition;
-        if (condition != null && _narrowingAnalyzer != null)
-        {
-            var narrowingContext = _narrowingAnalyzer.AnalyzeCondition(condition, isNegated: false);
-            _narrowingStack.Push(_currentNarrowingContext ?? new GDTypeNarrowingContext());
-            _currentNarrowingContext = narrowingContext;
-            _model!.SetNarrowingContext(ifStatement, narrowingContext);
-        }
+        // Store parent narrowing context
+        _narrowingStack.Push(_currentNarrowingContext ?? new GDTypeNarrowingContext());
     }
 
     public override void Left(GDIfStatement ifStatement)
@@ -376,6 +379,50 @@ public class GDSemanticReferenceCollector : GDVisitor
             _currentNarrowingContext = _narrowingStack.Pop();
 
         PopScope();
+    }
+
+    public override void Visit(GDIfBranch ifBranch)
+    {
+        // Analyze if-branch condition
+        if (ifBranch.Condition != null && _narrowingAnalyzer != null)
+        {
+            var ifNarrowing = _narrowingAnalyzer.AnalyzeCondition(ifBranch.Condition, isNegated: false);
+            _currentNarrowingContext = ifNarrowing;
+            _model!.SetNarrowingContext(ifBranch, ifNarrowing);
+        }
+    }
+
+    public override void Left(GDIfBranch ifBranch)
+    {
+        // Restore parent context after leaving if branch
+        // (will be restored fully when leaving GDIfStatement)
+    }
+
+    public override void Visit(GDElifBranch elifBranch)
+    {
+        // Analyze elif branch condition
+        if (elifBranch.Condition != null && _narrowingAnalyzer != null)
+        {
+            var elifNarrowing = _narrowingAnalyzer.AnalyzeCondition(elifBranch.Condition, isNegated: false);
+            _currentNarrowingContext = elifNarrowing;
+            _model!.SetNarrowingContext(elifBranch, elifNarrowing);
+        }
+    }
+
+    public override void Left(GDElifBranch elifBranch)
+    {
+        // Restore parent context after leaving elif branch
+    }
+
+    public override void Visit(GDElseBranch elseBranch)
+    {
+        // In else branch, all previous conditions were false
+        // No specific narrowing here - the exclusion is handled by the context
+    }
+
+    public override void Left(GDElseBranch elseBranch)
+    {
+        // Nothing special to do
     }
 
     public override void Visit(GDInnerClassDeclaration innerClass)
@@ -902,6 +949,50 @@ public class GDSemanticReferenceCollector : GDVisitor
         foreach (var kv in duckCollector.VariableDuckTypes)
         {
             _model!.SetDuckType(kv.Key, kv.Value);
+        }
+    }
+
+    #endregion
+
+    #region Variable Usage Collection
+
+    private void CollectVariableUsageProfiles(GDClassDeclaration classDecl, GDValidationContext context)
+    {
+        if (classDecl.Members == null)
+            return;
+
+        // Collect class-level Variant variables first
+        var classCollector = new GDClassVariableCollector(_typeEngine);
+        classCollector.Collect(classDecl);
+
+        foreach (var kv in classCollector.Profiles)
+        {
+            _model!.SetVariableProfile(kv.Key, kv.Value);
+        }
+
+        // Collect local variables per method
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDMethodDeclaration method)
+            {
+                // Collect variable usage profiles
+                var varCollector = new GDVariableUsageCollector(context.Scopes, _typeEngine);
+                varCollector.Collect(method);
+
+                foreach (var kv in varCollector.Profiles)
+                {
+                    _model!.SetVariableProfile(kv.Key, kv.Value);
+                }
+
+                // Collect container usage profiles
+                var containerCollector = new GDContainerUsageCollector(context.Scopes, _typeEngine);
+                containerCollector.Collect(method);
+
+                foreach (var kv in containerCollector.Profiles)
+                {
+                    _model!.SetContainerProfile(kv.Key, kv.Value);
+                }
+            }
         }
     }
 

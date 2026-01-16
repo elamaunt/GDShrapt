@@ -11,9 +11,42 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
 {
     private readonly IGDRuntimeProvider[] _providers;
 
+    /// <summary>
+    /// Gets the project types provider if available.
+    /// </summary>
+    public GDProjectTypesProvider? ProjectTypesProvider { get; }
+
+    /// <summary>
+    /// Gets the Godot types provider if available.
+    /// </summary>
+    public GDGodotTypesProvider? GodotTypesProvider { get; }
+
     public GDCompositeRuntimeProvider(params IGDRuntimeProvider?[] providers)
     {
         _providers = providers.Where(p => p != null).Cast<IGDRuntimeProvider>().ToArray();
+
+        // Store references to specific providers for direct access
+        foreach (var provider in _providers)
+        {
+            if (provider is GDProjectTypesProvider projectProvider)
+                ProjectTypesProvider = projectProvider;
+            else if (provider is GDGodotTypesProvider godotProvider)
+                GodotTypesProvider = godotProvider;
+        }
+    }
+
+    public GDCompositeRuntimeProvider(
+        GDGodotTypesProvider? godotTypesProvider,
+        GDProjectTypesProvider? projectTypesProvider,
+        GDAutoloadsProvider? autoloadsProvider,
+        GDSceneTypesProvider? sceneTypesProvider)
+    {
+        var providers = new IGDRuntimeProvider?[] { godotTypesProvider, projectTypesProvider, autoloadsProvider, sceneTypesProvider };
+        _providers = providers.Where(p => p != null).Cast<IGDRuntimeProvider>().ToArray();
+
+        // Store direct references
+        GodotTypesProvider = godotTypesProvider;
+        ProjectTypesProvider = projectTypesProvider;
     }
 
     public bool IsKnownType(string typeName)
