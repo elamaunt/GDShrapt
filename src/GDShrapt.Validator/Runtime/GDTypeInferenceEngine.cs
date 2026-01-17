@@ -63,6 +63,28 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Finds a member in a type, traversing the inheritance chain if necessary.
+        /// </summary>
+        private GDRuntimeMemberInfo FindMemberWithInheritance(string typeName, string memberName)
+        {
+            var visited = new HashSet<string>();
+            var current = typeName;
+            while (!string.IsNullOrEmpty(current))
+            {
+                // Prevent infinite loop on cyclic inheritance
+                if (!visited.Add(current))
+                    return null;
+
+                var memberInfo = _runtimeProvider.GetMember(current, memberName);
+                if (memberInfo != null)
+                    return memberInfo;
+
+                current = _runtimeProvider.GetBaseType(current);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Sets a provider function for inferring container element types.
         /// Used to integrate with usage-based type inference from semantic analysis.
         /// </summary>
@@ -446,7 +468,7 @@ namespace GDShrapt.Reader
 
                 if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(methodName))
                 {
-                    var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
+                    var memberInfo = FindMemberWithInheritance(callerType, methodName);
                     if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                         return memberInfo.Type;
                 }
@@ -539,7 +561,7 @@ namespace GDShrapt.Reader
 
             if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(memberName))
             {
-                var memberInfo = _runtimeProvider.GetMember(callerType, memberName);
+                var memberInfo = FindMemberWithInheritance(callerType, memberName);
                 if (memberInfo != null)
                     return memberInfo.Type;
             }
@@ -631,8 +653,8 @@ namespace GDShrapt.Reader
 
                 if (!string.IsNullOrEmpty(signalName) && !string.IsNullOrEmpty(callerType))
                 {
-                    // Check if it's a signal via runtime provider
-                    var memberInfo = _runtimeProvider.GetMember(callerType, signalName);
+                    // Check if it's a signal via runtime provider (with inheritance)
+                    var memberInfo = FindMemberWithInheritance(callerType, signalName);
                     if (memberInfo?.Kind == GDRuntimeMemberKind.Signal)
                     {
                         // Try type injector for signal parameter types
@@ -1088,7 +1110,7 @@ namespace GDShrapt.Reader
 
                 if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(methodName))
                 {
-                    var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
+                    var memberInfo = FindMemberWithInheritance(callerType, methodName);
                     if (memberInfo?.Kind == GDRuntimeMemberKind.Method)
                     {
                         // Type injector may know the parameter types

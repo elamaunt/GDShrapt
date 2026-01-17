@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -40,6 +41,31 @@ public class GDTypeInferenceHelper
         _analyzer = analyzer;
         _typeResolver = typeResolver;
         _runtimeProvider = typeResolver?.RuntimeProvider;
+    }
+
+    /// <summary>
+    /// Finds a member in a type, traversing the inheritance chain if necessary.
+    /// </summary>
+    private GDRuntimeMemberInfo? FindMemberWithInheritance(string typeName, string memberName)
+    {
+        if (_runtimeProvider == null)
+            return null;
+
+        var visited = new HashSet<string>();
+        var current = typeName;
+        while (!string.IsNullOrEmpty(current))
+        {
+            // Prevent infinite loop on cyclic inheritance
+            if (!visited.Add(current))
+                return null;
+
+            var memberInfo = _runtimeProvider.GetMember(current, memberName);
+            if (memberInfo != null)
+                return memberInfo;
+
+            current = _runtimeProvider.GetBaseType(current);
+        }
+        return null;
     }
 
     /// <summary>
@@ -318,7 +344,7 @@ public class GDTypeInferenceHelper
 
             if (!callerTypeResult.IsUnknown && !string.IsNullOrEmpty(methodName))
             {
-                var memberInfo = _runtimeProvider?.GetMember(callerTypeResult.TypeName, methodName);
+                var memberInfo = FindMemberWithInheritance(callerTypeResult.TypeName, methodName);
                 if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                 {
                     if (!string.IsNullOrEmpty(memberInfo.Type))
@@ -341,7 +367,7 @@ public class GDTypeInferenceHelper
 
         if (!callerTypeResult.IsUnknown && !string.IsNullOrEmpty(memberName))
         {
-            var memberInfo = _runtimeProvider?.GetMember(callerTypeResult.TypeName, memberName);
+            var memberInfo = FindMemberWithInheritance(callerTypeResult.TypeName, memberName);
             if (memberInfo != null && !string.IsNullOrEmpty(memberInfo.Type))
             {
                 return GDInferredType.High(memberInfo.Type, $"Property type: {callerTypeResult.TypeName}.{memberName}");

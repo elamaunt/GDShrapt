@@ -117,6 +117,10 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(methodName))
             return;
 
+        // Skip .new() constructor - it's a special built-in, not a regular method
+        if (methodName == "new")
+            return;
+
         var callerExpr = memberExpr.CallerExpression;
         if (callerExpr == null)
             return;

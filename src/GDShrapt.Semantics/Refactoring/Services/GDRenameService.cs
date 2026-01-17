@@ -1,5 +1,4 @@
 using GDShrapt.Reader;
-using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,38 +13,6 @@ namespace GDShrapt.Semantics;
 public class GDRenameService
 {
     private readonly GDScriptProject _project;
-
-    /// <summary>
-    /// Reserved GDScript keywords that cannot be used as identifiers.
-    /// </summary>
-    private static readonly HashSet<string> ReservedKeywords = new HashSet<string>(StringComparer.Ordinal)
-    {
-        // Control flow
-        "if", "elif", "else", "for", "while", "match", "break", "continue", "pass", "return", "await",
-        // Declarations
-        "class", "class_name", "extends", "func", "signal", "var", "const", "enum", "static",
-        // Types
-        "void", "bool", "int", "float",
-        // Operators
-        "and", "or", "not", "in", "is", "as",
-        // Special
-        "self", "super", "true", "false", "null", "PI", "TAU", "INF", "NAN",
-        // Modifiers
-        "setget", "onready", "export", "tool", "master", "puppet", "slave", "remote", "sync", "remotesync", "mastersync", "puppetsync"
-    };
-
-    /// <summary>
-    /// Built-in type names that should not be used as identifiers.
-    /// </summary>
-    private static readonly HashSet<string> BuiltInTypes = new HashSet<string>(StringComparer.Ordinal)
-    {
-        "Array", "Dictionary", "String", "Vector2", "Vector3", "Vector4",
-        "Color", "Rect2", "Transform2D", "Transform3D", "Basis", "Quaternion",
-        "AABB", "Plane", "NodePath", "RID", "Object", "Callable", "Signal",
-        "StringName", "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
-        "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
-    };
 
     public GDRenameService(GDScriptProject project)
     {
@@ -247,7 +214,7 @@ public class GDRenameService
         var oldName = scope.SymbolName;
 
         // Check for reserved keywords
-        if (ReservedKeywords.Contains(newName))
+        if (GDNamingUtilities.IsReservedKeyword(newName))
             return GDRenameResult.WithConflicts(new List<GDRenameConflict> {
                 new GDRenameConflict(newName, $"'{newName}' is a reserved GDScript keyword", GDRenameConflictType.ReservedKeyword)
             });
@@ -373,7 +340,7 @@ public class GDRenameService
         var conflicts = new List<GDRenameConflict>();
 
         // Check reserved keywords
-        if (ReservedKeywords.Contains(newName))
+        if (GDNamingUtilities.IsReservedKeyword(newName))
         {
             conflicts.Add(new GDRenameConflict(
                 newName,
@@ -382,7 +349,7 @@ public class GDRenameService
         }
 
         // Check built-in types
-        if (BuiltInTypes.Contains(newName))
+        if (GDNamingUtilities.IsBuiltInType(newName))
         {
             conflicts.Add(new GDRenameConflict(
                 newName,
@@ -411,40 +378,14 @@ public class GDRenameService
 
     /// <summary>
     /// Validates that a name is a valid GDScript identifier.
+    /// Delegates to GDNamingUtilities for consistent validation.
     /// </summary>
     /// <param name="name">The name to validate.</param>
     /// <param name="errorMessage">Error message if invalid.</param>
     /// <returns>True if valid, false otherwise.</returns>
     public bool ValidateIdentifier(string name, out string? errorMessage)
     {
-        if (string.IsNullOrEmpty(name))
-        {
-            errorMessage = "Identifier cannot be empty";
-            return false;
-        }
-
-        // Must start with letter or underscore
-        if (!char.IsLetter(name[0]) && name[0] != '_')
-        {
-            errorMessage = "Identifier must start with a letter or underscore";
-            return false;
-        }
-
-        // Rest must be letters, digits, or underscores
-        for (int i = 1; i < name.Length; i++)
-        {
-            if (!char.IsLetterOrDigit(name[i]) && name[i] != '_')
-            {
-                errorMessage = $"Invalid character '{name[i]}' in identifier";
-                return false;
-            }
-        }
-
-        // Check reserved keywords (not blocking, but could be added as warning)
-        // For now, we block them in CheckConflicts
-
-        errorMessage = null;
-        return true;
+        return GDNamingUtilities.ValidateIdentifier(name, out errorMessage);
     }
 
     /// <summary>

@@ -24,6 +24,12 @@ namespace GDShrapt.Reader
         /// </summary>
         public IReadOnlyDictionary<string, GDFunctionSignature> UserFunctions => _userFunctions;
 
+        /// <summary>
+        /// The base type of the current class from its extends clause.
+        /// For example, "Node2D" for a script with "extends Node2D".
+        /// </summary>
+        public string CurrentClassBaseType { get; set; }
+
         public bool IsInLoop => Scopes.IsInLoop;
         public bool IsInFunction => Scopes.IsInFunction;
         public bool IsInClass => Scopes.IsInClass;
@@ -68,6 +74,57 @@ namespace GDShrapt.Reader
                 return true;
 
             return false;
+        }
+
+        /// <summary>
+        /// Checks if a member (method, property, signal) exists in the base class hierarchy.
+        /// Uses the pattern from GDMemberAccessValidator.FindMember().
+        /// </summary>
+        public bool IsBaseClassMember(string memberName)
+        {
+            if (string.IsNullOrEmpty(memberName) || string.IsNullOrEmpty(CurrentClassBaseType))
+                return false;
+
+            var visited = new HashSet<string>();
+            var currentType = CurrentClassBaseType;
+            while (!string.IsNullOrEmpty(currentType))
+            {
+                // Prevent infinite loop on cyclic inheritance
+                if (!visited.Add(currentType))
+                    return false;
+
+                var memberInfo = RuntimeProvider.GetMember(currentType, memberName);
+                if (memberInfo != null)
+                    return true;
+
+                currentType = RuntimeProvider.GetBaseType(currentType);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Gets member info from base class hierarchy (returns first found).
+        /// </summary>
+        public GDRuntimeMemberInfo GetBaseClassMember(string memberName)
+        {
+            if (string.IsNullOrEmpty(memberName) || string.IsNullOrEmpty(CurrentClassBaseType))
+                return null;
+
+            var visited = new HashSet<string>();
+            var currentType = CurrentClassBaseType;
+            while (!string.IsNullOrEmpty(currentType))
+            {
+                // Prevent infinite loop on cyclic inheritance
+                if (!visited.Add(currentType))
+                    return null;
+
+                var memberInfo = RuntimeProvider.GetMember(currentType, memberName);
+                if (memberInfo != null)
+                    return memberInfo;
+
+                currentType = RuntimeProvider.GetBaseType(currentType);
+            }
+            return null;
         }
 
         /// <summary>

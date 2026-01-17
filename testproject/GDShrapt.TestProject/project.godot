@@ -27,3 +27,7 @@ project/assembly_name="GDShrapt.TestProject"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gdshrapt/plugin.cfg")
+
+[gdshrapt]
+
+notifications/min_severity=1

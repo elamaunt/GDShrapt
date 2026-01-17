@@ -206,11 +206,12 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
         foreach (var method in typeInfo.Methods.Values)
         {
+            var (minArgs, maxArgs) = CalculateArgConstraints(method.Parameters);
             members.Add(GDRuntimeMemberInfo.Method(
                 method.Name,
                 method.ReturnTypeName,
-                method.Parameters.Count,
-                method.Parameters.Count,
+                minArgs,
+                maxArgs,
                 isVarArgs: false,
                 isStatic: method.IsStatic,
                 isAbstract: method.IsAbstract));
@@ -252,12 +253,22 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     /// <returns>A tuple of (member info, declaring type name) or (null, null) if not found.</returns>
     public (GDRuntimeMemberInfo? Member, string? DeclaringTypeName) GetMemberWithDeclaringType(string typeName, string memberName)
     {
+        return GetMemberWithDeclaringTypeInternal(typeName, memberName, new HashSet<string>());
+    }
+
+    private (GDRuntimeMemberInfo? Member, string? DeclaringTypeName) GetMemberWithDeclaringTypeInternal(
+        string typeName, string memberName, HashSet<string> visited)
+    {
         if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
             return (null, null);
 
         // Resolve path-based type names to class_name
         var resolvedName = ResolveTypeName(typeName);
         if (resolvedName == null || !_typeCache.TryGetValue(resolvedName, out var projectType))
+            return (null, null);
+
+        // Prevent infinite recursion by tracking visited types
+        if (!visited.Add(resolvedName))
             return (null, null);
 
         // Use resolved name for return value (class_name, not path)
@@ -303,7 +314,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check base type - propagate the declaring type from base
         if (!string.IsNullOrEmpty(projectType.BaseTypeName))
         {
-            return GetMemberWithDeclaringType(projectType.BaseTypeName, memberName);
+            return GetMemberWithDeclaringTypeInternal(projectType.BaseTypeName, memberName, visited);
         }
 
         return (null, null);
@@ -332,10 +343,14 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         if (sourceType == targetType)
             return true;
 
-        // Check inheritance chain
+        // Check inheritance chain with cycle detection
+        var visited = new HashSet<string>();
         var current = sourceType;
         while (!string.IsNullOrEmpty(current))
         {
+            if (!visited.Add(current))
+                return false; // Cycle detected
+
             if (current == targetType)
                 return true;
 
@@ -394,12 +409,21 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     /// </summary>
     public string? GetMemberType(string typeName, string memberName)
     {
+        return GetMemberTypeInternal(typeName, memberName, new HashSet<string>());
+    }
+
+    private string? GetMemberTypeInternal(string typeName, string memberName, HashSet<string> visited)
+    {
         if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
             return null;
 
         // Resolve path-based type names to class_name
         var resolvedName = ResolveTypeName(typeName);
         if (resolvedName == null || !_typeCache.TryGetValue(resolvedName, out var projectType))
+            return null;
+
+        // Prevent infinite recursion by tracking visited types
+        if (!visited.Add(resolvedName))
             return null;
 
         // Check properties
@@ -411,7 +435,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check base type
         if (!string.IsNullOrEmpty(projectType.BaseTypeName))
         {
-            return GetMemberType(projectType.BaseTypeName, memberName);
+            return GetMemberTypeInternal(projectType.BaseTypeName, memberName, visited);
         }
 
         return null;
@@ -420,6 +444,21 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     public IEnumerable<string> GetAllTypes()
     {
         return _typeCache.Keys;
+    }
+
+    /// <summary>
+    /// Calculates MinArgs and MaxArgs from project parameter information.
+    /// Note: GDScript does not support variadic parameters in user-defined functions.
+    /// </summary>
+    private static (int MinArgs, int MaxArgs) CalculateArgConstraints(List<GDProjectParameterInfo> parameters)
+    {
+        if (parameters == null || parameters.Count == 0)
+            return (0, 0);
+
+        int minArgs = parameters.Count(p => !p.HasDefaultValue);
+        int maxArgs = parameters.Count;
+
+        return (minArgs, maxArgs);
     }
 }
 

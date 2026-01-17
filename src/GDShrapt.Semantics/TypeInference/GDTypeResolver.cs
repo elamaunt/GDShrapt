@@ -204,10 +204,15 @@ public class GDTypeResolver
     public IReadOnlyList<string> GetInheritanceChain(string typeName)
     {
         var chain = new List<string>();
+        var visited = new HashSet<string>();
         var current = typeName;
 
         while (!string.IsNullOrEmpty(current))
         {
+            // Prevent infinite loop on cyclic inheritance
+            if (!visited.Add(current))
+                break;
+
             chain.Add(current);
             current = GetBaseType(current);
         }

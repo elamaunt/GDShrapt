@@ -45,10 +45,19 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             }
         }
 
-        // Add primitive types
+        // Add primitive types that are not in TypeDatas
         foreach (var primitiveType in new[] { "void", "bool", "int", "float", "String", "Variant" })
         {
             _knownTypes.Add(primitiveType);
+        }
+
+        // Add all GlobalTypes from TypesMap (includes PackedArray types, Array, Dictionary, etc.)
+        if (_assemblyData?.GlobalData?.GlobalTypes != null)
+        {
+            foreach (var globalType in _assemblyData.GlobalData.GlobalTypes.Keys)
+            {
+                _knownTypes.Add(globalType);
+            }
         }
     }
 
@@ -87,12 +96,13 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 if (methodKvp.Value.Count > 0)
                 {
                     var method = methodKvp.Value[0];
-                    var paramCount = method.Parameters?.Length ?? 0;
+                    var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
                     members.Add(GDRuntimeMemberInfo.Method(
                         method.GDScriptName,
                         method.GDScriptReturnTypeName ?? "Variant",
-                        paramCount,
-                        paramCount));
+                        minArgs,
+                        maxArgs,
+                        isVarArgs));
                 }
             }
         }
@@ -153,12 +163,13 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (typeData.MethodDatas?.TryGetValue(memberName, out var methods) == true && methods.Count > 0)
         {
             var method = methods[0];
-            var paramCount = method.Parameters?.Length ?? 0;
+            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
             return GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
                 method.GDScriptReturnTypeName ?? "Variant",
-                paramCount,
-                paramCount);
+                minArgs,
+                maxArgs,
+                isVarArgs);
         }
 
         // Check properties
@@ -267,11 +278,30 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (_assemblyData.GlobalData.MethodDatas.TryGetValue(name, out var methods) && methods.Count > 0)
         {
             var method = methods[0];
-            var paramCount = method.Parameters?.Length ?? 0;
-            return GDRuntimeFunctionInfo.Exact(
-                method.GDScriptName,
-                paramCount,
-                method.GDScriptReturnTypeName ?? "Variant");
+            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
+
+            if (isVarArgs)
+            {
+                return GDRuntimeFunctionInfo.VarArgs(
+                    method.GDScriptName,
+                    minArgs,
+                    method.GDScriptReturnTypeName ?? "Variant");
+            }
+            else if (minArgs == maxArgs)
+            {
+                return GDRuntimeFunctionInfo.Exact(
+                    method.GDScriptName,
+                    minArgs,
+                    method.GDScriptReturnTypeName ?? "Variant");
+            }
+            else
+            {
+                return GDRuntimeFunctionInfo.Range(
+                    method.GDScriptName,
+                    minArgs,
+                    maxArgs,
+                    method.GDScriptReturnTypeName ?? "Variant");
+            }
         }
 
         return null;
@@ -306,6 +336,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         // Check global types
         if (_assemblyData?.GlobalData?.GlobalTypes?.ContainsKey(identifier) == true)
+            return true;
+
+        // Check global enum constants (KEY_SPACE, KEY_ENTER, MOUSE_BUTTON_LEFT, etc.)
+        if (_assemblyData?.GlobalData?.EnumsConstants?.ContainsKey(identifier) == true)
             return true;
 
         // Built-in constants
@@ -375,5 +409,34 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     public IEnumerable<string> GetAllTypes()
     {
         return _knownTypes;
+    }
+
+    /// <summary>
+    /// Calculates MinArgs, MaxArgs, and IsVarArgs from parameter information.
+    /// </summary>
+    private static (int MinArgs, int MaxArgs, bool IsVarArgs) CalculateArgConstraints(GDParameterInfo[]? parameters)
+    {
+        if (parameters == null || parameters.Length == 0)
+            return (0, 0, false);
+
+        // Check if last parameter is variadic (params)
+        bool isVarArgs = parameters[^1].IsParams;
+
+        // MinArgs = count of parameters WITHOUT HasDefaultValue and not params
+        int minArgs = 0;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            var param = parameters[i];
+            if (param.IsParams)
+                continue;
+            if (param.HasDefaultValue)
+                continue;
+            minArgs++;
+        }
+
+        // MaxArgs = -1 if varargs, otherwise total count
+        int maxArgs = isVarArgs ? -1 : parameters.Length;
+
+        return (minArgs, maxArgs, isVarArgs);
     }
 }

@@ -32,6 +32,27 @@ namespace GDShrapt.Reader
             _context.Scopes.ResetToGlobal();
         }
 
+        #region Extends Clause
+
+        public override void Visit(GDExtendsAttribute extendsAttribute)
+        {
+            var typeNode = extendsAttribute.Type;
+            if (typeNode == null)
+                return;
+
+            // Skip string path extends (e.g., extends "res://path.gd") - handled separately
+            if (typeNode is GDStringTypeNode)
+                return;
+
+            var typeName = typeNode.BuildName();
+            if (!string.IsNullOrEmpty(typeName))
+            {
+                _context.CurrentClassBaseType = typeName;
+            }
+        }
+
+        #endregion
+
         #region Methods
 
         public override void Visit(GDMethodDeclaration methodDeclaration)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Abstractions;
 
@@ -105,16 +106,42 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Finds a member in a type, traversing the inheritance chain if necessary.
+        /// </summary>
+        private GDRuntimeMemberInfo FindMemberWithInheritance(string typeName, string memberName)
+        {
+            var visited = new HashSet<string>();
+            var current = typeName;
+            while (!string.IsNullOrEmpty(current))
+            {
+                // Prevent infinite loop on cyclic inheritance
+                if (!visited.Add(current))
+                    return null;
+
+                var memberInfo = Context.RuntimeProvider.GetMember(current, memberName);
+                if (memberInfo != null)
+                    return memberInfo;
+
+                current = Context.RuntimeProvider.GetBaseType(current);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Validates a method call on a type using the RuntimeProvider.
         /// </summary>
         private void ValidateMemberCall(string typeName, string methodName, int argCount, GDCallExpression call)
         {
+            // Skip .new() constructor - it's a special built-in, not a regular method
+            if (methodName == "new")
+                return;
+
             // First check if it's a global class/singleton
             var globalClass = Context.RuntimeProvider.GetGlobalClass(typeName);
             if (globalClass != null)
             {
-                // Get member info from the type
-                var memberInfo = Context.RuntimeProvider.GetMember(typeName, methodName);
+                // Get member info from the type, including inheritance chain
+                var memberInfo = FindMemberWithInheritance(typeName, methodName);
                 if (memberInfo == null)
                 {
                     // Method not found on known global class - report warning
@@ -154,7 +181,8 @@ namespace GDShrapt.Reader
             // Also check if it's a known type (for static methods)
             else if (Context.RuntimeProvider.IsKnownType(typeName))
             {
-                var memberInfo = Context.RuntimeProvider.GetMember(typeName, methodName);
+                // Get member info from the type, including inheritance chain
+                var memberInfo = FindMemberWithInheritance(typeName, methodName);
                 if (memberInfo == null)
                 {
                     // Method not found on known type - report warning

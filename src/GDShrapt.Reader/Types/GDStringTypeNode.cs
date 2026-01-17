@@ -85,7 +85,7 @@
 
         public override string BuildName()
         {
-            return $"{Path}";
+            return Path?.Sequence ?? "";
         }
     }
 }

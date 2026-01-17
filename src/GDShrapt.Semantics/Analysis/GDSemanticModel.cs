@@ -231,9 +231,14 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (_runtimeProvider == null)
             return typeName;
 
+        var visited = new HashSet<string>();
         var current = typeName;
         while (!string.IsNullOrEmpty(current))
         {
+            // Prevent infinite loop on cyclic inheritance
+            if (!visited.Add(current))
+                return typeName;
+
             var typeInfo = _runtimeProvider.GetTypeInfo(current);
             if (typeInfo?.Members != null)
             {

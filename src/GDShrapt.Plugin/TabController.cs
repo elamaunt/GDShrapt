@@ -169,12 +169,17 @@ internal partial class TabController : GodotObject
 
     private void CreateReferenceOverlay(Node container)
     {
+        Logger.Info($"CreateReferenceOverlay: textEdit={_textEdit != null}, existing overlay={_referenceOverlay != null}");
+
         if (_textEdit == null || _referenceOverlay != null)
             return;
 
         // Check if reference counter is enabled in settings
         var config = _plugin.ConfigManager?.Config;
-        if (config?.Plugin?.UI?.ReferencesCounterEnabled == false)
+        var isEnabled = config?.Plugin?.UI?.ReferencesCounterEnabled;
+        Logger.Info($"CreateReferenceOverlay: ReferencesCounterEnabled={isEnabled}");
+
+        if (isEnabled == false)
         {
             Logger.Debug("Reference count overlay disabled in settings");
             // Still create error lens if enabled
@@ -182,16 +187,23 @@ internal partial class TabController : GodotObject
             return;
         }
 
-        Logger.Debug("Creating reference count overlay");
+        Logger.Info("Creating reference count overlay");
 
         _referenceOverlay = new ReferenceCountOverlay();
+
+        // Enable processing before adding to tree
+        _referenceOverlay.SetProcess(true);
+        _referenceOverlay.ProcessMode = Node.ProcessModeEnum.Always;
+
         container.AddChild(_referenceOverlay);
+        Logger.Info($"CreateReferenceOverlay: Overlay added to container, visible={_referenceOverlay.Visible}, isInsideTree={_referenceOverlay.IsInsideTree()}, isProcessing={_referenceOverlay.IsProcessing()}, processMode={_referenceOverlay.ProcessMode}");
 
         // Position overlay over the TextEdit
         _referenceOverlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
 
         // Attach to editor
         _referenceOverlay.AttachToEditor(_textEdit, _plugin.ScriptProject);
+        Logger.Info($"CreateReferenceOverlay: AttachToEditor called, project scripts count={_plugin.ScriptProject?.ScriptFiles?.Count() ?? 0}, overlayIsProcessing={_referenceOverlay.IsProcessing()}");
 
         // Wire up click event
         _referenceOverlay.ReferenceCountClicked += OnReferenceCountClicked;
@@ -200,7 +212,12 @@ internal partial class TabController : GodotObject
         if (_script != null)
         {
             var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
+            Logger.Info($"CreateReferenceOverlay: Setting script, resourcePath={_script.ResourcePath}, found={ScriptFile != null}");
             _referenceOverlay.SetScript(ScriptFile);
+        }
+        else
+        {
+            Logger.Info("CreateReferenceOverlay: No script available yet");
         }
 
         // Create Error Lens overlay

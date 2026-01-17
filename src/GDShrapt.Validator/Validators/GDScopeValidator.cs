@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
@@ -99,12 +100,46 @@ namespace GDShrapt.Reader
         public override void Visit(GDInnerClassDeclaration innerClass)
         {
             // Inner class is already registered by GDDeclarationCollector
-            // Don't enter inner class scope - inner classes are separate units
+            // Save current base type and set inner class base type
+            var previousBaseType = Context.CurrentClassBaseType;
+
+            // Extract inner class base type
+            var baseType = innerClass.BaseType;
+            if (baseType != null)
+            {
+                var baseTypeName = baseType.BuildName();
+                if (!string.IsNullOrEmpty(baseTypeName))
+                {
+                    Context.CurrentClassBaseType = baseTypeName;
+                }
+            }
+            else
+            {
+                // Inner class without extends - no base type
+                Context.CurrentClassBaseType = null;
+            }
+
+            // Store previous base type for restoration in Left()
+            // Use node as key in a dictionary stored on the stack
+            _innerClassBaseTypes.Push((innerClass, previousBaseType));
         }
+
+        // Stack to track inner class base types for proper nesting
+        private readonly Stack<(GDInnerClassDeclaration innerClass, string previousBaseType)> _innerClassBaseTypes
+            = new Stack<(GDInnerClassDeclaration, string)>();
 
         public override void Left(GDInnerClassDeclaration innerClass)
         {
-            // Nothing to do
+            // Restore previous base type when leaving inner class
+            if (_innerClassBaseTypes.Count > 0)
+            {
+                var (storedInnerClass, previousBaseType) = _innerClassBaseTypes.Peek();
+                if (storedInnerClass == innerClass)
+                {
+                    _innerClassBaseTypes.Pop();
+                    Context.CurrentClassBaseType = previousBaseType;
+                }
+            }
         }
 
         #endregion
@@ -317,6 +352,10 @@ namespace GDShrapt.Reader
 
             // Check if it's a global class/singleton
             if (Context.RuntimeProvider.GetGlobalClass(name) != null)
+                return;
+
+            // Check if it's a method/member from base class hierarchy (e.g., queue_free() from Node2D)
+            if (Context.IsBaseClassMember(name))
                 return;
 
             ReportError(

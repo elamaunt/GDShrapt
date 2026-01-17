@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -38,7 +36,7 @@ public class GDExtractVariableService
         if (expression == null)
             return GDExtractVariableResult.Failed("No expression selected");
 
-        var normalizedName = NormalizeVariableName(variableName);
+        var normalizedName = GDNamingUtilities.NormalizeVariableName(variableName ?? "new_variable");
 
         // Infer type with confidence level
         var helper = new GDTypeInferenceHelper(context.GetAnalyzer());
@@ -70,7 +68,7 @@ public class GDExtractVariableService
         if (expression == null)
             return GDRefactoringResult.Failed("No expression selected");
 
-        var normalizedName = NormalizeVariableName(variableName);
+        var normalizedName = GDNamingUtilities.NormalizeVariableName(variableName ?? "new_variable");
         var filePath = context.Script.Reference.FullPath;
 
         // Get the statement containing the expression
@@ -86,7 +84,7 @@ public class GDExtractVariableService
         var edits = new List<GDTextEdit>();
 
         // Get indentation for the variable declaration
-        var indent = GetIndentation(containingStatement);
+        var indent = GDIndentationUtilities.GetIndentation(containingStatement);
 
         // Edit 1: Insert variable declaration before the containing statement
         var insertEdit = new GDTextEdit(
@@ -143,12 +141,12 @@ public class GDExtractVariableService
             case GDCallExpression call:
                 // Use function name as base
                 var funcName = call.CallerExpression?.ToString() ?? "result";
-                return ToSnakeCase(funcName);
+                return GDNamingUtilities.ToSnakeCase(funcName);
 
             case GDMemberOperatorExpression member:
                 // Use member name
                 var memberName = member.Identifier?.Sequence ?? "value";
-                return ToSnakeCase(memberName);
+                return GDNamingUtilities.ToSnakeCase(memberName);
 
             case GDIdentifierExpression ident:
                 // Already an identifier
@@ -173,58 +171,7 @@ public class GDExtractVariableService
 
     #region Helper Methods
 
-    private string NormalizeVariableName(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            return "new_variable";
-
-        // Convert to snake_case
-        var result = new StringBuilder();
-        for (int i = 0; i < name.Length; i++)
-        {
-            var c = name[i];
-            if (char.IsLetterOrDigit(c) || c == '_')
-            {
-                result.Append(char.ToLowerInvariant(c));
-            }
-            else if (char.IsWhiteSpace(c))
-            {
-                result.Append('_');
-            }
-        }
-
-        var normalized = result.ToString();
-        if (string.IsNullOrEmpty(normalized) || char.IsDigit(normalized[0]))
-            return "new_variable";
-
-        return normalized;
-    }
-
-    private string ToSnakeCase(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return "value";
-
-        var result = new StringBuilder();
-        for (int i = 0; i < name.Length; i++)
-        {
-            var c = name[i];
-            if (char.IsUpper(c))
-            {
-                if (i > 0 && !char.IsUpper(name[i - 1]))
-                    result.Append('_');
-                result.Append(char.ToLowerInvariant(c));
-            }
-            else
-            {
-                result.Append(c);
-            }
-        }
-
-        return result.ToString();
-    }
-
-    private string BuildVariableDeclaration(string name, string inferredType, string value)
+    private static string BuildVariableDeclaration(string name, string? inferredType, string value)
     {
         if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant")
         {
@@ -233,7 +180,7 @@ public class GDExtractVariableService
         return $"var {name} = {value}";
     }
 
-    private GDStatement FindContainingStatement(GDExpression expression)
+    private static GDStatement? FindContainingStatement(GDExpression expression)
     {
         var node = expression as GDNode;
         while (node != null)
@@ -245,34 +192,7 @@ public class GDExtractVariableService
         return null;
     }
 
-    private string GetIndentation(GDStatement statement)
-    {
-        // Find indentation from the statement's position
-        if (statement?.Parent is GDStatementsList stmtList)
-        {
-            var indent = stmtList.Tokens.OfType<GDIntendation>().FirstOrDefault();
-            if (indent != null)
-            {
-                return new string('\t', indent.LineIntendationThreshold);
-            }
-        }
-
-        // Find from parent node
-        var node = statement?.Parent;
-        while (node != null)
-        {
-            var indentToken = node.Tokens.OfType<GDIntendation>().FirstOrDefault();
-            if (indentToken != null)
-            {
-                return new string('\t', indentToken.LineIntendationThreshold);
-            }
-            node = node.Parent as GDNode;
-        }
-
-        return "\t"; // Default to single tab
-    }
-
-    private List<GDExpression> FindOccurrences(GDClassDeclaration classDecl, GDExpression expression)
+    private static List<GDExpression> FindOccurrences(GDClassDeclaration classDecl, GDExpression expression)
     {
         var occurrences = new List<GDExpression>();
         var targetText = expression.ToString();

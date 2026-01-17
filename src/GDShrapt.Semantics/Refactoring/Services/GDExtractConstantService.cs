@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -236,22 +235,20 @@ public class GDExtractConstantService
         return names;
     }
 
-    private void AddBuiltinNames(HashSet<string> names)
+    private static void AddBuiltinNames(HashSet<string> names)
     {
-        var keywords = new[]
-        {
-            "if", "elif", "else", "for", "while", "match", "break", "continue",
-            "pass", "return", "class", "class_name", "extends", "is", "as",
-            "self", "signal", "func", "static", "const", "enum", "var",
-            "onready", "export", "setget", "tool", "yield", "assert", "preload",
-            "await", "in", "not", "and", "or", "true", "false", "null",
-            "PI", "TAU", "INF", "NAN"
-        };
-
-        foreach (var keyword in keywords)
+        // Add all reserved keywords and their uppercase variants
+        foreach (var keyword in GDNamingUtilities.ReservedKeywords)
         {
             names.Add(keyword);
             names.Add(keyword.ToUpperInvariant());
+        }
+
+        // Add all built-in types and their uppercase variants
+        foreach (var type in GDNamingUtilities.BuiltInTypes)
+        {
+            names.Add(type);
+            names.Add(type.ToUpperInvariant());
         }
     }
 
@@ -309,84 +306,24 @@ public class GDExtractConstantService
         return conflicts;
     }
 
-    private string EnsureUniqueName(string baseName, HashSet<string> existingNames)
+    private static string EnsureUniqueName(string baseName, HashSet<string> existingNames)
     {
-        if (!existingNames.Contains(baseName))
-            return baseName;
-
-        for (int i = 2; i <= 100; i++)
-        {
-            var candidateName = $"{baseName}_{i}";
-            if (!existingNames.Contains(candidateName))
-                return candidateName;
-        }
-
-        return $"{baseName}_{DateTime.Now.Ticks % 10000}";
+        return GDNamingUtilities.GenerateUniqueName(baseName, existingNames);
     }
 
-    private string ToScreamingSnakeCase(string input)
+    private static string ToScreamingSnakeCase(string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return string.Empty;
-
-        // Replace non-alphanumeric with underscores
-        var result = Regex.Replace(input, @"[^a-zA-Z0-9]", "_");
-        // Insert underscore before uppercase letters
-        result = Regex.Replace(result, @"([a-z])([A-Z])", "$1_$2");
-        // Convert to uppercase
-        result = result.ToUpperInvariant();
-        // Remove consecutive underscores
-        result = Regex.Replace(result, @"_+", "_");
-        // Trim underscores
-        result = result.Trim('_');
-
-        return result;
+        return GDNamingUtilities.ToScreamingSnakeCase(input);
     }
 
-    private string ValidateConstantName(string name)
+    private static string ValidateConstantName(string name)
     {
-        name = name?.Trim() ?? string.Empty;
-
-        // Replace invalid characters
-        name = Regex.Replace(name, @"[^a-zA-Z0-9_]", "_");
-
-        // Ensure starts with letter or underscore
-        if (!string.IsNullOrEmpty(name) && char.IsDigit(name[0]))
-            name = "_" + name;
-
-        // Convert to uppercase for constants
-        name = name.ToUpperInvariant();
-
-        return string.IsNullOrEmpty(name) ? "CONSTANT" : name;
+        return GDNamingUtilities.NormalizeConstantName(name);
     }
 
-    private int FindConstantInsertionLine(GDClassDeclaration classDecl)
+    private static int FindConstantInsertionLine(GDClassDeclaration classDecl)
     {
-        var insertLine = 0;
-
-        // Skip extends declaration if present
-        if (classDecl.Extends != null)
-            insertLine = Math.Max(insertLine, classDecl.Extends.EndLine + 1);
-
-        // Skip class_name if present
-        if (classDecl.ClassName != null)
-            insertLine = Math.Max(insertLine, classDecl.ClassName.EndLine + 1);
-
-        // Find existing constants and insert after them
-        foreach (var member in classDecl.Members.OfType<GDVariableDeclaration>())
-        {
-            if (member.ConstKeyword != null)
-            {
-                insertLine = Math.Max(insertLine, member.EndLine + 1);
-            }
-            else
-            {
-                // Found a non-constant variable, insert before it
-                break;
-            }
-        }
-
-        return insertLine;
+        return GDIndentationUtilities.FindConstantInsertionLine(classDecl);
     }
 
     #endregion

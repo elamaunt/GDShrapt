@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -265,49 +264,15 @@ public class GDGenerateOnreadyService
         return GDInferredType.Low("Node", "Default node type - actual type depends on scene");
     }
 
-    private string NormalizeVariableName(string name, string nodePath)
+    private static string NormalizeVariableName(string? name, string? nodePath)
     {
         if (!string.IsNullOrWhiteSpace(name))
         {
-            return ToSnakeCase(name);
+            return GDNamingUtilities.ToSnakeCase(name);
         }
 
-        // Derive from node path
-        var nodeName = nodePath?.Split('/')?.LastOrDefault();
-        if (!string.IsNullOrEmpty(nodeName))
-        {
-            return ToSnakeCase(nodeName);
-        }
-
-        return "node";
-    }
-
-    private string ToSnakeCase(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return "node";
-
-        var result = new StringBuilder();
-        for (int i = 0; i < name.Length; i++)
-        {
-            var c = name[i];
-            if (char.IsUpper(c))
-            {
-                if (i > 0 && !char.IsUpper(name[i - 1]))
-                    result.Append('_');
-                result.Append(char.ToLowerInvariant(c));
-            }
-            else if (char.IsLetterOrDigit(c) || c == '_')
-            {
-                result.Append(char.ToLowerInvariant(c));
-            }
-        }
-
-        var normalized = result.ToString().TrimStart('_');
-        if (string.IsNullOrEmpty(normalized) || char.IsDigit(normalized[0]))
-            return "node";
-
-        return normalized;
+        // Derive from node path using utility
+        return GDNamingUtilities.SuggestVariableFromNodePath(nodePath ?? "");
     }
 
     private string BuildOnreadyDeclaration(string name, string type, string nodePath)
@@ -319,46 +284,9 @@ public class GDGenerateOnreadyService
         return $"@onready var {name} = ${nodePath}";
     }
 
-    private int FindOnreadyInsertionLine(GDClassDeclaration classDecl)
+    private static int FindOnreadyInsertionLine(GDClassDeclaration classDecl)
     {
-        // Find the best line to insert @onready declaration
-        // Prefer: after signals, before methods
-
-        var lastSignalLine = 0;
-        var firstMethodLine = int.MaxValue;
-        var lastVarLine = 0;
-
-        foreach (var member in classDecl.Members)
-        {
-            if (member is GDSignalDeclaration signal)
-            {
-                if (signal.EndLine > lastSignalLine)
-                    lastSignalLine = signal.EndLine;
-            }
-            else if (member is GDMethodDeclaration method)
-            {
-                if (method.StartLine < firstMethodLine)
-                    firstMethodLine = method.StartLine;
-            }
-            else if (member is GDVariableDeclaration varDecl)
-            {
-                if (varDecl.EndLine > lastVarLine)
-                    lastVarLine = varDecl.EndLine;
-            }
-        }
-
-        // Insert after last variable, before first method
-        if (lastVarLine > 0)
-            return lastVarLine + 1;
-
-        if (lastSignalLine > 0)
-            return lastSignalLine + 1;
-
-        // Default: after extends/class_name
-        var extendsLine = classDecl.Extends?.EndLine ?? 0;
-        var classNameLine = classDecl.ClassName?.EndLine ?? 0;
-
-        return System.Math.Max(extendsLine, classNameLine) + 1;
+        return GDIndentationUtilities.FindOnreadyInsertionLine(classDecl);
     }
 
     #endregion

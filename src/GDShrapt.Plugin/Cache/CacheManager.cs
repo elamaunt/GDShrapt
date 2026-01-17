@@ -18,7 +18,8 @@ internal class CacheManager : IDisposable
     private const string CacheSubDirectory = "cache";
     private const string LintSubDirectory = "lint";
     private const string IndexFileName = "cache.index.json";
-    private const int CurrentCacheVersion = 1;
+    // Version 4: Fixed global enum constants, path-based extends, uint mapping, str varargs
+    private const int CurrentCacheVersion = 4;
 
     private readonly string _projectPath;
     private readonly string _cacheDirectory;

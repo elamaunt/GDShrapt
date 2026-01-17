@@ -43,5 +43,64 @@ public enum GDFixKind
     /// <summary>
     /// Remove text range.
     /// </summary>
-    RemoveText
+    RemoveText,
+
+    // Validation fixes
+
+    /// <summary>
+    /// Add type annotation to variable or parameter.
+    /// </summary>
+    AddTypeAnnotation,
+
+    /// <summary>
+    /// Add return type annotation to function.
+    /// </summary>
+    AddReturnType,
+
+    /// <summary>
+    /// Add await keyword to async call.
+    /// </summary>
+    AddAwait,
+
+    /// <summary>
+    /// Remove unused variable declaration.
+    /// </summary>
+    RemoveUnusedVariable,
+
+    /// <summary>
+    /// Remove unreachable code after return/break/continue.
+    /// </summary>
+    RemoveUnreachableCode,
+
+    // Linter fixes
+
+    /// <summary>
+    /// Rename identifier to snake_case (GDScript convention).
+    /// </summary>
+    RenameToSnakeCase,
+
+    /// <summary>
+    /// Rename class/type to PascalCase (GDScript convention).
+    /// </summary>
+    RenameToPascalCase,
+
+    /// <summary>
+    /// Rename constant to SCREAMING_SNAKE_CASE (GDScript convention).
+    /// </summary>
+    RenameToScreamingSnakeCase,
+
+    /// <summary>
+    /// Simplify boolean expression (e.g., if x == true -> if x).
+    /// </summary>
+    SimplifyCondition,
+
+    /// <summary>
+    /// Extract duplicated code to method.
+    /// </summary>
+    ExtractMethod,
+
+    /// <summary>
+    /// Convert explicit type to inferred type (remove redundant annotation).
+    /// </summary>
+    UseInferredType
 }

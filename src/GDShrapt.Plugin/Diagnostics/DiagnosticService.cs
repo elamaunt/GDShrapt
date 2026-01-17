@@ -154,13 +154,16 @@ internal class DiagnosticService : IDisposable
             Logger.Info("Get service");
             // Create diagnostics service from config and run analysis asynchronously
             var diagnosticsService = GDDiagnosticsService.FromConfig(_configManager.Config);
-           
+
             Logger.Info("Diagnosing initialised");
 
+            // IMPORTANT: Use Diagnose(GDScriptFile) not Diagnose(GDClassDeclaration)
+            // to get semantic model with inheritance support for proper member resolution
             var result = await Task.Run(() =>
                 {
                     Logger.Info("Diagnosing started");
-                    return diagnosticsService.Diagnose(ScriptFile.Class);
+                    // Pass full ScriptFile to use semantic model with inheritance support
+                    return diagnosticsService.Diagnose(ScriptFile);
                 },
                 cancellationToken);
           
@@ -313,6 +316,14 @@ internal class DiagnosticService : IDisposable
             ScriptFile.Reload();
 
             Logger.Debug($"Binding ready");
+
+            // Re-analyze the script to populate semantic model
+            // This is needed because Reload() clears the Analyzer
+            // The semantic model provides inheritance-aware symbol resolution
+            var runtimeProvider = _scriptProject.CreateRuntimeProvider();
+            ScriptFile.Analyze(runtimeProvider);
+
+            Logger.Debug($"Script analyzed, Analyzer={ScriptFile.Analyzer != null}");
 
             // Read current content from disk
             if (System.IO.File.Exists(ScriptFile.FullPath))
