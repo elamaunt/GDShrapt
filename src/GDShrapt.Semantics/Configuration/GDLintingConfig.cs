@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
 
@@ -97,28 +98,4 @@ public enum GDIndentationStyle
     Spaces
 }
 
-/// <summary>
-/// Diagnostic severity levels.
-/// </summary>
-public enum GDDiagnosticSeverity
-{
-    /// <summary>
-    /// Subtle hint, lowest priority.
-    /// </summary>
-    Hint = 0,
-
-    /// <summary>
-    /// Informational message.
-    /// </summary>
-    Info = 1,
-
-    /// <summary>
-    /// Warning that should be addressed.
-    /// </summary>
-    Warning = 2,
-
-    /// <summary>
-    /// Error that must be fixed.
-    /// </summary>
-    Error = 3
-}
+// GDDiagnosticSeverity is defined in GDShrapt.Reader

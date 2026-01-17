@@ -1468,11 +1468,14 @@ namespace GDShrapt.Reader
                 return;
 
             var node = form._list.First;
-            var point = form._statePoints[StateIndex];
+            // FIX: Use ElementAtOrDefault to handle ListForms with 0 initial state points
+            var point = form._statePoints.Count > StateIndex
+                ? form._statePoints[StateIndex]
+                : null;
 
             while (node != null)
             {
-                if (point == node)
+                if (point != null && point == node)
                 {
                     SetOrAdd(node.Value?.Clone(), StateIndex++);
                     point = form._statePoints.ElementAtOrDefault(StateIndex);

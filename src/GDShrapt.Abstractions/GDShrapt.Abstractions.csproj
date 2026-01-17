@@ -7,7 +7,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>GDShrapt.Abstractions</RootNamespace>
     <AssemblyName>GDShrapt.Abstractions</AssemblyName>
-    <Version>5.1.0</Version>
+    <Version>6.0.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt.Abstractions</Product>
     <Description>GDShrapt.Abstractions provides base interfaces for GDScript semantic analysis tooling.
@@ -29,8 +29,8 @@ Used by: GDShrapt.Semantics, GDShrapt.CLI, GDShrapt.Plugin</Description>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>GDShrapt GDScript abstractions Godot interfaces file-system logging</PackageTags>
-    <AssemblyVersion>5.1.0</AssemblyVersion>
-    <FileVersion>5.1.0</FileVersion>
+    <AssemblyVersion>6.0.0</AssemblyVersion>
+    <FileVersion>6.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

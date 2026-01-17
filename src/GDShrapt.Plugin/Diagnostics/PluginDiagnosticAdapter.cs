@@ -17,6 +17,11 @@ internal static class PluginDiagnosticAdapter
     /// <returns>A Plugin diagnostic with 0-based coordinates.</returns>
     public static Diagnostic Convert(GDUnifiedDiagnostic unified, GDScriptFile script)
     {
+        // Convert fix descriptors to CodeFix objects
+        var fixes = unified.FixDescriptors.Count > 0
+            ? PluginFixConverter.Convert(unified.FixDescriptors)
+            : Array.Empty<CodeFix>();
+
         return new Diagnostic
         {
             RuleId = unified.Code,
@@ -29,7 +34,7 @@ internal static class PluginDiagnosticAdapter
             StartColumn = Math.Max(0, unified.StartColumn - 1),
             EndLine = Math.Max(0, unified.EndLine - 1),
             EndColumn = Math.Max(0, unified.EndColumn - 1),
-            Fixes = Array.Empty<CodeFix>() // Fixes are generated separately via GDFormatCodeService
+            Fixes = fixes
         };
     }
 

@@ -1,3 +1,5 @@
+using GDShrapt.Reader;
+
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -7,18 +9,18 @@ namespace GDShrapt.Semantics;
 public static class GDSeverityMapper
 {
     /// <summary>
-    /// Maps validator severity (from GDShrapt.Validator) to unified severity.
+    /// Maps validator severity (from GDShrapt.Reader) to unified severity.
     /// </summary>
     /// <param name="severity">Validator diagnostic severity.</param>
     /// <returns>Unified severity.</returns>
-    public static GDDiagnosticSeverity FromValidator(Reader.GDDiagnosticSeverity severity)
+    public static GDUnifiedDiagnosticSeverity FromValidator(GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            Reader.GDDiagnosticSeverity.Error => GDDiagnosticSeverity.Error,
-            Reader.GDDiagnosticSeverity.Warning => GDDiagnosticSeverity.Warning,
-            Reader.GDDiagnosticSeverity.Hint => GDDiagnosticSeverity.Hint,
-            _ => GDDiagnosticSeverity.Info
+            GDDiagnosticSeverity.Error => GDUnifiedDiagnosticSeverity.Error,
+            GDDiagnosticSeverity.Warning => GDUnifiedDiagnosticSeverity.Warning,
+            GDDiagnosticSeverity.Hint => GDUnifiedDiagnosticSeverity.Hint,
+            _ => GDUnifiedDiagnosticSeverity.Info
         };
     }
 
@@ -27,15 +29,15 @@ public static class GDSeverityMapper
     /// </summary>
     /// <param name="severity">Linter issue severity.</param>
     /// <returns>Unified severity.</returns>
-    public static GDDiagnosticSeverity FromLinter(GDLintSeverity severity)
+    public static GDUnifiedDiagnosticSeverity FromLinter(GDLintSeverity severity)
     {
         return severity switch
         {
-            GDLintSeverity.Error => GDDiagnosticSeverity.Error,
-            GDLintSeverity.Warning => GDDiagnosticSeverity.Warning,
-            GDLintSeverity.Info => GDDiagnosticSeverity.Info,
-            GDLintSeverity.Hint => GDDiagnosticSeverity.Hint,
-            _ => GDDiagnosticSeverity.Info
+            GDLintSeverity.Error => GDUnifiedDiagnosticSeverity.Error,
+            GDLintSeverity.Warning => GDUnifiedDiagnosticSeverity.Warning,
+            GDLintSeverity.Info => GDUnifiedDiagnosticSeverity.Info,
+            GDLintSeverity.Hint => GDUnifiedDiagnosticSeverity.Hint,
+            _ => GDUnifiedDiagnosticSeverity.Info
         };
     }
 
@@ -45,9 +47,9 @@ public static class GDSeverityMapper
     /// <param name="configuredSeverity">Configured severity override (nullable).</param>
     /// <param name="defaultSeverity">Default severity to use if no override.</param>
     /// <returns>Final severity to use.</returns>
-    public static GDDiagnosticSeverity ApplyOverride(
-        GDDiagnosticSeverity? configuredSeverity,
-        GDDiagnosticSeverity defaultSeverity)
+    public static GDUnifiedDiagnosticSeverity ApplyOverride(
+        GDUnifiedDiagnosticSeverity? configuredSeverity,
+        GDUnifiedDiagnosticSeverity defaultSeverity)
     {
         return configuredSeverity ?? defaultSeverity;
     }
@@ -55,29 +57,29 @@ public static class GDSeverityMapper
     /// <summary>
     /// Converts unified severity to validator severity.
     /// </summary>
-    public static Reader.GDDiagnosticSeverity ToValidator(GDDiagnosticSeverity severity)
+    public static GDDiagnosticSeverity ToValidator(GDUnifiedDiagnosticSeverity severity)
     {
         return severity switch
         {
-            GDDiagnosticSeverity.Error => Reader.GDDiagnosticSeverity.Error,
-            GDDiagnosticSeverity.Warning => Reader.GDDiagnosticSeverity.Warning,
-            GDDiagnosticSeverity.Hint => Reader.GDDiagnosticSeverity.Hint,
-            GDDiagnosticSeverity.Info => Reader.GDDiagnosticSeverity.Hint, // No Info in validator
-            _ => Reader.GDDiagnosticSeverity.Hint
+            GDUnifiedDiagnosticSeverity.Error => GDDiagnosticSeverity.Error,
+            GDUnifiedDiagnosticSeverity.Warning => GDDiagnosticSeverity.Warning,
+            GDUnifiedDiagnosticSeverity.Hint => GDDiagnosticSeverity.Hint,
+            GDUnifiedDiagnosticSeverity.Info => GDDiagnosticSeverity.Hint, // No Info in validator
+            _ => GDDiagnosticSeverity.Hint
         };
     }
 
     /// <summary>
     /// Converts unified severity to linter severity.
     /// </summary>
-    public static GDLintSeverity ToLinter(GDDiagnosticSeverity severity)
+    public static GDLintSeverity ToLinter(GDUnifiedDiagnosticSeverity severity)
     {
         return severity switch
         {
-            GDDiagnosticSeverity.Error => GDLintSeverity.Error,
-            GDDiagnosticSeverity.Warning => GDLintSeverity.Warning,
-            GDDiagnosticSeverity.Info => GDLintSeverity.Info,
-            GDDiagnosticSeverity.Hint => GDLintSeverity.Hint,
+            GDUnifiedDiagnosticSeverity.Error => GDLintSeverity.Error,
+            GDUnifiedDiagnosticSeverity.Warning => GDLintSeverity.Warning,
+            GDUnifiedDiagnosticSeverity.Info => GDLintSeverity.Info,
+            GDUnifiedDiagnosticSeverity.Hint => GDLintSeverity.Hint,
             _ => GDLintSeverity.Info
         };
     }
@@ -108,13 +110,13 @@ public static class GDSeverityMapper
     /// Returns int to avoid circular dependency with CLI.Core.
     /// Maps to: 0=Error, 1=Warning, 2=Information, 3=Hint
     /// </remarks>
-    public static int ToCliSeverityIndex(Reader.GDDiagnosticSeverity severity)
+    public static int ToCliSeverityIndex(GDDiagnosticSeverity severity)
     {
         return severity switch
         {
-            Reader.GDDiagnosticSeverity.Error => 0,
-            Reader.GDDiagnosticSeverity.Warning => 1,
-            Reader.GDDiagnosticSeverity.Hint => 3,
+            GDDiagnosticSeverity.Error => 0,
+            GDDiagnosticSeverity.Warning => 1,
+            GDDiagnosticSeverity.Hint => 3,
             _ => 2
         };
     }
@@ -126,14 +128,14 @@ public static class GDSeverityMapper
     /// Returns int to avoid circular dependency with CLI.Core.
     /// Maps to: 0=Error, 1=Warning, 2=Information, 3=Hint
     /// </remarks>
-    public static int ToCliSeverityIndex(GDDiagnosticSeverity severity)
+    public static int ToCliSeverityIndex(GDUnifiedDiagnosticSeverity severity)
     {
         return severity switch
         {
-            GDDiagnosticSeverity.Error => 0,
-            GDDiagnosticSeverity.Warning => 1,
-            GDDiagnosticSeverity.Info => 2,
-            GDDiagnosticSeverity.Hint => 3,
+            GDUnifiedDiagnosticSeverity.Error => 0,
+            GDUnifiedDiagnosticSeverity.Warning => 1,
+            GDUnifiedDiagnosticSeverity.Info => 2,
+            GDUnifiedDiagnosticSeverity.Hint => 3,
             _ => 2
         };
     }

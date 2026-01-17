@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace GDShrapt.Semantics;
 
@@ -31,6 +32,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private readonly IGDFileSystem _fileSystem;
     private readonly IGDSemanticLogger _logger;
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
+    private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly bool _enableFileWatcher;
     private FileSystemWatcher? _scriptsWatcher;
     private bool _disposed;
@@ -75,6 +77,12 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public GDSceneTypesProvider? SceneTypesProvider => _sceneTypesProvider;
 
     /// <summary>
+    /// Call site registry for incremental updates.
+    /// May be null if call site tracking is not enabled.
+    /// </summary>
+    public GDCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
+
+    /// <summary>
     /// Logger for diagnostic output.
     /// </summary>
     public IGDSemanticLogger Logger => _logger;
@@ -92,6 +100,11 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         if (options?.EnableSceneTypesProvider == true)
         {
             _sceneTypesProvider = new GDSceneTypesProvider(_context.ProjectPath, _fileSystem, _logger);
+        }
+
+        if (options?.EnableCallSiteRegistry == true)
+        {
+            _callSiteRegistry = new GDCallSiteRegistry();
         }
 
         _logger.Debug("Project created");
@@ -332,6 +345,65 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         return GetScript(path);
     }
 
+    #region Call Site Registry
+
+    /// <summary>
+    /// Builds or rebuilds the call site registry from all loaded scripts.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public void BuildCallSiteRegistry(CancellationToken cancellationToken = default)
+    {
+        if (_callSiteRegistry == null)
+            return;
+
+        _callSiteRegistry.Clear();
+
+        var updater = new GDIncrementalCallSiteUpdater();
+
+        foreach (var scriptFile in _scripts.Values)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (scriptFile.Class == null || scriptFile.FullPath == null)
+                continue;
+
+            // Register all call sites from this file
+            updater.UpdateSemanticModel(
+                this,
+                scriptFile.FullPath,
+                null,  // No old tree (initial build)
+                scriptFile.Class,
+                Array.Empty<GDTextChange>(),
+                cancellationToken);
+        }
+
+        _logger.Debug($"Call site registry built: {_callSiteRegistry.Count} entries");
+    }
+
+    /// <summary>
+    /// Handles incremental update when a file changes.
+    /// </summary>
+    /// <param name="filePath">Path of the changed file.</param>
+    /// <param name="oldTree">Old AST (may be null for new files).</param>
+    /// <param name="newTree">New AST.</param>
+    /// <param name="changes">List of text changes.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public void OnFileChanged(
+        string filePath,
+        GDClassDeclaration? oldTree,
+        GDClassDeclaration newTree,
+        IReadOnlyList<GDTextChange> changes,
+        CancellationToken cancellationToken = default)
+    {
+        if (_callSiteRegistry == null || string.IsNullOrEmpty(filePath))
+            return;
+
+        var updater = new GDIncrementalCallSiteUpdater();
+        updater.UpdateSemanticModel(this, filePath, oldTree, newTree, changes, cancellationToken);
+    }
+
+    #endregion
+
     #region FileSystemWatcher
 
     /// <summary>
@@ -471,4 +543,9 @@ public class GDScriptProjectOptions
     /// Whether to enable file system watcher for automatic script reload.
     /// </summary>
     public bool EnableFileWatcher { get; set; } = false;
+
+    /// <summary>
+    /// Whether to enable call site registry for incremental updates.
+    /// </summary>
+    public bool EnableCallSiteRegistry { get; set; } = false;
 }

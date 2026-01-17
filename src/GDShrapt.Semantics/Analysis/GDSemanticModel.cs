@@ -73,8 +73,9 @@ public class GDTypeUsage
 /// <summary>
 /// Unified facade for semantic queries on a single script file.
 /// Provides symbol resolution, reference tracking, type inference, and confidence analysis.
+/// Implements IGDMemberAccessAnalyzer for use with GDValidator.
 /// </summary>
-public class GDSemanticModel
+public class GDSemanticModel : IGDMemberAccessAnalyzer
 {
     private readonly GDScriptFile _scriptFile;
     private readonly IGDRuntimeProvider? _runtimeProvider;
@@ -878,6 +879,30 @@ public class GDSemanticModel
             expr = indexer.CallerExpression;
 
         return (expr as GDIdentifierExpression)?.Identifier?.Sequence;
+    }
+
+    #endregion
+
+    #region IGDMemberAccessAnalyzer Implementation
+
+    /// <summary>
+    /// Explicit interface implementation for IGDMemberAccessAnalyzer.GetMemberAccessConfidence.
+    /// </summary>
+    GDReferenceConfidence IGDMemberAccessAnalyzer.GetMemberAccessConfidence(object memberAccess)
+    {
+        if (memberAccess is GDMemberOperatorExpression memberExpr)
+            return GetMemberAccessConfidence(memberExpr);
+        return GDReferenceConfidence.NameMatch;
+    }
+
+    /// <summary>
+    /// Explicit interface implementation for IGDMemberAccessAnalyzer.GetExpressionType.
+    /// </summary>
+    string? IGDMemberAccessAnalyzer.GetExpressionType(object expression)
+    {
+        if (expression is GDExpression expr)
+            return GetExpressionType(expr);
+        return null;
     }
 
     #endregion

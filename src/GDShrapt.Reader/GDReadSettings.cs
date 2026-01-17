@@ -22,5 +22,14 @@
         /// Use it only for debugging
         /// </summary>
         public int? MaxStacktraceFramesCount { get; set; } = 512;
+
+        /// <summary>
+        /// Interval (in characters) between cancellation token checks during parsing.
+        /// Lower values provide faster cancellation response but slightly impact performance.
+        /// Higher values improve performance but delay cancellation response.
+        /// Set to 0 to disable cancellation checks.
+        /// Default value is 256.
+        /// </summary>
+        public int CancellationCheckInterval { get; set; } = 256;
     }
 }

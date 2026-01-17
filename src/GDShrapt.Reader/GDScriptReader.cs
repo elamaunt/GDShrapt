@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace GDShrapt.Reader
 {
@@ -20,9 +21,16 @@ namespace GDShrapt.Reader
             Settings = settings;
         }
 
+        #region ParseFileContent
+
         public GDClassDeclaration ParseFileContent(string content)
         {
-            var state = new GDReadingState(Settings);
+            return ParseFileContent(content, CancellationToken.None);
+        }
+
+        public GDClassDeclaration ParseFileContent(string content, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
 
             var declaration = new GDClassDeclaration();
             state.Push(declaration);
@@ -41,9 +49,18 @@ namespace GDShrapt.Reader
             return declaration;
         }
 
+        #endregion
+
+        #region ParseFile
+
         public GDClassDeclaration ParseFile(string filePath)
         {
-            var state = new GDReadingState(Settings);
+            return ParseFile(filePath, CancellationToken.None);
+        }
+
+        public GDClassDeclaration ParseFile(string filePath, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
 
             var declaration = new GDClassDeclaration();
             state.Push(declaration);
@@ -63,9 +80,18 @@ namespace GDShrapt.Reader
             return declaration;
         }
 
+        #endregion
+
+        #region ParseExpression
+
         public GDExpression ParseExpression(string content)
         {
-            var state = new GDReadingState(Settings);
+            return ParseExpression(content, CancellationToken.None);
+        }
+
+        public GDExpression ParseExpression(string content, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
             var receiver = new GDReceiver();
 
             state.Push(new GDStartTrimmingResolver(receiver, () => new GDExpressionResolver(receiver, 0)));
@@ -83,13 +109,22 @@ namespace GDShrapt.Reader
             return receiver.Tokens.OfType<GDExpression>().FirstOrDefault();
         }
 
+        #endregion
+
+        #region ParseStatement
+
         public GDStatement ParseStatement(string content)
         {
-            var state = new GDReadingState(Settings);
+            return ParseStatement(content, CancellationToken.None);
+        }
+
+        public GDStatement ParseStatement(string content, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
             var receiver = new GDReceiver();
 
             state.Push(new GDStatementsResolver(receiver, 0));
-            
+
             var buffer = new char[Settings.ReadBufferSize];
             int count = 0;
 
@@ -103,9 +138,18 @@ namespace GDShrapt.Reader
             return receiver.Tokens.OfType<GDStatement>().FirstOrDefault();
         }
 
+        #endregion
+
+        #region ParseStatementsList
+
         public GDStatementsList ParseStatementsList(string content)
         {
-            var state = new GDReadingState(Settings);
+            return ParseStatementsList(content, CancellationToken.None);
+        }
+
+        public GDStatementsList ParseStatementsList(string content, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
             var list = new GDStatementsList();
 
             state.Push(list);
@@ -123,9 +167,18 @@ namespace GDShrapt.Reader
             return list;
         }
 
+        #endregion
+
+        #region ParseStatements
+
         public List<GDStatement> ParseStatements(string content)
         {
-            var state = new GDReadingState(Settings);
+            return ParseStatements(content, CancellationToken.None);
+        }
+
+        public List<GDStatement> ParseStatements(string content, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
             var receiver = new GDReceiver();
 
             state.Push(new GDStatementsResolver(receiver, 0));
@@ -143,9 +196,18 @@ namespace GDShrapt.Reader
             return receiver.Tokens.OfType<GDStatement>().ToList();
         }
 
+        #endregion
+
+        #region ParseUnspecifiedContent
+
         public List<GDSyntaxToken> ParseUnspecifiedContent(string content)
         {
-            var state = new GDReadingState(Settings);
+            return ParseUnspecifiedContent(content, CancellationToken.None);
+        }
+
+        public List<GDSyntaxToken> ParseUnspecifiedContent(string content, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
             var receiver = new GDReceiver();
 
             state.Push(new GDContentResolver(receiver));
@@ -163,9 +225,18 @@ namespace GDShrapt.Reader
             return receiver.Tokens;
         }
 
+        #endregion
+
+        #region ParseType
+
         public GDTypeNode ParseType(string type)
         {
-            var state = new GDReadingState(Settings);
+            return ParseType(type, CancellationToken.None);
+        }
+
+        public GDTypeNode ParseType(string type, CancellationToken cancellationToken)
+        {
+            var state = new GDReadingState(Settings, cancellationToken);
             var receiver = new GDReceiver();
 
             state.Push(new GDTypeResolver(receiver));
@@ -182,6 +253,8 @@ namespace GDShrapt.Reader
             state.CompleteReading();
             return receiver.Tokens.OfType<GDTypeNode>().FirstOrDefault();
         }
+
+        #endregion
 
         private void ParseBuffer(char[] buffer, int count, GDReadingState state)
         {

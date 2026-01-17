@@ -10,6 +10,6 @@ global using GDShrapt.Linter;
 global using GDShrapt.Formatter;
 global using GDShrapt.Semantics;
 global using GDShrapt.Abstractions;
-global using GDDiagnosticSeverity = GDShrapt.Semantics.GDDiagnosticSeverity;
+global using GDDiagnosticSeverity = GDShrapt.Semantics.GDUnifiedDiagnosticSeverity;
 global using GD = Godot.GD;
 global using Environment = System.Environment;

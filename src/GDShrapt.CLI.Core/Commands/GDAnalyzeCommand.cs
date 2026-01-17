@@ -218,14 +218,14 @@ public class GDAnalyzeCommand : IGDCommand
     /// <summary>
     /// Maps unified severity from Semantics to CLI output severity.
     /// </summary>
-    private static GDSeverity MapToOutputSeverity(Semantics.GDDiagnosticSeverity severity)
+    private static GDSeverity MapToOutputSeverity(GDUnifiedDiagnosticSeverity severity)
     {
         return severity switch
         {
-            Semantics.GDDiagnosticSeverity.Error => GDSeverity.Error,
-            Semantics.GDDiagnosticSeverity.Warning => GDSeverity.Warning,
-            Semantics.GDDiagnosticSeverity.Info => GDSeverity.Information,
-            Semantics.GDDiagnosticSeverity.Hint => GDSeverity.Hint,
+            GDUnifiedDiagnosticSeverity.Error => GDSeverity.Error,
+            GDUnifiedDiagnosticSeverity.Warning => GDSeverity.Warning,
+            GDUnifiedDiagnosticSeverity.Info => GDSeverity.Information,
+            GDUnifiedDiagnosticSeverity.Hint => GDSeverity.Hint,
             _ => GDSeverity.Information
         };
     }
@@ -243,7 +243,9 @@ public class GDAnalyzeCommand : IGDCommand
     {
         if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig) && ruleConfig.Severity.HasValue)
         {
-            return MapToOutputSeverity(ruleConfig.Severity.Value);
+            // Convert from Reader.GDDiagnosticSeverity to unified, then to CLI output
+            var unified = GDSeverityMapper.FromValidator(ruleConfig.Severity.Value);
+            return MapToOutputSeverity(unified);
         }
         return defaultSeverity;
     }

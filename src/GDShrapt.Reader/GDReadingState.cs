@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 
 namespace GDShrapt.Reader
 {
@@ -11,7 +12,17 @@ namespace GDShrapt.Reader
     /// </summary>
     internal class GDReadingState
     {
+        /// <summary>
+        /// Counter for characters processed since last cancellation check.
+        /// </summary>
+        private int _charsSinceLastCheck;
+
         public GDReadSettings Settings { get; }
+
+        /// <summary>
+        /// Cancellation token for aborting parsing.
+        /// </summary>
+        public CancellationToken CancellationToken { get; }
 
         /// <summary>
         /// Main reading stack
@@ -125,8 +136,14 @@ namespace GDShrapt.Reader
         #endregion
 
         public GDReadingState(GDReadSettings settings)
+            : this(settings, CancellationToken.None)
+        {
+        }
+
+        public GDReadingState(GDReadSettings settings, CancellationToken cancellationToken)
         {
             Settings = settings;
+            CancellationToken = cancellationToken;
         }
 
         /// <summary>
@@ -183,6 +200,14 @@ namespace GDShrapt.Reader
         /// </summary>
         public void PassChar(char c)
         {
+            // Check cancellation periodically based on settings (0 = disabled)
+            var interval = Settings.CancellationCheckInterval;
+            if (interval > 0 && ++_charsSinceLastCheck >= interval)
+            {
+                _charsSinceLastCheck = 0;
+                CancellationToken.ThrowIfCancellationRequested();
+            }
+
             var reader = CurrentReader;
 
             if (reader == null)

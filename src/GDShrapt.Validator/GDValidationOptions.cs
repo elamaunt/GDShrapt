@@ -11,7 +11,14 @@ namespace GDShrapt.Reader
         /// Runtime provider for external type information.
         /// If null, uses GDDefaultRuntimeProvider.
         /// </summary>
-        public IGDRuntimeProvider RuntimeProvider { get; set; }
+        public IGDRuntimeProvider? RuntimeProvider { get; set; }
+
+        /// <summary>
+        /// Member access analyzer for enhanced type-aware validation.
+        /// When set, enables member access validation using type inference.
+        /// Typically provided by GDSemanticModel from GDShrapt.Semantics.
+        /// </summary>
+        public IGDMemberAccessAnalyzer? MemberAccessAnalyzer { get; set; }
 
         /// <summary>
         /// Whether to check for syntax errors (invalid tokens).
@@ -50,18 +57,18 @@ namespace GDShrapt.Reader
         public bool CheckIndentation { get; set; } = true;
 
         /// <summary>
-        /// Whether to check duck typing safety (unguarded member access on untyped variables).
-        /// When enabled, warns when accessing members on variables without type guards (is, has_method, etc.).
-        /// Default: false (opt-in)
+        /// Whether to check member access on typed and untyped expressions.
+        /// When enabled with MemberAccessAnalyzer, validates property/method access using type inference.
+        /// Default: false (opt-in, requires MemberAccessAnalyzer)
         /// </summary>
-        public bool CheckDuckTyping { get; set; } = false;
+        public bool CheckMemberAccess { get; set; } = false;
 
         /// <summary>
-        /// Severity level for duck typing violations.
-        /// Only applies when CheckDuckTyping is true.
+        /// Severity level for unguarded member access on untyped variables.
+        /// Only applies when CheckMemberAccess is true and MemberAccessAnalyzer is set.
         /// Default: Warning
         /// </summary>
-        public GDDiagnosticSeverity DuckTypingSeverity { get; set; } = GDDiagnosticSeverity.Warning;
+        public GDDiagnosticSeverity MemberAccessSeverity { get; set; } = GDDiagnosticSeverity.Warning;
 
         /// <summary>
         /// Whether to check @abstract annotation rules (Godot 4.5+).
@@ -84,6 +91,12 @@ namespace GDShrapt.Reader
         /// Default: true
         /// </summary>
         public bool CheckResourcePaths { get; set; } = true;
+
+        /// <summary>
+        /// Whether to parse and apply comment-based suppression directives (# gd:ignore).
+        /// Default: true
+        /// </summary>
+        public bool EnableCommentSuppression { get; set; } = true;
 
         /// <summary>
         /// Default validation options with all checks enabled.

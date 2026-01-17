@@ -67,10 +67,10 @@ public static class GDDiagnosticAdapter
     {
         var severity = diagnostic.Severity switch
         {
-            Semantics.GDDiagnosticSeverity.Error => GDLspDiagnosticSeverity.Error,
-            Semantics.GDDiagnosticSeverity.Warning => GDLspDiagnosticSeverity.Warning,
-            Semantics.GDDiagnosticSeverity.Info => GDLspDiagnosticSeverity.Information,
-            Semantics.GDDiagnosticSeverity.Hint => GDLspDiagnosticSeverity.Hint,
+            GDUnifiedDiagnosticSeverity.Error => GDLspDiagnosticSeverity.Error,
+            GDUnifiedDiagnosticSeverity.Warning => GDLspDiagnosticSeverity.Warning,
+            GDUnifiedDiagnosticSeverity.Info => GDLspDiagnosticSeverity.Information,
+            GDUnifiedDiagnosticSeverity.Hint => GDLspDiagnosticSeverity.Hint,
             _ => GDLspDiagnosticSeverity.Information
         };
 

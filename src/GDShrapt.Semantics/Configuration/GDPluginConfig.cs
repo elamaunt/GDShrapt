@@ -99,7 +99,7 @@ public class GDNotificationConfig
     /// <summary>
     /// Minimum severity to show in notifications. Default: Warning
     /// </summary>
-    public GDDiagnosticSeverity MinSeverity { get; set; } = GDDiagnosticSeverity.Warning;
+    public GDUnifiedDiagnosticSeverity MinSeverity { get; set; } = GDUnifiedDiagnosticSeverity.Warning;
 }
 
 /// <summary>

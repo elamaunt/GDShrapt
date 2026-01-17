@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>5.1.0</Version>
+    <Version>6.0.0</Version>
     <Authors>elamaunt</Authors>
     <Product>GDShrapt.Formatter</Product>
     <Description>GDShrapt.Formatter provides configurable code formatting for GDScript 2.0 (Godot 4.x) with auto type inference.
@@ -32,15 +32,14 @@ Requires: GDShrapt.Reader, GDShrapt.Validator</Description>
     <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>GDShrapt GDScript formatter Godot Godot4 code-formatter LSP type-inference auto-format</PackageTags>
-    <AssemblyVersion>5.1.0</AssemblyVersion>
-    <FileVersion>5.1.0</FileVersion>
+    <AssemblyVersion>6.0.0</AssemblyVersion>
+    <FileVersion>6.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
-    <ProjectReference Include="..\GDShrapt.Validator\GDShrapt.Validator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

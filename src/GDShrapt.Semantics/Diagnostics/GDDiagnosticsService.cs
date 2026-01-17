@@ -1,4 +1,7 @@
+using System.Linq;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using GDShrapt.Validator;
 
 namespace GDShrapt.Semantics;
 
@@ -12,6 +15,8 @@ public class GDDiagnosticsService
     private readonly GDValidationOptions _validationOptions;
     private readonly GDLinter? _linter;
     private readonly GDProjectConfig? _config;
+    private readonly GDFixProvider _fixProvider;
+    private readonly bool _generateFixes;
 
     /// <summary>
     /// Creates a new diagnostics service with the specified options.
@@ -19,15 +24,19 @@ public class GDDiagnosticsService
     /// <param name="validationOptions">Options for validation checks.</param>
     /// <param name="linterOptions">Options for linting (null to disable linting).</param>
     /// <param name="config">Project configuration for rule overrides (optional).</param>
+    /// <param name="generateFixes">Whether to generate code fixes for diagnostics.</param>
     public GDDiagnosticsService(
         GDValidationOptions? validationOptions = null,
         GDLinterOptions? linterOptions = null,
-        GDProjectConfig? config = null)
+        GDProjectConfig? config = null,
+        bool generateFixes = true)
     {
         _validator = new GDValidator();
         _validationOptions = validationOptions ?? new GDValidationOptions();
         _linter = linterOptions != null ? new GDLinter(linterOptions) : null;
         _config = config;
+        _fixProvider = new GDFixProvider();
+        _generateFixes = generateFixes;
     }
 
     /// <summary>
@@ -53,7 +62,7 @@ public class GDDiagnosticsService
             linterOptions = GDLinterOptionsFactory.FromConfig(config);
         }
 
-        return new GDDiagnosticsService(validationOptions, linterOptions, config);
+        return new GDDiagnosticsService(validationOptions, linterOptions, config, generateFixes: true);
     }
 
     /// <summary>
@@ -80,7 +89,7 @@ public class GDDiagnosticsService
             {
                 Code = "GD0002",
                 Message = $"Invalid token: {token.ToString()?.Trim() ?? "unknown"}",
-                Severity = GDDiagnosticSeverity.Error,
+                Severity = GDUnifiedDiagnosticSeverity.Error,
                 Source = GDDiagnosticSource.Syntax,
                 StartLine = token.StartLine,
                 StartColumn = token.StartColumn,
@@ -102,7 +111,7 @@ public class GDDiagnosticsService
             var severity = GDSeverityMapper.FromValidator(diagnostic.Severity);
             severity = ApplyConfiguredSeverity(ruleId, severity);
 
-            result.Add(new GDUnifiedDiagnostic
+            var unifiedDiagnostic = new GDUnifiedDiagnostic
             {
                 Code = ruleId,
                 Message = diagnostic.Message,
@@ -112,7 +121,20 @@ public class GDDiagnosticsService
                 StartColumn = diagnostic.StartColumn,
                 EndLine = diagnostic.EndLine,
                 EndColumn = diagnostic.EndColumn
-            });
+            };
+
+            // Generate fixes if enabled and node is available
+            if (_generateFixes && diagnostic.Node != null)
+            {
+                unifiedDiagnostic.FixDescriptors = _fixProvider.GetFixes(
+                    ruleId,
+                    diagnostic.Node,
+                    options.MemberAccessAnalyzer,
+                    options.RuntimeProvider
+                ).ToList();
+            }
+
+            result.Add(unifiedDiagnostic);
         }
 
         // 3. Run linter
@@ -128,7 +150,7 @@ public class GDDiagnosticsService
                 var severity = GDSeverityMapper.FromLinter(issue.Severity);
                 severity = ApplyConfiguredSeverity(issue.RuleId, severity);
 
-                result.Add(new GDUnifiedDiagnostic
+                var unifiedDiagnostic = new GDUnifiedDiagnostic
                 {
                     Code = issue.RuleId,
                     Message = issue.Message,
@@ -138,8 +160,28 @@ public class GDDiagnosticsService
                     StartColumn = issue.StartColumn,
                     EndLine = issue.EndLine,
                     EndColumn = issue.EndColumn
-                });
+                };
+
+                // Generate fixes if enabled and token is available
+                if (_generateFixes && issue.Token is GDNode node)
+                {
+                    unifiedDiagnostic.FixDescriptors = _fixProvider.GetFixes(
+                        issue.RuleId,
+                        node,
+                        options.MemberAccessAnalyzer,
+                        options.RuntimeProvider
+                    ).ToList();
+                }
+
+                result.Add(unifiedDiagnostic);
             }
+        }
+
+        // 4. Apply comment-based suppression
+        if (options.EnableCommentSuppression)
+        {
+            var suppressionContext = GDValidatorSuppressionParser.Parse(classDeclaration);
+            result.FilterSuppressed(suppressionContext);
         }
 
         return result;
@@ -162,7 +204,7 @@ public class GDDiagnosticsService
             {
                 Code = "GD0001",
                 Message = "Failed to parse file",
-                Severity = GDDiagnosticSeverity.Error,
+                Severity = GDUnifiedDiagnosticSeverity.Error,
                 Source = GDDiagnosticSource.Syntax,
                 StartLine = 1,
                 StartColumn = 1,
@@ -175,9 +217,9 @@ public class GDDiagnosticsService
         {
             // Use semantic model's runtime provider when available for enhanced validation
             var runtimeProvider = script.Analyzer?.Context?.RuntimeProvider ?? _validationOptions.RuntimeProvider;
-            var options = runtimeProvider != null && runtimeProvider != _validationOptions.RuntimeProvider
-                ? CreateOptionsWithProvider(runtimeProvider)
-                : _validationOptions;
+            var analyzer = script.Analyzer?.SemanticModel;
+
+            var options = CreateOptionsForScript(runtimeProvider, analyzer);
 
             var classResult = DiagnoseInternal(script.Class, options);
             result.AddRange(classResult.Diagnostics);
@@ -187,24 +229,26 @@ public class GDDiagnosticsService
     }
 
     /// <summary>
-    /// Creates validation options with a specific runtime provider.
+    /// Creates validation options with a specific runtime provider and member access analyzer.
     /// </summary>
-    private GDValidationOptions CreateOptionsWithProvider(IGDRuntimeProvider runtimeProvider)
+    private GDValidationOptions CreateOptionsForScript(IGDRuntimeProvider? runtimeProvider, IGDMemberAccessAnalyzer? analyzer)
     {
         return new GDValidationOptions
         {
-            RuntimeProvider = runtimeProvider,
+            RuntimeProvider = runtimeProvider ?? _validationOptions.RuntimeProvider,
+            MemberAccessAnalyzer = analyzer ?? _validationOptions.MemberAccessAnalyzer,
             CheckSyntax = _validationOptions.CheckSyntax,
             CheckScope = _validationOptions.CheckScope,
             CheckTypes = _validationOptions.CheckTypes,
             CheckCalls = _validationOptions.CheckCalls,
             CheckControlFlow = _validationOptions.CheckControlFlow,
             CheckIndentation = _validationOptions.CheckIndentation,
-            CheckDuckTyping = _validationOptions.CheckDuckTyping,
-            DuckTypingSeverity = _validationOptions.DuckTypingSeverity,
+            CheckMemberAccess = _validationOptions.CheckMemberAccess,
+            MemberAccessSeverity = _validationOptions.MemberAccessSeverity,
             CheckAbstract = _validationOptions.CheckAbstract,
             CheckSignals = _validationOptions.CheckSignals,
-            CheckResourcePaths = _validationOptions.CheckResourcePaths
+            CheckResourcePaths = _validationOptions.CheckResourcePaths,
+            EnableCommentSuppression = _validationOptions.EnableCommentSuppression
         };
     }
 
@@ -217,12 +261,23 @@ public class GDDiagnosticsService
         return true; // Enabled by default
     }
 
-    private GDDiagnosticSeverity ApplyConfiguredSeverity(string ruleId, GDDiagnosticSeverity defaultSeverity)
+    private GDUnifiedDiagnosticSeverity ApplyConfiguredSeverity(string ruleId, GDUnifiedDiagnosticSeverity defaultSeverity)
     {
         if (_config?.Linting.Rules.TryGetValue(ruleId, out var ruleConfig) == true && ruleConfig.Severity.HasValue)
         {
-            return ruleConfig.Severity.Value;
+            return MapConfigSeverity(ruleConfig.Severity.Value);
         }
         return defaultSeverity;
+    }
+
+    private static GDUnifiedDiagnosticSeverity MapConfigSeverity(GDDiagnosticSeverity severity)
+    {
+        return severity switch
+        {
+            GDDiagnosticSeverity.Error => GDUnifiedDiagnosticSeverity.Error,
+            GDDiagnosticSeverity.Warning => GDUnifiedDiagnosticSeverity.Warning,
+            GDDiagnosticSeverity.Hint => GDUnifiedDiagnosticSeverity.Hint,
+            _ => GDUnifiedDiagnosticSeverity.Info
+        };
     }
 }

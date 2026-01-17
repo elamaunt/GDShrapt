@@ -1,4 +1,8 @@
+using System;
 using System.Collections.Generic;
+using GDShrapt.Abstractions;
+using GDShrapt.Reader;
+using GDShrapt.Validator;
 
 namespace GDShrapt.Semantics;
 
@@ -58,18 +62,59 @@ public class GDDiagnosticsResult
         }
     }
 
-    private void UpdateCount(GDDiagnosticSeverity severity)
+    /// <summary>
+    /// Filters out suppressed diagnostics using the provided suppression context.
+    /// </summary>
+    public void FilterSuppressed(GDValidatorSuppressionContext suppressionContext)
+    {
+        if (suppressionContext == null)
+            return;
+
+        var filteredDiagnostics = new List<GDUnifiedDiagnostic>();
+        int newErrorCount = 0;
+        int newWarningCount = 0;
+        int newHintCount = 0;
+
+        foreach (var diagnostic in Diagnostics)
+        {
+            if (!suppressionContext.IsSuppressed(diagnostic.Code, diagnostic.StartLine))
+            {
+                filteredDiagnostics.Add(diagnostic);
+                switch (diagnostic.Severity)
+                {
+                    case GDUnifiedDiagnosticSeverity.Error:
+                        newErrorCount++;
+                        break;
+                    case GDUnifiedDiagnosticSeverity.Warning:
+                        newWarningCount++;
+                        break;
+                    case GDUnifiedDiagnosticSeverity.Info:
+                    case GDUnifiedDiagnosticSeverity.Hint:
+                        newHintCount++;
+                        break;
+                }
+            }
+        }
+
+        Diagnostics.Clear();
+        Diagnostics.AddRange(filteredDiagnostics);
+        ErrorCount = newErrorCount;
+        WarningCount = newWarningCount;
+        HintCount = newHintCount;
+    }
+
+    private void UpdateCount(GDUnifiedDiagnosticSeverity severity)
     {
         switch (severity)
         {
-            case GDDiagnosticSeverity.Error:
+            case GDUnifiedDiagnosticSeverity.Error:
                 ErrorCount++;
                 break;
-            case GDDiagnosticSeverity.Warning:
+            case GDUnifiedDiagnosticSeverity.Warning:
                 WarningCount++;
                 break;
-            case GDDiagnosticSeverity.Info:
-            case GDDiagnosticSeverity.Hint:
+            case GDUnifiedDiagnosticSeverity.Info:
+            case GDUnifiedDiagnosticSeverity.Hint:
                 HintCount++;
                 break;
         }
@@ -94,7 +139,7 @@ public class GDUnifiedDiagnostic
     /// <summary>
     /// Severity level.
     /// </summary>
-    public GDDiagnosticSeverity Severity { get; set; }
+    public GDUnifiedDiagnosticSeverity Severity { get; set; }
 
     /// <summary>
     /// Source of the diagnostic.
@@ -120,6 +165,37 @@ public class GDUnifiedDiagnostic
     /// End column (1-based).
     /// </summary>
     public int EndColumn { get; set; }
+
+    /// <summary>
+    /// Available code fix descriptors for this diagnostic.
+    /// </summary>
+    public IReadOnlyList<GDFixDescriptor> FixDescriptors { get; set; } = Array.Empty<GDFixDescriptor>();
+}
+
+/// <summary>
+/// Unified diagnostic severity level.
+/// </summary>
+public enum GDUnifiedDiagnosticSeverity
+{
+    /// <summary>
+    /// Compilation error that must be fixed.
+    /// </summary>
+    Error,
+
+    /// <summary>
+    /// Warning about potential issues.
+    /// </summary>
+    Warning,
+
+    /// <summary>
+    /// Informational message.
+    /// </summary>
+    Info,
+
+    /// <summary>
+    /// Hint for improvement.
+    /// </summary>
+    Hint
 }
 
 /// <summary>

@@ -137,7 +137,7 @@ public static class GDSeverityHelper
     /// <summary>
     /// Converts unified severity to CLI severity.
     /// </summary>
-    public static GDSeverity FromUnified(Semantics.GDDiagnosticSeverity severity)
+    public static GDSeverity FromUnified(GDUnifiedDiagnosticSeverity severity)
         => FromIndex(GDSeverityMapper.ToCliSeverityIndex(severity));
 
     /// <summary>
@@ -150,7 +150,9 @@ public static class GDSeverityHelper
     {
         if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig) && ruleConfig.Severity.HasValue)
         {
-            return FromUnified(ruleConfig.Severity.Value);
+            // Convert from Reader.GDDiagnosticSeverity to unified, then to CLI
+            var unified = GDSeverityMapper.FromValidator(ruleConfig.Severity.Value);
+            return FromUnified(unified);
         }
         return defaultSeverity;
     }

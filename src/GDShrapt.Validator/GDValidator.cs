@@ -9,7 +9,7 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Validates an AST node and returns all diagnostics.
         /// </summary>
-        public GDValidationResult Validate(GDNode node, GDValidationOptions options = null)
+        public GDValidationResult Validate(GDNode? node, GDValidationOptions? options = null)
         {
             options = options ?? GDValidationOptions.Default;
             var context = new GDValidationContext(options.RuntimeProvider);
@@ -58,10 +58,14 @@ namespace GDShrapt.Reader
                 indentationValidator.Validate(node);
             }
 
-            if (options.CheckDuckTyping)
+            // Member access validation using member access analyzer
+            if (options.CheckMemberAccess && options.MemberAccessAnalyzer != null)
             {
-                var duckTypingValidator = new GDDuckTypingValidator(context, options.DuckTypingSeverity);
-                duckTypingValidator.Validate(node);
+                var memberAccessValidator = new GDMemberAccessValidator(
+                    context,
+                    options.MemberAccessAnalyzer,
+                    options.MemberAccessSeverity);
+                memberAccessValidator.Validate(node);
             }
 
             if (options.CheckAbstract)
