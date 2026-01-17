@@ -1,4 +1,6 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System.Collections.Generic;
 
 namespace GDShrapt.Linter
 {
@@ -39,11 +41,28 @@ namespace GDShrapt.Linter
             if (!string.IsNullOrEmpty(nameToCheck) && !NamingHelper.MatchesCase(nameToCheck, expectedCase))
             {
                 var suggestion = NamingHelper.SuggestCorrectName(funcName, expectedCase);
+                var identifier = methodDeclaration.Identifier;
+                var fixes = CreateRenameFixes(identifier, suggestion);
+
                 ReportIssue(
                     $"Function name '{funcName}' should use {NamingHelper.GetCaseName(expectedCase)}",
                     methodDeclaration.Identifier,
-                    $"Rename to '{suggestion}'");
+                    $"Rename to '{suggestion}'",
+                    fixes);
             }
+        }
+
+        private IEnumerable<GDFixDescriptor> CreateRenameFixes(GDIdentifier identifier, string suggestion)
+        {
+            if (identifier == null || string.IsNullOrEmpty(suggestion))
+                yield break;
+
+            yield return GDTextEditFixDescriptor.Replace(
+                $"Rename to '{suggestion}'",
+                identifier.StartLine,
+                identifier.StartColumn,
+                identifier.EndColumn,
+                suggestion);
         }
     }
 }

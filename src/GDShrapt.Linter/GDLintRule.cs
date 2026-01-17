@@ -1,4 +1,7 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Linter
 {
@@ -76,6 +79,36 @@ namespace GDShrapt.Linter
                 message,
                 token,
                 suggestion));
+        }
+
+        /// <summary>
+        /// Reports an issue with fix descriptors.
+        /// </summary>
+        protected void ReportIssue(string message, GDSyntaxToken token, string suggestion, IEnumerable<GDFixDescriptor> fixes)
+        {
+            ReportIssue(DefaultSeverity, message, token, suggestion, fixes);
+        }
+
+        /// <summary>
+        /// Reports an issue with specific severity and fix descriptors.
+        /// </summary>
+        protected void ReportIssue(GDLintSeverity severity, string message, GDSyntaxToken token, string suggestion, IEnumerable<GDFixDescriptor> fixes)
+        {
+            var issue = new GDLintIssue(
+                RuleId,
+                Name,
+                severity,
+                Category,
+                message,
+                token,
+                suggestion);
+
+            if (fixes != null)
+            {
+                issue.FixDescriptors = fixes.ToList();
+            }
+
+            _result?.AddIssue(issue);
         }
     }
 }

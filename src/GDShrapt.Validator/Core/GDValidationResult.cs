@@ -69,5 +69,18 @@ namespace GDShrapt.Reader
         {
             return _diagnostics.Where(d => d.Code == code);
         }
+
+        /// <summary>
+        /// Removes diagnostics that are suppressed by comment directives.
+        /// </summary>
+        /// <param name="suppressionContext">The suppression context containing parsed directives.</param>
+        internal void FilterSuppressed(global::GDShrapt.Validator.GDValidatorSuppressionContext suppressionContext)
+        {
+            if (suppressionContext == null)
+                return;
+
+            _diagnostics.RemoveAll(d =>
+                suppressionContext.IsSuppressed(d.Code.ToCodeString(), d.StartLine));
+        }
     }
 }

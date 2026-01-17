@@ -53,5 +53,10 @@ public enum GDSymbolKind
     /// <summary>
     /// A for loop iterator variable.
     /// </summary>
-    Iterator
+    Iterator,
+
+    /// <summary>
+    /// A match case binding variable (var x in match patterns).
+    /// </summary>
+    MatchCaseBinding
 }

@@ -1,4 +1,6 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System.Collections.Generic;
 
 namespace GDShrapt.Linter
 {
@@ -27,10 +29,14 @@ namespace GDShrapt.Linter
             if (!NamingHelper.MatchesCase(className, expectedCase))
             {
                 var suggestion = NamingHelper.SuggestCorrectName(className, expectedCase);
+                var identifier = classDeclaration.ClassName?.Identifier;
+                var fixes = CreateRenameFixes(identifier, suggestion);
+
                 ReportIssue(
                     $"Class name '{className}' should use {NamingHelper.GetCaseName(expectedCase)}",
                     classDeclaration.ClassName,
-                    $"Rename to '{suggestion}'");
+                    $"Rename to '{suggestion}'",
+                    fixes);
             }
         }
 
@@ -47,11 +53,28 @@ namespace GDShrapt.Linter
             if (!NamingHelper.MatchesCase(className, expectedCase))
             {
                 var suggestion = NamingHelper.SuggestCorrectName(className, expectedCase);
+                var identifier = innerClass.Identifier;
+                var fixes = CreateRenameFixes(identifier, suggestion);
+
                 ReportIssue(
                     $"Inner class name '{className}' should use {NamingHelper.GetCaseName(expectedCase)}",
                     innerClass.Identifier,
-                    $"Rename to '{suggestion}'");
+                    $"Rename to '{suggestion}'",
+                    fixes);
             }
+        }
+
+        private IEnumerable<GDFixDescriptor> CreateRenameFixes(GDIdentifier identifier, string suggestion)
+        {
+            if (identifier == null || string.IsNullOrEmpty(suggestion))
+                yield break;
+
+            yield return GDTextEditFixDescriptor.Replace(
+                $"Rename to '{suggestion}'",
+                identifier.StartLine,
+                identifier.StartColumn,
+                identifier.EndColumn,
+                suggestion);
         }
     }
 }

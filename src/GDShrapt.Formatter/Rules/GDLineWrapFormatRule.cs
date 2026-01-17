@@ -204,18 +204,11 @@ namespace GDShrapt.Formatter
             if (IsAlreadyWrapped(list))
                 return;
 
+            // Determine the wrap style (use array-specific or fallback to general)
+            var wrapStyle = Options.ArrayWrapStyle ?? Options.LineWrapStyle;
             var wrapIndent = _currentIndentLevel + Options.ContinuationIndentSize;
 
-            if (Options.LineWrapStyle == LineWrapStyle.AfterOpeningBracket)
-            {
-                // Style: func(\n  param1,\n  param2\n)
-                WrapAfterOpeningBracket(list, openBracket, closeBracket, parent, wrapIndent);
-            }
-            else
-            {
-                // Style: func(param1,\n  param2, param3)
-                WrapBeforeElements(list, wrapIndent);
-            }
+            ApplyWrapStyle(list, openBracket, closeBracket, parent, wrapStyle, wrapIndent);
         }
 
         private void WrapParametersList(GDParametersList list, GDSyntaxToken openBracket, GDSyntaxToken closeBracket, GDNode parent)
@@ -227,16 +220,11 @@ namespace GDShrapt.Formatter
             if (IsAlreadyWrapped(list))
                 return;
 
+            // Determine the wrap style (use parameter-specific or fallback to general)
+            var wrapStyle = Options.ParameterWrapStyle ?? Options.LineWrapStyle;
             var wrapIndent = _currentIndentLevel + Options.ContinuationIndentSize;
 
-            if (Options.LineWrapStyle == LineWrapStyle.AfterOpeningBracket)
-            {
-                WrapAfterOpeningBracket(list, openBracket, closeBracket, parent, wrapIndent);
-            }
-            else
-            {
-                WrapBeforeElements(list, wrapIndent);
-            }
+            ApplyWrapStyle(list, openBracket, closeBracket, parent, wrapStyle, wrapIndent);
         }
 
         private void WrapDictionaryKeyValues(GDDictionaryKeyValueDeclarationList list, GDSyntaxToken openBracket, GDSyntaxToken closeBracket, GDNode parent)
@@ -248,15 +236,49 @@ namespace GDShrapt.Formatter
             if (IsAlreadyWrapped(list))
                 return;
 
+            // Determine the wrap style (use dictionary-specific or fallback to general)
+            var wrapStyle = Options.DictionaryWrapStyle ?? Options.LineWrapStyle;
             var wrapIndent = _currentIndentLevel + Options.ContinuationIndentSize;
 
-            if (Options.LineWrapStyle == LineWrapStyle.AfterOpeningBracket)
+            ApplyWrapStyle(list, openBracket, closeBracket, parent, wrapStyle, wrapIndent);
+        }
+
+        /// <summary>
+        /// Applies the appropriate wrap style to a list of elements.
+        /// </summary>
+        private void ApplyWrapStyle(GDNode list, GDSyntaxToken openBracket, GDSyntaxToken closeBracket, GDNode parent, LineWrapStyle wrapStyle, int wrapIndent)
+        {
+            switch (wrapStyle)
             {
-                WrapAfterOpeningBracket(list, openBracket, closeBracket, parent, wrapIndent);
+                case LineWrapStyle.AfterOpeningBracket:
+                    WrapAfterOpeningBracket(list, openBracket, closeBracket, parent, wrapIndent);
+                    break;
+
+                case LineWrapStyle.BeforeElements:
+                    WrapBeforeElements(list, wrapIndent);
+                    break;
+
+                case LineWrapStyle.HangingIndent:
+                    WrapHangingIndent(list, openBracket, closeBracket, parent);
+                    break;
+
+                case LineWrapStyle.CompactVertical:
+                    WrapCompactVertical(list, openBracket, closeBracket, parent, wrapIndent);
+                    break;
+
+                case LineWrapStyle.Aligned:
+                    WrapAligned(list, openBracket, closeBracket, parent);
+                    break;
+
+                default:
+                    WrapAfterOpeningBracket(list, openBracket, closeBracket, parent, wrapIndent);
+                    break;
             }
-            else
+
+            // Add trailing comma if enabled
+            if (Options.AddTrailingCommaWhenWrapped)
             {
-                WrapBeforeElements(list, wrapIndent);
+                AddTrailingComma(list);
             }
         }
 
@@ -380,13 +402,285 @@ namespace GDShrapt.Formatter
             }
         }
 
+        /// <summary>
+        /// Hanging indent: first element stays on line, rest aligned below.
+        /// func(param1,
+        ///      param2,
+        ///      param3)
+        /// </summary>
+        private void WrapHangingIndent(GDNode list, GDSyntaxToken openBracket, GDSyntaxToken closeBracket, GDNode parent)
+        {
+            if (list?.Form == null)
+                return;
+
+            // Calculate alignment position (position right after opening bracket)
+            int alignColumn = CalculateOpenBracketPosition(openBracket, parent);
+
+            var form = list.Form;
+            bool isFirstElement = true;
+
+            foreach (var token in form.ToList())
+            {
+                if (IsListElement(token))
+                {
+                    if (isFirstElement)
+                    {
+                        // First element stays in place
+                        isFirstElement = false;
+                    }
+                    // Other elements are handled after commas
+                }
+                else if (token is GDComma comma)
+                {
+                    var nextToken = form.NextTokenAfter(comma);
+                    if (nextToken != null && !(nextToken is GDNewLine))
+                    {
+                        // Remove space after comma if exists
+                        if (nextToken is GDSpace)
+                        {
+                            form.Remove(nextToken);
+                            nextToken = form.NextTokenAfter(comma);
+                        }
+
+                        if (nextToken != null)
+                        {
+                            InsertLineBreakWithSpaces(nextToken, form, alignColumn);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Compact vertical: pack as many elements as fit on each line.
+        /// func(
+        ///     param1, param2,
+        ///     param3, param4
+        /// )
+        /// </summary>
+        private void WrapCompactVertical(GDNode list, GDSyntaxToken openBracket, GDSyntaxToken closeBracket, GDNode parent, int wrapIndent)
+        {
+            if (list?.Form == null)
+                return;
+
+            var form = list.Form;
+            bool isFirstElement = true;
+            int currentLineLength = wrapIndent * GetIndentWidth();
+            bool wrappedAtLeastOnce = false;
+
+            // First, insert newline after opening bracket (before first element)
+            foreach (var token in form.ToList())
+            {
+                if (IsListElement(token))
+                {
+                    if (isFirstElement)
+                    {
+                        InsertLineBreakBefore(token, form, wrapIndent);
+                        currentLineLength = wrapIndent * GetIndentWidth() + EstimateTokenLength(token);
+                        isFirstElement = false;
+                        wrappedAtLeastOnce = true;
+                    }
+                }
+                else if (token is GDComma comma)
+                {
+                    var nextToken = form.NextTokenAfter(comma);
+                    if (nextToken != null)
+                    {
+                        // Skip space if present
+                        var tokenAfterComma = nextToken;
+                        if (tokenAfterComma is GDSpace)
+                        {
+                            tokenAfterComma = form.NextTokenAfter(tokenAfterComma);
+                        }
+
+                        if (tokenAfterComma != null && IsListElement(tokenAfterComma))
+                        {
+                            int elementLength = EstimateTokenLength(tokenAfterComma);
+                            // Check if next element fits on current line (+2 for ", ")
+                            if (currentLineLength + 2 + elementLength > Options.MaxLineLength)
+                            {
+                                // Wrap to next line
+                                if (nextToken is GDSpace)
+                                {
+                                    form.Remove(nextToken);
+                                    nextToken = form.NextTokenAfter(comma);
+                                }
+
+                                if (nextToken != null && !(nextToken is GDNewLine))
+                                {
+                                    InsertLineBreakBefore(nextToken, form, wrapIndent);
+                                    currentLineLength = wrapIndent * GetIndentWidth() + elementLength;
+                                }
+                            }
+                            else
+                            {
+                                // Keep on same line
+                                currentLineLength += 2 + elementLength; // ", " + element
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Add newline before closing bracket
+            if (wrappedAtLeastOnce && closeBracket != null && parent?.Form != null)
+            {
+                var prevToken = parent.Form.PreviousTokenBefore(closeBracket);
+                if (prevToken != null && !(prevToken is GDNewLine) && !(prevToken is GDIntendation))
+                {
+                    InsertLineBreakBefore(closeBracket, parent.Form, _currentIndentLevel);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Aligned: align continuation lines with the opening bracket.
+        /// some_function(param1,
+        ///               param2,
+        ///               param3)
+        /// </summary>
+        private void WrapAligned(GDNode list, GDSyntaxToken openBracket, GDSyntaxToken closeBracket, GDNode parent)
+        {
+            if (list?.Form == null)
+                return;
+
+            // Calculate alignment position (position right after opening bracket)
+            int alignColumn = CalculateOpenBracketPosition(openBracket, parent);
+
+            var form = list.Form;
+            bool isFirstElement = true;
+
+            foreach (var token in form.ToList())
+            {
+                if (IsListElement(token))
+                {
+                    if (isFirstElement)
+                    {
+                        // First element stays in place
+                        isFirstElement = false;
+                    }
+                }
+                else if (token is GDComma comma)
+                {
+                    var nextToken = form.NextTokenAfter(comma);
+                    if (nextToken != null && !(nextToken is GDNewLine))
+                    {
+                        // Remove space after comma if exists
+                        if (nextToken is GDSpace)
+                        {
+                            form.Remove(nextToken);
+                            nextToken = form.NextTokenAfter(comma);
+                        }
+
+                        if (nextToken != null)
+                        {
+                            InsertLineBreakWithSpaces(nextToken, form, alignColumn);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds a trailing comma after the last element in the list.
+        /// </summary>
+        private void AddTrailingComma(GDNode list)
+        {
+            if (list?.Form == null)
+                return;
+
+            // Find the last element
+            GDSyntaxToken lastElement = null;
+            GDSyntaxToken tokenAfterLastElement = null;
+
+            var tokens = list.Form.ToList();
+            for (int i = tokens.Count - 1; i >= 0; i--)
+            {
+                if (IsListElement(tokens[i]))
+                {
+                    lastElement = tokens[i];
+                    if (i + 1 < tokens.Count)
+                        tokenAfterLastElement = tokens[i + 1];
+                    break;
+                }
+            }
+
+            if (lastElement == null)
+                return;
+
+            // Check if there's already a comma after the last element
+            if (tokenAfterLastElement is GDComma)
+                return;
+
+            // Skip whitespace to check for comma
+            var nextNonWhitespace = tokenAfterLastElement;
+            while (nextNonWhitespace is GDSpace || nextNonWhitespace is GDNewLine || nextNonWhitespace is GDIntendation)
+            {
+                var idx = tokens.IndexOf(nextNonWhitespace);
+                if (idx + 1 < tokens.Count)
+                    nextNonWhitespace = tokens[idx + 1];
+                else
+                    break;
+            }
+
+            if (nextNonWhitespace is GDComma)
+                return;
+
+            // Add comma after last element
+            var comma = new GDComma();
+            list.Form.AddAfterToken(comma, lastElement);
+        }
+
+        /// <summary>
+        /// Calculates the column position right after the opening bracket.
+        /// </summary>
+        private int CalculateOpenBracketPosition(GDSyntaxToken openBracket, GDNode parent)
+        {
+            if (openBracket == null)
+                return EstimateCurrentLinePosition() + 1;
+
+            // Estimate based on the node string representation
+            if (parent != null)
+            {
+                var parentStr = parent.ToString();
+                var bracketIndex = parentStr.IndexOf(openBracket.ToString());
+                if (bracketIndex >= 0)
+                {
+                    return EstimateCurrentLinePosition() + bracketIndex + 1;
+                }
+            }
+
+            return EstimateCurrentLinePosition() + 1;
+        }
+
+        /// <summary>
+        /// Inserts a line break and spaces (not tabs) for alignment.
+        /// Used for HangingIndent and Aligned styles.
+        /// </summary>
+        private void InsertLineBreakWithSpaces(GDSyntaxToken beforeToken, GDTokensForm form, int spaceCount)
+        {
+            // Create and insert newline
+            var newLine = new GDNewLine();
+            form.AddBeforeToken(newLine, beforeToken);
+
+            // Create and insert spaces for alignment
+            if (spaceCount > 0)
+            {
+                var indent = new GDIntendation();
+                indent.Sequence = new string(' ', spaceCount);
+                indent.LineIntendationThreshold = 0; // Use raw spaces
+                form.AddBeforeToken(indent, beforeToken);
+            }
+        }
+
         private void WrapMethodChain(GDMemberOperatorExpression rootMemberOp)
         {
             // Collect all member operations in the chain
             var chainMembers = new List<GDMemberOperatorExpression>();
             CollectMethodChainMembers(rootMemberOp, chainMembers);
 
-            if (chainMembers.Count < 2)
+            // Check minimum chain length requirement
+            if (chainMembers.Count < Options.MinMethodChainLengthToWrap)
                 return;
 
             var wrapIndent = _currentIndentLevel + Options.ContinuationIndentSize;

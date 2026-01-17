@@ -1,4 +1,6 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System.Collections.Generic;
 
 namespace GDShrapt.Linter
 {
@@ -61,6 +63,11 @@ namespace GDShrapt.Linter
         /// Ending column number (1-based).
         /// </summary>
         public int EndColumn { get; }
+
+        /// <summary>
+        /// Structured fix descriptors for this issue.
+        /// </summary>
+        public IReadOnlyList<GDFixDescriptor> FixDescriptors { get; internal set; }
 
         public GDLintIssue(
             string ruleId,

@@ -1,4 +1,6 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System.Collections.Generic;
 
 namespace GDShrapt.Linter
 {
@@ -30,9 +32,9 @@ namespace GDShrapt.Linter
             CheckVariableName(varName, localVariable.Identifier);
         }
 
-        private void CheckVariableName(string varName, GDSyntaxToken token)
+        private void CheckVariableName(string varName, GDIdentifier identifier)
         {
-            if (string.IsNullOrEmpty(varName))
+            if (string.IsNullOrEmpty(varName) || identifier == null)
                 return;
 
             var expectedCase = Options?.VariableNameCase ?? NamingCase.SnakeCase;
@@ -42,11 +44,27 @@ namespace GDShrapt.Linter
             if (!NamingHelper.MatchesCase(varName, expectedCase))
             {
                 var suggestion = NamingHelper.SuggestCorrectName(varName, expectedCase);
+                var fixes = CreateRenameFixes(identifier, suggestion);
+
                 ReportIssue(
                     $"Variable name '{varName}' should use {NamingHelper.GetCaseName(expectedCase)}",
-                    token,
-                    $"Rename to '{suggestion}'");
+                    identifier,
+                    $"Rename to '{suggestion}'",
+                    fixes);
             }
+        }
+
+        private IEnumerable<GDFixDescriptor> CreateRenameFixes(GDIdentifier identifier, string suggestion)
+        {
+            if (identifier == null || string.IsNullOrEmpty(suggestion))
+                yield break;
+
+            yield return GDTextEditFixDescriptor.Replace(
+                $"Rename to '{suggestion}'",
+                identifier.StartLine,
+                identifier.StartColumn,
+                identifier.EndColumn,
+                suggestion);
         }
     }
 }

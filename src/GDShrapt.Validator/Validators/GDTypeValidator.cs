@@ -1,4 +1,5 @@
 using GDShrapt.Abstractions;
+using System.Collections.Generic;
 
 namespace GDShrapt.Reader
 {
@@ -10,6 +11,28 @@ namespace GDShrapt.Reader
     {
         private GDTypeInferenceEngine _typeInference;
 
+        /// <summary>
+        /// Represents a function context (either a method declaration or a lambda expression).
+        /// </summary>
+        private struct FunctionContext
+        {
+            public GDTypeNode ReturnType;
+            public bool IsLambda;
+
+            public static FunctionContext FromMethod(GDMethodDeclaration method)
+            {
+                return new FunctionContext { ReturnType = method.ReturnType, IsLambda = false };
+            }
+
+            public static FunctionContext FromLambda(GDMethodExpression lambda)
+            {
+                return new FunctionContext { ReturnType = lambda.ReturnType, IsLambda = true };
+            }
+        }
+
+        // Stack to track containing functions (methods and lambdas) for return type checking
+        private readonly Stack<FunctionContext> _functionStack = new Stack<FunctionContext>();
+
         public GDTypeValidator(GDValidationContext context) : base(context)
         {
         }
@@ -18,6 +41,7 @@ namespace GDShrapt.Reader
         {
             // Create type inference engine with runtime provider and scope stack
             _typeInference = new GDTypeInferenceEngine(Context.RuntimeProvider, Context.Scopes);
+            _functionStack.Clear();
             node?.WalkIn(this);
         }
 
@@ -56,6 +80,119 @@ namespace GDShrapt.Reader
                     awaitExpression);
             }
         }
+
+        #region Method/Return Type Tracking
+
+        public override void Visit(GDMethodDeclaration methodDeclaration)
+        {
+            _functionStack.Push(FunctionContext.FromMethod(methodDeclaration));
+        }
+
+        public override void Left(GDMethodDeclaration methodDeclaration)
+        {
+            if (_functionStack.Count > 0)
+                _functionStack.Pop();
+        }
+
+        public override void Visit(GDMethodExpression methodExpression)
+        {
+            // Lambda expressions also create a new function context
+            _functionStack.Push(FunctionContext.FromLambda(methodExpression));
+        }
+
+        public override void Left(GDMethodExpression methodExpression)
+        {
+            if (_functionStack.Count > 0)
+                _functionStack.Pop();
+        }
+
+        public override void Visit(GDReturnExpression returnExpression)
+        {
+            ValidateReturnType(returnExpression);
+        }
+
+        private void ValidateReturnType(GDReturnExpression returnExpr)
+        {
+            // Only validate if we're inside a function
+            if (_functionStack.Count == 0)
+                return;
+
+            var context = _functionStack.Peek();
+            var declaredReturnType = context.ReturnType?.BuildName();
+
+            // If no return type is declared, any return is valid
+            if (string.IsNullOrEmpty(declaredReturnType))
+                return;
+
+            // If declared as void, no value should be returned
+            if (declaredReturnType == "void")
+            {
+                if (returnExpr.Expression != null)
+                {
+                    var returnedType = InferSimpleType(returnExpr.Expression);
+                    if (returnedType != "void" && returnedType != "Unknown")
+                    {
+                        ReportWarning(
+                            GDDiagnosticCode.IncompatibleReturnType,
+                            $"Function with return type 'void' should not return a value (got '{returnedType}')",
+                            returnExpr);
+                    }
+                }
+                return;
+            }
+
+            // If method has a non-void return type, check the return expression
+            if (returnExpr.Expression == null)
+            {
+                // Return without value in typed function
+                ReportWarning(
+                    GDDiagnosticCode.IncompatibleReturnType,
+                    $"Function expects return type '{declaredReturnType}' but returns nothing",
+                    returnExpr);
+                return;
+            }
+
+            // Infer the type of the returned expression
+            var actualType = InferSimpleType(returnExpr.Expression);
+
+            // Skip validation if type couldn't be inferred
+            if (actualType == null || actualType == "Unknown")
+                return;
+
+            // Check type compatibility
+            if (!AreReturnTypesCompatible(actualType, declaredReturnType))
+            {
+                ReportWarning(
+                    GDDiagnosticCode.IncompatibleReturnType,
+                    $"Cannot return '{actualType}' from function with return type '{declaredReturnType}'",
+                    returnExpr);
+            }
+        }
+
+        /// <summary>
+        /// Checks if the actual return type is compatible with the declared return type.
+        /// </summary>
+        private bool AreReturnTypesCompatible(string actualType, string declaredType)
+        {
+            if (string.IsNullOrEmpty(actualType) || string.IsNullOrEmpty(declaredType))
+                return true;
+
+            // Same type is always compatible
+            if (actualType == declaredType)
+                return true;
+
+            // null is compatible with any reference type
+            if (actualType == "null")
+                return true;
+
+            // Use type inference engine for detailed compatibility check
+            if (_typeInference != null)
+                return _typeInference.AreTypesCompatible(actualType, declaredType);
+
+            return false;
+        }
+
+        #endregion
 
         private void ValidateDualOperator(GDDualOperatorExpression expr)
         {

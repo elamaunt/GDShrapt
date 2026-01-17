@@ -446,6 +446,358 @@ namespace GDShrapt.Reader.Tests.Formatting
             options.UseBackslashContinuation.Should().BeFalse();
         }
 
+        [TestMethod]
+        public void GDFormatterOptions_NewDefaults_AreCorrect()
+        {
+            var options = new GDFormatterOptions();
+
+            options.AddTrailingCommaWhenWrapped.Should().BeFalse();
+            options.ArrayWrapStyle.Should().BeNull();
+            options.ParameterWrapStyle.Should().BeNull();
+            options.DictionaryWrapStyle.Should().BeNull();
+            options.MinMethodChainLengthToWrap.Should().Be(2);
+        }
+
+        #endregion
+
+        #region HangingIndent Style
+
+        [TestMethod]
+        public void FormatCode_HangingIndent_WrapsAfterFirstElement()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 30,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.HangingIndent
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var arr = [aaa, bbb, ccc, ddd]
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All elements should be present
+            result.Should().Contain("aaa");
+            result.Should().Contain("bbb");
+            result.Should().Contain("ccc");
+            result.Should().Contain("ddd");
+            // Should have newlines (indicating wrapping occurred)
+            result.Should().Contain("\n");
+        }
+
+        [TestMethod]
+        public void FormatCode_HangingIndent_FunctionCall()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 35,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.HangingIndent
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	foo(param1, param2, param3, param4)
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All parameters should be present
+            result.Should().Contain("param1");
+            result.Should().Contain("param2");
+            result.Should().Contain("param3");
+            result.Should().Contain("param4");
+        }
+
+        #endregion
+
+        #region CompactVertical Style
+
+        [TestMethod]
+        public void FormatCode_CompactVertical_PacksMultiplePerLine()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 40,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.CompactVertical,
+                ContinuationIndentSize = 1
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var arr = [a, b, c, d, e, f, g, h]
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All elements should be present
+            result.Should().Contain("a");
+            result.Should().Contain("b");
+            result.Should().Contain("c");
+            result.Should().Contain("d");
+            result.Should().Contain("e");
+            result.Should().Contain("f");
+            result.Should().Contain("g");
+            result.Should().Contain("h");
+        }
+
+        [TestMethod]
+        public void FormatCode_CompactVertical_FunctionCall()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 50,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.CompactVertical,
+                ContinuationIndentSize = 1
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	my_func(param1, param2, param3, param4, param5, param6)
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All parameters should be present
+            result.Should().Contain("param1");
+            result.Should().Contain("param2");
+            result.Should().Contain("param3");
+            result.Should().Contain("param4");
+            result.Should().Contain("param5");
+            result.Should().Contain("param6");
+        }
+
+        #endregion
+
+        #region Aligned Style
+
+        [TestMethod]
+        public void FormatCode_Aligned_AlignsWithOpeningBracket()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 35,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.Aligned
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var arr = [aaa, bbb, ccc, ddd]
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All elements should be present
+            result.Should().Contain("aaa");
+            result.Should().Contain("bbb");
+            result.Should().Contain("ccc");
+            result.Should().Contain("ddd");
+        }
+
+        [TestMethod]
+        public void FormatCode_Aligned_FunctionCall()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 35,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.Aligned
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	some_func(param1, param2, param3)
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All parameters should be present
+            result.Should().Contain("param1");
+            result.Should().Contain("param2");
+            result.Should().Contain("param3");
+        }
+
+        #endregion
+
+        #region Trailing Comma
+
+        [TestMethod]
+        public void FormatCode_TrailingComma_AddsWhenWrapped()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 25,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.AfterOpeningBracket,
+                AddTrailingCommaWhenWrapped = true,
+                ContinuationIndentSize = 1
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var arr = [a, b, c, d]
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All elements should be present
+            result.Should().Contain("a");
+            result.Should().Contain("b");
+            result.Should().Contain("c");
+            result.Should().Contain("d");
+            // Wrapping should have occurred
+            result.Should().Contain("\n");
+        }
+
+        [TestMethod]
+        public void FormatCode_TrailingComma_NotAddedWhenNotWrapped()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 100, // Long enough to not wrap
+                WrapLongLines = true,
+                AddTrailingCommaWhenWrapped = true
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var arr = [1, 2, 3]
+";
+
+            var result = formatter.FormatCode(code);
+
+            // Should not be wrapped, so no trailing comma added
+            result.Should().Contain("[1, 2, 3]");
+        }
+
+        #endregion
+
+        #region Per-Type Wrap Style Configuration
+
+        [TestMethod]
+        public void FormatCode_ArrayWrapStyle_OverridesGeneral()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 30,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.AfterOpeningBracket,
+                ArrayWrapStyle = LineWrapStyle.CompactVertical,
+                ContinuationIndentSize = 1
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var arr = [a, b, c, d, e]
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All elements should be present
+            result.Should().Contain("a");
+            result.Should().Contain("b");
+            result.Should().Contain("c");
+            result.Should().Contain("d");
+            result.Should().Contain("e");
+        }
+
+        [TestMethod]
+        public void FormatCode_DictionaryWrapStyle_OverridesGeneral()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 35,
+                WrapLongLines = true,
+                LineWrapStyle = LineWrapStyle.AfterOpeningBracket,
+                DictionaryWrapStyle = LineWrapStyle.HangingIndent,
+                ContinuationIndentSize = 1
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var dict = {""a"": 1, ""b"": 2, ""c"": 3}
+";
+
+            var result = formatter.FormatCode(code);
+
+            // All key-value pairs should be present
+            result.Should().Contain("\"a\"");
+            result.Should().Contain("\"b\"");
+            result.Should().Contain("\"c\"");
+        }
+
+        #endregion
+
+        #region MinMethodChainLengthToWrap
+
+        [TestMethod]
+        public void FormatCode_MethodChain_ShortChain_NoWrapping()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 30,
+                WrapLongLines = true,
+                UseBackslashContinuation = true,
+                MinMethodChainLengthToWrap = 3 // Require at least 3 methods
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var x = obj.method1().method2()
+";
+
+            var result = formatter.FormatCode(code);
+
+            // Chain of 2 should NOT be wrapped (MinMethodChainLengthToWrap = 3)
+            result.Should().Contain("obj.method1().method2()");
+        }
+
+        [TestMethod]
+        public void FormatCode_MethodChain_LongChain_Wraps()
+        {
+            var options = new GDFormatterOptions
+            {
+                MaxLineLength = 25,
+                WrapLongLines = true,
+                UseBackslashContinuation = true,
+                MinMethodChainLengthToWrap = 2,
+                ContinuationIndentSize = 1
+            };
+            var formatter = new GDFormatter(options);
+
+            var code = @"func test():
+	var x = obj.method1().method2().method3()
+";
+
+            var result = formatter.FormatCode(code);
+
+            // Chain of 3 should be wrapped (MinMethodChainLengthToWrap = 2)
+            result.Should().Contain("method1");
+            result.Should().Contain("method2");
+            result.Should().Contain("method3");
+        }
+
+        #endregion
+
+        #region LineWrapStyle Enum Values
+
+        [TestMethod]
+        public void LineWrapStyle_AllValuesExist()
+        {
+            // Verify all expected enum values exist
+            LineWrapStyle.AfterOpeningBracket.Should().BeDefined();
+            LineWrapStyle.BeforeElements.Should().BeDefined();
+            LineWrapStyle.HangingIndent.Should().BeDefined();
+            LineWrapStyle.CompactVertical.Should().BeDefined();
+            LineWrapStyle.Aligned.Should().BeDefined();
+        }
+
         #endregion
     }
 }

@@ -1,4 +1,6 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System.Collections.Generic;
 
 namespace GDShrapt.Linter
 {
@@ -31,11 +33,28 @@ namespace GDShrapt.Linter
             if (!NamingHelper.MatchesCase(constName, expectedCase))
             {
                 var suggestion = NamingHelper.SuggestCorrectName(constName, expectedCase);
+                var identifier = variableDeclaration.Identifier;
+                var fixes = CreateRenameFixes(identifier, suggestion);
+
                 ReportIssue(
                     $"Constant name '{constName}' should use {NamingHelper.GetCaseName(expectedCase)}",
                     variableDeclaration.Identifier,
-                    $"Rename to '{suggestion}'");
+                    $"Rename to '{suggestion}'",
+                    fixes);
             }
+        }
+
+        private IEnumerable<GDFixDescriptor> CreateRenameFixes(GDIdentifier identifier, string suggestion)
+        {
+            if (identifier == null || string.IsNullOrEmpty(suggestion))
+                yield break;
+
+            yield return GDTextEditFixDescriptor.Replace(
+                $"Rename to '{suggestion}'",
+                identifier.StartLine,
+                identifier.StartColumn,
+                identifier.EndColumn,
+                suggestion);
         }
     }
 }

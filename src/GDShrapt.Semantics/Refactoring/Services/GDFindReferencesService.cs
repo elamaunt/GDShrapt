@@ -63,6 +63,11 @@ public class GDSymbolScope
     public GDForStatement? ContainingForLoop { get; }
 
     /// <summary>
+    /// The match case containing this symbol (match case variables).
+    /// </summary>
+    public GDMatchCaseDeclaration? ContainingMatchCase { get; }
+
+    /// <summary>
     /// The class containing this symbol.
     /// </summary>
     public GDClassDeclaration? ContainingClass { get; }
@@ -98,6 +103,7 @@ public class GDSymbolScope
         GDNode? declarationNode = null,
         GDMethodDeclaration? containingMethod = null,
         GDForStatement? containingForLoop = null,
+        GDMatchCaseDeclaration? containingMatchCase = null,
         GDClassDeclaration? containingClass = null,
         GDScriptFile? containingScript = null,
         GDMemberOperatorExpression? memberExpression = null,
@@ -110,6 +116,7 @@ public class GDSymbolScope
         DeclarationNode = declarationNode;
         ContainingMethod = containingMethod;
         ContainingForLoop = containingForLoop;
+        ContainingMatchCase = containingMatchCase;
         ContainingClass = containingClass;
         ContainingScript = containingScript;
         MemberExpression = memberExpression;
@@ -347,6 +354,7 @@ public class GDFindReferencesService
         {
             GDSymbolKind.Parameter => GDSymbolScopeType.MethodParameter,
             GDSymbolKind.Iterator => GDSymbolScopeType.ForLoopVariable,
+            GDSymbolKind.MatchCaseBinding => GDSymbolScopeType.MatchCaseVariable,
             GDSymbolKind.Variable when symbolInfo.DeclaringTypeName == null => GDSymbolScopeType.LocalVariable,
             GDSymbolKind.Variable => GDSymbolScopeType.ClassMember,
             GDSymbolKind.Method => GDSymbolScopeType.ClassMember,
@@ -369,12 +377,20 @@ public class GDFindReferencesService
 
         var containingForLoop = symbolInfo.DeclarationNode as GDForStatement;
 
+        // Check for match case variable
+        GDMatchCaseDeclaration? containingMatchCase = null;
+        if (symbolInfo.Kind == GDSymbolKind.MatchCaseBinding && symbolInfo.DeclarationNode != null)
+        {
+            containingMatchCase = GDPositionFinder.FindParent<GDMatchCaseDeclaration>(symbolInfo.DeclarationNode);
+        }
+
         return new GDSymbolScope(
             scopeType,
             symbolInfo.Name,
             declarationNode: symbolInfo.DeclarationNode,
             containingMethod: containingMethod,
             containingForLoop: containingForLoop,
+            containingMatchCase: containingMatchCase,
             containingClass: context.ClassDeclaration,
             containingScript: context.Script,
             callerTypeName: symbolInfo.DeclaringTypeName,
@@ -435,6 +451,23 @@ public class GDFindReferencesService
                 containingScript: context.Script);
         }
 
+        // Match case variable binding (var x in match patterns)
+        if (parent is GDMatchCaseVariableExpression matchCaseVar)
+        {
+            var matchCase = GDPositionFinder.FindParent<GDMatchCaseDeclaration>(identifier);
+            if (matchCase != null)
+            {
+                return new GDSymbolScope(
+                    GDSymbolScopeType.MatchCaseVariable,
+                    symbolName,
+                    declarationNode: matchCaseVar,
+                    containingMatchCase: matchCase,
+                    containingClass: context.ClassDeclaration,
+                    containingScript: context.Script,
+                    declarationLine: identifier.StartLine);
+            }
+        }
+
         // Class member (declaration)
         if (parent is GDMethodDeclaration || parent is GDVariableDeclaration ||
             parent is GDSignalDeclaration || parent is GDEnumDeclaration)
@@ -480,6 +513,26 @@ public class GDFindReferencesService
                         containingMethod: method,
                         containingClass: context.ClassDeclaration,
                         containingScript: context.Script);
+                }
+
+                // Check if it's a match case variable reference
+                var containingMatchCase = GDPositionFinder.FindParent<GDMatchCaseDeclaration>(identifier);
+                if (containingMatchCase != null)
+                {
+                    var matchCaseVarDecl = containingMatchCase.Conditions?.AllNodes
+                        .OfType<GDMatchCaseVariableExpression>()
+                        .FirstOrDefault(expr => expr.Identifier?.Sequence == symbolName);
+                    if (matchCaseVarDecl != null)
+                    {
+                        return new GDSymbolScope(
+                            GDSymbolScopeType.MatchCaseVariable,
+                            symbolName,
+                            declarationNode: matchCaseVarDecl,
+                            containingMatchCase: containingMatchCase,
+                            containingClass: context.ClassDeclaration,
+                            containingScript: context.Script,
+                            declarationLine: matchCaseVarDecl.Identifier?.StartLine ?? 0);
+                    }
                 }
             }
 
@@ -842,9 +895,89 @@ public class GDFindReferencesService
 
     private void CollectMatchCaseReferences(GDSymbolScope scope, List<GDFoundReference> references)
     {
-        // Match case variables are bound within their case body only
-        // Similar to for loop variables but within match case
-        // TODO: Implement when match case binding support is needed
+        if (scope.ContainingMatchCase == null) return;
+
+        var filePath = scope.ContainingScript?.FullPath;
+        var matchCase = scope.ContainingMatchCase;
+        var symbolName = scope.SymbolName;
+
+        // 1. Find the declaration (var x) in match case conditions
+        var variableBinding = matchCase.Conditions?.AllNodes
+            .OfType<GDMatchCaseVariableExpression>()
+            .FirstOrDefault(expr => expr.Identifier?.Sequence == symbolName);
+
+        if (variableBinding?.Identifier != null)
+        {
+            var id = variableBinding.Identifier;
+            var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
+            references.Add(new GDFoundReference(
+                symbolName,
+                filePath,
+                id.StartLine,
+                id.StartColumn,
+                id.EndColumn,
+                GDReferenceKind.Declaration,
+                GDReferenceConfidence.Strict,
+                variableBinding,
+                context,
+                hlStart,
+                hlEnd,
+                "Match case variable declaration"));
+        }
+
+        // 2. Find usages in the guard condition (when clause)
+        if (matchCase.GuardCondition != null)
+        {
+            foreach (var idExpr in matchCase.GuardCondition.AllNodes
+                .OfType<GDIdentifierExpression>()
+                .Where(e => e.Identifier?.Sequence == symbolName))
+            {
+                var id = idExpr.Identifier;
+                if (id == null) continue;
+
+                var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
+                references.Add(new GDFoundReference(
+                    symbolName,
+                    filePath,
+                    id.StartLine,
+                    id.StartColumn,
+                    id.EndColumn,
+                    DetermineReferenceKind(id),
+                    GDReferenceConfidence.Strict,
+                    idExpr,
+                    context,
+                    hlStart,
+                    hlEnd,
+                    "Match case guard condition reference"));
+            }
+        }
+
+        // 3. Find usages in the match case body (statements)
+        if (matchCase.Statements != null)
+        {
+            foreach (var idExpr in matchCase.Statements.AllNodes
+                .OfType<GDIdentifierExpression>()
+                .Where(e => e.Identifier?.Sequence == symbolName))
+            {
+                var id = idExpr.Identifier;
+                if (id == null) continue;
+
+                var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
+                references.Add(new GDFoundReference(
+                    symbolName,
+                    filePath,
+                    id.StartLine,
+                    id.StartColumn,
+                    id.EndColumn,
+                    DetermineReferenceKind(id),
+                    GDReferenceConfidence.Strict,
+                    idExpr,
+                    context,
+                    hlStart,
+                    hlEnd,
+                    "Match case variable reference"));
+            }
+        }
     }
 
     private void CollectClassMemberReferences(

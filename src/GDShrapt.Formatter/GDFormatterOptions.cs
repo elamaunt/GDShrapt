@@ -143,6 +143,40 @@ namespace GDShrapt.Formatter
         /// </summary>
         public bool UseBackslashContinuation { get; set; } = false;
 
+        /// <summary>
+        /// Add trailing comma after the last element when wrapping. Default: false.
+        /// When true and wrapping is applied:
+        /// [
+        ///     elem1,
+        ///     elem2,
+        /// ]
+        /// </summary>
+        public bool AddTrailingCommaWhenWrapped { get; set; } = false;
+
+        /// <summary>
+        /// Line wrap style for arrays specifically. Default: null (uses LineWrapStyle).
+        /// Set to override the general LineWrapStyle for arrays.
+        /// </summary>
+        public LineWrapStyle? ArrayWrapStyle { get; set; }
+
+        /// <summary>
+        /// Line wrap style for function/method parameters. Default: null (uses LineWrapStyle).
+        /// Set to override the general LineWrapStyle for function parameters.
+        /// </summary>
+        public LineWrapStyle? ParameterWrapStyle { get; set; }
+
+        /// <summary>
+        /// Line wrap style for dictionaries. Default: null (uses LineWrapStyle).
+        /// Set to override the general LineWrapStyle for dictionaries.
+        /// </summary>
+        public LineWrapStyle? DictionaryWrapStyle { get; set; }
+
+        /// <summary>
+        /// Minimum method chain length to trigger wrapping. Default: 2.
+        /// Method chains shorter than this won't be wrapped.
+        /// </summary>
+        public int MinMethodChainLengthToWrap { get; set; } = 2;
+
         // Rule management
 
         /// <summary>
@@ -268,6 +302,31 @@ namespace GDShrapt.Formatter
         /// func(param1,
         ///     param2, param3)
         /// </summary>
-        BeforeElements
+        BeforeElements,
+
+        /// <summary>
+        /// Hanging indent: first element stays on line, rest aligned below:
+        /// func(param1,
+        ///      param2,
+        ///      param3)
+        /// </summary>
+        HangingIndent,
+
+        /// <summary>
+        /// Compact vertical: pack as many elements as fit on each line:
+        /// func(
+        ///     param1, param2,
+        ///     param3, param4
+        /// )
+        /// </summary>
+        CompactVertical,
+
+        /// <summary>
+        /// Aligned: align continuation lines with the opening bracket:
+        /// some_function(param1,
+        ///               param2,
+        ///               param3)
+        /// </summary>
+        Aligned
     }
 }

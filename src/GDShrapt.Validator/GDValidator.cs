@@ -80,7 +80,16 @@ namespace GDShrapt.Reader
                 signalValidator.Validate(node);
             }
 
-            return context.BuildResult();
+            var result = context.BuildResult();
+
+            // Apply comment-based suppression if enabled
+            if (options.EnableCommentSuppression && node != null)
+            {
+                var suppressionContext = global::GDShrapt.Validator.GDValidatorSuppressionParser.Parse(node);
+                result.FilterSuppressed(suppressionContext);
+            }
+
+            return result;
         }
 
         /// <summary>
