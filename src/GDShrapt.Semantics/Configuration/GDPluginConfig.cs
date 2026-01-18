@@ -69,6 +69,11 @@ public class GDUIConfig
     /// Enable Find References dock in bottom panel. Default: true
     /// </summary>
     public bool FindReferencesDockEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Enable error line background highlighting (VS Code style). Default: true
+    /// </summary>
+    public bool ErrorLineBackgroundEnabled { get; set; } = true;
 }
 
 /// <summary>

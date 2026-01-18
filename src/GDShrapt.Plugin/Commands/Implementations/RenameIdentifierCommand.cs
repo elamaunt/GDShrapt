@@ -9,6 +9,7 @@ namespace GDShrapt.Plugin;
 internal class RenameIdentifierCommand : Command
 {
     RenamingDialog _renamingDialog;
+    Action<string, int, int, int> _renamingDialogNavigateHandler;
     NodeRenamingDialog _nodeRenamingDialog;
     GDNodePathReferenceFinder _referenceFinder;
     NodePathRenamer _renamer;
@@ -1181,11 +1182,12 @@ internal class RenameIdentifierCommand : Command
         {
             if (_renamingDialog != null)
             {
-                _renamingDialog.NavigateToReference -= OnNavigateToReference;
+                _renamingDialog.NavigateToReference -= _renamingDialogNavigateHandler;
                 _renamingDialog.QueueFree();
             }
             _renamingDialog = new RenamingDialog();
-            _renamingDialog.NavigateToReference += OnNavigateToReference;
+            _renamingDialogNavigateHandler = OnNavigateToReference;
+            _renamingDialog.NavigateToReference += _renamingDialogNavigateHandler;
             scriptEditor.AddChild(_renamingDialog);
         }
 
@@ -1196,7 +1198,7 @@ internal class RenameIdentifierCommand : Command
         return await _renamingDialog.ShowForResult();
     }
 
-    private void OnNavigateToReference(string filePath, int line, int column)
+    private void OnNavigateToReference(string filePath, int line, int column, int endColumn)
     {
         if (string.IsNullOrEmpty(filePath))
             return;
@@ -1212,5 +1214,8 @@ internal class RenameIdentifierCommand : Command
 
         // Open the script and navigate to the line
         EditorInterface.Singleton.EditScript(Godot.GD.Load<Script>(resourcePath), line + 1, column);
+
+        // Try to select the token if we have valid column range
+        // Note: Selection will be handled by the active tab controller after EditScript
     }
 }

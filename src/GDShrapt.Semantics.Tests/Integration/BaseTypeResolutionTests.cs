@@ -27,7 +27,7 @@ public class BaseTypeResolutionTests
 
         // Assert
         Assert.IsNotNull(extendsClause, "Script should have extends clause");
-        Assert.AreEqual("Node2D", extendsClause.Type?.TypeName?.ToString(),
+        Assert.AreEqual("Node2D", extendsClause.Type?.BuildName(),
             "base_entity.gd should extend Node2D");
     }
 
@@ -110,7 +110,8 @@ public class BaseTypeResolutionTests
         // Assert
         Assert.IsNotNull(member,
             "Node2D should have position property");
-        Assert.AreEqual("position", member.Name);
+        // Godot API uses PascalCase for property names
+        Assert.AreEqual("Position", member.Name);
     }
 
     [TestMethod]

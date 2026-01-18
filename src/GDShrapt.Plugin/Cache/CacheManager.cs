@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -18,8 +14,8 @@ internal class CacheManager : IDisposable
     private const string CacheSubDirectory = "cache";
     private const string LintSubDirectory = "lint";
     private const string IndexFileName = "cache.index.json";
-    // Version 4: Fixed global enum constants, path-based extends, uint mapping, str varargs
-    private const int CurrentCacheVersion = 4;
+
+    private const int CurrentCacheVersion = 7;
 
     private readonly string _projectPath;
     private readonly string _cacheDirectory;

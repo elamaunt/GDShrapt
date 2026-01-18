@@ -9,15 +9,17 @@ namespace GDShrapt.Reader
         bool _statementResolved;
         bool _resolvedAsExpression;
         GDStatement _resolvedStatement;
+        readonly bool _inExpressionContext;
 
         readonly StringBuilder _sequenceBuilder = new StringBuilder();
 
         new IIntendedTokenReceiver<GDStatement> Owner { get; }
 
-        public GDStatementsResolver(IIntendedTokenReceiver<GDStatement> owner, int lineIntendation)
+        public GDStatementsResolver(IIntendedTokenReceiver<GDStatement> owner, int lineIntendation, bool inExpressionContext = false)
             : base(owner, lineIntendation)
         {
             Owner = owner;
+            _inExpressionContext = inExpressionContext;
         }
 
         internal override void HandleCharAfterIntendation(char c, GDReadingState state)
@@ -33,16 +35,24 @@ namespace GDShrapt.Reader
 
                 if (_resolvedAsExpression)
                 {
-                    if (c.IsExpressionStopChar())
-                    {
-                        Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
-                        return;
-                    }
-
                     if (_resolvedStatement.Form.IsCompleted && _resolvedStatement.Form.FirstToken == null)
                     {
                         _resolvedStatement.RemoveFromParent();
                         state.PopAndPass(c);
+                        return;
+                    }
+
+                    if (c.IsExpressionStopChar())
+                    {
+                        // In expression context (e.g., lambda inside call), pass stop chars up
+                        // This allows lambdas inside GDExpressionsList to properly terminate on comma/bracket
+                        if (_inExpressionContext)
+                        {
+                            state.PopAndPass(c);
+                            return;
+                        }
+                        // Otherwise treat as invalid token (top-level or malformed code)
+                        Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                         return;
                     }
 

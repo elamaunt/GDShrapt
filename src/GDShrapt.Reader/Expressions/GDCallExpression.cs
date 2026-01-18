@@ -24,7 +24,7 @@
 
         public GDExpressionsList Parameters
         {
-            get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList());
+            get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList(_intendation));
             set => _form.Token2 = value;
         }
 

@@ -20,8 +20,9 @@ internal partial class ReferencesDock : Control
 
     /// <summary>
     /// Event fired when user wants to navigate to a reference.
+    /// Parameters: filePath, line, startColumn, endColumn
     /// </summary>
-    public event Action<string, int, int> NavigateToReference;
+    public event Action<string, int, int, int> NavigateToReference;
 
     public override void _Ready()
     {
@@ -199,7 +200,7 @@ internal partial class ReferencesDock : Control
         var refFromTree = _referencesTree.GetReferenceForItem(selected);
         if (refFromTree != null)
         {
-            NavigateToReference?.Invoke(refFromTree.FilePath, refFromTree.Line, refFromTree.Column);
+            NavigateToReference?.Invoke(refFromTree.FilePath, refFromTree.Line, refFromTree.Column, refFromTree.EndColumn);
             return;
         }
 
@@ -220,7 +221,7 @@ internal partial class ReferencesDock : Control
             var obj = firstMeta.AsGodotObject();
             if (obj is ReferenceItem refItem)
             {
-                NavigateToReference?.Invoke(refItem.FilePath, refItem.Line, refItem.Column);
+                NavigateToReference?.Invoke(refItem.FilePath, refItem.Line, refItem.Column, refItem.EndColumn);
                 return;
             }
             // If it's HeaderLayoutData, this is a file header - skip to second metadata
@@ -236,7 +237,7 @@ internal partial class ReferencesDock : Control
                 var firstRef = _references.FirstOrDefault(r => r.FilePath == filePath);
                 if (firstRef != null)
                 {
-                    NavigateToReference?.Invoke(firstRef.FilePath, firstRef.Line, firstRef.Column);
+                    NavigateToReference?.Invoke(firstRef.FilePath, firstRef.Line, firstRef.Column, firstRef.EndColumn);
                 }
             }
         }
@@ -257,6 +258,10 @@ internal partial class ReferenceItem : GodotObject
     public string FilePath { get; set; }
     public int Line { get; set; }
     public int Column { get; set; }
+    /// <summary>
+    /// End column of the token for precise selection.
+    /// </summary>
+    public int EndColumn { get; set; }
     public string ContextLine { get; set; }
     public ReferenceKind Kind { get; set; }
     public GDIdentifier Identifier { get; set; }
@@ -271,13 +276,19 @@ internal partial class ReferenceItem : GodotObject
     /// </summary>
     public int HighlightEnd { get; set; }
 
+    /// <summary>
+    /// Confidence level of the reference.
+    /// </summary>
+    public GDReferenceConfidence Confidence { get; set; } = GDReferenceConfidence.Strict;
+
     public ReferenceItem() { }
 
-    public ReferenceItem(string filePath, int line, int column, string context, ReferenceKind kind, int highlightStart = 0, int highlightEnd = 0)
+    public ReferenceItem(string filePath, int line, int column, int endColumn, string context, ReferenceKind kind, int highlightStart = 0, int highlightEnd = 0)
     {
         FilePath = filePath;
         Line = line;
         Column = column;
+        EndColumn = endColumn;
         ContextLine = context;
         Kind = kind;
         HighlightStart = highlightStart;
@@ -309,10 +320,12 @@ internal partial class ReferenceItem : GodotObject
             FilePath = memberRef.Script?.FullPath,
             Line = memberRef.Identifier?.StartLine ?? 0,
             Column = memberRef.Identifier?.StartColumn ?? 0,
+            EndColumn = memberRef.Identifier?.EndColumn ?? 0,
             Kind = DetermineKind(memberRef),
             ContextLine = contextLine,
             HighlightStart = highlightStart,
-            HighlightEnd = highlightEnd
+            HighlightEnd = highlightEnd,
+            Confidence = memberRef.Confidence
         };
     }
 

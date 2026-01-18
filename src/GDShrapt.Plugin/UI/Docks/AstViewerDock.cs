@@ -24,8 +24,9 @@ internal partial class AstViewerDock : Control
 
     /// <summary>
     /// Event fired when user wants to navigate to a code location.
+    /// Parameters: filePath, line, startColumn, endColumn
     /// </summary>
-    public event Action<string, int, int> NavigateToCode;
+    public event Action<string, int, int, int> NavigateToCode;
 
     private bool _initialized = false;
 
@@ -412,7 +413,8 @@ internal partial class AstViewerDock : Control
                 NavigateToCode?.Invoke(
                     _currentScript.Reference.ResourcePath,
                     node.StartLine,
-                    node.StartColumn
+                    node.StartColumn,
+                    node.EndColumn
                 );
             }
         }

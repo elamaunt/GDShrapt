@@ -6,10 +6,12 @@ namespace GDShrapt.Reader
     public sealed class GDStatementsList : GDIntendedTokensList<GDStatement>
     {
         bool _completed;
+        readonly bool _inExpressionContext;
 
-        internal GDStatementsList(int lineIntendation)
+        internal GDStatementsList(int lineIntendation, bool inExpressionContext = false)
              : base(lineIntendation)
         {
+            _inExpressionContext = inExpressionContext;
         }
 
         public GDStatementsList()
@@ -22,7 +24,7 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementsResolver(this, LineIntendationThreshold));
+                state.Push(new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext));
                 state.PassChar(c);
                 return;
             }
@@ -35,7 +37,7 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementsResolver(this, LineIntendationThreshold));
+                state.Push(new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext));
                 state.PassNewLine();
                 return;
             }

@@ -21,6 +21,7 @@ public partial class GDShraptPlugin : EditorPlugin
     readonly HashSet<Button> _injectedSupportButtons = new HashSet<Button>();
 
     private ReferencesDock _referencesDock;
+    private Action<string, int, int, int> _referencesDockNavigateHandler;
     private Control _referencesDockButton;
     private TodoTagsDock _todoTagsDock;
     private Control _todoTagsDockButton;
@@ -28,6 +29,7 @@ public partial class GDShraptPlugin : EditorPlugin
     private ProblemsDock _problemsDock;
     private Control _problemsDockButton;
     private AstViewerDock _astViewerDock;
+    private Action<string, int, int, int> _astViewerDockNavigateHandler;
     private Control _astViewerDockButton;
     private ReplDock _replDock;
     private Control _replDockButton;
@@ -53,6 +55,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
     // UI dialogs
     private AboutPanel _aboutPanel;
+    private TypeInferencePanel _typeInferencePanel;
 
     // Project Settings integration
     private ProjectSettingsRegistry _settingsRegistry;
@@ -309,7 +312,9 @@ public partial class GDShraptPlugin : EditorPlugin
     {
         if (_referencesDock != null)
         {
-            _referencesDock.NavigateToReference -= OnNavigateToReference;
+            if (_referencesDockNavigateHandler != null)
+                _referencesDock.NavigateToReference -= _referencesDockNavigateHandler;
+            _referencesDockNavigateHandler = null;
             RemoveControlFromBottomPanel(_referencesDock);
             _referencesDock.QueueFree();
             _referencesDock = null;
@@ -334,7 +339,9 @@ public partial class GDShraptPlugin : EditorPlugin
 
         if (_astViewerDock != null)
         {
-            _astViewerDock.NavigateToCode -= OnNavigateToReference;
+            if (_astViewerDockNavigateHandler != null)
+                _astViewerDock.NavigateToCode -= _astViewerDockNavigateHandler;
+            _astViewerDockNavigateHandler = null;
             RemoveControlFromBottomPanel(_astViewerDock);
             _astViewerDock.QueueFree();
             _astViewerDock = null;
@@ -379,7 +386,12 @@ public partial class GDShraptPlugin : EditorPlugin
 
     private void OnNavigateToReference(string filePath, int line, int column)
     {
-        Logger.Debug($"Navigate to reference: {filePath}:{line}:{column}");
+        OnNavigateToReference(filePath, line, column, column);
+    }
+
+    private void OnNavigateToReference(string filePath, int line, int column, int endColumn)
+    {
+        Logger.Debug($"Navigate to reference: {filePath}:{line}:{column}-{endColumn}");
 
         if (string.IsNullOrEmpty(filePath))
             return;
@@ -403,7 +415,13 @@ public partial class GDShraptPlugin : EditorPlugin
             EditorInterface.Singleton.SetMainScreenEditor("Script");
 
             // Open and navigate to the line
+            // Note: EditScript positions the caret at the specified line/column.
+            // For token selection, we'd need access to the CodeEdit after EditScript completes,
+            // but since EditScript may open a new tab, we defer selection via signal or delay.
             EditorInterface.Singleton.EditScript(script, line + 1, column);
+
+            // TODO: Implement token selection after EditScript if needed
+            // Currently, EditScript only sets caret position, not selection
         }
     }
 
@@ -438,7 +456,8 @@ public partial class GDShraptPlugin : EditorPlugin
         // Create the references dock
         _referencesDock = new ReferencesDock();
         _referencesDock.Initialize();
-        _referencesDock.NavigateToReference += OnNavigateToReference;
+        _referencesDockNavigateHandler = (path, line, col, endCol) => OnNavigateToReference(path, line, col, endCol);
+        _referencesDock.NavigateToReference += _referencesDockNavigateHandler;
         _referencesDockButton = AddControlToBottomPanel(_referencesDock, "Find References");
 
         // Create the TODO tags dock
@@ -458,7 +477,8 @@ public partial class GDShraptPlugin : EditorPlugin
         // Create the AST Viewer dock (if enabled)
         _astViewerDock = new AstViewerDock();
         _astViewerDock.Initialize(this, _scriptProject);
-        _astViewerDock.NavigateToCode += OnNavigateToReference;
+        _astViewerDockNavigateHandler = (path, line, col, endCol) => OnNavigateToReference(path, line, col, endCol);
+        _astViewerDock.NavigateToCode += _astViewerDockNavigateHandler;
         _astViewerDockButton = AddControlToBottomPanel(_astViewerDock, "AST Viewer");
 
         // Create the REPL dock
@@ -666,14 +686,17 @@ public partial class GDShraptPlugin : EditorPlugin
                 if (token is GDShrapt.Reader.GDIdentifier id && id.Sequence == symbolName)
                 {
                     var kind = DetermineReferenceKind(id);
-                    var context = GetContext(id);
+                    var context = GetContextWithHighlight(id, symbolName, out var hlStart, out var hlEnd);
 
                     references.Add(new ReferenceItem(
                         filePath,
                         id.StartLine,
                         id.StartColumn,
+                        id.EndColumn,
                         context,
-                        kind
+                        kind,
+                        hlStart,
+                        hlEnd
                     ));
                 }
             }
@@ -724,24 +747,52 @@ public partial class GDShraptPlugin : EditorPlugin
         return ReferenceKind.Read;
     }
 
-    private static string GetContext(GDShrapt.Reader.GDIdentifier identifier)
+    private static string GetContextWithHighlight(GDShrapt.Reader.GDIdentifier identifier, string symbolName, out int highlightStart, out int highlightEnd)
     {
+        highlightStart = 0;
+        highlightEnd = 0;
+
         var parent = identifier.Parent;
 
         if (parent is GDShrapt.Reader.GDMethodDeclaration method)
-            return $"func {method.Identifier?.Sequence ?? ""}(...)";
+        {
+            var text = $"func {method.Identifier?.Sequence ?? ""}(...)";
+            highlightStart = 5; // After "func "
+            highlightEnd = highlightStart + (method.Identifier?.Sequence?.Length ?? 0);
+            return text;
+        }
 
         if (parent is GDShrapt.Reader.GDVariableDeclaration variable)
-            return $"var {variable.Identifier?.Sequence ?? ""}";
+        {
+            var text = $"var {variable.Identifier?.Sequence ?? ""}";
+            highlightStart = 4; // After "var "
+            highlightEnd = highlightStart + (variable.Identifier?.Sequence?.Length ?? 0);
+            return text;
+        }
 
         if (parent is GDShrapt.Reader.GDVariableDeclarationStatement localVar)
-            return $"var {localVar.Identifier?.Sequence ?? ""}";
+        {
+            var text = $"var {localVar.Identifier?.Sequence ?? ""}";
+            highlightStart = 4; // After "var "
+            highlightEnd = highlightStart + (localVar.Identifier?.Sequence?.Length ?? 0);
+            return text;
+        }
 
         if (parent is GDShrapt.Reader.GDSignalDeclaration signal)
-            return $"signal {signal.Identifier?.Sequence ?? ""}";
+        {
+            var text = $"signal {signal.Identifier?.Sequence ?? ""}";
+            highlightStart = 7; // After "signal "
+            highlightEnd = highlightStart + (signal.Identifier?.Sequence?.Length ?? 0);
+            return text;
+        }
 
         if (parent is GDShrapt.Reader.GDParameterDeclaration param)
-            return $"param {param.Identifier?.Sequence ?? ""}";
+        {
+            var text = $"param {param.Identifier?.Sequence ?? ""}";
+            highlightStart = 6; // After "param "
+            highlightEnd = highlightStart + (param.Identifier?.Sequence?.Length ?? 0);
+            return text;
+        }
 
         // For expressions, try to get statement context
         var current = parent;
@@ -753,9 +804,26 @@ public partial class GDShraptPlugin : EditorPlugin
         if (current != null)
         {
             var text = current.ToString();
+            var wasTruncated = false;
             if (text.Length > 60)
+            {
                 text = text.Substring(0, 57) + "...";
-            return text.Trim().Replace("\n", " ").Replace("\r", "");
+                wasTruncated = true;
+            }
+            text = text.Trim().Replace("\n", " ").Replace("\r", "");
+
+            // Find the symbol within the context text
+            if (!string.IsNullOrEmpty(symbolName))
+            {
+                var idx = text.IndexOf(symbolName, StringComparison.Ordinal);
+                if (idx >= 0 && (!wasTruncated || idx + symbolName.Length <= 57))
+                {
+                    highlightStart = idx;
+                    highlightEnd = idx + symbolName.Length;
+                }
+            }
+
+            return text;
         }
 
         return identifier.Sequence;
@@ -868,7 +936,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
         foreach (var node in container.GetChildren().OfType<HBoxContainer>())
         {
-            var oldButton = node
+            /*var oldButton = node
                .GetChildren()
                .OfType<GDShraptMenuButton>()
                .FirstOrDefault();
@@ -883,10 +951,10 @@ public partial class GDShraptPlugin : EditorPlugin
             {
                 // Just move existing button to end, don't recreate
                 node.MoveChild(oldButton, node.GetChildCount() - 1);
-            }
+            }*/
 
             // Add Support button if not already present - positioned to the right
-            var existingSupportButton = node
+            /*var existingSupportButton = node
                .GetChildren()
                .OfType<SupportButton>()
                .FirstOrDefault();
@@ -915,7 +983,7 @@ public partial class GDShraptPlugin : EditorPlugin
                     node.MoveChild(existingSpacer, node.GetChildCount() - 1);
                 }
                 node.MoveChild(existingSupportButton, node.GetChildCount() - 1);
-            }
+            }*/
         }
 
         return true;
@@ -1062,6 +1130,49 @@ public partial class GDShraptPlugin : EditorPlugin
     internal void ExecuteCommand(Commands command, IScriptEditor controller)
     {
         _commands[command].Execute(controller).PrintIfFailed();
+    }
+
+    /// <summary>
+    /// Shows the TypeInferencePanel for a symbol at the specified line.
+    /// </summary>
+    public void ShowTypeInferencePanel(string symbolName, int line, GDScriptFile scriptFile)
+    {
+        Logger.Info($"ShowTypeInferencePanel: {symbolName} at line {line}");
+
+        try
+        {
+            // Create the window if it doesn't exist
+            if (_typeInferencePanel == null)
+            {
+                _typeInferencePanel = new TypeInferencePanel();
+                _typeInferencePanel.SetProject(_scriptProject);
+                _typeInferencePanel.NavigateToRequested += (path, lineNum) =>
+                {
+                    Logger.Info($"TypeInferencePanel navigate to: {path}:{lineNum}");
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        OpenResource(path);
+                        // TODO: Navigate to specific line after opening
+                    }
+                };
+                // Add window to editor base control so it's in the scene tree
+                EditorInterface.Singleton.GetBaseControl().AddChild(_typeInferencePanel);
+            }
+
+            // Update project reference in case it changed
+            _typeInferencePanel.SetProject(_scriptProject);
+
+            // Show for the symbol
+            _typeInferencePanel.ShowForSymbol(symbolName, line, scriptFile);
+
+            // Show centered
+            _typeInferencePanel.PopupCentered();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error showing TypeInferencePanel: {ex.Message}");
+            Logger.Error(ex);
+        }
     }
 
     public void OpenPreferences()

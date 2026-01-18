@@ -46,9 +46,9 @@ internal partial class RenamingDialog : Window
 
     /// <summary>
     /// Event fired when user wants to navigate to a reference.
-    /// Parameters: file path, line, column.
+    /// Parameters: file path, line, startColumn, endColumn.
     /// </summary>
-    public event Action<string, int, int> NavigateToReference;
+    public event Action<string, int, int, int> NavigateToReference;
 
     public RenamingParameters Parameters => new RenamingParameters()
     {
@@ -260,7 +260,7 @@ internal partial class RenamingDialog : Window
         var refFromTree = _referencesTree.GetReferenceForItem(selected);
         if (refFromTree != null)
         {
-            NavigateToReference?.Invoke(refFromTree.FilePath, refFromTree.Line, refFromTree.Column);
+            NavigateToReference?.Invoke(refFromTree.FilePath, refFromTree.Line, refFromTree.Column, refFromTree.EndColumn);
             return;
         }
 
@@ -281,7 +281,7 @@ internal partial class RenamingDialog : Window
             var obj = firstMeta.AsGodotObject();
             if (obj is ReferenceItem refItem)
             {
-                NavigateToReference?.Invoke(refItem.FilePath, refItem.Line, refItem.Column);
+                NavigateToReference?.Invoke(refItem.FilePath, refItem.Line, refItem.Column, refItem.EndColumn);
                 return;
             }
             // If it's HeaderLayoutData, this is a file header - skip to second metadata
@@ -297,7 +297,7 @@ internal partial class RenamingDialog : Window
                 var firstRef = _referenceItems.FirstOrDefault(r => r.FilePath == filePath);
                 if (firstRef != null)
                 {
-                    NavigateToReference?.Invoke(firstRef.FilePath, firstRef.Line, firstRef.Column);
+                    NavigateToReference?.Invoke(firstRef.FilePath, firstRef.Line, firstRef.Column, firstRef.EndColumn);
                 }
             }
         }

@@ -63,7 +63,7 @@ internal class RenamePreviewResult
 /// Preview dialog for rename operations with confidence level selection.
 /// Shows references grouped by confidence level (Strict/Potential/NameMatch).
 /// </summary>
-internal partial class RenamePreviewDialog : Window
+internal partial class RenamePreviewDialog : AcceptDialog
 {
     // UI Components
     private VBoxContainer _mainLayout;
@@ -98,13 +98,8 @@ internal partial class RenamePreviewDialog : Window
     private PanelContainer _proMessagePanel;
     private Label _proMessageLabel;
 
-    // Buttons
-    private HSeparator _buttonsSeparator;
-    private HBoxContainer _buttonsLayout;
-    private Control _buttonsSpacer;
+    // Buttons (Copy Changes is custom, OK/Cancel from AcceptDialog)
     private Button _copyButton;
-    private Button _cancelButton;
-    private Button _applyButton;
 
     private TaskCompletionSource<RenamePreviewResult> _completion;
     private bool _isProLicensed;
@@ -122,18 +117,20 @@ internal partial class RenamePreviewDialog : Window
     private const int MinDialogHeight = 500;
 
     // Colors for confidence levels (bright, alpha 0.5 for visibility)
-    private static readonly Color StrictColor = new Color(0.3f, 0.9f, 0.3f, 0.5f);    // Bright Green
+    private static readonly Color StrictColor = new Color(0.3f, 0.9f, 0.3f, 0.5f);     // Bright Green
     private static readonly Color PotentialColor = new Color(1.0f, 0.85f, 0.0f, 0.5f); // Bright Yellow
-    private static readonly Color NameMatchColor = new Color(1.0f, 0.3f, 0.3f, 0.5f); // Bright Red
+    private static readonly Color NameMatchColor = new Color(1.0f, 0.3f, 0.3f, 0.5f);  // Bright Red
 
     public RenamePreviewDialog()
     {
         Title = "Rename Preview";
         Exclusive = true;
         Transient = true;
-        WrapControls = true;
-        Unresizable = false;
         MinSize = new Vector2I(MinDialogWidth, MinDialogHeight);
+        Size = new Vector2I(DialogWidth, DialogHeight);
+
+        // AcceptDialog has its own OK button, we need to customize it
+        OkButtonText = "Apply";
 
         CreateUI();
         ConnectSignals();
@@ -141,18 +138,14 @@ internal partial class RenamePreviewDialog : Window
 
     private void CreateUI()
     {
-        // Main container with padding
-        var marginContainer = new MarginContainer();
-        marginContainer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        marginContainer.AddThemeConstantOverride("margin_left", 16);
-        marginContainer.AddThemeConstantOverride("margin_right", 16);
-        marginContainer.AddThemeConstantOverride("margin_top", 16);
-        marginContainer.AddThemeConstantOverride("margin_bottom", 16);
-        AddChild(marginContainer);
-
-        _mainLayout = new VBoxContainer();
+        // AcceptDialog manages layout automatically, just add a VBoxContainer
+        _mainLayout = new VBoxContainer
+        {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill
+        };
         _mainLayout.AddThemeConstantOverride("separation", 10);
-        marginContainer.AddChild(_mainLayout);
+        AddChild(_mainLayout);
 
         // Title
         _titleLabel = new Label
@@ -242,11 +235,16 @@ internal partial class RenamePreviewDialog : Window
         };
         _selectButtonsRow.AddChild(_deselectAllButton);
 
-        // Reference tabs
+        // Reference tabs (this should take all remaining height)
         _referenceTabs = new TabContainer
         {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+
+            // Important for VBoxContainer distribution:
+            SizeFlagsStretchRatio = 1.0f,
+
+            // Optional: keep a reasonable minimum
             CustomMinimumSize = new Vector2(0, 250)
         };
         _mainLayout.AddChild(_referenceTabs);
@@ -309,49 +307,11 @@ internal partial class RenamePreviewDialog : Window
         _proMessageLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.8f, 0.4f));
         _proMessagePanel.AddChild(_proMessageLabel);
 
-        // Buttons separator
-        _buttonsSeparator = new HSeparator();
-        _mainLayout.AddChild(_buttonsSeparator);
-
-        // Buttons row
-        _buttonsLayout = new HBoxContainer();
-        _buttonsLayout.AddThemeConstantOverride("separation", 8);
-        _mainLayout.AddChild(_buttonsLayout);
-
-        // Spacer to push buttons to the right
-        _buttonsSpacer = new Control
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
-        };
-        _buttonsLayout.AddChild(_buttonsSpacer);
-
-        // Copy Changes button
-        _copyButton = new Button
-        {
-            Text = "Copy Changes",
-            CustomMinimumSize = new Vector2(100, 0),
-            TooltipText = "Copy changes to clipboard for manual editing"
-        };
-        _buttonsLayout.AddChild(_copyButton);
-
-        // Cancel button
-        _cancelButton = new Button
-        {
-            Text = "Cancel",
-            CustomMinimumSize = new Vector2(80, 0)
-        };
-        _buttonsLayout.AddChild(_cancelButton);
-
-        // Apply button
-        _applyButton = new Button
-        {
-            Text = "Rename",
-            CustomMinimumSize = new Vector2(80, 0)
-        };
-        _buttonsLayout.AddChild(_applyButton);
-
-        // Apply initial size
-        Size = new Vector2I(DialogWidth, DialogHeight);
+        // AcceptDialog provides OK button (renamed to "Rename" in constructor)
+        // Add custom buttons: Copy Changes (left), Cancel
+        _copyButton = AddButton("Copy Changes", true, "copy_changes");
+        _copyButton.TooltipText = "Copy changes to clipboard for manual editing";
+        AddCancelButton("Cancel");
     }
 
     private void ConnectSignals()
@@ -360,10 +320,19 @@ internal partial class RenamePreviewDialog : Window
         _confidenceOption.ItemSelected += OnConfidenceChanged;
         _selectAllButton.Pressed += OnSelectAll;
         _deselectAllButton.Pressed += OnDeselectAll;
-        _copyButton.Pressed += OnCopyChanges;
-        _cancelButton.Pressed += OnCancelled;
-        _applyButton.Pressed += OnApply;
-        CloseRequested += OnCancelled;
+
+        // AcceptDialog signals
+        Confirmed += OnApply;
+        Canceled += OnCancelled;
+        CustomAction += OnCustomAction;
+    }
+
+    private void OnCustomAction(StringName action)
+    {
+        if (action == "copy_changes")
+        {
+            OnCopyChanges();
+        }
     }
 
     private void OnConfidenceChanged(long index)
@@ -377,17 +346,10 @@ internal partial class RenamePreviewDialog : Window
     {
         // Strict is always available, Potential/NameMatch require Pro
         var canApply = confidence == GDConfidenceMode.Strict || _isProLicensed;
-        _applyButton.Disabled = !canApply;
+        GetOkButton().Disabled = !canApply;
 
         // Show Pro message if needed
-        if (!_isProLicensed && confidence != GDConfidenceMode.Strict)
-        {
-            _proMessagePanel.Visible = true;
-        }
-        else
-        {
-            _proMessagePanel.Visible = false;
-        }
+        _proMessagePanel.Visible = !_isProLicensed && confidence != GDConfidenceMode.Strict;
     }
 
     private void UpdateTabVisibility(GDConfidenceMode confidence)

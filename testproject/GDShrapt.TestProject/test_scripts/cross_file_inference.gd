@@ -1,0 +1,337 @@
+extends Node
+class_name CrossFileInference
+
+## Tests type inference across file boundaries.
+## Uses classes from other files without explicit type annotations.
+
+# === References to other classes (no type annotations) ===
+
+var entity_manager    # Should infer: ECSLikeSystem
+var duck_handler      # Should infer: DuckTypingAdvanced
+var cyclic_processor  # Should infer: CyclicInference
+var signal_handler    # Should infer: SignalCallbackChains
+var poly_manager      # Should infer: PolymorphicInterfaces
+var union_handler     # Should infer: UnionTypesComplex
+var dynamic_caller    # Should infer: DynamicDispatch
+
+# Mixed assignments - could be multiple types
+var current_handler   # Could be any of the above
+var last_result       # Return type from various calls
+
+
+func _ready():
+	# Initialize without type annotations
+	entity_manager = ECSLikeSystem.new()
+	duck_handler = DuckTypingAdvanced.new()
+	cyclic_processor = CyclicInference.new()
+	signal_handler = SignalCallbackChains.new()
+	poly_manager = PolymorphicInterfaces.new()
+	union_handler = UnionTypesComplex.new()
+	dynamic_caller = DynamicDispatch.new()
+
+
+# === Cross-file method calls ===
+
+func process_entity(entity_data):
+	# Calls into ECSLikeSystem
+	var entity = entity_manager.create_entity(entity_data.get("name", ""))
+
+	# Add components dynamically
+	if entity_data.has("position"):
+		var transform = entity_manager.create_transform_component(entity_data["position"])
+		entity_manager.add_component(entity.id, "Transform", transform)
+
+	if entity_data.has("health"):
+		var health = entity_manager.create_health_component(entity_data["health"])
+		entity_manager.add_component(entity.id, "Health", health)
+
+	return entity  # Return type should be ECSLikeSystem.Entity
+
+
+func apply_damage(attacker, target, amount):
+	# Uses DuckTypingAdvanced
+	var result = duck_handler.process_attack(attacker, target)
+	last_result = result
+	return result
+
+
+func run_cyclic_computation(input):
+	# Uses CyclicInference - creates inference cycles across files
+	var step1 = cyclic_processor.process_a(input)
+	var step2 = cyclic_processor.transform_stage_1(step1)
+	var step3 = cyclic_processor.even_check(step2 if step2 is int else 0)
+	return step3
+
+
+func setup_signal_handlers(target):
+	# Uses SignalCallbackChains
+	signal_handler.on_event("damage", _on_damage_event)
+	signal_handler.on_event("spawn", _on_spawn_event)
+
+	# Chain with promise-like pattern
+	var op = signal_handler.create_operation()
+	op.then(_on_operation_result)
+	return op
+
+
+func _on_damage_event(data):
+	return apply_damage(data["source"], data["target"], data["amount"])
+
+
+func _on_spawn_event(data):
+	return process_entity(data)
+
+
+func _on_operation_result(result):
+	last_result = result
+
+
+func register_handlers(objects):
+	# Uses PolymorphicInterfaces
+	for obj in objects:
+		if obj.has_method("take_damage"):
+			poly_manager.register_damageable(obj)
+		if obj.has_method("move_to"):
+			poly_manager.register_moveable(obj)
+		if obj.has_method("update"):
+			poly_manager.register_updatable(obj)
+
+
+# === Union types from cross-file calls ===
+
+func get_result_from_anywhere(source_name, key):
+	# Return type is union of all possible sources
+	match source_name:
+		"entity":
+			return entity_manager.get_entity(key)           # ECSLikeSystem.Entity|null
+		"union":
+			return union_handler.get_config(key)            # String|int|float|bool|Array|Dictionary|null
+		"dynamic":
+			return dynamic_caller.get_property(self, key)   # Variant
+		"duck":
+			return duck_handler.get_entity_by_name(key)     # Dictionary|null
+		_:
+			return null
+
+
+func execute_on_handler(handler_type, action, args = []):
+	# current_handler could be any type
+	match handler_type:
+		"entity":
+			current_handler = entity_manager
+		"duck":
+			current_handler = duck_handler
+		"cyclic":
+			current_handler = cyclic_processor
+		"signal":
+			current_handler = signal_handler
+		"poly":
+			current_handler = poly_manager
+		"union":
+			current_handler = union_handler
+		"dynamic":
+			current_handler = dynamic_caller
+
+	# Dynamic dispatch to current handler
+	if current_handler and current_handler.has_method(action):
+		return current_handler.callv(action, args)
+	return null
+
+
+# === Complex cross-file chains ===
+
+func complex_chain_operation(initial_data):
+	# Chain through multiple systems, inferring types at each step
+
+	# Step 1: Create entity
+	var entity = entity_manager.create_entity("chain_entity")
+	entity_manager.add_component(entity.id, "Data", initial_data)
+
+	# Step 2: Process through duck typing
+	var processed = duck_handler.transform_data(
+		initial_data,
+		func(v): return v * 2 if v is int else v
+	)
+
+	# Step 3: Run through cyclic processor
+	var cycled = cyclic_processor.accumulate_left(
+		processed if processed is Array else [processed],
+		func(acc, item): return acc + item,
+		0
+	)
+
+	# Step 4: Emit via signal system
+	signal_handler.emit_event("chain_complete", {
+		"entity_id": entity.id,
+		"processed": processed,
+		"accumulated": cycled
+	})
+
+	# Step 5: Store result through dynamic dispatch
+	dynamic_caller.set_property(entity, "result", cycled)
+
+	return {
+		"entity": entity,
+		"processed": processed,
+		"accumulated": cycled
+	}
+
+
+# === Inference through callbacks across files ===
+
+var cross_file_callbacks = {}
+
+
+func register_cross_file_handler(event_name, handler_type):
+	match handler_type:
+		"entity_create":
+			cross_file_callbacks[event_name] = _create_entity_handler()
+		"damage_apply":
+			cross_file_callbacks[event_name] = _create_damage_handler()
+		"signal_emit":
+			cross_file_callbacks[event_name] = _create_signal_handler()
+		"dynamic_call":
+			cross_file_callbacks[event_name] = _create_dynamic_handler()
+
+
+func _create_entity_handler():
+	return func(data): return process_entity(data)
+
+
+func _create_damage_handler():
+	return func(data): return duck_handler.process_attack(data["attacker"], data["target"])
+
+
+func _create_signal_handler():
+	return func(data):
+		signal_handler.emit_event(data["type"], data["payload"])
+		return true
+
+
+func _create_dynamic_handler():
+	return func(data): return dynamic_caller.call_if_exists(data["target"], data["method"], data.get("args", []))
+
+
+func invoke_cross_file(event_name, data):
+	if cross_file_callbacks.has(event_name):
+		var callback = cross_file_callbacks[event_name]
+		last_result = callback.call(data)
+		return last_result
+	return null
+
+
+# === Factory using multiple file classes ===
+
+func _on_effect_result(result):
+	union_handler.operation_result = result
+
+
+func _process_cyclic(data):
+	return cyclic_processor.process_a(data)
+
+
+func _handle_union(value):
+	return union_handler.process_by_type(value)
+
+
+func create_game_object(object_type, params = {}):
+	# Returns different types based on object_type
+	match object_type:
+		"player":
+			var entity = entity_manager.create_entity("Player")
+			entity_manager.add_component(entity.id, "Transform",
+				entity_manager.create_transform_component(params.get("position", Vector2.ZERO)))
+			entity_manager.add_component(entity.id, "Health",
+				entity_manager.create_health_component(params.get("health", 100)))
+			poly_manager.register_damageable(entity)
+			poly_manager.register_moveable(entity)
+			return entity
+
+		"effect":
+			var op = signal_handler.create_operation()
+			op.then(_on_effect_result)
+			return op
+
+		"processor":
+			return {
+				"cyclic": cyclic_processor,
+				"dynamic": dynamic_caller,
+				"process": _process_cyclic
+			}
+
+		"handler":
+			return {
+				"duck": duck_handler,
+				"union": union_handler,
+				"handle": _handle_union
+			}
+
+	return null
+
+
+# === Bidirectional dependencies ===
+
+func _on_hit_callback(target, damage):
+	var health = entity_manager.get_component(target, "Health")
+	if health:
+		health["current"] -= damage
+		signal_handler.emit_event("damage_dealt", {
+			"target": target,
+			"damage": damage,
+			"remaining": health["current"]
+		})
+		return health["current"]
+	return 0
+
+
+func _on_entity_died(entity_id):
+	entity_manager.destroy_entity(entity_id)
+	duck_handler.current_target = null
+
+
+func _calculate_damage(base, target):
+	var defense = entity_manager.get_component(target, "Defense")
+	if defense:
+		return max(1, base - defense.get("value", 0))
+	return base
+
+
+func setup_bidirectional():
+	# Set up handlers that reference each other
+	duck_handler.on_hit_callback = _on_hit_callback
+	signal_handler.register_callback("entity_died", _on_entity_died)
+	poly_manager.set_damage_calculator({"calculate": _calculate_damage})
+
+
+# === Testing inference limits ===
+
+func stress_test_inference(depth, initial_value):
+	# Deep recursive cross-file calls to test inference limits
+	if depth <= 0:
+		return initial_value
+
+	var step1 = duck_handler.transform_data(initial_value, func(v): return v)
+	var step2 = cyclic_processor.process_a(step1 if step1 is int else 0)
+	var step3 = union_handler.process_by_type(step2)
+	var step4 = dynamic_caller.serialize_object({"value": step3})
+
+	return stress_test_inference(depth - 1, step4)
+
+
+func parallel_inference_test(inputs):
+	# Multiple independent inference paths
+	var results = {
+		"entity_results": [],
+		"duck_results": [],
+		"union_results": [],
+		"signal_results": []
+	}
+
+	for input in inputs:
+		# Each path has different return types
+		results["entity_results"].append(entity_manager.create_entity(str(input)))
+		results["duck_results"].append(duck_handler.process_by_type(input))
+		results["union_results"].append(union_handler.try_operation(input))
+		results["signal_results"].append(signal_handler.create_operation())
+
+	return results

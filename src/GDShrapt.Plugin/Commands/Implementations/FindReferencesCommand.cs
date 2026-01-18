@@ -129,11 +129,13 @@ internal class FindReferencesCommand : Command
     {
         var context = GetContextWithHighlight(reference.Node, reference.SymbolName, out var hlStart, out var hlEnd);
         var kind = ConvertReferenceKind(reference.Kind);
+        var endColumn = reference.Node?.EndColumn ?? reference.Column;
 
         return new ReferenceItem(
             reference.FilePath,
             reference.Line,
             reference.Column,
+            endColumn,
             context,
             kind,
             hlStart,
@@ -196,6 +198,7 @@ internal class FindReferencesCommand : Command
                                     filePath,
                                     memberOp.Identifier.StartLine,
                                     memberOp.Identifier.StartColumn,
+                                    memberOp.Identifier.EndColumn,
                                     context,
                                     DetermineReferenceKind(memberOp.Identifier),
                                     hlStart,
@@ -224,6 +227,7 @@ internal class FindReferencesCommand : Command
                                 filePath,
                                 memberOp.Identifier.StartLine,
                                 memberOp.Identifier.StartColumn,
+                                memberOp.Identifier.EndColumn,
                                 context,
                                 DetermineReferenceKind(memberOp.Identifier),
                                 hlStart,
@@ -248,6 +252,7 @@ internal class FindReferencesCommand : Command
                                 targetFilePath,
                                 member.Identifier.StartLine,
                                 member.Identifier.StartColumn,
+                                member.Identifier.EndColumn,
                                 context,
                                 ReferenceKind.Declaration,
                                 hlStart,
@@ -271,6 +276,7 @@ internal class FindReferencesCommand : Command
                             filePath,
                             id.StartLine,
                             id.StartColumn,
+                            id.EndColumn,
                             context,
                             kind,
                             hlStart,

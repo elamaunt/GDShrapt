@@ -1,4 +1,5 @@
 using Godot;
+using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +15,7 @@ internal partial class TabController : GodotObject
     PopupMenu? _codePopupMenu;
     TextEdit? _textEdit;
     Script? _script;
-    ReferenceCountOverlay? _referenceOverlay;
-    ErrorLensOverlay? _errorLensOverlay;
+    GDGutterManager? _gutterManager;
     QuickActionsPopup? _quickActionsPopup;
     QuickFixesPopup? _quickFixesPopup;
     RefactoringContextBuilder? _contextBuilder;
@@ -109,29 +109,13 @@ internal partial class TabController : GodotObject
         // Connect to text edit events for completion
         ConnectTextEditEvents();
 
-        // Find the CodeTextEditor parent for overlay
-        var codeTextEditor = FindCodeTextEditorParent(textEdit);
-        if (codeTextEditor != null)
+        // Create gutter manager for reference counts and error indicators
+        if (_textEdit is CodeEdit codeEdit)
         {
-            CreateReferenceOverlay(codeTextEditor);
+            CreateGutterManager(codeEdit);
         }
 
         return _editor;
-    }
-
-    /// <summary>
-    /// Finds the CodeTextEditor parent of a TextEdit.
-    /// </summary>
-    private static Node? FindCodeTextEditorParent(Node node)
-    {
-        var parent = node.GetParent();
-        while (parent != null)
-        {
-            if (parent.GetClass() == "CodeTextEditor" || parent.Name.ToString().Contains("CodeTextEditor"))
-                return parent;
-            parent = parent.GetParent();
-        }
-        return node.GetParent(); // Fallback to direct parent
     }
 
     /// <summary>
@@ -167,93 +151,108 @@ internal partial class TabController : GodotObject
         return null;
     }
 
-    private void CreateReferenceOverlay(Node container)
+    private void CreateGutterManager(CodeEdit codeEdit)
     {
-        Logger.Info($"CreateReferenceOverlay: textEdit={_textEdit != null}, existing overlay={_referenceOverlay != null}");
+        Logger.Info($"CreateGutterManager: codeEdit={codeEdit != null}, existing manager={_gutterManager != null}");
 
-        if (_textEdit == null || _referenceOverlay != null)
+        if (_gutterManager != null)
             return;
 
-        // Check if reference counter is enabled in settings
+        // Check settings
         var config = _plugin.ConfigManager?.Config;
-        var isEnabled = config?.Plugin?.UI?.ReferencesCounterEnabled;
-        Logger.Info($"CreateReferenceOverlay: ReferencesCounterEnabled={isEnabled}");
+        var referencesEnabled = config?.Plugin?.UI?.ReferencesCounterEnabled != false;
+        var errorsEnabled = config?.Plugin?.UI?.CodeLensEnabled != false;
 
-        if (isEnabled == false)
+        Logger.Info($"CreateGutterManager: ReferencesEnabled={referencesEnabled}, ErrorsEnabled={errorsEnabled}");
+
+        if (!referencesEnabled && !errorsEnabled)
         {
-            Logger.Debug("Reference count overlay disabled in settings");
-            // Still create error lens if enabled
-            CreateErrorLensOverlay(container);
+            Logger.Debug("Both reference counter and error lens are disabled in settings");
             return;
         }
 
-        Logger.Info("Creating reference count overlay");
+        Logger.Info("Creating gutter manager");
 
-        _referenceOverlay = new ReferenceCountOverlay();
+        _gutterManager = new GDGutterManager();
+        _gutterManager.SetReferencesEnabled(referencesEnabled);
+        _gutterManager.SetErrorsEnabled(errorsEnabled);
 
-        // Enable processing before adding to tree
-        _referenceOverlay.SetProcess(true);
-        _referenceOverlay.ProcessMode = Node.ProcessModeEnum.Always;
-
-        container.AddChild(_referenceOverlay);
-        Logger.Info($"CreateReferenceOverlay: Overlay added to container, visible={_referenceOverlay.Visible}, isInsideTree={_referenceOverlay.IsInsideTree()}, isProcessing={_referenceOverlay.IsProcessing()}, processMode={_referenceOverlay.ProcessMode}");
-
-        // Position overlay over the TextEdit
-        _referenceOverlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        // Check error line background setting
+        var errorLineBgEnabled = config?.Plugin?.UI?.ErrorLineBackgroundEnabled != false;
+        _gutterManager.SetErrorLineBackgroundEnabled(errorLineBgEnabled);
 
         // Attach to editor
-        _referenceOverlay.AttachToEditor(_textEdit, _plugin.ScriptProject);
-        Logger.Info($"CreateReferenceOverlay: AttachToEditor called, project scripts count={_plugin.ScriptProject?.ScriptFiles?.Count() ?? 0}, overlayIsProcessing={_referenceOverlay.IsProcessing()}");
+        _gutterManager.AttachToEditor(codeEdit, _plugin.ScriptProject);
 
-        // Wire up click event
-        _referenceOverlay.ReferenceCountClicked += OnReferenceCountClicked;
+        // Wire up click events
+        _gutterManager.ReferencesClicked += OnReferencesClicked;
+        _gutterManager.TypeClicked += OnTypeClicked;
+        _gutterManager.DiagnosticClicked += OnDiagnosticClicked;
 
         // Set initial script if available
         if (_script != null)
         {
-            var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
-            Logger.Info($"CreateReferenceOverlay: Setting script, resourcePath={_script.ResourcePath}, found={ScriptFile != null}");
-            _referenceOverlay.SetScript(ScriptFile);
+            var scriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
+            Logger.Info($"CreateGutterManager: Setting script, resourcePath={_script.ResourcePath}, found={scriptFile != null}");
+            _gutterManager.SetScript(scriptFile);
+
+            // Update diagnostics if available
+            if (scriptFile != null)
+            {
+                UpdateDiagnostics(scriptFile);
+            }
         }
         else
         {
-            Logger.Info("CreateReferenceOverlay: No script available yet");
+            Logger.Info("CreateGutterManager: No script available yet");
         }
-
-        // Create Error Lens overlay
-        CreateErrorLensOverlay(container);
     }
 
-    private void CreateErrorLensOverlay(Node container)
+    private void OnDiagnosticClicked(int line, string code)
     {
-        if (_textEdit == null || _errorLensOverlay != null)
+        Logger.Info($"Diagnostic clicked at line {line}, code={code}");
+        // Show quick fixes for this line
+        ShowQuickFixesAtLine(line);
+    }
+
+    /// <summary>
+    /// Shows quick fixes at a specific line.
+    /// </summary>
+    private void ShowQuickFixesAtLine(int line)
+    {
+        if (_textEdit == null || _script == null)
             return;
 
-        // Check if error lens is enabled in settings
-        var config = _plugin.ConfigManager?.Config;
-        if (config?.Plugin?.UI?.CodeLensEnabled == false)
-        {
-            Logger.Debug("Error lens overlay disabled in settings");
+        var quickFixHandler = _plugin.QuickFixHandler;
+        if (quickFixHandler == null)
             return;
-        }
 
-        Logger.Debug("Creating error lens overlay");
+        var scriptRef = GDPluginScriptReference;
+        if (scriptRef == null)
+            return;
 
-        _errorLensOverlay = new ErrorLensOverlay();
-        container.AddChild(_errorLensOverlay);
+        // Get fixes on this line
+        var fixes = quickFixHandler.GetFixesOnLine(scriptRef, line);
+        if (fixes.Count == 0)
+            return;
 
-        // Position overlay over the TextEdit
-        _errorLensOverlay.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-
-        // Attach to editor
-        _errorLensOverlay.AttachToEditor(_textEdit);
-
-        // Set initial script if available
-        if (_script != null)
+        // Create popup if needed
+        if (_quickFixesPopup == null)
         {
-            var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(_script.ResourcePath);
-            _errorLensOverlay.SetScript(ScriptFile);
+            _quickFixesPopup = new QuickFixesPopup();
+            _quickFixesPopup.SetHandler(quickFixHandler);
+            _quickFixesPopup.SetTextEdit(_textEdit);
+            _quickFixesPopup.FixApplied += OnQuickFixApplied;
+            _tab.AddChild(_quickFixesPopup);
         }
+
+        // Calculate position at the start of the line
+        var lineRect = _textEdit.GetRectAtLineColumn(line, 0);
+        var cursorPos = _textEdit.GlobalPosition + lineRect.Position;
+        cursorPos.Y += lineRect.Size.Y + 5;
+
+        var sourceCode = _textEdit.Text;
+        _quickFixesPopup.ShowFixes(scriptRef, line, 0, sourceCode, cursorPos);
     }
 
     private void ConnectTextEditEvents()
@@ -447,10 +446,92 @@ internal partial class TabController : GodotObject
         return char.IsLetterOrDigit(c) || c == '_';
     }
 
-    private void OnReferenceCountClicked(string symbolName, int line)
+    private void OnReferencesClicked(string symbolName, int line)
     {
-        Logger.Info($"Reference count clicked: '{symbolName}' at line {line}");
+        Logger.Info($"References clicked: '{symbolName}' at line {line}");
         ReferenceCountClicked?.Invoke(symbolName, line);
+        // Open Find References panel
+        _plugin.ExecuteCommand(Commands.FindReferences, _editor);
+    }
+
+    private void OnTypeClicked(string symbolName, int line, GDScriptFile? scriptFile)
+    {
+        Logger.Info($"Type clicked: '{symbolName}' at line {line}");
+        // Open TypeInferencePanel popup
+        if (scriptFile != null)
+        {
+            _plugin.ShowTypeInferencePanel(symbolName, line, scriptFile);
+        }
+    }
+
+    /// <summary>
+    /// Shows Type Inference panel for the symbol under cursor.
+    /// </summary>
+    internal void ShowTypeInferenceForCursor()
+    {
+        Logger.Info("TabController: ShowTypeInferenceForCursor requested");
+
+        if (_textEdit == null || _script == null)
+        {
+            Logger.Info("TabController: Cannot show type inference - no editor or script");
+            return;
+        }
+
+        var scriptFile = GDPluginScriptReference;
+        if (scriptFile == null)
+        {
+            Logger.Info("TabController: Cannot show type inference - no script file");
+            return;
+        }
+
+        // Get cursor position
+        var cursorLine = _textEdit.GetCaretLine();
+        var cursorCol = _textEdit.GetCaretColumn();
+
+        // Get the symbol under cursor
+        var symbolName = GetSymbolAtPosition(cursorLine, cursorCol);
+        if (string.IsNullOrEmpty(symbolName))
+        {
+            Logger.Info("TabController: No symbol found at cursor position");
+            return;
+        }
+
+        Logger.Info($"TabController: Showing type inference for '{symbolName}' at line {cursorLine}");
+        _plugin.ShowTypeInferencePanel(symbolName, cursorLine, scriptFile);
+    }
+
+    /// <summary>
+    /// Gets the symbol name at the given cursor position.
+    /// </summary>
+    private string? GetSymbolAtPosition(int line, int column)
+    {
+        if (_textEdit == null)
+            return null;
+
+        var lineText = _textEdit.GetLine(line);
+        if (string.IsNullOrEmpty(lineText) || column > lineText.Length)
+            return null;
+
+        // Find word boundaries
+        var wordStart = column;
+        var wordEnd = column;
+
+        // Move start backwards to find word start
+        while (wordStart > 0 && IsIdentifierChar(lineText[wordStart - 1]))
+        {
+            wordStart--;
+        }
+
+        // Move end forwards to find word end
+        while (wordEnd < lineText.Length && IsIdentifierChar(lineText[wordEnd]))
+        {
+            wordEnd++;
+        }
+
+        if (wordStart == wordEnd)
+            return null;
+
+        return lineText.Substring(wordStart, wordEnd - wordStart);
     }
 
     internal void RequestGodotLookup()
@@ -512,25 +593,24 @@ internal partial class TabController : GodotObject
         _script = script;
         Logger.Debug($"Controlled script updated: '{script.ResourcePath}'");
 
-        var ScriptFile = _plugin.ScriptProject.GetScriptByResourcePath(script.ResourcePath);
+        var scriptFile = _plugin.ScriptProject.GetScriptByResourcePath(script.ResourcePath);
 
-        // Update overlays with new script
-        _referenceOverlay?.SetScript(ScriptFile);
-        _errorLensOverlay?.SetScript(ScriptFile);
+        // Update gutter manager with new script
+        _gutterManager?.SetScript(scriptFile);
 
         // Update diagnostics from DiagnosticService if available
-        if (ScriptFile != null)
+        if (scriptFile != null)
         {
-            UpdateDiagnostics(ScriptFile);
+            UpdateDiagnostics(scriptFile);
         }
     }
 
     /// <summary>
-    /// Updates the error lens overlay with diagnostics from DiagnosticService.
+    /// Updates the gutter manager with diagnostics from DiagnosticService.
     /// </summary>
     internal void UpdateDiagnostics(GDScriptFile script)
     {
-        if (_errorLensOverlay == null)
+        if (_gutterManager == null)
             return;
 
         var diagnosticService = _plugin.DiagnosticService;
@@ -538,7 +618,7 @@ internal partial class TabController : GodotObject
             return;
 
         var diagnostics = diagnosticService.GetDiagnostics(script);
-        _errorLensOverlay.SetDiagnostics(diagnostics);
+        _gutterManager.SetDiagnostics(diagnostics);
     }
 
     /// <summary>
@@ -592,6 +672,7 @@ internal partial class TabController : GodotObject
         AddPopupMenuButton("Rename", "Rename", () => _plugin.ExecuteCommand(Commands.Rename, _editor), 10003, Key.R, true);
         AddPopupMenuButton("Extract method", "Extract_method", () => _plugin.ExecuteCommand(Commands.ExtractMethod, _editor), 10004, Key.E, true);
         AddPopupMenuButton("Quick Actions...", "Quick_actions", ShowQuickActions, 10005, Key.Period, true);
+        AddPopupMenuButton("Show Type Inference", "Show_type_inference", ShowTypeInferenceForCursor, 10006, Key.I, true);
 
         // Add dynamic refactoring actions
         AddDynamicRefactoringMenuItems();
@@ -908,21 +989,14 @@ internal partial class TabController : GodotObject
             popup.IdPressed -= OnItemPressed;
         }
 
-        // Clean up reference overlay
-        if (_referenceOverlay != null)
+        // Clean up gutter manager
+        if (_gutterManager != null)
         {
-            _referenceOverlay.ReferenceCountClicked -= OnReferenceCountClicked;
-            _referenceOverlay.Detach();
-            _referenceOverlay.QueueFree();
-            _referenceOverlay = null;
-        }
-
-        // Clean up error lens overlay
-        if (_errorLensOverlay != null)
-        {
-            _errorLensOverlay.Detach();
-            _errorLensOverlay.QueueFree();
-            _errorLensOverlay = null;
+            _gutterManager.ReferencesClicked -= OnReferencesClicked;
+            _gutterManager.TypeClicked -= OnTypeClicked;
+            _gutterManager.DiagnosticClicked -= OnDiagnosticClicked;
+            _gutterManager.Detach();
+            _gutterManager = null;
         }
 
         // Clean up quick actions popup
@@ -954,10 +1028,10 @@ internal partial class TabController : GodotObject
     }
 
     /// <summary>
-    /// Forces a refresh of the reference count overlay.
+    /// Forces a refresh of the reference count gutter.
     /// </summary>
     internal void RefreshReferenceOverlay()
     {
-        _referenceOverlay?.ForceRefresh();
+        _gutterManager?.ForceRefresh();
     }
 }

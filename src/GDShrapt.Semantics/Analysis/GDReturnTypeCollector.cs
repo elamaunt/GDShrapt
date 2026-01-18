@@ -112,8 +112,13 @@ public class GDReturnTypeCollector
 {
     private readonly GDMethodDeclaration _method;
     private readonly GDTypeInferenceEngine? _typeEngine;
+    private readonly GDScopeStack? _scopeStack;
     private readonly List<GDReturnInfo> _returns = new();
     private readonly Stack<string> _branchContext = new();
+
+    // Type narrowing support
+    private readonly GDTypeNarrowingAnalyzer? _narrowingAnalyzer;
+    private GDTypeNarrowingContext _currentNarrowingContext = new();
 
     /// <summary>
     /// All collected return statements.
@@ -130,10 +135,10 @@ public class GDReturnTypeCollector
         var classDecl = method.ClassDeclaration;
         if (runtimeProvider != null && classDecl != null)
         {
-            var scopeStack = new GDScopeStack();
-            scopeStack.Push(GDScopeType.Global);
-            scopeStack.Push(GDScopeType.Class, classDecl as GDNode);
-            scopeStack.Push(GDScopeType.Method, method);
+            _scopeStack = new GDScopeStack();
+            _scopeStack.Push(GDScopeType.Global);
+            _scopeStack.Push(GDScopeType.Class, classDecl as GDNode);
+            _scopeStack.Push(GDScopeType.Method, method);
 
             // Add parameters to scope
             if (method.Parameters != null)
@@ -144,12 +149,17 @@ public class GDReturnTypeCollector
                     {
                         var typeName = param.Type?.BuildName() ?? "Variant";
                         var symbol = GDSymbol.Parameter(param.Identifier.Sequence, param, typeName: typeName);
-                        scopeStack.TryDeclare(symbol);
+                        _scopeStack.TryDeclare(symbol);
                     }
                 }
             }
 
-            _typeEngine = new GDTypeInferenceEngine(runtimeProvider, scopeStack);
+            _typeEngine = new GDTypeInferenceEngine(runtimeProvider, _scopeStack);
+
+            // Set up type narrowing
+            _narrowingAnalyzer = new GDTypeNarrowingAnalyzer(runtimeProvider);
+            _typeEngine.SetNarrowingTypeProvider(varName =>
+                _currentNarrowingContext.GetConcreteType(varName));
         }
     }
 
@@ -192,6 +202,11 @@ public class GDReturnTypeCollector
                 _returns.Add(new GDReturnInfo(returnExpr, inferredType, isHighConfidence, context));
                 break;
 
+            case GDVariableDeclarationStatement varDecl:
+                // Add local variable to scope for type inference
+                AddLocalVariableToScope(varDecl);
+                break;
+
             case GDIfStatement ifStmt:
                 CollectFromIfStatement(ifStmt);
                 break;
@@ -216,31 +231,77 @@ public class GDReturnTypeCollector
         }
     }
 
+    private void AddLocalVariableToScope(GDVariableDeclarationStatement varDecl)
+    {
+        if (_scopeStack == null || varDecl.Identifier == null)
+            return;
+
+        var varName = varDecl.Identifier.Sequence;
+        if (string.IsNullOrEmpty(varName))
+            return;
+
+        // Get explicit type or infer from initializer
+        string? typeName = varDecl.Type?.BuildName();
+
+        // If no explicit type, try to infer from initializer
+        if (string.IsNullOrEmpty(typeName) && varDecl.Initializer != null && _typeEngine != null)
+        {
+            typeName = _typeEngine.InferType(varDecl.Initializer);
+        }
+
+        typeName ??= "Variant";
+
+        var symbol = GDSymbol.Variable(varName, varDecl, typeName: typeName);
+        _scopeStack.TryDeclare(symbol);
+    }
+
     private void CollectFromIfStatement(GDIfStatement ifStmt)
     {
-        // If branch
+        var parentContext = _currentNarrowingContext;
+
+        // If branch with type narrowing
         if (ifStmt.IfBranch?.Statements != null)
         {
+            // Analyze condition for type narrowing (e.g., "if x is Type:")
+            if (_narrowingAnalyzer != null && ifStmt.IfBranch is GDIfBranch ifBranch)
+            {
+                _currentNarrowingContext = _narrowingAnalyzer.AnalyzeCondition(
+                    ifBranch.Condition, isNegated: false);
+            }
+
             _branchContext.Push("if");
             CollectFromStatements(ifStmt.IfBranch.Statements);
             _branchContext.Pop();
+
+            // Restore parent context after if branch
+            _currentNarrowingContext = parentContext;
         }
 
-        // Elif branches
+        // Elif branches with type narrowing
         if (ifStmt.ElifBranchesList != null)
         {
             foreach (var elif in ifStmt.ElifBranchesList)
             {
                 if (elif.Statements != null)
                 {
+                    // Analyze elif condition for type narrowing
+                    if (_narrowingAnalyzer != null)
+                    {
+                        _currentNarrowingContext = _narrowingAnalyzer.AnalyzeCondition(
+                            elif.Condition, isNegated: false);
+                    }
+
                     _branchContext.Push("elif");
                     CollectFromStatements(elif.Statements);
                     _branchContext.Pop();
+
+                    // Restore parent context after elif branch
+                    _currentNarrowingContext = parentContext;
                 }
             }
         }
 
-        // Else branch
+        // Else branch (no narrowing or could use negated narrowing from all conditions)
         if (ifStmt.ElseBranch?.Statements != null)
         {
             _branchContext.Push("else");

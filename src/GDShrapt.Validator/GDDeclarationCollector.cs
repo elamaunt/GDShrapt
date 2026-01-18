@@ -40,9 +40,32 @@ namespace GDShrapt.Reader
             if (typeNode == null)
                 return;
 
-            // Skip string path extends (e.g., extends "res://path.gd") - handled separately
-            if (typeNode is GDStringTypeNode)
+            // Handle string path extends (e.g., extends "res://path.gd")
+            if (typeNode is GDStringTypeNode stringTypeNode)
+            {
+                var scriptPath = stringTypeNode.Path?.Sequence;
+                if (!string.IsNullOrEmpty(scriptPath))
+                {
+                    // Try to resolve the script path via project provider
+                    if (_context.RuntimeProvider is IGDProjectRuntimeProvider projectProvider)
+                    {
+                        var scriptInfo = projectProvider.GetScriptType(scriptPath);
+                        if (scriptInfo != null)
+                        {
+                            // Use class_name if available, otherwise use the script path itself
+                            var baseType = scriptInfo.ClassName ?? scriptPath;
+                            _context.CurrentClassBaseType = baseType;
+                            return;
+                        }
+                    }
+
+                    // Fallback: use the script path directly as the base type
+                    // RuntimeProvider.GetMember() and GetBaseType() can resolve paths
+                    // via _pathToTypeName mapping in GDProjectTypesProvider
+                    _context.CurrentClassBaseType = scriptPath;
+                }
                 return;
+            }
 
             var typeName = typeNode.BuildName();
             if (!string.IsNullOrEmpty(typeName))

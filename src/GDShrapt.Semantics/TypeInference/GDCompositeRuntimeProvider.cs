@@ -41,7 +41,8 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
         GDAutoloadsProvider? autoloadsProvider,
         GDSceneTypesProvider? sceneTypesProvider)
     {
-        var providers = new IGDRuntimeProvider?[] { godotTypesProvider, projectTypesProvider, autoloadsProvider, sceneTypesProvider };
+        // Include GDDefaultRuntimeProvider as fallback for built-in types (String, Array, Dictionary methods)
+        var providers = new IGDRuntimeProvider?[] { godotTypesProvider, projectTypesProvider, autoloadsProvider, sceneTypesProvider, GDDefaultRuntimeProvider.Instance };
         _providers = providers.Where(p => p != null).Cast<IGDRuntimeProvider>().ToArray();
 
         // Store direct references

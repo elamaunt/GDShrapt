@@ -411,5 +411,98 @@ func second():
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
             AssertHelper.NoInvalidTokens(declaration);
         }
+
+        [TestMethod]
+        public void ParseLambda_MultilineInFunctionCall_ClosingBracketTerminates()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+    timer.timeout.connect(func():
+        callback.call()
+        timer.queue_free()
+    )
+    print(""done"")";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+
+            // Verify that print("done") is a separate statement of test() function
+            var testMethod = declaration.Methods.FirstOrDefault();
+            Assert.IsNotNull(testMethod, "test() method should exist");
+            var statements = testMethod.Statements.OfType<GDExpressionStatement>().ToList();
+            Assert.AreEqual(2, statements.Count, "Should have 2 statements: connect() and print()");
+        }
+
+        [TestMethod]
+        public void ParseLambda_MultipleMultilineInCall_Separated()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+    process(
+        func():
+            return 1,
+        func():
+            return 2
+    )
+    print(""after"")";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseLambda_MultilineInCall_WithStatementAfter()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+    signal_handler.connect(func():
+        print(""connected"")
+    )
+    var x = 5
+    print(x)";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+
+            var testMethod = declaration.Methods.FirstOrDefault();
+            Assert.IsNotNull(testMethod, "test() method should exist");
+
+            // Should have 3 statements: connect(), var x = 5, print(x)
+            var allStatements = testMethod.Statements.ToList();
+            Assert.AreEqual(3, allStatements.Count, "Should have 3 statements: connect(), var x = 5, print(x)");
+        }
+
+        [TestMethod]
+        public void ParseLambda_NestedMultilineInCall()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+    outer(func():
+        inner(func():
+            return 1
+        )
+        return 2
+    )
+    print(""done"")";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
     }
 }

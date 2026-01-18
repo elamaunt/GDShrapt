@@ -42,11 +42,225 @@ namespace GDShrapt.Reader
             AddType("bool", null, true);
             AddType("int", null, true);
             AddType("float", null, true);
-            AddType("String", null, true);
+
+            // String type with methods
+            AddTypeWithMembers("String", null, true, new[]
+            {
+                // Case conversion
+                GDRuntimeMemberInfo.Method("to_upper", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("to_lower", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("capitalize", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("to_camel_case", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("to_pascal_case", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("to_snake_case", "String", 0, 0),
+
+                // Trimming
+                GDRuntimeMemberInfo.Method("strip_edges", "String", 0, 2),
+                GDRuntimeMemberInfo.Method("strip_escapes", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("lstrip", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("rstrip", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("dedent", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("indent", "String", 1, 1),
+
+                // Substring operations
+                GDRuntimeMemberInfo.Method("substr", "String", 1, 2),
+                GDRuntimeMemberInfo.Method("left", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("right", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("get_slice", "String", 2, 2),
+                GDRuntimeMemberInfo.Method("get_slice_count", "int", 1, 1),
+
+                // Search/Find
+                GDRuntimeMemberInfo.Method("find", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("findn", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("rfind", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("rfindn", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("count", "int", 1, 3),
+                GDRuntimeMemberInfo.Method("countn", "int", 1, 3),
+                GDRuntimeMemberInfo.Method("contains", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("containsn", "bool", 1, 1),
+
+                // Comparison
+                GDRuntimeMemberInfo.Method("begins_with", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("ends_with", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("match", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("matchn", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("is_subsequence_of", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("is_subsequence_ofn", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("similarity", "float", 1, 1),
+
+                // Replace
+                GDRuntimeMemberInfo.Method("replace", "String", 2, 2),
+                GDRuntimeMemberInfo.Method("replacen", "String", 2, 2),
+                GDRuntimeMemberInfo.Method("erase", "String", 2, 2),
+                GDRuntimeMemberInfo.Method("insert", "String", 2, 2),
+
+                // Split/Join
+                GDRuntimeMemberInfo.Method("split", "PackedStringArray", 1, 3),
+                GDRuntimeMemberInfo.Method("rsplit", "PackedStringArray", 1, 3),
+                GDRuntimeMemberInfo.Method("split_floats", "PackedFloat64Array", 1, 2),
+                GDRuntimeMemberInfo.Method("join", "String", 1, 1),
+
+                // Format
+                GDRuntimeMemberInfo.Method("format", "String", 1, 2),
+                GDRuntimeMemberInfo.Method("sprintf", "String", 1, 1, true), // varargs in practice
+                GDRuntimeMemberInfo.Method("pad_zeros", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("pad_decimals", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("lpad", "String", 2, 2),
+                GDRuntimeMemberInfo.Method("rpad", "String", 2, 2),
+                GDRuntimeMemberInfo.Method("repeat", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("reverse", "String", 0, 0),
+
+                // Validation
+                GDRuntimeMemberInfo.Method("is_empty", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_valid_float", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_valid_hex_number", "bool", 0, 1),
+                GDRuntimeMemberInfo.Method("is_valid_html_color", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_valid_identifier", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_valid_int", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_valid_ip_address", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_valid_filename", "bool", 0, 0),
+
+                // Conversion
+                GDRuntimeMemberInfo.Method("to_int", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("to_float", "float", 0, 0),
+                GDRuntimeMemberInfo.Method("hex_to_int", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("bin_to_int", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("to_ascii_buffer", "PackedByteArray", 0, 0),
+                GDRuntimeMemberInfo.Method("to_utf8_buffer", "PackedByteArray", 0, 0),
+                GDRuntimeMemberInfo.Method("to_utf16_buffer", "PackedByteArray", 0, 0),
+                GDRuntimeMemberInfo.Method("to_utf32_buffer", "PackedByteArray", 0, 0),
+                GDRuntimeMemberInfo.Method("to_wchar_buffer", "PackedByteArray", 0, 0),
+
+                // Hashing
+                GDRuntimeMemberInfo.Method("hash", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("md5_buffer", "PackedByteArray", 0, 0),
+                GDRuntimeMemberInfo.Method("md5_text", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("sha1_buffer", "PackedByteArray", 0, 0),
+                GDRuntimeMemberInfo.Method("sha1_text", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("sha256_buffer", "PackedByteArray", 0, 0),
+                GDRuntimeMemberInfo.Method("sha256_text", "String", 0, 0),
+
+                // Encoding
+                GDRuntimeMemberInfo.Method("c_escape", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("c_unescape", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("json_escape", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("xml_escape", "String", 0, 1),
+                GDRuntimeMemberInfo.Method("xml_unescape", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("uri_encode", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("uri_decode", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("validate_node_name", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("validate_filename", "String", 0, 0),
+
+                // Path operations
+                GDRuntimeMemberInfo.Method("get_base_dir", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("get_basename", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("get_extension", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("get_file", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("path_join", "String", 1, 1),
+                GDRuntimeMemberInfo.Method("simplify_path", "String", 0, 0),
+                GDRuntimeMemberInfo.Method("is_absolute_path", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_relative_path", "bool", 0, 0),
+
+                // Unicode
+                GDRuntimeMemberInfo.Method("unicode_at", "int", 1, 1),
+                GDRuntimeMemberInfo.Method("length", "int", 0, 0),
+
+                // Properties exposed as methods
+                GDRuntimeMemberInfo.Property("length", "int"),
+            });
 
             // Container types
-            AddType("Array", null, true);
-            AddType("Dictionary", null, true);
+            AddTypeWithMembers("Array", null, true, new[]
+            {
+                // Size/capacity
+                GDRuntimeMemberInfo.Method("size", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("is_empty", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_read_only", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("resize", "int", 1, 1),
+                GDRuntimeMemberInfo.Method("clear", "void", 0, 0),
+
+                // Access
+                GDRuntimeMemberInfo.Method("front", "Variant", 0, 0),
+                GDRuntimeMemberInfo.Method("back", "Variant", 0, 0),
+                GDRuntimeMemberInfo.Method("pick_random", "Variant", 0, 0),
+
+                // Modification
+                GDRuntimeMemberInfo.Method("append", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("append_array", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("push_back", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("push_front", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("pop_back", "Variant", 0, 0),
+                GDRuntimeMemberInfo.Method("pop_front", "Variant", 0, 0),
+                GDRuntimeMemberInfo.Method("pop_at", "Variant", 1, 1),
+                GDRuntimeMemberInfo.Method("insert", "int", 2, 2),
+                GDRuntimeMemberInfo.Method("remove_at", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("fill", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("erase", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("reverse", "void", 0, 0),
+                GDRuntimeMemberInfo.Method("shuffle", "void", 0, 0),
+
+                // Search
+                GDRuntimeMemberInfo.Method("find", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("rfind", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("count", "int", 1, 1),
+                GDRuntimeMemberInfo.Method("has", "bool", 1, 1),
+
+                // Comparison
+                GDRuntimeMemberInfo.Method("hash", "int", 0, 0),
+
+                // Slicing
+                GDRuntimeMemberInfo.Method("slice", "Array", 1, 4),
+                GDRuntimeMemberInfo.Method("duplicate", "Array", 0, 1),
+
+                // Sorting
+                GDRuntimeMemberInfo.Method("sort", "void", 0, 0),
+                GDRuntimeMemberInfo.Method("sort_custom", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("bsearch", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("bsearch_custom", "int", 2, 3),
+
+                // Functional
+                GDRuntimeMemberInfo.Method("map", "Array", 1, 1),
+                GDRuntimeMemberInfo.Method("filter", "Array", 1, 1),
+                GDRuntimeMemberInfo.Method("reduce", "Variant", 1, 2),
+                GDRuntimeMemberInfo.Method("any", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("all", "bool", 1, 1),
+
+                // Min/Max
+                GDRuntimeMemberInfo.Method("min", "Variant", 0, 0),
+                GDRuntimeMemberInfo.Method("max", "Variant", 0, 0),
+
+                // Assignment
+                GDRuntimeMemberInfo.Method("assign", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("make_read_only", "void", 0, 0),
+            });
+
+            AddTypeWithMembers("Dictionary", null, true, new[]
+            {
+                // Size
+                GDRuntimeMemberInfo.Method("size", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("is_empty", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_read_only", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("clear", "void", 0, 0),
+
+                // Access
+                GDRuntimeMemberInfo.Method("get", "Variant", 1, 2),
+                GDRuntimeMemberInfo.Method("has", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("has_all", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("keys", "Array", 0, 0),
+                GDRuntimeMemberInfo.Method("values", "Array", 0, 0),
+
+                // Modification
+                GDRuntimeMemberInfo.Method("erase", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("merge", "void", 1, 2),
+
+                // Comparison
+                GDRuntimeMemberInfo.Method("hash", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("duplicate", "Dictionary", 0, 1),
+
+                // Assignment
+                GDRuntimeMemberInfo.Method("make_read_only", "void", 0, 0),
+            });
+
             AddType("Callable", null, true);
             AddType("Signal", null, true);
 
@@ -236,6 +450,16 @@ namespace GDShrapt.Reader
         private void AddType(string name, string baseType, bool isNative)
         {
             var typeInfo = new GDRuntimeTypeInfo(name, baseType, isNative);
+            _types[name] = typeInfo;
+            _builtInIdentifiers.Add(name);
+        }
+
+        private void AddTypeWithMembers(string name, string baseType, bool isNative, GDRuntimeMemberInfo[] members)
+        {
+            var typeInfo = new GDRuntimeTypeInfo(name, baseType, isNative)
+            {
+                Members = members
+            };
             _types[name] = typeInfo;
             _builtInIdentifiers.Add(name);
         }

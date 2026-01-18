@@ -8,6 +8,7 @@ namespace GDShrapt.Plugin;
 /// Bottom panel dock that displays log output from the plugin.
 /// Provides filtering, clearing, and saving functionality.
 /// </summary>
+[Tool]
 public partial class OutputDock : Control
 {
     private RichTextLabel _outputLabel;

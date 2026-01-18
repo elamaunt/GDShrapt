@@ -9,6 +9,7 @@ namespace GDShrapt.Plugin;
 /// <summary>
 /// Bottom dock panel for displaying all diagnostics (errors, warnings, hints) from the project.
 /// </summary>
+[Tool]
 internal partial class ProblemsDock : Control
 {
     private Label _headerLabel;

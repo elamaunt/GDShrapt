@@ -1,6 +1,3 @@
-using Godot;
-using System;
-
 namespace GDShrapt.Plugin;
 
 /// <summary>

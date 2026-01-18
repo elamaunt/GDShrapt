@@ -21,4 +21,9 @@ internal class GDMemberReference
     /// The class member being referenced.
     /// </summary>
     public GDClassMember? Member { get; set; }
+
+    /// <summary>
+    /// The confidence level of this reference.
+    /// </summary>
+    public GDReferenceConfidence Confidence { get; set; } = GDReferenceConfidence.Strict;
 }

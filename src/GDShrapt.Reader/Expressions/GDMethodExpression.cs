@@ -74,7 +74,7 @@ namespace GDShrapt.Reader
 
         public GDStatementsList Statements
         {
-            get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1));
+            get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1, inExpressionContext: true));
             set => _form.Token9 = value;
         }
 
