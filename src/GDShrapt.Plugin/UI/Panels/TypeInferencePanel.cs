@@ -40,7 +40,7 @@ public partial class TypeInferencePanel : AcceptDialog
     private string _currentSymbolName;
     private int _currentLine;
     private bool _uiCreated = false;
-    private Stack<NavigationEntry> _navigationStack = new();
+    private Stack<GDNavigationEntry> _navigationStack = new();
 
     // Colors for confidence levels
     private static readonly Color HighConfidenceColor = new(0.3f, 0.8f, 0.3f);   // Green
@@ -434,7 +434,7 @@ public partial class TypeInferencePanel : AcceptDialog
             return;
 
         // Push current symbol to navigation stack
-        _navigationStack.Push(new NavigationEntry
+        _navigationStack.Push(new GDNavigationEntry
         {
             SymbolName = _currentSymbolName,
             Line = _currentLine,
@@ -784,7 +784,7 @@ public partial class TypeInferencePanel : AcceptDialog
 /// <summary>
 /// Navigation entry for back button support.
 /// </summary>
-internal class NavigationEntry
+internal class GDNavigationEntry
 {
     public string SymbolName { get; set; }
     public int Line { get; set; }

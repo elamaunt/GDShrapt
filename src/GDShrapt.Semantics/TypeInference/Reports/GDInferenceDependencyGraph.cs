@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// Dependency graph for type inference visualization.
 /// Contains nodes (methods) and edges (dependencies).
 /// </summary>
-public class GDInferenceDependencyGraph
+internal class GDInferenceDependencyGraph
 {
     /// <summary>
     /// All method nodes in the graph.
@@ -112,7 +112,7 @@ public class GDInferenceDependencyGraph
 /// <summary>
 /// A node in the inference dependency graph (represents a method).
 /// </summary>
-public class GDInferenceNode
+internal class GDInferenceNode
 {
     /// <summary>
     /// Full method key (ClassName.MethodName).
@@ -164,7 +164,7 @@ public class GDInferenceNode
 /// <summary>
 /// An edge in the inference dependency graph (represents a dependency).
 /// </summary>
-public class GDInferenceEdge
+internal class GDInferenceEdge
 {
     /// <summary>
     /// The method that depends on another.

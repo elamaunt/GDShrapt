@@ -6,12 +6,12 @@ namespace GDShrapt.Plugin;
 internal class RemoveCommentsCommand : Command
 {
     private readonly GDRemoveCommentsService _service = new();
-    private readonly RefactoringContextBuilder _contextBuilder;
+    private readonly GDPluginRefactoringContextBuilder _contextBuilder;
 
     public RemoveCommentsCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
-        _contextBuilder = new RefactoringContextBuilder(plugin.ScriptProject);
+        _contextBuilder = new GDPluginRefactoringContextBuilder(plugin.ScriptProject);
     }
 
     public override async Task Execute(IScriptEditor controller)

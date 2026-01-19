@@ -76,7 +76,7 @@ func test_loops():
         return scriptFile;
     }
 
-    private RefactoringContext CreateContext(GDScriptFile scriptFile, int line, int column)
+    private GDPluginRefactoringContext CreateContext(GDScriptFile scriptFile, int line, int column)
     {
         var classDecl = scriptFile.Class;
         GDNode? nodeAtCursor = null;
@@ -110,7 +110,7 @@ func test_loops():
             }
         }
 
-        return new RefactoringContext
+        return new GDPluginRefactoringContext
         {
             ScriptFile = scriptFile,
             ContainingClass = classDecl,
@@ -139,7 +139,7 @@ func test_loops():
         // This test validates the action can be instantiated and has correct properties
         Assert.AreEqual("invert_condition", action.Id);
         Assert.AreEqual("Invert Condition", action.DisplayName);
-        Assert.AreEqual(RefactoringCategory.Convert, action.Category);
+        Assert.AreEqual(GDRefactoringCategory.Convert, action.Category);
     }
 
     [TestMethod]
@@ -166,7 +166,7 @@ func test_loops():
 
         Assert.AreEqual("convert_for_to_while", action.Id);
         Assert.AreEqual("Convert to while loop", action.DisplayName);
-        Assert.AreEqual(RefactoringCategory.Convert, action.Category);
+        Assert.AreEqual(GDRefactoringCategory.Convert, action.Category);
     }
 
     [TestMethod]
@@ -192,7 +192,7 @@ func test_loops():
 
         Assert.AreEqual("extract_variable", action.Id);
         Assert.AreEqual("Extract Variable", action.DisplayName);
-        Assert.AreEqual(RefactoringCategory.Extract, action.Category);
+        Assert.AreEqual(GDRefactoringCategory.Extract, action.Category);
         Assert.AreEqual("Ctrl+Alt+V", action.Shortcut);
         Assert.AreEqual(5, action.Priority);
     }
@@ -220,7 +220,7 @@ func test_loops():
 
         Assert.AreEqual("surround_with_if", action.Id);
         Assert.AreEqual("Surround with if", action.DisplayName);
-        Assert.AreEqual(RefactoringCategory.Surround, action.Category);
+        Assert.AreEqual(GDRefactoringCategory.Surround, action.Category);
         Assert.AreEqual(10, action.Priority);
     }
 
@@ -247,7 +247,7 @@ func test_loops():
 
         Assert.AreEqual("add_type_annotation", action.Id);
         Assert.AreEqual("Add Type Annotation", action.DisplayName);
-        Assert.AreEqual(RefactoringCategory.Organize, action.Category);
+        Assert.AreEqual(GDRefactoringCategory.Organize, action.Category);
     }
 
     [TestMethod]
@@ -267,12 +267,12 @@ func test_loops():
 
     #endregion
 
-    #region RefactoringActionProvider Tests
+    #region GDRefactoringActionProvider Tests
 
     [TestMethod]
     public void RefactoringActionProvider_RegistersDefaultActions()
     {
-        var provider = new RefactoringActionProvider();
+        var provider = new GDRefactoringActionProvider();
         var actions = provider.AllActions;
 
         Assert.IsTrue(actions.Count > 0, "Provider should have registered actions");
@@ -290,7 +290,7 @@ func test_loops():
     [TestMethod]
     public void RefactoringActionProvider_GetActionById_ReturnsCorrectAction()
     {
-        var provider = new RefactoringActionProvider();
+        var provider = new GDRefactoringActionProvider();
 
         var action = provider.GetActionById("extract_constant");
 
@@ -302,7 +302,7 @@ func test_loops():
     [TestMethod]
     public void RefactoringActionProvider_GetActionById_NonExistent_ReturnsNull()
     {
-        var provider = new RefactoringActionProvider();
+        var provider = new GDRefactoringActionProvider();
 
         var action = provider.GetActionById("non_existent_action");
 
@@ -312,7 +312,7 @@ func test_loops():
     [TestMethod]
     public void RefactoringActionProvider_GetActionsWithShortcuts_ReturnsActionsWithShortcuts()
     {
-        var provider = new RefactoringActionProvider();
+        var provider = new GDRefactoringActionProvider();
 
         var actionsWithShortcuts = provider.GetActionsWithShortcuts().ToList();
 
@@ -323,11 +323,11 @@ func test_loops():
     [TestMethod]
     public void RefactoringActionProvider_GetCategoryDisplayName_ReturnsCorrectNames()
     {
-        Assert.AreEqual("Extract", RefactoringActionProvider.GetCategoryDisplayName(RefactoringCategory.Extract));
-        Assert.AreEqual("Generate", RefactoringActionProvider.GetCategoryDisplayName(RefactoringCategory.Generate));
-        Assert.AreEqual("Convert", RefactoringActionProvider.GetCategoryDisplayName(RefactoringCategory.Convert));
-        Assert.AreEqual("Surround With", RefactoringActionProvider.GetCategoryDisplayName(RefactoringCategory.Surround));
-        Assert.AreEqual("Organize", RefactoringActionProvider.GetCategoryDisplayName(RefactoringCategory.Organize));
+        Assert.AreEqual("Extract", GDRefactoringActionProvider.GetCategoryDisplayName(GDRefactoringCategory.Extract));
+        Assert.AreEqual("Generate", GDRefactoringActionProvider.GetCategoryDisplayName(GDRefactoringCategory.Generate));
+        Assert.AreEqual("Convert", GDRefactoringActionProvider.GetCategoryDisplayName(GDRefactoringCategory.Convert));
+        Assert.AreEqual("Surround With", GDRefactoringActionProvider.GetCategoryDisplayName(GDRefactoringCategory.Surround));
+        Assert.AreEqual("Organize", GDRefactoringActionProvider.GetCategoryDisplayName(GDRefactoringCategory.Organize));
     }
 
     #endregion

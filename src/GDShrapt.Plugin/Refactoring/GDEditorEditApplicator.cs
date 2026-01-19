@@ -87,7 +87,7 @@ internal static class GDEditorEditApplicator
     /// </summary>
     /// <param name="context">The refactoring context containing the editor.</param>
     /// <param name="result">The refactoring result containing edits.</param>
-    public static void ApplyEdits(RefactoringContext context, GDRefactoringResult? result)
+    public static void ApplyEdits(GDPluginRefactoringContext context, GDRefactoringResult? result)
     {
         if (context?.Editor == null)
             return;

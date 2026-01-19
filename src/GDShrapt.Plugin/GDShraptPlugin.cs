@@ -25,7 +25,7 @@ public partial class GDShraptPlugin : EditorPlugin
     private Control _referencesDockButton;
     private TodoTagsDock _todoTagsDock;
     private Control _todoTagsDockButton;
-    private TodoTagsScanner _todoTagsScanner;
+    private GDTodoTagsScanner _todoTagsScanner;
     private ProblemsDock _problemsDock;
     private Control _problemsDockButton;
     private AstViewerDock _astViewerDock;
@@ -36,16 +36,16 @@ public partial class GDShraptPlugin : EditorPlugin
 
     // Diagnostics system
     private GDConfigManager _configManager;
-    private CacheManager _cacheManager;
-    private DiagnosticService _diagnosticService;
-    private BackgroundAnalyzer _backgroundAnalyzer;
+    private GDCacheManager _cacheManager;
+    private GDPluginDiagnosticService _diagnosticService;
+    private GDBackgroundAnalyzer _backgroundAnalyzer;
     private NotificationPanel _notificationPanel;
-    private QuickFixHandler _quickFixHandler;
+    private GDQuickFixHandler _quickFixHandler;
 
     // Scene file watching (using events from GDSceneTypesProvider in Semantics)
 
     // Refactoring system
-    private RefactoringActionProvider _refactoringActionProvider;
+    private GDRefactoringActionProvider _refactoringActionProvider;
 
     // Formatting service
     private FormattingService _formattingService;
@@ -61,11 +61,11 @@ public partial class GDShraptPlugin : EditorPlugin
     private ProjectSettingsRegistry _settingsRegistry;
 
     internal GDScriptProject ScriptProject => _scriptProject;
-    internal DiagnosticService DiagnosticService => _diagnosticService;
+    internal GDPluginDiagnosticService GDPluginDiagnosticService => _diagnosticService;
     internal GDConfigManager ConfigManager => _configManager;
-    internal RefactoringActionProvider RefactoringActionProvider => _refactoringActionProvider;
+    internal GDRefactoringActionProvider GDRefactoringActionProvider => _refactoringActionProvider;
     internal FormattingService FormattingService => _formattingService;
-    internal QuickFixHandler QuickFixHandler => _quickFixHandler;
+    internal GDQuickFixHandler GDQuickFixHandler => _quickFixHandler;
     internal GDGodotTypesProvider GodotTypesProvider => _typeResolver?.GodotTypesProvider;
     internal GDTypeResolver TypeResolver => _typeResolver;
 
@@ -91,26 +91,26 @@ public partial class GDShraptPlugin : EditorPlugin
             // Initialize caching
             if (_configManager.Config.Plugin?.Cache?.Enabled ?? true)
             {
-                _cacheManager = new CacheManager(_scriptProject.ProjectPath);
+                _cacheManager = new GDCacheManager(_scriptProject.ProjectPath);
             }
 
             // Initialize diagnostic service
-            _diagnosticService = new DiagnosticService(_scriptProject, _configManager, _cacheManager);
+            _diagnosticService = new GDPluginDiagnosticService(_scriptProject, _configManager, _cacheManager);
             _diagnosticService.OnDiagnosticsChanged += OnDiagnosticsChanged;
             _diagnosticService.OnProjectAnalysisCompleted += OnProjectAnalysisCompleted;
 
             // Initialize background analyzer
-            _backgroundAnalyzer = new BackgroundAnalyzer(_diagnosticService, _scriptProject);
+            _backgroundAnalyzer = new GDBackgroundAnalyzer(_diagnosticService, _scriptProject);
 
             // Initialize quick fix handler
-            _quickFixHandler = new QuickFixHandler(_diagnosticService, _configManager);
+            _quickFixHandler = new GDQuickFixHandler(_diagnosticService, _configManager);
 
             // Initialize scene file watching using GDSceneTypesProvider from Semantics
             _scriptProject.SceneTypesProvider.NodeRenameDetected += OnNodeRenameDetected;
             _scriptProject.SceneTypesProvider.EnableFileWatcher();
 
             // Initialize refactoring system
-            _refactoringActionProvider = new RefactoringActionProvider();
+            _refactoringActionProvider = new GDRefactoringActionProvider();
 
             // Initialize formatting service
             _formattingService = new FormattingService(_configManager);
@@ -236,7 +236,7 @@ public partial class GDShraptPlugin : EditorPlugin
         }
     }
 
-    private void OnDiagnosticsChanged(DiagnosticsChangedEventArgs args)
+    private void OnDiagnosticsChanged(GDDiagnosticsChangedEventArgs args)
     {
         Logger.Debug($"Diagnostics changed for {args.Script.FullPath}: {args.Diagnostics.Count} issues");
 
@@ -254,7 +254,7 @@ public partial class GDShraptPlugin : EditorPlugin
         UpdateNotificationPanel(args.Script.FullPath, args.Summary);
     }
 
-    private void OnProjectAnalysisCompleted(ProjectAnalysisCompletedEventArgs args)
+    private void OnProjectAnalysisCompleted(GDPluginProjectAnalysisCompletedEventArgs args)
     {
         Logger.Info($"Project analysis completed: {args.Summary} ({args.FilesAnalyzed} files in {args.Duration.TotalMilliseconds:F0}ms)");
 
@@ -265,7 +265,7 @@ public partial class GDShraptPlugin : EditorPlugin
         }
     }
 
-    private void UpdateNotificationPanel(string? scriptPath, DiagnosticSummary summary)
+    private void UpdateNotificationPanel(string? scriptPath, GDDiagnosticSummary summary)
     {
         if (_notificationPanel == null || !(_configManager.Config.Plugin?.Notifications?.Enabled ?? true))
             return;
@@ -461,7 +461,7 @@ public partial class GDShraptPlugin : EditorPlugin
         _referencesDockButton = AddControlToBottomPanel(_referencesDock, "Find References");
 
         // Create the TODO tags dock
-        _todoTagsScanner = new TodoTagsScanner(_scriptProject, _configManager);
+        _todoTagsScanner = new GDTodoTagsScanner(_scriptProject, _configManager);
         _todoTagsDock = new TodoTagsDock();
         _todoTagsDock.Initialize(_todoTagsScanner, _configManager);
         _todoTagsDock.NavigateToItem += OnNavigateToTodoItem;
@@ -711,40 +711,40 @@ public partial class GDShraptPlugin : EditorPlugin
         }
     }
 
-    private static ReferenceKind DetermineReferenceKind(GDShrapt.Reader.GDIdentifier identifier)
+    private static GDPluginReferenceKind DetermineReferenceKind(GDShrapt.Reader.GDIdentifier identifier)
     {
         var parent = identifier.Parent;
 
         // Check if it's a declaration
         if (parent is GDShrapt.Reader.GDMethodDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDVariableDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDVariableDeclarationStatement)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDSignalDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDParameterDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDEnumDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDShrapt.Reader.GDInnerClassDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
 
         // Check if it's a call
         if (parent is GDShrapt.Reader.GDIdentifierExpression idExpr)
         {
             if (idExpr.Parent is GDShrapt.Reader.GDCallExpression)
-                return ReferenceKind.Call;
+                return GDPluginReferenceKind.Call;
         }
 
         if (parent is GDShrapt.Reader.GDMemberOperatorExpression memberOp)
         {
             if (memberOp.Parent is GDShrapt.Reader.GDCallExpression)
-                return ReferenceKind.Call;
+                return GDPluginReferenceKind.Call;
         }
 
-        return ReferenceKind.Read;
+        return GDPluginReferenceKind.Read;
     }
 
     private static string GetContextWithHighlight(GDShrapt.Reader.GDIdentifier identifier, string symbolName, out int highlightStart, out int highlightEnd)
@@ -1278,10 +1278,10 @@ public partial class GDShraptPlugin : EditorPlugin
         }).CallDeferred();
     }
 
-    private async System.Threading.Tasks.Task ProcessNodeRename(GDShrapt.Semantics.GDDetectedNodeRename rename)
+    private async System.Threading.Tasks.Task ProcessNodeRename(GDDetectedNodeRename rename)
     {
-        // Find all GDScript references to the old name
-        var referenceFinder = new GDNodePathReferenceFinder(_scriptProject, _scriptProject.SceneTypesProvider);
+        // Find all GDScript references to the old name (using Semantics service)
+        var referenceFinder = new GDNodePathReferenceFinder(_scriptProject);
         var references = referenceFinder
             .FindGDScriptReferences(rename.OldName)
             .ToList();
@@ -1311,14 +1311,20 @@ public partial class GDShraptPlugin : EditorPlugin
         }
 
         // Apply changes to GDScript files only (scene is already updated)
-        var renamer = new NodePathRenamer();
+        // Use Semantics GDNodePathRenamer
+        var renamer = new GDNodePathRenamer(_scriptProject);
 
-        // Use the NEW name from the scene
-        result.NewName = rename.NewName;
-        renamer.ApplyChanges(result, rename.OldName);
+        // Apply rename with the NEW name from the scene
+        var renameResult = renamer.ApplyRename(result.SelectedReferences, rename.OldName, rename.NewName);
+
+        if (!renameResult.Success)
+        {
+            Logger.Error($"Node rename failed: {renameResult.ErrorMessage}");
+            return;
+        }
 
         // Mark our own write to avoid triggering another rename detection
-        _scriptProject.SceneTypesProvider.MarkOwnWrite();
+        _scriptProject.SceneTypesProvider?.MarkOwnWrite();
 
         // Save modified scripts
         var modifiedScripts = renamer.GetModifiedScripts(result.SelectedReferences);

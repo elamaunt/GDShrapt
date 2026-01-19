@@ -11,7 +11,7 @@ namespace GDShrapt.Semantics;
 /// Complete project-wide report about type inference.
 /// Contains all method reports, dependency graph, and statistics.
 /// </summary>
-public class GDProjectInferenceReport
+internal class GDProjectInferenceReport
 {
     /// <summary>
     /// Project name or identifier.
@@ -221,7 +221,7 @@ public class GDProjectInferenceReport
 /// <summary>
 /// Statistics about type inference.
 /// </summary>
-public class GDInferenceStatistics
+internal class GDInferenceStatistics
 {
     public int TotalMethods { get; init; }
     public int MethodsWithInferredParams { get; init; }

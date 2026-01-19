@@ -20,9 +20,9 @@ internal partial class ProblemsDock : Control
     private CheckButton _autoRefreshToggle;
     private Label _statusLabel;
 
-    private DiagnosticService? _diagnosticService;
+    private GDPluginDiagnosticService? _diagnosticService;
     private GDScriptProject? _ScriptProject;
-    private ProblemsGroupingMode _groupingMode = ProblemsGroupingMode.ByFile;
+    private GDProblemsGroupingMode _groupingMode = GDProblemsGroupingMode.ByFile;
     private GDDiagnosticSeverity? _filterSeverity; // null = all severities
 
     /// <summary>
@@ -40,7 +40,7 @@ internal partial class ProblemsDock : Control
     /// <summary>
     /// Initializes the dock with required dependencies.
     /// </summary>
-    public void Initialize(DiagnosticService diagnosticService, GDScriptProject ScriptProject)
+    public void Initialize(GDPluginDiagnosticService diagnosticService, GDScriptProject ScriptProject)
     {
         Logger.Info("ProblemsDock.Initialize() called");
         _diagnosticService = diagnosticService;
@@ -89,9 +89,9 @@ internal partial class ProblemsDock : Control
         // Group by dropdown
         toolbar.AddChild(new Label { Text = "Group:" });
         _groupByOption = new OptionButton();
-        _groupByOption.AddItem("By File", (int)ProblemsGroupingMode.ByFile);
-        _groupByOption.AddItem("By Severity", (int)ProblemsGroupingMode.BySeverity);
-        _groupByOption.AddItem("By Category", (int)ProblemsGroupingMode.ByCategory);
+        _groupByOption.AddItem("By File", (int)GDProblemsGroupingMode.ByFile);
+        _groupByOption.AddItem("By Severity", (int)GDProblemsGroupingMode.BySeverity);
+        _groupByOption.AddItem("By Category", (int)GDProblemsGroupingMode.ByCategory);
         _groupByOption.ItemSelected += OnGroupByChanged;
         toolbar.AddChild(_groupByOption);
 
@@ -168,7 +168,7 @@ internal partial class ProblemsDock : Control
         CustomMinimumSize = new Vector2(400, 200);
     }
 
-    private void OnDiagnosticsChanged(DiagnosticsChangedEventArgs args)
+    private void OnDiagnosticsChanged(GDDiagnosticsChangedEventArgs args)
     {
         if (!_autoRefreshToggle.ButtonPressed)
             return;
@@ -176,7 +176,7 @@ internal partial class ProblemsDock : Control
         Callable.From(RefreshDisplay).CallDeferred();
     }
 
-    private void OnProjectAnalysisCompleted(ProjectAnalysisCompletedEventArgs args)
+    private void OnProjectAnalysisCompleted(GDPluginProjectAnalysisCompletedEventArgs args)
     {
         Callable.From(RefreshDisplay).CallDeferred();
     }
@@ -211,13 +211,13 @@ internal partial class ProblemsDock : Control
 
         switch (_groupingMode)
         {
-            case ProblemsGroupingMode.ByFile:
+            case GDProblemsGroupingMode.ByFile:
                 DisplayGroupedByFile(root, filteredDiagnostics);
                 break;
-            case ProblemsGroupingMode.BySeverity:
+            case GDProblemsGroupingMode.BySeverity:
                 DisplayGroupedBySeverity(root, filteredDiagnostics);
                 break;
-            case ProblemsGroupingMode.ByCategory:
+            case GDProblemsGroupingMode.ByCategory:
                 DisplayGroupedByCategory(root, filteredDiagnostics);
                 break;
         }
@@ -225,7 +225,7 @@ internal partial class ProblemsDock : Control
         UpdateStatus($"Found {filteredDiagnostics.Count} problems");
     }
 
-    private void DisplayGroupedByFile(TreeItem root, IEnumerable<Diagnostic> diagnostics)
+    private void DisplayGroupedByFile(TreeItem root, IEnumerable<GDPluginDiagnostic> diagnostics)
     {
         var byFile = diagnostics
             .Where(d => d.Script != null)
@@ -259,7 +259,7 @@ internal partial class ProblemsDock : Control
         }
     }
 
-    private void DisplayGroupedBySeverity(TreeItem root, IEnumerable<Diagnostic> diagnostics)
+    private void DisplayGroupedBySeverity(TreeItem root, IEnumerable<GDPluginDiagnostic> diagnostics)
     {
         var severities = new[] { GDDiagnosticSeverity.Error, GDDiagnosticSeverity.Warning, GDDiagnosticSeverity.Info, GDDiagnosticSeverity.Hint };
 
@@ -291,7 +291,7 @@ internal partial class ProblemsDock : Control
         }
     }
 
-    private void DisplayGroupedByCategory(TreeItem root, IEnumerable<Diagnostic> diagnostics)
+    private void DisplayGroupedByCategory(TreeItem root, IEnumerable<GDPluginDiagnostic> diagnostics)
     {
         var byCategory = diagnostics
             .GroupBy(d => d.Category)
@@ -313,7 +313,7 @@ internal partial class ProblemsDock : Control
         }
     }
 
-    private void CreateDiagnosticRow(TreeItem parent, Diagnostic diag)
+    private void CreateDiagnosticRow(TreeItem parent, GDPluginDiagnostic diag)
     {
         var row = _resultsTree.CreateItem(parent);
         row.SetText(0, GetSeverityText(diag.Severity));
@@ -359,7 +359,7 @@ internal partial class ProblemsDock : Control
 
     private void OnGroupByChanged(long index)
     {
-        _groupingMode = (ProblemsGroupingMode)index;
+        _groupingMode = (GDProblemsGroupingMode)index;
         RefreshDisplay();
     }
 
@@ -454,7 +454,7 @@ internal partial class ProblemsDock : Control
 /// <summary>
 /// How to group problems in the problems dock.
 /// </summary>
-internal enum ProblemsGroupingMode
+internal enum GDProblemsGroupingMode
 {
     ByFile,
     BySeverity,

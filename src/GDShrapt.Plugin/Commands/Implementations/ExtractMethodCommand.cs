@@ -35,7 +35,7 @@ internal class ExtractMethodCommand : Command
         }
 
         // Build refactoring context using the builder
-        var contextBuilder = new RefactoringContextBuilder(Map);
+        var contextBuilder = new GDPluginRefactoringContextBuilder(Map);
         var semanticsContext = contextBuilder.BuildSemanticsContext(controller);
 
         if (semanticsContext == null)

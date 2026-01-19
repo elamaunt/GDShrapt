@@ -55,7 +55,7 @@ internal class FindReferencesCommand : Command
         Logger.Info($"Finding references for '{symbolName}'");
 
         // Build refactoring context for semantics service
-        var contextBuilder = new RefactoringContextBuilder(Plugin.ScriptProject);
+        var contextBuilder = new GDPluginRefactoringContextBuilder(Plugin.ScriptProject);
         var semanticsContext = contextBuilder.BuildSemanticsContext(controller);
 
         if (semanticsContext == null)
@@ -146,15 +146,15 @@ internal class FindReferencesCommand : Command
     /// <summary>
     /// Converts semantics reference kind to UI reference kind.
     /// </summary>
-    private static ReferenceKind ConvertReferenceKind(GDReferenceKind kind)
+    private static GDPluginReferenceKind ConvertReferenceKind(GDReferenceKind kind)
     {
         return kind switch
         {
-            GDReferenceKind.Declaration => ReferenceKind.Declaration,
-            GDReferenceKind.Read => ReferenceKind.Read,
-            GDReferenceKind.Write => ReferenceKind.Write,
-            GDReferenceKind.Call => ReferenceKind.Call,
-            _ => ReferenceKind.Read
+            GDReferenceKind.Declaration => GDPluginReferenceKind.Declaration,
+            GDReferenceKind.Read => GDPluginReferenceKind.Read,
+            GDReferenceKind.Write => GDPluginReferenceKind.Write,
+            GDReferenceKind.Call => GDPluginReferenceKind.Call,
+            _ => GDPluginReferenceKind.Read
         };
     }
 
@@ -254,7 +254,7 @@ internal class FindReferencesCommand : Command
                                 member.Identifier.StartColumn,
                                 member.Identifier.EndColumn,
                                 context,
-                                ReferenceKind.Declaration,
+                                GDPluginReferenceKind.Declaration,
                                 hlStart,
                                 hlEnd
                             ));
@@ -288,40 +288,40 @@ internal class FindReferencesCommand : Command
         }
     }
 
-    private static ReferenceKind DetermineReferenceKind(GDIdentifier identifier)
+    private static GDPluginReferenceKind DetermineReferenceKind(GDIdentifier identifier)
     {
         var parent = identifier.Parent;
 
         // Check if it's a declaration
         if (parent is GDMethodDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDVariableDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDVariableDeclarationStatement)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDSignalDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDParameterDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDEnumDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
         if (parent is GDInnerClassDeclaration)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
 
         // Check if it's a call
         if (parent is GDIdentifierExpression idExpr)
         {
             if (idExpr.Parent is GDCallExpression)
-                return ReferenceKind.Call;
+                return GDPluginReferenceKind.Call;
         }
 
         if (parent is GDMemberOperatorExpression memberOp)
         {
             if (memberOp.Parent is GDCallExpression)
-                return ReferenceKind.Call;
+                return GDPluginReferenceKind.Call;
         }
 
-        return ReferenceKind.Read;
+        return GDPluginReferenceKind.Read;
     }
 
     /// <summary>

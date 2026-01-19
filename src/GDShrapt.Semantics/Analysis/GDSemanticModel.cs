@@ -123,8 +123,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
 
     /// <summary>
     /// Creates a semantic model for a script file.
+    /// Internal - use GDSemanticModel.Create() for external access.
     /// </summary>
-    public GDSemanticModel(
+    internal GDSemanticModel(
         GDScriptFile scriptFile,
         IGDRuntimeProvider? runtimeProvider = null,
         GDValidationContext? validationContext = null,
@@ -134,6 +135,22 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         _runtimeProvider = runtimeProvider;
         _validationContext = validationContext;
         _typeEngine = typeEngine;
+    }
+
+    /// <summary>
+    /// Creates and builds a semantic model for a script file.
+    /// This is the recommended factory method for external use.
+    /// </summary>
+    /// <param name="scriptFile">The script file to analyze.</param>
+    /// <param name="runtimeProvider">Optional runtime provider for type resolution.</param>
+    /// <returns>A fully built semantic model.</returns>
+    public static GDSemanticModel Create(GDScriptFile scriptFile, IGDRuntimeProvider? runtimeProvider = null)
+    {
+        if (scriptFile == null)
+            throw new ArgumentNullException(nameof(scriptFile));
+
+        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
+        return collector.BuildSemanticModel();
     }
 
     #region Symbol Resolution
@@ -167,13 +184,26 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
 
     /// <summary>
     /// Gets the symbol for a specific AST node.
+    /// Uses scope-aware lookup for identifier expressions.
     /// </summary>
     public GDSymbolInfo? GetSymbolForNode(GDNode node)
     {
         if (node == null)
             return null;
 
-        return _nodeToSymbol.TryGetValue(node, out var symbol) ? symbol : null;
+        // First check direct node mapping
+        if (_nodeToSymbol.TryGetValue(node, out var symbol))
+            return symbol;
+
+        // For identifier expressions, use scope-aware lookup
+        if (node is GDIdentifierExpression identExpr)
+        {
+            var name = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(name))
+                return FindSymbolInScope(name, node);
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -200,6 +230,66 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         return _nameToSymbols.TryGetValue(name, out var symbols)
             ? symbols
             : Enumerable.Empty<GDSymbolInfo>();
+    }
+
+    /// <summary>
+    /// Finds a symbol by name, considering the scope context.
+    /// For local variables, only returns symbols declared in the same method/lambda.
+    /// This prevents same-named variables in different methods from being confused.
+    /// </summary>
+    /// <param name="name">The symbol name to find</param>
+    /// <param name="contextNode">The AST node providing scope context (e.g., identifier expression)</param>
+    /// <returns>The symbol in the appropriate scope, or null if not found</returns>
+    public GDSymbolInfo? FindSymbolInScope(string name, GDNode? contextNode)
+    {
+        if (string.IsNullOrEmpty(name) || !_nameToSymbols.TryGetValue(name, out var symbols))
+            return null;
+
+        if (symbols.Count == 0)
+            return null;
+
+        // If no context or only one symbol, return first
+        if (contextNode == null || symbols.Count == 1)
+            return symbols[0];
+
+        // Find the enclosing method for the context node
+        var contextMethod = FindEnclosingMethod(contextNode);
+
+        // First, try to find a local symbol in the same method
+        foreach (var symbol in symbols)
+        {
+            if (symbol.DeclaringScopeNode != null)
+            {
+                // Local symbol - check if in same method
+                if (symbol.DeclaringScopeNode == contextMethod)
+                    return symbol;
+            }
+        }
+
+        // Fall back to class-level symbols (DeclaringScopeNode == null)
+        foreach (var symbol in symbols)
+        {
+            if (symbol.DeclaringScopeNode == null)
+                return symbol;
+        }
+
+        // Last resort: return first symbol
+        return symbols[0];
+    }
+
+    /// <summary>
+    /// Finds the enclosing method or lambda for an AST node.
+    /// </summary>
+    private GDNode? FindEnclosingMethod(GDNode node)
+    {
+        var current = node;
+        while (current != null)
+        {
+            if (current is GDMethodDeclaration || current is GDMethodExpression)
+                return current;
+            current = current.Parent as GDNode;
+        }
+        return null;
     }
 
     /// <summary>
@@ -467,6 +557,125 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         // Duck type as string representation
         var duckType = GetDuckType(variableName);
         return duckType?.ToString();
+    }
+
+    #endregion
+
+    #region Parameter Type Inference
+
+    /// <summary>
+    /// Infers the type for a parameter based on its usage within the method.
+    /// Returns Variant if cannot infer.
+    /// </summary>
+    public GDInferredParameterType InferParameterType(GDParameterDeclaration param)
+    {
+        if (param == null)
+            return GDInferredParameterType.Unknown("");
+
+        var paramName = param.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(paramName))
+            return GDInferredParameterType.Unknown("");
+
+        // If parameter has explicit type annotation, return it
+        var typeNode = param.Type;
+        var typeName = typeNode?.BuildName();
+        if (!string.IsNullOrEmpty(typeName))
+            return GDInferredParameterType.Declared(paramName, typeName);
+
+        // Find the containing method
+        var method = FindContainingMethod(param);
+        if (method == null)
+            return GDInferredParameterType.Unknown(paramName);
+
+        // Analyze parameter usage
+        var constraints = GDParameterUsageAnalyzer.AnalyzeMethod(method, _runtimeProvider);
+        if (!constraints.TryGetValue(paramName, out var paramConstraints) || !paramConstraints.HasConstraints)
+            return GDInferredParameterType.Unknown(paramName);
+
+        // Resolve constraints to type
+        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? new GDGodotTypesProvider());
+        return resolver.ResolveFromConstraints(paramConstraints);
+    }
+
+    /// <summary>
+    /// Gets the duck typing constraints for a parameter.
+    /// Returns null if the parameter has no usage constraints.
+    /// </summary>
+    public GDParameterConstraints? GetParameterConstraints(GDParameterDeclaration param)
+    {
+        if (param == null)
+            return null;
+
+        var paramName = param.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(paramName))
+            return null;
+
+        // Find the containing method
+        var method = FindContainingMethod(param);
+        if (method == null)
+            return null;
+
+        // Analyze parameter usage
+        var constraints = GDParameterUsageAnalyzer.AnalyzeMethod(method, _runtimeProvider);
+        return constraints.TryGetValue(paramName, out var paramConstraints) ? paramConstraints : null;
+    }
+
+    /// <summary>
+    /// Infers parameter types for all parameters of a method.
+    /// </summary>
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypes(GDMethodDeclaration method)
+    {
+        var result = new Dictionary<string, GDInferredParameterType>();
+
+        if (method?.Parameters == null)
+            return result;
+
+        // Analyze all parameter usage at once
+        var constraints = GDParameterUsageAnalyzer.AnalyzeMethod(method, _runtimeProvider);
+        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? new GDGodotTypesProvider());
+
+        foreach (var param in method.Parameters)
+        {
+            var paramName = param.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(paramName))
+                continue;
+
+            // Check for explicit type annotation first
+            var typeNode = param.Type;
+            var typeName = typeNode?.BuildName();
+            if (!string.IsNullOrEmpty(typeName))
+            {
+                result[paramName] = GDInferredParameterType.Declared(paramName, typeName);
+                continue;
+            }
+
+            // Try to resolve from constraints
+            if (constraints.TryGetValue(paramName, out var paramConstraints) && paramConstraints.HasConstraints)
+            {
+                result[paramName] = resolver.ResolveFromConstraints(paramConstraints);
+            }
+            else
+            {
+                result[paramName] = GDInferredParameterType.Unknown(paramName);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Finds the containing method for a parameter declaration.
+    /// </summary>
+    private GDMethodDeclaration? FindContainingMethod(GDParameterDeclaration param)
+    {
+        var current = param.Parent;
+        while (current != null)
+        {
+            if (current is GDMethodDeclaration method)
+                return method;
+            current = current.Parent;
+        }
+        return null;
     }
 
     #endregion

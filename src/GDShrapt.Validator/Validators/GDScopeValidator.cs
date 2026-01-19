@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
@@ -99,7 +100,12 @@ namespace GDShrapt.Reader
 
         public override void Visit(GDInnerClassDeclaration innerClass)
         {
-            // Inner class is already registered by GDDeclarationCollector
+            // Enter inner class scope first - members will be validated in this isolated scope
+            EnterScope(GDScopeType.Class, innerClass);
+
+            // Register inner class members in this scope so they're visible from methods
+            RegisterInnerClassMembers(innerClass);
+
             // Save current base type and set inner class base type
             var previousBaseType = Context.CurrentClassBaseType;
 
@@ -140,6 +146,9 @@ namespace GDShrapt.Reader
                     Context.CurrentClassBaseType = previousBaseType;
                 }
             }
+
+            // Exit inner class scope
+            ExitScope();
         }
 
         #endregion
@@ -420,6 +429,83 @@ namespace GDShrapt.Reader
                 }
             }
         }
+
+        #region Inner Class Member Registration
+
+        /// <summary>
+        /// Registers all members of an inner class in the current scope.
+        /// This makes class members visible from methods within the inner class.
+        /// </summary>
+        private void RegisterInnerClassMembers(GDInnerClassDeclaration innerClass)
+        {
+            foreach (var member in innerClass.Members)
+            {
+                switch (member)
+                {
+                    case GDVariableDeclaration varDecl:
+                        var varName = varDecl.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(varName))
+                        {
+                            var typeNode = varDecl.Type;
+                            var typeName = typeNode?.BuildName();
+                            if (varDecl.ConstKeyword != null)
+                                Context.Declare(GDSymbol.Constant(varName, varDecl, typeName: typeName, typeNode: typeNode));
+                            else
+                                Context.Declare(GDSymbol.Variable(varName, varDecl, typeName: typeName, typeNode: typeNode, isStatic: varDecl.IsStatic));
+                        }
+                        break;
+
+                    case GDMethodDeclaration methodDecl:
+                        var methodName = methodDecl.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(methodName))
+                        {
+                            Context.Declare(GDSymbol.Method(methodName, methodDecl, methodDecl.IsStatic));
+                            var parameters = methodDecl.Parameters?.ToList() ?? new System.Collections.Generic.List<GDParameterDeclaration>();
+                            Context.RegisterFunction(methodName, new GDFunctionSignature
+                            {
+                                Name = methodName,
+                                MinParameters = parameters.Count(p => p.DefaultValue == null),
+                                MaxParameters = parameters.Count,
+                                HasVarArgs = false,
+                                Declaration = methodDecl,
+                                IsStatic = methodDecl.IsStatic
+                            });
+                        }
+                        break;
+
+                    case GDSignalDeclaration signalDecl:
+                        var signalName = signalDecl.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(signalName))
+                            Context.Declare(GDSymbol.Signal(signalName, signalDecl));
+                        break;
+
+                    case GDEnumDeclaration enumDecl:
+                        var enumName = enumDecl.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(enumName))
+                        {
+                            Context.Declare(GDSymbol.Enum(enumName, enumDecl));
+                            if (enumDecl.Values != null)
+                            {
+                                foreach (var value in enumDecl.Values)
+                                {
+                                    var valueName = value.Identifier?.Sequence;
+                                    if (!string.IsNullOrEmpty(valueName))
+                                        Context.Declare(GDSymbol.EnumValue(valueName, value));
+                                }
+                            }
+                        }
+                        break;
+
+                    case GDInnerClassDeclaration nestedInnerClass:
+                        var nestedClassName = nestedInnerClass.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(nestedClassName))
+                            Context.Declare(GDSymbol.Class(nestedClassName, nestedInnerClass));
+                        break;
+                }
+            }
+        }
+
+        #endregion
 
         #region Type Annotation Validation
 

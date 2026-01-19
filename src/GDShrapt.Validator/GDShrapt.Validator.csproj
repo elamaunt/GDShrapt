@@ -20,12 +20,13 @@ Diagnostic Categories:
 - Indentation (GD6xxx): Mixed tabs/spaces, inconsistent indentation
 - Await (GD7xxx): Await expression structure issues
 
-Type Inference System:
+Runtime Provider System:
 - IGDRuntimeProvider interface for custom type information (integrate with Godot)
 - GDDefaultRuntimeProvider with built-in GDScript types and global functions
 - GDCachingRuntimeProvider wrapper for performance optimization
-- GDTypeInferenceEngine for expression type inference
 - Two-pass validation with full forward reference support
+
+Note: Type inference (GDTypeInferenceEngine) is now in GDShrapt.Semantics
 
 Usage: new GDValidator().Validate(tree, options)
 Requires: GDShrapt.Reader</Description>

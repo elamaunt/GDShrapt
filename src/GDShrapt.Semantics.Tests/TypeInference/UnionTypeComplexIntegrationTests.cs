@@ -157,8 +157,9 @@ public class UnionTypeComplexIntegrationTests
         Assert.IsTrue(union.IsUnion, "Expected union type");
         Assert.IsTrue(union.Types.Contains("int"), "Union should contain 'int'");
         Assert.IsTrue(union.Types.Contains("String"), "Union should contain 'String'");
-        Assert.IsTrue(union.Types.Contains("Array"), "Union should contain 'Array'");
-        Assert.IsTrue(union.Types.Contains("Dictionary"), "Union should contain 'Dictionary'");
+        // Array types now include element type, e.g., "Array[int]"
+        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Array")), "Union should contain 'Array' or 'Array[...]'");
+        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Dictionary")), "Union should contain 'Dictionary' or 'Dictionary[...]'");
     }
 
     /// <summary>
@@ -205,8 +206,9 @@ public class UnionTypeComplexIntegrationTests
         Assert.IsTrue(union.IsUnion, "Expected union type");
         Assert.IsTrue(union.Types.Contains("String"), "Union should contain 'String'");
         Assert.IsTrue(union.Types.Contains("float"), "Union should contain 'float'");
-        Assert.IsTrue(union.Types.Contains("Array"), "Union should contain 'Array'");
-        Assert.IsTrue(union.Types.Contains("Dictionary"), "Union should contain 'Dictionary'");
+        // Array types now include element type, e.g., "Array[int]"
+        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Array")), "Union should contain 'Array' or 'Array[...]'");
+        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Dictionary")), "Union should contain 'Dictionary' or 'Dictionary[...]'");
     }
 
     /// <summary>

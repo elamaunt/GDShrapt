@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// Detects cycles in the type inference dependency graph.
 /// Uses DFS to find strongly connected components (cycles).
 /// </summary>
-public class GDInferenceCycleDetector
+internal class GDInferenceCycleDetector
 {
     private readonly GDScriptProject _project;
     private readonly IGDRuntimeProvider? _customRuntimeProvider;

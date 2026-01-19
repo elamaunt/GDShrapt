@@ -18,10 +18,10 @@ internal partial class TabController : GodotObject
     GDGutterManager? _gutterManager;
     QuickActionsPopup? _quickActionsPopup;
     QuickFixesPopup? _quickFixesPopup;
-    RefactoringContextBuilder? _contextBuilder;
-    CompletionPopup? _completionPopup;
-    CompletionService? _completionService;
-    CompletionContextBuilder? _completionContextBuilder;
+    GDPluginRefactoringContextBuilder? _contextBuilder;
+    GDCompletionPopup? _completionPopup;
+    GDCompletionService? _completionService;
+    GDCompletionContextBuilder? _completionContextBuilder;
 
     public Script? ControlledScript => _script;
     public Control Tab => _tab;
@@ -223,7 +223,7 @@ internal partial class TabController : GodotObject
         if (_textEdit == null || _script == null)
             return;
 
-        var quickFixHandler = _plugin.QuickFixHandler;
+        var quickFixHandler = _plugin.GDQuickFixHandler;
         if (quickFixHandler == null)
             return;
 
@@ -340,13 +340,13 @@ internal partial class TabController : GodotObject
 
     private void TriggerMemberCompletion()
     {
-        TriggerCompletion(CompletionTriggerKind.TriggerCharacter, '.');
+        TriggerCompletion(GDCompletionTriggerKind.TriggerCharacter, '.');
     }
 
     /// <summary>
     /// Triggers code completion at the current cursor position.
     /// </summary>
-    internal void TriggerCompletion(CompletionTriggerKind triggerKind = CompletionTriggerKind.Invoked, char? triggerChar = null)
+    internal void TriggerCompletion(GDCompletionTriggerKind triggerKind = GDCompletionTriggerKind.Invoked, char? triggerChar = null)
     {
         if (_textEdit == null || _script == null)
             return;
@@ -356,7 +356,7 @@ internal partial class TabController : GodotObject
             return;
 
         // Initialize completion service if needed
-        EnsureCompletionServiceInitialized();
+        EnsureGDCompletionServiceInitialized();
         if (_completionService == null || _completionContextBuilder == null)
             return;
 
@@ -394,9 +394,9 @@ internal partial class TabController : GodotObject
         // Create popup if needed
         if (_completionPopup == null)
         {
-            _completionPopup = new CompletionPopup();
+            _completionPopup = new GDCompletionPopup();
             _completionPopup.SetTextEdit(_textEdit);
-            _completionPopup.ItemSelected += OnCompletionItemSelected;
+            _completionPopup.ItemSelected += OnGDCompletionItemSelected;
             _completionPopup.Cancelled += OnCompletionCancelled;
             _tab.AddChild(_completionPopup);
         }
@@ -411,7 +411,7 @@ internal partial class TabController : GodotObject
             context.WordPrefix);
     }
 
-    private void EnsureCompletionServiceInitialized()
+    private void EnsureGDCompletionServiceInitialized()
     {
         if (_completionService != null && _completionContextBuilder != null)
             return;
@@ -425,13 +425,13 @@ internal partial class TabController : GodotObject
             return;
         }
 
-        _completionService = new CompletionService(_plugin.ScriptProject, typeResolver, godotTypesProvider);
-        _completionContextBuilder = new CompletionContextBuilder(_plugin.ScriptProject, typeResolver);
+        _completionService = new GDCompletionService(_plugin.ScriptProject, typeResolver, godotTypesProvider);
+        _completionContextBuilder = new GDCompletionContextBuilder(_plugin.ScriptProject, typeResolver);
 
         Logger.Info("TabController: Completion service initialized");
     }
 
-    private void OnCompletionItemSelected(CompletionItem item)
+    private void OnGDCompletionItemSelected(GDCompletionItem item)
     {
         Logger.Debug($"TabController: Completion item selected: {item.Label}");
     }
@@ -613,7 +613,7 @@ internal partial class TabController : GodotObject
         if (_gutterManager == null)
             return;
 
-        var diagnosticService = _plugin.DiagnosticService;
+        var diagnosticService = _plugin.GDPluginDiagnosticService;
         if (diagnosticService == null)
             return;
 
@@ -683,7 +683,7 @@ internal partial class TabController : GodotObject
         if (_codePopupMenu == null || _editor == null)
             return;
 
-        var provider = _plugin.RefactoringActionProvider;
+        var provider = _plugin.GDRefactoringActionProvider;
         if (provider == null)
             return;
 
@@ -707,7 +707,7 @@ internal partial class TabController : GodotObject
         }
     }
 
-    private async void ExecuteRefactoringAction(IRefactoringAction action, RefactoringContext context)
+    private async void ExecuteRefactoringAction(IGDRefactoringAction action, GDPluginRefactoringContext context)
     {
         Logger.Info($"TabController: Executing refactoring action '{action.Id}'");
         try
@@ -752,7 +752,7 @@ internal partial class TabController : GodotObject
         if (_quickActionsPopup == null)
         {
             _quickActionsPopup = new QuickActionsPopup();
-            _quickActionsPopup.SetProvider(_plugin.RefactoringActionProvider);
+            _quickActionsPopup.SetProvider(_plugin.GDRefactoringActionProvider);
             _tab.AddChild(_quickActionsPopup);
         }
 
@@ -779,7 +779,7 @@ internal partial class TabController : GodotObject
         if (_textEdit == null || _script == null)
             return false;
 
-        var quickFixHandler = _plugin.QuickFixHandler;
+        var quickFixHandler = _plugin.GDQuickFixHandler;
         if (quickFixHandler == null)
             return false;
 
@@ -832,7 +832,7 @@ internal partial class TabController : GodotObject
             return;
         }
 
-        var quickFixHandler = _plugin.QuickFixHandler;
+        var quickFixHandler = _plugin.GDQuickFixHandler;
         if (quickFixHandler == null)
         {
             Logger.Info("TabController: Cannot show quick fixes - no handler");
@@ -876,7 +876,7 @@ internal partial class TabController : GodotObject
             if (map != null)
             {
                 // Re-analyze in background
-                _ = _plugin.DiagnosticService?.AnalyzeScriptAsync(map);
+                _ = _plugin.GDPluginDiagnosticService?.AnalyzeScriptAsync(map);
             }
         }
     }
@@ -899,12 +899,12 @@ internal partial class TabController : GodotObject
         return globalPos;
     }
 
-    private RefactoringContext BuildRefactoringContext()
+    private GDPluginRefactoringContext BuildRefactoringContext()
     {
         if (_editor == null)
             return null;
 
-        _contextBuilder ??= new RefactoringContextBuilder(_plugin.ScriptProject, _plugin);
+        _contextBuilder ??= new GDPluginRefactoringContextBuilder(_plugin.ScriptProject, _plugin);
         return _contextBuilder.Build(_editor);
     }
 
@@ -1017,7 +1017,7 @@ internal partial class TabController : GodotObject
         // Clean up completion popup
         if (_completionPopup != null)
         {
-            _completionPopup.ItemSelected -= OnCompletionItemSelected;
+            _completionPopup.ItemSelected -= OnGDCompletionItemSelected;
             _completionPopup.Cancelled -= OnCompletionCancelled;
             _completionPopup.QueueFree();
             _completionPopup = null;

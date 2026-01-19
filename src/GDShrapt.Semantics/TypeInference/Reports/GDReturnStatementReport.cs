@@ -3,7 +3,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Report about a single return statement in a method.
 /// </summary>
-public class GDReturnStatementReport
+internal class GDReturnStatementReport
 {
     /// <summary>
     /// Line number of the return statement.

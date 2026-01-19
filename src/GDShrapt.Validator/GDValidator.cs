@@ -34,11 +34,12 @@ namespace GDShrapt.Reader
                 scopeValidator.Validate(node);
             }
 
-            if (options.CheckTypes)
-            {
-                var typeValidator = new GDTypeValidator(context);
-                typeValidator.Validate(node);
-            }
+            // NOTE: Type validation moved to GDShrapt.Semantics.Validators
+            // Use GDSemanticValidator for type-based validation
+            // if (options.CheckTypes)
+            // {
+            //     // GDTypeValidator is now in Semantics.Validators
+            // }
 
             if (options.CheckCalls)
             {

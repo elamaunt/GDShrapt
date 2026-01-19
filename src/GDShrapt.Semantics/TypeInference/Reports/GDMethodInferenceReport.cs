@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Complete report about type inference for a method.
 /// Contains parameter inference, return type inference, and dependency information.
 /// </summary>
-public class GDMethodInferenceReport
+internal class GDMethodInferenceReport
 {
     /// <summary>
     /// Name of the class containing this method.

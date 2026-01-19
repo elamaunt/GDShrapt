@@ -7,16 +7,16 @@ namespace GDShrapt.Plugin;
 /// Inverts an if/elif/while condition and swaps the branches if applicable.
 /// Delegates to GDInvertConditionService for the actual logic.
 /// </summary>
-internal class InvertConditionAction : RefactoringActionBase
+internal class InvertConditionAction : GDRefactoringActionBase
 {
     private readonly GDInvertConditionService _service = new();
 
     public override string Id => "invert_condition";
     public override string DisplayName => "Invert Condition";
-    public override RefactoringCategory Category => RefactoringCategory.Convert;
+    public override GDRefactoringCategory Category => GDRefactoringCategory.Convert;
     public override int Priority => 10;
 
-    public override bool IsAvailable(RefactoringContext context)
+    public override bool IsAvailable(GDPluginRefactoringContext context)
     {
         if (context?.ContainingClass == null)
             return false;
@@ -25,7 +25,7 @@ internal class InvertConditionAction : RefactoringActionBase
         return semanticsContext != null && _service.CanExecute(semanticsContext);
     }
 
-    protected override string ValidateContext(RefactoringContext context)
+    protected override string ValidateContext(GDPluginRefactoringContext context)
     {
         var baseError = base.ValidateContext(context);
         if (baseError != null) return baseError;
@@ -40,16 +40,16 @@ internal class InvertConditionAction : RefactoringActionBase
         return null;
     }
 
-    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    protected override async Task ExecuteInternalAsync(GDPluginRefactoringContext context)
     {
         var semanticsContext = context.BuildSemanticsContext();
         if (semanticsContext == null)
-            throw new RefactoringException("Failed to build refactoring context");
+            throw new GDRefactoringException("Failed to build refactoring context");
 
         // Plan the refactoring
         var plan = _service.Plan(semanticsContext);
         if (!plan.Success)
-            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan invert condition");
+            throw new GDRefactoringException(plan.ErrorMessage ?? "Failed to plan invert condition");
 
         // Show preview dialog
         var dialog = new RefactoringPreviewDialog();
@@ -79,7 +79,7 @@ internal class InvertConditionAction : RefactoringActionBase
                 // Execute the refactoring
                 var executeResult = _service.Execute(semanticsContext);
                 if (!executeResult.Success)
-                    throw new RefactoringException(executeResult.ErrorMessage ?? "Failed to execute invert condition");
+                    throw new GDRefactoringException(executeResult.ErrorMessage ?? "Failed to execute invert condition");
 
                 // Apply edits to the editor
                 ApplyEdits(context, executeResult);
@@ -91,7 +91,7 @@ internal class InvertConditionAction : RefactoringActionBase
         }
     }
 
-    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    private void ApplyEdits(GDPluginRefactoringContext context, GDRefactoringResult result)
     {
         var editor = context.Editor;
 

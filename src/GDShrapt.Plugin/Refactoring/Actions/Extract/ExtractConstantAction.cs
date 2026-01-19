@@ -7,17 +7,17 @@ namespace GDShrapt.Plugin;
 /// Extracts a literal value (number, string, bool) into a constant at class level.
 /// Delegates to GDExtractConstantService for the actual logic.
 /// </summary>
-internal class ExtractConstantAction : RefactoringActionBase
+internal class ExtractConstantAction : GDRefactoringActionBase
 {
     private readonly GDExtractConstantService _service = new();
 
     public override string Id => "extract_constant";
     public override string DisplayName => "Extract Constant";
-    public override RefactoringCategory Category => RefactoringCategory.Extract;
+    public override GDRefactoringCategory Category => GDRefactoringCategory.Extract;
     public override string Shortcut => "Ctrl+Alt+C";
     public override int Priority => 10;
 
-    public override bool IsAvailable(RefactoringContext context)
+    public override bool IsAvailable(GDPluginRefactoringContext context)
     {
         if (context?.ContainingClass == null)
             return false;
@@ -26,7 +26,7 @@ internal class ExtractConstantAction : RefactoringActionBase
         return semanticsContext != null && _service.CanExecute(semanticsContext);
     }
 
-    protected override string ValidateContext(RefactoringContext context)
+    protected override string ValidateContext(GDPluginRefactoringContext context)
     {
         var baseError = base.ValidateContext(context);
         if (baseError != null) return baseError;
@@ -41,16 +41,16 @@ internal class ExtractConstantAction : RefactoringActionBase
         return null;
     }
 
-    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    protected override async Task ExecuteInternalAsync(GDPluginRefactoringContext context)
     {
         var semanticsContext = context.BuildSemanticsContext();
         if (semanticsContext == null)
-            throw new RefactoringException("Failed to build refactoring context");
+            throw new GDRefactoringException("Failed to build refactoring context");
 
         // Plan the refactoring
         var plan = _service.Plan(semanticsContext);
         if (!plan.Success)
-            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan extract constant");
+            throw new GDRefactoringException(plan.ErrorMessage ?? "Failed to plan extract constant");
 
         // Show name input dialog
         var nameDialog = new NameInputDialog();
@@ -72,7 +72,7 @@ internal class ExtractConstantAction : RefactoringActionBase
         // Re-plan with the user-provided name
         plan = _service.Plan(semanticsContext, constName);
         if (!plan.Success)
-            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan extract constant");
+            throw new GDRefactoringException(plan.ErrorMessage ?? "Failed to plan extract constant");
 
         // Build preview info
         var originalCode = plan.LiteralValue;
@@ -105,7 +105,7 @@ internal class ExtractConstantAction : RefactoringActionBase
                 // Execute the refactoring
                 var executeResult = _service.Execute(semanticsContext, plan.SuggestedName);
                 if (!executeResult.Success)
-                    throw new RefactoringException(executeResult.ErrorMessage ?? "Failed to execute extract constant");
+                    throw new GDRefactoringException(executeResult.ErrorMessage ?? "Failed to execute extract constant");
 
                 // Apply edits to the editor
                 ApplyEdits(context, executeResult);
@@ -117,7 +117,7 @@ internal class ExtractConstantAction : RefactoringActionBase
         }
     }
 
-    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    private void ApplyEdits(GDPluginRefactoringContext context, GDRefactoringResult result)
     {
         var editor = context.Editor;
 

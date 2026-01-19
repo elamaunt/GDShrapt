@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// Service for providing inference data to UI/plugins.
 /// Provides tooltip data, call site information, and dependency graph visualization.
 /// </summary>
-public class GDInferenceVisualizationService
+internal class GDInferenceVisualizationService
 {
     private readonly GDScriptProject _project;
     private readonly IGDRuntimeProvider _runtimeProvider;

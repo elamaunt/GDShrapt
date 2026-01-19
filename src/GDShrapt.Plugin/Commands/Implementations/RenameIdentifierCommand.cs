@@ -1,5 +1,6 @@
 using Godot;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,12 +13,11 @@ internal class RenameIdentifierCommand : Command
     Action<string, int, int, int> _renamingDialogNavigateHandler;
     NodeRenamingDialog _nodeRenamingDialog;
     GDNodePathReferenceFinder _referenceFinder;
-    NodePathRenamer _renamer;
+    GDNodePathRenamer _renamer;
 
     public RenameIdentifierCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
-        _renamer = new NodePathRenamer();
     }
 
     public override async Task Execute(IScriptEditor controller)
@@ -189,13 +189,7 @@ internal class RenameIdentifierCommand : Command
         // Initialize reference finder if needed
         if (_referenceFinder == null)
         {
-            var sceneProvider = Map.SceneTypesProvider;
-            if (sceneProvider == null)
-            {
-                Logger.Info("Scene types provider not available");
-                return false;
-            }
-            _referenceFinder = new GDNodePathReferenceFinder(Map, sceneProvider);
+            _referenceFinder = new GDNodePathReferenceFinder(Map);
         }
 
         // Get the current script
@@ -257,8 +251,20 @@ internal class RenameIdentifierCommand : Command
 
         var newName = InternalMethods.PrepareIdentifier(parameters.NewName, "");
 
-        // Apply changes
-        _renamer.ApplyChanges(parameters, nodeName);
+        // Initialize renamer if needed
+        if (_renamer == null)
+        {
+            _renamer = new GDNodePathRenamer(Map);
+        }
+
+        // Apply changes using Semantics service
+        var renameResult = _renamer.ApplyRename(parameters.SelectedReferences, nodeName, newName);
+
+        if (!renameResult.Success)
+        {
+            Logger.Error($"Node rename failed: {renameResult.ErrorMessage}");
+            return false;
+        }
 
         // Clear scene cache to reload updated scenes
         Map.SceneTypesProvider?.ClearCache();

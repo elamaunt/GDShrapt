@@ -9,17 +9,17 @@ namespace GDShrapt.Plugin;
 /// Supports both GDScript 4.x property syntax and traditional method syntax.
 /// Delegates to GDGenerateGetterSetterService for the actual logic.
 /// </summary>
-internal class GenerateGetterSetterAction : RefactoringActionBase
+internal class GenerateGetterSetterAction : GDRefactoringActionBase
 {
     private readonly GDGenerateGetterSetterService _service = new();
 
     public override string Id => "generate_getter_setter";
     public override string DisplayName => "Generate Getter/Setter";
-    public override RefactoringCategory Category => RefactoringCategory.Generate;
+    public override GDRefactoringCategory Category => GDRefactoringCategory.Generate;
     public override string Shortcut => "Ctrl+Alt+G";
     public override int Priority => 10;
 
-    public override bool IsAvailable(RefactoringContext context)
+    public override bool IsAvailable(GDPluginRefactoringContext context)
     {
         if (context?.ContainingClass == null)
             return false;
@@ -31,7 +31,7 @@ internal class GenerateGetterSetterAction : RefactoringActionBase
         return semanticsContext != null && _service.CanExecute(semanticsContext);
     }
 
-    protected override string ValidateContext(RefactoringContext context)
+    protected override string ValidateContext(GDPluginRefactoringContext context)
     {
         var baseError = base.ValidateContext(context);
         if (baseError != null) return baseError;
@@ -46,11 +46,11 @@ internal class GenerateGetterSetterAction : RefactoringActionBase
         return null;
     }
 
-    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    protected override async Task ExecuteInternalAsync(GDPluginRefactoringContext context)
     {
         var semanticsContext = context.BuildSemanticsContext();
         if (semanticsContext == null)
-            throw new RefactoringException("Failed to build refactoring context");
+            throw new GDRefactoringException("Failed to build refactoring context");
 
         // Show options dialog
         var optionsDialog = new GetterSetterOptionsDialog();
@@ -80,7 +80,7 @@ internal class GenerateGetterSetterAction : RefactoringActionBase
         // Plan the refactoring
         var plan = _service.Plan(semanticsContext, options);
         if (!plan.Success)
-            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan getter/setter generation");
+            throw new GDRefactoringException(plan.ErrorMessage ?? "Failed to plan getter/setter generation");
 
         // Show preview dialog
         var previewDialog = new RefactoringPreviewDialog();
@@ -108,7 +108,7 @@ internal class GenerateGetterSetterAction : RefactoringActionBase
                 // Execute the refactoring
                 var executeResult = _service.Execute(semanticsContext, options);
                 if (!executeResult.Success)
-                    throw new RefactoringException(executeResult.ErrorMessage ?? "Failed to execute getter/setter generation");
+                    throw new GDRefactoringException(executeResult.ErrorMessage ?? "Failed to execute getter/setter generation");
 
                 // Apply edits to the editor
                 ApplyEdits(context, executeResult);
@@ -120,7 +120,7 @@ internal class GenerateGetterSetterAction : RefactoringActionBase
         }
     }
 
-    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    private void ApplyEdits(GDPluginRefactoringContext context, GDRefactoringResult result)
     {
         var editor = context.Editor;
 

@@ -12,7 +12,7 @@ namespace GDShrapt.Semantics;
 /// Currently, it provides dependency tracking that can be used to minimize re-analysis
 /// when only a subset of files change.
 /// </remarks>
-public class GDInferenceDependencyTracker
+internal class GDInferenceDependencyTracker
 {
     // Method -> Methods that depend on it (reverse dependencies)
     private readonly Dictionary<string, HashSet<string>> _dependents = new();
@@ -339,7 +339,7 @@ public class GDInferenceDependencyTracker
 /// <summary>
 /// Statistics about the dependency tracker.
 /// </summary>
-public class GDDependencyTrackerStatistics
+internal class GDDependencyTrackerStatistics
 {
     /// <summary>
     /// Total number of methods being tracked.

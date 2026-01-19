@@ -20,9 +20,9 @@ internal partial class TodoTagsDock : Control
     private CheckButton _autoRefreshToggle;
     private Label _statusLabel;
 
-    private TodoTagsScanner? _scanner;
+    private GDTodoTagsScanner? _scanner;
     private GDConfigManager? _configManager;
-    private TodoTagsScanResult? _currentResult;
+    private GDTodoTagsScanResult? _currentResult;
     private GDTodoGroupingMode _groupingMode = GDTodoGroupingMode.ByFile;
     private string? _filterTag; // null = all tags
 
@@ -48,7 +48,7 @@ internal partial class TodoTagsDock : Control
     /// <summary>
     /// Initializes the dock with required dependencies.
     /// </summary>
-    public void Initialize(TodoTagsScanner scanner, GDConfigManager configManager)
+    public void Initialize(GDTodoTagsScanner scanner, GDConfigManager configManager)
     {
         _scanner = scanner;
         _configManager = configManager;
@@ -241,14 +241,14 @@ internal partial class TodoTagsDock : Control
         }
     }
 
-    private void OnScanCompleted(TodoTagsScanResult result)
+    private void OnScanCompleted(GDTodoTagsScanResult result)
     {
         _currentResult = result;
         Callable.From(RefreshDisplay).CallDeferred();
         Callable.From(UpdateStatus).CallDeferred();
     }
 
-    private void OnFileScanned(string filePath, List<TodoItem> items)
+    private void OnFileScanned(string filePath, List<GDTodoItem> items)
     {
         if (!_autoRefreshToggle.ButtonPressed)
             return;
@@ -286,7 +286,7 @@ internal partial class TodoTagsDock : Control
         }
     }
 
-    private void DisplayGroupedByFile(TreeItem root, List<TodoItem> items)
+    private void DisplayGroupedByFile(TreeItem root, List<GDTodoItem> items)
     {
         var byFile = items
             .GroupBy(i => i.FilePath)
@@ -310,7 +310,7 @@ internal partial class TodoTagsDock : Control
         }
     }
 
-    private void DisplayGroupedByTag(TreeItem root, List<TodoItem> items)
+    private void DisplayGroupedByTag(TreeItem root, List<GDTodoItem> items)
     {
         var byTag = items
             .GroupBy(i => i.Tag.ToUpperInvariant())
@@ -338,7 +338,7 @@ internal partial class TodoTagsDock : Control
         }
     }
 
-    private void CreateItemRow(TreeItem parent, TodoItem item)
+    private void CreateItemRow(TreeItem parent, GDTodoItem item)
     {
         var row = _resultsTree.CreateItem(parent);
         row.SetText(0, item.Tag);

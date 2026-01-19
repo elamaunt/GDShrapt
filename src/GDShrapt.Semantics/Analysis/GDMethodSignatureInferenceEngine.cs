@@ -11,7 +11,7 @@ namespace GDShrapt.Semantics;
 /// Coordinates call site collection, return type analysis, and cycle detection
 /// to infer Union types for method signatures.
 /// </summary>
-public class GDMethodSignatureInferenceEngine
+internal class GDMethodSignatureInferenceEngine
 {
     private readonly GDScriptProject _project;
     private readonly GDCallSiteCollector _callSiteCollector;
@@ -369,7 +369,7 @@ public class GDMethodSignatureInferenceEngine
 /// <summary>
 /// Result of inferring a method signature.
 /// </summary>
-public class GDInferredMethodSignature
+internal class GDInferredMethodSignature
 {
     /// <summary>
     /// The method name.

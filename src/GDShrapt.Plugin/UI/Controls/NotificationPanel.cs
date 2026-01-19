@@ -23,7 +23,7 @@ internal partial class NotificationPanel : Control
     // State
     private bool _isExpanded = false;
     private bool _hasBeenShownExpanded = false;
-    private DiagnosticSummary _currentSummary = DiagnosticSummary.Empty;
+    private GDDiagnosticSummary _currentSummary = GDDiagnosticSummary.Empty;
     private readonly HashSet<string> _shownFiles = new();
 
     // Constants
@@ -177,7 +177,7 @@ internal partial class NotificationPanel : Control
     /// <summary>
     /// Updates the panel with new diagnostic summary.
     /// </summary>
-    public void UpdateSummary(DiagnosticSummary summary, string? scriptPath = null)
+    public void UpdateSummary(GDDiagnosticSummary summary, string? scriptPath = null)
     {
         _currentSummary = summary;
 

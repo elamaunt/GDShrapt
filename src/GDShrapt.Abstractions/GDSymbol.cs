@@ -36,6 +36,11 @@ public class GDSymbol
     public string? TypeName { get; }
 
     /// <summary>
+    /// Type name inferred from usage/assignment (e.g., from ClassName.new()).
+    /// </summary>
+    public string? InferredTypeName { get; set; }
+
+    /// <summary>
     /// The full type node from AST (includes generic type arguments for Array[T], Dictionary[K,V]).
     /// </summary>
     public GDTypeNode? TypeNode { get; }

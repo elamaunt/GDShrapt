@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Helper methods for working with Union types.
 /// </summary>
-public static class GDUnionTypeHelper
+internal static class GDUnionTypeHelper
 {
     /// <summary>
     /// Finds the common base type for a set of types by traversing inheritance chains.

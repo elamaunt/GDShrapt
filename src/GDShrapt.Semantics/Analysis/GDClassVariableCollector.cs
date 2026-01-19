@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Collects Union types for class-level Variant variables.
 /// Tracks initializers and assignments from all methods.
 /// </summary>
-public class GDClassVariableCollector : GDVisitor
+internal class GDClassVariableCollector : GDVisitor
 {
     private readonly GDTypeInferenceEngine? _typeEngine;
     private readonly Dictionary<string, GDVariableUsageProfile> _profiles = new();

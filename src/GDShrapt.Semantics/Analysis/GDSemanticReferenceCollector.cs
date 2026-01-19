@@ -13,7 +13,7 @@ namespace GDShrapt.Semantics;
 /// - Tracks DeclaringTypeName for inherited member access
 /// - Builds a GDSemanticModel for unified querying
 /// </summary>
-public class GDSemanticReferenceCollector : GDVisitor
+internal class GDSemanticReferenceCollector : GDVisitor
 {
     private readonly GDScriptFile _scriptFile;
     private readonly IGDRuntimeProvider? _runtimeProvider;
@@ -143,6 +143,13 @@ public class GDSemanticReferenceCollector : GDVisitor
         context.EnterScope(GDScopeType.Global, classDecl);
 
         // Collect class members
+        CollectClassMembers(classDecl, context, _scriptFile.TypeName ?? "Unknown");
+
+        context.ExitScope();
+    }
+
+    private void CollectClassMembers(IGDClassDeclaration classDecl, GDValidationContext context, string declaringTypeName)
+    {
         foreach (var member in classDecl.Members)
         {
             switch (member)
@@ -150,29 +157,56 @@ public class GDSemanticReferenceCollector : GDVisitor
                 case GDVariableDeclaration varDecl:
                     // Constants are GDVariableDeclaration with ConstKeyword
                     if (varDecl.ConstKeyword != null)
-                        RegisterConstant(varDecl, context);
+                        RegisterConstant(varDecl, context, declaringTypeName);
                     else
-                        RegisterClassVariable(varDecl, context);
+                        RegisterClassVariable(varDecl, context, declaringTypeName);
                     break;
 
                 case GDMethodDeclaration methodDecl:
-                    RegisterMethod(methodDecl, context);
+                    RegisterMethod(methodDecl, context, declaringTypeName);
                     break;
 
                 case GDSignalDeclaration signalDecl:
-                    RegisterSignal(signalDecl, context);
+                    RegisterSignal(signalDecl, context, declaringTypeName);
                     break;
 
                 case GDEnumDeclaration enumDecl:
-                    RegisterEnum(enumDecl, context);
+                    RegisterEnum(enumDecl, context, declaringTypeName);
+                    break;
+
+                case GDInnerClassDeclaration innerClass:
+                    RegisterInnerClass(innerClass, context, declaringTypeName);
                     break;
             }
         }
+    }
+
+    private void RegisterInnerClass(GDInnerClassDeclaration innerClass, GDValidationContext context, string declaringTypeName)
+    {
+        var className = innerClass.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(className))
+            return;
+
+        // Register the inner class itself as a symbol
+        var symbol = GDSymbol.Class(className, innerClass);
+        context.Declare(symbol);
+
+        var symbolInfo = GDSymbolInfo.ClassMember(
+            symbol,
+            declaringTypeName: declaringTypeName,
+            declaringScript: _scriptFile);
+        _model!.RegisterSymbol(symbolInfo);
+
+        // Enter inner class scope and collect its members
+        context.EnterScope(GDScopeType.Class, innerClass);
+
+        var innerTypeName = $"{declaringTypeName}.{className}";
+        CollectClassMembers(innerClass, context, innerTypeName);
 
         context.ExitScope();
     }
 
-    private void RegisterClassVariable(GDVariableDeclaration varDecl, GDValidationContext context)
+    private void RegisterClassVariable(GDVariableDeclaration varDecl, GDValidationContext context, string declaringTypeName)
     {
         var name = varDecl.Identifier?.Sequence;
         if (string.IsNullOrEmpty(name))
@@ -187,13 +221,13 @@ public class GDSemanticReferenceCollector : GDVisitor
 
         var symbolInfo = GDSymbolInfo.ClassMember(
             symbol,
-            declaringTypeName: _scriptFile.TypeName ?? "Unknown",
+            declaringTypeName: declaringTypeName,
             declaringScript: _scriptFile);
 
         _model!.RegisterSymbol(symbolInfo);
     }
 
-    private void RegisterMethod(GDMethodDeclaration methodDecl, GDValidationContext context)
+    private void RegisterMethod(GDMethodDeclaration methodDecl, GDValidationContext context, string declaringTypeName)
     {
         var name = methodDecl.Identifier?.Sequence;
         if (string.IsNullOrEmpty(name))
@@ -206,13 +240,13 @@ public class GDSemanticReferenceCollector : GDVisitor
 
         var symbolInfo = GDSymbolInfo.ClassMember(
             symbol,
-            declaringTypeName: _scriptFile.TypeName ?? "Unknown",
+            declaringTypeName: declaringTypeName,
             declaringScript: _scriptFile);
 
         _model!.RegisterSymbol(symbolInfo);
     }
 
-    private void RegisterSignal(GDSignalDeclaration signalDecl, GDValidationContext context)
+    private void RegisterSignal(GDSignalDeclaration signalDecl, GDValidationContext context, string declaringTypeName)
     {
         var name = signalDecl.Identifier?.Sequence;
         if (string.IsNullOrEmpty(name))
@@ -223,13 +257,13 @@ public class GDSemanticReferenceCollector : GDVisitor
 
         var symbolInfo = GDSymbolInfo.ClassMember(
             symbol,
-            declaringTypeName: _scriptFile.TypeName ?? "Unknown",
+            declaringTypeName: declaringTypeName,
             declaringScript: _scriptFile);
 
         _model!.RegisterSymbol(symbolInfo);
     }
 
-    private void RegisterConstant(GDVariableDeclaration constDecl, GDValidationContext context)
+    private void RegisterConstant(GDVariableDeclaration constDecl, GDValidationContext context, string declaringTypeName)
     {
         var name = constDecl.Identifier?.Sequence;
         if (string.IsNullOrEmpty(name))
@@ -243,13 +277,13 @@ public class GDSemanticReferenceCollector : GDVisitor
 
         var symbolInfo = GDSymbolInfo.ClassMember(
             symbol,
-            declaringTypeName: _scriptFile.TypeName ?? "Unknown",
+            declaringTypeName: declaringTypeName,
             declaringScript: _scriptFile);
 
         _model!.RegisterSymbol(symbolInfo);
     }
 
-    private void RegisterEnum(GDEnumDeclaration enumDecl, GDValidationContext context)
+    private void RegisterEnum(GDEnumDeclaration enumDecl, GDValidationContext context, string declaringTypeName)
     {
         var name = enumDecl.Identifier?.Sequence;
         if (string.IsNullOrEmpty(name))
@@ -260,7 +294,7 @@ public class GDSemanticReferenceCollector : GDVisitor
 
         var symbolInfo = GDSymbolInfo.ClassMember(
             symbol,
-            declaringTypeName: _scriptFile.TypeName ?? "Unknown",
+            declaringTypeName: declaringTypeName,
             declaringScript: _scriptFile);
 
         _model!.RegisterSymbol(symbolInfo);
@@ -274,7 +308,7 @@ public class GDSemanticReferenceCollector : GDVisitor
     {
         PushScope(GDScopeType.Method, methodDeclaration);
 
-        // Register parameters
+        // Register parameters with the method as the declaring scope
         var parameters = methodDeclaration.Parameters;
         if (parameters != null)
         {
@@ -287,7 +321,8 @@ public class GDSemanticReferenceCollector : GDVisitor
                     var typeName = typeNode?.BuildName();
                     var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
 
-                    var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile);
+                    // Pass the method as the declaring scope for parameter isolation
+                    var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: methodDeclaration);
                     _model!.RegisterSymbol(symbolInfo);
                 }
             }
@@ -307,7 +342,9 @@ public class GDSemanticReferenceCollector : GDVisitor
         if (!string.IsNullOrEmpty(iteratorName))
         {
             var symbol = GDSymbol.Iterator(iteratorName, forStatement);
-            var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile);
+            // Pass the enclosing method/lambda for scope isolation
+            var enclosingScope = FindEnclosingScopeNode(forStatement);
+            var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope);
             _model!.RegisterSymbol(symbolInfo);
         }
     }
@@ -331,6 +368,7 @@ public class GDSemanticReferenceCollector : GDVisitor
     {
         PushScope(GDScopeType.Lambda, methodExpression);
 
+        // Register lambda parameters with the lambda as the declaring scope
         var parameters = methodExpression.Parameters;
         if (parameters != null)
         {
@@ -343,7 +381,8 @@ public class GDSemanticReferenceCollector : GDVisitor
                     var typeName = typeNode?.BuildName();
                     var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
 
-                    var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile);
+                    // Pass the lambda as the declaring scope for parameter isolation
+                    var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: methodExpression);
                     _model!.RegisterSymbol(symbolInfo);
                 }
             }
@@ -427,12 +466,15 @@ public class GDSemanticReferenceCollector : GDVisitor
 
     public override void Visit(GDInnerClassDeclaration innerClass)
     {
-        // Don't recurse into inner classes - they need separate analysis
+        // Inner class symbol is already registered in CollectClassMembers/RegisterInnerClass
+        // Here we just push scope for reference tracking during the visitor walk
+        PushScope(GDScopeType.Class, innerClass);
     }
 
     public override void Left(GDInnerClassDeclaration innerClass)
     {
-        // Nothing to do
+        // Exit inner class scope
+        PopScope();
     }
 
     private void PushScope(GDScopeType type, GDNode node)
@@ -478,7 +520,9 @@ public class GDSemanticReferenceCollector : GDVisitor
             var typeName = typeNode?.BuildName();
             var symbol = GDSymbol.Variable(varName, variableDeclaration, typeName: typeName, typeNode: typeNode);
 
-            var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile);
+            // Pass the enclosing method/lambda for scope isolation
+            var enclosingScope = FindEnclosingScopeNode(variableDeclaration);
+            var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope);
             _model!.RegisterSymbol(symbolInfo);
         }
     }
@@ -489,9 +533,26 @@ public class GDSemanticReferenceCollector : GDVisitor
         if (!string.IsNullOrEmpty(varName))
         {
             var symbol = GDSymbol.Variable(varName, matchCaseVariable);
-            var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile);
+            // Pass the enclosing method/lambda for scope isolation
+            var enclosingScope = FindEnclosingScopeNode(matchCaseVariable);
+            var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope);
             _model!.RegisterSymbol(symbolInfo);
         }
+    }
+
+    /// <summary>
+    /// Finds the enclosing method or lambda node for scope isolation.
+    /// </summary>
+    private static GDNode? FindEnclosingScopeNode(GDNode node)
+    {
+        var current = node.Parent;
+        while (current != null)
+        {
+            if (current is GDMethodDeclaration || current is GDMethodExpression)
+                return current as GDNode;
+            current = current.Parent;
+        }
+        return null;
     }
 
     #endregion
@@ -633,8 +694,8 @@ public class GDSemanticReferenceCollector : GDVisitor
         if (_runtimeProvider?.IsBuiltIn(name) == true)
             return;
 
-        // Try to resolve locally first
-        var localSymbol = _model!.FindSymbol(name);
+        // Try to resolve locally first using scope-aware lookup
+        var localSymbol = _model!.FindSymbolInScope(name, identifierExpression);
         if (localSymbol != null)
         {
             CreateReference(localSymbol, identifierExpression, GDReferenceConfidence.Strict);

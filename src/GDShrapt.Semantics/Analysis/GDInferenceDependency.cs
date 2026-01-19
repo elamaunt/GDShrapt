@@ -3,7 +3,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Kind of inference dependency between methods.
 /// </summary>
-public enum GDDependencyKind
+internal enum GDDependencyKind
 {
     /// <summary>
     /// Method A calls method B, parameters of B depend on arguments from A.
@@ -24,7 +24,7 @@ public enum GDDependencyKind
 /// <summary>
 /// Represents a dependency between two methods for type inference.
 /// </summary>
-public class GDInferenceDependency
+internal class GDInferenceDependency
 {
     /// <summary>
     /// The method that depends on another (e.g., "Player.attack").

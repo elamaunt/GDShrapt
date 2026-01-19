@@ -263,7 +263,7 @@ internal partial class ReferenceItem : GodotObject
     /// </summary>
     public int EndColumn { get; set; }
     public string ContextLine { get; set; }
-    public ReferenceKind Kind { get; set; }
+    public GDPluginReferenceKind Kind { get; set; }
     public GDIdentifier Identifier { get; set; }
 
     /// <summary>
@@ -283,7 +283,7 @@ internal partial class ReferenceItem : GodotObject
 
     public ReferenceItem() { }
 
-    public ReferenceItem(string filePath, int line, int column, int endColumn, string context, ReferenceKind kind, int highlightStart = 0, int highlightEnd = 0)
+    public ReferenceItem(string filePath, int line, int column, int endColumn, string context, GDPluginReferenceKind kind, int highlightStart = 0, int highlightEnd = 0)
     {
         FilePath = filePath;
         Line = line;
@@ -329,19 +329,19 @@ internal partial class ReferenceItem : GodotObject
         };
     }
 
-    private static ReferenceKind DetermineKind(GDMemberReference memberRef)
+    private static GDPluginReferenceKind DetermineKind(GDMemberReference memberRef)
     {
         if (memberRef.Member != null)
-            return ReferenceKind.Declaration;
+            return GDPluginReferenceKind.Declaration;
 
         // Check if it's a call based on parent node
         var parent = memberRef.Identifier?.Parent;
         if (parent is GDCallExpression)
-            return ReferenceKind.Call;
+            return GDPluginReferenceKind.Call;
         if (parent is GDIdentifierExpression idExpr && idExpr.Parent is GDCallExpression)
-            return ReferenceKind.Call;
+            return GDPluginReferenceKind.Call;
 
-        return ReferenceKind.Read;
+        return GDPluginReferenceKind.Read;
     }
 
     private static string GetContextLine(GDMemberReference memberRef)
@@ -419,7 +419,7 @@ internal partial class ReferenceItem : GodotObject
 /// <summary>
 /// Kind of reference (how the symbol is used).
 /// </summary>
-internal enum ReferenceKind
+internal enum GDPluginReferenceKind
 {
     Read,
     Write,

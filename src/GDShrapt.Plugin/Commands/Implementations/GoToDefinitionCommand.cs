@@ -30,7 +30,7 @@ internal class GoToDefinitionCommand : Command
         }
 
         // Build refactoring context for semantics service
-        var contextBuilder = new RefactoringContextBuilder(Plugin.ScriptProject);
+        var contextBuilder = new GDPluginRefactoringContextBuilder(Plugin.ScriptProject);
         var semanticsContext = contextBuilder.BuildSemanticsContext(scriptEditor);
 
         if (semanticsContext == null)

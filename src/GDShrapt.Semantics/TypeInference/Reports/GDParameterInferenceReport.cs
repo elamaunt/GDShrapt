@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Detailed report about parameter type inference for a single parameter.
 /// Contains all call sites and inferred types for visualization.
 /// </summary>
-public class GDParameterInferenceReport
+internal class GDParameterInferenceReport
 {
     /// <summary>
     /// Name of the parameter.

@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Resolves duck types to possible concrete types using runtime provider.
 /// Moved from Abstractions to keep logic in Semantics layer.
 /// </summary>
-public class GDDuckTypeResolver
+internal class GDDuckTypeResolver
 {
     private readonly IGDRuntimeProvider _runtimeProvider;
 

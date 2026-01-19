@@ -11,9 +11,9 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal partial class QuickActionsPopup : PopupMenu
 {
-    private RefactoringActionProvider _provider;
-    private RefactoringContext _currentContext;
-    private List<IRefactoringAction> _currentActions = new();
+    private GDRefactoringActionProvider _provider;
+    private GDPluginRefactoringContext _currentContext;
+    private List<IGDRefactoringAction> _currentActions = new();
 
     public QuickActionsPopup()
     {
@@ -23,7 +23,7 @@ internal partial class QuickActionsPopup : PopupMenu
     /// <summary>
     /// Sets the action provider.
     /// </summary>
-    public void SetProvider(RefactoringActionProvider provider)
+    public void SetProvider(GDRefactoringActionProvider provider)
     {
         _provider = provider;
     }
@@ -31,7 +31,7 @@ internal partial class QuickActionsPopup : PopupMenu
     /// <summary>
     /// Shows the popup with available actions for the given context.
     /// </summary>
-    public void ShowActions(RefactoringContext context, Vector2 position)
+    public void ShowActions(GDPluginRefactoringContext context, Vector2 position)
     {
         _currentContext = context;
         Clear();
@@ -64,7 +64,7 @@ internal partial class QuickActionsPopup : PopupMenu
 
     private void PopulateMenu()
     {
-        RefactoringCategory? lastCategory = null;
+        GDRefactoringCategory? lastCategory = null;
         var index = 0;
 
         foreach (var action in _currentActions)
@@ -132,7 +132,7 @@ internal partial class QuickActionsPopup : PopupMenu
         _ = ExecuteActionAsync(action);
     }
 
-    private async System.Threading.Tasks.Task ExecuteActionAsync(IRefactoringAction action)
+    private async System.Threading.Tasks.Task ExecuteActionAsync(IGDRefactoringAction action)
     {
         try
         {
@@ -144,7 +144,7 @@ internal partial class QuickActionsPopup : PopupMenu
         }
     }
 
-    private Texture2D GetCategoryIcon(RefactoringCategory category)
+    private Texture2D GetCategoryIcon(GDRefactoringCategory category)
     {
         // Return null for now - icons can be added later
         // Could use EditorInterface.GetEditorTheme() to get themed icons
@@ -170,18 +170,18 @@ internal partial class QuickActionsPopup : PopupMenu
     /// <summary>
     /// Gets the display name for a category.
     /// </summary>
-    public static string GetCategoryDisplayName(RefactoringCategory category)
+    public static string GetCategoryDisplayName(GDRefactoringCategory category)
     {
         return category switch
         {
-            RefactoringCategory.Extract => "Extract",
-            RefactoringCategory.Generate => "Generate",
-            RefactoringCategory.Convert => "Convert",
-            RefactoringCategory.Surround => "Surround With",
-            RefactoringCategory.Inline => "Inline",
-            RefactoringCategory.Move => "Move",
-            RefactoringCategory.Organize => "Organize",
-            RefactoringCategory.QuickFix => "Quick Fix",
+            GDRefactoringCategory.Extract => "Extract",
+            GDRefactoringCategory.Generate => "Generate",
+            GDRefactoringCategory.Convert => "Convert",
+            GDRefactoringCategory.Surround => "Surround With",
+            GDRefactoringCategory.Inline => "Inline",
+            GDRefactoringCategory.Move => "Move",
+            GDRefactoringCategory.Organize => "Organize",
+            GDRefactoringCategory.QuickFix => "Quick Fix",
             _ => category.ToString()
         };
     }

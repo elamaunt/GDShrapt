@@ -20,14 +20,14 @@ public class GDScriptAnalyzer
     private readonly IGDSemanticLogger _logger;
 
     /// <summary>
-    /// The type inference engine.
+    /// The type inference engine. Internal - use SemanticModel API instead.
     /// </summary>
-    public GDTypeInferenceEngine? TypeEngine => _typeEngine;
+    internal GDTypeInferenceEngine? TypeEngine => _typeEngine;
 
     /// <summary>
-    /// The validation context with scope and symbol information.
+    /// The validation context with scope and symbol information. Internal - use SemanticModel API instead.
     /// </summary>
-    public GDValidationContext? Context => _validationContext;
+    internal GDValidationContext? Context => _validationContext;
 
     /// <summary>
     /// The semantic model for this script. Provides unified access to symbol resolution,

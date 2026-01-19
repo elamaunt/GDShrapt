@@ -46,7 +46,34 @@ namespace GDShrapt.Reader
             string leftType,
             string rightType)
         {
-            // Unknown types propagate
+            // FIRST: Operators with fixed result type (don't depend on operand types)
+            // These must be checked BEFORE the null check to handle Variant parameters
+            switch (op)
+            {
+                // Comparison operators - ALWAYS return bool
+                case GDDualOperatorType.Equal:
+                case GDDualOperatorType.NotEqual:
+                case GDDualOperatorType.LessThan:
+                case GDDualOperatorType.MoreThan:
+                case GDDualOperatorType.LessThanOrEqual:
+                case GDDualOperatorType.MoreThanOrEqual:
+                case GDDualOperatorType.Is:
+                case GDDualOperatorType.In:
+                    return "bool";
+
+                // Logical operators - ALWAYS return bool
+                case GDDualOperatorType.And:
+                case GDDualOperatorType.And2:
+                case GDDualOperatorType.Or:
+                case GDDualOperatorType.Or2:
+                    return "bool";
+
+                // As operator - returns right type (or Variant if unknown)
+                case GDDualOperatorType.As:
+                    return rightType ?? "Variant";
+            }
+
+            // For remaining operators, null types propagate as null (unknown)
             if (string.IsNullOrEmpty(leftType) || string.IsNullOrEmpty(rightType))
                 return null;
             if (leftType == "Unknown" || rightType == "Unknown")
@@ -78,24 +105,6 @@ namespace GDShrapt.Reader
                         return "float";
                     return null;
 
-                // Comparison - always bool
-                case GDDualOperatorType.Equal:
-                case GDDualOperatorType.NotEqual:
-                case GDDualOperatorType.LessThan:
-                case GDDualOperatorType.MoreThan:
-                case GDDualOperatorType.LessThanOrEqual:
-                case GDDualOperatorType.MoreThanOrEqual:
-                case GDDualOperatorType.Is:
-                case GDDualOperatorType.In:
-                    return "bool";
-
-                // Logical - always bool
-                case GDDualOperatorType.And:
-                case GDDualOperatorType.And2:
-                case GDDualOperatorType.Or:
-                case GDDualOperatorType.Or2:
-                    return "bool";
-
                 // Bitwise - require int, return int
                 case GDDualOperatorType.BitwiseAnd:
                 case GDDualOperatorType.BitwiseOr:
@@ -105,10 +114,6 @@ namespace GDShrapt.Reader
                     if (leftType == "int" && rightType == "int")
                         return "int";
                     return null;
-
-                // Type cast
-                case GDDualOperatorType.As:
-                    return rightType;
 
                 // Assignment - returns left type
                 case GDDualOperatorType.Assignment:

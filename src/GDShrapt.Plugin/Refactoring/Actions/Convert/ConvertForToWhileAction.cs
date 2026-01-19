@@ -7,16 +7,16 @@ namespace GDShrapt.Plugin;
 /// Converts a for loop to an equivalent while loop with explicit index management.
 /// Delegates to GDConvertForToWhileService for the actual logic.
 /// </summary>
-internal class ConvertForToWhileAction : RefactoringActionBase
+internal class ConvertForToWhileAction : GDRefactoringActionBase
 {
     private readonly GDConvertForToWhileService _service = new();
 
     public override string Id => "convert_for_to_while";
     public override string DisplayName => "Convert to while loop";
-    public override RefactoringCategory Category => RefactoringCategory.Convert;
+    public override GDRefactoringCategory Category => GDRefactoringCategory.Convert;
     public override int Priority => 20;
 
-    public override bool IsAvailable(RefactoringContext context)
+    public override bool IsAvailable(GDPluginRefactoringContext context)
     {
         if (context?.ContainingMethod == null)
             return false;
@@ -25,7 +25,7 @@ internal class ConvertForToWhileAction : RefactoringActionBase
         return semanticsContext != null && _service.CanExecute(semanticsContext);
     }
 
-    protected override string ValidateContext(RefactoringContext context)
+    protected override string ValidateContext(GDPluginRefactoringContext context)
     {
         if (context.Editor == null)
             return "No editor available";
@@ -40,16 +40,16 @@ internal class ConvertForToWhileAction : RefactoringActionBase
         return null;
     }
 
-    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    protected override async Task ExecuteInternalAsync(GDPluginRefactoringContext context)
     {
         var semanticsContext = context.BuildSemanticsContext();
         if (semanticsContext == null)
-            throw new RefactoringException("Failed to build refactoring context");
+            throw new GDRefactoringException("Failed to build refactoring context");
 
         // Plan the refactoring
         var plan = _service.Plan(semanticsContext);
         if (!plan.Success)
-            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan conversion");
+            throw new GDRefactoringException(plan.ErrorMessage ?? "Failed to plan conversion");
 
         // Show preview dialog
         var dialog = new RefactoringPreviewDialog();
@@ -85,7 +85,7 @@ internal class ConvertForToWhileAction : RefactoringActionBase
                 // Execute the refactoring
                 var executeResult = _service.Execute(semanticsContext);
                 if (!executeResult.Success)
-                    throw new RefactoringException(executeResult.ErrorMessage ?? "Failed to execute conversion");
+                    throw new GDRefactoringException(executeResult.ErrorMessage ?? "Failed to execute conversion");
 
                 // Apply edits to the editor
                 ApplyEdits(context, executeResult);
@@ -97,7 +97,7 @@ internal class ConvertForToWhileAction : RefactoringActionBase
         }
     }
 
-    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    private void ApplyEdits(GDPluginRefactoringContext context, GDRefactoringResult result)
     {
         var editor = context.Editor;
 

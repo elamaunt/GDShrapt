@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Resolves Union types and determines member access confidence.
 /// </summary>
-public class GDUnionTypeResolver
+internal class GDUnionTypeResolver
 {
     private readonly IGDRuntimeProvider _runtimeProvider;
 

@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace GDShrapt.Plugin.Tests;
 
 [TestClass]
-public class PluginFixConverterTests
+public class GDPluginFixConverterTests
 {
     #region Suppression Fix Tests
 
@@ -19,7 +19,7 @@ public class PluginFixConverterTests
             IsInline = true
         };
 
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
 
         fixes.Should().ContainSingle();
         var fix = fixes[0];
@@ -42,7 +42,7 @@ public class PluginFixConverterTests
             IsInline = false
         };
 
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
 
         fixes.Should().ContainSingle();
         var fix = fixes[0];
@@ -67,7 +67,7 @@ public class PluginFixConverterTests
         };
 
         var source = "\t\tvar x = obj.health";
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
         var result = fixes[0].Apply(source);
 
         // Inserted line should have same indentation
@@ -90,7 +90,7 @@ public class PluginFixConverterTests
             IndentLevel = 1
         };
 
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
 
         fixes.Should().ContainSingle();
         var fix = fixes[0];
@@ -116,7 +116,7 @@ public class PluginFixConverterTests
         };
 
         var source = "var x = obj.visible";
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
         var result = fixes[0].Apply(source);
 
         var lines = result.Split('\n');
@@ -140,7 +140,7 @@ public class PluginFixConverterTests
             IndentLevel = 1
         };
 
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
 
         fixes.Should().ContainSingle();
         var fix = fixes[0];
@@ -171,7 +171,7 @@ public class PluginFixConverterTests
             EndColumn = 12
         };
 
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
 
         fixes.Should().ContainSingle();
         var fix = fixes[0];
@@ -193,7 +193,7 @@ public class PluginFixConverterTests
         };
 
         var source = "obj.atack()";
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
         var result = fixes[0].Apply(source);
 
         result.Should().Be("obj.attack()");
@@ -213,7 +213,7 @@ public class PluginFixConverterTests
             "var x = 1\n"
         );
 
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
 
         fixes.Should().ContainSingle();
         var fix = fixes[0];
@@ -231,7 +231,7 @@ public class PluginFixConverterTests
         );
 
         var source = "unused_varremaining";
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
         var result = fixes[0].Apply(source);
 
         result.Should().Be("remaining");
@@ -249,7 +249,7 @@ public class PluginFixConverterTests
         );
 
         var source = "var old_name = 1";
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
         var result = fixes[0].Apply(source);
 
         result.Should().Be("var new_name = 1");
@@ -262,7 +262,7 @@ public class PluginFixConverterTests
     [TestMethod]
     public void Convert_NullDescriptors_ReturnsEmpty()
     {
-        var fixes = PluginFixConverter.Convert(null!);
+        var fixes = GDPluginFixConverter.Convert(null!);
 
         fixes.Should().BeEmpty();
     }
@@ -270,7 +270,7 @@ public class PluginFixConverterTests
     [TestMethod]
     public void Convert_EmptyDescriptors_ReturnsEmpty()
     {
-        var fixes = PluginFixConverter.Convert(Array.Empty<GDFixDescriptor>());
+        var fixes = GDPluginFixConverter.Convert(Array.Empty<GDFixDescriptor>());
 
         fixes.Should().BeEmpty();
     }
@@ -285,7 +285,7 @@ public class PluginFixConverterTests
             new GDSuppressionFixDescriptor { DiagnosticCode = "GD2", TargetLine = 2, IsInline = true }
         };
 
-        var fixes = PluginFixConverter.Convert(descriptors);
+        var fixes = GDPluginFixConverter.Convert(descriptors);
 
         fixes.Should().HaveCount(2);
     }
@@ -301,7 +301,7 @@ public class PluginFixConverterTests
         };
 
         var source = "line1\nline2";
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
 
         // Should not throw
         var result = fixes[0].Apply(source);
@@ -322,7 +322,7 @@ public class PluginFixConverterTests
         };
 
         var source = "line1\npositon = 1\nline3";
-        var fixes = PluginFixConverter.Convert(new[] { descriptor });
+        var fixes = GDPluginFixConverter.Convert(new[] { descriptor });
         var result = fixes[0].Apply(source);
 
         result.Should().Be("line1\nposition = 1\nline3");
@@ -342,7 +342,7 @@ public class PluginFixConverterTests
             new GDMethodGuardFixDescriptor { VariableName = "obj", MethodName = "foo", StatementLine = 1 }
         };
 
-        var fixes = PluginFixConverter.Convert(descriptors);
+        var fixes = GDPluginFixConverter.Convert(descriptors);
 
         fixes.Should().HaveCount(3);
     }

@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Collects all call sites for a method across the project.
 /// Used for parameter type inference from usage patterns.
 /// </summary>
-public class GDCallSiteCollector
+internal class GDCallSiteCollector
 {
     private readonly GDScriptProject _project;
     private readonly IGDRuntimeProvider? _runtimeProvider;

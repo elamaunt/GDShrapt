@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Collects usage patterns for local untyped Array/Dictionary variables.
 /// </summary>
-public class GDContainerUsageCollector : GDVisitor
+internal class GDContainerUsageCollector : GDVisitor
 {
     private readonly GDScopeStack? _scopes;
     private readonly GDTypeInferenceEngine? _typeEngine;

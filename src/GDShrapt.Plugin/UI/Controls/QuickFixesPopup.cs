@@ -6,9 +6,9 @@ namespace GDShrapt.Plugin;
 /// </summary>
 internal partial class QuickFixesPopup : PopupMenu
 {
-    private QuickFixHandler? _handler;
+    private GDQuickFixHandler? _handler;
     private GDScriptFile? _currentScript;
-    private List<QuickFixItem> _currentFixes = new();
+    private List<GDQuickFixItem> _currentFixes = new();
     private TextEdit? _textEdit;
     private string? _currentSourceCode;
 
@@ -25,7 +25,7 @@ internal partial class QuickFixesPopup : PopupMenu
     /// <summary>
     /// Sets the quick fix handler.
     /// </summary>
-    public void SetHandler(QuickFixHandler handler)
+    public void SetHandler(GDQuickFixHandler handler)
     {
         _handler = handler;
     }
@@ -131,30 +131,30 @@ internal partial class QuickFixesPopup : PopupMenu
         foreach (var fixItem in _currentFixes)
         {
             // Add separator between severity levels
-            if (lastSeverity != null && lastSeverity != fixItem.Diagnostic.Severity)
+            if (lastSeverity != null && lastSeverity != fixItem.GDPluginDiagnostic.Severity)
             {
                 AddSeparator();
             }
 
             // Build display text with rule ID and location
-            var text = $"{GetSeverityPrefix(fixItem.Diagnostic.Severity)} {fixItem.DisplayTitle}";
+            var text = $"{GetSeverityPrefix(fixItem.GDPluginDiagnostic.Severity)} {fixItem.DisplayTitle}";
 
             // Add location hint for multi-line view
-            if (_currentFixes.Select(f => f.Diagnostic.StartLine).Distinct().Count() > 1)
+            if (_currentFixes.Select(f => f.GDPluginDiagnostic.StartLine).Distinct().Count() > 1)
             {
-                text += $" (line {fixItem.Diagnostic.StartLine + 1})";
+                text += $" (line {fixItem.GDPluginDiagnostic.StartLine + 1})";
             }
 
             AddItem(text, index);
 
             // Set icon based on severity
-            var icon = GetSeverityIcon(fixItem.Diagnostic.Severity);
+            var icon = GetSeverityIcon(fixItem.GDPluginDiagnostic.Severity);
             if (icon != null)
             {
                 SetItemIcon(index, icon);
             }
 
-            lastSeverity = fixItem.Diagnostic.Severity;
+            lastSeverity = fixItem.GDPluginDiagnostic.Severity;
             index++;
         }
     }
@@ -202,7 +202,7 @@ internal partial class QuickFixesPopup : PopupMenu
         ApplyFix(fixItem);
     }
 
-    private void ApplyFix(QuickFixItem fixItem)
+    private void ApplyFix(GDQuickFixItem fixItem)
     {
         if (_handler == null || _currentSourceCode == null)
             return;

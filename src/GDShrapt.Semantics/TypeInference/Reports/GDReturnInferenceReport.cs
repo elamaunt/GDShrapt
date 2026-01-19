@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Report about return type inference for a method.
 /// Contains all return statements and the computed Union type.
 /// </summary>
-public class GDReturnInferenceReport
+internal class GDReturnInferenceReport
 {
     /// <summary>
     /// Explicit return type annotation (if any).

@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Contains information about a return expression in a method.
 /// </summary>
-public class GDReturnInfo
+internal class GDReturnInfo
 {
     /// <summary>
     /// The return expression node.
@@ -108,7 +108,7 @@ public class GDReturnInfo
 /// <summary>
 /// Collects all return expressions from a method and computes the return Union type.
 /// </summary>
-public class GDReturnTypeCollector
+internal class GDReturnTypeCollector
 {
     private readonly GDMethodDeclaration _method;
     private readonly GDTypeInferenceEngine? _typeEngine;

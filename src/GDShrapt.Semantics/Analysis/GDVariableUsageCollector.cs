@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Collects assignment observations for Variant variables to infer Union types.
 /// </summary>
-public class GDVariableUsageCollector : GDVisitor
+internal class GDVariableUsageCollector : GDVisitor
 {
     private readonly GDScopeStack? _scopes;
     private readonly GDTypeInferenceEngine? _typeEngine;

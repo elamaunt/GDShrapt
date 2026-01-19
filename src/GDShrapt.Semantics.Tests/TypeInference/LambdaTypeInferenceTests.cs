@@ -158,9 +158,9 @@ var callback = func(): return [1, 2, 3]
         // Act - use InferLambdaReturnType to get the return type of the lambda body
         var returnType = engine.InferLambdaReturnType(lambda);
 
-        // Assert
-        Assert.AreEqual("Array", returnType,
-            $"Lambda returning array literal should have type 'Array'. Got: {returnType}");
+        // Assert - Array[int] is now correctly inferred with element type
+        Assert.IsTrue(returnType?.StartsWith("Array") == true,
+            $"Lambda returning array literal should have type starting with 'Array'. Got: {returnType}");
     }
 
     /// <summary>

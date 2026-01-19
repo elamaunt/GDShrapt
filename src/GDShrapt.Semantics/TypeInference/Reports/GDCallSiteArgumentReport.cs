@@ -4,7 +4,7 @@ namespace GDShrapt.Semantics;
 /// Detailed report about an argument at a specific call site.
 /// Used for visualization of parameter type inference.
 /// </summary>
-public class GDCallSiteArgumentReport
+internal class GDCallSiteArgumentReport
 {
     /// <summary>
     /// Full file path of the source script.

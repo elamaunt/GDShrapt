@@ -57,6 +57,13 @@ public class GDSymbolInfo
     public GDScriptFile? AccessingScript { get; }
 
     /// <summary>
+    /// For local symbols (variables, parameters, iterators), the method/lambda node
+    /// where this symbol is declared. Null for class-level symbols.
+    /// Used to isolate local symbols by their enclosing scope.
+    /// </summary>
+    public GDNode? DeclaringScopeNode { get; }
+
+    /// <summary>
     /// True if this symbol is accessed via inheritance (declared in a base class).
     /// </summary>
     public bool IsInherited => DeclaringScript != null &&
@@ -88,7 +95,8 @@ public class GDSymbolInfo
         GDScriptFile? declaringScript = null,
         GDScriptFile? accessingScript = null,
         GDReferenceConfidence confidence = GDReferenceConfidence.Strict,
-        string? confidenceReason = null)
+        string? confidenceReason = null,
+        GDNode? declaringScopeNode = null)
     {
         Symbol = symbol;
         Name = symbol.Name;
@@ -102,6 +110,7 @@ public class GDSymbolInfo
         AccessingScript = accessingScript;
         Confidence = confidence;
         ConfidenceReason = confidenceReason;
+        DeclaringScopeNode = declaringScopeNode;
     }
 
     /// <summary>
@@ -133,9 +142,13 @@ public class GDSymbolInfo
     /// <summary>
     /// Creates symbol info for a local variable (always Strict confidence).
     /// </summary>
+    /// <param name="symbol">The symbol to wrap</param>
+    /// <param name="script">The script file containing the symbol</param>
+    /// <param name="declaringScopeNode">The method/lambda node where this local is declared (for scope isolation)</param>
     public static GDSymbolInfo Local(
         GDSymbol symbol,
-        GDScriptFile? script = null)
+        GDScriptFile? script = null,
+        GDNode? declaringScopeNode = null)
     {
         return new GDSymbolInfo(
             symbol,
@@ -143,7 +156,8 @@ public class GDSymbolInfo
             declaringScript: script,
             accessingScript: script,
             confidence: GDReferenceConfidence.Strict,
-            confidenceReason: "Local variable in scope");
+            confidenceReason: "Local variable in scope",
+            declaringScopeNode: declaringScopeNode);
     }
 
     /// <summary>

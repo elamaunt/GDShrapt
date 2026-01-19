@@ -8,17 +8,17 @@ namespace GDShrapt.Plugin;
 /// to an @onready variable declaration at class level.
 /// Delegates to GDGenerateOnreadyService for all logic.
 /// </summary>
-internal class MoveGetNodeToOnreadyAction : IRefactoringAction
+internal class MoveGetNodeToOnreadyAction : IGDRefactoringAction
 {
     private readonly GDGenerateOnreadyService _service = new();
 
     public string Id => "move_getnode_to_onready";
     public string DisplayName => "Move to @onready";
-    public RefactoringCategory Category => RefactoringCategory.Move;
+    public GDRefactoringCategory Category => GDRefactoringCategory.Move;
     public string Shortcut => null;
     public int Priority => 10;
 
-    public bool IsAvailable(RefactoringContext context)
+    public bool IsAvailable(GDPluginRefactoringContext context)
     {
         if (context?.ContainingClass == null)
             return false;
@@ -35,7 +35,7 @@ internal class MoveGetNodeToOnreadyAction : IRefactoringAction
         return _service.CanExecute(semanticsContext);
     }
 
-    public async Task ExecuteAsync(RefactoringContext context)
+    public async Task ExecuteAsync(GDPluginRefactoringContext context)
     {
         Logger.Info("MoveGetNodeToOnreadyAction: Starting execution");
 
@@ -49,7 +49,7 @@ internal class MoveGetNodeToOnreadyAction : IRefactoringAction
         await ExecuteWithService(context, semanticsContext);
     }
 
-    private async Task ExecuteWithService(RefactoringContext context, GDRefactoringContext semanticsContext)
+    private async Task ExecuteWithService(GDPluginRefactoringContext context, GDRefactoringContext semanticsContext)
     {
         // Plan the refactoring first
         var plan = _service.Plan(semanticsContext);

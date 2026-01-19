@@ -382,6 +382,51 @@ public class LocalVariableReturnTypeTests
 
     #endregion
 
+    #region Phase 3 Tests - Array[Union], Signal types
+
+    /// <summary>
+    /// Tests that mixed_array returns Array with Union element type.
+    /// The array [1, "two", 3.0, [4], {"five": 5}] contains int, String, float, Array, Dictionary.
+    /// </summary>
+    [TestMethod]
+    public void GetTypeForNode_MixedArray_ShouldReturnArrayWithUnion()
+    {
+        // Arrange
+        var variable = FindVariable("mixed_array");
+        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
+        var analyzer = _script.Analyzer;
+
+        // Act
+        var type = analyzer.GetTypeForNode(variable) ?? "unknown";
+
+        // Assert
+        Assert.IsTrue(type.StartsWith("Array["),
+            $"mixed_array should return 'Array[Union]'. Got: {type}");
+        Assert.IsTrue(type.Contains("int") && type.Contains("String") && type.Contains("float"),
+            $"Array Union should contain int, String, float. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests that result_ready signal shows parameter type.
+    /// </summary>
+    [TestMethod]
+    public void GetTypeForNode_SignalWithParam_ShouldShowParameterType()
+    {
+        // Arrange
+        var signal = FindSignal("result_ready");
+        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
+        var analyzer = _script.Analyzer;
+
+        // Act
+        var type = analyzer.GetTypeForNode(signal) ?? "unknown";
+
+        // Assert
+        Assert.IsTrue(type.Contains("result"),
+            $"Signal type should show parameter name 'result'. Got: {type}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static GDMethodDeclaration FindMethod(string name)
@@ -406,6 +451,18 @@ public class LocalVariableReturnTypeTests
 
         Assert.IsNotNull(variable, $"Variable '{name}' not found in union_types_complex.gd");
         return variable;
+    }
+
+    private static GDSignalDeclaration FindSignal(string name)
+    {
+        Assert.IsNotNull(_script?.Class, "Script not loaded or has no class");
+
+        var signal = _script.Class.Members
+            .OfType<GDSignalDeclaration>()
+            .FirstOrDefault(s => s.Identifier?.Sequence == name);
+
+        Assert.IsNotNull(signal, $"Signal '{name}' not found in union_types_complex.gd");
+        return signal;
     }
 
     #endregion

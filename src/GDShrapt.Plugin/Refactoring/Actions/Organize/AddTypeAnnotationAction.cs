@@ -8,16 +8,16 @@ namespace GDShrapt.Plugin;
 /// Adds type annotation to a variable or parameter declaration based on inferred type.
 /// Delegates to GDAddTypeAnnotationService for type inference and shows preview before applying.
 /// </summary>
-internal class AddTypeAnnotationAction : RefactoringActionBase
+internal class AddTypeAnnotationAction : GDRefactoringActionBase
 {
     private readonly GDAddTypeAnnotationService _service = new();
 
     public override string Id => "add_type_annotation";
     public override string DisplayName => "Add Type Annotation";
-    public override RefactoringCategory Category => RefactoringCategory.Organize;
+    public override GDRefactoringCategory Category => GDRefactoringCategory.Organize;
     public override int Priority => 10;
 
-    public override bool IsAvailable(RefactoringContext context)
+    public override bool IsAvailable(GDPluginRefactoringContext context)
     {
         var semanticsContext = context.BuildSemanticsContext();
         if (semanticsContext == null)
@@ -26,7 +26,7 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
         return _service.CanExecute(semanticsContext);
     }
 
-    protected override string ValidateContext(RefactoringContext context)
+    protected override string ValidateContext(GDPluginRefactoringContext context)
     {
         if (context.Editor == null)
             return "No editor available";
@@ -41,7 +41,7 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
         return null;
     }
 
-    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    protected override async Task ExecuteInternalAsync(GDPluginRefactoringContext context)
     {
         var semanticsContext = context.BuildSemanticsContext();
         if (semanticsContext == null)
@@ -63,7 +63,7 @@ internal class AddTypeAnnotationAction : RefactoringActionBase
         await ShowPreviewAndApply(context, plan);
     }
 
-    private async Task ShowPreviewAndApply(RefactoringContext context, GDAddTypeAnnotationResult plan)
+    private async Task ShowPreviewAndApply(GDPluginRefactoringContext context, GDAddTypeAnnotationResult plan)
     {
         var previewDialog = new RefactoringPreviewDialog();
         context.DialogParent?.AddChild(previewDialog);

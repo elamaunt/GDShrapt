@@ -9,16 +9,16 @@ namespace GDShrapt.Plugin;
 /// Delegates to GDSurroundWithService for the actual logic.
 /// This is a "safe" operation that can be applied directly in Base.
 /// </summary>
-internal class SurroundWithIfAction : RefactoringActionBase
+internal class SurroundWithIfAction : GDRefactoringActionBase
 {
     private readonly GDSurroundWithService _service = new();
 
     public override string Id => "surround_with_if";
     public override string DisplayName => "Surround with if";
-    public override RefactoringCategory Category => RefactoringCategory.Surround;
+    public override GDRefactoringCategory Category => GDRefactoringCategory.Surround;
     public override int Priority => 10;
 
-    public override bool IsAvailable(RefactoringContext context)
+    public override bool IsAvailable(GDPluginRefactoringContext context)
     {
         if (context?.ContainingMethod == null)
             return false;
@@ -27,7 +27,7 @@ internal class SurroundWithIfAction : RefactoringActionBase
         return context.HasStatementsSelected || IsOnStatement(context);
     }
 
-    private bool IsOnStatement(RefactoringContext context)
+    private bool IsOnStatement(GDPluginRefactoringContext context)
     {
         var node = context.NodeAtCursor;
         while (node != null)
@@ -39,7 +39,7 @@ internal class SurroundWithIfAction : RefactoringActionBase
         return false;
     }
 
-    protected override string ValidateContext(RefactoringContext context)
+    protected override string ValidateContext(GDPluginRefactoringContext context)
     {
         if (context.Editor == null)
             return "No editor available";
@@ -50,7 +50,7 @@ internal class SurroundWithIfAction : RefactoringActionBase
         return null;
     }
 
-    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    protected override async Task ExecuteInternalAsync(GDPluginRefactoringContext context)
     {
         var editor = context.Editor;
 
@@ -174,7 +174,7 @@ internal class SurroundWithIfAction : RefactoringActionBase
         await Task.CompletedTask;
     }
 
-    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    private void ApplyEdits(GDPluginRefactoringContext context, GDRefactoringResult result)
     {
         var editor = context.Editor;
 
@@ -209,7 +209,7 @@ internal class SurroundWithIfAction : RefactoringActionBase
         editor.ReloadScriptFromText();
     }
 
-    private GDStatement FindContainingStatement(RefactoringContext context)
+    private GDStatement FindContainingStatement(GDPluginRefactoringContext context)
     {
         var node = context.NodeAtCursor;
         while (node != null)

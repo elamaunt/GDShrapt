@@ -240,7 +240,7 @@ internal class GDGutterManager
     /// <summary>
     /// Updates diagnostics from DiagnosticService (uses plugin's Diagnostic type).
     /// </summary>
-    public void SetDiagnostics(IReadOnlyList<Diagnostic>? diagnostics)
+    public void SetDiagnostics(IReadOnlyList<GDPluginDiagnostic>? diagnostics)
     {
         lock (_diagnosticsLock)
         {

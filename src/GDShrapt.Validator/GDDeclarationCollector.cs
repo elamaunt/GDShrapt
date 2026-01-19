@@ -216,6 +216,7 @@ namespace GDShrapt.Reader
             var className = innerClass.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(className))
             {
+                // Register inner class symbol in parent scope
                 if (!_context.TryDeclare(GDSymbol.Class(className, innerClass)))
                 {
                     _context.AddError(
@@ -224,12 +225,15 @@ namespace GDShrapt.Reader
                         innerClass);
                 }
             }
-            // Don't recurse into inner classes - they need separate validation
+
+            // Enter inner class scope - members will be declared in this isolated scope
+            _context.EnterScope(GDScopeType.Class, innerClass);
         }
 
         public override void Left(GDInnerClassDeclaration innerClass)
         {
-            // Nothing to do
+            // Exit inner class scope
+            _context.ExitScope();
         }
 
         #endregion

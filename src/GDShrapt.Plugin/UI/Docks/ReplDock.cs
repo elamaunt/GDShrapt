@@ -23,8 +23,8 @@ internal partial class ReplDock : Control
     private Label _statusLabel;
 
     // State
-    private readonly ReplExecutor _executor = new();
-    private readonly ReplHistory _history = new();
+    private readonly GDReplExecutor _executor = new();
+    private readonly GDReplHistory _history = new();
     private Node _selectedNode;
     private bool _disclaimerShown = false;
     private List<(string path, Node node)> _allNodes = new();
@@ -359,7 +359,7 @@ Proceed with caution!",
         // Check if node is selected
         if (_selectedNode == null || !GodotObject.IsInstanceValid(_selectedNode))
         {
-            AppendOutput(input, ReplResult.Error("No valid node selected"));
+            AppendOutput(input, GDReplResult.Error("No valid node selected"));
             _inputField.Clear();
             return;
         }
@@ -372,7 +372,7 @@ Proceed with caution!",
         _inputField.Clear();
     }
 
-    private void AppendOutput(string input, ReplResult result)
+    private void AppendOutput(string input, GDReplResult result)
     {
         var text = _outputArea.Text;
         if (!string.IsNullOrEmpty(text))

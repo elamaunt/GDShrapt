@@ -7,17 +7,17 @@ namespace GDShrapt.Plugin;
 /// Extracts an expression into a local variable.
 /// Delegates to GDExtractVariableService for the actual logic.
 /// </summary>
-internal class ExtractVariableAction : RefactoringActionBase
+internal class ExtractVariableAction : GDRefactoringActionBase
 {
     private readonly GDExtractVariableService _service = new();
 
     public override string Id => "extract_variable";
     public override string DisplayName => "Extract Variable";
-    public override RefactoringCategory Category => RefactoringCategory.Extract;
+    public override GDRefactoringCategory Category => GDRefactoringCategory.Extract;
     public override string Shortcut => "Ctrl+Alt+V";
     public override int Priority => 5;
 
-    public override bool IsAvailable(RefactoringContext context)
+    public override bool IsAvailable(GDPluginRefactoringContext context)
     {
         if (context?.ContainingMethod == null)
             return false;
@@ -26,7 +26,7 @@ internal class ExtractVariableAction : RefactoringActionBase
         return semanticsContext != null && _service.CanExecute(semanticsContext);
     }
 
-    protected override string ValidateContext(RefactoringContext context)
+    protected override string ValidateContext(GDPluginRefactoringContext context)
     {
         if (context.Editor == null)
             return "No editor available";
@@ -44,23 +44,23 @@ internal class ExtractVariableAction : RefactoringActionBase
         return null;
     }
 
-    protected override async Task ExecuteInternalAsync(RefactoringContext context)
+    protected override async Task ExecuteInternalAsync(GDPluginRefactoringContext context)
     {
         var semanticsContext = context.BuildSemanticsContext();
         if (semanticsContext == null)
-            throw new RefactoringException("Failed to build refactoring context");
+            throw new GDRefactoringException("Failed to build refactoring context");
 
         // Get the expression to extract and suggest a name
         var expression = semanticsContext.SelectedExpression;
         if (expression == null)
-            throw new RefactoringException("No expression found to extract");
+            throw new GDRefactoringException("No expression found to extract");
 
         var suggestedName = _service.SuggestVariableName(expression);
 
         // Plan the refactoring with suggested name
         var plan = _service.Plan(semanticsContext, suggestedName);
         if (!plan.Success)
-            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan extract variable");
+            throw new GDRefactoringException(plan.ErrorMessage ?? "Failed to plan extract variable");
 
         // Show name input dialog first
         var nameDialog = new NameInputDialog();
@@ -82,7 +82,7 @@ internal class ExtractVariableAction : RefactoringActionBase
         // Re-plan with the user-provided name
         plan = _service.Plan(semanticsContext, varName);
         if (!plan.Success)
-            throw new RefactoringException(plan.ErrorMessage ?? "Failed to plan extract variable");
+            throw new GDRefactoringException(plan.ErrorMessage ?? "Failed to plan extract variable");
 
         // Build preview info
         var originalCode = plan.ExpressionText;
@@ -115,7 +115,7 @@ internal class ExtractVariableAction : RefactoringActionBase
                 // Execute the refactoring
                 var executeResult = _service.Execute(semanticsContext, varName, replaceAll: false);
                 if (!executeResult.Success)
-                    throw new RefactoringException(executeResult.ErrorMessage ?? "Failed to execute extract variable");
+                    throw new GDRefactoringException(executeResult.ErrorMessage ?? "Failed to execute extract variable");
 
                 // Apply edits to the editor
                 ApplyEdits(context, executeResult);
@@ -138,7 +138,7 @@ internal class ExtractVariableAction : RefactoringActionBase
         return $"{varDecl}\n\n// ... {plan.SuggestedName} used in place of the expression";
     }
 
-    private void ApplyEdits(RefactoringContext context, GDRefactoringResult result)
+    private void ApplyEdits(GDPluginRefactoringContext context, GDRefactoringResult result)
     {
         var editor = context.Editor;
 
