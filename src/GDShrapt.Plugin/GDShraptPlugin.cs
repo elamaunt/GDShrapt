@@ -55,7 +55,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
     // UI dialogs
     private AboutPanel _aboutPanel;
-    private TypeInferencePanel _typeInferencePanel;
+    private GDTypeFlowPanel _typeFlowPanel;
 
     // Project Settings integration
     private ProjectSettingsRegistry _settingsRegistry;
@@ -1133,44 +1133,43 @@ public partial class GDShraptPlugin : EditorPlugin
     }
 
     /// <summary>
-    /// Shows the TypeInferencePanel for a symbol at the specified line.
+    /// Shows the Type Flow panel for a symbol at the specified line.
     /// </summary>
-    public void ShowTypeInferencePanel(string symbolName, int line, GDScriptFile scriptFile)
+    public void ShowTypeFlowPanel(string symbolName, int line, GDScriptFile scriptFile)
     {
-        Logger.Info($"ShowTypeInferencePanel: {symbolName} at line {line}");
+        Logger.Info($"ShowTypeFlowPanel: {symbolName} at line {line}");
 
         try
         {
             // Create the window if it doesn't exist
-            if (_typeInferencePanel == null)
+            if (_typeFlowPanel == null)
             {
-                _typeInferencePanel = new TypeInferencePanel();
-                _typeInferencePanel.SetProject(_scriptProject);
-                _typeInferencePanel.NavigateToRequested += (path, lineNum) =>
+                _typeFlowPanel = new GDTypeFlowPanel();
+                _typeFlowPanel.Initialize(_scriptProject, EditorInterface.Singleton);
+                _typeFlowPanel.NavigateToRequested += (path, lineNum) =>
                 {
-                    Logger.Info($"TypeInferencePanel navigate to: {path}:{lineNum}");
+                    Logger.Info($"GDTypeFlowPanel navigate to: {path}:{lineNum}");
                     if (!string.IsNullOrEmpty(path))
                     {
                         OpenResource(path);
-                        // TODO: Navigate to specific line after opening
                     }
                 };
                 // Add window to editor base control so it's in the scene tree
-                EditorInterface.Singleton.GetBaseControl().AddChild(_typeInferencePanel);
+                EditorInterface.Singleton.GetBaseControl().AddChild(_typeFlowPanel);
             }
 
             // Update project reference in case it changed
-            _typeInferencePanel.SetProject(_scriptProject);
+            _typeFlowPanel.SetProject(_scriptProject);
 
             // Show for the symbol
-            _typeInferencePanel.ShowForSymbol(symbolName, line, scriptFile);
+            _typeFlowPanel.ShowForSymbol(symbolName, line, scriptFile);
 
             // Show centered
-            _typeInferencePanel.PopupCentered();
+            _typeFlowPanel.PopupCentered();
         }
         catch (Exception ex)
         {
-            Logger.Error($"Error showing TypeInferencePanel: {ex.Message}");
+            Logger.Error($"Error showing GDTypeFlowPanel: {ex.Message}");
             Logger.Error(ex);
         }
     }

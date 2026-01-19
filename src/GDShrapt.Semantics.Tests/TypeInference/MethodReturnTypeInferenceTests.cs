@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics.Tests;
 
 /// <summary>
 /// Tests for method return type inference via GetTypeForNode.
-/// These tests replicate the logic used in TypeInferencePanel plugin
+/// These tests replicate the logic used in GDTypeFlowPanel plugin
 /// to verify that methods with return statements don't incorrectly show "void".
 /// </summary>
 [TestClass]
@@ -30,7 +30,7 @@ public class MethodReturnTypeInferenceTests
     /// Tests that GetTypeForNode for method 'get_config' does NOT return "void".
     /// This method has no explicit type annotation but returns config.get(key).
     ///
-    /// This test replicates the exact logic from TypeInferencePanel:
+    /// This test replicates the exact logic from GDTypeFlowPanel:
     ///   var returnType = analyzer.GetTypeForNode(method) ?? "void";
     ///
     /// Note: config is a class-level Dictionary variable. config.get(key) returns Variant.
@@ -44,7 +44,7 @@ public class MethodReturnTypeInferenceTests
         Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
         var analyzer = _script.Analyzer;
 
-        // Act - exactly like TypeInferencePanel does
+        // Act - exactly like GDTypeFlowPanel does
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
 
         // Assert - config.get(key) returns Variant

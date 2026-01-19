@@ -45,6 +45,8 @@ public class GDProjectSemanticModel
     private readonly Dictionary<string, GDSemanticModel> _fileModels = new();
     private GDRefactoringServices? _services;
     private GDDiagnosticsServices? _diagnostics;
+    private GDSignalConnectionRegistry? _signalRegistry;
+    private bool _signalRegistryInitialized;
 
     /// <summary>
     /// The underlying project.
@@ -64,12 +66,47 @@ public class GDProjectSemanticModel
     public GDDiagnosticsServices Diagnostics => _diagnostics ??= new GDDiagnosticsServices(_project);
 
     /// <summary>
+    /// Signal connection registry for inter-procedural analysis.
+    /// Lazy initialized on first access.
+    /// </summary>
+    public GDSignalConnectionRegistry SignalConnectionRegistry
+    {
+        get
+        {
+            if (!_signalRegistryInitialized)
+            {
+                _signalRegistry = new GDSignalConnectionRegistry();
+                InitializeSignalRegistry();
+                _signalRegistryInitialized = true;
+            }
+            return _signalRegistry!;
+        }
+    }
+
+    /// <summary>
     /// Creates a new project-level semantic model.
     /// </summary>
     /// <param name="project">The GDScript project to analyze.</param>
     public GDProjectSemanticModel(GDScriptProject project)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
+    }
+
+    /// <summary>
+    /// Initializes the signal connection registry by collecting all connections.
+    /// </summary>
+    private void InitializeSignalRegistry()
+    {
+        if (_signalRegistry == null)
+            return;
+
+        var collector = new GDSignalConnectionCollector(_project);
+        var connections = collector.CollectAllConnections();
+
+        foreach (var connection in connections)
+        {
+            _signalRegistry.Register(connection);
+        }
     }
 
     #region Factory Methods
@@ -322,6 +359,214 @@ public class GDProjectSemanticModel
         return model.InferParameterTypes(method);
     }
 
+    /// <summary>
+    /// Infers parameter types for a method using both local usage analysis and cross-file call site analysis.
+    /// This provides the most accurate inference by combining:
+    /// 1. Local duck typing (how parameters are used within the method)
+    /// 2. Call site analysis (what types are passed when the method is called)
+    /// </summary>
+    /// <param name="className">The class name containing the method.</param>
+    /// <param name="methodName">The method name.</param>
+    /// <param name="preferCallSites">If true, prefer call site types over local duck types when both are available.</param>
+    /// <returns>Dictionary of parameter name to inferred type.</returns>
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesWithCallSites(
+        string className,
+        string methodName,
+        bool preferCallSites = true)
+    {
+        var result = new Dictionary<string, GDInferredParameterType>();
+
+        // Find the method declaration
+        var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
+        if (typeDecl.File == null)
+            return result;
+
+        var model = GetSemanticModel(typeDecl.File);
+        if (model == null)
+            return result;
+
+        // Find the method
+        var classDecl = typeDecl.File.Class;
+        if (classDecl == null)
+            return result;
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .FirstOrDefault(m => m.Identifier?.Sequence == methodName);
+
+        if (method == null)
+            return result;
+
+        // Get local usage analysis
+        var localTypes = model.InferParameterTypes(method);
+
+        // Get call site analysis if registry is available
+        var callSiteRegistry = _project.CallSiteRegistry;
+        if (callSiteRegistry != null)
+        {
+            var callSiteTypes = GetParameterTypesFromCallSites(className, methodName, method, callSiteRegistry);
+
+            // Merge local and call site results
+            return MergeParameterTypes(localTypes, callSiteTypes, preferCallSites);
+        }
+
+        return localTypes;
+    }
+
+    /// <summary>
+    /// Gets parameter types from call site analysis.
+    /// </summary>
+    private IReadOnlyDictionary<string, GDInferredParameterType> GetParameterTypesFromCallSites(
+        string className,
+        string methodName,
+        GDMethodDeclaration method,
+        GDCallSiteRegistry callSiteRegistry)
+    {
+        var result = new Dictionary<string, GDInferredParameterType>();
+
+        // Get parameter names
+        var paramNames = method.Parameters?
+            .Select(p => p.Identifier?.Sequence)
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Cast<string>()
+            .ToList() ?? new List<string>();
+
+        if (paramNames.Count == 0)
+            return result;
+
+        // Create the analyzer
+        var analyzer = new GDCallSiteTypeAnalyzer(
+            callSiteRegistry,
+            file => GetSemanticModel(file));
+
+        // Analyze call sites
+        var callSiteResults = analyzer.AnalyzeCallSites(
+            className,
+            methodName,
+            paramNames,
+            GetFileByPath);
+
+        // Convert to inferred types
+        foreach (var (paramName, callSiteResult) in callSiteResults)
+        {
+            result[paramName] = GDCallSiteTypeAnalyzer.ToInferredParameterType(callSiteResult);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets a script file by its path.
+    /// </summary>
+    private GDScriptFile? GetFileByPath(string filePath)
+    {
+        return _project.ScriptFiles?.FirstOrDefault(f =>
+            f.FullPath != null &&
+            f.FullPath.Equals(filePath, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Merges local duck typing results with call site analysis results.
+    /// </summary>
+    private static IReadOnlyDictionary<string, GDInferredParameterType> MergeParameterTypes(
+        IReadOnlyDictionary<string, GDInferredParameterType> localTypes,
+        IReadOnlyDictionary<string, GDInferredParameterType> callSiteTypes,
+        bool preferCallSites)
+    {
+        var result = new Dictionary<string, GDInferredParameterType>();
+
+        // Get all parameter names
+        var allParams = new HashSet<string>(localTypes.Keys);
+        foreach (var key in callSiteTypes.Keys)
+            allParams.Add(key);
+
+        foreach (var paramName in allParams)
+        {
+            var hasLocal = localTypes.TryGetValue(paramName, out var local);
+            var hasCallSite = callSiteTypes.TryGetValue(paramName, out var callSite);
+
+            if (hasLocal && hasCallSite)
+            {
+                // Both sources available - merge or prefer one
+                result[paramName] = MergeSingleParameterType(local!, callSite!, preferCallSites, paramName);
+            }
+            else if (hasLocal)
+            {
+                result[paramName] = local!;
+            }
+            else if (hasCallSite)
+            {
+                result[paramName] = callSite!;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Merges a single parameter's type from two sources.
+    /// </summary>
+    private static GDInferredParameterType MergeSingleParameterType(
+        GDInferredParameterType local,
+        GDInferredParameterType callSite,
+        bool preferCallSites,
+        string paramName)
+    {
+        // If one is unknown, use the other
+        if (local.IsUnknown && !callSite.IsUnknown)
+            return callSite;
+        if (callSite.IsUnknown && !local.IsUnknown)
+            return local;
+        if (local.IsUnknown && callSite.IsUnknown)
+            return local;
+
+        // If types match, use the one with higher confidence
+        if (local.TypeName == callSite.TypeName)
+        {
+            return local.Confidence >= callSite.Confidence ? local : callSite;
+        }
+
+        // Types differ - preference-based selection or union
+        if (preferCallSites && callSite.Confidence >= GDTypeConfidence.Medium)
+        {
+            // Call site types are more reliable as they show actual usage
+            return callSite;
+        }
+
+        if (!preferCallSites && local.Confidence >= GDTypeConfidence.Medium)
+        {
+            // Local duck typing preferred
+            return local;
+        }
+
+        // Create a union of both types
+        var types = new List<string>();
+        if (local.UnionTypes != null)
+            types.AddRange(local.UnionTypes);
+        else if (!string.IsNullOrEmpty(local.TypeName) && local.TypeName != "Variant")
+            types.Add(local.TypeName);
+
+        if (callSite.UnionTypes != null)
+            types.AddRange(callSite.UnionTypes);
+        else if (!string.IsNullOrEmpty(callSite.TypeName) && callSite.TypeName != "Variant")
+            types.Add(callSite.TypeName);
+
+        // Deduplicate
+        types = types.Distinct().ToList();
+
+        if (types.Count == 0)
+            return GDInferredParameterType.Unknown(paramName);
+
+        // Determine confidence (lower of the two sources)
+        var confidence = local.Confidence < callSite.Confidence ? local.Confidence : callSite.Confidence;
+
+        return GDInferredParameterType.Union(
+            paramName,
+            types,
+            confidence,
+            "merged from local usage and call sites");
+    }
+
     #endregion
 
     #region Invalidation
@@ -333,7 +578,26 @@ public class GDProjectSemanticModel
     public void InvalidateFile(string filePath)
     {
         if (!string.IsNullOrEmpty(filePath))
+        {
             _fileModels.Remove(filePath);
+
+            // Also invalidate signal connections from this file
+            if (_signalRegistryInitialized && _signalRegistry != null)
+            {
+                _signalRegistry.UnregisterFile(filePath);
+                // Re-collect connections for this file
+                var collector = new GDSignalConnectionCollector(_project);
+                var file = GetFileByPath(filePath);
+                if (file != null)
+                {
+                    var connections = collector.CollectConnectionsInFile(file);
+                    foreach (var connection in connections)
+                    {
+                        _signalRegistry.Register(connection);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -342,6 +606,117 @@ public class GDProjectSemanticModel
     public void InvalidateAll()
     {
         _fileModels.Clear();
+        _signalRegistry?.Clear();
+        _signalRegistryInitialized = false;
+    }
+
+    #endregion
+
+    #region Signal Connection Queries
+
+    /// <summary>
+    /// Gets all signals that call a specific callback method.
+    /// Useful for understanding what events trigger a method.
+    /// </summary>
+    public IReadOnlyList<GDSignalConnectionEntry> GetSignalsCallingMethod(string? className, string methodName)
+    {
+        return SignalConnectionRegistry.GetSignalsCallingMethod(className, methodName);
+    }
+
+    /// <summary>
+    /// Gets all callbacks connected to a specific signal.
+    /// Useful for finding all handlers of a signal.
+    /// </summary>
+    public IReadOnlyList<GDSignalConnectionEntry> GetCallbacksForSignal(string? emitterType, string signalName)
+    {
+        return SignalConnectionRegistry.GetCallbacksForSignal(emitterType, signalName);
+    }
+
+    /// <summary>
+    /// Checks if a method is used as a signal callback.
+    /// </summary>
+    public bool IsMethodUsedAsCallback(string? className, string methodName)
+    {
+        var connections = SignalConnectionRegistry.GetSignalsCallingMethod(className, methodName);
+        return connections.Count > 0;
+    }
+
+    /// <summary>
+    /// Gets parameter types for a callback method based on the signals it's connected to.
+    /// Analyzes the signal definitions to infer parameter types.
+    /// </summary>
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferCallbackParameterTypes(
+        string? className,
+        string methodName)
+    {
+        var result = new Dictionary<string, GDInferredParameterType>();
+        var connections = SignalConnectionRegistry.GetSignalsCallingMethod(className, methodName);
+
+        if (connections.Count == 0)
+            return result;
+
+        // Find the method to get parameter names
+        GDMethodDeclaration? method = null;
+        foreach (var file in _project.ScriptFiles)
+        {
+            if (file.Class == null)
+                continue;
+
+            // Check if this file contains the callback
+            var fileTypeName = file.TypeName;
+            if (className != null && fileTypeName != className)
+                continue;
+
+            method = file.Class.Members
+                .OfType<GDMethodDeclaration>()
+                .FirstOrDefault(m => m.Identifier?.Sequence == methodName);
+
+            if (method != null)
+                break;
+        }
+
+        if (method == null)
+            return result;
+
+        var paramNames = method.Parameters?
+            .Select(p => p.Identifier?.Sequence)
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Cast<string>()
+            .ToList() ?? new List<string>();
+
+        if (paramNames.Count == 0)
+            return result;
+
+        // Try to get signal parameter types from the emitters
+        var runtimeProvider = _project.CreateRuntimeProvider();
+        foreach (var connection in connections)
+        {
+            if (string.IsNullOrEmpty(connection.EmitterType))
+                continue;
+
+            // Try to get signal info
+            var signalMember = runtimeProvider?.GetMember(connection.EmitterType, connection.SignalName);
+            if (signalMember == null || signalMember.Kind != GDRuntimeMemberKind.Signal)
+                continue;
+
+            // Signal parameters should match callback parameters
+            // For now, mark them as inferred from signal
+            for (int i = 0; i < paramNames.Count; i++)
+            {
+                var paramName = paramNames[i];
+                if (!result.ContainsKey(paramName))
+                {
+                    // Mark as inferred from signal (Variant for now, could be improved)
+                    result[paramName] = GDInferredParameterType.Create(
+                        paramName,
+                        "Variant",
+                        GDTypeConfidence.Low,
+                        $"inferred from signal {connection.EmitterType}.{connection.SignalName}");
+                }
+            }
+        }
+
+        return result;
     }
 
     #endregion

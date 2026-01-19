@@ -366,3 +366,41 @@ func _process_typed_data(data, type_str):
 			return data.get("items", [])
 		_:
 			return data
+
+
+# === TypeFlow Test Method (for maximum coverage of node kinds) ===
+
+func type_flow_test_method(param: Variant) -> Variant:
+	# 1. Parameter with type annotation
+	# 2. Local variable initialization from parameter
+	var local = param
+
+	# 3. Null check
+	if local == null:
+		return null  # 4. Return null
+
+	# 5. Type check (is Dictionary)
+	if local is Dictionary:
+		# 6. Method call on typed object
+		var value = local.get("key")
+		# 7. Indexer access on Dictionary
+		var item = local["item"]
+		# 8. Method call (size)
+		var count = local.size()
+		return value  # 9. Return variable
+
+	# 10. Type check (is Array) with comparison
+	if local is Array and local.size() > 0:
+		# 11. Indexer on Array
+		return local[0]
+
+	# 12. String "in" check (duck typing)
+	if "custom_method" in local:
+		# 13. Method call on duck-typed object
+		return local.custom_method()
+
+	# 14. Comparison (not null check)
+	if local == "specific_value":
+		return "matched"
+
+	return "fallback"  # 15. Return literal

@@ -1,4 +1,6 @@
+using GDShrapt.Reader;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Semantics;
 
@@ -35,6 +37,11 @@ public class GDInferredParameterType
     public IReadOnlyList<string>? UnionTypes { get; private init; }
 
     /// <summary>
+    /// Detailed union members with sources and derivability info.
+    /// </summary>
+    public IReadOnlyList<GDUnionTypeMember>? UnionMembers { get; private init; }
+
+    /// <summary>
     /// Whether the inferred type is a union of multiple types.
     /// </summary>
     public bool IsUnion => UnionTypes != null && UnionTypes.Count > 1;
@@ -53,6 +60,13 @@ public class GDInferredParameterType
     /// The constraints used to infer this type (if duck typed).
     /// </summary>
     public GDParameterConstraints? SourceConstraints { get; private init; }
+
+    /// <summary>
+    /// Whether any part of the type can be inferred further.
+    /// </summary>
+    public bool HasDerivableParts => UnionMembers?.Any(m =>
+        m.KeyType?.IsDerivable == true ||
+        m.ValueType?.IsDerivable == true) ?? false;
 
     /// <summary>
     /// Internal constructor for factory methods.
@@ -143,6 +157,84 @@ public class GDInferredParameterType
         {
             UnionTypes = types
         };
+    }
+
+    /// <summary>
+    /// Creates a union type with detailed member info including sources and derivability.
+    /// </summary>
+    public static GDInferredParameterType UnionWithMembers(
+        string paramName,
+        List<GDUnionTypeMember> members,
+        GDTypeConfidence confidence,
+        GDParameterConstraints? constraints = null)
+    {
+        if (members == null || members.Count == 0)
+            return Unknown(paramName);
+
+        var types = members.Select(m => m.FormattedType).ToList();
+
+        if (members.Count == 1)
+        {
+            return new GDInferredParameterType(paramName, types[0], confidence, "single type from constraints")
+            {
+                UnionMembers = members,
+                UnionTypes = types,
+                IsDuckTyped = true,
+                SourceConstraints = constraints
+            };
+        }
+
+        var effectiveType = string.Join(" | ", types);
+        return new GDInferredParameterType(paramName, effectiveType, confidence, "union from type checks")
+        {
+            UnionTypes = types,
+            UnionMembers = members,
+            IsDuckTyped = true,
+            SourceConstraints = constraints
+        };
+    }
+
+    #endregion
+
+    #region Derivable Navigation
+
+    /// <summary>
+    /// Gets all derivable slots with their source nodes for navigation.
+    /// </summary>
+    public IEnumerable<(string SlotDescription, GDNode? SourceNode, string? Reason)> GetDerivableSlots()
+    {
+        if (UnionMembers == null)
+            yield break;
+
+        foreach (var member in UnionMembers)
+        {
+            if (member.KeyType?.IsDerivable == true)
+            {
+                yield return (
+                    $"{member.BaseType} key type",
+                    member.KeyType.DerivableSourceNode,
+                    member.KeyType.DerivableReason);
+            }
+
+            if (member.ValueType?.IsDerivable == true)
+            {
+                yield return (
+                    $"{member.BaseType} value type",
+                    member.ValueType.DerivableSourceNode,
+                    member.ValueType.DerivableReason);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the source node for a specific union member.
+    /// </summary>
+    public GDNode? GetSourceNodeForMember(int memberIndex)
+    {
+        if (UnionMembers == null || memberIndex < 0 || memberIndex >= UnionMembers.Count)
+            return null;
+
+        return UnionMembers[memberIndex].Source?.SourceNode;
     }
 
     #endregion

@@ -154,18 +154,210 @@ internal class GDParameterTypeResolver
         // Group by type
         var grouped = candidates.GroupBy(c => c.Type).ToList();
 
-        if (grouped.Count == 1)
+        // Build union members with detailed info
+        var unionMembers = grouped.Select(g => BuildUnionMember(g.Key, g.First().Confidence, sourceConstraints)).ToList();
+
+        // Format types with per-type constraints if available
+        var formattedTypes = unionMembers.Select(m => m.FormattedType).ToList();
+
+        if (formattedTypes.Count == 1)
         {
             // Single type - use highest confidence
             var best = candidates.OrderBy(c => c.Confidence).First();
-            return sourceConstraints != null
-                ? GDInferredParameterType.FromDuckTyping(paramName, best.Type, sourceConstraints)
-                : GDInferredParameterType.Create(paramName, best.Type, best.Confidence, best.Reason);
+
+            // Still use UnionWithMembers to preserve derivability info
+            return GDInferredParameterType.UnionWithMembers(paramName, unionMembers, best.Confidence, sourceConstraints);
         }
 
-        // Multiple types - return Union
-        var types = grouped.Select(g => g.Key).ToList();
+        // Multiple types - return Union with members
         var minConfidence = candidates.Min(c => c.Confidence);
-        return GDInferredParameterType.Union(paramName, types, minConfidence);
+        return GDInferredParameterType.UnionWithMembers(paramName, unionMembers, minConfidence, sourceConstraints);
+    }
+
+    /// <summary>
+    /// Builds a union member with detailed type info, sources, and derivability markers.
+    /// </summary>
+    private GDUnionTypeMember BuildUnionMember(string baseType, GDTypeConfidence confidence, GDParameterConstraints? constraints)
+    {
+        if (constraints == null)
+        {
+            return new GDUnionTypeMember
+            {
+                BaseType = baseType,
+                FormattedType = baseType,
+                Confidence = confidence
+            };
+        }
+
+        // Try to get per-type constraints
+        GDTypeSpecificConstraints? typeSpecific = null;
+        constraints.TypeConstraints.TryGetValue(baseType, out typeSpecific);
+
+        // Get the first source for this type
+        var source = typeSpecific?.InferenceSources.FirstOrDefault();
+
+        // Build key and value slots
+        GDGenericTypeSlot? keySlot = null;
+        GDGenericTypeSlot? valueSlot = null;
+
+        if (baseType == "Dictionary")
+        {
+            keySlot = BuildKeySlot(typeSpecific, constraints);
+            valueSlot = BuildValueSlot(typeSpecific, constraints);
+        }
+        else if (baseType == "Array")
+        {
+            valueSlot = BuildValueSlot(typeSpecific, constraints);
+        }
+
+        // Format the type
+        var formattedType = typeSpecific?.FormatFullType() ?? FormatTypeWithElements(baseType, constraints);
+
+        return new GDUnionTypeMember
+        {
+            BaseType = baseType,
+            FormattedType = formattedType,
+            Source = source,
+            KeyType = keySlot,
+            ValueType = valueSlot,
+            Confidence = confidence
+        };
+    }
+
+    /// <summary>
+    /// Builds a key type slot with derivability info.
+    /// </summary>
+    private GDGenericTypeSlot BuildKeySlot(GDTypeSpecificConstraints? typeSpecific, GDParameterConstraints constraints)
+    {
+        var keyTypes = typeSpecific?.KeyTypes ?? constraints.KeyTypes;
+        var sources = typeSpecific?.KeyTypeSources ?? new List<GDTypeInferenceSource>();
+
+        if (keyTypes.Count == 0)
+        {
+            // Check if derivable
+            if (typeSpecific?.KeyIsDerivable == true)
+            {
+                return GDGenericTypeSlot.Derivable(
+                    typeSpecific.KeyDerivableNode,
+                    typeSpecific.KeyDerivableReason);
+            }
+            return GDGenericTypeSlot.Variant();
+        }
+
+        var typeStr = keyTypes.Count == 1
+            ? keyTypes.First()
+            : string.Join(" | ", keyTypes.OrderBy(t => t));
+
+        return new GDGenericTypeSlot
+        {
+            TypeName = typeStr,
+            IsDerivable = typeSpecific?.KeyIsDerivable ?? false,
+            DerivableSourceNode = typeSpecific?.KeyDerivableNode,
+            DerivableReason = typeSpecific?.KeyDerivableReason,
+            Sources = sources.ToList(),
+            Confidence = GDTypeConfidence.Medium
+        };
+    }
+
+    /// <summary>
+    /// Builds a value type slot with derivability info.
+    /// </summary>
+    private GDGenericTypeSlot BuildValueSlot(GDTypeSpecificConstraints? typeSpecific, GDParameterConstraints constraints)
+    {
+        var elemTypes = typeSpecific?.ElementTypes ?? constraints.ElementTypes;
+        var sources = typeSpecific?.ElementTypeSources ?? new List<GDTypeInferenceSource>();
+
+        if (elemTypes.Count == 0)
+        {
+            // Check if derivable
+            if (typeSpecific?.ValueIsDerivable == true)
+            {
+                return GDGenericTypeSlot.Derivable(
+                    typeSpecific.ValueDerivableNode,
+                    typeSpecific.ValueDerivableReason);
+            }
+            return GDGenericTypeSlot.Variant();
+        }
+
+        var typeStr = elemTypes.Count == 1
+            ? elemTypes.First()
+            : string.Join(" | ", elemTypes.OrderBy(t => t));
+
+        return new GDGenericTypeSlot
+        {
+            TypeName = typeStr,
+            IsDerivable = typeSpecific?.ValueIsDerivable ?? false,
+            DerivableSourceNode = typeSpecific?.ValueDerivableNode,
+            DerivableReason = typeSpecific?.ValueDerivableReason,
+            Sources = sources.ToList(),
+            Confidence = GDTypeConfidence.Medium
+        };
+    }
+
+    /// <summary>
+    /// Formats a type using per-type constraints if available, falling back to global constraints.
+    /// This ensures Dictionary gets its specific key types and Array gets its specific element types.
+    /// </summary>
+    private string FormatTypeWithPerTypeConstraints(string baseType, GDParameterConstraints? constraints)
+    {
+        if (constraints == null)
+            return baseType;
+
+        // Try to use per-type constraints first
+        if (constraints.TypeConstraints.TryGetValue(baseType, out var typeSpecific))
+        {
+            return typeSpecific.FormatFullType();
+        }
+
+        // Fall back to global constraints (legacy behavior)
+        return FormatTypeWithElements(baseType, constraints);
+    }
+
+    /// <summary>
+    /// Formats a container type with element/key types if available from constraints.
+    /// E.g., "Array" → "Array[int | String]", "Dictionary" → "Dictionary[String, Variant]"
+    /// </summary>
+    private string FormatTypeWithElements(string baseType, GDParameterConstraints? constraints)
+    {
+        if (constraints == null)
+            return baseType;
+
+        // Build element type string
+        string? elementTypeString = null;
+        if (constraints.ElementTypes.Count > 0)
+        {
+            elementTypeString = constraints.ElementTypes.Count == 1
+                ? constraints.ElementTypes.First()
+                : string.Join(" | ", constraints.ElementTypes.OrderBy(t => t));
+        }
+
+        // Build key type string
+        string? keyTypeString = null;
+        if (constraints.KeyTypes.Count > 0)
+        {
+            keyTypeString = constraints.KeyTypes.Count == 1
+                ? constraints.KeyTypes.First()
+                : string.Join(" | ", constraints.KeyTypes.OrderBy(t => t));
+        }
+
+        // Format based on type
+        if (baseType == "Array")
+        {
+            if (!string.IsNullOrEmpty(elementTypeString))
+                return $"Array[{elementTypeString}]";
+            return baseType;
+        }
+
+        if (baseType == "Dictionary")
+        {
+            var key = keyTypeString ?? "Variant";
+            var val = elementTypeString ?? "Variant";
+            if (keyTypeString != null || elementTypeString != null)
+                return $"Dictionary[{key}, {val}]";
+            return baseType;
+        }
+
+        // Other types - no element formatting
+        return baseType;
     }
 }

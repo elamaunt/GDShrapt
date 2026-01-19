@@ -457,30 +457,30 @@ internal partial class TabController : GodotObject
     private void OnTypeClicked(string symbolName, int line, GDScriptFile? scriptFile)
     {
         Logger.Info($"Type clicked: '{symbolName}' at line {line}");
-        // Open TypeInferencePanel popup
+        // Open GDTypeFlowPanel popup
         if (scriptFile != null)
         {
-            _plugin.ShowTypeInferencePanel(symbolName, line, scriptFile);
+            _plugin.ShowTypeFlowPanel(symbolName, line, scriptFile);
         }
     }
 
     /// <summary>
-    /// Shows Type Inference panel for the symbol under cursor.
+    /// Shows Type Flow panel for the symbol under cursor.
     /// </summary>
-    internal void ShowTypeInferenceForCursor()
+    internal void ShowTypeFlowForCursor()
     {
-        Logger.Info("TabController: ShowTypeInferenceForCursor requested");
+        Logger.Info("TabController: ShowTypeFlowForCursor requested");
 
         if (_textEdit == null || _script == null)
         {
-            Logger.Info("TabController: Cannot show type inference - no editor or script");
+            Logger.Info("TabController: Cannot show type flow - no editor or script");
             return;
         }
 
         var scriptFile = GDPluginScriptReference;
         if (scriptFile == null)
         {
-            Logger.Info("TabController: Cannot show type inference - no script file");
+            Logger.Info("TabController: Cannot show type flow - no script file");
             return;
         }
 
@@ -496,8 +496,8 @@ internal partial class TabController : GodotObject
             return;
         }
 
-        Logger.Info($"TabController: Showing type inference for '{symbolName}' at line {cursorLine}");
-        _plugin.ShowTypeInferencePanel(symbolName, cursorLine, scriptFile);
+        Logger.Info($"TabController: Showing type flow for '{symbolName}' at line {cursorLine}");
+        _plugin.ShowTypeFlowPanel(symbolName, cursorLine, scriptFile);
     }
 
     /// <summary>
@@ -672,7 +672,7 @@ internal partial class TabController : GodotObject
         AddPopupMenuButton("Rename", "Rename", () => _plugin.ExecuteCommand(Commands.Rename, _editor), 10003, Key.R, true);
         AddPopupMenuButton("Extract method", "Extract_method", () => _plugin.ExecuteCommand(Commands.ExtractMethod, _editor), 10004, Key.E, true);
         AddPopupMenuButton("Quick Actions...", "Quick_actions", ShowQuickActions, 10005, Key.Period, true);
-        AddPopupMenuButton("Show Type Inference", "Show_type_inference", ShowTypeInferenceForCursor, 10006, Key.I, true);
+        AddPopupMenuButton("Show Type Flow", "Show_type_flow", ShowTypeFlowForCursor, 10006, Key.I, true);
 
         // Add dynamic refactoring actions
         AddDynamicRefactoringMenuItems();

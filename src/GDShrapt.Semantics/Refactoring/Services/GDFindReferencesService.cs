@@ -597,7 +597,8 @@ public class GDFindReferencesService
             if (collected != null)
             {
                 strictRefs.AddRange(collected.Where(r => r.Confidence == GDReferenceConfidence.Strict));
-                potentialRefs.AddRange(collected.Where(r => r.Confidence != GDReferenceConfidence.Strict));
+                // Only include Potential, skip NameMatch (too weak for reference finding)
+                potentialRefs.AddRange(collected.Where(r => r.Confidence == GDReferenceConfidence.Potential));
                 return GDFindReferencesResult.Succeeded(scope, strictRefs, potentialRefs);
             }
         }

@@ -106,6 +106,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
     private readonly Dictionary<string, GDContainerUsageProfile> _containerProfiles = new();
     private readonly Dictionary<string, GDContainerElementType> _containerTypeCache = new();
 
+    // Flow-sensitive type analysis (SSA-style)
+    private readonly Dictionary<GDMethodDeclaration, GDFlowAnalyzer> _methodFlowAnalyzers = new();
+
     /// <summary>
     /// The script file this model represents.
     /// </summary>
@@ -391,6 +394,14 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (node is GDExpression expr)
             return GetExpressionType(expr);
 
+        // For parameter declarations, use parameter type inference
+        if (node is GDParameterDeclaration paramDecl)
+        {
+            var inferred = InferParameterType(paramDecl);
+            if (inferred.Confidence != GDTypeConfidence.Unknown)
+                return inferred.TypeName;
+        }
+
         return null;
     }
 
@@ -415,6 +426,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
 
     /// <summary>
     /// Gets the inferred type for an expression.
+    /// Uses flow-sensitive analysis when available.
     /// </summary>
     public string? GetExpressionType(GDExpression expression)
     {
@@ -425,9 +437,156 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (_nodeTypes.TryGetValue(expression, out var cachedType))
             return cachedType;
 
+        // For identifier expressions, use flow-sensitive type analysis
+        // Priority: flow-sensitive > narrowing > type engine
+        if (expression is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                // Try flow-sensitive type first (SSA-style)
+                var method = FindContainingMethodNode(expression);
+                if (method != null)
+                {
+                    var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+                    var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
+                    if (!string.IsNullOrEmpty(flowType) && flowType != "Variant")
+                        return flowType;
+                }
+
+                // Fall back to narrowing (for backward compatibility)
+                var narrowed = GetNarrowedType(varName, expression);
+                if (!string.IsNullOrEmpty(narrowed))
+                    return narrowed;
+            }
+        }
+
+        // For member access, check if caller has narrowed type
+        // This handles current.get where current is narrowed to Dictionary
+        if (expression is GDMemberOperatorExpression memberExpr)
+        {
+            var callerType = GetExpressionType(memberExpr.CallerExpression);
+            var memberName = memberExpr.Identifier?.Sequence;
+
+            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
+                !string.IsNullOrEmpty(memberName) && _runtimeProvider != null)
+            {
+                var memberInfo = FindMemberWithInheritanceInternal(callerType, memberName);
+                if (memberInfo != null)
+                    return memberInfo.Type;
+            }
+        }
+
+        // For call expressions on narrowed types
+        if (expression is GDCallExpression callExpr &&
+            callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
+        {
+            var callerType = GetExpressionType(callMemberExpr.CallerExpression);
+            var methodName = callMemberExpr.Identifier?.Sequence;
+
+            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
+                !string.IsNullOrEmpty(methodName) && _runtimeProvider != null)
+            {
+                var memberInfo = FindMemberWithInheritanceInternal(callerType, methodName);
+                if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
+                    return memberInfo.Type;
+            }
+        }
+
         // Use type engine for type inference
         // Note: Do NOT delegate to Analyzer to avoid circular dependency
         return _typeEngine?.InferType(expression);
+    }
+
+    /// <summary>
+    /// Finds a member in a type, traversing the inheritance chain if necessary.
+    /// Internal method to avoid name collision with public API.
+    /// </summary>
+    private GDRuntimeMemberInfo? FindMemberWithInheritanceInternal(string typeName, string memberName)
+    {
+        if (_runtimeProvider == null)
+            return null;
+
+        var visited = new HashSet<string>();
+        var current = typeName;
+        while (!string.IsNullOrEmpty(current))
+        {
+            if (!visited.Add(current))
+                return null;
+
+            var memberInfo = _runtimeProvider.GetMember(current, memberName);
+            if (memberInfo != null)
+                return memberInfo;
+
+            current = _runtimeProvider.GetBaseType(current);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets or creates a flow analyzer for a method.
+    /// Flow analyzers are cached per method.
+    /// </summary>
+    private GDFlowAnalyzer? GetOrCreateFlowAnalyzer(GDMethodDeclaration method)
+    {
+        if (method == null)
+            return null;
+
+        if (_methodFlowAnalyzers.TryGetValue(method, out var existing))
+            return existing;
+
+        var analyzer = new GDFlowAnalyzer(_typeEngine);
+        analyzer.Analyze(method);
+        _methodFlowAnalyzers[method] = analyzer;
+        return analyzer;
+    }
+
+    /// <summary>
+    /// Finds the containing method declaration for an AST node.
+    /// </summary>
+    private static GDMethodDeclaration? FindContainingMethodNode(GDNode node)
+    {
+        var current = node?.Parent;
+        while (current != null)
+        {
+            if (current is GDMethodDeclaration method)
+                return method;
+            current = current.Parent;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the flow-sensitive type for a variable at a specific location.
+    /// Returns null if flow analysis is not available.
+    /// </summary>
+    public string? GetFlowSensitiveType(string variableName, GDNode atLocation)
+    {
+        if (string.IsNullOrEmpty(variableName) || atLocation == null)
+            return null;
+
+        var method = FindContainingMethodNode(atLocation);
+        if (method == null)
+            return null;
+
+        var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+        return flowAnalyzer?.GetTypeAtLocation(variableName, atLocation);
+    }
+
+    /// <summary>
+    /// Gets the full flow variable type info at a specific location.
+    /// </summary>
+    public GDFlowVariableType? GetFlowVariableType(string variableName, GDNode atLocation)
+    {
+        if (string.IsNullOrEmpty(variableName) || atLocation == null)
+            return null;
+
+        var method = FindContainingMethodNode(atLocation);
+        if (method == null)
+            return null;
+
+        var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+        return flowAnalyzer?.GetVariableTypeAtLocation(variableName, atLocation);
     }
 
     /// <summary>

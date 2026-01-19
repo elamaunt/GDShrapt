@@ -15,6 +15,19 @@ internal class GDParameterUsageAnalyzer : GDVisitor
     private readonly HashSet<string> _parameterNames;
     private readonly IGDRuntimeProvider? _runtimeProvider;
 
+    // Alias tracking: maps local variable name to the parameter it was assigned from
+    // e.g., "var current = data" maps "current" → "data"
+    private readonly Dictionary<string, string> _aliasToParameter = new();
+
+    // Iterator tracking: maps iterator variable name to the parameter being iterated
+    // e.g., "for key in path" maps "key" → "path"
+    private readonly Dictionary<string, string> _iteratorToParameter = new();
+
+    // Tracks which parameters use an iterator as a key (for deferred type propagation)
+    // e.g., "current[key]" where key is iterator → "data" uses key from "path"
+    // Maps iterator variable name → list of parameters that use it as key
+    private readonly Dictionary<string, List<string>> _iteratorKeyUsers = new();
+
     /// <summary>
     /// The collected constraints for each parameter.
     /// </summary>
@@ -37,6 +50,45 @@ internal class GDParameterUsageAnalyzer : GDVisitor
             _paramConstraints[name] = new GDParameterConstraints(name);
     }
 
+    #region Alias Tracking
+
+    /// <summary>
+    /// Tracks variable declarations that alias parameters.
+    /// E.g., "var current = data" makes current an alias of data.
+    /// </summary>
+    public override void Visit(GDVariableDeclarationStatement varDecl)
+    {
+        base.Visit(varDecl);
+
+        var initVar = GetRootVariable(varDecl.Initializer);
+        if (initVar == null)
+            return;
+
+        // Resolve through existing aliases
+        initVar = ResolveAlias(initVar);
+
+        if (_parameterNames.Contains(initVar))
+        {
+            var localName = varDecl.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(localName))
+            {
+                _aliasToParameter[localName] = initVar;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Resolves a variable name through the alias chain to get the original parameter.
+    /// </summary>
+    private string ResolveAlias(string varName)
+    {
+        while (_aliasToParameter.TryGetValue(varName, out var aliased))
+            varName = aliased;
+        return varName;
+    }
+
+    #endregion
+
     #region Member Access
 
     /// <summary>
@@ -47,7 +99,13 @@ internal class GDParameterUsageAnalyzer : GDVisitor
         base.Visit(memberOp);
 
         var rootVar = GetRootVariable(memberOp.CallerExpression);
-        if (rootVar != null && _parameterNames.Contains(rootVar))
+        if (rootVar == null)
+            return;
+
+        // Resolve alias to original parameter
+        rootVar = ResolveAlias(rootVar);
+
+        if (_parameterNames.Contains(rootVar))
         {
             var memberName = memberOp.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(memberName))
@@ -67,6 +125,7 @@ internal class GDParameterUsageAnalyzer : GDVisitor
 
     /// <summary>
     /// Tracks for loop usage - parameter must be iterable.
+    /// Also tracks iterator variable for element type inference.
     /// </summary>
     public override void Visit(GDForStatement forStmt)
     {
@@ -74,24 +133,146 @@ internal class GDParameterUsageAnalyzer : GDVisitor
 
         // for x in param → param is iterable
         var collectionVar = GetRootVariable(forStmt.Collection);
-        if (collectionVar != null && _parameterNames.Contains(collectionVar))
+        if (collectionVar == null)
+            return;
+
+        // Resolve alias
+        collectionVar = ResolveAlias(collectionVar);
+
+        if (_parameterNames.Contains(collectionVar))
         {
             _paramConstraints[collectionVar].AddIterableConstraint();
+
+            // Track iterator → parameter mapping for element type inference
+            var iteratorName = forStmt.Variable?.Sequence;
+            if (!string.IsNullOrEmpty(iteratorName))
+            {
+                _iteratorToParameter[iteratorName] = collectionVar;
+            }
         }
     }
 
     /// <summary>
     /// Tracks indexer access - parameter must be indexable.
+    /// Also collects key types from the index expression.
     /// </summary>
     public override void Visit(GDIndexerExpression indexer)
     {
         base.Visit(indexer);
 
         var rootVar = GetRootVariable(indexer.CallerExpression);
-        if (rootVar != null && _parameterNames.Contains(rootVar))
+        if (rootVar == null)
+            return;
+
+        // Resolve alias
+        rootVar = ResolveAlias(rootVar);
+
+        if (_parameterNames.Contains(rootVar))
         {
             _paramConstraints[rootVar].AddIndexableConstraint();
+
+            // Track key types from the index expression
+            TrackKeyType(rootVar, indexer.InnerExpression, indexer);
         }
+    }
+
+    /// <summary>
+    /// Tracks key/index type from an expression used to access a container parameter.
+    /// </summary>
+    private void TrackKeyType(string paramName, GDExpression? keyExpr, GDNode? sourceNode = null)
+    {
+        if (keyExpr == null)
+            return;
+
+        // If key is an iterator variable, register this parameter as a key user
+        // Element types will be propagated when discovered via type checks
+        var keyVar = GetRootVariable(keyExpr);
+        if (keyVar != null && _iteratorToParameter.TryGetValue(keyVar, out var iteratorSource))
+        {
+            // Register this parameter as using iterator as key
+            if (!_iteratorKeyUsers.TryGetValue(keyVar, out var users))
+            {
+                users = new List<string>();
+                _iteratorKeyUsers[keyVar] = users;
+            }
+            if (!users.Contains(paramName))
+                users.Add(paramName);
+
+            // Also copy any already-discovered element types from the iterator's source
+            foreach (var elemType in _paramConstraints[iteratorSource].ElementTypes)
+            {
+                _paramConstraints[paramName].AddKeyType(elemType);
+
+                // Add to per-type constraints
+                var source = sourceNode != null
+                    ? GDTypeInferenceSource.FromIndexer(sourceNode)
+                    : null;
+                _paramConstraints[paramName].AddKeyTypeForType("Dictionary", elemType, source);
+                _paramConstraints[paramName].AddKeyTypeForType("Array", elemType, source);
+            }
+            return;
+        }
+
+        // Infer key type from expression type
+        var keyType = InferSimpleType(keyExpr);
+        if (!string.IsNullOrEmpty(keyType))
+        {
+            _paramConstraints[paramName].AddKeyType(keyType);
+
+            // Add to per-type constraints
+            var source = sourceNode != null
+                ? GDTypeInferenceSource.FromIndexer(sourceNode)
+                : null;
+            _paramConstraints[paramName].AddKeyTypeForType("Dictionary", keyType, source);
+            _paramConstraints[paramName].AddKeyTypeForType("Array", keyType, source);
+        }
+    }
+
+    /// <summary>
+    /// Infers a simple type from an expression (literals, type checks).
+    /// </summary>
+    private string? InferSimpleType(GDExpression? expr)
+    {
+        return expr switch
+        {
+            GDNumberExpression num => InferNumberType(num),
+            GDStringExpression => "String",
+            GDBoolExpression => "bool",
+            GDIdentifierExpression ident => CheckIteratorType(ident.Identifier?.Sequence),
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Infers type from a number expression.
+    /// </summary>
+    private static string InferNumberType(GDNumberExpression num)
+    {
+        if (num.Number == null)
+            return "int";
+
+        return num.Number.ResolveNumberType() switch
+        {
+            GDNumberType.LongDecimal or GDNumberType.LongBinary or GDNumberType.LongHexadecimal => "int",
+            GDNumberType.Double => "float",
+            _ => "int"
+        };
+    }
+
+    /// <summary>
+    /// If the identifier is an iterator, return its tracked element types.
+    /// </summary>
+    private string? CheckIteratorType(string? varName)
+    {
+        if (string.IsNullOrEmpty(varName))
+            return null;
+
+        // If this is an iterator, we don't know its type yet - it will be inferred later
+        // Return null so we don't add incorrect types
+        if (_iteratorToParameter.ContainsKey(varName))
+            return null;
+
+        return null;
     }
 
     #endregion
@@ -100,17 +281,47 @@ internal class GDParameterUsageAnalyzer : GDVisitor
 
     /// <summary>
     /// Tracks when parameters are passed to other methods.
+    /// Also tracks .get(key) calls on aliased parameters to collect key types.
     /// </summary>
     public override void Visit(GDCallExpression call)
     {
         base.Visit(call);
 
-        // Track when parameter is passed to another method
-        var args = call.Parameters?.ToList() ?? new List<GDExpression>();
-        for (int i = 0; i < args.Count; i++)
+        // Track .get(key) calls on aliased parameters
+        if (call.CallerExpression is GDMemberOperatorExpression memberOp)
         {
-            var argVar = GetRootVariable(args[i]);
-            if (argVar != null && _parameterNames.Contains(argVar))
+            var methodName = memberOp.Identifier?.Sequence;
+            var objVar = GetRootVariable(memberOp.CallerExpression);
+
+            if (objVar != null && methodName == "get")
+            {
+                // Resolve alias to original parameter
+                var paramName = ResolveAlias(objVar);
+
+                if (_parameterNames.Contains(paramName))
+                {
+                    // current.get(key) → data (via alias) has KeyType = typeof(key)
+                    var args = call.Parameters?.ToList();
+                    if (args != null && args.Count >= 1)
+                    {
+                        TrackKeyType(paramName, args[0], call);
+                    }
+                }
+            }
+        }
+
+        // Track when parameter is passed to another method
+        var callArgs = call.Parameters?.ToList() ?? new List<GDExpression>();
+        for (int i = 0; i < callArgs.Count; i++)
+        {
+            var argVar = GetRootVariable(callArgs[i]);
+            if (argVar == null)
+                continue;
+
+            // Resolve alias
+            argVar = ResolveAlias(argVar);
+
+            if (_parameterNames.Contains(argVar))
             {
                 _paramConstraints[argVar].AddPassedToCall(call, i);
             }
@@ -123,6 +334,7 @@ internal class GDParameterUsageAnalyzer : GDVisitor
 
     /// <summary>
     /// Tracks 'is' type checks to narrow possible types.
+    /// Also tracks element types when type checks are on iterator variables.
     /// </summary>
     public override void Visit(GDDualOperatorExpression dualOp)
     {
@@ -132,9 +344,8 @@ internal class GDParameterUsageAnalyzer : GDVisitor
         if (op != GDDualOperatorType.Is)
             return;
 
-        // Check if left side is a parameter
-        var paramName = GetRootVariable(dualOp.LeftExpression);
-        if (paramName == null || !_parameterNames.Contains(paramName))
+        var leftVar = GetRootVariable(dualOp.LeftExpression);
+        if (leftVar == null)
             return;
 
         // Get the type being checked
@@ -142,13 +353,73 @@ internal class GDParameterUsageAnalyzer : GDVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
+        // Case 1: Type check on iterator → element type of the container parameter
+        if (_iteratorToParameter.TryGetValue(leftVar, out var containerParam))
+        {
+            // "key is int" where "for key in path" → path has element type int
+            _paramConstraints[containerParam].AddElementType(typeName);
+
+            // Also add to per-type constraints for Array (iterators come from Array/String/etc)
+            var source = GDTypeInferenceSource.FromTypeCheck(dualOp, typeName);
+            _paramConstraints[containerParam].AddElementTypeForType("Array", typeName, source);
+
+            // Also propagate to any parameter that uses this iterator as key
+            PropagateIteratorTypeToKeyUsers(leftVar, typeName, dualOp);
+            return;
+        }
+
+        // Case 2: Resolve alias to original parameter
+        var paramName = ResolveAlias(leftVar);
+        if (!_parameterNames.Contains(paramName))
+            return;
+
         // Check if this is a negative check (not param is Type)
         var isNegative = IsNegativeCheck(dualOp);
 
         if (isNegative)
+        {
             _paramConstraints[paramName].ExcludeType(typeName);
+        }
         else
-            _paramConstraints[paramName].AddPossibleType(typeName);
+        {
+            // Add possible type with source for navigation
+            var source = GDTypeInferenceSource.FromTypeCheck(dualOp, typeName);
+            _paramConstraints[paramName].AddPossibleTypeWithSource(typeName, source);
+
+            // For Dictionary and Array, mark value as derivable if not already known
+            if (typeName == "Dictionary" || typeName == "Array")
+            {
+                _paramConstraints[paramName].MarkValueDerivable(
+                    typeName,
+                    dualOp,
+                    "value type can be inferred from return statements or further usage");
+            }
+        }
+    }
+
+    /// <summary>
+    /// When an iterator's type is discovered, propagate it as key type to any
+    /// parameter that uses this iterator for indexing or .get() calls.
+    /// </summary>
+    private void PropagateIteratorTypeToKeyUsers(string iteratorVar, string typeName, GDNode? sourceNode = null)
+    {
+        // Find all parameters that use this iterator as a key
+        if (_iteratorKeyUsers.TryGetValue(iteratorVar, out var users))
+        {
+            var source = sourceNode != null
+                ? GDTypeInferenceSource.FromTypeCheck(sourceNode, typeName)
+                : null;
+
+            foreach (var paramName in users)
+            {
+                _paramConstraints[paramName].AddKeyType(typeName);
+
+                // Add to per-type constraints for Dictionary (since .get() and [] use keys)
+                _paramConstraints[paramName].AddKeyTypeForType("Dictionary", typeName, source);
+                // Array also uses keys for indexing
+                _paramConstraints[paramName].AddKeyTypeForType("Array", typeName, source);
+            }
+        }
     }
 
     #endregion

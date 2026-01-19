@@ -14,7 +14,7 @@ namespace GDShrapt.Plugin;
 /// Format: ◆ N  [icon]
 /// - ◆ = strict refs (green), ◇ = potential only (yellow)
 /// - N = total reference count (yellowish if potential refs exist)
-/// - [icon] = info button to open TypeInferencePanel
+/// - [icon] = info button to open GDTypeFlowPanel
 /// </summary>
 internal class GDGutterManager
 {
@@ -354,7 +354,7 @@ internal class GDGutterManager
         }
 
         // Zone 2: Info icon (right side of gutter)
-        // Draw a small info icon to open TypeInferencePanel
+        // Draw a small info icon to open GDTypeFlowPanel
         var infoIcon = "ⓘ";  // Unicode info symbol (softer than emoji)
         var infoColor = ApplyHover(InfoIconColor, isHoveredLine);
         var infoWidth = font.GetStringSize(infoIcon, HorizontalAlignment.Left, -1, fontSize).X;
@@ -522,7 +522,7 @@ internal class GDGutterManager
 
             if (_lastMouseX >= iconZoneStart)
             {
-                // Click on info icon → open TypeInferencePanel
+                // Click on info icon → open GDTypeFlowPanel
                 Logger.Info($"GDGutterManager: Info icon clicked at line {lineInt}, symbol={info.SymbolName}");
                 TypeClicked?.Invoke(info.SymbolName, lineInt, _scriptFile);
             }
