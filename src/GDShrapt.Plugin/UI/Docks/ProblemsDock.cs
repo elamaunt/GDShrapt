@@ -385,7 +385,7 @@ internal partial class ProblemsDock : Control
         {
             if (_diagnosticService != null)
             {
-                await _diagnosticService.AnalyzeProjectAsync();
+                await _diagnosticService.AnalyzeProjectAsync(forceRefresh: true);
             }
         }
         finally

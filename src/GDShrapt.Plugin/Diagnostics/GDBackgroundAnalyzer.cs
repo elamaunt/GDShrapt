@@ -183,7 +183,7 @@ internal class GDBackgroundAnalyzer : IDisposable
                 await Task.Delay(50, _cts.Token);
             }
 
-            await _diagnosticService.AnalyzeScriptAsync(request.Script, _cts.Token);
+            await _diagnosticService.AnalyzeScriptAsync(request.Script, forceRefresh: false, _cts.Token);
 
             // Remove from pending
             _pendingScripts.TryRemove(request.Script.FullPath, out _);

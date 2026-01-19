@@ -99,7 +99,10 @@ internal class GDPluginDiagnosticService : IDisposable
     /// Analyzes a single script and updates diagnostics.
     /// Uses GDDiagnosticsService from Semantics kernel for unified diagnostics.
     /// </summary>
-    public async Task AnalyzeScriptAsync(GDScriptFile ScriptFile, CancellationToken cancellationToken = default)
+    /// <param name="ScriptFile">The script to analyze.</param>
+    /// <param name="forceRefresh">If true, skips cache and forces re-analysis.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task AnalyzeScriptAsync(GDScriptFile ScriptFile, bool forceRefresh = false, CancellationToken cancellationToken = default)
     {
         if (!_configManager.Config.Linting.Enabled)
         {
@@ -125,11 +128,11 @@ internal class GDPluginDiagnosticService : IDisposable
                 return;
             }
 
-            // Check cache first
+            // Check cache first (skip if forceRefresh)
             var contentHash = ComputeHash(content);
 
             Logger.Info("Content hash " + contentHash);
-            if (_cacheManager != null && _cacheManager.TryGetLintCache(ScriptFile, contentHash, out var cached))
+            if (!forceRefresh && _cacheManager != null && _cacheManager.TryGetLintCache(ScriptFile, contentHash, out var cached))
             {
                 _diagnostics[ScriptFile.FullPath] = cached;
                 NotifyDiagnosticsChanged(ScriptFile, cached);
@@ -201,7 +204,9 @@ internal class GDPluginDiagnosticService : IDisposable
     /// <summary>
     /// Analyzes all scripts in the project.
     /// </summary>
-    public async Task AnalyzeProjectAsync(CancellationToken cancellationToken = default)
+    /// <param name="forceRefresh">If true, skips cache and forces re-analysis of all scripts.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task AnalyzeProjectAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
     {
         var startTime = DateTime.UtcNow;
         var filesAnalyzed = 0;
@@ -225,7 +230,7 @@ internal class GDPluginDiagnosticService : IDisposable
                 cancellationToken.ThrowIfCancellationRequested();
 
                 Logger.Info("Script analysing.. " + i++);
-                await AnalyzeScriptAsync(map, cancellationToken);
+                await AnalyzeScriptAsync(map, forceRefresh, cancellationToken);
                 Logger.Info("Script complete " + (i - 1));
                 filesAnalyzed++;
             }
