@@ -25,9 +25,10 @@ jobs:
     - name: Build
       run: dotnet build src --no-restore --configuration Release
 
-    - name: Test
+    - name: Test with coverage
       run: |
         dotnet test src --no-build --configuration Release \
+          --collect:"XPlat Code Coverage" \
           --logger "trx;LogFileName=test-results.trx" \
           --results-directory ./TestResults
 
@@ -55,6 +56,13 @@ jobs:
         echo "passed=$PASSED" >> $GITHUB_OUTPUT
         echo "failed=$FAILED" >> $GITHUB_OUTPUT
         echo "Tests: $PASSED/$TOTAL passed, $FAILED failed"
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        directory: ./TestResults
+        fail_ci_if_error: false
 
     - name: Test Report
       uses: dorny/test-reporter@v1
