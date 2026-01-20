@@ -15,6 +15,11 @@ internal class GDPluginDiagnostic
     public required string RuleId { get; init; }
 
     /// <summary>
+    /// Human-readable rule name (e.g., "no-unused-variable").
+    /// </summary>
+    public string? RuleName { get; init; }
+
+    /// <summary>
     /// Human-readable message describing the issue.
     /// </summary>
     public required string Message { get; init; }
@@ -87,6 +92,7 @@ internal class GDPluginDiagnosticBuilder
 {
     private readonly string _ruleId;
     private readonly string _message;
+    private string? _ruleName;
     private GDDiagnosticSeverity _severity = GDDiagnosticSeverity.Warning;
     private GDDiagnosticCategory _category = GDDiagnosticCategory.Style;
     private GDScriptFile? _script;
@@ -107,6 +113,12 @@ internal class GDPluginDiagnosticBuilder
     public GDPluginDiagnosticBuilder WithSeverity(GDDiagnosticSeverity severity)
     {
         _severity = severity;
+        return this;
+    }
+
+    public GDPluginDiagnosticBuilder WithRuleName(string? ruleName)
+    {
+        _ruleName = ruleName;
         return this;
     }
 
@@ -169,6 +181,7 @@ internal class GDPluginDiagnosticBuilder
         return new GDPluginDiagnostic
         {
             RuleId = _ruleId,
+            RuleName = _ruleName,
             Message = _message,
             Severity = _severity,
             Category = _category,

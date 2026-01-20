@@ -34,7 +34,48 @@ namespace GDShrapt.Linter
         /// <returns>True if the rule is suppressed at this line.</returns>
         public bool IsSuppressed(string ruleId, string ruleName, int line)
         {
-            // 1. Check gdlint:ignore directives
+            // 1. Check gdlint:ignore-file directives (whole file suppression)
+            foreach (var directive in _directives.Where(d => d.Type == GDSuppressionType.IgnoreFile))
+            {
+                if (directive.AppliesToRule(ruleId, ruleName))
+                    return true;
+            }
+
+            // 2. Check gdlint:ignore-below directives (suppress from directive line to EOF)
+            foreach (var directive in _directives.Where(d => d.Type == GDSuppressionType.IgnoreBelow))
+            {
+                if (!directive.AppliesToRule(ruleId, ruleName))
+                    continue;
+
+                // Everything from directive line onwards is suppressed
+                if (line >= directive.Line)
+                    return true;
+            }
+
+            // 3. Check gdlint:ignore-function directives (function scope suppression)
+            foreach (var directive in _directives.Where(d => d.Type == GDSuppressionType.IgnoreFunction))
+            {
+                if (!directive.AppliesToRule(ruleId, ruleName))
+                    continue;
+
+                // Check if line is within the function range
+                // If FunctionEndLine is not resolved (-1), suppress from directive line to the next function or EOF
+                if (directive.FunctionEndLine > 0)
+                {
+                    // Function boundaries resolved: check if line is within range
+                    if (line >= directive.Line && line <= directive.FunctionEndLine)
+                        return true;
+                }
+                else
+                {
+                    // Not resolved: suppress the following function declaration line and its body
+                    // This is a fallback - in practice, boundaries should be resolved by the parser
+                    if (line == directive.Line + 1 || line == directive.Line)
+                        return true;
+                }
+            }
+
+            // 4. Check gdlint:ignore directives (single line suppression)
             foreach (var directive in _directives.Where(d => d.Type == GDSuppressionType.Ignore))
             {
                 if (!directive.AppliesToRule(ruleId, ruleName))
@@ -54,7 +95,7 @@ namespace GDShrapt.Linter
                 }
             }
 
-            // 2. Check gdlint:disable/enable directives
+            // 5. Check gdlint:disable/enable directives (block suppression)
             bool disabled = false;
             foreach (var directive in _directives.OrderBy(d => d.Line))
             {

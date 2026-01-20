@@ -103,6 +103,9 @@ public static class OptionParsers
         if (string.IsNullOrWhiteSpace(checks) || checks.Equals("all", StringComparison.OrdinalIgnoreCase))
             return GDValidationChecks.All;
 
+        if (checks.Equals("basic", StringComparison.OrdinalIgnoreCase))
+            return GDValidationChecks.Basic;
+
         var result = GDValidationChecks.None;
         var parts = checks.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
@@ -110,12 +113,18 @@ public static class OptionParsers
         {
             result |= part.ToLowerInvariant() switch
             {
+                // Basic checks
                 "syntax" => GDValidationChecks.Syntax,
                 "scope" => GDValidationChecks.Scope,
                 "types" => GDValidationChecks.Types,
                 "calls" => GDValidationChecks.Calls,
                 "controlflow" or "control-flow" => GDValidationChecks.ControlFlow,
                 "indentation" => GDValidationChecks.Indentation,
+                // Advanced checks
+                "memberaccess" or "member-access" => GDValidationChecks.MemberAccess,
+                "abstract" => GDValidationChecks.Abstract,
+                "signals" => GDValidationChecks.Signals,
+                "resourcepaths" or "resource-paths" => GDValidationChecks.ResourcePaths,
                 _ => GDValidationChecks.None
             };
         }

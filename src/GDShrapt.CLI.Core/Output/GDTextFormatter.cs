@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace GDShrapt.CLI.Core;
 
@@ -21,6 +22,23 @@ public class GDTextFormatter : IGDOutputFormatter
         output.WriteLine($"Total hints: {result.TotalHints}");
         output.WriteLine();
 
+        switch (result.GroupBy)
+        {
+            case GDGroupBy.Rule:
+                WriteGroupedByRule(output, result);
+                break;
+            case GDGroupBy.Severity:
+                WriteGroupedBySeverity(output, result);
+                break;
+            case GDGroupBy.File:
+            default:
+                WriteGroupedByFile(output, result);
+                break;
+        }
+    }
+
+    private void WriteGroupedByFile(TextWriter output, GDAnalysisResult result)
+    {
         foreach (var file in result.Files)
         {
             if (file.Diagnostics.Count == 0)
@@ -30,21 +48,73 @@ public class GDTextFormatter : IGDOutputFormatter
 
             foreach (var diag in file.Diagnostics)
             {
-                var severity = diag.Severity switch
-                {
-                    GDSeverity.Error => "error",
-                    GDSeverity.Warning => "warning",
-                    GDSeverity.Information => "info",
-                    GDSeverity.Hint => "hint",
-                    _ => "unknown"
-                };
-
+                var severity = FormatSeverity(diag.Severity);
                 output.WriteLine($"  {file.FilePath}:{diag.Line}:{diag.Column}: {severity} {diag.Code}: {diag.Message}");
             }
 
             output.WriteLine();
         }
     }
+
+    private void WriteGroupedByRule(TextWriter output, GDAnalysisResult result)
+    {
+        var allDiagnostics = result.Files
+            .SelectMany(f => f.Diagnostics.Select(d => (File: f.FilePath, Diag: d)))
+            .GroupBy(x => x.Diag.Code)
+            .OrderBy(g => g.Key);
+
+        foreach (var group in allDiagnostics)
+        {
+            var count = group.Count();
+            output.WriteLine($"--- {group.Key} ({count} occurrence{(count == 1 ? "" : "s")}) ---");
+
+            foreach (var (filePath, diag) in group.OrderBy(x => x.File).ThenBy(x => x.Diag.Line))
+            {
+                var severity = FormatSeverity(diag.Severity);
+                output.WriteLine($"  {filePath}:{diag.Line}:{diag.Column}: {severity} {diag.Message}");
+            }
+
+            output.WriteLine();
+        }
+    }
+
+    private void WriteGroupedBySeverity(TextWriter output, GDAnalysisResult result)
+    {
+        var allDiagnostics = result.Files
+            .SelectMany(f => f.Diagnostics.Select(d => (File: f.FilePath, Diag: d)))
+            .GroupBy(x => x.Diag.Severity)
+            .OrderBy(g => g.Key); // Error (0) first, then Warning, Info, Hint
+
+        foreach (var group in allDiagnostics)
+        {
+            var severityName = group.Key switch
+            {
+                GDSeverity.Error => "Errors",
+                GDSeverity.Warning => "Warnings",
+                GDSeverity.Information => "Information",
+                GDSeverity.Hint => "Hints",
+                _ => "Unknown"
+            };
+            var count = group.Count();
+            output.WriteLine($"--- {severityName} ({count}) ---");
+
+            foreach (var (filePath, diag) in group.OrderBy(x => x.File).ThenBy(x => x.Diag.Line))
+            {
+                output.WriteLine($"  {filePath}:{diag.Line}:{diag.Column}: {diag.Code}: {diag.Message}");
+            }
+
+            output.WriteLine();
+        }
+    }
+
+    private static string FormatSeverity(GDSeverity severity) => severity switch
+    {
+        GDSeverity.Error => "error",
+        GDSeverity.Warning => "warning",
+        GDSeverity.Information => "info",
+        GDSeverity.Hint => "hint",
+        _ => "unknown"
+    };
 
     public void WriteSymbols(TextWriter output, IEnumerable<GDSymbolInfo> symbols)
     {

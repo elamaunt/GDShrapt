@@ -311,11 +311,49 @@ namespace GDShrapt.Linter
         /// </summary>
         public bool WarnInconsistentReturn { get; set; } = false;
 
+        /// <summary>
+        /// Whether to warn when a function with explicit return type does not
+        /// return a value in all code paths.
+        /// </summary>
+        public bool WarnMissingReturn { get; set; } = false;
+
         // Style options (new rules)
         /// <summary>
         /// Whether to warn when if is the only statement in else block.
         /// </summary>
         public bool WarnNoLonelyIf { get; set; } = false;
+
+        // God class detection
+        /// <summary>
+        /// Whether to warn about god classes (classes with too many responsibilities).
+        /// </summary>
+        public bool WarnGodClass { get; set; } = false;
+
+        /// <summary>
+        /// Maximum number of variables for god class detection. Default: 15.
+        /// </summary>
+        public int GodClassMaxVariables { get; set; } = 15;
+
+        /// <summary>
+        /// Maximum number of methods for god class detection. Default: 20.
+        /// </summary>
+        public int GodClassMaxMethods { get; set; } = 20;
+
+        /// <summary>
+        /// Maximum number of lines for god class detection. Default: 500.
+        /// </summary>
+        public int GodClassMaxLines { get; set; } = 500;
+
+        // Additional best practices
+        /// <summary>
+        /// Whether to warn about commented-out code.
+        /// </summary>
+        public bool WarnCommentedCode { get; set; } = false;
+
+        /// <summary>
+        /// Whether to warn about debug print statements.
+        /// </summary>
+        public bool WarnDebugPrint { get; set; } = false;
 
         // Member ordering options
         /// <summary>
@@ -450,9 +488,23 @@ namespace GDShrapt.Linter
             if (rule.RuleId == "GDL234") // consistent-return
                 return WarnInconsistentReturn;
 
+            if (rule.RuleId == "GDL235") // missing-return
+                return WarnMissingReturn;
+
             // New style rules
             if (rule.RuleId == "GDL233") // no-lonely-if
                 return WarnNoLonelyIf;
+
+            // God class detection
+            if (rule.RuleId == "GDL236") // god-class
+                return WarnGodClass;
+
+            // Additional best practices
+            if (rule.RuleId == "GDL237") // commented-code
+                return WarnCommentedCode;
+
+            if (rule.RuleId == "GDL238") // no-debug-print
+                return WarnDebugPrint;
 
             // Formatting rules (text-based)
             if (rule.RuleId == "GDL502") // trailing-whitespace

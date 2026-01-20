@@ -132,6 +132,11 @@ public class GDUnifiedDiagnostic
     public string Code { get; set; } = string.Empty;
 
     /// <summary>
+    /// Human-readable rule name (e.g., "no-unused-variable").
+    /// </summary>
+    public string? RuleName { get; set; }
+
+    /// <summary>
     /// Human-readable message.
     /// </summary>
     public string Message { get; set; } = string.Empty;

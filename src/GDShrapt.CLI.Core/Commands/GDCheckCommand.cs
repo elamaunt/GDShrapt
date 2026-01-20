@@ -1,16 +1,16 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
 
 /// <summary>
-/// Checks a GDScript project for errors. Returns exit code 1 if errors found.
+/// Checks a GDScript project for errors.
+/// Exit codes: 0=Success, 1=Warnings/Hints (if fail-on configured), 2=Errors, 3=Fatal.
 /// Designed for CI/CD pipelines.
+/// Uses the unified GDDiagnosticsService for consistent diagnostics.
 /// </summary>
 public class GDCheckCommand : IGDCommand
 {
@@ -43,7 +43,7 @@ public class GDCheckCommand : IGDCommand
                 {
                     _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}");
                 }
-                return Task.FromResult(2);
+                return Task.FromResult(GDExitCode.Fatal);
             }
 
             // Load config from project or use provided
@@ -56,25 +56,8 @@ public class GDCheckCommand : IGDCommand
             var hintCount = 0;
             var fileCount = 0;
 
-            // Create linter and validator if linting is enabled
-            GDLinter? linter = null;
-            GDValidator? validator = null;
-            GDValidationOptions? validationOptions = null;
-
-            if (config.Linting.Enabled)
-            {
-                linter = new GDLinter(GDLinterOptionsFactory.FromConfig(config));
-                validator = new GDValidator();
-                validationOptions = new GDValidationOptions
-                {
-                    CheckSyntax = true,
-                    CheckScope = true,
-                    CheckTypes = true,
-                    CheckCalls = true,
-                    CheckControlFlow = true,
-                    CheckIndentation = config.Linting.FormattingLevel != GDFormattingLevel.Off
-                };
-            }
+            // Use unified diagnostics service - handles validator, linter, and config consistently
+            var diagnosticsService = GDDiagnosticsService.FromConfig(config);
 
             foreach (var script in project.ScriptFiles)
             {
@@ -86,78 +69,26 @@ public class GDCheckCommand : IGDCommand
 
                 fileCount++;
 
-                if (script.WasReadError)
-                {
-                    errorCount++;
-                    continue;
-                }
+                // Use unified diagnostics service - handles parse errors, invalid tokens,
+                // validation, linting, config overrides, and comment suppression
+                var result = diagnosticsService.Diagnose(script);
 
-                if (script.Class != null)
-                {
-                    // Parse errors
-                    errorCount += script.Class.AllInvalidTokens.Count();
-
-                    // Validator diagnostics
-                    if (validator != null && validationOptions != null)
-                    {
-                        var validationResult = validator.Validate(script.Class, validationOptions);
-                        foreach (var diag in validationResult.Diagnostics)
-                        {
-                            var ruleId = diag.CodeString;
-                            if (!IsRuleEnabled(config, ruleId))
-                                continue;
-
-                            switch (diag.Severity)
-                            {
-                                case Reader.GDDiagnosticSeverity.Error:
-                                    errorCount++;
-                                    break;
-                                case Reader.GDDiagnosticSeverity.Warning:
-                                    warningCount++;
-                                    break;
-                                default:
-                                    hintCount++;
-                                    break;
-                            }
-                        }
-                    }
-
-                    // Linter issues
-                    if (linter != null)
-                    {
-                        var lintResult = linter.Lint(script.Class);
-                        foreach (var issue in lintResult.Issues)
-                        {
-                            if (!IsRuleEnabled(config, issue.RuleId))
-                                continue;
-
-                            switch (issue.Severity)
-                            {
-                                case GDLintSeverity.Error:
-                                    errorCount++;
-                                    break;
-                                case GDLintSeverity.Warning:
-                                    warningCount++;
-                                    break;
-                                default:
-                                    hintCount++;
-                                    break;
-                            }
-                        }
-                    }
-                }
+                errorCount += result.ErrorCount;
+                warningCount += result.WarningCount;
+                hintCount += result.HintCount;
             }
 
-            // Determine if check failed
-            var failed = errorCount > 0;
-            if (!failed && config.Cli.FailOnWarning && warningCount > 0)
-                failed = true;
-            if (!failed && config.Cli.FailOnHint && hintCount > 0)
-                failed = true;
+            // Determine exit code using new exit code system
+            var exitCode = GDExitCode.FromResults(
+                errorCount,
+                warningCount,
+                hintCount,
+                config.Cli.FailOnWarning,
+                config.Cli.FailOnHint);
 
             if (!_quiet)
             {
-                if (!failed)
+                if (exitCode == GDExitCode.Success)
                 {
                     _formatter.WriteMessage(_output, $"OK: {fileCount} files checked, {errorCount} errors, {warningCount} warnings, {hintCount} hints.");
                 }
@@ -167,7 +98,7 @@ public class GDCheckCommand : IGDCommand
                 }
             }
 
-            return Task.FromResult(failed ? 1 : 0);
+            return Task.FromResult(exitCode);
         }
         catch (Exception ex)
         {
@@ -175,16 +106,7 @@ public class GDCheckCommand : IGDCommand
             {
                 _formatter.WriteError(_output, ex.Message);
             }
-            return Task.FromResult(2);
+            return Task.FromResult(GDExitCode.Fatal);
         }
-    }
-
-    private static bool IsRuleEnabled(GDProjectConfig config, string ruleId)
-    {
-        if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig))
-        {
-            return ruleConfig.Enabled;
-        }
-        return true;
     }
 }

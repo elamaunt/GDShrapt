@@ -36,6 +36,26 @@ public class GDValidationCheckOverrides
     public bool? CheckIndentation { get; set; }
 
     /// <summary>
+    /// Enable/disable member access checking on typed/untyped expressions (GD7xxx).
+    /// </summary>
+    public bool? CheckMemberAccess { get; set; }
+
+    /// <summary>
+    /// Enable/disable @abstract annotation checking (GD8xxx).
+    /// </summary>
+    public bool? CheckAbstract { get; set; }
+
+    /// <summary>
+    /// Enable/disable signal operation validation.
+    /// </summary>
+    public bool? CheckSignals { get; set; }
+
+    /// <summary>
+    /// Enable/disable resource path validation in load/preload calls.
+    /// </summary>
+    public bool? CheckResourcePaths { get; set; }
+
+    /// <summary>
     /// Applies overrides to the given validation checks flags.
     /// </summary>
     public GDValidationChecks ApplyTo(GDValidationChecks checks)
@@ -88,6 +108,38 @@ public class GDValidationCheckOverrides
                 result |= GDValidationChecks.Indentation;
             else
                 result &= ~GDValidationChecks.Indentation;
+        }
+
+        if (CheckMemberAccess.HasValue)
+        {
+            if (CheckMemberAccess.Value)
+                result |= GDValidationChecks.MemberAccess;
+            else
+                result &= ~GDValidationChecks.MemberAccess;
+        }
+
+        if (CheckAbstract.HasValue)
+        {
+            if (CheckAbstract.Value)
+                result |= GDValidationChecks.Abstract;
+            else
+                result &= ~GDValidationChecks.Abstract;
+        }
+
+        if (CheckSignals.HasValue)
+        {
+            if (CheckSignals.Value)
+                result |= GDValidationChecks.Signals;
+            else
+                result &= ~GDValidationChecks.Signals;
+        }
+
+        if (CheckResourcePaths.HasValue)
+        {
+            if (CheckResourcePaths.Value)
+                result |= GDValidationChecks.ResourcePaths;
+            else
+                result &= ~GDValidationChecks.ResourcePaths;
         }
 
         return result;

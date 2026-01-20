@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI;
 
@@ -83,11 +84,46 @@ public static class LintCommandBuilder
         var maxComplexityOption = new Option<int?>(
             new[] { "--max-complexity" },
             "Maximum cyclomatic complexity (0 to disable)");
+
+        // Complexity limits (new rules)
+        var maxPublicMethodsOption = new Option<int?>(
+            new[] { "--max-public-methods" },
+            "Maximum public methods per class (0 to disable)");
+        var maxReturnsOption = new Option<int?>(
+            new[] { "--max-returns" },
+            "Maximum return statements per function (0 to disable)");
+        var maxNestingDepthOption = new Option<int?>(
+            new[] { "--max-nesting-depth" },
+            "Maximum nesting depth in a function (0 to disable)");
+        var maxLocalVariablesOption = new Option<int?>(
+            new[] { "--max-local-variables" },
+            "Maximum local variables per function (0 to disable)");
+        var maxClassVariablesOption = new Option<int?>(
+            new[] { "--max-class-variables" },
+            "Maximum class variables (0 to disable)");
+        var maxBranchesOption = new Option<int?>(
+            new[] { "--max-branches" },
+            "Maximum branches in a function (0 to disable)");
+        var maxBooleanExpressionsOption = new Option<int?>(
+            new[] { "--max-boolean-expressions" },
+            "Maximum boolean expressions in a condition (0 to disable)");
+        var maxInnerClassesOption = new Option<int?>(
+            new[] { "--max-inner-classes" },
+            "Maximum inner classes per file (0 to disable)");
+
         command.AddOption(maxLineLengthOption);
         command.AddOption(maxFileLinesOption);
         command.AddOption(maxParametersOption);
         command.AddOption(maxFunctionLengthOption);
         command.AddOption(maxComplexityOption);
+        command.AddOption(maxPublicMethodsOption);
+        command.AddOption(maxReturnsOption);
+        command.AddOption(maxNestingDepthOption);
+        command.AddOption(maxLocalVariablesOption);
+        command.AddOption(maxClassVariablesOption);
+        command.AddOption(maxBranchesOption);
+        command.AddOption(maxBooleanExpressionsOption);
+        command.AddOption(maxInnerClassesOption);
 
         // Warning toggles
         var warnUnusedVariablesOption = new Option<bool?>(
@@ -123,6 +159,30 @@ public static class LintCommandBuilder
         var warnDuplicatedLoadOption = new Option<bool?>(
             new[] { "--warn-duplicated-load" },
             "Warn about duplicated load/preload calls");
+        var warnExpressionNotAssignedOption = new Option<bool?>(
+            new[] { "--warn-expression-not-assigned" },
+            "Warn when expression result is not assigned");
+        var warnUselessAssignmentOption = new Option<bool?>(
+            new[] { "--warn-useless-assignment" },
+            "Warn when assigned value is never read before being overwritten");
+        var warnInconsistentReturnOption = new Option<bool?>(
+            new[] { "--warn-inconsistent-return" },
+            "Warn when function has inconsistent return statements");
+        var warnMissingReturnOption = new Option<bool?>(
+            new[] { "--warn-missing-return" },
+            "Warn when function with return type does not return in all code paths");
+        var warnNoLonelyIfOption = new Option<bool?>(
+            new[] { "--warn-no-lonely-if" },
+            "Warn when if is the only statement in else block");
+        var warnGodClassOption = new Option<bool?>(
+            new[] { "--warn-god-class" },
+            "Warn about god classes (classes with too many responsibilities)");
+        var warnCommentedCodeOption = new Option<bool?>(
+            new[] { "--warn-commented-code" },
+            "Warn about commented-out code");
+        var warnDebugPrintOption = new Option<bool?>(
+            new[] { "--warn-debug-print" },
+            "Warn about debug print statements");
         command.AddOption(warnUnusedVariablesOption);
         command.AddOption(warnUnusedParametersOption);
         command.AddOption(warnUnusedSignalsOption);
@@ -134,6 +194,28 @@ public static class LintCommandBuilder
         command.AddOption(warnNoElseReturnOption);
         command.AddOption(warnPrivateMethodCallOption);
         command.AddOption(warnDuplicatedLoadOption);
+        command.AddOption(warnExpressionNotAssignedOption);
+        command.AddOption(warnUselessAssignmentOption);
+        command.AddOption(warnInconsistentReturnOption);
+        command.AddOption(warnMissingReturnOption);
+        command.AddOption(warnNoLonelyIfOption);
+        command.AddOption(warnGodClassOption);
+        command.AddOption(warnCommentedCodeOption);
+        command.AddOption(warnDebugPrintOption);
+
+        // God class thresholds
+        var godClassMaxVariablesOption = new Option<int?>(
+            new[] { "--god-class-max-variables" },
+            "Maximum variables for god class detection (default: 15)");
+        var godClassMaxMethodsOption = new Option<int?>(
+            new[] { "--god-class-max-methods" },
+            "Maximum methods for god class detection (default: 20)");
+        var godClassMaxLinesOption = new Option<int?>(
+            new[] { "--god-class-max-lines" },
+            "Maximum lines for god class detection (default: 500)");
+        command.AddOption(godClassMaxVariablesOption);
+        command.AddOption(godClassMaxMethodsOption);
+        command.AddOption(godClassMaxLinesOption);
 
         // Strict typing options
         var strictTypingOption = new Option<string?>(
@@ -163,10 +245,73 @@ public static class LintCommandBuilder
             "Enable inline comment suppression (gdlint:ignore)");
         command.AddOption(enableSuppressionOption);
 
+        // Member ordering options
+        var abstractMethodPositionOption = new Option<string?>(
+            new[] { "--abstract-method-position" },
+            "Position of abstract methods: first, last, or none (no constraint)");
+        var privateMethodPositionOption = new Option<string?>(
+            new[] { "--private-method-position" },
+            "Position of private methods: after_public, before_public, or none");
+        var staticMethodPositionOption = new Option<string?>(
+            new[] { "--static-method-position" },
+            "Position of static methods: first, after_constants, or none");
+        command.AddOption(abstractMethodPositionOption);
+        command.AddOption(privateMethodPositionOption);
+        command.AddOption(staticMethodPositionOption);
+
+        // Fail threshold
+        var failOnOption = new Option<string?>(
+            new[] { "--fail-on" },
+            "Fail threshold: error (default), warning, or hint");
+        command.AddOption(failOnOption);
+
+        // Severity filtering
+        var minSeverityOption = new Option<string?>(
+            new[] { "--min-severity" },
+            "Minimum severity to report: error, warning, info, or hint");
+        var maxIssuesOption = new Option<int?>(
+            new[] { "--max-issues" },
+            "Maximum number of issues to report (0 = unlimited)");
+        var groupByOption = new Option<string?>(
+            new[] { "--group-by" },
+            "Group output by: file (default), rule, or severity");
+        command.AddOption(minSeverityOption);
+        command.AddOption(maxIssuesOption);
+        command.AddOption(groupByOption);
+
         command.SetHandler(async (InvocationContext context) =>
         {
             var projectPath = context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
+            var minSeverity = context.ParseResult.GetValueForOption(minSeverityOption);
+            var maxIssues = context.ParseResult.GetValueForOption(maxIssuesOption);
+            var groupBy = context.ParseResult.GetValueForOption(groupByOption);
+
+            // Parse group-by
+            GDGroupBy groupByMode = GDGroupBy.File;
+            if (groupBy != null)
+            {
+                groupByMode = groupBy.ToLowerInvariant() switch
+                {
+                    "rule" => GDGroupBy.Rule,
+                    "severity" => GDGroupBy.Severity,
+                    _ => GDGroupBy.File
+                };
+            }
+
+            // Parse min severity to linter severity
+            GDLintSeverity? minSev = null;
+            if (minSeverity != null)
+            {
+                minSev = minSeverity.ToLowerInvariant() switch
+                {
+                    "error" => GDLintSeverity.Error,
+                    "warning" => GDLintSeverity.Warning,
+                    "info" or "information" => GDLintSeverity.Info,
+                    "hint" => GDLintSeverity.Hint,
+                    _ => null
+                };
+            }
 
             var formatter = CommandHelpers.GetFormatter(format);
 
@@ -219,6 +364,16 @@ public static class LintCommandBuilder
             overrides.MaxFunctionLength = context.ParseResult.GetValueForOption(maxFunctionLengthOption);
             overrides.MaxCyclomaticComplexity = context.ParseResult.GetValueForOption(maxComplexityOption);
 
+            // Complexity limits (new rules)
+            overrides.MaxPublicMethods = context.ParseResult.GetValueForOption(maxPublicMethodsOption);
+            overrides.MaxReturns = context.ParseResult.GetValueForOption(maxReturnsOption);
+            overrides.MaxNestingDepth = context.ParseResult.GetValueForOption(maxNestingDepthOption);
+            overrides.MaxLocalVariables = context.ParseResult.GetValueForOption(maxLocalVariablesOption);
+            overrides.MaxClassVariables = context.ParseResult.GetValueForOption(maxClassVariablesOption);
+            overrides.MaxBranches = context.ParseResult.GetValueForOption(maxBranchesOption);
+            overrides.MaxBooleanExpressions = context.ParseResult.GetValueForOption(maxBooleanExpressionsOption);
+            overrides.MaxInnerClasses = context.ParseResult.GetValueForOption(maxInnerClassesOption);
+
             // Warnings
             overrides.WarnUnusedVariables = context.ParseResult.GetValueForOption(warnUnusedVariablesOption);
             overrides.WarnUnusedParameters = context.ParseResult.GetValueForOption(warnUnusedParametersOption);
@@ -231,6 +386,21 @@ public static class LintCommandBuilder
             overrides.WarnNoElseReturn = context.ParseResult.GetValueForOption(warnNoElseReturnOption);
             overrides.WarnPrivateMethodCall = context.ParseResult.GetValueForOption(warnPrivateMethodCallOption);
             overrides.WarnDuplicatedLoad = context.ParseResult.GetValueForOption(warnDuplicatedLoadOption);
+
+            // New warnings (new rules)
+            overrides.WarnExpressionNotAssigned = context.ParseResult.GetValueForOption(warnExpressionNotAssignedOption);
+            overrides.WarnUselessAssignment = context.ParseResult.GetValueForOption(warnUselessAssignmentOption);
+            overrides.WarnInconsistentReturn = context.ParseResult.GetValueForOption(warnInconsistentReturnOption);
+            overrides.WarnMissingReturn = context.ParseResult.GetValueForOption(warnMissingReturnOption);
+            overrides.WarnNoLonelyIf = context.ParseResult.GetValueForOption(warnNoLonelyIfOption);
+
+            // God class, commented code, debug print
+            overrides.WarnGodClass = context.ParseResult.GetValueForOption(warnGodClassOption);
+            overrides.WarnCommentedCode = context.ParseResult.GetValueForOption(warnCommentedCodeOption);
+            overrides.WarnDebugPrint = context.ParseResult.GetValueForOption(warnDebugPrintOption);
+            overrides.GodClassMaxVariables = context.ParseResult.GetValueForOption(godClassMaxVariablesOption);
+            overrides.GodClassMaxMethods = context.ParseResult.GetValueForOption(godClassMaxMethodsOption);
+            overrides.GodClassMaxLines = context.ParseResult.GetValueForOption(godClassMaxLinesOption);
 
             // Strict typing
             var strictTyping = context.ParseResult.GetValueForOption(strictTypingOption);
@@ -262,7 +432,30 @@ public static class LintCommandBuilder
             // Suppression
             overrides.EnableCommentSuppression = context.ParseResult.GetValueForOption(enableSuppressionOption);
 
-            var cmd = new GDLintCommand(projectPath, formatter, optionsOverrides: overrides);
+            // Member ordering
+            overrides.AbstractMethodPosition = context.ParseResult.GetValueForOption(abstractMethodPositionOption);
+            overrides.PrivateMethodPosition = context.ParseResult.GetValueForOption(privateMethodPositionOption);
+            overrides.StaticMethodPosition = context.ParseResult.GetValueForOption(staticMethodPositionOption);
+
+            // Build config with fail-on overrides
+            var failOn = context.ParseResult.GetValueForOption(failOnOption);
+            GDProjectConfig? config = null;
+            if (failOn != null)
+            {
+                config = new GDProjectConfig();
+                switch (failOn.ToLowerInvariant())
+                {
+                    case "warning":
+                        config.Cli.FailOnWarning = true;
+                        break;
+                    case "hint":
+                        config.Cli.FailOnWarning = true;
+                        config.Cli.FailOnHint = true;
+                        break;
+                }
+            }
+
+            var cmd = new GDLintCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, optionsOverrides: overrides);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

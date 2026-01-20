@@ -2,6 +2,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using GDShrapt.CLI.Core;
+using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI;
 
@@ -21,7 +22,7 @@ public static class ValidateCommandBuilder
         // Check selection
         var checksOption = new Option<string?>(
             new[] { "--checks" },
-            "Checks to run: syntax, scope, types, calls, controlflow, indentation, or 'all'");
+            "Checks to run: syntax, scope, types, calls, controlflow, indentation, memberaccess, abstract, signals, resourcepaths, or 'all'");
         command.AddOption(checksOption);
 
         // Severity control
@@ -30,7 +31,7 @@ public static class ValidateCommandBuilder
             "Treat all issues as errors");
         command.AddOption(strictOption);
 
-        // Individual check toggles
+        // Individual check toggles - basic checks
         var checkSyntaxOption = new Option<bool?>(
             new[] { "--check-syntax" },
             "Enable/disable syntax checking");
@@ -49,6 +50,22 @@ public static class ValidateCommandBuilder
         var checkIndentationOption = new Option<bool?>(
             new[] { "--check-indentation" },
             "Enable/disable indentation checking");
+
+        // Individual check toggles - advanced checks
+        var checkMemberAccessOption = new Option<bool?>(
+            new[] { "--check-member-access" },
+            "Enable/disable member access checking on typed/untyped expressions (GD7xxx)");
+        var checkAbstractOption = new Option<bool?>(
+            new[] { "--check-abstract" },
+            "Enable/disable @abstract annotation checking (GD8xxx)");
+        var checkSignalsOption = new Option<bool?>(
+            new[] { "--check-signals" },
+            "Enable/disable signal operation validation");
+        var checkResourcePathsOption = new Option<bool?>(
+            new[] { "--check-resource-paths" },
+            "Enable/disable resource path validation in load/preload calls");
+
+        // Add basic options
         command.AddOption(checkSyntaxOption);
         command.AddOption(checkScopeOption);
         command.AddOption(checkTypesOption);
@@ -56,12 +73,67 @@ public static class ValidateCommandBuilder
         command.AddOption(checkControlFlowOption);
         command.AddOption(checkIndentationOption);
 
+        // Add advanced options
+        command.AddOption(checkMemberAccessOption);
+        command.AddOption(checkAbstractOption);
+        command.AddOption(checkSignalsOption);
+        command.AddOption(checkResourcePathsOption);
+
+        // Fail threshold
+        var failOnOption = new Option<string?>(
+            new[] { "--fail-on" },
+            "Fail threshold: error (default), warning, or hint");
+        command.AddOption(failOnOption);
+
+        // Severity filtering
+        var minSeverityOption = new Option<string?>(
+            new[] { "--min-severity" },
+            "Minimum severity to report: error, warning, info, or hint");
+        var maxIssuesOption = new Option<int?>(
+            new[] { "--max-issues" },
+            "Maximum number of issues to report (0 = unlimited)");
+        var groupByOption = new Option<string?>(
+            new[] { "--group-by" },
+            "Group output by: file (default), rule, or severity");
+        command.AddOption(minSeverityOption);
+        command.AddOption(maxIssuesOption);
+        command.AddOption(groupByOption);
+
         command.SetHandler(async (InvocationContext context) =>
         {
             var projectPath = context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
             var checks = context.ParseResult.GetValueForOption(checksOption);
             var strict = context.ParseResult.GetValueForOption(strictOption);
+            var minSeverity = context.ParseResult.GetValueForOption(minSeverityOption);
+            var maxIssues = context.ParseResult.GetValueForOption(maxIssuesOption);
+            var groupBy = context.ParseResult.GetValueForOption(groupByOption);
+
+            // Parse group-by
+            GDGroupBy groupByMode = GDGroupBy.File;
+            if (groupBy != null)
+            {
+                groupByMode = groupBy.ToLowerInvariant() switch
+                {
+                    "rule" => GDGroupBy.Rule,
+                    "severity" => GDGroupBy.Severity,
+                    _ => GDGroupBy.File
+                };
+            }
+
+            // Parse min severity
+            GDSeverity? minSev = null;
+            if (minSeverity != null)
+            {
+                minSev = minSeverity.ToLowerInvariant() switch
+                {
+                    "error" => GDSeverity.Error,
+                    "warning" => GDSeverity.Warning,
+                    "info" or "information" => GDSeverity.Information,
+                    "hint" => GDSeverity.Hint,
+                    _ => null
+                };
+            }
 
             var formatter = CommandHelpers.GetFormatter(format);
             var validationChecks = OptionParsers.ParseValidationChecks(checks);
@@ -74,12 +146,34 @@ public static class ValidateCommandBuilder
                 CheckTypes = context.ParseResult.GetValueForOption(checkTypesOption),
                 CheckCalls = context.ParseResult.GetValueForOption(checkCallsOption),
                 CheckControlFlow = context.ParseResult.GetValueForOption(checkControlFlowOption),
-                CheckIndentation = context.ParseResult.GetValueForOption(checkIndentationOption)
+                CheckIndentation = context.ParseResult.GetValueForOption(checkIndentationOption),
+                CheckMemberAccess = context.ParseResult.GetValueForOption(checkMemberAccessOption),
+                CheckAbstract = context.ParseResult.GetValueForOption(checkAbstractOption),
+                CheckSignals = context.ParseResult.GetValueForOption(checkSignalsOption),
+                CheckResourcePaths = context.ParseResult.GetValueForOption(checkResourcePathsOption)
             };
 
             validationChecks = checkOverrides.ApplyTo(validationChecks);
 
-            var cmd = new GDValidateCommand(projectPath, formatter, checks: validationChecks, strict: strict);
+            // Build config with fail-on overrides
+            var failOn = context.ParseResult.GetValueForOption(failOnOption);
+            GDProjectConfig? config = null;
+            if (failOn != null)
+            {
+                config = new GDProjectConfig();
+                switch (failOn.ToLowerInvariant())
+                {
+                    case "warning":
+                        config.Cli.FailOnWarning = true;
+                        break;
+                    case "hint":
+                        config.Cli.FailOnWarning = true;
+                        config.Cli.FailOnHint = true;
+                        break;
+                }
+            }
+
+            var cmd = new GDValidateCommand(projectPath, formatter, config: config, checks: validationChecks, strict: strict, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

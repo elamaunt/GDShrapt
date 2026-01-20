@@ -11,6 +11,7 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Lints GDScript files for style and best practices issues.
+/// Exit codes: 0=Success, 1=Warnings/Hints (if fail-on configured), 2=Errors, 3=Fatal.
 /// This command runs only the linter (not the validator).
 /// </summary>
 public class GDLintCommand : IGDCommand
@@ -22,6 +23,8 @@ public class GDLintCommand : IGDCommand
     private readonly HashSet<string>? _onlyRules;
     private readonly HashSet<GDLintCategory>? _categories;
     private readonly GDLintSeverity? _minSeverity;
+    private readonly int? _maxIssues;
+    private readonly GDGroupBy _groupBy;
     private readonly GDLinterOptionsOverrides? _optionsOverrides;
 
     public string Name => "lint";
@@ -37,6 +40,8 @@ public class GDLintCommand : IGDCommand
     /// <param name="onlyRules">Only run these specific rules (e.g., "GDL001,GDL003").</param>
     /// <param name="categories">Only run rules in these categories.</param>
     /// <param name="minSeverity">Minimum severity to report.</param>
+    /// <param name="maxIssues">Maximum number of issues to report (0 = unlimited).</param>
+    /// <param name="groupBy">How to group the output (default: by file).</param>
     /// <param name="optionsOverrides">CLI options overrides.</param>
     public GDLintCommand(
         string projectPath,
@@ -46,6 +51,8 @@ public class GDLintCommand : IGDCommand
         IEnumerable<string>? onlyRules = null,
         IEnumerable<GDLintCategory>? categories = null,
         GDLintSeverity? minSeverity = null,
+        int? maxIssues = null,
+        GDGroupBy groupBy = GDGroupBy.File,
         GDLinterOptionsOverrides? optionsOverrides = null)
     {
         _projectPath = projectPath;
@@ -87,6 +94,8 @@ public class GDLintCommand : IGDCommand
         }
 
         _minSeverity = minSeverity;
+        _maxIssues = maxIssues;
+        _groupBy = groupBy;
     }
 
     public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -97,7 +106,7 @@ public class GDLintCommand : IGDCommand
             if (projectRoot == null)
             {
                 _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}");
-                return Task.FromResult(2);
+                return Task.FromResult(GDExitCode.Fatal);
             }
 
             // Load config from project or use provided
@@ -106,24 +115,23 @@ public class GDLintCommand : IGDCommand
             using var project = GDProjectLoader.LoadProject(projectRoot);
 
             var result = BuildLintResult(project, projectRoot, config);
+            result.GroupBy = _groupBy;
             _formatter.WriteAnalysisResult(_output, result);
 
-            // Determine exit code
-            if (result.TotalErrors > 0)
-                return Task.FromResult(1);
+            // Determine exit code using new exit code system
+            var exitCode = GDExitCode.FromResults(
+                result.TotalErrors,
+                result.TotalWarnings,
+                result.TotalHints,
+                config.Cli.FailOnWarning,
+                config.Cli.FailOnHint);
 
-            if (config.Cli.FailOnWarning && result.TotalWarnings > 0)
-                return Task.FromResult(1);
-
-            if (config.Cli.FailOnHint && result.TotalHints > 0)
-                return Task.FromResult(1);
-
-            return Task.FromResult(0);
+            return Task.FromResult(exitCode);
         }
         catch (Exception ex)
         {
             _formatter.WriteError(_output, ex.Message);
-            return Task.FromResult(2);
+            return Task.FromResult(GDExitCode.Fatal);
         }
     }
 
@@ -139,6 +147,8 @@ public class GDLintCommand : IGDCommand
         var totalErrors = 0;
         var totalWarnings = 0;
         var totalHints = 0;
+        var totalIssuesReported = 0;
+        var maxIssues = _maxIssues ?? 0; // 0 means unlimited
 
         // Create linter with options from config (using factory from Semantics)
         var linterOptions = GDLinterOptionsFactory.FromConfig(config);
@@ -164,6 +174,10 @@ public class GDLintCommand : IGDCommand
 
         foreach (var script in project.ScriptFiles)
         {
+            // Check if we've reached the max issues limit
+            if (maxIssues > 0 && totalIssuesReported >= maxIssues)
+                break;
+
             var relativePath = GetRelativePath(script.Reference.FullPath, projectRoot);
 
             // Check if file should be excluded
@@ -182,6 +196,10 @@ public class GDLintCommand : IGDCommand
             var lintResult = linter.Lint(script.Class);
             foreach (var issue in lintResult.Issues)
             {
+                // Check if we've reached the max issues limit
+                if (maxIssues > 0 && totalIssuesReported >= maxIssues)
+                    break;
+
                 // Filter by category if specified
                 if (_categories != null && _categories.Count > 0)
                 {
@@ -212,6 +230,7 @@ public class GDLintCommand : IGDCommand
                 });
 
                 UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, severity);
+                totalIssuesReported++;
             }
 
             if (fileDiags.Diagnostics.Count > 0)

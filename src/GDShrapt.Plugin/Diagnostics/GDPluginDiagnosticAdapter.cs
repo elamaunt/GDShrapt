@@ -25,6 +25,7 @@ internal static class GDPluginDiagnosticAdapter
         return new GDPluginDiagnostic
         {
             RuleId = unified.Code,
+            RuleName = unified.RuleName,
             Message = unified.Message,
             Severity = unified.Severity,
             Category = MapCategory(unified.Source),

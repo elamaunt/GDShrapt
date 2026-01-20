@@ -1,16 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Analyzes a GDScript project and outputs diagnostics.
+/// Exit codes: 0=Success, 1=Warnings/Hints (if fail-on configured), 2=Errors, 3=Fatal.
+/// Uses the unified GDDiagnosticsService for consistent diagnostics across CLI, LSP, and Plugin.
 /// </summary>
 public class GDAnalyzeCommand : IGDCommand
 {
@@ -18,16 +18,29 @@ public class GDAnalyzeCommand : IGDCommand
     private readonly IGDOutputFormatter _formatter;
     private readonly TextWriter _output;
     private readonly GDProjectConfig? _config;
+    private readonly GDSeverity? _minSeverity;
+    private readonly int? _maxIssues;
+    private readonly GDGroupBy _groupBy;
 
     public string Name => "analyze";
     public string Description => "Analyze a GDScript project and output diagnostics";
 
-    public GDAnalyzeCommand(string projectPath, IGDOutputFormatter formatter, TextWriter? output = null, GDProjectConfig? config = null)
+    public GDAnalyzeCommand(
+        string projectPath,
+        IGDOutputFormatter formatter,
+        TextWriter? output = null,
+        GDProjectConfig? config = null,
+        GDSeverity? minSeverity = null,
+        int? maxIssues = null,
+        GDGroupBy groupBy = GDGroupBy.File)
     {
         _projectPath = projectPath;
         _formatter = formatter;
         _output = output ?? Console.Out;
         _config = config;
+        _minSeverity = minSeverity;
+        _maxIssues = maxIssues;
+        _groupBy = groupBy;
     }
 
     public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -38,7 +51,7 @@ public class GDAnalyzeCommand : IGDCommand
             if (projectRoot == null)
             {
                 _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}");
-                return Task.FromResult(2);
+                return Task.FromResult(GDExitCode.Fatal);
             }
 
             // Load config from project or use provided
@@ -46,29 +59,33 @@ public class GDAnalyzeCommand : IGDCommand
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
 
-            var result = BuildAnalysisResult(project, projectRoot, config);
+            var result = BuildAnalysisResult(project, projectRoot, config, _minSeverity, _maxIssues);
+            result.GroupBy = _groupBy;
             _formatter.WriteAnalysisResult(_output, result);
 
-            // Determine exit code based on config
-            if (result.TotalErrors > 0)
-                return Task.FromResult(1);
+            // Determine exit code using new exit code system
+            var exitCode = GDExitCode.FromResults(
+                result.TotalErrors,
+                result.TotalWarnings,
+                result.TotalHints,
+                config.Cli.FailOnWarning,
+                config.Cli.FailOnHint);
 
-            if (config.Cli.FailOnWarning && result.TotalWarnings > 0)
-                return Task.FromResult(1);
-
-            if (config.Cli.FailOnHint && result.TotalHints > 0)
-                return Task.FromResult(1);
-
-            return Task.FromResult(0);
+            return Task.FromResult(exitCode);
         }
         catch (Exception ex)
         {
             _formatter.WriteError(_output, ex.Message);
-            return Task.FromResult(2);
+            return Task.FromResult(GDExitCode.Fatal);
         }
     }
 
-    private static GDAnalysisResult BuildAnalysisResult(GDScriptProject project, string projectRoot, GDProjectConfig config)
+    private static GDAnalysisResult BuildAnalysisResult(
+        GDScriptProject project,
+        string projectRoot,
+        GDProjectConfig config,
+        GDSeverity? minSeverity = null,
+        int? maxIssues = null)
     {
         var result = new GDAnalysisResult
         {
@@ -80,25 +97,17 @@ public class GDAnalyzeCommand : IGDCommand
         var totalErrors = 0;
         var totalWarnings = 0;
         var totalHints = 0;
+        var totalIssuesReported = 0;
+        var maxReached = false;
 
-        // Create linter with options from config (using factory from Semantics)
-        var linterOptions = GDLinterOptionsFactory.FromConfig(config);
-        var linter = new GDLinter(linterOptions);
-
-        // Create validator
-        var validator = new GDValidator();
-        var validationOptions = new GDValidationOptions
-        {
-            CheckSyntax = true,
-            CheckScope = true,
-            CheckTypes = true,
-            CheckCalls = true,
-            CheckControlFlow = true,
-            CheckIndentation = config.Linting.FormattingLevel != GDFormattingLevel.Off
-        };
+        // Use unified diagnostics service - handles validator, linter, and config consistently
+        var diagnosticsService = GDDiagnosticsService.FromConfig(config);
 
         foreach (var script in project.ScriptFiles)
         {
+            if (maxReached)
+                break;
+
             var relativePath = GetRelativePath(script.Reference.FullPath, projectRoot);
 
             // Check if file should be excluded
@@ -110,93 +119,50 @@ public class GDAnalyzeCommand : IGDCommand
                 FilePath = relativePath
             };
 
-            // Check for parse errors
-            if (script.WasReadError)
+            // Use unified diagnostics service - handles parse errors, invalid tokens,
+            // validation, linting, config overrides, and comment suppression
+            var diagnosticsResult = diagnosticsService.Diagnose(script);
+
+            foreach (var diagnostic in diagnosticsResult.Diagnostics)
             {
+                var severity = GDSeverityHelper.FromUnified(diagnostic.Severity);
+
+                // Filter by minimum severity
+                if (minSeverity.HasValue && severity > minSeverity.Value)
+                    continue;
+
+                // Check max issues limit
+                if (maxIssues.HasValue && maxIssues.Value > 0 && totalIssuesReported >= maxIssues.Value)
+                {
+                    maxReached = true;
+                    break;
+                }
+
                 fileDiags.Diagnostics.Add(new GDDiagnosticInfo
                 {
-                    Code = "GD0001",
-                    Message = "Failed to parse file",
-                    Severity = GDSeverity.Error,
-                    Line = 1,
-                    Column = 1
+                    Code = diagnostic.Code,
+                    Message = diagnostic.Message,
+                    Severity = severity,
+                    Line = diagnostic.StartLine,
+                    Column = diagnostic.StartColumn,
+                    EndLine = diagnostic.EndLine,
+                    EndColumn = diagnostic.EndColumn
                 });
-                totalErrors++;
-            }
 
-            if (script.Class != null)
-            {
-                // Check for invalid tokens in AST
-                var invalidTokens = script.Class.AllInvalidTokens;
-                foreach (var token in invalidTokens)
+                totalIssuesReported++;
+
+                // Update counts
+                switch (severity)
                 {
-                    fileDiags.Diagnostics.Add(new GDDiagnosticInfo
-                    {
-                        Code = "GD0002",
-                        Message = $"Invalid token: {token.ToString()?.Trim() ?? "unknown"}",
-                        Severity = GDSeverity.Error,
-                        Line = token.StartLine,
-                        Column = token.StartColumn
-                    });
-                    totalErrors++;
-                }
-
-                // Run validator
-                var validationResult = validator.Validate(script.Class, validationOptions);
-                foreach (var diagnostic in validationResult.Diagnostics)
-                {
-                    var unifiedSeverity = GDSeverityMapper.FromValidator(diagnostic.Severity);
-                    var severity = MapToOutputSeverity(unifiedSeverity);
-
-                    // Check if rule is enabled in config
-                    var ruleId = diagnostic.CodeString;
-                    if (!IsRuleEnabled(config, ruleId))
-                        continue;
-
-                    var finalSeverity = GetConfiguredSeverity(config, ruleId, severity);
-
-                    fileDiags.Diagnostics.Add(new GDDiagnosticInfo
-                    {
-                        Code = ruleId,
-                        Message = diagnostic.Message,
-                        Severity = finalSeverity,
-                        Line = diagnostic.StartLine,
-                        Column = diagnostic.StartColumn,
-                        EndLine = diagnostic.EndLine,
-                        EndColumn = diagnostic.EndColumn
-                    });
-
-                    UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, finalSeverity);
-                }
-
-                // Run linter
-                if (config.Linting.Enabled)
-                {
-                    var lintResult = linter.Lint(script.Class);
-                    foreach (var issue in lintResult.Issues)
-                    {
-                        var unifiedSeverity = GDSeverityMapper.FromLinter(issue.Severity);
-                        var severity = MapToOutputSeverity(unifiedSeverity);
-
-                        // Check if rule is enabled in config
-                        if (!IsRuleEnabled(config, issue.RuleId))
-                            continue;
-
-                        var finalSeverity = GetConfiguredSeverity(config, issue.RuleId, severity);
-
-                        fileDiags.Diagnostics.Add(new GDDiagnosticInfo
-                        {
-                            Code = issue.RuleId,
-                            Message = issue.Message,
-                            Severity = finalSeverity,
-                            Line = issue.StartLine,
-                            Column = issue.StartColumn,
-                            EndLine = issue.EndLine,
-                            EndColumn = issue.EndColumn
-                        });
-
-                        UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, finalSeverity);
-                    }
+                    case GDSeverity.Error:
+                        totalErrors++;
+                        break;
+                    case GDSeverity.Warning:
+                        totalWarnings++;
+                        break;
+                    default:
+                        totalHints++;
+                        break;
                 }
             }
 
@@ -213,58 +179,6 @@ public class GDAnalyzeCommand : IGDCommand
         result.TotalHints = totalHints;
 
         return result;
-    }
-
-    /// <summary>
-    /// Maps unified severity from Semantics to CLI output severity.
-    /// </summary>
-    private static GDSeverity MapToOutputSeverity(GDUnifiedDiagnosticSeverity severity)
-    {
-        return severity switch
-        {
-            GDUnifiedDiagnosticSeverity.Error => GDSeverity.Error,
-            GDUnifiedDiagnosticSeverity.Warning => GDSeverity.Warning,
-            GDUnifiedDiagnosticSeverity.Info => GDSeverity.Information,
-            GDUnifiedDiagnosticSeverity.Hint => GDSeverity.Hint,
-            _ => GDSeverity.Information
-        };
-    }
-
-    private static bool IsRuleEnabled(GDProjectConfig config, string ruleId)
-    {
-        if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig))
-        {
-            return ruleConfig.Enabled;
-        }
-        return true; // Enabled by default
-    }
-
-    private static GDSeverity GetConfiguredSeverity(GDProjectConfig config, string ruleId, GDSeverity defaultSeverity)
-    {
-        if (config.Linting.Rules.TryGetValue(ruleId, out var ruleConfig) && ruleConfig.Severity.HasValue)
-        {
-            // Convert from Reader.GDDiagnosticSeverity to unified, then to CLI output
-            var unified = GDSeverityMapper.FromValidator(ruleConfig.Severity.Value);
-            return MapToOutputSeverity(unified);
-        }
-        return defaultSeverity;
-    }
-
-    private static void UpdateCounts(ref int errors, ref int warnings, ref int hints, GDSeverity severity)
-    {
-        switch (severity)
-        {
-            case GDSeverity.Error:
-                errors++;
-                break;
-            case GDSeverity.Warning:
-                warnings++;
-                break;
-            case GDSeverity.Hint:
-            case GDSeverity.Information:
-                hints++;
-                break;
-        }
     }
 
     private static string GetRelativePath(string fullPath, string basePath)

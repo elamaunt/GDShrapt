@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Linter
 {
     /// <summary>
@@ -23,6 +21,26 @@ namespace GDShrapt.Linter
         /// Re-enable previously disabled rules.
         /// Syntax: # gdlint: enable=rule1, rule2
         /// </summary>
-        Enable
+        Enable,
+
+        /// <summary>
+        /// Ignore rules for the entire file.
+        /// Syntax: # gdlint:ignore-file or # gdlint:ignore-file = rule1, rule2
+        /// Must appear at the top of the file (first 10 lines).
+        /// </summary>
+        IgnoreFile,
+
+        /// <summary>
+        /// Ignore rules for the entire function that follows.
+        /// Syntax: # gdlint:ignore-function or # gdlint:ignore-function = rule1, rule2
+        /// Must appear immediately before a func declaration.
+        /// </summary>
+        IgnoreFunction,
+
+        /// <summary>
+        /// Ignore rules from this point to end of file.
+        /// Syntax: # gdlint:ignore-below or # gdlint:ignore-below = rule1, rule2
+        /// </summary>
+        IgnoreBelow
     }
 }

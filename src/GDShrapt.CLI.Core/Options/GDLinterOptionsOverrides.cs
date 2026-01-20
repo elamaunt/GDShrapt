@@ -56,7 +56,16 @@ public class GDLinterOptionsOverrides
     public bool? WarnExpressionNotAssigned { get; set; }
     public bool? WarnUselessAssignment { get; set; }
     public bool? WarnInconsistentReturn { get; set; }
+    public bool? WarnMissingReturn { get; set; }
     public bool? WarnNoLonelyIf { get; set; }
+
+    // God class, commented code, debug print
+    public bool? WarnGodClass { get; set; }
+    public bool? WarnCommentedCode { get; set; }
+    public bool? WarnDebugPrint { get; set; }
+    public int? GodClassMaxVariables { get; set; }
+    public int? GodClassMaxMethods { get; set; }
+    public int? GodClassMaxLines { get; set; }
 
     // Strict typing
     public GDLintSeverity? StrictTypingClassVariables { get; set; }
@@ -158,8 +167,24 @@ public class GDLinterOptionsOverrides
             options.WarnUselessAssignment = WarnUselessAssignment.Value;
         if (WarnInconsistentReturn.HasValue)
             options.WarnInconsistentReturn = WarnInconsistentReturn.Value;
+        if (WarnMissingReturn.HasValue)
+            options.WarnMissingReturn = WarnMissingReturn.Value;
         if (WarnNoLonelyIf.HasValue)
             options.WarnNoLonelyIf = WarnNoLonelyIf.Value;
+
+        // God class, commented code, debug print
+        if (WarnGodClass.HasValue)
+            options.WarnGodClass = WarnGodClass.Value;
+        if (WarnCommentedCode.HasValue)
+            options.WarnCommentedCode = WarnCommentedCode.Value;
+        if (WarnDebugPrint.HasValue)
+            options.WarnDebugPrint = WarnDebugPrint.Value;
+        if (GodClassMaxVariables.HasValue)
+            options.GodClassMaxVariables = GodClassMaxVariables.Value;
+        if (GodClassMaxMethods.HasValue)
+            options.GodClassMaxMethods = GodClassMaxMethods.Value;
+        if (GodClassMaxLines.HasValue)
+            options.GodClassMaxLines = GodClassMaxLines.Value;
 
         // Strict typing
         if (StrictTypingClassVariables.HasValue)

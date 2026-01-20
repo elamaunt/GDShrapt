@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using GDShrapt.Reader;
 
@@ -27,6 +28,21 @@ namespace GDShrapt.Linter
             @"#\s*gdlint\s*:\s*enable\s*(=\s*([\w\-]+(?:\s*,\s*[\w\-]+)*))?",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+        // gdlint:ignore-file = rule1,rule2  or  gdlint:ignore-file
+        private static readonly Regex IgnoreFilePattern = new Regex(
+            @"#\s*gdlint\s*:\s*ignore-file\s*(=\s*([\w\-]+(?:\s*,\s*[\w\-]+)*))?",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        // gdlint:ignore-function = rule1,rule2  or  gdlint:ignore-function
+        private static readonly Regex IgnoreFunctionPattern = new Regex(
+            @"#\s*gdlint\s*:\s*ignore-function\s*(=\s*([\w\-]+(?:\s*,\s*[\w\-]+)*))?",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        // gdlint:ignore-below = rule1,rule2  or  gdlint:ignore-below
+        private static readonly Regex IgnoreBelowPattern = new Regex(
+            @"#\s*gdlint\s*:\s*ignore-below\s*(=\s*([\w\-]+(?:\s*,\s*[\w\-]+)*))?",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         /// <summary>
         /// Parses all suppression directives from an AST node.
         /// </summary>
@@ -49,7 +65,61 @@ namespace GDShrapt.Linter
                 }
             }
 
+            // Resolve function boundaries for IgnoreFunction directives
+            ResolveFunctionBoundaries(node, directives);
+
             return new GDSuppressionContext(directives);
+        }
+
+        /// <summary>
+        /// Resolves function end lines for IgnoreFunction directives.
+        /// </summary>
+        private static void ResolveFunctionBoundaries(GDNode node, List<GDSuppressionDirective> directives)
+        {
+            var functionDirectives = directives
+                .Where(d => d.Type == GDSuppressionType.IgnoreFunction)
+                .ToList();
+
+            if (functionDirectives.Count == 0)
+                return;
+
+            // Collect all function declarations with their line ranges
+            var functions = new List<(int StartLine, int EndLine)>();
+            CollectFunctions(node, functions);
+
+            // For each IgnoreFunction directive, find the function that follows it
+            foreach (var directive in functionDirectives)
+            {
+                // Find the first function that starts after (or on) the directive line
+                var matchingFunction = functions
+                    .Where(f => f.StartLine >= directive.Line)
+                    .OrderBy(f => f.StartLine)
+                    .FirstOrDefault();
+
+                if (matchingFunction.EndLine > 0)
+                {
+                    directive.FunctionEndLine = matchingFunction.EndLine;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Recursively collects function declarations and their line ranges.
+        /// </summary>
+        private static void CollectFunctions(GDNode node, List<(int StartLine, int EndLine)> functions)
+        {
+            if (node == null)
+                return;
+
+            if (node is GDMethodDeclaration method)
+            {
+                functions.Add((method.StartLine, method.EndLine));
+            }
+
+            foreach (var child in node.Nodes)
+            {
+                CollectFunctions(child, functions);
+            }
         }
 
         /// <summary>
@@ -71,7 +141,32 @@ namespace GDShrapt.Linter
             // Check if comment is inline (has code before it on the same line)
             bool isInline = IsInlineComment(comment);
 
-            // Try each pattern
+            // Try each pattern (order matters: more specific patterns first)
+
+            // Check ignore-file first (before ignore)
+            var ignoreFileMatch = IgnoreFilePattern.Match(text);
+            if (ignoreFileMatch.Success)
+            {
+                var ruleIds = ParseRuleIds(ignoreFileMatch.Groups[2].Value);
+                return new GDSuppressionDirective(GDSuppressionType.IgnoreFile, ruleIds, line, isInline);
+            }
+
+            // Check ignore-function (before ignore)
+            var ignoreFunctionMatch = IgnoreFunctionPattern.Match(text);
+            if (ignoreFunctionMatch.Success)
+            {
+                var ruleIds = ParseRuleIds(ignoreFunctionMatch.Groups[2].Value);
+                return new GDSuppressionDirective(GDSuppressionType.IgnoreFunction, ruleIds, line, isInline);
+            }
+
+            // Check ignore-below (before ignore)
+            var ignoreBelowMatch = IgnoreBelowPattern.Match(text);
+            if (ignoreBelowMatch.Success)
+            {
+                var ruleIds = ParseRuleIds(ignoreBelowMatch.Groups[2].Value);
+                return new GDSuppressionDirective(GDSuppressionType.IgnoreBelow, ruleIds, line, isInline);
+            }
+
             var ignoreMatch = IgnorePattern.Match(text);
             if (ignoreMatch.Success)
             {

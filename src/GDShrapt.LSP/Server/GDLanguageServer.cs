@@ -86,7 +86,8 @@ public class GDLanguageServer : IGDLanguageServer
                 var projectRoot = GDProjectLoader.FindProjectRoot(rootPath);
                 if (projectRoot != null)
                 {
-                    project = GDProjectLoader.LoadProject(projectRoot);
+                    // Load project WITHOUT analysis - analysis will run in background after initialized
+                    project = GDProjectLoader.LoadProjectWithoutAnalysis(projectRoot);
                     _documentManager = new GDDocumentManager(project);
                     _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, project);
                     _project = project;
@@ -139,6 +140,31 @@ public class GDLanguageServer : IGDLanguageServer
     private Task HandleInitializedAsync(object? @params)
     {
         IsInitialized = true;
+
+        // Start background analysis after initialization completes
+        // This prevents blocking the initialize request and allows the client to proceed
+        if (_project != null)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Run analysis in background
+                    _project.AnalyzeAll();
+
+                    // Publish initial diagnostics for all loaded scripts
+                    if (_diagnosticPublisher != null && _documentManager != null)
+                    {
+                        await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Analysis failed, but server can still function with reduced capabilities
+                }
+            });
+        }
+
         return Task.CompletedTask;
     }
 
@@ -319,7 +345,11 @@ internal static class GDProjectLoader
         return null;
     }
 
-    public static GDScriptProject LoadProject(string projectRoot)
+    /// <summary>
+    /// Loads project without analysis (fast for initialization).
+    /// Call AnalyzeAllAsync() separately for background analysis.
+    /// </summary>
+    public static GDScriptProject LoadProjectWithoutAnalysis(string projectRoot)
     {
         var context = new GDDefaultProjectContext(projectRoot);
         var project = new GDScriptProject(context, new GDScriptProjectOptions
@@ -329,8 +359,18 @@ internal static class GDProjectLoader
 
         project.LoadScripts();
         project.LoadScenes();
-        project.AnalyzeAll();
+        // NOTE: AnalyzeAll() is NOT called here - do it asynchronously after initialized
 
+        return project;
+    }
+
+    /// <summary>
+    /// Loads project with full analysis (blocking, for CLI use).
+    /// </summary>
+    public static GDScriptProject LoadProject(string projectRoot)
+    {
+        var project = LoadProjectWithoutAnalysis(projectRoot);
+        project.AnalyzeAll();
         return project;
     }
 }

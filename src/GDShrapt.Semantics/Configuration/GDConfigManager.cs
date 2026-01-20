@@ -304,6 +304,7 @@ public class GDConfigManager : IDisposable
     /// <summary>
     /// Loads configuration from the project directory (no file watching).
     /// Returns default config if file doesn't exist.
+    /// Falls back to .gdlintrc if .gdshrapt.json doesn't exist (gdtoolkit compatibility).
     /// </summary>
     /// <param name="projectPath">Path to the project directory.</param>
     /// <returns>Loaded or default configuration.</returns>
@@ -311,21 +312,40 @@ public class GDConfigManager : IDisposable
     {
         var configPath = Path.Combine(projectPath, ConfigFileName);
 
-        if (!File.Exists(configPath))
+        // First, try .gdshrapt.json
+        if (File.Exists(configPath))
         {
-            return new GDProjectConfig();
+            try
+            {
+                var json = File.ReadAllText(configPath);
+                return JsonSerializer.Deserialize<GDProjectConfig>(json, JsonOptions) ?? new GDProjectConfig();
+            }
+            catch (JsonException)
+            {
+                // Return default config if JSON is invalid
+                return new GDProjectConfig();
+            }
         }
 
-        try
+        // Fall back to .gdlintrc (gdtoolkit compatibility)
+        var gdlintrcPath = Path.Combine(projectPath, GDGdlintConfigParser.ConfigFileName);
+        if (File.Exists(gdlintrcPath))
         {
-            var json = File.ReadAllText(configPath);
-            return JsonSerializer.Deserialize<GDProjectConfig>(json, JsonOptions) ?? new GDProjectConfig();
+            var config = GDGdlintConfigParser.Parse(gdlintrcPath);
+            if (config != null)
+                return config;
         }
-        catch (JsonException)
+
+        // Fall back to .gdlint.cfg (alternative gdtoolkit filename)
+        var gdlintCfgPath = Path.Combine(projectPath, GDGdlintConfigParser.AltConfigFileName);
+        if (File.Exists(gdlintCfgPath))
         {
-            // Return default config if JSON is invalid
-            return new GDProjectConfig();
+            var config = GDGdlintConfigParser.Parse(gdlintCfgPath);
+            if (config != null)
+                return config;
         }
+
+        return new GDProjectConfig();
     }
 
     /// <summary>

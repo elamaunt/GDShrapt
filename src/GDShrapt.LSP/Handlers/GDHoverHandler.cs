@@ -113,45 +113,50 @@ public class GDHoverHandler
             return null;
 
         // In GDScript, doc comments are ## lines above the declaration
-        // We need to look at the tokens before the declaration
-        var sb = new StringBuilder();
-        var classDecl = declaration.ClassDeclaration as GDClassDeclaration;
-        if (classDecl == null)
-            return null;
-
-        // Get the source text and find comments before this declaration
-        var source = classDecl.ToString();
-        if (string.IsNullOrEmpty(source))
-            return null;
-
-        var lines = source.Split('\n');
-        var declLine = declaration.StartLine;
-
-        // Look backwards for ## comments
+        // We look for comment tokens preceding the declaration
         var docLines = new System.Collections.Generic.List<string>();
-        for (int i = declLine - 2; i >= 0; i--) // -2 because lines are 1-based and we want the line before
-        {
-            if (i >= lines.Length)
-                continue;
 
-            var line = lines[i].Trim();
-            if (line.StartsWith("##"))
+        // Find the first token of the declaration
+        GDSyntaxToken? firstToken = null;
+        foreach (var token in declaration.AllTokens)
+        {
+            firstToken = token;
+            break;
+        }
+
+        if (firstToken == null)
+            return null;
+
+        // Walk backwards through tokens looking for ## comments
+        var currentToken = firstToken.GlobalPreviousToken;
+        while (currentToken != null)
+        {
+            if (currentToken is GDComment comment)
             {
-                // Remove the ## prefix and add to doc
-                var docText = line.Substring(2).TrimStart();
-                docLines.Insert(0, docText);
-            }
-            else if (string.IsNullOrWhiteSpace(line))
-            {
-                // Empty line - stop if we already have doc lines
-                if (docLines.Count > 0)
+                var text = comment.ToString().Trim();
+                if (text.StartsWith("##"))
+                {
+                    // Remove the ## prefix and add to doc
+                    var docText = text.Substring(2).TrimStart();
+                    docLines.Insert(0, docText);
+                }
+                else
+                {
+                    // Regular comment (not doc comment) - stop
                     break;
+                }
+            }
+            else if (currentToken is GDNewLine || currentToken is GDSpace)
+            {
+                // Whitespace is allowed between doc comments
             }
             else
             {
-                // Non-comment line - stop
+                // Any other token means we've passed the doc comments
                 break;
             }
+
+            currentToken = currentToken.GlobalPreviousToken;
         }
 
         return docLines.Count > 0 ? string.Join("\n", docLines) : null;

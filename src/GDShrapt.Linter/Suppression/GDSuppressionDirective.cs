@@ -29,6 +29,12 @@ namespace GDShrapt.Linter
         public bool IsInline { get; }
 
         /// <summary>
+        /// The end line for function-scoped suppression (IgnoreFunction).
+        /// Set by the parser after resolving the function boundaries.
+        /// </summary>
+        public int FunctionEndLine { get; internal set; }
+
+        /// <summary>
         /// Creates a new suppression directive.
         /// </summary>
         /// <param name="type">Type of suppression.</param>
@@ -41,6 +47,7 @@ namespace GDShrapt.Linter
             RuleIds = ruleIds;
             Line = line;
             IsInline = isInline;
+            FunctionEndLine = -1; // Not resolved yet
         }
 
         /// <summary>

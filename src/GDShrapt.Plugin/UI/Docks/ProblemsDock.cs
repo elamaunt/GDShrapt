@@ -16,14 +16,17 @@ internal partial class ProblemsDock : Control
     private Tree _resultsTree;
     private OptionButton _groupByOption;
     private OptionButton _filterBySeverityOption;
+    private LineEdit _searchInput;
     private Button _refreshButton;
     private CheckButton _autoRefreshToggle;
     private Label _statusLabel;
+    private PopupMenu? _contextMenu;
 
     private GDPluginDiagnosticService? _diagnosticService;
     private GDScriptProject? _ScriptProject;
     private GDProblemsGroupingMode _groupingMode = GDProblemsGroupingMode.ByFile;
     private GDDiagnosticSeverity? _filterSeverity; // null = all severities
+    private string _searchFilter = ""; // file name filter
 
     /// <summary>
     /// Event fired when user wants to navigate to a diagnostic.
@@ -105,6 +108,16 @@ internal partial class ProblemsDock : Control
         _filterBySeverityOption.ItemSelected += OnFilterChanged;
         toolbar.AddChild(_filterBySeverityOption);
 
+        // Search input
+        _searchInput = new LineEdit
+        {
+            PlaceholderText = "Search files...",
+            CustomMinimumSize = new Vector2(120, 0),
+            ClearButtonEnabled = true
+        };
+        _searchInput.TextChanged += OnSearchChanged;
+        toolbar.AddChild(_searchInput);
+
         // Auto-refresh toggle
         _autoRefreshToggle = new CheckButton
         {
@@ -152,7 +165,17 @@ internal partial class ProblemsDock : Control
         _resultsTree.SetColumnCustomMinimumWidth(2, 150);
         _resultsTree.SetColumnCustomMinimumWidth(3, 50);
         _resultsTree.ItemActivated += OnItemActivated;
+        _resultsTree.GuiInput += OnTreeGuiInput;
         mainVBox.AddChild(_resultsTree);
+
+        // Context menu
+        _contextMenu = new PopupMenu();
+        _contextMenu.AddItem("Go to Issue", 0);
+        _contextMenu.AddItem("Copy Message", 1);
+        _contextMenu.AddSeparator();
+        _contextMenu.AddItem("Copy Rule ID", 2);
+        _contextMenu.IdPressed += OnContextMenuPressed;
+        AddChild(_contextMenu);
 
         // Status bar
         _statusLabel = new Label
@@ -193,10 +216,20 @@ internal partial class ProblemsDock : Control
 
         var allDiagnostics = _diagnosticService.GetAllDiagnostics();
 
-        // Apply filter
+        // Apply severity filter
         var filteredDiagnostics = _filterSeverity == null
             ? allDiagnostics
             : allDiagnostics.Where(d => d.Severity == _filterSeverity).ToList();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(_searchFilter))
+        {
+            filteredDiagnostics = filteredDiagnostics
+                .Where(d => d.Script?.FullPath != null &&
+                           System.IO.Path.GetFileName(d.Script.FullPath)
+                               .Contains(_searchFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
 
         var summary = _diagnosticService.GetProjectSummary();
         _headerLabel.Text = $"Problems ({summary.ErrorCount} errors, {summary.WarningCount} warnings, {summary.HintCount} hints)";
@@ -317,7 +350,13 @@ internal partial class ProblemsDock : Control
     {
         var row = _resultsTree.CreateItem(parent);
         row.SetText(0, GetSeverityText(diag.Severity));
-        row.SetText(1, $"[{diag.RuleId}] {diag.Message}");
+
+        // Format: [RULE_ID] (rule-name) message
+        var ruleDisplay = !string.IsNullOrEmpty(diag.RuleName)
+            ? $"[{diag.RuleId}] ({diag.RuleName}) {diag.Message}"
+            : $"[{diag.RuleId}] {diag.Message}";
+        row.SetText(1, ruleDisplay);
+
         row.SetText(2, diag.Script != null ? System.IO.Path.GetFileName(diag.Script.FullPath) : "");
         row.SetText(3, (diag.StartLine + 1).ToString());
 
@@ -374,6 +413,56 @@ internal partial class ProblemsDock : Control
             _ => null
         };
         RefreshDisplay();
+    }
+
+    private void OnSearchChanged(string newText)
+    {
+        _searchFilter = newText;
+        RefreshDisplay();
+    }
+
+    private void OnTreeGuiInput(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mouseButton &&
+            mouseButton.Pressed &&
+            mouseButton.ButtonIndex == MouseButton.Right)
+        {
+            var selected = _resultsTree.GetSelected();
+            if (selected != null && _contextMenu != null)
+            {
+                _contextMenu.Position = (Vector2I)GetGlobalMousePosition();
+                _contextMenu.Popup();
+            }
+        }
+    }
+
+    private void OnContextMenuPressed(long id)
+    {
+        var selected = _resultsTree.GetSelected();
+        if (selected == null)
+            return;
+
+        switch (id)
+        {
+            case 0: // Go to Issue
+                OnItemActivated();
+                break;
+            case 1: // Copy Message
+                var message = selected.GetText(1);
+                if (!string.IsNullOrEmpty(message))
+                    DisplayServer.ClipboardSet(message);
+                break;
+            case 2: // Copy Rule ID
+                var fullText = selected.GetText(1);
+                // Extract rule ID from "[RULE_ID] message" or "(rule-name) message"
+                if (fullText.StartsWith("["))
+                {
+                    var endBracket = fullText.IndexOf(']');
+                    if (endBracket > 0)
+                        DisplayServer.ClipboardSet(fullText.Substring(1, endBracket - 1));
+                }
+                break;
+        }
     }
 
     private async void OnRefreshPressed()

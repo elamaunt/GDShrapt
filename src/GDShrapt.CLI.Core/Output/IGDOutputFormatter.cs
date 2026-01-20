@@ -54,6 +54,11 @@ public class GDAnalysisResult
     public int TotalWarnings { get; set; }
     public int TotalHints { get; set; }
     public List<GDFileDiagnostics> Files { get; set; } = new();
+
+    /// <summary>
+    /// How to group the output. Default is by file.
+    /// </summary>
+    public GDGroupBy GroupBy { get; set; } = GDGroupBy.File;
 }
 
 /// <summary>
@@ -88,6 +93,27 @@ public enum GDSeverity
     Warning,
     Information,
     Hint
+}
+
+/// <summary>
+/// Grouping mode for analysis output.
+/// </summary>
+public enum GDGroupBy
+{
+    /// <summary>
+    /// Group by file (default).
+    /// </summary>
+    File,
+
+    /// <summary>
+    /// Group by rule code.
+    /// </summary>
+    Rule,
+
+    /// <summary>
+    /// Group by severity.
+    /// </summary>
+    Severity
 }
 
 /// <summary>

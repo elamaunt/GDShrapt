@@ -96,6 +96,7 @@ namespace GDShrapt.Linter
             AddRule(new GDNoSelfAssignRule());
             AddRule(new GDUselessAssignmentRule());
             AddRule(new GDConsistentReturnRule());
+            AddRule(new GDMissingReturnRule());
 
             // Style rules
             AddRule(new GDTrailingCommaRule());
@@ -110,6 +111,11 @@ namespace GDShrapt.Linter
             AddRule(new GDMaxBranchesRule());
             AddRule(new GDMaxBooleanExpressionsRule());
             AddRule(new GDMaxInnerClassesRule());
+            AddRule(new GDGodClassRule());
+
+            // Additional best practices rules
+            AddRule(new GDCommentedCodeRule());
+            AddRule(new GDDebugPrintRule());
 
             // Organization rules
             AddRule(new GDMemberOrderingRule());

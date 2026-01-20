@@ -153,6 +153,7 @@ public class GDDiagnosticsService
                 var unifiedDiagnostic = new GDUnifiedDiagnostic
                 {
                     Code = issue.RuleId,
+                    RuleName = issue.RuleName,
                     Message = issue.Message,
                     Severity = severity,
                     Source = GDDiagnosticSource.Linter,
