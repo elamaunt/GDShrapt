@@ -127,7 +127,11 @@ public class GDValidationCheckOverridesTests
             CheckTypes = true,
             CheckCalls = true,
             CheckControlFlow = true,
-            CheckIndentation = true
+            CheckIndentation = true,
+            CheckMemberAccess = true,
+            CheckAbstract = true,
+            CheckSignals = true,
+            CheckResourcePaths = true
         };
 
         // Act
@@ -149,7 +153,11 @@ public class GDValidationCheckOverridesTests
             CheckTypes = false,
             CheckCalls = false,
             CheckControlFlow = false,
-            CheckIndentation = false
+            CheckIndentation = false,
+            CheckMemberAccess = false,
+            CheckAbstract = false,
+            CheckSignals = false,
+            CheckResourcePaths = false
         };
 
         // Act
@@ -185,5 +193,165 @@ public class GDValidationCheckOverridesTests
 
         // Assert
         result.HasFlag(GDValidationChecks.Indentation).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void ApplyTo_MemberAccessCheck_EnablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.None;
+        var overrides = new GDValidationCheckOverrides { CheckMemberAccess = true };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.MemberAccess).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void ApplyTo_MemberAccessCheck_DisablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.All;
+        var overrides = new GDValidationCheckOverrides { CheckMemberAccess = false };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.MemberAccess).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void ApplyTo_AbstractCheck_EnablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.None;
+        var overrides = new GDValidationCheckOverrides { CheckAbstract = true };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.Abstract).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void ApplyTo_AbstractCheck_DisablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.All;
+        var overrides = new GDValidationCheckOverrides { CheckAbstract = false };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.Abstract).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void ApplyTo_SignalsCheck_EnablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.None;
+        var overrides = new GDValidationCheckOverrides { CheckSignals = true };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.Signals).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void ApplyTo_SignalsCheck_DisablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.All;
+        var overrides = new GDValidationCheckOverrides { CheckSignals = false };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.Signals).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void ApplyTo_ResourcePathsCheck_EnablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.None;
+        var overrides = new GDValidationCheckOverrides { CheckResourcePaths = true };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.ResourcePaths).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void ApplyTo_ResourcePathsCheck_DisablesFlag()
+    {
+        // Arrange
+        var checks = GDValidationChecks.All;
+        var overrides = new GDValidationCheckOverrides { CheckResourcePaths = false };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.ResourcePaths).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void ApplyTo_BasicChecks_EqualsExpectedFlags()
+    {
+        // Arrange
+        var checks = GDValidationChecks.None;
+        var overrides = new GDValidationCheckOverrides
+        {
+            CheckSyntax = true,
+            CheckScope = true,
+            CheckTypes = true,
+            CheckCalls = true,
+            CheckControlFlow = true,
+            CheckIndentation = true
+        };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.Should().Be(GDValidationChecks.Basic);
+    }
+
+    [TestMethod]
+    public void ApplyTo_AdvancedChecksOnly_AddsCorrectFlags()
+    {
+        // Arrange
+        var checks = GDValidationChecks.None;
+        var overrides = new GDValidationCheckOverrides
+        {
+            CheckMemberAccess = true,
+            CheckAbstract = true,
+            CheckSignals = true,
+            CheckResourcePaths = true
+        };
+
+        // Act
+        var result = overrides.ApplyTo(checks);
+
+        // Assert
+        result.HasFlag(GDValidationChecks.MemberAccess).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Abstract).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.Signals).Should().BeTrue();
+        result.HasFlag(GDValidationChecks.ResourcePaths).Should().BeTrue();
+        // Basic checks should not be set
+        result.HasFlag(GDValidationChecks.Syntax).Should().BeFalse();
+        result.HasFlag(GDValidationChecks.Scope).Should().BeFalse();
     }
 }

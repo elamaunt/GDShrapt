@@ -82,20 +82,23 @@ public class GDDiagnosticsService
     {
         var result = new GDDiagnosticsResult();
 
-        // 1. Check for syntax errors (invalid tokens)
-        foreach (var token in classDeclaration.AllInvalidTokens)
+        // 1. Check for syntax errors (invalid tokens) - only when CheckSyntax is enabled
+        if (options.CheckSyntax)
         {
-            result.Add(new GDUnifiedDiagnostic
+            foreach (var token in classDeclaration.AllInvalidTokens)
             {
-                Code = "GD0002",
-                Message = $"Invalid token: {token.ToString()?.Trim() ?? "unknown"}",
-                Severity = GDUnifiedDiagnosticSeverity.Error,
-                Source = GDDiagnosticSource.Syntax,
-                StartLine = token.StartLine,
-                StartColumn = token.StartColumn,
-                EndLine = token.EndLine,
-                EndColumn = token.EndColumn
-            });
+                result.Add(new GDUnifiedDiagnostic
+                {
+                    Code = "GD0002",
+                    Message = $"Invalid token: {token.ToString()?.Trim() ?? "unknown"}",
+                    Severity = GDUnifiedDiagnosticSeverity.Error,
+                    Source = GDDiagnosticSource.Syntax,
+                    StartLine = token.StartLine,
+                    StartColumn = token.StartColumn,
+                    EndLine = token.EndLine,
+                    EndColumn = token.EndColumn
+                });
+            }
         }
 
         // 2. Run validator with provided options (may include project-aware runtime provider)

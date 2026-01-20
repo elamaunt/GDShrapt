@@ -28,7 +28,7 @@ public class GDCheckCommandTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WithValidProject_ReturnsZeroOrOne()
+    public async Task ExecuteAsync_WithValidProject_ReturnsZeroOrOneOrTwo()
     {
         // Arrange
         var testProjectPath = GetTestProjectPath();
@@ -45,11 +45,12 @@ public class GDCheckCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        (result == 0 || result == 1).Should().BeTrue("Exit code should be 0 (success) or 1 (errors found)");
+        // Exit codes: 0=Success, 1=Warnings/Hints (if fail-on configured), 2=Errors
+        (result == 0 || result == 1 || result == 2).Should().BeTrue("Exit code should be 0 (success), 1 (warnings), or 2 (errors)");
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WithInvalidPath_ReturnsTwo()
+    public async Task ExecuteAsync_WithInvalidPath_ReturnsFatal()
     {
         // Arrange
         var output = new StringWriter();
@@ -60,7 +61,8 @@ public class GDCheckCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(2);
+        // Exit code 3 = Fatal (project not found)
+        result.Should().Be(3);
     }
 
     [TestMethod]
@@ -105,7 +107,7 @@ public class GDCheckCommandTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WithErrors_ReturnsOne()
+    public async Task ExecuteAsync_WithErrors_ReturnsTwo()
     {
         // Arrange - break outside loop is an error
         _tempProjectPath = TestProjectHelper.CreateProjectWithBreakOutsideLoop();
@@ -117,7 +119,8 @@ public class GDCheckCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(1);
+        // Exit code 2 = Errors found
+        result.Should().Be(2);
         output.ToString().Should().Contain("FAILED");
     }
 
@@ -160,7 +163,7 @@ public class GDCheckCommandTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_SyntaxError_ReturnsOne()
+    public async Task ExecuteAsync_SyntaxError_ReturnsTwo()
     {
         // Arrange
         _tempProjectPath = TestProjectHelper.CreateProjectWithSyntaxError();
@@ -172,7 +175,8 @@ public class GDCheckCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(1);
+        // Exit code 2 = Errors found
+        result.Should().Be(2);
     }
 
     [TestMethod]
@@ -193,7 +197,7 @@ public class GDCheckCommandTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_QuietMode_WithErrors_StillReturnsOne()
+    public async Task ExecuteAsync_QuietMode_WithErrors_StillReturnsTwo()
     {
         // Arrange
         _tempProjectPath = TestProjectHelper.CreateProjectWithBreakOutsideLoop();
@@ -205,7 +209,8 @@ public class GDCheckCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(1);
+        // Exit code 2 = Errors found
+        result.Should().Be(2);
         output.ToString().Trim().Should().BeEmpty(); // No output in quiet mode
     }
 

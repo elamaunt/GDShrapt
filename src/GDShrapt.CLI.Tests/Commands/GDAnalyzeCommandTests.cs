@@ -49,7 +49,7 @@ public class GDAnalyzeCommandTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_WithInvalidPath_ReturnsTwo()
+    public async Task ExecuteAsync_WithInvalidPath_ReturnsFatal()
     {
         // Arrange
         var output = new StringWriter();
@@ -60,7 +60,8 @@ public class GDAnalyzeCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(2);
+        // Exit code 3 = Fatal (project not found)
+        result.Should().Be(3);
     }
 
     [TestMethod]
@@ -149,7 +150,8 @@ public class GDAnalyzeCommandTests
             var result = await command.ExecuteAsync();
 
             // Assert - should not crash on empty directory
-            (result == 0 || result == 2).Should().BeTrue("Empty directory should return 0 or 2");
+            // Exit codes: 0=Success, 2=Errors, 3=Fatal (no project.godot)
+            (result == 0 || result == 2 || result == 3).Should().BeTrue("Empty directory should return 0, 2, or 3 (Fatal if no project.godot)");
         }
         finally
         {
