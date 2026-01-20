@@ -30,7 +30,7 @@ jobs:
         dotnet test src --no-build --configuration Release \
           --filter "TestCategory!=StressTests&TestCategory!=LongRunning" \
           --collect:"XPlat Code Coverage" \
-          --logger "trx;LogFileName=test-results.trx" \
+          --logger "trx;LogFileName=test-results-{assembly}.trx" \
           --results-directory ./TestResults
 
     - name: Parse test results
