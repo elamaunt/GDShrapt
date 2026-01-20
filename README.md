@@ -109,15 +109,33 @@ The plugin is currently developed in this repository and will be published to th
 
 ---
 
-## Architecture Overview
+## Architecture
 
-Godot Editor
-→ GDShrapt Plugin (OSS)
-→ GDShrapt Semantic Core (Parser · Semantics · Analysis)
-→ LSP Server (OSS) / CLI Tools (OSS)
-→ Automation & Enterprise Layer (Commercial)
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        Integrations                          │
+├──────────────┬──────────────┬──────────────┬────────────────┤
+│  CLI Tools   │  LSP Server  │ Godot Plugin │   Your Tool    │
+└──────┬───────┴──────┬───────┴──────┬───────┴────────┬───────┘
+       │              │              │                │
+       └──────────────┴──────────────┴────────────────┘
+                              │
+┌─────────────────────────────┴────────────────────────────────┐
+│                    GDShrapt.Semantics                        │
+│         Project Model · Type Inference · Refactoring         │
+├──────────────────────────────────────────────────────────────┤
+│                   GDShrapt.Abstractions                      │
+├──────────────┬──────────────┬──────────────┬────────────────┤
+│  Validator   │    Linter    │  Formatter   │    Builder     │
+└──────────────┴──────────────┴──────────────┴────────────────┘
+                              │
+┌─────────────────────────────┴────────────────────────────────┐
+│                     GDShrapt.Reader                          │
+│              Parser · AST · Syntax Tokens                    │
+└──────────────────────────────────────────────────────────────┘
+```
 
-The open-source core powers all editions and integrations.
+The open-source core powers all integrations. Each layer depends only on the layers below it.
 
 ---
 
