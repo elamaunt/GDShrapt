@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>GDShrapt.Semantics.Benchmarks</RootNamespace>
+    <AssemblyName>GDShrapt.Semantics.Benchmarks</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GDShrapt.Semantics\GDShrapt.Semantics.csproj" />
+    <ProjectReference Include="..\GDShrapt.Semantics.StressTests\GDShrapt.Semantics.StressTests.csproj" />
+  </ItemGroup>
+
+</Project>

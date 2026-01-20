@@ -21,7 +21,8 @@
       "Bash(findstr:*)",
       "Bash(Select-String \"Всего тестов\")",
       "Bash(git switch:*)",
-      "Bash(git submodule update:*)"
+      "Bash(git submodule update:*)",
+      "Bash(dotnet sln:*)"
     ]
   }
 }
