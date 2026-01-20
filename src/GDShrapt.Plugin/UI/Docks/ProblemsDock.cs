@@ -174,6 +174,10 @@ internal partial class ProblemsDock : Control
         _contextMenu.AddItem("Copy Message", 1);
         _contextMenu.AddSeparator();
         _contextMenu.AddItem("Copy Rule ID", 2);
+        _contextMenu.AddSeparator();
+        _contextMenu.AddItem("Ignore This Line", 3);
+        _contextMenu.AddItem("Ignore This Rule in File", 4);
+        _contextMenu.AddItem("Ignore This Rule (Next Line)", 5);
         _contextMenu.IdPressed += OnContextMenuPressed;
         AddChild(_contextMenu);
 
@@ -360,10 +364,12 @@ internal partial class ProblemsDock : Control
         row.SetText(2, diag.Script != null ? System.IO.Path.GetFileName(diag.Script.FullPath) : "");
         row.SetText(3, (diag.StartLine + 1).ToString());
 
-        // Store for navigation
+        // Store for navigation and ignore actions
         row.SetMetadata(0, ProjectSettings.LocalizePath(diag.Script?.FullPath ?? ""));
         row.SetMetadata(1, diag.StartLine);
         row.SetMetadata(2, diag.StartColumn);
+        row.SetMetadata(3, diag.RuleId ?? "");
+        row.SetMetadata(4, diag.RuleName ?? "");
 
         row.SetCustomColor(0, GetSeverityColor(diag.Severity));
 
@@ -453,16 +459,53 @@ internal partial class ProblemsDock : Control
                     DisplayServer.ClipboardSet(message);
                 break;
             case 2: // Copy Rule ID
-                var fullText = selected.GetText(1);
-                // Extract rule ID from "[RULE_ID] message" or "(rule-name) message"
-                if (fullText.StartsWith("["))
+                var ruleIdMeta = selected.GetMetadata(3);
+                if (ruleIdMeta.VariantType == Variant.Type.String)
                 {
-                    var endBracket = fullText.IndexOf(']');
-                    if (endBracket > 0)
-                        DisplayServer.ClipboardSet(fullText.Substring(1, endBracket - 1));
+                    var ruleId = ruleIdMeta.AsString();
+                    if (!string.IsNullOrEmpty(ruleId))
+                        DisplayServer.ClipboardSet(ruleId);
                 }
                 break;
+            case 3: // Ignore This Line
+                CopyIgnoreDirective(selected, GDIgnoreDirectiveType.Line);
+                break;
+            case 4: // Ignore This Rule in File
+                CopyIgnoreDirective(selected, GDIgnoreDirectiveType.File);
+                break;
+            case 5: // Ignore This Rule (Next Line)
+                CopyIgnoreDirective(selected, GDIgnoreDirectiveType.NextLine);
+                break;
         }
+    }
+
+    private void CopyIgnoreDirective(TreeItem item, GDIgnoreDirectiveType type)
+    {
+        var ruleIdMeta = item.GetMetadata(3);
+        var ruleNameMeta = item.GetMetadata(4);
+
+        if (ruleIdMeta.VariantType != Variant.Type.String)
+            return;
+
+        var ruleId = ruleIdMeta.AsString();
+        var ruleName = ruleNameMeta.VariantType == Variant.Type.String ? ruleNameMeta.AsString() : "";
+
+        if (string.IsNullOrEmpty(ruleId) && string.IsNullOrEmpty(ruleName))
+            return;
+
+        // Prefer rule name for readability, fall back to rule ID
+        var ruleRef = !string.IsNullOrEmpty(ruleName) ? ruleName : ruleId;
+
+        string directive = type switch
+        {
+            GDIgnoreDirectiveType.Line => $"# gdlint:ignore={ruleRef}",
+            GDIgnoreDirectiveType.File => $"# gdlint:ignore-file={ruleRef}",
+            GDIgnoreDirectiveType.NextLine => $"# gdlint:ignore={ruleRef}",
+            _ => $"# gdlint:ignore={ruleRef}"
+        };
+
+        DisplayServer.ClipboardSet(directive);
+        UpdateStatus($"Copied: {directive}");
     }
 
     private async void OnRefreshPressed()
@@ -548,4 +591,17 @@ internal enum GDProblemsGroupingMode
     ByFile,
     BySeverity,
     ByCategory
+}
+
+/// <summary>
+/// Type of ignore directive to generate.
+/// </summary>
+internal enum GDIgnoreDirectiveType
+{
+    /// <summary>Ignore on the same line (inline comment).</summary>
+    Line,
+    /// <summary>Ignore for the entire file (placed at top).</summary>
+    File,
+    /// <summary>Ignore next line (placed above the problematic line).</summary>
+    NextLine
 }
