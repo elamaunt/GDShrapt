@@ -205,9 +205,10 @@ func test():
         }
 
         [TestMethod]
-        public void InferType_UntypedDictionaryIndexer_ReturnsVariant()
+        public void InferType_UntypedDictionaryIndexer_WithKnownKey_ReturnsValueType()
         {
-            // Arrange: Untyped dictionary returns Variant
+            // Arrange: Dictionary with known key returns the specific value type
+            // (key-specific type inference was added in Static String Resolution)
             var code = @"
 var dict: Dictionary = {""a"": 1}
 func test():
@@ -228,9 +229,9 @@ func test():
                 .First();
             var typeNode = engine.InferTypeNode(indexerExpr);
 
-            // Assert: Untyped containers return Variant
+            // Assert: Known key with known value type returns specific type
             typeNode.Should().NotBeNull();
-            typeNode!.BuildName().Should().Be("Variant");
+            typeNode!.BuildName().Should().Be("int");
         }
 
         #endregion

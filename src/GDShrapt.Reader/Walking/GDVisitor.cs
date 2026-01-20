@@ -791,5 +791,15 @@
         {
             // Nothing
         }
+
+        public virtual void Visit(GDStringNameExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDStringNameExpression e)
+        {
+            // Nothing
+        }
     }
 }

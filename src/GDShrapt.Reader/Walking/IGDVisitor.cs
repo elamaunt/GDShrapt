@@ -164,5 +164,7 @@
         void Left(GDSubTypeNode t);
         void Visit(GDRestExpression e);
         void Left(GDRestExpression e);
+        void Visit(GDStringNameExpression e);
+        void Left(GDStringNameExpression e);
     }
 }

@@ -270,6 +270,22 @@ namespace GDShrapt.Semantics
 
             // For untyped Array/Dictionary, try to infer from usage
             var containerType = containerTypeNode?.BuildName();
+
+            // For untyped Dictionary, try key-specific type inference first
+            if (containerType == "Dictionary")
+            {
+                // Try to extract the key as a static string
+                var resolver = GDStaticStringExtractor.CreateScopeResolver(_scopes, indexerExpr.RootClassDeclaration);
+                var keyStr = GDStaticStringExtractor.TryExtractString(indexerExpr.InnerExpression, resolver);
+
+                if (!string.IsNullOrEmpty(keyStr))
+                {
+                    var specificType = InferDictionaryValueTypeForKey(indexerExpr.CallerExpression, keyStr);
+                    if (!string.IsNullOrEmpty(specificType))
+                        return CreateSimpleType(specificType);
+                }
+            }
+
             if (containerType == "Array" || containerType == "Dictionary")
             {
                 // Try to get inferred element type from container usage analysis
@@ -575,12 +591,28 @@ namespace GDShrapt.Semantics
                 {
                     if (!string.IsNullOrEmpty(callerType))
                     {
-                        // Special handling for Dictionary.get() - try to infer value type from initializer
+                        // Special handling for Dictionary.get("key") - try to infer value type for specific key
                         if (callerType == "Dictionary" && methodName == "get")
                         {
-                            var dictValueType = InferDictionaryValueType(memberExpr.CallerExpression);
+                            var dictValueType = InferDictionaryGetType(callExpr, memberExpr.CallerExpression);
                             if (!string.IsNullOrEmpty(dictValueType))
                                 return dictValueType;
+                        }
+
+                        // Special handling for Object.get("property") - infer property type
+                        if (methodName == "get" && callerType != "Dictionary")
+                        {
+                            var propType = InferObjectGetType(callExpr, callerType);
+                            if (!string.IsNullOrEmpty(propType))
+                                return propType;
+                        }
+
+                        // Special handling for call/callv - infer return type from method name
+                        if (methodName == "call" || methodName == "callv")
+                        {
+                            var dynamicReturnType = InferDynamicCallType(callExpr, callerType);
+                            if (!string.IsNullOrEmpty(dynamicReturnType))
+                                return dynamicReturnType;
                         }
 
                         var memberInfo = FindMemberWithInheritance(callerType, methodName);
@@ -721,6 +753,156 @@ namespace GDShrapt.Semantics
             // Multiple types - return Union (sorted alphabetically)
             var sorted = System.Linq.Enumerable.OrderBy(elementTypes, t => t);
             return string.Join(" | ", sorted);
+        }
+
+        /// <summary>
+        /// Infers the type for Dictionary.get("key") with key-specific type lookup.
+        /// First tries to find the specific key in the dictionary initializer,
+        /// then falls back to union of all values.
+        /// </summary>
+        private string? InferDictionaryGetType(GDCallExpression callExpr, GDExpression dictExpr)
+        {
+            var args = callExpr.Parameters?.ToList();
+            if (args != null && args.Count >= 1)
+            {
+                // Try to extract the key as a static string
+                var resolver = GDStaticStringExtractor.CreateScopeResolver(_scopes, callExpr.RootClassDeclaration);
+                var keyStr = GDStaticStringExtractor.TryExtractString(args[0], resolver);
+
+                if (!string.IsNullOrEmpty(keyStr))
+                {
+                    // Try to find the specific key in the dictionary initializer
+                    var specificType = InferDictionaryValueTypeForKey(dictExpr, keyStr);
+                    if (!string.IsNullOrEmpty(specificType))
+                        return specificType;
+                }
+            }
+
+            // Fall back to union of all dictionary values
+            return InferDictionaryValueType(dictExpr);
+        }
+
+        /// <summary>
+        /// Gets the value type for a specific key in a Dictionary initializer.
+        /// Returns null if the key is not found (falls back to union).
+        /// </summary>
+        private string? InferDictionaryValueTypeForKey(GDExpression dictExpr, string key)
+        {
+            var dictInit = FindDictionaryInitializer(dictExpr);
+            if (dictInit?.KeyValues == null)
+                return null;
+
+            // Look for the specific key
+            foreach (var kv in dictInit.KeyValues)
+            {
+                var keyStr = GDStaticStringExtractor.TryExtractString(kv.Key, null);
+                if (keyStr == key && kv.Value != null)
+                    return InferType(kv.Value);
+            }
+
+            // Key not found - return null to fall back to union
+            return null;
+        }
+
+        /// <summary>
+        /// Finds the dictionary initializer expression for a dictionary variable.
+        /// </summary>
+        private GDDictionaryInitializerExpression? FindDictionaryInitializer(GDExpression dictExpr)
+        {
+            if (dictExpr is GDDictionaryInitializerExpression directInit)
+                return directInit;
+
+            if (dictExpr is GDIdentifierExpression identExpr)
+            {
+                var name = identExpr.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(name))
+                    return null;
+
+                // Try scope first
+                if (_scopes != null)
+                {
+                    var symbol = _scopes.Lookup(name);
+                    if (symbol?.Declaration is GDVariableDeclaration varDecl &&
+                        varDecl.Initializer is GDDictionaryInitializerExpression init)
+                    {
+                        return init;
+                    }
+                    if (symbol?.Declaration is GDVariableDeclarationStatement varStmt &&
+                        varStmt.Initializer is GDDictionaryInitializerExpression stmtInit)
+                    {
+                        return stmtInit;
+                    }
+                }
+
+                // Try class members
+                var classDecl = dictExpr.RootClassDeclaration;
+                if (classDecl != null)
+                {
+                    foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
+                    {
+                        if (member is GDVariableDeclaration memberVarDecl &&
+                            memberVarDecl.Identifier?.Sequence == name &&
+                            memberVarDecl.Initializer is GDDictionaryInitializerExpression memberInit)
+                        {
+                            return memberInit;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Infers the type for Object.get("property") by looking up the property in the type.
+        /// </summary>
+        private string? InferObjectGetType(GDCallExpression callExpr, string callerType)
+        {
+            var args = callExpr.Parameters?.ToList();
+            if (args == null || args.Count == 0)
+                return null;
+
+            // Try to extract the property name as a static string
+            var resolver = GDStaticStringExtractor.CreateScopeResolver(_scopes, callExpr.RootClassDeclaration);
+            var propName = GDStaticStringExtractor.TryExtractString(args[0], resolver);
+
+            if (string.IsNullOrEmpty(propName))
+                return null; // Dynamic property name - cannot resolve
+
+            // Look up the property in the type
+            var memberInfo = FindMemberWithInheritance(callerType, propName);
+            if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Property)
+                return memberInfo.Type;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Infers the return type for call()/callv() with a static method name.
+        /// </summary>
+        private string? InferDynamicCallType(GDCallExpression callExpr, string callerType)
+        {
+            var args = callExpr.Parameters?.ToList();
+            if (args == null || args.Count == 0)
+                return null;
+
+            // Try to extract the method name as a static string
+            var resolver = GDStaticStringExtractor.CreateScopeResolver(_scopes, callExpr.RootClassDeclaration);
+            var targetMethodName = GDStaticStringExtractor.TryExtractString(args[0], resolver);
+
+            if (string.IsNullOrEmpty(targetMethodName))
+                return null; // Dynamic method name - cannot resolve
+
+            // If caller type is known, look up the method
+            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
+            {
+                var memberInfo = FindMemberWithInheritance(callerType, targetMethodName);
+                if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
+                    return memberInfo.Type;
+            }
+
+            // For unknown caller type, try common types (duck typing)
+            return FindMethodReturnTypeInCommonTypes(targetMethodName);
         }
 
         /// <summary>

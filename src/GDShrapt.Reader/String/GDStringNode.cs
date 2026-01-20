@@ -183,6 +183,11 @@ namespace GDShrapt.Reader
 
         public abstract void HandleReceivedToken(GDStringPartsList token);
         public abstract void HandleReceivedTokenSkip();
+
+        internal override void ForceComplete(GDReadingState state)
+        {
+            base.ForceComplete(state);
+        }
     }
 
     public abstract class GDStringNode<BOUNDER> : GDStringNode,

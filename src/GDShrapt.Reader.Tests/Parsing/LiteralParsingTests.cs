@@ -289,5 +289,143 @@ World""""""
             AssertHelper.CompareCodeStrings(code, statement.ToString());
             AssertHelper.NoInvalidTokens(statement);
         }
+
+        #region StringName Tests
+
+        [TestMethod]
+        public void ParseStringName_DoubleQuotes()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "&\"signal_name\"";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDStringNameExpression));
+
+            var stringNameExpr = (GDStringNameExpression)expression;
+
+            Assert.IsNotNull(stringNameExpr.Ampersand);
+            Assert.IsNotNull(stringNameExpr.String);
+            Assert.AreEqual("signal_name", stringNameExpr.String.Sequence);
+            Assert.AreEqual("signal_name", stringNameExpr.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        [TestMethod]
+        public void ParseStringName_SingleQuotes()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "&'property_name'";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDStringNameExpression));
+
+            var stringNameExpr = (GDStringNameExpression)expression;
+
+            Assert.IsNotNull(stringNameExpr.Ampersand);
+            Assert.IsNotNull(stringNameExpr.String);
+            Assert.AreEqual("property_name", stringNameExpr.String.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        [TestMethod]
+        public void ParseStringName_InVariableDeclaration()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "var sig = &\"my_signal\"";
+
+            var statement = reader.ParseStatement(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDVariableDeclarationStatement));
+
+            var varDecl = (GDVariableDeclarationStatement)statement;
+            Assert.IsInstanceOfType(varDecl.Initializer, typeof(GDStringNameExpression));
+
+            var stringNameExpr = (GDStringNameExpression)varDecl.Initializer;
+            Assert.AreEqual("my_signal", stringNameExpr.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
+        }
+
+        [TestMethod]
+        public void ParseStringName_InCallExpression()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "connect(&\"pressed\", _on_pressed)";
+
+            var statement = reader.ParseExpression(code);
+
+            Assert.IsNotNull(statement);
+            Assert.IsInstanceOfType(statement, typeof(GDCallExpression));
+
+            var callExpr = (GDCallExpression)statement;
+            var firstArg = callExpr.Parameters?.FirstOrDefault();
+
+            Assert.IsNotNull(firstArg);
+            Assert.IsInstanceOfType(firstArg, typeof(GDStringNameExpression));
+
+            var stringNameExpr = (GDStringNameExpression)firstArg;
+            Assert.AreEqual("pressed", stringNameExpr.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, statement.ToString());
+            AssertHelper.NoInvalidTokens(statement);
+        }
+
+        [TestMethod]
+        public void ParseStringName_WithSpaces()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "& \"value_with_space\"";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDStringNameExpression));
+
+            var stringNameExpr = (GDStringNameExpression)expression;
+            Assert.AreEqual("value_with_space", stringNameExpr.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        [TestMethod]
+        public void ParseStringName_EmptyString()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "&\"\"";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDStringNameExpression));
+
+            var stringNameExpr = (GDStringNameExpression)expression;
+
+            Assert.IsNotNull(stringNameExpr.Ampersand);
+            Assert.IsNotNull(stringNameExpr.String);
+            Assert.AreEqual("", stringNameExpr.String.Sequence);
+            Assert.AreEqual("", stringNameExpr.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        #endregion
     }
 }

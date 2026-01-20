@@ -52,6 +52,14 @@ namespace GDShrapt.Reader
 
         private void CompleteWithPattern(string matchedPattern, GDReadingState state)
         {
+            if (IsCompleted)
+            {
+                state.Pop();
+                return;
+            }
+
+            IsCompleted = true;
+
             PatternMatched(matchedPattern, state);
 
             for (int i = matchedPattern?.Length ?? 0; i < _sequenceBuilder.Length; i++)

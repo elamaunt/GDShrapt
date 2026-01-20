@@ -189,11 +189,10 @@ internal class GDSignalConnectionCollector
                 return (value, false);
             }
 
-            // StringName: &"signal_name" - handled via prefix operator
-            if (expr is GDSingleOperatorExpression singleOp &&
-                singleOp.TargetExpression is GDStringExpression innerStr)
+            // StringName: &"signal_name"
+            if (expr is GDStringNameExpression stringNameExpr)
             {
-                var value = innerStr.String?.Sequence;
+                var value = stringNameExpr.String?.Sequence;
                 return (value, false);
             }
 

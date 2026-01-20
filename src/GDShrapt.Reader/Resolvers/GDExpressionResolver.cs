@@ -177,6 +177,14 @@ namespace GDShrapt.Reader
                     return;
                 }
 
+                if (c == '&')
+                {
+                    // StringName literal: &"name" or &'name'
+                    PushAndSave(state, new GDStringNameExpression());
+                    state.PassChar(c);
+                    return;
+                }
+
                 FlushSplitTokens(state);
 
                 Owner.HandleAsInvalidToken(c, state, x => c != x);

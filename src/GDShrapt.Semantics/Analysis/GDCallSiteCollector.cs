@@ -188,10 +188,112 @@ internal class GDCallSiteCollector
         {
             base.Visit(callExpr);
 
+            // First check for direct method call
             var callSiteInfo = TryCreateCallSiteInfo(callExpr);
             if (callSiteInfo != null)
             {
                 _callSites.Add(callSiteInfo);
+                return;
+            }
+
+            // Then check for dynamic call/callv
+            var dynamicCallSiteInfo = TryCreateDynamicCallSiteInfo(callExpr);
+            if (dynamicCallSiteInfo != null)
+            {
+                _callSites.Add(dynamicCallSiteInfo);
+            }
+        }
+
+        /// <summary>
+        /// Tries to create a call site info from a dynamic call/callv expression.
+        /// </summary>
+        private GDCallSiteInfo? TryCreateDynamicCallSiteInfo(GDCallExpression callExpr)
+        {
+            // Check if this is obj.call("method", args...) or obj.callv("method", args)
+            if (callExpr.CallerExpression is not GDMemberOperatorExpression memberExpr)
+                return null;
+
+            var methodName = memberExpr.Identifier?.Sequence;
+            if (methodName != "call" && methodName != "callv")
+                return null;
+
+            var args = callExpr.Parameters?.ToList();
+            if (args == null || args.Count == 0)
+                return null;
+
+            // Try to extract static method name
+            var resolver = GDStaticStringExtractor.CreateClassResolver(callExpr.RootClassDeclaration);
+            var targetMethodName = GDStaticStringExtractor.TryExtractString(args[0] as GDExpression, resolver);
+
+            if (string.IsNullOrEmpty(targetMethodName) || targetMethodName != _targetMethodName)
+                return null;
+
+            // Get receiver type
+            var receiverType = _typeEngine?.InferType(memberExpr.CallerExpression);
+            var receiverVariableName = GetRootVariableName(memberExpr.CallerExpression);
+            var isDuckTyped = string.IsNullOrEmpty(receiverType) || receiverType == "Variant";
+
+            // Check type compatibility for non-duck-typed calls
+            if (!isDuckTyped)
+            {
+                if (receiverType!.Contains("|"))
+                {
+                    // Union type - check if any matches
+                    var types = receiverType.Split('|').Select(t => t.Trim()).ToList();
+                    if (!types.Any(t => IsTypeCompatible(t, _targetTypeName)))
+                        return null;
+                }
+                else if (!IsTypeCompatible(receiverType, _targetTypeName))
+                {
+                    return null;
+                }
+            }
+
+            // For "call", args[1..] are the method arguments
+            // For "callv", args[1] is an Array of arguments (harder to analyze, skip for now)
+            if (methodName == "callv")
+                return null;
+
+            // Collect arguments (skip the first argument which is the method name)
+            var methodArgs = new List<GDArgumentInfo>();
+            for (int i = 1; i < args.Count; i++)
+            {
+                var expr = args[i] as GDExpression;
+                if (expr == null)
+                {
+                    methodArgs.Add(GDArgumentInfo.Unknown(i - 1));
+                }
+                else
+                {
+                    var argType = _typeEngine?.InferType(expr);
+                    var isHighConfidence = !string.IsNullOrEmpty(argType) && argType != "Variant";
+                    methodArgs.Add(new GDArgumentInfo(i - 1, expr, argType, isHighConfidence));
+                }
+            }
+
+            // Create call site info with dynamic call marker
+            var confidence = isDuckTyped ? GDReferenceConfidence.Potential : GDReferenceConfidence.Strict;
+
+            if (isDuckTyped && receiverVariableName != null)
+            {
+                var info = GDCallSiteInfo.CreateDuckTyped(
+                    callExpr,
+                    _scriptFile,
+                    methodArgs,
+                    receiverVariableName);
+                info.IsDynamicCall = true;
+                return info;
+            }
+            else
+            {
+                var info = new GDCallSiteInfo(
+                    callExpr,
+                    _scriptFile,
+                    methodArgs,
+                    receiverType,
+                    confidence);
+                info.IsDynamicCall = true;
+                return info;
             }
         }
 

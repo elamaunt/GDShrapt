@@ -53,6 +53,11 @@ public class GDCallSiteInfo
     public GDReferenceConfidence Confidence { get; }
 
     /// <summary>
+    /// Whether this call site comes from a dynamic call (obj.call("method", args)).
+    /// </summary>
+    public bool IsDynamicCall { get; set; }
+
+    /// <summary>
     /// Line number of the call site.
     /// </summary>
     public int Line { get; }
