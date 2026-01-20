@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -17,6 +17,7 @@ GDShrapt.Reader (base)
 
 GDShrapt.Abstractions (interfaces)
        └── GDShrapt.Semantics   - Semantic analysis
+              ├── GDShrapt.Semantics.Validator - Type-based validation using semantics
               ├── GDShrapt.CLI.Core → GDShrapt.CLI
               ├── GDShrapt.LSP
               └── GDShrapt.Plugin
@@ -42,66 +43,153 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 ### Core Components
 
-**Reader** - One-pass parser with recursive descent
-- `GDScriptReader` - Main API: `ParseFileContent()`, `ParseExpression()`, `ParseStatement()`
-- `GDExpressionResolver` - Expression parsing with operator precedence
-- `GDTokensForm` - Token ordering in nodes
+**Reader** - One-pass recursive descent parser
+- `GDScriptReader` - Main API: `ParseFileContent()`, `ParseFile()`, `ParseExpression()`, `ParseStatement()`, `ParseStatements()`, `ParseType()`
+- `GDReadingState` - Parser state with char-buffer mechanism, indentation tracking, cancellation support
+- `GDTokensForm<STATE, T0...>` - Type-safe token positioning in nodes
+- 26+ resolver classes in `Resolvers/`: `GDExpressionResolver`, `GDStatementsResolver`, `GDClassMembersResolver`, `GDTypeResolver`, etc.
 
-**Builder** - Code generation via `GD` static class
-- Three styles: Short, Fluent, Tokens
+**Builder** - Code generation via static `GD` class
+- `GD.Declaration` - Class, Method, Variable, Signal, Enum, Constant, Parameter
+- `GD.Expression` - Literals, operations, member access, calls, type casting
+- `GD.Statement` - If/elif/else, loops, match, return, break, continue
+- `GD.Attribute`, `GD.Type`, `GD.Syntax`, `GD.List`, `GD.Keywords`
+- Three styles: Short (`GD.Declaration.Class()`), Fluent (`.Add().AddExtendsAttribute()`), Tokens
 
-**Validator** - Compiler-style diagnostics
-- `GDValidationRule` extends `GDVisitor`
-- Categories: Syntax (1xxx), Scope (2xxx), Type (3xxx), Call (4xxx), ControlFlow (5xxx), Indentation (6xxx), DuckTyping (7xxx), Abstract (8xxx)
-- `GDTypeInferenceEngine` - Type inference with `IGDRuntimeProvider`
-- Project-level validation via `IGDProjectRuntimeProvider`: signals, resource paths, extends paths
+**Validator** - Sequential validation pipeline
+- `GDValidator` - Main API: `Validate()`, `ValidateCode()`, `IsValid()`
+- Pipeline phases: `GDDeclarationCollector` → `GDSyntaxValidator` → `GDScopeValidator` → `GDCallValidator` → `GDControlFlowValidator` → `GDIndentationValidator` → `GDMemberAccessValidator` → `GDAbstractValidator` → `GDSignalValidator`
+- Diagnostic codes (GDDiagnosticCode enum):
+  - GD1xxx: Syntax (InvalidToken, MissingSemicolon, UnexpectedToken, MissingColon, MissingBracket)
+  - GD2xxx: Scope (UndefinedVariable/Function, DuplicateDeclaration, UndefinedSignal/EnumValue)
+  - GD3xxx: Type (TypeMismatch, InvalidOperandType, UnknownType, ArgumentTypeMismatch)
+  - GD4xxx: Call (WrongArgumentCount, MethodNotFound, InvalidSignalConnection, ResourceNotFound)
+  - GD5xxx: ControlFlow (Break/Continue/Return outside context, UnreachableCode, ConstantReassignment)
+  - GD6xxx: Indentation (InconsistentIndentation, UnexpectedIndent/Dedent)
+  - GD7xxx: DuckTyping (UnguardedMethodAccess/PropertyAccess/MethodCall)
+  - GD8xxx: Abstract (AbstractMethodHasBody, ClassNotAbstract, AbstractMethodNotImplemented)
+- `GDValidationOptions`: CheckSyntax, CheckScope, CheckCalls, CheckControlFlow, CheckIndentation, CheckAbstract, CheckSignals, CheckMemberAccess, RuntimeProvider, EnableCommentSuppression
 
-**Linter** - Style guide enforcement
-- `GDLintRule` extends `GDVisitor`
-- Naming, Style, BestPractices, Complexity rules
-- Suppression: `# gdlint:ignore`, `# gdlint:disable/enable`
-- Supports `.gdlintrc` (gdtoolkit-compatible)
+**Linter** - Style checking (64+ rules)
+- `GDLinter` - Main API: `LintCode()`, `Lint()`, `GetRulesByCategory()`
+- Categories (GDLintCategory):
+  - Naming (12): ClassNameCaseRule, FunctionNameCaseRule, VariableNameCaseRule, ConstantNameCaseRule, SignalNameCaseRule, EnumNameCaseRule, PrivatePrefixRule
+  - Style (7): LineLengthRule, MaxFileLinesRule, NoElifReturnRule, TrailingCommaRule
+  - BestPractices (30+): UnusedVariableRule, TypeHintRule, CyclomaticComplexityRule, MagicNumberRule, DeadCodeRule, StrictTypingRule, ConsistentReturnRule, CommentedCodeRule
+  - Complexity (8): MaxNestingDepthRule, MaxLocalVariablesRule, MaxBranchesRule, GodClassRule
+  - Organization (1): MemberOrderingRule
+  - Formatting (6): IndentationConsistencyRule, TrailingWhitespaceRule, SpaceAroundOperatorsRule
+- Suppression: `# gdlint:ignore`, `# gdlint:disable/enable`, `.gdlintrc` config
 
-**Formatter** - Code formatting (safe, cosmetic only)
-- `GDFormatRule` extends `GDVisitor`
-- Rules: indentation, spacing, blank lines, line wrapping
-- Safe formatting only (no code transformations)
-- `GDFormatterStyleExtractor` - Extract style from sample code
-- Note: Auto type hints and member reordering moved to refactoring commands
+**Formatter** - Safe cosmetic formatting
+- `GDFormatter` - Main API: `FormatCode()`, `Format()`, `IsFormatted()`, `Check()`, `FormatCodeWithStyle()`
+- Rules: `GDIndentationFormatRule`, `GDBlankLinesFormatRule`, `GDSpacingFormatRule`, `GDTrailingWhitespaceFormatRule`, `GDNewLineFormatRule`, `GDLineWrapFormatRule`
+- `GDFormatterStyleExtractor` - Auto-detect style from sample code
+- `GDFormatterOptions`: IndentStyle (Spaces/Tabs), IndentSize, LineEnding, SpaceAroundOperators, SpaceAfterComma/Colon, BlankLinesBetweenFunctions, MaxLineLength, WrapLongLines
 
 **Semantics** - Project-level analysis
-- `GDScriptProject` - Project orchestrator
-- `GDTypeResolver` - Cross-file type resolution
-- `GDSceneTypesProvider` - Node types and signal connections from scenes
-- Refactoring services in `Refactoring/Services/`
+- `GDScriptProject` - Orchestrator: `LoadScripts()`, `LoadScenes()`, `AnalyzeAll()`, file watching, events (ScriptChanged/Created/Deleted/Renamed)
+- `GDScriptFile` - Individual script with `Class` (AST), `Analyzer` (semantic model), `Reload()`
+- `GDSemanticModel` - Single-file type inference: `GetTypeForExpression()`, `GetTypeForNode()`, `FindReferences()`, `GetSymbolInfo()`
+- `GDProjectSemanticModel` - Cross-file analysis with incremental updates
+- Type inference: `GDTypeInferenceSource`, `GDDuckTypeResolver`, `GDParameterTypeResolver`, `GDMethodSignatureInferenceEngine`, `GDUnionTypeResolver`
+- `GDFlowAnalyzer` - Control flow analysis, reachability, type narrowing
+- `GDDiagnosticsService` - Unified validation + linting pipeline
+- Type providers: `GDSceneTypesProvider` (scene files), `GDGodotTypesProvider` (built-in types)
+- Refactoring services: `GDGoToDefinitionService`, `GDAddTypeAnnotationService`, `GDReorderMembersService`, `GDExtractMethodService`, `GDExtractConstantService`, `GDExtractVariableService`, `GDInvertConditionService`, `GDConvertForToWhileService`, `GDSurroundWithService`, `GDSnippetService`
+- Configuration: `GDProjectConfig`, `GDConfigManager` (.gdshrapt.json), `GDGodotProjectParser` (project.godot), `GDGdlintConfigParser` (.gdlintrc)
+
+**Semantics.Validator** - Type-based validation using semantic analysis
+- `GDSemanticValidator` - Orchestrator: `Validate()`, `ValidateCode()`
+- `GDTypeValidator` - Type mismatches, assignment compatibility, return types
+- `GDMemberAccessValidator` - Method/property resolution with duck typing
+
+**Abstractions** - Core interfaces
+- `IGDRuntimeProvider` - Type system: `IsKnownType()`, `GetTypeInfo()`, `GetMember()`, `GetBaseType()`, `IsAssignableTo()`, `GetGlobalFunction()`, `GetGlobalClass()`, `GetAllTypes()`
+- `IGDProjectContext`, `IGDFileSystem`, `IGDSemanticLogger`
+- `IGDMemberAccessAnalyzer` - Type inference: `GetMemberAccessConfidence()`, `GetExpressionType()`
+- Type abstractions: `GDRuntimeTypeInfo`, `GDRuntimeMemberInfo`, `GDUnionType`, `GDDuckType`
+- Scope: `GDScope`, `GDScopeStack`, `GDSymbol`, `GDSymbolKind`
+- Fix providers: `IGDFixProvider`, `GDFixDescriptor`, `GDTextEditFixDescriptor`, `GDSuppressionFixDescriptor`, `GDMethodGuardFixDescriptor`, `GDTypoFixDescriptor`
+
+**CLI** - Command-line interface (10 commands)
+- `analyze` - Project-wide analysis with exit codes (0=success, 1=warnings, 2=errors, 3=fatal)
+- `check` - Quick diagnostic summary
+- `lint` - Style checking
+- `validate` - Syntax/scope validation
+- `format` - Code formatting
+- `symbols` - Document symbols extraction
+- `find-refs` - Cross-file reference search
+- `rename` - Safe refactoring with conflict detection
+- `parse` - AST debug output
+- `extract-style` - Detect formatting style
+- Output formats: `GDTextFormatter`, `GDJsonFormatter`
+
+**LSP** - Language Server Protocol 3.17
+- `GDLanguageServer` - Main server: `InitializeAsync()`, `RunAsync()`
+- Handlers: `GDDefinitionHandler`, `GDReferencesHandler`, `GDHoverHandler`, `GDDocumentSymbolHandler`, `GDCompletionHandler`, `GDRenameHandler`, `GDFormattingHandler`
+- `GDDocumentManager` - Open document tracking
+- `GDDiagnosticPublisher` - Real-time diagnostics
+- Transports: `GDStdioJsonRpcTransport`, `GDSocketJsonRpcTransport`
+
+**Plugin** - Godot Editor integration
+- `GDShraptPlugin` (EditorPlugin) with subsystems:
+  - Diagnostics: `GDPluginDiagnosticService`, `GDBackgroundAnalyzer`, `GDDiagnosticPublisher`
+  - Cache: `GDCacheManager`
+  - Quick fixes: `GDQuickFixHandler`
+  - Refactoring: `GDRefactoringActionProvider`
+  - Formatting: `FormattingService`
+  - Type resolution: `GDTypeResolver`, `GDGodotTypesProvider`
+- UI Docks: `ProblemsDock`, `ReferencesDock`, `TodoTagsDock`, `AstViewerDock`, `ReplDock`, `NotificationPanel`
+- Configuration: `GDConfigManager`, `ProjectSettingsRegistry`
+
+### AST Node Hierarchy
+
+**Base**: `GDNode` (Tokens, AllTokens, Nodes, AllNodes, Form, WalkIn, InvalidTokens), `GDSyntaxToken`
+
+**Declarations**: `GDClassDeclaration`, `GDInnerClassDeclaration`, `GDMethodDeclaration`, `GDVariableDeclaration`, `GDConstantDeclaration`, `GDSignalDeclaration`, `GDEnumDeclaration`, `GDParameterDeclaration`
+
+**Statements**: `GDIfStatement`, `GDWhileStatement`, `GDForStatement`, `GDMatchStatement`, `GDReturnStatement`, `GDBreakStatement`, `GDContinueStatement`, `GDPassStatement`, `GDAwaitStatement`, `GDVariableDeclarationStatement`, `GDExpressionStatement`, `GDAssertStatement`
+
+**Expressions**: `GDNumberLiteral`, `GDStringLiteral`, `GDBooleanLiteral`, `GDNullLiteral`, `GDIdentifier`, `GDMemberAccessExpression`, `GDIndexingExpression`, `GDCallExpression`, `GDArrayExpression`, `GDDictionaryExpression`, `GDBinaryExpression`, `GDUnaryExpression`, `GDAsExpression`, `GDIsExpression`, `GDNodePathExpression`, `GDPreloadExpression`, `GDAwaitExpression`, `GDAssignmentExpression`
 
 ### Design Patterns
 
-- **One-pass parsing** - No backtracking, character-by-character with state stack
-- **Form-based tokens** - `GDTokensForm` manages token ordering
-- **Visitor pattern** - `GDVisitor` for traversal, extended by rules
-- Formatting and comments preserved in syntax tree
+- **One-pass parsing** - Character-by-character with recursive descent, no backtracking
+- **Form-based tokens** - Type-safe `GDTokensForm<STATE, T...>` manages token ordering
+- **Visitor pattern** - `GDVisitor` base class with `Left()` overrides for traversal
+- **Pipeline architecture** - Sequential validation/linting phases
+- **Incremental analysis** - Call site tracking, file watching, concurrent updates
+- **Error recovery** - Invalid syntax creates `GDInvalidToken` nodes (no exceptions)
+- **Pluggable runtime** - `IGDRuntimeProvider` for custom type information
+- **Unified diagnostics** - Single pipeline combining validation + linting
 
 ### Naming Conventions
 
 - All classes prefixed with `GD`
-- Suffixes: `Resolver` (parsing), `Declaration` (structures), `Expression`, `Token`
-- Rules: `GD<Name>ValidationRule`, `<Name>Rule` (Linter), `GD<Name>FormatRule`
-- Services: `GD<Name>Service` (Refactoring)
+- Suffixes: `Resolver` (parsing), `Declaration`/`Statement`/`Expression` (AST), `Token` (syntax)
+- Validators: pipeline classes in `Validators/`
+- Linter rules: `<Name>Rule` in category folders
+- Format rules: `GD<Name>FormatRule`
+- Services: `GD<Name>Service` (refactoring)
+- Handlers: `GD<Name>Handler` (LSP)
 
 ## Key Implementation Notes
 
-- `GDReadingState` manages parsing stack with char-buffer mechanism
-- Position tracking: `StartLine`, `EndLine`, `StartColumn`, `EndColumn` on tokens
-- GDVisitor has no Visit methods for simple tokens - iterate `node.Form` directly
+- `GDReadingState` manages parsing with char-buffer, pending chars mechanism, indentation stack
+- Position tracking: `StartLine`, `EndLine`, `StartColumn`, `EndColumn` on all tokens
+- `GDVisitor` has no Visit methods for simple tokens - iterate `node.Form.Direct()` directly
 - Token manipulation: `form.AddBeforeToken()`, `form.AddAfterToken()`, `form.Remove()`
-- `AllTokens` is lazy IEnumerable in source code order
+- `AllTokens` / `AllNodes` are lazy IEnumerable in source code order
 - Auto-update indentation: `declaration.UpdateIntendation()`
 - Clone nodes with `.Clone()`
+- Thread-safe project analysis with `ConcurrentDictionary`
+- Comment-based suppression: `# gdvalidate:ignore`, `# gdlint:ignore/disable/enable`
+- Config hierarchy: Defaults → `.gdshrapt.json` → CLI flags
 
 ## Testing
 
-Test projects mirror component structure. Total: 2049+ tests.
+Test projects mirror component structure. Total: 3,400+ tests (including semantic stress tests and benchmarks).
 
 Assertion helpers (`GDShrapt.Tests.Common`):
 - `AssertHelper.CompareCodeStrings()` - Compare ignoring whitespace
