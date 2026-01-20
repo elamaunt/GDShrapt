@@ -1,172 +1,184 @@
+<!-- Logo -->
+<p align="center">
+  <img src="./assets/logo.png" alt="GDShrapt logo" width="128" />
+
+<!-- The logo file is expected to be provided in the repository -->
+</p>
+
 # GDShrapt
 
-[![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Tests](https://img.shields.io/badge/tests-1052%20passed-brightgreen.svg)]()
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20GDShrapt-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/elamaunt)
+<!-- Badges -->
+<p align="center">
+  <a href="https://www.nuget.org/packages/GDShrapt.Reader"><img src="https://img.shields.io/nuget/v/GDShrapt.Reader.svg" alt="NuGet" /></a>
+  <a href="https://github.com/elamaunt/GDShrapt/actions"><img src="https://github.com/elamaunt/GDShrapt/actions/workflows/ci.yml/badge.svg" alt="Build & Tests" /></a>
+  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License" /></a>
+</p>
 
-**GDShrapt** is a set of C# libraries for working with [GDScript](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_basics.html) code — the scripting language of [Godot Engine](https://godotengine.org/). Whether you need to parse, analyze, transform, validate, lint, or format GDScript source code, GDShrapt provides the building blocks to do it programmatically.
+High-performance language intelligence platform for GDScript.
 
-The libraries are designed to be used together or independently: from a lightweight parser for simple code inspection to a full-featured toolkit for building IDE plugins, CLI tools, or custom language integrations.
+GDShrapt is built and tested as a **standalone tooling platform**. It does **not depend on the Godot runtime** and can analyze projects purely from source files, project configuration, and scene metadata.
 
-## Why GDShrapt?
+High-performance language intelligence platform for GDScript.
 
-### Design Philosophy
+GDShrapt is an open-source ecosystem for deep static analysis, refactoring, and automation of GDScript projects. What started as a standalone parser has evolved into a full semantic platform powering CLI tools, a Language Server (LSP), and a Godot Editor plugin — all built on a shared, incremental semantic core.
 
-- **One-pass parsing** — High-performance character-by-character parsing with no backtracking. The parser processes input in a single pass, making it predictable and fast.
+GDShrapt is designed as a **language tooling platform for Godot**, comparable in scope to clang/clangd or rust-analyzer, but tailored specifically to GDScript and the Godot workflow.
 
-- **Format preservation** — Comments, whitespace, and formatting are preserved in the AST. Round-trip your code through parse → modify → generate without losing structure.
+---
 
-- **Modular architecture** — Use only what you need. The core parser has zero dependencies; validation, linting, and formatting are separate packages.
+## Project Status
 
-- **Full GDScript 4.x** — Complete support for modern GDScript: lambdas, await, typed arrays/dictionaries, pattern matching, all annotations.
+- **Test coverage:** 3,400+ automated tests (including semantic stress tests and benchmarks)
 
-### Who Is This For?
+- **Latest stable release:** 5.x (parser, linter, formatter libraries)
+- **Next major release:** 6.0.0 (semantic platform release)
 
-- **IDE/Editor plugins** — Build language support, code completion, refactoring tools
-- **CLI tools** — Create linters, formatters, code generators for CI/CD pipelines
-- **Language embedding** — Integrate GDScript parsing into other technologies
-- **Code analysis** — Static analysis, metrics, documentation generation
+Version 6.0.0 represents a **conceptual shift** from standalone libraries to an integrated language intelligence platform. While much of the code already exists in this repository, not all components have been publicly released yet.
 
-## Packages
+---
 
-### Core Libraries
+## What GDShrapt Provides
 
-| Package | Description | NuGet |
-|---------|-------------|-------|
-| [GDShrapt.Reader](src/GDShrapt.Reader/) | Core parser and AST | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Reader.svg)](https://www.nuget.org/packages/GDShrapt.Reader) |
-| [GDShrapt.Builder](src/GDShrapt.Builder/) | Fluent API for code generation | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Builder.svg)](https://www.nuget.org/packages/GDShrapt.Builder) |
-| [GDShrapt.Validator](src/GDShrapt.Validator/) | AST validation with diagnostics | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Validator.svg)](https://www.nuget.org/packages/GDShrapt.Validator) |
-| [GDShrapt.Linter](src/GDShrapt.Linter/) | Style checking and naming conventions | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Linter.svg)](https://www.nuget.org/packages/GDShrapt.Linter) |
-| [GDShrapt.Formatter](src/GDShrapt.Formatter/) | Code formatting with type inference | [![NuGet](https://img.shields.io/nuget/v/GDShrapt.Formatter.svg)](https://www.nuget.org/packages/GDShrapt.Formatter) |
+### Open-Source Core
 
-### Ecosystem Tools
+The core libraries intentionally expose only a **minimal public surface**, while internally supporting deep semantic analysis and large-scale refactoring. This allows GDShrapt to evolve its semantic model without breaking consumers, while still enabling advanced tooling on top.
 
-| Package | Description |
-|---------|-------------|
-| [GDShrapt.CLI](src/GDShrapt.CLI/) | Command-line tool for analysis and refactoring |
-| [GDShrapt.LSP](src/GDShrapt.LSP/) | Language Server Protocol implementation |
-| [GDShrapt.Semantics](src/GDShrapt.Semantics/) | Godot-independent semantic analysis |
-| [GDShrapt.Abstractions](src/GDShrapt.Abstractions/) | Base interfaces for extensibility |
-| [GDShrapt.Plugin](src/GDShrapt.Plugin/) | Godot Editor plugin |
+The open-source core is the foundation of all GDShrapt tooling:
 
-## Installation
+- Incremental GDScript parser with full-fidelity AST
+- Project-wide semantic model (types, signals, scenes, resources)
+- Flow-sensitive type inference with confidence tracking
+- Cross-file symbol resolution and reference indexing
+- Refactoring planning engine (rename, extract, reorder, etc.)
+- Unified diagnostics framework (syntax, semantic, style)
 
-```bash
-dotnet add package GDShrapt.Reader
-```
+This core is shared by the CLI, LSP server, and Godot plugin to ensure identical behavior across all environments.
 
-Add optional packages as needed:
-```bash
-dotnet add package GDShrapt.Builder
-dotnet add package GDShrapt.Validator
-dotnet add package GDShrapt.Linter
-dotnet add package GDShrapt.Formatter
-```
+The semantic engine operates independently of the Godot editor or runtime. It can:
 
-## Quick Start
+- Parse and analyze GDScript projects offline
+- Read Godot project configuration
+- Load and inspect scene files for type, signal, and node information
+- Perform cross-file and cross-scene analysis without launching Godot
 
-### Parse GDScript
+---
 
-```csharp
-using GDShrapt.Reader;
+## Tooling Built on the Core
 
-var reader = new GDScriptReader();
-var tree = reader.ParseFileContent(@"
-extends Node2D
+### Command Line Interface (CLI)
 
-@export var health: int = 100
+The GDShrapt CLI is part of the upcoming 6.0.0 platform release.
 
-func _ready():
-    print(""Hello, Godot 4!"")
-");
+It will provide project-wide analysis, linting, formatting, and refactoring workflows designed for automation and CI/CD environments.
 
-Console.WriteLine(tree.Extends?.Type);             // "Node2D"
-Console.WriteLine(tree.Variables.First().Identifier); // "health"
-```
+The CLI is **not publicly available yet**. NuGet packages currently published (5.x) contain only the standalone libraries released prior to the semantic platform.
 
-### Build GDScript
+---
 
-```csharp
-var classDecl = GD.Declaration.Class(
-    GD.Atribute.Extends("Node2D"),
-    GD.Declaration.Variable("speed", "float", GD.Expression.Number(100.0))
-);
-classDecl.UpdateIntendation();
-Console.WriteLine(classDecl.ToString());
-```
 
-### Validate
+### Language Server Protocol (LSP)
 
-```csharp
-var validator = new GDValidator();
-var result = validator.Validate(tree);
+GDShrapt provides an LSP 3.17-compatible server for editor integration:
 
-foreach (var error in result.Errors)
-    Console.WriteLine(error); // "error GD5001: 'break' can only be used inside a loop (3:4)"
-```
+- Code completion
+- Go to definition
+- Find references
+- Rename refactoring
+- Hover information
+- Document symbols
+- Real-time diagnostics
 
-### Lint
+The LSP can be used with any LSP-capable editor (VS Code, Neovim, Sublime Text, etc.).
 
-```csharp
-var linter = new GDLinter();
-var result = linter.LintCode(code);
+---
 
-foreach (var issue in result.Issues)
-    Console.WriteLine(issue); // "warning GDL101: Variable 'MyVar' should use snake_case (2:4)"
-```
+### Godot Editor Plugin (Community Edition)
 
-### Format
+The Community Edition plugin integrates GDShrapt directly into the Godot editor:
 
-```csharp
-var formatter = new GDFormatter();
-var formatted = formatter.FormatCode(code);
-// Applies consistent spacing, indentation, and line endings
-```
+- Semantic code completion
+- Go to definition / find references
+- Rename and refactoring previews
+- Quick fixes and diagnostics
+- TODO scanning and reference views
+- AST and semantic inspection tools
 
-## Documentation
+The plugin is currently developed in this repository and will be published to the Godot Asset Store after stabilization.
 
-Each package has detailed documentation in its README:
+---
 
-- [GDShrapt.Reader](src/GDShrapt.Reader/) — Parsing API, helper classes, error recovery
-- [GDShrapt.Builder](src/GDShrapt.Builder/) — Building styles, factory methods, examples
-- [GDShrapt.Validator](src/GDShrapt.Validator/) — Diagnostic codes, runtime providers, type inference
-- [GDShrapt.Linter](src/GDShrapt.Linter/) — Lint rules, naming conventions, suppression comments
-- [GDShrapt.Formatter](src/GDShrapt.Formatter/) — Format rules, LSP options, style extraction
+## Architecture Overview
 
-For examples, see the test projects in [src/](src/).
+Godot Editor
+→ GDShrapt Plugin (OSS)
+→ GDShrapt Semantic Core (Parser · Semantics · Analysis)
+→ LSP Server (OSS) / CLI Tools (OSS)
+→ Automation & Enterprise Layer (Commercial)
 
-## Changelog
+The open-source core powers all editions and integrations.
 
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+---
 
-## Contributing
+## Commercial Edition (Overview)
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+GDShrapt follows an **open-core platform model**.
 
-## Support
+The open-source core remains fully functional and actively developed. A commercial edition is planned for professional teams and studios, building on the same core and focusing on **automation, scale, and CI reliability**, such as:
 
-If GDShrapt helps your project, consider supporting its development:
+- Advanced project-wide refactoring execution
+- Batch and transactional code transformations
+- CI baselines and regression detection
+- Advanced reports and exports
+- Enterprise-oriented build and optimization features
 
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/elamaunt)
+Commercial features are implemented as a separate automation layer and do not replace or cripple the open-source core.
 
-Your support helps maintain these tools and build new features for the Godot community.
+---
 
-## Ecosystem
+## Repository Structure
 
-Related projects:
+This repository contains the entire open-source platform:
 
-| Project | Description |
-|---------|-------------|
-| [GDShrapt.TypesMap](https://github.com/elamaunt/GDShrapt.TypesMap) | Runtime type provider for Godot classes and global functions |
+- GDShrapt.Reader — Incremental parser and AST
+- GDShrapt.Semantics — Project-wide semantic analysis
+- GDShrapt.Validator / Linter / Formatter — Diagnostics and style tooling
+- GDShrapt.CLI — Command-line interface
+- GDShrapt.LSP — Language Server Protocol implementation
+- GDShrapt.Plugin — Godot Editor plugin (Community Edition)
+
+Related project:
+- GDShrapt.TypesMap — Godot built-in and engine type metadata
+
+---
+
+## Roadmap (High-Level)
+
+**6.0.0**
+- Stabilized semantic core
+- Public CLI with semantic analysis
+- Initial LSP release
+- Godot plugin Community Edition
+
+**6.x**
+- Incremental analysis optimizations
+- Expanded refactoring support
+- CI-focused workflows
+
+**Later**
+- Commercial automation layer
+- Enterprise build and performance tooling
+
+---
 
 ## License
 
-This project is licensed under the Apache License 2.0 — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0.
 
-**Note:** Versions 5.0.0 and earlier were released under the MIT License. Starting from version 5.1.0, GDShrapt is licensed under the Apache License 2.0.
+Earlier versions (≤ 5.0.0) were released under the MIT License.
 
-## Acknowledgments
+---
 
-- [Godot Engine](https://godotengine.org/) team for the amazing game engine
-- All contributors who have helped improve this project
+## Project Vision
+
+GDShrapt aims to become the reference language intelligence platform for GDScript, providing first-class tooling for both the open-source community and professional Godot teams — with a shared, transparent, and technically rigorous core.
+
