@@ -30,6 +30,11 @@ namespace GDShrapt.Semantics
         // Optional provider for narrowed types from control flow analysis (e.g., after "if x is Type:")
         private Func<string, string> _narrowingTypeProvider;
 
+        // Specialized analyzers (lazy initialized)
+        private GDContainerTypeAnalyzer _containerAnalyzer;
+        private GDSignalTypeAnalyzer _signalAnalyzer;
+        private GDMethodReturnTypeAnalyzer _methodReturnAnalyzer;
+
         /// <summary>
         /// Gets the runtime provider.
         /// </summary>
@@ -130,6 +135,35 @@ namespace GDShrapt.Semantics
         {
             _narrowingTypeProvider = provider;
         }
+
+        #region Analyzer Accessors (Lazy Initialization)
+
+        /// <summary>
+        /// Gets the container type analyzer (Array/Dictionary analysis).
+        /// </summary>
+        private GDContainerTypeAnalyzer ContainerAnalyzer =>
+            _containerAnalyzer ??= new GDContainerTypeAnalyzer(_scopes, InferType);
+
+        /// <summary>
+        /// Gets the signal type analyzer (signals and await).
+        /// </summary>
+        private GDSignalTypeAnalyzer SignalAnalyzer =>
+            _signalAnalyzer ??= new GDSignalTypeAnalyzer(
+                _typeInjector,
+                _injectionContext,
+                InferType,
+                FindMemberWithInheritance);
+
+        /// <summary>
+        /// Gets the method return type analyzer.
+        /// </summary>
+        private GDMethodReturnTypeAnalyzer MethodReturnAnalyzer =>
+            _methodReturnAnalyzer ??= new GDMethodReturnTypeAnalyzer(
+                InferType,
+                InferTypeNode,
+                InferCallType);
+
+        #endregion
 
         /// <summary>
         /// Infers the type of an expression as a string.
@@ -635,223 +669,42 @@ namespace GDShrapt.Semantics
         }
 
         /// <summary>
-        /// Tries to infer the value type of a Dictionary by analyzing its initializer.
-        /// Returns Union type if multiple value types, single type if uniform, or null if unknown.
+        /// Extracts the Union type of elements from an Array initializer expression.
+        /// Delegates to GDContainerTypeAnalyzer.
         /// </summary>
-        private string InferDictionaryValueType(GDExpression dictExpr)
-        {
-            // If it's an identifier, try to find its initializer
-            if (dictExpr is GDIdentifierExpression identExpr)
-            {
-                var name = identExpr.Identifier?.Sequence;
-                if (string.IsNullOrEmpty(name))
-                    return null;
-
-                // Try to find the variable declaration with initializer
-                GDDictionaryInitializerExpression dictInit = null;
-
-                // Check scope for the variable
-                if (_scopes != null)
-                {
-                    var symbol = _scopes.Lookup(name);
-                    if (symbol?.Declaration is GDVariableDeclaration varDecl &&
-                        varDecl.Initializer is GDDictionaryInitializerExpression init)
-                    {
-                        dictInit = init;
-                    }
-                }
-
-                // If not found in scope, check class members
-                if (dictInit == null)
-                {
-                    var classDecl = dictExpr.RootClassDeclaration;
-                    if (classDecl != null)
-                    {
-                        foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
-                        {
-                            if (member is GDVariableDeclaration memberVarDecl &&
-                                memberVarDecl.Identifier?.Sequence == name &&
-                                memberVarDecl.Initializer is GDDictionaryInitializerExpression memberInit)
-                            {
-                                dictInit = memberInit;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (dictInit != null)
-                {
-                    var result = ExtractDictionaryValueTypes(dictInit);
-                    return result;
-                }
-            }
-            // If it's a dictionary literal directly
-            else if (dictExpr is GDDictionaryInitializerExpression directInit)
-            {
-                return ExtractDictionaryValueTypes(directInit);
-            }
-
-            return null;
-        }
+        private string ExtractArrayElementTypes(GDArrayInitializerExpression arrayInit)
+            => ContainerAnalyzer.ExtractArrayElementTypes(arrayInit);
 
         /// <summary>
         /// Extracts the Union type of values from a Dictionary initializer expression.
+        /// Delegates to GDContainerTypeAnalyzer.
         /// </summary>
         private string ExtractDictionaryValueTypes(GDDictionaryInitializerExpression dictInit)
-        {
-            if (dictInit.KeyValues == null || !System.Linq.Enumerable.Any(dictInit.KeyValues))
-                return null;
-
-            var valueTypes = new HashSet<string>();
-            foreach (var kv in dictInit.KeyValues)
-            {
-                if (kv.Value != null)
-                {
-                    var type = InferType(kv.Value);
-                    if (!string.IsNullOrEmpty(type))
-                        valueTypes.Add(type);
-                }
-            }
-
-            if (valueTypes.Count == 0)
-                return null;
-
-            if (valueTypes.Count == 1)
-                return System.Linq.Enumerable.First(valueTypes);
-
-            // Multiple types - return Union
-            var sorted = System.Linq.Enumerable.OrderBy(valueTypes, t => t);
-            return string.Join(" | ", sorted);
-        }
-
-        /// <summary>
-        /// Extracts the Union type of elements from an Array initializer expression.
-        /// </summary>
-        private string ExtractArrayElementTypes(GDArrayInitializerExpression arrayInit)
-        {
-            if (arrayInit.Values == null || !System.Linq.Enumerable.Any(arrayInit.Values))
-                return null;
-
-            var elementTypes = new HashSet<string>();
-            foreach (var element in arrayInit.Values)
-            {
-                if (element != null)
-                {
-                    var type = InferType(element);
-                    if (!string.IsNullOrEmpty(type))
-                        elementTypes.Add(type);
-                }
-            }
-
-            if (elementTypes.Count == 0)
-                return null;
-
-            if (elementTypes.Count == 1)
-                return System.Linq.Enumerable.First(elementTypes);
-
-            // Multiple types - return Union (sorted alphabetically)
-            var sorted = System.Linq.Enumerable.OrderBy(elementTypes, t => t);
-            return string.Join(" | ", sorted);
-        }
+            => ContainerAnalyzer.ExtractDictionaryValueTypes(dictInit);
 
         /// <summary>
         /// Infers the type for Dictionary.get("key") with key-specific type lookup.
-        /// First tries to find the specific key in the dictionary initializer,
-        /// then falls back to union of all values.
+        /// Delegates to GDContainerTypeAnalyzer.
         /// </summary>
         private string? InferDictionaryGetType(GDCallExpression callExpr, GDExpression dictExpr)
-        {
-            var args = callExpr.Parameters?.ToList();
-            if (args != null && args.Count >= 1)
-            {
-                // Try to extract the key as a static string
-                var resolver = GDStaticStringExtractor.CreateScopeResolver(_scopes, callExpr.RootClassDeclaration);
-                var keyStr = GDStaticStringExtractor.TryExtractString(args[0], resolver);
-
-                if (!string.IsNullOrEmpty(keyStr))
-                {
-                    // Try to find the specific key in the dictionary initializer
-                    var specificType = InferDictionaryValueTypeForKey(dictExpr, keyStr);
-                    if (!string.IsNullOrEmpty(specificType))
-                        return specificType;
-                }
-            }
-
-            // Fall back to union of all dictionary values
-            return InferDictionaryValueType(dictExpr);
-        }
+            => ContainerAnalyzer.InferDictionaryGetType(callExpr, dictExpr);
 
         /// <summary>
         /// Gets the value type for a specific key in a Dictionary initializer.
-        /// Returns null if the key is not found (falls back to union).
+        /// Delegates to GDContainerTypeAnalyzer.
         /// </summary>
         private string? InferDictionaryValueTypeForKey(GDExpression dictExpr, string key)
-        {
-            var dictInit = FindDictionaryInitializer(dictExpr);
-            if (dictInit?.KeyValues == null)
-                return null;
-
-            // Look for the specific key
-            foreach (var kv in dictInit.KeyValues)
-            {
-                var keyStr = GDStaticStringExtractor.TryExtractString(kv.Key, null);
-                if (keyStr == key && kv.Value != null)
-                    return InferType(kv.Value);
-            }
-
-            // Key not found - return null to fall back to union
-            return null;
-        }
+            => ContainerAnalyzer.InferDictionaryValueTypeForKey(dictExpr, key);
 
         /// <summary>
         /// Finds the dictionary initializer expression for a dictionary variable.
+        /// Delegates to GDContainerTypeAnalyzer.
         /// </summary>
         private GDDictionaryInitializerExpression? FindDictionaryInitializer(GDExpression dictExpr)
-        {
-            if (dictExpr is GDDictionaryInitializerExpression directInit)
-                return directInit;
+            => ContainerAnalyzer.FindDictionaryInitializer(dictExpr);
 
-            if (dictExpr is GDIdentifierExpression identExpr)
-            {
-                var name = identExpr.Identifier?.Sequence;
-                if (string.IsNullOrEmpty(name))
-                    return null;
-
-                // Try scope first
-                if (_scopes != null)
-                {
-                    var symbol = _scopes.Lookup(name);
-                    if (symbol?.Declaration is GDVariableDeclaration varDecl &&
-                        varDecl.Initializer is GDDictionaryInitializerExpression init)
-                    {
-                        return init;
-                    }
-                    if (symbol?.Declaration is GDVariableDeclarationStatement varStmt &&
-                        varStmt.Initializer is GDDictionaryInitializerExpression stmtInit)
-                    {
-                        return stmtInit;
-                    }
-                }
-
-                // Try class members
-                var classDecl = dictExpr.RootClassDeclaration;
-                if (classDecl != null)
-                {
-                    foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
-                    {
-                        if (member is GDVariableDeclaration memberVarDecl &&
-                            memberVarDecl.Identifier?.Sequence == name &&
-                            memberVarDecl.Initializer is GDDictionaryInitializerExpression memberInit)
-                        {
-                            return memberInit;
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
+        private string? InferDictionaryValueType(GDExpression dictExpr)
+            => ContainerAnalyzer.InferDictionaryValueType(dictExpr);
 
         /// <summary>
         /// Infers the type for Object.get("property") by looking up the property in the type.
@@ -907,59 +760,10 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Infers the type for signal-related calls (emit_signal, connect, disconnect, etc.).
+        /// Delegates to GDSignalTypeAnalyzer.
         /// </summary>
         private string InferSignalCallType(GDCallExpression callExpr, GDExpression caller)
-        {
-            string methodName = null;
-
-            // Check for direct call: emit_signal(...), connect(...)
-            if (caller is GDIdentifierExpression identExpr)
-            {
-                methodName = identExpr.Identifier?.Sequence;
-            }
-            // Check for method call: obj.emit_signal(...), obj.connect(...)
-            else if (caller is GDMemberOperatorExpression memberExpr)
-            {
-                methodName = memberExpr.Identifier?.Sequence;
-            }
-
-            if (string.IsNullOrEmpty(methodName))
-                return null;
-
-            switch (methodName)
-            {
-                case "emit_signal":
-                    // emit_signal returns void (it triggers signal handlers)
-                    return "void";
-
-                case "connect":
-                    // connect returns Error (int enum in Godot 4)
-                    return "Error";
-
-                case "disconnect":
-                    // disconnect returns void
-                    return "void";
-
-                case "is_connected":
-                    // is_connected returns bool
-                    return "bool";
-
-                case "get_signal_connection_list":
-                    // Returns Array of Dictionaries with connection info
-                    return "Array";
-
-                case "get_signal_list":
-                    // Returns Array of Dictionaries with signal info
-                    return "Array";
-
-                case "has_signal":
-                    // has_signal returns bool
-                    return "bool";
-
-                default:
-                    return null;
-            }
-        }
+            => SignalAnalyzer.InferSignalCallType(callExpr, caller);
 
         /// <summary>
         /// Finds a method declaration in the current class context.
@@ -984,347 +788,24 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Infers the return type of a method by analyzing its return statements.
-        /// Returns null if no return type can be determined.
+        /// Delegates to GDMethodReturnTypeAnalyzer.
         /// </summary>
         private string InferMethodReturnType(GDMethodDeclaration method)
-        {
-            if (method.Statements == null || !System.Linq.Enumerable.Any(method.Statements))
-                return null;
-
-            // Create a local scope to track local variable types
-            var localScope = new Dictionary<string, string>();
-
-            // First, register method parameters
-            if (method.Parameters != null)
-            {
-                foreach (var param in method.Parameters)
-                {
-                    var name = param.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(name))
-                    {
-                        var type = param.Type?.BuildName() ?? "Variant";
-                        localScope[name] = type;
-                    }
-                }
-            }
-
-            // Collect local variables from method body
-            CollectLocalVariables(method.Statements, localScope);
-
-            var returnTypes = new HashSet<string>();
-            CollectReturnTypesFromStatements(method.Statements, returnTypes, localScope);
-
-            // Single type - return it
-            if (returnTypes.Count == 1)
-                return System.Linq.Enumerable.First(returnTypes);
-
-            // Multiple different types - return Union representation (including null if present)
-            if (returnTypes.Count > 0)
-            {
-                var sorted = System.Linq.Enumerable.OrderBy(returnTypes, t => t);
-                return string.Join(" | ", sorted);
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Collects local variable types from statements into the scope.
-        /// </summary>
-        private void CollectLocalVariables(GDStatementsList statements, Dictionary<string, string> scope)
-        {
-            foreach (var stmt in statements)
-            {
-                if (stmt is GDVariableDeclarationStatement varDecl)
-                {
-                    var name = varDecl.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(name))
-                    {
-                        var type = varDecl.Type?.BuildName();
-                        if (string.IsNullOrEmpty(type) && varDecl.Initializer != null)
-                        {
-                            type = InferType(varDecl.Initializer);
-                            // If initializer is an identifier (like parameter) and type is still unknown,
-                            // default to Variant to ensure the variable is tracked
-                            if (string.IsNullOrEmpty(type) && varDecl.Initializer is GDIdentifierExpression)
-                                type = "Variant";
-                        }
-                        if (!string.IsNullOrEmpty(type))
-                            scope[name] = type;
-                    }
-                }
-                // Recursively collect from nested blocks
-                else if (stmt is GDIfStatement ifStmt)
-                {
-                    if (ifStmt.IfBranch?.Statements != null)
-                        CollectLocalVariables(ifStmt.IfBranch.Statements, scope);
-                    if (ifStmt.ElifBranchesList != null)
-                        foreach (var elif in ifStmt.ElifBranchesList)
-                            if (elif.Statements != null)
-                                CollectLocalVariables(elif.Statements, scope);
-                    if (ifStmt.ElseBranch?.Statements != null)
-                        CollectLocalVariables(ifStmt.ElseBranch.Statements, scope);
-                }
-                else if (stmt is GDForStatement forStmt)
-                {
-                    // Register loop variable
-                    var loopVar = forStmt.Variable?.Sequence;
-                    if (!string.IsNullOrEmpty(loopVar))
-                        scope[loopVar] = "Variant"; // Type depends on iterable
-
-                    if (forStmt.Statements != null)
-                        CollectLocalVariables(forStmt.Statements, scope);
-                }
-                else if (stmt is GDWhileStatement whileStmt && whileStmt.Statements != null)
-                    CollectLocalVariables(whileStmt.Statements, scope);
-                else if (stmt is GDMatchStatement matchStmt && matchStmt.Cases != null)
-                {
-                    foreach (var c in matchStmt.Cases)
-                    {
-                        // Register pattern variables from match case conditions
-                        CollectPatternVariables(c, scope);
-
-                        if (c.Statements != null)
-                            CollectLocalVariables(c.Statements, scope);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Collects pattern variables from a match case into the scope.
-        /// Pattern variables are declared with 'var' in match patterns.
-        /// </summary>
-        private void CollectPatternVariables(GDMatchCaseDeclaration matchCase, Dictionary<string, string> scope)
-        {
-            if (matchCase.Conditions == null)
-                return;
-
-            // Check for guard condition "when x is Type" to infer narrowed type
-            string guardType = null;
-            string guardVar = null;
-
-            if (matchCase.GuardCondition is GDDualOperatorExpression guardExpr &&
-                guardExpr.Operator?.OperatorType == GDDualOperatorType.Is)
-            {
-                if (guardExpr.LeftExpression is GDIdentifierExpression guardIdExpr)
-                    guardVar = guardIdExpr.Identifier?.Sequence;
-
-                if (guardExpr.RightExpression is GDIdentifierExpression typeIdExpr)
-                    guardType = typeIdExpr.Identifier?.Sequence;
-            }
-
-            // Recursively collect pattern variables from conditions
-            foreach (var condition in matchCase.Conditions)
-            {
-                CollectPatternVariablesFromExpression(condition, scope, guardVar, guardType);
-            }
-        }
-
-        /// <summary>
-        /// Recursively collects pattern variables from a pattern expression.
-        /// </summary>
-        private void CollectPatternVariablesFromExpression(
-            GDExpression expr,
-            Dictionary<string, string> scope,
-            string guardVar,
-            string guardType)
-        {
-            if (expr == null)
-                return;
-
-            switch (expr)
-            {
-                case GDMatchCaseVariableExpression varExpr:
-                    var name = varExpr.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(name))
-                    {
-                        // If this variable has a type guard, use that type
-                        var type = (name == guardVar && !string.IsNullOrEmpty(guardType))
-                            ? guardType
-                            : "Variant";
-                        scope[name] = type;
-                    }
-                    break;
-
-                case GDDictionaryInitializerExpression dictInit:
-                    // {"key": var value} - extract pattern variables from values
-                    if (dictInit.KeyValues != null)
-                    {
-                        foreach (var kv in dictInit.KeyValues)
-                        {
-                            CollectPatternVariablesFromExpression(kv.Value, scope, guardVar, guardType);
-                        }
-                    }
-                    break;
-
-                case GDArrayInitializerExpression arrayInit:
-                    // [var first, ..] - extract pattern variables from elements
-                    if (arrayInit.Values != null)
-                    {
-                        foreach (var element in arrayInit.Values)
-                        {
-                            CollectPatternVariablesFromExpression(element, scope, guardVar, guardType);
-                        }
-                    }
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Infers the type of an expression, using local scope for identifiers.
-        /// </summary>
-        private string InferTypeWithLocalScope(GDExpression expr, Dictionary<string, string> localScope)
-        {
-            // If it's an identifier and exists in localScope, return its type
-            if (expr is GDIdentifierExpression idExpr && localScope != null)
-            {
-                var name = idExpr.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(name) && localScope.TryGetValue(name, out var type))
-                    return type;
-            }
-            // For call expressions, use InferCallType directly to handle union types
-            if (expr is GDCallExpression callExpr)
-            {
-                return InferCallType(callExpr);
-            }
-            return InferType(expr);
-        }
+            => MethodReturnAnalyzer.InferMethodReturnType(method);
 
         /// <summary>
         /// Infers the return type of a lambda expression by analyzing its body.
-        /// Returns the inferred type, or "void" for lambdas without return.
-        /// Note: The type of a lambda *expression* is always "Callable" - use this method
-        /// to get what the lambda *returns* when called.
+        /// Delegates to GDMethodReturnTypeAnalyzer.
         /// </summary>
         public string InferLambdaReturnType(GDMethodExpression lambda)
-        {
-            return InferLambdaReturnTypeNode(lambda)?.BuildName() ?? "void";
-        }
+            => MethodReturnAnalyzer.InferLambdaReturnType(lambda);
 
         /// <summary>
         /// Infers the return type node of a lambda expression by analyzing its body.
-        /// Returns the inferred type node, or void for lambdas without return.
+        /// Delegates to GDMethodReturnTypeAnalyzer.
         /// </summary>
         private GDTypeNode InferLambdaReturnTypeNode(GDMethodExpression lambda)
-        {
-            // 1. If explicit return type annotation exists, use it
-            if (lambda.ReturnType != null)
-                return lambda.ReturnType;
-
-            // 2. Inline lambda: func(x): return expr or func(x): expr
-            if (lambda.Expression != null)
-            {
-                // If it's a return expression, get the type from its value
-                if (lambda.Expression is GDReturnExpression returnExpr)
-                {
-                    if (returnExpr.Expression != null)
-                        return InferTypeNode(returnExpr.Expression);
-                    return CreateSimpleType("void");
-                }
-                // Otherwise it's just an expression - its type is the return type
-                return InferTypeNode(lambda.Expression);
-            }
-
-            // 3. Multiline lambda - analyze return statements
-            if (lambda.Statements != null && System.Linq.Enumerable.Any(lambda.Statements))
-            {
-                var returnTypes = new HashSet<string>();
-                CollectReturnTypesFromStatements(lambda.Statements, returnTypes);
-
-                if (returnTypes.Count == 0)
-                    return CreateSimpleType("void");
-
-                if (returnTypes.Count == 1)
-                    return CreateSimpleType(System.Linq.Enumerable.First(returnTypes));
-
-                // Multiple types excluding null
-                var nonNullTypes = System.Linq.Enumerable.ToList(
-                    System.Linq.Enumerable.Where(returnTypes, t => t != "null"));
-                if (nonNullTypes.Count == 1)
-                    return CreateSimpleType(nonNullTypes[0]);
-
-                // Multiple different types - return Variant
-                return CreateSimpleType("Variant");
-            }
-
-            // 4. Empty lambda - void
-            return CreateSimpleType("void");
-        }
-
-        /// <summary>
-        /// Recursively collects return types from statements.
-        /// </summary>
-        private void CollectReturnTypesFromStatements(
-            GDStatementsList statements,
-            HashSet<string> types,
-            Dictionary<string, string> localScope = null)
-        {
-            foreach (var stmt in statements)
-            {
-                if (stmt is GDExpressionStatement exprStmt &&
-                    exprStmt.Expression is GDReturnExpression ret)
-                {
-                    // return without value or return null (null is GDIdentifierExpression with "null")
-                    if (ret.Expression == null ||
-                        (ret.Expression is GDIdentifierExpression nullIdent &&
-                         nullIdent.Identifier?.Sequence == "null"))
-                    {
-                        types.Add("null");
-                    }
-                    else
-                    {
-                        var type = localScope != null
-                            ? InferTypeWithLocalScope(ret.Expression, localScope)
-                            : InferType(ret.Expression);
-                        if (!string.IsNullOrEmpty(type))
-                            types.Add(type);
-                    }
-                }
-                else if (stmt is GDIfStatement ifStmt)
-                {
-                    if (ifStmt.IfBranch?.Statements != null)
-                        CollectReturnTypesFromStatements(ifStmt.IfBranch.Statements, types, localScope);
-                    if (ifStmt.ElifBranchesList != null)
-                        foreach (var elif in ifStmt.ElifBranchesList)
-                            if (elif.Statements != null)
-                                CollectReturnTypesFromStatements(elif.Statements, types, localScope);
-                    if (ifStmt.ElseBranch?.Statements != null)
-                        CollectReturnTypesFromStatements(ifStmt.ElseBranch.Statements, types, localScope);
-                }
-                else if (stmt is GDMatchStatement matchStmt && matchStmt.Cases != null)
-                {
-                    foreach (var c in matchStmt.Cases)
-                    {
-                        // Handle inline expression mode: "case: return value"
-                        if (c.Expression is GDReturnExpression inlineRet)
-                        {
-                            if (inlineRet.Expression == null ||
-                                (inlineRet.Expression is GDIdentifierExpression nullIdent &&
-                                 nullIdent.Identifier?.Sequence == "null"))
-                            {
-                                types.Add("null");
-                            }
-                            else
-                            {
-                                var type = localScope != null
-                                    ? InferTypeWithLocalScope(inlineRet.Expression, localScope)
-                                    : InferType(inlineRet.Expression);
-                                if (!string.IsNullOrEmpty(type))
-                                    types.Add(type);
-                            }
-                        }
-                        // Handle block statements mode
-                        if (c.Statements != null)
-                            CollectReturnTypesFromStatements(c.Statements, types, localScope);
-                    }
-                }
-                else if (stmt is GDForStatement forStmt && forStmt.Statements != null)
-                    CollectReturnTypesFromStatements(forStmt.Statements, types, localScope);
-                else if (stmt is GDWhileStatement whileStmt && whileStmt.Statements != null)
-                    CollectReturnTypesFromStatements(whileStmt.Statements, types, localScope);
-            }
-        }
+            => MethodReturnAnalyzer.InferLambdaReturnTypeNode(lambda);
 
         private string InferMemberType(GDMemberOperatorExpression memberExpr)
         {
@@ -1368,165 +849,31 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Infers the type of an await expression.
-        /// For signals: returns the emission type (first param, void for no params, Array for multiple params).
-        /// For coroutines: returns the function's return type.
+        /// Delegates to GDSignalTypeAnalyzer.
         /// </summary>
         private GDTypeNode InferAwaitType(GDAwaitExpression awaitExpr)
-        {
-            var innerExpr = awaitExpr.Expression;
-            if (innerExpr == null)
-                return CreateSimpleType("Variant");
-
-            // 1. Call expression - coroutine or method returning Signal
-            if (innerExpr is GDCallExpression callExpr)
-            {
-                // Get the return type of the called function/method
-                var returnType = InferCallType(callExpr);
-
-                // If it returns a Signal, we can't know the emission type without more context
-                if (returnType == "Signal")
-                    return CreateSimpleType("Variant");
-
-                // Otherwise, return the function's return type (coroutine semantics)
-                return CreateSimpleType(returnType ?? "Variant");
-            }
-
-            // 2. Identifier - local signal (signal defined in current class)
-            if (innerExpr is GDIdentifierExpression identExpr)
-            {
-                var signalName = identExpr.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(signalName))
-                {
-                    // Look for signal declaration in current class
-                    var signalDecl = FindLocalSignalDeclaration(signalName, awaitExpr);
-                    if (signalDecl != null)
-                    {
-                        return CreateSimpleType(GetSignalEmissionTypeFromDecl(signalDecl));
-                    }
-
-                    // Try type injector for inherited/Godot signals
-                    if (_typeInjector != null)
-                    {
-                        var currentType = _injectionContext?.CurrentClass ?? "self";
-                        var paramTypes = _typeInjector.GetSignalParameterTypes(signalName, currentType);
-                        if (paramTypes != null)
-                        {
-                            return CreateSimpleType(GetSignalEmissionType(paramTypes));
-                        }
-                    }
-                }
-            }
-
-            // 3. Member access - signal on an object (obj.signal_name)
-            if (innerExpr is GDMemberOperatorExpression memberExpr)
-            {
-                var signalName = memberExpr.Identifier?.Sequence;
-                var callerType = InferType(memberExpr.CallerExpression);
-
-                if (!string.IsNullOrEmpty(signalName) && !string.IsNullOrEmpty(callerType))
-                {
-                    // Check if it's a signal via runtime provider (with inheritance)
-                    var memberInfo = FindMemberWithInheritance(callerType, signalName);
-                    if (memberInfo?.Kind == GDRuntimeMemberKind.Signal)
-                    {
-                        // Try type injector for signal parameter types
-                        if (_typeInjector != null)
-                        {
-                            var paramTypes = _typeInjector.GetSignalParameterTypes(signalName, callerType);
-                            if (paramTypes != null)
-                            {
-                                return CreateSimpleType(GetSignalEmissionType(paramTypes));
-                            }
-                        }
-                        // Signal exists but we can't determine emission type
-                        return CreateSimpleType("Variant");
-                    }
-
-                    // Check if member type is Signal
-                    if (memberInfo?.Type == "Signal")
-                    {
-                        // Try type injector for signal parameter types
-                        if (_typeInjector != null)
-                        {
-                            var paramTypes = _typeInjector.GetSignalParameterTypes(signalName, callerType);
-                            if (paramTypes != null)
-                            {
-                                return CreateSimpleType(GetSignalEmissionType(paramTypes));
-                            }
-                        }
-                        return CreateSimpleType("Variant");
-                    }
-                }
-            }
-
-            // 4. Fallback - Variant
-            return CreateSimpleType("Variant");
-        }
+            => SignalAnalyzer.InferAwaitType(awaitExpr, InferCallType);
 
         /// <summary>
         /// Finds a signal declaration in the current class context.
+        /// Delegates to GDSignalTypeAnalyzer.
         /// </summary>
         private GDSignalDeclaration FindLocalSignalDeclaration(string signalName, GDNode context)
-        {
-            var classDecl = context.RootClassDeclaration;
-            if (classDecl == null)
-                return null;
-
-            foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
-            {
-                if (member is GDSignalDeclaration signalDecl &&
-                    signalDecl.Identifier?.Sequence == signalName)
-                {
-                    return signalDecl;
-                }
-            }
-
-            return null;
-        }
+            => SignalAnalyzer.FindLocalSignalDeclaration(signalName, context);
 
         /// <summary>
         /// Gets the emission type from a signal declaration.
-        /// 0 params = "void", 1 param = param type, multiple params = "Array".
+        /// Delegates to GDSignalTypeAnalyzer.
         /// </summary>
         private string GetSignalEmissionTypeFromDecl(GDSignalDeclaration signalDecl)
-        {
-            var parameters = signalDecl.Parameters;
-            if (parameters == null)
-                return "void";
-
-            var paramCount = 0;
-            GDParameterDeclaration firstParam = null;
-
-            foreach (var param in parameters)
-            {
-                if (paramCount == 0)
-                    firstParam = param;
-                paramCount++;
-                if (paramCount > 1)
-                    return "Array";
-            }
-
-            if (paramCount == 0)
-                return "void";
-
-            // Single parameter - return its type
-            return firstParam?.Type?.BuildName() ?? "Variant";
-        }
+            => SignalAnalyzer.GetSignalEmissionTypeFromDecl(signalDecl);
 
         /// <summary>
         /// Gets the emission type from signal parameter types list.
-        /// 0 params = "void", 1 param = param type, multiple params = "Array".
+        /// Delegates to GDSignalTypeAnalyzer.
         /// </summary>
         private string GetSignalEmissionType(IReadOnlyList<string> paramTypes)
-        {
-            if (paramTypes == null || paramTypes.Count == 0)
-                return "void";
-
-            if (paramTypes.Count == 1)
-                return paramTypes[0];
-
-            return "Array";
-        }
+            => SignalAnalyzer.GetSignalEmissionType(paramTypes);
 
         /// <summary>
         /// Checks if two types are compatible for assignment.

@@ -263,7 +263,7 @@ internal class GDFlowAnalyzer : GDVisitor
 
     private class LoopAnalysisContext
     {
-        public GDFlowState PreLoopState { get; set; } = null!;
+        public GDFlowState PreLoopState { get; set; } = GDFlowState.Empty;
         public GDFlowState? CurrentIterationState { get; set; }
         public int IterationCount { get; set; }
         public Dictionary<string, HashSet<string>>? PreviousSnapshot { get; set; }

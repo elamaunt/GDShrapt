@@ -23,6 +23,11 @@ public enum TerminationType
 /// </summary>
 public class GDFlowState
 {
+    /// <summary>
+    /// Gets an empty flow state with no variables. Use for default initialization.
+    /// </summary>
+    public static GDFlowState Empty { get; } = new GDFlowState();
+
     private readonly Dictionary<string, GDFlowVariableType> _variables = new();
     private readonly GDFlowState? _parent;
 

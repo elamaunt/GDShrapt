@@ -9,6 +9,118 @@ namespace GDShrapt.Semantics;
 /// </summary>
 public class GDAddTypeAnnotationsService
 {
+    #region Annotation Context (Strategy Pattern)
+
+    /// <summary>
+    /// Abstracts the differences between variable, local variable, and parameter annotation contexts.
+    /// </summary>
+    private interface IAnnotationContext
+    {
+        bool ShouldSkip();
+        GDIdentifier? GetIdentifier();
+        GDExpression? GetInitializer();
+        string GetUnknownReason();
+        TypeAnnotationTarget GetTarget();
+        string GetFallbackName();
+    }
+
+    private sealed class VariableAnnotationContext : IAnnotationContext
+    {
+        private readonly GDVariableDeclaration _varDecl;
+        public VariableAnnotationContext(GDVariableDeclaration varDecl) => _varDecl = varDecl;
+
+        public bool ShouldSkip() =>
+            _varDecl.Type != null || _varDecl.TypeColon != null || _varDecl.ConstKeyword != null;
+        public GDIdentifier? GetIdentifier() => _varDecl.Identifier;
+        public GDExpression? GetInitializer() => _varDecl.Initializer;
+        public string GetUnknownReason() => "No initializer";
+        public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.ClassVariable;
+        public string GetFallbackName() => "variable";
+    }
+
+    private sealed class LocalVariableAnnotationContext : IAnnotationContext
+    {
+        private readonly GDVariableDeclarationStatement _varStmt;
+        public LocalVariableAnnotationContext(GDVariableDeclarationStatement varStmt) => _varStmt = varStmt;
+
+        public bool ShouldSkip() => _varStmt.Type != null || _varStmt.Colon != null;
+        public GDIdentifier? GetIdentifier() => _varStmt.Identifier;
+        public GDExpression? GetInitializer() => _varStmt.Initializer;
+        public string GetUnknownReason() => "No initializer";
+        public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.LocalVariable;
+        public string GetFallbackName() => "variable";
+    }
+
+    private sealed class ParameterAnnotationContext : IAnnotationContext
+    {
+        private readonly GDParameterDeclaration _param;
+        public ParameterAnnotationContext(GDParameterDeclaration param) => _param = param;
+
+        public bool ShouldSkip() => _param.Type != null;
+        public GDIdentifier? GetIdentifier() => _param.Identifier;
+        public GDExpression? GetInitializer() => _param.DefaultValue;
+        public string GetUnknownReason() => "No default value";
+        public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.Parameter;
+        public string GetFallbackName() => "parameter";
+    }
+
+    /// <summary>
+    /// Core annotation logic shared by all annotation types.
+    /// </summary>
+    private static void TryAddAnnotationCore(
+        GDScriptFile file,
+        IAnnotationContext context,
+        GDTypeInferenceHelper helper,
+        GDTypeAnnotationOptions options,
+        List<GDTypeAnnotationPlan> annotations)
+    {
+        if (context.ShouldSkip())
+            return;
+
+        var identifier = context.GetIdentifier();
+        if (identifier == null)
+            return;
+
+        var initializer = context.GetInitializer();
+        var inferredType = initializer != null
+            ? helper.InferExpressionType(initializer)
+            : GDInferredType.Unknown(context.GetUnknownReason());
+
+        // Apply minimum confidence filter
+        if (inferredType.Confidence > options.MinimumConfidence)
+        {
+            if (options.UnknownTypeFallback != null)
+                inferredType = GDInferredType.FromType(options.UnknownTypeFallback, GDTypeConfidence.Low, "Fallback type");
+            else
+                return;
+        }
+
+        if (inferredType.IsUnknown && options.UnknownTypeFallback == null)
+            return;
+
+        var typeName = inferredType.IsUnknown && options.UnknownTypeFallback != null
+            ? options.UnknownTypeFallback
+            : inferredType.TypeName;
+
+        var edit = new GDTextEdit(
+            file.FullPath,
+            identifier.EndLine,
+            identifier.EndColumn,
+            "",
+            $": {typeName}");
+
+        annotations.Add(new GDTypeAnnotationPlan(
+            file.FullPath,
+            identifier.Sequence ?? context.GetFallbackName(),
+            identifier.StartLine,
+            identifier.StartColumn,
+            inferredType,
+            context.GetTarget(),
+            edit));
+    }
+
+    #endregion
+
     /// <summary>
     /// Plans type annotations for a single file (preview only).
     /// </summary>
@@ -92,219 +204,67 @@ public class GDAddTypeAnnotationsService
         }
     }
 
-    private void CollectLocalVariableAnnotations(
+    private static void CollectLocalVariableAnnotations(
         GDScriptFile file,
         IEnumerable<GDStatement> statements,
         GDTypeInferenceHelper helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations)
     {
-        foreach (var stmt in statements)
+        var collector = new LocalVariableAnnotationsCollector(file, helper, options, annotations);
+        collector.TraverseStatements(statements);
+    }
+
+    /// <summary>
+    /// Traverser that collects local variable annotations from method body.
+    /// </summary>
+    private sealed class LocalVariableAnnotationsCollector : GDStatementTraverser
+    {
+        private readonly GDScriptFile _file;
+        private readonly GDTypeInferenceHelper _helper;
+        private readonly GDTypeAnnotationOptions _options;
+        private readonly List<GDTypeAnnotationPlan> _annotations;
+
+        public LocalVariableAnnotationsCollector(
+            GDScriptFile file,
+            GDTypeInferenceHelper helper,
+            GDTypeAnnotationOptions options,
+            List<GDTypeAnnotationPlan> annotations)
+        {
+            _file = file;
+            _helper = helper;
+            _options = options;
+            _annotations = annotations;
+        }
+
+        protected override void ProcessStatement(GDStatement stmt)
         {
             if (stmt is GDVariableDeclarationStatement varStmt)
-            {
-                TryAddLocalVariableAnnotation(file, varStmt, helper, options, annotations);
-            }
-            else if (stmt is GDIfStatement ifStmt)
-            {
-                if (ifStmt.IfBranch?.Statements != null)
-                    CollectLocalVariableAnnotations(file, ifStmt.IfBranch.Statements, helper, options, annotations);
-                if (ifStmt.ElseBranch?.Statements != null)
-                    CollectLocalVariableAnnotations(file, ifStmt.ElseBranch.Statements, helper, options, annotations);
-                if (ifStmt.ElifBranchesList != null)
-                {
-                    foreach (var elif in ifStmt.ElifBranchesList)
-                    {
-                        if (elif?.Statements != null)
-                            CollectLocalVariableAnnotations(file, elif.Statements, helper, options, annotations);
-                    }
-                }
-            }
-            else if (stmt is GDForStatement forStmt && forStmt.Statements != null)
-            {
-                CollectLocalVariableAnnotations(file, forStmt.Statements, helper, options, annotations);
-            }
-            else if (stmt is GDWhileStatement whileStmt && whileStmt.Statements != null)
-            {
-                CollectLocalVariableAnnotations(file, whileStmt.Statements, helper, options, annotations);
-            }
-            else if (stmt is GDMatchStatement matchStmt && matchStmt.Cases != null)
-            {
-                foreach (var matchCase in matchStmt.Cases)
-                {
-                    if (matchCase?.Statements != null)
-                        CollectLocalVariableAnnotations(file, matchCase.Statements, helper, options, annotations);
-                }
-            }
+                TryAddLocalVariableAnnotation(_file, varStmt, _helper, _options, _annotations);
         }
     }
 
-    private void TryAddVariableAnnotation(
+    private static void TryAddVariableAnnotation(
         GDScriptFile file,
         GDVariableDeclaration varDecl,
         GDTypeInferenceHelper helper,
         GDTypeAnnotationOptions options,
-        List<GDTypeAnnotationPlan> annotations)
-    {
-        // Skip if already has type annotation
-        if (varDecl.Type != null)
-            return;
+        List<GDTypeAnnotationPlan> annotations) =>
+        TryAddAnnotationCore(file, new VariableAnnotationContext(varDecl), helper, options, annotations);
 
-        // Skip if using inferred assignment (:=)
-        if (varDecl.TypeColon != null)
-            return;
-
-        // Skip constants
-        if (varDecl.ConstKeyword != null)
-            return;
-
-        var identifier = varDecl.Identifier;
-        if (identifier == null)
-            return;
-
-        var inferredType = varDecl.Initializer != null
-            ? helper.InferExpressionType(varDecl.Initializer)
-            : GDInferredType.Unknown("No initializer");
-
-        // Apply minimum confidence filter
-        if (inferredType.Confidence > options.MinimumConfidence)
-        {
-            // If fallback is set, use it for lower confidence
-            if (options.UnknownTypeFallback != null)
-                inferredType = GDInferredType.FromType(options.UnknownTypeFallback, GDTypeConfidence.Low, "Fallback type");
-            else
-                return;
-        }
-
-        if (inferredType.IsUnknown && options.UnknownTypeFallback == null)
-            return;
-
-        var typeName = inferredType.IsUnknown && options.UnknownTypeFallback != null
-            ? options.UnknownTypeFallback
-            : inferredType.TypeName;
-
-        var edit = new GDTextEdit(
-            file.FullPath,
-            identifier.EndLine,
-            identifier.EndColumn,
-            "",
-            $": {typeName}");
-
-        annotations.Add(new GDTypeAnnotationPlan(
-            file.FullPath,
-            identifier.Sequence ?? "variable",
-            identifier.StartLine,
-            identifier.StartColumn,
-            inferredType,
-            TypeAnnotationTarget.ClassVariable,
-            edit));
-    }
-
-    private void TryAddLocalVariableAnnotation(
+    private static void TryAddLocalVariableAnnotation(
         GDScriptFile file,
         GDVariableDeclarationStatement varStmt,
         GDTypeInferenceHelper helper,
         GDTypeAnnotationOptions options,
-        List<GDTypeAnnotationPlan> annotations)
-    {
-        // Skip if already has type annotation
-        if (varStmt.Type != null)
-            return;
+        List<GDTypeAnnotationPlan> annotations) =>
+        TryAddAnnotationCore(file, new LocalVariableAnnotationContext(varStmt), helper, options, annotations);
 
-        // Skip if using inferred assignment (:=)
-        if (varStmt.Colon != null)
-            return;
-
-        var identifier = varStmt.Identifier;
-        if (identifier == null)
-            return;
-
-        var inferredType = varStmt.Initializer != null
-            ? helper.InferExpressionType(varStmt.Initializer)
-            : GDInferredType.Unknown("No initializer");
-
-        // Apply minimum confidence filter
-        if (inferredType.Confidence > options.MinimumConfidence)
-        {
-            if (options.UnknownTypeFallback != null)
-                inferredType = GDInferredType.FromType(options.UnknownTypeFallback, GDTypeConfidence.Low, "Fallback type");
-            else
-                return;
-        }
-
-        if (inferredType.IsUnknown && options.UnknownTypeFallback == null)
-            return;
-
-        var typeName = inferredType.IsUnknown && options.UnknownTypeFallback != null
-            ? options.UnknownTypeFallback
-            : inferredType.TypeName;
-
-        var edit = new GDTextEdit(
-            file.FullPath,
-            identifier.EndLine,
-            identifier.EndColumn,
-            "",
-            $": {typeName}");
-
-        annotations.Add(new GDTypeAnnotationPlan(
-            file.FullPath,
-            identifier.Sequence ?? "variable",
-            identifier.StartLine,
-            identifier.StartColumn,
-            inferredType,
-            TypeAnnotationTarget.LocalVariable,
-            edit));
-    }
-
-    private void TryAddParameterAnnotation(
+    private static void TryAddParameterAnnotation(
         GDScriptFile file,
         GDParameterDeclaration param,
         GDTypeInferenceHelper helper,
         GDTypeAnnotationOptions options,
-        List<GDTypeAnnotationPlan> annotations)
-    {
-        // Skip if already has type annotation
-        if (param.Type != null)
-            return;
-
-        var identifier = param.Identifier;
-        if (identifier == null)
-            return;
-
-        var inferredType = param.DefaultValue != null
-            ? helper.InferExpressionType(param.DefaultValue)
-            : GDInferredType.Unknown("No default value");
-
-        // Apply minimum confidence filter
-        if (inferredType.Confidence > options.MinimumConfidence)
-        {
-            if (options.UnknownTypeFallback != null)
-                inferredType = GDInferredType.FromType(options.UnknownTypeFallback, GDTypeConfidence.Low, "Fallback type");
-            else
-                return;
-        }
-
-        if (inferredType.IsUnknown && options.UnknownTypeFallback == null)
-            return;
-
-        var typeName = inferredType.IsUnknown && options.UnknownTypeFallback != null
-            ? options.UnknownTypeFallback
-            : inferredType.TypeName;
-
-        var edit = new GDTextEdit(
-            file.FullPath,
-            identifier.EndLine,
-            identifier.EndColumn,
-            "",
-            $": {typeName}");
-
-        annotations.Add(new GDTypeAnnotationPlan(
-            file.FullPath,
-            identifier.Sequence ?? "parameter",
-            identifier.StartLine,
-            identifier.StartColumn,
-            inferredType,
-            TypeAnnotationTarget.Parameter,
-            edit));
-    }
+        List<GDTypeAnnotationPlan> annotations) =>
+        TryAddAnnotationCore(file, new ParameterAnnotationContext(param), helper, options, annotations);
 }
