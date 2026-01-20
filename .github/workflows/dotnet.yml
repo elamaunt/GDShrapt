@@ -1,4 +1,4 @@
-name: .NET
+name: Build & Tests
 
 on:
   push:
@@ -11,13 +11,67 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+
     - name: Restore dependencies
       run: dotnet restore src
+
     - name: Build
-      run: dotnet build src --no-restore
+      run: dotnet build src --no-restore --configuration Release
+
     - name: Test
-      run: dotnet test src --no-build --verbosity normal
+      run: |
+        dotnet test src --no-build --configuration Release \
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory ./TestResults
+
+    - name: Parse test results
+      if: always()
+      id: test-results
+      run: |
+        # Parse .trx files for test counts
+        TOTAL=0
+        PASSED=0
+        FAILED=0
+
+        for file in TestResults/*.trx; do
+          if [ -f "$file" ]; then
+            FILE_TOTAL=$(grep -oP 'total="\K[0-9]+' "$file" | head -1 || echo "0")
+            FILE_PASSED=$(grep -oP 'passed="\K[0-9]+' "$file" | head -1 || echo "0")
+            FILE_FAILED=$(grep -oP 'failed="\K[0-9]+' "$file" | head -1 || echo "0")
+            TOTAL=$((TOTAL + FILE_TOTAL))
+            PASSED=$((PASSED + FILE_PASSED))
+            FAILED=$((FAILED + FILE_FAILED))
+          fi
+        done
+
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        echo "passed=$PASSED" >> $GITHUB_OUTPUT
+        echo "failed=$FAILED" >> $GITHUB_OUTPUT
+        echo "Tests: $PASSED/$TOTAL passed, $FAILED failed"
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: 'TestResults/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+    - name: Update test badge
+      if: github.ref == 'refs/heads/main' && always()
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.GIST_TOKEN }}
+        gistID: ${{ vars.TEST_BADGE_GIST_ID }}
+        filename: gdshrapt-tests.json
+        label: tests
+        message: ${{ steps.test-results.outputs.passed }}/${{ steps.test-results.outputs.total }} passed
+        color: ${{ steps.test-results.outputs.failed == '0' && 'brightgreen' || 'red' }}
