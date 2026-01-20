@@ -116,17 +116,20 @@ The plugin is currently developed in this repository and will be published to th
 │                        Integrations                          │
 ├──────────────┬──────────────┬──────────────┬────────────────┤
 │  CLI Tools   │  LSP Server  │ Godot Plugin │   Your Tool    │
-└──────┬───────┴──────┬───────┴──────┬───────┴────────┬───────┘
-       │              │              │                │
-       └──────────────┴──────────────┴────────────────┘
+└──────────────┴──────────────┴──────────────┴────────────────┘
                               │
 ┌─────────────────────────────┴────────────────────────────────┐
 │                    GDShrapt.Semantics                        │
 │         Project Model · Type Inference · Refactoring         │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │             GDShrapt.Semantics.Validator               │  │
+│  │                 Type-based validation                  │  │
+│  └────────────────────────────────────────────────────────┘  │
 ├──────────────────────────────────────────────────────────────┤
 │                   GDShrapt.Abstractions                      │
 ├──────────────┬──────────────┬──────────────┬────────────────┤
 │  Validator   │    Linter    │  Formatter   │    Builder     │
+│ (AST-based)  │              │              │                │
 └──────────────┴──────────────┴──────────────┴────────────────┘
                               │
 ┌─────────────────────────────┴────────────────────────────────┐
@@ -135,7 +138,7 @@ The plugin is currently developed in this repository and will be published to th
 └──────────────────────────────────────────────────────────────┘
 ```
 
-The open-source core powers all integrations. Each layer depends only on the layers below it.
+Each layer depends only on the layers below it. Two validation levels: AST-based (syntax, scope, control flow) and semantic (type checking, member resolution).
 
 ---
 
