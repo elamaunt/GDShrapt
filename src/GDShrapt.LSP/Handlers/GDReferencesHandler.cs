@@ -1,97 +1,68 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 
 namespace GDShrapt.LSP;
 
 /// <summary>
 /// Handles textDocument/references requests.
+/// Thin wrapper over IGDFindRefsHandler from CLI.Core.
+/// Uses IGDGoToDefHandler to get symbol name at cursor position.
 /// </summary>
 public class GDReferencesHandler
 {
-    private readonly GDScriptProject _project;
+    private readonly IGDFindRefsHandler _findRefsHandler;
+    private readonly IGDGoToDefHandler _goToDefHandler;
 
-    public GDReferencesHandler(GDScriptProject project)
+    public GDReferencesHandler(IGDFindRefsHandler findRefsHandler, IGDGoToDefHandler goToDefHandler)
     {
-        _project = project;
+        _findRefsHandler = findRefsHandler;
+        _goToDefHandler = goToDefHandler;
     }
 
     public Task<GDLspLocation[]?> HandleAsync(GDReferencesParams @params, CancellationToken cancellationToken)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
-        var script = _project.GetScript(filePath);
 
-        if (script?.Analyzer == null || script.Class == null)
-            return Task.FromResult<GDLspLocation[]?>(null);
-
-        // Convert to 1-based line/column
+        // Convert LSP 0-based to CLI.Core 1-based
         var line = @params.Position.Line + 1;
         var column = @params.Position.Character + 1;
 
-        // Find the node at the position
-        var node = GDNodeFinder.FindNodeAtPosition(script.Class, line, column);
-        if (node == null)
+        // First, get the symbol name at the cursor position
+        var definition = _goToDefHandler.FindDefinition(filePath, line, column);
+        if (definition == null || string.IsNullOrEmpty(definition.SymbolName))
             return Task.FromResult<GDLspLocation[]?>(null);
 
-        // Get the symbol for this node
-        var symbol = script.Analyzer.GetSymbolForNode(node);
-        if (symbol == null)
+        var symbolName = definition.SymbolName;
+
+        // Delegate to CLI.Core handler
+        var result = _findRefsHandler.FindReferences(symbolName, filePath);
+        if (result == null || result.Count == 0)
             return Task.FromResult<GDLspLocation[]?>(null);
 
+        // Filter results based on IncludeDeclaration
+        var filteredResults = @params.Context.IncludeDeclaration
+            ? result
+            : result.Where(r => !r.IsDeclaration).ToList();
+
+        if (filteredResults.Count == 0)
+            return Task.FromResult<GDLspLocation[]?>(null);
+
+        // Convert CLI.Core results to LSP locations
         var locations = new List<GDLspLocation>();
-
-        // Add declaration if requested
-        if (@params.Context.IncludeDeclaration && symbol.DeclarationNode != null)
+        foreach (var reference in filteredResults)
         {
-            var declLocation = GDLocationAdapter.FromNode(symbol.DeclarationNode, filePath);
-            if (declLocation != null)
+            locations.Add(new GDLspLocation
             {
-                locations.Add(declLocation);
-            }
-        }
-
-        // Get all references to this symbol in the current file
-        var references = script.Analyzer.GetReferencesTo(symbol);
-        foreach (var reference in references)
-        {
-            var refNode = reference.ReferenceNode;
-            if (refNode == null)
-                continue;
-
-            // Skip declaration if already added
-            if (@params.Context.IncludeDeclaration && refNode == symbol.DeclarationNode)
-                continue;
-
-            var location = GDLocationAdapter.FromNode(refNode, filePath);
-            if (location != null)
-            {
-                locations.Add(location);
-            }
-        }
-
-        // Also search in other files for cross-file references
-        foreach (var otherScript in _project.ScriptFiles)
-        {
-            if (otherScript.Reference.FullPath == filePath)
-                continue;
-
-            if (otherScript.Analyzer == null)
-                continue;
-
-            var otherRefs = otherScript.Analyzer.GetReferencesTo(symbol);
-            foreach (var reference in otherRefs)
-            {
-                var otherNode = reference.ReferenceNode;
-                if (otherNode == null)
-                    continue;
-
-                var location = GDLocationAdapter.FromNode(otherNode, otherScript.Reference.FullPath);
-                if (location != null)
-                {
-                    locations.Add(location);
-                }
-            }
+                Uri = GDDocumentManager.PathToUri(reference.FilePath),
+                Range = GDLocationAdapter.ToLspRange(
+                    reference.Line,
+                    reference.Column,
+                    reference.Line,
+                    reference.Column + symbolName.Length)
+            });
         }
 
         return Task.FromResult<GDLspLocation[]?>(locations.ToArray());

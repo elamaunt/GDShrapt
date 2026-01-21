@@ -219,6 +219,24 @@ public class GDServerCapabilities
     /// </summary>
     [JsonPropertyName("completionProvider")]
     public GDCompletionOptions? CompletionProvider { get; set; }
+
+    /// <summary>
+    /// The server provides code action support.
+    /// </summary>
+    [JsonPropertyName("codeActionProvider")]
+    public bool? CodeActionProvider { get; set; }
+
+    /// <summary>
+    /// The server provides signature help support.
+    /// </summary>
+    [JsonPropertyName("signatureHelpProvider")]
+    public GDSignatureHelpOptions? SignatureHelpProvider { get; set; }
+
+    /// <summary>
+    /// The server provides inlay hint support.
+    /// </summary>
+    [JsonPropertyName("inlayHintProvider")]
+    public GDInlayHintOptions? InlayHintProvider { get; set; }
 }
 
 /// <summary>

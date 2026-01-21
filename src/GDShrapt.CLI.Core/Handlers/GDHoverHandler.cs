@@ -1,44 +1,41 @@
+using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
-namespace GDShrapt.LSP;
+namespace GDShrapt.CLI.Core;
 
 /// <summary>
-/// Handles textDocument/hover requests.
+/// Handler for hover information.
+/// Extracts symbol info and documentation at a given position.
 /// </summary>
-public class GDHoverHandler
+public class GDHoverHandler : IGDHoverHandler
 {
-    private readonly GDScriptProject _project;
+    protected readonly GDScriptProject _project;
 
     public GDHoverHandler(GDScriptProject project)
     {
         _project = project;
     }
 
-    public Task<GDLspHover?> HandleAsync(GDHoverParams @params, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public virtual GDHoverInfo? GetHover(string filePath, int line, int column)
     {
-        var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
         var script = _project.GetScript(filePath);
-
         if (script?.Analyzer == null || script.Class == null)
-            return Task.FromResult<GDLspHover?>(null);
-
-        // Convert to 1-based line/column
-        var line = @params.Position.Line + 1;
-        var column = @params.Position.Character + 1;
+            return null;
 
         // Find the node at the position
-        var node = GDNodeFinder.FindNodeAtPosition(script.Class, line, column);
+        var finder = new GDPositionFinder(script.Class);
+        var node = finder.FindNodeAtPosition(line, column);
         if (node == null)
-            return Task.FromResult<GDLspHover?>(null);
+            return null;
 
         // Get the symbol for this node
         var symbol = script.Analyzer.GetSymbolForNode(node);
         if (symbol == null)
-            return Task.FromResult<GDLspHover?>(null);
+            return null;
 
         // Build hover content
         var sb = new StringBuilder();
@@ -71,34 +68,36 @@ public class GDHoverHandler
             sb.Append(docComment);
         }
 
-        var hover = new GDLspHover
+        return new GDHoverInfo
         {
-            Contents = GDLspMarkupContent.Markdown(sb.ToString()),
-            Range = symbol.DeclarationNode != null
-                ? GDLocationAdapter.ToLspRange(
-                    symbol.DeclarationNode.StartLine,
-                    symbol.DeclarationNode.StartColumn,
-                    symbol.DeclarationNode.EndLine,
-                    symbol.DeclarationNode.EndColumn)
-                : null
+            Content = sb.ToString(),
+            Kind = symbol.Kind,
+            SymbolName = symbol.Name,
+            TypeName = symbol.TypeName ?? symbol.TypeNode?.ToString(),
+            Documentation = docComment,
+            StartLine = symbol.DeclarationNode?.StartLine,
+            StartColumn = symbol.DeclarationNode?.StartColumn,
+            EndLine = symbol.DeclarationNode?.EndLine,
+            EndColumn = symbol.DeclarationNode?.EndColumn
         };
-
-        return Task.FromResult<GDLspHover?>(hover);
     }
 
-    private static string GetSymbolKindString(GDSymbolInfo symbol)
+    /// <summary>
+    /// Converts symbol kind to GDScript keyword string.
+    /// </summary>
+    protected static string GetSymbolKindString(Semantics.GDSymbolInfo symbol)
     {
         return symbol.Kind switch
         {
-            GDSymbolKind.Variable => symbol.IsStatic ? "const" : "var",
-            GDSymbolKind.Constant => "const",
-            GDSymbolKind.Method => "func",
-            GDSymbolKind.Signal => "signal",
-            GDSymbolKind.Class => "class",
-            GDSymbolKind.Enum => "enum",
-            GDSymbolKind.EnumValue => "enum value",
-            GDSymbolKind.Parameter => "param",
-            GDSymbolKind.Iterator => "var",
+            Abstractions.GDSymbolKind.Variable => symbol.IsStatic ? "const" : "var",
+            Abstractions.GDSymbolKind.Constant => "const",
+            Abstractions.GDSymbolKind.Method => "func",
+            Abstractions.GDSymbolKind.Signal => "signal",
+            Abstractions.GDSymbolKind.Class => "class",
+            Abstractions.GDSymbolKind.Enum => "enum",
+            Abstractions.GDSymbolKind.EnumValue => "enum value",
+            Abstractions.GDSymbolKind.Parameter => "param",
+            Abstractions.GDSymbolKind.Iterator => "var",
             _ => "symbol"
         };
     }
@@ -107,14 +106,14 @@ public class GDHoverHandler
     /// Extracts documentation comments from above the declaration.
     /// GDScript uses ## for doc comments.
     /// </summary>
-    private static string? ExtractDocComment(GDNode? declaration)
+    protected static string? ExtractDocComment(GDNode? declaration)
     {
         if (declaration == null)
             return null;
 
         // In GDScript, doc comments are ## lines above the declaration
         // We look for comment tokens preceding the declaration
-        var docLines = new System.Collections.Generic.List<string>();
+        var docLines = new List<string>();
 
         // Find the first token of the declaration
         GDSyntaxToken? firstToken = null;

@@ -61,10 +61,9 @@ internal class InvertConditionAction : GDRefactoringActionBase
                 ? "Invert Condition (swap if/else)"
                 : "Invert Condition";
 
-            // In Base Plugin: Apply is disabled (Pro required)
-            // This can be changed to true when Pro licensing is available
-            var canApply = false;
-            var proMessage = "GDShrapt Pro required to apply this refactoring";
+            // Base: Single-file execute enabled (safe, reversible operation)
+            var canApply = true;
+            string proMessage = null;
 
             var result = await dialog.ShowForResult(
                 title,

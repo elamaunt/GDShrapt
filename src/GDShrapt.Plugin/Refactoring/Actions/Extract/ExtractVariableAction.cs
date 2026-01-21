@@ -98,9 +98,9 @@ internal class ExtractVariableAction : GDRefactoringActionBase
                 ? $"Extract Variable ({plan.OccurrencesCount} occurrences found)"
                 : "Extract Variable";
 
-            // In Base Plugin: Apply is disabled (Pro required)
-            var canApply = false;
-            var proMessage = "GDShrapt Pro required to apply this refactoring";
+            // Base: Single-file execute enabled
+            var canApply = true;
+            string proMessage = null;
 
             var result = await previewDialog.ShowForResult(
                 title,

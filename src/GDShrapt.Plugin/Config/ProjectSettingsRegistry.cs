@@ -65,7 +65,6 @@ internal class ProjectSettingsRegistry
             SetSetting("ui/references_counter_enabled", ui.ReferencesCounterEnabled);
             SetSetting("ui/problems_dock_enabled", ui.ProblemsDockEnabled);
             SetSetting("ui/todo_tags_dock_enabled", ui.TodoTagsDockEnabled);
-            SetSetting("ui/api_documentation_dock_enabled", ui.ApiDocumentationDockEnabled);
             SetSetting("ui/find_references_dock_enabled", ui.FindReferencesDockEnabled);
 
             // Code Style (core config - linting + formatting)
@@ -148,7 +147,6 @@ internal class ProjectSettingsRegistry
             config.Plugin.UI.ReferencesCounterEnabled = GetBool("ui/references_counter_enabled", config.Plugin.UI.ReferencesCounterEnabled);
             config.Plugin.UI.ProblemsDockEnabled = GetBool("ui/problems_dock_enabled", config.Plugin.UI.ProblemsDockEnabled);
             config.Plugin.UI.TodoTagsDockEnabled = GetBool("ui/todo_tags_dock_enabled", config.Plugin.UI.TodoTagsDockEnabled);
-            config.Plugin.UI.ApiDocumentationDockEnabled = GetBool("ui/api_documentation_dock_enabled", config.Plugin.UI.ApiDocumentationDockEnabled);
             config.Plugin.UI.FindReferencesDockEnabled = GetBool("ui/find_references_dock_enabled", config.Plugin.UI.FindReferencesDockEnabled);
 
             // Code Style (core config - linting + formatting)
@@ -267,7 +265,6 @@ internal class ProjectSettingsRegistry
         RegisterBool("ui/references_counter_enabled", true, isBasic: true);
         RegisterBool("ui/problems_dock_enabled", true, isBasic: true);
         RegisterBool("ui/todo_tags_dock_enabled", true, isBasic: true);
-        RegisterBool("ui/api_documentation_dock_enabled", true, isBasic: true);
         RegisterBool("ui/find_references_dock_enabled", true, isBasic: true);
     }
 

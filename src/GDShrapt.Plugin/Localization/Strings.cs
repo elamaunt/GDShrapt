@@ -69,9 +69,6 @@ public static class Strings
     public const string AboutGithub = "about.github";
     public const string AboutDonate = "about.donate";
 
-    // Support button
-    public const string SupportButton = "support.button";
-
     // References dock
     public const string ReferencesCopyList = "references.copy_list";
     public const string ReferencesNoResults = "references.no_results";

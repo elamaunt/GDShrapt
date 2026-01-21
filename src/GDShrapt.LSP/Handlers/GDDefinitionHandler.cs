@@ -1,102 +1,46 @@
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.Reader;
-using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 
 namespace GDShrapt.LSP;
 
 /// <summary>
 /// Handles textDocument/definition requests.
+/// Thin wrapper over IGDGoToDefHandler from CLI.Core.
 /// </summary>
 public class GDDefinitionHandler
 {
-    private readonly GDScriptProject _project;
+    private readonly IGDGoToDefHandler _handler;
 
-    public GDDefinitionHandler(GDScriptProject project)
+    public GDDefinitionHandler(IGDGoToDefHandler handler)
     {
-        _project = project;
+        _handler = handler;
     }
 
     public Task<GDLspLocation?> HandleAsync(GDDefinitionParams @params, CancellationToken cancellationToken)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
-        var script = _project.GetScript(filePath);
 
-        if (script?.Analyzer == null || script.Class == null)
-            return Task.FromResult<GDLspLocation?>(null);
-
-        // Convert to 1-based line/column
+        // Convert LSP 0-based to CLI.Core 1-based
         var line = @params.Position.Line + 1;
         var column = @params.Position.Character + 1;
 
-        // Find the node at the position (look for identifier expressions which are GDNodes)
-        var node = GDNodeFinder.FindNodeAtPosition(script.Class, line, column);
-        if (node == null)
+        // Delegate to CLI.Core handler
+        var result = _handler.FindDefinition(filePath, line, column);
+        if (result == null)
             return Task.FromResult<GDLspLocation?>(null);
 
-        // Get the symbol for this node
-        var symbol = script.Analyzer.GetSymbolForNode(node);
-        if (symbol?.DeclarationNode == null)
-            return Task.FromResult<GDLspLocation?>(null);
-
-        // Get the file containing the declaration
-        // First check if it's in the current file
-        var declarationFile = filePath;
-
-        // If symbol is not declared in this script, search across project
-        if (symbol.DeclarationNode.Parent == null ||
-            !IsDeclarationInScript(symbol.DeclarationNode, script.Class))
+        // Convert CLI.Core 1-based to LSP 0-based
+        var location = new GDLspLocation
         {
-            // Try to find the script containing this symbol
-            var declaringScript = FindScriptWithSymbol(symbol);
-            if (declaringScript != null)
-            {
-                declarationFile = declaringScript.Reference.FullPath;
-            }
-        }
+            Uri = GDDocumentManager.PathToUri(result.FilePath),
+            Range = GDLocationAdapter.ToLspRange(
+                result.Line,
+                result.Column,
+                result.Line,
+                result.Column + (result.SymbolName?.Length ?? 0))
+        };
 
-        var location = GDLocationAdapter.FromNode(symbol.DeclarationNode, declarationFile);
-        return Task.FromResult(location);
-    }
-
-    /// <summary>
-    /// Checks if a declaration node is within the given class.
-    /// </summary>
-    private static bool IsDeclarationInScript(GDNode declaration, GDClassDeclaration? classDecl)
-    {
-        if (classDecl == null)
-            return false;
-
-        var current = declaration;
-        while (current != null)
-        {
-            if (current == classDecl)
-                return true;
-            current = current.Parent as GDNode;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Finds the script containing a symbol declaration.
-    /// </summary>
-    private GDScriptFile? FindScriptWithSymbol(GDSymbolInfo symbol)
-    {
-        if (symbol?.DeclarationNode == null)
-            return null;
-
-        // Search through all scripts in the project
-        foreach (var script in _project.ScriptFiles)
-        {
-            if (script.Class == null)
-                continue;
-
-            if (IsDeclarationInScript(symbol.DeclarationNode, script.Class))
-            {
-                return script;
-            }
-        }
-
-        return null;
+        return Task.FromResult<GDLspLocation?>(location);
     }
 }

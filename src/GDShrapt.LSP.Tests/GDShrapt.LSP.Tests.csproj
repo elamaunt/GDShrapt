@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GDShrapt.LSP\GDShrapt.LSP.csproj" />
+    <ProjectReference Include="..\GDShrapt.CLI.Core\GDShrapt.CLI.Core.csproj" />
   </ItemGroup>
 
 </Project>

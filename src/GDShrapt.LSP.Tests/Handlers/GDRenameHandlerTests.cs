@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
+using GDShrapt.CLI.Core;
 using GDShrapt.LSP;
 using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -22,6 +23,18 @@ public class GDRenameHandlerTests
         return System.IO.Path.Combine(projectRoot, "testproject", "GDShrapt.TestProject");
     }
 
+    private static GDLspRenameHandler CreateHandler(GDScriptProject project)
+    {
+        // Create CLI.Core handlers from the project
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+
+        var renameHandler = registry.GetService<IGDRenameHandler>()!;
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        return new GDLspRenameHandler(renameHandler, goToDefHandler);
+    }
+
     [TestMethod]
     public async Task HandleAsync_RenameVariable_ReturnsWorkspaceEdit()
     {
@@ -39,7 +52,7 @@ public class GDRenameHandlerTests
         if (script == null)
             return;
 
-        var handler = new GDRenameHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDRenameParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -66,7 +79,7 @@ public class GDRenameHandlerTests
         project.LoadScripts();
         project.AnalyzeAll();
 
-        var handler = new GDRenameHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDRenameParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -95,7 +108,7 @@ public class GDRenameHandlerTests
 
         var baseEntityPath = System.IO.Path.Combine(TestProjectPath, "test_scripts", "base_entity.gd");
 
-        var handler = new GDRenameHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDRenameParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -124,7 +137,7 @@ public class GDRenameHandlerTests
 
         var baseEntityPath = System.IO.Path.Combine(TestProjectPath, "test_scripts", "base_entity.gd");
 
-        var handler = new GDRenameHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDRenameParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -153,7 +166,7 @@ public class GDRenameHandlerTests
 
         var baseEntityPath = System.IO.Path.Combine(TestProjectPath, "test_scripts", "base_entity.gd");
 
-        var handler = new GDRenameHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDRenameParams
         {
             TextDocument = new GDLspTextDocumentIdentifier

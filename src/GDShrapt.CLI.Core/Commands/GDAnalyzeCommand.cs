@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -12,18 +11,14 @@ namespace GDShrapt.CLI.Core;
 /// Exit codes: 0=Success, 1=Warnings/Hints (if fail-on configured), 2=Errors, 3=Fatal.
 /// Uses the unified GDDiagnosticsService for consistent diagnostics across CLI, LSP, and Plugin.
 /// </summary>
-public class GDAnalyzeCommand : IGDCommand
+public class GDAnalyzeCommand : GDProjectCommandBase
 {
-    private readonly string _projectPath;
-    private readonly IGDOutputFormatter _formatter;
-    private readonly TextWriter _output;
-    private readonly GDProjectConfig? _config;
     private readonly GDSeverity? _minSeverity;
     private readonly int? _maxIssues;
     private readonly GDGroupBy _groupBy;
 
-    public string Name => "analyze";
-    public string Description => "Analyze a GDScript project and output diagnostics";
+    public override string Name => "analyze";
+    public override string Description => "Analyze a GDScript project and output diagnostics";
 
     public GDAnalyzeCommand(
         string projectPath,
@@ -33,51 +28,31 @@ public class GDAnalyzeCommand : IGDCommand
         GDSeverity? minSeverity = null,
         int? maxIssues = null,
         GDGroupBy groupBy = GDGroupBy.File)
+        : base(projectPath, formatter, output, config)
     {
-        _projectPath = projectPath;
-        _formatter = formatter;
-        _output = output ?? Console.Out;
-        _config = config;
         _minSeverity = minSeverity;
         _maxIssues = maxIssues;
         _groupBy = groupBy;
     }
 
-    public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
+    protected override Task<int> ExecuteOnProjectAsync(
+        GDScriptProject project,
+        string projectRoot,
+        GDProjectConfig config,
+        CancellationToken cancellationToken)
     {
-        try
-        {
-            var projectRoot = GDProjectLoader.FindProjectRoot(_projectPath);
-            if (projectRoot == null)
-            {
-                _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}");
-                return Task.FromResult(GDExitCode.Fatal);
-            }
+        var result = BuildAnalysisResult(project, projectRoot, config, _minSeverity, _maxIssues);
+        result.GroupBy = _groupBy;
+        _formatter.WriteAnalysisResult(_output, result);
 
-            // Load config from project or use provided
-            var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
+        var exitCode = GDExitCode.FromResults(
+            result.TotalErrors,
+            result.TotalWarnings,
+            result.TotalHints,
+            config.Cli.FailOnWarning,
+            config.Cli.FailOnHint);
 
-            using var project = GDProjectLoader.LoadProject(projectRoot);
-
-            var result = BuildAnalysisResult(project, projectRoot, config, _minSeverity, _maxIssues);
-            result.GroupBy = _groupBy;
-            _formatter.WriteAnalysisResult(_output, result);
-
-            // Determine exit code using new exit code system
-            var exitCode = GDExitCode.FromResults(
-                result.TotalErrors,
-                result.TotalWarnings,
-                result.TotalHints,
-                config.Cli.FailOnWarning,
-                config.Cli.FailOnHint);
-
-            return Task.FromResult(exitCode);
-        }
-        catch (Exception ex)
-        {
-            _formatter.WriteError(_output, ex.Message);
-            return Task.FromResult(GDExitCode.Fatal);
-        }
+        return Task.FromResult(exitCode);
     }
 
     private static GDAnalysisResult BuildAnalysisResult(
@@ -100,7 +75,6 @@ public class GDAnalyzeCommand : IGDCommand
         var totalIssuesReported = 0;
         var maxReached = false;
 
-        // Use unified diagnostics service - handles validator, linter, and config consistently
         var diagnosticsService = GDDiagnosticsService.FromConfig(config);
 
         foreach (var script in project.ScriptFiles)
@@ -110,7 +84,6 @@ public class GDAnalyzeCommand : IGDCommand
 
             var relativePath = GetRelativePath(script.Reference.FullPath, projectRoot);
 
-            // Check if file should be excluded
             if (GDConfigLoader.ShouldExclude(relativePath, config.Cli.Exclude))
                 continue;
 
@@ -119,19 +92,15 @@ public class GDAnalyzeCommand : IGDCommand
                 FilePath = relativePath
             };
 
-            // Use unified diagnostics service - handles parse errors, invalid tokens,
-            // validation, linting, config overrides, and comment suppression
             var diagnosticsResult = diagnosticsService.Diagnose(script);
 
             foreach (var diagnostic in diagnosticsResult.Diagnostics)
             {
                 var severity = GDSeverityHelper.FromUnified(diagnostic.Severity);
 
-                // Filter by minimum severity
                 if (minSeverity.HasValue && severity > minSeverity.Value)
                     continue;
 
-                // Check max issues limit
                 if (maxIssues.HasValue && maxIssues.Value > 0 && totalIssuesReported >= maxIssues.Value)
                 {
                     maxReached = true;
@@ -151,7 +120,6 @@ public class GDAnalyzeCommand : IGDCommand
 
                 totalIssuesReported++;
 
-                // Update counts
                 switch (severity)
                 {
                     case GDSeverity.Error:
@@ -179,17 +147,5 @@ public class GDAnalyzeCommand : IGDCommand
         result.TotalHints = totalHints;
 
         return result;
-    }
-
-    private static string GetRelativePath(string fullPath, string basePath)
-    {
-        try
-        {
-            return Path.GetRelativePath(basePath, fullPath);
-        }
-        catch
-        {
-            return fullPath;
-        }
     }
 }

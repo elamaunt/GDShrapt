@@ -61,11 +61,6 @@ public class GDUIConfig
     public bool TodoTagsDockEnabled { get; set; } = true;
 
     /// <summary>
-    /// Enable API Documentation dock in bottom panel. Default: true
-    /// </summary>
-    public bool ApiDocumentationDockEnabled { get; set; } = true;
-
-    /// <summary>
     /// Enable Find References dock in bottom panel. Default: true
     /// </summary>
     public bool FindReferencesDockEnabled { get; set; } = true;

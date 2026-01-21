@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GDShrapt.Semantics\GDShrapt.Semantics.csproj" />
     <ProjectReference Include="..\GDShrapt.Formatter\GDShrapt.Formatter.csproj" />
+    <ProjectReference Include="..\GDShrapt.CLI.Core\GDShrapt.CLI.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

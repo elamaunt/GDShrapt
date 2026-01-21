@@ -33,7 +33,6 @@ Godot Editor plugin providing enhanced GDScript editing features. Integrates dir
 - **Problems Dock** - View all diagnostics
 - **TODO Tags Dock** - Browse TODO comments
 - **AST Viewer Dock** - Inspect syntax tree
-- **API Documentation Dock** - Browse Godot API
 
 ## Installation
 

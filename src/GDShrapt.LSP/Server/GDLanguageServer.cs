@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
+using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.LSP;
@@ -12,6 +13,7 @@ namespace GDShrapt.LSP;
 public class GDLanguageServer : IGDLanguageServer
 {
     private GDScriptProject? _project;
+    private GDServiceRegistry? _registry;
     private GDDocumentManager? _documentManager;
     private GDDiagnosticPublisher? _diagnosticPublisher;
     private IGDJsonRpcTransport? _transport;
@@ -67,6 +69,9 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnRequest<GDCompletionParams, GDLspCompletionList?>("textDocument/completion", HandleCompletionAsync);
         _transport.OnRequest<GDRenameParams, GDWorkspaceEdit?>("textDocument/rename", HandleRenameAsync);
         _transport.OnRequest<GDDocumentFormattingParams, GDLspTextEdit[]?>("textDocument/formatting", HandleFormattingAsync);
+        _transport.OnRequest<GDCodeActionParams, GDLspCodeAction[]?>("textDocument/codeAction", HandleCodeActionAsync);
+        _transport.OnRequest<GDSignatureHelpParams, GDLspSignatureHelp?>("textDocument/signatureHelp", HandleSignatureHelpAsync);
+        _transport.OnRequest<GDInlayHintParams, GDLspInlayHint[]?>("textDocument/inlayHint", HandleInlayHintAsync);
     }
 
     #region Lifecycle Handlers
@@ -91,6 +96,12 @@ public class GDLanguageServer : IGDLanguageServer
                     _documentManager = new GDDocumentManager(project);
                     _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, project);
                     _project = project;
+
+                    // Initialize service registry with base module
+                    // NOTE: Pro module is NOT loaded in LSP (by design - Strict mode only)
+                    _registry = new GDServiceRegistry();
+                    _registry.LoadModules(project, new GDBaseModule());
+
                     project = null; // Successfully transferred ownership
                 }
             }
@@ -124,6 +135,16 @@ public class GDLanguageServer : IGDLanguageServer
                 CompletionProvider = new GDCompletionOptions
                 {
                     TriggerCharacters = [".", ":", "("],
+                    ResolveProvider = false
+                },
+                CodeActionProvider = true,
+                SignatureHelpProvider = new GDSignatureHelpOptions
+                {
+                    TriggerCharacters = ["(", ","],
+                    RetriggerCharacters = [","]
+                },
+                InlayHintProvider = new GDInlayHintOptions
+                {
                     ResolveProvider = false
                 }
             },
@@ -238,64 +259,133 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspLocation?> HandleDefinitionAsync(GDDefinitionParams @params, CancellationToken ct)
     {
-        if (_project == null)
+        if (_registry == null)
             return Task.FromResult<GDLspLocation?>(null);
 
-        var handler = new GDDefinitionHandler(_project);
+        var coreHandler = _registry.GetService<IGDGoToDefHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspLocation?>(null);
+
+        var handler = new GDDefinitionHandler(coreHandler);
         return handler.HandleAsync(@params, ct);
     }
 
     private Task<GDLspLocation[]?> HandleReferencesAsync(GDReferencesParams @params, CancellationToken ct)
     {
-        if (_project == null)
+        if (_registry == null)
             return Task.FromResult<GDLspLocation[]?>(null);
 
-        var handler = new GDReferencesHandler(_project);
+        var findRefsHandler = _registry.GetService<IGDFindRefsHandler>();
+        var goToDefHandler = _registry.GetService<IGDGoToDefHandler>();
+        if (findRefsHandler == null || goToDefHandler == null)
+            return Task.FromResult<GDLspLocation[]?>(null);
+
+        var handler = new GDReferencesHandler(findRefsHandler, goToDefHandler);
         return handler.HandleAsync(@params, ct);
     }
 
     private Task<GDLspHover?> HandleHoverAsync(GDHoverParams @params, CancellationToken ct)
     {
-        if (_project == null)
+        if (_registry == null)
             return Task.FromResult<GDLspHover?>(null);
 
-        var handler = new GDHoverHandler(_project);
+        var coreHandler = _registry.GetService<IGDHoverHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspHover?>(null);
+
+        var handler = new GDLspHoverHandler(coreHandler);
         return handler.HandleAsync(@params, ct);
     }
 
     private Task<GDLspDocumentSymbol[]?> HandleDocumentSymbolAsync(GDDocumentSymbolParams @params, CancellationToken ct)
     {
-        if (_project == null)
+        if (_registry == null)
             return Task.FromResult<GDLspDocumentSymbol[]?>(null);
 
-        var handler = new GDDocumentSymbolHandler(_project);
+        var coreHandler = _registry.GetService<IGDSymbolsHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspDocumentSymbol[]?>(null);
+
+        var handler = new GDDocumentSymbolHandler(coreHandler);
         return handler.HandleAsync(@params, ct);
     }
 
     private Task<GDLspCompletionList?> HandleCompletionAsync(GDCompletionParams @params, CancellationToken ct)
     {
-        if (_project == null)
+        if (_registry == null)
             return Task.FromResult<GDLspCompletionList?>(null);
 
-        var handler = new GDCompletionHandler(_project);
+        var coreHandler = _registry.GetService<IGDCompletionHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspCompletionList?>(null);
+
+        var handler = new GDLspCompletionHandler(coreHandler);
         return handler.HandleAsync(@params, ct);
     }
 
     private Task<GDWorkspaceEdit?> HandleRenameAsync(GDRenameParams @params, CancellationToken ct)
     {
-        if (_project == null)
+        if (_registry == null)
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        var handler = new GDRenameHandler(_project);
+        var renameHandler = _registry.GetService<IGDRenameHandler>();
+        var goToDefHandler = _registry.GetService<IGDGoToDefHandler>();
+        if (renameHandler == null || goToDefHandler == null)
+            return Task.FromResult<GDWorkspaceEdit?>(null);
+
+        var handler = new GDLspRenameHandler(renameHandler, goToDefHandler);
         return handler.HandleAsync(@params, ct);
     }
 
     private Task<GDLspTextEdit[]?> HandleFormattingAsync(GDDocumentFormattingParams @params, CancellationToken ct)
     {
-        if (_project == null)
+        if (_registry == null)
             return Task.FromResult<GDLspTextEdit[]?>(null);
 
-        var handler = new GDFormattingHandler(_project);
+        var coreHandler = _registry.GetService<IGDFormatHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspTextEdit[]?>(null);
+
+        var handler = new GDFormattingHandler(coreHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
+    private Task<GDLspCodeAction[]?> HandleCodeActionAsync(GDCodeActionParams @params, CancellationToken ct)
+    {
+        if (_registry == null)
+            return Task.FromResult<GDLspCodeAction[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDCodeActionHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspCodeAction[]?>(null);
+
+        var handler = new GDLspCodeActionHandler(coreHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
+    private Task<GDLspSignatureHelp?> HandleSignatureHelpAsync(GDSignatureHelpParams @params, CancellationToken ct)
+    {
+        if (_registry == null)
+            return Task.FromResult<GDLspSignatureHelp?>(null);
+
+        var coreHandler = _registry.GetService<IGDSignatureHelpHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspSignatureHelp?>(null);
+
+        var handler = new GDLspSignatureHelpHandler(coreHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
+    private Task<GDLspInlayHint[]?> HandleInlayHintAsync(GDInlayHintParams @params, CancellationToken ct)
+    {
+        if (_registry == null)
+            return Task.FromResult<GDLspInlayHint[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDInlayHintHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspInlayHint[]?>(null);
+
+        var handler = new GDLspInlayHintHandler(coreHandler);
         return handler.HandleAsync(@params, ct);
     }
 

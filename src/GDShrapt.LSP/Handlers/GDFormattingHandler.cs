@@ -1,57 +1,44 @@
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.Reader;
+using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
+
+using GDIndentationStyle = GDShrapt.Semantics.GDIndentationStyle;
 
 namespace GDShrapt.LSP;
 
 /// <summary>
 /// Handles textDocument/formatting requests.
+/// Thin wrapper over IGDFormatHandler from CLI.Core.
 /// </summary>
 public class GDFormattingHandler
 {
-    private readonly GDScriptProject _project;
+    private readonly IGDFormatHandler _handler;
 
-    public GDFormattingHandler(GDScriptProject project)
+    public GDFormattingHandler(IGDFormatHandler handler)
     {
-        _project = project;
+        _handler = handler;
     }
 
     public Task<GDLspTextEdit[]?> HandleAsync(GDDocumentFormattingParams @params, CancellationToken cancellationToken)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
-        var script = _project.GetScript(filePath);
 
-        if (script?.Class == null)
+        // Convert LSP formatting options to CLI.Core format config
+        var config = ConvertOptions(@params.Options);
+
+        // Delegate to CLI.Core handler
+        var formatted = _handler.Format(filePath, config);
+        if (formatted == null)
             return Task.FromResult<GDLspTextEdit[]?>(null);
 
-        // Get the current content from AST
-        var content = script.Class.ToString();
-        if (string.IsNullOrEmpty(content))
-            return Task.FromResult<GDLspTextEdit[]?>(null);
-
-        // Convert LSP formatting options to GDFormatterOptions
-        var formatterOptions = ConvertOptions(@params.Options);
-
-        // Create formatter and format the code
-        var formatter = new GDFormatter(formatterOptions);
-        string formatted;
-        try
-        {
-            formatted = formatter.FormatCode(content);
-        }
-        catch
-        {
-            // If formatting fails, return null (no changes)
-            return Task.FromResult<GDLspTextEdit[]?>(null);
-        }
-
-        // If content is unchanged, return empty array
-        if (content == formatted)
+        // Read original content to check if unchanged
+        var original = System.IO.File.ReadAllText(filePath);
+        if (original == formatted)
             return Task.FromResult<GDLspTextEdit[]?>([]);
 
         // Count lines in original content to determine the range
-        var lineCount = CountLines(content);
+        var lineCount = CountLines(original);
 
         // Return a single edit replacing the entire document
         var edit = new GDLspTextEdit
@@ -63,30 +50,15 @@ public class GDFormattingHandler
         return Task.FromResult<GDLspTextEdit[]?>([edit]);
     }
 
-    private static GDFormatterOptions ConvertOptions(GDFormattingOptions lspOptions)
+    private static GDFormatterConfig ConvertOptions(GDFormattingOptions lspOptions)
     {
-        var options = new GDFormatterOptions
+        var config = new GDFormatterConfig
         {
             IndentSize = lspOptions.TabSize,
-            IndentStyle = lspOptions.InsertSpaces ? IndentStyle.Spaces : IndentStyle.Tabs
+            IndentStyle = lspOptions.InsertSpaces ? GDIndentationStyle.Spaces : GDIndentationStyle.Tabs
         };
 
-        if (lspOptions.TrimTrailingWhitespace.HasValue)
-        {
-            options.RemoveTrailingWhitespace = lspOptions.TrimTrailingWhitespace.Value;
-        }
-
-        if (lspOptions.InsertFinalNewline.HasValue)
-        {
-            options.EnsureTrailingNewline = lspOptions.InsertFinalNewline.Value;
-        }
-
-        if (lspOptions.TrimFinalNewlines.HasValue)
-        {
-            options.RemoveMultipleTrailingNewlines = lspOptions.TrimFinalNewlines.Value;
-        }
-
-        return options;
+        return config;
     }
 
     private static int CountLines(string content)

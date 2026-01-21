@@ -1,67 +1,58 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 
 namespace GDShrapt.LSP;
 
 /// <summary>
 /// Handles textDocument/rename requests.
-/// Uses GDRenameService from GDShrapt.Semantics for rename operations.
+/// Thin wrapper over IGDRenameHandler from CLI.Core.
+/// Uses IGDGoToDefHandler to get symbol name at cursor position.
 /// </summary>
-public class GDRenameHandler
+public class GDLspRenameHandler
 {
-    private readonly GDScriptProject _project;
+    private readonly IGDRenameHandler _renameHandler;
+    private readonly IGDGoToDefHandler _goToDefHandler;
 
-    public GDRenameHandler(GDScriptProject project)
+    public GDLspRenameHandler(IGDRenameHandler renameHandler, IGDGoToDefHandler goToDefHandler)
     {
-        _project = project;
+        _renameHandler = renameHandler;
+        _goToDefHandler = goToDefHandler;
     }
 
     public Task<GDWorkspaceEdit?> HandleAsync(GDRenameParams @params, CancellationToken cancellationToken)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
-        var script = _project.GetScript(filePath);
 
-        if (script?.Analyzer == null || script.Class == null)
-            return Task.FromResult<GDWorkspaceEdit?>(null);
-
-        // Convert to 1-based line/column
+        // Convert LSP 0-based to CLI.Core 1-based
         var line = @params.Position.Line + 1;
         var column = @params.Position.Character + 1;
-
-        // Find the node at the position
-        var node = GDNodeFinder.FindNodeAtPosition(script.Class, line, column);
-        if (node == null)
-            return Task.FromResult<GDWorkspaceEdit?>(null);
-
-        // Get the symbol for this node
-        var symbol = script.Analyzer.GetSymbolForNode(node);
-        if (symbol == null)
-            return Task.FromResult<GDWorkspaceEdit?>(null);
 
         var newName = @params.NewName;
         if (string.IsNullOrWhiteSpace(newName))
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        // Use GDRenameService for the rename operation
-        var renameService = new GDRenameService(_project);
-
-        // Plan the rename
-        var result = renameService.PlanRename(symbol, newName);
-
-        // If rename failed or has conflicts, return null
-        if (!result.Success || result.Conflicts.Count > 0)
+        // First, get the symbol name at the cursor position
+        var definition = _goToDefHandler.FindDefinition(filePath, line, column);
+        if (definition == null || string.IsNullOrEmpty(definition.SymbolName))
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        // LSP uses only strict edits (type-confirmed references)
-        // Potential edits are excluded to avoid false positives
-        // They can be handled separately in plugin UI with user confirmation
-        if (result.StrictEdits.Count == 0)
+        var oldName = definition.SymbolName;
+
+        // Validate the new name
+        if (!_renameHandler.ValidateIdentifier(newName, out _))
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
-        // Convert GDTextEdit to LSP workspace edit (strict only)
-        var changes = ConvertToWorkspaceEdit(result.StrictEdits);
+        // Delegate to CLI.Core handler
+        var result = _renameHandler.Plan(oldName, newName, filePath);
+
+        // If rename failed or has no edits, return null
+        if (!result.Success || result.Edits.Count == 0)
+            return Task.FromResult<GDWorkspaceEdit?>(null);
+
+        // Convert CLI.Core edits to LSP workspace edit
+        var changes = ConvertToWorkspaceEdit(result.Edits);
 
         return Task.FromResult<GDWorkspaceEdit?>(new GDWorkspaceEdit
         {
@@ -84,7 +75,6 @@ public class GDRenameHandler
             }
 
             // Convert 1-based line/column to 0-based LSP positions
-            // GDTextEdit has OldText which gives us the length for the end position
             var startLine = edit.Line - 1;
             var startColumn = edit.Column - 1;
             var endLine = startLine;

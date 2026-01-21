@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
+using GDShrapt.CLI.Core;
 using GDShrapt.LSP;
 using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -22,6 +23,16 @@ public class GDCompletionHandlerTests
         return System.IO.Path.Combine(projectRoot, "testproject", "GDShrapt.TestProject");
     }
 
+    private static GDLspCompletionHandler CreateHandler(GDScriptProject project)
+    {
+        // Create CLI.Core handlers from the project
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+
+        var completionHandler = registry.GetService<IGDCompletionHandler>()!;
+        return new GDLspCompletionHandler(completionHandler);
+    }
+
     [TestMethod]
     public async Task HandleAsync_GeneralCompletion_IncludesKeywords()
     {
@@ -31,7 +42,7 @@ public class GDCompletionHandlerTests
         project.LoadScripts();
         project.AnalyzeAll();
 
-        var handler = new GDCompletionHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDCompletionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -46,7 +57,7 @@ public class GDCompletionHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Items.Should().NotBeEmpty();
+        result!.Items.Should().NotBeEmpty();
 
         // Should contain keywords
         var keywords = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Keyword).ToList();
@@ -65,7 +76,7 @@ public class GDCompletionHandlerTests
         project.LoadScripts();
         project.AnalyzeAll();
 
-        var handler = new GDCompletionHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDCompletionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -82,7 +93,7 @@ public class GDCompletionHandlerTests
         result.Should().NotBeNull();
 
         // Should contain built-in types
-        var types = result.Items.Where(i => i.Detail == "built-in type").ToList();
+        var types = result!.Items.Where(i => i.Detail == "built-in type").ToList();
         types.Should().NotBeEmpty();
         types.Should().Contain(t => t.Label == "int");
         types.Should().Contain(t => t.Label == "String");
@@ -98,7 +109,7 @@ public class GDCompletionHandlerTests
         project.LoadScripts();
         project.AnalyzeAll();
 
-        var handler = new GDCompletionHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDCompletionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -115,7 +126,7 @@ public class GDCompletionHandlerTests
         result.Should().NotBeNull();
 
         // Should contain local methods/variables from the script
-        var methods = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Method).ToList();
+        var methods = result!.Items.Where(i => i.Kind == GDLspCompletionItemKind.Method).ToList();
         var variables = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Variable).ToList();
 
         // The exact symbols depend on the test project content
@@ -131,7 +142,7 @@ public class GDCompletionHandlerTests
         project.LoadScripts();
         project.AnalyzeAll();
 
-        var handler = new GDCompletionHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDCompletionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
@@ -163,7 +174,7 @@ public class GDCompletionHandlerTests
         project.LoadScripts();
         project.AnalyzeAll();
 
-        var handler = new GDCompletionHandler(project);
+        var handler = CreateHandler(project);
         var @params = new GDCompletionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier

@@ -18,7 +18,6 @@ public partial class GDShraptPlugin : EditorPlugin
     readonly ConditionalWeakTable<GDScriptFile, TabController> _weakScriptTabControllersTable = new ConditionalWeakTable<GDScriptFile, TabController>();
 
     readonly HashSet<MenuButton> _injectedButtons = new HashSet<MenuButton>();
-    readonly HashSet<Button> _injectedSupportButtons = new HashSet<Button>();
 
     private ReferencesDock _referencesDock;
     private Action<string, int, int, int> _referencesDockNavigateHandler;
@@ -856,24 +855,6 @@ public partial class GDShraptPlugin : EditorPlugin
             item.GetParent()?.RemoveChild(item);
 
         _injectedButtons.Clear();
-
-        foreach (var item in _injectedSupportButtons)
-        {
-            // Also remove the spacer that was added before the button
-            var parent = item.GetParent();
-            if (parent != null)
-            {
-                var spacer = parent.GetNodeOrNull<Control>("GDShraptSpacer");
-                if (spacer != null)
-                {
-                    parent.RemoveChild(spacer);
-                    spacer.QueueFree();
-                }
-            }
-            item.GetParent()?.RemoveChild(item);
-        }
-
-        _injectedSupportButtons.Clear();
     }
 
     private bool FindTabContainer()
@@ -953,37 +934,6 @@ public partial class GDShraptPlugin : EditorPlugin
                 node.MoveChild(oldButton, node.GetChildCount() - 1);
             }*/
 
-            // Add Support button if not already present - positioned to the right
-            /*var existingSupportButton = node
-               .GetChildren()
-               .OfType<SupportButton>()
-               .FirstOrDefault();
-
-            var existingSpacer = node.GetNodeOrNull("GDShraptSpacer");
-
-            if (existingSupportButton == null)
-            {
-                // Add a spacer to push the button to the right
-                var spacer = new Control
-                {
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    Name = "GDShraptSpacer"
-                };
-                node.AddChild(spacer);
-
-                var supportButton = new SupportButton();
-                _injectedSupportButtons.Add(supportButton);
-                node.AddChild(supportButton);
-            }
-            else
-            {
-                // Move spacer and button to the end to keep them on the right
-                if (existingSpacer != null)
-                {
-                    node.MoveChild(existingSpacer, node.GetChildCount() - 1);
-                }
-                node.MoveChild(existingSupportButton, node.GetChildCount() - 1);
-            }*/
         }
 
         return true;

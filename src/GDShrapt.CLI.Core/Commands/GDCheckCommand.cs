@@ -40,13 +40,10 @@ public class GDCheckCommand : IGDCommand
             if (projectRoot == null)
             {
                 if (!_quiet)
-                {
                     _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}");
-                }
                 return Task.FromResult(GDExitCode.Fatal);
             }
 
-            // Load config from project or use provided
             var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
@@ -56,21 +53,17 @@ public class GDCheckCommand : IGDCommand
             var hintCount = 0;
             var fileCount = 0;
 
-            // Use unified diagnostics service - handles validator, linter, and config consistently
             var diagnosticsService = GDDiagnosticsService.FromConfig(config);
 
             foreach (var script in project.ScriptFiles)
             {
                 var relativePath = Path.GetRelativePath(projectRoot, script.Reference.FullPath);
 
-                // Check if file should be excluded
                 if (GDConfigLoader.ShouldExclude(relativePath, config.Cli.Exclude))
                     continue;
 
                 fileCount++;
 
-                // Use unified diagnostics service - handles parse errors, invalid tokens,
-                // validation, linting, config overrides, and comment suppression
                 var result = diagnosticsService.Diagnose(script);
 
                 errorCount += result.ErrorCount;
@@ -78,7 +71,6 @@ public class GDCheckCommand : IGDCommand
                 hintCount += result.HintCount;
             }
 
-            // Determine exit code using new exit code system
             var exitCode = GDExitCode.FromResults(
                 errorCount,
                 warningCount,
@@ -89,13 +81,9 @@ public class GDCheckCommand : IGDCommand
             if (!_quiet)
             {
                 if (exitCode == GDExitCode.Success)
-                {
                     _formatter.WriteMessage(_output, $"OK: {fileCount} files checked, {errorCount} errors, {warningCount} warnings, {hintCount} hints.");
-                }
                 else
-                {
                     _formatter.WriteMessage(_output, $"FAILED: {fileCount} files checked, {errorCount} errors, {warningCount} warnings, {hintCount} hints.");
-                }
             }
 
             return Task.FromResult(exitCode);
@@ -103,9 +91,7 @@ public class GDCheckCommand : IGDCommand
         catch (Exception ex)
         {
             if (!_quiet)
-            {
                 _formatter.WriteError(_output, ex.Message);
-            }
             return Task.FromResult(GDExitCode.Fatal);
         }
     }
