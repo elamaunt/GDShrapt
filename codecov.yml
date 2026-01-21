@@ -1,0 +1,32 @@
+coverage:
+  precision: 2
+  round: down
+  range: "50...100"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+
+ignore:
+  # Entry point applications (thin wrappers)
+  - "src/GDShrapt.CLI/**/*"
+  - "src/GDShrapt.LSP/**/*"
+
+  # Godot runtime-dependent plugin
+  - "src/GDShrapt.Plugin/**/*"
+
+  # All test projects
+  - "src/**/*.Tests/**/*"
+  - "src/GDShrapt.Tests.*/**/*"
+
+  # Benchmarks and stress tests
+  - "src/GDShrapt.Semantics.Benchmarks/**/*"
+  - "src/GDShrapt.Semantics.StressTests/**/*"
+
+  # Deprecated/empty projects
+  - "src/GDShrapt.Converter/**/*"
+  - "src/GDShrapt.Converter.Tests/**/*"
