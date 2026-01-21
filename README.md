@@ -112,33 +112,40 @@ The plugin is currently developed in this repository and will be published to th
 ## Architecture
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                       Integrations                         │
-├──────────────┬─────────────┬──────────────┬────────────────┤
-│  CLI Tools   │ LSP Server  │ Godot Plugin │   Your Tool    │
-└──────────────┴─────────────┴──────────────┴────────────────┘
-                             │
-┌────────────────────────────┴───────────────────────────────┐
-│                   GDShrapt.Semantics                       │
-│        Project Model · Type Inference · Refactoring        │
-│ ┌────────────────────────────────────────────────────────┐ │
-│ │            GDShrapt.Semantics.Validator                │ │
-│ │                Type-based validation                   │ │
-│ └────────────────────────────────────────────────────────┘ │
-├────────────────────────────────────────────────────────────┤
-│                  GDShrapt.Abstractions                     │
-├──────────────┬─────────────┬──────────────┬────────────────┤
-│  Validator   │   Linter    │  Formatter   │    Builder     │
-│ (AST-based)  │             │              │                │
-└──────────────┴─────────────┴──────────────┴────────────────┘
-                             │
-┌────────────────────────────┴───────────────────────────────┐
-│                    GDShrapt.Reader                         │
-│             Parser · AST · Syntax Tokens                   │
-└────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          Integrations                                   │
+├──────────────┬─────────────┬──────────────┬─────────────────────────────┤
+│     CLI      │ LSP Server  │ Godot Plugin │        Your Tool            │
+└──────┬───────┴──────┬──────┴──────┬───────┴─────────────────────────────┘
+       │              │             │
+       └──────────────┴─────────────┴─────────────────────────────────────┐
+                                                                          │
+┌─────────────────────────────────────────────────────────────────────────┤
+│                         GDShrapt.CLI.Core                               │
+│           Commands · Handlers · Service Registry                        │
+├───────────────────────────────────────────────────────┬─────────────────┤
+│                     GDShrapt.Semantics                │ GDShrapt        │
+│       Project Model · Type Inference · Refactoring    │ .TypesMap       │
+│ ┌───────────────────────────────────────────────────┐ │ (submodule)     │
+│ │             GDShrapt.Semantics.Validator          │ │                 │
+│ │                Type-based validation              │ │ Godot built-in  │
+│ └───────────────────────────────────────────────────┘ │ type metadata   │
+├───────────────────────────────────────────────────────┴─────────────────┤
+│                        GDShrapt.Abstractions                            │
+├───────────────┬─────────────┬──────────────┬────────────────────────────┤
+│   Validator   │   Linter    │  Formatter   │          Builder           │
+│  (AST-based)  │             │              │     Code generation        │
+└───────────────┴─────────────┴──────────────┴────────────────────────────┘
+                                    │
+┌───────────────────────────────────┴─────────────────────────────────────┐
+│                          GDShrapt.Reader                                │
+│                   Parser · AST · Syntax Tokens                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 Each layer depends only on the layers below it. Two validation levels: AST-based (syntax, scope, control flow) and semantic (type checking, member resolution).
+
+**TypesMap** is a submodule containing Godot built-in type metadata (classes, methods, signals, enums). It is used by Semantics for type resolution and completion.
 
 ---
 
@@ -162,15 +169,24 @@ Commercial features are implemented as a separate automation layer and do not re
 
 This repository contains the entire open-source platform:
 
-- GDShrapt.Reader — Incremental parser and AST
-- GDShrapt.Semantics — Project-wide semantic analysis
-- GDShrapt.Validator / Linter / Formatter — Diagnostics and style tooling
-- GDShrapt.CLI — Command-line interface
-- GDShrapt.LSP — Language Server Protocol implementation
-- GDShrapt.Plugin — Godot Editor plugin (Community Edition)
+```
+GDShrapt/
+├── Reader         Parser, AST (netstandard2.0)
+├── Builder        Code generation
+├── Validator      Diagnostics GD1xxx-GD8xxx (AST-based)
+├── Linter         Style rules GDLxxx
+├── Formatter      Safe formatting GDFxxx
+├── Abstractions   Shared interfaces (netstandard2.1)
+├── Semantics      Project analysis, type inference, refactoring (net8.0)
+│   └── Validator  Type-based validation
+├── CLI.Core       Commands, handlers, service registry
+├── CLI            CLI executable
+├── LSP            Language Server Protocol implementation
+└── Plugin         Godot Editor plugin (Community Edition)
+```
 
-Related project:
-- GDShrapt.TypesMap — Godot built-in and engine type metadata
+Related submodule:
+- **GDShrapt.TypesMap** — Godot built-in type metadata (classes, methods, signals, enums)
 
 ---
 
