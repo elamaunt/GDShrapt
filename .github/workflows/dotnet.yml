@@ -62,8 +62,9 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./TestResults
+        files: ./TestResults/**/coverage.cobertura.xml
         fail_ci_if_error: false
+        verbose: true
 
     - name: Test Report
       uses: dorny/test-reporter@v1
