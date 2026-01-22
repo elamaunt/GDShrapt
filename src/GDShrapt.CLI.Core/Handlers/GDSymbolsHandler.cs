@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Abstractions;
+using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
@@ -36,5 +37,50 @@ public class GDSymbolsHandler : IGDSymbolsHandler
             .OrderBy(s => s.Line)
             .ThenBy(s => s.Column)
             .ToList();
+    }
+
+    /// <inheritdoc />
+    public virtual Semantics.GDSymbolInfo? FindSymbolByName(string symbolName, string filePath)
+    {
+        if (string.IsNullOrEmpty(symbolName) || string.IsNullOrEmpty(filePath))
+            return null;
+
+        var file = _project.GetScript(filePath);
+        return file?.SemanticModel?.FindSymbol(symbolName);
+    }
+
+    /// <inheritdoc />
+    public virtual IReadOnlyList<Semantics.GDSymbolInfo> GetSymbolsOfKind(string filePath, GDSymbolKind kind)
+    {
+        var file = _project.GetScript(filePath);
+        if (file?.SemanticModel == null)
+            return [];
+
+        return file.SemanticModel.Symbols
+            .Where(s => s.Kind == kind)
+            .ToList();
+    }
+
+    /// <inheritdoc />
+    public virtual IReadOnlyList<GDReference> GetReferencesToSymbol(Semantics.GDSymbolInfo symbol, string filePath)
+    {
+        if (symbol == null || string.IsNullOrEmpty(filePath))
+            return [];
+
+        var file = _project.GetScript(filePath);
+        if (file?.SemanticModel == null)
+            return [];
+
+        return file.SemanticModel.GetReferencesTo(symbol).ToList();
+    }
+
+    /// <inheritdoc />
+    public virtual string? GetTypeForNode(GDNode node, string filePath)
+    {
+        if (node == null || string.IsNullOrEmpty(filePath))
+            return null;
+
+        var file = _project.GetScript(filePath);
+        return file?.SemanticModel?.GetTypeForNode(node);
     }
 }

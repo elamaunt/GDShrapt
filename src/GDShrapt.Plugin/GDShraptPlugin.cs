@@ -1,4 +1,5 @@
 using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -52,6 +53,9 @@ public partial class GDShraptPlugin : EditorPlugin
     // Type inference for completion (using Semantics)
     private GDTypeResolver _typeResolver;
 
+    // Service registry for handlers (Rule 11 - all access through handlers)
+    private GDServiceRegistry _serviceRegistry;
+
     // UI dialogs
     private AboutPanel _aboutPanel;
     private GDTypeFlowPanel _typeFlowPanel;
@@ -66,6 +70,7 @@ public partial class GDShraptPlugin : EditorPlugin
     internal FormattingService FormattingService => _formattingService;
     internal GDQuickFixHandler GDQuickFixHandler => _quickFixHandler;
     internal GDTypeResolver TypeResolver => _typeResolver;
+    internal IGDServiceRegistry ServiceRegistry => _serviceRegistry;
 
     public override void _Ready()
     {
@@ -119,6 +124,10 @@ public partial class GDShraptPlugin : EditorPlugin
             // Initialize type resolver for completion (using Semantics)
             // Includes all providers: Godot types, project types, autoloads, and scene types
             _typeResolver = _scriptProject.CreateTypeResolver();
+
+            // Initialize service registry for handlers (Rule 11 - all access through handlers)
+            _serviceRegistry = new GDServiceRegistry();
+            _serviceRegistry.LoadModules(_scriptProject, new GDBaseModule());
 
             _scriptProject.AnalyzeAll();
 
@@ -1094,7 +1103,9 @@ public partial class GDShraptPlugin : EditorPlugin
             if (_typeFlowPanel == null)
             {
                 _typeFlowPanel = new GDTypeFlowPanel();
-                _typeFlowPanel.Initialize(_scriptProject, EditorInterface.Singleton);
+                var typeFlowHandler = _serviceRegistry.GetService<IGDTypeFlowHandler>();
+                var symbolsHandler = _serviceRegistry.GetService<IGDSymbolsHandler>();
+                _typeFlowPanel.Initialize(_scriptProject, EditorInterface.Singleton, typeFlowHandler, symbolsHandler);
                 _typeFlowPanel.NavigateToRequested += (path, lineNum) =>
                 {
                     Logger.Info($"GDTypeFlowPanel navigate to: {path}:{lineNum}");
@@ -1108,7 +1119,9 @@ public partial class GDShraptPlugin : EditorPlugin
             }
 
             // Update project reference in case it changed
-            _typeFlowPanel.SetProject(_scriptProject);
+            var tfHandler = _serviceRegistry.GetService<IGDTypeFlowHandler>();
+            var symHandler = _serviceRegistry.GetService<IGDSymbolsHandler>();
+            _typeFlowPanel.SetProject(_scriptProject, tfHandler, symHandler);
 
             // Show for the symbol
             _typeFlowPanel.ShowForSymbol(symbolName, line, scriptFile);

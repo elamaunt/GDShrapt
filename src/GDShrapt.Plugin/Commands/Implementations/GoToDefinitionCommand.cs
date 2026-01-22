@@ -1,3 +1,4 @@
+using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System.Linq;
@@ -8,10 +9,12 @@ namespace GDShrapt.Plugin;
 internal class GoToDefinitionCommand : Command
 {
     private readonly GDGoToDefinitionService _service = new();
+    private readonly IGDSymbolsHandler _symbolsHandler;
 
     public GoToDefinitionCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
+        _symbolsHandler = plugin.ServiceRegistry.GetService<IGDSymbolsHandler>();
     }
 
     public override async Task Execute(IScriptEditor scriptEditor)
@@ -145,16 +148,15 @@ internal class GoToDefinitionCommand : Command
 
         if (token?.Parent is GDMemberOperatorExpression memberExpr && memberExpr.CallerExpression != null)
         {
-            var semanticModel = scriptEditor.ScriptFile.SemanticModel;
-
-            if (semanticModel == null)
+            var scriptFile = scriptEditor.ScriptFile;
+            if (scriptFile?.FullPath == null)
             {
-                Logger.Info("GoToDefinition: SemanticModel not available");
+                Logger.Info("GoToDefinition: ScriptFile not available");
                 scriptEditor.RequestGodotLookup();
                 return;
             }
 
-            var callerType = semanticModel.GetTypeForNode(memberExpr.CallerExpression);
+            var callerType = _symbolsHandler.GetTypeForNode(memberExpr.CallerExpression, scriptFile.FullPath);
 
             if (string.IsNullOrEmpty(callerType))
             {
@@ -168,9 +170,9 @@ internal class GoToDefinitionCommand : Command
             // Try to find the member in project classes
             var typeMap = Map.GetScriptByTypeName(callerType);
 
-            if (typeMap?.SemanticModel != null)
+            if (typeMap?.FullPath != null)
             {
-                var symbol = typeMap.SemanticModel.FindSymbol(memberName);
+                var symbol = _symbolsHandler.FindSymbolByName(memberName, typeMap.FullPath);
                 if (symbol?.DeclarationNode != null)
                 {
                     // Find the identifier in the declaration

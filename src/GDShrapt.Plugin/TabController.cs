@@ -1,4 +1,5 @@
 using Godot;
+using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
 using System;
 using System.Collections.Generic;
@@ -423,7 +424,8 @@ internal partial class TabController : GodotObject
             return;
         }
 
-        _completionService = new GDCompletionService(_plugin.ScriptProject, typeResolver);
+        var symbolsHandler = _plugin.ServiceRegistry.GetService<IGDSymbolsHandler>();
+        _completionService = new GDCompletionService(_plugin.ScriptProject, typeResolver, symbolsHandler);
         _completionContextBuilder = new GDCompletionContextBuilder(_plugin.ScriptProject, typeResolver);
 
         Logger.Info("TabController: Completion service initialized");

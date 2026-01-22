@@ -1,6 +1,8 @@
 using GDShrapt.Abstractions;
+using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
+using GDSymbolInfo = GDShrapt.Semantics.GDSymbolInfo;
 
 namespace GDShrapt.Plugin;
 
@@ -14,6 +16,8 @@ namespace GDShrapt.Plugin;
 internal class GDTypeFlowGraphBuilder
 {
     private readonly GDScriptProject _project;
+    private readonly IGDTypeFlowHandler _typeFlowHandler;
+    private readonly IGDSymbolsHandler _symbolsHandler;
     private int _nodeIdCounter;
 
     /// <summary>
@@ -49,9 +53,11 @@ internal class GDTypeFlowGraphBuilder
     /// </summary>
     public bool IncludeDuckConstraints { get; set; } = true;
 
-    public GDTypeFlowGraphBuilder(GDScriptProject project)
+    public GDTypeFlowGraphBuilder(GDScriptProject project, IGDTypeFlowHandler typeFlowHandler, IGDSymbolsHandler symbolsHandler)
     {
         _project = project;
+        _typeFlowHandler = typeFlowHandler;
+        _symbolsHandler = symbolsHandler;
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System.Collections.Generic;
@@ -9,11 +10,13 @@ namespace GDShrapt.Plugin;
 internal class FindReferencesCommand : Command
 {
     private readonly GDFindReferencesService _service = new();
+    private readonly IGDSymbolsHandler _symbolsHandler;
     private ReferencesDock _referencesDock;
 
     public FindReferencesCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
+        _symbolsHandler = plugin.ServiceRegistry.GetService<IGDSymbolsHandler>();
     }
 
     internal void SetReferencesDock(ReferencesDock dock)
@@ -186,11 +189,10 @@ internal class FindReferencesCommand : Command
                 {
                     if (memberOp.Identifier?.Sequence == symbolName)
                     {
-                        // Check if the caller type matches
-                        var semanticModel = script.SemanticModel;
-                        if (semanticModel != null)
+                        // Check if the caller type matches using handler
+                        if (filePath != null)
                         {
-                            var callerType = semanticModel.GetTypeForNode(memberOp.CallerExpression);
+                            var callerType = _symbolsHandler.GetTypeForNode(memberOp.CallerExpression, filePath);
                             if (callerType == typeName)
                             {
                                 var context = GetContextWithHighlight(memberOp.Identifier, symbolName, out var hlStart, out var hlEnd);
@@ -216,10 +218,10 @@ internal class FindReferencesCommand : Command
                 {
                     if (memberOp.Identifier?.Sequence != symbolName) continue;
 
-                    var semanticModel = script.SemanticModel;
-                    if (semanticModel != null)
+                    // Use handler to get type
+                    if (filePath != null)
                     {
-                        var type = semanticModel.GetTypeForNode(memberOp.CallerExpression);
+                        var type = _symbolsHandler.GetTypeForNode(memberOp.CallerExpression, filePath);
                         if (type == scope.CallerTypeName)
                         {
                             var context = GetContextWithHighlight(memberOp.Identifier, symbolName, out var hlStart, out var hlEnd);

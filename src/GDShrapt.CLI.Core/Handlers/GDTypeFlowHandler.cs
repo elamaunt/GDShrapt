@@ -543,4 +543,80 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
             _nodeRegistry[node.Id] = node;
         }
     }
+
+    /// <inheritdoc />
+    public virtual GDUnionType? ResolveUnionType(string symbolName, string filePath)
+    {
+        if (string.IsNullOrEmpty(symbolName) || string.IsNullOrEmpty(filePath))
+            return null;
+
+        var script = _project.GetScript(filePath);
+        return script?.SemanticModel?.GetUnionType(symbolName);
+    }
+
+    /// <inheritdoc />
+    public virtual GDDuckType? ResolveDuckType(string symbolName, string filePath)
+    {
+        if (string.IsNullOrEmpty(symbolName) || string.IsNullOrEmpty(filePath))
+            return null;
+
+        var script = _project.GetScript(filePath);
+        return script?.SemanticModel?.GetDuckType(symbolName);
+    }
+
+    /// <inheritdoc />
+    public virtual IReadOnlyList<GDTypeFlowNode>? GetInflowNodes(string symbolName, string filePath)
+    {
+        if (string.IsNullOrEmpty(symbolName) || string.IsNullOrEmpty(filePath))
+            return null;
+
+        var script = _project.GetScript(filePath);
+        if (script?.SemanticModel == null)
+            return null;
+
+        var node = ShowForSymbol(symbolName, script);
+        return node?.Inflows;
+    }
+
+    /// <inheritdoc />
+    public virtual IReadOnlyList<GDTypeFlowNode>? GetOutflowNodes(string symbolName, string filePath)
+    {
+        if (string.IsNullOrEmpty(symbolName) || string.IsNullOrEmpty(filePath))
+            return null;
+
+        var script = _project.GetScript(filePath);
+        if (script?.SemanticModel == null)
+            return null;
+
+        var node = ShowForSymbol(symbolName, script);
+        return node?.Outflows;
+    }
+
+    /// <inheritdoc />
+    public virtual Semantics.GDSymbolInfo? FindSymbol(string symbolName, string filePath)
+    {
+        if (string.IsNullOrEmpty(symbolName) || string.IsNullOrEmpty(filePath))
+            return null;
+
+        var script = _project.GetScript(filePath);
+        return script?.SemanticModel?.FindSymbol(symbolName);
+    }
+
+    /// <inheritdoc />
+    public virtual string? ResolveTypeAtPosition(string filePath, int line, int column)
+    {
+        if (string.IsNullOrEmpty(filePath))
+            return null;
+
+        var script = _project.GetScript(filePath);
+        if (script?.SemanticModel == null || script.Class == null)
+            return null;
+
+        var finder = new GDPositionFinder(script.Class);
+        var astNode = finder.FindNodeAtPosition(line, column);
+        if (astNode == null)
+            return null;
+
+        return script.SemanticModel.GetTypeForNode(astNode);
+    }
 }

@@ -1,3 +1,5 @@
+using GDShrapt.CLI.Core;
+
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -7,6 +9,7 @@ internal class GDCompletionService
 {
     private readonly GDScriptProject _scriptProject;
     private readonly GDTypeResolver _typeResolver;
+    private readonly IGDSymbolsHandler _symbolsHandler;
 
     // GDScript keywords
     private static readonly string[] Keywords = {
@@ -43,10 +46,11 @@ internal class GDCompletionService
         "Node", "Node2D", "Node3D", "Control", "Resource", "RefCounted"
     };
 
-    public GDCompletionService(GDScriptProject scriptProject, GDTypeResolver typeResolver)
+    public GDCompletionService(GDScriptProject scriptProject, GDTypeResolver typeResolver, IGDSymbolsHandler symbolsHandler)
     {
         _scriptProject = scriptProject;
         _typeResolver = typeResolver;
+        _symbolsHandler = symbolsHandler;
     }
 
     /// <summary>
@@ -255,25 +259,31 @@ internal class GDCompletionService
     }
 
     /// <summary>
-    /// Gets local symbols from the current script.
+    /// Gets local symbols from the current script via IGDSymbolsHandler (Rule 11).
     /// </summary>
     private IEnumerable<GDCompletionItem> GetLocalSymbols(GDCompletionContext context)
     {
-        var semanticModel = context.ScriptFile?.SemanticModel;
-        if (semanticModel == null)
+        var filePath = context.ScriptFile?.FullPath;
+        if (string.IsNullOrEmpty(filePath))
             yield break;
 
-        foreach (var symbol in semanticModel.Symbols)
+        // Use IGDSymbolsHandler instead of direct SemanticModel access (Rule 11)
+        var symbols = _symbolsHandler.GetSymbols(filePath);
+        foreach (var symbol in symbols)
         {
             GDCompletionItem item = symbol.Kind switch
             {
                 GDSymbolKind.Variable => GDCompletionItem.Variable(
                     symbol.Name,
-                    symbol.TypeName,
+                    symbol.Type,
+                    GDCompletionSource.Script),
+                GDSymbolKind.Property => GDCompletionItem.Property(
+                    symbol.Name,
+                    symbol.Type,
                     GDCompletionSource.Script),
                 GDSymbolKind.Method => GDCompletionItem.Method(
                     symbol.Name,
-                    symbol.TypeName ?? "Variant",
+                    symbol.Type ?? "Variant",
                     null,
                     GDCompletionSource.Script),
                 GDSymbolKind.Signal => GDCompletionItem.Signal(
@@ -281,7 +291,7 @@ internal class GDCompletionService
                     GDCompletionSource.Script),
                 GDSymbolKind.Constant => GDCompletionItem.Constant(
                     symbol.Name,
-                    symbol.TypeName,
+                    symbol.Type,
                     GDCompletionSource.Script),
                 GDSymbolKind.Enum => GDCompletionItem.Class(
                     symbol.Name,
@@ -295,7 +305,7 @@ internal class GDCompletionService
                     GDCompletionSource.Script),
                 GDSymbolKind.Parameter => GDCompletionItem.Variable(
                     symbol.Name,
-                    symbol.TypeName,
+                    symbol.Type,
                     GDCompletionSource.Local),
                 _ => null
             };
@@ -329,16 +339,14 @@ internal class GDCompletionService
             return context.ScriptFile?.TypeName ?? context.ScriptFile?.Class?.Extends?.Type?.BuildName() ?? "RefCounted";
         }
 
-        // Check local symbols
-        var semanticModel = context.ScriptFile?.SemanticModel;
-        if (semanticModel != null)
+        // Use IGDSymbolsHandler.FindSymbolByName instead of direct SemanticModel access (Rule 11)
+        var filePath = context.ScriptFile?.FullPath;
+        if (!string.IsNullOrEmpty(filePath))
         {
-            foreach (var symbol in semanticModel.Symbols)
+            var symbol = _symbolsHandler.FindSymbolByName(expression, filePath);
+            if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
             {
-                if (symbol.Name == expression && !string.IsNullOrEmpty(symbol.TypeName))
-                {
-                    return symbol.TypeName;
-                }
+                return symbol.TypeName;
             }
         }
 

@@ -1,4 +1,5 @@
 using Godot;
+using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System.Collections.Generic;
@@ -14,10 +15,12 @@ internal class RenameIdentifierCommand : Command
     NodeRenamingDialog _nodeRenamingDialog;
     GDNodePathReferenceFinder _referenceFinder;
     GDNodePathRenamer _renamer;
+    readonly IGDSymbolsHandler _symbolsHandler;
 
     public RenameIdentifierCommand(GDShraptPlugin plugin)
         : base(plugin)
     {
+        _symbolsHandler = plugin.ServiceRegistry.GetService<IGDSymbolsHandler>();
     }
 
     public override async Task Execute(IScriptEditor controller)
@@ -541,7 +544,7 @@ internal class RenameIdentifierCommand : Command
 
         var allReferences = new LinkedList<GDMemberReference>();
 
-        var service = new GDRenameService(Plugin.ScriptProject);
+        // TODO: Use IGDFindRefsHandler to find cross-file references
         /*foreach (var binding in Map.Scripts.OrderBy(x => x.TypeName))
         {
             var references = binding.GetReferencesToTypeMember(type, memberName);
@@ -602,10 +605,10 @@ internal class RenameIdentifierCommand : Command
             return null;
 
         var ScriptFile = Map.GetScriptByClass(classDecl);
-        if (ScriptFile?.SemanticModel == null)
+        if (ScriptFile?.FullPath == null)
             return null;
 
-        return ScriptFile.SemanticModel.GetTypeForNode(callerExpression);
+        return _symbolsHandler.GetTypeForNode(callerExpression, ScriptFile.FullPath);
     }
 
     private async Task<bool> RenameEnum(GDEnumDeclaration enumDeclaration, GDIdentifier identifier)
@@ -853,23 +856,23 @@ internal class RenameIdentifierCommand : Command
             return false;
 
         var ScriptFile = Map.GetScriptByClass(classDecl);
-        if (ScriptFile?.SemanticModel == null)
+        if (ScriptFile?.FullPath == null)
         {
-            Logger.Info("SemanticModel not available");
+            Logger.Info("ScriptFile not available");
             return false;
         }
 
-        // Find the symbol for this identifier
-        var symbol = ScriptFile.SemanticModel.FindSymbol(variableName);
+        // Find the symbol for this identifier using handler
+        var symbol = _symbolsHandler.FindSymbolByName(variableName, ScriptFile.FullPath);
         if (symbol == null)
         {
             Logger.Info($"Symbol '{variableName}' not found");
             return false;
         }
 
-        // Collect references from semantic model
+        // Collect references using handler
         var memberReferences = new LinkedList<GDMemberReference>();
-        var semanticRefs = ScriptFile.SemanticModel.GetReferencesTo(symbol);
+        var semanticRefs = _symbolsHandler.GetReferencesToSymbol(symbol, ScriptFile.FullPath);
         foreach (var reference in semanticRefs)
         {
             var refNode = reference.ReferenceNode;

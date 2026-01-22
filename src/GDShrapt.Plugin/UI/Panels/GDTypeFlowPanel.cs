@@ -1,3 +1,4 @@
+using GDShrapt.CLI.Core;
 using static Godot.Control;
 
 namespace GDShrapt.Plugin;
@@ -14,6 +15,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     private GDTypeFlowGraphBuilder _graphBuilder;
     private GDTypeFlowNavigationService _navigationService;
     private EditorInterface _editorInterface;
+    private IGDTypeFlowHandler _typeFlowHandler;
+    private IGDSymbolsHandler _symbolsHandler;
 
     // UI containers
     private VBoxContainer _mainContainer;
@@ -72,21 +75,25 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     /// <summary>
     /// Initializes the panel with required dependencies.
     /// </summary>
-    public void Initialize(GDScriptProject project, EditorInterface editorInterface)
+    public void Initialize(GDScriptProject project, EditorInterface editorInterface, IGDTypeFlowHandler typeFlowHandler, IGDSymbolsHandler symbolsHandler)
     {
         _project = project;
         _editorInterface = editorInterface;
-        _graphBuilder = new GDTypeFlowGraphBuilder(project);
+        _typeFlowHandler = typeFlowHandler;
+        _symbolsHandler = symbolsHandler;
+        _graphBuilder = new GDTypeFlowGraphBuilder(project, typeFlowHandler, symbolsHandler);
         _navigationService = new GDTypeFlowNavigationService(editorInterface, project);
     }
 
     /// <summary>
     /// Sets the project (for backward compatibility).
     /// </summary>
-    public void SetProject(GDScriptProject project)
+    public void SetProject(GDScriptProject project, IGDTypeFlowHandler typeFlowHandler, IGDSymbolsHandler symbolsHandler)
     {
         _project = project;
-        _graphBuilder = new GDTypeFlowGraphBuilder(project);
+        _typeFlowHandler = typeFlowHandler;
+        _symbolsHandler = symbolsHandler;
+        _graphBuilder = new GDTypeFlowGraphBuilder(project, typeFlowHandler, symbolsHandler);
     }
 
     /// <summary>

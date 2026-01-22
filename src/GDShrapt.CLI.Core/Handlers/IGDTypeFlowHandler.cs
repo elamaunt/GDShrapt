@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using GDShrapt.Abstractions;
+using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
 
@@ -83,6 +85,55 @@ public interface IGDTypeFlowHandler
     /// Clears the current session and resets navigation.
     /// </summary>
     void Clear();
+
+    /// <summary>
+    /// Resolves the union type for a symbol (when variable can have multiple types).
+    /// </summary>
+    /// <param name="symbolName">The name of the symbol.</param>
+    /// <param name="filePath">Path to the file containing the symbol.</param>
+    /// <returns>Union type information if the symbol has multiple possible types, null otherwise.</returns>
+    GDUnionType? ResolveUnionType(string symbolName, string filePath);
+
+    /// <summary>
+    /// Resolves the duck type constraints for a symbol.
+    /// </summary>
+    /// <param name="symbolName">The name of the symbol.</param>
+    /// <param name="filePath">Path to the file containing the symbol.</param>
+    /// <returns>Duck type information if the symbol has inferred constraints, null otherwise.</returns>
+    GDDuckType? ResolveDuckType(string symbolName, string filePath);
+
+    /// <summary>
+    /// Gets inflow nodes (where type comes from) for a symbol.
+    /// </summary>
+    /// <param name="symbolName">The name of the symbol.</param>
+    /// <param name="filePath">Path to the file containing the symbol.</param>
+    /// <returns>List of inflow nodes, or null if symbol not found.</returns>
+    IReadOnlyList<GDTypeFlowNode>? GetInflowNodes(string symbolName, string filePath);
+
+    /// <summary>
+    /// Gets outflow nodes (where type goes to) for a symbol.
+    /// </summary>
+    /// <param name="symbolName">The name of the symbol.</param>
+    /// <param name="filePath">Path to the file containing the symbol.</param>
+    /// <returns>List of outflow nodes, or null if symbol not found.</returns>
+    IReadOnlyList<GDTypeFlowNode>? GetOutflowNodes(string symbolName, string filePath);
+
+    /// <summary>
+    /// Finds a symbol by name in a file.
+    /// </summary>
+    /// <param name="symbolName">The name of the symbol.</param>
+    /// <param name="filePath">Path to the file.</param>
+    /// <returns>Symbol information if found, null otherwise.</returns>
+    Semantics.GDSymbolInfo? FindSymbol(string symbolName, string filePath);
+
+    /// <summary>
+    /// Resolves the type of an expression at a specific position.
+    /// </summary>
+    /// <param name="filePath">Path to the file.</param>
+    /// <param name="line">Line number (1-based).</param>
+    /// <param name="column">Column number (1-based).</param>
+    /// <returns>The resolved type name, or null if not found.</returns>
+    string? ResolveTypeAtPosition(string filePath, int line, int column);
 }
 
 /// <summary>
