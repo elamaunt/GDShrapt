@@ -1,4 +1,5 @@
 using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,15 @@ internal class GDTypeFlowPanelEmulator
     public GDTypeFlowPanelEmulator(GDScriptProject project)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
-        _builder = new GDTypeFlowGraphBuilder(project);
+
+        // Initialize service registry and load base module to get handlers
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(_project, new GDBaseModule());
+
+        var typeFlowHandler = registry.GetService<IGDTypeFlowHandler>();
+        var symbolsHandler = registry.GetService<IGDSymbolsHandler>();
+
+        _builder = new GDTypeFlowGraphBuilder(project, typeFlowHandler, symbolsHandler);
     }
 
     #region State Properties

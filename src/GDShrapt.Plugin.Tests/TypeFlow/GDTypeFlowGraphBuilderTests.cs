@@ -1,5 +1,6 @@
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentAssertions;
 
@@ -14,6 +15,8 @@ public class GDTypeFlowGraphBuilderTests
 {
     private GDScriptProject _project;
     private GDScriptFile _unionTypesScript;
+    private IGDTypeFlowHandler _typeFlowHandler;
+    private IGDSymbolsHandler _symbolsHandler;
 
     [TestInitialize]
     public void Setup()
@@ -21,6 +24,13 @@ public class GDTypeFlowGraphBuilderTests
         _project = CrossFileTestHelpers.CreateTestProject();
         _unionTypesScript = CrossFileTestHelpers.GetScriptByName(_project, "union_types_complex.gd");
         _unionTypesScript.Should().NotBeNull("union_types_complex.gd should exist in test project");
+
+        // Initialize service registry and load base module to get handlers
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(_project, new GDBaseModule());
+
+        _typeFlowHandler = registry.GetService<IGDTypeFlowHandler>();
+        _symbolsHandler = registry.GetService<IGDSymbolsHandler>();
     }
 
     #region handle_result Tests - func handle_result(result): lines 224-234
@@ -29,7 +39,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_HandleResult_Parameter_CreatesRootNode()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -44,7 +54,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_HandleResult_Parameter_HasOutflows_ForMemberAccess()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -63,7 +73,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_HandleResult_Parameter_HasOutflows_ForDictionaryIndexing()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -81,7 +91,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_HandleResult_Parameter_OutflowsHaveCorrectKind()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -106,7 +116,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_SafeGetNested_Data_CreatesRootNode()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("data", _unionTypesScript);
@@ -121,7 +131,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_SafeGetNested_Data_HasOutflows_ForAssignment()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("data", _unionTypesScript);
@@ -137,7 +147,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_SafeGetNested_Current_CreatesRootNode()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -152,7 +162,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_SafeGetNested_Current_HasMultipleInflows()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -172,7 +182,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_SafeGetNested_Current_HasOutflows_ForUsages()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -195,7 +205,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_SafeGetNested_Current_HasOutflows_ForReturn()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -220,7 +230,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_GeneratesEdges_ForAllInflows()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -239,7 +249,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_GeneratesEdges_ForAllOutflows()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -258,7 +268,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_EdgesHaveSourceAndTarget()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -292,7 +302,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_HandleResult_TotalNodeCount()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -329,7 +339,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_SafeGetNested_Current_TotalNodeCount()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -371,7 +381,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_MixedInput_HasUnionType()
     {
         // Arrange - mixed_input is: int|float|String|Array|Dictionary
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("mixed_input", _unionTypesScript);
@@ -394,7 +404,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_NoCircularReferences()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -413,7 +423,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_AllNodesHaveUniqueIds()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -435,7 +445,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_Current_HasCorrectKinds()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -464,7 +474,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_Current_NullCheckHasBoolType()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -485,7 +495,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_Current_TypeCheckHasBoolType()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -506,7 +516,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_Result_IndexerHasProperLabels()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -531,7 +541,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_MethodCall_HasSourceObjectName()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -555,7 +565,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_Indexer_HasSourceObjectName()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("result", _unionTypesScript);
@@ -581,7 +591,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_CanTraverseDeep_WithoutDepthLimit()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act - build graph for a symbol
         var root = builder.BuildGraph("data", _unionTypesScript);
@@ -619,7 +629,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_NodeRegistry_NoDuplicateNodes()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -644,7 +654,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_TypeFlowTestMethod_Local_HasAllKinds()
     {
         // Arrange - using the comprehensive type_flow_test_method
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("local", _unionTypesScript);
@@ -681,7 +691,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_TypeFlowTestMethod_Local_HasIndexerAccess()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("local", _unionTypesScript);
@@ -705,7 +715,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_TypeFlowTestMethod_Local_HasExpectedKinds()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("local", _unionTypesScript);
@@ -744,7 +754,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_Outflows_HaveLineNumbers()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -764,7 +774,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_TypeCheck_HasTypeGuardDescription()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
@@ -785,7 +795,7 @@ public class GDTypeFlowGraphBuilderTests
     public void BuildGraph_NullCheck_HasNullCheckDescription()
     {
         // Arrange
-        var builder = new GDTypeFlowGraphBuilder(_project);
+        var builder = new GDTypeFlowGraphBuilder(_project, _typeFlowHandler, _symbolsHandler);
 
         // Act
         var root = builder.BuildGraph("current", _unionTypesScript);
