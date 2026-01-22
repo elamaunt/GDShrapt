@@ -602,10 +602,10 @@ internal class RenameIdentifierCommand : Command
             return null;
 
         var ScriptFile = Map.GetScriptByClass(classDecl);
-        if (ScriptFile?.Analyzer == null)
+        if (ScriptFile?.SemanticModel == null)
             return null;
 
-        return ScriptFile.Analyzer.GetTypeForNode(callerExpression);
+        return ScriptFile.SemanticModel.GetTypeForNode(callerExpression);
     }
 
     private async Task<bool> RenameEnum(GDEnumDeclaration enumDeclaration, GDIdentifier identifier)
@@ -853,24 +853,24 @@ internal class RenameIdentifierCommand : Command
             return false;
 
         var ScriptFile = Map.GetScriptByClass(classDecl);
-        if (ScriptFile?.Analyzer == null)
+        if (ScriptFile?.SemanticModel == null)
         {
-            Logger.Info("Analyzer not available");
+            Logger.Info("SemanticModel not available");
             return false;
         }
 
         // Find the symbol for this identifier
-        var symbol = ScriptFile.Analyzer.FindSymbol(variableName);
+        var symbol = ScriptFile.SemanticModel.FindSymbol(variableName);
         if (symbol == null)
         {
             Logger.Info($"Symbol '{variableName}' not found");
             return false;
         }
 
-        // Collect references from analyzer
+        // Collect references from semantic model
         var memberReferences = new LinkedList<GDMemberReference>();
-        var analyzerRefs = ScriptFile.Analyzer.GetReferencesTo(symbol);
-        foreach (var reference in analyzerRefs)
+        var semanticRefs = ScriptFile.SemanticModel.GetReferencesTo(symbol);
+        foreach (var reference in semanticRefs)
         {
             var refNode = reference.ReferenceNode;
             if (refNode is GDIdentifierExpression refExpr && refExpr.Identifier != null)
@@ -917,7 +917,7 @@ internal class RenameIdentifierCommand : Command
         var newName = parameters.NewName;
 
         // Rename all references
-        foreach (var reference in analyzerRefs)
+        foreach (var reference in semanticRefs)
         {
             var refNode = reference.ReferenceNode;
             if (refNode is GDIdentifierExpression refExpr && refExpr.Identifier != null)

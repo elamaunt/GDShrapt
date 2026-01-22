@@ -69,9 +69,9 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
 
         // Try project classes
         var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
-        if (ScriptFile?.Analyzer != null)
+        if (ScriptFile?.SemanticModel != null)
         {
-            var symbol = ScriptFile.Analyzer.FindSymbol(memberName);
+            var symbol = ScriptFile.SemanticModel.FindSymbol(memberName);
             if (symbol != null)
             {
                 return new GDRuntimeMemberInfo(memberName, ConvertSymbolKind(symbol.Kind), symbol.TypeName)
@@ -269,9 +269,9 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         if (!string.IsNullOrEmpty(typeName) && typeName != "self")
         {
             var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
-            if (ScriptFile?.Analyzer != null)
+            if (ScriptFile?.SemanticModel != null)
             {
-                var symbol = ScriptFile.Analyzer.FindSymbol(signalName);
+                var symbol = ScriptFile.SemanticModel.FindSymbol(signalName);
                 if (symbol?.Kind == GDSymbolKind.Signal)
                 {
                     return BuildSignalInfo(symbol);
@@ -305,9 +305,9 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
 
         // Check project scripts
         var ScriptFile = _scriptProject?.GetScriptByTypeName(typeName);
-        if (ScriptFile?.Analyzer != null)
+        if (ScriptFile?.SemanticModel != null)
         {
-            foreach (var symbol in ScriptFile.Analyzer.Symbols)
+            foreach (var symbol in ScriptFile.SemanticModel.Symbols)
             {
                 if (symbol.Kind == GDSymbolKind.Signal)
                 {
@@ -365,13 +365,13 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         };
 
         // Build members from analyzer if available
-        if (ScriptFile.Analyzer != null)
+        if (ScriptFile.SemanticModel != null)
         {
             var members = new List<GDRuntimeMemberInfo>();
             var methods = new List<GDMethodInfo>();
             var signals = new List<GDSignalInfo>();
 
-            foreach (var symbol in ScriptFile.Analyzer.Symbols)
+            foreach (var symbol in ScriptFile.SemanticModel.Symbols)
             {
                 switch (symbol.Kind)
                 {

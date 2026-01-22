@@ -134,17 +134,17 @@ internal class GDTypeFlowNavigationService
     {
         try
         {
-            var analyzer = script.Analyzer;
-            if (analyzer == null)
+            var semanticModel = script.SemanticModel;
+            if (semanticModel == null)
             {
                 script.Analyze();
-                analyzer = script.Analyzer;
+                semanticModel = script.SemanticModel;
             }
 
-            if (analyzer == null)
+            if (semanticModel == null)
                 return null;
 
-            var symbol = analyzer.FindSymbol(symbolName);
+            var symbol = semanticModel.FindSymbol(symbolName);
             if (symbol?.DeclarationNode != null)
             {
                 return GDSourceLocation.FromNode(symbol.DeclarationNode, script.FullPath);

@@ -331,7 +331,7 @@ public class GDFindReferencesService
             return null;
 
         // Use SemanticModel for symbol resolution
-        var semanticModel = context.Script?.Analyzer?.SemanticModel;
+        var semanticModel = context.Script?.SemanticModel;
         if (semanticModel != null)
         {
             var symbolInfo = semanticModel.GetSymbolAt(context.Cursor.Line, context.Cursor.Column);
@@ -590,7 +590,7 @@ public class GDFindReferencesService
         var potentialRefs = new List<GDFoundReference>();
 
         // Use SemanticModel for all scope types when available
-        var semanticModel = context.Script?.Analyzer?.SemanticModel;
+        var semanticModel = context.Script?.SemanticModel;
         if (semanticModel != null)
         {
             var collected = CollectReferencesViaSemanticModel(semanticModel, scope);

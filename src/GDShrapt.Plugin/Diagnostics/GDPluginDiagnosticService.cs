@@ -328,7 +328,7 @@ internal class GDPluginDiagnosticService : IDisposable
             var runtimeProvider = _scriptProject.CreateRuntimeProvider();
             ScriptFile.Analyze(runtimeProvider);
 
-            Logger.Debug($"Script analyzed, Analyzer={ScriptFile.Analyzer != null}");
+            Logger.Debug($"Script analyzed, SemanticModel={ScriptFile.SemanticModel != null}");
 
             // Read current content from disk
             if (System.IO.File.Exists(ScriptFile.FullPath))

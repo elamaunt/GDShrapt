@@ -36,7 +36,7 @@ func die():
 ";
         var project = CreateSingleFileProject("player.gd", code);
         var script = project.ScriptFiles.First();
-        var symbol = script.Analyzer?.FindSymbol("health");
+        var symbol = script.SemanticModel?.FindSymbol("health");
 
         Assert.IsNotNull(symbol);
 
@@ -170,7 +170,7 @@ func process():
 ";
         var project = CreateSingleFileProject("script.gd", code);
         var script = project.ScriptFiles.First();
-        var symbol = script.Analyzer?.FindSymbol("attack");
+        var symbol = script.SemanticModel?.FindSymbol("attack");
 
         Assert.IsNotNull(symbol);
 
@@ -198,7 +198,7 @@ var x = 10
 ";
         var project = CreateSingleFileProject("script.gd", code);
         var script = project.ScriptFiles.First();
-        var symbol = script.Analyzer?.FindSymbol("x");
+        var symbol = script.SemanticModel?.FindSymbol("x");
 
         Assert.IsNotNull(symbol);
 
@@ -223,7 +223,7 @@ var my_var = 10
 ";
         var project = CreateSingleFileProject("script.gd", code);
         var script = project.ScriptFiles.First();
-        var symbol = script.Analyzer?.FindSymbol("my_var");
+        var symbol = script.SemanticModel?.FindSymbol("my_var");
 
         Assert.IsNotNull(symbol);
 
@@ -246,7 +246,7 @@ var my_var = 10
 ";
         var project = CreateSingleFileProject("script.gd", code);
         var script = project.ScriptFiles.First();
-        var symbol = script.Analyzer?.FindSymbol("my_var");
+        var symbol = script.SemanticModel?.FindSymbol("my_var");
 
         Assert.IsNotNull(symbol);
 

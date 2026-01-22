@@ -97,12 +97,12 @@ public static class CrossFileTestHelpers
         string symbolName)
     {
         // Ensure the script is analyzed
-        if (scriptFile.Analyzer == null)
+        if (scriptFile.SemanticModel == null)
         {
             scriptFile.Analyze();
         }
 
-        var semanticModel = scriptFile.Analyzer?.SemanticModel;
+        var semanticModel = scriptFile.SemanticModel;
         if (semanticModel == null)
             return new List<CrossFileReference>();
 
@@ -110,7 +110,7 @@ public static class CrossFileTestHelpers
 
         // Find symbols with this name (including inherited members)
         var symbols = semanticModel.FindSymbols(symbolName).ToList();
-        if (symbols.Count == 0)
+        if (symbols.Count() == 0)
             return references;
 
         foreach (var symbolInfo in symbols)
@@ -160,12 +160,12 @@ public static class CrossFileTestHelpers
 
         foreach (var scriptFile in project.ScriptFiles)
         {
-            if (scriptFile.Analyzer == null)
+            if (scriptFile.SemanticModel == null)
             {
                 scriptFile.Analyze();
             }
 
-            var semanticModel = scriptFile.Analyzer?.SemanticModel;
+            var semanticModel = scriptFile.SemanticModel;
             if (semanticModel == null)
                 continue;
 

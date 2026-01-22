@@ -277,7 +277,7 @@ public class GDRenameService
             // Create a temporary symbol for cross-file search
             if (scope.DeclarationNode is GDIdentifiableClassMember identifiable)
             {
-                var symbol = containingScript.Analyzer?.FindSymbol(oldName);
+                var symbol = containingScript.SemanticModel?.FindSymbol(oldName);
                 if (symbol != null)
                 {
                     var crossFileRefs = crossFileFinder.FindReferences(symbol, containingScript);
@@ -359,11 +359,11 @@ public class GDRenameService
 
         // Find the script containing this symbol
         var containingScript = FindScriptContainingSymbol(symbol);
-        if (containingScript?.Analyzer == null)
+        if (containingScript?.SemanticModel == null)
             return conflicts;
 
         // Check if new name already exists in the same scope
-        var existingSymbol = containingScript.Analyzer.FindSymbol(newName);
+        var existingSymbol = containingScript.SemanticModel.FindSymbol(newName);
         if (existingSymbol != null && existingSymbol != symbol)
         {
             conflicts.Add(new GDRenameConflict(
@@ -444,10 +444,10 @@ public class GDRenameService
     {
         foreach (var script in _project.ScriptFiles)
         {
-            if (script.Analyzer == null)
+            if (script.SemanticModel == null)
                 continue;
 
-            if (script.Analyzer.Symbols.Contains(symbol))
+            if (script.SemanticModel.Symbols.Contains(symbol))
                 return script;
         }
         return null;
@@ -471,10 +471,10 @@ public class GDRenameService
     private List<GDTextEdit> CollectEditsFromScript(GDScriptFile script, GDSymbolInfo symbol, string oldName, string newName)
     {
         var edits = new List<GDTextEdit>();
-        var analyzer = script.Analyzer;
+        var semanticModel = script.SemanticModel;
         var filePath = script.FullPath;
 
-        if (analyzer == null || filePath == null)
+        if (semanticModel == null || filePath == null)
             return edits;
 
         // Add declaration
@@ -484,7 +484,7 @@ public class GDRenameService
         }
 
         // Add all references
-        var refs = analyzer.GetReferencesTo(symbol);
+        var refs = semanticModel.GetReferencesTo(symbol);
         foreach (var reference in refs)
         {
             var node = reference.ReferenceNode;
@@ -504,13 +504,13 @@ public class GDRenameService
     private List<GDTextEdit> CollectEditsFromScriptByName(GDScriptFile script, string oldName, string newName)
     {
         var edits = new List<GDTextEdit>();
-        var analyzer = script.Analyzer;
+        var semanticModel = script.SemanticModel;
         var filePath = script.FullPath;
 
-        if (analyzer == null || filePath == null)
+        if (semanticModel == null || filePath == null)
             return edits;
 
-        var symbol = analyzer.FindSymbol(oldName);
+        var symbol = semanticModel.FindSymbol(oldName);
         if (symbol == null)
             return edits;
 

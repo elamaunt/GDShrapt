@@ -71,9 +71,9 @@ public class GDSymbolsCommand : IGDCommand
     private static IEnumerable<GDSymbolInfo> ExtractSymbols(GDScriptFile script)
     {
         var symbols = new List<GDSymbolInfo>();
-        var analyzer = script.Analyzer;
+        var semanticModel = script.SemanticModel;
 
-        if (analyzer == null)
+        if (semanticModel == null)
             return symbols;
 
         // Add class name
@@ -89,7 +89,7 @@ public class GDSymbolsCommand : IGDCommand
         }
 
         // Add methods
-        foreach (var method in analyzer.GetMethods())
+        foreach (var method in semanticModel.GetMethods())
         {
             symbols.Add(new GDSymbolInfo
             {
@@ -102,7 +102,7 @@ public class GDSymbolsCommand : IGDCommand
         }
 
         // Add variables
-        foreach (var variable in analyzer.GetVariables())
+        foreach (var variable in semanticModel.GetVariables())
         {
             symbols.Add(new GDSymbolInfo
             {
@@ -115,7 +115,7 @@ public class GDSymbolsCommand : IGDCommand
         }
 
         // Add signals
-        foreach (var signal in analyzer.GetSignals())
+        foreach (var signal in semanticModel.GetSignals())
         {
             symbols.Add(new GDSymbolInfo
             {
@@ -127,7 +127,7 @@ public class GDSymbolsCommand : IGDCommand
         }
 
         // Add constants
-        foreach (var constant in analyzer.GetConstants())
+        foreach (var constant in semanticModel.GetConstants())
         {
             symbols.Add(new GDSymbolInfo
             {
@@ -140,7 +140,7 @@ public class GDSymbolsCommand : IGDCommand
         }
 
         // Add enums
-        foreach (var enumSymbol in analyzer.GetEnums())
+        foreach (var enumSymbol in semanticModel.GetEnums())
         {
             symbols.Add(new GDSymbolInfo
             {
@@ -152,7 +152,7 @@ public class GDSymbolsCommand : IGDCommand
         }
 
         // Add inner classes
-        foreach (var innerClass in analyzer.GetInnerClasses())
+        foreach (var innerClass in semanticModel.GetInnerClasses())
         {
             symbols.Add(new GDSymbolInfo
             {

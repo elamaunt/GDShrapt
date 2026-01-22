@@ -21,10 +21,10 @@ public class GDSymbolsHandler : IGDSymbolsHandler
     public virtual IReadOnlyList<GDDocumentSymbol> GetSymbols(string filePath)
     {
         var file = _project.GetScript(filePath);
-        if (file?.Analyzer == null)
+        if (file?.SemanticModel == null)
             return [];
 
-        return file.Analyzer.Symbols
+        return file.SemanticModel.Symbols
             .Select(s => new GDDocumentSymbol
             {
                 Name = s.Name,

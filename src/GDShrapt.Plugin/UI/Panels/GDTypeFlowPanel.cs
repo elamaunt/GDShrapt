@@ -289,10 +289,10 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             return;
         }
 
-        var analyzer = node.SourceScript.Analyzer;
-        if (analyzer == null)
+        var semanticModel = node.SourceScript.SemanticModel;
+        if (semanticModel == null)
         {
-            // Still try to show node info without analyzer
+            // Still try to show node info without semantic model
             if (IsExpressionNode(node.Kind))
             {
                 _signatureLabel.Text = BuildNodeSignatureBBCode(node);
@@ -304,7 +304,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             return;
         }
 
-        var symbol = analyzer.FindSymbol(node.Label);
+        var symbol = semanticModel.FindSymbol(node.Label);
         if (symbol?.DeclarationNode == null)
         {
             // Symbol not found - check if this is an expression node
@@ -320,10 +320,10 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         }
 
         // Build BBCode signature
-        _signatureLabel.Text = BuildSignatureBBCode(symbol, analyzer);
+        _signatureLabel.Text = BuildSignatureBBCode(symbol, semanticModel);
     }
 
-    private string BuildSignatureBBCode(GDShrapt.Semantics.GDSymbolInfo symbol, GDShrapt.Semantics.GDScriptAnalyzer analyzer)
+    private string BuildSignatureBBCode(GDShrapt.Semantics.GDSymbolInfo symbol, GDShrapt.Semantics.GDSemanticModel analyzer)
     {
         var decl = symbol.DeclarationNode;
 
@@ -368,7 +368,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
                kind == GDTypeFlowNodeKind.Assignment;
     }
 
-    private string BuildMethodSignatureBBCode(GDShrapt.Reader.GDMethodDeclaration method, GDShrapt.Semantics.GDScriptAnalyzer analyzer)
+    private string BuildMethodSignatureBBCode(GDShrapt.Reader.GDMethodDeclaration method, GDShrapt.Semantics.GDSemanticModel analyzer)
     {
         var sb = new System.Text.StringBuilder();
 
@@ -406,7 +406,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         return sb.ToString();
     }
 
-    private string BuildVariableSignatureBBCode(GDShrapt.Reader.GDVariableDeclaration variable, GDShrapt.Semantics.GDScriptAnalyzer analyzer)
+    private string BuildVariableSignatureBBCode(GDShrapt.Reader.GDVariableDeclaration variable, GDShrapt.Semantics.GDSemanticModel analyzer)
     {
         var sb = new System.Text.StringBuilder();
 
@@ -488,7 +488,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         return sb.ToString();
     }
 
-    private string BuildParameterSignatureBBCode(GDShrapt.Reader.GDParameterDeclaration param, GDShrapt.Semantics.GDScriptAnalyzer analyzer)
+    private string BuildParameterSignatureBBCode(GDShrapt.Reader.GDParameterDeclaration param, GDShrapt.Semantics.GDSemanticModel analyzer)
     {
         var sb = new System.Text.StringBuilder();
 

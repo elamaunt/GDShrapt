@@ -4,6 +4,7 @@ namespace GDShrapt.Semantics;
 
 /// <summary>
 /// Static utility methods for type inference operations.
+/// Internal helper for TypeInference analyzers.
 /// </summary>
 internal static class GDTypeInferenceUtilities
 {

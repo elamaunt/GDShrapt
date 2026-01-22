@@ -762,16 +762,16 @@ internal class GDGutterManager
                 if (script == _scriptFile || script.Class == null)
                     continue;
 
-                var analyzer = script.Analyzer;
+                var semanticModel = script.SemanticModel;
 
                 foreach (var memberOp in script.Class.AllNodes.OfType<GDMemberOperatorExpression>())
                 {
                     if (memberOp.Identifier?.Sequence != symbolName)
                         continue;
 
-                    if (analyzer != null)
+                    if (semanticModel != null)
                     {
-                        var callerType = analyzer.GetTypeForNode(memberOp.CallerExpression);
+                        var callerType = semanticModel.GetTypeForNode(memberOp.CallerExpression);
                         if (callerType == typeName)
                         {
                             strictCount++;

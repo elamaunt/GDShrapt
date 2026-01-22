@@ -106,9 +106,9 @@ func my_func() -> void:
         project.AnalyzeAll();
 
         var script = project.ScriptFiles.First();
-        Assert.IsNotNull(script.Analyzer);
+        Assert.IsNotNull(script.SemanticModel);
 
-        var symbols = script.Analyzer.Symbols.ToList();
+        var symbols = script.SemanticModel.Symbols.ToList();
         Assert.IsTrue(symbols.Count > 0);
     }
 

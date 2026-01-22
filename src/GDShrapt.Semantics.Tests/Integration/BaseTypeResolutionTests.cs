@@ -52,13 +52,13 @@ public class BaseTypeResolutionTests
         Assert.IsNotNull(script, "base_entity.gd not found");
 
         // Ensure script is analyzed
-        if (script.Analyzer == null)
+        if (script.SemanticModel == null)
         {
             var runtimeProvider = project.CreateRuntimeProvider();
             script.Analyze(runtimeProvider);
         }
 
-        var semanticModel = script.Analyzer?.SemanticModel;
+        var semanticModel = script.SemanticModel;
         Assert.IsNotNull(semanticModel, "Script should have a semantic model after analysis");
 
         // Act - Try to resolve queue_free() on Node2D type through inheritance chain (Node.queue_free())

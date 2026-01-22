@@ -145,16 +145,16 @@ internal class GoToDefinitionCommand : Command
 
         if (token?.Parent is GDMemberOperatorExpression memberExpr && memberExpr.CallerExpression != null)
         {
-            var analyzer = scriptEditor.ScriptFile.Analyzer;
+            var semanticModel = scriptEditor.ScriptFile.SemanticModel;
 
-            if (analyzer == null)
+            if (semanticModel == null)
             {
-                Logger.Info("GoToDefinition: Analyzer not available");
+                Logger.Info("GoToDefinition: SemanticModel not available");
                 scriptEditor.RequestGodotLookup();
                 return;
             }
 
-            var callerType = analyzer.GetTypeForNode(memberExpr.CallerExpression);
+            var callerType = semanticModel.GetTypeForNode(memberExpr.CallerExpression);
 
             if (string.IsNullOrEmpty(callerType))
             {
@@ -168,9 +168,9 @@ internal class GoToDefinitionCommand : Command
             // Try to find the member in project classes
             var typeMap = Map.GetScriptByTypeName(callerType);
 
-            if (typeMap?.Analyzer != null)
+            if (typeMap?.SemanticModel != null)
             {
-                var symbol = typeMap.Analyzer.FindSymbol(memberName);
+                var symbol = typeMap.SemanticModel.FindSymbol(memberName);
                 if (symbol?.DeclarationNode != null)
                 {
                     // Find the identifier in the declaration

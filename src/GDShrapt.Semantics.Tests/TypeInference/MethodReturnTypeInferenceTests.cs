@@ -20,7 +20,7 @@ public class MethodReturnTypeInferenceTests
         _script = TestProjectFixture.GetScript("union_types_complex.gd");
         Assert.IsNotNull(_script, "Script 'union_types_complex.gd' not found in test project");
 
-        if (_script.Analyzer == null)
+        if (_script.SemanticModel == null)
         {
             _script.Analyze();
         }
@@ -41,8 +41,8 @@ public class MethodReturnTypeInferenceTests
     {
         // Arrange
         var method = FindMethod("get_config");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act - exactly like GDTypeFlowPanel does
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -65,8 +65,8 @@ public class MethodReturnTypeInferenceTests
     {
         // Arrange
         var method = FindMethod("create_error");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -87,8 +87,8 @@ public class MethodReturnTypeInferenceTests
     {
         // Arrange
         var method = FindMethod("try_operation");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -107,8 +107,8 @@ public class MethodReturnTypeInferenceTests
     {
         // Arrange
         var method = FindMethod("complex_conditional");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -127,8 +127,8 @@ public class MethodReturnTypeInferenceTests
     {
         // Arrange
         var method = FindMethod("match_return");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -149,11 +149,11 @@ public class MethodReturnTypeInferenceTests
         var lambdaScript = TestProjectFixture.GetScript("cross_file_inference.gd");
         Assert.IsNotNull(lambdaScript, "Script 'cross_file_inference.gd' not found");
 
-        if (lambdaScript.Analyzer == null)
+        if (lambdaScript.SemanticModel == null)
             lambdaScript.Analyze();
 
-        Assert.IsNotNull(lambdaScript.Analyzer, "Analyzer should be available");
-        var analyzer = lambdaScript.Analyzer;
+        Assert.IsNotNull(lambdaScript.SemanticModel, "Analyzer should be available");
+        var analyzer = lambdaScript.SemanticModel;
 
         // Find _create_entity_handler which returns: func(data): return process_entity(data)
         var method = lambdaScript.Class?.Members

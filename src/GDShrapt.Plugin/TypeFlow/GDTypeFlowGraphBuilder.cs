@@ -84,14 +84,14 @@ internal class GDTypeFlowGraphBuilder
         if (script == null)
             return;
 
-        var analyzer = EnsureAnalyzer(script);
-        if (analyzer == null)
+        var semanticModel = EnsureSemanticModel(script);
+        if (semanticModel == null)
             return;
 
-        var symbol = analyzer.FindSymbol(node.Label);
+        var symbol = semanticModel.FindSymbol(node.Label);
         if (symbol != null)
         {
-            BuildMultiLevelInflows(node, symbol, script, analyzer, 1);
+            BuildMultiLevelInflows(node, symbol, script, semanticModel, 1);
         }
 
         node.AreInflowsLoaded = true;
@@ -110,14 +110,14 @@ internal class GDTypeFlowGraphBuilder
         if (script == null)
             return;
 
-        var analyzer = EnsureAnalyzer(script);
-        if (analyzer == null)
+        var semanticModel = EnsureSemanticModel(script);
+        if (semanticModel == null)
             return;
 
-        var symbol = analyzer.FindSymbol(node.Label);
+        var symbol = semanticModel.FindSymbol(node.Label);
         if (symbol != null)
         {
-            BuildMultiLevelOutflows(node, symbol, script, analyzer, 1);
+            BuildMultiLevelOutflows(node, symbol, script, semanticModel, 1);
         }
 
         node.AreOutflowsLoaded = true;
@@ -137,16 +137,16 @@ internal class GDTypeFlowGraphBuilder
         // Clear registry for new graph
         ClearRegistry();
 
-        var analyzer = EnsureAnalyzer(script);
-        if (analyzer == null)
+        var semanticModel = EnsureSemanticModel(script);
+        if (semanticModel == null)
             return null;
 
-        var symbol = analyzer.FindSymbol(symbolName);
+        var symbol = semanticModel.FindSymbol(symbolName);
         if (symbol == null)
             return null;
 
         // Create the root node for the symbol
-        var rootNode = CreateNodeFromSymbol(symbol, script, analyzer);
+        var rootNode = CreateNodeFromSymbol(symbol, script, semanticModel);
         if (rootNode == null)
             return null;
 
@@ -154,23 +154,23 @@ internal class GDTypeFlowGraphBuilder
         RegisterNode(rootNode);
 
         // Add union type info if applicable
-        AddUnionTypeInfo(rootNode, symbolName, analyzer);
+        AddUnionTypeInfo(rootNode, symbolName, semanticModel);
 
         // Add duck type info if applicable
-        AddDuckTypeInfo(rootNode, symbolName, analyzer);
+        AddDuckTypeInfo(rootNode, symbolName, semanticModel);
 
         // Build multi-level inflows
-        BuildMultiLevelInflows(rootNode, symbol, script, analyzer, 1);
+        BuildMultiLevelInflows(rootNode, symbol, script, semanticModel, 1);
         rootNode.AreInflowsLoaded = true;
 
         // Build multi-level outflows
-        BuildMultiLevelOutflows(rootNode, symbol, script, analyzer, 1);
+        BuildMultiLevelOutflows(rootNode, symbol, script, semanticModel, 1);
         rootNode.AreOutflowsLoaded = true;
 
         // Expand union types if enabled
         if (ExpandUnionTypes)
         {
-            ExpandUnionTypeNodes(rootNode, script, analyzer);
+            ExpandUnionTypeNodes(rootNode, script, semanticModel);
         }
 
         // Create edge objects from Inflows/Outflows relationships
@@ -299,9 +299,8 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Adds union type information to a node.
     /// </summary>
-    private void AddUnionTypeInfo(GDTypeFlowNode node, string symbolName, GDScriptAnalyzer analyzer)
+    private void AddUnionTypeInfo(GDTypeFlowNode node, string symbolName, GDSemanticModel semanticModel)
     {
-        var semanticModel = analyzer.SemanticModel;
         if (semanticModel == null)
             return;
 
@@ -319,12 +318,12 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Adds duck type information to a node.
     /// </summary>
-    private void AddDuckTypeInfo(GDTypeFlowNode node, string symbolName, GDScriptAnalyzer analyzer)
+    private void AddDuckTypeInfo(GDTypeFlowNode node, string symbolName, GDSemanticModel semanticModel)
     {
         if (!IncludeDuckConstraints)
             return;
 
-        var duckType = analyzer.GetDuckType(symbolName);
+        var duckType = semanticModel.GetDuckType(symbolName);
         if (duckType != null && duckType.HasRequirements)
         {
             node.HasDuckConstraints = true;
@@ -335,7 +334,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Builds multi-level inflows recursively.
     /// </summary>
-    private void BuildMultiLevelInflows(GDTypeFlowNode targetNode, GDSymbolInfo symbol, GDScriptFile script, GDScriptAnalyzer analyzer, int currentLevel)
+    private void BuildMultiLevelInflows(GDTypeFlowNode targetNode, GDSymbolInfo symbol, GDScriptFile script, GDSemanticModel semanticModel, int currentLevel)
     {
         if (currentLevel > MaxInflowLevels)
             return;
@@ -364,39 +363,39 @@ internal class GDTypeFlowGraphBuilder
         // For parameters, check for default value
         if (decl is GDParameterDeclaration param && param.DefaultValue != null)
         {
-            var defaultNode = CreateInflowFromExpression(param.DefaultValue, script, analyzer, "Default value", currentLevel);
+            var defaultNode = CreateInflowFromExpression(param.DefaultValue, script, semanticModel, "Default value", currentLevel);
             if (defaultNode != null)
             {
                 targetNode.Inflows.Add(defaultNode);
                 // Recurse into default value expression
-                BuildInflowsFromExpression(defaultNode, param.DefaultValue, script, analyzer, currentLevel + 1);
+                BuildInflowsFromExpression(defaultNode, param.DefaultValue, script, semanticModel, currentLevel + 1);
             }
         }
 
         // For variables, check initialization
         if (decl is GDVariableDeclaration variable && variable.Initializer != null)
         {
-            var initNode = CreateInflowFromExpression(variable.Initializer, script, analyzer, "Initialization", currentLevel);
+            var initNode = CreateInflowFromExpression(variable.Initializer, script, semanticModel, "Initialization", currentLevel);
             if (initNode != null)
             {
                 targetNode.Inflows.Add(initNode);
                 // Recurse into initializer
-                BuildInflowsFromExpression(initNode, variable.Initializer, script, analyzer, currentLevel + 1);
+                BuildInflowsFromExpression(initNode, variable.Initializer, script, semanticModel, currentLevel + 1);
             }
         }
 
         // Check assignments to this symbol
-        var assignments = FindAssignmentsTo(symbol.Name, script, analyzer);
+        var assignments = FindAssignmentsTo(symbol.Name, script, semanticModel);
         foreach (var assignment in assignments.Take(5))
         {
             if (assignment.RightExpression != null)
             {
-                var assignNode = CreateInflowFromExpression(assignment.RightExpression, script, analyzer, "Assignment", currentLevel);
+                var assignNode = CreateInflowFromExpression(assignment.RightExpression, script, semanticModel, "Assignment", currentLevel);
                 if (assignNode != null)
                 {
                     targetNode.Inflows.Add(assignNode);
                     // Recurse into assignment
-                    BuildInflowsFromExpression(assignNode, assignment.RightExpression, script, analyzer, currentLevel + 1);
+                    BuildInflowsFromExpression(assignNode, assignment.RightExpression, script, semanticModel, currentLevel + 1);
                 }
             }
         }
@@ -405,7 +404,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Builds inflows from an expression (for recursive multi-level).
     /// </summary>
-    private void BuildInflowsFromExpression(GDTypeFlowNode targetNode, GDNode expression, GDScriptFile script, GDScriptAnalyzer analyzer, int currentLevel)
+    private void BuildInflowsFromExpression(GDTypeFlowNode targetNode, GDNode expression, GDScriptFile script, GDSemanticModel semanticModel, int currentLevel)
     {
         if (currentLevel > MaxInflowLevels)
             return;
@@ -416,11 +415,11 @@ internal class GDTypeFlowGraphBuilder
             // Try to find the method being called
             if (call.CallerExpression is GDIdentifierExpression idExpr)
             {
-                var methodSymbol = analyzer.FindSymbol(idExpr.Identifier?.Sequence);
+                var methodSymbol = semanticModel.FindSymbol(idExpr.Identifier?.Sequence);
                 if (methodSymbol != null)
                 {
                     // Create node for the method return
-                    var methodNode = CreateNodeFromSymbol(methodSymbol, script, analyzer);
+                    var methodNode = CreateNodeFromSymbol(methodSymbol, script, semanticModel);
                     if (methodNode != null)
                     {
                         methodNode.Description = "Method definition";
@@ -432,22 +431,22 @@ internal class GDTypeFlowGraphBuilder
         // For identifier expressions, trace the variable
         else if (expression is GDIdentifierExpression idExpr)
         {
-            var varSymbol = analyzer.FindSymbol(idExpr.Identifier?.Sequence);
+            var varSymbol = semanticModel.FindSymbol(idExpr.Identifier?.Sequence);
             if (varSymbol != null)
             {
-                var varNode = CreateNodeFromSymbol(varSymbol, script, analyzer);
+                var varNode = CreateNodeFromSymbol(varSymbol, script, semanticModel);
                 if (varNode != null)
                 {
                     targetNode.Inflows.Add(varNode);
                     // Recurse into this variable's sources
-                    BuildMultiLevelInflows(varNode, varSymbol, script, analyzer, currentLevel + 1);
+                    BuildMultiLevelInflows(varNode, varSymbol, script, semanticModel, currentLevel + 1);
                 }
             }
         }
         // For member access, trace the member
         else if (expression is GDMemberOperatorExpression memberAccess)
         {
-            var memberNode = CreateNodeFromMemberAccess(memberAccess, script, analyzer);
+            var memberNode = CreateNodeFromMemberAccess(memberAccess, script, semanticModel);
             if (memberNode != null)
             {
                 targetNode.Inflows.Add(memberNode);
@@ -458,12 +457,12 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Builds multi-level outflows recursively.
     /// </summary>
-    private void BuildMultiLevelOutflows(GDTypeFlowNode sourceNode, GDSymbolInfo symbol, GDScriptFile script, GDScriptAnalyzer analyzer, int currentLevel)
+    private void BuildMultiLevelOutflows(GDTypeFlowNode sourceNode, GDSymbolInfo symbol, GDScriptFile script, GDSemanticModel semanticModel, int currentLevel)
     {
         if (currentLevel > MaxOutflowLevels)
             return;
 
-        var refs = analyzer.GetReferencesTo(symbol);
+        var refs = semanticModel.GetReferencesTo(symbol);
         var processedLocations = new HashSet<(int, int)>();
 
         foreach (var reference in refs.Take(10))
@@ -480,19 +479,19 @@ internal class GDTypeFlowGraphBuilder
             // Handle different parent expression types
             if (parent is GDCallExpression call)
             {
-                var callNode = CreateNodeFromCall(call, script, analyzer, reference);
+                var callNode = CreateNodeFromCall(call, script, semanticModel, reference);
                 if (callNode != null)
                 {
-                    AddDuckTypeInfo(callNode, symbol.Name, analyzer);
+                    AddDuckTypeInfo(callNode, symbol.Name, semanticModel);
                     sourceNode.Outflows.Add(callNode);
                     // Recurse into call usages
-                    BuildOutflowsFromCall(callNode, call, script, analyzer, currentLevel + 1);
+                    BuildOutflowsFromCall(callNode, call, script, semanticModel, currentLevel + 1);
                 }
             }
             else if (parent is GDIndexerExpression indexer)
             {
                 // Indexer access: symbol[key]
-                var indexerNode = CreateNodeFromIndexer(indexer, script, analyzer);
+                var indexerNode = CreateNodeFromIndexer(indexer, script, semanticModel);
                 if (indexerNode != null)
                 {
                     sourceNode.Outflows.Add(indexerNode);
@@ -500,7 +499,7 @@ internal class GDTypeFlowGraphBuilder
             }
             else if (parent is GDMemberOperatorExpression memberAccess)
             {
-                var accessNode = CreateNodeFromMemberAccess(memberAccess, script, analyzer);
+                var accessNode = CreateNodeFromMemberAccess(memberAccess, script, semanticModel);
                 if (accessNode != null)
                 {
                     sourceNode.Outflows.Add(accessNode);
@@ -509,7 +508,7 @@ internal class GDTypeFlowGraphBuilder
             else if (parent is GDDualOperatorExpression dualOp)
             {
                 // Type check, null check, comparison
-                var opNode = CreateNodeFromDualOperator(dualOp, script, analyzer);
+                var opNode = CreateNodeFromDualOperator(dualOp, script, semanticModel);
                 if (opNode != null)
                 {
                     sourceNode.Outflows.Add(opNode);
@@ -518,7 +517,7 @@ internal class GDTypeFlowGraphBuilder
             else if (parent is GDReturnExpression ret)
             {
                 // Return statement
-                var returnNode = CreateNodeFromReturn(ret, script, analyzer);
+                var returnNode = CreateNodeFromReturn(ret, script, semanticModel);
                 if (returnNode != null)
                 {
                     sourceNode.Outflows.Add(returnNode);
@@ -527,7 +526,7 @@ internal class GDTypeFlowGraphBuilder
             else
             {
                 // Find parent dual operator or return up the tree
-                var foundNode = FindAndCreateParentContextNode(reference.ReferenceNode, script, analyzer);
+                var foundNode = FindAndCreateParentContextNode(reference.ReferenceNode, script, semanticModel);
                 if (foundNode != null)
                 {
                     sourceNode.Outflows.Add(foundNode);
@@ -545,7 +544,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Finds parent context (return, dual operator) and creates a node.
     /// </summary>
-    private GDTypeFlowNode FindAndCreateParentContextNode(GDNode node, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private GDTypeFlowNode FindAndCreateParentContextNode(GDNode node, GDScriptFile script, GDSemanticModel semanticModel)
     {
         var current = node.Parent;
         int depth = 0;
@@ -554,15 +553,15 @@ internal class GDTypeFlowGraphBuilder
         {
             if (current is GDReturnExpression ret)
             {
-                return CreateNodeFromReturn(ret, script, analyzer);
+                return CreateNodeFromReturn(ret, script, semanticModel);
             }
             if (current is GDDualOperatorExpression dualOp)
             {
-                return CreateNodeFromDualOperator(dualOp, script, analyzer);
+                return CreateNodeFromDualOperator(dualOp, script, semanticModel);
             }
             if (current is GDIndexerExpression indexer)
             {
-                return CreateNodeFromIndexer(indexer, script, analyzer);
+                return CreateNodeFromIndexer(indexer, script, semanticModel);
             }
             current = current.Parent;
             depth++;
@@ -596,13 +595,13 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Creates a node from an indexer expression.
     /// </summary>
-    private GDTypeFlowNode CreateNodeFromIndexer(GDIndexerExpression indexer, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private GDTypeFlowNode CreateNodeFromIndexer(GDIndexerExpression indexer, GDScriptFile script, GDSemanticModel semanticModel)
     {
         var sourceObjectName = GetRootIdentifierName(indexer.CallerExpression);
-        var sourceType = GetSourceType(indexer.CallerExpression, analyzer);
-        var resultType = analyzer.GetTypeForNode(indexer) ?? "Variant";
+        var sourceType = GetSourceType(indexer.CallerExpression, semanticModel);
+        var resultType = semanticModel.GetTypeForNode(indexer) ?? "Variant";
         var label = GetIndexerLabel(indexer);
-        var description = GetDetailedDescription(indexer, GDTypeFlowNodeKind.IndexerAccess, null, analyzer);
+        var description = GetDetailedDescription(indexer, GDTypeFlowNodeKind.IndexerAccess, null, semanticModel);
 
         return new GDTypeFlowNode
         {
@@ -623,12 +622,12 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Creates a node from a dual operator expression (type check, null check, comparison).
     /// </summary>
-    private GDTypeFlowNode CreateNodeFromDualOperator(GDDualOperatorExpression dualOp, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private GDTypeFlowNode CreateNodeFromDualOperator(GDDualOperatorExpression dualOp, GDScriptFile script, GDSemanticModel semanticModel)
     {
         var kind = GetKindForDualOperator(dualOp);
         var label = GetDualOperatorLabel(dualOp);
-        var resultType = InferImprovedType(dualOp, analyzer);
-        var description = GetDetailedDescription(dualOp, kind, null, analyzer);
+        var resultType = InferImprovedType(dualOp, semanticModel);
+        var description = GetDetailedDescription(dualOp, kind, null, semanticModel);
 
         return new GDTypeFlowNode
         {
@@ -647,13 +646,13 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Creates a node from a return expression.
     /// </summary>
-    private GDTypeFlowNode CreateNodeFromReturn(GDReturnExpression ret, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private GDTypeFlowNode CreateNodeFromReturn(GDReturnExpression ret, GDScriptFile script, GDSemanticModel semanticModel)
     {
         var label = GetReturnLabel(ret);
         var returnedType = ret.Expression != null
-            ? (analyzer.GetTypeForNode(ret.Expression) ?? "Variant")
+            ? (semanticModel.GetTypeForNode(ret.Expression) ?? "Variant")
             : "void";
-        var description = GetDetailedDescription(ret, GDTypeFlowNodeKind.ReturnValue, null, analyzer);
+        var description = GetDetailedDescription(ret, GDTypeFlowNodeKind.ReturnValue, null, semanticModel);
 
         return new GDTypeFlowNode
         {
@@ -672,7 +671,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Builds outflows from a call expression.
     /// </summary>
-    private void BuildOutflowsFromCall(GDTypeFlowNode sourceNode, GDCallExpression call, GDScriptFile script, GDScriptAnalyzer analyzer, int currentLevel)
+    private void BuildOutflowsFromCall(GDTypeFlowNode sourceNode, GDCallExpression call, GDScriptFile script, GDSemanticModel semanticModel, int currentLevel)
     {
         if (currentLevel > MaxOutflowLevels)
             return;
@@ -684,10 +683,10 @@ internal class GDTypeFlowGraphBuilder
             // Result assigned to variable
             if (assignment.LeftExpression is GDIdentifierExpression idExpr)
             {
-                var varSymbol = analyzer.FindSymbol(idExpr.Identifier?.Sequence);
+                var varSymbol = semanticModel.FindSymbol(idExpr.Identifier?.Sequence);
                 if (varSymbol != null)
                 {
-                    var varNode = CreateNodeFromSymbol(varSymbol, script, analyzer);
+                    var varNode = CreateNodeFromSymbol(varSymbol, script, semanticModel);
                     if (varNode != null)
                     {
                         varNode.Description = "Receives result";
@@ -701,13 +700,13 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Expands union type nodes by creating separate inflow nodes for each type source.
     /// </summary>
-    private void ExpandUnionTypeNodes(GDTypeFlowNode rootNode, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private void ExpandUnionTypeNodes(GDTypeFlowNode rootNode, GDScriptFile script, GDSemanticModel semanticModel)
     {
         if (!rootNode.IsUnionType || rootNode.UnionTypeInfo == null)
             return;
 
         var unionTypes = rootNode.UnionTypeInfo.Types;
-        var assignments = FindAssignmentsTo(rootNode.Label, script, analyzer).ToList();
+        var assignments = FindAssignmentsTo(rootNode.Label, script, semanticModel).ToList();
 
         // Try to trace each union type to its source
         foreach (var typeName in unionTypes.Take(5))
@@ -718,7 +717,7 @@ internal class GDTypeFlowGraphBuilder
                 if (assignment.RightExpression == null)
                     continue;
 
-                var exprType = analyzer.GetTypeForNode(assignment.RightExpression);
+                var exprType = semanticModel.GetTypeForNode(assignment.RightExpression);
                 if (exprType == typeName)
                 {
                     var unionSourceNode = new GDTypeFlowNode
@@ -747,15 +746,15 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Creates a node from a symbol.
     /// </summary>
-    private GDTypeFlowNode CreateNodeFromSymbol(GDSymbolInfo symbol, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private GDTypeFlowNode CreateNodeFromSymbol(GDSymbolInfo symbol, GDScriptFile script, GDSemanticModel semanticModel)
     {
         var decl = symbol.DeclarationNode;
         if (decl == null)
             return null;
 
-        var typeStr = analyzer.GetTypeForNode(decl) ?? "Variant";
+        var typeStr = semanticModel.GetTypeForNode(decl) ?? "Variant";
         var kind = GetNodeKindFromSymbol(symbol);
-        var confidence = CalculateConfidence(symbol, typeStr, analyzer);
+        var confidence = CalculateConfidence(symbol, typeStr, semanticModel);
 
         var node = new GDTypeFlowNode
         {
@@ -776,15 +775,15 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Creates an inflow node from an expression.
     /// </summary>
-    private GDTypeFlowNode CreateInflowFromExpression(GDNode expression, GDScriptFile script, GDScriptAnalyzer analyzer, string context, int level)
+    private GDTypeFlowNode CreateInflowFromExpression(GDNode expression, GDScriptFile script, GDSemanticModel semanticModel, string context, int level)
     {
         if (expression == null)
             return null;
 
-        var exprType = InferImprovedType(expression, analyzer);
+        var exprType = InferImprovedType(expression, semanticModel);
         var kind = GetNodeKindFromExpression(expression);
         var label = GetLabelFromExpression(expression);
-        var description = GetDetailedDescription(expression, kind, context, analyzer);
+        var description = GetDetailedDescription(expression, kind, context, semanticModel);
 
         string sourceType = null;
         string sourceObjectName = null;
@@ -795,18 +794,18 @@ internal class GDTypeFlowGraphBuilder
             if (call.CallerExpression is GDMemberOperatorExpression memberOp)
             {
                 sourceObjectName = GetRootIdentifierName(memberOp.CallerExpression);
-                sourceType = GetSourceType(memberOp.CallerExpression, analyzer);
+                sourceType = GetSourceType(memberOp.CallerExpression, semanticModel);
             }
         }
         else if (expression is GDIndexerExpression indexer)
         {
             sourceObjectName = GetRootIdentifierName(indexer.CallerExpression);
-            sourceType = GetSourceType(indexer.CallerExpression, analyzer);
+            sourceType = GetSourceType(indexer.CallerExpression, semanticModel);
         }
         else if (expression is GDMemberOperatorExpression memberAccess)
         {
             sourceObjectName = GetRootIdentifierName(memberAccess.CallerExpression);
-            sourceType = GetSourceType(memberAccess.CallerExpression, analyzer);
+            sourceType = GetSourceType(memberAccess.CallerExpression, semanticModel);
         }
 
         return new GDTypeFlowNode
@@ -846,7 +845,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Creates a node from a call expression.
     /// </summary>
-    private GDTypeFlowNode CreateNodeFromCall(GDCallExpression call, GDScriptFile script, GDScriptAnalyzer analyzer, GDReference reference)
+    private GDTypeFlowNode CreateNodeFromCall(GDCallExpression call, GDScriptFile script, GDSemanticModel semanticModel, GDReference reference)
     {
         string sourceObjectName = null;
         string sourceType = null;
@@ -854,12 +853,12 @@ internal class GDTypeFlowGraphBuilder
         if (call.CallerExpression is GDMemberOperatorExpression memberOp)
         {
             sourceObjectName = GetRootIdentifierName(memberOp.CallerExpression);
-            sourceType = GetSourceType(memberOp.CallerExpression, analyzer);
+            sourceType = GetSourceType(memberOp.CallerExpression, semanticModel);
         }
 
-        var returnType = InferImprovedType(call, analyzer);
+        var returnType = InferImprovedType(call, semanticModel);
         var label = GetCallLabel(call);
-        var description = GetDetailedDescription(call, GDTypeFlowNodeKind.MethodCall, null, analyzer);
+        var description = GetDetailedDescription(call, GDTypeFlowNodeKind.MethodCall, null, semanticModel);
 
         return new GDTypeFlowNode
         {
@@ -881,13 +880,13 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Creates a node from a member access expression.
     /// </summary>
-    private GDTypeFlowNode CreateNodeFromMemberAccess(GDMemberOperatorExpression memberAccess, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private GDTypeFlowNode CreateNodeFromMemberAccess(GDMemberOperatorExpression memberAccess, GDScriptFile script, GDSemanticModel semanticModel)
     {
         var sourceObjectName = GetRootIdentifierName(memberAccess.CallerExpression);
-        var sourceType = GetSourceType(memberAccess.CallerExpression, analyzer);
-        var memberType = analyzer.GetTypeForNode(memberAccess) ?? "Variant";
+        var sourceType = GetSourceType(memberAccess.CallerExpression, semanticModel);
+        var memberType = semanticModel.GetTypeForNode(memberAccess) ?? "Variant";
         var label = GetMemberAccessLabel(memberAccess);
-        var description = GetDetailedDescription(memberAccess, GDTypeFlowNodeKind.PropertyAccess, null, analyzer);
+        var description = GetDetailedDescription(memberAccess, GDTypeFlowNodeKind.PropertyAccess, null, semanticModel);
 
         return new GDTypeFlowNode
         {
@@ -908,7 +907,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Finds assignment statements to a variable.
     /// </summary>
-    private IEnumerable<GDDualOperatorExpression> FindAssignmentsTo(string variableName, GDScriptFile script, GDScriptAnalyzer analyzer)
+    private IEnumerable<GDDualOperatorExpression> FindAssignmentsTo(string variableName, GDScriptFile script, GDSemanticModel semanticModel)
     {
         if (script.Class == null)
             yield break;
@@ -934,7 +933,7 @@ internal class GDTypeFlowGraphBuilder
     /// Calculates confidence based on symbol and type information.
     /// Uses GDSymbolInfo.TypeName for explicit annotations and RuntimeProvider for known types.
     /// </summary>
-    private float CalculateConfidence(GDSymbolInfo symbol, string type, GDScriptAnalyzer analyzer)
+    private float CalculateConfidence(GDSymbolInfo symbol, string type, GDSemanticModel semanticModel)
     {
         if (type == "Variant" || string.IsNullOrEmpty(type))
             return 0.2f;
@@ -1198,12 +1197,12 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Gets a detailed description for a node, including line number and context.
     /// </summary>
-    private string GetDetailedDescription(GDNode node, GDTypeFlowNodeKind kind, string context, GDScriptAnalyzer analyzer)
+    private string GetDetailedDescription(GDNode node, GDTypeFlowNodeKind kind, string context, GDSemanticModel semanticModel)
     {
         var basePart = kind switch
         {
-            GDTypeFlowNodeKind.MethodCall => GetMethodCallDescription(node, analyzer),
-            GDTypeFlowNodeKind.IndexerAccess => GetIndexerDescription(node, analyzer),
+            GDTypeFlowNodeKind.MethodCall => GetMethodCallDescription(node, semanticModel),
+            GDTypeFlowNodeKind.IndexerAccess => GetIndexerDescription(node, semanticModel),
             GDTypeFlowNodeKind.ReturnValue => "Return statement",
             GDTypeFlowNodeKind.TypeCheck => "Type guard",
             GDTypeFlowNodeKind.NullCheck => "Null check",
@@ -1225,12 +1224,12 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Gets description for a method call including source type.
     /// </summary>
-    private string GetMethodCallDescription(GDNode node, GDScriptAnalyzer analyzer)
+    private string GetMethodCallDescription(GDNode node, GDSemanticModel semanticModel)
     {
         if (node is GDCallExpression call &&
             call.CallerExpression is GDMemberOperatorExpression memberOp)
         {
-            var callerType = analyzer?.GetTypeForNode(memberOp.CallerExpression);
+            var callerType = semanticModel?.GetTypeForNode(memberOp.CallerExpression);
             var methodName = memberOp.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
                 return $"{callerType}.{methodName}() call";
@@ -1242,11 +1241,11 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Gets description for an indexer access including source type.
     /// </summary>
-    private string GetIndexerDescription(GDNode node, GDScriptAnalyzer analyzer)
+    private string GetIndexerDescription(GDNode node, GDSemanticModel semanticModel)
     {
         if (node is GDIndexerExpression indexer)
         {
-            var callerType = analyzer?.GetTypeForNode(indexer.CallerExpression);
+            var callerType = semanticModel?.GetTypeForNode(indexer.CallerExpression);
             if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
                 return $"{callerType} index access";
         }
@@ -1256,9 +1255,9 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Gets the source type for an expression.
     /// </summary>
-    private string GetSourceType(GDExpression callerExpr, GDScriptAnalyzer analyzer)
+    private string GetSourceType(GDExpression callerExpr, GDSemanticModel semanticModel)
     {
-        var sourceType = analyzer?.GetTypeForNode(callerExpr);
+        var sourceType = semanticModel?.GetTypeForNode(callerExpr);
         if (!string.IsNullOrEmpty(sourceType) && sourceType != "Variant")
             return sourceType;
         return null;
@@ -1268,25 +1267,25 @@ internal class GDTypeFlowGraphBuilder
     /// Infers an improved type for an expression by delegating to Semantics.
     /// All type knowledge is centralized in GDTypeInferenceEngine via GDGodotTypesProvider.
     /// </summary>
-    private string InferImprovedType(GDNode expression, GDScriptAnalyzer analyzer)
+    private string InferImprovedType(GDNode expression, GDSemanticModel semanticModel)
     {
         // Delegate all type inference to Semantics - no hardcoded types here
-        return analyzer?.GetTypeForNode(expression) ?? "Variant";
+        return semanticModel?.GetTypeForNode(expression) ?? "Variant";
     }
 
     /// <summary>
-    /// Ensures the script has an analyzer.
+    /// Ensures the script has a semantic model.
     /// </summary>
-    private GDScriptAnalyzer EnsureAnalyzer(GDScriptFile script)
+    private GDSemanticModel EnsureSemanticModel(GDScriptFile script)
     {
-        if (script.Analyzer != null)
-            return script.Analyzer;
+        if (script.SemanticModel != null)
+            return script.SemanticModel;
 
         try
         {
             var runtimeProvider = _project?.CreateRuntimeProvider();
             script.Analyze(runtimeProvider);
-            return script.Analyzer;
+            return script.SemanticModel;
         }
         catch (Exception ex)
         {

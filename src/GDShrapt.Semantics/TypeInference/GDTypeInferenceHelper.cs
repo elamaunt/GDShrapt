@@ -9,16 +9,16 @@ namespace GDShrapt.Semantics;
 /// </summary>
 public class GDTypeInferenceHelper
 {
-    private readonly GDScriptAnalyzer? _analyzer;
+    private readonly GDSemanticModel? _semanticModel;
     private readonly GDTypeResolver? _typeResolver;
     private readonly IGDRuntimeProvider? _runtimeProvider;
 
     /// <summary>
-    /// Creates a type inference helper with an analyzer.
+    /// Creates a type inference helper with a semantic model.
     /// </summary>
-    public GDTypeInferenceHelper(GDScriptAnalyzer? analyzer)
+    public GDTypeInferenceHelper(GDSemanticModel? semanticModel)
     {
-        _analyzer = analyzer;
+        _semanticModel = semanticModel;
         _typeResolver = null;
         _runtimeProvider = null;
     }
@@ -28,17 +28,17 @@ public class GDTypeInferenceHelper
     /// </summary>
     public GDTypeInferenceHelper(GDTypeResolver? typeResolver)
     {
-        _analyzer = null;
+        _semanticModel = null;
         _typeResolver = typeResolver;
         _runtimeProvider = typeResolver?.RuntimeProvider;
     }
 
     /// <summary>
-    /// Creates a type inference helper with both analyzer and type resolver.
+    /// Creates a type inference helper with both semantic model and type resolver.
     /// </summary>
-    public GDTypeInferenceHelper(GDScriptAnalyzer? analyzer, GDTypeResolver? typeResolver)
+    public GDTypeInferenceHelper(GDSemanticModel? semanticModel, GDTypeResolver? typeResolver)
     {
-        _analyzer = analyzer;
+        _semanticModel = semanticModel;
         _typeResolver = typeResolver;
         _runtimeProvider = typeResolver?.RuntimeProvider;
     }
@@ -88,8 +88,8 @@ public class GDTypeInferenceHelper
         if (expression is GDCallExpression callExpr && IsConstructorCall(callExpr, out var constructedType))
             return GDInferredType.High(constructedType, $"Constructor call: {constructedType}.new()");
 
-        // 4. Try analyzer inference
-        var analyzerType = _analyzer?.GetTypeForNode(expression);
+        // 4. Try semantic model inference
+        var analyzerType = _semanticModel?.GetTypeForNode(expression);
         if (!string.IsNullOrEmpty(analyzerType) && analyzerType != "Variant")
         {
             var confidence = DetermineConfidenceFromType(analyzerType);

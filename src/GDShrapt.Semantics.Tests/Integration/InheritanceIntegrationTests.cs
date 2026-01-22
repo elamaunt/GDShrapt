@@ -90,7 +90,7 @@ public class InheritanceIntegrationTests
 
         // Act - _ready method calls super._ready()
         // This should be detected as a reference
-        var analyzer = script.Analyzer;
+        var analyzer = script.SemanticModel;
         Assert.IsNotNull(analyzer, "Script should be analyzed");
 
         // The _ready method should exist
@@ -106,7 +106,7 @@ public class InheritanceIntegrationTests
         Assert.IsNotNull(script, "enemy_entity.gd not found");
 
         // Act
-        var analyzer = script.Analyzer;
+        var analyzer = script.SemanticModel;
         Assert.IsNotNull(analyzer, "Script should be analyzed");
 
         // The die method should exist (it calls super.die())
@@ -127,9 +127,9 @@ public class InheritanceIntegrationTests
         Assert.IsNotNull(enemyScript, "enemy_entity.gd not found");
 
         // Act
-        var baseMethods = baseScript.Analyzer?.GetMethods().ToList();
-        var playerMethods = playerScript.Analyzer?.GetMethods().ToList();
-        var enemyMethods = enemyScript.Analyzer?.GetMethods().ToList();
+        var baseMethods = baseScript.SemanticModel?.GetMethods().ToList();
+        var playerMethods = playerScript.SemanticModel?.GetMethods().ToList();
+        var enemyMethods = enemyScript.SemanticModel?.GetMethods().ToList();
 
         // Assert - take_damage exists in all three
         Assert.IsTrue(baseMethods?.Any(m => m.Name == "take_damage") == true,
@@ -241,7 +241,7 @@ public class InheritanceIntegrationTests
         Assert.IsNotNull(enemyScript, "enemy_entity.gd not found");
 
         // Act
-        var variables = enemyScript.Analyzer?.GetVariables().ToList();
+        var variables = enemyScript.SemanticModel?.GetVariables().ToList();
 
         // Assert
         var targetVar = variables?.FirstOrDefault(v => v.Name == "target");
@@ -307,7 +307,7 @@ public class InheritanceIntegrationTests
         Assert.IsNotNull(playerScript, "player_entity.gd not found");
 
         // Assert - gain_experience exists in PlayerEntity
-        var playerMethods = playerScript.Analyzer?.GetMethods().ToList();
+        var playerMethods = playerScript.SemanticModel?.GetMethods().ToList();
         Assert.IsTrue(playerMethods?.Any(m => m.Name == "gain_experience") == true,
             "PlayerEntity should have gain_experience method");
     }
@@ -343,8 +343,8 @@ public class InheritanceIntegrationTests
         Assert.IsNotNull(playerScript, "player_entity.gd not found");
 
         // Act
-        var baseSignals = baseScript.Analyzer?.GetSignals().ToList();
-        var playerSignals = playerScript.Analyzer?.GetSignals().ToList();
+        var baseSignals = baseScript.SemanticModel?.GetSignals().ToList();
+        var playerSignals = playerScript.SemanticModel?.GetSignals().ToList();
 
         // Assert
         // Signal should be defined in base
@@ -464,7 +464,7 @@ public class InheritanceIntegrationTests
         Assert.IsNotNull(script, "simple_class.gd not found");
 
         // Act
-        var methods = script.Analyzer?.GetMethods().ToList();
+        var methods = script.SemanticModel?.GetMethods().ToList();
 
         // Assert
         Assert.IsNotNull(methods, "Should have methods");
@@ -498,7 +498,7 @@ public class InheritanceIntegrationTests
         var script = TestProjectFixture.GetScript("simple_class.gd");
         Assert.IsNotNull(script, "simple_class.gd not found");
 
-        var semanticModel = script.Analyzer?.SemanticModel;
+        var semanticModel = script.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         // Act
@@ -520,7 +520,7 @@ public class InheritanceIntegrationTests
         var script = TestProjectFixture.GetScript("player_entity.gd");
         Assert.IsNotNull(script, "player_entity.gd not found");
 
-        var analyzer = script.Analyzer;
+        var analyzer = script.SemanticModel;
         Assert.IsNotNull(analyzer, "Script should be analyzed");
 
         var readyMethod = analyzer.GetMethods().FirstOrDefault(m => m.Name == "_ready");
@@ -534,7 +534,7 @@ public class InheritanceIntegrationTests
         var script = TestProjectFixture.GetScript("player_entity.gd");
         Assert.IsNotNull(script, "player_entity.gd not found");
 
-        var takeDamageMethod = script.Analyzer?.GetMethods().FirstOrDefault(m => m.Name == "take_damage");
+        var takeDamageMethod = script.SemanticModel?.GetMethods().FirstOrDefault(m => m.Name == "take_damage");
         Assert.IsNotNull(takeDamageMethod, "take_damage method should exist");
     }
 
@@ -545,7 +545,7 @@ public class InheritanceIntegrationTests
         var script = TestProjectFixture.GetScript("player_entity.gd");
         Assert.IsNotNull(script, "player_entity.gd not found");
 
-        var dieMethod = script.Analyzer?.GetMethods().FirstOrDefault(m => m.Name == "die");
+        var dieMethod = script.SemanticModel?.GetMethods().FirstOrDefault(m => m.Name == "die");
         Assert.IsNotNull(dieMethod, "die method should exist");
     }
 
@@ -556,7 +556,7 @@ public class InheritanceIntegrationTests
         var script = TestProjectFixture.GetScript("enemy_entity.gd");
         Assert.IsNotNull(script, "enemy_entity.gd not found");
 
-        var dieMethod = script.Analyzer?.GetMethods().FirstOrDefault(m => m.Name == "die");
+        var dieMethod = script.SemanticModel?.GetMethods().FirstOrDefault(m => m.Name == "die");
         Assert.IsNotNull(dieMethod, "die method should exist in EnemyEntity");
     }
 

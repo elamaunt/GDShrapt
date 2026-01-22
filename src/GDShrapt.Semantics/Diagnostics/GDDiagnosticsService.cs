@@ -220,10 +220,10 @@ public class GDDiagnosticsService
         if (script.Class != null)
         {
             // Use semantic model's runtime provider when available for enhanced validation
-            var runtimeProvider = script.Analyzer?.Context?.RuntimeProvider ?? _validationOptions.RuntimeProvider;
-            var analyzer = script.Analyzer?.SemanticModel;
+            var runtimeProvider = script.SemanticModel?.RuntimeProvider ?? _validationOptions.RuntimeProvider;
+            var semanticModel = script.SemanticModel;
 
-            var options = CreateOptionsForScript(runtimeProvider, analyzer);
+            var options = CreateOptionsForScript(runtimeProvider, semanticModel);
 
             var classResult = DiagnoseInternal(script.Class, options);
             result.AddRange(classResult.Diagnostics);

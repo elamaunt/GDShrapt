@@ -187,10 +187,10 @@ internal class FindReferencesCommand : Command
                     if (memberOp.Identifier?.Sequence == symbolName)
                     {
                         // Check if the caller type matches
-                        var analyzer = script.Analyzer;
-                        if (analyzer != null)
+                        var semanticModel = script.SemanticModel;
+                        if (semanticModel != null)
                         {
-                            var callerType = analyzer.GetTypeForNode(memberOp.CallerExpression);
+                            var callerType = semanticModel.GetTypeForNode(memberOp.CallerExpression);
                             if (callerType == typeName)
                             {
                                 var context = GetContextWithHighlight(memberOp.Identifier, symbolName, out var hlStart, out var hlEnd);
@@ -216,10 +216,10 @@ internal class FindReferencesCommand : Command
                 {
                     if (memberOp.Identifier?.Sequence != symbolName) continue;
 
-                    var analyzer = script.Analyzer;
-                    if (analyzer != null)
+                    var semanticModel = script.SemanticModel;
+                    if (semanticModel != null)
                     {
-                        var type = analyzer.GetTypeForNode(memberOp.CallerExpression);
+                        var type = semanticModel.GetTypeForNode(memberOp.CallerExpression);
                         if (type == scope.CallerTypeName)
                         {
                             var context = GetContextWithHighlight(memberOp.Identifier, symbolName, out var hlStart, out var hlEnd);

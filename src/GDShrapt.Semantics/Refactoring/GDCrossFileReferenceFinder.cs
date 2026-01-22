@@ -63,13 +63,11 @@ public class GDCrossFileReferenceFinder
         string memberName,
         string declaringTypeName)
     {
-        var analyzer = script.Analyzer;
-        if (analyzer == null)
+        var semanticModel = script.SemanticModel;
+        if (semanticModel == null)
             yield break;
 
-        // Try using SemanticModel first (preferred)
-        var semanticModel = analyzer.SemanticModel;
-        if (semanticModel != null)
+        // Use SemanticModel directly
         {
             var references = semanticModel.GetReferencesTo(memberName);
             foreach (var gdRef in references)
@@ -122,14 +120,14 @@ public class GDCrossFileReferenceFinder
 
         foreach (var memberAccess in visitor.Found)
         {
-            var confidence = DetermineConfidence(memberAccess, declaringTypeName, analyzer);
+            var confidence = DetermineConfidence(memberAccess, declaringTypeName, semanticModel);
             if (confidence != GDReferenceConfidence.NameMatch)
             {
                 yield return new GDCrossFileReference(
                     script,
                     memberAccess,
                     confidence,
-                    GetConfidenceReason(memberAccess, confidence, analyzer, declaringTypeName));
+                    GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
             }
         }
 
@@ -142,7 +140,7 @@ public class GDCrossFileReferenceFinder
             var memberAccess = callExpr.CallerExpression as GDMemberOperatorExpression;
             if (memberAccess != null)
             {
-                var confidence = DetermineConfidence(memberAccess, declaringTypeName, analyzer);
+                var confidence = DetermineConfidence(memberAccess, declaringTypeName, semanticModel);
                 if (confidence != GDReferenceConfidence.NameMatch)
                 {
                     // Use memberAccess as the reference node (it's a GDNode via GDExpression)
@@ -150,7 +148,7 @@ public class GDCrossFileReferenceFinder
                         script,
                         memberAccess,
                         confidence,
-                        GetConfidenceReason(memberAccess, confidence, analyzer, declaringTypeName));
+                        GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
                 }
             }
         }
@@ -162,13 +160,13 @@ public class GDCrossFileReferenceFinder
     private GDReferenceConfidence DetermineConfidence(
         GDMemberOperatorExpression memberAccess,
         string targetTypeName,
-        GDScriptAnalyzer analyzer)
+        GDSemanticModel semanticModel)
     {
         if (memberAccess.CallerExpression == null)
             return GDReferenceConfidence.Potential;
 
         // 1. Get caller expression type
-        var callerType = analyzer.GetTypeForNode(memberAccess.CallerExpression);
+        var callerType = semanticModel.GetTypeForNode(memberAccess.CallerExpression);
 
         // 2. If type is known
         if (!string.IsNullOrEmpty(callerType))
@@ -185,7 +183,7 @@ public class GDCrossFileReferenceFinder
         if (varName != null)
         {
             // Check for type narrowing from if checks
-            var narrowedType = analyzer.GetNarrowedType(varName, memberAccess);
+            var narrowedType = semanticModel.GetNarrowedType(varName, memberAccess);
             if (!string.IsNullOrEmpty(narrowedType))
             {
                 if (IsTypeCompatible(narrowedType, targetTypeName))
@@ -193,7 +191,7 @@ public class GDCrossFileReferenceFinder
             }
 
             // Check duck type compatibility
-            var duckType = analyzer.GetDuckType(varName);
+            var duckType = semanticModel.GetDuckType(varName);
             if (duckType != null && _duckTypeResolver != null)
             {
                 if (_duckTypeResolver.IsCompatibleWith(duckType, targetTypeName))
@@ -262,13 +260,13 @@ public class GDCrossFileReferenceFinder
     private string GetConfidenceReason(
         GDMemberOperatorExpression memberAccess,
         GDReferenceConfidence confidence,
-        GDScriptAnalyzer analyzer,
+        GDSemanticModel semanticModel,
         string targetTypeName)
     {
         if (memberAccess.CallerExpression == null)
             return "Caller expression is null";
 
-        var callerType = analyzer.GetTypeForNode(memberAccess.CallerExpression);
+        var callerType = semanticModel.GetTypeForNode(memberAccess.CallerExpression);
         var varName = GetRootVariableName(memberAccess.CallerExpression);
 
         return confidence switch

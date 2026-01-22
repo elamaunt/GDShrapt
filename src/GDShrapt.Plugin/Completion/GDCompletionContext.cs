@@ -208,7 +208,7 @@ internal class GDCompletionContextBuilder
         if (completionType == GDCompletionType.MemberAccess)
         {
             memberAccessExpression = ExtractMemberAccessExpression(textBeforeCursor);
-            if (memberAccessExpression != null && _typeResolver != null)
+            if (memberAccessExpression != null)
             {
                 memberAccessType = ResolveExpressionType(memberAccessExpression, ScriptFile);
             }
@@ -385,37 +385,28 @@ internal class GDCompletionContextBuilder
 
     private string? ResolveExpressionType(string expression, GDScriptFile ScriptFile)
     {
-        if (_typeResolver == null || ScriptFile.Analyzer == null)
+        var semanticModel = ScriptFile.SemanticModel;
+        if (semanticModel == null)
             return null;
 
         try
         {
-            // Try to parse and resolve the expression
+            // Try to parse the expression
             var reader = new GDScriptReader();
             var parsedExpr = reader.ParseExpression(expression);
 
             if (parsedExpr != null)
             {
-                // GDScriptFile implements IGDScriptInfo directly
-                var result = _typeResolver.ResolveExpressionType(parsedExpr, ScriptFile);
-                return result.IsResolved ? result.TypeName : null;
+                // Use SemanticModel.ResolveStandaloneExpression() - single entry point (Rule 11)
+                // SemanticModel internally handles TypeResolver fallback for Godot API, scene nodes, etc.
+                var result = semanticModel.ResolveStandaloneExpression(parsedExpr);
+                if (result.IsResolved)
+                    return result.TypeName;
             }
         }
         catch (Exception ex)
         {
             Logger.Debug($"Failed to resolve expression type: {ex.Message}");
-        }
-
-        // Fallback: try to find type from local scope
-        var analyzer = ScriptFile.Analyzer;
-
-        // Simple identifier lookup
-        foreach (var symbol in analyzer.Symbols)
-        {
-            if (symbol.Name == expression)
-            {
-                return symbol.TypeName;
-            }
         }
 
         return null;

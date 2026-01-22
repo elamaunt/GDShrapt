@@ -63,22 +63,22 @@ signal damaged
 
         scriptFile.Analyze();
 
-        Assert.IsNotNull(scriptFile.Analyzer);
+        Assert.IsNotNull(scriptFile.SemanticModel);
 
         // Check variables
-        var variables = scriptFile.Analyzer.GetVariables().ToList();
+        var variables = scriptFile.SemanticModel.GetVariables().ToList();
         Assert.IsTrue(variables.Any(v => v.Name == "health"));
 
         // Check constants
-        var constants = scriptFile.Analyzer.GetConstants().ToList();
+        var constants = scriptFile.SemanticModel.GetConstants().ToList();
         Assert.IsTrue(constants.Any(c => c.Name == "MAX_HEALTH"));
 
         // Check methods
-        var methods = scriptFile.Analyzer.GetMethods().ToList();
+        var methods = scriptFile.SemanticModel.GetMethods().ToList();
         Assert.IsTrue(methods.Any(m => m.Name == "take_damage"));
 
         // Check signals
-        var signals = scriptFile.Analyzer.GetSignals().ToList();
+        var signals = scriptFile.SemanticModel.GetSignals().ToList();
         Assert.IsTrue(signals.Any(s => s.Name == "damaged"));
     }
 
@@ -100,7 +100,8 @@ func _ready() -> void:
         var provider = new GDGodotTypesProvider();
         scriptFile.Analyze(provider);
 
-        Assert.IsNotNull(scriptFile.Analyzer);
-        Assert.IsNotNull(scriptFile.Analyzer.TypeEngine);
+        Assert.IsNotNull(scriptFile.SemanticModel);
+        // TypeEngine is internal to GDSemanticModel, verify the model exists instead
+        Assert.IsNotNull(scriptFile.SemanticModel.RuntimeProvider, "SemanticModel should have RuntimeProvider");
     }
 }

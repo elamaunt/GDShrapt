@@ -100,17 +100,17 @@ public class GDFindRefsCommand : IGDCommand
         string projectRoot,
         List<GDReferenceInfo> references)
     {
-        var analyzer = script.Analyzer;
-        if (analyzer == null)
+        var semanticModel = script.SemanticModel;
+        if (semanticModel == null)
             return;
 
         // Find the symbol first
-        var symbol = analyzer.FindSymbol(symbolName);
+        var symbol = semanticModel.FindSymbol(symbolName);
         if (symbol == null)
             return;
 
         // Get all references to this symbol
-        var refs = analyzer.GetReferencesTo(symbol);
+        var refs = semanticModel.GetReferencesTo(symbol);
 
         foreach (var reference in refs)
         {

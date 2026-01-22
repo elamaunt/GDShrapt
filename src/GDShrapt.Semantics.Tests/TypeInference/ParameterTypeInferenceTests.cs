@@ -23,11 +23,11 @@ extends Node
 func process(data):
     return data.get(""key"")
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var dataParam = method.Parameters.First();
 
         // Act - use the same path as the plugin
-        var type = analyzer.GetTypeForNode(dataParam);
+        var type = semanticModel.GetTypeForNode(dataParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'data' parameter");
@@ -49,11 +49,11 @@ extends Node
 func add_item(collection, item):
     collection.append(item)
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "add_item");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "add_item");
         var collectionParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(collectionParam);
+        var type = semanticModel.GetTypeForNode(collectionParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'collection' parameter");
@@ -72,11 +72,11 @@ func process(items):
     for item in items:
         print(item)
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var itemsParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(itemsParam);
+        var type = semanticModel.GetTypeForNode(itemsParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'items' parameter");
@@ -94,11 +94,11 @@ extends Node
 func get_first(arr):
     return arr[0]
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "get_first");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "get_first");
         var arrParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(arrParam);
+        var type = semanticModel.GetTypeForNode(arrParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'arr' parameter");
@@ -121,11 +121,11 @@ func process_text(text):
     var parts = text.split("","")
     return text.substr(0, 10)
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process_text");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process_text");
         var textParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(textParam);
+        var type = semanticModel.GetTypeForNode(textParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'text' parameter");
@@ -147,11 +147,11 @@ extends Node
 func get_magnitude(vec):
     return sqrt(vec.x * vec.x + vec.y * vec.y)
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "get_magnitude");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "get_magnitude");
         var vecParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(vecParam);
+        var type = semanticModel.GetTypeForNode(vecParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'vec' parameter");
@@ -169,11 +169,11 @@ extends Node
 func get_length(vec):
     return sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z)
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "get_length");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "get_length");
         var vecParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(vecParam);
+        var type = semanticModel.GetTypeForNode(vecParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'vec' parameter");
@@ -196,11 +196,11 @@ func process(node):
     var child = node.get_node(""Child"")
     return child
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var nodeParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(nodeParam);
+        var type = semanticModel.GetTypeForNode(nodeParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'node' parameter");
@@ -223,11 +223,11 @@ func process(obj):
     if obj is Node2D:
         obj.queue_free()
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var objParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(objParam);
+        var type = semanticModel.GetTypeForNode(objParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'obj' parameter");
@@ -249,11 +249,11 @@ extends Node
 func process(data: Dictionary):
     return data.get(""key"")
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var dataParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(dataParam);
+        var type = semanticModel.GetTypeForNode(dataParam);
 
         // Assert
         Assert.IsNotNull(type, "Should return type for 'data' parameter");
@@ -277,11 +277,11 @@ func process(items):
         if item is Node:
             item.queue_free()
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var itemsParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(itemsParam);
+        var type = semanticModel.GetTypeForNode(itemsParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'items' parameter");
@@ -303,11 +303,11 @@ func process(path):
         elif key is String:
             print(key.length())
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var pathParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(pathParam);
+        var type = semanticModel.GetTypeForNode(pathParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'path' parameter");
@@ -333,11 +333,11 @@ func process(data):
         return current.get(""key"")
     return null
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var dataParam = method.Parameters.First();
 
         // Act
-        var type = analyzer.GetTypeForNode(dataParam);
+        var type = semanticModel.GetTypeForNode(dataParam);
 
         // Assert
         Assert.IsNotNull(type, "Should infer type for 'data' parameter");
@@ -369,13 +369,13 @@ func safe_get_nested(data, path):
             return null
     return current
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "safe_get_nested");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "safe_get_nested");
         var dataParam = method.Parameters.First();
         var pathParam = method.Parameters.Skip(1).First();
 
         // Act
-        var dataType = analyzer.GetTypeForNode(dataParam);
-        var pathType = analyzer.GetTypeForNode(pathParam);
+        var dataType = semanticModel.GetTypeForNode(dataParam);
+        var pathType = semanticModel.GetTypeForNode(pathParam);
 
         // Assert - path should be Array[int] (from 'for key in path' + 'key is int')
         Assert.IsNotNull(pathType, "Should infer type for 'path' parameter");
@@ -408,13 +408,13 @@ func process(data, path):
             current = current.get(key)
     return current
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var dataParam = method.Parameters.First();
         var pathParam = method.Parameters.Skip(1).First();
 
         // Act
-        var dataType = analyzer.GetTypeForNode(dataParam);
-        var pathType = analyzer.GetTypeForNode(pathParam);
+        var dataType = semanticModel.GetTypeForNode(dataParam);
+        var pathType = semanticModel.GetTypeForNode(pathParam);
 
         // Assert - path should have both element types
         Assert.IsNotNull(pathType, "Should infer type for 'path' parameter");
@@ -438,11 +438,11 @@ func process_data(items, callback):
     for item in items:
         callback.call(item)
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process_data");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process_data");
         var itemsParam = method.Parameters.First();
 
         // Act
-        var itemsType = analyzer.GetTypeForNode(itemsParam);
+        var itemsType = semanticModel.GetTypeForNode(itemsParam);
 
         // Assert
         Assert.IsNotNull(itemsType, "Should infer type for 'items' parameter");
@@ -469,11 +469,10 @@ func process(data):
         return current[0]
     return null
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var dataParam = method.Parameters.First();
 
         // Act - get the detailed inferred type
-        var semanticModel = analyzer.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var inferred = semanticModel.InferParameterType(dataParam);
@@ -502,11 +501,10 @@ func process(data):
         return value
     return null
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var dataParam = method.Parameters.First();
 
         // Act
-        var semanticModel = analyzer.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var inferred = semanticModel.InferParameterType(dataParam);
@@ -542,11 +540,10 @@ func process(obj):
     if obj is Node2D:
         obj.position = Vector2.ZERO
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
         var objParam = method.Parameters.First();
 
         // Act
-        var semanticModel = analyzer.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var inferred = semanticModel.InferParameterType(objParam);
@@ -587,7 +584,7 @@ func safe_get_nested(data, path):
             return null
     return current
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "safe_get_nested");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "safe_get_nested");
 
         // Find the "current.get(key)" call expression
         // It's inside the "if current is Dictionary:" branch
@@ -603,7 +600,6 @@ func safe_get_nested(data, path):
         Assert.IsNotNull(memberOp, "Caller should be member operator expression");
 
         // Act - get type for the caller expression (current)
-        var semanticModel = analyzer.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var currentType = semanticModel.GetExpressionType(memberOp.CallerExpression);
@@ -627,7 +623,7 @@ func process(data):
         return value
     return null
 ";
-        var (method, analyzer) = GetMethodAndAnalyzer(code, "process");
+        var (method, semanticModel) = GetMethodAndSemanticModel(code, "process");
 
         // Find the "data.get" call
         var getCall = method.AllNodes
@@ -639,7 +635,6 @@ func process(data):
         Assert.IsNotNull(getCall, "Should find data.get call");
 
         // Act
-        var semanticModel = analyzer.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var callReturnType = semanticModel.GetExpressionType(getCall);
@@ -658,7 +653,7 @@ func process(data):
     /// Parses code and returns the method and analyzer.
     /// Uses the same analysis path as the plugin.
     /// </summary>
-    private static (GDMethodDeclaration method, GDScriptAnalyzer analyzer) GetMethodAndAnalyzer(
+    private static (GDMethodDeclaration method, GDSemanticModel semanticModel) GetMethodAndSemanticModel(
         string code, string methodName)
     {
         var reference = new GDScriptReference("test://virtual/param_test.gd");
@@ -671,7 +666,7 @@ func process(data):
         var runtimeProvider = new GDGodotTypesProvider();
         scriptFile.Analyze(runtimeProvider);
 
-        Assert.IsNotNull(scriptFile.Analyzer, "Script should have analyzer after Analyze()");
+        Assert.IsNotNull(scriptFile.SemanticModel, "Script should have semantic model after Analyze()");
 
         var method = scriptFile.Class.Members
             .OfType<GDMethodDeclaration>()
@@ -679,7 +674,7 @@ func process(data):
 
         Assert.IsNotNull(method, $"Should find method '{methodName}'");
 
-        return (method, scriptFile.Analyzer);
+        return (method, scriptFile.SemanticModel);
     }
 
     #endregion

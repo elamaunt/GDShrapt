@@ -171,7 +171,7 @@ public class ComplexTypesTests
         Assert.IsNotNull(indexerExpr, "Indexer expression should be found");
 
         // Use SemanticModel which delegates to Analyzer for local variable type inference
-        var semanticModel = _script!.Analyzer?.SemanticModel;
+        var semanticModel = _script!.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var typeNode = semanticModel.GetTypeNodeForExpression(indexerExpr);
@@ -195,7 +195,7 @@ public class ComplexTypesTests
         Assert.IsNotNull(indexerExpr, "Indexer expression should be found");
 
         // Use SemanticModel which delegates to Analyzer for local variable type inference
-        var semanticModel = _script!.Analyzer?.SemanticModel;
+        var semanticModel = _script!.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var typeNode = semanticModel.GetTypeNodeForExpression(indexerExpr);
@@ -220,7 +220,7 @@ public class ComplexTypesTests
         Assert.IsNotNull(indexerExpr, "Indexer expression should be found");
 
         // Use SemanticModel which delegates to Analyzer for local variable type inference
-        var semanticModel = _script!.Analyzer?.SemanticModel;
+        var semanticModel = _script!.SemanticModel;
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
         var typeNode = semanticModel.GetTypeNodeForExpression(indexerExpr);

@@ -24,7 +24,7 @@ public class SceneIntegrationTests
         {
             Name = Path.GetFileName(s.FullPath),
             HasClass = s.Class != null,
-            HasAnalyzer = s.Analyzer != null,
+            HasAnalyzer = s.SemanticModel != null,
             TypeName = s.TypeName
         }).ToList();
 
@@ -39,12 +39,12 @@ public class SceneIntegrationTests
         Assert.IsNotNull(sceneRefsScript.Class, $"scene_references.gd Class is null. Scripts:\n{scriptList}");
 
         // If analyzer is null, try analyzing manually to see error
-        if (sceneRefsScript.Analyzer == null)
+        if (sceneRefsScript.SemanticModel == null)
         {
             try
             {
                 sceneRefsScript.Analyze();
-                Assert.IsNotNull(sceneRefsScript.Analyzer, $"Manual analyze still null. Scripts:\n{scriptList}");
+                Assert.IsNotNull(sceneRefsScript.SemanticModel, $"Manual analyze still null. Scripts:\n{scriptList}");
             }
             catch (Exception ex)
             {
@@ -347,10 +347,10 @@ public class SceneIntegrationTests
         // Arrange - scene_references.gd has @onready var player: CharacterBody2D = $Player
         var script = TestProjectFixture.GetScript("scene_references.gd");
         Assert.IsNotNull(script, "scene_references.gd not found");
-        Assert.IsNotNull(script.Analyzer, "Script should be analyzed");
+        Assert.IsNotNull(script.SemanticModel, "Script should be analyzed");
 
         // Act
-        var playerSymbol = script.Analyzer.FindSymbol("player");
+        var playerSymbol = script.SemanticModel.FindSymbol("player");
 
         // Assert
         Assert.IsNotNull(playerSymbol, "Should find 'player' symbol");
@@ -363,10 +363,10 @@ public class SceneIntegrationTests
         // Arrange - scene_references.gd has @onready var ui_label: Label = $UI/StatusLabel
         var script = TestProjectFixture.GetScript("scene_references.gd");
         Assert.IsNotNull(script, "scene_references.gd not found");
-        Assert.IsNotNull(script.Analyzer, "Script should be analyzed");
+        Assert.IsNotNull(script.SemanticModel, "Script should be analyzed");
 
         // Act
-        var labelSymbol = script.Analyzer.FindSymbol("ui_label");
+        var labelSymbol = script.SemanticModel.FindSymbol("ui_label");
 
         // Assert
         Assert.IsNotNull(labelSymbol, "Should find 'ui_label' symbol");
@@ -488,7 +488,7 @@ public class SceneIntegrationTests
 
         // Act
         // Check that the script has @onready variables that reference scene nodes
-        var variables = script.Analyzer?.GetVariables().ToList();
+        var variables = script.SemanticModel?.GetVariables().ToList();
 
         // Assert
         Assert.IsNotNull(variables, "Should have variables");

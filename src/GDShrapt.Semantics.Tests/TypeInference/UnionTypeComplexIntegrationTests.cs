@@ -21,7 +21,7 @@ public class UnionTypeComplexIntegrationTests
         _script = TestProjectFixture.GetScript("union_types_complex.gd");
         Assert.IsNotNull(_script, "Script 'union_types_complex.gd' not found in test project");
 
-        if (_script.Analyzer == null)
+        if (_script.SemanticModel == null)
         {
             _script.Analyze();
         }
@@ -488,7 +488,7 @@ public class UnionTypeComplexIntegrationTests
 
     private static IGDRuntimeProvider GetRuntimeProvider()
     {
-        return _script?.Analyzer?.SemanticModel?.RuntimeProvider ?? GDDefaultRuntimeProvider.Instance;
+        return _script?.SemanticModel?.RuntimeProvider ?? GDDefaultRuntimeProvider.Instance;
     }
 
     #endregion

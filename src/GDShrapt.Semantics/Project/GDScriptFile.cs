@@ -2,6 +2,7 @@ using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace GDShrapt.Semantics;
 
@@ -27,9 +28,10 @@ public class GDScriptFile : IGDScriptInfo
     public GDClassDeclaration? Class { get; private set; }
 
     /// <summary>
-    /// Script analyzer for type inference and reference collection.
+    /// The semantic model for this script.
+    /// Provides unified access to symbols, references, type inference, and semantic analysis.
     /// </summary>
-    public GDScriptAnalyzer? Analyzer { get; private set; }
+    public GDSemanticModel? SemanticModel { get; private set; }
 
     /// <summary>
     /// Whether this script is global (has class_name).
@@ -93,7 +95,7 @@ public class GDScriptFile : IGDScriptInfo
     public void Reload(string content)
     {
         WasReadError = false;
-        Analyzer = null;
+        SemanticModel = null;
 
         try
         {
@@ -123,9 +125,8 @@ public class GDScriptFile : IGDScriptInfo
 
         try
         {
-            var analyzer = new GDScriptAnalyzer(this);
-            analyzer.Analyze(runtimeProvider);
-            Analyzer = analyzer;
+            SemanticModel = GDSemanticModel.Create(this, runtimeProvider);
+            _logger.Debug($"Analysis complete: {SemanticModel.Symbols.Count()} symbols found");
         }
         catch (Exception ex)
         {
@@ -161,7 +162,7 @@ public class GDScriptFile : IGDScriptInfo
                 CheckTypes = true,
                 CheckCalls = true,
                 CheckControlFlow = true,
-                RuntimeProvider = Analyzer?.Context?.RuntimeProvider
+                RuntimeProvider = SemanticModel?.RuntimeProvider
             };
 
             return validator.Validate(Class, options);

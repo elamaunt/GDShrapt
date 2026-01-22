@@ -19,7 +19,7 @@ public class LocalVariableReturnTypeTests
         _script = TestProjectFixture.GetScript("union_types_complex.gd");
         Assert.IsNotNull(_script, "Script 'union_types_complex.gd' not found in test project");
 
-        if (_script.Analyzer == null)
+        if (_script.SemanticModel == null)
         {
             _script.Analyze();
         }
@@ -36,8 +36,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("map_with_fallback");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -58,8 +58,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("filter_map");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -80,8 +80,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("reduce_or_default");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -105,8 +105,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("complex_conditional");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -133,8 +133,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("match_return");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -165,8 +165,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("match_with_patterns");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -198,8 +198,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("process_mixed_array");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -220,8 +220,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("_process_mixed_item");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -249,8 +249,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("get_config");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -281,8 +281,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var variable = FindVariable("config");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var type = analyzer.GetTypeForNode(variable) ?? "unknown";
@@ -303,8 +303,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("safe_get_nested");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -325,8 +325,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("_process_mixed_item");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -347,8 +347,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("handle_result");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -369,8 +369,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var method = FindMethod("safe_chain_example");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
@@ -393,8 +393,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var variable = FindVariable("mixed_array");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var type = analyzer.GetTypeForNode(variable) ?? "unknown";
@@ -414,8 +414,8 @@ public class LocalVariableReturnTypeTests
     {
         // Arrange
         var signal = FindSignal("result_ready");
-        Assert.IsNotNull(_script?.Analyzer, "Analyzer should be available");
-        var analyzer = _script.Analyzer;
+        Assert.IsNotNull(_script?.SemanticModel, "Analyzer should be available");
+        var analyzer = _script.SemanticModel;
 
         // Act
         var type = analyzer.GetTypeForNode(signal) ?? "unknown";

@@ -23,7 +23,8 @@ public class GDHoverHandler : IGDHoverHandler
     public virtual GDHoverInfo? GetHover(string filePath, int line, int column)
     {
         var script = _project.GetScript(filePath);
-        if (script?.Analyzer == null || script.Class == null)
+        var semanticModel = script?.SemanticModel;
+        if (semanticModel == null || script?.Class == null)
             return null;
 
         // Find the node at the position
@@ -32,8 +33,8 @@ public class GDHoverHandler : IGDHoverHandler
         if (node == null)
             return null;
 
-        // Get the symbol for this node
-        var symbol = script.Analyzer.GetSymbolForNode(node);
+        // Get the symbol for this node (via SemanticModel per Rule 11)
+        var symbol = semanticModel.GetSymbolForNode(node);
         if (symbol == null)
             return null;
 

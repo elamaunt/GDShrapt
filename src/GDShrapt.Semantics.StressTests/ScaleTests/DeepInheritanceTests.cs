@@ -35,19 +35,19 @@ public class DeepInheritanceTests
             script.Should().NotBeNull(
                 because: $"Level{level} script should exist");
 
-            var analyzer = script!.Analyzer;
-            analyzer.Should().NotBeNull(
+            var semanticModel = script!.SemanticModel;
+            semanticModel.Should().NotBeNull(
                 because: $"Level{level} should be analyzed");
 
             // Each level should have its own declared variable
             var varName = $"level_{level}_var";
-            var symbol = analyzer!.FindSymbol(varName);
+            var symbol = semanticModel!.FindSymbol(varName);
             symbol.Should().NotBeNull(
                 because: $"'{varName}' should be declared in Level{level}");
 
             // Each level should have its own declared method
             var methodName = $"level_{level}_method";
-            var methodSymbol = analyzer.FindSymbol(methodName);
+            var methodSymbol = semanticModel.FindSymbol(methodName);
             methodSymbol.Should().NotBeNull(
                 because: $"'{methodName}' should be declared in Level{level}");
         }
@@ -85,8 +85,8 @@ public class DeepInheritanceTests
             .First(s => s.TypeName == $"Level{depth - 1}");
 
         // Act - find the method that calls all parent methods
-        var analyzer = deepestScript.Analyzer!;
-        var callAllParents = analyzer.FindSymbol("call_all_parents");
+        var semanticModel = deepestScript.SemanticModel!;
+        var callAllParents = semanticModel.FindSymbol("call_all_parents");
 
         // Assert
         callAllParents.Should().NotBeNull(
@@ -94,15 +94,14 @@ public class DeepInheritanceTests
 
         // The method body references all parent level methods
         // Verify the semantic model can resolve these references
-        var semanticModel = analyzer.SemanticModel;
         semanticModel.Should().NotBeNull();
 
         // Verify each level has its method defined
         for (int level = 0; level < depth; level++)
         {
             var script = project.ScriptFiles.First(s => s.TypeName == $"Level{level}");
-            var levelAnalyzer = script.Analyzer!;
-            var methodSymbol = levelAnalyzer.FindSymbol($"level_{level}_method");
+            var levelSemanticModel = script.SemanticModel!;
+            var methodSymbol = levelSemanticModel.FindSymbol($"level_{level}_method");
             methodSymbol.Should().NotBeNull(
                 because: $"level_{level}_method should be defined in Level{level}");
         }
@@ -120,8 +119,8 @@ public class DeepInheritanceTests
         // Each level overrides get_level() method
         foreach (var script in project.ScriptFiles)
         {
-            var analyzer = script.Analyzer!;
-            var getLevelMethod = analyzer.FindSymbol("get_level");
+            var semanticModel = script.SemanticModel!;
+            var getLevelMethod = semanticModel.FindSymbol("get_level");
 
             getLevelMethod.Should().NotBeNull(
                 because: $"{script.TypeName} should have get_level method");
@@ -146,10 +145,10 @@ public class DeepInheritanceTests
             // Exercise member resolution at each level
             foreach (var script in project.ScriptFiles)
             {
-                var analyzer = script.Analyzer!;
+                var semanticModel = script.SemanticModel!;
                 // Access the symbols to exercise the semantic model
-                _ = analyzer.Symbols.ToList();
-                _ = analyzer.GetMethods().ToList();
+                _ = semanticModel.Symbols.ToList();
+                _ = semanticModel.GetMethods().ToList();
             }
 
             sw.Stop();
@@ -188,8 +187,8 @@ public class DeepInheritanceTests
 
         foreach (var entity in entityScripts.Take(5))
         {
-            var analyzer = entity.Analyzer!;
-            analyzer.Should().NotBeNull(
+            var semanticModel = entity.SemanticModel!;
+            semanticModel.Should().NotBeNull(
                 because: $"{entity.TypeName} should be analyzed");
 
             // Verify the entity extends the correct base class
@@ -198,7 +197,7 @@ public class DeepInheritanceTests
                 because: $"{entity.TypeName} should extend Level9");
 
             // Verify entity has its own symbols
-            var symbols = analyzer.Symbols.ToList();
+            var symbols = semanticModel.Symbols.ToList();
             symbols.Should().NotBeEmpty(
                 because: $"{entity.TypeName} should have its own symbols");
         }
@@ -210,8 +209,8 @@ public class DeepInheritanceTests
             script.Should().NotBeNull(
                 because: $"Level{level} should exist in combined project");
 
-            var levelAnalyzer = script!.Analyzer!;
-            var method = levelAnalyzer.FindSymbol($"level_{level}_method");
+            var levelSemanticModel = script!.SemanticModel!;
+            var method = levelSemanticModel.FindSymbol($"level_{level}_method");
             method.Should().NotBeNull(
                 because: $"Level{level} should have level_{level}_method defined");
         }

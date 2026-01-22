@@ -65,7 +65,6 @@ public partial class GDShraptPlugin : EditorPlugin
     internal GDRefactoringActionProvider GDRefactoringActionProvider => _refactoringActionProvider;
     internal FormattingService FormattingService => _formattingService;
     internal GDQuickFixHandler GDQuickFixHandler => _quickFixHandler;
-    internal GDGodotTypesProvider GodotTypesProvider => _typeResolver?.GodotTypesProvider;
     internal GDTypeResolver TypeResolver => _typeResolver;
 
     public override void _Ready()

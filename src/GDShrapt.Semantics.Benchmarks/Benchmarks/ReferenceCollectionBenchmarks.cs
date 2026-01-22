@@ -43,12 +43,12 @@ public class ReferenceCollectionBenchmarks
     public int FindReferences_100Refs()
     {
         var script = _manyRefs100!.ScriptFiles.First();
-        var analyzer = script.Analyzer!;
+        var semanticModel = script.SemanticModel!;
 
-        var symbol = analyzer.FindSymbol("target_symbol");
+        var symbol = semanticModel.FindSymbol("target_symbol");
         if (symbol == null) return 0;
 
-        var refs = analyzer.SemanticModel?.GetReferencesTo(symbol);
+        var refs = semanticModel.GetReferencesTo(symbol);
         return refs?.Count ?? 0;
     }
 
@@ -56,12 +56,12 @@ public class ReferenceCollectionBenchmarks
     public int FindReferences_500Refs()
     {
         var script = _manyRefs500!.ScriptFiles.First();
-        var analyzer = script.Analyzer!;
+        var semanticModel = script.SemanticModel!;
 
-        var symbol = analyzer.FindSymbol("target_symbol");
+        var symbol = semanticModel.FindSymbol("target_symbol");
         if (symbol == null) return 0;
 
-        var refs = analyzer.SemanticModel?.GetReferencesTo(symbol);
+        var refs = semanticModel.GetReferencesTo(symbol);
         return refs?.Count ?? 0;
     }
 
@@ -71,7 +71,7 @@ public class ReferenceCollectionBenchmarks
         int count = 0;
         foreach (var script in _crossFileProject!.ScriptFiles)
         {
-            count += script.Analyzer?.Symbols.Count() ?? 0;
+            count += script.SemanticModel?.Symbols.Count() ?? 0;
         }
         return count;
     }
@@ -82,7 +82,7 @@ public class ReferenceCollectionBenchmarks
         int found = 0;
         foreach (var script in _crossFileProject!.ScriptFiles)
         {
-            if (script.Analyzer?.FindSymbol("health") != null)
+            if (script.SemanticModel?.FindSymbol("health") != null)
                 found++;
         }
         return found;

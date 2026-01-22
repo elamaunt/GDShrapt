@@ -34,7 +34,7 @@ public class DiagnosticTests
 
         Console.WriteLine($"Script path: {script.FullPath}");
         Console.WriteLine($"Has class: {script.Class != null}");
-        Console.WriteLine($"Has analyzer: {script.Analyzer != null}");
+        Console.WriteLine($"Has analyzer: {script.SemanticModel != null}");
     }
 
     [TestMethod]
@@ -58,17 +58,16 @@ public class DiagnosticTests
         Console.WriteLine($"Script TypeName: {script.TypeName}");
         Console.WriteLine($"Script WasReadError: {script.WasReadError}");
 
-        if (script.Analyzer == null)
+        if (script.SemanticModel == null)
         {
             Console.WriteLine("Analyzer is null - trying to analyze manually...");
             script.Analyze();
-            Console.WriteLine($"After manual Analyze(): {script.Analyzer != null}");
+            Console.WriteLine($"After manual Analyze(): {script.SemanticModel != null}");
         }
 
-        Assert.IsNotNull(script.Analyzer, "Should have analyzer");
-        Assert.IsNotNull(script.Analyzer.SemanticModel, "Analyzer should have SemanticModel");
+        Assert.IsNotNull(script.SemanticModel, "Should have SemanticModel");
 
-        var symbols = script.Analyzer.Symbols.ToList();
+        var symbols = script.SemanticModel.Symbols.ToList();
         Console.WriteLine($"Symbols found: {symbols.Count}");
         foreach (var sym in symbols.Take(20))
         {
@@ -81,9 +80,9 @@ public class DiagnosticTests
     {
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd should exist");
-        Assert.IsNotNull(script.Analyzer, "Should have analyzer");
+        Assert.IsNotNull(script.SemanticModel, "Should have analyzer");
 
-        var symbol = script.Analyzer.FindSymbol("counter");
+        var symbol = script.SemanticModel.FindSymbol("counter");
         Console.WriteLine($"Symbol 'counter' found: {symbol != null}");
         if (symbol != null)
         {
@@ -93,7 +92,7 @@ public class DiagnosticTests
         }
 
         // List all symbols for debugging
-        var allSymbols = script.Analyzer.Symbols.ToList();
+        var allSymbols = script.SemanticModel.Symbols.ToList();
         Console.WriteLine($"\nAll symbols ({allSymbols.Count}):");
         foreach (var sym in allSymbols)
         {

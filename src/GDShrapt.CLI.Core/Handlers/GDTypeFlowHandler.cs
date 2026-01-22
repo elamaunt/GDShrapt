@@ -76,7 +76,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     public virtual GDTypeFlowNode? ShowForPosition(string filePath, int line, int column)
     {
         var script = _project.GetScript(filePath);
-        if (script?.Analyzer == null || script.Class == null)
+        if (script?.SemanticModel == null || script.Class == null)
             return null;
 
         // Find the node at the position
@@ -86,7 +86,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
             return null;
 
         // Get the symbol for this node
-        var symbol = script.Analyzer.GetSymbolForNode(astNode);
+        var symbol = script.SemanticModel.GetSymbolForNode(astNode);
         if (symbol == null)
             return null;
 
@@ -244,27 +244,27 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// </summary>
     protected virtual GDTypeFlowNode? BuildGraph(string symbolName, GDScriptFile script)
     {
-        if (script?.Analyzer == null || string.IsNullOrEmpty(symbolName))
+        if (script?.SemanticModel == null || string.IsNullOrEmpty(symbolName))
             return null;
 
         // Clear registry for new graph
         _nodeRegistry.Clear();
         _nodeIdCounter = 0;
 
-        var analyzer = script.Analyzer;
-        var symbol = analyzer.FindSymbol(symbolName);
+        var semanticModel = script.SemanticModel;
+        var symbol = semanticModel.FindSymbol(symbolName);
         if (symbol == null)
             return null;
 
         // Create the root node
-        var rootNode = CreateNodeFromSymbol(symbol, script, analyzer);
+        var rootNode = CreateNodeFromSymbol(symbol, script, semanticModel);
         if (rootNode == null)
             return null;
 
         RegisterNode(rootNode);
 
         // Add union type info
-        var unionType = analyzer.SemanticModel?.GetUnionType(symbolName);
+        var unionType = semanticModel.GetUnionType(symbolName);
         if (unionType?.IsUnion == true)
         {
             rootNode.IsUnionType = true;
@@ -272,7 +272,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         }
 
         // Add duck type info
-        var duckType = analyzer.GetDuckType(symbolName);
+        var duckType = semanticModel.GetDuckType(symbolName);
         if (duckType?.HasRequirements == true)
         {
             rootNode.HasDuckConstraints = true;
@@ -280,11 +280,11 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         }
 
         // Build basic inflows (type annotation)
-        BuildBasicInflows(rootNode, symbol, script, analyzer);
+        BuildBasicInflows(rootNode, symbol, script, semanticModel);
         rootNode.AreInflowsLoaded = true;
 
         // Build basic outflows (references)
-        BuildBasicOutflows(rootNode, symbol, script, analyzer);
+        BuildBasicOutflows(rootNode, symbol, script, semanticModel);
         rootNode.AreOutflowsLoaded = true;
 
         return rootNode;
@@ -296,11 +296,11 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     protected virtual GDTypeFlowNode CreateNodeFromSymbol(
         Semantics.GDSymbolInfo symbol,
         GDScriptFile script,
-        GDScriptAnalyzer analyzer)
+        GDSemanticModel semanticModel)
     {
-        var type = analyzer.GetTypeForNode(symbol.DeclarationNode) ?? symbol.TypeName ?? "Variant";
+        var type = semanticModel.GetTypeForNode(symbol.DeclarationNode) ?? symbol.TypeName ?? "Variant";
         var kind = MapSymbolKind(symbol.Kind);
-        var confidence = CalculateConfidence(symbol, type, analyzer);
+        var confidence = CalculateConfidence(symbol, type);
 
         return new GDTypeFlowNode
         {
@@ -341,7 +341,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// <summary>
     /// Calculates confidence for a symbol's type.
     /// </summary>
-    protected virtual float CalculateConfidence(Semantics.GDSymbolInfo symbol, string type, GDScriptAnalyzer analyzer)
+    protected virtual float CalculateConfidence(Semantics.GDSymbolInfo symbol, string type)
     {
         if (type == "Variant" || string.IsNullOrEmpty(type))
             return 0.2f;
@@ -383,7 +383,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         GDTypeFlowNode node,
         Semantics.GDSymbolInfo symbol,
         GDScriptFile script,
-        GDScriptAnalyzer analyzer)
+        GDSemanticModel semanticModel)
     {
         // Get type source from explicit annotation
         if (symbol.TypeName != null)
@@ -412,17 +412,17 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         GDTypeFlowNode node,
         Semantics.GDSymbolInfo symbol,
         GDScriptFile script,
-        GDScriptAnalyzer analyzer)
+        GDSemanticModel semanticModel)
     {
         // Get references to this symbol
-        var references = analyzer.GetReferencesTo(symbol);
+        var references = semanticModel.GetReferencesTo(symbol);
         foreach (var reference in references.Take(20))
         {
             if (reference.ReferenceNode == null)
                 continue;
 
             var usageContext = GetUsageContext(reference);
-            var usageType = analyzer.GetTypeForNode(reference.ReferenceNode) ?? node.Type;
+            var usageType = semanticModel.GetTypeForNode(reference.ReferenceNode) ?? node.Type;
             var usageNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),

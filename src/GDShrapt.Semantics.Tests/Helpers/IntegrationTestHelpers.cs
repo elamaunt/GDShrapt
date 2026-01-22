@@ -69,13 +69,13 @@ public static class IntegrationTestHelpers
         string symbolName)
     {
         // Ensure the script is analyzed
-        if (scriptFile.Analyzer == null)
+        if (scriptFile.SemanticModel == null)
         {
             scriptFile.Analyze();
         }
 
         // Use SemanticModel (handles inherited members, path-based extends, etc.)
-        var semanticModel = scriptFile.Analyzer?.SemanticModel;
+        var semanticModel = scriptFile.SemanticModel;
         if (semanticModel != null)
         {
             return CollectReferencesViaSemanticModel(semanticModel, symbolName, scriptFile.FullPath);
@@ -185,12 +185,12 @@ public static class IntegrationTestHelpers
         foreach (var scriptFile in project.ScriptFiles)
         {
             // Ensure the script is analyzed
-            if (scriptFile.Analyzer == null)
+            if (scriptFile.SemanticModel == null)
             {
                 scriptFile.Analyze();
             }
 
-            var semanticModel = scriptFile.Analyzer?.SemanticModel;
+            var semanticModel = scriptFile.SemanticModel;
             if (semanticModel == null)
                 continue;
 

@@ -129,9 +129,9 @@ namespace GDShrapt.Plugin;
                 var className = name.Substring(0, dotIndex);
                 var memberName = name.Substring(dotIndex + 1);
                 var ScriptFile = GetScriptByTypeName(className);
-                if (ScriptFile?.Analyzer != null)
+                if (ScriptFile?.SemanticModel != null)
                 {
-                    var symbol = ScriptFile.Analyzer.FindSymbol(memberName);
+                    var symbol = ScriptFile.SemanticModel.FindSymbol(memberName);
                     if (symbol != null && symbol.IsStatic)
                     {
                         var identifier = (symbol.Declaration as GDIdentifiableClassMember)?.Identifier;

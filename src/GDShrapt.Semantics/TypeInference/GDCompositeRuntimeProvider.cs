@@ -17,9 +17,9 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
     public GDProjectTypesProvider? ProjectTypesProvider { get; }
 
     /// <summary>
-    /// Gets the Godot types provider if available.
+    /// Gets the Godot types provider if available. Internal - external code should use IGDRuntimeProvider interface.
     /// </summary>
-    public GDGodotTypesProvider? GodotTypesProvider { get; }
+    internal GDGodotTypesProvider? GodotTypesProvider { get; }
 
     public GDCompositeRuntimeProvider(params IGDRuntimeProvider?[] providers)
     {

@@ -24,9 +24,9 @@ extends Node
 func is_greater(a, b):
     return a > b
 ";
-        var (classDecl, semanticModel, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -34,7 +34,7 @@ func is_greater(a, b):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -51,9 +51,9 @@ extends Node
 func are_equal(a, b):
     return a == b
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -61,7 +61,7 @@ func are_equal(a, b):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -78,9 +78,9 @@ extends Node
 func not_equal(a, b):
     return a != b
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -88,7 +88,7 @@ func not_equal(a, b):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -105,9 +105,9 @@ extends Node
 func is_less(a, b):
     return a < b
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -115,7 +115,7 @@ func is_less(a, b):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -136,9 +136,9 @@ extends Node
 func check_both(a, b):
     return a and b
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -146,7 +146,7 @@ func check_both(a, b):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -163,9 +163,9 @@ extends Node
 func check_either(a, b):
     return a or b
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -173,7 +173,7 @@ func check_either(a, b):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -194,9 +194,9 @@ extends Node
 func is_node(obj):
     return obj is Node
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -204,7 +204,7 @@ func is_node(obj):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -221,9 +221,9 @@ extends Node
 func contains_key(dict, key):
     return key in dict
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -231,7 +231,7 @@ func contains_key(dict, key):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -252,9 +252,9 @@ extends Node
 func is_numeric(value):
     return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -262,7 +262,7 @@ func is_numeric(value):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -279,9 +279,9 @@ extends Node
 func in_range(value, min_val, max_val):
     return value >= min_val and value <= max_val
 ";
-        var (classDecl, _, analyzer) = AnalyzeCode(code);
+        var (classDecl, semanticModel) = AnalyzeCode(code);
         Assert.IsNotNull(classDecl);
-        Assert.IsNotNull(analyzer);
+        Assert.IsNotNull(semanticModel);
 
         var method = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -289,7 +289,7 @@ func in_range(value, min_val, max_val):
         Assert.IsNotNull(method);
 
         // Act
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
+        var returnType = semanticModel.GetTypeForNode(method) ?? "void";
 
         // Assert
         Assert.AreEqual("bool", returnType,
@@ -300,19 +300,19 @@ func in_range(value, min_val, max_val):
 
     #region Helper Methods
 
-    private static (GDClassDeclaration?, GDSemanticModel?, GDScriptAnalyzer?) AnalyzeCode(string code)
+    private static (GDClassDeclaration?, GDSemanticModel?) AnalyzeCode(string code)
     {
         var reference = new GDScriptReference("test://virtual/bool_test.gd");
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
 
         if (scriptFile.Class == null)
-            return (null, null, null);
+            return (null, null);
 
         var runtimeProvider = new GDGodotTypesProvider();
         scriptFile.Analyze(runtimeProvider);
 
-        return (scriptFile.Class, scriptFile.Analyzer?.SemanticModel, scriptFile.Analyzer);
+        return (scriptFile.Class, scriptFile.SemanticModel);
     }
 
     #endregion

@@ -204,11 +204,11 @@ var callback = func(): print(""hello"")
         var script = TestProjectFixture.GetScript("cross_file_inference.gd");
         Assert.IsNotNull(script, "Script 'cross_file_inference.gd' not found");
 
-        if (script.Analyzer == null)
+        if (script.SemanticModel == null)
             script.Analyze();
 
-        Assert.IsNotNull(script.Analyzer, "Analyzer should be available");
-        var analyzer = script.Analyzer;
+        Assert.IsNotNull(script.SemanticModel, "Analyzer should be available");
+        var analyzer = script.SemanticModel;
 
         var method = script.Class?.Members
             .OfType<GDMethodDeclaration>()

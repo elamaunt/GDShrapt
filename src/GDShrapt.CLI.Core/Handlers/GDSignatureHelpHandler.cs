@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -22,7 +24,7 @@ public class GDSignatureHelpHandler : IGDSignatureHelpHandler
     public virtual GDSignatureHelpResult? GetSignatureHelp(string filePath, int line, int column)
     {
         var script = _project.GetScript(filePath);
-        if (script?.Class == null || script.Analyzer == null)
+        if (script?.Class == null || script.SemanticModel == null)
             return null;
 
         // Find the call expression containing the cursor
@@ -135,14 +137,15 @@ public class GDSignatureHelpHandler : IGDSignatureHelpHandler
     }
 
     /// <summary>
-    /// Finds method information from the analyzer or built-in types.
+    /// Finds method information from SemanticModel or built-in types.
     /// </summary>
     protected virtual GDSignatureInfo? FindMethodInfo(GDScriptFile script, GDCallExpression call, string methodName)
     {
-        // First, try to find the method in the script's analyzer
-        if (script.Analyzer != null)
+        // First, try to find the method in the script's SemanticModel (per Rule 11)
+        var semanticModel = script.SemanticModel;
+        if (semanticModel != null)
         {
-            var methods = script.Analyzer.GetMethods();
+            var methods = semanticModel.Symbols.Where(s => s.Kind == GDSymbolKind.Method);
             foreach (var method in methods)
             {
                 if (method.Name == methodName && method.DeclarationNode is GDMethodDeclaration methodDecl)
@@ -214,36 +217,28 @@ public class GDSignatureHelpHandler : IGDSignatureHelpHandler
     }
 
     /// <summary>
-    /// Tries to get the type name of an expression.
+    /// Tries to get the type name of an expression via SemanticModel.
     /// </summary>
     protected static string? GetExpressionTypeName(GDScriptFile script, GDExpression expression)
     {
-        if (script.Analyzer == null)
+        var semanticModel = script.SemanticModel;
+        if (semanticModel == null)
             return null;
 
+        // Use SemanticModel for type inference (per Rule 11)
+        var inferredType = semanticModel.GetTypeForNode(expression);
+        if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant")
+            return inferredType;
+
+        // Fallback for identifier lookup via SemanticModel
         if (expression is GDIdentifierExpression idExpr)
         {
-            var symbol = script.Analyzer.GetSymbolForNode(idExpr);
+            var symbol = semanticModel.GetSymbolForNode(idExpr);
             if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
             {
                 return symbol.TypeName;
             }
         }
-
-        if (expression is GDStringExpression)
-            return "String";
-
-        if (expression is GDNumberExpression numExpr)
-        {
-            var text = numExpr.ToString();
-            return text != null && text.Contains('.') ? "float" : "int";
-        }
-
-        if (expression is GDArrayInitializerExpression)
-            return "Array";
-
-        if (expression is GDDictionaryInitializerExpression)
-            return "Dictionary";
 
         return null;
     }

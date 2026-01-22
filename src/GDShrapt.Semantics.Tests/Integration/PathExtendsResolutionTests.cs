@@ -43,9 +43,9 @@ public class PathExtendsResolutionTests
         Console.WriteLine($"   TypeName: {baseEntityScript.TypeName}");
 
         // 4. Check if BaseEntity has the expected members
-        if (baseEntityScript.Analyzer != null)
+        if (baseEntityScript.SemanticModel != null)
         {
-            var symbols = baseEntityScript.Analyzer.Symbols.ToList();
+            var symbols = baseEntityScript.SemanticModel.Symbols.ToList();
             Console.WriteLine($"\n4. BaseEntity symbols ({symbols.Count}):");
             foreach (var sym in symbols.Take(15))
             {
@@ -85,9 +85,9 @@ public class PathExtendsResolutionTests
 
         // 7. Check if path_extends_test sees inherited members
         Console.WriteLine($"\n7. PathExtendsTest inherited member resolution:");
-        if (pathExtendsScript.Analyzer != null)
+        if (pathExtendsScript.SemanticModel != null)
         {
-            var maxHealthSymbol = pathExtendsScript.Analyzer.FindSymbol("max_health");
+            var maxHealthSymbol = pathExtendsScript.SemanticModel.FindSymbol("max_health");
             Console.WriteLine($"   max_health found: {maxHealthSymbol != null}");
             if (maxHealthSymbol != null)
             {
@@ -96,7 +96,7 @@ public class PathExtendsResolutionTests
                 Console.WriteLine($"   - IsInherited: {maxHealthSymbol.IsInherited}");
             }
 
-            var takeDamageSymbol = pathExtendsScript.Analyzer.FindSymbol("take_damage");
+            var takeDamageSymbol = pathExtendsScript.SemanticModel.FindSymbol("take_damage");
             Console.WriteLine($"   take_damage found: {takeDamageSymbol != null}");
         }
         else

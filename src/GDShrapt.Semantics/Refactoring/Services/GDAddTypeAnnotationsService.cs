@@ -134,7 +134,7 @@ public class GDAddTypeAnnotationsService
         if (file?.Class == null)
             return GDAddTypeAnnotationsResult.Failed("File has no class declaration");
 
-        var helper = new GDTypeInferenceHelper(file.Analyzer);
+        var helper = new GDTypeInferenceHelper(file.SemanticModel);
         var annotations = new List<GDTypeAnnotationPlan>();
 
         CollectAnnotations(file, file.Class, helper, options, annotations);

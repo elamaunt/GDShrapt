@@ -167,13 +167,13 @@ public class GDProjectSemanticModel
             return model;
 
         // Ensure the file is analyzed
-        if (scriptFile.Analyzer?.SemanticModel == null)
+        if (scriptFile.SemanticModel == null)
         {
             var runtimeProvider = _project.CreateRuntimeProvider();
             scriptFile.Analyze(runtimeProvider);
         }
 
-        model = scriptFile.Analyzer?.SemanticModel;
+        model = scriptFile.SemanticModel;
         if (model != null)
             _fileModels[path] = model;
 

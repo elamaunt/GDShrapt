@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -7,6 +9,7 @@ namespace GDShrapt.CLI.Core;
 /// <summary>
 /// Handler for inlay hint operations.
 /// Provides type hints for variables without explicit type annotations.
+/// All type information is accessed through GDSemanticModel as the single API entry point.
 /// </summary>
 public class GDInlayHintHandler : IGDInlayHintHandler
 {
@@ -26,16 +29,17 @@ public class GDInlayHintHandler : IGDInlayHintHandler
     public virtual IReadOnlyList<GDInlayHint> GetInlayHints(string filePath, int startLine, int endLine)
     {
         var script = _project.GetScript(filePath);
-        if (script?.Class == null || script.Analyzer == null)
+        var semanticModel = script?.SemanticModel;
+        if (script?.Class == null || semanticModel == null)
             return [];
 
         var hints = new List<GDInlayHint>();
 
         // Collect hints for class-level variables
-        CollectVariableHints(script, startLine, endLine, hints);
+        CollectVariableHints(script, semanticModel, startLine, endLine, hints);
 
         // Collect hints for local variables in methods
-        CollectLocalVariableHints(script, startLine, endLine, hints);
+        CollectLocalVariableHints(script, semanticModel, startLine, endLine, hints);
 
         // Limit hints count
         if (hints.Count > MaxHintsPerRequest)
@@ -48,15 +52,17 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
     /// <summary>
     /// Collects inlay hints for class-level variables.
+    /// Uses GDSemanticModel.Symbols as the single API entry point.
     /// </summary>
     protected virtual void CollectVariableHints(
         GDScriptFile script,
+        GDSemanticModel semanticModel,
         int startLine,
         int endLine,
         List<GDInlayHint> hints)
     {
-        // Get all class-level variables
-        foreach (var variable in script.Analyzer!.GetVariables())
+        // Get all class-level variables through SemanticModel.Symbols
+        foreach (var variable in semanticModel.Symbols.Where(s => s.Kind == GDSymbolKind.Variable))
         {
             if (hints.Count >= MaxHintsPerRequest)
                 break;
@@ -98,9 +104,11 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
     /// <summary>
     /// Collects inlay hints for local variables within methods.
+    /// Uses GDSemanticModel for all type inference.
     /// </summary>
     protected virtual void CollectLocalVariableHints(
         GDScriptFile script,
+        GDSemanticModel semanticModel,
         int startLine,
         int endLine,
         List<GDInlayHint> hints)
@@ -125,8 +133,10 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                 if (varStmt.Type != null)
                     continue;
 
-                // Try to infer type from initializer
-                var typeName = InferTypeFromExpression(script, varStmt.Initializer);
+                // Try to infer type from initializer via SemanticModel
+                var typeName = varStmt.Initializer != null
+                    ? semanticModel.GetTypeForNode(varStmt.Initializer)
+                    : null;
                 if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
                     continue;
 
@@ -149,8 +159,12 @@ public class GDInlayHintHandler : IGDInlayHintHandler
             // Handle for loop iterators
             if (node is GDForStatement forStmt && forStmt.Variable != null)
             {
-                // Try to infer iterator element type
-                var typeName = InferIteratorType(script, forStmt);
+                // Get iterator type via SemanticModel flow analysis
+                var iteratorName = forStmt.Variable.Sequence;
+                var typeName = !string.IsNullOrEmpty(iteratorName)
+                    ? semanticModel.GetFlowVariableType(iteratorName, forStmt)?.EffectiveType
+                    : null;
+
                 if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
                 {
                     var position = GetHintPositionAfterIdentifier(forStmt.Variable);
@@ -204,148 +218,4 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         return (identifier.EndLine, identifier.EndColumn + 1);
     }
 
-    /// <summary>
-    /// Infers the type from an expression.
-    /// </summary>
-    protected static string? InferTypeFromExpression(GDScriptFile script, GDExpression? expression)
-    {
-        if (expression == null)
-            return null;
-
-        // Literal types
-        if (expression is GDStringExpression)
-            return "String";
-
-        if (expression is GDNumberExpression numExpr)
-        {
-            var text = numExpr.ToString();
-            return text != null && text.Contains('.') ? "float" : "int";
-        }
-
-        if (expression is GDBoolExpression)
-            return "bool";
-
-        if (expression is GDArrayInitializerExpression)
-            return "Array";
-
-        if (expression is GDDictionaryInitializerExpression)
-            return "Dictionary";
-
-        if (expression is GDNodePathExpression)
-            return "NodePath";
-
-        // Constructor calls like Vector2(), Color(), etc.
-        if (expression is GDCallExpression call)
-        {
-            var callerName = GetCallerName(call.CallerExpression);
-            if (callerName != null && IsGodotType(callerName))
-            {
-                return callerName;
-            }
-        }
-
-        // Try to get type from analyzer
-        if (script.Analyzer != null)
-        {
-            var symbol = script.Analyzer.GetSymbolForNode(expression);
-            if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
-            {
-                return symbol.TypeName;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Infers the element type for a for loop iterator.
-    /// </summary>
-    protected static string? InferIteratorType(GDScriptFile script, GDForStatement forStmt)
-    {
-        var collection = forStmt.Collection;
-        if (collection == null)
-            return null;
-
-        // range() returns int
-        if (collection is GDCallExpression call)
-        {
-            var callerName = GetCallerName(call.CallerExpression);
-            if (callerName == "range")
-                return "int";
-        }
-
-        // String iteration returns String (each character)
-        if (collection is GDStringExpression)
-            return "String";
-
-        // Try to get collection type
-        var collectionType = InferTypeFromExpression(script, collection);
-        if (collectionType != null)
-        {
-            // Extract element type from typed arrays
-            if (collectionType.StartsWith("Array[") && collectionType.EndsWith("]"))
-            {
-                return collectionType.Substring(6, collectionType.Length - 7);
-            }
-
-            // PackedStringArray -> String
-            if (collectionType == "PackedStringArray")
-                return "String";
-            if (collectionType == "PackedInt32Array" || collectionType == "PackedInt64Array")
-                return "int";
-            if (collectionType == "PackedFloat32Array" || collectionType == "PackedFloat64Array")
-                return "float";
-            if (collectionType == "PackedVector2Array")
-                return "Vector2";
-            if (collectionType == "PackedVector3Array")
-                return "Vector3";
-            if (collectionType == "PackedColorArray")
-                return "Color";
-            if (collectionType == "PackedByteArray")
-                return "int";
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Gets the caller name from a call expression.
-    /// </summary>
-    protected static string? GetCallerName(GDExpression? caller)
-    {
-        if (caller is GDIdentifierExpression idExpr)
-            return idExpr.Identifier?.ToString();
-
-        return null;
-    }
-
-    /// <summary>
-    /// Checks if a name is a Godot built-in type.
-    /// </summary>
-    protected static bool IsGodotType(string name)
-    {
-        return name switch
-        {
-            // Math types
-            "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i" => true,
-            "Rect2" or "Rect2i" => true,
-            "Transform2D" or "Transform3D" => true,
-            "Plane" or "Quaternion" or "AABB" or "Basis" => true,
-            "Projection" => true,
-
-            // Color
-            "Color" => true,
-
-            // String types
-            "StringName" or "NodePath" => true,
-
-            // Resources
-            "RID" => true,
-
-            // Callables
-            "Callable" or "Signal" => true,
-
-            _ => false
-        };
-    }
 }

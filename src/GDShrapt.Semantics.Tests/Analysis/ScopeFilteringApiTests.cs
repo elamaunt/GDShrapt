@@ -15,7 +15,7 @@ public class ScopeFilteringApiTests
     /// </summary>
     private static void EnsureAnalyzed(GDScriptFile script)
     {
-        if (script.Analyzer == null)
+        if (script.SemanticModel == null)
         {
             script.Analyze();
         }
@@ -32,13 +32,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act - find all symbols named "counter" and get the first one (local variable)
-        var symbols = script.Analyzer?.FindSymbols("counter").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
-        Assert.IsTrue(script.Analyzer!.IsLocalSymbol(symbol), "counter should be a local symbol");
+        Assert.IsTrue(script.SemanticModel!.IsLocalSymbol(symbol), "counter should be a local symbol");
     }
 
     [TestMethod]
@@ -50,13 +50,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act - find parameter "value"
-        var symbols = script.Analyzer?.FindSymbols("value").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("value").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "value symbol not found");
         var symbol = symbols.First();
-        Assert.IsTrue(script.Analyzer!.IsLocalSymbol(symbol), "parameter value should be a local symbol");
+        Assert.IsTrue(script.SemanticModel!.IsLocalSymbol(symbol), "parameter value should be a local symbol");
     }
 
     [TestMethod]
@@ -68,13 +68,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act - find for iterator "i"
-        var symbols = script.Analyzer?.FindSymbols("i").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("i").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "i (for iterator) symbol not found");
         var symbol = symbols.First();
-        Assert.IsTrue(script.Analyzer!.IsLocalSymbol(symbol), "for iterator i should be a local symbol");
+        Assert.IsTrue(script.SemanticModel!.IsLocalSymbol(symbol), "for iterator i should be a local symbol");
     }
 
     [TestMethod]
@@ -86,13 +86,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("multiplier").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
-        Assert.IsFalse(script.Analyzer!.IsLocalSymbol(symbol), "class member multiplier should not be a local symbol");
+        Assert.IsFalse(script.SemanticModel!.IsLocalSymbol(symbol), "class member multiplier should not be a local symbol");
     }
 
     [TestMethod]
@@ -104,13 +104,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("test_rename_local_variable").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("test_rename_local_variable").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "test_rename_local_variable symbol not found");
         var symbol = symbols.First();
-        Assert.IsFalse(script.Analyzer!.IsLocalSymbol(symbol), "method should not be a local symbol");
+        Assert.IsFalse(script.SemanticModel!.IsLocalSymbol(symbol), "method should not be a local symbol");
     }
 
     #endregion
@@ -126,13 +126,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("multiplier").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
-        Assert.IsTrue(script.Analyzer!.IsClassMember(symbol), "class variable multiplier should be a class member");
+        Assert.IsTrue(script.SemanticModel!.IsClassMember(symbol), "class variable multiplier should be a class member");
     }
 
     [TestMethod]
@@ -144,13 +144,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("test_rename_local_variable").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("test_rename_local_variable").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "test_rename_local_variable symbol not found");
         var symbol = symbols.First();
-        Assert.IsTrue(script.Analyzer!.IsClassMember(symbol), "method should be a class member");
+        Assert.IsTrue(script.SemanticModel!.IsClassMember(symbol), "method should be a class member");
     }
 
     [TestMethod]
@@ -162,13 +162,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("health_changed").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("health_changed").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "health_changed signal not found");
         var symbol = symbols.First();
-        Assert.IsTrue(script.Analyzer!.IsClassMember(symbol), "signal should be a class member");
+        Assert.IsTrue(script.SemanticModel!.IsClassMember(symbol), "signal should be a class member");
     }
 
     [TestMethod]
@@ -180,13 +180,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("counter").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
-        Assert.IsFalse(script.Analyzer!.IsClassMember(symbol), "local variable counter should not be a class member");
+        Assert.IsFalse(script.SemanticModel!.IsClassMember(symbol), "local variable counter should not be a class member");
     }
 
     [TestMethod]
@@ -198,13 +198,13 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("value").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("value").ToList();
 
         // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "value symbol not found");
         var symbol = symbols.First();
-        Assert.IsFalse(script.Analyzer!.IsClassMember(symbol), "parameter value should not be a class member");
+        Assert.IsFalse(script.SemanticModel!.IsClassMember(symbol), "parameter value should not be a class member");
     }
 
     #endregion
@@ -220,11 +220,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("counter").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
-        var scopeType = script.Analyzer?.GetDeclarationScopeType(symbol);
+        var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
         // Assert
         Assert.AreEqual(GDScopeType.Method, scopeType, "local variable should be declared in Method scope");
@@ -239,11 +239,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("multiplier").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
-        var scopeType = script.Analyzer?.GetDeclarationScopeType(symbol);
+        var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
         // Assert
         Assert.AreEqual(GDScopeType.Class, scopeType, "class variable should be declared in Class scope");
@@ -258,11 +258,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("i").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("i").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "i symbol not found");
         var symbol = symbols.First();
-        var scopeType = script.Analyzer?.GetDeclarationScopeType(symbol);
+        var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
         // Assert
         Assert.AreEqual(GDScopeType.ForLoop, scopeType, "for iterator should be declared in ForLoop scope");
@@ -277,11 +277,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("test_rename_local_variable").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("test_rename_local_variable").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "method symbol not found");
         var symbol = symbols.First();
-        var scopeType = script.Analyzer?.GetDeclarationScopeType(symbol);
+        var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
         // Assert
         Assert.AreEqual(GDScopeType.Class, scopeType, "method should be declared in Class scope");
@@ -300,11 +300,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("counter").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
-        var localRefs = script.Analyzer?.GetLocalReferences(symbol).ToList();
+        var localRefs = script.SemanticModel?.GetLocalReferences(symbol).ToList();
 
         // Assert
         Assert.IsNotNull(localRefs);
@@ -328,11 +328,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("multiplier").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
-        var localRefs = script.Analyzer?.GetLocalReferences(symbol).ToList();
+        var localRefs = script.SemanticModel?.GetLocalReferences(symbol).ToList();
 
         // Assert
         Assert.IsNotNull(localRefs);
@@ -353,11 +353,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("counter").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
-        var methodRefs = script.Analyzer?.GetReferencesInScope(symbol, GDScopeType.Method).ToList();
+        var methodRefs = script.SemanticModel?.GetReferencesInScope(symbol, GDScopeType.Method).ToList();
 
         // Assert
         Assert.IsNotNull(methodRefs);
@@ -377,11 +377,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("i").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("i").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "i symbol not found");
         var symbol = symbols.First();
-        var loopRefs = script.Analyzer?.GetReferencesInScope(symbol, GDScopeType.ForLoop).ToList();
+        var loopRefs = script.SemanticModel?.GetReferencesInScope(symbol, GDScopeType.ForLoop).ToList();
 
         // Assert
         Assert.IsNotNull(loopRefs);
@@ -405,11 +405,11 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("counter").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
-        var refs = script.Analyzer?.GetReferencesInScopes(symbol, GDScopeType.Method, GDScopeType.Conditional).ToList();
+        var refs = script.SemanticModel?.GetReferencesInScopes(symbol, GDScopeType.Method, GDScopeType.Conditional).ToList();
 
         // Assert
         Assert.IsNotNull(refs);
@@ -436,18 +436,18 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("counter").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
-        var declaringScopeRefs = script.Analyzer?.GetReferencesInDeclaringScope(symbol).ToList();
+        var declaringScopeRefs = script.SemanticModel?.GetReferencesInDeclaringScope(symbol).ToList();
 
         // Assert
         Assert.IsNotNull(declaringScopeRefs);
         Assert.IsTrue(declaringScopeRefs.Count > 0, "Should have references in declaring scope");
 
         // All references should be within the same method that declares 'counter'
-        var allRefs = script.Analyzer?.GetReferencesTo(symbol).ToList();
+        var allRefs = script.SemanticModel?.GetReferencesTo(symbol).ToList();
         Assert.AreEqual(allRefs?.Count, declaringScopeRefs.Count,
             "For local variable, declaring scope refs should equal all refs");
     }
@@ -461,12 +461,12 @@ public class ScopeFilteringApiTests
         EnsureAnalyzed(script);
 
         // Act
-        var symbols = script.Analyzer?.FindSymbols("multiplier").ToList();
+        var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
-        var declaringScopeRefs = script.Analyzer?.GetReferencesInDeclaringScope(symbol).ToList();
-        var allRefs = script.Analyzer?.GetReferencesTo(symbol).ToList();
+        var declaringScopeRefs = script.SemanticModel?.GetReferencesInDeclaringScope(symbol).ToList();
+        var allRefs = script.SemanticModel?.GetReferencesTo(symbol).ToList();
 
         // Assert
         Assert.IsNotNull(declaringScopeRefs);

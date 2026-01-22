@@ -34,7 +34,7 @@ public class LargeProjectAnalysisTests
         project.ScriptFiles.All(s => s.Class != null).Should().BeTrue(
             because: "all scripts should be parsed");
 
-        project.ScriptFiles.All(s => s.Analyzer != null).Should().BeTrue(
+        project.ScriptFiles.All(s => s.SemanticModel != null).Should().BeTrue(
             because: "all scripts should be analyzed");
 
         // Output performance info
@@ -60,7 +60,7 @@ public class LargeProjectAnalysisTests
             because: $"{fileCount}-file project analysis should complete within {threshold.TotalSeconds:F1}s");
 
         project.ScriptFiles.Count().Should().Be(fileCount);
-        project.ScriptFiles.All(s => s.Analyzer != null).Should().BeTrue();
+        project.ScriptFiles.All(s => s.SemanticModel != null).Should().BeTrue();
 
         Console.WriteLine($"[PERF] {fileCount} files analyzed in {sw.ElapsedMilliseconds}ms (threshold: {threshold.TotalMilliseconds}ms)");
     }
@@ -85,7 +85,7 @@ public class LargeProjectAnalysisTests
             because: $"{fileCount}-file project analysis should complete within {threshold.TotalSeconds:F1}s");
 
         project.ScriptFiles.Count().Should().Be(fileCount);
-        project.ScriptFiles.All(s => s.Analyzer != null).Should().BeTrue();
+        project.ScriptFiles.All(s => s.SemanticModel != null).Should().BeTrue();
 
         Console.WriteLine($"[PERF] {fileCount} files analyzed in {sw.ElapsedMilliseconds}ms (threshold: {threshold.TotalMilliseconds}ms)");
     }
@@ -162,10 +162,10 @@ public class LargeProjectAnalysisTests
         foreach (var script in derivedScripts.Take(10))
         {
             // Each derived entity should be analyzed and have its own symbols
-            var analyzer = script.Analyzer;
-            analyzer.Should().NotBeNull();
+            var semanticModel = script.SemanticModel;
+            semanticModel.Should().NotBeNull();
 
-            var symbols = analyzer!.Symbols.ToList();
+            var symbols = semanticModel!.Symbols.ToList();
             symbols.Should().NotBeEmpty(
                 because: $"{script.TypeName} should have its own declared symbols");
 
@@ -182,8 +182,8 @@ public class LargeProjectAnalysisTests
 
         foreach (var script in baseScripts)
         {
-            var analyzer = script.Analyzer!;
-            var healthSymbol = analyzer.FindSymbol("health");
+            var semanticModel = script.SemanticModel!;
+            var healthSymbol = semanticModel.FindSymbol("health");
             healthSymbol.Should().NotBeNull(
                 because: $"Base class {script.TypeName} should have 'health' declared");
         }

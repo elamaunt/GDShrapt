@@ -31,18 +31,17 @@ public class ConcurrentQueryTests
                 for (int j = 0; j < queriesPerThread; j++)
                 {
                     var script = scripts[random.Next(scripts.Count)];
-                    var analyzer = script.Analyzer;
+                    var semanticModel = script.SemanticModel;
 
-                    if (analyzer == null)
+                    if (semanticModel == null)
                         continue;
 
                     // Various concurrent queries
-                    _ = analyzer.Symbols.ToList();
-                    _ = analyzer.GetMethods().ToList();
-                    _ = analyzer.FindSymbol("health");
-                    _ = analyzer.GetEffectiveType("health");
+                    _ = semanticModel.Symbols.ToList();
+                    _ = semanticModel.GetMethods().ToList();
+                    _ = semanticModel.FindSymbol("health");
+                    _ = semanticModel.GetEffectiveType("health");
 
-                    var semanticModel = analyzer.SemanticModel;
                     if (semanticModel != null)
                     {
                         _ = semanticModel.Symbols.ToList();
@@ -73,7 +72,7 @@ public class ConcurrentQueryTests
         project.AnalyzeAll();
 
         var targetScript = project.ScriptFiles.First(s => s.TypeName != null);
-        var analyzer = targetScript.Analyzer!;
+        var semanticModel = targetScript.SemanticModel!;
 
         var results = new ConcurrentBag<bool>();
         const int threadCount = 20;
@@ -84,7 +83,7 @@ public class ConcurrentQueryTests
         {
             for (int i = 0; i < lookupsPerThread; i++)
             {
-                var symbol = analyzer.FindSymbol("health");
+                var symbol = semanticModel.FindSymbol("health");
                 results.Add(symbol != null);
             }
         }));
@@ -128,7 +127,7 @@ public class ConcurrentQueryTests
                         // Access properties to verify state (discard results)
                         var typeName = script.TypeName;
                         var cls = script.Class;
-                        var analyzer = script.Analyzer;
+                        var semanticModel = script.SemanticModel;
                     }
                 }
             }
@@ -166,14 +165,14 @@ public class ConcurrentQueryTests
         {
             try
             {
-                var analyzer = script.Analyzer;
-                if (analyzer == null)
+                var semanticModel = script.SemanticModel;
+                if (semanticModel == null)
                     return;
 
                 // Resolve types for various symbols
                 foreach (var symbolName in new[] { "health", "speed", "is_alive", "max_health" })
                 {
-                    var type = analyzer.GetEffectiveType(symbolName);
+                    var type = semanticModel.GetEffectiveType(symbolName);
                     var key = $"{script.TypeName}.{symbolName}";
                     typeResults.TryAdd(key, type);
                 }
@@ -238,7 +237,7 @@ public class ConcurrentQueryTests
 
                     // Query may return null if analysis not complete - that's OK
                     var cls = script.Class;
-                    var symbols = script.Analyzer?.Symbols.ToList();
+                    var symbols = script.SemanticModel?.Symbols.ToList();
                 }
             }
             catch (Exception ex)
@@ -275,8 +274,8 @@ public class ConcurrentQueryTests
             int count = 0;
             foreach (var script in scripts)
             {
-                var analyzer = script.Analyzer;
-                if (analyzer?.FindSymbol("health") != null)
+                var semanticModel = script.SemanticModel;
+                if (semanticModel?.FindSymbol("health") != null)
                 {
                     count++;
                 }

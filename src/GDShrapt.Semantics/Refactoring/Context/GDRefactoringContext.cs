@@ -276,16 +276,16 @@ public class GDRefactoringContext
     }
 
     /// <summary>
-    /// Gets the analyzer for the script.
+    /// Gets the semantic model for the script.
     /// </summary>
-    public GDScriptAnalyzer? GetAnalyzer() => Script.Analyzer;
+    public GDSemanticModel? GetSemanticModel() => Script.SemanticModel;
 
     /// <summary>
-    /// Infers the type of the given expression using the script's analyzer.
+    /// Infers the type of the given expression using the script's semantic model.
     /// </summary>
     public string? InferType(GDExpression expression)
     {
-        return Script.Analyzer?.GetTypeForNode(expression);
+        return Script.SemanticModel?.GetTypeForNode(expression);
     }
 
     #endregion

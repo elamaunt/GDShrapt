@@ -87,7 +87,7 @@ public class GDAddTypeAnnotationService
         if (!CanExecute(context))
             return GDAddTypeAnnotationResult.Failed("Cannot add type annotation at this position");
 
-        var helper = new GDTypeInferenceHelper(context.GetAnalyzer());
+        var helper = new GDTypeInferenceHelper(context.GetSemanticModel());
 
         // Try class-level variable
         var varDecl = GetVariableDeclaration(context);
@@ -198,11 +198,11 @@ public class GDAddTypeAnnotationService
         if (varDecl.Initializer != null)
             return true;
 
-        // Check if analyzer has type info
-        var analyzer = context.Script?.Analyzer;
-        if (analyzer != null)
+        // Check if semantic model has type info
+        var semanticModel = context.Script?.SemanticModel;
+        if (semanticModel != null)
         {
-            var typeName = analyzer.GetTypeForNode(varDecl);
+            var typeName = semanticModel.GetTypeForNode(varDecl);
             if (!string.IsNullOrEmpty(typeName))
                 return true;
         }
@@ -263,11 +263,11 @@ public class GDAddTypeAnnotationService
                 return methodName;
         }
 
-        // Try to get type from analyzer
-        var analyzer = context.Script?.Analyzer;
-        if (analyzer != null)
+        // Try to get type from semantic model
+        var semanticModel = context.Script?.SemanticModel;
+        if (semanticModel != null)
         {
-            var typeName = analyzer.GetTypeForNode(expr);
+            var typeName = semanticModel.GetTypeForNode(expr);
             if (!string.IsNullOrEmpty(typeName))
                 return typeName;
         }

@@ -224,18 +224,18 @@ public class GDGenerateOnreadyService
 
     private GDInferredType InferNodeType(GDRefactoringContext context, string nodePath)
     {
-        // Try to infer type from analyzer (would have scene information)
-        if (context.Script?.Analyzer != null)
+        // Try to infer type from semantic model (would have scene information)
+        if (context.Script?.SemanticModel != null)
         {
-            // The analyzer might have scene information - high confidence
+            // The semantic model might have scene information - high confidence
             // Check if there's scene type resolution available
             var nodeExpr = FindNodeExpression(context);
             if (nodeExpr != null)
             {
-                var analyzerType = context.Script.Analyzer.GetTypeForNode(nodeExpr);
-                if (!string.IsNullOrEmpty(analyzerType) && analyzerType != "Variant" && analyzerType != "Node")
+                var semanticModelType = context.Script.SemanticModel.GetTypeForNode(nodeExpr);
+                if (!string.IsNullOrEmpty(semanticModelType) && semanticModelType != "Variant" && semanticModelType != "Node")
                 {
-                    return GDInferredType.High(analyzerType, "From scene type resolution");
+                    return GDInferredType.High(semanticModelType, "From scene type resolution");
                 }
             }
         }

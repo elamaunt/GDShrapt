@@ -54,12 +54,12 @@ public class TypeInferenceBenchmarks
         _deepInheritance10!.AnalyzeAll();
 
         var deepest = _deepInheritance10.ScriptFiles.First(s => s.TypeName == "Level9");
-        var analyzer = deepest.Analyzer!;
+        var semanticModel = deepest.SemanticModel!;
 
         for (int level = 0; level < 10; level++)
         {
-            _ = analyzer.FindSymbol($"level_{level}_var");
-            _ = analyzer.FindSymbol($"level_{level}_method");
+            _ = semanticModel.FindSymbol($"level_{level}_var");
+            _ = semanticModel.FindSymbol($"level_{level}_method");
         }
     }
 
@@ -69,12 +69,12 @@ public class TypeInferenceBenchmarks
         _deepInheritance15!.AnalyzeAll();
 
         var deepest = _deepInheritance15.ScriptFiles.First(s => s.TypeName == "Level14");
-        var analyzer = deepest.Analyzer!;
+        var semanticModel = deepest.SemanticModel!;
 
         for (int level = 0; level < 15; level++)
         {
-            _ = analyzer.FindSymbol($"level_{level}_var");
-            _ = analyzer.FindSymbol($"level_{level}_method");
+            _ = semanticModel.FindSymbol($"level_{level}_var");
+            _ = semanticModel.FindSymbol($"level_{level}_method");
         }
     }
 
@@ -84,11 +84,11 @@ public class TypeInferenceBenchmarks
         _complexTypes!.AnalyzeAll();
 
         var script = _complexTypes.ScriptFiles.First();
-        var analyzer = script.Analyzer!;
+        var semanticModel = script.SemanticModel!;
 
         for (int i = 0; i < 30; i++)
         {
-            _ = analyzer.GetEffectiveType($"variant_{i}");
+            _ = semanticModel.GetEffectiveType($"variant_{i}");
         }
     }
 
@@ -98,9 +98,9 @@ public class TypeInferenceBenchmarks
         _longMethod!.AnalyzeAll();
 
         var script = _longMethod.ScriptFiles.First();
-        var analyzer = script.Analyzer!;
+        var semanticModel = script.SemanticModel!;
 
-        _ = analyzer.GetMethods().ToList();
+        _ = semanticModel.GetMethods().ToList();
     }
 }
 
@@ -131,20 +131,20 @@ public class SymbolLookupBenchmarks
     [Benchmark(Baseline = true)]
     public object? FindSymbol_SingleLookup()
     {
-        return _targetScript!.Analyzer?.FindSymbol("health");
+        return _targetScript!.SemanticModel?.FindSymbol("health");
     }
 
     [Benchmark]
     public int FindSymbol_10Lookups()
     {
-        var analyzer = _targetScript!.Analyzer!;
+        var semanticModel = _targetScript!.SemanticModel!;
         int count = 0;
 
         for (int i = 0; i < 10; i++)
         {
-            if (analyzer.FindSymbol("health") != null) count++;
-            if (analyzer.FindSymbol("speed") != null) count++;
-            if (analyzer.FindSymbol("is_alive") != null) count++;
+            if (semanticModel.FindSymbol("health") != null) count++;
+            if (semanticModel.FindSymbol("speed") != null) count++;
+            if (semanticModel.FindSymbol("is_alive") != null) count++;
         }
 
         return count;
@@ -153,18 +153,18 @@ public class SymbolLookupBenchmarks
     [Benchmark]
     public int EnumerateAllSymbols()
     {
-        return _targetScript!.Analyzer!.Symbols.Count();
+        return _targetScript!.SemanticModel!.Symbols.Count();
     }
 
     [Benchmark]
     public int GetEffectiveType_MultipleSymbols()
     {
-        var analyzer = _targetScript!.Analyzer!;
+        var semanticModel = _targetScript!.SemanticModel!;
         int count = 0;
 
-        foreach (var symbol in analyzer.Symbols.Take(20))
+        foreach (var symbol in semanticModel.Symbols.Take(20))
         {
-            if (analyzer.GetEffectiveType(symbol.Name) != null)
+            if (semanticModel.GetEffectiveType(symbol.Name) != null)
                 count++;
         }
 

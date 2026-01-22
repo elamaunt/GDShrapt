@@ -417,15 +417,13 @@ internal partial class TabController : GodotObject
             return;
 
         var typeResolver = _plugin.TypeResolver;
-        var godotTypesProvider = _plugin.GodotTypesProvider;
-
-        if (typeResolver == null || godotTypesProvider == null)
+        if (typeResolver == null)
         {
-            Logger.Debug("TabController: Cannot initialize completion - missing dependencies");
+            Logger.Debug("TabController: Cannot initialize completion - missing TypeResolver");
             return;
         }
 
-        _completionService = new GDCompletionService(_plugin.ScriptProject, typeResolver, godotTypesProvider);
+        _completionService = new GDCompletionService(_plugin.ScriptProject, typeResolver);
         _completionContextBuilder = new GDCompletionContextBuilder(_plugin.ScriptProject, typeResolver);
 
         Logger.Info("TabController: Completion service initialized");

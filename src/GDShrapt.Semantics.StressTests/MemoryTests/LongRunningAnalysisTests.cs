@@ -27,7 +27,7 @@ public class LongRunningAnalysisTests
                 project.AnalyzeAll();
 
                 // Verify it actually analyzed
-                project.ScriptFiles.All(s => s.Analyzer != null).Should().BeTrue();
+                project.ScriptFiles.All(s => s.SemanticModel != null).Should().BeTrue();
             }
 
             // Force GC and record memory
@@ -73,14 +73,14 @@ public class LongRunningAnalysisTests
         {
             foreach (var script in scripts)
             {
-                var analyzer = script.Analyzer;
-                if (analyzer == null) continue;
+                var semanticModel = script.SemanticModel;
+                if (semanticModel == null) continue;
 
                 // Perform various type queries
-                _ = analyzer.GetEffectiveType("health");
-                _ = analyzer.GetEffectiveType("speed");
-                _ = analyzer.Symbols.ToList();
-                _ = analyzer.GetMethods().ToList();
+                _ = semanticModel.GetEffectiveType("health");
+                _ = semanticModel.GetEffectiveType("speed");
+                _ = semanticModel.Symbols.ToList();
+                _ = semanticModel.GetMethods().ToList();
             }
 
             if (iteration % 10 == 0)
@@ -243,12 +243,12 @@ public class LongRunningAnalysisTests
 
             // Exercise inheritance chain resolution
             var deepest = project.ScriptFiles.First(s => s.TypeName == "Level14");
-            var analyzer = deepest.Analyzer!;
+            var semanticModel = deepest.SemanticModel!;
 
             for (int level = 0; level < 15; level++)
             {
-                _ = analyzer.FindSymbol($"level_{level}_var");
-                _ = analyzer.FindSymbol($"level_{level}_method");
+                _ = semanticModel.FindSymbol($"level_{level}_var");
+                _ = semanticModel.FindSymbol($"level_{level}_method");
             }
         }
 

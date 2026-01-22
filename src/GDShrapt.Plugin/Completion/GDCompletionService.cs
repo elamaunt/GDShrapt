@@ -7,7 +7,6 @@ internal class GDCompletionService
 {
     private readonly GDScriptProject _scriptProject;
     private readonly GDTypeResolver _typeResolver;
-    private readonly GDGodotTypesProvider _godotTypesProvider;
 
     // GDScript keywords
     private static readonly string[] Keywords = {
@@ -44,11 +43,10 @@ internal class GDCompletionService
         "Node", "Node2D", "Node3D", "Control", "Resource", "RefCounted"
     };
 
-    public GDCompletionService(GDScriptProject ScriptProject, GDTypeResolver typeResolver, GDGodotTypesProvider godotTypesProvider)
+    public GDCompletionService(GDScriptProject scriptProject, GDTypeResolver typeResolver)
     {
-        _scriptProject = ScriptProject;
+        _scriptProject = scriptProject;
         _typeResolver = typeResolver;
-        _godotTypesProvider = godotTypesProvider;
     }
 
     /// <summary>
@@ -261,11 +259,11 @@ internal class GDCompletionService
     /// </summary>
     private IEnumerable<GDCompletionItem> GetLocalSymbols(GDCompletionContext context)
     {
-        var analyzer = context.ScriptFile?.Analyzer;
-        if (analyzer == null)
+        var semanticModel = context.ScriptFile?.SemanticModel;
+        if (semanticModel == null)
             yield break;
 
-        foreach (var symbol in analyzer.Symbols)
+        foreach (var symbol in semanticModel.Symbols)
         {
             GDCompletionItem item = symbol.Kind switch
             {
@@ -332,10 +330,10 @@ internal class GDCompletionService
         }
 
         // Check local symbols
-        var analyzer = context.ScriptFile?.Analyzer;
-        if (analyzer != null)
+        var semanticModel = context.ScriptFile?.SemanticModel;
+        if (semanticModel != null)
         {
-            foreach (var symbol in analyzer.Symbols)
+            foreach (var symbol in semanticModel.Symbols)
             {
                 if (symbol.Name == expression && !string.IsNullOrEmpty(symbol.TypeName))
                 {

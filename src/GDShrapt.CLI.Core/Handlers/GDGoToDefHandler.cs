@@ -4,7 +4,7 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Handler for go-to-definition navigation.
-/// Uses GDScriptAnalyzer for CLI-friendly symbol lookup.
+/// Uses GDSemanticModel for symbol lookup per Rule 11.
 /// </summary>
 public class GDGoToDefHandler : IGDGoToDefHandler
 {
@@ -19,7 +19,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
     public virtual GDDefinitionLocation? FindDefinition(string filePath, int line, int column)
     {
         var script = _project.GetScript(filePath);
-        if (script?.Analyzer == null || script.Class == null)
+        if (script?.SemanticModel == null || script.Class == null)
             return null;
 
         // Use GDPositionFinder to find the identifier at position
@@ -40,9 +40,10 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (!string.IsNullOrEmpty(fromFilePath))
         {
             var script = _project.GetScript(fromFilePath);
-            if (script?.Analyzer != null)
+            var semanticModel = script?.SemanticModel;
+            if (semanticModel != null)
             {
-                var symbol = script.Analyzer.FindSymbol(symbolName);
+                var symbol = semanticModel.FindSymbol(symbolName);
                 if (symbol?.DeclarationNode != null)
                 {
                     return new GDDefinitionLocation
@@ -60,10 +61,11 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         // Search across all files
         foreach (var script in _project.ScriptFiles)
         {
-            if (script.Analyzer == null)
+            var semanticModel = script.SemanticModel;
+            if (semanticModel == null)
                 continue;
 
-            var symbol = script.Analyzer.FindSymbol(symbolName);
+            var symbol = semanticModel.FindSymbol(symbolName);
             if (symbol?.DeclarationNode != null)
             {
                 return new GDDefinitionLocation

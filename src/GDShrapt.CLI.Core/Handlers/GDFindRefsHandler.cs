@@ -6,7 +6,7 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Handler for finding symbol references.
-/// Uses GDScriptAnalyzer for CLI-friendly symbol lookup.
+/// Uses GDSemanticModel for symbol lookup per Rule 11.
 /// </summary>
 public class GDFindRefsHandler : IGDFindRefsHandler
 {
@@ -48,17 +48,17 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         string symbolName,
         List<GDReferenceLocation> results)
     {
-        var analyzer = script.Analyzer;
-        if (analyzer == null)
+        var semanticModel = script.SemanticModel;
+        if (semanticModel == null)
             return;
 
-        // Find the symbol first
-        var symbol = analyzer.FindSymbol(symbolName);
+        // Find the symbol first (via SemanticModel per Rule 11)
+        var symbol = semanticModel.FindSymbol(symbolName);
         if (symbol == null)
             return;
 
         // Get all references to this symbol
-        var refs = analyzer.GetReferencesTo(symbol);
+        var refs = semanticModel.GetReferencesTo(symbol);
 
         foreach (var reference in refs)
         {

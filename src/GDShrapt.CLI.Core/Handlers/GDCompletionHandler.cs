@@ -142,11 +142,12 @@ public class GDCompletionHandler : IGDCompletionHandler
 
     private IEnumerable<GDCompletionItem> GetSymbolCompletions(GDCompletionRequest request)
     {
-        // Local symbols from current file
+        // Local symbols from current file (via SemanticModel per Rule 11)
         var file = _project.GetScript(request.FilePath);
-        if (file?.Analyzer != null)
+        var semanticModel = file?.SemanticModel;
+        if (semanticModel != null)
         {
-            foreach (var symbol in file.Analyzer.Symbols)
+            foreach (var symbol in semanticModel.Symbols)
             {
                 var item = MapSymbolToCompletionItem(symbol);
                 if (item != null)

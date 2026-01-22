@@ -61,12 +61,12 @@ public class TypeInferencePropertyTests
                 // Lookup same symbol multiple times
                 foreach (var script in project.ScriptFiles.Take(10))
                 {
-                    var analyzer = script.Analyzer;
-                    if (analyzer == null) continue;
+                    var semanticModel = script.SemanticModel;
+                    if (semanticModel == null) continue;
 
-                    var first = analyzer.FindSymbol("health");
-                    var second = analyzer.FindSymbol("health");
-                    var third = analyzer.FindSymbol("health");
+                    var first = semanticModel.FindSymbol("health");
+                    var second = semanticModel.FindSymbol("health");
+                    var third = semanticModel.FindSymbol("health");
 
                     // All lookups should return same result
                     if (first != null || second != null || third != null)
@@ -102,14 +102,14 @@ public class TypeInferencePropertyTests
                 for (int level = 0; level < depth; level++)
                 {
                     var script = project.ScriptFiles.FirstOrDefault(s => s.TypeName == $"Level{level}");
-                    if (script?.Analyzer == null)
+                    if (script?.SemanticModel == null)
                     {
                         Console.WriteLine($"Failed: Level{level} not found or not analyzed");
                         return false;
                     }
 
-                    var analyzer = script.Analyzer;
-                    var symbol = analyzer.FindSymbol($"level_{level}_var");
+                    var semanticModel = script.SemanticModel;
+                    var symbol = semanticModel.FindSymbol($"level_{level}_var");
                     if (symbol == null)
                     {
                         Console.WriteLine($"Failed: level_{level}_var not found in Level{level}");
@@ -152,10 +152,10 @@ public class TypeInferencePropertyTests
                 // Each level should have its own get_level method
                 foreach (var script in project.ScriptFiles)
                 {
-                    var analyzer = script.Analyzer;
-                    if (analyzer == null) continue;
+                    var semanticModel = script.SemanticModel;
+                    if (semanticModel == null) continue;
 
-                    var getLevel = analyzer.FindSymbol("get_level");
+                    var getLevel = semanticModel.FindSymbol("get_level");
                     if (getLevel == null)
                     {
                         Console.WriteLine($"Failed: get_level not found in {script.TypeName}");
@@ -238,7 +238,7 @@ public class TypeInferencePropertyTests
                     project.AnalyzeAll();
 
                     // Verify all scripts were analyzed
-                    var analyzed = project.ScriptFiles.Count(s => s.Analyzer != null);
+                    var analyzed = project.ScriptFiles.Count(s => s.SemanticModel != null);
                     return analyzed == fileCount;
                 }
                 catch (Exception ex)
@@ -271,7 +271,7 @@ public class TypeInferencePropertyTests
                     project.AnalyzeAll();
 
                     // All scripts should be analyzed
-                    var allAnalyzed = project.ScriptFiles.All(s => s.Analyzer != null);
+                    var allAnalyzed = project.ScriptFiles.All(s => s.SemanticModel != null);
                     if (!allAnalyzed)
                     {
                         Console.WriteLine($"Not all scripts analyzed: files={files}, depth={depth}, refs={refs}");
@@ -296,12 +296,12 @@ public class TypeInferencePropertyTests
         var results = new List<string>();
         foreach (var script in project.ScriptFiles.OrderBy(s => s.FullPath))
         {
-            var analyzer = script.Analyzer;
-            if (analyzer == null) continue;
+            var semanticModel = script.SemanticModel;
+            if (semanticModel == null) continue;
 
-            foreach (var symbol in analyzer.Symbols.OrderBy(s => s.Name))
+            foreach (var symbol in semanticModel.Symbols.OrderBy(s => s.Name))
             {
-                var type = analyzer.GetEffectiveType(symbol.Name) ?? "null";
+                var type = semanticModel.GetEffectiveType(symbol.Name) ?? "null";
                 results.Add($"{script.TypeName}.{symbol.Name}:{type}");
             }
         }

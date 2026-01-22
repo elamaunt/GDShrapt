@@ -89,9 +89,9 @@ public class RenameServiceTests
         var service = CreateService();
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script);
-        if (script.Analyzer == null) script.Analyze();
+        if (script.SemanticModel == null) script.Analyze();
 
-        var symbol = script.Analyzer!.FindSymbols("counter").FirstOrDefault();
+        var symbol = script.SemanticModel!.FindSymbols("counter").FirstOrDefault();
         Assert.IsNotNull(symbol);
 
         var conflicts = service.CheckConflicts(symbol, "if");
@@ -106,9 +106,9 @@ public class RenameServiceTests
         var service = CreateService();
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script);
-        if (script.Analyzer == null) script.Analyze();
+        if (script.SemanticModel == null) script.Analyze();
 
-        var symbol = script.Analyzer!.FindSymbols("counter").FirstOrDefault();
+        var symbol = script.SemanticModel!.FindSymbols("counter").FirstOrDefault();
         Assert.IsNotNull(symbol);
 
         var conflicts = service.CheckConflicts(symbol, "Array");
@@ -123,9 +123,9 @@ public class RenameServiceTests
         var service = CreateService();
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script);
-        if (script.Analyzer == null) script.Analyze();
+        if (script.SemanticModel == null) script.Analyze();
 
-        var symbol = script.Analyzer!.FindSymbols("counter").FirstOrDefault();
+        var symbol = script.SemanticModel!.FindSymbols("counter").FirstOrDefault();
         Assert.IsNotNull(symbol);
 
         var conflicts = service.CheckConflicts(symbol, "my_new_counter");
@@ -143,9 +143,9 @@ public class RenameServiceTests
         var service = CreateService();
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script);
-        if (script.Analyzer == null) script.Analyze();
+        if (script.SemanticModel == null) script.Analyze();
 
-        var symbol = script.Analyzer!.FindSymbols("counter").FirstOrDefault();
+        var symbol = script.SemanticModel!.FindSymbols("counter").FirstOrDefault();
         Assert.IsNotNull(symbol);
 
         var result = service.PlanRename(symbol, "my_counter");
@@ -161,9 +161,9 @@ public class RenameServiceTests
         var service = CreateService();
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script);
-        if (script.Analyzer == null) script.Analyze();
+        if (script.SemanticModel == null) script.Analyze();
 
-        var symbol = script.Analyzer!.FindSymbols("multiplier").FirstOrDefault();
+        var symbol = script.SemanticModel!.FindSymbols("multiplier").FirstOrDefault();
         Assert.IsNotNull(symbol);
 
         var result = service.PlanRename(symbol, "scale_factor");
@@ -178,9 +178,9 @@ public class RenameServiceTests
         var service = CreateService();
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script);
-        if (script.Analyzer == null) script.Analyze();
+        if (script.SemanticModel == null) script.Analyze();
 
-        var symbol = script.Analyzer!.FindSymbols("counter").FirstOrDefault();
+        var symbol = script.SemanticModel!.FindSymbols("counter").FirstOrDefault();
         Assert.IsNotNull(symbol);
 
         var result = service.PlanRename(symbol, "123invalid");
@@ -195,9 +195,9 @@ public class RenameServiceTests
         var service = CreateService();
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script);
-        if (script.Analyzer == null) script.Analyze();
+        if (script.SemanticModel == null) script.Analyze();
 
-        var symbol = script.Analyzer!.FindSymbols("counter").FirstOrDefault();
+        var symbol = script.SemanticModel!.FindSymbols("counter").FirstOrDefault();
         Assert.IsNotNull(symbol);
 
         var result = service.PlanRename(symbol, "return");

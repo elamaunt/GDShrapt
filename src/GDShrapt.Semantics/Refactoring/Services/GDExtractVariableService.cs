@@ -39,7 +39,7 @@ public class GDExtractVariableService
         var normalizedName = GDNamingUtilities.NormalizeVariableName(variableName ?? "new_variable");
 
         // Infer type with confidence level
-        var helper = new GDTypeInferenceHelper(context.GetAnalyzer());
+        var helper = new GDTypeInferenceHelper(context.GetSemanticModel());
         var inferredType = helper.InferExpressionType(expression);
 
         // Count occurrences of the same expression
@@ -77,7 +77,7 @@ public class GDExtractVariableService
             return GDRefactoringResult.Failed("Could not find containing statement");
 
         // Build the variable declaration with inferred type
-        var helper = new GDTypeInferenceHelper(context.GetAnalyzer());
+        var helper = new GDTypeInferenceHelper(context.GetSemanticModel());
         var inferredType = helper.InferExpressionType(expression);
         var varDecl = BuildVariableDeclaration(normalizedName, inferredType.TypeName, expression.ToString());
 
