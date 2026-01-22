@@ -60,7 +60,14 @@ public class GDLspCompletionHandler
         }
 
         if (items.Count == 0)
-            return Task.FromResult<GDLspCompletionList?>(null);
+        {
+            // Return empty list instead of null to indicate "no completions" vs "error"
+            return Task.FromResult<GDLspCompletionList?>(new GDLspCompletionList
+            {
+                IsIncomplete = false,
+                Items = []
+            });
+        }
 
         // Convert CLI.Core items to LSP completion items
         var lspItems = new List<GDLspCompletionItem>();

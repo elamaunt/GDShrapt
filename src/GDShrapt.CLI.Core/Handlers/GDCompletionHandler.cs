@@ -166,6 +166,12 @@ public class GDCompletionHandler : IGDCompletionHandler
             yield return GDCompletionItem.Keyword(keyword);
         }
 
+        // Built-in types (Godot API)
+        foreach (var typeName in CommonTypes)
+        {
+            yield return GDCompletionItem.Class(typeName, GDCompletionSource.GodotApi);
+        }
+
         // Project types
         foreach (var scriptFile in _project.ScriptFiles)
         {

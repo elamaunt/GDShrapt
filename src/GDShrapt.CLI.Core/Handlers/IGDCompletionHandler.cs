@@ -200,6 +200,7 @@ public class GDCompletionItem
     {
         Label = name,
         Kind = GDCompletionItemKind.Class,
+        Detail = source == GDCompletionSource.GodotApi ? "built-in type" : null,
         SortPriority = 30,
         Source = source
     };
