@@ -344,14 +344,14 @@ internal class GDTypeFlowGraphBuilder
         if (decl == null)
             return;
 
-        // Check for explicit type annotation
-        if (HasExplicitTypeAnnotation(decl, out var annotationType))
+        // Check for explicit type annotation via GDSymbolInfo.TypeName
+        if (symbol.TypeName != null)
         {
             var annotationNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
                 Label = "Type annotation",
-                Type = annotationType,
+                Type = symbol.TypeName,
                 Kind = GDTypeFlowNodeKind.TypeAnnotation,
                 Confidence = 1.0f,
                 Description = "Explicitly declared type",
@@ -931,58 +931,24 @@ internal class GDTypeFlowGraphBuilder
     }
 
     /// <summary>
-    /// Checks if a declaration has an explicit type annotation.
-    /// </summary>
-    private bool HasExplicitTypeAnnotation(GDNode decl, out string annotationType)
-    {
-        annotationType = null;
-
-        if (decl is GDVariableDeclaration variable && variable.Type != null)
-        {
-            annotationType = variable.Type.ToString();
-            return true;
-        }
-
-        if (decl is GDParameterDeclaration param && param.Type != null)
-        {
-            annotationType = param.Type.ToString();
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
     /// Calculates confidence based on symbol and type information.
+    /// Uses GDSymbolInfo.TypeName for explicit annotations and RuntimeProvider for known types.
     /// </summary>
     private float CalculateConfidence(GDSymbolInfo symbol, string type, GDScriptAnalyzer analyzer)
     {
         if (type == "Variant" || string.IsNullOrEmpty(type))
             return 0.2f;
 
-        if (HasExplicitTypeAnnotation(symbol.DeclarationNode, out _))
+        // Check for explicit type annotation via GDSymbolInfo.TypeName
+        if (symbol.TypeName != null)
             return 1.0f;
 
-        if (IsBuiltinType(type))
+        // Check if it's a known type via RuntimeProvider (no hardcoded list)
+        var runtimeProvider = _project?.CreateRuntimeProvider();
+        if (runtimeProvider != null && runtimeProvider.IsKnownType(type))
             return 0.9f;
 
         return 0.6f;
-    }
-
-    /// <summary>
-    /// Checks if a type is a known built-in type.
-    /// </summary>
-    private bool IsBuiltinType(string type)
-    {
-        var builtins = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "int", "float", "bool", "String", "Vector2", "Vector3", "Vector4",
-            "Rect2", "Transform2D", "Transform3D", "Color", "NodePath", "RID",
-            "Object", "Dictionary", "Array", "PackedByteArray", "PackedInt32Array",
-            "PackedFloat32Array", "PackedStringArray", "PackedVector2Array",
-            "PackedVector3Array", "PackedColorArray", "Callable", "Signal"
-        };
-        return builtins.Contains(type);
     }
 
     /// <summary>
@@ -1299,50 +1265,13 @@ internal class GDTypeFlowGraphBuilder
     }
 
     /// <summary>
-    /// Infers an improved type for an expression, using knowledge of common methods.
+    /// Infers an improved type for an expression by delegating to Semantics.
+    /// All type knowledge is centralized in GDTypeInferenceEngine via GDGodotTypesProvider.
     /// </summary>
     private string InferImprovedType(GDNode expression, GDScriptAnalyzer analyzer)
     {
-        var type = analyzer?.GetTypeForNode(expression);
-        if (!string.IsNullOrEmpty(type) && type != "Variant")
-            return type;
-
-        return expression switch
-        {
-            // is, ==, != → bool
-            GDDualOperatorExpression dualOp when dualOp.OperatorType == GDDualOperatorType.Is => "bool",
-            GDDualOperatorExpression dualOp when IsComparisonOperator(dualOp.OperatorType) => "bool",
-
-            // Known methods
-            GDCallExpression call when IsKnownMethodCall(call, "size") => "int",
-            GDCallExpression call when IsKnownMethodCall(call, "keys") => "Array",
-            GDCallExpression call when IsKnownMethodCall(call, "values") => "Array",
-            GDCallExpression call when IsKnownMethodCall(call, "has") => "bool",
-            GDCallExpression call when IsKnownMethodCall(call, "contains") => "bool",
-            GDCallExpression call when IsKnownMethodCall(call, "is_empty") => "bool",
-            GDCallExpression call when IsKnownMethodCall(call, "get_class") => "String",
-            GDCallExpression call when IsKnownMethodCall(call, "to_string") => "String",
-            GDCallExpression call when IsKnownMethodCall(call, "length") => "int",
-            GDCallExpression call when IsKnownMethodCall(call, "abs") => "float",
-
-            _ => type ?? "Variant"
-        };
-    }
-
-    /// <summary>
-    /// Checks if a call expression is a call to a known method.
-    /// </summary>
-    private bool IsKnownMethodCall(GDCallExpression call, string methodName)
-    {
-        if (call.CallerExpression is GDMemberOperatorExpression memberOp)
-        {
-            return string.Equals(memberOp.Identifier?.Sequence, methodName, StringComparison.OrdinalIgnoreCase);
-        }
-        if (call.CallerExpression is GDIdentifierExpression idExpr)
-        {
-            return string.Equals(idExpr.Identifier?.Sequence, methodName, StringComparison.OrdinalIgnoreCase);
-        }
-        return false;
+        // Delegate all type inference to Semantics - no hardcoded types here
+        return analyzer?.GetTypeForNode(expression) ?? "Variant";
     }
 
     /// <summary>

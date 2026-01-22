@@ -32,5 +32,8 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<IGDCodeActionHandler>(new GDCodeActionHandler(project));
         registry.Register<IGDSignatureHelpHandler>(new GDSignatureHelpHandler(project));
         registry.Register<IGDInlayHintHandler>(new GDInlayHintHandler(project));
+
+        // TypeFlow visualization
+        registry.Register<IGDTypeFlowHandler>(new GDTypeFlowHandler(project));
     }
 }
