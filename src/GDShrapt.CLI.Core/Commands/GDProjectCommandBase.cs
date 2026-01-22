@@ -17,6 +17,12 @@ public abstract class GDProjectCommandBase : IGDCommand
     protected readonly TextWriter _output;
     protected readonly GDProjectConfig? _config;
 
+    /// <summary>
+    /// Service registry for accessing CLI.Core handlers.
+    /// Available after project is loaded in ExecuteOnProjectAsync.
+    /// </summary>
+    protected IGDServiceRegistry? Registry { get; private set; }
+
     public abstract string Name { get; }
     public abstract string Description { get; }
 
@@ -45,6 +51,11 @@ public abstract class GDProjectCommandBase : IGDCommand
 
             var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
             using var project = GDProjectLoader.LoadProject(projectRoot);
+
+            // Initialize service registry with base module
+            var registry = new GDServiceRegistry();
+            registry.LoadModules(project, new GDBaseModule());
+            Registry = registry;
 
             return ExecuteOnProjectAsync(project, projectRoot, config, cancellationToken);
         }

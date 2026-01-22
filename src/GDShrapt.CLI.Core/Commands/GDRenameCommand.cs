@@ -9,7 +9,7 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Renames a symbol across the project.
-/// Uses GDRenameService from Semantics for rename logic.
+/// Uses IGDRenameHandler from CLI.Core for rename logic.
 /// </summary>
 public class GDRenameCommand : IGDCommand
 {
@@ -57,18 +57,26 @@ public class GDRenameCommand : IGDCommand
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
 
-            // Use GDRenameService from Semantics
-            var renameService = new GDRenameService(project);
+            // Initialize service registry and get rename handler
+            var registry = new GDServiceRegistry();
+            registry.LoadModules(project, new GDBaseModule());
+            var renameHandler = registry.GetService<IGDRenameHandler>();
+
+            if (renameHandler == null)
+            {
+                _formatter.WriteError(_output, "Rename handler not available");
+                return Task.FromResult(2);
+            }
 
             // Validate new name
-            if (!renameService.ValidateIdentifier(_newName, out var validationError))
+            if (!renameHandler.ValidateIdentifier(_newName, out var validationError))
             {
                 _formatter.WriteError(_output, validationError ?? $"Invalid identifier: {_newName}");
                 return Task.FromResult(2);
             }
 
             // Plan the rename
-            var result = renameService.PlanRename(_oldName, _newName, _filePath);
+            var result = renameHandler.Plan(_oldName, _newName, _filePath);
 
             if (!result.Success)
             {
@@ -147,7 +155,7 @@ public class GDRenameCommand : IGDCommand
                 var strictByFile = result.StrictEdits.GroupBy(e => e.FilePath);
                 foreach (var fileGroup in strictByFile)
                 {
-                    renameService.ApplyEditsToFile(fileGroup.Key, fileGroup);
+                    renameHandler.ApplyEdits(fileGroup.Key, fileGroup);
                 }
 
                 var strictFileCount = result.StrictEdits.Select(e => e.FilePath).Distinct().Count();

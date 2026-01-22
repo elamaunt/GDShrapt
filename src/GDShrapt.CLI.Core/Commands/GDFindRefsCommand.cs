@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -10,6 +9,7 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Finds references to a symbol across the project.
+/// Uses IGDFindRefsHandler from CLI.Core.
 /// </summary>
 public class GDFindRefsCommand : IGDCommand
 {
@@ -51,30 +51,43 @@ public class GDFindRefsCommand : IGDCommand
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
 
-            var references = new List<GDReferenceInfo>();
+            // Initialize service registry and get find-refs handler
+            var registry = new GDServiceRegistry();
+            registry.LoadModules(project, new GDBaseModule());
+            var findRefsHandler = registry.GetService<IGDFindRefsHandler>();
 
-            // If file is specified, search only in that file
+            if (findRefsHandler == null)
+            {
+                _formatter.WriteError(_output, "Find references handler not available");
+                return Task.FromResult(2);
+            }
+
+            // Resolve file path if specified
+            string? fullFilePath = null;
             if (!string.IsNullOrEmpty(_filePath))
             {
-                var fullPath = Path.GetFullPath(_filePath);
-                var script = project.GetScript(fullPath);
-
+                fullFilePath = Path.GetFullPath(_filePath);
+                var script = project.GetScript(fullFilePath);
                 if (script == null)
                 {
-                    _formatter.WriteError(_output, $"Script not found in project: {fullPath}");
+                    _formatter.WriteError(_output, $"Script not found in project: {fullFilePath}");
                     return Task.FromResult(2);
                 }
+            }
 
-                CollectReferencesFromScript(script, _symbolName, projectRoot, references);
-            }
-            else
+            // Use handler to find references
+            var locations = findRefsHandler.FindReferences(_symbolName, fullFilePath);
+
+            // Convert to GDReferenceInfo for output
+            var references = locations.Select(loc => new GDReferenceInfo
             {
-                // Search across all files
-                foreach (var script in project.ScriptFiles)
-                {
-                    CollectReferencesFromScript(script, _symbolName, projectRoot, references);
-                }
-            }
+                FilePath = GetRelativePath(loc.FilePath, projectRoot),
+                Line = loc.Line,
+                Column = loc.Column,
+                IsDeclaration = loc.IsDeclaration,
+                IsWrite = loc.IsWrite,
+                Context = loc.Context
+            }).ToList();
 
             if (references.Count == 0)
             {
@@ -91,62 +104,6 @@ public class GDFindRefsCommand : IGDCommand
         {
             _formatter.WriteError(_output, ex.Message);
             return Task.FromResult(2);
-        }
-    }
-
-    private static void CollectReferencesFromScript(
-        GDScriptFile script,
-        string symbolName,
-        string projectRoot,
-        List<GDReferenceInfo> references)
-    {
-        var semanticModel = script.SemanticModel;
-        if (semanticModel == null)
-            return;
-
-        // Find the symbol first
-        var symbol = semanticModel.FindSymbol(symbolName);
-        if (symbol == null)
-            return;
-
-        // Get all references to this symbol
-        var refs = semanticModel.GetReferencesTo(symbol);
-
-        foreach (var reference in refs)
-        {
-            var node = reference.ReferenceNode;
-            if (node == null)
-                continue;
-
-            references.Add(new GDReferenceInfo
-            {
-                FilePath = GetRelativePath(script.Reference.FullPath, projectRoot),
-                Line = node.StartLine,
-                Column = node.StartColumn,
-                IsDeclaration = node == symbol.DeclarationNode,
-                IsWrite = false // Simplified - can't easily determine write vs read from GDReference
-            });
-        }
-
-        // Also add declaration location if not already included
-        if (symbol.DeclarationNode != null)
-        {
-            var declarationIncluded = references.Any(r =>
-                r.Line == symbol.DeclarationNode.StartLine &&
-                r.Column == symbol.DeclarationNode.StartColumn &&
-                r.FilePath == GetRelativePath(script.Reference.FullPath, projectRoot));
-
-            if (!declarationIncluded)
-            {
-                references.Insert(0, new GDReferenceInfo
-                {
-                    FilePath = GetRelativePath(script.Reference.FullPath, projectRoot),
-                    Line = symbol.DeclarationNode.StartLine,
-                    Column = symbol.DeclarationNode.StartColumn,
-                    IsDeclaration = true,
-                    IsWrite = false
-                });
-            }
         }
     }
 

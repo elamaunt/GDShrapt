@@ -5,12 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Semantics;
-using GDShrapt.Reader;
 
 namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Lists symbols in a GDScript file.
+/// Uses IGDSymbolsHandler from CLI.Core.
 /// </summary>
 public class GDSymbolsCommand : IGDCommand
 {
@@ -48,16 +48,57 @@ public class GDSymbolsCommand : IGDCommand
             }
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
-            var script = project.GetScript(fullPath);
 
+            // Initialize service registry and get symbols handler
+            var registry = new GDServiceRegistry();
+            registry.LoadModules(project, new GDBaseModule());
+            var symbolsHandler = registry.GetService<IGDSymbolsHandler>();
+
+            if (symbolsHandler == null)
+            {
+                _formatter.WriteError(_output, "Symbols handler not available");
+                return Task.FromResult(2);
+            }
+
+            var script = project.GetScript(fullPath);
             if (script == null)
             {
                 _formatter.WriteError(_output, $"Script not found in project: {fullPath}");
                 return Task.FromResult(2);
             }
 
-            var symbols = ExtractSymbols(script);
-            _formatter.WriteSymbols(_output, symbols);
+            // Use handler to get symbols
+            var documentSymbols = symbolsHandler.GetSymbols(fullPath);
+
+            // Convert to GDSymbolInfo for output, adding class name separately
+            var symbols = new List<GDSymbolInfo>();
+
+            // Add class name if available
+            if (script.Class?.ClassName != null)
+            {
+                symbols.Add(new GDSymbolInfo
+                {
+                    Name = script.TypeName ?? Path.GetFileNameWithoutExtension(script.Reference.FullPath),
+                    Kind = "class",
+                    Line = script.Class.ClassName.StartLine,
+                    Column = script.Class.ClassName.StartColumn
+                });
+            }
+
+            // Add symbols from handler
+            foreach (var docSymbol in documentSymbols)
+            {
+                symbols.Add(new GDSymbolInfo
+                {
+                    Name = docSymbol.Name,
+                    Kind = ConvertSymbolKind(docSymbol.Kind),
+                    Type = docSymbol.Type,
+                    Line = docSymbol.Line,
+                    Column = docSymbol.Column
+                });
+            }
+
+            _formatter.WriteSymbols(_output, symbols.OrderBy(s => s.Line).ThenBy(s => s.Column));
 
             return Task.FromResult(0);
         }
@@ -68,101 +109,19 @@ public class GDSymbolsCommand : IGDCommand
         }
     }
 
-    private static IEnumerable<GDSymbolInfo> ExtractSymbols(GDScriptFile script)
+    private static string ConvertSymbolKind(GDShrapt.Abstractions.GDSymbolKind kind)
     {
-        var symbols = new List<GDSymbolInfo>();
-        var semanticModel = script.SemanticModel;
-
-        if (semanticModel == null)
-            return symbols;
-
-        // Add class name
-        if (script.Class?.ClassName != null)
+        return kind switch
         {
-            symbols.Add(new GDSymbolInfo
-            {
-                Name = script.TypeName ?? Path.GetFileNameWithoutExtension(script.Reference.FullPath),
-                Kind = "class",
-                Line = script.Class.ClassName.StartLine,
-                Column = script.Class.ClassName.StartColumn
-            });
-        }
-
-        // Add methods
-        foreach (var method in semanticModel.GetMethods())
-        {
-            symbols.Add(new GDSymbolInfo
-            {
-                Name = method.Name,
-                Kind = "method",
-                Type = method.TypeNode?.ToString(),
-                Line = method.DeclarationNode?.StartLine ?? 0,
-                Column = method.DeclarationNode?.StartColumn ?? 0
-            });
-        }
-
-        // Add variables
-        foreach (var variable in semanticModel.GetVariables())
-        {
-            symbols.Add(new GDSymbolInfo
-            {
-                Name = variable.Name,
-                Kind = variable.IsStatic ? "constant" : "variable",
-                Type = variable.TypeNode?.ToString(),
-                Line = variable.DeclarationNode?.StartLine ?? 0,
-                Column = variable.DeclarationNode?.StartColumn ?? 0
-            });
-        }
-
-        // Add signals
-        foreach (var signal in semanticModel.GetSignals())
-        {
-            symbols.Add(new GDSymbolInfo
-            {
-                Name = signal.Name,
-                Kind = "signal",
-                Line = signal.DeclarationNode?.StartLine ?? 0,
-                Column = signal.DeclarationNode?.StartColumn ?? 0
-            });
-        }
-
-        // Add constants
-        foreach (var constant in semanticModel.GetConstants())
-        {
-            symbols.Add(new GDSymbolInfo
-            {
-                Name = constant.Name,
-                Kind = "constant",
-                Type = constant.TypeNode?.ToString(),
-                Line = constant.DeclarationNode?.StartLine ?? 0,
-                Column = constant.DeclarationNode?.StartColumn ?? 0
-            });
-        }
-
-        // Add enums
-        foreach (var enumSymbol in semanticModel.GetEnums())
-        {
-            symbols.Add(new GDSymbolInfo
-            {
-                Name = enumSymbol.Name,
-                Kind = "enum",
-                Line = enumSymbol.DeclarationNode?.StartLine ?? 0,
-                Column = enumSymbol.DeclarationNode?.StartColumn ?? 0
-            });
-        }
-
-        // Add inner classes
-        foreach (var innerClass in semanticModel.GetInnerClasses())
-        {
-            symbols.Add(new GDSymbolInfo
-            {
-                Name = innerClass.Name,
-                Kind = "class",
-                Line = innerClass.DeclarationNode?.StartLine ?? 0,
-                Column = innerClass.DeclarationNode?.StartColumn ?? 0
-            });
-        }
-
-        return symbols.OrderBy(s => s.Line).ThenBy(s => s.Column);
+            GDShrapt.Abstractions.GDSymbolKind.Class => "class",
+            GDShrapt.Abstractions.GDSymbolKind.Method => "method",
+            GDShrapt.Abstractions.GDSymbolKind.Variable => "variable",
+            GDShrapt.Abstractions.GDSymbolKind.Constant => "constant",
+            GDShrapt.Abstractions.GDSymbolKind.Signal => "signal",
+            GDShrapt.Abstractions.GDSymbolKind.Enum => "enum",
+            GDShrapt.Abstractions.GDSymbolKind.EnumValue => "enum_value",
+            GDShrapt.Abstractions.GDSymbolKind.Parameter => "parameter",
+            _ => "unknown"
+        };
     }
 }
