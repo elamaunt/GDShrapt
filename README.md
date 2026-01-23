@@ -20,8 +20,6 @@ High-performance language intelligence platform for GDScript.
 
 GDShrapt is built and tested as a **standalone tooling platform**. It does **not depend on the Godot runtime** and can analyze projects purely from source files, project configuration, and scene metadata.
 
-High-performance language intelligence platform for GDScript.
-
 GDShrapt is an open-source ecosystem for deep static analysis, refactoring, and automation of GDScript projects. What started as a standalone parser has evolved into a full semantic platform powering CLI tools, a Language Server (LSP), and a Godot Editor plugin — all built on a shared, incremental semantic core.
 
 GDShrapt is designed as a **language tooling platform for Godot**, comparable in scope to clang/clangd or rust-analyzer, but tailored specifically to GDScript and the Godot workflow.
@@ -30,7 +28,7 @@ GDShrapt is designed as a **language tooling platform for Godot**, comparable in
 
 ## Project Status
 
-- **Test coverage:** 3,500+ automated tests (including semantic stress tests and benchmarks)
+- **Test coverage:** 3,600+ automated tests (including semantic stress tests and benchmarks)
 
 - **Latest stable release:** 5.x (parser, linter, formatter libraries)
 - **Next major release:** 6.0.0 (semantic platform release)
