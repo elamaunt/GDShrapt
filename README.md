@@ -28,7 +28,7 @@ GDShrapt is designed as a **language tooling platform for Godot**, comparable in
 
 ## Project Status
 
-- **Test coverage:** 3,600+ automated tests (including semantic stress tests and benchmarks)
+- **Test coverage:** 4,000+ automated tests (including semantic stress tests and benchmarks)
 
 - **Latest stable release:** 5.x (parser, linter, formatter libraries)
 - **Next major release:** 6.0.0 (semantic platform release)
