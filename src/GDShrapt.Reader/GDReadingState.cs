@@ -17,6 +17,12 @@ namespace GDShrapt.Reader
         /// </summary>
         private int _charsSinceLastCheck;
 
+        /// <summary>
+        /// Counter for PassChar calls since last AdvanceInputPosition.
+        /// Reset to 0 when input advances. Throws if exceeds MaxPassesWithoutProgress.
+        /// </summary>
+        private int _passCountSinceAdvance;
+
         public GDReadSettings Settings { get; }
 
         /// <summary>
@@ -118,8 +124,7 @@ namespace GDShrapt.Reader
             }
         }
 
-        // Static buffer for typical cases (avoids allocations)
-        static readonly char[] _repassBuffer = new char[16];
+        readonly char[] _repassBuffer = new char[16];
 
         /// <summary>
         /// If the current reader is a GDCharSequence (like GDSpace), completes it and pops from stack.
@@ -196,6 +201,16 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Signals that the parser has advanced to a new character from the input stream.
+        /// This resets the loop detection counter.
+        /// Called before PassChar for each new character from the external input.
+        /// </summary>
+        public void AdvanceInputPosition()
+        {
+            _passCountSinceAdvance = 0;
+        }
+
+        /// <summary>
         /// Sends a character to the current reader.
         /// </summary>
         public void PassChar(char c)
@@ -206,6 +221,18 @@ namespace GDShrapt.Reader
             {
                 _charsSinceLastCheck = 0;
                 CancellationToken.ThrowIfCancellationRequested();
+            }
+
+            // Loop detection: count PassChar calls since last input advance
+            var maxPasses = Settings.MaxPassesWithoutProgress;
+            if (maxPasses.HasValue)
+            {
+                _passCountSinceAdvance++;
+                if (_passCountSinceAdvance > maxPasses.Value)
+                {
+                    var readerTypeName = CurrentReader?.GetType().Name;
+                    throw new GDInfiniteLoopException(_passCountSinceAdvance, maxPasses.Value, c, readerTypeName);
+                }
             }
 
             var reader = CurrentReader;

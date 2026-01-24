@@ -15,6 +15,41 @@ namespace GDShrapt.Builder
                 String = Syntax.String(value, boundingChar)
             };
 
+            /// <summary>
+            /// Creates a StringName expression: &amp;"name"
+            /// StringName is an immutable string used for fast comparisons (hashed).
+            /// </summary>
+            public static GDStringNameExpression StringName(string value)
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                return new GDStringNameExpression()
+                {
+                    Ampersand = new GDAmpersand(),
+                    String = new GDDoubleQuotasStringNode()
+                    {
+                        OpeningBounder = new GDDoubleQuotas(),
+                        Parts = new GDStringPartsList() { new GDStringPart() { Sequence = value } },
+                        ClosingBounder = new GDDoubleQuotas()
+                    }
+                };
+            }
+
+            /// <summary>
+            /// Creates a StringName expression with custom string node (multiline, single-quote, etc.)
+            /// </summary>
+            public static GDStringNameExpression StringName(GDStringNode stringNode) => new GDStringNameExpression()
+            {
+                Ampersand = new GDAmpersand(),
+                String = stringNode
+            };
+
+            /// <summary>
+            /// Creates a StringName expression with unsafe tokens.
+            /// </summary>
+            public static GDStringNameExpression StringName(params GDSyntaxToken[] unsafeTokens) => new GDStringNameExpression() { FormTokensSetter = unsafeTokens };
+
             public static GDNumberExpression Number(string value) => new GDNumberExpression() { Number = Syntax.Number(value) };
             public static GDNumberExpression Number(long value) => new GDNumberExpression() { Number = Syntax.Number(value) };
             public static GDNumberExpression Number(double value) => new GDNumberExpression() { Number = Syntax.Number(value) };
@@ -35,20 +70,32 @@ namespace GDShrapt.Builder
                 FalseExpression = falseExpr
             };
 
-            public static GDArrayInitializerExpression Array() => new GDArrayInitializerExpression();
+            public static GDArrayInitializerExpression Array() => new GDArrayInitializerExpression()
+            {
+                SquareOpenBracket = new GDSquareOpenBracket(),
+                SquareCloseBracket = new GDSquareCloseBracket()
+            };
             public static GDArrayInitializerExpression Array(Func<GDArrayInitializerExpression, GDArrayInitializerExpression> setup) => setup(new GDArrayInitializerExpression());
             public static GDArrayInitializerExpression Array(params GDSyntaxToken[] unsafeTokens) => new GDArrayInitializerExpression() { FormTokensSetter = unsafeTokens };
             public static GDArrayInitializerExpression Array(params GDExpression[] expressions) => new GDArrayInitializerExpression()
             {
-                Values = List.Expressions(expressions)
+                SquareOpenBracket = new GDSquareOpenBracket(),
+                Values = List.Expressions(expressions),
+                SquareCloseBracket = new GDSquareCloseBracket()
             };
 
-            public static GDDictionaryInitializerExpression Dictionary() => new GDDictionaryInitializerExpression();
+            public static GDDictionaryInitializerExpression Dictionary() => new GDDictionaryInitializerExpression()
+            {
+                FigureOpenBracket = new GDFigureOpenBracket(),
+                FigureCloseBracket = new GDFigureCloseBracket()
+            };
             public static GDDictionaryInitializerExpression Dictionary(Func<GDDictionaryInitializerExpression, GDDictionaryInitializerExpression> setup) => setup(new GDDictionaryInitializerExpression());
             public static GDDictionaryInitializerExpression Dictionary(params GDSyntaxToken[] unsafeTokens) => new GDDictionaryInitializerExpression() { FormTokensSetter = unsafeTokens };
             public static GDDictionaryInitializerExpression Dictionary(params GDDictionaryKeyValueDeclaration[] keyValues) => new GDDictionaryInitializerExpression()
             {
-                KeyValues = List.KeyValues(keyValues)
+                FigureOpenBracket = new GDFigureOpenBracket(),
+                KeyValues = List.KeyValues(keyValues),
+                FigureCloseBracket = new GDFigureCloseBracket()
             };
 
             public static GDDictionaryKeyValueDeclaration KeyValue(GDExpression key, GDExpression value) => new GDDictionaryKeyValueDeclaration()
@@ -179,7 +226,9 @@ namespace GDShrapt.Builder
             public static GDDualOperatorExpression DualOperator(GDExpression left, GDDualOperator @operator, GDExpression right) => new GDDualOperatorExpression()
             {
                 LeftExpression = left,
+                [1] = Syntax.Space(),
                 Operator = @operator,
+                [2] = Syntax.Space(),
                 RightExpression = right
             };
 
@@ -333,6 +382,22 @@ namespace GDShrapt.Builder
             {
                 String = Syntax.MultilineStringSingleQuote(value)
             };
+
+            /// <summary>
+            /// Creates a preload() call expression for loading resources at compile time.
+            /// </summary>
+            public static GDCallExpression Preload(string path) => Call(
+                Identifier("preload"),
+                String(path)
+            );
+
+            /// <summary>
+            /// Creates a load() call expression for loading resources at runtime.
+            /// </summary>
+            public static GDCallExpression Load(string path) => Call(
+                Identifier("load"),
+                String(path)
+            );
         }
     }
 }

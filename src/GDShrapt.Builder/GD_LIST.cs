@@ -131,14 +131,12 @@ namespace GDShrapt.Builder
 
                 bool previousMemberIsAttribute = false;
                 bool currentMemberIsAttribute = false;
-                bool isNotAttributeMet = false;
 
                 for (int i = 0; i < members.Length; i++)
                 {
                     var member = members[i];
 
                     currentMemberIsAttribute = member is GDClassAttribute;
-                    isNotAttributeMet = isNotAttributeMet || !(member is GDClassAttribute);
 
                     if (!previousMemberIsAttribute)
                     {

@@ -60,6 +60,21 @@ namespace GDShrapt.Builder
             return receiver;
         }
 
+        // Alias for Add(string identifier) for better expressiveness
+        public static T AddIdentifier<T>(this T receiver, string identifier)
+            where T : ITokenReceiver<GDIdentifier>
+        {
+            receiver.HandleReceivedToken(GD.Syntax.Identifier(identifier));
+            return receiver;
+        }
+
+        public static T AddIdentifier<T>(this T receiver, GDIdentifier identifier)
+            where T : ITokenReceiver<GDIdentifier>
+        {
+            receiver.HandleReceivedToken(identifier);
+            return receiver;
+        }
+
         public static T AddType<T>(this T receiver, string type)
             where T : ITokenReceiver<GDType>
         {

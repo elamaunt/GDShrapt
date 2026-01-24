@@ -16,8 +16,8 @@ using GDShrapt.Reader;
 
 // Create a simple class
 var classDecl = GD.Declaration.Class(
-    GD.Atribute.Extends("Node2D"),
-    GD.Atribute.Export(),
+    GD.Attribute.Extends("Node2D"),
+    GD.Attribute.Export(),
     GD.Declaration.Variable("health", "int", GD.Expression.Number(100)),
     GD.Declaration.Method(GD.Syntax.Identifier("_ready"),
         GD.Expression.Call(GD.Expression.Identifier("print"),
@@ -55,10 +55,10 @@ variable.Identifier = new GDIdentifier { Sequence = "health" };
 
 ### Annotations
 ```csharp
-GD.Atribute.Export()                    // @export
-GD.Atribute.ExportRange(0, 100)         // @export_range(0, 100)
-GD.Atribute.Onready()                   // @onready
-GD.Atribute.Tool()                      // @tool
+GD.Attribute.Export()                    // @export
+GD.Attribute.ExportRange(0, 100)         // @export_range(0, 100)
+GD.Attribute.Onready()                   // @onready
+GD.Attribute.Tool()                      // @tool
 ```
 
 ### Expressions

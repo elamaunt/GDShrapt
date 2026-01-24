@@ -259,7 +259,10 @@ namespace GDShrapt.Reader
         private void ParseBuffer(char[] buffer, int count, GDReadingState state)
         {
             for (int i = 0; i < count; i++)
+            {
+                state.AdvanceInputPosition();
                 state.PassChar(buffer[i]);
+            }
         }
     }
 }
