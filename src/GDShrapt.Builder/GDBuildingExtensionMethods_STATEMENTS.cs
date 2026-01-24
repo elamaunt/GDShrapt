@@ -214,5 +214,33 @@ namespace GDShrapt.Builder
             receiver.HandleReceivedToken(GD.Statement.Match(value, cases));
             return receiver;
         }
+
+        public static T AddCondition<T>(this T receiver, GDExpression condition)
+            where T : ITokenReceiver<GDExpression>
+        {
+            receiver.HandleReceivedToken(condition);
+            return receiver;
+        }
+
+        public static T AddWhile<T>(this T receiver, Func<GDWhileStatement, GDWhileStatement> setup)
+           where T : ITokenReceiver<GDWhileStatement>
+        {
+            receiver.HandleReceivedToken(GD.Statement.While(setup));
+            return receiver;
+        }
+
+        public static T AddWhile<T>(this T receiver, params GDSyntaxToken[] unsafeTokens)
+            where T : ITokenReceiver<GDWhileStatement>
+        {
+            receiver.HandleReceivedToken(GD.Statement.While(unsafeTokens));
+            return receiver;
+        }
+
+        public static T AddWhile<T>(this T receiver, GDExpression condition, params GDStatement[] statements)
+           where T : ITokenReceiver<GDWhileStatement>
+        {
+            receiver.HandleReceivedToken(GD.Statement.While(condition, statements));
+            return receiver;
+        }
     }
 }

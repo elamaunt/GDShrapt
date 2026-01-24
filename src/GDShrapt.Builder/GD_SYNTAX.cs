@@ -11,11 +11,14 @@ namespace GDShrapt.Builder
 
         public static class Syntax
         {
-            public static GDIdentifier Identifier(string name) => new GDIdentifier() { Sequence = name };
-            public static GDType Type(string name) => new GDType() { Sequence = name };
+            public static GDIdentifier Identifier(string name) => new GDIdentifier() { Sequence = name ?? throw new ArgumentNullException(nameof(name)) };
+            public static GDType Type(string name) => new GDType() { Sequence = name ?? throw new ArgumentNullException(nameof(name)) };
 
             public static GDStringNode String(string value, GDStringBoundingChar boundingChar = GDStringBoundingChar.DoubleQuotas)
             {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
                 switch (boundingChar)
                 {
                     case GDStringBoundingChar.SingleQuotas:
@@ -47,11 +50,11 @@ namespace GDShrapt.Builder
                             ClosingBounder = new GDTripleSingleQuotas()
                         };
                     default:
-                        throw new NotImplementedException();
+                        throw new ArgumentOutOfRangeException(nameof(boundingChar), boundingChar, "Unsupported string bounding character type");
                 }
             }
 
-            public static GDNumber Number(string stringValue) => new GDNumber() { Sequence = stringValue };
+            public static GDNumber Number(string stringValue) => new GDNumber() { Sequence = stringValue ?? throw new ArgumentNullException(nameof(stringValue)) };
             public static GDNumber Number(int value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(long value) => new GDNumber() { ValueInt64 = value };
             public static GDNumber Number(double value) => new GDNumber() { ValueDouble = value };
@@ -66,7 +69,7 @@ namespace GDShrapt.Builder
                 Sequence = new string('\t', count),
                 LineIntendationThreshold = count 
             };
-            public static GDComment Comment(string comment) => new GDComment() { Sequence = comment };
+            public static GDComment Comment(string comment) => new GDComment() { Sequence = comment ?? throw new ArgumentNullException(nameof(comment)) };
 
             public static GDFigureOpenBracket FigureOpenBracket => new GDFigureOpenBracket();
             public static GDFigureCloseBracket FigureCloseBracket => new GDFigureCloseBracket();
@@ -87,7 +90,7 @@ namespace GDShrapt.Builder
             public static GDSemiColon SemiColon => new GDSemiColon();
 
             public static GDPathSpecifier PathSpecifier(GDPathSpecifierType specifier) => new GDPathSpecifier() { Type = specifier };
-            public static GDPathSpecifier PathSpecifier(string identifier) => new GDPathSpecifier() { Type = GDPathSpecifierType.Identifier, IdentifierValue = identifier };
+            public static GDPathSpecifier PathSpecifier(string identifier) => new GDPathSpecifier() { Type = GDPathSpecifierType.Identifier, IdentifierValue = identifier ?? throw new ArgumentNullException(nameof(identifier)) };
 
             public static GDDualOperator DualOperator(GDDualOperatorType type) => new GDDualOperator()
             {

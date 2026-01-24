@@ -34,7 +34,7 @@ namespace GDShrapt.Builder
                 [1] = Syntax.Space(),
                 Identifier = Syntax.Identifier(name),
                 Colon = new GDColon(),
-                [3] = new GDNewLine(),
+                [5] = new GDNewLine(),
                 Members = members
             };
 
@@ -44,7 +44,7 @@ namespace GDShrapt.Builder
                 [1] = Syntax.Space(),
                 Identifier = identifier,
                 Colon = new GDColon(),
-                [3] = new GDNewLine(),
+                [5] = new GDNewLine(),
                 Members = members
             };
 
@@ -59,7 +59,7 @@ namespace GDShrapt.Builder
                 [1] = Syntax.Space(),
                 Identifier = Syntax.Identifier(name),
                 Colon = new GDColon(),
-                [3] = new GDNewLine(),
+                [5] = new GDNewLine(),
                 Members = List.Members(members)
             };
 
@@ -69,7 +69,7 @@ namespace GDShrapt.Builder
                 [1] = Syntax.Space(),
                 Identifier = identifier,
                 Colon = new GDColon(),
-                [3] = new GDNewLine(),
+                [5] = new GDNewLine(),
                 Members = List.Members(members)
             };
 
@@ -283,17 +283,33 @@ namespace GDShrapt.Builder
                 Identifier = Syntax.Identifier(identifier)
             };
 
-            public static GDParameterDeclaration Parameter(string identifier, GDTypeNode type, GDExpression defaultValue) => new GDParameterDeclaration()
+            public static GDParameterDeclaration Parameter(string identifier, GDTypeNode type, GDExpression defaultValue)
+            {
+                var param = new GDParameterDeclaration()
+                {
+                    Identifier = Syntax.Identifier(identifier),
+                    Colon = new GDColon(),
+                    [2] = Syntax.Space(),
+                    Type = type
+                };
+
+                if (defaultValue != null)
+                {
+                    param[3] = Syntax.Space();
+                    param.Assign = new GDAssign();
+                    param[4] = Syntax.Space();
+                    param.DefaultValue = defaultValue;
+                }
+
+                return param;
+            }
+
+            public static GDParameterDeclaration Parameter(string identifier, GDTypeNode type) => new GDParameterDeclaration()
             {
                 Identifier = Syntax.Identifier(identifier),
-                [1] = Syntax.Space(),
                 Colon = new GDColon(),
                 [2] = Syntax.Space(),
-                Type = type,
-                [3] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [4] = Syntax.Space(),
-                DefaultValue = defaultValue
+                Type = type
             };
 
             public static GDParameterDeclaration Parameter(string identifier, GDExpression defaultValue) => new GDParameterDeclaration()
@@ -310,17 +326,33 @@ namespace GDShrapt.Builder
                 Identifier = identifier
             };
 
-            public static GDParameterDeclaration Parameter(GDIdentifier identifier, GDTypeNode type, GDExpression defaultValue) => new GDParameterDeclaration()
+            public static GDParameterDeclaration Parameter(GDIdentifier identifier, GDTypeNode type, GDExpression defaultValue)
+            {
+                var param = new GDParameterDeclaration()
+                {
+                    Identifier = identifier,
+                    Colon = new GDColon(),
+                    [2] = Syntax.Space(),
+                    Type = type
+                };
+
+                if (defaultValue != null)
+                {
+                    param[3] = Syntax.Space();
+                    param.Assign = new GDAssign();
+                    param[4] = Syntax.Space();
+                    param.DefaultValue = defaultValue;
+                }
+
+                return param;
+            }
+
+            public static GDParameterDeclaration Parameter(GDIdentifier identifier, GDTypeNode type) => new GDParameterDeclaration()
             {
                 Identifier = identifier,
-                [1] = Syntax.Space(),
                 Colon = new GDColon(),
                 [2] = Syntax.Space(),
-                Type = type,
-                [3] = Syntax.Space(),
-                Assign = new GDAssign(),
-                [4] = Syntax.Space(),
-                DefaultValue = defaultValue
+                Type = type
             };
 
             public static GDParameterDeclaration Parameter(GDIdentifier identifier, GDExpression defaultValue) => new GDParameterDeclaration()
@@ -349,6 +381,14 @@ namespace GDShrapt.Builder
                 Colon = new GDColon(),
                 Statements = List.Statements(statements)
             };
+
+            // Single expression pattern (auto-wrap in ExpressionsList)
+            public static GDMatchCaseDeclaration MatchCase(GDExpression condition, GDStatementsList statements)
+                => MatchCase(List.Expressions(condition), statements);
+
+            // Single expression pattern with params statements
+            public static GDMatchCaseDeclaration MatchCase(GDExpression condition, params GDStatement[] statements)
+                => MatchCase(List.Expressions(condition), statements);
 
             public static GDSignalDeclaration Signal() => new GDSignalDeclaration();
             public static GDSignalDeclaration Signal(Func<GDSignalDeclaration, GDSignalDeclaration> setup) => setup(new GDSignalDeclaration());
@@ -405,8 +445,7 @@ namespace GDShrapt.Builder
                 VarKeyword = new GDVarKeyword(),
                 [3] = Syntax.Space(),
                 Identifier = Syntax.Identifier(identifier),
-                [4] = Syntax.Space(),
-                Colon = new GDColon(),
+                TypeColon = new GDColon(),
                 [5] = Syntax.Space(),
                 Type = GD.ParseTypeNode(type)
             };
@@ -427,10 +466,33 @@ namespace GDShrapt.Builder
                 VarKeyword = new GDVarKeyword(),
                 [3] = Syntax.Space(),
                 Identifier = Syntax.Identifier(identifier),
-                [4] = Syntax.Space(),
-                Colon = new GDColon(),
+                TypeColon = new GDColon(),
                 [5] = Syntax.Space(),
                 Type = GD.ParseTypeNode(type),
+                [6] = Syntax.Space(),
+                Assign = new GDAssign(),
+                [7] = Syntax.Space(),
+                Initializer = initializer
+            };
+
+            public static GDVariableDeclaration Variable(string identifier, GDTypeNode type) => new GDVariableDeclaration()
+            {
+                VarKeyword = new GDVarKeyword(),
+                [3] = Syntax.Space(),
+                Identifier = Syntax.Identifier(identifier),
+                TypeColon = new GDColon(),
+                [5] = Syntax.Space(),
+                Type = type
+            };
+
+            public static GDVariableDeclaration Variable(string identifier, GDTypeNode type, GDExpression initializer) => new GDVariableDeclaration()
+            {
+                VarKeyword = new GDVarKeyword(),
+                [3] = Syntax.Space(),
+                Identifier = Syntax.Identifier(identifier),
+                TypeColon = new GDColon(),
+                [5] = Syntax.Space(),
+                Type = type,
                 [6] = Syntax.Space(),
                 Assign = new GDAssign(),
                 [7] = Syntax.Space(),
@@ -555,6 +617,20 @@ namespace GDShrapt.Builder
                 ConstKeyword = new GDConstKeyword(),
                 [3] = Syntax.Space(),
                 Identifier = identifier,
+                [6] = Syntax.Space(),
+                Assign = new GDAssign(),
+                [7] = Syntax.Space(),
+                Initializer = initializer
+            };
+
+            public static GDVariableDeclaration Const(string identifier, GDTypeNode type, GDExpression initializer) => new GDVariableDeclaration()
+            {
+                ConstKeyword = new GDConstKeyword(),
+                [3] = Syntax.Space(),
+                Identifier = Syntax.Identifier(identifier),
+                TypeColon = new GDColon(),
+                [5] = Syntax.Space(),
+                Type = type,
                 [6] = Syntax.Space(),
                 Assign = new GDAssign(),
                 [7] = Syntax.Space(),
@@ -729,6 +805,7 @@ namespace GDShrapt.Builder
             {
                 GetKeyword = new GDGetKeyword(),
                 Colon = new GDColon(),
+                [3] = new GDNewLine(),
                 Statements = List.Statements(statements)
             };
 
@@ -757,6 +834,7 @@ namespace GDShrapt.Builder
                 Parameter = new GDParameterDeclaration() { Identifier = Syntax.Identifier(parameterName) },
                 CloseBracket = new GDCloseBracket(),
                 Colon = new GDColon(),
+                [6] = new GDNewLine(),
                 Statements = List.Statements(statements)
             };
 

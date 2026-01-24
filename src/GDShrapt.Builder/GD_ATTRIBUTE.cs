@@ -5,7 +5,7 @@ namespace GDShrapt.Builder
 {
     public partial class GD
     {
-        public static class Atribute
+        public static class Attribute
         {
             public static GDToolAttribute Tool() => new GDToolAttribute()
             {
@@ -33,7 +33,7 @@ namespace GDShrapt.Builder
             public static GDExtendsAttribute Extends(Func<GDExtendsAttribute, GDExtendsAttribute> setup) => setup(new GDExtendsAttribute());
             public static GDExtendsAttribute Extends(params GDSyntaxToken[] unsafeTokens) => new GDExtendsAttribute() { FormTokensSetter = unsafeTokens };
             public static GDExtendsAttribute Extends(GDTypeNode type) => new GDExtendsAttribute()
-            { 
+            {
                 ExtendsKeyword = new GDExtendsKeyword(),
                 [1] = Syntax.Space(),
                 Type = type

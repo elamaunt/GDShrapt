@@ -67,7 +67,7 @@ namespace GDShrapt.Reader.Tests.Building
         [TestMethod]
         public void Attribute_Abstract_ReturnsCorrectAttribute()
         {
-            var attr = GD.Atribute.Abstract();
+            var attr = GD.Attribute.Abstract();
             var code = attr.ToString();
             Assert.AreEqual("@abstract", code);
         }
@@ -88,7 +88,12 @@ namespace GDShrapt.Reader.Tests.Building
         public void Declaration_AbstractMethodWithParameters_GeneratesCorrectCode()
         {
             var method = GD.Declaration.AbstractMethod("process", GD.List.Parameters(
-                GD.Declaration.Parameter("delta", GD.Type.Single("float"), null)
+                GD.Declaration.Parameter(p => p
+                    .Add(GD.Syntax.Identifier("delta"))
+                    .AddColon()
+                    .AddSpace()
+                    .Add(GD.Type.Single("float"))
+                )
             ));
             var code = method.ToString();
             Assert.IsTrue(code.Contains("func"));
@@ -280,7 +285,7 @@ namespace GDShrapt.Reader.Tests.Building
         {
             // Build a class with @abstract attribute using the members list
             var cls = GD.Declaration.Class();
-            cls.Members = GD.List.Members(GD.Atribute.Abstract());
+            cls.Members = GD.List.Members(GD.Attribute.Abstract());
             var code = cls.ToString();
             Assert.IsTrue(code.Contains("@abstract"));
         }

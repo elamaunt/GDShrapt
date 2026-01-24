@@ -31,5 +31,14 @@
         /// Default value is 256.
         /// </summary>
         public int CancellationCheckInterval { get; set; } = 256;
+
+        /// <summary>
+        /// Maximum number of PassChar calls allowed without advancing the input position.
+        /// If exceeded, a <see cref="GDInfiniteLoopException"/> is thrown.
+        /// This protects against buggy resolvers that re-pass the same character indefinitely.
+        /// Set to null to disable loop detection.
+        /// Default value is 1000.
+        /// </summary>
+        public int? MaxPassesWithoutProgress { get; set; } = 1000;
     }
 }
