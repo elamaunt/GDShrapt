@@ -329,6 +329,109 @@ func process(obj):
 
     #endregion
 
+    #region Return Type Collector Narrowing Tests
+
+    /// <summary>
+    /// Tests that binary operators correctly use narrowed type of operands.
+    /// After 'if input is int:', the expression 'input * 2' should be inferred as 'int', not 'Variant'.
+    /// </summary>
+    [TestMethod]
+    public void ReturnTypeCollector_BinaryOperator_UsesNarrowedOperandType()
+    {
+        // Arrange
+        var code = @"
+func try_operation(input):
+    if input is int:
+        return input * 2
+";
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+        var method = classDecl?.Members.OfType<GDMethodDeclaration>().FirstOrDefault();
+        Assert.IsNotNull(method, "Method not found");
+
+        var collector = new GDReturnTypeCollector(method, new GDDefaultRuntimeProvider());
+
+        // Act
+        collector.Collect();
+        var union = collector.ComputeReturnUnionType();
+
+        // Assert - 'input * 2' after 'if input is int' should be inferred as int
+        var actualTypes = string.Join(", ", union.Types);
+        Assert.IsTrue(union.Types.Contains("int"),
+            $"Return type of 'input * 2' after 'is int' check should be 'int'. Actual types: [{actualTypes}]");
+        Assert.IsFalse(union.Types.Contains("Variant"),
+            $"Should not contain 'Variant' - narrowing should work. Actual types: [{actualTypes}]");
+    }
+
+    /// <summary>
+    /// Tests that type narrowing is preserved in nested if statements.
+    /// The narrowed type from outer 'if input is int:' should persist through inner 'if input < 0:'.
+    /// </summary>
+    [TestMethod]
+    public void ReturnTypeCollector_NestedIf_PreservesNarrowedType()
+    {
+        // Arrange
+        var code = @"
+func try_operation(input):
+    if input is int:
+        if input < 0:
+            return input + 100
+        return input * 2
+";
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+        var method = classDecl?.Members.OfType<GDMethodDeclaration>().FirstOrDefault();
+        Assert.IsNotNull(method, "Method not found");
+
+        var collector = new GDReturnTypeCollector(method, new GDDefaultRuntimeProvider());
+
+        // Act
+        collector.Collect();
+        var union = collector.ComputeReturnUnionType();
+
+        // Assert - Both returns should be int (narrowing preserved through nested if)
+        var actualTypes = string.Join(", ", union.Types);
+        var returnInfos = string.Join(", ", collector.Returns.Select(r => $"{r.ExpressionText}:{r.InferredType ?? "null"}"));
+
+        Assert.IsTrue(union.Types.Contains("int"),
+            $"All returns inside 'is int' block should be 'int'. Actual types: [{actualTypes}], Returns: [{returnInfos}]");
+        Assert.IsFalse(union.Types.Contains("Variant"),
+            $"Should not contain 'Variant' - narrowing should be preserved. Actual types: [{actualTypes}]");
+    }
+
+    /// <summary>
+    /// Tests that method calls on narrowed types work correctly.
+    /// After 'if input is String:', calling 'input.length()' should return 'int'.
+    /// </summary>
+    [TestMethod]
+    public void ReturnTypeCollector_MethodCallOnNarrowedType_InfersCorrectly()
+    {
+        // Arrange
+        var code = @"
+func get_length(input):
+    if input is String:
+        return input.length()
+    return 0
+";
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+        var method = classDecl?.Members.OfType<GDMethodDeclaration>().FirstOrDefault();
+        Assert.IsNotNull(method, "Method not found");
+
+        var collector = new GDReturnTypeCollector(method, new GDDefaultRuntimeProvider());
+
+        // Act
+        collector.Collect();
+        var union = collector.ComputeReturnUnionType();
+
+        // Assert - input.length() should return int
+        var actualTypes = string.Join(", ", union.Types);
+        Assert.IsTrue(union.Types.Contains("int"),
+            $"input.length() on String should return 'int'. Actual types: [{actualTypes}]");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static GDIfStatement? FindFirstIfStatement(GDClassDeclaration? classDecl)

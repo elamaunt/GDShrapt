@@ -1,3 +1,5 @@
+using GDShrapt.CLI.Core;
+
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -76,7 +78,7 @@ internal class GDTypeFlowLayoutEngine
     {
         // Focus node is level 0
         focusNode.Level = 0;
-        focusNode.Size = new Vector2(NodeWidth, NodeHeight);
+        focusNode.SetSize(new Vector2(NodeWidth, NodeHeight));
         allNodes.Add(focusNode);
         visitedIds.Add(focusNode.Id);
 
@@ -101,7 +103,7 @@ internal class GDTypeFlowLayoutEngine
                 continue;
 
             node.Level = level;
-            node.Size = new Vector2(NodeWidth, NodeHeight);
+            node.SetSize(new Vector2(NodeWidth, NodeHeight));
             allNodes.Add(node);
             visitedIds.Add(node.Id);
 
@@ -136,7 +138,7 @@ internal class GDTypeFlowLayoutEngine
                 continue;
 
             node.Level = level;
-            node.Size = new Vector2(NodeWidth, NodeHeight);
+            node.SetSize(new Vector2(NodeWidth, NodeHeight));
             allNodes.Add(node);
             visitedIds.Add(node.Id);
 
@@ -180,7 +182,7 @@ internal class GDTypeFlowLayoutEngine
             for (int i = 0; i < nodes.Count; i++)
             {
                 var node = nodes[i];
-                node.Position = new Vector2(startX + i * (NodeWidth + HorizontalSpacing), y);
+                node.SetPosition(new Vector2(startX + i * (NodeWidth + HorizontalSpacing), y));
             }
         }
 
@@ -196,15 +198,16 @@ internal class GDTypeFlowLayoutEngine
         if (nodes.Count == 0)
             return;
 
-        var minX = nodes.Min(n => n.Position.X);
-        var minY = nodes.Min(n => n.Position.Y);
+        var minX = nodes.Min(n => n.GetPosition().X);
+        var minY = nodes.Min(n => n.GetPosition().Y);
 
         foreach (var node in nodes)
         {
-            node.Position = new Vector2(
-                node.Position.X - minX,
-                node.Position.Y - minY
-            );
+            var pos = node.GetPosition();
+            node.SetPosition(new Vector2(
+                pos.X - minX,
+                pos.Y - minY
+            ));
         }
     }
 
@@ -304,10 +307,10 @@ internal class GDTypeFlowLayoutEngine
         if (nodes == null || nodes.Count == 0)
             return new Rect2(0, 0, 400, 300);
 
-        var minX = nodes.Min(n => n.Position.X);
-        var minY = nodes.Min(n => n.Position.Y);
-        var maxX = nodes.Max(n => n.Position.X + n.Size.X);
-        var maxY = nodes.Max(n => n.Position.Y + n.Size.Y);
+        var minX = nodes.Min(n => n.GetPosition().X);
+        var minY = nodes.Min(n => n.GetPosition().Y);
+        var maxX = nodes.Max(n => n.GetPosition().X + n.GetSize().X);
+        var maxY = nodes.Max(n => n.GetPosition().Y + n.GetSize().Y);
 
         return new Rect2(minX, minY, maxX - minX, maxY - minY);
     }

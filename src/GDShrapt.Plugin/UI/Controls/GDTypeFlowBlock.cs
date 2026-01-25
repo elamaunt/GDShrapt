@@ -1,3 +1,5 @@
+using GDShrapt.CLI.Core;
+
 namespace GDShrapt.Plugin;
 
 /// <summary>

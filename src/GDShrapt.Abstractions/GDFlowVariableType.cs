@@ -36,12 +36,53 @@ public class GDFlowVariableType
 
     /// <summary>
     /// Gets the effective type for display/inference.
-    /// Priority: narrowing > current inferred > declared > Variant
+    /// Priority: narrowing > declared (when current is null/generic base) > current inferred > declared > Variant
     /// </summary>
-    public string EffectiveType =>
-        IsNarrowed && !string.IsNullOrEmpty(NarrowedFromType) ? NarrowedFromType :
-        !CurrentType.IsEmpty ? CurrentType.EffectiveType :
-        DeclaredType ?? "Variant";
+    public string EffectiveType
+    {
+        get
+        {
+            if (IsNarrowed && !string.IsNullOrEmpty(NarrowedFromType))
+                return NarrowedFromType;
+
+            if (!CurrentType.IsEmpty)
+            {
+                var currentEffective = CurrentType.EffectiveType;
+
+                // If DeclaredType exists and CurrentType is only "null", prefer DeclaredType
+                // This ensures "var x: Node = null" returns "Node", not "null"
+                if (!string.IsNullOrEmpty(DeclaredType) && currentEffective == "null")
+                    return DeclaredType;
+
+                // If DeclaredType is a generic version of CurrentType, prefer DeclaredType
+                // e.g., DeclaredType = "Dictionary[String,int]", CurrentType = "Dictionary"
+                if (!string.IsNullOrEmpty(DeclaredType) && IsGenericVersionOf(DeclaredType, currentEffective))
+                    return DeclaredType;
+
+                return currentEffective;
+            }
+
+            return DeclaredType ?? "Variant";
+        }
+    }
+
+    /// <summary>
+    /// Checks if genericType is a generic version of baseType.
+    /// e.g., "Dictionary[String,int]" is generic version of "Dictionary".
+    /// </summary>
+    private static bool IsGenericVersionOf(string genericType, string baseType)
+    {
+        if (string.IsNullOrEmpty(genericType) || string.IsNullOrEmpty(baseType))
+            return false;
+
+        // Check if genericType starts with baseType followed by '['
+        var bracketIndex = genericType.IndexOf('[');
+        if (bracketIndex <= 0)
+            return false;
+
+        var genericBase = genericType.Substring(0, bracketIndex);
+        return genericBase.Equals(baseType, System.StringComparison.Ordinal);
+    }
 
     /// <summary>
     /// Gets the effective type as a formatted string.
@@ -57,7 +98,16 @@ public class GDFlowVariableType
             if (!CurrentType.IsEmpty)
             {
                 if (CurrentType.IsSingleType)
-                    return CurrentType.Types.First();
+                {
+                    var singleType = CurrentType.Types.First();
+                    // Prefer DeclaredType when current is null
+                    if (!string.IsNullOrEmpty(DeclaredType) && singleType == "null")
+                        return DeclaredType;
+                    // Prefer DeclaredType if it's a generic version
+                    if (!string.IsNullOrEmpty(DeclaredType) && IsGenericVersionOf(DeclaredType, singleType))
+                        return DeclaredType;
+                    return singleType;
+                }
                 if (CurrentType.IsUnion)
                     return string.Join(" | ", CurrentType.Types.OrderBy(t => t));
             }

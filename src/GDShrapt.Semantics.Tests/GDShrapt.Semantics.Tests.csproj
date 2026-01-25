@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GDShrapt.Semantics\GDShrapt.Semantics.csproj" />
+    <ProjectReference Include="..\GDShrapt.Semantics.Validator\GDShrapt.Semantics.Validator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

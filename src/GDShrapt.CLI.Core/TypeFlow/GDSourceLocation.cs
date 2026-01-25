@@ -74,8 +74,13 @@ public class GDSourceLocation
     /// </summary>
     public bool IsValid => !string.IsNullOrEmpty(FilePath);
 
+    /// <summary>
+    /// Gets the file name without the path.
+    /// </summary>
+    public string GetFileName() => System.IO.Path.GetFileName(FilePath ?? "");
+
     public override string ToString()
     {
-        return $"{System.IO.Path.GetFileName(FilePath ?? "")}:{StartLine + 1}:{StartColumn + 1}";
+        return $"{GetFileName()}:{StartLine + 1}:{StartColumn + 1}";
     }
 }

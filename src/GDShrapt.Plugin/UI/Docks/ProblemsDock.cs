@@ -151,7 +151,7 @@ internal partial class ProblemsDock : Control
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             HideRoot = true,
             SelectMode = Tree.SelectModeEnum.Single,
-            Columns = 4
+            Columns = 5 // 5th column is hidden, used for metadata storage
         };
         _resultsTree.SetColumnTitle(0, "Severity");
         _resultsTree.SetColumnTitle(1, "Message");
@@ -161,9 +161,11 @@ internal partial class ProblemsDock : Control
         _resultsTree.SetColumnExpand(1, true);
         _resultsTree.SetColumnExpand(2, false);
         _resultsTree.SetColumnExpand(3, false);
+        _resultsTree.SetColumnExpand(4, false);
         _resultsTree.SetColumnCustomMinimumWidth(0, 70);
         _resultsTree.SetColumnCustomMinimumWidth(2, 150);
         _resultsTree.SetColumnCustomMinimumWidth(3, 50);
+        _resultsTree.SetColumnCustomMinimumWidth(4, 0); // Hidden column for RuleName metadata
         _resultsTree.ItemActivated += OnItemActivated;
         _resultsTree.GuiInput += OnTreeGuiInput;
         mainVBox.AddChild(_resultsTree);

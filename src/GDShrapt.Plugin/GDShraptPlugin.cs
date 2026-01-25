@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
 using GDShrapt.CLI.Core;
 using System.Diagnostics;
@@ -1114,6 +1115,16 @@ public partial class GDShraptPlugin : EditorPlugin
                         OpenResource(path);
                     }
                 };
+
+                // Handle type annotation requests
+                _typeFlowPanel.AddTypeAnnotationRequested += OnTypeFlowAddTypeAnnotation;
+
+                // Handle type guard requests
+                _typeFlowPanel.AddTypeGuardRequested += OnTypeFlowAddTypeGuard;
+
+                // Handle interface generation requests
+                _typeFlowPanel.GenerateInterfaceRequested += OnTypeFlowGenerateInterface;
+
                 // Add window to editor base control so it's in the scene tree
                 EditorInterface.Singleton.GetBaseControl().AddChild(_typeFlowPanel);
             }
@@ -1134,6 +1145,163 @@ public partial class GDShraptPlugin : EditorPlugin
             Logger.Error($"Error showing GDTypeFlowPanel: {ex.Message}");
             Logger.Error(ex);
         }
+    }
+
+    /// <summary>
+    /// Handles type annotation request from the Type Flow panel.
+    /// </summary>
+    private void OnTypeFlowAddTypeAnnotation(GDScriptFile scriptFile, GDTypeAnnotationPlan annotation)
+    {
+        if (scriptFile == null || annotation?.Edit == null)
+        {
+            Logger.Warning("OnTypeFlowAddTypeAnnotation: Invalid parameters");
+            return;
+        }
+
+        try
+        {
+            Logger.Info($"Applying type annotation: {annotation.IdentifierName}: {annotation.InferredType.TypeName}");
+
+            // Open the script and apply the edit
+            var resPath = ToResPath(scriptFile.FullPath);
+            if (string.IsNullOrEmpty(resPath))
+            {
+                Logger.Warning($"Cannot convert path to res://: {scriptFile.FullPath}");
+                return;
+            }
+
+            OpenResource(resPath);
+
+            // Get the current editor and apply the edit
+            var scriptEditor = EditorInterface.Singleton.GetScriptEditor();
+            var currentEditor = scriptEditor?.GetCurrentEditor();
+            if (currentEditor == null)
+            {
+                Logger.Warning("No current editor available");
+                return;
+            }
+
+            var codeEdit = FindCodeEdit(currentEditor);
+            if (codeEdit == null)
+            {
+                Logger.Warning("No CodeEdit found in current editor");
+                return;
+            }
+
+            // Apply the edit directly to CodeEdit
+            ApplyTextEditToCodeEdit(codeEdit, annotation.Edit);
+
+            // Reload the script file to update the AST
+            scriptFile.Reload(codeEdit.Text);
+
+            Logger.Info($"Type annotation applied successfully to '{annotation.IdentifierName}'");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error applying type annotation: {ex.Message}");
+            Logger.Error(ex);
+        }
+    }
+
+    /// <summary>
+    /// Handles type guard request from the Type Flow panel.
+    /// </summary>
+    private void OnTypeFlowAddTypeGuard(GDScriptFile scriptFile, string symbolName, IReadOnlyList<string> types)
+    {
+        if (scriptFile == null || string.IsNullOrEmpty(symbolName))
+        {
+            Logger.Warning("OnTypeFlowAddTypeGuard: Invalid parameters");
+            return;
+        }
+
+        // Type guard generation is a Pro feature - silent in Base per Rule 12 (STATE.md)
+        Logger.Debug($"Type guard requested for '{symbolName}' with types: {string.Join(", ", types)} - Pro feature, no-op in Base");
+    }
+
+    /// <summary>
+    /// Handles interface generation request from the Type Flow panel.
+    /// </summary>
+    private void OnTypeFlowGenerateInterface(GDScriptFile scriptFile, GDDuckType duckType)
+    {
+        if (scriptFile == null || duckType == null)
+        {
+            Logger.Warning("OnTypeFlowGenerateInterface: Invalid parameters");
+            return;
+        }
+
+        // Interface generation is a Pro feature - silent in Base per Rule 12 (STATE.md)
+        var methodCount = duckType.RequiredMethods.Count;
+        var propCount = duckType.RequiredProperties.Count;
+        Logger.Debug($"Interface generation requested: {methodCount} methods, {propCount} properties - Pro feature, no-op in Base");
+    }
+
+    /// <summary>
+    /// Applies a GDTextEdit to a CodeEdit control.
+    /// </summary>
+    private void ApplyTextEditToCodeEdit(CodeEdit codeEdit, GDTextEdit edit)
+    {
+        if (codeEdit == null || edit == null)
+            return;
+
+        if (string.IsNullOrEmpty(edit.OldText))
+        {
+            // Insert only - no text to replace
+            codeEdit.SetCaretLine(edit.Line);
+            codeEdit.SetCaretColumn(edit.Column);
+            codeEdit.InsertTextAtCaret(edit.NewText ?? "");
+        }
+        else
+        {
+            // Replace existing text
+            var oldTextLines = edit.OldText.Split('\n');
+            var endLine = edit.Line + oldTextLines.Length - 1;
+            var endColumn = oldTextLines.Length > 1
+                ? oldTextLines[^1].Length
+                : edit.Column + edit.OldText.Length;
+
+            codeEdit.Select(edit.Line, edit.Column, endLine, endColumn);
+            codeEdit.Cut();
+            codeEdit.InsertTextAtCaret(edit.NewText ?? "");
+        }
+    }
+
+    /// <summary>
+    /// Converts an absolute file path to a res:// path.
+    /// </summary>
+    private string ToResPath(string absolutePath)
+    {
+        if (string.IsNullOrEmpty(absolutePath))
+            return null;
+
+        if (absolutePath.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+            return absolutePath;
+
+        var projectPath = ProjectSettings.GlobalizePath("res://");
+        if (absolutePath.StartsWith(projectPath, StringComparison.OrdinalIgnoreCase))
+        {
+            var relativePath = absolutePath.Substring(projectPath.Length);
+            return "res://" + relativePath.Replace('\\', '/');
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Recursively finds a CodeEdit control in a node hierarchy.
+    /// </summary>
+    private CodeEdit FindCodeEdit(Node parent)
+    {
+        if (parent is CodeEdit codeEdit)
+            return codeEdit;
+
+        foreach (var child in parent.GetChildren())
+        {
+            var found = FindCodeEdit(child);
+            if (found != null)
+                return found;
+        }
+
+        return null;
     }
 
     public void OpenPreferences()

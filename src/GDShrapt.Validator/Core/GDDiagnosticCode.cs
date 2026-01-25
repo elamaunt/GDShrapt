@@ -5,8 +5,8 @@ namespace GDShrapt.Reader
     /// Codes are grouped by category:
     /// - GD1xxx: Syntax errors
     /// - GD2xxx: Scope errors
-    /// - GD3xxx: Type errors
-    /// - GD4xxx: Call errors
+    /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018)
+    /// - GD4xxx: Call errors (including signal types GD4009-4010)
     /// - GD5xxx: Control flow errors
     /// - GD6xxx: Indentation errors
     /// - GD7xxx: Duck typing errors
@@ -122,6 +122,52 @@ namespace GDShrapt.Reader
         /// </summary>
         ArgumentTypeMismatch = 3010,
 
+        /// <summary>
+        /// Accessing a member on a type that was excluded by flow analysis.
+        /// For example, calling String.to_upper() after type guards excluded String.
+        /// </summary>
+        ImpossibleTypeAccess = 3011,
+
+        /// <summary>
+        /// Recommendation to add type annotation for better analysis.
+        /// </summary>
+        TypeAnnotationRecommended = 3012,
+
+        /// <summary>
+        /// Indexer key type does not match expected type.
+        /// For example: arr["string"] where arr expects int key.
+        /// </summary>
+        IndexerKeyTypeMismatch = 3013,
+
+        /// <summary>
+        /// Attempting to use indexer on a non-indexable type.
+        /// For example: int[0] - int is not indexable.
+        /// </summary>
+        NotIndexable = 3014,
+
+        /// <summary>
+        /// Static index is out of range for known-size collections.
+        /// </summary>
+        IndexOutOfRange = 3015,
+
+        /// <summary>
+        /// Wrong number of type parameters for generic type.
+        /// For example: Array[int, String] instead of Array[int].
+        /// </summary>
+        WrongGenericParameterCount = 3016,
+
+        /// <summary>
+        /// Unknown or invalid type used as generic argument.
+        /// For example: Array[UnknownType].
+        /// </summary>
+        InvalidGenericArgument = 3017,
+
+        /// <summary>
+        /// Dictionary key type is not hashable.
+        /// For example: Dictionary[Array, int] - Array is not hashable.
+        /// </summary>
+        DictionaryKeyNotHashable = 3018,
+
         // Call errors (4xxx)
         /// <summary>
         /// Wrong number of arguments in a function call.
@@ -162,6 +208,16 @@ namespace GDShrapt.Reader
         /// A resource path in load/preload does not exist.
         /// </summary>
         ResourceNotFound = 4008,
+
+        /// <summary>
+        /// emit_signal called with argument type that doesn't match signal parameter.
+        /// </summary>
+        EmitSignalTypeMismatch = 4009,
+
+        /// <summary>
+        /// connect callback signature doesn't match signal parameters.
+        /// </summary>
+        ConnectCallbackTypeMismatch = 4010,
 
         // Control flow errors (5xxx)
         /// <summary>

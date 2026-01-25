@@ -27,6 +27,10 @@ namespace GDShrapt.Semantics
         // Guard against infinite recursion when inferring method return types
         private readonly HashSet<string> _methodsBeingInferred = new HashSet<string>();
 
+        // Guard against infinite recursion when inferring expression types
+        private readonly HashSet<GDExpression> _expressionsBeingInferred = new HashSet<GDExpression>();
+        private const int MaxInferenceDepth = 50;
+
         // Optional provider for narrowed types from control flow analysis (e.g., after "if x is Type:")
         private Func<string, string> _narrowingTypeProvider;
 
@@ -183,6 +187,36 @@ namespace GDShrapt.Semantics
             if (expression == null)
                 return null;
 
+            // Check cache first
+            if (_typeNodeCache.TryGetValue(expression, out var cachedType))
+                return cachedType;
+
+            // Guard against infinite recursion
+            if (_expressionsBeingInferred.Contains(expression))
+                return null; // Already inferring this expression - break cycle
+
+            if (_expressionsBeingInferred.Count >= MaxInferenceDepth)
+                return null; // Too deep - likely infinite recursion
+
+            _expressionsBeingInferred.Add(expression);
+            try
+            {
+                var result = InferTypeNodeCore(expression);
+                if (result != null)
+                    _typeNodeCache[expression] = result;
+                return result;
+            }
+            finally
+            {
+                _expressionsBeingInferred.Remove(expression);
+            }
+        }
+
+        /// <summary>
+        /// Core implementation of InferTypeNode without recursion guard.
+        /// </summary>
+        private GDTypeNode InferTypeNodeCore(GDExpression expression)
+        {
             switch (expression)
             {
                 // Literals - known types

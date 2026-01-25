@@ -60,6 +60,31 @@ public class UnionTypeComplexIntegrationTests
     }
 
     /// <summary>
+    /// Tests that try_operation return types do NOT include Variant - type narrowing should work.
+    /// After 'if input is int:', 'input * 2' should be inferred as int, not Variant.
+    /// </summary>
+    [TestMethod]
+    public void TryOperation_NoVariantType_NarrowingWorks()
+    {
+        // Arrange
+        var method = FindMethod("try_operation");
+        var collector = new GDReturnTypeCollector(method, GetRuntimeProvider());
+
+        // Act
+        collector.Collect();
+        var union = collector.ComputeReturnUnionType();
+
+        // Debug: Print actual inferred types for diagnostics
+        var actualTypes = string.Join(", ", union.Types);
+        var returnInfos = string.Join("\n", collector.Returns.Select(r =>
+            $"  Line {r.Line}: {r.InferredType ?? "null"} (expr: {r.ExpressionText ?? "implicit"})"));
+
+        // Assert - Variant should NOT be in the union when narrowing works correctly
+        Assert.IsFalse(union.Types.Contains("Variant"),
+            $"Union should NOT contain 'Variant' - type narrowing should work. Actual types: [{actualTypes}]\nReturns:\n{returnInfos}");
+    }
+
+    /// <summary>
     /// Verifies that try_operation has the expected number of return statements.
     /// The method has 5 explicit return statements.
     /// </summary>
@@ -489,6 +514,78 @@ public class UnionTypeComplexIntegrationTests
     private static IGDRuntimeProvider GetRuntimeProvider()
     {
         return _script?.SemanticModel?.RuntimeProvider ?? GDDefaultRuntimeProvider.Instance;
+    }
+
+    #endregion
+
+    #region Semantic Model GetUnionType Tests
+
+    /// <summary>
+    /// Tests that SemanticModel.GetUnionType returns a union type for methods with multiple return types.
+    /// try_operation returns int | String, so IsUnion should be true.
+    /// </summary>
+    [TestMethod]
+    public void SemanticModel_GetUnionType_ForMethod_ReturnsUnionFromReturnStatements()
+    {
+        // Arrange
+        var semanticModel = _script?.SemanticModel;
+        Assert.IsNotNull(semanticModel, "Semantic model not available");
+
+        // Act
+        var unionType = semanticModel.GetUnionType("try_operation");
+
+        // Assert
+        Assert.IsNotNull(unionType, "GetUnionType should return a union for method 'try_operation'");
+        Assert.IsTrue(unionType.IsUnion,
+            $"IsUnion should be true for try_operation. Actual types: [{string.Join(", ", unionType.Types)}]");
+        Assert.IsTrue(unionType.Types.Contains("int"),
+            $"Union should contain 'int'. Actual types: [{string.Join(", ", unionType.Types)}]");
+        Assert.IsTrue(unionType.Types.Contains("String"),
+            $"Union should contain 'String'. Actual types: [{string.Join(", ", unionType.Types)}]");
+    }
+
+    /// <summary>
+    /// Tests that SemanticModel.GetUnionType returns a union type for parameters with null checks.
+    /// The 'input' parameter in try_operation has 'if input == null:' check, so union should include null.
+    /// </summary>
+    [TestMethod]
+    public void SemanticModel_GetUnionType_ForParameter_IncludesNullFromNullCheck()
+    {
+        // Arrange
+        var semanticModel = _script?.SemanticModel;
+        Assert.IsNotNull(semanticModel, "Semantic model not available");
+
+        // Act
+        var unionType = semanticModel.GetUnionType("input");
+
+        // Assert
+        Assert.IsNotNull(unionType, "GetUnionType should return a union for parameter 'input'");
+        Assert.IsTrue(unionType.Types.Contains("null"),
+            $"Union should contain 'null' from null check. Actual types: [{string.Join(", ", unionType.Types)}]");
+    }
+
+    /// <summary>
+    /// Tests that SemanticModel.GetUnionType returns types from 'is' checks for parameters.
+    /// The 'input' parameter in try_operation has 'if input is int:' and 'if input is String:' checks.
+    /// </summary>
+    [TestMethod]
+    public void SemanticModel_GetUnionType_ForParameter_IncludesTypesFromIsChecks()
+    {
+        // Arrange
+        var semanticModel = _script?.SemanticModel;
+        Assert.IsNotNull(semanticModel, "Semantic model not available");
+
+        // Act
+        var unionType = semanticModel.GetUnionType("input");
+
+        // Assert
+        Assert.IsNotNull(unionType, "GetUnionType should return a union for parameter 'input'");
+        var actualTypes = string.Join(", ", unionType.Types);
+
+        Assert.IsTrue(unionType.Types.Contains("int"),
+            $"Union should contain 'int' from is check. Actual types: [{actualTypes}]");
+        Assert.IsTrue(unionType.Types.Contains("String"),
+            $"Union should contain 'String' from is check. Actual types: [{actualTypes}]");
     }
 
     #endregion

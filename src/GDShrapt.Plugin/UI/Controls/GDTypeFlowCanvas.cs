@@ -1,3 +1,5 @@
+using GDShrapt.CLI.Core;
+
 namespace GDShrapt.Plugin;
 
 /// <summary>
@@ -128,7 +130,7 @@ internal partial class GDTypeFlowCanvas : ScrollContainer
             return;
 
         // Scroll to center the node
-        var nodeCenter = node.Position + node.Size / 2;
+        var nodeCenter = node.GetPosition() + node.GetSize() / 2;
         var viewportSize = Size;
         var scrollPos = nodeCenter - viewportSize / 2;
 
@@ -161,8 +163,8 @@ internal partial class GDTypeFlowCanvas : ScrollContainer
             var node = _nodes[i];
             var block = _blocks[i];
 
-            block.Position = node.Position + new Vector2(padding, padding);
-            block.Size = node.Size;
+            block.Position = node.GetPosition() + new Vector2(padding, padding);
+            block.Size = node.GetSize();
         }
     }
 
@@ -223,11 +225,118 @@ internal partial class GDTypeFlowCanvas : ScrollContainer
     private partial class CanvasDrawingArea : Control
     {
         private readonly GDTypeFlowCanvas _canvas;
+        private const float Padding = 30f;
 
         public CanvasDrawingArea(GDTypeFlowCanvas canvas)
         {
             _canvas = canvas;
-            MouseFilter = MouseFilterEnum.Pass;
+            MouseFilter = MouseFilterEnum.Stop; // Capture mouse events
+        }
+
+        public override void _GuiInput(InputEvent @event)
+        {
+            if (@event is InputEventMouseMotion motion)
+            {
+                HandleMouseMotion(motion.Position);
+            }
+            else if (@event is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
+            {
+                HandleMouseClick(mb.Position);
+            }
+        }
+
+        private void HandleMouseMotion(Vector2 localPos)
+        {
+            var hitEdge = HitTestEdges(localPos);
+
+            if (hitEdge != _canvas._hoveredEdge)
+            {
+                if (_canvas._hoveredEdge != null)
+                {
+                    _canvas.EdgeHoverEnd?.Invoke();
+                }
+
+                _canvas._hoveredEdge = hitEdge;
+
+                if (_canvas._hoveredEdge != null)
+                {
+                    _canvas.EdgeHoverStart?.Invoke(_canvas._hoveredEdge, localPos);
+                }
+
+                QueueRedraw();
+            }
+        }
+
+        private void HandleMouseClick(Vector2 localPos)
+        {
+            var hitEdge = HitTestEdges(localPos);
+            if (hitEdge != null)
+            {
+                _canvas.EdgeClicked?.Invoke(hitEdge);
+            }
+        }
+
+        private GDTypeFlowEdge HitTestEdges(Vector2 point)
+        {
+            foreach (var node in _canvas._nodes)
+            {
+                foreach (var edge in node.OutgoingEdges)
+                {
+                    if (IsPointNearEdge(point, edge))
+                        return edge;
+                }
+            }
+            return null;
+        }
+
+        private bool IsPointNearEdge(Vector2 point, GDTypeFlowEdge edge)
+        {
+            if (edge?.Source == null || edge.Target == null)
+                return false;
+
+            var (start, end) = GetEdgeEndpoints(edge);
+
+            // Sample points along the bezier curve and check distance
+            var distance = start.DistanceTo(end);
+            var controlOffset = Math.Min(distance * 0.5f, 60f);
+            var control1 = start + new Vector2(0, controlOffset);
+            var control2 = end - new Vector2(0, controlOffset);
+
+            var segments = (int)Math.Max(10, distance / 20);
+
+            for (int i = 0; i <= segments; i++)
+            {
+                var t = (float)i / segments;
+                var curvePoint = CubicBezier(start, control1, control2, end, t);
+
+                if (point.DistanceTo(curvePoint) < EdgeHitRadius)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private (Vector2 start, Vector2 end) GetEdgeEndpoints(GDTypeFlowEdge edge)
+        {
+            var sourcePos = edge.Source.GetPosition() + new Vector2(Padding, Padding);
+            var targetPos = edge.Target.GetPosition() + new Vector2(Padding, Padding);
+            var sourceSize = edge.Source.GetSize();
+            var targetSize = edge.Target.GetSize();
+
+            Vector2 start, end;
+
+            if (edge.Source.Level < edge.Target.Level)
+            {
+                start = sourcePos + new Vector2(sourceSize.X / 2, sourceSize.Y);
+                end = targetPos + new Vector2(targetSize.X / 2, 0);
+            }
+            else
+            {
+                start = sourcePos + new Vector2(sourceSize.X / 2, 0);
+                end = targetPos + new Vector2(targetSize.X / 2, targetSize.Y);
+            }
+
+            return (start, end);
         }
 
         public override void _Draw()
@@ -259,42 +368,21 @@ internal partial class GDTypeFlowCanvas : ScrollContainer
 
         private void DrawEdges()
         {
-            var padding = 30f;
-
             foreach (var node in _canvas._nodes)
             {
                 foreach (var edge in node.OutgoingEdges)
                 {
-                    DrawEdge(edge, padding);
+                    DrawEdge(edge);
                 }
             }
         }
 
-        private void DrawEdge(GDTypeFlowEdge edge, float padding)
+        private void DrawEdge(GDTypeFlowEdge edge)
         {
             if (edge?.Source == null || edge.Target == null)
                 return;
 
-            var sourcePos = edge.Source.Position + new Vector2(padding, padding);
-            var targetPos = edge.Target.Position + new Vector2(padding, padding);
-            var sourceSize = edge.Source.Size;
-            var targetSize = edge.Target.Size;
-
-            // Determine connection points
-            Vector2 start, end;
-
-            if (edge.Source.Level < edge.Target.Level)
-            {
-                // Downward edge (inflow to focus, or focus to outflow)
-                start = sourcePos + new Vector2(sourceSize.X / 2, sourceSize.Y);
-                end = targetPos + new Vector2(targetSize.X / 2, 0);
-            }
-            else
-            {
-                // Upward edge
-                start = sourcePos + new Vector2(sourceSize.X / 2, 0);
-                end = targetPos + new Vector2(targetSize.X / 2, targetSize.Y);
-            }
+            var (start, end) = GetEdgeEndpoints(edge);
 
             // Get edge color
             var color = edge.GetEdgeColor();

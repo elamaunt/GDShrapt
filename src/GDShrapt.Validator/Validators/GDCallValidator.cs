@@ -7,14 +7,34 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Validates function calls in GDScript.
     /// Uses function signatures collected by GDDeclarationCollector.
+    /// Optionally validates argument types when ArgumentTypeAnalyzer is provided.
     /// </summary>
     public class GDCallValidator : GDValidationVisitor
     {
         private readonly bool _checkResourcePaths;
+        private readonly IGDArgumentTypeAnalyzer? _argumentTypeAnalyzer;
+        private readonly bool _checkArgumentTypes;
+        private readonly GDDiagnosticSeverity _argumentTypeSeverity;
 
         public GDCallValidator(GDValidationContext context, bool checkResourcePaths = true) : base(context)
         {
             _checkResourcePaths = checkResourcePaths;
+            _argumentTypeAnalyzer = null;
+            _checkArgumentTypes = false;
+            _argumentTypeSeverity = GDDiagnosticSeverity.Warning;
+        }
+
+        public GDCallValidator(
+            GDValidationContext context,
+            bool checkResourcePaths,
+            IGDArgumentTypeAnalyzer? argumentTypeAnalyzer,
+            bool checkArgumentTypes,
+            GDDiagnosticSeverity argumentTypeSeverity) : base(context)
+        {
+            _checkResourcePaths = checkResourcePaths;
+            _argumentTypeAnalyzer = argumentTypeAnalyzer;
+            _checkArgumentTypes = checkArgumentTypes && argumentTypeAnalyzer != null;
+            _argumentTypeSeverity = argumentTypeSeverity;
         }
 
         public void Validate(GDNode node)
@@ -75,6 +95,61 @@ namespace GDShrapt.Reader
                         ValidateMemberCall(typeName, methodName, argCount, callExpression);
                     }
                 }
+            }
+
+            // Validate argument types if enabled
+            if (_checkArgumentTypes && _argumentTypeAnalyzer != null)
+            {
+                ValidateArgumentTypes(callExpression);
+            }
+        }
+
+        /// <summary>
+        /// Validates argument types for a call expression using the semantic analyzer.
+        /// </summary>
+        private void ValidateArgumentTypes(GDCallExpression callExpression)
+        {
+            if (_argumentTypeAnalyzer == null)
+                return;
+
+            var diffs = _argumentTypeAnalyzer.GetAllArgumentTypeDiffs(callExpression);
+
+            foreach (var diff in diffs)
+            {
+                // Skip if should be skipped (Variant without constraints)
+                if (diff.ShouldSkip)
+                    continue;
+
+                // Skip if compatible
+                if (diff.IsCompatible)
+                    continue;
+
+                // Report the mismatch with detailed message
+                ReportArgumentTypeMismatch(callExpression, diff);
+            }
+        }
+
+        /// <summary>
+        /// Reports an argument type mismatch diagnostic.
+        /// </summary>
+        private void ReportArgumentTypeMismatch(GDCallExpression callExpression, GDArgumentTypeDiff diff)
+        {
+            // Use short message for inline display, detailed message for extended info
+            var shortMessage = diff.FormatShortMessage();
+            var detailedMessage = diff.FormatDetailedMessage();
+
+            // Choose the appropriate severity
+            switch (_argumentTypeSeverity)
+            {
+                case GDDiagnosticSeverity.Error:
+                    ReportError(GDDiagnosticCode.ArgumentTypeMismatch, shortMessage, callExpression);
+                    break;
+                case GDDiagnosticSeverity.Warning:
+                    ReportWarning(GDDiagnosticCode.ArgumentTypeMismatch, shortMessage, callExpression);
+                    break;
+                case GDDiagnosticSeverity.Hint:
+                    ReportHint(GDDiagnosticCode.ArgumentTypeMismatch, shortMessage, callExpression);
+                    break;
             }
         }
 

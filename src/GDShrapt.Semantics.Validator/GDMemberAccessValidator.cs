@@ -257,13 +257,16 @@ public class GDMemberAccessValidator : GDValidationVisitor
 
     private GDRuntimeMemberInfo? FindMember(string typeName, string memberName)
     {
-        // Check direct member
-        var memberInfo = _runtimeProvider.GetMember(typeName, memberName);
+        // Extract base type for generics (Array[int] -> Array)
+        var baseTypeName = ExtractBaseTypeName(typeName);
+
+        // Check direct member on base type
+        var memberInfo = _runtimeProvider.GetMember(baseTypeName, memberName);
         if (memberInfo != null)
             return memberInfo;
 
         // Check inherited members
-        var baseType = _runtimeProvider.GetBaseType(typeName);
+        var baseType = _runtimeProvider.GetBaseType(baseTypeName);
         while (!string.IsNullOrEmpty(baseType))
         {
             memberInfo = _runtimeProvider.GetMember(baseType, memberName);
@@ -274,6 +277,22 @@ public class GDMemberAccessValidator : GDValidationVisitor
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Extracts the base type name from a generic type.
+    /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
+    /// </summary>
+    private static string ExtractBaseTypeName(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return typeName;
+
+        var bracketIndex = typeName.IndexOf('[');
+        if (bracketIndex > 0)
+            return typeName.Substring(0, bracketIndex);
+
+        return typeName;
     }
 
     private string? GetRootVariableName(GDExpression? expr)

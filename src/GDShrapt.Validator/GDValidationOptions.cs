@@ -1,3 +1,4 @@
+using System;
 using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
@@ -15,9 +16,9 @@ namespace GDShrapt.Reader
 
         /// <summary>
         /// Member access analyzer for enhanced type-aware validation.
-        /// When set, enables member access validation using type inference.
-        /// Typically provided by GDSemanticModel from GDShrapt.Semantics.
+        /// DEPRECATED: Use GDSemanticValidator from GDShrapt.Semantics.Validator instead.
         /// </summary>
+        [Obsolete("Use GDSemanticValidator from GDShrapt.Semantics.Validator instead")]
         public IGDMemberAccessAnalyzer? MemberAccessAnalyzer { get; set; }
 
         /// <summary>
@@ -58,16 +59,16 @@ namespace GDShrapt.Reader
 
         /// <summary>
         /// Whether to check member access on typed and untyped expressions.
-        /// When enabled with MemberAccessAnalyzer, validates property/method access using type inference.
-        /// Default: false (opt-in, requires MemberAccessAnalyzer)
+        /// DEPRECATED: Use GDSemanticValidator from GDShrapt.Semantics.Validator instead.
         /// </summary>
+        [Obsolete("Use GDSemanticValidator from GDShrapt.Semantics.Validator instead")]
         public bool CheckMemberAccess { get; set; } = false;
 
         /// <summary>
         /// Severity level for unguarded member access on untyped variables.
-        /// Only applies when CheckMemberAccess is true and MemberAccessAnalyzer is set.
-        /// Default: Warning
+        /// DEPRECATED: Use GDSemanticValidator from GDShrapt.Semantics.Validator instead.
         /// </summary>
+        [Obsolete("Use GDSemanticValidator from GDShrapt.Semantics.Validator instead")]
         public GDDiagnosticSeverity MemberAccessSeverity { get; set; } = GDDiagnosticSeverity.Warning;
 
         /// <summary>
@@ -91,6 +92,27 @@ namespace GDShrapt.Reader
         /// Default: true
         /// </summary>
         public bool CheckResourcePaths { get; set; } = true;
+
+        /// <summary>
+        /// Argument type analyzer for enhanced type-aware call validation.
+        /// When set, enables argument type checking in addition to count checking.
+        /// Typically provided by GDSemanticModel from GDShrapt.Semantics.
+        /// </summary>
+        public IGDArgumentTypeAnalyzer? ArgumentTypeAnalyzer { get; set; }
+
+        /// <summary>
+        /// Whether to check argument types in function calls.
+        /// Requires ArgumentTypeAnalyzer to be set.
+        /// Default: false (opt-in)
+        /// </summary>
+        public bool CheckArgumentTypes { get; set; } = false;
+
+        /// <summary>
+        /// Severity level for argument type mismatches.
+        /// Only applies when CheckArgumentTypes is true and ArgumentTypeAnalyzer is set.
+        /// Default: Warning
+        /// </summary>
+        public GDDiagnosticSeverity ArgumentTypeSeverity { get; set; } = GDDiagnosticSeverity.Warning;
 
         /// <summary>
         /// Whether to parse and apply comment-based suppression directives (# gd:ignore).

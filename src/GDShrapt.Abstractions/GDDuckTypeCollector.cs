@@ -36,10 +36,10 @@ public class GDDuckTypeCollector : GDVisitor
         if (varName == null)
             return;
 
-        // Check if variable is untyped
+        // Check if variable is untyped (no type or Variant type)
         var symbol = _scopes?.Lookup(varName);
-        if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
-            return; // Already has a known type
+        if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName) && symbol.TypeName != "Variant")
+            return; // Already has a known concrete type
 
         var memberName = memberOp.Identifier?.Sequence;
         if (string.IsNullOrEmpty(memberName))
@@ -56,10 +56,10 @@ public class GDDuckTypeCollector : GDVisitor
             if (varName == null)
                 return;
 
-            // Check if variable is untyped
+            // Check if variable is untyped (no type or Variant type)
             var symbol = _scopes?.Lookup(varName);
-            if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
-                return;
+            if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName) && symbol.TypeName != "Variant")
+                return; // Already has a known concrete type
 
             var methodName = memberOp.Identifier?.Sequence;
             if (string.IsNullOrEmpty(methodName))

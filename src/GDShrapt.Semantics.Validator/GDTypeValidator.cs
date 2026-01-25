@@ -87,29 +87,203 @@ namespace GDShrapt.Semantics.Validator
         public override void Visit(GDMethodDeclaration methodDeclaration)
         {
             _functionStack.Push(FunctionContext.FromMethod(methodDeclaration));
+
+            // Enter method scope and register parameters
+            Context.EnterScope(GDScopeType.Method, methodDeclaration);
+            RegisterMethodParameters(methodDeclaration);
         }
 
         public override void Left(GDMethodDeclaration methodDeclaration)
         {
             if (_functionStack.Count > 0)
                 _functionStack.Pop();
+
+            Context.ExitScope();
         }
 
         public override void Visit(GDMethodExpression methodExpression)
         {
             // Lambda expressions also create a new function context
             _functionStack.Push(FunctionContext.FromLambda(methodExpression));
+
+            // Enter lambda scope and register parameters
+            Context.EnterScope(GDScopeType.Lambda, methodExpression);
+            RegisterLambdaParameters(methodExpression);
         }
 
         public override void Left(GDMethodExpression methodExpression)
         {
             if (_functionStack.Count > 0)
                 _functionStack.Pop();
+
+            Context.ExitScope();
         }
 
         public override void Visit(GDReturnExpression returnExpression)
         {
             ValidateReturnType(returnExpression);
+        }
+
+        public override void Visit(GDVariableDeclarationStatement variableDeclaration)
+        {
+            // Register local variable in scope for type tracking
+            RegisterLocalVariable(variableDeclaration);
+
+            ValidateVariableDeclaration(variableDeclaration);
+        }
+
+        public override void Visit(GDVariableDeclaration variableDeclaration)
+        {
+            ValidateClassVariableDeclaration(variableDeclaration);
+        }
+
+        private void RegisterMethodParameters(GDMethodDeclaration method)
+        {
+            if (method.Parameters == null)
+                return;
+
+            foreach (var param in method.Parameters)
+            {
+                var paramName = param.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(paramName))
+                    continue;
+
+                var typeName = param.Type?.BuildName();
+                Context.Declare(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: param.Type));
+            }
+        }
+
+        private void RegisterLambdaParameters(GDMethodExpression lambda)
+        {
+            if (lambda.Parameters == null)
+                return;
+
+            foreach (var param in lambda.Parameters)
+            {
+                var paramName = param.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(paramName))
+                    continue;
+
+                var typeName = param.Type?.BuildName();
+                Context.Declare(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: param.Type));
+            }
+        }
+
+        private void RegisterLocalVariable(GDVariableDeclarationStatement varDecl)
+        {
+            var varName = varDecl.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(varName))
+                return;
+
+            // Use explicit type if present, otherwise Variant (for dynamic typing)
+            var typeName = varDecl.Type?.BuildName() ?? "Variant";
+            Context.Declare(GDSymbol.Variable(varName, varDecl, typeName: typeName, typeNode: varDecl.Type));
+        }
+
+        private void ValidateVariableDeclaration(GDVariableDeclarationStatement varDecl)
+        {
+            // Skip if no type annotation
+            var declaredType = varDecl.Type?.BuildName();
+            if (string.IsNullOrEmpty(declaredType))
+                return;
+
+            // Skip if no initializer
+            var initializer = varDecl.Initializer;
+            if (initializer == null)
+                return;
+
+            // Infer the type of the initializer
+            var initType = InferSimpleType(initializer);
+
+            // Skip validation if type couldn't be inferred
+            if (initType == null || initType == "Unknown")
+                return;
+
+            // Check type compatibility
+            if (!AreTypesCompatibleForAssignment(initType, declaredType))
+            {
+                ReportWarning(
+                    GDDiagnosticCode.TypeAnnotationMismatch,
+                    $"Type mismatch: cannot assign '{initType}' to variable of type '{declaredType}'",
+                    varDecl);
+            }
+        }
+
+        private void ValidateClassVariableDeclaration(GDVariableDeclaration varDecl)
+        {
+            // Skip if no type annotation
+            var declaredType = varDecl.Type?.BuildName();
+            if (string.IsNullOrEmpty(declaredType))
+                return;
+
+            // Skip if no initializer
+            var initializer = varDecl.Initializer;
+            if (initializer == null)
+                return;
+
+            // Infer the type of the initializer
+            var initType = InferSimpleType(initializer);
+
+            // Skip validation if type couldn't be inferred
+            if (initType == null || initType == "Unknown")
+                return;
+
+            // Check type compatibility
+            if (!AreTypesCompatibleForAssignment(initType, declaredType))
+            {
+                ReportWarning(
+                    GDDiagnosticCode.TypeAnnotationMismatch,
+                    $"Type mismatch: cannot assign '{initType}' to variable of type '{declaredType}'",
+                    varDecl);
+            }
+        }
+
+        private bool AreTypesCompatibleForAssignment(string sourceType, string targetType)
+        {
+            if (string.IsNullOrEmpty(sourceType) || string.IsNullOrEmpty(targetType))
+                return true;
+
+            // Same type is always compatible
+            if (sourceType == targetType)
+                return true;
+
+            // null is compatible with any reference type
+            if (sourceType == "null")
+                return true;
+
+            // Variant accepts anything
+            if (targetType == "Variant")
+                return true;
+
+            // Extract base types for generics (Array[int] -> Array)
+            var sourceBase = ExtractBaseTypeName(sourceType);
+            var targetBase = ExtractBaseTypeName(targetType);
+
+            // Generic type is assignable to its non-generic base (Array[int] -> Array)
+            if (sourceBase == targetBase && sourceBase != sourceType)
+                return true;
+
+            // Use type inference engine for detailed compatibility check
+            if (_typeInference != null)
+                return _typeInference.AreTypesCompatible(sourceType, targetType);
+
+            return false;
+        }
+
+        /// <summary>
+        /// Extracts the base type name from a generic type.
+        /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
+        /// </summary>
+        private static string ExtractBaseTypeName(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return typeName;
+
+            var bracketIndex = typeName.IndexOf('[');
+            if (bracketIndex > 0)
+                return typeName.Substring(0, bracketIndex);
+
+            return typeName;
         }
 
         private void ValidateReturnType(GDReturnExpression returnExpr)
