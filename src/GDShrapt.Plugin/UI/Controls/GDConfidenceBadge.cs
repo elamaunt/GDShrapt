@@ -64,7 +64,9 @@ internal partial class GDConfidenceBadge : Control
     {
         if (_compactMode)
         {
-            CustomMinimumSize = new Vector2(DotRadius * 3, DotRadius * 3);
+            // Compact mode: smaller single dot, minimize space usage in narrow layouts
+            // Using 2*radius for width to fit single dot tightly
+            CustomMinimumSize = new Vector2(DotRadius * 2 + 2, DotRadius * 2 + 2);
         }
         else
         {

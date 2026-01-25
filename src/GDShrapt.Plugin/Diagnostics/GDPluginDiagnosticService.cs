@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using GDShrapt.Semantics.Validator;
 
 namespace GDShrapt.Plugin;
 
@@ -176,6 +177,37 @@ internal class GDPluginDiagnosticService : IDisposable
             var diagnostics = result.Diagnostics
                 .Select(d => GDPluginDiagnosticAdapter.Convert(d, ScriptFile))
                 .ToList();
+
+            // Run semantic validator for type-aware validation (member access, argument types, indexers, signals, generics)
+            if (ScriptFile.SemanticModel != null)
+            {
+                Logger.Info("Running semantic validation");
+                var semanticValidatorOptions = new GDSemanticValidatorOptions
+                {
+                    CheckTypes = true,
+                    CheckMemberAccess = true,
+                    CheckArgumentTypes = true,
+                    CheckIndexers = true,
+                    CheckSignalTypes = true,
+                    CheckGenericTypes = true
+                };
+
+                var semanticValidator = new GDSemanticValidator(ScriptFile.SemanticModel, semanticValidatorOptions);
+                var semanticResult = await Task.Run(() => semanticValidator.Validate(ScriptFile.Class), cancellationToken);
+
+                Logger.Info($"Semantic validation found {semanticResult.Diagnostics.Count} diagnostics");
+
+                // Convert semantic diagnostics to plugin diagnostics
+                foreach (var diagnostic in semanticResult.Diagnostics)
+                {
+                    var pluginDiagnostic = GDPluginDiagnosticAdapter.ConvertFromValidator(diagnostic, ScriptFile);
+                    diagnostics.Add(pluginDiagnostic);
+                }
+            }
+            else
+            {
+                Logger.Info("Semantic model not available, skipping semantic validation");
+            }
 
             // Store results
             _diagnostics[ScriptFile.FullPath] = diagnostics;

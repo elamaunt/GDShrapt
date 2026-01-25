@@ -124,6 +124,6 @@ public class GDUnionType
     {
         if (IsEmpty) return "Variant";
         if (IsSingleType) return Types.First();
-        return $"Union({string.Join(", ", Types)})";
+        return string.Join("|", Types.OrderBy(t => t));
     }
 }

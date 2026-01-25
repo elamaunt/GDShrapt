@@ -269,14 +269,21 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         {
             rootNode.IsUnionType = true;
             rootNode.UnionTypeInfo = unionType;
+            // Update Type to show union types (e.g., "int|String|null")
+            rootNode.Type = string.Join("|", unionType.Types.Take(3));
+            if (unionType.Types.Count > 3)
+                rootNode.Type += "...";
         }
 
-        // Add duck type info
-        var duckType = semanticModel.GetDuckType(symbolName);
-        if (duckType?.HasRequirements == true)
+        // Add duck type info (only if not suppressed for known types)
+        if (!semanticModel.ShouldSuppressDuckConstraints(symbolName))
         {
-            rootNode.HasDuckConstraints = true;
-            rootNode.DuckTypeInfo = duckType;
+            var duckType = semanticModel.GetDuckType(symbolName);
+            if (duckType?.HasRequirements == true)
+            {
+                rootNode.HasDuckConstraints = true;
+                rootNode.DuckTypeInfo = duckType;
+            }
         }
 
         // Build basic inflows (type annotation)
@@ -1273,14 +1280,21 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         {
             node.IsUnionType = true;
             node.UnionTypeInfo = unionType;
+            // Update Type to show union types (e.g., "int|String|null")
+            node.Type = string.Join("|", unionType.Types.Take(3));
+            if (unionType.Types.Count > 3)
+                node.Type += "...";
         }
 
-        // Add duck type info
-        var duckType = semanticModel.GetDuckType(symbolName);
-        if (duckType?.HasRequirements == true)
+        // Add duck type info (only if not suppressed for known types)
+        if (!semanticModel.ShouldSuppressDuckConstraints(symbolName))
         {
-            node.HasDuckConstraints = true;
-            node.DuckTypeInfo = duckType;
+            var duckType = semanticModel.GetDuckType(symbolName);
+            if (duckType?.HasRequirements == true)
+            {
+                node.HasDuckConstraints = true;
+                node.DuckTypeInfo = duckType;
+            }
         }
 
         // Build basic inflows

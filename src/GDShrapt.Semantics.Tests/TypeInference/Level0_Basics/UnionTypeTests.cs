@@ -320,7 +320,7 @@ public class UnionTypeTests
     }
 
     [TestMethod]
-    public void UnionType_ToString_Union_ReturnsUnionFormat()
+    public void UnionType_ToString_Union_ReturnsPipeFormat()
     {
         // Arrange
         var union = new GDUnionType();
@@ -330,11 +330,8 @@ public class UnionTypeTests
         // Act
         var result = union.ToString();
 
-        // Assert
-        Assert.IsTrue(result.StartsWith("Union("));
-        Assert.IsTrue(result.Contains("Player"));
-        Assert.IsTrue(result.Contains("Enemy"));
-        Assert.IsTrue(result.EndsWith(")"));
+        // Assert - format is "Type1|Type2" (alphabetically ordered, no spaces)
+        Assert.AreEqual("Enemy|Player", result);
     }
 
     #endregion

@@ -1310,6 +1310,27 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             if (!string.IsNullOrEmpty(narrowed))
                 return GDReferenceConfidence.Strict;
 
+            // Check narrowing context for duck type constraints (P1, P8, P10)
+            // If there's a narrowing context with any requirements or excluded types, consider it Potential
+            var narrowingContext = FindNarrowingContextForNode(memberAccess);
+            if (narrowingContext != null)
+            {
+                var narrowedInfo = narrowingContext.GetNarrowedType(varName);
+                if (narrowedInfo != null)
+                {
+                    // P1: "method" in obj - has RequiredMethods
+                    // If the required method matches what we're calling, it's safe
+                    var memberName = memberAccess.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(memberName) && narrowedInfo.RequiredMethods.ContainsKey(memberName))
+                        return GDReferenceConfidence.Potential;
+
+                    // P8/P10: null excluded - still should allow method calls
+                    // If null is excluded, the variable is known to be non-null
+                    if (narrowedInfo.ExcludedTypes.Contains("null"))
+                        return GDReferenceConfidence.Potential;
+                }
+            }
+
             // Check Union type (for Variant variables with tracked assignments)
             var unionType = GetUnionType(varName);
             if (unionType != null && !unionType.IsEmpty)
@@ -1320,9 +1341,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                     return GetUnionMemberConfidence(unionType, memberName);
                 }
             }
-
-            // Duck type exists but doesn't provide safety - it just documents requirements
-            // For Variant without type guard, this is still unguarded access
         }
 
         // Type is Variant or unknown without type guard - this is unguarded access
@@ -1782,6 +1800,32 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     {
         if (node != null && context != null)
             _narrowingContexts[node] = context;
+    }
+
+    /// <summary>
+    /// Sets narrowing context for statements following an if-statement with early return.
+    /// The context applies to sibling statements that come after the if-statement.
+    /// </summary>
+    internal void SetPostIfNarrowing(GDIfStatement ifStatement, GDTypeNarrowingContext context)
+    {
+        if (ifStatement == null || context == null)
+            return;
+
+        // Get parent statements list and find statements after this if-statement
+        if (ifStatement.Parent is GDStatementsList statementsList)
+        {
+            bool foundIf = false;
+            foreach (var statement in statementsList)
+            {
+                if (foundIf)
+                {
+                    // Apply narrowing context to all statements after the if
+                    _narrowingContexts[statement] = context;
+                }
+                if (ReferenceEquals(statement, ifStatement))
+                    foundIf = true;
+            }
+        }
     }
 
     /// <summary>

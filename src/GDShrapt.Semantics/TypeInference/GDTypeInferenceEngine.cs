@@ -463,7 +463,9 @@ namespace GDShrapt.Semantics
                 case "self":
                     return CreateSimpleType("self");
                 case "super":
-                    return CreateSimpleType("super");
+                    // super refers to the parent class type
+                    var parentType = GetParentClassType(identExpr);
+                    return CreateSimpleType(parentType ?? "RefCounted");
             }
 
             // Check narrowing context first (type guards like "if x is Type:")
@@ -488,7 +490,7 @@ namespace GDShrapt.Semantics
                     if (!string.IsNullOrEmpty(symbol.TypeName))
                         return CreateSimpleType(symbol.TypeName);
 
-                    // Fallback: infer type from initializer if symbol has no explicit type
+                    // Fallback: infer type from initializer for understanding expression type
                     // Handle local variables (statements)
                     if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt &&
                         varDeclStmt.Initializer != null)
@@ -520,6 +522,13 @@ namespace GDShrapt.Semantics
                         if (varDecl.Initializer != null)
                             return InferTypeNode(varDecl.Initializer);
                     }
+
+                    // Check if it's a signal declaration
+                    if (member is GDSignalDeclaration signalDecl &&
+                        signalDecl.Identifier?.Sequence == name)
+                    {
+                        return CreateSimpleType("Signal");
+                    }
                 }
             }
 
@@ -546,6 +555,31 @@ namespace GDShrapt.Semantics
                 return "float";
 
             return "int";
+        }
+
+        /// <summary>
+        /// Gets the parent class type from the extends clause of the containing class.
+        /// Used to resolve the type of 'super' keyword.
+        /// </summary>
+        private static string? GetParentClassType(GDIdentifierExpression identExpr)
+        {
+            var classDecl = identExpr.RootClassDeclaration;
+            if (classDecl == null)
+                return null;
+
+            // Get extends clause
+            var extendsClause = classDecl.Extends;
+            if (extendsClause?.Type != null)
+            {
+                // Get the type name from extends clause using BuildName()
+                // This works for both simple types (Node2D) and complex types
+                var typeName = extendsClause.Type.BuildName();
+                if (!string.IsNullOrEmpty(typeName))
+                    return typeName;
+            }
+
+            // If no extends, default to RefCounted
+            return "RefCounted";
         }
 
         private string InferCallType(GDCallExpression callExpr)

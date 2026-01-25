@@ -410,6 +410,70 @@ func test():
 
     #endregion
 
+    #region P4: Variant Parameter Accepts Any Type
+
+    [TestMethod]
+    public void P4_VariantParameter_AcceptsInt()
+    {
+        // P4: Variant parameter with null default should accept int
+        var code = @"
+func get_item_property(key: String, default_val: Variant = null):
+    return default_val
+
+func test():
+    get_item_property(""key"", 42)
+";
+        // Act
+        var diagnostics = ValidateCode(code);
+
+        // Assert
+        var mismatchDiagnostics = diagnostics.Where(d => d.Code == GDDiagnosticCode.ArgumentTypeMismatch).ToList();
+        Assert.AreEqual(0, mismatchDiagnostics.Count,
+            $"Variant parameter should accept int. Found: {string.Join(", ", mismatchDiagnostics.Select(d => d.Message))}");
+    }
+
+    [TestMethod]
+    public void P4_VariantParameter_AcceptsString()
+    {
+        // P4: Variant parameter with null default should accept String
+        var code = @"
+func get_item_property(key: String, default_val: Variant = null):
+    return default_val
+
+func test():
+    get_item_property(""key"", ""default_string"")
+";
+        // Act
+        var diagnostics = ValidateCode(code);
+
+        // Assert
+        var mismatchDiagnostics = diagnostics.Where(d => d.Code == GDDiagnosticCode.ArgumentTypeMismatch).ToList();
+        Assert.AreEqual(0, mismatchDiagnostics.Count,
+            "Variant parameter should accept String");
+    }
+
+    [TestMethod]
+    public void P4_VariantParameter_AcceptsNull()
+    {
+        // P4: Variant parameter should accept null explicitly
+        var code = @"
+func get_item_property(key: String, default_val: Variant = null):
+    return default_val
+
+func test():
+    get_item_property(""key"", null)
+";
+        // Act
+        var diagnostics = ValidateCode(code);
+
+        // Assert
+        var mismatchDiagnostics = diagnostics.Where(d => d.Code == GDDiagnosticCode.ArgumentTypeMismatch).ToList();
+        Assert.AreEqual(0, mismatchDiagnostics.Count,
+            "Variant parameter should accept null");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static System.Collections.Generic.IEnumerable<GDDiagnostic> ValidateCode(

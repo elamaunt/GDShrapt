@@ -86,7 +86,7 @@ public class GDFlowVariableType
 
     /// <summary>
     /// Gets the effective type as a formatted string.
-    /// For Union types, returns "Type1 | Type2" format.
+    /// For Union types, returns "Type1|Type2" format.
     /// </summary>
     public string EffectiveTypeFormatted
     {
@@ -109,7 +109,7 @@ public class GDFlowVariableType
                     return singleType;
                 }
                 if (CurrentType.IsUnion)
-                    return string.Join(" | ", CurrentType.Types.OrderBy(t => t));
+                    return string.Join("|", CurrentType.Types.OrderBy(t => t));
             }
 
             return DeclaredType ?? "Variant";

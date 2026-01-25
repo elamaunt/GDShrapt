@@ -43,6 +43,17 @@ public class GDTypeNarrowingAnalyzer
                 AnalyzeIsExpression(dualOp, context, isNegated);
                 break;
 
+            // P1: "method" in obj - duck typing check
+            case GDDualOperatorExpression inOp when inOp.Operator?.OperatorType == GDDualOperatorType.In:
+                AnalyzeInExpression(inOp, context, isNegated);
+                break;
+
+            // P10: obj == null / obj != null - null check
+            case GDDualOperatorExpression eqOp when eqOp.Operator?.OperatorType == GDDualOperatorType.Equal ||
+                                                    eqOp.Operator?.OperatorType == GDDualOperatorType.NotEqual:
+                AnalyzeNullComparison(eqOp, context, isNegated);
+                break;
+
             // obj.has_method("name") / obj.has_signal("name")
             case GDCallExpression callExpr:
                 AnalyzeCallCondition(callExpr, context, isNegated);
@@ -88,6 +99,11 @@ public class GDTypeNarrowingAnalyzer
             case GDBracketExpression bracket:
                 if (bracket.InnerExpression != null)
                     AnalyzeConditionInto(bracket.InnerExpression, context, isNegated);
+                break;
+
+            // P8: if variable: (truthiness check) - variable is not null/false/empty
+            case GDIdentifierExpression ident:
+                AnalyzeTruthinessCheck(ident, context, isNegated);
                 break;
         }
     }
@@ -159,6 +175,93 @@ public class GDTypeNarrowingAnalyzer
                 // Object is valid, but we don't learn much about type
             }
         }
+    }
+
+    /// <summary>
+    /// P1: Analyzes "method" in obj pattern for duck typing.
+    /// When condition is true, obj is guaranteed to have that method.
+    /// </summary>
+    private void AnalyzeInExpression(GDDualOperatorExpression inExpr, GDTypeNarrowingContext context, bool isNegated)
+    {
+        // Pattern: "method_name" in obj
+        if (inExpr.LeftExpression is GDStringExpression strExpr)
+        {
+            var memberName = strExpr.String?.Sequence;
+            var varName = GetVariableName(inExpr.RightExpression);
+
+            if (string.IsNullOrEmpty(memberName) || string.IsNullOrEmpty(varName))
+                return;
+
+            if (!isNegated)
+            {
+                // In if branch: obj has this member (could be method or property)
+                context.RequireMethod(varName, memberName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// P10: Analyzes null comparison (obj == null or obj != null).
+    /// </summary>
+    private void AnalyzeNullComparison(GDDualOperatorExpression eqExpr, GDTypeNarrowingContext context, bool isNegated)
+    {
+        var isEqualOp = eqExpr.Operator?.OperatorType == GDDualOperatorType.Equal;
+
+        // Determine which side is the null literal and which is the variable
+        string? varName = null;
+        bool isNullOnRight = false;
+
+        if (IsNullLiteral(eqExpr.RightExpression))
+        {
+            varName = GetVariableName(eqExpr.LeftExpression);
+            isNullOnRight = true;
+        }
+        else if (IsNullLiteral(eqExpr.LeftExpression))
+        {
+            varName = GetVariableName(eqExpr.RightExpression);
+            isNullOnRight = false;
+        }
+
+        if (string.IsNullOrEmpty(varName))
+            return;
+
+        // Logic:
+        // - "x == null" with isNegated=false: x IS null in the if branch -> nothing useful
+        // - "x == null" with isNegated=true (else branch): x IS NOT null -> narrow to non-null
+        // - "x != null" with isNegated=false: x IS NOT null -> narrow to non-null
+        // - "x != null" with isNegated=true (else branch): x IS null -> nothing useful
+        bool narrowsToNonNull = (isEqualOp && isNegated) || (!isEqualOp && !isNegated);
+
+        if (narrowsToNonNull)
+        {
+            // Mark variable as guaranteed non-null (narrowed away from null)
+            context.ExcludeType(varName, "null");
+        }
+    }
+
+    /// <summary>
+    /// P8: Analyzes truthiness check (if variable:).
+    /// If variable is used directly as condition, it's truthy (non-null, non-empty, non-false).
+    /// </summary>
+    private void AnalyzeTruthinessCheck(GDIdentifierExpression ident, GDTypeNarrowingContext context, bool isNegated)
+    {
+        var varName = ident.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(varName))
+            return;
+
+        if (!isNegated)
+        {
+            // if variable: -> variable is truthy (not null, not false, not 0, not empty)
+            // For type narrowing, this means the variable is at least non-null
+            context.ExcludeType(varName, "null");
+        }
+    }
+
+    private static bool IsNullLiteral(GDExpression? expr)
+    {
+        if (expr is GDIdentifierExpression ident)
+            return ident.Identifier?.Sequence == "null";
+        return false;
     }
 
     private static string? GetVariableName(GDExpression? expr)

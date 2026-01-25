@@ -219,6 +219,11 @@ public enum GDDiagnosticSource
     Validator,
 
     /// <summary>
+    /// Semantic validation error (type checks, member access, argument types, indexers, signals, generics).
+    /// </summary>
+    SemanticValidator,
+
+    /// <summary>
     /// Lint issue (naming, style, best practices).
     /// </summary>
     Linter

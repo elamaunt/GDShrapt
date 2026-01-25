@@ -30,6 +30,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     private Button _backButton;
     private GDTypeFlowTabBar _tabBar;
     private Button _pinButton;
+    private Label _contextLabel;  // Shows file > method > line context
 
     // Signature section
     private PanelContainer _signaturePanel;
@@ -41,9 +42,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     // Content area - switches based on layout mode
     private Control _contentArea;
     private GDTypeBreakdownPanel _breakdownPanel;
-    private GDTypeFlowCanvas _canvas;
-    private HSplitContainer _wideSplitContainer;
-    private GDConstraintTooltip _constraintTooltip;
 
     // Constraints panel
     private GDConstraintsPanel _constraintsPanel;
@@ -100,7 +98,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     {
         Title = "Type Flow";
         Size = new Vector2I(650, 400);
-        MinSize = new Vector2I(400, 300);  // Minimum size for the dialog
+        MinSize = new Vector2I(400, 350);  // Minimum size for the dialog (increased from 300 to fit content)
         Exclusive = false;
         Transient = true;
         Unresizable = false;
@@ -305,10 +303,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         CreateContentArea();
         CreateConstraintsPanel();
         CreateActionBar();
-
-        // Constraint tooltip (overlays)
-        _constraintTooltip = new GDConstraintTooltip();
-        AddChild(_constraintTooltip);
     }
 
     private void CreateHeader()
@@ -348,6 +342,17 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         _headerRow.AddChild(_pinButton);
 
         _mainContainer.AddChild(_headerRow);
+
+        // Context label - shows file > method > line
+        _contextLabel = new Label
+        {
+            Text = "",
+            SizeFlagsHorizontal = SizeFlags.ExpandFill
+        };
+        _contextLabel.AddThemeFontSizeOverride("font_size", 10);
+        _contextLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.5f));
+        _mainContainer.AddChild(_contextLabel);
+
         _mainContainer.AddChild(new HSeparator());
     }
 
@@ -410,7 +415,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         _contentArea = new VBoxContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ExpandFill
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            CustomMinimumSize = new Vector2(0, 120)  // Minimum height to prevent content overflow
         };
 
         // Breakdown panel (tabs: Overview, Inflows, Outflows) - ExpandFill to take available space
@@ -422,34 +428,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         _breakdownPanel.NodeNavigationRequested += OnNodeNavigationRequested;
         _breakdownPanel.NodeOpenInTabRequested += OnNodeOpenInTabRequested;
 
-        // Canvas for graph view
-        _canvas = new GDTypeFlowCanvas
-        {
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(300, 200)
-        };
-        _canvas.BlockBodyClicked += OnBlockBodyClicked;
-        _canvas.BlockLabelClicked += OnBlockLabelClicked;
-        _canvas.EdgeClicked += OnEdgeClicked;
-        _canvas.EdgeHoverStart += OnEdgeHoverStart;
-        _canvas.EdgeHoverEnd += OnEdgeHoverEnd;
-
-        // Wide split container (for wide layout)
-        _wideSplitContainer = new HSplitContainer
-        {
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-            Visible = false
-        };
-
         // Default: show breakdown panel
         _contentArea.AddChild(_breakdownPanel);
-        _contentArea.AddChild(_canvas);
-        _contentArea.AddChild(_wideSplitContainer);
-
-        // Initially show breakdown, hide canvas
-        _canvas.Visible = false;
 
         _mainContainer.AddChild(_contentArea);
     }
@@ -527,6 +507,9 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         // Debug output for semantic core data
         DebugLogNodeData(node);
 
+        // Update context label (file > method > line)
+        UpdateContextLabel(node);
+
         // Update signature
         UpdateSignature(node);
 
@@ -536,14 +519,62 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         // Update breakdown panel
         _breakdownPanel.SetNode(node, node.SourceScript?.SemanticModel);
 
-        // Update canvas
-        _canvas.DisplayGraph(node);
-
         // Update constraints panel
         _constraintsPanel.SetConstraints(node);
 
         // Update action bar
         UpdateActionBar(node);
+    }
+
+    /// <summary>
+    /// Updates the context label with file > line > kind information.
+    /// Helps developers understand where the symbol is located.
+    /// </summary>
+    private void UpdateContextLabel(GDTypeFlowNode node)
+    {
+        var parts = new List<string>();
+
+        // File name
+        if (node.SourceScript != null && !string.IsNullOrEmpty(node.SourceScript.FullPath))
+        {
+            parts.Add(System.IO.Path.GetFileName(node.SourceScript.FullPath));
+        }
+
+        // Line number
+        if (node.Location?.IsValid == true)
+        {
+            parts.Add($"line {node.Location.StartLine + 1}");
+        }
+
+        // Node kind for context
+        if (node.Kind != GDTypeFlowNodeKind.Unknown)
+        {
+            parts.Add(GetKindDescription(node.Kind));
+        }
+
+        _contextLabel.Text = parts.Count > 0 ? string.Join(" > ", parts) : "";
+        _contextLabel.Visible = parts.Count > 0;
+        // Remove from layout completely when hidden to avoid reserving space
+        _contextLabel.CustomMinimumSize = parts.Count > 0 ? new Vector2(0, 16) : Vector2.Zero;
+    }
+
+    /// <summary>
+    /// Gets a human-readable description for a node kind.
+    /// </summary>
+    private string GetKindDescription(GDTypeFlowNodeKind kind)
+    {
+        return kind switch
+        {
+            GDTypeFlowNodeKind.Parameter => "parameter",
+            GDTypeFlowNodeKind.LocalVariable => "local variable",
+            GDTypeFlowNodeKind.MemberVariable => "member variable",
+            GDTypeFlowNodeKind.MethodCall => "method call",
+            GDTypeFlowNodeKind.PropertyAccess => "property",
+            GDTypeFlowNodeKind.ReturnValue => "return value",
+            GDTypeFlowNodeKind.Literal => "literal",
+            GDTypeFlowNodeKind.TypeAnnotation => "type annotation",
+            _ => kind.ToString().ToLower()
+        };
     }
 
     /// <summary>
@@ -756,7 +787,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         _quickFixButton.Visible = false;
         _addGuardButton.Visible = false;
         _breakdownPanel.ClearAll();
-        _canvas.DisplayGraph(null);
         _constraintsPanel.Clear();
     }
 
@@ -777,60 +807,27 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             case GDResponsiveContainer.LayoutMode.Minimal:
                 // Hide tabs, show only signature
                 _breakdownPanel.Visible = false;
-                _canvas.Visible = false;
-                _wideSplitContainer.Visible = false;
                 _constraintsPanel.SetCompactMode(true);
                 _confidenceBadge.SetCompactMode(true);
                 break;
 
             case GDResponsiveContainer.LayoutMode.Compact:
-                // Show breakdown only (no graph)
+                // Show breakdown only
                 _breakdownPanel.Visible = true;
                 _breakdownPanel.SetCompactMode(true);
-                _canvas.Visible = false;
-                _wideSplitContainer.Visible = false;
                 _constraintsPanel.SetCompactMode(true);
                 _confidenceBadge.SetCompactMode(true);
                 break;
 
             case GDResponsiveContainer.LayoutMode.Normal:
-                // Show breakdown panel
+            case GDResponsiveContainer.LayoutMode.Wide:
+                // Show breakdown panel (Wide treated as Normal since canvas was removed)
                 _breakdownPanel.Visible = true;
                 _breakdownPanel.SetCompactMode(false);
-                _canvas.Visible = false;
-                _wideSplitContainer.Visible = false;
                 _constraintsPanel.SetCompactMode(false);
                 _confidenceBadge.SetCompactMode(false);
                 break;
-
-            case GDResponsiveContainer.LayoutMode.Wide:
-                // Show split view: breakdown + graph
-                SetupWideSplitView();
-                break;
         }
-    }
-
-    private void SetupWideSplitView()
-    {
-        // Move breakdown and canvas to split container
-        if (_breakdownPanel.GetParent() == _contentArea)
-        {
-            _contentArea.RemoveChild(_breakdownPanel);
-            _contentArea.RemoveChild(_canvas);
-
-            _wideSplitContainer.AddChild(_breakdownPanel);
-            _wideSplitContainer.AddChild(_canvas);
-        }
-
-        _breakdownPanel.Visible = true;
-        _breakdownPanel.SetCompactMode(false);
-        _canvas.Visible = true;
-        _wideSplitContainer.Visible = true;
-        _constraintsPanel.SetCompactMode(false);
-        _confidenceBadge.SetCompactMode(false);
-
-        // Set split position
-        _wideSplitContainer.SplitOffset = (int)(Size.X * 0.45f);
     }
 
     #endregion
@@ -1059,10 +1056,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
                     _navigationService?.NavigateToNode(_focusedNode);
                 break;
 
-            case Key.F when key.CtrlPressed:
-                _canvas.FitAllNodes();
-                break;
-
             case Key.Key1 when key.AltPressed:
                 _tabBar.ActivateCursorTab();
                 break;
@@ -1100,22 +1093,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     {
         _isPinned = pressed;
         _pinButton.Text = pressed ? "📍" : "📌";
-    }
-
-    private void OnBlockBodyClicked(GDTypeFlowNode node)
-    {
-        if (node == null)
-            return;
-
-        _navigationService?.NavigateToNode(node);
-    }
-
-    private void OnBlockLabelClicked(GDTypeFlowNode node)
-    {
-        if (node == null)
-            return;
-
-        NavigateToNode(node);
     }
 
     private void OnNodeNavigationRequested(GDTypeFlowNode node)
@@ -1160,28 +1137,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         }
 
         _navigationService?.NavigateToNode(node);
-    }
-
-    private void OnEdgeClicked(GDTypeFlowEdge edge)
-    {
-        if (edge?.Target == null)
-            return;
-
-        _canvas.ScrollToNode(edge.Target);
-    }
-
-    private void OnEdgeHoverStart(GDTypeFlowEdge edge, Vector2 position)
-    {
-        if (edge?.Constraints != null && edge.Constraints.HasRequirements)
-        {
-            var panelPos = _canvas.GlobalPosition + position;
-            _constraintTooltip.ShowForEdge(edge, panelPos);
-        }
-    }
-
-    private void OnEdgeHoverEnd()
-    {
-        _constraintTooltip.Hide();
     }
 
     private void OnSignatureMetaClicked(Variant meta)

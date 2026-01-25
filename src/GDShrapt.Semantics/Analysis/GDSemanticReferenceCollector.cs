@@ -459,8 +459,20 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
     public override void Left(GDIfStatement ifStatement)
     {
+        // Check for early return pattern: if the if-branch contains an unconditional return,
+        // then the code after the if-statement should have the inverse narrowing
+        var afterIfNarrowing = ComputePostIfNarrowing(ifStatement);
+
         if (_narrowingStack.Count > 0)
             _currentNarrowingContext = _narrowingStack.Pop();
+
+        // Apply early return narrowing to code after this if-statement
+        if (afterIfNarrowing != null)
+        {
+            _currentNarrowingContext = afterIfNarrowing;
+            // Register for the containing method's statements that follow
+            _model!.SetPostIfNarrowing(ifStatement, afterIfNarrowing);
+        }
 
         PopScope();
     }
@@ -507,6 +519,51 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDElseBranch elseBranch)
     {
         // Nothing special to do
+    }
+
+    /// <summary>
+    /// Computes narrowing for code after an if-statement with early return.
+    /// If the if-branch contains unconditional return and no else branch,
+    /// the code after will have the inverse condition narrowing.
+    /// </summary>
+    private GDTypeNarrowingContext? ComputePostIfNarrowing(GDIfStatement ifStatement)
+    {
+        if (_narrowingAnalyzer == null)
+            return null;
+
+        var ifBranch = ifStatement.IfBranch;
+        if (ifBranch == null || ifBranch.Condition == null)
+            return null;
+
+        // Only apply if there's no actual else branch (early return pattern)
+        // Check for ElseKeyword since ElseBranch property creates empty branch if null
+        if (ifStatement.ElseBranch?.ElseKeyword != null)
+            return null;
+
+        // Check if if-branch has unconditional return
+        if (!BranchHasUnconditionalReturn(ifBranch))
+            return null;
+
+        // The code after the if has the inverse of the condition
+        return _narrowingAnalyzer.AnalyzeCondition(ifBranch.Condition, isNegated: true);
+    }
+
+    /// <summary>
+    /// Checks if a branch contains an unconditional return statement.
+    /// </summary>
+    private static bool BranchHasUnconditionalReturn(GDIfBranch branch)
+    {
+        var statements = branch.Statements;
+        if (statements == null || statements.Count == 0)
+            return false;
+
+        // Check if the last statement is a return
+        var lastStatement = statements.LastOrDefault();
+        if (lastStatement is GDExpressionStatement exprStmt)
+        {
+            return exprStmt.Expression is GDReturnExpression;
+        }
+        return lastStatement is GDReturnExpression;
     }
 
     public override void Visit(GDInnerClassDeclaration innerClass)

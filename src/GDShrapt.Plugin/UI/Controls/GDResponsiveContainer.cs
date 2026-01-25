@@ -38,11 +38,11 @@ internal partial class GDResponsiveContainer : Container
 
     private LayoutMode _currentMode = LayoutMode.Normal;
 
-    // Breakpoints (configurable)
-    private float _compactWidthThreshold = 350f;
-    private float _wideWidthThreshold = 600f;
-    private float _minimalHeightThreshold = 300f;
-    private float _compactHeightThreshold = 500f;
+    // Breakpoints (configurable) - adjusted for better scaling behavior
+    private float _compactWidthThreshold = 400f;   // Increased from 350 to catch more narrow windows
+    private float _wideWidthThreshold = 700f;      // Increased from 600 for wider threshold
+    private float _minimalHeightThreshold = 300f;  // Keep same - very small heights
+    private float _compactHeightThreshold = 400f;  // Reduced from 500 to 400 for clearer boundaries
 
     /// <summary>
     /// Fired when the layout mode changes.
@@ -152,22 +152,20 @@ internal partial class GDResponsiveContainer : Container
 
     private LayoutMode DetermineLayoutMode(Vector2 size)
     {
-        // Height takes priority for minimal mode
+        // Priority 1: Critical height constraint - very small heights
         if (size.Y < _minimalHeightThreshold)
             return LayoutMode.Minimal;
 
-        // Compact mode for narrow widths or limited height with narrow width
-        if (size.X < _compactWidthThreshold)
+        // Priority 2: Narrow width OR limited height - both need compact mode
+        // This ensures windows like 350x400 correctly go to Compact
+        if (size.X < _compactWidthThreshold || size.Y < _compactHeightThreshold)
             return LayoutMode.Compact;
 
-        // Compact mode for limited height
-        if (size.Y < _compactHeightThreshold && size.X < _wideWidthThreshold)
-            return LayoutMode.Compact;
-
-        // Wide mode for large widths
+        // Priority 3: Wide layout for large widths
         if (size.X > _wideWidthThreshold)
             return LayoutMode.Wide;
 
+        // Default: Normal layout
         return LayoutMode.Normal;
     }
 

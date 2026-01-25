@@ -47,6 +47,7 @@ internal partial class GDConstraintsPanel : PanelContainer
     public GDConstraintsPanel()
     {
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        SizeFlagsVertical = SizeFlags.ShrinkBegin;  // Don't expand, prevent pushing ActionBar off screen
 
         // Panel styling
         var style = new StyleBoxFlat
@@ -90,6 +91,7 @@ internal partial class GDConstraintsPanel : PanelContainer
 
     /// <summary>
     /// Sets the constraints to display for the given node.
+    /// Auto-expands when constraints are critical (low confidence, many union types, etc.)
     /// </summary>
     public void SetConstraints(GDTypeFlowNode node)
     {
@@ -118,10 +120,42 @@ internal partial class GDConstraintsPanel : PanelContainer
         if (hasConstraints)
         {
             var constraintCount = GetConstraintCount(node);
+
+            // Auto-expand when constraints are critical for understanding the type
+            bool shouldAutoExpand = ShouldAutoExpand(node, constraintCount);
+            if (shouldAutoExpand && _collapsed)
+            {
+                _collapsed = false;
+                _detailsContainer.Visible = true;
+            }
+
             _toggleButton.Text = _collapsed
                 ? $"▶ Constraints ({constraintCount})"
                 : $"▼ Constraints ({constraintCount})";
         }
+    }
+
+    /// <summary>
+    /// Determines if constraints panel should auto-expand based on data criticality.
+    /// </summary>
+    private bool ShouldAutoExpand(GDTypeFlowNode node, int constraintCount)
+    {
+        if (node == null)
+            return false;
+
+        // Low confidence - developer needs to see what constraints exist
+        if (node.Confidence < 0.5f)
+            return true;
+
+        // Multiple union types - critical for understanding variable behavior
+        if (node.IsUnionType && node.UnionTypeInfo?.Types.Count > 2)
+            return true;
+
+        // Many duck constraints - important to show
+        if (node.HasDuckConstraints && constraintCount > 3)
+            return true;
+
+        return false;
     }
 
     /// <summary>
@@ -421,7 +455,7 @@ internal partial class GDConstraintsPanel : PanelContainer
 
     /// <summary>
     /// Sets compact mode for space-constrained layouts.
-    /// In compact mode, constraints are shown in a single line.
+    /// In compact mode, constraints are always collapsed.
     /// </summary>
     public void SetCompactMode(bool compact)
     {
@@ -431,5 +465,11 @@ internal partial class GDConstraintsPanel : PanelContainer
             _collapsed = true;
             _detailsContainer.Visible = false;
         }
+        // When exiting compact mode, we don't auto-expand - let user decide
+        // Just update the toggle button text to reflect current state
+        var constraintCount = GetConstraintCount(_currentNode);
+        _toggleButton.Text = _collapsed
+            ? $"▶ Constraints ({constraintCount})"
+            : $"▼ Constraints ({constraintCount})";
     }
 }

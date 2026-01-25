@@ -46,6 +46,10 @@ internal partial class GDTypeOverviewTab : ScrollContainer
 
     /// <summary>
     /// Displays overview information for the given node.
+    /// Shows relevant sections based on the node type:
+    /// - Methods: Parameters, Return Type, Local Variables
+    /// - Variables: Type Sources (inflows that define the type)
+    /// - All: Inflows/Outflows summary
     /// </summary>
     public void DisplayOverview(GDTypeFlowNode node, GDSemanticModel semanticModel = null)
     {
@@ -54,38 +58,125 @@ internal partial class GDTypeOverviewTab : ScrollContainer
         if (node == null)
             return;
 
-        // Parameters section (if applicable)
-        var parameters = GetParameters(node, semanticModel);
-        if (parameters.Count > 0)
+        // Determine if this is a method/function node
+        var isMethodNode = IsMethodNode(node);
+
+        // Parameters section - only for methods
+        if (isMethodNode)
         {
-            AddSection("Parameters", parameters);
+            var parameters = GetParameters(node, semanticModel);
+            if (parameters.Count > 0)
+            {
+                AddSection("Parameters", parameters);
+            }
         }
 
-        // Return type section (if applicable)
-        var returnInfo = GetReturnTypeInfo(node, semanticModel);
-        if (returnInfo != null)
+        // Return type section - only for methods, skip "void" return types
+        if (isMethodNode)
         {
-            AddSection("Return Type", new List<TypeInfo> { returnInfo });
+            var returnInfo = GetReturnTypeInfo(node, semanticModel);
+            if (returnInfo != null && returnInfo.Type != "void")
+            {
+                AddSection("Return Type", new List<TypeInfo> { returnInfo });
+            }
         }
 
-        // Local variables section
-        var locals = GetLocalVariables(node, semanticModel);
-        if (locals.Count > 0)
+        // For variables - show "Type Sources" instead of generic "Local Variables"
+        if (IsVariableNode(node))
         {
-            AddSection("Local Variables", locals);
+            var typeSources = GetTypeSources(node);
+            if (typeSources.Count > 0)
+            {
+                AddSection("Type Sources", typeSources);
+            }
+        }
+        else if (isMethodNode)
+        {
+            // Local variables section - only for methods
+            var locals = GetLocalVariables(node, semanticModel);
+            if (locals.Count > 0)
+            {
+                AddSection("Local Variables", locals);
+            }
         }
 
-        // Inflows summary
+        // Inflows summary - always relevant
         if (node.Inflows.Count > 0)
         {
             AddInflowsSummary(node);
         }
 
-        // Outflows summary
+        // Outflows summary - always relevant
         if (node.Outflows.Count > 0)
         {
             AddOutflowsSummary(node);
         }
+    }
+
+    /// <summary>
+    /// Checks if the node represents a method or function.
+    /// </summary>
+    private bool IsMethodNode(GDTypeFlowNode node)
+    {
+        // Check by Kind - MethodDefinition is for methods
+        // Also check if we have Parameter inflows (indicates a method)
+        if (node.Kind == GDTypeFlowNodeKind.MethodCall)
+            return false; // This is a call, not a definition
+
+        // Check if any inflow is a Parameter
+        return node.Inflows.Any(i => i.Kind == GDTypeFlowNodeKind.Parameter);
+    }
+
+    /// <summary>
+    /// Checks if the node represents a variable (local, member, or parameter).
+    /// </summary>
+    private bool IsVariableNode(GDTypeFlowNode node)
+    {
+        return node.Kind == GDTypeFlowNodeKind.LocalVariable ||
+               node.Kind == GDTypeFlowNodeKind.MemberVariable ||
+               node.Kind == GDTypeFlowNodeKind.Parameter;
+    }
+
+    /// <summary>
+    /// Gets type sources for a variable node - shows where the type comes from.
+    /// </summary>
+    private List<TypeInfo> GetTypeSources(GDTypeFlowNode node)
+    {
+        var result = new List<TypeInfo>();
+
+        foreach (var inflow in node.Inflows)
+        {
+            // Skip self-references
+            if (inflow.Label == node.Label && inflow.Kind == node.Kind)
+                continue;
+
+            result.Add(new TypeInfo
+            {
+                Name = GetSourceName(inflow),
+                Type = inflow.Type ?? "Variant",
+                Confidence = inflow.Confidence,
+                SourceHint = GetSourceHint(inflow),
+                Node = inflow
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets a descriptive name for a source node.
+    /// </summary>
+    private string GetSourceName(GDTypeFlowNode node)
+    {
+        return node.Kind switch
+        {
+            GDTypeFlowNodeKind.TypeAnnotation => "annotation",
+            GDTypeFlowNodeKind.Literal => node.Label ?? "literal",
+            GDTypeFlowNodeKind.MethodCall => $"{node.Label}()",
+            GDTypeFlowNodeKind.PropertyAccess => $".{node.Label}",
+            GDTypeFlowNodeKind.Assignment => node.Label,
+            _ => node.Label ?? node.Kind.ToString()
+        };
     }
 
     /// <summary>
@@ -129,12 +220,15 @@ internal partial class GDTypeOverviewTab : ScrollContainer
         bullet.AddThemeColorOverride("font_color", HintColor);
         row.AddChild(bullet);
 
-        // Name
+        // Name - with ClipText to prevent horizontal overflow in narrow windows
         var nameButton = new Button
         {
             Text = $"{info.Name}:",
             Flat = true,
-            TooltipText = $"Click to navigate to {info.Name}"
+            TooltipText = $"Click to navigate to {info.Name}",
+            ClipText = true,
+            CustomMinimumSize = new Vector2(50, 0),  // Minimum width for button
+            SizeFlagsHorizontal = SizeFlags.ExpandFill  // Take available space, clip if needed
         };
         nameButton.AddThemeFontSizeOverride("font_size", 11);
         nameButton.Pressed += () => OnNodeClicked(info);
@@ -185,7 +279,9 @@ internal partial class GDTypeOverviewTab : ScrollContainer
             {
                 Text = $"{inflow.Label}: {inflow.Type ?? "Variant"}",
                 Flat = true,
-                TooltipText = $"Click to view {inflow.Label}"
+                TooltipText = $"Click to view {inflow.Label}",
+                ClipText = true,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill
             };
             inflowButton.AddThemeFontSizeOverride("font_size", 11);
             inflowButton.Pressed += () => NodeDoubleClicked?.Invoke(inflow);
@@ -227,7 +323,9 @@ internal partial class GDTypeOverviewTab : ScrollContainer
             {
                 Text = $"{outflow.Label}: {outflow.Type ?? "Variant"}",
                 Flat = true,
-                TooltipText = $"Click to view {outflow.Label}"
+                TooltipText = $"Click to view {outflow.Label}",
+                ClipText = true,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill
             };
             outflowButton.AddThemeFontSizeOverride("font_size", 11);
             outflowButton.Pressed += () => NodeDoubleClicked?.Invoke(outflow);

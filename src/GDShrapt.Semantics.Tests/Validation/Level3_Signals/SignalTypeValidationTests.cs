@@ -189,6 +189,75 @@ func test(signal_name: String):
 
     #endregion
 
+    #region P7: Signal.emit() Direct Call
+
+    [TestMethod]
+    public void P7_SignalEmit_DirectCall_IsRecognized()
+    {
+        // P7: signal.emit() should work without GD7003
+        var code = @"
+signal health_changed(old_value: int, new_value: int)
+
+var _health: int
+
+var tracked_health: int:
+    set(value):
+        var old = _health
+        _health = value
+        health_changed.emit(old, _health)
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
+
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"signal.emit() should be recognized without GD7003. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void P7_SignalConnect_DirectCall_IsRecognized()
+    {
+        // signal.connect() should also work
+        var code = @"
+signal health_changed(old_value: int, new_value: int)
+
+func _ready():
+    health_changed.connect(_on_health_changed)
+
+func _on_health_changed(old_value: int, new_value: int):
+    pass
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
+
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"signal.connect() should be recognized. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void P7_SignalIdentifier_HasSignalType()
+    {
+        // When accessing signal by identifier, it should have Signal type
+        var code = @"
+signal my_signal(value: int)
+
+func test():
+    var s = my_signal
+";
+        var diagnostics = ValidateCode(code);
+        // No type errors expected
+        var typeErrors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.TypeMismatch).ToList();
+
+        Assert.AreEqual(0, typeErrors.Count,
+            $"Signal identifier should have valid type. Found: {FormatDiagnostics(typeErrors)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)

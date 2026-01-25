@@ -56,7 +56,11 @@ internal partial class GDTypeOutflowsTab : ScrollContainer
         _tree.SetColumnExpand(0, true);
         _tree.SetColumnExpand(1, true);
         _tree.SetColumnExpand(2, false);
-        _tree.SetColumnCustomMinimumWidth(2, 80);
+
+        // Set minimum widths to prevent column collapse in narrow windows
+        _tree.SetColumnCustomMinimumWidth(0, 80);  // Target column minimum
+        _tree.SetColumnCustomMinimumWidth(1, 100); // Usage column minimum (more text)
+        _tree.SetColumnCustomMinimumWidth(2, 60);  // Location column (reduced from 80)
 
         _tree.ItemActivated += OnItemActivated;
 

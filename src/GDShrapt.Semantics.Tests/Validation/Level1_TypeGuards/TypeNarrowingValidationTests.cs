@@ -1,5 +1,4 @@
 using GDShrapt.Abstractions;
-using GDShrapt.Reader;
 using GDShrapt.Semantics.Validator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
@@ -228,19 +227,108 @@ func test(value):
 
     #endregion
 
+    #region P1: In Operator Duck-Typed Check
+
+    [TestMethod]
+    public void P1_InOperator_AllowsDuckTypedMethodCall()
+    {
+        // P1: "method" in obj should allow obj.method() without GD7003
+        var code = @"
+func test(local):
+    if ""custom_method"" in local:
+        return local.custom_method()
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
+
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"After 'method in obj' check, method call should be allowed. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    #endregion
+
+    #region P8: Truthiness Check Narrowing
+
+    [TestMethod]
+    public void P8_TruthinessCheck_NarrowsAwayNull()
+    {
+        // P8: if collision: should narrow collision type to non-null
+        var code = @"
+extends CharacterBody2D
+func test():
+    var collision = get_slide_collision(0)
+    if collision:
+        var collider = collision.get_collider()
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
+
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"After truthiness check, method call should be valid. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    #endregion
+
+    #region P10: Null Equality Check with Early Return
+
+    [TestMethod]
+    public void P10_NullCheckReturn_NarrowsAfter()
+    {
+        // P10: if x == null: return should narrow x to non-null after
+        var code = @"
+extends Node
+func test() -> Vector2:
+    var parent = get_parent()
+    if parent == null:
+        return Vector2.ZERO
+    var grandparent = parent.get_parent()
+    return Vector2.ZERO
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
+
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"After null check with return, method call should be valid. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void P10_NotNullCheck_InIfBranch()
+    {
+        // if x != null: x.method() should work
+        var code = @"
+extends Node
+func test():
+    var parent = get_parent()
+    if parent != null:
+        var name = parent.get_name()
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
+
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"After 'if x != null', method call should be valid. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
     {
-        var reader = new GDScriptReader();
-        var classDecl = reader.ParseFileContent(code);
-
-        if (classDecl == null)
-            return Enumerable.Empty<GDDiagnostic>();
-
         var reference = new GDScriptReference("test://virtual/test_script.gd");
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
+
+        if (scriptFile.Class == null)
+            return Enumerable.Empty<GDDiagnostic>();
 
         // Use composite provider that combines Godot types (Node2D.position, Vector2.ZERO, etc.)
         // with built-in GDScript types (String.length, Array.size, etc.)
@@ -259,7 +347,8 @@ func test(value):
             CheckArgumentTypes = true
         };
         var validator = new GDSemanticValidator(semanticModel, options);
-        var result = validator.Validate(classDecl);
+        // Use scriptFile.Class to validate the SAME AST that semantic model was built from
+        var result = validator.Validate(scriptFile.Class);
 
         return result.Diagnostics;
     }

@@ -14,7 +14,7 @@ namespace GDShrapt.Semantics.Validator
 
         /// <summary>
         /// Represents a function context (either a method declaration or a lambda expression).
-        /// </summary>
+        /// </summary>1
         private struct FunctionContext
         {
             public GDTypeNode ReturnType;
@@ -175,9 +175,26 @@ namespace GDShrapt.Semantics.Validator
             if (string.IsNullOrEmpty(varName))
                 return;
 
-            // Use explicit type if present, otherwise Variant (for dynamic typing)
-            var typeName = varDecl.Type?.BuildName() ?? "Variant";
-            Context.Declare(GDSymbol.Variable(varName, varDecl, typeName: typeName, typeNode: varDecl.Type));
+            // Use explicit type if present (var x: int = ...)
+            var typeName = varDecl.Type?.BuildName();
+            GDTypeNode typeNode = varDecl.Type;
+
+            // Only infer type if := is used (Colon present but no Type node)
+            // var x := 42  → Colon != null, Type == null → infer int
+            // var x = 42   → Colon == null → Variant (dynamic)
+            // var x: int = 42 → Type != null → use explicit type (already set above)
+            if (string.IsNullOrEmpty(typeName) && varDecl.Initializer != null && varDecl.Colon != null)
+            {
+                typeName = InferSimpleType(varDecl.Initializer);
+            }
+
+            // Fallback to Variant for dynamic typing
+            if (string.IsNullOrEmpty(typeName) || typeName == "Unknown")
+            {
+                typeName = "Variant";
+            }
+
+            Context.Declare(GDSymbol.Variable(varName, varDecl, typeName: typeName, typeNode: typeNode));
         }
 
         private void ValidateVariableDeclaration(GDVariableDeclarationStatement varDecl)
@@ -438,6 +455,10 @@ namespace GDShrapt.Semantics.Validator
             if (targetType == valueType)
                 return;
 
+            // Check if target is an untyped variable (Variant) - allow any assignment
+            if (IsUntypedVariable(target))
+                return;
+
             // Use type inference engine for compatibility check
             if (_typeInference != null && !_typeInference.AreTypesCompatible(valueType, targetType))
             {
@@ -446,6 +467,45 @@ namespace GDShrapt.Semantics.Validator
                     $"Type mismatch in assignment: cannot assign '{valueType}' to '{targetType}'",
                     reportOn);
             }
+        }
+
+        /// <summary>
+        /// Checks if the expression refers to an untyped variable (declared without := or type annotation).
+        /// Untyped variables in GDScript are Variant and can be reassigned to any type.
+        /// </summary>
+        private bool IsUntypedVariable(GDExpression expr)
+        {
+            if (expr is not GDIdentifierExpression identExpr)
+                return false;
+
+            var name = identExpr.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(name))
+                return false;
+
+            // Look up the symbol
+            var symbol = Context.Scopes.Lookup(name);
+            if (symbol == null)
+                return false;
+
+            // Check if it's a local variable declaration without type annotation
+            if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt)
+            {
+                // var x := 42  → Colon != null, Type == null → typed via inference
+                // var x: int = 42 → Type != null → explicitly typed
+                // var x = 42   → Colon == null → Variant (untyped)
+                return varDeclStmt.Type == null && varDeclStmt.Colon == null;
+            }
+
+            // Check if it's a class-level variable declaration
+            if (symbol.Declaration is GDVariableDeclaration varDecl)
+            {
+                // var x := 42  → TypeColon != null, Type == null → typed via inference
+                // var x: int = 42 → Type != null → explicitly typed
+                // var x = 42   → TypeColon == null → Variant (untyped)
+                return varDecl.Type == null && varDecl.TypeColon == null;
+            }
+
+            return false;
         }
 
         private void ValidateSingleOperator(GDSingleOperatorExpression expr)
@@ -497,6 +557,10 @@ namespace GDShrapt.Semantics.Validator
         private bool AreTypesCompatibleForArithmetic(string left, string right)
         {
             if (left == "Unknown" || right == "Unknown")
+                return true;
+
+            // Variant is dynamically typed and can hold any value, so arithmetic is allowed
+            if (left == "Variant" || right == "Variant")
                 return true;
 
             if (IsNumericType(left) && IsNumericType(right))

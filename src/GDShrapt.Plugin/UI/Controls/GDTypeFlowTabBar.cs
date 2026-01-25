@@ -253,31 +253,18 @@ internal partial class GDTypeFlowTabBar : TabBar
 
     private void RebuildIndexTracking()
     {
-        // Rebuild both maps after tab removal
-        var oldNodeMap = new Dictionary<int, GDTypeFlowNode>(_tabNodeMap);
+        // Collect all nodes before clearing
+        var nodesList = _tabNodeMap.Values.Where(n => n != null).ToList();
         _tabNodeMap.Clear();
         _symbolTabIndices.Clear();
 
-        for (int i = 1; i < TabCount; i++)
+        // Reassign nodes to tabs 1..TabCount-1
+        for (int i = 1; i < TabCount && i - 1 < nodesList.Count; i++)
         {
-            // Find the node that was at old index i+1 (before removal)
-            // or try to get from the remaining entries
-            GDTypeFlowNode node = null;
-            foreach (var kvp in oldNodeMap)
-            {
-                if (kvp.Value != null)
-                {
-                    var nodeKey = BuildUniqueNodeKey(kvp.Value);
-                    if (!_symbolTabIndices.ContainsKey(nodeKey))
-                    {
-                        node = kvp.Value;
-                        _tabNodeMap[i] = node;
-                        _symbolTabIndices[nodeKey] = i;
-                        oldNodeMap.Remove(kvp.Key);
-                        break;
-                    }
-                }
-            }
+            var node = nodesList[i - 1];
+            var nodeKey = BuildUniqueNodeKey(node);
+            _tabNodeMap[i] = node;
+            _symbolTabIndices[nodeKey] = i;
         }
     }
 

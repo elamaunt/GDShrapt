@@ -8,6 +8,9 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Unified diagnostics service combining syntax checking, validation, and linting.
 /// Used by CLI, LSP, and Plugin for consistent diagnostics.
+///
+/// Note: For type-aware validation (member access, argument types, indexers, signals, generics),
+/// use GDSemanticValidator from GDShrapt.Semantics.Validator package separately.
 /// </summary>
 public class GDDiagnosticsService
 {

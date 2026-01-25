@@ -1039,6 +1039,7 @@ internal class GDTypeFlowGraphBuilder
 
     /// <summary>
     /// Gets the node kind from a symbol.
+    /// Matches GDTypeFlowHandler.MapSymbolKind() for consistency.
     /// </summary>
     private GDTypeFlowNodeKind GetNodeKindFromSymbol(GDSymbolInfo symbol)
     {
@@ -1046,8 +1047,13 @@ internal class GDTypeFlowGraphBuilder
         {
             GDSymbolKind.Parameter => GDTypeFlowNodeKind.Parameter,
             GDSymbolKind.Variable => GDTypeFlowNodeKind.LocalVariable,
+            GDSymbolKind.Iterator => GDTypeFlowNodeKind.LocalVariable,
             GDSymbolKind.Method => GDTypeFlowNodeKind.MethodCall,
             GDSymbolKind.Property => GDTypeFlowNodeKind.MemberVariable,
+            GDSymbolKind.Signal => GDTypeFlowNodeKind.MemberVariable,
+            GDSymbolKind.Constant => GDTypeFlowNodeKind.MemberVariable,
+            GDSymbolKind.EnumValue => GDTypeFlowNodeKind.Literal,
+            GDSymbolKind.MatchCaseBinding => GDTypeFlowNodeKind.LocalVariable,
             _ => GDTypeFlowNodeKind.Unknown
         };
     }
