@@ -218,6 +218,47 @@ namespace GDShrapt.Reader
 
         #endregion
 
+        #region Property Accessors
+
+        // Getter body - creates method-like scope
+        public override void Visit(GDGetAccessorBodyDeclaration getterBody)
+        {
+            // Getter body acts like a method scope (no parameters)
+            EnterScope(GDScopeType.Method, getterBody);
+        }
+
+        public override void Left(GDGetAccessorBodyDeclaration getterBody)
+        {
+            ExitScope();
+        }
+
+        // Setter body - creates method-like scope with parameter
+        public override void Visit(GDSetAccessorBodyDeclaration setterBody)
+        {
+            // Setter body acts like a method scope
+            EnterScope(GDScopeType.Method, setterBody);
+
+            // Register the setter parameter (e.g., 'value' in set(value):)
+            var param = setterBody.Parameter;
+            if (param != null)
+            {
+                var paramName = param.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(paramName))
+                {
+                    var typeNode = param.Type;
+                    var typeName = typeNode?.BuildName();
+                    TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
+                }
+            }
+        }
+
+        public override void Left(GDSetAccessorBodyDeclaration setterBody)
+        {
+            ExitScope();
+        }
+
+        #endregion
+
         #region Local declarations
 
         // Local variables (inside methods)
@@ -263,13 +304,46 @@ namespace GDShrapt.Reader
             ExitScope();
         }
 
-        // Conditionals
+        // Conditionals - each branch gets its own scope for variable isolation
         public override void Visit(GDIfStatement ifStatement)
         {
             EnterScope(GDScopeType.Conditional, ifStatement);
         }
 
         public override void Left(GDIfStatement ifStatement)
+        {
+            ExitScope();
+        }
+
+        // If branch - separate scope for variables declared in this branch
+        public override void Visit(GDIfBranch ifBranch)
+        {
+            EnterScope(GDScopeType.Block, ifBranch);
+        }
+
+        public override void Left(GDIfBranch ifBranch)
+        {
+            ExitScope();
+        }
+
+        // Elif branch - separate scope for variables declared in this branch
+        public override void Visit(GDElifBranch elifBranch)
+        {
+            EnterScope(GDScopeType.Block, elifBranch);
+        }
+
+        public override void Left(GDElifBranch elifBranch)
+        {
+            ExitScope();
+        }
+
+        // Else branch - separate scope for variables declared in this branch
+        public override void Visit(GDElseBranch elseBranch)
+        {
+            EnterScope(GDScopeType.Block, elseBranch);
+        }
+
+        public override void Left(GDElseBranch elseBranch)
         {
             ExitScope();
         }
@@ -281,6 +355,19 @@ namespace GDShrapt.Reader
         }
 
         public override void Left(GDMatchStatement matchStatement)
+        {
+            ExitScope();
+        }
+
+        // Match case - each case gets its own scope for binding variables isolation
+        public override void Visit(GDMatchCaseDeclaration matchCase)
+        {
+            // Each match case gets its own scope for binding variables
+            // This prevents 'var x' in one case from conflicting with 'var x' in another case
+            EnterScope(GDScopeType.Block, matchCase);
+        }
+
+        public override void Left(GDMatchCaseDeclaration matchCase)
         {
             ExitScope();
         }
