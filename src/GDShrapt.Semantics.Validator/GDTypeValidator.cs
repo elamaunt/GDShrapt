@@ -1,20 +1,21 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using System.Collections.Generic;
 
 namespace GDShrapt.Semantics.Validator
 {
     /// <summary>
     /// Type checking for expressions and statements.
-    /// Uses GDTypeInferenceEngine for type inference via RuntimeProvider.
+    /// Uses GDSemanticModel for type inference via public API.
     /// </summary>
     public class GDTypeValidator : GDValidationVisitor
     {
-        private GDTypeInferenceEngine _typeInference;
+        private readonly GDSemanticModel? _semanticModel;
 
         /// <summary>
         /// Represents a function context (either a method declaration or a lambda expression).
-        /// </summary>1
+        /// </summary>
         private struct FunctionContext
         {
             public GDTypeNode ReturnType;
@@ -34,14 +35,14 @@ namespace GDShrapt.Semantics.Validator
         // Stack to track containing functions (methods and lambdas) for return type checking
         private readonly Stack<FunctionContext> _functionStack = new Stack<FunctionContext>();
 
-        public GDTypeValidator(GDValidationContext context) : base(context)
+        public GDTypeValidator(GDValidationContext context, GDSemanticModel? semanticModel = null)
+            : base(context)
         {
+            _semanticModel = semanticModel;
         }
 
         public void Validate(GDNode node)
         {
-            // Create type inference engine with runtime provider and scope stack
-            _typeInference = new GDTypeInferenceEngine(Context.RuntimeProvider, Context.Scopes);
             _functionStack.Clear();
             node?.WalkIn(this);
         }
@@ -280,9 +281,9 @@ namespace GDShrapt.Semantics.Validator
             if (sourceBase == targetBase && sourceBase != sourceType)
                 return true;
 
-            // Use type inference engine for detailed compatibility check
-            if (_typeInference != null)
-                return _typeInference.AreTypesCompatible(sourceType, targetType);
+            // Use semantic model for detailed compatibility check
+            if (_semanticModel != null)
+                return _semanticModel.AreTypesCompatible(sourceType, targetType);
 
             return false;
         }
@@ -377,9 +378,9 @@ namespace GDShrapt.Semantics.Validator
             if (actualType == "null")
                 return true;
 
-            // Use type inference engine for detailed compatibility check
-            if (_typeInference != null)
-                return _typeInference.AreTypesCompatible(actualType, declaredType);
+            // Use semantic model for detailed compatibility check
+            if (_semanticModel != null)
+                return _semanticModel.AreTypesCompatible(actualType, declaredType);
 
             return false;
         }
@@ -459,8 +460,8 @@ namespace GDShrapt.Semantics.Validator
             if (IsUntypedVariable(target))
                 return;
 
-            // Use type inference engine for compatibility check
-            if (_typeInference != null && !_typeInference.AreTypesCompatible(valueType, targetType))
+            // Use semantic model for compatibility check
+            if (_semanticModel != null && !_semanticModel.AreTypesCompatible(valueType, targetType))
             {
                 ReportWarning(
                     GDDiagnosticCode.TypeMismatch,
@@ -545,12 +546,27 @@ namespace GDShrapt.Semantics.Validator
         }
 
         /// <summary>
-        /// Infers type using the type inference engine.
+        /// Infers type using the semantic model and local scope.
         /// Returns "Unknown" if type cannot be determined.
         /// </summary>
         private string InferSimpleType(GDExpression expr)
         {
-            var type = _typeInference?.InferType(expr);
+            // First check local scope for variables registered during validation
+            if (expr is GDIdentifierExpression identExpr)
+            {
+                var name = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(name))
+                {
+                    var symbol = Context.Scopes.Lookup(name);
+                    if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
+                    {
+                        return symbol.TypeName;
+                    }
+                }
+            }
+
+            // Fall back to semantic model for complex expressions
+            var type = _semanticModel?.GetExpressionType(expr);
             return type ?? "Unknown";
         }
 

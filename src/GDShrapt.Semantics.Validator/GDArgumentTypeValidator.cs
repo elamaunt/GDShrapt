@@ -14,7 +14,6 @@ namespace GDShrapt.Semantics.Validator
     public class GDArgumentTypeValidator : GDValidationVisitor
     {
         private readonly GDSemanticModel _semanticModel;
-        private readonly GDTypeInferenceEngine _typeInference;
         private readonly GDDiagnosticSeverity _severity;
 
         /// <summary>
@@ -30,7 +29,6 @@ namespace GDShrapt.Semantics.Validator
             : base(context)
         {
             _semanticModel = semanticModel;
-            _typeInference = new GDTypeInferenceEngine(context.RuntimeProvider, context.Scopes);
             _severity = severity;
         }
 
@@ -142,13 +140,9 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private string InferArgumentType(GDExpression arg)
         {
-            // First try semantic model (has flow-sensitive analysis)
-            var type = _semanticModel.GetExpressionType(arg);
-            if (!string.IsNullOrEmpty(type) && type != "Variant" && type != "Unknown")
-                return type;
-
-            // Fall back to type inference engine
-            return _typeInference?.InferType(arg) ?? "Unknown";
+            // Use semantic model for type inference
+            var type = _semanticModel?.GetExpressionType(arg);
+            return !string.IsNullOrEmpty(type) ? type : "Unknown";
         }
 
         /// <summary>

@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="GDShrapt.Semantics.Tests" />
-    <InternalsVisibleTo Include="GDShrapt.Semantics.Validator" />
   </ItemGroup>
 
 </Project>

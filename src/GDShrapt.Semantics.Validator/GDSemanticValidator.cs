@@ -55,7 +55,7 @@ public class GDSemanticValidator
         // Run type validator
         if (_options.CheckTypes)
         {
-            var typeValidator = new GDTypeValidator(context);
+            var typeValidator = new GDTypeValidator(context, _semanticModel);
             typeValidator.Validate(node);
         }
 

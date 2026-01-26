@@ -5,7 +5,7 @@ using GDShrapt.Reader;
 namespace GDShrapt.Semantics.Validator;
 
 /// <summary>
-/// Validates indexer expressions (array[key], dict[key]) using type inference.
+/// Validates indexer expressions (array[key], dict[key]) using semantic model.
 /// Reports errors for:
 /// - Indexing on non-indexable types (int, float, bool, etc.)
 /// - Key type mismatch (string key for int-indexed array)
@@ -13,7 +13,6 @@ namespace GDShrapt.Semantics.Validator;
 public class GDIndexerValidator : GDValidationVisitor
 {
     private readonly GDSemanticModel _semanticModel;
-    private readonly GDTypeInferenceEngine _typeInference;
 
     // Types that support integer indexing
     private static readonly HashSet<string> IntegerIndexableTypes = new HashSet<string>
@@ -43,7 +42,6 @@ public class GDIndexerValidator : GDValidationVisitor
         : base(context)
     {
         _semanticModel = semanticModel;
-        _typeInference = new GDTypeInferenceEngine(context.RuntimeProvider, context.Scopes);
     }
 
     public void Validate(GDNode? node)
@@ -249,7 +247,7 @@ public class GDIndexerValidator : GDValidationVisitor
         if (targetType == "Variant")
             return true;
 
-        // Use type inference engine for detailed check
-        return _typeInference.AreTypesCompatible(sourceType, targetType);
+        // Use semantic model for detailed check
+        return _semanticModel.AreTypesCompatible(sourceType, targetType);
     }
 }

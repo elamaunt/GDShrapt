@@ -478,11 +478,38 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // assert(condition), assert(condition, message)
             "assert" => GDRuntimeFunctionInfo.Range("assert", 1, 2, "void"),
 
-            // min(a, b, ...) - variadic, returns Variant (int/float depending on args)
-            "min" => GDRuntimeFunctionInfo.VarArgs("min", 2, "Variant"),
+            // min(a, b, ...) - variadic, returns float (use mini() for int)
+            "min" => GDRuntimeFunctionInfo.VarArgs("min", 2, "float"),
 
-            // max(a, b, ...) - variadic, returns Variant (int/float depending on args)
-            "max" => GDRuntimeFunctionInfo.VarArgs("max", 2, "Variant"),
+            // max(a, b, ...) - variadic, returns float (use maxi() for int)
+            "max" => GDRuntimeFunctionInfo.VarArgs("max", 2, "float"),
+
+            // mini(a, b, ...) - variadic integer minimum, returns int
+            "mini" => GDRuntimeFunctionInfo.VarArgs("mini", 2, "int"),
+
+            // maxi(a, b, ...) - variadic integer maximum, returns int
+            "maxi" => GDRuntimeFunctionInfo.VarArgs("maxi", 2, "int"),
+
+            // minf(a, b) - float minimum, returns float
+            "minf" => GDRuntimeFunctionInfo.Exact("minf", 2, "float"),
+
+            // maxf(a, b) - float maximum, returns float
+            "maxf" => GDRuntimeFunctionInfo.Exact("maxf", 2, "float"),
+
+            // clampi(value, min, max) - returns int
+            "clampi" => GDRuntimeFunctionInfo.Exact("clampi", 3, "int"),
+
+            // clampf(value, min, max) - returns float
+            "clampf" => GDRuntimeFunctionInfo.Exact("clampf", 3, "float"),
+
+            // abs(x) - returns float
+            "abs" => GDRuntimeFunctionInfo.Exact("abs", 1, "float"),
+
+            // absi(x) - returns int
+            "absi" => GDRuntimeFunctionInfo.Exact("absi", 1, "int"),
+
+            // absf(x) - returns float
+            "absf" => GDRuntimeFunctionInfo.Exact("absf", 1, "float"),
 
             _ => null
         };

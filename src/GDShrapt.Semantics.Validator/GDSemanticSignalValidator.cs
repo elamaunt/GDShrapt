@@ -6,7 +6,7 @@ using GDShrapt.Reader;
 namespace GDShrapt.Semantics.Validator;
 
 /// <summary>
-/// Validates signal operations (emit_signal, connect) using type inference.
+/// Validates signal operations (emit_signal, connect) using semantic model.
 /// Extends the basic GDSignalValidator with type checking:
 /// - emit_signal argument types vs signal parameter types
 /// - connect callback signature type compatibility
@@ -14,7 +14,6 @@ namespace GDShrapt.Semantics.Validator;
 public class GDSemanticSignalValidator : GDValidationVisitor
 {
     private readonly GDSemanticModel _semanticModel;
-    private readonly GDTypeInferenceEngine _typeInference;
     private readonly GDDiagnosticSeverity _severity;
 
     public GDSemanticSignalValidator(
@@ -24,7 +23,6 @@ public class GDSemanticSignalValidator : GDValidationVisitor
         : base(context)
     {
         _semanticModel = semanticModel;
-        _typeInference = new GDTypeInferenceEngine(context.RuntimeProvider, context.Scopes);
         _severity = severity;
     }
 
@@ -209,8 +207,8 @@ public class GDSemanticSignalValidator : GDValidationVisitor
         if (sourceType == "null")
             return true;
 
-        // Use type inference engine for detailed check
-        return _typeInference.AreTypesCompatible(sourceType, targetType);
+        // Use semantic model for detailed check
+        return _semanticModel.AreTypesCompatible(sourceType, targetType);
     }
 
     private void ReportDiagnostic(GDDiagnosticSeverity severity, GDDiagnosticCode code, string message, GDNode node)
