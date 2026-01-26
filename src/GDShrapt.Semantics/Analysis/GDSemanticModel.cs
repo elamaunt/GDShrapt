@@ -153,13 +153,17 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     /// <param name="scriptFile">The script file to analyze.</param>
     /// <param name="runtimeProvider">Optional runtime provider for type resolution.</param>
+    /// <param name="typeInjector">Optional type injector for scene-based node type inference.</param>
     /// <returns>A fully built semantic model.</returns>
-    public static GDSemanticModel Create(GDScriptFile scriptFile, IGDRuntimeProvider? runtimeProvider = null)
+    public static GDSemanticModel Create(
+        GDScriptFile scriptFile,
+        IGDRuntimeProvider? runtimeProvider = null,
+        IGDRuntimeTypeInjector? typeInjector = null)
     {
         if (scriptFile == null)
             throw new ArgumentNullException(nameof(scriptFile));
 
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
+        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider, typeInjector);
         return collector.BuildSemanticModel();
     }
 
@@ -514,9 +518,17 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         // This ensures narrowed types (e.g., after 'if x is int:') are used for expressions like 'x * 2'
         if (expression is GDDualOperatorExpression dualOp)
         {
+            var opType = dualOp.Operator?.OperatorType;
+
+            // For 'as' operator, delegate to TypeEngine which handles it correctly
+            // (right side is a TYPE NAME, not an expression value)
+            if (opType == GDDualOperatorType.As)
+            {
+                return _typeEngine?.InferType(expression);
+            }
+
             var leftType = GetExpressionType(dualOp.LeftExpression);
             var rightType = GetExpressionType(dualOp.RightExpression);
-            var opType = dualOp.Operator?.OperatorType;
 
             if (opType.HasValue)
             {
@@ -2002,6 +2014,91 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     {
         if (expression is GDExpression expr)
             return GetExpressionType(expr);
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if the type name refers to a local enum declaration.
+    /// </summary>
+    bool IGDMemberAccessAnalyzer.IsLocalEnum(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var symbols = FindSymbols(typeName);
+        return symbols.Any(s => s.Kind == GDSymbolKind.Enum);
+    }
+
+    /// <summary>
+    /// Checks if a member name is a valid value for a local enum.
+    /// </summary>
+    bool IGDMemberAccessAnalyzer.IsLocalEnumValue(string enumTypeName, string memberName)
+    {
+        if (string.IsNullOrEmpty(enumTypeName) || string.IsNullOrEmpty(memberName))
+            return false;
+
+        var enumSymbol = FindSymbols(enumTypeName)
+            .FirstOrDefault(s => s.Kind == GDSymbolKind.Enum);
+
+        if (enumSymbol?.DeclarationNode is not GDEnumDeclaration enumDecl)
+            return false;
+
+        // Check if memberName is a valid enum value
+        return enumDecl.Values?.Any(v => v.Identifier?.Sequence == memberName) ?? false;
+    }
+
+    /// <summary>
+    /// Checks if the type name refers to a local inner class declaration.
+    /// </summary>
+    bool IGDMemberAccessAnalyzer.IsLocalInnerClass(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var symbols = FindSymbols(typeName);
+        return symbols.Any(s => s.Kind == GDSymbolKind.Class);
+    }
+
+    /// <summary>
+    /// Gets a member from a local inner class.
+    /// </summary>
+    GDRuntimeMemberInfo? IGDMemberAccessAnalyzer.GetInnerClassMember(string innerClassName, string memberName)
+    {
+        if (string.IsNullOrEmpty(innerClassName) || string.IsNullOrEmpty(memberName))
+            return null;
+
+        var classSymbol = FindSymbols(innerClassName)
+            .FirstOrDefault(s => s.Kind == GDSymbolKind.Class);
+
+        if (classSymbol?.DeclarationNode is not GDInnerClassDeclaration innerClass)
+            return null;
+
+        // Check members for property or method
+        foreach (var member in innerClass.Members)
+        {
+            if (member is GDVariableDeclaration varDecl &&
+                varDecl.Identifier?.Sequence == memberName)
+            {
+                var varType = varDecl.Type?.BuildName() ?? "Variant";
+                return GDRuntimeMemberInfo.Property(memberName, varType, false);
+            }
+
+            if (member is GDMethodDeclaration methodDecl &&
+                methodDecl.Identifier?.Sequence == memberName)
+            {
+                var returnType = methodDecl.ReturnType?.BuildName() ?? "Variant";
+                var paramCount = methodDecl.Parameters?.Count ?? 0;
+                return GDRuntimeMemberInfo.Method(memberName, returnType, paramCount, paramCount, false);
+            }
+        }
+
+        // Check base type inheritance chain
+        var baseTypeName = innerClass.BaseType?.BuildName();
+        if (!string.IsNullOrEmpty(baseTypeName))
+        {
+            return FindMemberWithInheritanceInternal(baseTypeName, memberName);
+        }
+
         return null;
     }
 

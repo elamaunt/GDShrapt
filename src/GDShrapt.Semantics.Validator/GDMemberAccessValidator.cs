@@ -166,6 +166,37 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
+        // Variant can have any properties (duck typing)
+        if (typeName == "Variant")
+            return;
+
+        // Check if this is a local enum value access (e.g., AIState.IDLE)
+        if (_analyzer.IsLocalEnum(typeName))
+        {
+            if (_analyzer.IsLocalEnumValue(typeName, memberName))
+                return; // Valid enum access
+
+            ReportWarning(
+                GDDiagnosticCode.PropertyNotFound,
+                $"Enum value '{memberName}' not found in enum '{typeName}'",
+                memberAccess);
+            return;
+        }
+
+        // Check if this is a local inner class member access
+        if (_analyzer.IsLocalInnerClass(typeName))
+        {
+            var innerMember = _analyzer.GetInnerClassMember(typeName, memberName);
+            if (innerMember != null)
+                return; // Valid inner class member
+
+            ReportWarning(
+                GDDiagnosticCode.PropertyNotFound,
+                $"Property '{memberName}' not found on inner class '{typeName}'",
+                memberAccess);
+            return;
+        }
+
         var memberInfo = FindMember(typeName, memberName);
         if (memberInfo == null)
         {
@@ -181,7 +212,39 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
-        var memberInfo = FindMember(typeName, methodName);
+        // Variant can have any methods (duck typing)
+        if (typeName == "Variant")
+            return;
+
+        GDRuntimeMemberInfo? memberInfo;
+
+        // Check if this is a local inner class method call
+        if (_analyzer.IsLocalInnerClass(typeName))
+        {
+            memberInfo = _analyzer.GetInnerClassMember(typeName, methodName);
+            if (memberInfo == null)
+            {
+                ReportWarning(
+                    GDDiagnosticCode.MethodNotFound,
+                    $"Method '{methodName}' not found on inner class '{typeName}'",
+                    call);
+                return;
+            }
+
+            if (memberInfo.Kind != GDRuntimeMemberKind.Method)
+            {
+                ReportError(
+                    GDDiagnosticCode.NotCallable,
+                    $"'{methodName}' on inner class '{typeName}' is not a method",
+                    call);
+                return;
+            }
+
+            // Skip argument count validation for inner class methods (we don't have reliable info)
+            return;
+        }
+
+        memberInfo = FindMember(typeName, methodName);
         if (memberInfo == null)
         {
             ReportWarning(

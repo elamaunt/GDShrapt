@@ -42,6 +42,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             var typeInfo = BuildTypeInfo(scriptInfo);
             _typeCache[typeName] = typeInfo;
 
+            // Register inner classes as separate types
+            RegisterInnerClasses(scriptInfo.Class, typeName);
+
             // Index by script path for "extends 'res://path/to/script.gd'" support
             if (!string.IsNullOrEmpty(scriptInfo.FullPath))
             {
@@ -58,6 +61,118 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Registers inner classes as separate types in the cache.
+    /// This enables proper inheritance resolution for inner class hierarchies.
+    /// </summary>
+    private void RegisterInnerClasses(GDClassDeclaration classDecl, string parentTypeName)
+    {
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDInnerClassDeclaration innerClass && innerClass.Identifier != null)
+            {
+                var innerClassName = innerClass.Identifier.Sequence;
+                var innerTypeInfo = BuildInnerClassTypeInfo(innerClass, parentTypeName);
+                _typeCache[innerClassName] = innerTypeInfo;
+
+                // Recursively register nested inner classes
+                RegisterNestedInnerClasses(innerClass, innerClassName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Recursively registers nested inner classes.
+    /// </summary>
+    private void RegisterNestedInnerClasses(GDInnerClassDeclaration innerClass, string parentTypeName)
+    {
+        foreach (var member in innerClass.Members)
+        {
+            if (member is GDInnerClassDeclaration nestedClass && nestedClass.Identifier != null)
+            {
+                var nestedClassName = nestedClass.Identifier.Sequence;
+                var nestedTypeInfo = BuildInnerClassTypeInfo(nestedClass, parentTypeName);
+                _typeCache[nestedClassName] = nestedTypeInfo;
+
+                // Continue recursion
+                RegisterNestedInnerClasses(nestedClass, nestedClassName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds type info for an inner class declaration.
+    /// </summary>
+    private GDProjectTypeInfo BuildInnerClassTypeInfo(GDInnerClassDeclaration innerClass, string parentTypeName)
+    {
+        var info = new GDProjectTypeInfo
+        {
+            Name = innerClass.Identifier?.Sequence ?? "",
+            BaseTypeName = innerClass.BaseType?.BuildName() ?? parentTypeName,
+            IsAbstract = innerClass.CustomAttributes.Any(attr => attr.Attribute?.IsAbstract() == true)
+        };
+
+        // Extract members from inner class
+        foreach (var member in innerClass.Members)
+        {
+            switch (member)
+            {
+                case GDMethodDeclaration method when method.Identifier != null:
+                    var isMethodAbstract = method.AttributesDeclaredBefore
+                        .Any(attr => attr.Attribute?.IsAbstract() == true);
+
+                    info.Methods[method.Identifier.Sequence] = new GDProjectMethodInfo
+                    {
+                        Name = method.Identifier.Sequence,
+                        ReturnTypeName = method.ReturnType?.BuildName() ?? "Variant",
+                        IsStatic = method.IsStatic,
+                        IsAbstract = isMethodAbstract,
+                        Parameters = method.Parameters?
+                            .Where(p => p.Identifier != null)
+                            .Select(p => new GDProjectParameterInfo
+                            {
+                                Name = p.Identifier!.Sequence,
+                                TypeName = p.Type?.BuildName() ?? "Variant",
+                                HasDefaultValue = p.DefaultValue != null
+                            })
+                            .ToList() ?? new()
+                    };
+                    break;
+
+                case GDVariableDeclaration variable when variable.Identifier != null:
+                    info.Properties[variable.Identifier.Sequence] = new GDProjectPropertyInfo
+                    {
+                        Name = variable.Identifier.Sequence,
+                        TypeName = variable.Type?.BuildName() ?? "Variant",
+                        IsConstant = variable.ConstKeyword != null
+                    };
+                    break;
+
+                case GDSignalDeclaration signal when signal.Identifier != null:
+                    info.Signals[signal.Identifier.Sequence] = new GDProjectSignalInfo
+                    {
+                        Name = signal.Identifier.Sequence,
+                        Parameters = signal.Parameters?
+                            .Where(p => p.Identifier != null)
+                            .Select(p => new GDProjectParameterInfo
+                            {
+                                Name = p.Identifier!.Sequence,
+                                TypeName = p.Type?.BuildName() ?? "Variant",
+                                HasDefaultValue = p.DefaultValue != null
+                            })
+                            .ToList() ?? new()
+                    };
+                    break;
+
+                case GDInnerClassDeclaration nested when nested.Identifier != null:
+                    info.InnerClasses.Add(nested.Identifier.Sequence);
+                    break;
+            }
+        }
+
+        return info;
     }
 
     private GDProjectTypeInfo BuildTypeInfo(IGDScriptInfo scriptInfo)

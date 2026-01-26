@@ -490,6 +490,19 @@ namespace GDShrapt.Semantics
                     if (!string.IsNullOrEmpty(symbol.TypeName))
                         return CreateSimpleType(symbol.TypeName);
 
+                    // Handle enum symbols - enum type is the enum name itself
+                    // This allows AIState.PATROL where AIState is a local enum
+                    if (symbol.Kind == GDSymbolKind.Enum)
+                    {
+                        return CreateSimpleType(symbol.Name);
+                    }
+
+                    // Handle inner class symbols - class type is the class name
+                    if (symbol.Kind == GDSymbolKind.Class)
+                    {
+                        return CreateSimpleType(symbol.Name);
+                    }
+
                     // Fallback: infer type from initializer for understanding expression type
                     // Handle local variables (statements)
                     if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt &&
@@ -530,6 +543,17 @@ namespace GDShrapt.Semantics
                         return CreateSimpleType("Signal");
                     }
                 }
+
+                // Check inherited members from base class via implicit self
+                // When identifier like 'position' is used without 'self.', resolve from parent class
+                // This handles cases like: extends Node2D; func test(): var d = position.distance_to(...)
+                var baseTypeName = GetClassBaseType(classDecl);
+                if (!string.IsNullOrEmpty(baseTypeName))
+                {
+                    var memberInfo = FindMemberWithInheritance(baseTypeName, name);
+                    if (memberInfo != null)
+                        return CreateSimpleType(memberInfo.Type);
+                }
             }
 
             // Check if it's a known type (type as value, like Vector2)
@@ -563,23 +587,51 @@ namespace GDShrapt.Semantics
         /// </summary>
         private static string? GetParentClassType(GDIdentifierExpression identExpr)
         {
+            // First check if we're inside an inner class
+            var innerClass = identExpr.InnerClassDeclaration;
+            if (innerClass != null)
+            {
+                // Use inner class's BaseType directly (not Extends.Type - Extends is just the keyword)
+                var baseType = innerClass.BaseType;
+                if (baseType != null)
+                {
+                    var typeName = baseType.BuildName();
+                    if (!string.IsNullOrEmpty(typeName))
+                        return typeName;
+                }
+                // Inner classes without extends default to RefCounted
+                return "RefCounted";
+            }
+
+            // Fall back to root class for outer class context
             var classDecl = identExpr.RootClassDeclaration;
             if (classDecl == null)
                 return null;
 
             // Get extends clause
-            var extendsClause = classDecl.Extends;
-            if (extendsClause?.Type != null)
+            var extendsClause2 = classDecl.Extends;
+            if (extendsClause2?.Type != null)
             {
                 // Get the type name from extends clause using BuildName()
                 // This works for both simple types (Node2D) and complex types
-                var typeName = extendsClause.Type.BuildName();
+                var typeName = extendsClause2.Type.BuildName();
                 if (!string.IsNullOrEmpty(typeName))
                     return typeName;
             }
 
             // If no extends, default to RefCounted
             return "RefCounted";
+        }
+
+        /// <summary>
+        /// Gets the base type name from the extends clause of the class declaration.
+        /// </summary>
+        private static string? GetClassBaseType(GDClassDeclaration classDecl)
+        {
+            var extendsClause = classDecl?.Extends;
+            if (extendsClause?.Type != null)
+                return extendsClause.Type.BuildName();
+            return null;
         }
 
         private string InferCallType(GDCallExpression callExpr)
@@ -896,11 +948,43 @@ namespace GDShrapt.Semantics
             if (opType == null)
                 return null;
 
+            // Special handling for 'as' operator - right side IS the type name, not an expression
+            if (opType == GDDualOperatorType.As)
+            {
+                var typeName = GetTypeNameFromExpression(dualOp.RightExpression);
+                return typeName ?? "Variant";
+            }
+
             var leftType = InferType(dualOp.LeftExpression);
             var rightType = InferType(dualOp.RightExpression);
 
             // Delegate to the centralized operator type resolver
             return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+        }
+
+        /// <summary>
+        /// Extracts a type name from an expression used in type context (e.g., 'as' operator, 'is' check).
+        /// </summary>
+        private static string? GetTypeNameFromExpression(GDExpression? expr)
+        {
+            if (expr == null)
+                return null;
+
+            // Simple identifier: Dictionary, Array, Node, Sprite2D, etc.
+            if (expr is GDIdentifierExpression identExpr)
+                return identExpr.Identifier?.Sequence;
+
+            // Member expressions like SomeClass.InnerType
+            if (expr is GDMemberOperatorExpression memberExpr)
+            {
+                var caller = GetTypeNameFromExpression(memberExpr.CallerExpression);
+                var member = memberExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(caller) && !string.IsNullOrEmpty(member))
+                    return $"{caller}.{member}";
+            }
+
+            // Fallback
+            return expr.ToString();
         }
 
         private string InferSingleOperatorType(GDSingleOperatorExpression singleOp)

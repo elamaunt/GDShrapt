@@ -374,6 +374,10 @@ namespace GDShrapt.Semantics.Validator
             if (actualType == declaredType)
                 return true;
 
+            // 'self' is compatible with any declared return type (it's the current class or subclass)
+            if (actualType == "self")
+                return true;
+
             // null is compatible with any reference type
             if (actualType == "null")
                 return true;
@@ -413,6 +417,10 @@ namespace GDShrapt.Semantics.Validator
                     {
                         // String + anything is allowed in GDScript
                         if (op == GDDualOperatorType.Addition && (leftType == "String" || rightType == "String"))
+                            break;
+
+                        // String % anything is string formatting in GDScript
+                        if (op == GDDualOperatorType.Mod && leftType == "String")
                             break;
 
                         ReportWarning(
@@ -585,12 +593,47 @@ namespace GDShrapt.Semantics.Validator
             if (left == right)
                 return true;
 
+            // Vector * scalar and scalar * Vector operations are valid
+            // This includes *, / for scaling vectors
+            if (IsVectorType(left) && IsNumericType(right))
+                return true;
+
+            if (IsNumericType(left) && IsVectorType(right))
+                return true;
+
+            // Transform * Vector and Vector * Transform operations are also valid
+            if (IsTransformType(left) && IsVectorType(right))
+                return true;
+
+            if (IsVectorType(left) && IsTransformType(right))
+                return true;
+
+            // Color * scalar operations
+            if (left == "Color" && IsNumericType(right))
+                return true;
+
+            if (IsNumericType(left) && right == "Color")
+                return true;
+
             return false;
         }
 
         private bool IsNumericType(string type)
         {
             return type == "int" || type == "float";
+        }
+
+        private static bool IsVectorType(string type)
+        {
+            return type == "Vector2" || type == "Vector2i" ||
+                   type == "Vector3" || type == "Vector3i" ||
+                   type == "Vector4" || type == "Vector4i";
+        }
+
+        private static bool IsTransformType(string type)
+        {
+            return type == "Transform2D" || type == "Transform3D" ||
+                   type == "Basis" || type == "Projection";
         }
 
         private string GetOperatorSymbol(GDDualOperatorType op)

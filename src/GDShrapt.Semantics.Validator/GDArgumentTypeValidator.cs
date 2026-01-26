@@ -120,6 +120,10 @@ namespace GDShrapt.Semantics.Validator
                 if (string.IsNullOrEmpty(expectedType) || expectedType == "Variant")
                     continue;
 
+                // Parameter with null type (inferred from default = null) accepts any value
+                if (expectedType == "null")
+                    continue;
+
                 // Get actual type of argument
                 var actualType = InferArgumentType(arg);
                 if (string.IsNullOrEmpty(actualType) || actualType == "Unknown" || actualType == "Variant")
@@ -161,6 +165,22 @@ namespace GDShrapt.Semantics.Validator
             // Variant accepts anything
             if (expectedType == "Variant")
                 return true;
+
+            // Handle 'self' - resolve to actual class type
+            if (actualType == "self")
+            {
+                var currentClassType = _semanticModel?.ScriptFile?.TypeName;
+                if (!string.IsNullOrEmpty(currentClassType))
+                {
+                    // Replace 'self' with actual class type for inheritance check
+                    actualType = currentClassType;
+                }
+                else
+                {
+                    // If we can't determine type, assume compatible
+                    return true;
+                }
+            }
 
             // Check union type compatibility
             if (expectedUnion != null && !expectedUnion.IsEmpty)

@@ -17,6 +17,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
 {
     private readonly GDScriptFile _scriptFile;
     private readonly IGDRuntimeProvider? _runtimeProvider;
+    private readonly IGDRuntimeTypeInjector? _typeInjector;
     private GDTypeInferenceEngine? _typeEngine;
     private readonly GDTypeNarrowingAnalyzer? _narrowingAnalyzer;
 
@@ -52,12 +53,15 @@ internal class GDSemanticReferenceCollector : GDVisitor
     /// </summary>
     /// <param name="scriptFile">The script file to analyze.</param>
     /// <param name="runtimeProvider">Runtime provider for type resolution (includes Godot types, project types, etc.).</param>
+    /// <param name="typeInjector">Optional type injector for scene-based node type inference.</param>
     public GDSemanticReferenceCollector(
         GDScriptFile scriptFile,
-        IGDRuntimeProvider? runtimeProvider = null)
+        IGDRuntimeProvider? runtimeProvider = null,
+        IGDRuntimeTypeInjector? typeInjector = null)
     {
         _scriptFile = scriptFile ?? throw new ArgumentNullException(nameof(scriptFile));
         _runtimeProvider = runtimeProvider;
+        _typeInjector = typeInjector;
 
         if (runtimeProvider != null)
         {
@@ -90,9 +94,22 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
         // Create type engine with proper scopes (after all declarations are collected)
         // Store in field so it can be used during reference collection
-        _typeEngine = _runtimeProvider != null
-            ? new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes)
-            : null;
+        // If type injector is provided, use it for scene-based node type inference
+        if (_runtimeProvider != null)
+        {
+            if (_typeInjector != null)
+            {
+                var injectionContext = new GDTypeInjectionContext
+                {
+                    ScriptPath = _scriptFile.FullPath
+                };
+                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes, _typeInjector, injectionContext);
+            }
+            else
+            {
+                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes);
+            }
+        }
 
         _model = new GDSemanticModel(_scriptFile, _runtimeProvider, validationContext, _typeEngine);
 

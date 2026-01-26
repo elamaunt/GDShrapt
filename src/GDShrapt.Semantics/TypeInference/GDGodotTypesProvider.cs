@@ -232,104 +232,56 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     }
 
     /// <summary>
-    /// Returns hardcoded properties for built-in value types that may not be fully captured in TypesMap.
+    /// Looks up properties and methods for built-in value types from TypesMap data.
     /// These types have struct-like properties (x, y, z, r, g, b, etc.) that are essential for GDScript.
     /// </summary>
-    private static GDRuntimeMemberInfo? GetBuiltinTypeMember(string typeName, string memberName)
+    private GDRuntimeMemberInfo? GetBuiltinTypeMember(string typeName, string memberName)
     {
-        // Normalize type name for case-insensitive matching
-        var typeKey = typeName.ToLowerInvariant();
-        var memberKey = memberName.ToLowerInvariant();
+        if (_assemblyData?.TypeDatas == null)
+            return null;
 
-        return (typeKey, memberKey) switch
+        // Try to find type data by GDScript name (case-insensitive lookup)
+        if (!_assemblyData.TypeDatas.TryGetValue(typeName, out var typeVariants))
+            return null;
+
+        // Get the first type data variant
+        var typeData = typeVariants.Values.FirstOrDefault();
+        if (typeData == null)
+            return null;
+
+        // Check methods
+        if (typeData.MethodDatas?.TryGetValue(memberName, out var methods) == true && methods.Count > 0)
         {
-            // Vector2 properties
-            ("vector2", "x") => GDRuntimeMemberInfo.Property("x", "float"),
-            ("vector2", "y") => GDRuntimeMemberInfo.Property("y", "float"),
+            var method = methods[0];
+            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
+            var memberInfo = GDRuntimeMemberInfo.Method(
+                method.GDScriptName,
+                method.GDScriptReturnTypeName ?? "Variant",
+                minArgs,
+                isVarArgs ? int.MaxValue : maxArgs,
+                isVarArgs);
+            memberInfo.Parameters = CreateParameterList(method.Parameters);
+            return memberInfo;
+        }
 
-            // Vector2i properties
-            ("vector2i", "x") => GDRuntimeMemberInfo.Property("x", "int"),
-            ("vector2i", "y") => GDRuntimeMemberInfo.Property("y", "int"),
+        // Check properties
+        if (typeData.PropertyDatas?.TryGetValue(memberName, out var property) == true)
+        {
+            return GDRuntimeMemberInfo.Property(
+                property.GDScriptName,
+                property.GDScriptTypeName ?? "Variant",
+                property.IsStatic);
+        }
 
-            // Vector3 properties
-            ("vector3", "x") => GDRuntimeMemberInfo.Property("x", "float"),
-            ("vector3", "y") => GDRuntimeMemberInfo.Property("y", "float"),
-            ("vector3", "z") => GDRuntimeMemberInfo.Property("z", "float"),
+        // Check constants
+        if (typeData.Constants?.TryGetValue(memberName, out var constant) == true)
+        {
+            return GDRuntimeMemberInfo.Constant(
+                constant.GDScriptName ?? memberName,
+                constant.CSharpValueTypeName ?? "Variant");
+        }
 
-            // Vector3i properties
-            ("vector3i", "x") => GDRuntimeMemberInfo.Property("x", "int"),
-            ("vector3i", "y") => GDRuntimeMemberInfo.Property("y", "int"),
-            ("vector3i", "z") => GDRuntimeMemberInfo.Property("z", "int"),
-
-            // Vector4 properties
-            ("vector4", "x") => GDRuntimeMemberInfo.Property("x", "float"),
-            ("vector4", "y") => GDRuntimeMemberInfo.Property("y", "float"),
-            ("vector4", "z") => GDRuntimeMemberInfo.Property("z", "float"),
-            ("vector4", "w") => GDRuntimeMemberInfo.Property("w", "float"),
-
-            // Vector4i properties
-            ("vector4i", "x") => GDRuntimeMemberInfo.Property("x", "int"),
-            ("vector4i", "y") => GDRuntimeMemberInfo.Property("y", "int"),
-            ("vector4i", "z") => GDRuntimeMemberInfo.Property("z", "int"),
-            ("vector4i", "w") => GDRuntimeMemberInfo.Property("w", "int"),
-
-            // Color properties
-            ("color", "r") => GDRuntimeMemberInfo.Property("r", "float"),
-            ("color", "g") => GDRuntimeMemberInfo.Property("g", "float"),
-            ("color", "b") => GDRuntimeMemberInfo.Property("b", "float"),
-            ("color", "a") => GDRuntimeMemberInfo.Property("a", "float"),
-            ("color", "r8") => GDRuntimeMemberInfo.Property("r8", "int"),
-            ("color", "g8") => GDRuntimeMemberInfo.Property("g8", "int"),
-            ("color", "b8") => GDRuntimeMemberInfo.Property("b8", "int"),
-            ("color", "a8") => GDRuntimeMemberInfo.Property("a8", "int"),
-            ("color", "h") => GDRuntimeMemberInfo.Property("h", "float"),
-            ("color", "s") => GDRuntimeMemberInfo.Property("s", "float"),
-            ("color", "v") => GDRuntimeMemberInfo.Property("v", "float"),
-
-            // Rect2 properties
-            ("rect2", "position") => GDRuntimeMemberInfo.Property("position", "Vector2"),
-            ("rect2", "size") => GDRuntimeMemberInfo.Property("size", "Vector2"),
-            ("rect2", "end") => GDRuntimeMemberInfo.Property("end", "Vector2"),
-
-            // Rect2i properties
-            ("rect2i", "position") => GDRuntimeMemberInfo.Property("position", "Vector2i"),
-            ("rect2i", "size") => GDRuntimeMemberInfo.Property("size", "Vector2i"),
-            ("rect2i", "end") => GDRuntimeMemberInfo.Property("end", "Vector2i"),
-
-            // Quaternion properties
-            ("quaternion", "x") => GDRuntimeMemberInfo.Property("x", "float"),
-            ("quaternion", "y") => GDRuntimeMemberInfo.Property("y", "float"),
-            ("quaternion", "z") => GDRuntimeMemberInfo.Property("z", "float"),
-            ("quaternion", "w") => GDRuntimeMemberInfo.Property("w", "float"),
-
-            // Plane properties
-            ("plane", "x") => GDRuntimeMemberInfo.Property("x", "float"),
-            ("plane", "y") => GDRuntimeMemberInfo.Property("y", "float"),
-            ("plane", "z") => GDRuntimeMemberInfo.Property("z", "float"),
-            ("plane", "d") => GDRuntimeMemberInfo.Property("d", "float"),
-            ("plane", "normal") => GDRuntimeMemberInfo.Property("normal", "Vector3"),
-
-            // AABB properties
-            ("aabb", "position") => GDRuntimeMemberInfo.Property("position", "Vector3"),
-            ("aabb", "size") => GDRuntimeMemberInfo.Property("size", "Vector3"),
-            ("aabb", "end") => GDRuntimeMemberInfo.Property("end", "Vector3"),
-
-            // Transform2D properties
-            ("transform2d", "x") => GDRuntimeMemberInfo.Property("x", "Vector2"),
-            ("transform2d", "y") => GDRuntimeMemberInfo.Property("y", "Vector2"),
-            ("transform2d", "origin") => GDRuntimeMemberInfo.Property("origin", "Vector2"),
-
-            // Basis properties
-            ("basis", "x") => GDRuntimeMemberInfo.Property("x", "Vector3"),
-            ("basis", "y") => GDRuntimeMemberInfo.Property("y", "Vector3"),
-            ("basis", "z") => GDRuntimeMemberInfo.Property("z", "Vector3"),
-
-            // Transform3D properties
-            ("transform3d", "basis") => GDRuntimeMemberInfo.Property("basis", "Basis"),
-            ("transform3d", "origin") => GDRuntimeMemberInfo.Property("origin", "Vector3"),
-
-            _ => null
-        };
+        return null;
     }
 
     public string? GetBaseType(string typeName)
@@ -373,6 +325,11 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         // Numeric promotion
         if (sourceType == "int" && targetType == "float")
+            return true;
+
+        // String <-> StringName implicit conversion
+        if ((sourceType == "String" && targetType == "StringName") ||
+            (sourceType == "StringName" && targetType == "String"))
             return true;
 
         // Extract base type names for generics (Array[int] -> Array)
@@ -510,6 +467,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
             // absf(x) - returns float
             "absf" => GDRuntimeFunctionInfo.Exact("absf", 1, "float"),
+
+            // str(value, ...) - variadic, returns String (AssemblyData incorrectly maps to GD.Print which returns void)
+            "str" => GDRuntimeFunctionInfo.VarArgs("str", 1, "String"),
 
             _ => null
         };

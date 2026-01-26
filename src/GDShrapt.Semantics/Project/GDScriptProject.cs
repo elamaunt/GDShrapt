@@ -187,11 +187,28 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public void AnalyzeAll()
     {
         var runtimeProvider = CreateRuntimeProvider();
+        var nodeTypeInjector = CreateNodeTypeInjector();
 
         foreach (var script in _scripts.Values)
         {
-            script.Analyze(runtimeProvider);
+            script.Analyze(runtimeProvider, nodeTypeInjector);
         }
+    }
+
+    /// <summary>
+    /// Creates a node type injector for scene-based node type inference.
+    /// </summary>
+    private GDNodeTypeInjector? CreateNodeTypeInjector()
+    {
+        if (_sceneTypesProvider == null)
+            return null;
+
+        var godotTypesProvider = new GDGodotTypesProvider();
+        return new GDNodeTypeInjector(
+            _sceneTypesProvider,
+            this, // IGDScriptProvider
+            godotTypesProvider,
+            _logger);
     }
 
     /// <summary>
