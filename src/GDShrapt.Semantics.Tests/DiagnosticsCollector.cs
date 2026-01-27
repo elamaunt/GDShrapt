@@ -42,14 +42,13 @@ public class DiagnosticsCollector
             allDiagnostics.AddRange(diagnostics);
         }
 
-        // Generate markdown report
-        var markdown = GenerateMarkdownReport(allDiagnostics, project);
+        // Generate plain text report (same format as plugin output)
+        var repoRoot = GetRepoRoot();
+        var plainText = GeneratePlainTextReport(allDiagnostics, project);
+        var txtOutputPath = Path.Combine(repoRoot, "DIAGNOSTICS.txt");
+        File.WriteAllText(txtOutputPath, plainText);
 
-        // Save to DIAGNOSTICS.md in the root of the repo
-        var outputPath = Path.Combine(GetRepoRoot(), "DIAGNOSTICS.md");
-        File.WriteAllText(outputPath, markdown);
-
-        Console.WriteLine($"Diagnostics saved to: {outputPath}");
+        Console.WriteLine($"Diagnostics saved to: {txtOutputPath}");
         Console.WriteLine($"Total diagnostics: {allDiagnostics.Count}");
 
         // Also print summary
@@ -122,93 +121,83 @@ public class DiagnosticsCollector
         return entries;
     }
 
-    private string GenerateMarkdownReport(List<DiagnosticEntry> diagnostics, GDScriptProject project)
+    private string GeneratePlainTextReport(List<DiagnosticEntry> diagnostics, GDScriptProject project)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("# GDShrapt Diagnostics Report");
-        sb.AppendLine();
+        sb.AppendLine("================================================================================");
+        sb.AppendLine("GDShrapt Diagnostics Report");
         sb.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Project: testproject/GDShrapt.TestProject");
+        sb.AppendLine("================================================================================");
         sb.AppendLine();
 
         // Summary
-        sb.AppendLine("## Summary");
+        sb.AppendLine("SUMMARY");
+        sb.AppendLine("--------------------------------------------------------------------------------");
+        sb.AppendLine($"Total diagnostics: {diagnostics.Count}");
+        sb.AppendLine($"Scripts analyzed:  {project.ScriptFiles.Count()}");
         sb.AppendLine();
-        sb.AppendLine($"- **Total diagnostics:** {diagnostics.Count}");
-        sb.AppendLine($"- **Scripts analyzed:** {project.ScriptFiles.Count()}");
 
-        var bySource = diagnostics.GroupBy(d => d.Source).OrderBy(g => g.Key);
-        sb.AppendLine();
-        sb.AppendLine("### By Source");
-        foreach (var group in bySource)
-        {
-            sb.AppendLine($"- {group.Key}: {group.Count()}");
-        }
-
+        // By Severity
         var bySeverity = diagnostics.GroupBy(d => d.Severity).OrderBy(g => g.Key);
-        sb.AppendLine();
-        sb.AppendLine("### By Severity");
+        sb.AppendLine("By Severity:");
         foreach (var group in bySeverity)
         {
-            sb.AppendLine($"- {group.Key}: {group.Count()}");
+            sb.AppendLine($"  {group.Key,-10}: {group.Count(),5}");
         }
+        sb.AppendLine();
 
+        // By Source
+        var bySource = diagnostics.GroupBy(d => d.Source).OrderBy(g => g.Key);
+        sb.AppendLine("By Source:");
+        foreach (var group in bySource)
+        {
+            sb.AppendLine($"  {group.Key,-20}: {group.Count(),5}");
+        }
+        sb.AppendLine();
+
+        // By Code (Top 30)
         var byCode = diagnostics.GroupBy(d => d.Code).OrderByDescending(g => g.Count());
-        sb.AppendLine();
-        sb.AppendLine("### By Code (Top 20)");
-        sb.AppendLine();
-        sb.AppendLine("| Code | Count | Sample Message |");
-        sb.AppendLine("|------|-------|----------------|");
-        foreach (var group in byCode.Take(20))
+        sb.AppendLine("By Code (Top 30):");
+        foreach (var group in byCode.Take(30))
         {
             var sample = group.First().Message;
             if (sample.Length > 60)
                 sample = sample.Substring(0, 57) + "...";
-            sb.AppendLine($"| {group.Key} | {group.Count()} | {EscapeMarkdown(sample)} |");
+            sb.AppendLine($"  {group.Key,-10}: {group.Count(),4}  ({sample})");
         }
+        sb.AppendLine();
 
         // Diagnostics by file
-        sb.AppendLine();
-        sb.AppendLine("---");
-        sb.AppendLine();
-        sb.AppendLine("## Diagnostics by File");
+        sb.AppendLine("================================================================================");
+        sb.AppendLine("DIAGNOSTICS BY FILE");
+        sb.AppendLine("================================================================================");
         sb.AppendLine();
 
         var byFile = diagnostics.GroupBy(d => d.FilePath).OrderBy(g => g.Key);
         foreach (var fileGroup in byFile)
         {
-            sb.AppendLine($"### {fileGroup.Key}");
-            sb.AppendLine();
-            sb.AppendLine($"**{fileGroup.Count()} diagnostics**");
+            sb.AppendLine($"--- {fileGroup.Key} ({fileGroup.Count()} diagnostics) ---");
             sb.AppendLine();
 
-            // Group by severity within file
             var fileDiags = fileGroup.OrderBy(d => d.StartLine).ThenBy(d => d.StartColumn);
-
-            sb.AppendLine("| Line | Code | Severity | Source | Message |");
-            sb.AppendLine("|------|------|----------|--------|---------|");
-
             foreach (var diag in fileDiags)
             {
-                var msg = diag.Message;
-                if (msg.Length > 80)
-                    msg = msg.Substring(0, 77) + "...";
-                sb.AppendLine($"| {diag.StartLine}:{diag.StartColumn} | {diag.Code} | {diag.Severity} | {diag.Source} | {EscapeMarkdown(msg)} |");
+                sb.AppendLine($"  {diag.StartLine,4}:{diag.StartColumn,-3} [{diag.Code}] {diag.Severity} - {diag.Message}");
             }
-
             sb.AppendLine();
         }
 
-        // All diagnostics (detailed list)
-        sb.AppendLine("---");
+        // All diagnostics raw list
+        sb.AppendLine("================================================================================");
+        sb.AppendLine("ALL DIAGNOSTICS (RAW)");
+        sb.AppendLine("================================================================================");
         sb.AppendLine();
-        sb.AppendLine("## All Diagnostics (Raw)");
-        sb.AppendLine();
-        sb.AppendLine("```");
+
         foreach (var diag in diagnostics.OrderBy(d => d.FilePath).ThenBy(d => d.StartLine))
         {
             sb.AppendLine($"{diag.FilePath}:{diag.StartLine}:{diag.StartColumn}: [{diag.Code}] {diag.Severity} ({diag.Source}) - {diag.Message}");
         }
-        sb.AppendLine("```");
 
         return sb.ToString();
     }
@@ -232,11 +221,6 @@ public class DiagnosticsCollector
         {
             Console.WriteLine($"  {group.Key}: {group.Count()}");
         }
-    }
-
-    private static string EscapeMarkdown(string text)
-    {
-        return text.Replace("|", "\\|").Replace("\n", " ").Replace("\r", "");
     }
 
     private static string GetRelativePath(string? fullPath, GDScriptProject project)

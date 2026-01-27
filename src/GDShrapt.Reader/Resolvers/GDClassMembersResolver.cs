@@ -288,6 +288,13 @@ namespace GDShrapt.Reader
                         m.Add(new GDClassKeyword());
                     }
                     break;
+                case "pass":
+                    {
+                        var m = new GDPassDeclaration(CurrentResolvedIntendationInSpaces);
+                        HandleStaticIfMet(m, () => Owner.HandleReceivedToken(state.Push(m)));
+                        m.Add(new GDPassKeyword());
+                    }
+                    break;
                 default:
                     {
                         _handleEndOfTheLineAsInvalid = false;

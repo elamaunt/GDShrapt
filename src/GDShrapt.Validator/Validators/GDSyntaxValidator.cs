@@ -19,7 +19,7 @@ namespace GDShrapt.Reader
                 Context.AddError(
                     GDDiagnosticCode.InvalidToken,
                     $"Invalid token: '{invalidToken.Sequence}'",
-                    node);
+                    invalidToken);
             }
         }
     }

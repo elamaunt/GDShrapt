@@ -40,29 +40,8 @@ namespace GDShrapt.Linter
             }
         }
 
-        public override void Visit(GDInnerClassDeclaration innerClass)
-        {
-            var className = innerClass.Identifier?.Sequence;
-            if (string.IsNullOrEmpty(className))
-                return;
-
-            var expectedCase = Options?.ClassNameCase ?? NamingCase.PascalCase;
-            if (expectedCase == NamingCase.Any)
-                return;
-
-            if (!NamingHelper.MatchesCase(className, expectedCase))
-            {
-                var suggestion = NamingHelper.SuggestCorrectName(className, expectedCase);
-                var identifier = innerClass.Identifier;
-                var fixes = CreateRenameFixes(identifier, suggestion);
-
-                ReportIssue(
-                    $"Inner class name '{className}' should use {NamingHelper.GetCaseName(expectedCase)}",
-                    innerClass.Identifier,
-                    $"Rename to '{suggestion}'",
-                    fixes);
-            }
-        }
+        // Inner class naming is handled by GDInnerClassNameCaseRule (GDL009)
+        // to avoid duplicate diagnostics
 
         private IEnumerable<GDFixDescriptor> CreateRenameFixes(GDIdentifier identifier, string suggestion)
         {
