@@ -157,7 +157,7 @@ public class GDUnifiedDiagnostic
     public int StartLine { get; set; }
 
     /// <summary>
-    /// Start column (1-based).
+    /// Start column (0-based).
     /// </summary>
     public int StartColumn { get; set; }
 
@@ -167,7 +167,7 @@ public class GDUnifiedDiagnostic
     public int EndLine { get; set; }
 
     /// <summary>
-    /// End column (1-based).
+    /// End column (0-based).
     /// </summary>
     public int EndColumn { get; set; }
 

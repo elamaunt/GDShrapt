@@ -426,7 +426,8 @@ public partial class GDShraptPlugin : EditorPlugin
             // Note: EditScript positions the caret at the specified line/column.
             // For token selection, we'd need access to the CodeEdit after EditScript completes,
             // but since EditScript may open a new tab, we defer selection via signal or delay.
-            EditorInterface.Singleton.EditScript(script, line + 1, column);
+            // Line is expected to be 1-based from caller (EditScript uses 1-based lines).
+            EditorInterface.Singleton.EditScript(script, line, column);
 
             // TODO: Implement token selection after EditScript if needed
             // Currently, EditScript only sets caret position, not selection

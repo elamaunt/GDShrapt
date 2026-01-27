@@ -364,7 +364,7 @@ internal partial class ProblemsDock : Control
         row.SetText(1, ruleDisplay);
 
         row.SetText(2, diag.Script != null ? System.IO.Path.GetFileName(diag.Script.FullPath) : "");
-        row.SetText(3, (diag.StartLine + 1).ToString());
+        row.SetText(3, (diag.StartLine + 1).ToString());  // Display 1-based for user
 
         // Store for navigation and ignore actions
         row.SetMetadata(0, ProjectSettings.LocalizePath(diag.Script?.FullPath ?? ""));

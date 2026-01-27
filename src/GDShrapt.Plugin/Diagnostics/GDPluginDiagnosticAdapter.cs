@@ -31,11 +31,11 @@ internal static class GDPluginDiagnosticAdapter
             Severity = unified.Severity,
             Category = MapCategory(unified.Source),
             Script = script,
-            // Convert from 1-based (Semantics) to 0-based (Plugin)
+            // Convert Line from 1-based to 0-based. Column already 0-based.
             StartLine = Math.Max(0, unified.StartLine - 1),
-            StartColumn = Math.Max(0, unified.StartColumn - 1),
+            StartColumn = unified.StartColumn,
             EndLine = Math.Max(0, unified.EndLine - 1),
-            EndColumn = Math.Max(0, unified.EndColumn - 1),
+            EndColumn = unified.EndColumn,
             Fixes = fixes
         };
     }
@@ -56,11 +56,11 @@ internal static class GDPluginDiagnosticAdapter
             Severity = MapSeverity(diagnostic.Severity),
             Category = GDDiagnosticCategory.Correctness,
             Script = script,
-            // Convert from 1-based (Validator) to 0-based (Plugin)
+            // Convert Line from 1-based to 0-based. Column already 0-based.
             StartLine = Math.Max(0, diagnostic.StartLine - 1),
-            StartColumn = Math.Max(0, diagnostic.StartColumn - 1),
+            StartColumn = diagnostic.StartColumn,
             EndLine = Math.Max(0, diagnostic.EndLine - 1),
-            EndColumn = Math.Max(0, diagnostic.EndColumn - 1),
+            EndColumn = diagnostic.EndColumn,
             Fixes = Array.Empty<GDCodeFix>()
         };
     }

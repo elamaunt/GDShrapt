@@ -14,7 +14,7 @@ config/name="GDShrapt Test Project"
 config/description="Test project for GDShrapt plugin development and integration testing."
 run/main_scene="res://test_scenes/main.tscn"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="uid://c1hfe6puisgqm"
 
 [autoload]
 

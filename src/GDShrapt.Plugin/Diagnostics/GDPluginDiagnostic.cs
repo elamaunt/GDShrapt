@@ -81,7 +81,7 @@ internal class GDPluginDiagnostic
 
     public override string ToString()
     {
-        return $"[{RuleId}] {Severity}: {Message} at line {StartLine + 1}";
+        return $"[{RuleId}] {Severity}: {Message} at line {StartLine}";
     }
 }
 

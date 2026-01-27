@@ -96,10 +96,10 @@ public class GDDiagnosticsService
                     Message = $"Invalid token: {token.ToString()?.Trim() ?? "unknown"}",
                     Severity = GDUnifiedDiagnosticSeverity.Error,
                     Source = GDDiagnosticSource.Syntax,
-                    StartLine = token.StartLine,
-                    StartColumn = token.StartColumn,
-                    EndLine = token.EndLine,
-                    EndColumn = token.EndColumn
+                    StartLine = token.StartLine + 1,  // Convert 0-based to 1-based
+                    StartColumn = token.StartColumn,  // Keep 0-based
+                    EndLine = token.EndLine + 1,      // Convert 0-based to 1-based
+                    EndColumn = token.EndColumn       // Keep 0-based
                 });
             }
         }

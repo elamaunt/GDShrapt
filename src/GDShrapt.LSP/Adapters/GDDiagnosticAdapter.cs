@@ -24,11 +24,12 @@ public static class GDDiagnosticAdapter
         {
             diagnostics.Add(new GDLspDiagnostic
             {
+                // Token is 0-based, ToLspRange expects 1-based Line (converts to 0-based LSP)
                 Range = GDLocationAdapter.ToLspRange(
-                    token.StartLine,
-                    token.StartColumn,
-                    token.EndLine,
-                    token.EndColumn),
+                    token.StartLine + 1,  // Convert 0-based to 1-based
+                    token.StartColumn,    // Keep 0-based
+                    token.EndLine + 1,    // Convert 0-based to 1-based
+                    token.EndColumn),     // Keep 0-based
                 Severity = GDLspDiagnosticSeverity.Error,
                 Source = "gdshrapt",
                 Code = "GDS001",
@@ -137,12 +138,13 @@ public static class GDDiagnosticAdapter
 
     /// <summary>
     /// Creates an error diagnostic.
+    /// Line is 1-based, Column is 0-based.
     /// </summary>
     public static GDLspDiagnostic Error(int line, int column, string code, string message)
     {
         return new GDLspDiagnostic
         {
-            Range = new GDLspRange(line - 1, column - 1, line - 1, column),
+            Range = new GDLspRange(line - 1, column, line - 1, column + 1),  // Line: 1-based → 0-based
             Severity = GDLspDiagnosticSeverity.Error,
             Source = "gdshrapt",
             Code = code,
@@ -152,12 +154,13 @@ public static class GDDiagnosticAdapter
 
     /// <summary>
     /// Creates a warning diagnostic.
+    /// Line is 1-based, Column is 0-based.
     /// </summary>
     public static GDLspDiagnostic Warning(int line, int column, string code, string message)
     {
         return new GDLspDiagnostic
         {
-            Range = new GDLspRange(line - 1, column - 1, line - 1, column),
+            Range = new GDLspRange(line - 1, column, line - 1, column + 1),  // Line: 1-based → 0-based
             Severity = GDLspDiagnosticSeverity.Warning,
             Source = "gdshrapt",
             Code = code,

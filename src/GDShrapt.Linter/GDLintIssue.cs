@@ -50,7 +50,7 @@ namespace GDShrapt.Linter
         public int StartLine { get; }
 
         /// <summary>
-        /// Starting column number (1-based).
+        /// Starting column number (0-based).
         /// </summary>
         public int StartColumn { get; }
 
@@ -60,7 +60,7 @@ namespace GDShrapt.Linter
         public int EndLine { get; }
 
         /// <summary>
-        /// Ending column number (1-based).
+        /// Ending column number (0-based).
         /// </summary>
         public int EndColumn { get; }
 
@@ -88,15 +88,16 @@ namespace GDShrapt.Linter
 
             if (token != null)
             {
-                StartLine = token.StartLine + 1;     // Convert 0-based to 1-based
-                StartColumn = token.StartColumn + 1; // Convert 0-based to 1-based
-                EndLine = token.EndLine + 1;         // Convert 0-based to 1-based
-                EndColumn = token.EndColumn + 1;     // Convert 0-based to 1-based
+                StartLine = token.StartLine + 1;  // Convert 0-based to 1-based
+                StartColumn = token.StartColumn;  // Keep 0-based (Godot uses 0-based columns)
+                EndLine = token.EndLine + 1;      // Convert 0-based to 1-based
+                EndColumn = token.EndColumn;      // Keep 0-based (Godot uses 0-based columns)
             }
         }
 
         /// <summary>
-        /// Creates a lint issue with explicit line/column coordinates (1-based).
+        /// Creates a lint issue with explicit line/column coordinates.
+        /// Line is 1-based, Column is 0-based.
         /// Used for text-based rules that don't have AST tokens.
         /// </summary>
         public GDLintIssue(
