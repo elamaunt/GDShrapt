@@ -468,8 +468,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // absf(x) - returns float
             "absf" => GDRuntimeFunctionInfo.Exact("absf", 1, "float"),
 
-            // str(value, ...) - variadic, returns String (AssemblyData incorrectly maps to GD.Print which returns void)
-            "str" => GDRuntimeFunctionInfo.VarArgs("str", 1, "String"),
+            // str(value, ...) - variadic, returns String. Accepts 0 or more args: str() returns ""
+            "str" => GDRuntimeFunctionInfo.VarArgs("str", 0, "String"),
 
             _ => null
         };

@@ -571,14 +571,16 @@ namespace GDShrapt.Reader
                         if (!string.IsNullOrEmpty(enumName))
                         {
                             Context.Declare(GDSymbol.Enum(enumName, enumDecl));
-                            if (enumDecl.Values != null)
+                        }
+                        // Register ALL enum values for direct access within the class.
+                        // In GDScript, named enum values can be accessed both as EnumName.VALUE and directly as VALUE.
+                        if (enumDecl.Values != null)
+                        {
+                            foreach (var value in enumDecl.Values)
                             {
-                                foreach (var value in enumDecl.Values)
-                                {
-                                    var valueName = value.Identifier?.Sequence;
-                                    if (!string.IsNullOrEmpty(valueName))
-                                        Context.Declare(GDSymbol.EnumValue(valueName, value));
-                                }
+                                var valueName = value.Identifier?.Sequence;
+                                if (!string.IsNullOrEmpty(valueName))
+                                    Context.Declare(GDSymbol.EnumValue(valueName, value));
                             }
                         }
                         break;

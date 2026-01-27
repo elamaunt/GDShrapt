@@ -66,7 +66,7 @@ public static class GDValidatorSuppressionParser
         if (string.IsNullOrEmpty(text))
             return null;
 
-        var line = comment.StartLine;
+        var line = comment.StartLine + 1;  // Convert 0-based to 1-based
 
         // Check if comment is inline (has code before it on the same line)
         bool isInline = IsInlineComment(comment);

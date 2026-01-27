@@ -187,9 +187,15 @@ namespace GDShrapt.Reader
                 }
             }
 
+            // Register all enum values for direct access within the script.
+            // In GDScript, named enum values can be accessed both as EnumName.VALUE and directly as VALUE.
+            // For duplicate detection: we only report duplicates for anonymous enum values,
+            // since named enum values from different enums sharing the same name is acceptable.
             var values = enumDeclaration.Values;
             if (values != null)
             {
+                bool isAnonymousEnum = string.IsNullOrEmpty(enumName);
+
                 foreach (var value in values)
                 {
                     var valueName = value.Identifier?.Sequence;
@@ -197,10 +203,16 @@ namespace GDShrapt.Reader
                     {
                         if (!_context.TryDeclare(GDSymbol.EnumValue(valueName, value)))
                         {
-                            _context.AddError(
-                                GDDiagnosticCode.DuplicateDeclaration,
-                                $"Enum value '{valueName}' is already declared",
-                                value);
+                            // Only report duplicate for anonymous enums.
+                            // Named enums can have overlapping value names (enum A { X }, enum B { X })
+                            // because they can be disambiguated via EnumName.VALUE syntax.
+                            if (isAnonymousEnum)
+                            {
+                                _context.AddError(
+                                    GDDiagnosticCode.DuplicateDeclaration,
+                                    $"Enum value '{valueName}' is already declared",
+                                    value);
+                            }
                         }
                     }
                 }

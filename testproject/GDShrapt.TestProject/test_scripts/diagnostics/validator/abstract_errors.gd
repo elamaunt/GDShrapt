@@ -15,11 +15,11 @@ class_name DiagnosticsTest_AbstractErrors
 # GD8001: AbstractMethodHasBody
 # =============================================================================
 
-## VALID - abstract method without body
+## VALID - abstract method without body (Godot 4.5 syntax - no body at all)
+@abstract
 class ValidAbstractClass:
 	@abstract
-	func abstract_method() -> void:
-		pass  # Note: GDScript requires 'pass' even for abstract
+	func abstract_method() -> void
 
 
 ## INVALID - @abstract method with implementation body (non-pass statement)
@@ -41,31 +41,28 @@ class SuppressedAbstractBody:
 # GD8002: ClassNotAbstract
 # =============================================================================
 
-## VALID - class with @abstract annotation has abstract methods
+## VALID - class with @abstract annotation has abstract methods (Godot 4.5 syntax)
 @abstract
 class ValidAbstractAnnotation:
 	@abstract
-	func must_implement() -> void:
-		pass
+	func must_implement() -> void
 
 
 ## INVALID - class has abstract methods but no @abstract annotation
 class MissingAbstractAnnotation:  # GD8002: ClassNotAbstract
 	@abstract
-	func abstract_method() -> void:
-		pass
+	func abstract_method() -> void
 
 
 # =============================================================================
 # GD8003: AbstractMethodNotImplemented
 # =============================================================================
 
-## Base abstract class
+## Base abstract class (Godot 4.5 syntax - abstract methods have no body)
 @abstract
 class AbstractBase:
 	@abstract
-	func required_method() -> int:
-		pass
+	func required_method() -> int
 
 
 ## VALID - implements all abstract methods
@@ -87,8 +84,7 @@ class MissingImplementation extends AbstractBase:  # GD8003: AbstractMethodNotIm
 @abstract
 class CannotInstantiate:
 	@abstract
-	func do_something() -> void:
-		pass
+	func do_something() -> void
 
 
 ## VALID - should NOT trigger GD8005

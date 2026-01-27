@@ -32,9 +32,9 @@ namespace GDShrapt.Reader
 
             if (node != null)
             {
-                StartLine = node.StartLine;
+                StartLine = node.StartLine + 1;  // Convert 0-based to 1-based
                 StartColumn = node.StartColumn;
-                EndLine = node.EndLine;
+                EndLine = node.EndLine + 1;      // Convert 0-based to 1-based
                 EndColumn = node.EndColumn;
             }
         }
@@ -75,9 +75,9 @@ namespace GDShrapt.Reader
 
             if (token != null)
             {
-                StartLine = token.StartLine;
+                StartLine = token.StartLine + 1;  // Convert 0-based to 1-based
                 StartColumn = token.StartColumn;
-                EndLine = token.EndLine;
+                EndLine = token.EndLine + 1;      // Convert 0-based to 1-based
                 EndColumn = token.EndColumn;
             }
         }

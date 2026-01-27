@@ -15,10 +15,9 @@ namespace GDShrapt.Reader.Tests.Validation
     public class DiagnosticLineNumbersTests
     {
         [TestMethod]
-        public void DiagnosticLineNumbers_AreZeroBased()
+        public void DiagnosticLineNumbers_AreOneBased()
         {
-            // Parse a simple code and verify line numbers
-            // Note: GDShrapt uses 0-based line numbers internally
+            // Parse a simple code and verify line numbers are 1-based
             var code = @"extends Node
 
 func test():
@@ -42,24 +41,25 @@ func test():
                 Console.WriteLine($"  [{diag.Code}] Line {diag.StartLine}:{diag.StartColumn} - {diag.Message}");
             }
 
-            // The undefined function call is on line 3 (0-based, which is line 4 in editor)
+            // The undefined function call is on line 4 (1-based)
             var undefinedError = result.Diagnostics
                 .FirstOrDefault(d => d.Message.Contains("nonexistent_function"));
 
             if (undefinedError != null)
             {
-                // Line 3 is the 4th line (0-indexed: 0=extends, 1=empty, 2=func, 3=var)
-                undefinedError.StartLine.Should().Be(3,
-                    "nonexistent_function is on line 3 (0-based)");
+                // Line 4 is: var undefined_var = nonexistent_function()
+                // (1-indexed: 1=extends, 2=empty, 3=func, 4=var)
+                undefinedError.StartLine.Should().Be(4,
+                    "nonexistent_function is on line 4 (1-based)");
                 undefinedError.StartColumn.Should().BeGreaterThanOrEqualTo(0,
                     "Column should be non-negative");
             }
 
-            // All line numbers should be non-negative (0-based)
+            // All line numbers should be positive (1-based)
             foreach (var diag in result.Diagnostics)
             {
-                diag.StartLine.Should().BeGreaterThanOrEqualTo(0,
-                    $"Line numbers should be non-negative for {diag.Code}: {diag.Message}");
+                diag.StartLine.Should().BeGreaterThanOrEqualTo(1,
+                    $"Line numbers should be positive (1-based) for {diag.Code}: {diag.Message}");
             }
         }
 

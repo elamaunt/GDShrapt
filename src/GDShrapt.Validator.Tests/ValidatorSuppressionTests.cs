@@ -55,8 +55,8 @@ func test():
 ";
             var result = _validator.ValidateCode(code, new GDValidationOptions { EnableCommentSuppression = true });
 
-            // All issues on line 3 should be suppressed (0-based: line 3 = 4th line = print(undefined_var))
-            result.Diagnostics.Where(d => d.StartLine == 3).Should().BeEmpty();
+            // All issues on line 4 should be suppressed (1-based: line 4 = print(undefined_var))
+            result.Diagnostics.Where(d => d.StartLine == 4).Should().BeEmpty();
         }
 
         [TestMethod]
@@ -85,9 +85,9 @@ func test():
 ";
             var result = _validator.ValidateCode(code, new GDValidationOptions { EnableCommentSuppression = true });
 
-            // First variable suppressed (line 3), second should still have issue (line 4) - 0-based
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 3).Should().BeEmpty();
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 4).Should().NotBeEmpty();
+            // First variable suppressed (line 4), second should still have issue (line 5) - 1-based
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 4).Should().BeEmpty();
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 5).Should().NotBeEmpty();
         }
 
         [TestMethod]
@@ -135,10 +135,10 @@ func test():
 ";
             var result = _validator.ValidateCode(code, new GDValidationOptions { EnableCommentSuppression = true });
 
-            // First two suppressed, third should have issue - 0-based line numbers
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 3).Should().BeEmpty();
+            // First two suppressed, third should have issue - 1-based line numbers
             result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 4).Should().BeEmpty();
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 6).Should().NotBeEmpty();
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 5).Should().BeEmpty();
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 7).Should().NotBeEmpty();
         }
 
         [TestMethod]
@@ -152,8 +152,8 @@ func test():
 ";
             var result = _validator.ValidateCode(code, new GDValidationOptions { EnableCommentSuppression = true });
 
-            // All issues after disable should be suppressed - 0-based
-            result.Diagnostics.Where(d => d.StartLine >= 3).Should().BeEmpty();
+            // All issues after disable should be suppressed - 1-based
+            result.Diagnostics.Where(d => d.StartLine >= 4).Should().BeEmpty();
         }
 
         [TestMethod]
@@ -168,9 +168,9 @@ func test():
 ";
             var result = _validator.ValidateCode(code, new GDValidationOptions { EnableCommentSuppression = true });
 
-            // Line 3 suppressed (0-based), line 5 should report
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 3).Should().BeEmpty();
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 5).Should().NotBeEmpty();
+            // Line 4 suppressed (1-based), line 6 should report
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 4).Should().BeEmpty();
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 6).Should().NotBeEmpty();
         }
 
         #endregion
@@ -258,11 +258,11 @@ func test():
 ";
             var result = _validator.ValidateCode(code, new GDValidationOptions { EnableCommentSuppression = true });
 
-            // First break and continue suppressed, last break should report - 0-based
+            // First break and continue suppressed, last break should report - 1-based
             result.Diagnostics.Where(d =>
                 (d.Code == GDDiagnosticCode.BreakOutsideLoop || d.Code == GDDiagnosticCode.ContinueOutsideLoop) &&
-                d.StartLine <= 4).Should().BeEmpty();
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.BreakOutsideLoop && d.StartLine == 6).Should().NotBeEmpty();
+                d.StartLine <= 5).Should().BeEmpty();
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.BreakOutsideLoop && d.StartLine == 7).Should().NotBeEmpty();
         }
 
         #endregion
@@ -340,12 +340,12 @@ func test():
 ";
             var result = _validator.ValidateCode(code, new GDValidationOptions { EnableCommentSuppression = true });
 
-            // UndefinedVariable suppressed at line 3, re-enabled at line 7 - 0-based
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 3).Should().BeEmpty();
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 7).Should().NotBeEmpty();
-            // BreakOutsideLoop suppressed at line 5, re-enabled at line 9 - 0-based
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.BreakOutsideLoop && d.StartLine == 5).Should().BeEmpty();
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.BreakOutsideLoop && d.StartLine == 9).Should().NotBeEmpty();
+            // UndefinedVariable suppressed at line 4, re-enabled at line 8 - 1-based
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 4).Should().BeEmpty();
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable && d.StartLine == 8).Should().NotBeEmpty();
+            // BreakOutsideLoop suppressed at line 6, re-enabled at line 10 - 1-based
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.BreakOutsideLoop && d.StartLine == 6).Should().BeEmpty();
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.BreakOutsideLoop && d.StartLine == 10).Should().NotBeEmpty();
         }
 
         #endregion

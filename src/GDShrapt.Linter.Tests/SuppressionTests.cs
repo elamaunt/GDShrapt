@@ -92,16 +92,16 @@ var My_Very_Long_Variable_Name_That_Exceeds_Line_Limit = 10";
         [TestMethod]
         public void Ignore_OnlyAffectsNextLine()
         {
-            // Line 0: comment, Line 1: first var (suppressed), Line 2: second var (not suppressed)
+            // Line 1: comment, Line 2: first var (suppressed), Line 3: second var (not suppressed)
             var code = @"# gdlint:ignore = variable-name-case
 var MyVariable = 10
 var AnotherBadName = 20";
 
             var result = _linter.LintCode(code);
 
-            // First variable suppressed (line 1), second should still have issue (line 2)
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 1).Should().BeEmpty();
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 2).Should().NotBeEmpty();
+            // First variable suppressed (line 2), second should still have issue (line 3) - 1-based
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 2).Should().BeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 3).Should().NotBeEmpty();
         }
 
         [TestMethod]
@@ -139,7 +139,7 @@ var ThirdBadName = 30
         [TestMethod]
         public void Disable_Enable_SuppressesOnlyBlock()
         {
-            // Line 0: disable, Line 1: var1, Line 2: var2, Line 3: enable, Line 4: var3
+            // Line 1: disable, Line 2: var1, Line 3: var2, Line 4: enable, Line 5: var3
             var code = @"# gdlint: disable=variable-name-case
 var MyVariable = 10
 var AnotherBadName = 20
@@ -148,10 +148,10 @@ var ThirdBadName = 30";
 
             var result = _linter.LintCode(code);
 
-            // First two suppressed, third should have issue
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 1).Should().BeEmpty();
+            // First two suppressed, third should have issue - 1-based
             result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 2).Should().BeEmpty();
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 4).Should().NotBeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 3).Should().BeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 5).Should().NotBeEmpty();
         }
 
         [TestMethod]
@@ -204,7 +204,7 @@ var Another_Very_Long_Variable_Name = 20
         [TestMethod]
         public void Enable_ReEnablesRule()
         {
-            // Line 0: disable, Line 1: var1, Line 2: enable, Line 3: var2
+            // Line 1: disable, Line 2: var1, Line 3: enable, Line 4: var2
             var code = @"# gdlint: disable=variable-name-case
 var MyVariable = 10
 # gdlint: enable=variable-name-case
@@ -212,8 +212,9 @@ var AnotherBadName = 20";
 
             var result = _linter.LintCode(code);
 
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 1).Should().BeEmpty();
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 3).Should().NotBeEmpty();
+            // 1-based line numbers
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 2).Should().BeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 4).Should().NotBeEmpty();
         }
 
         #endregion
@@ -343,9 +344,9 @@ var AnotherBadName = 20
         [TestMethod]
         public void Nested_Disable_Enable()
         {
-            // Line 0: disable var, Line 1: var1, Line 2: disable func
-            // Line 3: func1, Line 4: pass, Line 5: enable var
-            // Line 6: var2, Line 7: enable func, Line 8: func2, Line 9: pass
+            // Line 1: disable var, Line 2: var1, Line 3: disable func
+            // Line 4: func1, Line 5: pass, Line 6: enable var
+            // Line 7: var2, Line 8: enable func, Line 9: func2, Line 10: pass
             var code = @"# gdlint: disable=variable-name-case
 var MyVariable = 10
 # gdlint: disable=function-name-case
@@ -359,11 +360,11 @@ func another_function():
 
             var result = _linter.LintCode(code);
 
-            // Variable naming should be suppressed at line 1, re-enabled at line 6
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 1).Should().BeEmpty();
-            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 6).Should().NotBeEmpty();
-            // Function naming should be disabled at line 3
-            result.Issues.Where(i => i.RuleId == "GDL002" && i.StartLine == 3).Should().BeEmpty();
+            // Variable naming should be suppressed at line 2, re-enabled at line 7 - 1-based
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 2).Should().BeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL003" && i.StartLine == 7).Should().NotBeEmpty();
+            // Function naming should be disabled at line 4 - 1-based
+            result.Issues.Where(i => i.RuleId == "GDL002" && i.StartLine == 4).Should().BeEmpty();
         }
 
         #endregion

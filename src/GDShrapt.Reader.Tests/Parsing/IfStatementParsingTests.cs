@@ -295,5 +295,48 @@ else:
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
             AssertHelper.NoInvalidTokens(declaration);
         }
+
+        /// <summary>
+        /// Regression test for parser infinite loop bug.
+        /// The parser enters an infinite loop when:
+        /// 1. Deeply nested if statements (5+ levels)
+        /// 2. Followed by multiple blank lines
+        /// 3. Followed by a comment with specific pattern (e.g., "## SUPPRESSED - GDL225")
+        /// 4. Followed by another comment (e.g., "# gdlint:ignore = max-nesting-depth")
+        ///
+        /// The loop occurs in GDElseResolver when processing comments after the nested if-statement.
+        /// Error: "Infinite loop detected in parser. PassChar called 1001 times without advancing input.
+        /// Last character: '#'. Current reader: GDElseResolver."
+        /// </summary>
+        [TestMethod]
+        public void ParseIfStatement_DeepNestedWithCommentsAfter_ShouldNotInfiniteLoop()
+        {
+            var reader = new GDScriptReader();
+
+            // This specific pattern causes an infinite loop in the parser
+            var code = @"func test(x: int) -> void:
+	if x > 0:
+		if x > 10:
+			if x > 100:
+				if x > 1000:
+					if x > 10000:
+						print(""deep"")
+
+
+## SUPPRESSED - GDL225
+# gdlint:ignore = max-nesting-depth
+func another(x: int) -> void:
+	pass";
+
+            // This should parse without throwing an exception or timing out
+            var declaration = reader.ParseFileContent(code);
+
+            Assert.IsNotNull(declaration);
+            Assert.AreEqual(2, declaration.Members.Count);
+            Assert.IsInstanceOfType(declaration.Members[0], typeof(GDMethodDeclaration));
+            Assert.IsInstanceOfType(declaration.Members[1], typeof(GDMethodDeclaration));
+
+            AssertHelper.NoInvalidTokens(declaration);
+        }
     }
 }

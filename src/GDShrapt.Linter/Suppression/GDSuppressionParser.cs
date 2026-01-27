@@ -113,7 +113,8 @@ namespace GDShrapt.Linter
 
             if (node is GDMethodDeclaration method)
             {
-                functions.Add((method.StartLine, method.EndLine));
+                // Convert 0-based to 1-based line numbers
+                functions.Add((method.StartLine + 1, method.EndLine + 1));
             }
 
             foreach (var child in node.Nodes)
@@ -136,7 +137,7 @@ namespace GDShrapt.Linter
             if (string.IsNullOrEmpty(text))
                 return null;
 
-            var line = comment.StartLine;
+            var line = comment.StartLine + 1;  // Convert 0-based to 1-based
 
             // Check if comment is inline (has code before it on the same line)
             bool isInline = IsInlineComment(comment);

@@ -24,7 +24,8 @@
       "Bash(git submodule update:*)",
       "Bash(dotnet sln:*)",
       "Bash(gh run list:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(printf:*)"
     ]
   }
 }
