@@ -352,3 +352,4 @@ MigrationBackup/
 /testproject/GDShrapt.TestProject/.godot
 /testproject/GDShrapt.TestProject/.gdshrapt
 DIAGNOSTICS.txt
+*.uid
