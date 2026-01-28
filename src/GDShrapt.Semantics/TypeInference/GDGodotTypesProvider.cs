@@ -623,6 +623,60 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     }
 
     /// <summary>
+    /// Finds all types that have a specific method defined directly (not inherited).
+    /// Used for duck typing inference to narrow down possible types.
+    /// </summary>
+    /// <param name="methodName">The method name to search for</param>
+    /// <returns>List of type names that have this method</returns>
+    public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+    {
+        if (string.IsNullOrEmpty(methodName))
+            return Array.Empty<string>();
+
+        var result = new List<string>();
+
+        foreach (var kvp in _typeCache)
+        {
+            var typeName = kvp.Key;
+            var typeData = kvp.Value;
+
+            if (typeData.MethodDatas?.ContainsKey(methodName) == true)
+            {
+                result.Add(typeName);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Finds all types that have a specific property defined directly (not inherited).
+    /// Used for duck typing inference to narrow down possible types.
+    /// </summary>
+    /// <param name="propertyName">The property name to search for</param>
+    /// <returns>List of type names that have this property</returns>
+    public IReadOnlyList<string> FindTypesWithProperty(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return Array.Empty<string>();
+
+        var result = new List<string>();
+
+        foreach (var kvp in _typeCache)
+        {
+            var typeName = kvp.Key;
+            var typeData = kvp.Value;
+
+            if (typeData.PropertyDatas?.ContainsKey(propertyName) == true)
+            {
+                result.Add(typeName);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Calculates MinArgs, MaxArgs, and IsVarArgs from parameter information.
     /// </summary>
     private static (int MinArgs, int MaxArgs, bool IsVarArgs) CalculateArgConstraints(GDParameterInfo[]? parameters)

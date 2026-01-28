@@ -90,12 +90,13 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 **Semantics** - Project-level analysis
 - `GDScriptProject` - Orchestrator: `LoadScripts()`, `LoadScenes()`, `AnalyzeAll()`, file watching, events (ScriptChanged/Created/Deleted/Renamed)
 - `GDScriptFile` - Individual script with `Class` (AST), `Analyzer` (semantic model), `Reload()`
-- `GDSemanticModel` - Single-file type inference: `GetTypeForExpression()`, `GetTypeForNode()`, `FindReferences()`, `GetSymbolInfo()`
+- `GDSemanticModel` - Single-file type inference: `GetTypeForExpression()`, `GetTypeForNode()`, `FindReferences()`, `GetSymbolInfo()`, `GetMemberAccessConfidence()`
 - `GDProjectSemanticModel` - Cross-file analysis with incremental updates
 - Type inference: `GDTypeInferenceSource`, `GDDuckTypeResolver`, `GDParameterTypeResolver`, `GDMethodSignatureInferenceEngine`, `GDUnionTypeResolver`
+- Duck-type inference: `GDParameterUsageAnalyzer` (collects constraints), `GDParameterTypeResolver` (resolves to types via TypesMap)
 - `GDFlowAnalyzer` - Control flow analysis, reachability, type narrowing
 - `GDDiagnosticsService` - Unified validation + linting pipeline
-- Type providers: `GDSceneTypesProvider` (scene files), `GDGodotTypesProvider` (built-in types)
+- Type providers: `GDSceneTypesProvider` (scene files), `GDGodotTypesProvider` (built-in types with `FindTypesWithMethod()`, `FindTypesWithProperty()`), `GDProjectTypesProvider` (project types)
 - Refactoring services: `GDGoToDefinitionService`, `GDAddTypeAnnotationService`, `GDReorderMembersService`, `GDExtractMethodService`, `GDExtractConstantService`, `GDExtractVariableService`, `GDInvertConditionService`, `GDConvertForToWhileService`, `GDSurroundWithService`, `GDSnippetService`
 - Configuration: `GDProjectConfig`, `GDConfigManager` (.gdshrapt.json), `GDGodotProjectParser` (project.godot), `GDGdlintConfigParser` (.gdlintrc)
 
@@ -284,3 +285,41 @@ Use `gdshrapt <command> --help` for options.
 **Plugin** (`GDShrapt.Plugin`) - Godot Editor integration
 - Code intelligence, refactoring, real-time diagnostics
 - Config in Project Settings under `gdshrapt/`
+
+## Duck-Type Inference
+
+Infers types for untyped parameters based on usage patterns.
+
+**See:** `src/GDShrapt.Semantics/Analysis/CLAUDE.md` for full algorithm details.
+
+**Quick Reference:**
+- `Strict` - Explicit type annotation or type guard
+- `Potential` - Duck-typed (method exists in TypesMap) → no warning
+- `NameMatch` - Unknown method → GD7003 warning
+
+## Documentation Hierarchy
+
+Each component has its own CLAUDE.md. **Always update relevant CLAUDE.md files when making changes.**
+
+### Structure
+
+| Location | Scope | Contents |
+|----------|-------|----------|
+| `CLAUDE.md` (this file) | Package root | Overview, architecture, build commands |
+| `src/GDShrapt.Semantics/CLAUDE.md` | Package | Services overview, API summary |
+| `src/GDShrapt.Semantics/Analysis/CLAUDE.md` | Folder | **Most detailed** - analyzers, duck-typing algorithm |
+| `src/GDShrapt.Semantics/TypeInference/CLAUDE.md` | Folder | Type inference engine, providers, caching |
+| `src/GDShrapt.Semantics/Refactoring/CLAUDE.md` | Folder | Refactoring services, Plan vs Execute |
+| `src/GDShrapt.Semantics.Validator/CLAUDE.md` | Package | Semantic validation, GD7003 logic |
+| `src/GDShrapt.Validator/CLAUDE.md` | Package | AST validation pipeline |
+| `src/GDShrapt.CLI.Core/CLAUDE.md` | Package | CLI handlers |
+| `src/GDShrapt.LSP/CLAUDE.md` | Package | LSP handlers |
+| `src/GDShrapt.Plugin/CLAUDE.md` | Package | Godot plugin |
+| `submodules/GDShrapt.TypesMap/CLAUDE.md` | Submodule | TypesMap database |
+
+### Update Guidelines
+
+1. **Architecture changes** → Update this file
+2. **Package API changes** → Update package CLAUDE.md
+3. **Algorithm/implementation details** → Update folder CLAUDE.md
+4. **Cross-cutting features** (duck-typing, flow analysis) → Update all relevant files

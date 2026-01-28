@@ -299,8 +299,114 @@ Utility for union type operations.
 ### GDParameterTypeResolver
 Resolves parameter types from usage constraints.
 
+**Key Method:** `FindDuckTypeMatches(GDParameterConstraints)`
+- Uses TypesMap (via providers) to find types matching all required methods
+- Returns list of matching type names (e.g., `["Array", "PackedByteArray"]`)
+
+**Type Lookup:**
+```csharp
+// Gets types from GDGodotTypesProvider
+var godotProvider = compositeProvider.GodotTypesProvider;
+var typesWithMethod = godotProvider.FindTypesWithMethod("slice");
+
+// Also checks project types
+var projectProvider = compositeProvider.ProjectTypesProvider;
+var projectTypesWithMethod = projectProvider.FindTypesWithMethod("custom_method");
+```
+
 ### GDParameterUsageAnalyzer
 Analyzes how parameters are used to infer constraints.
+
+---
+
+## Duck-Type Inference System
+
+### Overview
+
+Duck-typing allows GDScript parameters without explicit types to be validated based on how they're used.
+
+```gdscript
+func process(list):      # No type annotation
+    list.is_empty()      # → Requires is_empty() method
+    list.slice(1)        # → Requires slice() method
+    # Intersection: Array, PackedByteArray, etc.
+```
+
+### GDReferenceConfidence Levels
+
+| Level | Meaning | Produces Warning |
+|-------|---------|------------------|
+| `Strict` | Explicit type annotation | No |
+| `Potential` | Duck-typed, method exists in TypesMap | No |
+| `NameMatch` | Method not found in any known type | **Yes (GD7003)** |
+
+### How Confidence is Determined
+
+**In `GDSemanticModel.GetMemberAccessConfidence()`:**
+
+```csharp
+// 1. Explicit type → Strict
+if (HasExplicitType(varName))
+    return Strict;
+
+// 2. Type guard (is check) → Strict
+if (HasNarrowedType(varName, location))
+    return Strict;
+
+// 3. Duck-typed with known method → Potential
+var duckType = GetDuckType(varName);
+if (duckType != null)
+{
+    // Check if method exists in TypesMap
+    var typesWithMethod = godotProvider.FindTypesWithMethod(memberName);
+    if (typesWithMethod.Count > 0)
+        return Potential;  // No warning
+
+    // Also check project types
+    var projectTypes = projectProvider.FindTypesWithMethod(memberName);
+    if (projectTypes.Count > 0)
+        return Potential;  // No warning
+}
+
+// 4. Unknown method → NameMatch → GD7003 warning
+return NameMatch;
+```
+
+### Key Files
+
+| File | Responsibility |
+|------|----------------|
+| `GDSemanticModel.cs` | `GetMemberAccessConfidence()` - determines warning |
+| `GDParameterTypeResolver.cs` | `FindDuckTypeMatches()` - finds types matching constraints |
+| `GDGodotTypesProvider.cs` | `FindTypesWithMethod()` - searches TypesMap |
+| `GDProjectTypesProvider.cs` | `FindTypesWithMethod()` - searches project types |
+| `GDDuckTypeCollector.cs` | Collects duck-type constraints from usage |
+
+### Example: No Warning for Known Method
+
+```gdscript
+func test(data):
+    data.slice(1)  # slice() exists on Array → Potential → No warning
+```
+
+### Example: Warning for Unknown Method
+
+```gdscript
+func test(visitor):
+    visitor.custom_visit()  # custom_visit() not in TypesMap → NameMatch → GD7003
+```
+
+### TypesMap Lookup APIs
+
+```csharp
+// GDGodotTypesProvider
+IReadOnlyList<string> FindTypesWithMethod(string methodName);
+IReadOnlyList<string> FindTypesWithProperty(string propertyName);
+
+// GDProjectTypesProvider
+IReadOnlyList<string> FindTypesWithMethod(string methodName);
+IReadOnlyList<string> FindTypesWithProperty(string propertyName);
+```
 
 ---
 

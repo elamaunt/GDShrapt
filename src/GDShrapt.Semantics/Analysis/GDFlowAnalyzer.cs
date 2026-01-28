@@ -1,5 +1,6 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,6 +14,7 @@ namespace GDShrapt.Semantics;
 internal class GDFlowAnalyzer : GDVisitor
 {
     private readonly GDTypeInferenceEngine? _typeEngine;
+    private readonly Func<GDExpression, string?>? _expressionTypeProvider;
     private readonly Stack<GDFlowState> _stateStack = new();
     private readonly Stack<List<GDFlowState>> _branchStatesStack = new();
     private GDFlowState _currentState;
@@ -28,6 +30,16 @@ internal class GDFlowAnalyzer : GDVisitor
     {
         _typeEngine = typeEngine;
         _currentState = new GDFlowState();
+    }
+
+    /// <summary>
+    /// Creates a flow analyzer with an optional expression type provider callback.
+    /// The callback can provide richer type information (e.g., from union types).
+    /// </summary>
+    public GDFlowAnalyzer(GDTypeInferenceEngine? typeEngine, Func<GDExpression, string?>? expressionTypeProvider)
+        : this(typeEngine)
+    {
+        _expressionTypeProvider = expressionTypeProvider;
     }
 
     /// <summary>
@@ -73,12 +85,9 @@ internal class GDFlowAnalyzer : GDVisitor
             return;
 
         var declType = varDecl.Type?.BuildName();
-        string? initType = null;
-
-        if (varDecl.Initializer != null)
-        {
-            initType = _typeEngine?.InferType(varDecl.Initializer);
-        }
+        var initType = varDecl.Initializer != null
+            ? ResolveTypeWithFallback(varDecl.Initializer)
+            : null;
 
         _currentState.DeclareVariable(name, declType, initType);
         RecordState(varDecl);
@@ -94,7 +103,6 @@ internal class GDFlowAnalyzer : GDVisitor
         if (opType == null)
             return;
 
-        // Handle assignment operators
         if (IsAssignmentOperator(opType.Value))
         {
             if (dualOp.LeftExpression is GDIdentifierExpression identExpr)
@@ -102,7 +110,7 @@ internal class GDFlowAnalyzer : GDVisitor
                 var name = identExpr.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(name))
                 {
-                    var rhsType = _typeEngine?.InferType(dualOp.RightExpression);
+                    var rhsType = ResolveTypeWithFallback(dualOp.RightExpression);
                     if (!string.IsNullOrEmpty(rhsType))
                     {
                         _currentState.SetVariableType(name, rhsType, dualOp);
@@ -133,6 +141,30 @@ internal class GDFlowAnalyzer : GDVisitor
         };
     }
 
+    /// <summary>
+    /// Resolves type for an expression, trying the expression type provider first,
+    /// then falling back to the type engine. Avoids returning "Variant" when a more
+    /// specific type is available.
+    /// </summary>
+    private string? ResolveTypeWithFallback(GDExpression? expr)
+    {
+        if (expr == null)
+            return null;
+
+        // Try expression type provider first (can use union types and richer inference)
+        var primaryType = _expressionTypeProvider?.Invoke(expr);
+        if (!string.IsNullOrEmpty(primaryType) && primaryType != "Variant")
+            return primaryType;
+
+        // Fall back to basic type engine inference
+        var fallbackType = _typeEngine?.InferType(expr);
+        if (!string.IsNullOrEmpty(fallbackType) && fallbackType != "Variant")
+            return fallbackType;
+
+        // Return Variant as last resort if that's what we got
+        return primaryType ?? fallbackType;
+    }
+
     #endregion
 
     #region If Statements
@@ -160,7 +192,7 @@ internal class GDFlowAnalyzer : GDVisitor
     public override void Left(GDIfBranch ifBranch)
     {
         // Save branch end state for merging
-        RecordState(ifBranch);
+        // DON'T RecordState here - we want the entry state with narrowing, not exit state
         if (_branchStatesStack.Count > 0)
         {
             _branchStatesStack.Peek().Add(_currentState);
@@ -183,7 +215,7 @@ internal class GDFlowAnalyzer : GDVisitor
     public override void Left(GDElifBranch elifBranch)
     {
         // Save branch end state for merging
-        RecordState(elifBranch);
+        // DON'T RecordState here - we want the entry state with narrowing, not exit state
         if (_branchStatesStack.Count > 0)
         {
             _branchStatesStack.Peek().Add(_currentState);
@@ -201,7 +233,7 @@ internal class GDFlowAnalyzer : GDVisitor
     public override void Left(GDElseBranch elseBranch)
     {
         // Save branch end state for merging
-        RecordState(elseBranch);
+        // DON'T RecordState here - we want the entry state, not exit state
         if (_branchStatesStack.Count > 0)
         {
             _branchStatesStack.Peek().Add(_currentState);
@@ -399,12 +431,9 @@ internal class GDFlowAnalyzer : GDVisitor
         // Iterate until fixed point or max iterations
         for (int i = 0; i < MaxFixedPointIterations; i++)
         {
-            // Create a merged state: pre-loop merged with current iteration
-            // This simulates another iteration where the loop body starts
-            // with types that could come from either before the loop or after previous iteration
+            // Simulate another iteration: loop body starts with types from either before the loop or after previous iteration
             var mergedEntry = GDFlowState.MergeBranches(currentState, preLoopState, preLoopState);
 
-            // Create a new iteration state from the merged entry
             var iterationState = mergedEntry.CreateChild();
 
             // Re-declare iterator if present
@@ -417,7 +446,6 @@ internal class GDFlowAnalyzer : GDVisitor
             // This accumulates types across iterations
             var changed = currentState.MergeInto(iterationState);
 
-            // Check if we've reached a fixed point (no new types added)
             if (!changed)
             {
                 break;
@@ -440,6 +468,25 @@ internal class GDFlowAnalyzer : GDVisitor
     }
 
     /// <summary>
+    /// Extracts the generic type parameter from a generic type string.
+    /// For example: "Array[int]" -> "int", "Dictionary[String, int]" -> "String, int"
+    /// </summary>
+    /// <param name="genericType">The generic type string.</param>
+    /// <param name="prefix">The type prefix (e.g., "Array[").</param>
+    /// <returns>The extracted type parameter, or null if not matching.</returns>
+    private static string? ExtractGenericTypeParameter(string genericType, string prefix)
+    {
+        if (string.IsNullOrEmpty(genericType) ||
+            !genericType.StartsWith(prefix) ||
+            !genericType.EndsWith("]"))
+        {
+            return null;
+        }
+
+        return genericType.Substring(prefix.Length, genericType.Length - prefix.Length - 1);
+    }
+
+    /// <summary>
     /// Infers the element type from a collection type.
     /// </summary>
     private static string? InferIteratorElementType(string? collectionType)
@@ -448,9 +495,10 @@ internal class GDFlowAnalyzer : GDVisitor
             return "Variant";
 
         // Handle typed arrays: Array[Type] -> Type
-        if (collectionType.StartsWith("Array[") && collectionType.EndsWith("]"))
+        var arrayElementType = ExtractGenericTypeParameter(collectionType, GDTypeInferenceConstants.ArrayTypePrefix);
+        if (arrayElementType != null)
         {
-            return collectionType.Substring(6, collectionType.Length - 7);
+            return arrayElementType;
         }
 
         // Handle range() -> int
@@ -575,7 +623,6 @@ internal class GDFlowAnalyzer : GDVisitor
             return;
         }
 
-        // Handle array patterns: [a, b, c]
         if (pattern is GDArrayInitializerExpression arrayExpr)
         {
             foreach (var element in arrayExpr.Values ?? Enumerable.Empty<GDExpression>())
@@ -614,8 +661,6 @@ internal class GDFlowAnalyzer : GDVisitor
         _lambdaCaptureStates[lambdaExpr] = _currentState;
         RecordState(lambdaExpr);
 
-        // Create a child state for the lambda body
-        // Lambda parameters are local to the lambda
         var lambdaState = _currentState.CreateChild();
 
         // Add lambda parameters to the lambda state
@@ -731,7 +776,9 @@ internal class GDFlowAnalyzer : GDVisitor
 
     private void RecordState(GDNode node)
     {
-        _nodeStates[node] = _currentState;
+        // Clone the current state to create an immutable snapshot
+        // This ensures that subsequent mutations to _currentState don't affect recorded states
+        _nodeStates[node] = _currentState.Clone();
         _statementOrder[node] = _currentOrder++;
     }
 
@@ -741,28 +788,70 @@ internal class GDFlowAnalyzer : GDVisitor
 
     /// <summary>
     /// Gets the type of a variable at a specific AST node location.
+    /// Walks up the AST tree to find the nearest ancestor with a recorded state
+    /// that contains the variable. Skips assignment expressions since they record
+    /// post-assignment state but we need pre-assignment state when evaluating RHS.
     /// </summary>
     public string? GetTypeAtLocation(string variableName, GDNode location)
     {
         if (string.IsNullOrEmpty(variableName) || location == null)
             return null;
 
-        // Find the nearest state for this location by walking up
+        // Walk up the AST tree to find the nearest ancestor with a recorded state
         var node = location;
         while (node != null)
         {
+            // Skip assignment expressions - they contain post-assignment state
+            if (node is GDDualOperatorExpression dualOp)
+            {
+                var opType = dualOp.Operator?.OperatorType;
+                if (IsAssignmentOperator(opType ?? GDDualOperatorType.Null))
+                {
+                    node = node.Parent as GDNode;
+                    continue;
+                }
+            }
+
             if (_nodeStates.TryGetValue(node, out var state))
             {
                 var varType = state.GetVariableType(variableName);
                 if (varType != null)
                     return varType.EffectiveType;
             }
+
             node = node.Parent as GDNode;
         }
 
-        // Fall back to final state
+        // Fall back to final state (covers cases where variable hasn't been modified yet)
         var finalVarType = _currentState.GetVariableType(variableName);
         return finalVarType?.EffectiveType;
+    }
+
+    /// <summary>
+    /// Reference equality comparer for GDNode (uses object identity, not value equality).
+    /// </summary>
+    private sealed class ReferenceEqualityComparer : IEqualityComparer<GDNode>
+    {
+        public static readonly ReferenceEqualityComparer Instance = new();
+
+        public bool Equals(GDNode? x, GDNode? y) => ReferenceEquals(x, y);
+        public int GetHashCode(GDNode obj) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+    }
+
+    /// <summary>
+    /// Finds the statement order for a node by walking up to find a recorded parent.
+    /// </summary>
+    private int FindStatementOrder(GDNode location)
+    {
+        var node = location;
+        while (node != null)
+        {
+            if (_statementOrder.TryGetValue(node, out var order))
+                return order;
+            node = node.Parent as GDNode;
+        }
+        // If no order found, return max to get the final state
+        return int.MaxValue;
     }
 
     /// <summary>

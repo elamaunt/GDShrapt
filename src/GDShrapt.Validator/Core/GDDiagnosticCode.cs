@@ -11,6 +11,7 @@ namespace GDShrapt.Reader
     /// - GD6xxx: Indentation errors
     /// - GD7xxx: Duck typing errors
     /// - GD8xxx: Abstract errors
+    /// - GD9xxx: Static method errors
     /// </summary>
     public enum GDDiagnosticCode
     {
@@ -341,7 +342,20 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Cannot instantiate abstract class.
         /// </summary>
-        AbstractClassInstantiation = 8005
+        AbstractClassInstantiation = 8005,
+
+        // Static method errors (9xxx)
+        /// <summary>
+        /// Instance method called on class name (without instance).
+        /// For example: MyClass.instance_method() instead of instance.instance_method().
+        /// </summary>
+        InstanceMethodCalledAsStatic = 9001,
+
+        /// <summary>
+        /// Static method called on instance (warning, GDScript allows this).
+        /// For example: instance.static_method() instead of MyClass.static_method().
+        /// </summary>
+        StaticMethodCalledOnInstance = 9002
     }
 
     /// <summary>

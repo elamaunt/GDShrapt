@@ -536,7 +536,6 @@ namespace GDShrapt.Semantics
                             return InferTypeNode(varDecl.Initializer);
                     }
 
-                    // Check if it's a signal declaration
                     if (member is GDSignalDeclaration signalDecl &&
                         signalDecl.Identifier?.Sequence == name)
                     {
@@ -556,7 +555,6 @@ namespace GDShrapt.Semantics
                 }
             }
 
-            // Check if it's a known type (type as value, like Vector2)
             if (_runtimeProvider.IsKnownType(name))
                 return CreateSimpleType(name);
 
@@ -564,6 +562,12 @@ namespace GDShrapt.Semantics
             var globalClass = _runtimeProvider.GetGlobalClass(name);
             if (globalClass != null)
                 return CreateSimpleType(name);
+
+            // AST fallback: search for local variable declaration by walking up the AST
+            // This handles cases when scope is not populated (e.g., direct type engine usage)
+            var localInit = GDContainerTypeAnalyzer.FindLocalVariableInitializer(identExpr, name);
+            if (localInit != null)
+                return InferTypeNode(localInit);
 
             return null;
         }
@@ -612,9 +616,7 @@ namespace GDShrapt.Semantics
             var extendsClause2 = classDecl.Extends;
             if (extendsClause2?.Type != null)
             {
-                // Get the type name from extends clause using BuildName()
-                // This works for both simple types (Node2D) and complex types
-                var typeName = extendsClause2.Type.BuildName();
+                    var typeName = extendsClause2.Type.BuildName();
                 if (!string.IsNullOrEmpty(typeName))
                     return typeName;
             }
@@ -713,7 +715,7 @@ namespace GDShrapt.Semantics
                 var methodName = memberExpr.Identifier?.Sequence;
 
                 // Handle .new() constructor - returns the class type itself
-                if (methodName == "new")
+                if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
                 {
                     var constructorType = InferType(memberExpr.CallerExpression);
                     if (!string.IsNullOrEmpty(constructorType))
@@ -1061,8 +1063,7 @@ namespace GDShrapt.Semantics
             if (string.IsNullOrEmpty(typeName) || string.IsNullOrWhiteSpace(typeName))
                 return null;
 
-            // Check if this is a simple type (no generic brackets, dots, or union |)
-            // Simple types can be created directly for performance
+            // Simple types (no generic brackets, dots, or union |) - optimize for performance
             if (typeName.IndexOf('[') < 0 && typeName.IndexOf('.') < 0 && typeName.IndexOf('|') < 0)
             {
                 // Validate that it's a valid identifier before creating

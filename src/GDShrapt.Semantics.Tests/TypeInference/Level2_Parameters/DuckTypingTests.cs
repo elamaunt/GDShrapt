@@ -322,6 +322,306 @@ func _ready():
 
     #endregion
 
+    #region Duck Type Inference and Confidence Tests
+
+    /// <summary>
+    /// Tests that slice() method usage infers Array type for parameter.
+    /// </summary>
+    [TestMethod]
+    public void InferParameterType_WithSliceMethod_InfersArray()
+    {
+        // Arrange
+        var code = @"
+func process(data):
+    data.slice(1)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var method = classDecl.Methods
+            .FirstOrDefault(m => m.Identifier?.Sequence == "process");
+        Assert.IsNotNull(method);
+
+        var param = method.Parameters?.FirstOrDefault();
+        Assert.IsNotNull(param);
+
+        // Act - infer type from usage
+        var inferredType = model.InferParameterType(param);
+
+        // Assert - should infer Array (or union containing Array) because slice() is Array-specific
+        // Note: slice() exists on Array and all Packed*Array types, so we may get a union
+        Assert.IsTrue(inferredType.TypeName.Contains("Array"),
+            $"Parameter using slice() should infer type containing Array. Got: {inferredType.TypeName}");
+    }
+
+    /// <summary>
+    /// Tests that is_empty() + slice() usage infers Array type.
+    /// </summary>
+    [TestMethod]
+    public void InferParameterType_WithIsEmptyAndSlice_InfersArray()
+    {
+        // Arrange - accumulate_left pattern from cyclic_inference.gd
+        var code = @"
+func accumulate_left(list, func_ref, initial):
+    if list.is_empty():
+        return initial
+    var head = list[0]
+    var tail = list.slice(1)
+    return accumulate_left(tail, func_ref, func_ref.call(initial, head))
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var method = classDecl.Methods
+            .FirstOrDefault(m => m.Identifier?.Sequence == "accumulate_left");
+        Assert.IsNotNull(method);
+
+        var listParam = method.Parameters?.FirstOrDefault(p => p.Identifier?.Sequence == "list");
+        Assert.IsNotNull(listParam);
+
+        // Act
+        var inferredType = model.InferParameterType(listParam);
+
+        // Assert - is_empty + slice + indexable = Array (or union containing Array)
+        // Note: slice() + is_empty() exist on Array and Packed*Array types
+        Assert.IsTrue(inferredType.TypeName.Contains("Array"),
+            $"Parameter with is_empty() + slice() should infer type containing Array. Got: {inferredType.TypeName}");
+    }
+
+    /// <summary>
+    /// Tests that GetMemberAccessConfidence returns Potential for duck-typed parameters.
+    /// </summary>
+    [TestMethod]
+    public void GetMemberAccessConfidence_DuckTypedParameter_ReturnsPotential()
+    {
+        // Arrange
+        var code = @"
+func process(data):
+    data.is_empty()
+    data.slice(1)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        // Find the is_empty() member access
+        var isEmptyCall = FindMemberAccess(classDecl, "is_empty");
+        Assert.IsNotNull(isEmptyCall, "Could not find is_empty member access");
+
+        // Act
+        var confidence = model.GetMemberAccessConfidence(isEmptyCall);
+
+        // Assert - should be Potential because duck-type constraints exist
+        Assert.AreEqual(GDReferenceConfidence.Potential, confidence,
+            "Duck-typed parameter should have Potential confidence, not NameMatch");
+    }
+
+    private static GDMemberOperatorExpression? FindMemberAccess(GDClassDeclaration classDecl, string memberName)
+    {
+        GDMemberOperatorExpression? found = null;
+        var visitor = new MemberAccessFinder(memberName, m => found = m);
+        classDecl.WalkIn(visitor);
+        return found;
+    }
+
+    private class MemberAccessFinder : GDVisitor
+    {
+        private readonly string _memberName;
+        private readonly System.Action<GDMemberOperatorExpression> _onFound;
+
+        public MemberAccessFinder(string memberName, System.Action<GDMemberOperatorExpression> onFound)
+        {
+            _memberName = memberName;
+            _onFound = onFound;
+        }
+
+        public override void Visit(GDMemberOperatorExpression e)
+        {
+            if (e.Identifier?.Sequence == _memberName)
+                _onFound(e);
+        }
+    }
+
+    #endregion
+
+    #region Unknown Method Tests - Should Produce Warning
+
+    /// <summary>
+    /// Tests that calling unknown method (not in TypesMap) returns NameMatch confidence.
+    /// This should produce GD7003 warning.
+    /// </summary>
+    [TestMethod]
+    public void GetMemberAccessConfidence_UnknownMethod_ReturnsNameMatch()
+    {
+        // Arrange - some_unknown_method does NOT exist in any Godot type
+        var code = @"
+func process(data):
+    data.some_unknown_method()
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var unknownCall = FindMemberAccess(classDecl, "some_unknown_method");
+        Assert.IsNotNull(unknownCall, "Could not find some_unknown_method member access");
+
+        // Act
+        var confidence = model.GetMemberAccessConfidence(unknownCall);
+
+        // Assert - should be NameMatch because method is unknown
+        Assert.AreEqual(GDReferenceConfidence.NameMatch, confidence,
+            "Unknown method should have NameMatch confidence (produces warning)");
+    }
+
+    /// <summary>
+    /// Tests that accessing unknown property (not in TypesMap) returns NameMatch confidence.
+    /// </summary>
+    [TestMethod]
+    public void GetMemberAccessConfidence_UnknownProperty_ReturnsNameMatch()
+    {
+        // Arrange - xyz_nonexistent does NOT exist in any Godot type
+        var code = @"
+func process(data):
+    var x = data.xyz_nonexistent
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var unknownAccess = FindMemberAccess(classDecl, "xyz_nonexistent");
+        Assert.IsNotNull(unknownAccess, "Could not find xyz_nonexistent member access");
+
+        // Act
+        var confidence = model.GetMemberAccessConfidence(unknownAccess);
+
+        // Assert - should be NameMatch because property is unknown
+        Assert.AreEqual(GDReferenceConfidence.NameMatch, confidence,
+            "Unknown property should have NameMatch confidence (produces warning)");
+    }
+
+    #endregion
+
+    #region Known Godot Method Tests - Should NOT Produce Warning
+
+    /// <summary>
+    /// Tests that calling known Godot method (queue_free) returns Potential confidence.
+    /// </summary>
+    [TestMethod]
+    public void GetMemberAccessConfidence_KnownGodotMethod_ReturnsPotential()
+    {
+        // Arrange - queue_free exists on Node and subclasses
+        var code = @"
+func process(node):
+    node.queue_free()
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var queueFreeCall = FindMemberAccess(classDecl, "queue_free");
+        Assert.IsNotNull(queueFreeCall, "Could not find queue_free member access");
+
+        // Act
+        var confidence = model.GetMemberAccessConfidence(queueFreeCall);
+
+        // Assert - should be Potential because queue_free exists in TypesMap
+        Assert.AreEqual(GDReferenceConfidence.Potential, confidence,
+            "Known Godot method should have Potential confidence (no warning)");
+    }
+
+    /// <summary>
+    /// Tests that accessing known Vector2 property (x, y) returns Potential confidence.
+    /// </summary>
+    [TestMethod]
+    public void GetMemberAccessConfidence_KnownVectorProperty_ReturnsPotential()
+    {
+        // Arrange - 'x' property exists on Vector2, Vector3, etc.
+        var code = @"
+func process(vec):
+    var x = vec.x
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var xAccess = FindMemberAccess(classDecl, "x");
+        Assert.IsNotNull(xAccess, "Could not find 'x' member access");
+
+        // Act
+        var confidence = model.GetMemberAccessConfidence(xAccess);
+
+        // Assert - should be Potential because 'x' property exists in TypesMap
+        Assert.AreEqual(GDReferenceConfidence.Potential, confidence,
+            "Known vector property should have Potential confidence (no warning)");
+    }
+
+    #endregion
+
+    #region Multiple Methods - Union Type Inference
+
+    /// <summary>
+    /// Tests that using multiple Godot methods infers a union of types.
+    /// </summary>
+    [TestMethod]
+    public void InferParameterType_MultipleGodotMethods_InfersUnionType()
+    {
+        // Arrange - queue_free and get_parent are both Node methods
+        var code = @"
+func process(node):
+    node.queue_free()
+    var parent = node.get_parent()
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var method = classDecl.Methods.FirstOrDefault(m => m.Identifier?.Sequence == "process");
+        Assert.IsNotNull(method);
+        var param = method.Parameters?.FirstOrDefault();
+        Assert.IsNotNull(param);
+
+        // Act
+        var inferredType = model.InferParameterType(param);
+
+        // Assert - should infer Node (or union containing Node)
+        Assert.IsTrue(inferredType.TypeName.Contains("Node"),
+            $"Multiple Node methods should infer type containing Node. Got: {inferredType.TypeName}");
+    }
+
+    #endregion
+
+    #region Explicit Type Annotation - No Duck Typing
+
+    /// <summary>
+    /// Tests that parameter with explicit type annotation returns Strict confidence.
+    /// </summary>
+    [TestMethod]
+    public void GetMemberAccessConfidence_ExplicitType_ReturnsStrict()
+    {
+        // Arrange - data has explicit Array type
+        var code = @"
+func process(data: Array):
+    data.append(1)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var appendCall = FindMemberAccess(classDecl, "append");
+        Assert.IsNotNull(appendCall, "Could not find append member access");
+
+        // Act
+        var confidence = model.GetMemberAccessConfidence(appendCall);
+
+        // Assert - should be Strict because parameter has explicit type
+        Assert.AreEqual(GDReferenceConfidence.Strict, confidence,
+            "Explicit type annotation should have Strict confidence");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static (GDClassDeclaration?, GDSemanticModel?) AnalyzeCode(string code)
@@ -338,7 +638,14 @@ func _ready():
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code); // Parse the code
 
-        var collector = new GDSemanticReferenceCollector(scriptFile);
+        // Use composite provider with Godot types for duck-type inference
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null,  // projectTypesProvider
+            null,  // autoloadsProvider
+            null); // sceneTypesProvider
+
+        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
         var semanticModel = collector.BuildSemanticModel();
 
         return (classDecl, semanticModel);

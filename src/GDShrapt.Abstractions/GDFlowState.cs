@@ -243,6 +243,15 @@ public class GDFlowState
     }
 
     /// <summary>
+    /// Creates a full clone of this state (flattening parent chain).
+    /// Used for recording state snapshots at specific program points.
+    /// </summary>
+    public GDFlowState Clone()
+    {
+        return CloneState(this, null);
+    }
+
+    /// <summary>
     /// Creates a clone of a state with a new parent.
     /// </summary>
     private static GDFlowState CloneState(GDFlowState source, GDFlowState? newParent)

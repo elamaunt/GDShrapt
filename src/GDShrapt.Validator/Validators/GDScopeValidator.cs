@@ -58,7 +58,6 @@ namespace GDShrapt.Reader
             if (string.IsNullOrEmpty(typeName))
                 return;
 
-            // Check if base type is known (either built-in type, inner class, or from RuntimeProvider)
             if (!Context.RuntimeProvider.IsKnownType(typeName) &&
                 !Context.RuntimeProvider.IsBuiltIn(typeName) &&
                 LookupSymbol(typeName) == null)
@@ -433,24 +432,19 @@ namespace GDShrapt.Reader
             if (Context.RuntimeProvider.IsBuiltIn(name))
                 return;
 
-            // Check if it's a known type (used as value, e.g., Vector2)
             if (Context.RuntimeProvider.IsKnownType(name))
                 return;
 
-            // Check scope (includes class-level symbols collected by GDDeclarationCollector)
             var symbol = LookupSymbol(name);
             if (symbol != null)
                 return;
 
-            // Check if it's a user-defined function (forward reference support)
             if (Context.IsFunctionDeclared(name))
                 return;
 
-            // Check if it's a global class/singleton
             if (Context.RuntimeProvider.GetGlobalClass(name) != null)
                 return;
 
-            // Check if it's a method/member from base class hierarchy (e.g., queue_free() from Node2D)
             if (Context.IsBaseClassMember(name))
                 return;
 
@@ -467,7 +461,6 @@ namespace GDShrapt.Reader
             if (opType == null)
                 return;
 
-            // Check all assignment operators
             if (IsAssignmentOperator(opType.Value))
             {
                 CheckConstantReassignment(dualOperator.LeftExpression, dualOperator);
@@ -625,10 +618,7 @@ namespace GDShrapt.Reader
             if (typeNode.IsArray || typeNode.IsDictionary)
                 return;
 
-            // Check if type is known:
-            // 1. Built-in runtime types (Vector2, Node, etc.)
-            // 2. Types registered via RuntimeProvider (project types)
-            // 3. Inner classes declared in current scope
+            // Known types: runtime types (Vector2, Node), project types, inner classes
             if (!Context.RuntimeProvider.IsKnownType(typeName) &&
                 !Context.RuntimeProvider.IsBuiltIn(typeName) &&
                 LookupSymbol(typeName) == null)

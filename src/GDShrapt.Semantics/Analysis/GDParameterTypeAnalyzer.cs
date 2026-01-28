@@ -20,6 +20,23 @@ internal sealed class GDParameterTypeAnalyzer
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly GDTypeInferenceEngine? _typeEngine;
 
+    /// <summary>
+    /// Context object for condition analysis, reducing parameter passing overhead.
+    /// </summary>
+    private sealed class ConditionAnalysisContext
+    {
+        public string ParamName { get; }
+        public HashSet<string> TypeGuardTypes { get; }
+        public bool HasNullCheck { get; set; }
+        public bool IsNegated { get; set; }
+
+        public ConditionAnalysisContext(string paramName, HashSet<string> typeGuardTypes)
+        {
+            ParamName = paramName;
+            TypeGuardTypes = typeGuardTypes;
+        }
+    }
+
     public GDParameterTypeAnalyzer(IGDRuntimeProvider? runtimeProvider, GDTypeInferenceEngine? typeEngine)
     {
         _runtimeProvider = runtimeProvider;
@@ -47,19 +64,18 @@ internal sealed class GDParameterTypeAnalyzer
         AddDefaultValueType(param, union);
 
         // 3. Type guards from conditions
-        var hasNullCheck = false;
-        var typeGuardTypes = new HashSet<string>();
+        var context = new ConditionAnalysisContext(paramName, new HashSet<string>());
 
-        AnalyzeIfStatements(method, paramName, ref hasNullCheck, typeGuardTypes);
-        AnalyzeMatchStatements(method, paramName, typeGuardTypes);
-        AnalyzeAssertStatements(method, paramName, typeGuardTypes);
+        AnalyzeIfStatements(method, context);
+        AnalyzeMatchStatements(method, paramName, context.TypeGuardTypes);
+        AnalyzeAssertStatements(method, paramName, context.TypeGuardTypes);
 
-        foreach (var guardType in typeGuardTypes)
+        foreach (var guardType in context.TypeGuardTypes)
         {
             union.AddType(guardType, isHighConfidence: true);
         }
 
-        if (hasNullCheck)
+        if (context.HasNullCheck)
         {
             union.AddType("null", isHighConfidence: true);
         }
@@ -123,21 +139,17 @@ internal sealed class GDParameterTypeAnalyzer
         }
     }
 
-    private void AnalyzeIfStatements(
-        GDMethodDeclaration method,
-        string paramName,
-        ref bool hasNullCheck,
-        HashSet<string> typeGuardTypes)
+    private void AnalyzeIfStatements(GDMethodDeclaration method, ConditionAnalysisContext context)
     {
         foreach (var ifStmt in method.AllNodes.OfType<GDIfStatement>())
         {
-            AnalyzeCondition(ifStmt.IfBranch?.Condition, paramName, ref hasNullCheck, typeGuardTypes);
+            AnalyzeCondition(ifStmt.IfBranch?.Condition, context);
 
             if (ifStmt.ElifBranchesList != null)
             {
                 foreach (var elif in ifStmt.ElifBranchesList)
                 {
-                    AnalyzeCondition(elif.Condition, paramName, ref hasNullCheck, typeGuardTypes);
+                    AnalyzeCondition(elif.Condition, context);
                 }
             }
         }
@@ -147,48 +159,38 @@ internal sealed class GDParameterTypeAnalyzer
     /// Analyzes a condition expression to find type guards and null checks.
     /// Handles: is checks, typeof() checks, null comparisons, and/or, not, brackets.
     /// </summary>
-    private void AnalyzeCondition(
-        GDExpression? condition,
-        string paramName,
-        ref bool hasNullCheck,
-        HashSet<string> typeGuardTypes,
-        bool isNegated = false)
+    private void AnalyzeCondition(GDExpression? condition, ConditionAnalysisContext context)
     {
         if (condition == null)
             return;
 
         if (condition is GDDualOperatorExpression dualOp)
         {
-            AnalyzeDualOperator(dualOp, paramName, ref hasNullCheck, typeGuardTypes, isNegated);
+            AnalyzeDualOperator(dualOp, context);
         }
         else if (condition is GDSingleOperatorExpression singleOp)
         {
-            AnalyzeSingleOperator(singleOp, paramName, ref hasNullCheck, typeGuardTypes, isNegated);
+            AnalyzeSingleOperator(singleOp, context);
         }
         else if (condition is GDBracketExpression bracketExpr)
         {
-            AnalyzeCondition(bracketExpr.InnerExpression, paramName, ref hasNullCheck, typeGuardTypes, isNegated);
+            AnalyzeCondition(bracketExpr.InnerExpression, context);
         }
     }
 
-    private void AnalyzeDualOperator(
-        GDDualOperatorExpression dualOp,
-        string paramName,
-        ref bool hasNullCheck,
-        HashSet<string> typeGuardTypes,
-        bool isNegated)
+    private void AnalyzeDualOperator(GDDualOperatorExpression dualOp, ConditionAnalysisContext context)
     {
         var opType = dualOp.Operator?.OperatorType;
 
         // Handle 'param is Type' check
         if (opType == GDDualOperatorType.Is)
         {
-            if (IsParameterExpression(dualOp.LeftExpression, paramName))
+            if (IsParameterExpression(dualOp.LeftExpression, context.ParamName))
             {
-                var typeName = dualOp.RightExpression?.ToString();
+                var typeName = ExtractTypeNameFromExpression(dualOp.RightExpression);
                 if (!string.IsNullOrEmpty(typeName))
                 {
-                    typeGuardTypes.Add(typeName);
+                    context.TypeGuardTypes.Add(typeName);
                 }
             }
         }
@@ -196,40 +198,40 @@ internal sealed class GDParameterTypeAnalyzer
         else if (opType == GDDualOperatorType.Equal || opType == GDDualOperatorType.NotEqual)
         {
             // Null check
-            if (IsParameterExpression(dualOp.LeftExpression, paramName) && IsNullExpression(dualOp.RightExpression) ||
-                IsParameterExpression(dualOp.RightExpression, paramName) && IsNullExpression(dualOp.LeftExpression))
+            if (IsParameterExpression(dualOp.LeftExpression, context.ParamName) && IsNullExpression(dualOp.RightExpression) ||
+                IsParameterExpression(dualOp.RightExpression, context.ParamName) && IsNullExpression(dualOp.LeftExpression))
             {
-                hasNullCheck = true;
+                context.HasNullCheck = true;
             }
 
             // typeof() check
-            var typeofType = TryExtractTypeofCheck(dualOp, paramName);
+            var typeofType = TryExtractTypeofCheck(dualOp, context.ParamName);
             if (!string.IsNullOrEmpty(typeofType))
             {
-                typeGuardTypes.Add(typeofType);
+                context.TypeGuardTypes.Add(typeofType);
             }
         }
         // Handle 'and' / 'or'
         else if (opType == GDDualOperatorType.And || opType == GDDualOperatorType.And2 ||
                  opType == GDDualOperatorType.Or || opType == GDDualOperatorType.Or2)
         {
-            AnalyzeCondition(dualOp.LeftExpression, paramName, ref hasNullCheck, typeGuardTypes, isNegated);
-            AnalyzeCondition(dualOp.RightExpression, paramName, ref hasNullCheck, typeGuardTypes, isNegated);
+            AnalyzeCondition(dualOp.LeftExpression, context);
+            AnalyzeCondition(dualOp.RightExpression, context);
         }
     }
 
-    private void AnalyzeSingleOperator(
-        GDSingleOperatorExpression singleOp,
-        string paramName,
-        ref bool hasNullCheck,
-        HashSet<string> typeGuardTypes,
-        bool isNegated)
+    private void AnalyzeSingleOperator(GDSingleOperatorExpression singleOp, ConditionAnalysisContext context)
     {
         var isNotOperator = singleOp.OperatorType == GDSingleOperatorType.Not ||
                             singleOp.OperatorType == GDSingleOperatorType.Not2;
 
-        var newIsNegated = isNotOperator ? !isNegated : isNegated;
-        AnalyzeCondition(singleOp.TargetExpression, paramName, ref hasNullCheck, typeGuardTypes, newIsNegated);
+        if (isNotOperator)
+            context.IsNegated = !context.IsNegated;
+
+        AnalyzeCondition(singleOp.TargetExpression, context);
+
+        if (isNotOperator)
+            context.IsNegated = !context.IsNegated; // Restore
     }
 
     /// <summary>
@@ -285,13 +287,40 @@ internal sealed class GDParameterTypeAnalyzer
                 dualOp.Operator?.OperatorType == GDDualOperatorType.Is &&
                 IsParameterExpression(dualOp.LeftExpression, paramName))
             {
-                var typeName = dualOp.RightExpression?.ToString();
+                var typeName = ExtractTypeNameFromExpression(dualOp.RightExpression);
                 if (!string.IsNullOrEmpty(typeName))
                 {
                     typeGuardTypes.Add(typeName);
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Extracts a type name from an expression.
+    /// Handles identifiers, member expressions, and falls back to ToString() for complex cases.
+    /// </summary>
+    private static string? ExtractTypeNameFromExpression(GDExpression? expr)
+    {
+        if (expr == null)
+            return null;
+
+        // Simple identifier (e.g., Node, String, int)
+        if (expr is GDIdentifierExpression identExpr)
+            return identExpr.Identifier?.Sequence;
+
+        // Member access (e.g., MyClass.InnerType)
+        if (expr is GDMemberOperatorExpression memberExpr)
+        {
+            var caller = ExtractTypeNameFromExpression(memberExpr.CallerExpression);
+            var member = memberExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(caller) && !string.IsNullOrEmpty(member))
+                return $"{caller}.{member}";
+            return member;
+        }
+
+        // Fallback for complex expressions
+        return expr.ToString();
     }
 
     #region typeof() Analysis

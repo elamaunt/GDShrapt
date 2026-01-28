@@ -116,24 +116,7 @@ internal sealed class GDNodeTypeAnalyzer
         var expectedUnion = new GDUnionType();
         var actualUnion = new GDUnionType();
 
-        // Explicit type annotation
-        var explicitType = variable.Type?.BuildName();
-        if (!string.IsNullOrEmpty(explicitType))
-        {
-            expectedUnion.AddType(explicitType, isHighConfidence: true);
-        }
-
-        // Initializer type
-        if (variable.Initializer != null)
-        {
-            var initType = _typeEngine?.InferType(variable.Initializer);
-            if (!string.IsNullOrEmpty(initType))
-            {
-                actualUnion.AddType(initType, isHighConfidence: true);
-            }
-        }
-
-        // Assignments to this variable
+        BuildAnnotationAndInitializerTypes(variable.Type, variable.Initializer, expectedUnion, actualUnion);
         AddAssignmentTypes(varName, actualUnion);
 
         var duckType = _semanticModel.GetDuckType(varName);
@@ -153,29 +136,39 @@ internal sealed class GDNodeTypeAnalyzer
         var expectedUnion = new GDUnionType();
         var actualUnion = new GDUnionType();
 
+        BuildAnnotationAndInitializerTypes(localVar.Type, localVar.Initializer, expectedUnion, actualUnion);
+        AddAssignmentTypes(varName, actualUnion);
+
+        var duckType = _semanticModel.GetDuckType(varName);
+
+        return GDTypeDiff.Create(localVar, varName, expectedUnion, actualUnion, duckType, null, _runtimeProvider);
+    }
+
+    /// <summary>
+    /// Builds expected and actual union types from type annotation and initializer.
+    /// </summary>
+    private void BuildAnnotationAndInitializerTypes(
+        GDTypeNode? typeNode,
+        GDExpression? initializer,
+        GDUnionType expectedUnion,
+        GDUnionType actualUnion)
+    {
         // Explicit type annotation
-        var explicitType = localVar.Type?.BuildName();
+        var explicitType = typeNode?.BuildName();
         if (!string.IsNullOrEmpty(explicitType))
         {
             expectedUnion.AddType(explicitType, isHighConfidence: true);
         }
 
         // Initializer type
-        if (localVar.Initializer != null)
+        if (initializer != null)
         {
-            var initType = _typeEngine?.InferType(localVar.Initializer);
+            var initType = _typeEngine?.InferType(initializer);
             if (!string.IsNullOrEmpty(initType))
             {
                 actualUnion.AddType(initType, isHighConfidence: true);
             }
         }
-
-        // Assignments to this variable
-        AddAssignmentTypes(varName, actualUnion);
-
-        var duckType = _semanticModel.GetDuckType(varName);
-
-        return GDTypeDiff.Create(localVar, varName, expectedUnion, actualUnion, duckType, null, _runtimeProvider);
     }
 
     /// <summary>
@@ -196,47 +189,19 @@ internal sealed class GDNodeTypeAnalyzer
         if (symbol.DeclarationNode is GDParameterDeclaration param)
         {
             var diff = AnalyzeParameter(param);
-            // Update with narrowed type at this specific location
-            var narrowedType = _semanticModel.GetNarrowedType(name, identExpr);
-            if (!string.IsNullOrEmpty(narrowedType))
-            {
-                return GDTypeDiff.Create(
-                    identExpr, name,
-                    diff.ExpectedTypes, diff.ActualTypes,
-                    diff.DuckConstraints, narrowedType,
-                    _runtimeProvider);
-            }
-            return diff;
+            return WrapWithNarrowedType(diff, identExpr, name);
         }
 
         if (symbol.DeclarationNode is GDVariableDeclaration varDecl)
         {
             var diff = AnalyzeVariable(varDecl);
-            var narrowedType = _semanticModel.GetNarrowedType(name, identExpr);
-            if (!string.IsNullOrEmpty(narrowedType))
-            {
-                return GDTypeDiff.Create(
-                    identExpr, name,
-                    diff.ExpectedTypes, diff.ActualTypes,
-                    diff.DuckConstraints, narrowedType,
-                    _runtimeProvider);
-            }
-            return diff;
+            return WrapWithNarrowedType(diff, identExpr, name);
         }
 
         if (symbol.DeclarationNode is GDVariableDeclarationStatement localVar)
         {
             var diff = AnalyzeLocalVariable(localVar);
-            var narrowedType = _semanticModel.GetNarrowedType(name, identExpr);
-            if (!string.IsNullOrEmpty(narrowedType))
-            {
-                return GDTypeDiff.Create(
-                    identExpr, name,
-                    diff.ExpectedTypes, diff.ActualTypes,
-                    diff.DuckConstraints, narrowedType,
-                    _runtimeProvider);
-            }
-            return diff;
+            return WrapWithNarrowedType(diff, identExpr, name);
         }
 
         // Fall back to union type
@@ -251,6 +216,23 @@ internal sealed class GDNodeTypeAnalyzer
             duckType,
             narrowed,
             _runtimeProvider);
+    }
+
+    /// <summary>
+    /// Wraps a type diff with narrowed type information at the given location.
+    /// </summary>
+    private GDTypeDiff WrapWithNarrowedType(GDTypeDiff diff, GDIdentifierExpression identExpr, string varName)
+    {
+        var narrowedType = _semanticModel.GetNarrowedType(varName, identExpr);
+        if (!string.IsNullOrEmpty(narrowedType))
+        {
+            return GDTypeDiff.Create(
+                identExpr, varName,
+                diff.ExpectedTypes, diff.ActualTypes,
+                diff.DuckConstraints, narrowedType,
+                _runtimeProvider);
+        }
+        return diff;
     }
 
     /// <summary>

@@ -68,7 +68,7 @@ internal class GDParameterTypeResolver
     }
 
     /// <summary>
-    /// Finds types that match the duck typing constraints.
+    /// Finds types that match the duck typing constraints using TypesMap data.
     /// </summary>
     private List<string> FindDuckTypeMatches(GDParameterConstraints constraints)
     {
@@ -86,17 +86,39 @@ internal class GDParameterTypeResolver
             return matches;
         }
 
-        // Check if "get" method is required - likely Dictionary
+        // Try to use TypesMap for method-based duck typing
+        GDGodotTypesProvider? typesProvider = null;
+        GDProjectTypesProvider? projectProvider = null;
+
+        if (_runtimeProvider is GDGodotTypesProvider godotProvider)
+        {
+            typesProvider = godotProvider;
+        }
+        else if (_runtimeProvider is GDCompositeRuntimeProvider compositeProvider)
+        {
+            typesProvider = compositeProvider.GodotTypesProvider;
+            projectProvider = compositeProvider.ProjectTypesProvider;
+        }
+
+        if (typesProvider != null && constraints.RequiredMethods.Count > 0)
+        {
+            var methodMatches = FindTypesMatchingAllMethods(typesProvider, projectProvider, constraints.RequiredMethods);
+            if (methodMatches.Count > 0)
+            {
+                matches.AddRange(methodMatches);
+                return matches.Distinct().ToList();
+            }
+        }
+
+        // Fallback to hardcoded patterns if TypesMap lookup fails or is unavailable
         if (constraints.RequiredMethods.Contains("get"))
             matches.Add("Dictionary");
 
-        // Check if common container methods are used
         if (constraints.RequiredMethods.Contains("append") ||
             constraints.RequiredMethods.Contains("push_back") ||
             constraints.RequiredMethods.Contains("pop_back"))
             matches.Add("Array");
 
-        // Check if common string methods are used
         if (constraints.RequiredMethods.Contains("substr") ||
             constraints.RequiredMethods.Contains("find") ||
             constraints.RequiredMethods.Contains("split"))
@@ -132,6 +154,60 @@ internal class GDParameterTypeResolver
         }
 
         return matches;
+    }
+
+    /// <summary>
+    /// Finds types that have ALL required methods using TypesMap data.
+    /// Intersects the sets of types for each method to find common types.
+    /// Checks both Godot types and project types.
+    /// </summary>
+    private static List<string> FindTypesMatchingAllMethods(
+        GDGodotTypesProvider? godotProvider,
+        GDProjectTypesProvider? projectProvider,
+        HashSet<string> requiredMethods)
+    {
+        if (requiredMethods.Count == 0)
+            return new List<string>();
+
+        HashSet<string>? intersection = null;
+
+        foreach (var methodName in requiredMethods)
+        {
+            var typesWithMethod = new HashSet<string>();
+
+            // Check Godot types
+            if (godotProvider != null)
+            {
+                foreach (var t in godotProvider.FindTypesWithMethod(methodName))
+                    typesWithMethod.Add(t);
+            }
+
+            // Check project types
+            if (projectProvider != null)
+            {
+                foreach (var t in projectProvider.FindTypesWithMethod(methodName))
+                    typesWithMethod.Add(t);
+            }
+
+            if (typesWithMethod.Count == 0)
+            {
+                // If any method has no types, intersection is empty
+                return new List<string>();
+            }
+
+            if (intersection == null)
+            {
+                intersection = typesWithMethod;
+            }
+            else
+            {
+                intersection.IntersectWith(typesWithMethod);
+                if (intersection.Count == 0)
+                    return new List<string>();
+            }
+        }
+
+        return intersection?.ToList() ?? new List<string>();
     }
 
     /// <summary>
@@ -193,7 +269,6 @@ internal class GDParameterTypeResolver
         GDTypeSpecificConstraints? typeSpecific = null;
         constraints.TypeConstraints.TryGetValue(baseType, out typeSpecific);
 
-        // Get the first source for this type
         var source = typeSpecific?.InferenceSources.FirstOrDefault();
 
         // Build key and value slots
@@ -234,7 +309,6 @@ internal class GDParameterTypeResolver
 
         if (keyTypes.Count == 0)
         {
-            // Check if derivable
             if (typeSpecific?.KeyIsDerivable == true)
             {
                 return GDGenericTypeSlot.Derivable(
@@ -269,7 +343,6 @@ internal class GDParameterTypeResolver
 
         if (elemTypes.Count == 0)
         {
-            // Check if derivable
             if (typeSpecific?.ValueIsDerivable == true)
             {
                 return GDGenericTypeSlot.Derivable(

@@ -508,7 +508,11 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDIfBranch ifBranch)
     {
         // Restore parent context after leaving if branch
-        // (will be restored fully when leaving GDIfStatement)
+        // This ensures elif/else branches don't inherit if-branch narrowing
+        if (_narrowingStack.Count > 0)
+        {
+            _currentNarrowingContext = _narrowingStack.Peek();
+        }
     }
 
     public override void Visit(GDElifBranch elifBranch)
@@ -525,12 +529,28 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDElifBranch elifBranch)
     {
         // Restore parent context after leaving elif branch
+        // This ensures subsequent elif/else branches don't inherit this branch's narrowing
+        if (_narrowingStack.Count > 0)
+        {
+            _currentNarrowingContext = _narrowingStack.Peek();
+        }
     }
 
     public override void Visit(GDElseBranch elseBranch)
     {
         // In else branch, all previous conditions were false
-        // No specific narrowing here - the exclusion is handled by the context
+        // Reset narrowing context to parent (no narrowing from if/elif branches applies here)
+        // The _narrowingStack contains the parent context pushed in Visit(GDIfStatement)
+        if (_narrowingStack.Count > 0)
+        {
+            // Peek the parent context without popping (will be popped in Left(GDIfStatement))
+            _currentNarrowingContext = _narrowingStack.Peek();
+        }
+        else
+        {
+            // No parent context, use empty
+            _currentNarrowingContext = new GDTypeNarrowingContext();
+        }
     }
 
     public override void Left(GDElseBranch elseBranch)

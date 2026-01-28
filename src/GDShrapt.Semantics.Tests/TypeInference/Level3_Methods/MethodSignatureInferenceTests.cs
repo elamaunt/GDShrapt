@@ -555,6 +555,229 @@ func third():
 
     #endregion
 
+    #region Lazy Return Type Inference Tests
+
+    [TestMethod]
+    public void LazyReturnTypeInference_InnerClassReturn_InferredCorrectly()
+    {
+        // This test verifies that GDProjectTypesProvider correctly infers return types
+        // for methods that return inner class instances.
+        // Corresponds to ECSLikeSystem.create_entity() returning Entity inner class.
+        var project = CreateProject("""
+class_name ECSLikeSystem
+
+class Entity:
+    var id: int
+    var name: String
+
+func create_entity(entity_name = ""):
+    var entity = Entity.new()
+    entity.name = entity_name
+    return entity
+""");
+
+        // Get the runtime provider
+        var provider = project.CreateRuntimeProvider();
+        Assert.IsNotNull(provider);
+
+        // Get the method info
+        var member = provider.GetMember("ECSLikeSystem", "create_entity");
+        Assert.IsNotNull(member);
+
+        // Debug: print the actual type
+        System.Console.WriteLine($"Inferred return type: {member.Type}");
+
+        // The return type should be "Entity" (inner class), not "Variant"
+        Assert.AreNotEqual("Variant", member.Type,
+            $"Return type should be inferred, but was: {member.Type}");
+
+        // Also verify the inner class is known
+        var isKnown = provider.IsKnownType("ECSLikeSystem.Entity");
+        System.Console.WriteLine($"IsKnownType(ECSLikeSystem.Entity): {isKnown}");
+
+        // Check if simple Entity name resolves
+        var memberFromEntity = provider.GetMember("Entity", "id");
+        System.Console.WriteLine($"GetMember(Entity, id): {memberFromEntity?.Name ?? "null"}");
+
+        var memberFromQualified = provider.GetMember("ECSLikeSystem.Entity", "id");
+        System.Console.WriteLine($"GetMember(ECSLikeSystem.Entity, id): {memberFromQualified?.Name ?? "null"}");
+    }
+
+    [TestMethod]
+    public void LazyReturnTypeInference_SimpleReturn_InferredCorrectly()
+    {
+        // Simple test: method returns a literal
+        var project = CreateProject("""
+class_name Calculator
+
+func get_magic_number():
+    return 42
+""");
+
+        var provider = project.CreateRuntimeProvider();
+        Assert.IsNotNull(provider);
+
+        var member = provider.GetMember("Calculator", "get_magic_number");
+        Assert.IsNotNull(member);
+
+        // Should infer "int" from the return statement
+        Assert.AreEqual("int", member.Type,
+            $"Return type should be 'int', but was: {member.Type}");
+    }
+
+    [TestMethod]
+    public void LazyReturnTypeInference_StringReturn_InferredCorrectly()
+    {
+        // Simple test: method returns a string
+        var project = CreateProject("""
+class_name Greeter
+
+func get_greeting():
+    return "Hello"
+""");
+
+        var provider = project.CreateRuntimeProvider();
+        Assert.IsNotNull(provider);
+
+        var member = provider.GetMember("Greeter", "get_greeting");
+        Assert.IsNotNull(member);
+
+        // Should infer "String" from the return statement
+        Assert.AreEqual("String", member.Type,
+            $"Return type should be 'String', but was: {member.Type}");
+    }
+
+    #endregion
+
+    #region Cross-File Call Chain Tests
+
+    [TestMethod]
+    public void CrossFileCallChain_LocalVariableFromMethodCall_InfersType()
+    {
+        // This test verifies the full chain:
+        // 1. Class variable has inferred type from assignment
+        // 2. Method call returns inferred type
+        // 3. Local variable gets type from method return
+        // 4. Member access on local variable resolves correctly
+        var project = CreateProject("""
+class_name ECSLikeSystem
+
+class Entity:
+    var id: int
+    var name: String
+
+func create_entity(entity_name = ""):
+    var entity = Entity.new()
+    entity.name = entity_name
+    return entity
+""", """
+class_name Consumer
+
+var entity_manager
+
+func _ready():
+    entity_manager = ECSLikeSystem.new()
+
+func process():
+    var entity = entity_manager.create_entity("Test")
+    var id_value = entity.id  # Should NOT trigger GD7002
+""");
+
+        // Get the consumer script
+        var consumerFile = project.ScriptFiles.FirstOrDefault(f => f.Class?.ClassName?.Identifier?.Sequence == "Consumer");
+        Assert.IsNotNull(consumerFile, "Consumer file not found");
+
+        var model = consumerFile.SemanticModel;
+        Assert.IsNotNull(model, "SemanticModel not found");
+
+        // Check entity_manager type (class variable union type)
+        var entityManagerType = model.GetUnionType("entity_manager")?.EffectiveType;
+        System.Console.WriteLine($"entity_manager union type: {entityManagerType}");
+
+        // Find the process method
+        var processMethod = consumerFile.Class.Methods.FirstOrDefault(m => m.Identifier?.Sequence == "process");
+        Assert.IsNotNull(processMethod, "process method not found");
+
+        // Find the local variable 'entity'
+        var entityVarDecl = processMethod.Statements?
+            .OfType<GDVariableDeclarationStatement>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "entity");
+        Assert.IsNotNull(entityVarDecl, "entity variable not found");
+
+        // Check initializer type
+        var initializerType = model.GetExpressionType(entityVarDecl.Initializer);
+        System.Console.WriteLine($"entity initializer type: {initializerType}");
+
+        // Check that identifier expression for entity resolves correctly
+        // Find the entity identifier expression in the second statement (var id_value = entity.id)
+        var idValueVarDecl = processMethod.Statements?
+            .OfType<GDVariableDeclarationStatement>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "id_value");
+        Assert.IsNotNull(idValueVarDecl, "id_value variable not found");
+
+        // The initializer is entity.id - a member operator expression
+        var entityIdAccess = idValueVarDecl.Initializer as GDMemberOperatorExpression;
+        Assert.IsNotNull(entityIdAccess, "entity.id member access not found");
+
+        // Verify it's the right expression
+        var entityIdentifier = entityIdAccess.CallerExpression as GDIdentifierExpression;
+        Assert.IsNotNull(entityIdentifier, "entity identifier not found");
+        Assert.AreEqual("entity", entityIdentifier.Identifier?.Sequence);
+        Assert.AreEqual("id", entityIdAccess.Identifier?.Sequence);
+
+        // Check the confidence level - should be Strict, not NameMatch
+        var confidence = model.GetMemberAccessConfidence(entityIdAccess);
+        System.Console.WriteLine($"entity.id confidence: {confidence}");
+
+        var callerType = model.GetExpressionType(entityIdAccess.CallerExpression);
+        System.Console.WriteLine($"entity type (caller of .id): {callerType}");
+
+        // Debug: check what symbol 'entity' resolves to
+        var entitySymbol = model.FindSymbol("entity");
+        System.Console.WriteLine($"FindSymbol(entity): {entitySymbol?.Name}, TypeName={entitySymbol?.TypeName}, Kind={entitySymbol?.Kind}");
+
+        // Check the identifier expression type directly
+        var entityIdentifierType = model.GetExpressionType(entityIdentifier);
+        System.Console.WriteLine($"GetExpressionType(entityIdentifier): {entityIdentifierType}");
+
+        // Debug: Check if symbol has Declaration
+        System.Console.WriteLine($"Symbol Declaration: {entitySymbol?.DeclarationNode?.GetType().Name}");
+        if (entitySymbol?.DeclarationNode is GDVariableDeclarationStatement varDeclSymbol)
+        {
+            System.Console.WriteLine($"Symbol Declaration Initializer: {varDeclSymbol.Initializer?.GetType().Name}");
+            var initType = model.GetExpressionType(varDeclSymbol.Initializer);
+            System.Console.WriteLine($"Symbol Declaration Initializer Type: {initType}");
+        }
+
+        // Debug: check if Entity type is known
+        var provider = project.CreateRuntimeProvider();
+        var entityIsKnown = provider.IsKnownType("Entity");
+        System.Console.WriteLine($"IsKnownType(Entity): {entityIsKnown}");
+
+        var idMember = provider.GetMember("Entity", "id");
+        System.Console.WriteLine($"GetMember(Entity, id): {idMember?.Name ?? "null"} type={idMember?.Type}");
+
+        // Try getting type via type engine directly
+        var typeEngine = new GDTypeInferenceEngine(provider);
+        var entityTypeFromEngine = typeEngine.InferType(entityIdAccess.CallerExpression);
+        System.Console.WriteLine($"TypeEngine.InferType(entity): {entityTypeFromEngine}");
+
+        // Debug: test AST fallback directly
+        var localInit = GDContainerTypeAnalyzer.FindLocalVariableInitializer(entityIdentifier, "entity");
+        System.Console.WriteLine($"FindLocalVariableInitializer result: {localInit?.GetType().Name}");
+        if (localInit != null)
+        {
+            var localInitType = typeEngine.InferType(localInit);
+            System.Console.WriteLine($"LocalInit inferred type: {localInitType}");
+        }
+
+        // The main assertion: confidence should not be NameMatch (which triggers GD7002)
+        Assert.AreNotEqual(GDReferenceConfidence.NameMatch, confidence,
+            $"entity.id should not have NameMatch confidence. Caller type: {callerType}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static GDScriptProject CreateProject(params string[] scripts)

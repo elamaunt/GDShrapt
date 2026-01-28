@@ -121,6 +121,35 @@ Validates generic type parameters:
 | GD7003 | UnguardedMethodCall | Method call on untyped |
 | GD7004 | MemberNotGuaranteed | Member not on any possible type |
 
+#### GD7003 Warning Logic
+
+**Warning is produced when:**
+- Variable has no explicit type AND
+- No type guard (is check) before access AND
+- Called method/property NOT found in TypesMap (Godot or project types)
+
+**Warning is suppressed when:**
+- Explicit type annotation: `var x: Array`
+- Type guard: `if x is Array: x.slice(1)`
+- Method exists in TypesMap: `x.slice(1)` → `slice()` found on Array → **No warning**
+
+**How it works:**
+1. `GDMemberAccessValidator` calls `SemanticModel.GetMemberAccessConfidence()`
+2. Confidence `NameMatch` → produces GD7003
+3. Confidence `Potential` or `Strict` → no warning
+
+```csharp
+// In GDMemberAccessValidator
+var confidence = _semanticModel.GetMemberAccessConfidence(memberAccess);
+if (confidence == GDReferenceConfidence.NameMatch)
+{
+    // Method not found in any known type → GD7003
+    ReportDiagnostic(GDDiagnosticCode.UnguardedMethodCall, ...);
+}
+```
+
+**See:** `GDShrapt.Semantics/Analysis/CLAUDE.md` for detailed duck-type inference algorithm.
+
 ## Options
 
 ```csharp
@@ -159,6 +188,14 @@ public class GDSemanticValidatorOptions
 - `MemberAccessSeverity` option
 
 Use `GDSemanticValidator` for all member access validation.
+
+## Known Limitations
+
+1. **Requires SemanticModel** - Must build semantic model before validation (not standalone)
+2. **Duck-Type Heuristics** - GD7xxx warnings may have false positives for dynamic code
+3. **Generic Variance** - No covariance/contravariance support for generic types
+4. **Intersection Types** - No validation for union/intersection type compatibility
+5. **Lambda Type Inference** - Limited type checking inside lambda bodies
 
 ## Testing
 

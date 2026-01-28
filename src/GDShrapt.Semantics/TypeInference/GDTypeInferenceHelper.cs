@@ -258,7 +258,7 @@ public class GDTypeInferenceHelper
         if (callExpr.CallerExpression is GDMemberOperatorExpression memberExpr)
         {
             var methodName = memberExpr.Identifier?.Sequence;
-            if (methodName == "new")
+            if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
             {
                 // Get the class name from caller
                 if (memberExpr.CallerExpression is GDIdentifierExpression identExpr)
@@ -333,7 +333,7 @@ public class GDTypeInferenceHelper
             var methodName = memberExpr.Identifier?.Sequence;
 
             // .new() constructor
-            if (methodName == "new")
+            if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
             {
                 var callerType = InferExpressionType(memberExpr.CallerExpression);
                 if (!callerType.IsUnknown)

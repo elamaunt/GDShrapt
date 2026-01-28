@@ -132,8 +132,10 @@ func test(value):
     #region Negative Cases - Access Without Guard
 
     [TestMethod]
-    public void NoGuard_AccessStringMethod_ReportsWarning()
+    public void NoGuard_AccessStringMethod_DuckTypedNoWarning()
     {
+        // length() exists in TypesMap (String), so duck typing infers the type
+        // This is expected behavior - known methods are duck-typed
         var code = @"
 func test(value):
     print(value.length())
@@ -143,8 +145,25 @@ func test(value):
             d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
             d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
 
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"length() is a known method - duck typing infers String. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NoGuard_AccessUnknownMethod_ReportsWarning()
+    {
+        // unknown_method() does NOT exist in TypesMap, so warning should be shown
+        var code = @"
+func test(value):
+    print(value.unknown_method())
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedMethodAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
+
         Assert.IsTrue(unguardedDiagnostics.Count > 0,
-            "Expected warning for unguarded method call on Variant");
+            "Expected warning for unguarded call to unknown method on Variant");
     }
 
     [TestMethod]

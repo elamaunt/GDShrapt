@@ -307,7 +307,7 @@ internal class GDContainerUsageCollector : GDVisitor
         // ClassName.new() has high confidence
         if (expr is GDCallExpression call &&
             call.CallerExpression is GDMemberOperatorExpression member &&
-            member.Identifier?.Sequence == "new")
+            member.Identifier?.Sequence == GDTypeInferenceConstants.ConstructorMethodName)
             return true;
 
         // If we got a concrete type, treat as high confidence

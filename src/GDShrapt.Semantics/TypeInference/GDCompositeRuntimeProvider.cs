@@ -49,6 +49,9 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
         // Store direct references
         GodotTypesProvider = godotTypesProvider;
         ProjectTypesProvider = projectTypesProvider;
+
+        // Set composite provider for lazy return type inference
+        projectTypesProvider?.SetCompositeProvider(this);
     }
 
     public bool IsKnownType(string typeName)

@@ -240,6 +240,17 @@ public class GDMemberAccessValidator : GDValidationVisitor
                 return;
             }
 
+            // Check if this is a static call (calling on class name, not instance)
+            var isCallingOnClassName = IsCallingOnClassName(memberExpr, typeName);
+            if (isCallingOnClassName && !memberInfo.IsStatic)
+            {
+                ReportError(
+                    GDDiagnosticCode.InstanceMethodCalledAsStatic,
+                    $"Cannot call instance method '{methodName}' on class '{typeName}'. Use an instance or make the method static.",
+                    call);
+                return;
+            }
+
             // Skip argument count validation for inner class methods (we don't have reliable info)
             return;
         }
@@ -367,5 +378,28 @@ public class GDMemberAccessValidator : GDValidationVisitor
             GDIndexerExpression indexerExpr => GetRootVariableName(indexerExpr.CallerExpression),
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Checks if the method call is made directly on a class name (static call pattern).
+    /// For example: MyClass.method() returns true for "MyClass"
+    /// But: instance.method() returns false
+    /// </summary>
+    private bool IsCallingOnClassName(GDMemberOperatorExpression memberExpr, string typeName)
+    {
+        // If the caller is a simple identifier matching the inner class name,
+        // it's a static call on the class name
+        if (memberExpr.CallerExpression is GDIdentifierExpression idExpr)
+        {
+            var callerName = idExpr.Identifier?.Sequence;
+            if (callerName == typeName)
+                return true;
+
+            // Also check if it's a known inner class by name
+            if (_analyzer.IsLocalInnerClass(callerName))
+                return true;
+        }
+
+        return false;
     }
 }
