@@ -217,6 +217,95 @@ func test():
 
     #endregion
 
+    #region Indexer Access - Typed Containers
+
+    [TestMethod]
+    public void IndexerAccess_TypedArray_MethodCall_NoDiagnostic()
+    {
+        // Array[String][index].length() should not produce GD7003
+        var code = @"
+func test():
+    var names: Array[String] = [""hello"", ""world""]
+    var len = names[0].length()
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = FilterUnguardedDiagnostics(diagnostics);
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"Array[String][index] should have type String. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void IndexerAccess_TypedArray_AppendMethod_NoDiagnostic()
+    {
+        // After dict[key] = [], dict[key].append() should work without warning
+        var code = @"
+var spatial_grid: Dictionary[Vector2i, Array] = {}
+
+func update():
+    var cell = Vector2i(0, 0)
+    if not spatial_grid.has(cell):
+        spatial_grid[cell] = []
+    spatial_grid[cell].append(1)
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = FilterUnguardedDiagnostics(diagnostics);
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"Dictionary[K,Array][key].append() should work. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void IndexerAccess_TypedDictionary_PropertyAccess_NoDiagnostic()
+    {
+        // Dictionary[int, Node2D][key].position should not produce GD7002
+        var code = @"
+func test():
+    var nodes: Dictionary[int, Node2D] = {}
+    nodes[0] = Node2D.new()
+    var pos = nodes[0].position
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = FilterUnguardedDiagnostics(diagnostics);
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"Dictionary[int, Node2D][key].position should work. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void IndexerAccess_UntypedDict_AppendMethod_NoDiagnostic()
+    {
+        // For untyped dict, dict[key].append() should use Potential confidence
+        // because append is a common container method
+        var code = @"
+var spatial_grid = {}
+
+func update():
+    var cell = Vector2i(0, 0)
+    if not spatial_grid.has(cell):
+        spatial_grid[cell] = []
+    spatial_grid[cell].append(1)
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = FilterUnguardedDiagnostics(diagnostics);
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"Untyped dict[key].append() should use Potential confidence for common container methods. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void IndexerAccess_NestedTypedArray_MethodCall_NoDiagnostic()
+    {
+        // Array[Array[String]][i][j].length() should work
+        var code = @"
+func test():
+    var matrix: Array[Array[String]] = [[""a"", ""b""], [""c"", ""d""]]
+    var len = matrix[0][0].length()
+";
+        var diagnostics = ValidateCode(code);
+        var unguardedDiagnostics = FilterUnguardedDiagnostics(diagnostics);
+        Assert.AreEqual(0, unguardedDiagnostics.Count,
+            $"Nested Array indexing should preserve types. Found: {FormatDiagnostics(unguardedDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
@@ -260,6 +349,13 @@ func test():
             d.Code == GDDiagnosticCode.MethodNotFound ||
             d.Code == GDDiagnosticCode.MemberNotAccessible ||
             d.Code == GDDiagnosticCode.NotCallable).ToList();
+    }
+
+    private static List<GDDiagnostic> FilterUnguardedDiagnostics(IEnumerable<GDDiagnostic> diagnostics)
+    {
+        return diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.UnguardedPropertyAccess ||
+            d.Code == GDDiagnosticCode.UnguardedMethodCall).ToList();
     }
 
     private static string FormatDiagnostics(IEnumerable<GDDiagnostic> diagnostics)

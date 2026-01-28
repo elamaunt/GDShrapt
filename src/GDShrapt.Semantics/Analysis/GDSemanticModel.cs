@@ -599,6 +599,32 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             }
         }
 
+        // For indexer expressions (dict[key], array[index]), infer element type from container
+        if (expression is GDIndexerExpression indexerExpr)
+        {
+            // First, try typed containers (Array[T], Dictionary[K,V])
+            var typeNode = GetTypeNodeForExpression(indexerExpr);
+            if (typeNode != null)
+            {
+                var typeName = typeNode.BuildName();
+                if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
+                    return typeName;
+            }
+
+            // Fallback: check container usage analysis for untyped containers
+            var varName = GetRootVariableName(indexerExpr.CallerExpression);
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var containerType = GetInferredContainerType(varName);
+                if (containerType != null && containerType.HasElementTypes)
+                {
+                    var elementType = containerType.EffectiveElementType;
+                    if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+                        return elementType;
+                }
+            }
+        }
+
         // Use type engine for type inference
         // Note: Do NOT delegate to Analyzer to avoid circular dependency
         return _typeEngine?.InferType(expression);
@@ -1431,6 +1457,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         // Type is known and concrete
         if (IsConcreteType(callerType))
             return GDReferenceConfidence.Strict;
+
+        // For indexer-based member access (e.g., dict[key].property, dict[key].method()),
+        // treat as Potential confidence. The caller type is the indexed element, not the container.
+        // This is duck-typing: if programmer accesses dict[key].tags, they expect element to have .tags.
+        // varName-based checks below would incorrectly use the container's type, not the element's type.
+        if (memberAccess.CallerExpression is GDIndexerExpression)
+        {
+            return GDReferenceConfidence.Potential;
+        }
 
         // Check for type narrowing and Union types
         var varName = GetRootVariableName(memberAccess.CallerExpression);
