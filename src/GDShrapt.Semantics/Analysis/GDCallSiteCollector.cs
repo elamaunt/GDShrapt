@@ -350,7 +350,10 @@ internal class GDCallSiteCollector
                     {
                         unionReceiverType = receiverType;
                         // For Union types, check if ANY type in the union is compatible
-                        var types = receiverType.Split('|').Select(t => t.Trim()).ToList();
+                        var types = receiverType.Split('|').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList();
+                        if (types.Count == 0)
+                            return null;
+
                         var hasMatch = types.Any(t => IsTypeCompatible(t, _targetTypeName));
                         if (hasMatch)
                         {

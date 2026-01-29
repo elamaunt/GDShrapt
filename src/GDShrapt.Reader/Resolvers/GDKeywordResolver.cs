@@ -5,7 +5,7 @@
     {
         public new ITokenOrSkipReceiver<KEYWORD> Owner { get; }
 
-        static KEYWORD _keyword = new KEYWORD();
+        static readonly KEYWORD _keyword = new KEYWORD();
 
         public override string Sequence => _keyword.Sequence;
 

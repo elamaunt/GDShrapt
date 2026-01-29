@@ -3,6 +3,7 @@ using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GDShrapt.Semantics;
@@ -39,14 +40,19 @@ namespace GDShrapt.Semantics;
 /// </code>
 /// </example>
 /// </summary>
-public class GDProjectSemanticModel
+public class GDProjectSemanticModel : IDisposable
 {
     private readonly GDScriptProject _project;
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, GDSemanticModel> _fileModels = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource> _pendingInvalidations = new();
     private GDRefactoringServices? _services;
     private GDDiagnosticsServices? _diagnostics;
     private readonly Lazy<GDSignalConnectionRegistry> _signalRegistry;
     private readonly Lazy<GDClassContainerRegistry> _containerRegistry;
+    private readonly Lazy<GDTypeDependencyGraph> _dependencyGraph;
+    private readonly TimeSpan _debounceInterval = TimeSpan.FromMilliseconds(300);
+    private readonly bool _subscribeToChanges;
+    private bool _disposed;
 
     /// <summary>
     /// The underlying project.
@@ -78,14 +84,33 @@ public class GDProjectSemanticModel
     public GDClassContainerRegistry ContainerRegistry => _containerRegistry.Value;
 
     /// <summary>
+    /// Type dependency graph for incremental invalidation.
+    /// Tracks which files depend on which other files.
+    /// </summary>
+    public GDTypeDependencyGraph DependencyGraph => _dependencyGraph.Value;
+
+    /// <summary>
+    /// Fired when a file is invalidated in the semantic model.
+    /// </summary>
+    public event EventHandler<string>? FileInvalidated;
+
+    /// <summary>
     /// Creates a new project-level semantic model.
     /// </summary>
     /// <param name="project">The GDScript project to analyze.</param>
-    public GDProjectSemanticModel(GDScriptProject project)
+    /// <param name="subscribeToChanges">Whether to subscribe to project's incremental change events.</param>
+    public GDProjectSemanticModel(GDScriptProject project, bool subscribeToChanges = false)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
+        _subscribeToChanges = subscribeToChanges;
         _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
+        _dependencyGraph = new Lazy<GDTypeDependencyGraph>(InitializeDependencyGraph, LazyThreadSafetyMode.ExecutionAndPublication);
+
+        if (_subscribeToChanges)
+        {
+            _project.IncrementalChange += OnIncrementalChange;
+        }
     }
 
     /// <summary>
@@ -151,6 +176,135 @@ public class GDProjectSemanticModel
         return registry;
     }
 
+    /// <summary>
+    /// Initializes the dependency graph by analyzing all scripts for cross-file references.
+    /// </summary>
+    private GDTypeDependencyGraph InitializeDependencyGraph()
+    {
+        var graph = new GDTypeDependencyGraph();
+
+        foreach (var scriptFile in _project.ScriptFiles)
+        {
+            if (scriptFile.FullPath == null || scriptFile.Class == null)
+                continue;
+
+            var dependencies = CollectFileDependencies(scriptFile);
+            graph.UpdateDependencies(scriptFile.FullPath, dependencies);
+        }
+
+        return graph;
+    }
+
+    /// <summary>
+    /// Collects all file paths that the given script depends on.
+    /// </summary>
+    private IEnumerable<string> CollectFileDependencies(GDScriptFile scriptFile)
+    {
+        var dependencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (scriptFile.Class == null)
+            return dependencies;
+
+        // Check extends clause
+        var extendsType = scriptFile.Class.Extends?.Type;
+        if (extendsType != null)
+        {
+            // Check if extends uses path (e.g., extends "res://scripts/base.gd")
+            if (extendsType is GDStringTypeNode stringTypeNode)
+            {
+                var path = stringTypeNode.Path?.Sequence;
+                if (!string.IsNullOrEmpty(path))
+                {
+                    var extendedScript = _project.GetScriptByResourcePath(path);
+                    if (extendedScript?.FullPath != null)
+                    {
+                        dependencies.Add(extendedScript.FullPath);
+                    }
+                }
+            }
+            else
+            {
+                // Check extends by class name (e.g., extends MyClass)
+                var typeName = extendsType.BuildName();
+                if (!string.IsNullOrEmpty(typeName))
+                {
+                    var extendedScript = _project.GetScriptByTypeName(typeName);
+                    if (extendedScript?.FullPath != null)
+                    {
+                        dependencies.Add(extendedScript.FullPath);
+                    }
+                }
+            }
+        }
+
+        // Check preload references
+        foreach (var preload in scriptFile.Class.AllNodes.OfType<GDCallExpression>())
+        {
+            if (preload.CallerExpression is GDIdentifierExpression idExpr &&
+                idExpr.Identifier?.Sequence == "preload" &&
+                preload.Parameters?.Count > 0 &&
+                preload.Parameters[0] is GDStringExpression strExpr)
+            {
+                var path = strExpr.String?.Sequence;
+                if (!string.IsNullOrEmpty(path) && path.EndsWith(".gd"))
+                {
+                    var referencedScript = _project.GetScriptByResourcePath(path);
+                    if (referencedScript?.FullPath != null)
+                    {
+                        dependencies.Add(referencedScript.FullPath);
+                    }
+                }
+            }
+        }
+
+        // Check type references in annotations
+        foreach (var member in scriptFile.Class.Members)
+        {
+            if (member is GDVariableDeclaration varDecl && varDecl.Type != null)
+            {
+                var typeName = varDecl.Type.BuildName();
+                var typeScript = _project.GetScriptByTypeName(typeName);
+                if (typeScript?.FullPath != null)
+                {
+                    dependencies.Add(typeScript.FullPath);
+                }
+            }
+
+            if (member is GDMethodDeclaration methodDecl)
+            {
+                // Check return type
+                if (methodDecl.ReturnType != null)
+                {
+                    var returnTypeName = methodDecl.ReturnType.BuildName();
+                    var returnTypeScript = _project.GetScriptByTypeName(returnTypeName);
+                    if (returnTypeScript?.FullPath != null)
+                    {
+                        dependencies.Add(returnTypeScript.FullPath);
+                    }
+                }
+
+                // Check parameter types
+                if (methodDecl.Parameters != null)
+                {
+                    foreach (var param in methodDecl.Parameters)
+                    {
+                        if (param.Type != null)
+                        {
+                            var paramTypeName = param.Type.BuildName();
+                            var paramTypeScript = _project.GetScriptByTypeName(paramTypeName);
+                            if (paramTypeScript?.FullPath != null)
+                            {
+                                dependencies.Add(paramTypeScript.FullPath);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return dependencies;
+    }
+
     #region Factory Methods
 
     /// <summary>
@@ -178,15 +332,34 @@ public class GDProjectSemanticModel
 
     /// <summary>
     /// Creates a project semantic model from a directory path asynchronously.
+    /// Loads scripts and performs parallel analysis.
     /// </summary>
     /// <param name="projectPath">Path to the Godot project directory (containing project.godot).</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <param name="enableSceneTypes">Enable scene types provider for autoloads.</param>
+    /// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
     /// <returns>A fully initialized project semantic model.</returns>
-    public static Task<GDProjectSemanticModel> LoadAsync(string projectPath, IGDSemanticLogger? logger = null, bool enableSceneTypes = true)
+    public static Task<GDProjectSemanticModel> LoadAsync(
+        string projectPath,
+        IGDSemanticLogger? logger = null,
+        bool enableSceneTypes = true,
+        CancellationToken cancellationToken = default)
     {
-        // Currently synchronous, but provides async signature for future optimization
-        return Task.FromResult(Load(projectPath, logger, enableSceneTypes));
+        return Task.Run(() =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrEmpty(projectPath))
+                throw new ArgumentNullException(nameof(projectPath));
+
+            var project = GDProjectLoader.LoadProject(projectPath, logger, enableSceneTypes);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Parallel analysis
+            project.AnalyzeAll(cancellationToken);
+
+            return new GDProjectSemanticModel(project);
+        }, cancellationToken);
     }
 
     #endregion
@@ -656,6 +829,137 @@ public class GDProjectSemanticModel
             _signalRegistry.Value.Clear();
         if (_containerRegistry.IsValueCreated)
             _containerRegistry.Value.Clear();
+        if (_dependencyGraph.IsValueCreated)
+            _dependencyGraph.Value.Clear();
+    }
+
+    /// <summary>
+    /// Handles incremental changes from the project.
+    /// Uses debouncing to coalesce rapid changes.
+    /// </summary>
+    private void OnIncrementalChange(object? sender, GDScriptIncrementalChangeEventArgs e)
+    {
+        if (_disposed || string.IsNullOrEmpty(e.FilePath))
+            return;
+
+        // Cancel previous pending invalidation for this file
+        if (_pendingInvalidations.TryRemove(e.FilePath, out var oldCts))
+        {
+            try { oldCts.Cancel(); }
+            catch { /* Ignore cancellation exceptions */ }
+            oldCts.Dispose();
+        }
+
+        var cts = new CancellationTokenSource();
+        _pendingInvalidations[e.FilePath] = cts;
+
+        // Schedule debounced invalidation
+        Task.Delay(_debounceInterval, cts.Token).ContinueWith(t =>
+        {
+            if (t.IsCanceled || _disposed)
+                return;
+
+            _pendingInvalidations.TryRemove(e.FilePath, out _);
+            ProcessIncrementalChange(e);
+        }, TaskScheduler.Default);
+    }
+
+    /// <summary>
+    /// Processes an incremental change after debouncing.
+    /// </summary>
+    private void ProcessIncrementalChange(GDScriptIncrementalChangeEventArgs e)
+    {
+        // Invalidate affected file
+        InvalidateFile(e.FilePath);
+
+        // Handle rename - also invalidate old path
+        if (e.ChangeKind == GDIncrementalChangeKind.Renamed && !string.IsNullOrEmpty(e.OldFilePath))
+        {
+            InvalidateFile(e.OldFilePath);
+            // Update dependency graph for rename
+            if (_dependencyGraph.IsValueCreated)
+            {
+                _dependencyGraph.Value.RemoveFile(e.OldFilePath);
+            }
+        }
+
+        // Update dependency graph for this file
+        if (_dependencyGraph.IsValueCreated && e.Script != null)
+        {
+            if (e.ChangeKind == GDIncrementalChangeKind.Deleted)
+            {
+                _dependencyGraph.Value.RemoveFile(e.FilePath);
+            }
+            else
+            {
+                var dependencies = CollectFileDependencies(e.Script);
+                _dependencyGraph.Value.UpdateDependencies(e.FilePath, dependencies);
+            }
+
+            // Invalidate files that depend on the changed file
+            var dependents = _dependencyGraph.Value.GetDependents(e.FilePath);
+            foreach (var dependent in dependents)
+            {
+                InvalidateFile(dependent);
+                FileInvalidated?.Invoke(this, dependent);
+            }
+        }
+
+        // Update call site registry incrementally if available
+        var callSiteRegistry = _project.CallSiteRegistry;
+        if (callSiteRegistry != null && e.OldTree != null && e.NewTree != null)
+        {
+            var updater = new GDIncrementalCallSiteUpdater();
+            updater.UpdateSemanticModel(
+                _project,
+                e.FilePath,
+                e.OldTree,
+                e.NewTree,
+                e.TextChanges,
+                default);
+        }
+
+        // Fire event for external subscribers
+        FileInvalidated?.Invoke(this, e.FilePath);
+    }
+
+    #endregion
+
+    #region Disposal
+
+    /// <summary>
+    /// Disposes resources and unsubscribes from events.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Unsubscribe from project events
+                if (_subscribeToChanges)
+                {
+                    _project.IncrementalChange -= OnIncrementalChange;
+                }
+
+                // Cancel all pending invalidations
+                foreach (var cts in _pendingInvalidations.Values)
+                {
+                    try { cts.Cancel(); cts.Dispose(); }
+                    catch { /* Ignore */ }
+                }
+                _pendingInvalidations.Clear();
+
+                _fileModels.Clear();
+            }
+            _disposed = true;
+        }
     }
 
     #endregion

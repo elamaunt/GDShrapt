@@ -46,13 +46,13 @@ public class GDRenameService
 
         // Find the script containing this symbol
         var containingScript = FindScriptContainingSymbol(symbol);
-        if (containingScript != null)
+        if (containingScript?.FullPath != null)
         {
             // Same-file edits are always Strict confidence
             var scriptEdits = CollectEditsFromScript(containingScript, symbol, oldName, newName);
             strictEdits.AddRange(scriptEdits);
             if (scriptEdits.Count > 0)
-                filesModified.Add(containingScript.FullPath!);
+                filesModified.Add(containingScript.FullPath);
         }
 
         // For class members, also search other scripts that might reference this symbol
@@ -142,11 +142,14 @@ public class GDRenameService
 
         foreach (var script in _project.ScriptFiles)
         {
+            if (script.FullPath == null)
+                continue;
+
             // If file filter is specified, only process that file
             if (!string.IsNullOrEmpty(filterFilePath))
             {
                 var fullPath = Path.GetFullPath(filterFilePath);
-                if (!script.FullPath!.Equals(fullPath, StringComparison.OrdinalIgnoreCase))
+                if (!script.FullPath.Equals(fullPath, StringComparison.OrdinalIgnoreCase))
                     continue;
             }
 
@@ -154,7 +157,7 @@ public class GDRenameService
             if (fileEdits.Count > 0)
             {
                 edits.AddRange(fileEdits);
-                filesModified.Add(script.FullPath!);
+                filesModified.Add(script.FullPath);
             }
         }
 

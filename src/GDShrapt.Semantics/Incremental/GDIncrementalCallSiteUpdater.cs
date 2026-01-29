@@ -92,36 +92,39 @@ namespace GDShrapt.Semantics
             if (string.IsNullOrEmpty(changedFilePath))
                 return Array.Empty<string>();
 
-            var affected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            // Get the changed file
-            var changedFile = project.ScriptFiles?.FirstOrDefault(f =>
-                f.FullPath != null &&
-                f.FullPath.Equals(changedFilePath, StringComparison.OrdinalIgnoreCase));
-
-            if (changedFile == null)
-                return Array.Empty<string>();
-
-            // Find all files that reference classes/methods defined in the changed file
-            var changedClassName = changedFile.Class?.ClassName?.Identifier?.ToString();
-
-            if (!string.IsNullOrEmpty(changedClassName))
+            lock (_lock)
             {
-                foreach (var file in project.ScriptFiles ?? Enumerable.Empty<GDScriptFile>())
-                {
-                    if (file.FullPath == null ||
-                        file.FullPath.Equals(changedFilePath, StringComparison.OrdinalIgnoreCase))
-                        continue;
+                var affected = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                    // Check if this file references the changed class
-                    if (FileReferencesClass(file, changedClassName))
+                // Get the changed file
+                var changedFile = project.ScriptFiles?.FirstOrDefault(f =>
+                    f.FullPath != null &&
+                    f.FullPath.Equals(changedFilePath, StringComparison.OrdinalIgnoreCase));
+
+                if (changedFile == null)
+                    return Array.Empty<string>();
+
+                // Find all files that reference classes/methods defined in the changed file
+                var changedClassName = changedFile.Class?.ClassName?.Identifier?.ToString();
+
+                if (!string.IsNullOrEmpty(changedClassName))
+                {
+                    foreach (var file in project.ScriptFiles ?? Enumerable.Empty<GDScriptFile>())
                     {
-                        affected.Add(file.FullPath);
+                        if (file.FullPath == null ||
+                            file.FullPath.Equals(changedFilePath, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        // Check if this file references the changed class
+                        if (FileReferencesClass(file, changedClassName))
+                        {
+                            affected.Add(file.FullPath);
+                        }
                     }
                 }
-            }
 
-            return affected.ToList();
+                return affected.ToList();
+            }
         }
 
         /// <inheritdoc/>

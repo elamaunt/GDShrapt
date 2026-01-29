@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="GDShrapt.Semantics.Tests" />
+    <InternalsVisibleTo Include="GDShrapt.Semantics.StressTests" />
   </ItemGroup>
 
 </Project>

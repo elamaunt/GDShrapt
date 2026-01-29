@@ -128,7 +128,7 @@ internal class FindReferencesCommand : Command
     /// <summary>
     /// Converts a semantics reference to a UI reference item.
     /// </summary>
-    private ReferenceItem ConvertToReferenceItem(GDFoundReference reference, bool isStrict)
+    private ReferenceItem ConvertToReferenceItem(GDReferenceLocation reference, bool isStrict)
     {
         var context = GetContextWithHighlight(reference.Node, reference.SymbolName, out var hlStart, out var hlEnd);
         var kind = ConvertReferenceKind(reference.Kind);
