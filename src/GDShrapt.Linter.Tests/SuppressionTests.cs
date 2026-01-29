@@ -634,5 +634,196 @@ class my_bad_class:
         }
 
         #endregion
+
+        #region Complexity Rules Suppression (GDL225, GDL223, GDL228)
+
+        [TestMethod]
+        public void Ignore_MaxNestingDepth_SuppressesOnMethodLine()
+        {
+            var options = new GDLinterOptions { MaxNestingDepth = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:ignore = max-nesting-depth
+func test():
+    if true:
+        if true:
+            if true:
+                pass
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL225").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_MaxNestingDepth_ByRuleId_SuppressesOnMethodLine()
+        {
+            var options = new GDLinterOptions { MaxNestingDepth = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:ignore = GDL225
+func test():
+    if true:
+        if true:
+            if true:
+                pass
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL225").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_MaxReturns_SuppressesOnMethodLine()
+        {
+            var options = new GDLinterOptions { MaxReturns = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:ignore = max-returns
+func test(x):
+    if x == 0:
+        return 0
+    if x == 1:
+        return 1
+    return 2
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL223").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_MaxReturns_ByRuleId_SuppressesOnMethodLine()
+        {
+            var options = new GDLinterOptions { MaxReturns = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:ignore = GDL223
+func test(x):
+    if x == 0:
+        return 0
+    if x == 1:
+        return 1
+    return 2
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL223").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_MaxBranches_SuppressesOnMethodLine()
+        {
+            var options = new GDLinterOptions { MaxBranches = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:ignore = max-branches
+func test(x):
+    if x == 0:
+        pass
+    elif x == 1:
+        pass
+    elif x == 2:
+        pass
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL228").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_MaxBranches_ByRuleId_SuppressesOnMethodLine()
+        {
+            var options = new GDLinterOptions { MaxBranches = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:ignore = GDL228
+func test(x):
+    if x == 0:
+        pass
+    elif x == 1:
+        pass
+    elif x == 2:
+        pass
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL228").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Ignore_MultipleComplexityRules_SuppressesBoth()
+        {
+            var options = new GDLinterOptions { MaxReturns = 2, MaxBranches = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:ignore = max-returns, max-branches
+func test(x):
+    if x == 0:
+        return 0
+    elif x == 1:
+        return 1
+    elif x == 2:
+        return 2
+    return -1
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL223" || i.RuleId == "GDL228").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_MaxNestingDepth_SuppressesMultipleFunctions()
+        {
+            var options = new GDLinterOptions { MaxNestingDepth = 2 };
+            var linter = new GDLinter(options);
+            var code = @"
+# gdlint:disable = max-nesting-depth
+func test1():
+    if true:
+        if true:
+            if true:
+                pass
+
+func test2():
+    if true:
+        if true:
+            if true:
+                pass
+";
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL225").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void Disable_Enable_MaxReturns_SuppressesOnlyBlock()
+        {
+            var options = new GDLinterOptions { MaxReturns = 2 };
+            var linter = new GDLinter(options);
+            // Line 1: disable
+            // Line 2: func test1 (suppressed)
+            // ...
+            // Line 8: enable
+            // Line 9: func test2 (NOT suppressed)
+            var code = @"# gdlint:disable = max-returns
+func test1(x):
+    if x == 0: return 0
+    if x == 1: return 1
+    return 2
+# gdlint:enable = max-returns
+func test2(x):
+    if x == 0: return 0
+    if x == 1: return 1
+    return 2";
+
+            var result = linter.LintCode(code);
+
+            // test1 suppressed, test2 not suppressed
+            result.Issues.Where(i => i.RuleId == "GDL223" && i.StartLine == 2).Should().BeEmpty();
+            result.Issues.Where(i => i.RuleId == "GDL223" && i.StartLine == 7).Should().NotBeEmpty();
+        }
+
+        #endregion
     }
 }

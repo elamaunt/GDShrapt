@@ -6,66 +6,198 @@ using System.Linq;
 namespace GDShrapt.Semantics;
 
 /// <summary>
-/// Collects usage patterns for local untyped Array/Dictionary variables.
+/// Collects usage patterns for class-level untyped Array/Dictionary variables.
+/// Unlike GDContainerUsageCollector which works on local variables within methods,
+/// this collector tracks class member containers and their usage across all methods.
 /// </summary>
-internal class GDContainerUsageCollector : GDVisitor
+internal class GDClassContainerUsageCollector : GDVisitor
 {
-    private readonly GDScopeStack? _scopes;
     private readonly GDTypeInferenceEngine? _typeEngine;
+    private readonly string _className;
+    private readonly HashSet<string> _classContainerNames;
     private readonly Dictionary<string, GDContainerUsageProfile> _profiles = new();
 
     /// <summary>
-    /// Collected container usage profiles.
+    /// Container types inferred from assignments (not from initializers).
+    /// Key: variable name, Value: "Array", "Dictionary", or "Array | Dictionary" for union.
+    /// </summary>
+    private readonly Dictionary<string, string> _inferredContainerTypes = new();
+
+    /// <summary>
+    /// Collected container usage profiles keyed by variable name.
     /// </summary>
     public IReadOnlyDictionary<string, GDContainerUsageProfile> Profiles => _profiles;
 
-    public GDContainerUsageCollector(GDScopeStack? scopes, GDTypeInferenceEngine? typeEngine)
+    public GDClassContainerUsageCollector(
+        GDClassDeclaration classDecl,
+        GDTypeInferenceEngine? typeEngine)
     {
-        _scopes = scopes;
         _typeEngine = typeEngine;
+        _className = classDecl.ClassName?.Identifier?.Sequence ?? classDecl.TypeName ?? "";
+        _classContainerNames = CollectClassContainerNames(classDecl);
     }
 
     /// <summary>
-    /// Collects container usage profiles from a method declaration.
+    /// Collects names of class-level untyped containers.
+    /// Phase 1: Variables with [] or {} initializer.
+    /// Phase 2: Variables without initializer (or null) where all assignments are containers.
     /// </summary>
-    public void Collect(GDMethodDeclaration method)
+    private HashSet<string> CollectClassContainerNames(GDClassDeclaration classDecl)
     {
-        method?.WalkIn(this);
+        var names = new HashSet<string>();
+        var candidatesForAssignmentAnalysis = new HashSet<string>();
+
+        // Phase 1: Static analysis of initializers
+        foreach (var member in classDecl.Members ?? Enumerable.Empty<GDClassMember>())
+        {
+            if (member is GDVariableDeclaration varDecl)
+            {
+                // Only track untyped variables (no type annotation)
+                if (varDecl.Type != null)
+                    continue;
+
+                var varName = varDecl.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(varName))
+                    continue;
+
+                // Check if initializer is Array or Dictionary by AST type
+                // This catches both empty [] and typed [value1, value2]
+                var initializer = varDecl.Initializer;
+                bool isContainer = initializer is GDArrayInitializerExpression ||
+                                   initializer is GDDictionaryInitializerExpression;
+
+                if (!isContainer && initializer != null)
+                {
+                    // Also check inferred type for edge cases
+                    var initType = _typeEngine?.InferType(initializer);
+                    isContainer = initType == "Array" || initType == "Dictionary" ||
+                                  initType?.StartsWith("Array[") == true ||
+                                  initType?.StartsWith("Dictionary[") == true;
+                }
+
+                if (isContainer)
+                {
+                    names.Add(varName);
+                }
+                else if (initializer == null || IsNullLiteral(initializer))
+                {
+                    // Phase 2 candidate: variable without initializer or with null
+                    candidatesForAssignmentAnalysis.Add(varName);
+                }
+            }
+        }
+
+        // Phase 2: Assignment analysis for candidates
+        if (candidatesForAssignmentAnalysis.Count > 0)
+        {
+            var assignmentVisitor = new AssignmentCollectorVisitor(candidatesForAssignmentAnalysis);
+            classDecl.WalkIn(assignmentVisitor);
+
+            foreach (var kv in assignmentVisitor.Assignments)
+            {
+                var varName = kv.Key;
+                var assignedTypes = kv.Value;
+
+                // Require at least one assignment
+                if (assignedTypes.Count == 0)
+                    continue;
+
+                // All assignments must be containers (Array or Dictionary)
+                // Mixed types are allowed - will be Union
+                var containerTypes = assignedTypes.Where(t => t != null).Distinct().ToList();
+
+                if (containerTypes.Count > 0 &&
+                    assignedTypes.All(t => t != null))  // No non-container assignments
+                {
+                    names.Add(varName);
+
+                    // Store type(s) for later use
+                    if (containerTypes.Count == 1)
+                    {
+                        _inferredContainerTypes[varName] = containerTypes[0]!;
+                    }
+                    else
+                    {
+                        // Union type: "Array | Dictionary"
+                        _inferredContainerTypes[varName] = string.Join(" | ", containerTypes.OrderBy(t => t));
+                    }
+                }
+            }
+        }
+
+        return names;
     }
 
-    public override void Visit(GDVariableDeclarationStatement varDecl)
+    /// <summary>
+    /// Collects container usage from the class declaration.
+    /// </summary>
+    public void Collect(GDClassDeclaration classDecl)
     {
-        var varName = varDecl.Identifier?.Sequence;
-        if (string.IsNullOrEmpty(varName))
+        if (_classContainerNames.Count == 0)
             return;
 
-        // Only track untyped variables
-        if (varDecl.Type != null)
-            return;
-
-        // Check if initializer is an array or dictionary literal directly
-        var isArrayLiteral = varDecl.Initializer is GDArrayInitializerExpression;
-        var isDictLiteral = varDecl.Initializer is GDDictionaryInitializerExpression;
-
-        // Also check inferred type for cases like [] or {}
-        var initType = _typeEngine?.InferType(varDecl.Initializer);
-        var isArray = isArrayLiteral || initType == "Array" || initType?.StartsWith("Array[") == true;
-        var isDict = isDictLiteral || initType == "Dictionary" || initType?.StartsWith("Dictionary[") == true;
-
-        if (!isArray && !isDict)
-            return;
-
-        var token = varDecl.AllTokens.FirstOrDefault();
-        var profile = new GDContainerUsageProfile(varName)
+        // Initialize profiles for each container
+        foreach (var name in _classContainerNames)
         {
-            IsDictionary = isDict,
-            DeclarationLine = token?.StartLine ?? 0,
-            DeclarationColumn = token?.StartColumn ?? 0
-        };
-        _profiles[varName] = profile;
+            var profile = new GDContainerUsageProfile(name);
 
-        // Collect values from initializer
-        CollectInitializerValues(varDecl.Initializer, profile);
+            var varDecl = FindVariableDeclaration(classDecl, name);
+
+            // Determine IsDictionary/IsArray (or IsUnion for mixed types)
+            if (_inferredContainerTypes.TryGetValue(name, out var inferredType))
+            {
+                // Type inferred from assignments (Phase 2)
+                if (inferredType.Contains(" | "))
+                {
+                    // Union type: Array | Dictionary
+                    profile.IsUnion = true;
+                    profile.IsDictionary = inferredType.Contains("Dictionary");
+                    profile.IsArray = inferredType.Contains("Array");
+                }
+                else
+                {
+                    profile.IsDictionary = inferredType == "Dictionary";
+                    profile.IsArray = inferredType == "Array";
+                }
+            }
+            else if (varDecl?.Initializer != null)
+            {
+                // Type from initializer (Phase 1)
+                var initType = _typeEngine?.InferType(varDecl.Initializer);
+                profile.IsDictionary = initType == "Dictionary";
+                profile.IsArray = initType == "Array" || initType?.StartsWith("Array[") == true;
+
+                // Collect types from initializer
+                CollectInitializerValues(varDecl.Initializer, profile);
+            }
+
+            _profiles[name] = profile;
+        }
+
+        // Walk the class to find all usages
+        classDecl.WalkIn(this);
+    }
+
+    private static GDVariableDeclaration? FindVariableDeclaration(GDClassDeclaration classDecl, string name)
+    {
+        foreach (var member in classDecl.Members ?? Enumerable.Empty<GDClassMember>())
+        {
+            if (member is GDVariableDeclaration varDecl &&
+                varDecl.Identifier?.Sequence == name)
+            {
+                return varDecl;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if expression is a null literal (identifier "null").
+    /// </summary>
+    private static bool IsNullLiteral(GDExpression? expr)
+    {
+        return expr is GDIdentifierExpression identExpr &&
+               identExpr.Identifier?.Sequence == GDTypeInferenceConstants.NullTypeName;
     }
 
     public override void Visit(GDCallExpression callExpr)
@@ -85,7 +217,7 @@ internal class GDContainerUsageCollector : GDVisitor
 
     public override void Visit(GDDualOperatorExpression dualOp)
     {
-        // Check for index assignment: arr[i] = value, dict[key] = value
+        // Check for index assignment: container[key] = value
         if (dualOp.Operator?.OperatorType == GDDualOperatorType.Assignment)
         {
             if (dualOp.LeftExpression is GDIndexerExpression indexer)
@@ -333,5 +465,58 @@ internal class GDContainerUsageCollector : GDVisitor
             expr = indexer.CallerExpression;
 
         return (expr as GDIdentifierExpression)?.Identifier?.Sequence;
+    }
+
+    /// <summary>
+    /// Visitor for collecting assignments to class-level variables.
+    /// Used to determine containers without initializers.
+    /// </summary>
+    private class AssignmentCollectorVisitor : GDVisitor
+    {
+        private readonly HashSet<string> _candidateVarNames;
+
+        /// <summary>
+        /// Collected assignments: varName -> list of assigned types ("Array", "Dictionary", or null for non-container).
+        /// </summary>
+        public Dictionary<string, List<string?>> Assignments { get; } = new();
+
+        public AssignmentCollectorVisitor(HashSet<string> candidateVarNames)
+        {
+            _candidateVarNames = candidateVarNames;
+
+            // Initialize empty lists for all candidates
+            foreach (var name in candidateVarNames)
+            {
+                Assignments[name] = new List<string?>();
+            }
+        }
+
+        public override void Visit(GDDualOperatorExpression dualOp)
+        {
+            base.Visit(dualOp);
+
+            if (dualOp.Operator?.OperatorType != GDDualOperatorType.Assignment)
+                return;
+
+            // Check for direct assignment: varName = expr
+            if (dualOp.LeftExpression is GDIdentifierExpression identExpr)
+            {
+                var varName = identExpr.Identifier?.Sequence;
+                if (varName != null && _candidateVarNames.Contains(varName))
+                {
+                    var rightExpr = dualOp.RightExpression;
+                    string? assignedType = null;
+
+                    // Check for literal containers
+                    if (rightExpr is GDArrayInitializerExpression)
+                        assignedType = "Array";
+                    else if (rightExpr is GDDictionaryInitializerExpression)
+                        assignedType = "Dictionary";
+                    // null/other - leave assignedType = null
+
+                    Assignments[varName].Add(assignedType);
+                }
+            }
+        }
     }
 }

@@ -22,10 +22,29 @@ namespace GDShrapt.Reader
                 return;
 
             // Class-level symbols are already collected by GDDeclarationCollector
-            // We just need to enter global scope and validate
-            EnterScope(GDScopeType.Global, node);
+            // Save existing Global (if any) to avoid overwriting it
+            var existingGlobal = Context.Scopes.Global;
+            var hadGlobal = existingGlobal != null && Context.Scopes.Depth > 0;
+
+            if (!hadGlobal)
+            {
+                // No existing global - create one
+                EnterScope(GDScopeType.Global, node);
+            }
+
             node.WalkIn(this);
-            ExitScope();
+
+            if (!hadGlobal)
+            {
+                // We created the global - exit it
+                ExitScope();
+            }
+            else
+            {
+                // We didn't create global, but walking may have entered/exited scopes
+                // Ensure we're back to Global state
+                Context.Scopes.ResetToGlobal();
+            }
         }
 
         #region Classes

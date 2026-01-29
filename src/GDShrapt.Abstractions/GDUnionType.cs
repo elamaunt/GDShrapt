@@ -120,6 +120,72 @@ public class GDUnionType
         return result;
     }
 
+    /// <summary>
+    /// Computes type-safe intersection with a single target type, considering inheritance and numeric compatibility.
+    /// Used for type narrowing when checking 'x in container' where container has known element type.
+    /// </summary>
+    /// <param name="targetType">The type to intersect with</param>
+    /// <param name="runtimeProvider">Optional runtime provider for inheritance checking</param>
+    /// <returns>A new GDUnionType containing only types compatible with targetType</returns>
+    public GDUnionType IntersectWithType(string targetType, IGDRuntimeProvider? runtimeProvider)
+    {
+        var result = new GDUnionType { AllHighConfidence = AllHighConfidence };
+
+        // If this union is empty, return the target type
+        if (IsEmpty)
+        {
+            result.Types.Add(targetType);
+            return result;
+        }
+
+        foreach (var type in Types)
+        {
+            // Skip null when intersecting with concrete types
+            if (type == "null" && targetType != "null")
+                continue;
+
+            // Exact match
+            if (type == targetType)
+            {
+                result.Types.Add(type);
+                continue;
+            }
+
+            // Numeric compatibility: int <-> float
+            if (IsNumericType(type) && IsNumericType(targetType))
+            {
+                // Prefer target type for narrowing
+                result.Types.Add(targetType);
+                continue;
+            }
+
+            // Check inheritance via runtime provider
+            if (runtimeProvider != null)
+            {
+                // type is assignable to targetType (type is subclass of targetType)
+                if (runtimeProvider.IsAssignableTo(type, targetType))
+                {
+                    // Keep the more specific type (the subclass)
+                    result.Types.Add(type);
+                    continue;
+                }
+
+                // targetType is assignable to type (targetType is subclass of type)
+                if (runtimeProvider.IsAssignableTo(targetType, type))
+                {
+                    // Use the more specific type (targetType)
+                    result.Types.Add(targetType);
+                    continue;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static bool IsNumericType(string type) =>
+        type == "int" || type == "float";
+
     public override string ToString()
     {
         if (IsEmpty) return "Variant";

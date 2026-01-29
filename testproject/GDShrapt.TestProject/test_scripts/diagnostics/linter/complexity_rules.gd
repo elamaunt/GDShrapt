@@ -138,8 +138,8 @@ func test_gdl223_invalid(x: int) -> int:  # GDL223: max-returns
 	return x  # 8th return - over limit
 
 
-## SUPPRESSED - GDL223 suppressed
-# gdlint:ignore = max-returns
+## SUPPRESSED - GDL223 suppressed (also GDL228 since this function has many branches too)
+# gdlint:ignore = max-returns, max-branches
 func test_gdl223_suppressed(x: int) -> int:  # Suppressed
 	if x == 0:
 		return 0
@@ -206,8 +206,8 @@ func test_gdl228_invalid(x: int) -> String:  # GDL228: max-branches
 	return "other"
 
 
-## SUPPRESSED - GDL228 suppressed
-# gdlint:ignore = max-branches
+## SUPPRESSED - GDL228 suppressed (also GDL223 since this function has many returns too)
+# gdlint:ignore = max-branches, max-returns
 func test_gdl228_suppressed(x: int) -> String:  # Suppressed
 	if x == 0:
 		return "a"

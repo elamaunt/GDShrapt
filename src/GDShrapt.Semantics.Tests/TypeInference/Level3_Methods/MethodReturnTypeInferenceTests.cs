@@ -165,9 +165,9 @@ public class MethodReturnTypeInferenceTests
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
 
-        // Assert - lambdas in GDScript 4 have type Callable
-        Assert.AreEqual("Callable", returnType,
-            $"Method returning lambda should have type 'Callable'. Got: {returnType}");
+        // Assert - lambdas in GDScript 4 have semantic Callable type with signature
+        Assert.IsTrue(returnType.StartsWith("Callable"),
+            $"Method returning lambda should have Callable type. Got: {returnType}");
     }
 
     #region Helper Methods

@@ -47,6 +47,8 @@ public class GDProjectSemanticModel
     private GDDiagnosticsServices? _diagnostics;
     private GDSignalConnectionRegistry? _signalRegistry;
     private bool _signalRegistryInitialized;
+    private GDClassContainerRegistry? _containerRegistry;
+    private bool _containerRegistryInitialized;
 
     /// <summary>
     /// The underlying project.
@@ -84,6 +86,24 @@ public class GDProjectSemanticModel
     }
 
     /// <summary>
+    /// Class-level container registry for cross-file type inference.
+    /// Lazy initialized on first access.
+    /// </summary>
+    public GDClassContainerRegistry ContainerRegistry
+    {
+        get
+        {
+            if (!_containerRegistryInitialized)
+            {
+                _containerRegistry = new GDClassContainerRegistry();
+                InitializeContainerRegistry();
+                _containerRegistryInitialized = true;
+            }
+            return _containerRegistry!;
+        }
+    }
+
+    /// <summary>
     /// Creates a new project-level semantic model.
     /// </summary>
     /// <param name="project">The GDScript project to analyze.</param>
@@ -106,6 +126,51 @@ public class GDProjectSemanticModel
         foreach (var connection in connections)
         {
             _signalRegistry.Register(connection);
+        }
+    }
+
+    /// <summary>
+    /// Initializes the class container registry by collecting all class-level container profiles.
+    /// Also performs cross-file analysis to merge usages from external files.
+    /// </summary>
+    private void InitializeContainerRegistry()
+    {
+        if (_containerRegistry == null)
+            return;
+
+        // Phase 1: Collect single-file profiles from each script
+        foreach (var scriptFile in _project.ScriptFiles)
+        {
+            var model = GetSemanticModel(scriptFile);
+            if (model == null)
+                continue;
+
+            var className = scriptFile.TypeName ?? "";
+            foreach (var kv in model.ClassContainerProfiles)
+            {
+                _containerRegistry.Register(className, kv.Key, kv.Value, scriptFile.FullPath);
+            }
+        }
+
+        // Phase 2: Collect cross-file usages and merge them
+        var crossFileCollector = new GDCrossFileContainerUsageCollector(_project);
+
+        foreach (var profileEntry in _containerRegistry.AllProfiles)
+        {
+            // Parse key to get class and container name
+            var parts = profileEntry.Key.Split(new[] { '.' }, 2);
+            if (parts.Length != 2)
+                continue;
+
+            var className = parts[0];
+            var containerName = parts[1];
+
+            // Collect cross-file usages
+            var crossFileUsages = crossFileCollector.CollectUsages(className, containerName);
+            if (crossFileUsages.Count > 0)
+            {
+                _containerRegistry.MergeCrossFileUsages(className, containerName, crossFileUsages);
+            }
         }
     }
 
@@ -597,6 +662,12 @@ public class GDProjectSemanticModel
                     }
                 }
             }
+
+            // Invalidate container profiles from this file
+            if (_containerRegistryInitialized && _containerRegistry != null)
+            {
+                _containerRegistry.InvalidateFile(filePath);
+            }
         }
     }
 
@@ -608,6 +679,8 @@ public class GDProjectSemanticModel
         _fileModels.Clear();
         _signalRegistry?.Clear();
         _signalRegistryInitialized = false;
+        _containerRegistry?.Clear();
+        _containerRegistryInitialized = false;
     }
 
     #endregion

@@ -194,11 +194,11 @@ var callback = func(): print(""hello"")
     }
 
     /// <summary>
-    /// Tests that method returning a lambda expression has type Callable (for the method itself).
-    /// The lambda's internal return type can be inferred, but the method returns Callable.
+    /// Tests that method returning a lambda expression has type Callable with signature.
+    /// The lambda's signature is inferred from its parameters and return type.
     /// </summary>
     [TestMethod]
-    public void GetTypeForNode_MethodReturningLambda_ReturnsCallable()
+    public void GetTypeForNode_MethodReturningLambda_ReturnsCallableWithSignature()
     {
         // Arrange
         var script = TestProjectFixture.GetScript("cross_file_inference.gd");
@@ -219,10 +219,286 @@ var callback = func(): print(""hello"")
         // Act
         var returnType = analyzer.GetTypeForNode(method) ?? "void";
 
-        // Assert - method returns a lambda, which is Callable
-        Assert.AreEqual("Callable", returnType,
-            $"Method returning lambda should have type 'Callable'. Got: {returnType}");
+        // Assert - method returns a lambda with semantic Callable type (includes signature)
+        Assert.IsTrue(returnType.StartsWith("Callable"),
+            $"Method returning lambda should have Callable type. Got: {returnType}");
     }
+
+    #region Lambda Signature Inference Tests
+
+    /// <summary>
+    /// Tests that lambda with typed parameters has full signature inferred.
+    /// Example: func(x: int, y: String) -> bool: return x > 0
+    /// Expected type: Callable[[int, String], bool]
+    /// </summary>
+    [TestMethod]
+    public void InferType_LambdaWithTypedParams_InfersSignature()
+    {
+        var code = @"
+extends Node
+var cb = func(x: int, y: String) -> bool:
+    return x > 0
+";
+        var classDecl = ParseClass(code);
+        var engine = CreateTypeEngine();
+
+        var variable = classDecl.Members
+            .OfType<GDVariableDeclaration>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "cb");
+
+        var lambda = variable?.Initializer as GDMethodExpression;
+        Assert.IsNotNull(lambda, "Initializer should be a lambda");
+
+        // Act - infer the full semantic type of the lambda expression
+        var type = engine.InferType(lambda);
+
+        // Assert - semantic type includes full signature
+        Assert.IsNotNull(type, "Lambda type should be inferred");
+        Assert.IsTrue(type.StartsWith("Callable"),
+            $"Lambda should be inferred as Callable type. Got: {type}");
+        Assert.IsTrue(type.Contains("int"), $"Lambda semantic type should include 'int' param. Got: {type}");
+        Assert.IsTrue(type.Contains("String"), $"Lambda semantic type should include 'String' param. Got: {type}");
+        Assert.IsTrue(type.Contains("bool"), $"Lambda semantic type should include 'bool' return. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests that lambda without typed params returns generic Callable.
+    /// Example: func(x, y): return x + y
+    /// </summary>
+    [TestMethod]
+    public void InferType_LambdaNoParams_InfersCallable()
+    {
+        var code = @"
+extends Node
+var cb = func(): pass
+";
+        var classDecl = ParseClass(code);
+        var engine = CreateTypeEngine();
+
+        var variable = classDecl.Members
+            .OfType<GDVariableDeclaration>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "cb");
+
+        var lambda = variable?.Initializer as GDMethodExpression;
+        Assert.IsNotNull(lambda, "Initializer should be a lambda");
+
+        // Act
+        var type = engine.InferType(lambda);
+
+        // Assert - no params, no return → simple Callable
+        Assert.AreEqual("Callable", type,
+            $"Lambda with no params and void return should be 'Callable'. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests that lambda with untyped params still infers as Callable.
+    /// Example: func(x, y): return x + y
+    /// </summary>
+    [TestMethod]
+    public void InferType_LambdaUntypedParams_InfersCallable()
+    {
+        var code = @"
+extends Node
+var cb = func(x, y): return x + y
+";
+        var classDecl = ParseClass(code);
+        var engine = CreateTypeEngine();
+
+        var variable = classDecl.Members
+            .OfType<GDVariableDeclaration>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "cb");
+
+        var lambda = variable?.Initializer as GDMethodExpression;
+        Assert.IsNotNull(lambda, "Initializer should be a lambda");
+
+        // Act
+        var type = engine.InferType(lambda);
+
+        // Assert - semantic type includes Variant for untyped params
+        Assert.IsTrue(type.StartsWith("Callable"),
+            $"Lambda with untyped params should be Callable. Got: {type}");
+        Assert.IsTrue(type.Contains("Variant"),
+            $"Lambda semantic type with untyped params should contain Variant. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests that lambda assigned to typed variable inherits constraints.
+    /// </summary>
+    [TestMethod]
+    public void InferType_LambdaWithTypedVariable_InfersFromVariable()
+    {
+        var code = @"
+extends Node
+var cb: Callable = func(x: int): return x * 2
+";
+        var classDecl = ParseClass(code);
+        var engine = CreateTypeEngine();
+
+        var variable = classDecl.Members
+            .OfType<GDVariableDeclaration>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "cb");
+
+        var lambda = variable?.Initializer as GDMethodExpression;
+        Assert.IsNotNull(lambda, "Initializer should be a lambda");
+
+        // Act
+        var type = engine.InferType(lambda);
+
+        // Assert - should be Callable with signature
+        Assert.IsTrue(type.StartsWith("Callable"),
+            $"Lambda assigned to Callable variable should be Callable. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests exact semantic signature format: Callable[[int, String], bool]
+    /// </summary>
+    [TestMethod]
+    public void InferType_LambdaWithTypedParams_ExactSignatureFormat()
+    {
+        var code = @"
+extends Node
+var cb = func(x: int, y: String) -> bool:
+    return x > 0
+";
+        var classDecl = ParseClass(code);
+        var engine = CreateTypeEngine();
+
+        var variable = classDecl.Members
+            .OfType<GDVariableDeclaration>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "cb");
+
+        var lambda = variable?.Initializer as GDMethodExpression;
+        Assert.IsNotNull(lambda, "Initializer should be a lambda");
+
+        // Act - InferType returns semantic type with full signature
+        var type = engine.InferType(lambda);
+
+        // Assert exact format: Callable[[int, String], bool]
+        Assert.AreEqual("Callable[[int, String], bool]", type,
+            $"Lambda semantic type should be 'Callable[[int, String], bool]'. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests that lambda with return type but no params has correct format.
+    /// Example: func() -> int: return 42
+    /// Expected: Callable[[], int]
+    /// </summary>
+    [TestMethod]
+    public void InferType_LambdaNoParamsWithReturn_InfersSignature()
+    {
+        var code = @"
+extends Node
+var cb = func() -> int: return 42
+";
+        var classDecl = ParseClass(code);
+        var engine = CreateTypeEngine();
+
+        var variable = classDecl.Members
+            .OfType<GDVariableDeclaration>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "cb");
+
+        var lambda = variable?.Initializer as GDMethodExpression;
+        Assert.IsNotNull(lambda, "Initializer should be a lambda");
+
+        // Act
+        var type = engine.InferType(lambda);
+
+        // Assert - no params but has return type: Callable[[], int]
+        Assert.AreEqual("Callable[[], int]", type,
+            $"Lambda with no params but return type should be 'Callable[[], int]'. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests that lambda with single param has correct format.
+    /// Example: func(x: int): return x * 2
+    /// Expected: Callable[[int], int]
+    /// </summary>
+    [TestMethod]
+    public void InferType_LambdaSingleParam_InfersSignature()
+    {
+        var code = @"
+extends Node
+var cb = func(x: int): return x * 2
+";
+        var classDecl = ParseClass(code);
+        var engine = CreateTypeEngine();
+
+        var variable = classDecl.Members
+            .OfType<GDVariableDeclaration>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "cb");
+
+        var lambda = variable?.Initializer as GDMethodExpression;
+        Assert.IsNotNull(lambda, "Initializer should be a lambda");
+
+        // Act
+        var type = engine.InferType(lambda);
+
+        // Assert: Callable[[int], int]
+        Assert.AreEqual("Callable[[int], int]", type,
+            $"Lambda with int param returning int should be 'Callable[[int], int]'. Got: {type}");
+    }
+
+    /// <summary>
+    /// Tests extracting return type from Callable signature.
+    /// </summary>
+    [TestMethod]
+    public void ExtractCallableReturnType_WithSignature_ReturnsCorrectType()
+    {
+        Assert.AreEqual("bool", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[int, String], bool]"));
+        Assert.AreEqual("int", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[String], int]"));
+        Assert.AreEqual("void", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[], void]"));
+        Assert.AreEqual("Array[int]", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[int], Array[int]]"));
+        Assert.IsNull(GDTypeInferenceEngine.ExtractCallableReturnType("Callable"));
+        Assert.IsNull(GDTypeInferenceEngine.ExtractCallableReturnType(null));
+    }
+
+    /// <summary>
+    /// Tests extracting parameter types from Callable signature.
+    /// </summary>
+    [TestMethod]
+    public void ExtractCallableParameterTypes_WithSignature_ReturnsCorrectTypes()
+    {
+        var types = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable[[int, String], bool]");
+        Assert.AreEqual(2, types.Count);
+        Assert.AreEqual("int", types[0]);
+        Assert.AreEqual("String", types[1]);
+
+        var singleParam = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable[[String], int]");
+        Assert.AreEqual(1, singleParam.Count);
+        Assert.AreEqual("String", singleParam[0]);
+
+        var noParams = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable[[], void]");
+        Assert.AreEqual(0, noParams.Count);
+
+        var simple = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable");
+        Assert.AreEqual(0, simple.Count);
+    }
+
+    /// <summary>
+    /// Tests that Callable.call() returns the correct type from signature.
+    /// Note: This requires full semantic analysis with scope tracking.
+    /// Using direct type extraction test as the basic unit test.
+    /// </summary>
+    [TestMethod]
+    public void InferType_CallableCall_ExtractsReturnType()
+    {
+        // Test the extraction logic directly
+        // When cb has type Callable[[int], String], cb.call(42) should return String
+        var callableType = "Callable[[int], String]";
+        var returnType = GDTypeInferenceEngine.ExtractCallableReturnType(callableType);
+
+        Assert.AreEqual("String", returnType,
+            $"Callable[[int], String].call() should return String. Got: {returnType}");
+
+        // Complex case with nested generic
+        var complexType = "Callable[[Array[int], Dictionary], Array[String]]";
+        var complexReturn = GDTypeInferenceEngine.ExtractCallableReturnType(complexType);
+
+        Assert.AreEqual("Array[String]", complexReturn,
+            $"Complex Callable should extract correct return type. Got: {complexReturn}");
+    }
+
+    #endregion
 
     #region Helper Methods
 

@@ -622,6 +622,133 @@ func process(data: Array):
 
     #endregion
 
+    #region Object Member Filtering Tests
+
+    /// <summary>
+    /// Tests that has_method (Object method) is NOT included in RequiredMethods.
+    /// </summary>
+    [TestMethod]
+    public void DuckType_FilterObjectMethods_HasMethodNotIncluded()
+    {
+        // has_method is Object method - should NOT be in RequiredMethods
+        var code = @"
+func process(obj):
+    if obj.has_method(""attack""):
+        obj.attack()
+";
+        var (_, semanticModel) = AnalyzeCode(code);
+        var duckType = semanticModel?.GetDuckType("obj");
+
+        Assert.IsNotNull(duckType, "Duck type should be collected");
+        // attack should be required (actual method being called)
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("attack"),
+            "attack should be in RequiredMethods");
+        // has_method should NOT be required (Object method)
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("has_method"),
+            "has_method should be filtered as Object method");
+    }
+
+    /// <summary>
+    /// Tests that get_class (Object method) is NOT included in RequiredMethods.
+    /// </summary>
+    [TestMethod]
+    public void DuckType_FilterObjectMethods_GetClassNotIncluded()
+    {
+        // get_class is Object method - should NOT be in RequiredMethods
+        var code = @"
+func identify(obj):
+    var class_name = obj.get_class()
+    obj.custom_method()
+";
+        var (_, semanticModel) = AnalyzeCode(code);
+        var duckType = semanticModel?.GetDuckType("obj");
+
+        Assert.IsNotNull(duckType, "Duck type should be collected");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("custom_method"),
+            "custom_method should be in RequiredMethods");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("get_class"),
+            "get_class should be filtered as Object method");
+    }
+
+    /// <summary>
+    /// Tests that connect (Object method) is NOT included in RequiredMethods.
+    /// </summary>
+    [TestMethod]
+    public void DuckType_FilterObjectMethods_ConnectNotIncluded()
+    {
+        // connect is Object method for signal connections
+        var code = @"
+func setup(obj):
+    obj.connect(""pressed"", _on_pressed)
+    obj.custom_signal_handler()
+";
+        var (_, semanticModel) = AnalyzeCode(code);
+        var duckType = semanticModel?.GetDuckType("obj");
+
+        Assert.IsNotNull(duckType, "Duck type should be collected");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("custom_signal_handler"),
+            "custom_signal_handler should be in RequiredMethods");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("connect"),
+            "connect should be filtered as Object method");
+    }
+
+    /// <summary>
+    /// Tests that non-Object methods are still included normally.
+    /// </summary>
+    [TestMethod]
+    public void DuckType_NonObjectMethods_StillIncluded()
+    {
+        // Regular methods should still be included
+        var code = @"
+func process(obj):
+    obj.foo()
+    obj.bar()
+    obj.baz()
+";
+        var (_, semanticModel) = AnalyzeCode(code);
+        var duckType = semanticModel?.GetDuckType("obj");
+
+        Assert.IsNotNull(duckType, "Duck type should be collected");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("foo"), "foo should be in RequiredMethods");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("bar"), "bar should be in RequiredMethods");
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("baz"), "baz should be in RequiredMethods");
+        Assert.AreEqual(3, duckType.RequiredMethods.Count, "Should have exactly 3 required methods");
+    }
+
+    /// <summary>
+    /// Tests that multiple Object methods are all filtered.
+    /// </summary>
+    [TestMethod]
+    public void DuckType_FilterObjectMethods_MultipleFiltered()
+    {
+        // Multiple Object methods should all be filtered
+        var code = @"
+func check(obj):
+    if obj.has_method(""process""):
+        if obj.has_signal(""done""):
+            var name = obj.get_class()
+            obj.call(""process"")
+            obj.actual_method()
+";
+        var (_, semanticModel) = AnalyzeCode(code);
+        var duckType = semanticModel?.GetDuckType("obj");
+
+        Assert.IsNotNull(duckType, "Duck type should be collected");
+        // Only actual_method should be in RequiredMethods
+        Assert.IsTrue(duckType.RequiredMethods.ContainsKey("actual_method"),
+            "actual_method should be in RequiredMethods");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("has_method"),
+            "has_method should be filtered");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("has_signal"),
+            "has_signal should be filtered");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("get_class"),
+            "get_class should be filtered");
+        Assert.IsFalse(duckType.RequiredMethods.ContainsKey("call"),
+            "call should be filtered");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static (GDClassDeclaration?, GDSemanticModel?) AnalyzeCode(string code)

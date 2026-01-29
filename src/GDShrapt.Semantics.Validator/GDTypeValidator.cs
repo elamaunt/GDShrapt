@@ -2,6 +2,7 @@ using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Semantics.Validator
 {
@@ -180,11 +181,13 @@ namespace GDShrapt.Semantics.Validator
             var typeName = varDecl.Type?.BuildName();
             GDTypeNode typeNode = varDecl.Type;
 
-            // Only infer type if := is used (Colon present but no Type node)
+            // Infer type from initializer if no explicit type annotation
             // var x := 42  → Colon != null, Type == null → infer int
-            // var x = 42   → Colon == null → Variant (dynamic)
+            // var x = 42   → Colon == null → also infer int from literal
             // var x: int = 42 → Type != null → use explicit type (already set above)
-            if (string.IsNullOrEmpty(typeName) && varDecl.Initializer != null && varDecl.Colon != null)
+            // NOTE: Removed `&& varDecl.Colon != null` check to fix GD3020 false positives
+            // for `var x = 0` style declarations with literal initializers
+            if (string.IsNullOrEmpty(typeName) && varDecl.Initializer != null)
             {
                 typeName = InferSimpleType(varDecl.Initializer);
             }
@@ -452,8 +455,328 @@ namespace GDShrapt.Semantics.Validator
                 case GDDualOperatorType.Assignment:
                     ValidateAssignment(left, right, leftType, rightType, expr);
                     break;
+
+                // Ordered comparison operators - check for null and type compatibility
+                case GDDualOperatorType.LessThan:
+                case GDDualOperatorType.MoreThan:
+                case GDDualOperatorType.LessThanOrEqual:
+                case GDDualOperatorType.MoreThanOrEqual:
+                    ValidateComparisonOperator(expr, left, right, leftType, rightType, op.Value);
+                    break;
             }
         }
+
+        /// <summary>
+        /// Validates ordered comparison operators (&lt;, &gt;, &lt;=, &gt;=).
+        /// These operators do NOT work with null - they cause runtime errors.
+        /// </summary>
+        private void ValidateComparisonOperator(
+            GDDualOperatorExpression expr,
+            GDExpression left,
+            GDExpression right,
+            string leftType,
+            string rightType,
+            GDDualOperatorType op)
+        {
+            // 1. Check for exact null type - this is an error (runtime crash)
+            // Also check for null literal directly
+            bool leftIsNull = leftType == "null" || IsNullLiteral(left) || IsNullInitializedVariable(left);
+            bool rightIsNull = rightType == "null" || IsNullLiteral(right) || IsNullInitializedVariable(right);
+
+            if (leftIsNull || rightIsNull)
+            {
+                ReportError(
+                    GDDiagnosticCode.ComparisonWithNull,
+                    $"Cannot use '{GetComparisonOperatorSymbol(op)}' with null (causes runtime error: 'Invalid operands')",
+                    expr);
+                return;
+            }
+
+            // 2. Check for potentially null variables (only if not already handled as exact null)
+            CheckPotentiallyNullComparison(left, leftType, expr, op);
+            CheckPotentiallyNullComparison(right, rightType, expr, op);
+
+            // 3. Check for incompatible types
+            if (!AreTypesCompatibleForComparison(leftType, rightType))
+            {
+                ReportWarning(
+                    GDDiagnosticCode.IncompatibleComparisonTypes,
+                    $"Incompatible types for comparison: {leftType} {GetComparisonOperatorSymbol(op)} {rightType}",
+                    expr);
+            }
+        }
+
+        /// <summary>
+        /// Checks if an expression is a null literal.
+        /// </summary>
+        private static bool IsNullLiteral(GDExpression? expr)
+        {
+            if (expr is GDIdentifierExpression identExpr)
+            {
+                return identExpr.Identifier?.Sequence == "null";
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if a variable is explicitly initialized to null (var x = null).
+        /// </summary>
+        private bool IsNullInitializedVariable(GDExpression? expr)
+        {
+            if (expr is not GDIdentifierExpression identExpr)
+                return false;
+
+            var varName = identExpr.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(varName))
+                return false;
+
+            // Check if semantic model knows about null initialization
+            if (_semanticModel != null)
+            {
+                var type = _semanticModel.GetExpressionType(expr);
+                if (type == "null")
+                    return true;
+            }
+
+            // Also check local scope
+            var symbol = Context.Scopes.Lookup(varName);
+            if (symbol?.Declaration is GDVariableDeclarationStatement varDeclStmt)
+            {
+                // Check if initializer is null
+                if (varDeclStmt.Initializer is GDIdentifierExpression initIdent &&
+                    initIdent.Identifier?.Sequence == "null")
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if a variable used in comparison might be null.
+        /// </summary>
+        private void CheckPotentiallyNullComparison(
+            GDExpression expr,
+            string exprType,
+            GDDualOperatorExpression comparisonExpr,
+            GDDualOperatorType op)
+        {
+            // Skip if type is known and non-null
+            if (exprType != "Unknown" && exprType != "Variant")
+                return;
+
+            // Check if this is an identifier (variable)
+            if (expr is not GDIdentifierExpression identExpr)
+                return;
+
+            var varName = identExpr.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(varName))
+                return;
+
+            // Check if variable is guarded by a null check in the condition
+            if (IsGuardedByNullCheck(comparisonExpr, varName))
+                return;
+
+            // Look up the symbol
+            var symbol = Context.Scopes.Lookup(varName);
+            if (symbol == null)
+                return;
+
+            // If it's a typed parameter, it's safe (non-null by type)
+            if (symbol.Declaration is GDParameterDeclaration paramDecl && paramDecl.Type != null)
+                return;
+
+            // Untyped parameter or untyped variable could be null
+            if (symbol.Declaration is GDParameterDeclaration ||
+                (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt && varDeclStmt.Type == null && varDeclStmt.Colon == null))
+            {
+                ReportWarning(
+                    GDDiagnosticCode.ComparisonWithPotentiallyNull,
+                    $"Variable '{varName}' may be null; comparison with '{GetComparisonOperatorSymbol(op)}' would cause runtime error",
+                    comparisonExpr);
+            }
+        }
+
+        /// <summary>
+        /// Checks if a variable is guarded by a null check in the same 'and' expression.
+        /// Handles patterns like: x != null and x < 5, x is int and x < 5
+        /// </summary>
+        private static bool IsGuardedByNullCheck(GDDualOperatorExpression comparisonExpr, string varName)
+        {
+            // Walk up to find parent 'and' expression
+            var current = comparisonExpr.Parent as GDNode;
+            while (current != null)
+            {
+                if (current is GDDualOperatorExpression andExpr)
+                {
+                    var opType = andExpr.Operator?.OperatorType;
+                    if (opType == GDDualOperatorType.And || opType == GDDualOperatorType.And2)
+                    {
+                        // Check if the comparison is on the RIGHT side of 'and'
+                        // (i.e., a descendant of the right expression)
+                        if (IsDescendantOf(comparisonExpr, andExpr.RightExpression))
+                        {
+                            // Check if the left side is a null guard for our variable
+                            if (IsNullGuardFor(andExpr.LeftExpression, varName))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                current = current.Parent as GDNode;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the child node is a descendant of the parent node.
+        /// </summary>
+        private static bool IsDescendantOf(GDNode? child, GDNode? parent)
+        {
+            if (child == null || parent == null)
+                return false;
+
+            var current = child;
+            while (current != null)
+            {
+                if (current == parent)
+                    return true;
+                current = current.Parent as GDNode;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the expression is a null guard for the specified variable.
+        /// Recognizes: var != null, var is Type, is_instance_valid(var)
+        /// </summary>
+        private static bool IsNullGuardFor(GDExpression? expr, string varName)
+        {
+            if (expr == null)
+                return false;
+
+            // var != null
+            if (expr is GDDualOperatorExpression eqOp &&
+                eqOp.Operator?.OperatorType == GDDualOperatorType.NotEqual)
+            {
+                if (IsNullLiteral(eqOp.RightExpression) &&
+                    eqOp.LeftExpression is GDIdentifierExpression leftIdent &&
+                    leftIdent.Identifier?.Sequence == varName)
+                    return true;
+
+                if (IsNullLiteral(eqOp.LeftExpression) &&
+                    eqOp.RightExpression is GDIdentifierExpression rightIdent &&
+                    rightIdent.Identifier?.Sequence == varName)
+                    return true;
+            }
+
+            // var is Type (type guard implies non-null)
+            if (expr is GDDualOperatorExpression isOp &&
+                isOp.Operator?.OperatorType == GDDualOperatorType.Is)
+            {
+                if (isOp.LeftExpression is GDIdentifierExpression leftIsIdent &&
+                    leftIsIdent.Identifier?.Sequence == varName)
+                    return true;
+            }
+
+            // is_instance_valid(var)
+            if (expr is GDCallExpression callExpr)
+            {
+                if (callExpr.CallerExpression is GDIdentifierExpression funcIdent &&
+                    funcIdent.Identifier?.Sequence == "is_instance_valid")
+                {
+                    var args = callExpr.Parameters?.ToList();
+                    if (args != null && args.Count > 0 && args[0] is GDIdentifierExpression argIdent)
+                    {
+                        if (argIdent.Identifier?.Sequence == varName)
+                            return true;
+                    }
+                }
+            }
+
+            // Recursively check left side of nested 'and' expressions
+            if (expr is GDDualOperatorExpression andExpr)
+            {
+                var opType = andExpr.Operator?.OperatorType;
+                if (opType == GDDualOperatorType.And || opType == GDDualOperatorType.And2)
+                {
+                    // Check the left part of and
+                    if (IsNullGuardFor(andExpr.LeftExpression, varName))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if two types are compatible for ordered comparison.
+        /// </summary>
+        private static bool AreTypesCompatibleForComparison(string left, string right)
+        {
+            // Unknown types - assume compatible (can't verify)
+            if (left == "Unknown" || right == "Unknown")
+                return true;
+
+            // Variant is dynamically typed - allow comparison
+            if (left == "Variant" || right == "Variant")
+                return true;
+
+            // Same type is always compatible
+            if (left == right)
+                return true;
+
+            // Numeric types are compatible with each other
+            if (IsNumericTypeStatic(left) && IsNumericTypeStatic(right))
+                return true;
+
+            // String types are compatible
+            if (IsStringType(left) && IsStringType(right))
+                return true;
+
+            // Vector types of the same dimension are comparable
+            if (AreVectorTypesComparable(left, right))
+                return true;
+
+            return false;
+        }
+
+        private static bool IsNumericTypeStatic(string type) =>
+            type == "int" || type == "float";
+
+        private static bool IsStringType(string type) =>
+            type == "String" || type == "StringName";
+
+        private static bool AreVectorTypesComparable(string left, string right)
+        {
+            // Vector2/Vector2i, Vector3/Vector3i, Vector4/Vector4i
+            if ((left == "Vector2" || left == "Vector2i") &&
+                (right == "Vector2" || right == "Vector2i"))
+                return true;
+
+            if ((left == "Vector3" || left == "Vector3i") &&
+                (right == "Vector3" || right == "Vector3i"))
+                return true;
+
+            if ((left == "Vector4" || left == "Vector4i") &&
+                (right == "Vector4" || right == "Vector4i"))
+                return true;
+
+            return false;
+        }
+
+        private static string GetComparisonOperatorSymbol(GDDualOperatorType op) =>
+            op switch
+            {
+                GDDualOperatorType.LessThan => "<",
+                GDDualOperatorType.MoreThan => ">",
+                GDDualOperatorType.LessThanOrEqual => "<=",
+                GDDualOperatorType.MoreThanOrEqual => ">=",
+                _ => op.ToString()
+            };
 
         private void ValidateAssignment(GDExpression target, GDExpression value, string targetType, string valueType, GDNode reportOn)
         {

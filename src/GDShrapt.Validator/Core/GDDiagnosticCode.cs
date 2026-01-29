@@ -169,6 +169,24 @@ namespace GDShrapt.Reader
         /// </summary>
         DictionaryKeyNotHashable = 3018,
 
+        /// <summary>
+        /// Comparison operator (&lt; &gt; &lt;= &gt;=) used with null type.
+        /// Runtime error in GDScript: "Invalid operands 'Nil' and 'int'".
+        /// </summary>
+        ComparisonWithNull = 3019,
+
+        /// <summary>
+        /// Comparison operator (&lt; &gt; &lt;= &gt;=) used with potentially null variable.
+        /// The variable has not been checked for null before the comparison.
+        /// </summary>
+        ComparisonWithPotentiallyNull = 3020,
+
+        /// <summary>
+        /// Comparison operator used with incompatible types.
+        /// For example: "str" &lt; 5 - String and int are not comparable.
+        /// </summary>
+        IncompatibleComparisonTypes = 3021,
+
         // Call errors (4xxx)
         /// <summary>
         /// Wrong number of arguments in a function call.
@@ -317,6 +335,80 @@ namespace GDShrapt.Reader
         /// Member access on variable where no known type has that member.
         /// </summary>
         MemberNotGuaranteed = 7004,
+
+        // Nullable access warnings (7005-7009)
+        /// <summary>
+        /// Accessing member on a variable that may be null.
+        /// For example: x.foo where x = null.
+        /// </summary>
+        PotentiallyNullAccess = 7005,
+
+        /// <summary>
+        /// Using indexer on a variable that may be null.
+        /// For example: x[i] where x = null.
+        /// </summary>
+        PotentiallyNullIndexer = 7006,
+
+        /// <summary>
+        /// Calling method on a variable that may be null.
+        /// For example: x.method() where x = null.
+        /// </summary>
+        PotentiallyNullMethodCall = 7007,
+
+        /// <summary>
+        /// Accessing class-level variable that was initialized to null and not reassigned.
+        /// </summary>
+        ClassVariableMayBeNull = 7008,
+
+        /// <summary>
+        /// Using union type containing null without null check.
+        /// For example: using x: Node | null without if x != null.
+        /// </summary>
+        NullableTypeNotChecked = 7009,
+
+        // Redundant guard warnings (7010-7014)
+        /// <summary>
+        /// Type guard is redundant because variable already has the exact type.
+        /// For example: var x: Array; if x is Array.
+        /// </summary>
+        RedundantTypeGuard = 7010,
+
+        /// <summary>
+        /// Type guard is redundant because variable was already narrowed to this type.
+        /// For example: if x is Array: if x is Array.
+        /// </summary>
+        RedundantNarrowedTypeGuard = 7011,
+
+        /// <summary>
+        /// has_method/has/has_signal check is redundant because type is known to have it.
+        /// For example: var arr: Array; if arr.has_method("slice").
+        /// </summary>
+        RedundantHasMethodCheck = 7012,
+
+        /// <summary>
+        /// Null check is redundant because type cannot be null.
+        /// For example: var x: int = 5; if x != null.
+        /// </summary>
+        RedundantNullCheck = 7013,
+
+        /// <summary>
+        /// Truthiness check is redundant because type cannot be falsy.
+        /// For example: var x: int = 5; if x.
+        /// </summary>
+        RedundantTruthinessCheck = 7014,
+
+        // Dynamic call validation (7015-7016)
+        /// <summary>
+        /// Method specified in call()/callv() not found on the known type.
+        /// For example: node.call("unknown_method") where node: Node.
+        /// </summary>
+        DynamicMethodNotFound = 7015,
+
+        /// <summary>
+        /// Property specified in get()/set() not found on the known type.
+        /// For example: node.get("unknown_property") where node: Node.
+        /// </summary>
+        DynamicPropertyNotFound = 7016,
 
         // Abstract errors (8xxx)
         /// <summary>

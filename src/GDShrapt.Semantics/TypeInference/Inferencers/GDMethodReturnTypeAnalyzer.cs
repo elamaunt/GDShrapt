@@ -84,6 +84,25 @@ internal class GDMethodReturnTypeAnalyzer
         if (lambda.ReturnType != null)
             return lambda.ReturnType;
 
+        // Create a local scope to track lambda parameter types
+        var localScope = new Dictionary<string, string>();
+        if (lambda.Parameters != null)
+        {
+            foreach (var param in lambda.Parameters)
+            {
+                var name = param.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(name))
+                {
+                    var type = param.Type?.BuildName();
+                    if (string.IsNullOrEmpty(type) && param.DefaultValue != null)
+                    {
+                        type = _inferType(param.DefaultValue);
+                    }
+                    localScope[name] = type ?? "Variant";
+                }
+            }
+        }
+
         // 2. Inline lambda: func(x): return expr or func(x): expr
         if (lambda.Expression != null)
         {
@@ -91,18 +110,26 @@ internal class GDMethodReturnTypeAnalyzer
             if (lambda.Expression is GDReturnExpression returnExpr)
             {
                 if (returnExpr.Expression != null)
-                    return _inferTypeNode(returnExpr.Expression);
+                {
+                    var type = InferTypeWithLocalScope(returnExpr.Expression, localScope);
+                    return !string.IsNullOrEmpty(type)
+                        ? GDTypeInferenceUtilities.CreateSimpleType(type)
+                        : _inferTypeNode(returnExpr.Expression);
+                }
                 return GDTypeInferenceUtilities.CreateSimpleType("void");
             }
             // Otherwise it's just an expression - its type is the return type
-            return _inferTypeNode(lambda.Expression);
+            var exprType = InferTypeWithLocalScope(lambda.Expression, localScope);
+            return !string.IsNullOrEmpty(exprType)
+                ? GDTypeInferenceUtilities.CreateSimpleType(exprType)
+                : _inferTypeNode(lambda.Expression);
         }
 
         // 3. Multiline lambda - analyze return statements
         if (lambda.Statements != null && lambda.Statements.Any())
         {
             var returnTypes = new HashSet<string>();
-            CollectReturnTypesFromStatements(lambda.Statements, returnTypes);
+            CollectReturnTypesFromStatements(lambda.Statements, returnTypes, localScope);
 
             if (returnTypes.Count == 0)
                 return GDTypeInferenceUtilities.CreateSimpleType("void");
@@ -390,18 +417,52 @@ internal class GDMethodReturnTypeAnalyzer
     /// </summary>
     private string InferTypeWithLocalScope(GDExpression expr, Dictionary<string, string> localScope)
     {
+        if (expr == null || localScope == null)
+            return _inferType(expr);
+
         // If it's an identifier and exists in localScope, return its type
-        if (expr is GDIdentifierExpression idExpr && localScope != null)
+        if (expr is GDIdentifierExpression idExpr)
         {
             var name = idExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(name) && localScope.TryGetValue(name, out var type))
                 return type;
         }
 
+        // For binary operators, infer operand types with local scope
+        if (expr is GDDualOperatorExpression dualOp)
+        {
+            var leftType = InferTypeWithLocalScope(dualOp.LeftExpression, localScope);
+            var rightType = InferTypeWithLocalScope(dualOp.RightExpression, localScope);
+
+            // Use operator type resolver for the result type
+            var opType = dualOp.Operator?.OperatorType;
+            if (opType != null)
+            {
+                return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+            }
+        }
+
+        // For unary operators, infer operand type with local scope
+        if (expr is GDSingleOperatorExpression singleOp)
+        {
+            var operandType = InferTypeWithLocalScope(singleOp.TargetExpression, localScope);
+            var opType = singleOp.Operator?.OperatorType;
+            if (opType != null)
+            {
+                return GDOperatorTypeResolver.ResolveSingleOperatorType(opType.Value, operandType);
+            }
+        }
+
         // For call expressions, use InferCallType directly to handle union types
         if (expr is GDCallExpression callExpr)
         {
             return _inferCallType(callExpr);
+        }
+
+        // For bracket expressions, recurse
+        if (expr is GDBracketExpression bracketExpr)
+        {
+            return InferTypeWithLocalScope(bracketExpr.InnerExpression, localScope);
         }
 
         return _inferType(expr);

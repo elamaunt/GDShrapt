@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,10 +12,14 @@ namespace GDShrapt.Abstractions;
 public class GDTypeNarrowingAnalyzer
 {
     private readonly IGDRuntimeProvider? _runtimeProvider;
+    private readonly Func<string, string?>? _variableTypeResolver;
 
-    public GDTypeNarrowingAnalyzer(IGDRuntimeProvider? runtimeProvider)
+    public GDTypeNarrowingAnalyzer(
+        IGDRuntimeProvider? runtimeProvider,
+        Func<string, string?>? variableTypeResolver = null)
     {
         _runtimeProvider = runtimeProvider;
+        _variableTypeResolver = variableTypeResolver;
     }
 
     /// <summary>
@@ -49,9 +54,15 @@ public class GDTypeNarrowingAnalyzer
                 break;
 
             // P10: obj == null / obj != null - null check
+            // Also: obj == literal (type narrowing)
             case GDDualOperatorExpression eqOp when eqOp.Operator?.OperatorType == GDDualOperatorType.Equal ||
                                                     eqOp.Operator?.OperatorType == GDDualOperatorType.NotEqual:
                 AnalyzeNullComparison(eqOp, context, isNegated);
+                // Also check for literal type narrowing (x == 42)
+                if (eqOp.Operator?.OperatorType == GDDualOperatorType.Equal && !isNegated)
+                {
+                    AnalyzeLiteralComparison(eqOp, context);
+                }
                 break;
 
             // obj.has_method("name") / obj.has_signal("name")
@@ -134,7 +145,7 @@ public class GDTypeNarrowingAnalyzer
 
     private void AnalyzeCallCondition(GDCallExpression callExpr, GDTypeNarrowingContext context, bool isNegated)
     {
-        // Check for has_method/has_signal pattern
+        // Check for has_method/has_signal/is_valid/is_null pattern
         if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
         {
             var methodName = memberOp.Identifier?.Sequence;
@@ -164,6 +175,41 @@ public class GDTypeNarrowingAnalyzer
                 if (argName != null)
                     context.RequireProperty(varName, argName);
             }
+            // Callable.is_valid() - returns true if callable is valid (not null)
+            // if cb.is_valid(): → cb is valid (non-null)
+            // if not cb.is_valid(): → cb may be null
+            else if (methodName == "is_valid")
+            {
+                if (!isNegated)
+                {
+                    // In true branch: Callable is valid (not null)
+                    context.MarkValidated(varName);
+                    context.SetNotNull(varName);
+                }
+                else
+                {
+                    // In else branch (or negated): Callable may be null/invalid
+                    context.SetMayBeNull(varName);
+                }
+            }
+            // Callable.is_null() - returns true if callable is null
+            // if cb.is_null(): → cb is null
+            // if not cb.is_null(): → cb is valid
+            else if (methodName == "is_null")
+            {
+                if (!isNegated)
+                {
+                    // In true branch: Callable is null
+                    context.SetConcreteType(varName, "null");
+                    context.SetMayBeNull(varName);
+                }
+                else
+                {
+                    // In else branch (or negated): Callable is not null
+                    context.MarkValidated(varName);
+                    context.SetNotNull(varName);
+                }
+            }
         }
 
         // Check for is_instance_valid(obj)
@@ -179,11 +225,12 @@ public class GDTypeNarrowingAnalyzer
 
     /// <summary>
     /// P1: Analyzes "method" in obj pattern for duck typing.
-    /// When condition is true, obj is guaranteed to have that method.
+    /// Also handles x in container pattern for type narrowing.
+    /// When condition is true, obj is guaranteed to have that method, or x is element type.
     /// </summary>
     private void AnalyzeInExpression(GDDualOperatorExpression inExpr, GDTypeNarrowingContext context, bool isNegated)
     {
-        // Pattern: "method_name" in obj
+        // Pattern: "method_name" in obj (duck typing)
         if (inExpr.LeftExpression is GDStringExpression strExpr)
         {
             var memberName = strExpr.String?.Sequence;
@@ -197,6 +244,297 @@ public class GDTypeNarrowingAnalyzer
                 // In if branch: obj has this member (could be method or property)
                 context.RequireMethod(varName, memberName);
             }
+        }
+
+        // Pattern: x in container (type narrowing)
+        if (!isNegated)
+        {
+            AnalyzeContainerMembershipCheck(inExpr, context);
+        }
+    }
+
+    /// <summary>
+    /// Analyzes x in container patterns for type narrowing.
+    /// x in [1, 2, 3] -> x is int
+    /// x in {"a": 1} -> x is String (key type)
+    /// x in "hello" -> x is String
+    /// </summary>
+    private void AnalyzeContainerMembershipCheck(GDDualOperatorExpression inExpr, GDTypeNarrowingContext context)
+    {
+        var varName = GetVariableName(inExpr.LeftExpression);
+        if (string.IsNullOrEmpty(varName))
+            return;
+
+        var container = inExpr.RightExpression;
+        if (container == null)
+            return;
+
+        // Infer element/key type from container
+        var elementType = InferContainerElementType(container);
+        if (!string.IsNullOrEmpty(elementType) && elementType != "Variant" && elementType != "Unknown")
+        {
+            context.SetConcreteType(varName, elementType);
+        }
+    }
+
+    /// <summary>
+    /// Infers the element/key type from a container expression.
+    /// </summary>
+    private string? InferContainerElementType(GDExpression container)
+    {
+        // Array literal: [1, 2, 3] or ["a", "b"]
+        if (container is GDArrayInitializerExpression arrayInit)
+        {
+            return InferArrayLiteralElementType(arrayInit);
+        }
+
+        // Dictionary literal: {"a": 1}
+        if (container is GDDictionaryInitializerExpression dictInit)
+        {
+            return InferDictionaryLiteralKeyType(dictInit);
+        }
+
+        // String literal: "hello"
+        if (container is GDStringExpression)
+        {
+            return "String";
+        }
+
+        // range() call
+        if (container is GDCallExpression callExpr &&
+            callExpr.CallerExpression is GDIdentifierExpression funcIdent &&
+            funcIdent.Identifier?.Sequence == "range")
+        {
+            return "int";
+        }
+
+        // Variable with known type via resolver
+        if (container is GDIdentifierExpression identExpr && _variableTypeResolver != null)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var typeName = _variableTypeResolver(varName);
+                if (!string.IsNullOrEmpty(typeName))
+                {
+                    return ExtractElementTypeFromTypeName(typeName);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Extracts the element/key type from a container type name.
+    /// Array[int] -> int, Dictionary[String, int] -> String, PackedInt32Array -> int
+    /// </summary>
+    private static string? ExtractElementTypeFromTypeName(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return null;
+
+        // Array[T] -> T
+        if (typeName.StartsWith("Array[") && typeName.EndsWith("]"))
+            return typeName.Substring(6, typeName.Length - 7);
+
+        // Dictionary[K, V] -> K (key type for 'in')
+        if (typeName.StartsWith("Dictionary["))
+        {
+            var inner = typeName.Substring(11, typeName.Length - 12);
+            var commaIndex = FindTopLevelComma(inner);
+            if (commaIndex > 0)
+                return inner.Substring(0, commaIndex).Trim();
+        }
+
+        // String -> String
+        if (typeName == "String")
+            return "String";
+
+        // Range -> int
+        if (typeName == "Range")
+            return "int";
+
+        // PackedArrays
+        if (typeName.StartsWith("Packed") && typeName.EndsWith("Array"))
+            return InferPackedArrayElementType(typeName);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Finds the first top-level comma (not inside brackets) in a string.
+    /// </summary>
+    private static int FindTopLevelComma(string str)
+    {
+        int depth = 0;
+        for (int i = 0; i < str.Length; i++)
+        {
+            if (str[i] == '[') depth++;
+            else if (str[i] == ']') depth--;
+            else if (str[i] == ',' && depth == 0) return i;
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Infers element type from PackedArray type name.
+    /// PackedInt32Array -> int, PackedStringArray -> String, etc.
+    /// </summary>
+    private static string? InferPackedArrayElementType(string typeName)
+    {
+        // Extract middle part: PackedXxxArray -> Xxx
+        var inner = typeName.Substring(6, typeName.Length - 11);
+        return inner switch
+        {
+            "String" => "String",
+            "Int32" or "Int64" => "int",
+            "Float32" or "Float64" => "float",
+            "Vector2" => "Vector2",
+            "Vector3" => "Vector3",
+            "Vector4" => "Vector4",
+            "Color" => "Color",
+            "Byte" => "int",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Infers element type from array literal.
+    /// </summary>
+    private static string? InferArrayLiteralElementType(GDArrayInitializerExpression arrayInit)
+    {
+        var values = arrayInit.Values?.ToList();
+        if (values == null || values.Count == 0)
+            return null;
+
+        string? commonType = null;
+        foreach (var value in values)
+        {
+            var elementType = GetLiteralType(value);
+            if (string.IsNullOrEmpty(elementType))
+                return "Variant"; // Non-literal element
+
+            if (commonType == null)
+            {
+                commonType = elementType;
+            }
+            else if (commonType != elementType)
+            {
+                // Mixed int/float -> keep as numeric
+                if ((commonType == "int" || commonType == "float") &&
+                    (elementType == "int" || elementType == "float"))
+                {
+                    commonType = "float";
+                }
+                else
+                {
+                    return "Variant"; // Truly mixed types
+                }
+            }
+        }
+
+        return commonType;
+    }
+
+    /// <summary>
+    /// Infers key type from dictionary literal.
+    /// </summary>
+    private static string? InferDictionaryLiteralKeyType(GDDictionaryInitializerExpression dictInit)
+    {
+        var keyValues = dictInit.KeyValues?.ToList();
+        if (keyValues == null || keyValues.Count == 0)
+            return null;
+
+        string? commonKeyType = null;
+        foreach (var kv in keyValues)
+        {
+            var keyType = GetLiteralType(kv.Key);
+            if (string.IsNullOrEmpty(keyType))
+                return "Variant";
+
+            if (commonKeyType == null)
+            {
+                commonKeyType = keyType;
+            }
+            else if (commonKeyType != keyType)
+            {
+                return "Variant"; // Mixed key types
+            }
+        }
+
+        return commonKeyType;
+    }
+
+    /// <summary>
+    /// Gets the type of a literal expression.
+    /// </summary>
+    private static string? GetLiteralType(GDExpression? expr)
+    {
+        return expr switch
+        {
+            GDNumberExpression numExpr => IsIntegerNumber(numExpr) ? "int" : "float",
+            GDStringExpression => "String",
+            GDBoolExpression => "bool",
+            _ when IsNullLiteral(expr) => "null",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Checks if a number expression represents an integer.
+    /// </summary>
+    private static bool IsIntegerNumber(GDNumberExpression numExpr)
+    {
+        var sequence = numExpr.Number?.Sequence;
+        if (string.IsNullOrEmpty(sequence))
+            return true;
+        return !sequence.Contains('.');
+    }
+
+    /// <summary>
+    /// Analyzes x == literal patterns for type narrowing.
+    /// x == 42 -> x is int
+    /// x == "hello" -> x is String
+    /// x == null -> x is null
+    /// </summary>
+    private void AnalyzeLiteralComparison(GDDualOperatorExpression eqExpr, GDTypeNarrowingContext context)
+    {
+        string? varName = null;
+        string? literalType = null;
+
+        // variable == literal (including null)
+        if (eqExpr.LeftExpression is GDIdentifierExpression leftIdent)
+        {
+            // Don't treat 'null' identifier as a variable
+            if (leftIdent.Identifier?.Sequence != "null")
+            {
+                var type = GetLiteralType(eqExpr.RightExpression);
+                if (!string.IsNullOrEmpty(type))
+                {
+                    varName = leftIdent.Identifier?.Sequence;
+                    literalType = type;
+                }
+            }
+        }
+        // literal == variable (including null)
+        else if (eqExpr.RightExpression is GDIdentifierExpression rightIdent)
+        {
+            // Don't treat 'null' identifier as a variable
+            if (rightIdent.Identifier?.Sequence != "null")
+            {
+                var type = GetLiteralType(eqExpr.LeftExpression);
+                if (!string.IsNullOrEmpty(type))
+                {
+                    varName = rightIdent.Identifier?.Sequence;
+                    literalType = type;
+                }
+            }
+        }
+
+        if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(literalType))
+        {
+            context.SetConcreteType(varName, literalType);
         }
     }
 
@@ -254,6 +592,16 @@ public class GDTypeNarrowingAnalyzer
             // if variable: -> variable is truthy (not null, not false, not 0, not empty)
             // For type narrowing, this means the variable is at least non-null
             context.ExcludeType(varName, "null");
+            context.SetNotNull(varName);
+            // For Callable, truthy also means valid
+            context.MarkValidated(varName);
+        }
+        else
+        {
+            // if not variable: -> variable is falsy (null, false, 0, empty)
+            // For Callable, this means it's invalid/null
+            context.SetMayBeNull(varName);
+            context.SetConcreteType(varName, "null");
         }
     }
 

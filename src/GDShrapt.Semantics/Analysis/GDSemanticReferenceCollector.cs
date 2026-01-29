@@ -92,6 +92,12 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var scopeValidator = new GDScopeValidator(validationContext);
         scopeValidator.Validate(_scriptFile.Class);
 
+        // Reset scope stack to class scope after validation
+        // GDScopeValidator.Validate() pops all scopes including global, which breaks
+        // GDTypeInferenceEngine.Lookup() since it needs access to class-level declarations
+        // (methods, signals, class variables). ResetToClass() restores both Global and Class scopes.
+        validationContext.Scopes.ResetToClass();
+
         // Create type engine with proper scopes (after all declarations are collected)
         // Store in field so it can be used during reference collection
         // If type injector is provided, use it for scene-based node type inference
@@ -1271,7 +1277,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Pass scopes so that GDDuckTypeCollector can filter out typed variables.
         // Without scopes, ALL variables would be considered untyped and duck types
         // would be incorrectly collected for member access on typed variables.
-        var duckCollector = new GDDuckTypeCollector(context.Scopes);
+        // Pass runtimeProvider to filter out universal Object members (has_method, get_class, etc.)
+        // that exist on all objects and don't contribute to duck-type specificity.
+        var duckCollector = new GDDuckTypeCollector(context.Scopes, _runtimeProvider);
         duckCollector.Collect(classDecl);
 
         foreach (var kv in duckCollector.VariableDuckTypes)
@@ -1312,7 +1320,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     _model!.SetVariableProfile(kv.Key, kv.Value);
                 }
 
-                // Collect container usage profiles
+                // Collect container usage profiles (local containers)
                 var containerCollector = new GDContainerUsageCollector(context.Scopes, _typeEngine);
                 containerCollector.Collect(method);
 
@@ -1321,6 +1329,17 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     _model!.SetContainerProfile(kv.Key, kv.Value);
                 }
             }
+        }
+
+        // Collect class-level container usage profiles
+        // This tracks untyped class-level Array/Dictionary variables and infers element types from usage
+        var className = classDecl.ClassName?.Identifier?.Sequence ?? _scriptFile.TypeName ?? "";
+        var classContainerCollector = new GDClassContainerUsageCollector(classDecl, _typeEngine);
+        classContainerCollector.Collect(classDecl);
+
+        foreach (var kv in classContainerCollector.Profiles)
+        {
+            _model!.SetClassContainerProfile(className, kv.Key, kv.Value);
         }
     }
 

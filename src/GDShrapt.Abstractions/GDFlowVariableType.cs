@@ -35,6 +35,25 @@ public class GDFlowVariableType
     public GDNode? LastAssignmentNode { get; set; }
 
     /// <summary>
+    /// Whether this variable is guaranteed to be non-null at this program point.
+    /// Set to true after null checks (x != null) or truthiness checks (if x:).
+    /// </summary>
+    public bool IsGuaranteedNonNull { get; set; }
+
+    /// <summary>
+    /// Whether this variable is potentially null at this program point.
+    /// Set to false for types that cannot be null (int, float, bool, etc.).
+    /// Default is true for reference types and Variant.
+    /// </summary>
+    public bool IsPotentiallyNull { get; set; } = true;
+
+    /// <summary>
+    /// Duck-type constraints from has_method/has/has_signal checks.
+    /// Null if no duck-type constraints have been applied.
+    /// </summary>
+    public GDDuckType? DuckType { get; set; }
+
+    /// <summary>
     /// Gets the effective type for display/inference.
     /// Priority: narrowing > declared (when current is null/generic base) > current inferred > declared > Variant
     /// </summary>
@@ -125,8 +144,27 @@ public class GDFlowVariableType
         DeclaredType = DeclaredType,
         IsNarrowed = IsNarrowed,
         NarrowedFromType = NarrowedFromType,
-        LastAssignmentNode = LastAssignmentNode
+        LastAssignmentNode = LastAssignmentNode,
+        IsGuaranteedNonNull = IsGuaranteedNonNull,
+        IsPotentiallyNull = IsPotentiallyNull,
+        DuckType = DuckType != null ? CloneDuckType(DuckType) : null
     };
+
+    private static GDDuckType CloneDuckType(GDDuckType original)
+    {
+        var clone = new GDDuckType();
+        foreach (var kv in original.RequiredMethods)
+            clone.RequiredMethods[kv.Key] = kv.Value;
+        foreach (var kv in original.RequiredProperties)
+            clone.RequiredProperties[kv.Key] = kv.Value;
+        foreach (var s in original.RequiredSignals)
+            clone.RequiredSignals.Add(s);
+        foreach (var t in original.PossibleTypes)
+            clone.PossibleTypes.Add(t);
+        foreach (var t in original.ExcludedTypes)
+            clone.ExcludedTypes.Add(t);
+        return clone;
+    }
 
     private static GDUnionType CloneUnion(GDUnionType original)
     {

@@ -1,5 +1,6 @@
 using GDShrapt.Reader;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Abstractions;
 
@@ -18,6 +19,18 @@ public class GDContainerUsageProfile
     /// Whether this container is a Dictionary (vs Array).
     /// </summary>
     public bool IsDictionary { get; set; }
+
+    /// <summary>
+    /// Whether this container is (or can be) an Array.
+    /// For Union types (Array | Dictionary), both IsArray and IsDictionary are true.
+    /// </summary>
+    public bool IsArray { get; set; } = true;
+
+    /// <summary>
+    /// Whether this container is a Union of Array and Dictionary.
+    /// When true, both IsArray and IsDictionary should be true.
+    /// </summary>
+    public bool IsUnion { get; set; }
 
     /// <summary>
     /// All value usages (elements added to the container).
@@ -91,6 +104,64 @@ public class GDContainerUsageProfile
         var inferredType = ComputeInferredType();
         return $"Container '{VariableName}': {inferredType} ({ValueUsageCount} values)";
     }
+
+    /// <summary>
+    /// Creates a deep clone of this profile.
+    /// </summary>
+    public GDContainerUsageProfile Clone()
+    {
+        var clone = new GDContainerUsageProfile(VariableName)
+        {
+            IsDictionary = IsDictionary,
+            IsArray = IsArray,
+            IsUnion = IsUnion,
+            DeclarationLine = DeclarationLine,
+            DeclarationColumn = DeclarationColumn
+        };
+
+        clone.ValueUsages.AddRange(ValueUsages);
+        clone.KeyUsages.AddRange(KeyUsages);
+
+        return clone;
+    }
+
+    /// <summary>
+    /// Adds a value usage observation.
+    /// </summary>
+    public void AddValueUsage(string? inferredType, GDContainerUsageKind kind, GDNode? node)
+    {
+        if (string.IsNullOrEmpty(inferredType))
+            return;
+
+        ValueUsages.Add(new GDContainerUsageObservation
+        {
+            Kind = kind,
+            InferredType = inferredType,
+            IsHighConfidence = !string.IsNullOrEmpty(inferredType) && inferredType != "Variant",
+            Node = node,
+            Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
+            Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
+        });
+    }
+
+    /// <summary>
+    /// Adds a key usage observation (for dictionaries).
+    /// </summary>
+    public void AddKeyUsage(string? inferredType, GDContainerUsageKind kind, GDNode? node)
+    {
+        if (string.IsNullOrEmpty(inferredType))
+            return;
+
+        KeyUsages.Add(new GDContainerUsageObservation
+        {
+            Kind = kind,
+            InferredType = inferredType,
+            IsHighConfidence = !string.IsNullOrEmpty(inferredType) && inferredType != "Variant",
+            Node = node,
+            Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
+            Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
+        });
+    }
 }
 
 /// <summary>
@@ -127,6 +198,11 @@ public class GDContainerUsageObservation
     /// Column number of the usage (1-based).
     /// </summary>
     public int Column { get; set; }
+
+    /// <summary>
+    /// Source file path for cross-file analysis (optional).
+    /// </summary>
+    public string? SourceFilePath { get; set; }
 
     public override string ToString()
     {
@@ -173,5 +249,35 @@ public enum GDContainerUsageKind
     /// <summary>
     /// dict.get(key, default) - infers from default value
     /// </summary>
-    GetWithDefault
+    GetWithDefault,
+
+    /// <summary>
+    /// arr.push_back(value)
+    /// </summary>
+    PushBack,
+
+    /// <summary>
+    /// arr.append_array(array)
+    /// </summary>
+    AppendArray,
+
+    /// <summary>
+    /// dict[key] - tracking key type for dictionary access
+    /// </summary>
+    KeyAssignment,
+
+    /// <summary>
+    /// dict.get(key) - tracking dictionary get access
+    /// </summary>
+    DictionaryGet,
+
+    /// <summary>
+    /// arr[index] = value - tracking index assignment
+    /// </summary>
+    IndexAssignment,
+
+    /// <summary>
+    /// Unknown usage pattern
+    /// </summary>
+    Unknown
 }
