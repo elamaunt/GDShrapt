@@ -714,17 +714,43 @@ public class GDFindReferencesService : GDRefactoringServiceBase
 
     /// <summary>
     /// Finds an identifier with the given name within a node.
+    /// Uses fast-path checks for common node types before falling back to full token search.
     /// </summary>
     private GDIdentifier? FindIdentifierInNode(GDNode node, string name)
     {
-        // Check common patterns first for efficiency
+        // Fast-path 1: Simple identifier expression (most common)
         if (node is GDIdentifierExpression idExpr && idExpr.Identifier?.Sequence == name)
             return idExpr.Identifier;
 
+        // Fast-path 2: Member access (obj.member)
         if (node is GDMemberOperatorExpression memberOp && memberOp.Identifier?.Sequence == name)
             return memberOp.Identifier;
 
-        // Search in all tokens
+        // Fast-path 3: Match case variable binding
+        if (node is GDMatchCaseVariableExpression matchVar && matchVar.Identifier?.Sequence == name)
+            return matchVar.Identifier;
+
+        // Fast-path 4: Method declaration
+        if (node is GDMethodDeclaration methodDecl && methodDecl.Identifier?.Sequence == name)
+            return methodDecl.Identifier;
+
+        // Fast-path 5: Variable declaration
+        if (node is GDVariableDeclaration varDecl && varDecl.Identifier?.Sequence == name)
+            return varDecl.Identifier;
+
+        // Fast-path 6: Parameter declaration
+        if (node is GDParameterDeclaration param && param.Identifier?.Sequence == name)
+            return param.Identifier;
+
+        // Fast-path 7: Signal declaration
+        if (node is GDSignalDeclaration signalDecl && signalDecl.Identifier?.Sequence == name)
+            return signalDecl.Identifier;
+
+        // Fast-path 8: Enum declaration
+        if (node is GDEnumDeclaration enumDecl && enumDecl.Identifier?.Sequence == name)
+            return enumDecl.Identifier;
+
+        // Fallback: Full search in all tokens
         return node.AllTokens.OfType<GDIdentifier>().FirstOrDefault(i => i.Sequence == name);
     }
 
