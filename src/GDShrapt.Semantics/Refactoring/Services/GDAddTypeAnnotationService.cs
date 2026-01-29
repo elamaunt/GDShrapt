@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for adding type annotations to variable and parameter declarations.
 /// </summary>
-public class GDAddTypeAnnotationService
+public class GDAddTypeAnnotationService : GDRefactoringServiceBase
 {
     private static readonly string[] GodotTypes = new[]
     {
@@ -25,7 +25,7 @@ public class GDAddTypeAnnotationService
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Check if on a variable declaration without type annotation

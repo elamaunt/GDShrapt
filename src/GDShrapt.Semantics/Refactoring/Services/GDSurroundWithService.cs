@@ -8,14 +8,14 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for surrounding selected code with control structures.
 /// </summary>
-public class GDSurroundWithService
+public class GDSurroundWithService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the surround with refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Must have some code selected

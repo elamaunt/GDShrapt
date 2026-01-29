@@ -9,14 +9,14 @@ namespace GDShrapt.Semantics;
 /// Service for extracting selected statements into a new method.
 /// Analyzes dependencies to determine required parameters.
 /// </summary>
-public class GDExtractMethodService
+public class GDExtractMethodService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the extract method refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Must have statements selected

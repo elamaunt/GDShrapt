@@ -8,14 +8,14 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for converting for loops to equivalent while loops with explicit index management.
 /// </summary>
-public class GDConvertForToWhileService
+public class GDConvertForToWhileService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the convert for-to-while refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Must be inside a method

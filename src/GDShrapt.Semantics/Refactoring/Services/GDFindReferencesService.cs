@@ -320,14 +320,14 @@ public class GDFindReferencesResult : GDRefactoringResult
 /// Service for finding all references to a symbol.
 /// Uses GDSemanticModel for symbol resolution when available.
 /// </summary>
-public class GDFindReferencesService
+public class GDFindReferencesService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Determines the scope of a symbol at the given cursor position.
     /// </summary>
     public GDSymbolScope? DetermineSymbolScope(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return null;
 
         // Use SemanticModel for symbol resolution
