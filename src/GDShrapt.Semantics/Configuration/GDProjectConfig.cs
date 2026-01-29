@@ -39,6 +39,11 @@ public class GDProjectConfig
     /// Only used by the Godot editor plugin, ignored by CLI/LSP.
     /// </summary>
     public GDPluginConfig? Plugin { get; set; }
+
+    /// <summary>
+    /// Semantic analysis configuration.
+    /// </summary>
+    public GDSemanticsConfig Semantics { get; set; } = new();
 }
 
 /// <summary>

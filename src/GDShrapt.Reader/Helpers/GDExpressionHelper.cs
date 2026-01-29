@@ -296,6 +296,28 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Extracts the root variable name from a member access or indexer chain.
+        /// For "player.position.x", returns "player".
+        /// For "items[0].name", returns "items".
+        /// For "config["key"]["subkey"]", returns "config".
+        /// </summary>
+        /// <param name="expr">The expression to analyze.</param>
+        /// <returns>The root variable name, or null if not a variable access.</returns>
+        public static string GetRootVariableName(this GDExpression expr)
+        {
+            // Unwrap member access chains (e.g., "obj.prop.subprop")
+            while (expr is GDMemberOperatorExpression member)
+                expr = member.CallerExpression;
+
+            // Unwrap indexer chains (e.g., "arr[0][1]")
+            while (expr is GDIndexerExpression indexer)
+                expr = indexer.CallerExpression;
+
+            // Return the identifier at the root
+            return (expr as GDIdentifierExpression)?.Identifier?.Sequence;
+        }
+
+        /// <summary>
         /// Checks if the function name is a known GDScript built-in function
         /// </summary>
         public static bool IsBuiltInFunction(string functionName)

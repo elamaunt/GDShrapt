@@ -42,13 +42,11 @@ namespace GDShrapt.Semantics;
 public class GDProjectSemanticModel
 {
     private readonly GDScriptProject _project;
-    private readonly Dictionary<string, GDSemanticModel> _fileModels = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, GDSemanticModel> _fileModels = new();
     private GDRefactoringServices? _services;
     private GDDiagnosticsServices? _diagnostics;
-    private GDSignalConnectionRegistry? _signalRegistry;
-    private bool _signalRegistryInitialized;
-    private GDClassContainerRegistry? _containerRegistry;
-    private bool _containerRegistryInitialized;
+    private readonly Lazy<GDSignalConnectionRegistry> _signalRegistry;
+    private readonly Lazy<GDClassContainerRegistry> _containerRegistry;
 
     /// <summary>
     /// The underlying project.
@@ -69,39 +67,15 @@ public class GDProjectSemanticModel
 
     /// <summary>
     /// Signal connection registry for inter-procedural analysis.
-    /// Lazy initialized on first access.
+    /// Thread-safe lazy initialization.
     /// </summary>
-    public GDSignalConnectionRegistry SignalConnectionRegistry
-    {
-        get
-        {
-            if (!_signalRegistryInitialized)
-            {
-                _signalRegistry = new GDSignalConnectionRegistry();
-                InitializeSignalRegistry();
-                _signalRegistryInitialized = true;
-            }
-            return _signalRegistry!;
-        }
-    }
+    public GDSignalConnectionRegistry SignalConnectionRegistry => _signalRegistry.Value;
 
     /// <summary>
     /// Class-level container registry for cross-file type inference.
-    /// Lazy initialized on first access.
+    /// Thread-safe lazy initialization.
     /// </summary>
-    public GDClassContainerRegistry ContainerRegistry
-    {
-        get
-        {
-            if (!_containerRegistryInitialized)
-            {
-                _containerRegistry = new GDClassContainerRegistry();
-                InitializeContainerRegistry();
-                _containerRegistryInitialized = true;
-            }
-            return _containerRegistry!;
-        }
-    }
+    public GDClassContainerRegistry ContainerRegistry => _containerRegistry.Value;
 
     /// <summary>
     /// Creates a new project-level semantic model.
@@ -110,33 +84,34 @@ public class GDProjectSemanticModel
     public GDProjectSemanticModel(GDScriptProject project)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
+        _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
+        _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     /// <summary>
     /// Initializes the signal connection registry by collecting all connections.
     /// </summary>
-    private void InitializeSignalRegistry()
+    private GDSignalConnectionRegistry InitializeSignalRegistry()
     {
-        if (_signalRegistry == null)
-            return;
-
+        var registry = new GDSignalConnectionRegistry();
         var collector = new GDSignalConnectionCollector(_project);
         var connections = collector.CollectAllConnections();
 
         foreach (var connection in connections)
         {
-            _signalRegistry.Register(connection);
+            registry.Register(connection);
         }
+
+        return registry;
     }
 
     /// <summary>
     /// Initializes the class container registry by collecting all class-level container profiles.
     /// Also performs cross-file analysis to merge usages from external files.
     /// </summary>
-    private void InitializeContainerRegistry()
+    private GDClassContainerRegistry InitializeContainerRegistry()
     {
-        if (_containerRegistry == null)
-            return;
+        var registry = new GDClassContainerRegistry();
 
         // Phase 1: Collect single-file profiles from each script
         foreach (var scriptFile in _project.ScriptFiles)
@@ -148,14 +123,14 @@ public class GDProjectSemanticModel
             var className = scriptFile.TypeName ?? "";
             foreach (var kv in model.ClassContainerProfiles)
             {
-                _containerRegistry.Register(className, kv.Key, kv.Value, scriptFile.FullPath);
+                registry.Register(className, kv.Key, kv.Value, scriptFile.FullPath);
             }
         }
 
         // Phase 2: Collect cross-file usages and merge them
         var crossFileCollector = new GDCrossFileContainerUsageCollector(_project);
 
-        foreach (var profileEntry in _containerRegistry.AllProfiles)
+        foreach (var profileEntry in registry.AllProfiles)
         {
             // Parse key to get class and container name
             var parts = profileEntry.Key.Split(new[] { '.' }, 2);
@@ -169,9 +144,11 @@ public class GDProjectSemanticModel
             var crossFileUsages = crossFileCollector.CollectUsages(className, containerName);
             if (crossFileUsages.Count > 0)
             {
-                _containerRegistry.MergeCrossFileUsages(className, containerName, crossFileUsages);
+                registry.MergeCrossFileUsages(className, containerName, crossFileUsages);
             }
         }
+
+        return registry;
     }
 
     #region Factory Methods
@@ -218,6 +195,7 @@ public class GDProjectSemanticModel
 
     /// <summary>
     /// Gets or creates the semantic model for a script file.
+    /// Thread-safe via ConcurrentDictionary.
     /// </summary>
     public GDSemanticModel? GetSemanticModel(GDScriptFile scriptFile)
     {
@@ -228,21 +206,16 @@ public class GDProjectSemanticModel
         if (string.IsNullOrEmpty(path))
             return null;
 
-        if (_fileModels.TryGetValue(path, out var model))
-            return model;
-
-        // Ensure the file is analyzed
-        if (scriptFile.SemanticModel == null)
+        return _fileModels.GetOrAdd(path, _ =>
         {
-            var runtimeProvider = _project.CreateRuntimeProvider();
-            scriptFile.Analyze(runtimeProvider);
-        }
-
-        model = scriptFile.SemanticModel;
-        if (model != null)
-            _fileModels[path] = model;
-
-        return model;
+            // Ensure the file is analyzed
+            if (scriptFile.SemanticModel == null)
+            {
+                var runtimeProvider = _project.CreateRuntimeProvider();
+                scriptFile.Analyze(runtimeProvider);
+            }
+            return scriptFile.SemanticModel;
+        })!;
     }
 
     /// <summary>
@@ -639,17 +612,18 @@ public class GDProjectSemanticModel
     /// <summary>
     /// Invalidates the cached semantic model for a file.
     /// Call this when a file has changed.
+    /// Thread-safe via ConcurrentDictionary.
     /// </summary>
     public void InvalidateFile(string filePath)
     {
         if (!string.IsNullOrEmpty(filePath))
         {
-            _fileModels.Remove(filePath);
+            _fileModels.TryRemove(filePath, out _);
 
             // Also invalidate signal connections from this file
-            if (_signalRegistryInitialized && _signalRegistry != null)
+            if (_signalRegistry.IsValueCreated)
             {
-                _signalRegistry.UnregisterFile(filePath);
+                _signalRegistry.Value.UnregisterFile(filePath);
                 // Re-collect connections for this file
                 var collector = new GDSignalConnectionCollector(_project);
                 var file = GetFileByPath(filePath);
@@ -658,29 +632,30 @@ public class GDProjectSemanticModel
                     var connections = collector.CollectConnectionsInFile(file);
                     foreach (var connection in connections)
                     {
-                        _signalRegistry.Register(connection);
+                        _signalRegistry.Value.Register(connection);
                     }
                 }
             }
 
             // Invalidate container profiles from this file
-            if (_containerRegistryInitialized && _containerRegistry != null)
+            if (_containerRegistry.IsValueCreated)
             {
-                _containerRegistry.InvalidateFile(filePath);
+                _containerRegistry.Value.InvalidateFile(filePath);
             }
         }
     }
 
     /// <summary>
     /// Clears all cached semantic models.
+    /// Warning: Lazy registries will need to be re-initialized on next access.
     /// </summary>
     public void InvalidateAll()
     {
         _fileModels.Clear();
-        _signalRegistry?.Clear();
-        _signalRegistryInitialized = false;
-        _containerRegistry?.Clear();
-        _containerRegistryInitialized = false;
+        if (_signalRegistry.IsValueCreated)
+            _signalRegistry.Value.Clear();
+        if (_containerRegistry.IsValueCreated)
+            _containerRegistry.Value.Clear();
     }
 
     #endregion

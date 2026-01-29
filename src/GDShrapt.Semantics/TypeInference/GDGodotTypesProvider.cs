@@ -45,13 +45,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             }
         }
 
-        // Add primitive types that are not in TypeDatas
-        foreach (var primitiveType in new[] { "void", "bool", "int", "float", "String", "Variant" })
-        {
-            _knownTypes.Add(primitiveType);
-        }
-
-        // Add all GlobalTypes from TypesMap (includes PackedArray types, Array, Dictionary, etc.)
+        // Add all GlobalTypes from TypesMap (includes primitives, PackedArray types, Array, Dictionary, etc.)
         if (_assemblyData?.GlobalData?.GlobalTypes != null)
         {
             foreach (var globalType in _assemblyData.GlobalData.GlobalTypes.Keys)

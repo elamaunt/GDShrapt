@@ -333,13 +333,15 @@ namespace GDShrapt.Semantics
             // For typed arrays: Array[T] -> T
             if (containerTypeNode is GDArrayTypeNode arrayType)
             {
-                return arrayType.InnerType;
+                if (arrayType.InnerType != null)
+                    return arrayType.InnerType;
             }
 
             // For typed dictionaries: Dictionary[K, V] -> V
             if (containerTypeNode is GDDictionaryTypeNode dictType)
             {
-                return dictType.ValueType;
+                if (dictType.ValueType != null)
+                    return dictType.ValueType;
             }
 
             // For untyped Array/Dictionary, try to infer from usage
@@ -1015,7 +1017,9 @@ namespace GDShrapt.Semantics
                     }
                     else
                     {
-                        paramTypes.Add("Variant");
+                        // Infer from lambda parameter usage (duck typing)
+                        var inferredType = InferLambdaParameterType(lambda, param);
+                        paramTypes.Add(inferredType);
                     }
                 }
             }
@@ -1043,6 +1047,44 @@ namespace GDShrapt.Semantics
             // With parameters: Callable[[int, String], bool]
             var paramsStr = string.Join(", ", paramTypes);
             return $"Callable[[{paramsStr}], {actualReturn}]";
+        }
+
+        /// <summary>
+        /// Infers a lambda parameter type from its usage patterns within the lambda body.
+        /// Uses the same duck-typing infrastructure as method parameters.
+        /// </summary>
+        private string InferLambdaParameterType(GDMethodExpression lambda, GDParameterDeclaration param)
+        {
+            var paramName = param.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(paramName))
+                return "Variant";
+
+            // Use existing analyzer infrastructure (already has AnalyzeLambda method!)
+            var constraints = GDParameterUsageAnalyzer.AnalyzeLambda(lambda, _runtimeProvider);
+
+            if (!constraints.TryGetValue(paramName, out var paramConstraints) ||
+                !paramConstraints.HasConstraints)
+            {
+                return "Variant";
+            }
+
+            // Use existing resolver infrastructure
+            var resolver = new GDParameterTypeResolver(_runtimeProvider);
+            var result = resolver.ResolveFromConstraints(paramConstraints);
+
+            // Use individual union types if available
+            if (result.UnionTypes != null && result.UnionTypes.Count > 0)
+            {
+                // Single type
+                if (result.UnionTypes.Count == 1)
+                    return result.UnionTypes[0];
+
+                // Union type: "Array | Dictionary"
+                return string.Join(" | ", result.UnionTypes);
+            }
+
+            // Fall back to TypeName or Variant
+            return !string.IsNullOrEmpty(result.TypeName) ? result.TypeName : "Variant";
         }
 
         /// <summary>

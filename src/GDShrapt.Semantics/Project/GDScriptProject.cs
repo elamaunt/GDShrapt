@@ -34,6 +34,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly bool _enableFileWatcher;
+    private readonly GDScriptProjectOptions? _options;
     private FileSystemWatcher? _scriptsWatcher;
     private bool _disposed;
 
@@ -94,6 +95,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public GDScriptProject(IGDProjectContext context, GDScriptProjectOptions? options = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _options = options;
         _fileSystem = options?.FileSystem ?? new GDDefaultFileSystem();
         _logger = options?.Logger ?? GDNullLogger.Instance;
         _enableFileWatcher = options?.EnableFileWatcher ?? false;
@@ -566,4 +568,10 @@ public class GDScriptProjectOptions
     /// Whether to enable call site registry for incremental updates.
     /// </summary>
     public bool EnableCallSiteRegistry { get; set; } = false;
+
+    /// <summary>
+    /// Semantic analysis configuration.
+    /// If null, uses defaults from GDSemanticsConfig.
+    /// </summary>
+    public GDSemanticsConfig? SemanticsConfig { get; set; }
 }
