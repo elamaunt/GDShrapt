@@ -143,6 +143,11 @@ namespace GDShrapt.Reader
             state.PassSharpChar();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            state.PopAndPassCarriageReturnChar();
+        }
+
         internal override void WalkIn(IGDVisitor visitor, bool walkBackward)
         {
             visitor.WillVisitExpression(this);

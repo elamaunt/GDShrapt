@@ -18,6 +18,12 @@
             state.PassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            CompleteSequence(state);
+            state.PassCarriageReturnChar();
+        }
+
         internal override bool CanAppendChar(char c, GDReadingState state)
         {
             return true;

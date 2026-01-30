@@ -27,6 +27,12 @@ namespace GDShrapt.Reader
             state.PassLeftSlashChar();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            state.Pop();
+            state.PassCarriageReturnChar();
+        }
+
         public override int Length => ToString().Length;
         public override int NewLinesCount => 0;
     }

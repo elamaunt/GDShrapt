@@ -38,6 +38,19 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDMatchCasesResolver(this, _lineIntendationThreshold));
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDMatchCasesList();

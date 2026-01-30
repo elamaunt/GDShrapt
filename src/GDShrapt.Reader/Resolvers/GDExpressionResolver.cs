@@ -217,7 +217,7 @@ namespace GDShrapt.Reader
 
                         // Send all next tokens to the current reader
                         foreach (var token in form.GetAllTokensAfter(0))
-                            state.PassString(token.ToString());
+                            PassToken(state, token);
 
                         state.PassChar(c);
                         return;
@@ -527,6 +527,31 @@ namespace GDShrapt.Reader
             }
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            // CR handling mirrors NL handling - complete expression first, then pass CR
+            if (NewLineReceiver != null)
+            {
+                if (_expression != null)
+                {
+                    PushAndSwap(state, new GDDualOperatorExpression(_intendation, true));
+                    state.PassCarriageReturnChar();
+                }
+                else
+                {
+                    FlushSplitTokensToNewLineReceiver();
+                    // Pass CR to NewLineReceiver as a token
+                    ((ITokenReceiver)NewLineReceiver).HandleReceivedToken(new GDCarriageReturnToken());
+                }
+            }
+            else
+            {
+                if (!CheckKeywords(state))
+                    CompleteExpression(state);
+                state.PassCarriageReturnChar();
+            }
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             if (NewLineReceiver != null)
@@ -614,7 +639,7 @@ namespace GDShrapt.Reader
 
                     // Send all tokens after Single operator to the current reader
                     foreach (var token in operatorExpression.Form.GetAllTokensAfter(1))
-                        state.PassString(token.ToString());
+                        PassToken(state, token);
                 }
                 else if (last is GDDualOperatorExpression dualOperatorExpression &&
                     dualOperatorExpression.RightExpression == null &&
@@ -626,7 +651,7 @@ namespace GDShrapt.Reader
 
                     // Send all tokens after Left expression to the current reader
                     foreach (var token in dualOperatorExpression.Form.GetAllTokensAfter(0))
-                        state.PassString(token.ToString());
+                        PassToken(state, token);
                 }
                 else
                 {
@@ -637,6 +662,25 @@ namespace GDShrapt.Reader
                 OwnerWithSkip?.HandleReceivedTokenSkip();
 
             FlushSplitTokens(state);
+        }
+
+        /// <summary>
+        /// Passes a token to the state, handling special tokens like CR that have empty ToString().
+        /// </summary>
+        private static void PassToken(GDReadingState state, GDSyntaxToken token)
+        {
+            if (token is GDCarriageReturnToken)
+            {
+                state.PassCarriageReturnChar();
+            }
+            else if (token is GDNewLine)
+            {
+                state.PassNewLine();
+            }
+            else
+            {
+                state.PassString(token.ToString());
+            }
         }
 
         private void PushAndSwap<T>(GDReadingState state, T node)
@@ -695,6 +739,11 @@ namespace GDShrapt.Reader
         }
 
         public void HandleReceivedToken(GDMultiLineSplitToken token)
+        {
+            Owner.HandleReceivedToken(token);
+        }
+
+        public void HandleReceivedToken(GDCarriageReturnToken token)
         {
             Owner.HandleReceivedToken(token);
         }

@@ -84,6 +84,11 @@ namespace GDShrapt.Reader
             _form.AddBeforeActiveToken(new GDNewLine());
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            _form.AddBeforeActiveToken(new GDCarriageReturnToken());
+        }
+
         void ITokenReceiver<GDClassMembersList>.HandleReceivedToken(GDClassMembersList token)
         {
             if (_form.StateIndex <= (int)State.Members)

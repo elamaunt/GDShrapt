@@ -141,6 +141,12 @@ namespace GDShrapt.Reader
             HandleCharAfterIntendation('\n', state);
         }
 
+        internal override void HandleCarriageReturnCharAfterIntendation(GDReadingState state)
+        {
+            // CR handling - treat like other special chars, pass through HandleCharAfterIntendation
+            HandleCharAfterIntendation('\r', state);
+        }
+
         internal override void HandleSharpCharAfterIntendation(GDReadingState state)
         {
             HandleCharAfterIntendation('#', state);

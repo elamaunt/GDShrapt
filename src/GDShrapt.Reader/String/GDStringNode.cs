@@ -229,6 +229,18 @@ namespace GDShrapt.Reader
             HandleChar('\n', state);
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.State == State.Completed)
+            {
+                state.PopAndPassCarriageReturnChar();
+                return;
+            }
+
+            // For incomplete strings, CR is not valid - but pass through HandleChar for error handling
+            HandleChar('\r', state);
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             HandleChar('#', state);

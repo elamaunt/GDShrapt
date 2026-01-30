@@ -242,6 +242,35 @@ namespace GDShrapt.Reader
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                state.Push(Parameters);
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            if (_form.IsOrLowerState(State.BaseCallParameters))
+            {
+                _form.State = State.BaseCallCloseBracket;
+                state.Push(BaseCallParameters);
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            if (_form.StateIndex <= (int)State.Statements)
+            {
+                _form.State = State.Completed;
+                state.Push(Statements);
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDMethodDeclaration();

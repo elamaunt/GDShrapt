@@ -35,6 +35,11 @@ namespace GDShrapt.Reader
             base.HandleChar('\n', state);
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            base.HandleChar('\r', state);
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             base.HandleChar('#', state);

@@ -54,6 +54,21 @@
             HandleChar('\n', state);
         }
 
+        internal override void HandleCarriageReturnCharAfterIntendation(GDReadingState state)
+        {
+            // CR handling mirrors the SharpChar/LeftSlash pattern
+            var s = Sequence;
+            state.Pop();
+            OnFail(state);
+
+            PassIntendationSequence(state);
+
+            for (int i = 0; i < Index - 1; i++)
+                state.PassChar(s[i]);
+
+            state.PassCarriageReturnChar();
+        }
+
         protected override void OnIntendationThresholdMet(GDReadingState state)
         {
             base.OnIntendationThresholdMet(state);

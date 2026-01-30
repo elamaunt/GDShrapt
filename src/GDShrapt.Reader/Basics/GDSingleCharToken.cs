@@ -28,6 +28,14 @@
             throw new GDInvalidStateException();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (Char != '\r')
+                throw new GDInvalidStateException();
+
+            state.Pop();
+        }
+
         public override string ToString()
         {
             return Char.ToString();

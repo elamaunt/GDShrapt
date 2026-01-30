@@ -14,6 +14,7 @@
         void HandleReceivedToken(GDAttribute token);
         void HandleReceivedToken(GDInvalidToken token);
         void HandleReceivedToken(GDMultiLineSplitToken token);
+        void HandleReceivedToken(GDCarriageReturnToken token);
 
         bool IsCompleted { get; }
     }

@@ -201,6 +201,14 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Sends carriage return character '\r' to the current reader.
+        /// </summary>
+        public void PassCarriageReturnChar()
+        {
+            CurrentReader?.HandleCarriageReturnChar(this);
+        }
+
+        /// <summary>
         /// Signals that the parser has advanced to a new character from the input stream.
         /// This resets the loop detection counter.
         /// Called before PassChar for each new character from the external input.
@@ -241,7 +249,10 @@ namespace GDShrapt.Reader
                 return;
 
             if (c == '\r')
+            {
+                reader.HandleCarriageReturnChar(this);
                 return;
+            }
 
             if (c == '\n')
             {
@@ -328,6 +339,12 @@ namespace GDShrapt.Reader
         {
             _readersStack.Pop();
             PassNewLine();
+        }
+
+        public void PopAndPassCarriageReturnChar()
+        {
+            _readersStack.Pop();
+            PassCarriageReturnChar();
         }
     }
 }

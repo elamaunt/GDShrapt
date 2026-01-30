@@ -39,6 +39,17 @@
             this.ResolveStringPart('\n', state, _bounder);
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_ended)
+            {
+                state.PopAndPassCarriageReturnChar();
+                return;
+            }
+
+            this.ResolveStringPart('\r', state, _bounder);
+        }
+
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
             if (Count == 0)

@@ -45,6 +45,19 @@ namespace GDShrapt.Reader
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext));
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDStatementsList();

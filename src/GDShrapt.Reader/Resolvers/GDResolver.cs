@@ -20,5 +20,10 @@
             Owner.HandleReceivedToken(state.Push(new GDMultiLineSplitToken()));
             state.PassLeftSlashChar();
         }
+
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            Owner.HandleReceivedToken(new GDCarriageReturnToken());
+        }
     }
 }

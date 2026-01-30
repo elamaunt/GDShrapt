@@ -74,18 +74,21 @@ func updateSample(obj):
 
             var tokens = @class.AllTokens.ToArray();
 
+            // Filter out CR tokens for position checking (CR has Length=0, doesn't affect Godot positions)
+            var nonCrTokens = tokens.Where(t => !(t is GDCarriageReturnToken)).ToArray();
+
             int i = 0;
 
-            CheckPosition(tokens[i++], 0, 0, 0, 0); // intendation
-            CheckPosition(tokens[i++], 0, 0, 0, 7); // extends
-            CheckPosition(tokens[i++], 0, 7, 0, 8); // ' '
-            CheckPosition(tokens[i++], 0, 8, 0, 14); // Node2D
-            CheckPosition(tokens[i++], 0, 14, 1, 0); // \n
-            CheckPosition(tokens[i++], 1, 0, 2, 0); // \n
-            CheckPosition(tokens[i++], 2, 0, 2, 0); // intendation
-            CheckPosition(tokens[i++], 2, 0, 2, 10); // class_name
-            CheckPosition(tokens[i++], 2, 10, 2, 11); // ' '
-            CheckPosition(tokens[i++], 2, 11, 2, 16); // Usage
+            CheckPosition(nonCrTokens[i++], 0, 0, 0, 0); // intendation
+            CheckPosition(nonCrTokens[i++], 0, 0, 0, 7); // extends
+            CheckPosition(nonCrTokens[i++], 0, 7, 0, 8); // ' '
+            CheckPosition(nonCrTokens[i++], 0, 8, 0, 14); // Node2D
+            CheckPosition(nonCrTokens[i++], 0, 14, 1, 0); // \n
+            CheckPosition(nonCrTokens[i++], 1, 0, 2, 0); // \n
+            CheckPosition(nonCrTokens[i++], 2, 0, 2, 0); // intendation
+            CheckPosition(nonCrTokens[i++], 2, 0, 2, 10); // class_name
+            CheckPosition(nonCrTokens[i++], 2, 10, 2, 11); // ' '
+            CheckPosition(nonCrTokens[i++], 2, 11, 2, 16); // Usage
         }
 
         [TestMethod]

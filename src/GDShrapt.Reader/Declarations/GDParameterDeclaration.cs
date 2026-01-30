@@ -127,6 +127,11 @@
             _form.AddBeforeActiveToken(new GDNewLine());
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            _form.AddBeforeActiveToken(new GDCarriageReturnToken());
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             // Spaces before comment are not trailing, they're part of formatting

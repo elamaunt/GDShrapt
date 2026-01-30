@@ -204,6 +204,22 @@ namespace GDShrapt.Reader
             state.PassNewLine();
         }
 
+        internal override void HandleCarriageReturnCharAfterIntendation(GDReadingState state)
+        {
+            // CR handling mirrors NL - no accessors found, pop and pass through
+            if (_checkComma)
+            {
+                _checkComma = false;
+                CommaReceiver.HandleReceivedTokenSkip();
+            }
+
+            Owner.HandleReceivedTokenSkip();
+            state.Pop();
+            PassIntendationSequence(state);
+            PassStoredSequence(state);
+            state.PassCarriageReturnChar();
+        }
+
         internal override void HandleSharpCharAfterIntendation(GDReadingState state)
         {
             Owner.HandleReceivedTokenSkip();

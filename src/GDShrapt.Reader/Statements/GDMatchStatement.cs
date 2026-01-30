@@ -92,7 +92,24 @@
                     state.PushAndPassNewLine(Cases);
                     break;
                 default:
-                    state.PopAndPassNewLine(); 
+                    state.PopAndPassNewLine();
+                    break;
+            }
+        }
+
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            switch (_form.State)
+            {
+                case State.Value:
+                case State.Colon:
+                case State.Cases:
+                    _form.State = State.Completed;
+                    state.Push(Cases);
+                    state.PassCarriageReturnChar();
+                    break;
+                default:
+                    state.PopAndPassCarriageReturnChar();
                     break;
             }
         }

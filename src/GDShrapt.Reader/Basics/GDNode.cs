@@ -141,6 +141,11 @@ namespace GDShrapt.Reader
             state.PassLeftSlashChar();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            Form.AddBeforeActiveToken(new GDCarriageReturnToken());
+        }
+
         public override void AppendTo(StringBuilder builder)
         {
             foreach (var token in Form)
@@ -433,6 +438,11 @@ namespace GDShrapt.Reader
         }
 
         void ITokenReceiver.HandleReceivedToken(GDMultiLineSplitToken token)
+        {
+            Form.AddBeforeActiveToken(token);
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDCarriageReturnToken token)
         {
             Form.AddBeforeActiveToken(token);
         }

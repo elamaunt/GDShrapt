@@ -60,6 +60,11 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDExpressionStatement();

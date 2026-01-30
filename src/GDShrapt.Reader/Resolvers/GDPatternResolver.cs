@@ -152,6 +152,16 @@ namespace GDShrapt.Reader
             HandleChar('\\', state);
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            // CR should complete pattern matching just like newline does
+            // Pop first, then complete with any matched pattern, then pass CR
+            state.Pop();
+            CompleteWithPattern(_lastPatternCheck.MatchedPattern, state);
+            _sequenceBuilder.Clear();
+            state.PassCarriageReturnChar();
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             CompleteWithPattern(_lastPatternCheck.MatchedPattern, state);

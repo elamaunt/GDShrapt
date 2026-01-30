@@ -110,6 +110,24 @@
             }
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            switch (_form.State)
+            {
+                case State.Get:
+                case State.Colon:
+                case State.Expression:
+                case State.Statements:
+                    _form.State = State.Completed;
+                    state.Push(Statements);
+                    state.PassCarriageReturnChar();
+                    break;
+                default:
+                    state.PopAndPassCarriageReturnChar();
+                    break;
+            }
+        }
+
         void ITokenReceiver<GDGetKeyword>.HandleReceivedToken(GDGetKeyword token)
         {
             if (_form.State == State.Get)

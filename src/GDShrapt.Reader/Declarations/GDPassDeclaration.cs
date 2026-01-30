@@ -56,6 +56,12 @@ namespace GDShrapt.Reader
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            _form.State = State.Completed;
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDPassDeclaration();

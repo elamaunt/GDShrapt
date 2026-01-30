@@ -40,6 +40,7 @@ namespace GDShrapt.Reader
 
         internal abstract void HandleCharAfterIntendation(char c, GDReadingState state);
         internal abstract void HandleNewLineAfterIntendation(GDReadingState state);
+        internal abstract void HandleCarriageReturnCharAfterIntendation(GDReadingState state);
         internal abstract void HandleSharpCharAfterIntendation(GDReadingState state);
         internal abstract void HandleLeftSlashCharAfterIntendation(GDReadingState state);
 
@@ -168,6 +169,20 @@ namespace GDShrapt.Reader
             }
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (!_lineIntendationEnded)
+            {
+                // Buffer CR just like we buffer other whitespace characters
+                _sequenceBuilder.Append('\r');
+            }
+            else
+            {
+                // After indentation ended, delegate to subclass handler (mirrors HandleNewLineChar pattern)
+                HandleCarriageReturnCharAfterIntendation(state);
+            }
+        }
+
         protected void SendIntendationTokensToOwner()
         {
             if (_intendationTokensSent)
@@ -212,6 +227,24 @@ namespace GDShrapt.Reader
                             if (comment == null)
                                 comment = new GDComment();
                             comment.Append(c);
+                        }
+                        break;
+                    case '\r':
+                        // CR should be sent before the corresponding NL
+                        if (split != null)
+                            split.Append(c);
+                        else if (comment != null)
+                            comment.Append(c);
+                        else
+                        {
+                            // Flush any pending space before CR
+                            if (space != null)
+                            {
+                                space.Complete();
+                                Owner.HandleReceivedToken(space);
+                                space = null;
+                            }
+                            Owner.HandleReceivedToken(new GDCarriageReturnToken());
                         }
                         break;
                     case '\n':

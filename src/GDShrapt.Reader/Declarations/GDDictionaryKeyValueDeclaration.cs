@@ -89,6 +89,14 @@
                 _form.AddBeforeActiveToken(new GDNewLine());
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.State == State.Completed)
+                state.PopAndPassCarriageReturnChar();
+            else
+                _form.AddBeforeActiveToken(new GDCarriageReturnToken());
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDDictionaryKeyValueDeclaration();

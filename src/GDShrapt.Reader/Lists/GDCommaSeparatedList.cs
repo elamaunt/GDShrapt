@@ -42,6 +42,11 @@
             ListForm.AddToEnd(new GDNewLine());
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            ListForm.AddToEnd(new GDCarriageReturnToken());
+        }
+
         internal void SetAsCompleted()
         {
             _completed = true;

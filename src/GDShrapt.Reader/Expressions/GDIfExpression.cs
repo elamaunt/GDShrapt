@@ -116,6 +116,16 @@
                 state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (AllowNewLines && _form.State != State.Completed)
+            {
+                _form.AddBeforeActiveToken(new GDCarriageReturnToken());
+            }
+            else
+                state.PopAndPassCarriageReturnChar();
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             if (AllowNewLines && _form.State != State.Completed)

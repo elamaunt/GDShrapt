@@ -88,6 +88,11 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            state.PopAndPassCarriageReturnChar();
+        }
+
         void ITokenReceiver<GDGetKeyword>.HandleReceivedToken(GDGetKeyword token)
         {
             if (_form.State == State.Get)

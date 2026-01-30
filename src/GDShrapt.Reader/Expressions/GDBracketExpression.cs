@@ -88,6 +88,23 @@
             }
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            switch (_form.State)
+            {
+                case State.OpenBracket:
+                    state.PopAndPassCarriageReturnChar();
+                    break;
+                case State.Expression:
+                case State.CloseBracket:
+                    _form.AddBeforeActiveToken(new GDCarriageReturnToken());
+                    break;
+                default:
+                    state.PopAndPassCarriageReturnChar();
+                    break;
+            }
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             _form.AddBeforeActiveToken(state.Push(new GDComment()));

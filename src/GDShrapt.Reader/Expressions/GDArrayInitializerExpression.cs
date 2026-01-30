@@ -90,6 +90,20 @@
 
             state.PopAndPassNewLine();
         }
+
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.IsOrLowerState(State.Values))
+            {
+                _form.State = State.SquareCloseBracket;
+                state.Push(Values);
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             _form.AddBeforeActiveToken(state.Push(new GDComment()));

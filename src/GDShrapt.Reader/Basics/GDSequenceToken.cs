@@ -28,6 +28,12 @@
             state.PassLeftSlashChar();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            state.Pop();
+            state.PassCarriageReturnChar();
+        }
+
         public override string ToString()
         {
             return Sequence;

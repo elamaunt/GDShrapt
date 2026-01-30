@@ -193,6 +193,32 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.IsOrLowerState(State.FirstAccessorDeclarationNode))
+            {
+                state.Push(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, false, false, Intendation + 1));
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            if (_form.State == State.Comma)
+            {
+                state.Push(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, false, true, Intendation + 1));
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            if (_form.State == State.SecondAccessorDeclarationNode)
+            {
+                state.Push(new GDSetGetAccessorsResolver<GDVariableDeclaration>(this, this, Comma != null, false, Intendation + 1));
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDVariableDeclaration();

@@ -41,6 +41,12 @@ namespace GDShrapt.Reader
         public override GDSyntaxToken Clone() => new GDCarriageReturnToken();
 
         /// <summary>
+        /// Returns an empty string for Godot-compatible output.
+        /// Use ToOriginalString() on parent nodes to include \r characters.
+        /// </summary>
+        public override string ToString() => string.Empty;
+
+        /// <summary>
         /// Appends this token to the builder.
         /// </summary>
         /// <param name="builder">The StringBuilder to append to.</param>
@@ -53,8 +59,8 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Internal constructor - carriage return tokens are created only by the parser.
+        /// Creates a new carriage return token.
         /// </summary>
-        internal GDCarriageReturnToken() { }
+        public GDCarriageReturnToken() { }
     }
 }

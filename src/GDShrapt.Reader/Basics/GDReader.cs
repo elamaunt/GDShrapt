@@ -22,6 +22,13 @@
         /// <param name="state">Current reading state</param>
         internal abstract void HandleLeftSlashChar(GDReadingState state);
 
+        /// <summary>
+        /// The same <see cref="HandleChar(char, GDReadingState)"/> but separated method for a carriage return character.
+        /// Used to preserve CRLF line endings for exact text reconstruction.
+        /// </summary>
+        /// <param name="state">Current reading state</param>
+        internal abstract void HandleCarriageReturnChar(GDReadingState state);
+
 
         /// <summary>
         /// Simple check on whitespace characters ' ' and '\t'.

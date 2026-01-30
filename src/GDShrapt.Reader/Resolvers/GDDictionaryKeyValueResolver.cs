@@ -61,6 +61,27 @@
             }
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (!_keyExpressionChecked)
+            {
+                Owner.HandleReceivedToken(new GDCarriageReturnToken());
+                return;
+            }
+
+            if (_activeDeclaration == null)
+            {
+                Owner.HandleReceivedTokenSkip();
+                state.PopAndPassCarriageReturnChar();
+            }
+            else
+            {
+                state.Pop();
+                Owner.HandleReceivedToken(_activeDeclaration);
+                _activeDeclaration.HandleCarriageReturnChar(state);
+            }
+        }
+
         void ITokenReceiver<GDExpression>.HandleReceivedToken(GDExpression token)
         {
             _activeDeclaration = new GDDictionaryKeyValueDeclaration();
@@ -109,6 +130,14 @@
         }
 
         public void HandleReceivedToken(GDMultiLineSplitToken token)
+        {
+            if (_activeDeclaration == null)
+                Owner.HandleReceivedToken(token);
+            else
+                _receiver.HandleReceivedToken(token);
+        }
+
+        public void HandleReceivedToken(GDCarriageReturnToken token)
         {
             if (_activeDeclaration == null)
                 Owner.HandleReceivedToken(token);

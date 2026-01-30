@@ -25,7 +25,15 @@
       "Bash(dotnet sln:*)",
       "Bash(gh run list:*)",
       "Bash(node -e:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(dotnet script:*)",
+      "Bash(while read f)",
+      "Bash(do if ! grep -q \"HandleCarriageReturnChar\" \"$f\")",
+      "Bash(then echo \"$f\")",
+      "Bash(fi)",
+      "Bash(for:*)",
+      "Bash(do if grep -q \"HandleNewLineChar\" \"$f\")",
+      "Bash(! grep -q \"HandleCarriageReturnChar\" \"$f\")"
     ]
   }
 }

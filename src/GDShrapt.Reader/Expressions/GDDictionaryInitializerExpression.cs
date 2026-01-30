@@ -81,6 +81,19 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.IsOrLowerState(State.KeyValues))
+            {
+                _form.State = State.FigureCloseBracket;
+                state.Push(KeyValues);
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         internal override void HandleSharpChar(GDReadingState state)
         {
             if (_form.State != State.Completed)

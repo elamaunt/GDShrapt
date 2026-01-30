@@ -39,6 +39,13 @@
             state.PassNewLine();
         }
 
+        internal override void HandleCarriageReturnCharAfterIntendation(GDReadingState state)
+        {
+            // CR handling: send CR token, but DON'T reset indentation
+            // The subsequent NL will handle the line reset. CR is just a token.
+            Owner.HandleReceivedToken(new GDCarriageReturnToken());
+        }
+
         internal override void HandleSharpCharAfterIntendation(GDReadingState state)
         {
             Owner.HandleReceivedToken(state.Push(new GDComment()));

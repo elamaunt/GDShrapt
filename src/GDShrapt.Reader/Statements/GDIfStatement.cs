@@ -94,6 +94,30 @@
             }
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            switch (_form.State)
+            {
+                case State.IfBranch:
+                    _form.State = State.ElifBranches;
+                    state.Push(IfBranch);
+                    state.PassCarriageReturnChar();
+                    break;
+                case State.ElifBranches:
+                    _form.State = State.ElseBranch;
+                    state.Push(ElifBranchesList);
+                    state.PassCarriageReturnChar();
+                    break;
+                case State.ElseBranch:
+                    state.Push(new GDElseResolver(this, LineIntendation));
+                    state.PassCarriageReturnChar();
+                    break;
+                default:
+                    state.PopAndPassCarriageReturnChar();
+                    break;
+            }
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDIfStatement();

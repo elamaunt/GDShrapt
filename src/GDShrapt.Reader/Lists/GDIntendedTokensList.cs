@@ -30,5 +30,10 @@
         {
             ListForm.AddToEnd(token);
         }
+
+        void ITokenReceiver.HandleReceivedToken(GDCarriageReturnToken token)
+        {
+            ListForm.AddToEnd(token);
+        }
     }
 }

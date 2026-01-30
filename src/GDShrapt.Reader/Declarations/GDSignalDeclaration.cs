@@ -93,7 +93,27 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                state.PushAndPassNewLine(Parameters);
+                return;
+            }
+
             state.PopAndPassNewLine();
+        }
+
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.IsOrLowerState(State.Parameters))
+            {
+                _form.State = State.CloseBracket;
+                state.Push(Parameters);
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
         }
 
         public override GDNode CreateEmptyInstance()

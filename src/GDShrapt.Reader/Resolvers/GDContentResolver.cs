@@ -122,6 +122,26 @@ namespace GDShrapt.Reader
             }
         }
 
+        internal override void HandleCarriageReturnCharAfterIntendation(GDReadingState state)
+        {
+            // CR handling mirrors NL
+            if (_sequence.Length == 0)
+            {
+                if (_lastSpace != null)
+                {
+                    Owner.HandleReceivedToken(_lastSpace);
+                    _lastSpace = null;
+                }
+
+                Owner.HandleReceivedToken(new GDCarriageReturnToken());
+            }
+            else
+            {
+                HandleSequence(_sequence.ToString(), state);
+                state.PassCarriageReturnChar();
+            }
+        }
+
         internal override void HandleSharpCharAfterIntendation(GDReadingState state)
         {
             if (_sequence.Length == 0)

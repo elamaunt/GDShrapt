@@ -120,6 +120,17 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_form.IsOrLowerState(State.Values))
+            {
+                _form.AddBeforeActiveToken(new GDCarriageReturnToken());
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDEnumDeclaration();

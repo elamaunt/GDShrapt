@@ -44,6 +44,21 @@ namespace GDShrapt.Reader
             state.PassNewLine();
         }
 
+        internal override void HandleCarriageReturnCharAfterIntendation(GDReadingState state)
+        {
+            // CR handling: complete pending keyword, send CR token, but DON'T reset indentation
+            // The subsequent NL will handle the line reset. CR is just a token.
+            if (_sequenceBuilder?.Length > 0)
+            {
+                var sequence = _sequenceBuilder.ToString();
+                ResetSequence();
+                Complete(state, sequence);
+            }
+
+            // Send CR directly to owner as a token (not via PassCarriageReturnChar which would re-buffer it)
+            Owner.HandleReceivedToken(new GDCarriageReturnToken());
+        }
+
         internal override void HandleSharpCharAfterIntendation(GDReadingState state)
         {
             if (_sequenceBuilder?.Length > 0)

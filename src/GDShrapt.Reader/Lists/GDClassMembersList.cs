@@ -39,6 +39,19 @@
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (!_completed)
+            {
+                _completed = true;
+                state.Push(new GDClassMembersResolver(this, LineIntendationThreshold));
+                state.PassCarriageReturnChar();
+                return;
+            }
+
+            state.PopAndPassCarriageReturnChar();
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDClassMembersList();

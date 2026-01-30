@@ -67,6 +67,11 @@ namespace GDShrapt.Reader
             Tokens.Add(token);
         }
 
+        public void HandleReceivedToken(GDCarriageReturnToken token)
+        {
+            Tokens.Add(token);
+        }
+
         public void HandleReceivedTokenSkip()
         {
 

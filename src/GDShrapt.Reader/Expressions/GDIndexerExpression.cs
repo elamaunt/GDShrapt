@@ -88,6 +88,11 @@ namespace GDShrapt.Reader
             state.PopAndPassNewLine();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            state.PopAndPassCarriageReturnChar();
+        }
+
         protected override GDExpression PriorityRebuildingPass()
         {
             if (IsHigherPriorityThan(CallerExpression, GDSideType.Left))

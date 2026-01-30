@@ -134,6 +134,27 @@ namespace GDShrapt.Reader
             }
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            switch (_form.State)
+            {
+                case State.In:
+                case State.Variable:
+                case State.Colon:
+                case State.Collection:
+                case State.Expression:
+                case State.Statements:
+                    _form.State = State.Completed;
+                    state.Push(Statements);
+                    state.PassCarriageReturnChar();
+                    break;
+                default:
+                    state.Pop();
+                    state.PassCarriageReturnChar();
+                    break;
+            }
+        }
+
         public override GDNode CreateEmptyInstance()
         {
             return new GDForStatement();

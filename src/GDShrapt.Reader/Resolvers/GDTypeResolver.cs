@@ -235,6 +235,13 @@
             state.PassLeftSlashChar();
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            state.Pop();
+            Complete(state);
+            state.PassCarriageReturnChar();
+        }
+
         internal override void ForceComplete(GDReadingState state)
         {
             base.ForceComplete(state);
@@ -272,6 +279,11 @@
         }
 
         void ITokenReceiver.HandleReceivedToken(GDMultiLineSplitToken token)
+        {
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver.HandleReceivedToken(GDCarriageReturnToken token)
         {
             throw new GDInvalidStateException();
         }

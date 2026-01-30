@@ -60,6 +60,10 @@ namespace GDShrapt.Reader
             // Nothing
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            // Nothing
+        }
 
         public override GDSyntaxToken Clone()
         {
