@@ -83,6 +83,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 **Formatter** - Safe cosmetic formatting
 - `GDFormatter` - Main API: `FormatCode()`, `Format()`, `IsFormatted()`, `Check()`, `FormatCodeWithStyle()`
+- **CRLF Handling**: Input normalized to LF before parsing; output controlled by `LineEnding` option
 - Rules: `GDIndentationFormatRule`, `GDBlankLinesFormatRule`, `GDSpacingFormatRule`, `GDTrailingWhitespaceFormatRule`, `GDNewLineFormatRule`, `GDLineWrapFormatRule`
 - `GDFormatterStyleExtractor` - Auto-detect style from sample code
 - `GDFormatterOptions`: IndentStyle (Spaces/Tabs), IndentSize, LineEnding, SpaceAroundOperators, SpaceAfterComma/Colon, BlankLinesBetweenFunctions, MaxLineLength, WrapLongLines
@@ -184,7 +185,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `AllTokens` / `AllNodes` are lazy IEnumerable in source code order
 - Auto-update indentation: `declaration.UpdateIntendation()`
 - Clone nodes with `.Clone()`
-- Thread-safe project analysis with `ConcurrentDictionary`
+- Thread-safe project analysis: `ConcurrentDictionary` in `GDProjectTypesProvider` + `Parallel.ForEach` in `AnalyzeAll()`
 - Comment-based suppression: `# gdvalidate:ignore`, `# gdlint:ignore/disable/enable`
 - Config hierarchy: Defaults → `.gdshrapt.json` → CLI flags
 

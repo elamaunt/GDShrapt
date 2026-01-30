@@ -32,7 +32,7 @@ Central type inference engine with bidirectional inference support.
 
 **Recursion Protection:**
 - `MaxInferenceDepth = 50` - prevents stack overflow
-- `_methodsBeingInferred` HashSet - guards method return inference
+- `_methodsBeingInferred` ConcurrentDictionary - guards method return inference (thread-safe)
 - `_expressionsBeingInferred` HashSet - guards expression inference
 
 **Caching:**
@@ -103,6 +103,37 @@ GetMember("Node2D", "position"):
 GetMember("PlayerScript", "health"):
   1. GodotTypesProvider.GetMember() → null
   2. ProjectTypesProvider.GetMember() → found
+```
+
+## Thread Safety
+
+**GDProjectTypesProvider** thread-safe for parallel analysis:
+- `_methodsBeingInferred: ConcurrentDictionary<string, byte>` - prevents concurrent inference of same method
+- `lock(method)` for updating `ReturnTypeName` and `ReturnTypeInferred`
+- Double-check pattern after `TryAdd()` for race protection
+
+```csharp
+if (!_methodsBeingInferred.TryAdd(methodKey, 0))
+    return method.ReturnTypeName; // Already being inferred
+
+try
+{
+    if (method.ReturnTypeInferred)
+        return method.ReturnTypeName;
+    // Inference logic...
+    lock (method)
+    {
+        if (!method.ReturnTypeInferred)
+        {
+            method.ReturnTypeName = inferredType;
+            method.ReturnTypeInferred = true;
+        }
+    }
+}
+finally
+{
+    _methodsBeingInferred.TryRemove(methodKey, out _);
+}
 ```
 
 ## Known Limitations

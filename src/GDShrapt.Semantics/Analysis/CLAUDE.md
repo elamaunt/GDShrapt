@@ -426,6 +426,7 @@ IReadOnlyList<string> FindTypesWithProperty(string propertyName);
 | `GDFlowAnalyzer` | `MaxFixedPointIterations` | 10 |
 | `GDInferenceCycleDetector` | Tarjan's SCC | - |
 | `GDGodotTypesProvider.IsAssignableTo` | `visited` HashSet + self-ref check | - |
+| `GDProjectTypesProvider` | `ConcurrentDictionary<string, byte>` + `lock(method)` | - |
 
 ## Testing
 
