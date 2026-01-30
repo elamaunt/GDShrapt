@@ -1,5 +1,6 @@
 using GDShrapt.Reader;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,7 +19,8 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
     // For lazy return type inference
     private IGDRuntimeProvider? _compositeProvider;
-    private readonly HashSet<string> _methodsBeingInferred = new();
+    // Thread-safe set for tracking methods being inferred (prevents recursive inference)
+    private readonly ConcurrentDictionary<string, byte> _methodsBeingInferred = new();
 
     public GDProjectTypesProvider(IGDScriptProvider scriptProvider)
     {
@@ -489,10 +491,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     /// <summary>
     /// Lazily infers the return type for a method without explicit type annotation.
     /// Uses GDReturnTypeCollector to analyze the method body.
+    /// Thread-safe: uses locking on method object to prevent data races.
     /// </summary>
     private string GetMethodReturnType(GDProjectMethodInfo method)
     {
-        // If has explicit type or already inferred, return cached value
+        // If has explicit type or already inferred, return cached value (read is safe)
         if (method.HasExplicitReturnType || method.ReturnTypeInferred)
             return method.ReturnTypeName;
 
@@ -500,13 +503,17 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         if (method.MethodDeclaration == null)
             return method.ReturnTypeName;
 
-        // Prevent recursive inference
+        // Prevent recursive inference (thread-safe)
         var methodKey = $"{method.MethodDeclaration.ClassDeclaration?.Identifier?.Sequence ?? ""}.{method.Name}";
-        if (!_methodsBeingInferred.Add(methodKey))
+        if (!_methodsBeingInferred.TryAdd(methodKey, 0))
             return method.ReturnTypeName; // Return Variant if in recursive inference
 
         try
         {
+            // Double-check after acquiring the inference slot
+            if (method.ReturnTypeInferred)
+                return method.ReturnTypeName;
+
             // Use composite provider for type inference (if available)
             var provider = _compositeProvider;
             if (provider == null)
@@ -516,21 +523,30 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             collector.Collect();
 
             var unionType = collector.ComputeReturnUnionType();
+            string? inferredType = null;
             if (!unionType.IsEmpty)
             {
-                var inferredType = unionType.EffectiveType;
-                if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant" && inferredType != "null")
+                inferredType = unionType.EffectiveType;
+            }
+
+            // Thread-safe update of method properties
+            lock (method)
+            {
+                if (!method.ReturnTypeInferred)
                 {
-                    method.ReturnTypeName = inferredType;
+                    if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant" && inferredType != "null")
+                    {
+                        method.ReturnTypeName = inferredType;
+                    }
+                    method.ReturnTypeInferred = true;
                 }
             }
 
-            method.ReturnTypeInferred = true;
             return method.ReturnTypeName;
         }
         finally
         {
-            _methodsBeingInferred.Remove(methodKey);
+            _methodsBeingInferred.TryRemove(methodKey, out _);
         }
     }
 

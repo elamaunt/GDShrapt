@@ -50,7 +50,8 @@ public class GDProjectSemanticModel : IDisposable
     private readonly Lazy<GDSignalConnectionRegistry> _signalRegistry;
     private readonly Lazy<GDClassContainerRegistry> _containerRegistry;
     private readonly Lazy<GDTypeDependencyGraph> _dependencyGraph;
-    private readonly TimeSpan _debounceInterval = TimeSpan.FromMilliseconds(300);
+    private readonly TimeSpan _debounceInterval;
+    private readonly bool _enableIncrementalAnalysis;
     private readonly bool _subscribeToChanges;
     private bool _disposed;
 
@@ -99,10 +100,17 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     /// <param name="project">The GDScript project to analyze.</param>
     /// <param name="subscribeToChanges">Whether to subscribe to project's incremental change events.</param>
-    public GDProjectSemanticModel(GDScriptProject project, bool subscribeToChanges = false)
+    /// <param name="config">Optional semantics configuration. If null, uses project options or defaults.</param>
+    public GDProjectSemanticModel(GDScriptProject project, bool subscribeToChanges = false, GDSemanticsConfig? config = null)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
         _subscribeToChanges = subscribeToChanges;
+
+        // Resolve configuration: explicit > project options > defaults
+        var semanticsConfig = config ?? project.Options?.SemanticsConfig ?? new GDSemanticsConfig();
+        _debounceInterval = TimeSpan.FromMilliseconds(semanticsConfig.FileChangeDebounceMs);
+        _enableIncrementalAnalysis = semanticsConfig.EnableIncrementalAnalysis;
+
         _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _dependencyGraph = new Lazy<GDTypeDependencyGraph>(InitializeDependencyGraph, LazyThreadSafetyMode.ExecutionAndPublication);
@@ -869,6 +877,16 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     private void ProcessIncrementalChange(GDScriptIncrementalChangeEventArgs e)
     {
+        // If incremental analysis is disabled, invalidate everything
+        if (!_enableIncrementalAnalysis)
+        {
+            InvalidateAll();
+            FileInvalidated?.Invoke(this, e.FilePath);
+            return;
+        }
+
+        // Incremental analysis: Invalidate only affected files
+
         // Invalidate affected file
         InvalidateFile(e.FilePath);
 

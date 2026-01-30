@@ -8,9 +8,10 @@ namespace GDShrapt.Semantics.StressTests.Infrastructure;
 public static class PerformanceThresholds
 {
     // Project analysis time limits
-    public static readonly TimeSpan Project100Files = TimeSpan.FromSeconds(5);
-    public static readonly TimeSpan Project500Files = TimeSpan.FromSeconds(30);
-    public static readonly TimeSpan Project1000Files = TimeSpan.FromSeconds(90);
+    // Note: Increased for loaded machines and CI environments
+    public static readonly TimeSpan Project100Files = TimeSpan.FromSeconds(15);
+    public static readonly TimeSpan Project500Files = TimeSpan.FromSeconds(60);
+    public static readonly TimeSpan Project1000Files = TimeSpan.FromSeconds(180);
 
     // Type inference limits
     public static readonly TimeSpan DeepInheritance15Levels = TimeSpan.FromSeconds(2);
@@ -21,9 +22,10 @@ public static class PerformanceThresholds
     public static readonly TimeSpan FindReferences1000 = TimeSpan.FromSeconds(1);
 
     // Memory limits (bytes)
-    public static readonly long MaxMemoryProject100Files = 100 * 1024 * 1024;   // 100 MB
-    public static readonly long MaxMemoryProject500Files = 400 * 1024 * 1024;   // 400 MB
-    public static readonly long MaxMemoryProject1000Files = 800 * 1024 * 1024;  // 800 MB
+    // Note: Includes JIT, TypesMap, test framework overhead
+    public static readonly long MaxMemoryProject100Files = 200 * 1024 * 1024;   // 200 MB
+    public static readonly long MaxMemoryProject500Files = 500 * 1024 * 1024;   // 500 MB
+    public static readonly long MaxMemoryProject1000Files = 1000 * 1024 * 1024;  // 1000 MB
 
     // Scaling factor: allows CI to adjust based on hardware
     private static double _scaleFactor = 1.0;

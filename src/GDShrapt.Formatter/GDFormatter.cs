@@ -129,6 +129,10 @@ namespace GDShrapt.Formatter
             if (string.IsNullOrEmpty(code))
                 return code;
 
+            // Normalize line endings to LF before parsing for consistent AST.
+            // Output line endings are controlled by ConvertLineEndings at the end.
+            code = code.Replace("\r\n", "\n").Replace("\r", "");
+
             var tree = _reader.ParseFileContent(code);
             Format(tree);
             var result = tree.ToString();

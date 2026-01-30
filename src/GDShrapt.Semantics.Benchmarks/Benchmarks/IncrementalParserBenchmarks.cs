@@ -16,8 +16,7 @@ public class IncrementalParserBenchmarks
     private string _largeFile = "";   // ~50000 characters
 
     private GDScriptReader _reader = null!;
-    private GDTrueIncrementalParser _trueIncremental = null!;
-    private GDIncrementalParser _oldIncremental = null!;
+    private GDScriptIncrementalReader _incrementalReader = null!;
 
     private GDClassDeclaration _smallTree = null!;
     private GDClassDeclaration _mediumTree = null!;
@@ -27,16 +26,15 @@ public class IncrementalParserBenchmarks
     private string _mediumFileEdited = "";
     private string _largeFileEdited = "";
 
-    private GDTextChange _smallChange = null!;
-    private GDTextChange _mediumChange = null!;
-    private GDTextChange _largeChange = null!;
+    private GDTextChange _smallChange;
+    private GDTextChange _mediumChange;
+    private GDTextChange _largeChange;
 
     [GlobalSetup]
     public void Setup()
     {
         _reader = new GDScriptReader();
-        _trueIncremental = new GDTrueIncrementalParser(_reader);
-        _oldIncremental = new GDIncrementalParser();
+        _incrementalReader = new GDScriptIncrementalReader(_reader);
 
         _smallFile = GenerateFile(10);
         _mediumFile = GenerateFile(100);
@@ -95,17 +93,10 @@ public class IncrementalParserBenchmarks
     }
 
     [Benchmark]
-    public GDClassDeclaration Small_TrueIncremental()
+    public GDClassDeclaration Small_Incremental()
     {
         var tree = (GDClassDeclaration)_smallTree.Clone();
-        return _trueIncremental.ParseIncremental(tree, _smallFileEdited, new[] { _smallChange });
-    }
-
-    [Benchmark]
-    public GDClassDeclaration Small_OldIncremental()
-    {
-        var tree = (GDClassDeclaration)_smallTree.Clone();
-        return _oldIncremental.ParseIncremental(tree, _smallFileEdited, new[] { _smallChange });
+        return _incrementalReader.ParseIncremental(tree, _smallFileEdited, new[] { _smallChange }).Tree;
     }
 
     #endregion
@@ -119,17 +110,10 @@ public class IncrementalParserBenchmarks
     }
 
     [Benchmark]
-    public GDClassDeclaration Medium_TrueIncremental()
+    public GDClassDeclaration Medium_Incremental()
     {
         var tree = (GDClassDeclaration)_mediumTree.Clone();
-        return _trueIncremental.ParseIncremental(tree, _mediumFileEdited, new[] { _mediumChange });
-    }
-
-    [Benchmark]
-    public GDClassDeclaration Medium_OldIncremental()
-    {
-        var tree = (GDClassDeclaration)_mediumTree.Clone();
-        return _oldIncremental.ParseIncremental(tree, _mediumFileEdited, new[] { _mediumChange });
+        return _incrementalReader.ParseIncremental(tree, _mediumFileEdited, new[] { _mediumChange }).Tree;
     }
 
     #endregion
@@ -143,17 +127,10 @@ public class IncrementalParserBenchmarks
     }
 
     [Benchmark]
-    public GDClassDeclaration Large_TrueIncremental()
+    public GDClassDeclaration Large_Incremental()
     {
         var tree = (GDClassDeclaration)_largeTree.Clone();
-        return _trueIncremental.ParseIncremental(tree, _largeFileEdited, new[] { _largeChange });
-    }
-
-    [Benchmark]
-    public GDClassDeclaration Large_OldIncremental()
-    {
-        var tree = (GDClassDeclaration)_largeTree.Clone();
-        return _oldIncremental.ParseIncremental(tree, _largeFileEdited, new[] { _largeChange });
+        return _incrementalReader.ParseIncremental(tree, _largeFileEdited, new[] { _largeChange }).Tree;
     }
 
     #endregion

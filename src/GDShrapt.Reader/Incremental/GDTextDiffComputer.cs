@@ -11,7 +11,7 @@ namespace GDShrapt.Reader
     {
         /// <summary>
         /// Computes changes to transform oldText into newText.
-        /// Uses line-based diff for efficiency (matches GDIncrementalParser's member-level strategy).
+        /// Uses line-based diff for efficiency (matches GDScriptIncrementalReader's member-level strategy).
         /// </summary>
         public static IReadOnlyList<GDTextChange> ComputeChanges(string oldText, string newText)
         {

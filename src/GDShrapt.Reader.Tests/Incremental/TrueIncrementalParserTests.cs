@@ -9,13 +9,13 @@ namespace GDShrapt.Reader.Tests.Incremental
     public class TrueIncrementalParserTests
     {
         private GDScriptReader _reader;
-        private GDTrueIncrementalParser _incrementalParser;
+        private GDScriptIncrementalReader _incrementalParser;
 
         [TestInitialize]
         public void Setup()
         {
             _reader = new GDScriptReader();
-            _incrementalParser = new GDTrueIncrementalParser(_reader);
+            _incrementalParser = new GDScriptIncrementalReader(_reader);
         }
 
         #region Basic Consistency Tests
@@ -203,7 +203,8 @@ func test():
             var result = _incrementalParser.ParseIncremental(
                 tree, originalCode, new GDTextChange[0]);
 
-            result.Should().BeSameAs(tree);
+            result.Tree.Should().BeSameAs(tree);
+            result.IsFullReparse.Should().BeFalse();
         }
 
         [TestMethod]
@@ -213,8 +214,9 @@ func test():
 
             var result = _incrementalParser.ParseIncremental(null, newCode, null);
 
-            result.Should().NotBeNull();
-            result.ToString().Should().Be(newCode);
+            result.Tree.Should().NotBeNull();
+            result.IsFullReparse.Should().BeTrue();
+            result.Tree.ToString().Should().Be(newCode);
         }
 
         [TestMethod]
@@ -230,8 +232,9 @@ func test():
             var result = _incrementalParser.ParseIncremental(
                 tree, newCode, new[] { change });
 
-            result.Should().NotBeNull();
-            result.ToString().Should().Be(newCode);
+            result.Tree.Should().NotBeNull();
+            result.IsFullReparse.Should().BeTrue();
+            result.Tree.ToString().Should().Be(newCode);
         }
 
         [TestMethod]
@@ -247,8 +250,9 @@ func test():
             var result = _incrementalParser.ParseIncremental(
                 tree, newCode, new[] { change });
 
-            result.Should().NotBeNull();
-            result.ToString().Should().Be(newCode);
+            result.Tree.Should().NotBeNull();
+            result.IsFullReparse.Should().BeTrue();
+            result.Tree.ToString().Should().Be(newCode);
         }
 
         #endregion
@@ -623,7 +627,7 @@ func test():
                 oldTree, newCode, changes);
 
             var fullText = fullResult.ToString();
-            var incrementalText = incrementalResult.ToString();
+            var incrementalText = incrementalResult.Tree.ToString();
 
             incrementalText.Should().Be(fullText,
                 message ?? $"Consistency check failed at test line {line}");

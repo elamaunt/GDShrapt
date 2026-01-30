@@ -6,19 +6,19 @@ namespace GDShrapt.Reader.Tests.Incremental
     /// <summary>
     /// Roundtrip tests verify that:
     /// original → edit → parse → reverse_edit → parse → compare with original
-    /// Specifically for GDTrueIncrementalParser.
+    /// Specifically for GDScriptIncrementalReader.
     /// </summary>
     [TestClass]
     public class TrueIncrementalRoundtripTests
     {
         private GDScriptReader _reader;
-        private GDTrueIncrementalParser _incrementalParser;
+        private GDScriptIncrementalReader _incrementalParser;
 
         [TestInitialize]
         public void Setup()
         {
             _reader = new GDScriptReader();
-            _incrementalParser = new GDTrueIncrementalParser(_reader);
+            _incrementalParser = new GDScriptIncrementalReader(_reader);
         }
 
         /// <summary>
@@ -43,8 +43,8 @@ namespace GDShrapt.Reader.Tests.Incremental
             var edited = insertChange.Apply(original);
 
             // Step 3: Parse edited
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { insertChange });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { insertChange });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Step 4: Delete the inserted text (reverse)
             var deleteChange = GDTextChange.Delete(insertPosition, insertedText.Length);
@@ -52,10 +52,10 @@ namespace GDShrapt.Reader.Tests.Incremental
             restored.Should().Be(original);
 
             // Step 5: Parse restored
-            var tree3 = _incrementalParser.ParseIncremental(tree2, restored, new[] { deleteChange });
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, restored, new[] { deleteChange });
 
             // Step 6: Compare with original
-            tree3.ToString().Should().Be(original);
+            result3.Tree.ToString().Should().Be(original);
         }
 
         [TestMethod]
@@ -75,8 +75,8 @@ namespace GDShrapt.Reader.Tests.Incremental
             edited.Should().Be("extends Node\nvar x = 999");
 
             // Step 3: Parse edited with incremental
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { replaceChange });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { replaceChange });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Step 4: Reverse the replacement
             var reverseChange = GDTextChange.Replace(replacePosition, newValue.Length, oldValue);
@@ -84,10 +84,10 @@ namespace GDShrapt.Reader.Tests.Incremental
             restored.Should().Be(original);
 
             // Step 5: Parse restored
-            var tree3 = _incrementalParser.ParseIncremental(tree2, restored, new[] { reverseChange });
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, restored, new[] { reverseChange });
 
             // Step 6: Compare
-            tree3.ToString().Should().Be(original);
+            result3.Tree.ToString().Should().Be(original);
         }
 
         #endregion
@@ -110,7 +110,8 @@ namespace GDShrapt.Reader.Tests.Incremental
                 var pos = code.LastIndexOf(oldVal);
                 var change = GDTextChange.Replace(pos, oldVal.Length, newVal);
                 code = code.Substring(0, pos) + newVal + code.Substring(pos + oldVal.Length);
-                tree = _incrementalParser.ParseIncremental(tree, code, new[] { change });
+                var result = _incrementalParser.ParseIncremental(tree, code, new[] { change });
+                tree = result.Tree;
 
                 tree.ToString().Should().Be(code, $"After change {i}: {oldVal} -> {newVal}");
             }
@@ -139,7 +140,8 @@ func test():
                 var pos = code.IndexOf(oldText);
                 var change = GDTextChange.Replace(pos, oldText.Length, newText);
                 code = code.Replace(oldText, newText);
-                tree = _incrementalParser.ParseIncremental(tree, code, new[] { change });
+                var result = _incrementalParser.ParseIncremental(tree, code, new[] { change });
+                tree = result.Tree;
 
                 tree.ToString().Should().Be(code);
             }
@@ -159,13 +161,13 @@ func test():
 
             // Add method
             var addChange = GDTextChange.Insert(original.Length, "func test():\n\tpass\n");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, withMethod, new[] { addChange });
-            tree2.ToString().Should().Be(withMethod);
+            var result2 = _incrementalParser.ParseIncremental(tree1, withMethod, new[] { addChange });
+            result2.Tree.ToString().Should().Be(withMethod);
 
             // Remove method
             var removeChange = GDTextChange.Delete(original.Length, withMethod.Length - original.Length);
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { removeChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { removeChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         [TestMethod]
@@ -186,15 +188,15 @@ func test():
             // Add variable after extends
             var insertPos = original.IndexOf("\nfunc");
             var addChange = GDTextChange.Insert(insertPos, "\nvar new_var = 42");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, withVar, new[] { addChange });
-            tree2.ToString().Should().Be(withVar);
+            var result2 = _incrementalParser.ParseIncremental(tree1, withVar, new[] { addChange });
+            result2.Tree.ToString().Should().Be(withVar);
 
             // Remove variable
             var removePos = withVar.IndexOf("\nvar new_var");
             var removeLength = "\nvar new_var = 42".Length;
             var removeChange = GDTextChange.Delete(removePos, removeLength);
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { removeChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { removeChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         #endregion
@@ -233,14 +235,14 @@ func c():
             // Edit func b
             var passPos = original.IndexOf("pass", original.IndexOf("func b"));
             var change = GDTextChange.Replace(passPos, 4, "return 42");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Reverse edit
             var returnPos = edited.IndexOf("return 42");
             var reverseChange = GDTextChange.Replace(returnPos, 9, "pass");
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         #endregion
@@ -271,14 +273,14 @@ func test():
             var newText = "new_value = 100";
             var pos = original.IndexOf(oldText);
             var change = GDTextChange.Replace(pos, oldText.Length, newText);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Reverse
             var reversePos = edited.IndexOf(newText);
             var reverseChange = GDTextChange.Replace(reversePos, newText.Length, oldText);
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         [TestMethod]
@@ -301,14 +303,14 @@ var x = 1
             var newComment = "# Modified comment with more text";
             var pos = original.IndexOf(oldComment);
             var change = GDTextChange.Replace(pos, oldComment.Length, newComment);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Reverse
             var reversePos = edited.IndexOf(newComment);
             var reverseChange = GDTextChange.Replace(reversePos, newComment.Length, oldComment);
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         #endregion
@@ -324,12 +326,12 @@ var x = 1
             var tree1 = _reader.ParseFileContent(original);
 
             var change = GDTextChange.Replace(0, 3, "const");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             var reverseChange = GDTextChange.Replace(0, 5, "var");
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         [TestMethod]
@@ -341,12 +343,12 @@ var x = 1
             var tree1 = _reader.ParseFileContent(original);
 
             var change = GDTextChange.Replace(original.Length - 1, 1, "100");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             var reverseChange = GDTextChange.Replace(edited.Length - 3, 3, "1");
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         [TestMethod]
@@ -358,13 +360,13 @@ var x = 1
 
             // Insert empty string
             var insertChange = GDTextChange.Insert(4, "");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, original, new[] { insertChange });
-            tree2.ToString().Should().Be(original);
+            var result2 = _incrementalParser.ParseIncremental(tree1, original, new[] { insertChange });
+            result2.Tree.ToString().Should().Be(original);
 
             // Delete nothing
             var deleteChange = GDTextChange.Delete(4, 0);
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { deleteChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { deleteChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         #endregion
@@ -399,14 +401,14 @@ func outer():
 
             var pos = original.IndexOf("= 1");
             var change = GDTextChange.Replace(pos + 2, 1, "999");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Reverse
             var reversePos = edited.IndexOf("= 999");
             var reverseChange = GDTextChange.Replace(reversePos + 2, 3, "1");
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         #endregion
@@ -437,14 +439,14 @@ func test():
             var newSig = "health_changed(old_value, new_value)";
             var pos = original.IndexOf(oldSig);
             var change = GDTextChange.Replace(pos, oldSig.Length, newSig);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Reverse
             var reversePos = edited.IndexOf(newSig);
             var reverseChange = GDTextChange.Replace(reversePos, newSig.Length, oldSig);
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         [TestMethod]
@@ -471,14 +473,14 @@ func test():
             var newEnum = "{ IDLE, WALKING, RUNNING, JUMPING }";
             var pos = original.IndexOf(oldEnum);
             var change = GDTextChange.Replace(pos, oldEnum.Length, newEnum);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            tree2.ToString().Should().Be(edited);
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            result2.Tree.ToString().Should().Be(edited);
 
             // Reverse
             var reversePos = edited.IndexOf(newEnum);
             var reverseChange = GDTextChange.Replace(reversePos, newEnum.Length, oldEnum);
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            tree3.ToString().Should().Be(original);
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            result3.Tree.ToString().Should().Be(original);
         }
 
         #endregion
@@ -506,14 +508,14 @@ func test():
             // Tree 2: After edit
             var pos = original.IndexOf("= 1") + 2;
             var change = GDTextChange.Replace(pos, 1, "999");
-            var tree2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
-            GDAstValidator.Validate(tree2, edited).IsValid.Should().BeTrue();
+            var result2 = _incrementalParser.ParseIncremental(tree1, edited, new[] { change });
+            GDAstValidator.Validate(result2.Tree, edited).IsValid.Should().BeTrue();
 
             // Tree 3: After reverse
             var reversePos = edited.IndexOf("= 999") + 2;
             var reverseChange = GDTextChange.Replace(reversePos, 3, "1");
-            var tree3 = _incrementalParser.ParseIncremental(tree2, original, new[] { reverseChange });
-            GDAstValidator.Validate(tree3, original).IsValid.Should().BeTrue();
+            var result3 = _incrementalParser.ParseIncremental(result2.Tree, original, new[] { reverseChange });
+            GDAstValidator.Validate(result3.Tree, original).IsValid.Should().BeTrue();
         }
 
         #endregion

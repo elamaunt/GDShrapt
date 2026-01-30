@@ -17,8 +17,11 @@ namespace GDShrapt.Reader
         /// <param name="newText">The new complete source text after edits.</param>
         /// <param name="changes">The text changes that were applied to transform old text to new text.</param>
         /// <param name="cancellationToken">Token to cancel parsing.</param>
-        /// <returns>A new parse tree representing the parsed code. May share structure with oldTree for unchanged portions.</returns>
-        GDClassDeclaration ParseIncremental(
+        /// <returns>
+        /// A result containing the updated parse tree and information about what changed.
+        /// The result includes a snapshot of the old member for semantic model updates.
+        /// </returns>
+        GDIncrementalParseResult ParseIncremental(
             GDClassDeclaration oldTree,
             string newText,
             IReadOnlyList<GDTextChange> changes,

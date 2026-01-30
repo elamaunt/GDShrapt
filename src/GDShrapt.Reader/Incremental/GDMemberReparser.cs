@@ -61,57 +61,57 @@ namespace GDShrapt.Reader
                 var parsedMember = members[0];
 
                 // Verify the parsed member's text matches our extracted text
-                // If not, there might be parsing issues that require full reparse
-                if (parsedMember.ToString() != memberText.TrimEnd())
+                // Normalize both strings for comparison (remove trailing whitespace including CR/LF)
+                var parsedStr = parsedMember.ToOriginalString().TrimEnd('\r', '\n', ' ', '\t');
+                var expectedStr = memberText.TrimEnd('\r', '\n', ' ', '\t');
+                if (parsedStr != expectedStr)
                     return null;
 
                 return parsedMember;
             }
-            catch
+            catch (GDInvalidStateException)
             {
-                // Parsing failed (e.g., invalid syntax after edit)
-                // Return null to trigger full reparse
+                // Parser state error - return null to trigger full reparse
+                return null;
+            }
+            catch (GDStackOverflowException)
+            {
+                // Parser stack overflow - return null to trigger full reparse
+                return null;
+            }
+            catch (GDInfiniteLoopException)
+            {
+                // Parser infinite loop - return null to trigger full reparse
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                // Invalid argument during parsing - return null to trigger full reparse
+                return null;
+            }
+            catch (InvalidOperationException)
+            {
+                // Invalid operation during parsing - return null to trigger full reparse
                 return null;
             }
         }
 
         /// <summary>
-        /// Extracts the text for a single member, finding proper boundaries.
+        /// Extracts the text for a single member using the provided end offset.
+        /// The end offset should correspond to the original member boundary in the new text.
         /// </summary>
-        private string ExtractMemberText(string text, int start, int approximateEnd)
+        private string ExtractMemberText(string text, int start, int end)
         {
             // Find the start of the line containing the start offset
             int lineStart = start;
             while (lineStart > 0 && text[lineStart - 1] != '\n')
                 lineStart--;
 
-            // Find the end of the member by looking for the next member
-            // (a line starting with non-whitespace at column 0)
-            // Start searching from approximateEnd or lineStart+1 if approximateEnd is too small
-            int searchStart = Math.Max(lineStart + 1, approximateEnd);
+            // Use the provided end, but ensure it doesn't exceed text length
+            int memberEnd = Math.Min(end, text.Length);
 
-            // Use dynamic lookahead based on the approximate member size
-            int approximateSize = approximateEnd - start;
-            int lookahead = Math.Max(1000, approximateSize * 2);
-            int searchEnd = Math.Min(text.Length, searchStart + lookahead);
-
-            int memberEnd = text.Length; // Default to end of text
-
-            for (int i = searchStart; i < searchEnd; i++)
-            {
-                if (i > 0 && text[i - 1] == '\n')
-                {
-                    // Check if this line starts a new member (non-whitespace at column 0)
-                    if (i < text.Length && !char.IsWhiteSpace(text[i]))
-                    {
-                        memberEnd = i;
-                        break;
-                    }
-                }
-            }
-
-            // Sanity check
-            if (memberEnd < lineStart)
+            // Ensure we have valid bounds
+            if (memberEnd <= lineStart)
                 memberEnd = text.Length;
 
             return text.Substring(lineStart, memberEnd - lineStart);

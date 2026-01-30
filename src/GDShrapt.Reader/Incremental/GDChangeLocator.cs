@@ -2,6 +2,7 @@ namespace GDShrapt.Reader
 {
     /// <summary>
     /// Locates the node affected by a text change. Zero-allocation using readonly struct.
+    /// Uses OriginLength for CRLF-safe coordinate calculation.
     /// </summary>
     public static class GDChangeLocator
     {
@@ -58,12 +59,12 @@ namespace GDShrapt.Reader
             int currentOffset = 0;
             int memberIndex = 0;
 
-            // Walk through tokens until we reach Members
+            // Walk through tokens until we reach Members (using OriginLength for CRLF)
             foreach (var token in tree.Tokens)
             {
                 if (token == tree.Members)
                     break;
-                currentOffset += token.Length;
+                currentOffset += token.OriginLength;
             }
 
             int membersStartOffset = currentOffset;
@@ -75,7 +76,7 @@ namespace GDShrapt.Reader
             // Walk through members
             foreach (var member in tree.Members)
             {
-                int memberEnd = currentOffset + member.Length;
+                int memberEnd = currentOffset + member.OriginLength;
 
                 if (charOffset >= currentOffset && charOffset < memberEnd)
                 {
@@ -107,7 +108,7 @@ namespace GDShrapt.Reader
 
             foreach (var token in startNode.Tokens)
             {
-                int tokenEnd = currentOffset + token.Length;
+                int tokenEnd = currentOffset + token.OriginLength;
 
                 if (charOffset >= currentOffset && charOffset < tokenEnd)
                 {

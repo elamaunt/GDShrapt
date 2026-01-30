@@ -124,6 +124,11 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// </summary>
     public IGDSemanticLogger Logger => _logger;
 
+    /// <summary>
+    /// Project options (may be null if created without options).
+    /// </summary>
+    public GDScriptProjectOptions? Options => _options;
+
     // IGDScriptProvider implementation
     IEnumerable<IGDScriptInfo> IGDScriptProvider.Scripts => _scripts.Values;
 
@@ -186,7 +191,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             _logger.Debug($"Loading script '{Path.GetFileName(scriptFile)}'");
 
             var reference = new GDScriptReference(scriptFile, _context);
-            var script = new GDScriptFile(reference, _fileSystem, _logger);
+            var script = CreateScriptFile(reference);
             _scripts.TryAdd(reference, script);
             script.Reload();
         }
@@ -291,6 +296,46 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     {
         return configValue < 0 ? Environment.ProcessorCount :
                configValue == 0 ? 1 : configValue;
+    }
+
+    /// <summary>
+    /// Creates a new GDScriptFile with project configuration applied.
+    /// </summary>
+    private GDScriptFile CreateScriptFile(GDScriptReference reference)
+    {
+        var config = _options?.SemanticsConfig;
+        var enableIncrementalParsing = config?.EnableIncrementalParsing ?? true;
+        var script = new GDScriptFile(reference, _fileSystem, _logger, enableIncrementalParsing);
+
+        // Apply incremental parsing thresholds from config
+        if (config != null)
+        {
+            script.ConfigureIncremental(
+                config.IncrementalFullReparseThreshold,
+                config.IncrementalMaxAffectedMembers);
+        }
+
+        return script;
+    }
+
+    /// <summary>
+    /// Applies semantic configuration to all scripts in the project.
+    /// Call this if you change SemanticsConfig after scripts are loaded.
+    /// </summary>
+    /// <param name="config">The configuration to apply.</param>
+    public void ApplySemanticsConfig(GDSemanticsConfig config)
+    {
+        if (config == null)
+            throw new ArgumentNullException(nameof(config));
+
+        foreach (var script in _scripts.Values)
+        {
+            script.ConfigureIncremental(
+                config.IncrementalFullReparseThreshold,
+                config.IncrementalMaxAffectedMembers);
+        }
+
+        _logger.Debug($"Applied semantics config: threshold={config.IncrementalFullReparseThreshold}, maxMembers={config.IncrementalMaxAffectedMembers}");
     }
 
     /// <summary>
@@ -401,7 +446,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public GDScriptFile AddScript(string fullPath)
     {
         var reference = new GDScriptReference(fullPath, _context);
-        var script = new GDScriptFile(reference, _fileSystem, _logger);
+        var script = CreateScriptFile(reference);
         _scripts.TryAdd(reference, script);
         script.Reload();
         return script;
@@ -413,7 +458,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public GDScriptFile AddScript(string fullPath, string content)
     {
         var reference = new GDScriptReference(fullPath, _context);
-        var script = new GDScriptFile(reference, _fileSystem, _logger);
+        var script = CreateScriptFile(reference);
         _scripts.TryAdd(reference, script);
         script.Reload(content);
         return script;
@@ -619,7 +664,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private void OnFileCreated(object sender, FileSystemEventArgs e)
     {
         var reference = new GDScriptReference(e.FullPath, _context);
-        var script = new GDScriptFile(reference, _fileSystem, _logger);
+        var script = CreateScriptFile(reference);
         if (_scripts.TryAdd(reference, script))
         {
             script.Reload();
@@ -668,7 +713,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             var oldTree = script.Class;
 
             // Create new script file at new location
-            var newScript = new GDScriptFile(newReference, _fileSystem, _logger);
+            var newScript = CreateScriptFile(newReference);
             _scripts.TryAdd(newReference, newScript);
             newScript.Reload();
             var newTree = newScript.Class;

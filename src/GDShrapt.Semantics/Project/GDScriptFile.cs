@@ -15,12 +15,13 @@ public class GDScriptFile : IGDScriptInfo
 {
     private readonly IGDFileSystem _fileSystem;
     private readonly IGDSemanticLogger _logger;
+    private readonly bool _enableIncrementalParsing;
     private GDScriptReference _reference;
     private static readonly GDScriptReader Reader = new();
 
     // Incremental parsing support
     private string? _lastContent;
-    private readonly GDIncrementalParser _incrementalParser = new();
+    private readonly GDScriptIncrementalReader _incrementalReader = new();
     private readonly object _reloadLock = new();
 
     /// <summary>
@@ -76,11 +77,16 @@ public class GDScriptFile : IGDScriptInfo
     GDClassDeclaration? IGDScriptInfo.Class => Class;
     bool IGDScriptInfo.IsGlobal => IsGlobal;
 
-    public GDScriptFile(GDScriptReference reference, IGDFileSystem? fileSystem = null, IGDSemanticLogger? logger = null)
+    public GDScriptFile(
+        GDScriptReference reference,
+        IGDFileSystem? fileSystem = null,
+        IGDSemanticLogger? logger = null,
+        bool enableIncrementalParsing = true)
     {
         _reference = reference;
         _fileSystem = fileSystem ?? new GDDefaultFileSystem();
         _logger = logger ?? GDNullLogger.Instance;
+        _enableIncrementalParsing = enableIncrementalParsing;
     }
 
     /// <summary>
@@ -150,12 +156,13 @@ public class GDScriptFile : IGDScriptInfo
             {
                 bool wasIncremental = false;
 
-                if (oldTree != null && changes != null && changes.Count > 0)
+                if (_enableIncrementalParsing && oldTree != null && changes != null && changes.Count > 0)
                 {
                     // Use incremental parser
                     _logger.Debug($"Incremental reload: {Path.GetFileName(_reference.FullPath)}");
-                    Class = _incrementalParser.ParseIncremental(oldTree, newContent, changes);
-                    wasIncremental = true;
+                    var result = _incrementalReader.ParseIncremental(oldTree, newContent, changes);
+                    Class = result.Tree;
+                    wasIncremental = !result.IsFullReparse;
                 }
                 else
                 {
@@ -209,6 +216,16 @@ public class GDScriptFile : IGDScriptInfo
     internal void ChangeReference(GDScriptReference newReference)
     {
         _reference = newReference;
+    }
+
+    /// <summary>
+    /// Configures incremental parsing thresholds.
+    /// </summary>
+    /// <param name="fullReparseThreshold">Threshold ratio (0.0-1.0) for triggering full reparse.</param>
+    /// <param name="maxAffectedMembers">Maximum affected members before full reparse.</param>
+    public void ConfigureIncremental(double fullReparseThreshold, int maxAffectedMembers)
+    {
+        _incrementalReader.Configure(fullReparseThreshold, maxAffectedMembers);
     }
 
     /// <summary>

@@ -37,4 +37,33 @@ public class GDSemanticsConfig
     /// Default: true
     /// </summary>
     public bool EnableIncrementalAnalysis { get; set; } = true;
+
+    /// <summary>
+    /// Enable incremental parsing (member-level reparsing).
+    /// When disabled, full file reparse is used for all changes.
+    /// Default: true
+    /// </summary>
+    public bool EnableIncrementalParsing { get; set; } = true;
+
+    /// <summary>
+    /// Debounce interval for file change processing (milliseconds).
+    /// Rapid file changes within this interval are coalesced.
+    /// Default: 300
+    /// </summary>
+    public int FileChangeDebounceMs { get; set; } = 300;
+
+    /// <summary>
+    /// Threshold for triggering full reparse instead of incremental.
+    /// If the ratio of changed characters to file size exceeds this value,
+    /// full reparse is used. Value from 0.0 to 1.0 (0.5 = 50%).
+    /// Default: 0.5
+    /// </summary>
+    public double IncrementalFullReparseThreshold { get; set; } = 0.5;
+
+    /// <summary>
+    /// Maximum number of class members affected by changes
+    /// before triggering full reparse instead of incremental.
+    /// Default: 3
+    /// </summary>
+    public int IncrementalMaxAffectedMembers { get; set; } = 3;
 }

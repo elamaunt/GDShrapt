@@ -13,7 +13,12 @@ namespace GDShrapt.Reader.Tests.Incremental
     public class BatchEditTests
     {
         private readonly GDScriptReader _reader = new GDScriptReader();
-        private readonly GDIncrementalParser _incrementalParser = new GDIncrementalParser();
+        private readonly GDScriptIncrementalReader _incrementalReader;
+
+        public BatchEditTests()
+        {
+            _incrementalReader = new GDScriptIncrementalReader(_reader);
+        }
 
         #region Basic Batch Edit Tests
 
@@ -34,11 +39,11 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
 
-            var validation = GDAstValidator.Validate(tree2, expected);
+            var validation = GDAstValidator.Validate(tree2.Tree,expected);
             validation.IsValid.Should().BeTrue(string.Join("\n", validation.Errors));
         }
 
@@ -55,9 +60,9 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
         }
 
         [TestMethod]
@@ -78,12 +83,12 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
 
             // Verify both methods are present and correct
-            tree2.Methods.Count().Should().Be(2);
+            tree2.Tree.Methods.Count().Should().Be(2);
         }
 
         #endregion
@@ -103,12 +108,12 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
 
             // Second var should be correctly parsed
-            tree2.Members.Count().Should().Be(2);
+            tree2.Tree.Members.Count().Should().Be(2);
         }
 
         [TestMethod]
@@ -128,9 +133,9 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
         }
 
         [TestMethod]
@@ -145,9 +150,9 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
         }
 
         #endregion
@@ -171,9 +176,9 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
         }
 
         #endregion
@@ -181,15 +186,18 @@ namespace GDShrapt.Reader.Tests.Incremental
         #region Edge Cases Tests
 
         [TestMethod]
-        public void BatchEdits_EmptyChanges_ReturnsClone()
+        public void BatchEdits_EmptyChanges_ReturnsSameTree()
         {
             var code = "var x = 1";
             var tree1 = _reader.ParseFileContent(code);
 
-            var tree2 = _incrementalParser.ParseIncremental(tree1, code, System.Array.Empty<GDTextChange>());
+            var tree2 = _incrementalReader.ParseIncremental(tree1, code, System.Array.Empty<GDTextChange>());
 
-            tree2.ToString().Should().Be(code);
-            tree2.Should().NotBeSameAs(tree1); // Should be a clone
+            tree2.Tree.ToString().Should().Be(code);
+            // With Minimal Clone strategy, no changes means same tree reference
+            tree2.Tree.Should().BeSameAs(tree1);
+            tree2.IsFullReparse.Should().BeFalse();
+            tree2.IsIncremental.Should().BeFalse(); // NoChanges case
         }
 
         [TestMethod]
@@ -201,9 +209,9 @@ namespace GDShrapt.Reader.Tests.Incremental
             var changes = new[] { GDTextChange.Replace(8, 1, "100") };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
         }
 
         [TestMethod]
@@ -219,9 +227,9 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
 
-            tree2.ToString().Should().Be(expected);
+            tree2.Tree.ToString().Should().Be(expected);
         }
 
         #endregion
@@ -242,14 +250,14 @@ namespace GDShrapt.Reader.Tests.Incremental
             };
 
             var tree1 = _reader.ParseFileContent(original);
-            var incrementalTree = _incrementalParser.ParseIncremental(tree1, expected, changes);
+            var incrementalTree = _incrementalReader.ParseIncremental(tree1, expected, changes);
             var freshTree = _reader.ParseFileContent(expected);
 
             // Both should produce the same text
-            incrementalTree.ToString().Should().Be(freshTree.ToString());
+            incrementalTree.Tree.ToString().Should().Be(freshTree.ToString());
 
             // Structure should be equivalent
-            var differences = GDAstValidator.CompareStructure(incrementalTree, freshTree);
+            var differences = GDAstValidator.CompareStructure(incrementalTree.Tree, freshTree);
             differences.Should().BeEmpty();
         }
 
@@ -264,8 +272,8 @@ namespace GDShrapt.Reader.Tests.Incremental
             var tree1 = _reader.ParseFileContent(original);
             GDAstValidator.Validate(tree1, original).IsValid.Should().BeTrue();
 
-            var tree2 = _incrementalParser.ParseIncremental(tree1, expected, changes);
-            GDAstValidator.Validate(tree2, expected).IsValid.Should().BeTrue();
+            var tree2 = _incrementalReader.ParseIncremental(tree1, expected, changes);
+            GDAstValidator.Validate(tree2.Tree,expected).IsValid.Should().BeTrue();
         }
 
         #endregion
