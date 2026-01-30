@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GDShrapt.Semantics;
@@ -48,6 +49,9 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
         // Store direct references
         GodotTypesProvider = godotTypesProvider;
         ProjectTypesProvider = projectTypesProvider;
+
+        // Set composite provider for lazy return type inference
+        projectTypesProvider?.SetCompositeProvider(this);
     }
 
     public bool IsKnownType(string typeName)
@@ -95,11 +99,37 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
 
     public bool IsAssignableTo(string sourceType, string targetType)
     {
+        if (string.IsNullOrEmpty(sourceType) || string.IsNullOrEmpty(targetType))
+            return false;
+
+        // Same type
+        if (sourceType == targetType)
+            return true;
+
+        // First, try each provider's built-in IsAssignableTo logic
+        // This handles provider-specific rules (numeric conversion, String<->StringName, etc.)
         foreach (var provider in _providers)
         {
             if (provider.IsAssignableTo(sourceType, targetType))
                 return true;
         }
+
+        // If no provider matched, walk inheritance chain using GetBaseType from all providers
+        // This handles cross-provider inheritance (e.g., SceneNodes [project] -> Node2D [Godot] -> Node [Godot])
+        var visited = new HashSet<string>();
+        var current = sourceType;
+        while (!string.IsNullOrEmpty(current))
+        {
+            if (!visited.Add(current))
+                return false; // Cycle detected
+
+            if (current == targetType)
+                return true;
+
+            // Get base type from any provider
+            current = GetBaseType(current);
+        }
+
         return false;
     }
 

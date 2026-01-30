@@ -82,9 +82,10 @@ internal class AddTypeAnnotationAction : GDRefactoringActionBase
             var originalCode = $"{plan.IdentifierName}";
             var resultCode = $"{plan.IdentifierName}: {plan.TypeName}";
 
-            // In Base Plugin: Apply is disabled (Pro required)
-            var canApply = false;
-            var proMessage = "GDShrapt Pro required to apply this refactoring";
+            // Single-file apply with preview is allowed in Base
+            // Pro is only required for batch (project-wide) operations
+            var canApply = true;
+            string proMessage = null;
 
             var result = await previewDialog.ShowForResult(
                 title,

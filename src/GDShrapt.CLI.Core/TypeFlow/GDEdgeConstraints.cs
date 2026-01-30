@@ -18,7 +18,7 @@ public class GDEdgeConstraints
     /// Properties required by this constraint.
     /// Key = property name, Value = expected type (or null).
     /// </summary>
-    public Dictionary<string, string?> RequiredProperties { get; } = new();
+    public Dictionary<string, string> RequiredProperties { get; } = new();
 
     /// <summary>
     /// Signals required by this constraint.
@@ -39,7 +39,10 @@ public class GDEdgeConstraints
             constraints.RequiredMethods[kv.Key] = kv.Value;
 
         foreach (var kv in duckType.RequiredProperties)
-            constraints.RequiredProperties[kv.Key] = kv.Value;
+        {
+            if (kv.Value != null)
+                constraints.RequiredProperties[kv.Key] = kv.Value;
+        }
 
         foreach (var signal in duckType.RequiredSignals)
             constraints.RequiredSignals.Add(signal);

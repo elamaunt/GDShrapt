@@ -1,3 +1,4 @@
+using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentAssertions;

@@ -107,6 +107,11 @@
             // Nothing
         }
 
+        public virtual void Left(GDPassDeclaration d)
+        {
+            // Nothing
+        }
+
         public virtual void Left(GDClassMembersList list)
         {
             // Nothing
@@ -213,6 +218,11 @@
         }
 
         public virtual void Visit(GDVariableDeclaration d)
+        {
+            // Nothing
+        }
+
+        public virtual void Visit(GDPassDeclaration d)
         {
             // Nothing
         }

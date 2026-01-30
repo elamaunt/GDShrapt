@@ -22,10 +22,29 @@ namespace GDShrapt.Reader
                 return;
 
             // Class-level symbols are already collected by GDDeclarationCollector
-            // We just need to enter global scope and validate
-            EnterScope(GDScopeType.Global, node);
+            // Save existing Global (if any) to avoid overwriting it
+            var existingGlobal = Context.Scopes.Global;
+            var hadGlobal = existingGlobal != null && Context.Scopes.Depth > 0;
+
+            if (!hadGlobal)
+            {
+                // No existing global - create one
+                EnterScope(GDScopeType.Global, node);
+            }
+
             node.WalkIn(this);
-            ExitScope();
+
+            if (!hadGlobal)
+            {
+                // We created the global - exit it
+                ExitScope();
+            }
+            else
+            {
+                // We didn't create global, but walking may have entered/exited scopes
+                // Ensure we're back to Global state
+                Context.Scopes.ResetToGlobal();
+            }
         }
 
         #region Classes
@@ -58,7 +77,6 @@ namespace GDShrapt.Reader
             if (string.IsNullOrEmpty(typeName))
                 return;
 
-            // Check if base type is known (either built-in type, inner class, or from RuntimeProvider)
             if (!Context.RuntimeProvider.IsKnownType(typeName) &&
                 !Context.RuntimeProvider.IsBuiltIn(typeName) &&
                 LookupSymbol(typeName) == null)
@@ -218,6 +236,47 @@ namespace GDShrapt.Reader
 
         #endregion
 
+        #region Property Accessors
+
+        // Getter body - creates method-like scope
+        public override void Visit(GDGetAccessorBodyDeclaration getterBody)
+        {
+            // Getter body acts like a method scope (no parameters)
+            EnterScope(GDScopeType.Method, getterBody);
+        }
+
+        public override void Left(GDGetAccessorBodyDeclaration getterBody)
+        {
+            ExitScope();
+        }
+
+        // Setter body - creates method-like scope with parameter
+        public override void Visit(GDSetAccessorBodyDeclaration setterBody)
+        {
+            // Setter body acts like a method scope
+            EnterScope(GDScopeType.Method, setterBody);
+
+            // Register the setter parameter (e.g., 'value' in set(value):)
+            var param = setterBody.Parameter;
+            if (param != null)
+            {
+                var paramName = param.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(paramName))
+                {
+                    var typeNode = param.Type;
+                    var typeName = typeNode?.BuildName();
+                    TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
+                }
+            }
+        }
+
+        public override void Left(GDSetAccessorBodyDeclaration setterBody)
+        {
+            ExitScope();
+        }
+
+        #endregion
+
         #region Local declarations
 
         // Local variables (inside methods)
@@ -263,13 +322,46 @@ namespace GDShrapt.Reader
             ExitScope();
         }
 
-        // Conditionals
+        // Conditionals - each branch gets its own scope for variable isolation
         public override void Visit(GDIfStatement ifStatement)
         {
             EnterScope(GDScopeType.Conditional, ifStatement);
         }
 
         public override void Left(GDIfStatement ifStatement)
+        {
+            ExitScope();
+        }
+
+        // If branch - separate scope for variables declared in this branch
+        public override void Visit(GDIfBranch ifBranch)
+        {
+            EnterScope(GDScopeType.Block, ifBranch);
+        }
+
+        public override void Left(GDIfBranch ifBranch)
+        {
+            ExitScope();
+        }
+
+        // Elif branch - separate scope for variables declared in this branch
+        public override void Visit(GDElifBranch elifBranch)
+        {
+            EnterScope(GDScopeType.Block, elifBranch);
+        }
+
+        public override void Left(GDElifBranch elifBranch)
+        {
+            ExitScope();
+        }
+
+        // Else branch - separate scope for variables declared in this branch
+        public override void Visit(GDElseBranch elseBranch)
+        {
+            EnterScope(GDScopeType.Block, elseBranch);
+        }
+
+        public override void Left(GDElseBranch elseBranch)
         {
             ExitScope();
         }
@@ -281,6 +373,19 @@ namespace GDShrapt.Reader
         }
 
         public override void Left(GDMatchStatement matchStatement)
+        {
+            ExitScope();
+        }
+
+        // Match case - each case gets its own scope for binding variables isolation
+        public override void Visit(GDMatchCaseDeclaration matchCase)
+        {
+            // Each match case gets its own scope for binding variables
+            // This prevents 'var x' in one case from conflicting with 'var x' in another case
+            EnterScope(GDScopeType.Block, matchCase);
+        }
+
+        public override void Left(GDMatchCaseDeclaration matchCase)
         {
             ExitScope();
         }
@@ -346,24 +451,19 @@ namespace GDShrapt.Reader
             if (Context.RuntimeProvider.IsBuiltIn(name))
                 return;
 
-            // Check if it's a known type (used as value, e.g., Vector2)
             if (Context.RuntimeProvider.IsKnownType(name))
                 return;
 
-            // Check scope (includes class-level symbols collected by GDDeclarationCollector)
             var symbol = LookupSymbol(name);
             if (symbol != null)
                 return;
 
-            // Check if it's a user-defined function (forward reference support)
             if (Context.IsFunctionDeclared(name))
                 return;
 
-            // Check if it's a global class/singleton
             if (Context.RuntimeProvider.GetGlobalClass(name) != null)
                 return;
 
-            // Check if it's a method/member from base class hierarchy (e.g., queue_free() from Node2D)
             if (Context.IsBaseClassMember(name))
                 return;
 
@@ -380,7 +480,6 @@ namespace GDShrapt.Reader
             if (opType == null)
                 return;
 
-            // Check all assignment operators
             if (IsAssignmentOperator(opType.Value))
             {
                 CheckConstantReassignment(dualOperator.LeftExpression, dualOperator);
@@ -484,14 +583,16 @@ namespace GDShrapt.Reader
                         if (!string.IsNullOrEmpty(enumName))
                         {
                             Context.Declare(GDSymbol.Enum(enumName, enumDecl));
-                            if (enumDecl.Values != null)
+                        }
+                        // Register ALL enum values for direct access within the class.
+                        // In GDScript, named enum values can be accessed both as EnumName.VALUE and directly as VALUE.
+                        if (enumDecl.Values != null)
+                        {
+                            foreach (var value in enumDecl.Values)
                             {
-                                foreach (var value in enumDecl.Values)
-                                {
-                                    var valueName = value.Identifier?.Sequence;
-                                    if (!string.IsNullOrEmpty(valueName))
-                                        Context.Declare(GDSymbol.EnumValue(valueName, value));
-                                }
+                                var valueName = value.Identifier?.Sequence;
+                                if (!string.IsNullOrEmpty(valueName))
+                                    Context.Declare(GDSymbol.EnumValue(valueName, value));
                             }
                         }
                         break;
@@ -536,10 +637,7 @@ namespace GDShrapt.Reader
             if (typeNode.IsArray || typeNode.IsDictionary)
                 return;
 
-            // Check if type is known:
-            // 1. Built-in runtime types (Vector2, Node, etc.)
-            // 2. Types registered via RuntimeProvider (project types)
-            // 3. Inner classes declared in current scope
+            // Known types: runtime types (Vector2, Node), project types, inner classes
             if (!Context.RuntimeProvider.IsKnownType(typeName) &&
                 !Context.RuntimeProvider.IsBuiltIn(typeName) &&
                 LookupSymbol(typeName) == null)

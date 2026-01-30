@@ -30,10 +30,47 @@ public class GDProjectConfig
     public GDCliConfig Cli { get; set; } = new();
 
     /// <summary>
+    /// Semantic validation settings.
+    /// </summary>
+    public GDValidationConfig Validation { get; set; } = new();
+
+    /// <summary>
     /// Plugin-specific settings (UI, notifications, cache, etc.).
     /// Only used by the Godot editor plugin, ignored by CLI/LSP.
     /// </summary>
     public GDPluginConfig? Plugin { get; set; }
+
+    /// <summary>
+    /// Semantic analysis configuration.
+    /// </summary>
+    public GDSemanticsConfig Semantics { get; set; } = new();
+}
+
+/// <summary>
+/// Semantic validation configuration options.
+/// </summary>
+public class GDValidationConfig
+{
+    /// <summary>
+    /// Nullable access check strictness.
+    /// Values: "error", "strict", "normal", "relaxed", "off"
+    /// Default: "strict"
+    /// </summary>
+    public string NullableStrictness { get; set; } = "strict";
+
+    /// <summary>
+    /// Warn on Dictionary indexer access (dict["key"]).
+    /// Dictionary values may be null.
+    /// Default: true
+    /// </summary>
+    public bool WarnOnDictionaryIndexer { get; set; } = true;
+
+    /// <summary>
+    /// Warn on untyped function parameters.
+    /// Callers could technically pass null to untyped parameters.
+    /// Default: true
+    /// </summary>
+    public bool WarnOnUntypedParameters { get; set; } = true;
 }
 
 /// <summary>

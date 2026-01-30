@@ -43,7 +43,12 @@ namespace GDShrapt.Reader
 
             if (options.CheckCalls)
             {
-                var callValidator = new GDCallValidator(context, options.CheckResourcePaths);
+                var callValidator = new GDCallValidator(
+                    context,
+                    options.CheckResourcePaths,
+                    options.ArgumentTypeAnalyzer,
+                    options.CheckArgumentTypes,
+                    options.ArgumentTypeSeverity);
                 callValidator.Validate(node);
             }
 
@@ -59,15 +64,9 @@ namespace GDShrapt.Reader
                 indentationValidator.Validate(node);
             }
 
-            // Member access validation using member access analyzer
-            if (options.CheckMemberAccess && options.MemberAccessAnalyzer != null)
-            {
-                var memberAccessValidator = new GDMemberAccessValidator(
-                    context,
-                    options.MemberAccessAnalyzer,
-                    options.MemberAccessSeverity);
-                memberAccessValidator.Validate(node);
-            }
+            // NOTE: Member access validation moved to GDShrapt.Semantics.Validator
+            // Use GDSemanticValidator with GDSemanticModel for member access validation
+            // The old GDMemberAccessValidator has been removed
 
             if (options.CheckAbstract)
             {

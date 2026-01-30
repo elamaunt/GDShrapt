@@ -9,14 +9,14 @@ namespace GDShrapt.Semantics;
 /// Service for generating getters and setters for class variables.
 /// Supports both GDScript 4.x property syntax and traditional method syntax.
 /// </summary>
-public class GDGenerateGetterSetterService
+public class GDGenerateGetterSetterService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the generate getter/setter refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         var varDecl = GetVariableDeclaration(context);

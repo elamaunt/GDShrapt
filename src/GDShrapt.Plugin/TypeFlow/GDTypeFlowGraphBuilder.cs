@@ -80,6 +80,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Loads inflows for a node that hasn't had its inflows loaded yet.
     /// This enables lazy loading for deep graph traversal.
+    /// Delegates to CLI.Core handler.
     /// </summary>
     public void LoadInflowsFor(GDTypeFlowNode node)
     {
@@ -87,17 +88,21 @@ internal class GDTypeFlowGraphBuilder
             return;
 
         var script = node.SourceScript;
-        if (script == null)
+        if (script == null || string.IsNullOrEmpty(script.FullPath))
             return;
 
-        var semanticModel = EnsureSemanticModel(script);
-        if (semanticModel == null)
-            return;
-
-        var symbol = semanticModel.FindSymbol(node.Label);
-        if (symbol != null)
+        // Use handler to get inflows from CLI.Core
+        var inflows = _typeFlowHandler.GetInflowNodes(node.Label, script.FullPath);
+        if (inflows != null)
         {
-            BuildMultiLevelInflows(node, symbol, script, semanticModel, 1);
+            foreach (var inflow in inflows)
+            {
+                if (!node.Inflows.Any(n => n.Id == inflow.Id))
+                {
+                    node.Inflows.Add(inflow);
+                    RegisterNode(inflow);
+                }
+            }
         }
 
         node.AreInflowsLoaded = true;
@@ -106,6 +111,7 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Loads outflows for a node that hasn't had its outflows loaded yet.
     /// This enables lazy loading for deep graph traversal.
+    /// Delegates to CLI.Core handler.
     /// </summary>
     public void LoadOutflowsFor(GDTypeFlowNode node)
     {
@@ -113,17 +119,21 @@ internal class GDTypeFlowGraphBuilder
             return;
 
         var script = node.SourceScript;
-        if (script == null)
+        if (script == null || string.IsNullOrEmpty(script.FullPath))
             return;
 
-        var semanticModel = EnsureSemanticModel(script);
-        if (semanticModel == null)
-            return;
-
-        var symbol = semanticModel.FindSymbol(node.Label);
-        if (symbol != null)
+        // Use handler to get outflows from CLI.Core
+        var outflows = _typeFlowHandler.GetOutflowNodes(node.Label, script.FullPath);
+        if (outflows != null)
         {
-            BuildMultiLevelOutflows(node, symbol, script, semanticModel, 1);
+            foreach (var outflow in outflows)
+            {
+                if (!node.Outflows.Any(n => n.Id == outflow.Id))
+                {
+                    node.Outflows.Add(outflow);
+                    RegisterNode(outflow);
+                }
+            }
         }
 
         node.AreOutflowsLoaded = true;
@@ -131,6 +141,7 @@ internal class GDTypeFlowGraphBuilder
 
     /// <summary>
     /// Builds a type flow graph for the specified symbol.
+    /// Delegates to IGDTypeFlowHandler for core graph building, then enhances with UI-specific features.
     /// </summary>
     /// <param name="symbolName">The name of the symbol to analyze.</param>
     /// <param name="script">The script containing the symbol.</param>
@@ -143,43 +154,39 @@ internal class GDTypeFlowGraphBuilder
         // Clear registry for new graph
         ClearRegistry();
 
-        var semanticModel = EnsureSemanticModel(script);
-        if (semanticModel == null)
-            return null;
-
-        var symbol = semanticModel.FindSymbol(symbolName);
-        if (symbol == null)
-            return null;
-
-        // Create the root node for the symbol
-        var rootNode = CreateNodeFromSymbol(symbol, script, semanticModel);
+        // Delegate to CLI.Core handler for core graph building
+        // This ensures all type flow logic is centralized in CLI.Core
+        var rootNode = _typeFlowHandler.ShowForSymbol(symbolName, script);
         if (rootNode == null)
             return null;
 
         // Register the root node
         RegisterNode(rootNode);
 
-        // Add union type info if applicable
-        AddUnionTypeInfo(rootNode, symbolName, semanticModel);
+        // Register all inflow and outflow nodes
+        foreach (var inflow in rootNode.Inflows)
+            RegisterNode(inflow);
+        foreach (var outflow in rootNode.Outflows)
+            RegisterNode(outflow);
 
-        // Add duck type info if applicable
-        AddDuckTypeInfo(rootNode, symbolName, semanticModel);
+        var semanticModel = script.SemanticModel;
 
-        // Build multi-level inflows
-        BuildMultiLevelInflows(rootNode, symbol, script, semanticModel, 1);
-        rootNode.AreInflowsLoaded = true;
-
-        // Build multi-level outflows
-        BuildMultiLevelOutflows(rootNode, symbol, script, semanticModel, 1);
-        rootNode.AreOutflowsLoaded = true;
-
-        // Expand union types if enabled
-        if (ExpandUnionTypes)
+        // Add union type info if applicable (UI enhancement)
+        if (semanticModel != null)
         {
-            ExpandUnionTypeNodes(rootNode, script, semanticModel);
+            AddUnionTypeInfo(rootNode, symbolName, semanticModel);
+
+            // Add duck type info if applicable (UI enhancement)
+            AddDuckTypeInfo(rootNode, symbolName, semanticModel);
+
+            // Expand union types if enabled (UI feature)
+            if (ExpandUnionTypes)
+            {
+                ExpandUnionTypeNodes(rootNode, script, semanticModel);
+            }
         }
 
-        // Create edge objects from Inflows/Outflows relationships
+        // Create edge objects from Inflows/Outflows relationships (UI feature)
         CreateEdges(rootNode);
 
         return rootNode;
@@ -323,18 +330,23 @@ internal class GDTypeFlowGraphBuilder
 
     /// <summary>
     /// Adds duck type information to a node.
+    /// Delegates suppression logic to GDSemanticModel.ShouldSuppressDuckConstraints().
     /// </summary>
     private void AddDuckTypeInfo(GDTypeFlowNode node, string symbolName, GDSemanticModel semanticModel)
     {
         if (!IncludeDuckConstraints)
             return;
 
+        // Delegate suppression decision to semantic model
+        if (semanticModel.ShouldSuppressDuckConstraints(symbolName))
+            return;
+
         var duckType = semanticModel.GetDuckType(symbolName);
-        if (duckType != null && duckType.HasRequirements)
-        {
-            node.HasDuckConstraints = true;
-            node.DuckTypeInfo = duckType;
-        }
+        if (duckType == null || !duckType.HasRequirements)
+            return;
+
+        node.HasDuckConstraints = true;
+        node.DuckTypeInfo = duckType;
     }
 
     /// <summary>
@@ -348,6 +360,13 @@ internal class GDTypeFlowGraphBuilder
         var decl = symbol?.DeclarationNode;
         if (decl == null)
             return;
+
+        // For methods, inflows are the parameters
+        if (decl is GDMethodDeclaration method)
+        {
+            BuildMethodInflows(targetNode, method, script, semanticModel, currentLevel);
+            return;
+        }
 
         // Check for explicit type annotation via GDSymbolInfo.TypeName
         if (symbol.TypeName != null)
@@ -404,6 +423,60 @@ internal class GDTypeFlowGraphBuilder
                     BuildInflowsFromExpression(assignNode, assignment.RightExpression, script, semanticModel, currentLevel + 1);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Builds inflows for a method (parameters are the inputs).
+    /// </summary>
+    private void BuildMethodInflows(GDTypeFlowNode targetNode, GDMethodDeclaration method, GDScriptFile script, GDSemanticModel semanticModel, int currentLevel)
+    {
+        // Add parameters as inflows (they are inputs to the method)
+        if (method.Parameters != null)
+        {
+            foreach (var param in method.Parameters)
+            {
+                if (param == null)
+                    continue;
+
+                var paramName = param.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(paramName))
+                    continue;
+
+                var paramType = param.Type?.BuildName() ?? semanticModel.GetTypeForNode(param) ?? "Variant";
+                var paramNode = new GDTypeFlowNode
+                {
+                    Id = GenerateNodeId(),
+                    Label = paramName,
+                    Type = paramType,
+                    Kind = GDTypeFlowNodeKind.Parameter,
+                    Confidence = param.Type != null ? 1.0f : 0.5f,
+                    Description = $"Parameter: {paramName}",
+                    Location = GDSourceLocation.FromNode(param, script.FullPath),
+                    SourceScript = script,
+                    AstNode = param
+                };
+                targetNode.Inflows.Add(paramNode);
+            }
+        }
+
+        // Add return type annotation if present
+        if (method.ReturnType != null)
+        {
+            var returnType = method.ReturnType.BuildName();
+            var returnAnnotationNode = new GDTypeFlowNode
+            {
+                Id = GenerateNodeId(),
+                Label = "Return type",
+                Type = returnType,
+                Kind = GDTypeFlowNodeKind.TypeAnnotation,
+                Confidence = 1.0f,
+                Description = $"Declared return type: {returnType}",
+                Location = GDSourceLocation.FromNode(method.ReturnType, script.FullPath),
+                SourceScript = script,
+                AstNode = method.ReturnType
+            };
+            targetNode.Inflows.Add(returnAnnotationNode);
         }
     }
 
@@ -467,6 +540,14 @@ internal class GDTypeFlowGraphBuilder
     {
         if (currentLevel > MaxOutflowLevels)
             return;
+
+        // For methods, outflows are handled by CLI.Core handler
+        // This method is now only used for non-method symbols
+        if (symbol.DeclarationNode is GDMethodDeclaration)
+        {
+            // Methods are handled via _typeFlowHandler.ShowForSymbol() which builds outflows in CLI.Core
+            return;
+        }
 
         var refs = semanticModel.GetReferencesTo(symbol);
         var processedLocations = new HashSet<(int, int)>();
@@ -958,6 +1039,7 @@ internal class GDTypeFlowGraphBuilder
 
     /// <summary>
     /// Gets the node kind from a symbol.
+    /// Matches GDTypeFlowHandler.MapSymbolKind() for consistency.
     /// </summary>
     private GDTypeFlowNodeKind GetNodeKindFromSymbol(GDSymbolInfo symbol)
     {
@@ -965,8 +1047,13 @@ internal class GDTypeFlowGraphBuilder
         {
             GDSymbolKind.Parameter => GDTypeFlowNodeKind.Parameter,
             GDSymbolKind.Variable => GDTypeFlowNodeKind.LocalVariable,
+            GDSymbolKind.Iterator => GDTypeFlowNodeKind.LocalVariable,
             GDSymbolKind.Method => GDTypeFlowNodeKind.MethodCall,
             GDSymbolKind.Property => GDTypeFlowNodeKind.MemberVariable,
+            GDSymbolKind.Signal => GDTypeFlowNodeKind.MemberVariable,
+            GDSymbolKind.Constant => GDTypeFlowNodeKind.MemberVariable,
+            GDSymbolKind.EnumValue => GDTypeFlowNodeKind.Literal,
+            GDSymbolKind.MatchCaseBinding => GDTypeFlowNodeKind.LocalVariable,
             _ => GDTypeFlowNodeKind.Unknown
         };
     }

@@ -1,3 +1,4 @@
+using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using System;
 
@@ -30,12 +31,37 @@ internal static class GDPluginDiagnosticAdapter
             Severity = unified.Severity,
             Category = MapCategory(unified.Source),
             Script = script,
-            // Convert from 1-based (Semantics) to 0-based (Plugin)
+            // Convert Line from 1-based to 0-based. Column already 0-based.
             StartLine = Math.Max(0, unified.StartLine - 1),
-            StartColumn = Math.Max(0, unified.StartColumn - 1),
+            StartColumn = unified.StartColumn,
             EndLine = Math.Max(0, unified.EndLine - 1),
-            EndColumn = Math.Max(0, unified.EndColumn - 1),
+            EndColumn = unified.EndColumn,
             Fixes = fixes
+        };
+    }
+
+    /// <summary>
+    /// Converts a GDDiagnostic from the Validator to a Plugin diagnostic.
+    /// </summary>
+    /// <param name="diagnostic">The diagnostic from GDSemanticValidator.</param>
+    /// <param name="script">The script reference for this diagnostic.</param>
+    /// <returns>A Plugin diagnostic with 0-based coordinates.</returns>
+    public static GDPluginDiagnostic ConvertFromValidator(GDDiagnostic diagnostic, GDScriptFile script)
+    {
+        return new GDPluginDiagnostic
+        {
+            RuleId = diagnostic.CodeString,
+            RuleName = null,
+            Message = diagnostic.Message,
+            Severity = MapSeverity(diagnostic.Severity),
+            Category = GDDiagnosticCategory.Correctness,
+            Script = script,
+            // Convert Line from 1-based to 0-based. Column already 0-based.
+            StartLine = Math.Max(0, diagnostic.StartLine - 1),
+            StartColumn = diagnostic.StartColumn,
+            EndLine = Math.Max(0, diagnostic.EndLine - 1),
+            EndColumn = diagnostic.EndColumn,
+            Fixes = Array.Empty<GDCodeFix>()
         };
     }
 
@@ -48,8 +74,23 @@ internal static class GDPluginDiagnosticAdapter
         {
             GDDiagnosticSource.Syntax => GDDiagnosticCategory.Syntax,
             GDDiagnosticSource.Validator => GDDiagnosticCategory.Correctness,
+            GDDiagnosticSource.SemanticValidator => GDDiagnosticCategory.Correctness,
             GDDiagnosticSource.Linter => GDDiagnosticCategory.Style,
             _ => GDDiagnosticCategory.Style
+        };
+    }
+
+    /// <summary>
+    /// Maps validator severity to plugin severity.
+    /// </summary>
+    private static GDDiagnosticSeverity MapSeverity(Reader.GDDiagnosticSeverity severity)
+    {
+        return severity switch
+        {
+            Reader.GDDiagnosticSeverity.Error => GDDiagnosticSeverity.Error,
+            Reader.GDDiagnosticSeverity.Warning => GDDiagnosticSeverity.Warning,
+            Reader.GDDiagnosticSeverity.Hint => GDDiagnosticSeverity.Hint,
+            _ => GDDiagnosticSeverity.Warning
         };
     }
 }

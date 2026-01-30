@@ -166,6 +166,37 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
+        // Variant can have any properties (duck typing)
+        if (typeName == "Variant")
+            return;
+
+        // Check if this is a local enum value access (e.g., AIState.IDLE)
+        if (_analyzer.IsLocalEnum(typeName))
+        {
+            if (_analyzer.IsLocalEnumValue(typeName, memberName))
+                return; // Valid enum access
+
+            ReportWarning(
+                GDDiagnosticCode.PropertyNotFound,
+                $"Enum value '{memberName}' not found in enum '{typeName}'",
+                memberAccess);
+            return;
+        }
+
+        // Check if this is a local inner class member access
+        if (_analyzer.IsLocalInnerClass(typeName))
+        {
+            var innerMember = _analyzer.GetInnerClassMember(typeName, memberName);
+            if (innerMember != null)
+                return; // Valid inner class member
+
+            ReportWarning(
+                GDDiagnosticCode.PropertyNotFound,
+                $"Property '{memberName}' not found on inner class '{typeName}'",
+                memberAccess);
+            return;
+        }
+
         var memberInfo = FindMember(typeName, memberName);
         if (memberInfo == null)
         {
@@ -181,7 +212,50 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
-        var memberInfo = FindMember(typeName, methodName);
+        // Variant can have any methods (duck typing)
+        if (typeName == "Variant")
+            return;
+
+        GDRuntimeMemberInfo? memberInfo;
+
+        // Check if this is a local inner class method call
+        if (_analyzer.IsLocalInnerClass(typeName))
+        {
+            memberInfo = _analyzer.GetInnerClassMember(typeName, methodName);
+            if (memberInfo == null)
+            {
+                ReportWarning(
+                    GDDiagnosticCode.MethodNotFound,
+                    $"Method '{methodName}' not found on inner class '{typeName}'",
+                    call);
+                return;
+            }
+
+            if (memberInfo.Kind != GDRuntimeMemberKind.Method)
+            {
+                ReportError(
+                    GDDiagnosticCode.NotCallable,
+                    $"'{methodName}' on inner class '{typeName}' is not a method",
+                    call);
+                return;
+            }
+
+            // Check if this is a static call (calling on class name, not instance)
+            var isCallingOnClassName = IsCallingOnClassName(memberExpr, typeName);
+            if (isCallingOnClassName && !memberInfo.IsStatic)
+            {
+                ReportError(
+                    GDDiagnosticCode.InstanceMethodCalledAsStatic,
+                    $"Cannot call instance method '{methodName}' on class '{typeName}'. Use an instance or make the method static.",
+                    call);
+                return;
+            }
+
+            // Skip argument count validation for inner class methods (we don't have reliable info)
+            return;
+        }
+
+        memberInfo = FindMember(typeName, methodName);
         if (memberInfo == null)
         {
             ReportWarning(
@@ -257,13 +331,16 @@ public class GDMemberAccessValidator : GDValidationVisitor
 
     private GDRuntimeMemberInfo? FindMember(string typeName, string memberName)
     {
-        // Check direct member
-        var memberInfo = _runtimeProvider.GetMember(typeName, memberName);
+        // Extract base type for generics (Array[int] -> Array)
+        var baseTypeName = ExtractBaseTypeName(typeName);
+
+        // Check direct member on base type
+        var memberInfo = _runtimeProvider.GetMember(baseTypeName, memberName);
         if (memberInfo != null)
             return memberInfo;
 
         // Check inherited members
-        var baseType = _runtimeProvider.GetBaseType(typeName);
+        var baseType = _runtimeProvider.GetBaseType(baseTypeName);
         while (!string.IsNullOrEmpty(baseType))
         {
             memberInfo = _runtimeProvider.GetMember(baseType, memberName);
@@ -276,6 +353,22 @@ public class GDMemberAccessValidator : GDValidationVisitor
         return null;
     }
 
+    /// <summary>
+    /// Extracts the base type name from a generic type.
+    /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
+    /// </summary>
+    private static string ExtractBaseTypeName(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return typeName;
+
+        var bracketIndex = typeName.IndexOf('[');
+        if (bracketIndex > 0)
+            return typeName.Substring(0, bracketIndex);
+
+        return typeName;
+    }
+
     private string? GetRootVariableName(GDExpression? expr)
     {
         return expr switch
@@ -285,5 +378,28 @@ public class GDMemberAccessValidator : GDValidationVisitor
             GDIndexerExpression indexerExpr => GetRootVariableName(indexerExpr.CallerExpression),
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Checks if the method call is made directly on a class name (static call pattern).
+    /// For example: MyClass.method() returns true for "MyClass"
+    /// But: instance.method() returns false
+    /// </summary>
+    private bool IsCallingOnClassName(GDMemberOperatorExpression memberExpr, string typeName)
+    {
+        // If the caller is a simple identifier matching the inner class name,
+        // it's a static call on the class name
+        if (memberExpr.CallerExpression is GDIdentifierExpression idExpr)
+        {
+            var callerName = idExpr.Identifier?.Sequence;
+            if (callerName == typeName)
+                return true;
+
+            // Also check if it's a known inner class by name
+            if (_analyzer.IsLocalInnerClass(callerName))
+                return true;
+        }
+
+        return false;
     }
 }

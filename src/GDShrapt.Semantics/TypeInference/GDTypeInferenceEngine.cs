@@ -27,6 +27,10 @@ namespace GDShrapt.Semantics
         // Guard against infinite recursion when inferring method return types
         private readonly HashSet<string> _methodsBeingInferred = new HashSet<string>();
 
+        // Guard against infinite recursion when inferring expression types
+        private readonly HashSet<GDExpression> _expressionsBeingInferred = new HashSet<GDExpression>();
+        private const int MaxInferenceDepth = 50;
+
         // Optional provider for narrowed types from control flow analysis (e.g., after "if x is Type:")
         private Func<string, string> _narrowingTypeProvider;
 
@@ -168,9 +172,16 @@ namespace GDShrapt.Semantics
         /// <summary>
         /// Infers the type of an expression as a string.
         /// Returns null if the type cannot be determined.
+        /// For lambda expressions, returns the full semantic Callable type with signature.
         /// </summary>
         public string InferType(GDExpression expression)
         {
+            // Special handling for lambda expressions - return full semantic type
+            if (expression is GDMethodExpression lambda)
+            {
+                return InferLambdaSemanticType(lambda);
+            }
+
             return InferTypeNode(expression)?.BuildName();
         }
 
@@ -183,6 +194,36 @@ namespace GDShrapt.Semantics
             if (expression == null)
                 return null;
 
+            // Check cache first
+            if (_typeNodeCache.TryGetValue(expression, out var cachedType))
+                return cachedType;
+
+            // Guard against infinite recursion
+            if (_expressionsBeingInferred.Contains(expression))
+                return null; // Already inferring this expression - break cycle
+
+            if (_expressionsBeingInferred.Count >= MaxInferenceDepth)
+                return null; // Too deep - likely infinite recursion
+
+            _expressionsBeingInferred.Add(expression);
+            try
+            {
+                var result = InferTypeNodeCore(expression);
+                if (result != null)
+                    _typeNodeCache[expression] = result;
+                return result;
+            }
+            finally
+            {
+                _expressionsBeingInferred.Remove(expression);
+            }
+        }
+
+        /// <summary>
+        /// Core implementation of InferTypeNode without recursion guard.
+        /// </summary>
+        private GDTypeNode InferTypeNodeCore(GDExpression expression)
+        {
             switch (expression)
             {
                 // Literals - known types
@@ -237,10 +278,9 @@ namespace GDShrapt.Semantics
                 case GDBracketExpression bracketExpr:
                     return InferTypeNode(bracketExpr.InnerExpression);
 
-                // Lambda as expression - always Callable type
-                // Use InferLambdaReturnType() to get the return type of the lambda body
-                case GDMethodExpression _:
-                    return CreateSimpleType("Callable");
+                // Lambda as expression - infer Callable with signature
+                case GDMethodExpression lambdaExpr:
+                    return InferLambdaTypeWithSignature(lambdaExpr);
 
                 // Await - returns signal emission type or coroutine return type
                 case GDAwaitExpression awaitExpr:
@@ -293,13 +333,15 @@ namespace GDShrapt.Semantics
             // For typed arrays: Array[T] -> T
             if (containerTypeNode is GDArrayTypeNode arrayType)
             {
-                return arrayType.InnerType;
+                if (arrayType.InnerType != null)
+                    return arrayType.InnerType;
             }
 
             // For typed dictionaries: Dictionary[K, V] -> V
             if (containerTypeNode is GDDictionaryTypeNode dictType)
             {
-                return dictType.ValueType;
+                if (dictType.ValueType != null)
+                    return dictType.ValueType;
             }
 
             // For untyped Array/Dictionary, try to infer from usage
@@ -429,7 +471,9 @@ namespace GDShrapt.Semantics
                 case "self":
                     return CreateSimpleType("self");
                 case "super":
-                    return CreateSimpleType("super");
+                    // super refers to the parent class type
+                    var parentType = GetParentClassType(identExpr);
+                    return CreateSimpleType(parentType ?? "RefCounted");
             }
 
             // Check narrowing context first (type guards like "if x is Type:")
@@ -454,7 +498,28 @@ namespace GDShrapt.Semantics
                     if (!string.IsNullOrEmpty(symbol.TypeName))
                         return CreateSimpleType(symbol.TypeName);
 
-                    // Fallback: infer type from initializer if symbol has no explicit type
+                    // Handle enum symbols - enum type is the enum name itself
+                    // This allows AIState.PATROL where AIState is a local enum
+                    if (symbol.Kind == GDSymbolKind.Enum)
+                    {
+                        return CreateSimpleType(symbol.Name);
+                    }
+
+                    // Handle inner class symbols - class type is the class name
+                    if (symbol.Kind == GDSymbolKind.Class)
+                    {
+                        return CreateSimpleType(symbol.Name);
+                    }
+
+                    // Handle method reference - method used without calling it returns Callable
+                    // Example: var cb = _on_timeout  →  cb is Callable
+                    // This enables .bind(), .call(), .is_valid() methods on method references
+                    if (symbol.Kind == GDSymbolKind.Method)
+                    {
+                        return CreateSimpleType("Callable");
+                    }
+
+                    // Fallback: infer type from initializer for understanding expression type
                     // Handle local variables (statements)
                     if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt &&
                         varDeclStmt.Initializer != null)
@@ -486,10 +551,35 @@ namespace GDShrapt.Semantics
                         if (varDecl.Initializer != null)
                             return InferTypeNode(varDecl.Initializer);
                     }
+
+                    if (member is GDSignalDeclaration signalDecl &&
+                        signalDecl.Identifier?.Sequence == name)
+                    {
+                        return CreateSimpleType("Signal");
+                    }
+
+                    // Handle method reference - method used without calling it returns Callable
+                    // Example: var cb = _on_timeout  →  cb is Callable
+                    // This enables .bind(), .call(), .is_valid() methods on method references
+                    if (member is GDMethodDeclaration methodDecl &&
+                        methodDecl.Identifier?.Sequence == name)
+                    {
+                        return CreateSimpleType("Callable");
+                    }
+                }
+
+                // Check inherited members from base class via implicit self
+                // When identifier like 'position' is used without 'self.', resolve from parent class
+                // This handles cases like: extends Node2D; func test(): var d = position.distance_to(...)
+                var baseTypeName = GetClassBaseType(classDecl);
+                if (!string.IsNullOrEmpty(baseTypeName))
+                {
+                    var memberInfo = FindMemberWithInheritance(baseTypeName, name);
+                    if (memberInfo != null)
+                        return CreateSimpleType(memberInfo.Type);
                 }
             }
 
-            // Check if it's a known type (type as value, like Vector2)
             if (_runtimeProvider.IsKnownType(name))
                 return CreateSimpleType(name);
 
@@ -497,6 +587,12 @@ namespace GDShrapt.Semantics
             var globalClass = _runtimeProvider.GetGlobalClass(name);
             if (globalClass != null)
                 return CreateSimpleType(name);
+
+            // AST fallback: search for local variable declaration by walking up the AST
+            // This handles cases when scope is not populated (e.g., direct type engine usage)
+            var localInit = GDContainerTypeAnalyzer.FindLocalVariableInitializer(identExpr, name);
+            if (localInit != null)
+                return InferTypeNode(localInit);
 
             return null;
         }
@@ -512,6 +608,57 @@ namespace GDShrapt.Semantics
                 return "float";
 
             return "int";
+        }
+
+        /// <summary>
+        /// Gets the parent class type from the extends clause of the containing class.
+        /// Used to resolve the type of 'super' keyword.
+        /// </summary>
+        private static string? GetParentClassType(GDIdentifierExpression identExpr)
+        {
+            // First check if we're inside an inner class
+            var innerClass = identExpr.InnerClassDeclaration;
+            if (innerClass != null)
+            {
+                // Use inner class's BaseType directly (not Extends.Type - Extends is just the keyword)
+                var baseType = innerClass.BaseType;
+                if (baseType != null)
+                {
+                    var typeName = baseType.BuildName();
+                    if (!string.IsNullOrEmpty(typeName))
+                        return typeName;
+                }
+                // Inner classes without extends default to RefCounted
+                return "RefCounted";
+            }
+
+            // Fall back to root class for outer class context
+            var classDecl = identExpr.RootClassDeclaration;
+            if (classDecl == null)
+                return null;
+
+            // Get extends clause
+            var extendsClause2 = classDecl.Extends;
+            if (extendsClause2?.Type != null)
+            {
+                    var typeName = extendsClause2.Type.BuildName();
+                if (!string.IsNullOrEmpty(typeName))
+                    return typeName;
+            }
+
+            // If no extends, default to RefCounted
+            return "RefCounted";
+        }
+
+        /// <summary>
+        /// Gets the base type name from the extends clause of the class declaration.
+        /// </summary>
+        private static string? GetClassBaseType(GDClassDeclaration classDecl)
+        {
+            var extendsClause = classDecl?.Extends;
+            if (extendsClause?.Type != null)
+                return extendsClause.Type.BuildName();
+            return null;
         }
 
         private string InferCallType(GDCallExpression callExpr)
@@ -593,7 +740,7 @@ namespace GDShrapt.Semantics
                 var methodName = memberExpr.Identifier?.Sequence;
 
                 // Handle .new() constructor - returns the class type itself
-                if (methodName == "new")
+                if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
                 {
                     var constructorType = InferType(memberExpr.CallerExpression);
                     if (!string.IsNullOrEmpty(constructorType))
@@ -641,7 +788,15 @@ namespace GDShrapt.Semantics
                                 return propType;
                         }
 
-                        // Special handling for call/callv - infer return type from method name
+                        // Special handling for Callable.call() - extract return type from signature
+                        if ((methodName == "call" || methodName == "callv") && callerType.StartsWith("Callable["))
+                        {
+                            var callableReturnType = ExtractCallableReturnType(callerType);
+                            if (!string.IsNullOrEmpty(callableReturnType))
+                                return callableReturnType;
+                        }
+
+                        // Special handling for call/callv on Object - infer return type from method name
                         if (methodName == "call" || methodName == "callv")
                         {
                             var dynamicReturnType = InferDynamicCallType(callExpr, callerType);
@@ -807,6 +962,282 @@ namespace GDShrapt.Semantics
         private GDTypeNode InferLambdaReturnTypeNode(GDMethodExpression lambda)
             => MethodReturnAnalyzer.InferLambdaReturnTypeNode(lambda);
 
+        /// <summary>
+        /// Infers the Callable type for a lambda expression with full signature.
+        /// Returns a semantic type like Callable[[int, String], bool] for internal analysis.
+        /// Note: GDTypeNode.BuildName() will return just "Callable" since GDScript
+        /// doesn't have syntax for Callable generic parameters.
+        /// Use InferType() to get the full semantic type string.
+        /// </summary>
+        private GDTypeNode InferLambdaTypeWithSignature(GDMethodExpression lambda)
+        {
+            // For GDTypeNode we can only return simple Callable since the parser
+            // doesn't support Callable[[params], return] syntax.
+            // The full semantic type is available via InferType() -> InferLambdaSemanticType()
+            return CreateSimpleType("Callable");
+        }
+
+        /// <summary>
+        /// Infers the full semantic Callable type for a lambda expression.
+        /// Returns format: Callable[[param1, param2], return] for type checking.
+        /// If lambda has no typed parameters and returns void, returns simple "Callable".
+        /// </summary>
+        public string InferLambdaSemanticType(GDMethodExpression lambda)
+        {
+            if (lambda == null)
+                return "Callable";
+
+            // Collect parameter types
+            var paramTypes = new List<string>();
+            bool hasTypedParams = false;
+
+            if (lambda.Parameters != null)
+            {
+                foreach (var param in lambda.Parameters)
+                {
+                    var typeName = param.Type?.BuildName();
+                    if (!string.IsNullOrEmpty(typeName))
+                    {
+                        hasTypedParams = true;
+                        paramTypes.Add(typeName);
+                    }
+                    else if (param.DefaultValue != null)
+                    {
+                        // Infer type from default value
+                        var inferredType = InferType(param.DefaultValue);
+                        if (!string.IsNullOrEmpty(inferredType) && inferredType != "null")
+                        {
+                            hasTypedParams = true;
+                            paramTypes.Add(inferredType);
+                        }
+                        else
+                        {
+                            paramTypes.Add("Variant");
+                        }
+                    }
+                    else
+                    {
+                        // Infer from lambda parameter usage (duck typing)
+                        var inferredType = InferLambdaParameterType(lambda, param);
+                        paramTypes.Add(inferredType);
+                    }
+                }
+            }
+
+            // Infer return type
+            var returnType = InferLambdaReturnType(lambda);
+            var hasReturnType = !string.IsNullOrEmpty(returnType) && returnType != "void" && returnType != "null";
+
+            // If no typed parameters and no return type, return simple Callable
+            if (!hasTypedParams && !hasReturnType && paramTypes.Count == 0)
+            {
+                return "Callable";
+            }
+
+            // Build semantic type: Callable[[param1, param2], return]
+            // If no return type, use void
+            var actualReturn = hasReturnType ? returnType : "void";
+
+            if (paramTypes.Count == 0)
+            {
+                // No parameters: Callable[[], void] or Callable[[], ReturnType]
+                return $"Callable[[], {actualReturn}]";
+            }
+
+            // With parameters: Callable[[int, String], bool]
+            var paramsStr = string.Join(", ", paramTypes);
+            return $"Callable[[{paramsStr}], {actualReturn}]";
+        }
+
+        /// <summary>
+        /// Infers a lambda parameter type from its usage patterns within the lambda body.
+        /// Uses the same duck-typing infrastructure as method parameters.
+        /// </summary>
+        private string InferLambdaParameterType(GDMethodExpression lambda, GDParameterDeclaration param)
+        {
+            var paramName = param.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(paramName))
+                return "Variant";
+
+            // Use existing analyzer infrastructure (already has AnalyzeLambda method!)
+            var constraints = GDParameterUsageAnalyzer.AnalyzeLambda(lambda, _runtimeProvider);
+
+            if (!constraints.TryGetValue(paramName, out var paramConstraints) ||
+                !paramConstraints.HasConstraints)
+            {
+                return "Variant";
+            }
+
+            // Use existing resolver infrastructure
+            var resolver = new GDParameterTypeResolver(_runtimeProvider);
+            var result = resolver.ResolveFromConstraints(paramConstraints);
+
+            // Use individual union types if available
+            if (result.UnionTypes != null && result.UnionTypes.Count > 0)
+            {
+                // Single type
+                if (result.UnionTypes.Count == 1)
+                    return result.UnionTypes[0];
+
+                // Union type: "Array | Dictionary"
+                return string.Join(" | ", result.UnionTypes);
+            }
+
+            // Fall back to TypeName or Variant
+            return !string.IsNullOrEmpty(result.TypeName) ? result.TypeName : "Variant";
+        }
+
+        /// <summary>
+        /// Gets the full signature of a lambda expression for diagnostics and display.
+        /// Returns a signature in format: (param1: Type1, param2: Type2) -> ReturnType
+        /// </summary>
+        public string GetLambdaSignature(GDMethodExpression lambda)
+        {
+            if (lambda == null)
+                return null;
+
+            // Collect parameter types
+            var paramParts = new List<string>();
+
+            if (lambda.Parameters != null)
+            {
+                foreach (var param in lambda.Parameters)
+                {
+                    var paramName = param.Identifier?.Sequence ?? "_";
+                    var typeName = param.Type?.BuildName();
+
+                    if (string.IsNullOrEmpty(typeName) && param.DefaultValue != null)
+                    {
+                        typeName = InferType(param.DefaultValue);
+                    }
+
+                    if (string.IsNullOrEmpty(typeName) || typeName == "null")
+                    {
+                        typeName = "Variant";
+                    }
+
+                    paramParts.Add($"{paramName}: {typeName}");
+                }
+            }
+
+            // Infer return type
+            var returnType = InferLambdaReturnType(lambda);
+            if (string.IsNullOrEmpty(returnType) || returnType == "null")
+                returnType = "void";
+
+            // Build signature: (x: int, y: String) -> bool
+            var paramsStr = string.Join(", ", paramParts);
+            return $"({paramsStr}) -> {returnType}";
+        }
+
+        /// <summary>
+        /// Gets the parameter types of a lambda expression.
+        /// Returns a list of type names for each parameter.
+        /// </summary>
+        public IReadOnlyList<string> GetLambdaParameterTypes(GDMethodExpression lambda)
+        {
+            if (lambda?.Parameters == null)
+                return Array.Empty<string>();
+
+            var types = new List<string>();
+            foreach (var param in lambda.Parameters)
+            {
+                var typeName = param.Type?.BuildName();
+
+                if (string.IsNullOrEmpty(typeName) && param.DefaultValue != null)
+                {
+                    typeName = InferType(param.DefaultValue);
+                }
+
+                if (string.IsNullOrEmpty(typeName) || typeName == "null")
+                {
+                    typeName = "Variant";
+                }
+
+                types.Add(typeName);
+            }
+            return types;
+        }
+
+        /// <summary>
+        /// Extracts the return type from a Callable semantic type signature.
+        /// For example: Callable[[int, String], bool] returns "bool"
+        /// For simple Callable without signature, returns null.
+        /// </summary>
+        public static string ExtractCallableReturnType(string callableType)
+        {
+            if (string.IsNullOrEmpty(callableType) || !callableType.StartsWith("Callable["))
+                return null;
+
+            // Format: Callable[[param1, param2], return]
+            // Find the last comma followed by the return type before the closing ]
+            // We need to find the "], " that separates params from return type
+
+            var paramsEndIndex = callableType.LastIndexOf("], ");
+            if (paramsEndIndex < 0)
+                return null;
+
+            // Extract return type: everything after "], " and before final "]"
+            var returnStart = paramsEndIndex + 3; // Skip "], "
+            var returnEnd = callableType.Length - 1; // Before final "]"
+
+            if (returnStart >= returnEnd)
+                return null;
+
+            return callableType.Substring(returnStart, returnEnd - returnStart);
+        }
+
+        /// <summary>
+        /// Extracts the parameter types from a Callable semantic type signature.
+        /// For example: Callable[[int, String], bool] returns ["int", "String"]
+        /// For simple Callable without signature, returns empty list.
+        /// </summary>
+        public static IReadOnlyList<string> ExtractCallableParameterTypes(string callableType)
+        {
+            if (string.IsNullOrEmpty(callableType) || !callableType.StartsWith("Callable[["))
+                return Array.Empty<string>();
+
+            // Format: Callable[[param1, param2], return]
+            // Extract the [[...]] part
+
+            var paramsStart = "Callable[[".Length;
+            var paramsEnd = callableType.IndexOf("], ");
+            if (paramsEnd < 0)
+                return Array.Empty<string>();
+
+            var paramsSection = callableType.Substring(paramsStart, paramsEnd - paramsStart);
+            if (string.IsNullOrEmpty(paramsSection))
+                return Array.Empty<string>();
+
+            // Split by ", " - but need to handle nested types like Array[int]
+            var types = new List<string>();
+            var depth = 0;
+            var start = 0;
+
+            for (int i = 0; i < paramsSection.Length; i++)
+            {
+                var c = paramsSection[i];
+                if (c == '[')
+                    depth++;
+                else if (c == ']')
+                    depth--;
+                else if (c == ',' && depth == 0)
+                {
+                    var type = paramsSection.Substring(start, i - start).Trim();
+                    if (!string.IsNullOrEmpty(type))
+                        types.Add(type);
+                    start = i + 1;
+                }
+            }
+
+            // Add the last type
+            var lastType = paramsSection.Substring(start).Trim();
+            if (!string.IsNullOrEmpty(lastType))
+                types.Add(lastType);
+
+            return types;
+        }
+
         private string InferMemberType(GDMemberOperatorExpression memberExpr)
         {
             var memberName = memberExpr.Identifier?.Sequence;
@@ -828,11 +1259,43 @@ namespace GDShrapt.Semantics
             if (opType == null)
                 return null;
 
+            // Special handling for 'as' operator - right side IS the type name, not an expression
+            if (opType == GDDualOperatorType.As)
+            {
+                var typeName = GetTypeNameFromExpression(dualOp.RightExpression);
+                return typeName ?? "Variant";
+            }
+
             var leftType = InferType(dualOp.LeftExpression);
             var rightType = InferType(dualOp.RightExpression);
 
             // Delegate to the centralized operator type resolver
             return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+        }
+
+        /// <summary>
+        /// Extracts a type name from an expression used in type context (e.g., 'as' operator, 'is' check).
+        /// </summary>
+        private static string? GetTypeNameFromExpression(GDExpression? expr)
+        {
+            if (expr == null)
+                return null;
+
+            // Simple identifier: Dictionary, Array, Node, Sprite2D, etc.
+            if (expr is GDIdentifierExpression identExpr)
+                return identExpr.Identifier?.Sequence;
+
+            // Member expressions like SomeClass.InnerType
+            if (expr is GDMemberOperatorExpression memberExpr)
+            {
+                var caller = GetTypeNameFromExpression(memberExpr.CallerExpression);
+                var member = memberExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(caller) && !string.IsNullOrEmpty(member))
+                    return $"{caller}.{member}";
+            }
+
+            // Fallback
+            return expr.ToString();
         }
 
         private string InferSingleOperatorType(GDSingleOperatorExpression singleOp)
@@ -909,8 +1372,7 @@ namespace GDShrapt.Semantics
             if (string.IsNullOrEmpty(typeName) || string.IsNullOrWhiteSpace(typeName))
                 return null;
 
-            // Check if this is a simple type (no generic brackets, dots, or union |)
-            // Simple types can be created directly for performance
+            // Simple types (no generic brackets, dots, or union |) - optimize for performance
             if (typeName.IndexOf('[') < 0 && typeName.IndexOf('.') < 0 && typeName.IndexOf('|') < 0)
             {
                 // Validate that it's a valid identifier before creating

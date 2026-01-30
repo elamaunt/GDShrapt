@@ -22,6 +22,11 @@ public class GDScopeStack
     public GDScope? Global { get; private set; }
 
     /// <summary>
+    /// The class-level scope (contains methods, signals, class variables).
+    /// </summary>
+    public GDScope? Class { get; private set; }
+
+    /// <summary>
     /// Current nesting depth.
     /// </summary>
     public int Depth => _stack.Count;
@@ -56,6 +61,8 @@ public class GDScopeStack
 
         if (type == GDScopeType.Global)
             Global = scope;
+        else if (type == GDScopeType.Class)
+            Class = scope;
 
         _stack.Push(scope);
         return scope;
@@ -160,7 +167,7 @@ public class GDScopeStack
 
     /// <summary>
     /// Resets stack to only contain the Global scope (keeping its symbols).
-    /// Used for two-pass validation.
+    /// Used for two-pass validation. If Global was popped, pushes it back.
     /// </summary>
     public void ResetToGlobal()
     {
@@ -170,6 +177,35 @@ public class GDScopeStack
             if (scope == Global)
                 break;
             _stack.Pop();
+        }
+
+        // If Global scope was popped (stack is empty but Global exists), push it back
+        if (_stack.Count == 0 && Global != null)
+        {
+            _stack.Push(Global);
+        }
+    }
+
+    /// <summary>
+    /// Resets stack to contain Global and Class scopes (keeping their symbols).
+    /// Used when type inference needs access to class-level declarations (methods, signals, variables).
+    /// Unlike ResetToGlobal(), this preserves the Class scope which contains method declarations.
+    /// </summary>
+    public void ResetToClass()
+    {
+        // Clear the stack
+        _stack.Clear();
+
+        // Push Global scope if it exists
+        if (Global != null)
+        {
+            _stack.Push(Global);
+        }
+
+        // Push Class scope if it exists (on top of Global)
+        if (Class != null)
+        {
+            _stack.Push(Class);
         }
     }
 }

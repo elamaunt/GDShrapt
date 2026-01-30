@@ -73,9 +73,9 @@ public class GDTypeUsage
 /// <summary>
 /// Unified facade for semantic queries on a single script file.
 /// Provides symbol resolution, reference tracking, type inference, and confidence analysis.
-/// Implements IGDMemberAccessAnalyzer for use with GDValidator.
+/// Implements IGDMemberAccessAnalyzer and IGDArgumentTypeAnalyzer for use with GDValidator.
 /// </summary>
-public class GDSemanticModel : IGDMemberAccessAnalyzer
+public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 {
     private readonly GDScriptFile _scriptFile;
     private readonly IGDRuntimeProvider? _runtimeProvider;
@@ -102,12 +102,22 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
     private readonly Dictionary<string, GDVariableUsageProfile> _variableProfiles = new();
     private readonly Dictionary<string, GDUnionType> _unionTypeCache = new();
 
-    // Container usage profiles
+    // Call site argument types for parameters (method.paramName -> union of argument types)
+    private readonly Dictionary<string, GDUnionType> _callSiteParameterTypes = new();
+
+    // Container usage profiles (local variables within methods)
     private readonly Dictionary<string, GDContainerUsageProfile> _containerProfiles = new();
     private readonly Dictionary<string, GDContainerElementType> _containerTypeCache = new();
 
+    // Class-level container usage profiles (class member variables)
+    private readonly Dictionary<string, GDContainerUsageProfile> _classContainerProfiles = new();
+
     // Flow-sensitive type analysis (SSA-style)
     private readonly Dictionary<GDMethodDeclaration, GDFlowAnalyzer> _methodFlowAnalyzers = new();
+
+    // Recursion guard for GetExpressionType to prevent infinite loops
+    private readonly HashSet<GDExpression> _expressionTypeInProgress = new();
+    private const int MaxExpressionTypeRecursionDepth = 50;
 
     /// <summary>
     /// The script file this model represents.
@@ -146,13 +156,17 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
     /// </summary>
     /// <param name="scriptFile">The script file to analyze.</param>
     /// <param name="runtimeProvider">Optional runtime provider for type resolution.</param>
+    /// <param name="typeInjector">Optional type injector for scene-based node type inference.</param>
     /// <returns>A fully built semantic model.</returns>
-    public static GDSemanticModel Create(GDScriptFile scriptFile, IGDRuntimeProvider? runtimeProvider = null)
+    public static GDSemanticModel Create(
+        GDScriptFile scriptFile,
+        IGDRuntimeProvider? runtimeProvider = null,
+        IGDRuntimeTypeInjector? typeInjector = null)
     {
         if (scriptFile == null)
             throw new ArgumentNullException(nameof(scriptFile));
 
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
+        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider, typeInjector);
         return collector.BuildSemanticModel();
     }
 
@@ -255,7 +269,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (contextNode == null || symbols.Count == 1)
             return symbols[0];
 
-        // Find the enclosing method for the context node
         var contextMethod = FindEnclosingMethod(contextNode);
 
         // First, try to find a local symbol in the same method
@@ -310,7 +323,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (memberInfo == null)
             return null;
 
-        // Find the declaring type (may be different from typeName if inherited)
         var declaringType = FindDeclaringType(typeName, memberName) ?? typeName;
 
         return GDSymbolInfo.BuiltIn(memberInfo, declaringType);
@@ -321,28 +333,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
     /// </summary>
     private string? FindDeclaringType(string typeName, string memberName)
     {
-        if (_runtimeProvider == null)
-            return typeName;
-
-        var visited = new HashSet<string>();
-        var current = typeName;
-        while (!string.IsNullOrEmpty(current))
+        return TraverseInheritanceChain(typeName, current =>
         {
-            // Prevent infinite loop on cyclic inheritance
-            if (!visited.Add(current))
-                return typeName;
-
-            var typeInfo = _runtimeProvider.GetTypeInfo(current);
-            if (typeInfo?.Members != null)
-            {
-                if (typeInfo.Members.Any(m => m.Name == memberName))
-                    return current;
-            }
-
-            current = _runtimeProvider.GetBaseType(current);
-        }
-
-        return typeName;
+            var typeInfo = _runtimeProvider!.GetTypeInfo(current);
+            if (typeInfo?.Members?.Any(m => m.Name == memberName) == true)
+                return current;
+            return null;
+        }) ?? typeName;
     }
 
     #endregion
@@ -435,18 +432,63 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (expression == null)
             return null;
 
-        // Check cache first
-        if (_nodeTypes.TryGetValue(expression, out var cachedType))
-            return cachedType;
-
-        // For identifier expressions, use flow-sensitive type analysis
-        // Priority: flow-sensitive > narrowing > type engine
+        // For identifier expressions, flow analysis takes priority over cache
+        // because cache may contain stale types from initialization (before reassignments)
         if (expression is GDIdentifierExpression identExpr)
         {
             var varName = identExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName))
             {
-                // Try flow-sensitive type first (SSA-style)
+                var method = FindContainingMethodNode(expression);
+                if (method != null)
+                {
+                    var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+                    var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
+                    // Return flow type even if it's Variant - this is the authoritative type
+                    // at this location, and returning Variant is correct for untyped variables
+                    if (!string.IsNullOrEmpty(flowType))
+                        return flowType;
+                }
+            }
+        }
+
+        // Check cache for non-identifier expressions or when flow analysis didn't provide result
+        if (_nodeTypes.TryGetValue(expression, out var cachedType))
+            return cachedType;
+
+        // Recursion guard: prevent infinite loops when resolving expression types
+        if (_expressionTypeInProgress.Contains(expression))
+            return null; // Already computing this expression's type - return null to break cycle
+
+        if (_expressionTypeInProgress.Count >= MaxExpressionTypeRecursionDepth)
+            return null; // Too deep - likely infinite recursion
+
+        _expressionTypeInProgress.Add(expression);
+        try
+        {
+            return GetExpressionTypeCore(expression);
+        }
+        finally
+        {
+            _expressionTypeInProgress.Remove(expression);
+        }
+    }
+
+    /// <summary>
+    /// Core implementation of GetExpressionType without recursion guard.
+    /// </summary>
+    private string? GetExpressionTypeCore(GDExpression expression)
+    {
+        // For identifier expressions, use flow-sensitive type analysis
+        // Priority: flow-sensitive > narrowing > class variable union > type engine
+        // Note: flow analysis is now checked in GetExpressionType() BEFORE cache lookup
+        if (expression is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                // Flow analysis is already checked in GetExpressionType(), but we keep this
+                // as fallback for cases where it wasn't available
                 var method = FindContainingMethodNode(expression);
                 if (method != null)
                 {
@@ -460,6 +502,40 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
                 var narrowed = GetNarrowedType(varName, expression);
                 if (!string.IsNullOrEmpty(narrowed))
                     return narrowed;
+
+                // Fall back to class variable union type (for untyped class-level variables)
+                // This handles: var entity_manager assigned in _ready() with ECSLikeSystem.new()
+                var unionType = GetUnionType(varName);
+                if (unionType != null && unionType.IsSingleType)
+                {
+                    var effectiveType = unionType.EffectiveType;
+                    if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant")
+                        return effectiveType;
+                }
+
+                // Check if identifier references a method - method reference is Callable
+                // This handles: var cb = _on_timeout; cb.bind(timer)
+                // Method references (without calling them) have type Callable
+                var methodSymbol = FindSymbol(varName);
+                if (methodSymbol?.Kind == GDSymbolKind.Method)
+                    return "Callable";
+
+                // Fall back to local variable initializer type inference
+                // This handles: var entity = entity_manager.create_entity(...)
+                // where entity_manager type is already known through union types
+                // Only use this when there are NO reassignments (otherwise, flow analysis should handle it)
+                if (method != null)
+                {
+                    var symbol = FindSymbol(varName);
+                    if (symbol?.DeclarationNode is GDVariableDeclarationStatement localVarDecl &&
+                        localVarDecl.Initializer != null &&
+                        !HasLocalReassignments(method, varName))
+                    {
+                        var initType = GetExpressionType(localVarDecl.Initializer);
+                        if (!string.IsNullOrEmpty(initType) && initType != "Variant")
+                            return initType;
+                    }
+                }
             }
         }
 
@@ -492,6 +568,70 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
                 var memberInfo = FindMemberWithInheritanceInternal(callerType, methodName);
                 if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                     return memberInfo.Type;
+            }
+        }
+
+        // For binary operators, recursively resolve operand types using flow-sensitive analysis
+        // This ensures narrowed types (e.g., after 'if x is int:') are used for expressions like 'x * 2'
+        if (expression is GDDualOperatorExpression dualOp)
+        {
+            var opType = dualOp.Operator?.OperatorType;
+
+            // For 'as' operator, delegate to TypeEngine which handles it correctly
+            // (right side is a TYPE NAME, not an expression value)
+            if (opType == GDDualOperatorType.As)
+            {
+                return _typeEngine?.InferType(expression);
+            }
+
+            var leftType = GetExpressionType(dualOp.LeftExpression);
+            var rightType = GetExpressionType(dualOp.RightExpression);
+
+            if (opType.HasValue)
+            {
+                var resultType = GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+                if (!string.IsNullOrEmpty(resultType))
+                    return resultType;
+            }
+        }
+
+        // For unary operators, recursively resolve operand type using flow-sensitive analysis
+        if (expression is GDSingleOperatorExpression singleOp)
+        {
+            var operandType = GetExpressionType(singleOp.TargetExpression);
+            var opType = singleOp.Operator?.OperatorType;
+
+            if (opType.HasValue)
+            {
+                var resultType = GDOperatorTypeResolver.ResolveSingleOperatorType(opType.Value, operandType);
+                if (!string.IsNullOrEmpty(resultType))
+                    return resultType;
+            }
+        }
+
+        // For indexer expressions (dict[key], array[index]), infer element type from container
+        if (expression is GDIndexerExpression indexerExpr)
+        {
+            // First, try typed containers (Array[T], Dictionary[K,V])
+            var typeNode = GetTypeNodeForExpression(indexerExpr);
+            if (typeNode != null)
+            {
+                var typeName = typeNode.BuildName();
+                if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
+                    return typeName;
+            }
+
+            // Fallback: check container usage analysis for untyped containers
+            var varName = GetRootVariableName(indexerExpr.CallerExpression);
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var containerType = GetInferredContainerType(varName);
+                if (containerType != null && containerType.HasElementTypes)
+                {
+                    var elementType = containerType.EffectiveElementType;
+                    if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+                        return elementType;
+                }
             }
         }
 
@@ -574,23 +714,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
     /// </summary>
     private GDRuntimeMemberInfo? FindMemberWithInheritanceInternal(string typeName, string memberName)
     {
-        if (_runtimeProvider == null)
-            return null;
-
-        var visited = new HashSet<string>();
-        var current = typeName;
-        while (!string.IsNullOrEmpty(current))
-        {
-            if (!visited.Add(current))
-                return null;
-
-            var memberInfo = _runtimeProvider.GetMember(current, memberName);
-            if (memberInfo != null)
-                return memberInfo;
-
-            current = _runtimeProvider.GetBaseType(current);
-        }
-        return null;
+        return TraverseInheritanceChain(typeName, current =>
+            _runtimeProvider!.GetMember(current, memberName));
     }
 
     /// <summary>
@@ -605,10 +730,75 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (_methodFlowAnalyzers.TryGetValue(method, out var existing))
             return existing;
 
-        var analyzer = new GDFlowAnalyzer(_typeEngine);
-        analyzer.Analyze(method);
+        var analyzer = new GDFlowAnalyzer(_typeEngine, GetExpressionTypeWithoutFlow);
+        // Cache BEFORE Analyze to prevent infinite recursion if Analyze triggers GetOrCreateFlowAnalyzer
         _methodFlowAnalyzers[method] = analyzer;
+        analyzer.Analyze(method);
         return analyzer;
+    }
+
+    /// <summary>
+    /// Gets expression type without using flow analysis (to avoid recursion when called from flow analyzer).
+    /// Uses union types for class variables and type engine for other expressions.
+    /// </summary>
+    private string? GetExpressionTypeWithoutFlow(GDExpression expression)
+    {
+        if (expression == null)
+            return null;
+
+        // For call expressions like entity_manager.create_entity(), resolve through member access
+        if (expression is GDCallExpression callExpr &&
+            callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
+        {
+            var callerType = GetExpressionTypeWithoutFlow(callMemberExpr.CallerExpression);
+            var methodName = callMemberExpr.Identifier?.Sequence;
+
+            // Handle .new() constructor
+            if (methodName == GDTypeInferenceConstants.ConstructorMethodName && !string.IsNullOrEmpty(callerType))
+                return callerType;
+
+            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
+                !string.IsNullOrEmpty(methodName) && _runtimeProvider != null)
+            {
+                var memberInfo = FindMemberWithInheritanceInternal(callerType, methodName);
+                if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
+                    return memberInfo.Type;
+            }
+        }
+
+        // For identifiers, try union types (class variables assigned in different methods)
+        if (expression is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                // IMPORTANT: Check for method reference FIRST, before union types.
+                // A method name without () should be typed as Callable, not by its return type.
+                // Example: var cb = _handler  =>  cb should be Callable (method reference)
+                // This enables .bind(), .call(), .is_valid() methods on the reference.
+                var symbol = FindSymbol(varName);
+                if (symbol?.Kind == GDSymbolKind.Method)
+                {
+                    return "Callable";
+                }
+
+                // Check union types (handles class variables like entity_manager)
+                var unionType = GetUnionType(varName);
+                if (unionType != null && unionType.IsSingleType)
+                {
+                    var effectiveType = unionType.EffectiveType;
+                    if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant" && effectiveType != "null")
+                    {
+                        return effectiveType;
+                    }
+                }
+            }
+        }
+
+        // Fall back to type engine
+        var result = _typeEngine?.InferType(expression);
+        Console.WriteLine($"[GetExpressionTypeWithoutFlow] expr={expression.GetType().Name}, TypeEngine result={result ?? "null"}");
+        return result;
     }
 
     /// <summary>
@@ -624,6 +814,36 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
             current = current.Parent;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Checks if a local variable has any reassignments within the method.
+    /// Used to determine if we should fall back to initializer type inference.
+    /// </summary>
+    private static bool HasLocalReassignments(GDMethodDeclaration? method, string varName)
+    {
+        if (method?.Statements == null || string.IsNullOrEmpty(varName))
+            return false;
+
+        // Look for assignment expressions targeting this variable
+        foreach (var node in method.AllNodes)
+        {
+            // Skip the initial declaration
+            if (node is GDVariableDeclarationStatement)
+                continue;
+
+            // Check for reassignment: x = something
+            // Can be in GDExpressionStatement or directly as GDDualOperatorExpression
+            if (node is GDDualOperatorExpression dualOp &&
+                dualOp.Operator?.OperatorType == GDDualOperatorType.Assignment &&
+                dualOp.LeftExpression is GDIdentifierExpression leftIdent &&
+                leftIdent.Identifier?.Sequence == varName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -657,6 +877,201 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
 
         var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
         return flowAnalyzer?.GetVariableTypeAtLocation(variableName, atLocation);
+    }
+
+    /// <summary>
+    /// Gets the flow state at a specific location in the code.
+    /// Returns null if flow analysis is not available.
+    /// </summary>
+    public GDFlowState? GetFlowStateAtLocation(GDNode atLocation)
+    {
+        if (atLocation == null)
+            return null;
+
+        var method = FindContainingMethodNode(atLocation);
+        if (method == null)
+            return null;
+
+        var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+        return flowAnalyzer?.GetStateAtLocation(atLocation);
+    }
+
+    /// <summary>
+    /// Checks if a variable is potentially null at a given location.
+    /// </summary>
+    public bool IsVariablePotentiallyNull(string variableName, GDNode atLocation)
+    {
+        if (string.IsNullOrEmpty(variableName) || atLocation == null)
+            return true; // Assume potentially null if unknown
+
+        // Check if this is an enum type access (enums are never null)
+        if (IsEnumType(variableName))
+            return false;
+
+        // Check if this is a class/type name (for static method calls like ClassName.new())
+        // Class names are not variables and cannot be null
+        if (IsClassName(variableName))
+            return false;
+
+        // Check if this is a built-in value type (Vector2, Vector3, etc.) - they have static members like ZERO
+        if (IsBuiltInValueType(variableName))
+            return false;
+
+        // Check if inherited property from base class (always exists) - check even if no local symbol
+        // This handles cases like "position.distance_to()" where position is from Node2D
+        if (IsInheritedProperty(variableName))
+            return false;
+
+        // Check if this is a signal (signals are never null)
+        var symbol = FindSymbol(variableName);
+        if (symbol != null)
+        {
+            // Signals are never null
+            if (symbol.Kind == GDSymbolKind.Signal)
+                return false;
+
+            // Check if class-level variable has non-null initializer
+            if (symbol.Kind == GDSymbolKind.Variable || symbol.Kind == GDSymbolKind.Property)
+            {
+                if (HasNonNullInitializer(symbol))
+                    return false;
+            }
+        }
+
+        var method = FindContainingMethodNode(atLocation);
+        if (method == null)
+            return true;
+
+        var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+        var state = flowAnalyzer?.GetStateAtLocation(atLocation);
+        if (state == null)
+            return true;
+
+        return state.IsVariablePotentiallyNull(variableName);
+    }
+
+    /// <summary>
+    /// Checks if a type name represents an enum type (local or cross-file).
+    /// </summary>
+    private bool IsEnumType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        // Check local enums (same logic as IGDMemberAccessAnalyzer.IsLocalEnum)
+        var symbols = FindSymbols(typeName);
+        if (symbols.Any(s => s.Kind == GDSymbolKind.Enum))
+            return true;
+
+        // Cross-file enums are handled via GDProjectTypesProvider which registers them
+        // as constants with the enum name as type. No additional check needed here
+        // since FindSymbols already covers project-level symbols.
+
+        return false;
+    }
+
+    /// <summary>
+    /// Public method to check if a type is an enum (for external access).
+    /// </summary>
+    public bool IsLocalEnumType(string typeName)
+    {
+        return IsEnumType(typeName);
+    }
+
+    /// <summary>
+    /// Checks if a name represents a class/type name.
+    /// Class names are used for static method calls (ClassName.new()) and cannot be null.
+    /// </summary>
+    private bool IsClassName(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return false;
+
+        // Check if it's a local class (class_name declaration)
+        var symbols = FindSymbols(name);
+        if (symbols.Any(s => s.Kind == GDSymbolKind.Class))
+            return true;
+
+        // Check if it's a known Godot type via runtime provider
+        if (_runtimeProvider?.IsKnownType(name) == true)
+            return true;
+
+        // Check global classes (singletons like Input, Engine, OS)
+        if (_runtimeProvider?.GetGlobalClass(name) != null)
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a name represents a built-in value type (Vector2, Vector3, etc.).
+    /// These types have static members like ZERO, ONE, UP, etc. that are never null.
+    /// </summary>
+    private static bool IsBuiltInValueType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        return typeName is "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i"
+            or "Color" or "Rect2" or "Rect2i" or "Transform2D" or "Transform3D"
+            or "Basis" or "Quaternion" or "Plane" or "AABB" or "Projection"
+            or "int" or "float" or "bool" or "String" or "StringName" or "RID" or "Callable" or "Signal";
+    }
+
+    /// <summary>
+    /// Checks if a symbol has a non-null initializer.
+    /// </summary>
+    private static bool HasNonNullInitializer(GDSymbolInfo symbol)
+    {
+        if (symbol.DeclarationNode is GDVariableDeclaration varDecl)
+        {
+            var initializer = varDecl.Initializer;
+            if (initializer == null)
+                return false;
+
+            // Null literal means explicitly null (in GDScript, null is GDIdentifierExpression with "null")
+            if (initializer is GDIdentifierExpression nullIdent && nullIdent.Identifier?.Sequence == "null")
+                return false;
+
+            // Any other initializer ([], {}, new(), literals, etc.) is non-null
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a variable is an inherited property from the extends clause.
+    /// </summary>
+    private bool IsInheritedProperty(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName) || _runtimeProvider == null)
+            return false;
+
+        // Get the extends type for this script
+        var extendsType = GetExtendsType();
+        if (string.IsNullOrEmpty(extendsType))
+            return false;
+
+        // Check if this is a property on the base type
+        var member = TraverseInheritanceChain(extendsType, current =>
+            _runtimeProvider.GetMember(current, variableName));
+
+        return member != null && member.Kind == GDRuntimeMemberKind.Property;
+    }
+
+    /// <summary>
+    /// Gets the extends type for the current script.
+    /// </summary>
+    private string? GetExtendsType()
+    {
+        // Find the class declaration in the script
+        var classDecl = _scriptFile?.Class;
+        if (classDecl == null)
+            return "RefCounted"; // Default GDScript base
+
+        var extendsType = classDecl.Extends?.Type?.BuildName();
+        return string.IsNullOrEmpty(extendsType) ? "RefCounted" : extendsType;
     }
 
     /// <summary>
@@ -780,12 +1195,68 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
 
         // Check symbol type
         var symbol = FindSymbol(variableName);
-        if (symbol?.TypeName != null)
+        if (symbol?.TypeName != null && symbol.TypeName != "Variant")
             return symbol.TypeName;
 
-        // Duck type as string representation
+        // Duck type as string representation (for Variant or untyped)
         var duckType = GetDuckType(variableName);
-        return duckType?.ToString();
+        if (duckType != null)
+            return duckType.ToString();
+
+        // Fallback to symbol type (including Variant)
+        return symbol?.TypeName;
+    }
+
+    /// <summary>
+    /// Checks if duck type constraints should be suppressed for a symbol.
+    /// Suppresses when:
+    /// - The symbol has a known concrete type (not Variant/Unknown)
+    /// - All member access usages are within narrowed contexts (type guards)
+    /// </summary>
+    /// <param name="symbolName">The symbol name to check.</param>
+    /// <returns>True if duck constraints should be suppressed.</returns>
+    public bool ShouldSuppressDuckConstraints(string symbolName)
+    {
+        if (string.IsNullOrEmpty(symbolName))
+            return true;
+
+        // If symbol has known concrete type, suppress duck constraints
+        var unionType = GetUnionType(symbolName);
+        if (unionType?.IsSingleType == true)
+        {
+            var type = unionType.EffectiveType;
+            if (IsConcreteType(type))
+                return true;
+        }
+
+        var symbol = FindSymbol(symbolName);
+        if (symbol?.TypeName != null && IsConcreteType(symbol.TypeName))
+            return true;
+
+        // If no duck type requirements, nothing to suppress
+        var duckType = GetDuckType(symbolName);
+        if (duckType == null || !duckType.HasRequirements)
+            return true;
+
+        if (symbol != null)
+        {
+            var refs = GetReferencesTo(symbol);
+            foreach (var reference in refs)
+            {
+                if (reference.ReferenceNode?.Parent is GDMemberOperatorExpression memberOp)
+                {
+                    var narrowedType = GetNarrowedType(symbolName, memberOp);
+                    if (string.IsNullOrEmpty(narrowedType))
+                    {
+                        // This usage is not in a type guard - duck type is needed
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // All usages are narrowed, suppress duck constraints
+        return true;
     }
 
     #endregion
@@ -811,7 +1282,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (!string.IsNullOrEmpty(typeName))
             return GDInferredParameterType.Declared(paramName, typeName);
 
-        // Find the containing method
         var method = FindContainingMethod(param);
         if (method == null)
             return GDInferredParameterType.Unknown(paramName);
@@ -839,7 +1309,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (string.IsNullOrEmpty(paramName))
             return null;
 
-        // Find the containing method
         var method = FindContainingMethod(param);
         if (method == null)
             return null;
@@ -950,34 +1419,96 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
     }
 
     /// <summary>
-    /// Gets the Union type for a Variant variable, computed from all assignments.
-    /// Returns null if the variable is not a tracked Variant variable.
+    /// Gets the Union type for a Variant variable or method return type.
+    /// For variables, computes from all assignments.
+    /// For methods, computes from all return statements.
+    /// Returns null if the symbol is not found.
     /// </summary>
-    public GDUnionType? GetUnionType(string variableName)
+    public GDUnionType? GetUnionType(string symbolName)
     {
-        if (string.IsNullOrEmpty(variableName))
+        if (string.IsNullOrEmpty(symbolName))
             return null;
 
         // Check cache first
-        if (_unionTypeCache.TryGetValue(variableName, out var cached))
+        if (_unionTypeCache.TryGetValue(symbolName, out var cached))
             return cached;
 
-        // Compute from profile
-        var profile = GetVariableProfile(variableName);
+        var symbol = FindSymbol(symbolName);
+        if (symbol?.DeclarationNode is GDMethodDeclaration method)
+        {
+            var union = ComputeMethodReturnUnion(method);
+            if (union != null)
+            {
+                EnrichUnionTypeIfNeeded(union);
+                _unionTypeCache[symbolName] = union;
+                return union;
+            }
+        }
+
+        if (symbol?.Kind == GDSymbolKind.Parameter && symbol.DeclarationNode is GDParameterDeclaration param)
+        {
+            var union = ComputeParameterUnion(param, symbol);
+            if (union != null)
+            {
+                EnrichUnionTypeIfNeeded(union);
+                _unionTypeCache[symbolName] = union;
+                return union;
+            }
+        }
+
+        // Compute from variable profile (for local variables)
+        var profile = GetVariableProfile(symbolName);
         if (profile == null)
             return null;
 
-        var union = profile.ComputeUnionType();
+        var varUnion = profile.ComputeUnionType();
+        EnrichUnionTypeIfNeeded(varUnion);
+        _unionTypeCache[symbolName] = varUnion;
+        return varUnion;
+    }
 
-        // Enrich with common base type if we have a runtime provider
-        if (_runtimeProvider != null && union.IsUnion)
+    /// <summary>
+    /// Computes the union type for a method's return statements.
+    /// </summary>
+    private GDUnionType? ComputeMethodReturnUnion(GDMethodDeclaration method)
+    {
+        var collector = new GDReturnTypeCollector(method, _runtimeProvider);
+        collector.Collect();
+        return collector.ComputeReturnUnionType();
+    }
+
+    /// <summary>
+    /// Computes the union type for a parameter based on type guards, null checks, and call site arguments.
+    /// </summary>
+    private GDUnionType? ComputeParameterUnion(GDParameterDeclaration param, GDSymbolInfo symbol)
+    {
+        var paramName = param.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(paramName))
+            return null;
+
+        var method = param.Parent?.Parent as GDMethodDeclaration;
+        if (method?.Statements == null)
+            return null;
+
+        // Use analyzer to compute expected types from code analysis
+        var analyzer = new GDParameterTypeAnalyzer(_runtimeProvider, _typeEngine);
+        var union = analyzer.ComputeExpectedTypes(param, method);
+
+        // Add call site argument types if available
+        var methodName = method.Identifier?.Sequence;
+        if (!string.IsNullOrEmpty(methodName))
         {
-            var resolver = new GDUnionTypeResolver(_runtimeProvider);
-            resolver.EnrichUnionType(union);
+            var key = BuildParameterKey(methodName, paramName);
+            if (_callSiteParameterTypes.TryGetValue(key, out var callSiteUnion) && callSiteUnion != null)
+            {
+                foreach (var type in callSiteUnion.Types)
+                {
+                    union.AddType(type, isHighConfidence: false);
+                }
+            }
         }
 
-        _unionTypeCache[variableName] = union;
-        return union;
+        return union.IsEmpty ? null : union;
     }
 
     /// <summary>
@@ -998,6 +1529,156 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
 
         var resolver = new GDUnionTypeResolver(_runtimeProvider);
         return resolver.GetMemberConfidence(unionType, memberName);
+    }
+
+    /// <summary>
+    /// Gets the confidence level for member access on an indexer result.
+    /// Attempts to infer element type from class-level container profiles.
+    /// </summary>
+    private GDReferenceConfidence GetIndexerMemberAccessConfidence(
+        GDIndexerExpression indexerExpr,
+        GDMemberOperatorExpression memberAccess)
+    {
+        var memberName = memberAccess.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(memberName))
+            return GDReferenceConfidence.Potential;
+
+        // Try to get the container variable name
+        var containerVarName = GetRootVariableName(indexerExpr.CallerExpression);
+        if (string.IsNullOrEmpty(containerVarName))
+            return GDReferenceConfidence.Potential;
+
+        // Try to get element type from local container profile first
+        var localProfile = GetContainerProfile(containerVarName);
+        if (localProfile != null)
+        {
+            var inferredType = localProfile.ComputeInferredType();
+            var elementType = inferredType.EffectiveElementType;
+
+            if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+            {
+                return GetMemberConfidenceOnType(elementType, memberName);
+            }
+        }
+
+        // Try class-level container profile
+        var classProfile = GetClassContainerProfile(_scriptFile?.TypeName ?? "", containerVarName);
+        if (classProfile != null)
+        {
+            var inferredType = classProfile.ComputeInferredType();
+            var elementType = inferredType.EffectiveElementType;
+
+            if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+            {
+                return GetMemberConfidenceOnType(elementType, memberName);
+            }
+
+            // If we have a union of element types, check if ALL types have the member
+            if (inferredType.ElementUnionType != null && inferredType.ElementUnionType.IsUnion)
+            {
+                return GetUnionMemberConfidence(inferredType.ElementUnionType, memberName);
+            }
+        }
+
+        // Default: duck-typing - treat as Potential since programmer expects element to have the member
+        return GDReferenceConfidence.Potential;
+    }
+
+    /// <summary>
+    /// Gets member confidence for a known type.
+    /// </summary>
+    private GDReferenceConfidence GetMemberConfidenceOnType(string typeName, string memberName)
+    {
+        if (_runtimeProvider == null)
+            return GDReferenceConfidence.Potential;
+
+        var memberInfo = _runtimeProvider.GetMember(typeName, memberName);
+        if (memberInfo != null)
+            return GDReferenceConfidence.Potential; // Known member on inferred type
+
+        // Member not found on the inferred type - still Potential for duck-typing
+        return GDReferenceConfidence.Potential;
+    }
+
+    /// <summary>
+    /// Gets the type diff for a parameter, comparing expected types (from usage/type guards)
+    /// vs actual types (from call site arguments).
+    /// </summary>
+    /// <param name="methodName">The method name.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <returns>Type diff result, or null if parameter is not found.</returns>
+    public GDParameterTypeDiff? GetParameterTypeDiff(string methodName, string paramName)
+    {
+        if (string.IsNullOrEmpty(methodName) || string.IsNullOrEmpty(paramName))
+            return null;
+
+        var methodSymbol = FindSymbol(methodName);
+        if (methodSymbol?.DeclarationNode is not GDMethodDeclaration method)
+            return null;
+
+        var param = method.Parameters?.FirstOrDefault(p => p.Identifier?.Sequence == paramName);
+        if (param == null)
+            return null;
+
+        // Use analyzer to compute expected types (including usage constraints)
+        var analyzer = new GDParameterTypeAnalyzer(_runtimeProvider, _typeEngine);
+        var expectedUnion = analyzer.ComputeExpectedTypes(param, method, includeUsageConstraints: true);
+
+        var actualUnion = new GDUnionType();
+        var key = BuildParameterKey(methodName, paramName);
+        if (_callSiteParameterTypes.TryGetValue(key, out var callSiteUnion) && callSiteUnion != null)
+        {
+            foreach (var type in callSiteUnion.Types)
+            {
+                actualUnion.AddType(type, isHighConfidence: false);
+            }
+        }
+
+        // Compute the diff
+        return GDParameterTypeDiff.Create(paramName, expectedUnion, actualUnion, _runtimeProvider);
+    }
+
+    /// <summary>
+    /// Gets the call site argument types for a parameter (from external callers).
+    /// </summary>
+    /// <param name="methodName">The method name.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <returns>Union of types passed at call sites, or null if none.</returns>
+    public GDUnionType? GetCallSiteTypes(string methodName, string paramName)
+    {
+        if (string.IsNullOrEmpty(methodName) || string.IsNullOrEmpty(paramName))
+            return null;
+
+        var key = BuildParameterKey(methodName, paramName);
+        return _callSiteParameterTypes.TryGetValue(key, out var union) ? union : null;
+    }
+
+    /// <summary>
+    /// Gets the unified type diff for ANY AST node.
+    /// This is the primary API for comparing expected vs actual types.
+    ///
+    /// The diff includes:
+    /// - Expected types: from annotations, type guards, typeof checks, match patterns, asserts
+    /// - Actual types: from assignments, call site arguments, initializers, flow analysis
+    /// - Duck constraints: inferred from method calls, property accesses on the value
+    /// - Narrowed type: flow-sensitive type at this specific location
+    ///
+    /// Works for:
+    /// - Parameters (type guards, call site arguments)
+    /// - Variables (annotations, assignments)
+    /// - Expressions (inferred types)
+    /// - Method declarations (return type analysis)
+    /// - Identifiers (resolved to their declaration)
+    /// </summary>
+    /// <param name="node">Any AST node to analyze.</param>
+    /// <returns>Type diff with expected vs actual comparison.</returns>
+    public GDTypeDiff GetTypeDiffForNode(GDNode node)
+    {
+        if (node == null)
+            return GDTypeDiff.Empty(node);
+
+        var analyzer = new GDNodeTypeAnalyzer(this, _runtimeProvider, _typeEngine);
+        return analyzer.Analyze(node);
     }
 
     #endregion
@@ -1033,19 +1714,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
             return null;
 
         var containerType = profile.ComputeInferredType();
-
-        // Enrich with common base type if we have a runtime provider
-        if (_runtimeProvider != null && containerType.ElementUnionType.IsUnion)
-        {
-            var resolver = new GDUnionTypeResolver(_runtimeProvider);
-            resolver.EnrichUnionType(containerType.ElementUnionType);
-        }
-        if (_runtimeProvider != null && containerType.KeyUnionType?.IsUnion == true)
-        {
-            var resolver = new GDUnionTypeResolver(_runtimeProvider);
-            resolver.EnrichUnionType(containerType.KeyUnionType);
-        }
-
+        EnrichUnionTypeIfNeeded(containerType.ElementUnionType);
+        EnrichUnionTypeIfNeeded(containerType.KeyUnionType);
         _containerTypeCache[variableName] = containerType;
         return containerType;
     }
@@ -1073,8 +1743,16 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         var callerType = GetExpressionType(memberAccess.CallerExpression);
 
         // Type is known and concrete
-        if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" && !callerType.StartsWith("Unknown"))
+        if (IsConcreteType(callerType))
             return GDReferenceConfidence.Strict;
+
+        // For indexer-based member access (e.g., dict[key].property, dict[key].method()),
+        // try to get element type from class-level container profiles first.
+        // If we know the element type, verify the member exists on that type.
+        if (memberAccess.CallerExpression is GDIndexerExpression indexerExpr)
+        {
+            return GetIndexerMemberAccessConfidence(indexerExpr, memberAccess);
+        }
 
         // Check for type narrowing and Union types
         var varName = GetRootVariableName(memberAccess.CallerExpression);
@@ -1083,6 +1761,27 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
             var narrowed = GetNarrowedType(varName, memberAccess);
             if (!string.IsNullOrEmpty(narrowed))
                 return GDReferenceConfidence.Strict;
+
+            // Check narrowing context for duck type constraints (P1, P8, P10)
+            // If there's a narrowing context with any requirements or excluded types, consider it Potential
+            var narrowingContext = FindNarrowingContextForNode(memberAccess);
+            if (narrowingContext != null)
+            {
+                var narrowedInfo = narrowingContext.GetNarrowedType(varName);
+                if (narrowedInfo != null)
+                {
+                    // P1: "method" in obj - has RequiredMethods
+                    // If the required method matches what we're calling, it's safe
+                    var memberName = memberAccess.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(memberName) && narrowedInfo.RequiredMethods.ContainsKey(memberName))
+                        return GDReferenceConfidence.Potential;
+
+                    // P8/P10: null excluded - still should allow method calls
+                    // If null is excluded, the variable is known to be non-null
+                    if (narrowedInfo.ExcludedTypes.Contains("null"))
+                        return GDReferenceConfidence.Potential;
+                }
+            }
 
             // Check Union type (for Variant variables with tracked assignments)
             var unionType = GetUnionType(varName);
@@ -1095,13 +1794,85 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
                 }
             }
 
-            // Check duck type
+            // Check duck-type constraints for parameters
+            // If a parameter has duck-type constraints collected from usage, and the member
+            // being accessed is in those constraints AND exists in TypesMap, it's a Potential reference
             var duckType = GetDuckType(varName);
-            if (duckType != null)
-                return GDReferenceConfidence.Potential;
+            if (duckType != null && duckType.HasRequirements)
+            {
+                var memberName = memberAccess.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(memberName))
+                {
+                    // Only return Potential if the method/property exists in known types
+                    // This ensures unknown members still get NameMatch (warning)
+                    if (_runtimeProvider is GDGodotTypesProvider typesProvider)
+                    {
+                        // If the called method is in required methods AND exists in TypesMap - it's duck-typed
+                        if (duckType.RequiredMethods.ContainsKey(memberName))
+                        {
+                            var typesWithMethod = typesProvider.FindTypesWithMethod(memberName);
+                            if (typesWithMethod.Count > 0)
+                                return GDReferenceConfidence.Potential;
+                        }
+
+                        // If the accessed property is in required properties AND exists in TypesMap - it's duck-typed
+                        if (duckType.RequiredProperties.ContainsKey(memberName))
+                        {
+                            var typesWithProperty = typesProvider.FindTypesWithProperty(memberName);
+                            if (typesWithProperty.Count > 0)
+                                return GDReferenceConfidence.Potential;
+                        }
+                    }
+                    else if (_runtimeProvider is GDCompositeRuntimeProvider compositeProvider)
+                    {
+                        bool foundInTypes = false;
+
+                        // Check Godot types
+                        var godotProvider = compositeProvider.GodotTypesProvider;
+                        if (godotProvider != null && !foundInTypes)
+                        {
+                            if (duckType.RequiredMethods.ContainsKey(memberName))
+                            {
+                                var typesWithMethod = godotProvider.FindTypesWithMethod(memberName);
+                                if (typesWithMethod.Count > 0)
+                                    foundInTypes = true;
+                            }
+
+                            if (!foundInTypes && duckType.RequiredProperties.ContainsKey(memberName))
+                            {
+                                var typesWithProperty = godotProvider.FindTypesWithProperty(memberName);
+                                if (typesWithProperty.Count > 0)
+                                    foundInTypes = true;
+                            }
+                        }
+
+                        // Check project types
+                        var projectProvider = compositeProvider.ProjectTypesProvider;
+                        if (projectProvider != null && !foundInTypes)
+                        {
+                            if (duckType.RequiredMethods.ContainsKey(memberName))
+                            {
+                                var typesWithMethod = projectProvider.FindTypesWithMethod(memberName);
+                                if (typesWithMethod.Count > 0)
+                                    foundInTypes = true;
+                            }
+
+                            if (!foundInTypes && duckType.RequiredProperties.ContainsKey(memberName))
+                            {
+                                var typesWithProperty = projectProvider.FindTypesWithProperty(memberName);
+                                if (typesWithProperty.Count > 0)
+                                    foundInTypes = true;
+                            }
+                        }
+
+                        if (foundInTypes)
+                            return GDReferenceConfidence.Potential;
+                    }
+                }
+            }
         }
 
-        // Type unknown
+        // Type is Variant or unknown without type guard - this is unguarded access
         return GDReferenceConfidence.NameMatch;
     }
 
@@ -1561,6 +2332,32 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
     }
 
     /// <summary>
+    /// Sets narrowing context for statements following an if-statement with early return.
+    /// The context applies to sibling statements that come after the if-statement.
+    /// </summary>
+    internal void SetPostIfNarrowing(GDIfStatement ifStatement, GDTypeNarrowingContext context)
+    {
+        if (ifStatement == null || context == null)
+            return;
+
+        // Get parent statements list and find statements after this if-statement
+        if (ifStatement.Parent is GDStatementsList statementsList)
+        {
+            bool foundIf = false;
+            foreach (var statement in statementsList)
+            {
+                if (foundIf)
+                {
+                    // Apply narrowing context to all statements after the if
+                    _narrowingContexts[statement] = context;
+                }
+                if (ReferenceEquals(statement, ifStatement))
+                    foundIf = true;
+            }
+        }
+    }
+
+    /// <summary>
     /// Adds a type usage to the model.
     /// </summary>
     internal void AddTypeUsage(string typeName, GDNode node, GDTypeUsageKind kind)
@@ -1603,6 +2400,105 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         }
     }
 
+    /// <summary>
+    /// Sets a class-level container usage profile.
+    /// </summary>
+    internal void SetClassContainerProfile(string className, string variableName, GDContainerUsageProfile profile)
+    {
+        if (!string.IsNullOrEmpty(className) && !string.IsNullOrEmpty(variableName) && profile != null)
+        {
+            var key = $"{className}.{variableName}";
+            _classContainerProfiles[key] = profile;
+        }
+    }
+
+    /// <summary>
+    /// Gets a class-level container usage profile.
+    /// </summary>
+    public GDContainerUsageProfile? GetClassContainerProfile(string className, string variableName)
+    {
+        if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(variableName))
+            return null;
+
+        var key = $"{className}.{variableName}";
+        return _classContainerProfiles.TryGetValue(key, out var profile) ? profile : null;
+    }
+
+    /// <summary>
+    /// Gets all class-level container profiles.
+    /// </summary>
+    public IReadOnlyDictionary<string, GDContainerUsageProfile> ClassContainerProfiles => _classContainerProfiles;
+
+    /// <summary>
+    /// Gets a class-level container profile merged with cross-file usages.
+    /// This method combines local profile with usages collected from external files.
+    /// </summary>
+    /// <param name="className">The class name containing the container.</param>
+    /// <param name="variableName">The container variable name.</param>
+    /// <param name="project">Optional project for cross-file collection.</param>
+    /// <returns>Merged container profile, or null if not found.</returns>
+    public GDContainerUsageProfile? GetMergedContainerProfile(
+        string className,
+        string variableName,
+        GDScriptProject? project)
+    {
+        // Get local profile first
+        var localProfile = GetClassContainerProfile(className, variableName);
+        if (localProfile == null)
+            return null;
+
+        // If no project provided, return local profile only
+        if (project == null)
+            return localProfile;
+
+        // Collect cross-file usages and merge
+        var crossCollector = new GDCrossFileContainerUsageCollector(project);
+        var crossUsages = crossCollector.CollectUsages(className, variableName);
+
+        if (crossUsages.Count == 0)
+            return localProfile;
+
+        // Merge profiles
+        return GDCrossFileContainerUsageCollector.MergeProfiles(localProfile, crossUsages);
+    }
+
+    /// <summary>
+    /// Sets call site argument types for a parameter.
+    /// This is used to inject project-level call site data into the file-level semantic model.
+    /// </summary>
+    /// <param name="methodName">The method name.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="callSiteTypes">The union of argument types from call sites.</param>
+    internal void SetCallSiteParameterTypes(string methodName, string paramName, GDUnionType callSiteTypes)
+    {
+        if (string.IsNullOrEmpty(methodName) || string.IsNullOrEmpty(paramName) || callSiteTypes == null)
+            return;
+
+        var key = BuildParameterKey(methodName, paramName);
+        _callSiteParameterTypes[key] = callSiteTypes;
+
+        // Clear union type cache for this parameter
+        _unionTypeCache.Remove(paramName);
+    }
+
+    /// <summary>
+    /// Sets call site argument types from a method inference report.
+    /// </summary>
+    /// <param name="report">The method inference report containing call site data.</param>
+    internal void SetCallSiteTypesFromReport(GDMethodInferenceReport report)
+    {
+        if (report == null)
+            return;
+
+        foreach (var (paramName, paramReport) in report.Parameters)
+        {
+            if (paramReport.InferredUnionType != null && !paramReport.InferredUnionType.IsEmpty)
+            {
+                SetCallSiteParameterTypes(report.MethodName, paramName, paramReport.InferredUnionType);
+            }
+        }
+    }
+
     #endregion
 
     #region Helper Methods
@@ -1615,6 +2511,65 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
             expr = indexer.CallerExpression;
 
         return (expr as GDIdentifierExpression)?.Identifier?.Sequence;
+    }
+
+    /// <summary>
+    /// Enriches a union type with common base type if available.
+    /// Centralizes the repeated enrichment pattern.
+    /// </summary>
+    private void EnrichUnionTypeIfNeeded(GDUnionType? union)
+    {
+        if (_runtimeProvider == null || union == null || !union.IsUnion)
+            return;
+
+        var resolver = new GDUnionTypeResolver(_runtimeProvider);
+        resolver.EnrichUnionType(union);
+    }
+
+    /// <summary>
+    /// Builds a parameter key for call site type lookup.
+    /// Format: "methodName.paramName"
+    /// </summary>
+    private static string BuildParameterKey(string methodName, string paramName)
+    {
+        return $"{methodName}.{paramName}";
+    }
+
+    /// <summary>
+    /// Checks if a type name represents a concrete (non-Variant, non-Unknown) type.
+    /// </summary>
+    private static bool IsConcreteType(string? typeName)
+    {
+        return !string.IsNullOrEmpty(typeName)
+            && typeName != "Variant"
+            && !typeName.StartsWith("Unknown");
+    }
+
+    /// <summary>
+    /// Traverses the inheritance chain looking for a matching result.
+    /// Handles cycle detection automatically.
+    /// </summary>
+    private T? TraverseInheritanceChain<T>(string typeName, Func<string, T?> finder) where T : class
+    {
+        if (_runtimeProvider == null || string.IsNullOrEmpty(typeName))
+            return default;
+
+        var visited = new HashSet<string>();
+        var current = typeName;
+
+        while (!string.IsNullOrEmpty(current))
+        {
+            if (!visited.Add(current))
+                break; // Cycle detection
+
+            var result = finder(current);
+            if (result != null)
+                return result;
+
+            current = _runtimeProvider.GetBaseType(current);
+        }
+
+        return default;
     }
 
     #endregion
@@ -1639,6 +2594,507 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer
         if (expression is GDExpression expr)
             return GetExpressionType(expr);
         return null;
+    }
+
+    /// <summary>
+    /// Checks if the type name refers to a local enum declaration.
+    /// </summary>
+    bool IGDMemberAccessAnalyzer.IsLocalEnum(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var symbols = FindSymbols(typeName);
+        return symbols.Any(s => s.Kind == GDSymbolKind.Enum);
+    }
+
+    /// <summary>
+    /// Checks if a member name is a valid value for a local enum.
+    /// </summary>
+    bool IGDMemberAccessAnalyzer.IsLocalEnumValue(string enumTypeName, string memberName)
+    {
+        if (string.IsNullOrEmpty(enumTypeName) || string.IsNullOrEmpty(memberName))
+            return false;
+
+        var enumSymbol = FindSymbols(enumTypeName)
+            .FirstOrDefault(s => s.Kind == GDSymbolKind.Enum);
+
+        if (enumSymbol?.DeclarationNode is not GDEnumDeclaration enumDecl)
+            return false;
+
+        return enumDecl.Values?.Any(v => v.Identifier?.Sequence == memberName) ?? false;
+    }
+
+    /// <summary>
+    /// Checks if the type name refers to a local inner class declaration.
+    /// </summary>
+    bool IGDMemberAccessAnalyzer.IsLocalInnerClass(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var symbols = FindSymbols(typeName);
+        return symbols.Any(s => s.Kind == GDSymbolKind.Class);
+    }
+
+    /// <summary>
+    /// Gets a member from a local inner class.
+    /// </summary>
+    GDRuntimeMemberInfo? IGDMemberAccessAnalyzer.GetInnerClassMember(string innerClassName, string memberName)
+    {
+        if (string.IsNullOrEmpty(innerClassName) || string.IsNullOrEmpty(memberName))
+            return null;
+
+        var classSymbol = FindSymbols(innerClassName)
+            .FirstOrDefault(s => s.Kind == GDSymbolKind.Class);
+
+        if (classSymbol?.DeclarationNode is not GDInnerClassDeclaration innerClass)
+            return null;
+
+        // Check members for property or method
+        foreach (var member in innerClass.Members)
+        {
+            if (member is GDVariableDeclaration varDecl &&
+                varDecl.Identifier?.Sequence == memberName)
+            {
+                var varType = varDecl.Type?.BuildName() ?? "Variant";
+                return GDRuntimeMemberInfo.Property(memberName, varType, false);
+            }
+
+            if (member is GDMethodDeclaration methodDecl &&
+                methodDecl.Identifier?.Sequence == memberName)
+            {
+                var returnType = methodDecl.ReturnType?.BuildName() ?? "Variant";
+                var paramCount = methodDecl.Parameters?.Count ?? 0;
+                return GDRuntimeMemberInfo.Method(memberName, returnType, paramCount, paramCount, isVarArgs: false, isStatic: methodDecl.IsStatic);
+            }
+        }
+
+        // Check base type inheritance chain
+        var baseTypeName = innerClass.BaseType?.BuildName();
+        if (!string.IsNullOrEmpty(baseTypeName))
+        {
+            return FindMemberWithInheritanceInternal(baseTypeName, memberName);
+        }
+
+        return null;
+    }
+
+    #endregion
+
+    #region IGDArgumentTypeAnalyzer Implementation
+
+    /// <summary>
+    /// Gets the type diff for a call expression argument at the given index.
+    /// </summary>
+    GDArgumentTypeDiff? IGDArgumentTypeAnalyzer.GetArgumentTypeDiff(object callExpression, int argumentIndex)
+    {
+        if (!(callExpression is GDCallExpression call))
+            return null;
+
+        return GetArgumentTypeDiffInternal(call, argumentIndex);
+    }
+
+    /// <summary>
+    /// Gets all argument type diffs for a call expression.
+    /// </summary>
+    IEnumerable<GDArgumentTypeDiff> IGDArgumentTypeAnalyzer.GetAllArgumentTypeDiffs(object callExpression)
+    {
+        if (!(callExpression is GDCallExpression call))
+            return Enumerable.Empty<GDArgumentTypeDiff>();
+
+        return GetAllArgumentTypeDiffsInternal(call);
+    }
+
+    /// <summary>
+    /// Gets the inferred type of an expression.
+    /// </summary>
+    string? IGDArgumentTypeAnalyzer.GetExpressionType(object expression)
+    {
+        if (expression is GDExpression expr)
+            return GetExpressionType(expr);
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the source description for an expression type.
+    /// </summary>
+    string? IGDArgumentTypeAnalyzer.GetExpressionTypeSource(object expression)
+    {
+        if (expression is GDExpression expr)
+            return GetExpressionTypeSource(expr);
+        return null;
+    }
+
+    /// <summary>
+    /// Internal implementation of GetArgumentTypeDiff.
+    /// </summary>
+    private GDArgumentTypeDiff? GetArgumentTypeDiffInternal(GDCallExpression call, int argumentIndex)
+    {
+        var args = call.Parameters?.ToList();
+        if (args == null || argumentIndex >= args.Count)
+            return null;
+
+        var arg = args[argumentIndex];
+
+        var (methodDecl, parameterInfo) = ResolveCalledMethod(call, argumentIndex);
+        var actualType = GetExpressionType(arg);
+        var actualSource = GetExpressionTypeSource(arg);
+
+        // If we have a method declaration with parameter info
+        if (methodDecl != null)
+        {
+            var parameters = methodDecl.Parameters?.ToList();
+            if (parameters != null && argumentIndex < parameters.Count)
+            {
+                var param = parameters[argumentIndex];
+                var paramName = param.Identifier?.Sequence;
+
+                // Get expected type directly from parameter annotation
+                // Avoid GetTypeDiffForNode to prevent potential infinite loops
+                var explicitType = param.Type?.BuildName();
+                if (string.IsNullOrEmpty(explicitType))
+                {
+                    // No explicit type - skip validation (Variant parameter)
+                    return GDArgumentTypeDiff.Skip(argumentIndex, paramName);
+                }
+
+                var expectedTypes = new List<string> { explicitType };
+                var expectedSource = "type annotation";
+
+                // Check compatibility
+                var isCompatible = CheckTypeCompatibility(actualType, expectedTypes, null);
+                var reason = isCompatible ? null : FormatIncompatibilityReason(actualType, expectedTypes, null);
+
+                if (isCompatible)
+                {
+                    return GDArgumentTypeDiff.Compatible(
+                        argumentIndex, paramName, actualType, actualSource,
+                        expectedTypes, expectedSource,
+                        GDReferenceConfidence.Strict);
+                }
+                else
+                {
+                    return GDArgumentTypeDiff.Incompatible(
+                        argumentIndex, paramName, actualType, actualSource,
+                        expectedTypes, expectedSource, reason!,
+                        GDReferenceConfidence.Strict);
+                }
+            }
+        }
+
+        // If we have runtime parameter info (for built-in functions/methods)
+        if (parameterInfo != null)
+        {
+            var expectedType = parameterInfo.Type;
+
+            // Skip type checking for varargs parameters - they accept any arguments
+            if (parameterInfo.IsParams)
+            {
+                return GDArgumentTypeDiff.Skip(argumentIndex, parameterInfo.Name);
+            }
+
+            if (string.IsNullOrEmpty(expectedType) || expectedType == "Variant")
+            {
+                return GDArgumentTypeDiff.Skip(argumentIndex, parameterInfo.Name);
+            }
+
+            var expectedTypes = new List<string> { expectedType };
+            var isCompatible = CheckTypeCompatibility(actualType, expectedTypes, null);
+            var reason = isCompatible ? null : FormatIncompatibilityReason(actualType, expectedTypes, null);
+
+            if (isCompatible)
+            {
+                return GDArgumentTypeDiff.Compatible(
+                    argumentIndex, parameterInfo.Name, actualType, actualSource,
+                    expectedTypes, "function signature",
+                    GDReferenceConfidence.Strict);
+            }
+            else
+            {
+                return GDArgumentTypeDiff.Incompatible(
+                    argumentIndex, parameterInfo.Name, actualType, actualSource,
+                    expectedTypes, "function signature", reason!,
+                    GDReferenceConfidence.Strict);
+            }
+        }
+
+        // Cannot determine parameter info - skip
+        return null;
+    }
+
+    /// <summary>
+    /// Internal implementation of GetAllArgumentTypeDiffs.
+    /// </summary>
+    private IEnumerable<GDArgumentTypeDiff> GetAllArgumentTypeDiffsInternal(GDCallExpression call)
+    {
+        var args = call.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            yield break;
+
+        for (int i = 0; i < args.Count; i++)
+        {
+            var diff = GetArgumentTypeDiffInternal(call, i);
+            if (diff != null)
+                yield return diff;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the called method/function and returns parameter info.
+    /// </summary>
+    private (GDMethodDeclaration? method, GDRuntimeParameterInfo? paramInfo) ResolveCalledMethod(GDCallExpression call, int argIndex)
+    {
+        var caller = call.CallerExpression;
+
+        // Direct function call
+        if (caller is GDIdentifierExpression idExpr)
+        {
+            var funcName = idExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(funcName))
+            {
+                // Check user-defined functions first
+                var symbol = FindSymbol(funcName);
+                if (symbol?.DeclarationNode is GDMethodDeclaration method)
+                {
+                    return (method, null);
+                }
+
+                // Check built-in global functions
+                if (_runtimeProvider != null)
+                {
+                    var funcInfo = _runtimeProvider.GetGlobalFunction(funcName);
+                    if (funcInfo?.Parameters != null && argIndex < funcInfo.Parameters.Count)
+                    {
+                        return (null, funcInfo.Parameters[argIndex]);
+                    }
+                }
+
+                // Fallback: Check methods of the base class (implicit self)
+                // This handles calls like add_child() without explicit self. prefix
+                if (_runtimeProvider != null)
+                {
+                    var baseType = _scriptFile?.Class?.Extends?.Type?.BuildName();
+                    if (!string.IsNullOrEmpty(baseType))
+                    {
+                        var memberInfo = FindMemberWithInheritanceInternal(baseType, funcName);
+                        if (memberInfo?.Parameters != null && argIndex < memberInfo.Parameters.Count)
+                        {
+                            return (null, memberInfo.Parameters[argIndex]);
+                        }
+                    }
+                }
+            }
+        }
+        // Method call: obj.method() or self.method()
+        else if (caller is GDMemberOperatorExpression memberExpr)
+        {
+            var methodName = memberExpr.Identifier?.Sequence;
+            var callerExprType = GetExpressionType(memberExpr.CallerExpression);
+
+            if (!string.IsNullOrEmpty(methodName))
+            {
+                // self.method()
+                if (memberExpr.CallerExpression is GDIdentifierExpression selfExpr &&
+                    selfExpr.Identifier?.Sequence == "self")
+                {
+                    var symbol = FindSymbol(methodName);
+                    if (symbol?.DeclarationNode is GDMethodDeclaration method)
+                    {
+                        return (method, null);
+                    }
+                }
+
+                // Type.method() - check RuntimeProvider
+                if (!string.IsNullOrEmpty(callerExprType) && _runtimeProvider != null)
+                {
+                    var memberInfo = FindMemberWithInheritanceInternal(callerExprType, methodName);
+                    if (memberInfo?.Parameters != null && argIndex < memberInfo.Parameters.Count)
+                    {
+                        return (null, memberInfo.Parameters[argIndex]);
+                    }
+                }
+            }
+        }
+
+        return (null, null);
+    }
+
+    /// <summary>
+    /// Gets the source description for an expression type.
+    /// </summary>
+    private string? GetExpressionTypeSource(GDExpression expr)
+    {
+        return expr switch
+        {
+            GDStringExpression => "string literal",
+            GDNumberExpression num => num.Number?.Sequence?.Contains('.') == true ? "float literal" : "integer literal",
+            GDBoolExpression => "boolean literal",
+            GDArrayInitializerExpression => "array literal",
+            GDDictionaryInitializerExpression => "dictionary literal",
+            GDIdentifierExpression id when id.Identifier?.Sequence == "null" => "null literal",
+            GDIdentifierExpression id => $"variable '{id.Identifier?.Sequence}'",
+            GDMemberOperatorExpression mem => "property access",
+            GDCallExpression => "function call result",
+            GDIndexerExpression => "indexer access",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Gets the source description for expected types.
+    /// </summary>
+    private string? GetExpectedTypeSource(GDTypeDiff paramDiff)
+    {
+        if (paramDiff.HasExpectedTypes && paramDiff.ExpectedTypes.Types.Any())
+        {
+            // Try to determine source from confidence
+            if (paramDiff.Confidence == GDTypeConfidence.High || paramDiff.Confidence == GDTypeConfidence.Certain)
+                return "type annotation";
+
+            if (paramDiff.HasDuckConstraints)
+                return "usage analysis";
+
+            return "type guard";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if actual type is compatible with any of the expected types.
+    /// </summary>
+    private bool CheckTypeCompatibility(string? actualType, IReadOnlyList<string> expectedTypes, GDDuckType? duckConstraints)
+    {
+        if (string.IsNullOrEmpty(actualType))
+            return true; // Unknown type - can't validate
+
+        if (expectedTypes.Count == 0 && (duckConstraints == null || !duckConstraints.HasRequirements))
+            return true; // No constraints
+
+        foreach (var expected in expectedTypes)
+        {
+            if (string.IsNullOrEmpty(expected) || expected == "Variant")
+                return true;
+
+            if (actualType == expected)
+                return true;
+
+            if (actualType == "null")
+                return true; // null is assignable to any reference type
+
+            if (_runtimeProvider?.IsAssignableTo(actualType, expected) == true)
+                return true;
+        }
+
+        // Check duck typing constraints
+        if (duckConstraints != null && duckConstraints.HasRequirements)
+        {
+            return CheckDuckTypeCompatibility(actualType, duckConstraints);
+        }
+
+        return expectedTypes.Count == 0; // If no expected types but has duck constraints that failed
+    }
+
+    /// <summary>
+    /// Checks if a type satisfies duck typing constraints.
+    /// </summary>
+    private bool CheckDuckTypeCompatibility(string actualType, GDDuckType duckConstraints)
+    {
+        if (_runtimeProvider == null)
+            return true; // Can't validate without runtime info
+
+        // Check required methods
+        foreach (var method in duckConstraints.RequiredMethods.Keys)
+        {
+            var memberInfo = FindMemberWithInheritanceInternal(actualType, method);
+            if (memberInfo == null || memberInfo.Kind != GDRuntimeMemberKind.Method)
+                return false;
+        }
+
+        // Check required properties
+        foreach (var prop in duckConstraints.RequiredProperties.Keys)
+        {
+            var memberInfo = FindMemberWithInheritanceInternal(actualType, prop);
+            if (memberInfo == null)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Formats the incompatibility reason message.
+    /// </summary>
+    private string FormatIncompatibilityReason(string? actualType, IReadOnlyList<string> expectedTypes, GDDuckType? duckConstraints)
+    {
+        actualType ??= "unknown";
+
+        if (expectedTypes.Count == 1)
+        {
+            var expected = expectedTypes[0];
+
+            if (_runtimeProvider != null)
+            {
+                var actualBase = _runtimeProvider.GetBaseType(actualType);
+                var expectedBase = _runtimeProvider.GetBaseType(expected);
+
+                if (_runtimeProvider.IsAssignableTo(expected, actualType))
+                {
+                    return $"'{actualType}' is not a subtype of '{expected}'. Hint: '{expected}' extends '{actualType}', but not vice versa";
+                }
+            }
+
+            return $"'{actualType}' is not assignable to '{expected}'";
+        }
+        else if (expectedTypes.Count > 1)
+        {
+            return $"'{actualType}' is not among expected types [{string.Join(", ", expectedTypes)}]";
+        }
+        else if (duckConstraints != null && duckConstraints.HasRequirements)
+        {
+            var missing = new List<string>();
+
+            foreach (var method in duckConstraints.RequiredMethods.Keys)
+            {
+                var memberInfo = _runtimeProvider != null
+                    ? FindMemberWithInheritanceInternal(actualType, method)
+                    : null;
+
+                if (memberInfo == null || memberInfo.Kind != GDRuntimeMemberKind.Method)
+                    missing.Add($"{method}()");
+            }
+
+            foreach (var prop in duckConstraints.RequiredProperties.Keys)
+            {
+                var memberInfo = _runtimeProvider != null
+                    ? FindMemberWithInheritanceInternal(actualType, prop)
+                    : null;
+
+                if (memberInfo == null)
+                    missing.Add(prop);
+            }
+
+            if (missing.Count > 0)
+            {
+                return $"Type '{actualType}' does not have: {string.Join(", ", missing)}";
+            }
+        }
+
+        return $"'{actualType}' is not compatible";
+    }
+
+    /// <summary>
+    /// Maps GDTypeConfidence to GDReferenceConfidence.
+    /// </summary>
+    private static GDReferenceConfidence MapConfidence(GDTypeConfidence confidence)
+    {
+        return confidence switch
+        {
+            GDTypeConfidence.Certain or GDTypeConfidence.High => GDReferenceConfidence.Strict,
+            GDTypeConfidence.Medium => GDReferenceConfidence.Potential,
+            _ => GDReferenceConfidence.NameMatch
+        };
     }
 
     #endregion

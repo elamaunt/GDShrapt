@@ -117,7 +117,10 @@ namespace GDShrapt.Reader
 
                         // Pass all data to the previous node
                         for (int i = 0; i < _sequenceBuilder.Length; i++)
+                        {
+                            state.AdvanceInputPosition();
                             state.PassChar(_sequenceBuilder[i]);
+                        }
 
                         state.PassChar(c);
                         return true;

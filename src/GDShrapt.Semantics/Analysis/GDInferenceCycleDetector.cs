@@ -406,7 +406,7 @@ internal class GDInferenceCycleDetector
             // Handle new expression - e.g., Enemy.new()
             if (expression is GDCallExpression callExpr &&
                 callExpr.CallerExpression is GDMemberOperatorExpression memberOp &&
-                memberOp.Identifier?.Sequence == "new" &&
+                memberOp.Identifier?.Sequence == GDTypeInferenceConstants.ConstructorMethodName &&
                 memberOp.CallerExpression is GDIdentifierExpression typeIdent)
             {
                 return typeIdent.Identifier?.Sequence;

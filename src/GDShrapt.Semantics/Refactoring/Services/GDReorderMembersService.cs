@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for reordering class members according to style guide.
 /// </summary>
-public class GDReorderMembersService
+public class GDReorderMembersService : GDRefactoringServiceBase
 {
     // Built-in Godot method names
     private static readonly HashSet<string> BuiltinMethodNames = new HashSet<string>
@@ -56,7 +56,7 @@ public class GDReorderMembersService
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         var members = context.ClassDeclaration.Members?.ToList();

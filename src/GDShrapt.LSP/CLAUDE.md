@@ -46,6 +46,12 @@ int lspCharacter = cliColumn - 1;
 - No heuristics in WorkspaceEdit (Rule 3)
 - All rename edits are Strict confidence only
 
+## Known Limitations
+
+1. **Strict Mode Only** - LSP does not load Pro module, no heuristic edits
+2. **No Batch Operations** - Single-file operations only
+3. **Position Conversion** - Off-by-one errors possible at file boundaries
+
 ## Key Files
 
 ```

@@ -142,7 +142,7 @@ internal partial class QuickFixesPopup : PopupMenu
             // Add location hint for multi-line view
             if (_currentFixes.Select(f => f.GDPluginDiagnostic.StartLine).Distinct().Count() > 1)
             {
-                text += $" (line {fixItem.GDPluginDiagnostic.StartLine + 1})";
+                text += $" (line {fixItem.GDPluginDiagnostic.StartLine})";
             }
 
             AddItem(text, index);

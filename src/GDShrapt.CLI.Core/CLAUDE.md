@@ -74,6 +74,12 @@ var type = semanticModel?.GetTypeForNode(node);
 // - GetMethods(), GetVariables(), GetSignals(), etc.
 ```
 
+## Known Limitations
+
+1. **Service Priority** - Higher priority modules override lower, no merge
+2. **Handler State** - Handlers are stateless, create new instances per request
+3. **TypeFlow** - Only visualizes single method, no cross-method flow
+
 ## Key Files
 
 ```

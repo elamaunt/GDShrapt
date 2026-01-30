@@ -203,15 +203,16 @@ func test():
             Console.WriteLine($"  [{diag.Code}] Line {diag.StartLine}:{diag.StartColumn} - {diag.Message}");
         }
 
-        // The undefined function call is on line 3 (0-based, which is the 4th line in editor)
+        // The undefined function call is on line 4 (1-based)
         var undefinedError = result.Diagnostics
             .FirstOrDefault(d => d.Message.Contains("nonexistent_function"));
 
         if (undefinedError != null)
         {
-            // Line 3 is the 4th line (0-indexed: 0=extends, 1=empty, 2=func, 3=var)
-            undefinedError.StartLine.Should().Be(3,
-                "nonexistent_function is on line 3 (0-based)");
+            // Line 4 is: var undefined_var = nonexistent_function()
+            // (1-indexed: 1=extends, 2=empty, 3=func, 4=var)
+            undefinedError.StartLine.Should().Be(4,
+                "nonexistent_function is on line 4 (1-based)");
         }
     }
 

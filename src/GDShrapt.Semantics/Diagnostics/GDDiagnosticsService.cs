@@ -8,6 +8,9 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Unified diagnostics service combining syntax checking, validation, and linting.
 /// Used by CLI, LSP, and Plugin for consistent diagnostics.
+///
+/// Note: For type-aware validation (member access, argument types, indexers, signals, generics),
+/// use GDSemanticValidator from GDShrapt.Semantics.Validator package separately.
 /// </summary>
 public class GDDiagnosticsService
 {
@@ -93,10 +96,10 @@ public class GDDiagnosticsService
                     Message = $"Invalid token: {token.ToString()?.Trim() ?? "unknown"}",
                     Severity = GDUnifiedDiagnosticSeverity.Error,
                     Source = GDDiagnosticSource.Syntax,
-                    StartLine = token.StartLine,
-                    StartColumn = token.StartColumn,
-                    EndLine = token.EndLine,
-                    EndColumn = token.EndColumn
+                    StartLine = token.StartLine + 1,  // Convert 0-based to 1-based
+                    StartColumn = token.StartColumn,  // Keep 0-based
+                    EndLine = token.EndLine + 1,      // Convert 0-based to 1-based
+                    EndColumn = token.EndColumn       // Keep 0-based
                 });
             }
         }

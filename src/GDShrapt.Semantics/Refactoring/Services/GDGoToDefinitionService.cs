@@ -189,14 +189,14 @@ public class GDGoToDefinitionResult : GDRefactoringResult
 /// Service for resolving symbol definitions.
 /// Handles identifier, type, member, and node path resolution.
 /// </summary>
-public class GDGoToDefinitionService
+public class GDGoToDefinitionService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if go-to-definition can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Must have a token at cursor position
@@ -210,7 +210,7 @@ public class GDGoToDefinitionService
     /// </summary>
     public GDGoToDefinitionResult GoToDefinition(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return GDGoToDefinitionResult.Failed("Invalid context");
 
         var finder = new GDPositionFinder(context.ClassDeclaration);

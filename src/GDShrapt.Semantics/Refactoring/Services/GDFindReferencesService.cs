@@ -145,9 +145,9 @@ public enum GDReferenceKind
 }
 
 /// <summary>
-/// A single reference found by GDFindReferencesService.
+/// A single reference location found by GDFindReferencesService.
 /// </summary>
-public class GDFoundReference
+public class GDReferenceLocation
 {
     /// <summary>
     /// The symbol name that was found.
@@ -209,7 +209,7 @@ public class GDFoundReference
     /// </summary>
     public int HighlightEnd { get; }
 
-    public GDFoundReference(
+    public GDReferenceLocation(
         string symbolName,
         string? filePath,
         int line,
@@ -251,17 +251,17 @@ public class GDFindReferencesResult : GDRefactoringResult
     /// <summary>
     /// Strict references - type-confirmed.
     /// </summary>
-    public IReadOnlyList<GDFoundReference> StrictReferences { get; }
+    public IReadOnlyList<GDReferenceLocation> StrictReferences { get; }
 
     /// <summary>
     /// Potential references - may be references but type unknown.
     /// </summary>
-    public IReadOnlyList<GDFoundReference> PotentialReferences { get; }
+    public IReadOnlyList<GDReferenceLocation> PotentialReferences { get; }
 
     /// <summary>
     /// All references combined.
     /// </summary>
-    public IReadOnlyList<GDFoundReference> AllReferences { get; }
+    public IReadOnlyList<GDReferenceLocation> AllReferences { get; }
 
     /// <summary>
     /// Total count of references.
@@ -272,8 +272,8 @@ public class GDFindReferencesResult : GDRefactoringResult
         bool success,
         string? errorMessage,
         GDSymbolScope? symbol,
-        IReadOnlyList<GDFoundReference> strictReferences,
-        IReadOnlyList<GDFoundReference> potentialReferences)
+        IReadOnlyList<GDReferenceLocation> strictReferences,
+        IReadOnlyList<GDReferenceLocation> potentialReferences)
         : base(success, errorMessage, null)
     {
         Symbol = symbol;
@@ -287,8 +287,8 @@ public class GDFindReferencesResult : GDRefactoringResult
     /// </summary>
     public static GDFindReferencesResult Succeeded(
         GDSymbolScope symbol,
-        IReadOnlyList<GDFoundReference> strictReferences,
-        IReadOnlyList<GDFoundReference> potentialReferences)
+        IReadOnlyList<GDReferenceLocation> strictReferences,
+        IReadOnlyList<GDReferenceLocation> potentialReferences)
     {
         return new GDFindReferencesResult(true, null, symbol, strictReferences, potentialReferences);
     }
@@ -299,20 +299,20 @@ public class GDFindReferencesResult : GDRefactoringResult
     public new static GDFindReferencesResult Failed(string errorMessage)
     {
         return new GDFindReferencesResult(false, errorMessage, null,
-            Array.Empty<GDFoundReference>(), Array.Empty<GDFoundReference>());
+            Array.Empty<GDReferenceLocation>(), Array.Empty<GDReferenceLocation>());
     }
 
     /// <summary>
     /// Gets references grouped by file.
     /// </summary>
-    public IReadOnlyDictionary<string, IReadOnlyList<GDFoundReference>> GetByFile()
+    public IReadOnlyDictionary<string, IReadOnlyList<GDReferenceLocation>> GetByFile()
     {
         return AllReferences
             .Where(r => r.FilePath != null)
             .GroupBy(r => r.FilePath!)
             .ToDictionary(
                 g => g.Key,
-                g => (IReadOnlyList<GDFoundReference>)g.OrderBy(r => r.Line).ThenBy(r => r.Column).ToList());
+                g => (IReadOnlyList<GDReferenceLocation>)g.OrderBy(r => r.Line).ThenBy(r => r.Column).ToList());
     }
 }
 
@@ -320,14 +320,14 @@ public class GDFindReferencesResult : GDRefactoringResult
 /// Service for finding all references to a symbol.
 /// Uses GDSemanticModel for symbol resolution when available.
 /// </summary>
-public class GDFindReferencesService
+public class GDFindReferencesService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Determines the scope of a symbol at the given cursor position.
     /// </summary>
     public GDSymbolScope? DetermineSymbolScope(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return null;
 
         // Use SemanticModel for symbol resolution
@@ -586,8 +586,8 @@ public class GDFindReferencesService
     /// </summary>
     public GDFindReferencesResult FindReferencesForScope(GDRefactoringContext context, GDSymbolScope scope)
     {
-        var strictRefs = new List<GDFoundReference>();
-        var potentialRefs = new List<GDFoundReference>();
+        var strictRefs = new List<GDReferenceLocation>();
+        var potentialRefs = new List<GDReferenceLocation>();
 
         // Use SemanticModel for all scope types when available
         var semanticModel = context.Script?.SemanticModel;
@@ -643,7 +643,7 @@ public class GDFindReferencesService
     /// Collects references using the SemanticModel when available.
     /// Returns null if SemanticModel doesn't have the symbol.
     /// </summary>
-    private List<GDFoundReference>? CollectReferencesViaSemanticModel(GDSemanticModel semanticModel, GDSymbolScope scope)
+    private List<GDReferenceLocation>? CollectReferencesViaSemanticModel(GDSemanticModel semanticModel, GDSymbolScope scope)
     {
         var symbolInfo = semanticModel.FindSymbol(scope.SymbolName);
         if (symbolInfo == null)
@@ -654,7 +654,7 @@ public class GDFindReferencesService
             return null;
 
         var filePath = scope.ContainingScript?.FullPath;
-        var results = new List<GDFoundReference>();
+        var results = new List<GDReferenceLocation>();
 
         foreach (var gdRef in references)
         {
@@ -671,7 +671,7 @@ public class GDFindReferencesService
             var refKind = DetermineReferenceKind(identifier);
             var confidenceReason = semanticModel.GetConfidenceReason(identifier) ?? "Resolved via SemanticModel";
 
-            results.Add(new GDFoundReference(
+            results.Add(new GDReferenceLocation(
                 scope.SymbolName,
                 filePath,
                 identifier.StartLine,
@@ -693,7 +693,7 @@ public class GDFindReferencesService
             if (declId != null && !results.Any(r => r.Line == declId.StartLine && r.Column == declId.StartColumn))
             {
                 var (contextText, hlStart, hlEnd) = GetContextWithHighlight(declId);
-                results.Add(new GDFoundReference(
+                results.Add(new GDReferenceLocation(
                     scope.SymbolName,
                     filePath,
                     declId.StartLine,
@@ -714,23 +714,49 @@ public class GDFindReferencesService
 
     /// <summary>
     /// Finds an identifier with the given name within a node.
+    /// Uses fast-path checks for common node types before falling back to full token search.
     /// </summary>
     private GDIdentifier? FindIdentifierInNode(GDNode node, string name)
     {
-        // Check common patterns first for efficiency
+        // Fast-path 1: Simple identifier expression (most common)
         if (node is GDIdentifierExpression idExpr && idExpr.Identifier?.Sequence == name)
             return idExpr.Identifier;
 
+        // Fast-path 2: Member access (obj.member)
         if (node is GDMemberOperatorExpression memberOp && memberOp.Identifier?.Sequence == name)
             return memberOp.Identifier;
 
-        // Search in all tokens
+        // Fast-path 3: Match case variable binding
+        if (node is GDMatchCaseVariableExpression matchVar && matchVar.Identifier?.Sequence == name)
+            return matchVar.Identifier;
+
+        // Fast-path 4: Method declaration
+        if (node is GDMethodDeclaration methodDecl && methodDecl.Identifier?.Sequence == name)
+            return methodDecl.Identifier;
+
+        // Fast-path 5: Variable declaration
+        if (node is GDVariableDeclaration varDecl && varDecl.Identifier?.Sequence == name)
+            return varDecl.Identifier;
+
+        // Fast-path 6: Parameter declaration
+        if (node is GDParameterDeclaration param && param.Identifier?.Sequence == name)
+            return param.Identifier;
+
+        // Fast-path 7: Signal declaration
+        if (node is GDSignalDeclaration signalDecl && signalDecl.Identifier?.Sequence == name)
+            return signalDecl.Identifier;
+
+        // Fast-path 8: Enum declaration
+        if (node is GDEnumDeclaration enumDecl && enumDecl.Identifier?.Sequence == name)
+            return enumDecl.Identifier;
+
+        // Fallback: Full search in all tokens
         return node.AllTokens.OfType<GDIdentifier>().FirstOrDefault(i => i.Sequence == name);
     }
 
     #region Collection Methods
 
-    private void CollectLocalVariableReferences(GDSymbolScope scope, List<GDFoundReference> references)
+    private void CollectLocalVariableReferences(GDSymbolScope scope, List<GDReferenceLocation> references)
     {
         if (scope.ContainingMethod == null) return;
 
@@ -748,7 +774,7 @@ public class GDFindReferencesService
                 if (id == null) continue;
 
                 var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
-                references.Add(new GDFoundReference(
+                references.Add(new GDReferenceLocation(
                     symbolName,
                     filePath,
                     id.StartLine,
@@ -771,7 +797,7 @@ public class GDFindReferencesService
             var id = varDecl.Identifier;
             if (id == null) continue;
 
-            references.Add(new GDFoundReference(
+            references.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 varDecl.StartLine,
@@ -787,7 +813,7 @@ public class GDFindReferencesService
         }
     }
 
-    private void CollectMethodParameterReferences(GDSymbolScope scope, List<GDFoundReference> references)
+    private void CollectMethodParameterReferences(GDSymbolScope scope, List<GDReferenceLocation> references)
     {
         if (scope.ContainingMethod == null) return;
 
@@ -801,7 +827,7 @@ public class GDFindReferencesService
         if (param?.Identifier != null)
         {
             var id = param.Identifier;
-            references.Add(new GDFoundReference(
+            references.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 param.StartLine,
@@ -824,7 +850,7 @@ public class GDFindReferencesService
             if (id == null) continue;
 
             var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
-            references.Add(new GDFoundReference(
+            references.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 id.StartLine,
@@ -840,7 +866,7 @@ public class GDFindReferencesService
         }
     }
 
-    private void CollectForLoopReferences(GDSymbolScope scope, List<GDFoundReference> references)
+    private void CollectForLoopReferences(GDSymbolScope scope, List<GDReferenceLocation> references)
     {
         if (scope.ContainingForLoop == null) return;
 
@@ -852,7 +878,7 @@ public class GDFindReferencesService
         var variable = forStmt.Variable;
         if (variable?.Sequence == symbolName)
         {
-            references.Add(new GDFoundReference(
+            references.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 variable.StartLine,
@@ -877,7 +903,7 @@ public class GDFindReferencesService
                 if (id == null) continue;
 
                 var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
-                references.Add(new GDFoundReference(
+                references.Add(new GDReferenceLocation(
                     symbolName,
                     filePath,
                     id.StartLine,
@@ -894,7 +920,7 @@ public class GDFindReferencesService
         }
     }
 
-    private void CollectMatchCaseReferences(GDSymbolScope scope, List<GDFoundReference> references)
+    private void CollectMatchCaseReferences(GDSymbolScope scope, List<GDReferenceLocation> references)
     {
         if (scope.ContainingMatchCase == null) return;
 
@@ -911,7 +937,7 @@ public class GDFindReferencesService
         {
             var id = variableBinding.Identifier;
             var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
-            references.Add(new GDFoundReference(
+            references.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 id.StartLine,
@@ -937,7 +963,7 @@ public class GDFindReferencesService
                 if (id == null) continue;
 
                 var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
-                references.Add(new GDFoundReference(
+                references.Add(new GDReferenceLocation(
                     symbolName,
                     filePath,
                     id.StartLine,
@@ -964,7 +990,7 @@ public class GDFindReferencesService
                 if (id == null) continue;
 
                 var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
-                references.Add(new GDFoundReference(
+                references.Add(new GDReferenceLocation(
                     symbolName,
                     filePath,
                     id.StartLine,
@@ -983,8 +1009,8 @@ public class GDFindReferencesService
 
     private void CollectClassMemberReferences(
         GDSymbolScope scope,
-        List<GDFoundReference> strictRefs,
-        List<GDFoundReference> potentialRefs)
+        List<GDReferenceLocation> strictRefs,
+        List<GDReferenceLocation> potentialRefs)
     {
         if (scope.ContainingClass == null) return;
 
@@ -999,7 +1025,7 @@ public class GDFindReferencesService
             var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
             var refNode = id.Parent as GDNode;
             if (refNode == null) continue;
-            strictRefs.Add(new GDFoundReference(
+            strictRefs.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 id.StartLine,
@@ -1020,8 +1046,8 @@ public class GDFindReferencesService
 
     private void CollectExternalMemberReferences(
         GDSymbolScope scope,
-        List<GDFoundReference> strictRefs,
-        List<GDFoundReference> potentialRefs,
+        List<GDReferenceLocation> strictRefs,
+        List<GDReferenceLocation> potentialRefs,
         GDRefactoringContext context)
     {
         if (scope.MemberExpression == null) return;
@@ -1037,7 +1063,7 @@ public class GDFindReferencesService
             var (ctxText, hlStart, hlEnd) = GetContextWithHighlight(id);
 
             // For external members, type is potentially unknown
-            potentialRefs.Add(new GDFoundReference(
+            potentialRefs.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 id.StartLine,
@@ -1057,8 +1083,8 @@ public class GDFindReferencesService
 
     private void CollectProjectWideReferences(
         GDSymbolScope scope,
-        List<GDFoundReference> strictRefs,
-        List<GDFoundReference> potentialRefs)
+        List<GDReferenceLocation> strictRefs,
+        List<GDReferenceLocation> potentialRefs)
     {
         if (scope.ContainingClass == null) return;
 
@@ -1072,7 +1098,7 @@ public class GDFindReferencesService
             var (context, hlStart, hlEnd) = GetContextWithHighlight(id);
             var refNode = id.Parent as GDNode;
             if (refNode == null) continue;
-            potentialRefs.Add(new GDFoundReference(
+            potentialRefs.Add(new GDReferenceLocation(
                 symbolName,
                 filePath,
                 id.StartLine,

@@ -1,12 +1,15 @@
+using GDShrapt.Abstractions;
 using GDShrapt.CLI.Core;
+using GDShrapt.Semantics;
+using System.Threading.Tasks;
 using static Godot.Control;
 
 namespace GDShrapt.Plugin;
 
 /// <summary>
-/// Type Flow Explorer panel - visualizes type inference as an interactive canvas-based graph.
+/// Type Flow Explorer panel - visualizes type inference with interactive tabs and graph.
 /// Shows how types flow through the code: where they come from (inflows) and where they go (outflows).
-/// Supports multi-level graphs, union type expansion, duck type constraints, and drag-to-pan navigation.
+/// Features: symbol tabs, adaptive layout, constraints panel, quick fixes.
 /// </summary>
 internal partial class GDTypeFlowPanel : AcceptDialog
 {
@@ -18,26 +21,37 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     private IGDTypeFlowHandler _typeFlowHandler;
     private IGDSymbolsHandler _symbolsHandler;
 
-    // UI containers
+    // Main layout
     private VBoxContainer _mainContainer;
+    private GDResponsiveContainer _responsiveContainer;
+
+    // Header with symbol tabs
     private HBoxContainer _headerRow;
     private Button _backButton;
-    private Label _titleLabel;
-    private Button _fitButton;
-    private Button _exportButton;
+    private GDTypeFlowTabBar _tabBar;
+    private Button _pinButton;
+    private Label _contextLabel;  // Shows file > method > line context
 
     // Signature section
     private PanelContainer _signaturePanel;
+    private VBoxContainer _signatureContainer;
     private RichTextLabel _signatureLabel;
+    private GDConfidenceBadge _confidenceBadge;
+    private Label _confidenceDescLabel;
 
-    // Canvas-based graph area
-    private GDTypeFlowCanvas _canvas;
-    private GDConstraintTooltip _constraintTooltip;
+    // Content area - switches based on layout mode
+    private Control _contentArea;
+    private GDTypeBreakdownPanel _breakdownPanel;
+
+    // Constraints panel
+    private GDConstraintsPanel _constraintsPanel;
 
     // Action bar
     private HBoxContainer _actionBar;
     private Label _suggestionLabel;
     private Button _quickFixButton;
+    private Button _addGuardButton;
+    private Button _exportButton;
 
     // State
     private GDScriptFile _currentScript;
@@ -46,30 +60,65 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     private GDTypeFlowNode _focusedNode;
     private Stack<GDTypeFlowNode> _navigationStack = new();
     private bool _uiCreated;
+    private bool _followMode = true;
+    private bool _isPinned = false;
+    private GDResponsiveContainer.LayoutMode _currentLayoutMode = GDResponsiveContainer.LayoutMode.Normal;
 
     // Colors
     private static readonly Color KeywordColor = new(0.8f, 0.55f, 0.75f);   // Pink
     private static readonly Color TypeColor = new(0.4f, 0.76f, 0.65f);       // Cyan
     private static readonly Color ParamColor = new(0.85f, 0.85f, 0.75f);     // Light cream
     private static readonly Color SymbolColor = new(0.6f, 0.6f, 0.6f);       // Gray
+    private static readonly Color DerivableColor = new(1.0f, 0.85f, 0.3f);   // Yellow for derivable types
 
     /// <summary>
     /// Event fired when user clicks on a file location to navigate.
     /// </summary>
     public event Action<string, int> NavigateToRequested;
 
+    /// <summary>
+    /// Event fired when user requests to add a type annotation.
+    /// Parameters: script file, symbol name, suggested type, location.
+    /// </summary>
+    public event Action<GDScriptFile, GDTypeAnnotationPlan> AddTypeAnnotationRequested;
+
+    /// <summary>
+    /// Event fired when user requests to add a type guard.
+    /// Parameters: script file, symbol name, union types.
+    /// </summary>
+    public event Action<GDScriptFile, string, IReadOnlyList<string>> AddTypeGuardRequested;
+
+    /// <summary>
+    /// Event fired when user requests to generate an interface from duck type constraints.
+    /// Parameters: script file, duck type info.
+    /// </summary>
+    public event Action<GDScriptFile, GDDuckType> GenerateInterfaceRequested;
+
     public GDTypeFlowPanel()
     {
         Title = "Type Flow";
-        Size = new Vector2I(600, 500);
+        Size = new Vector2I(650, 400);
+        MinSize = new Vector2I(400, 350);  // Minimum size for the dialog (increased from 300 to fit content)
         Exclusive = false;
         Transient = true;
-        OkButtonText = "Close";
+        Unresizable = false;
+        OkButtonText = "Закрыть";
     }
 
     public override void _Ready()
     {
         EnsureUICreated();
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (!Visible)
+            return;
+
+        if (@event is InputEventKey key && key.Pressed)
+        {
+            HandleKeyInput(key);
+        }
     }
 
     /// <summary>
@@ -108,7 +157,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
 
         // Update window title
         Title = $"Type Flow: {symbolName}";
-        _titleLabel.Text = symbolName;
 
         // Update back button visibility
         _backButton.Visible = _navigationStack.Count > 0;
@@ -127,9 +175,91 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             return;
         }
 
+        // Add symbol tab if not in follow mode
+        if (!_followMode || !_tabBar.IsCursorTabActive)
+        {
+            _tabBar.AddSymbolTab(_rootNode);
+        }
+
         // Display the graph with root as focus
-        DisplayGraph(_rootNode);
+        DisplayNode(_rootNode);
+
+        // Bring panel to front
+        BringToFront();
     }
+
+    /// <summary>
+    /// Updates the panel for the current cursor position (Follow Mode).
+    /// </summary>
+    public void UpdateForCursorPosition(string symbolName, int line, GDScriptFile scriptFile)
+    {
+        if (!_followMode || !Visible || _isPinned)
+            return;
+
+        if (!_tabBar.IsCursorTabActive)
+            return;
+
+        // Don't update if same symbol
+        if (_currentSymbolName == symbolName && _currentScript == scriptFile)
+            return;
+
+        _currentSymbolName = symbolName;
+        _currentScript = scriptFile;
+
+        if (_project == null || scriptFile == null)
+            return;
+
+        // Build the graph
+        _rootNode = _graphBuilder.BuildGraph(symbolName, scriptFile);
+        if (_rootNode == null)
+            return;
+
+        // Display without adding tab
+        DisplayNode(_rootNode);
+    }
+
+    /// <summary>
+    /// Brings the panel to the front of the window stack.
+    /// </summary>
+    public void BringToFront()
+    {
+        if (!Visible)
+        {
+            PopupCentered();
+        }
+        else
+        {
+            // Ensure the window is on top when already visible
+            MoveToForeground();
+        }
+        GrabFocus();
+    }
+
+    /// <summary>
+    /// Refreshes the current symbol by rebuilding the graph.
+    /// Call this after the file has been modified (e.g., type annotation added).
+    /// </summary>
+    public void RefreshCurrentSymbol()
+    {
+        if (string.IsNullOrEmpty(_currentSymbolName) || _currentScript == null || _project == null)
+            return;
+
+        // Re-analyze the script to pick up changes
+        _currentScript.Analyze();
+
+        // Rebuild the graph
+        _rootNode = _graphBuilder.BuildGraph(_currentSymbolName, _currentScript);
+        if (_rootNode == null)
+        {
+            ShowNoDataMessage($"Symbol '{_currentSymbolName}' not found after refresh");
+            return;
+        }
+
+        // Display the updated node
+        DisplayNode(_rootNode);
+    }
+
+    #region UI Creation
 
     private void EnsureUICreated()
     {
@@ -142,53 +272,87 @@ internal partial class GDTypeFlowPanel : AcceptDialog
 
     private void CreateUI()
     {
-        _mainContainer = new VBoxContainer();
-        _mainContainer.SetAnchorsPreset(LayoutPreset.FullRect);
-        _mainContainer.AddThemeConstantOverride("separation", 8);
-        AddChild(_mainContainer);
+        // Responsive container wraps everything
+        // For AcceptDialog, we need to use FULL_RECT anchors to fill the client area
+        _responsiveContainer = new GDResponsiveContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill
+        };
+        _responsiveContainer.LayoutModeChanged += OnLayoutModeChanged;
+        AddChild(_responsiveContainer);
+
+        // Set anchors to fill the entire available area (must be done after AddChild)
+        _responsiveContainer.SetAnchorsPreset(LayoutPreset.FullRect);
+        _responsiveContainer.OffsetLeft = 8;
+        _responsiveContainer.OffsetTop = 8;
+        _responsiveContainer.OffsetRight = -8;
+        _responsiveContainer.OffsetBottom = -40;  // Leave space for the OK button at the bottom
+
+        // Main vertical container - MUST be ExpandFill to fill the dialog
+        _mainContainer = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill
+        };
+        _mainContainer.AddThemeConstantOverride("separation", 6);
+        _responsiveContainer.AddChild(_mainContainer);
 
         CreateHeader();
         CreateSignatureSection();
-        CreateCanvasArea();
+        CreateContentArea();
+        CreateConstraintsPanel();
         CreateActionBar();
     }
 
     private void CreateHeader()
     {
         _headerRow = new HBoxContainer();
-        _headerRow.AddThemeConstantOverride("separation", 8);
+        _headerRow.AddThemeConstantOverride("separation", 4);
 
+        // Back button
         _backButton = new Button
         {
             Text = "←",
             Visible = false,
-            TooltipText = "Go back to previous symbol"
+            TooltipText = "Go back (Alt+Left)"
         };
-        _backButton.AddThemeFontSizeOverride("font_size", 16);
+        _backButton.AddThemeFontSizeOverride("font_size", 14);
         _backButton.Pressed += OnBackPressed;
         _headerRow.AddChild(_backButton);
 
-        _titleLabel = new Label
+        // Tab bar
+        _tabBar = new GDTypeFlowTabBar
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill
+        };
+        _tabBar.SymbolTabActivated += OnSymbolTabActivated;
+        _tabBar.SymbolTabClosed += OnSymbolTabClosed;
+        _tabBar.CursorTabActivated += OnCursorTabActivated;
+        _headerRow.AddChild(_tabBar);
+
+        // Pin button
+        _pinButton = new Button
+        {
+            Text = "📌",
+            ToggleMode = true,
+            TooltipText = "Pin panel (don't follow cursor)"
+        };
+        _pinButton.Toggled += OnPinToggled;
+        _headerRow.AddChild(_pinButton);
+
+        _mainContainer.AddChild(_headerRow);
+
+        // Context label - shows file > method > line
+        _contextLabel = new Label
         {
             Text = "",
             SizeFlagsHorizontal = SizeFlags.ExpandFill
         };
-        _titleLabel.AddThemeFontSizeOverride("font_size", 14);
-        _headerRow.AddChild(_titleLabel);
+        _contextLabel.AddThemeFontSizeOverride("font_size", 10);
+        _contextLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.5f));
+        _mainContainer.AddChild(_contextLabel);
 
-        _fitButton = new Button
-        {
-            Text = "Fit",
-            TooltipText = "Fit all nodes in view"
-        };
-        _fitButton.Pressed += OnFitPressed;
-        _headerRow.AddChild(_fitButton);
-
-        _exportButton = new Button { Text = "Export" };
-        _exportButton.Pressed += OnExportPressed;
-        _headerRow.AddChild(_exportButton);
-
-        _mainContainer.AddChild(_headerRow);
         _mainContainer.AddChild(new HSeparator());
     }
 
@@ -209,41 +373,75 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         };
         _signaturePanel.AddThemeStyleboxOverride("panel", signatureStyle);
 
+        _signatureContainer = new VBoxContainer();
+        _signatureContainer.AddThemeConstantOverride("separation", 4);
+
+        // Signature label
         _signatureLabel = new RichTextLabel
         {
             BbcodeEnabled = true,
             FitContent = true,
             SelectionEnabled = false,
-            CustomMinimumSize = new Vector2(0, 30)
+            CustomMinimumSize = new Vector2(0, 24)
         };
         _signatureLabel.MetaClicked += OnSignatureMetaClicked;
-        _signaturePanel.AddChild(_signatureLabel);
+        _signatureContainer.AddChild(_signatureLabel);
 
+        // Confidence row
+        var confidenceRow = new HBoxContainer();
+        confidenceRow.AddThemeConstantOverride("separation", 8);
+
+        _confidenceBadge = new GDConfidenceBadge();
+        _confidenceBadge.SetConfidence(1.0f);
+        confidenceRow.AddChild(_confidenceBadge);
+
+        _confidenceDescLabel = new Label
+        {
+            Text = "",
+            SizeFlagsHorizontal = SizeFlags.ExpandFill
+        };
+        _confidenceDescLabel.AddThemeFontSizeOverride("font_size", 11);
+        _confidenceDescLabel.AddThemeColorOverride("font_color", SymbolColor);
+        confidenceRow.AddChild(_confidenceDescLabel);
+
+        _signatureContainer.AddChild(confidenceRow);
+        _signaturePanel.AddChild(_signatureContainer);
         _mainContainer.AddChild(_signaturePanel);
     }
 
-    private void CreateCanvasArea()
+    private void CreateContentArea()
     {
-        // Canvas for the graph (replaces scroll + flow containers)
-        _canvas = new GDTypeFlowCanvas
+        // Content area that adapts to layout mode - MUST be ExpandFill (the only expanding child in _mainContainer)
+        _contentArea = new VBoxContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             SizeFlagsVertical = SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(400, 300)
+            CustomMinimumSize = new Vector2(0, 120)  // Minimum height to prevent content overflow
         };
 
-        // Wire up canvas events
-        _canvas.BlockBodyClicked += OnBlockBodyClicked;
-        _canvas.BlockLabelClicked += OnBlockLabelClicked;
-        _canvas.EdgeClicked += OnEdgeClicked;
-        _canvas.EdgeHoverStart += OnEdgeHoverStart;
-        _canvas.EdgeHoverEnd += OnEdgeHoverEnd;
+        // Breakdown panel (tabs: Overview, Inflows, Outflows) - ExpandFill to take available space
+        _breakdownPanel = new GDTypeBreakdownPanel
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill
+        };
+        _breakdownPanel.NodeNavigationRequested += OnNodeNavigationRequested;
+        _breakdownPanel.NodeOpenInTabRequested += OnNodeOpenInTabRequested;
 
-        _mainContainer.AddChild(_canvas);
+        // Default: show breakdown panel
+        _contentArea.AddChild(_breakdownPanel);
 
-        // Constraint tooltip (overlays on canvas)
-        _constraintTooltip = new GDConstraintTooltip();
-        AddChild(_constraintTooltip);
+        _mainContainer.AddChild(_contentArea);
+    }
+
+    private void CreateConstraintsPanel()
+    {
+        _constraintsPanel = new GDConstraintsPanel();
+        _constraintsPanel.Visible = false;
+        _constraintsPanel.AddInterfaceRequested += OnAddInterfaceRequested;
+        _constraintsPanel.NarrowTypeRequested += OnNarrowTypeRequested;
+        _constraintsPanel.AddTypeGuardRequested += OnAddTypeGuardRequestedInternal;
+        _mainContainer.AddChild(_constraintsPanel);
     }
 
     private void CreateActionBar()
@@ -266,26 +464,222 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         _quickFixButton = new Button
         {
             Text = "Add type annotation",
-            Visible = false
+            Visible = false,
+            TooltipText = "Add explicit type annotation to this symbol"
         };
         _quickFixButton.Pressed += OnQuickFixPressed;
         _actionBar.AddChild(_quickFixButton);
 
+        _addGuardButton = new Button
+        {
+            Text = "Add type guard",
+            Visible = false,
+            TooltipText = "Add a type check to narrow the type"
+        };
+        _addGuardButton.Pressed += OnAddTypeGuardPressed;
+        _actionBar.AddChild(_addGuardButton);
+
+        _exportButton = new Button
+        {
+            Text = "Export",
+            TooltipText = "Export type flow data to clipboard"
+        };
+        _exportButton.Pressed += OnExportPressed;
+        _actionBar.AddChild(_exportButton);
+
         _mainContainer.AddChild(_actionBar);
     }
 
-    private void DisplayGraph(GDTypeFlowNode focusNode)
+    #endregion
+
+    #region Display Logic
+
+    private void DisplayNode(GDTypeFlowNode node)
     {
-        _focusedNode = focusNode;
+        _focusedNode = node;
+
+        if (node == null)
+        {
+            ShowNoDataMessage("No symbol selected");
+            return;
+        }
+
+        // Debug output for semantic core data
+        DebugLogNodeData(node);
+
+        // Update context label (file > method > line)
+        UpdateContextLabel(node);
 
         // Update signature
-        UpdateSignature(focusNode);
+        UpdateSignature(node);
 
-        // Display graph on canvas
-        _canvas.DisplayGraph(focusNode);
+        // Update confidence
+        UpdateConfidence(node);
 
-        // Update suggestion
-        UpdateSuggestion(focusNode);
+        // Update breakdown panel
+        _breakdownPanel.SetNode(node, node.SourceScript?.SemanticModel);
+
+        // Update constraints panel
+        _constraintsPanel.SetConstraints(node);
+
+        // Update action bar
+        UpdateActionBar(node);
+    }
+
+    /// <summary>
+    /// Updates the context label with file > line > kind information.
+    /// Helps developers understand where the symbol is located.
+    /// </summary>
+    private void UpdateContextLabel(GDTypeFlowNode node)
+    {
+        var parts = new List<string>();
+
+        // File name
+        if (node.SourceScript != null && !string.IsNullOrEmpty(node.SourceScript.FullPath))
+        {
+            parts.Add(System.IO.Path.GetFileName(node.SourceScript.FullPath));
+        }
+
+        // Line number
+        if (node.Location?.IsValid == true)
+        {
+            parts.Add($"line {node.Location.StartLine + 1}");
+        }
+
+        // Node kind for context
+        if (node.Kind != GDTypeFlowNodeKind.Unknown)
+        {
+            parts.Add(GetKindDescription(node.Kind));
+        }
+
+        _contextLabel.Text = parts.Count > 0 ? string.Join(" > ", parts) : "";
+        _contextLabel.Visible = parts.Count > 0;
+        // Remove from layout completely when hidden to avoid reserving space
+        _contextLabel.CustomMinimumSize = parts.Count > 0 ? new Vector2(0, 16) : Vector2.Zero;
+    }
+
+    /// <summary>
+    /// Gets a human-readable description for a node kind.
+    /// </summary>
+    private string GetKindDescription(GDTypeFlowNodeKind kind)
+    {
+        return kind switch
+        {
+            GDTypeFlowNodeKind.Parameter => "parameter",
+            GDTypeFlowNodeKind.LocalVariable => "local variable",
+            GDTypeFlowNodeKind.MemberVariable => "member variable",
+            GDTypeFlowNodeKind.MethodCall => "method call",
+            GDTypeFlowNodeKind.PropertyAccess => "property",
+            GDTypeFlowNodeKind.ReturnValue => "return value",
+            GDTypeFlowNodeKind.Literal => "literal",
+            GDTypeFlowNodeKind.TypeAnnotation => "type annotation",
+            _ => kind.ToString().ToLower()
+        };
+    }
+
+    /// <summary>
+    /// Debug output of all semantic data for a node before display.
+    /// </summary>
+    private void DebugLogNodeData(GDTypeFlowNode node)
+    {
+        Logger.Info("=== TypeFlow Debug: Semantic Core Data ===");
+        Logger.Info($"Symbol: {node.Label}");
+        Logger.Info($"Type: {node.Type ?? "null"}");
+        Logger.Info($"Kind: {node.Kind}");
+        Logger.Info($"Confidence: {node.Confidence:P0}");
+        Logger.Info($"Description: {node.Description ?? "null"}");
+        Logger.Info($"Location: {node.Location}");
+        Logger.Info($"IsUnionType: {node.IsUnionType}");
+        Logger.Info($"HasDuckConstraints: {node.HasDuckConstraints}");
+        Logger.Info($"AreInflowsLoaded: {node.AreInflowsLoaded}");
+        Logger.Info($"AreOutflowsLoaded: {node.AreOutflowsLoaded}");
+
+        // Inflows
+        Logger.Info($"--- Inflows ({node.Inflows.Count}) ---");
+        foreach (var inflow in node.Inflows)
+        {
+            Logger.Info($"  [{inflow.Kind}] {inflow.Label}: {inflow.Type ?? "Variant"} (conf: {inflow.Confidence:P0})");
+            if (!string.IsNullOrEmpty(inflow.Description))
+                Logger.Info($"    Description: {inflow.Description}");
+            if (inflow.Location != null)
+                Logger.Info($"    Location: {inflow.Location}");
+        }
+
+        // Outflows
+        Logger.Info($"--- Outflows ({node.Outflows.Count}) ---");
+        foreach (var outflow in node.Outflows)
+        {
+            Logger.Info($"  [{outflow.Kind}] {outflow.Label}: {outflow.Type ?? "Variant"} (conf: {outflow.Confidence:P0})");
+            if (!string.IsNullOrEmpty(outflow.Description))
+                Logger.Info($"    Description: {outflow.Description}");
+            if (outflow.Location != null)
+                Logger.Info($"    Location: {outflow.Location}");
+        }
+
+        // Union type info
+        if (node.IsUnionType && node.UnionTypeInfo != null)
+        {
+            Logger.Info($"--- Union Type Info ---");
+            Logger.Info($"  Types: {string.Join(", ", node.UnionTypeInfo.Types)}");
+            Logger.Info($"  Union Sources: {node.UnionSources.Count}");
+            foreach (var src in node.UnionSources)
+            {
+                Logger.Info($"    [{src.Kind}] {src.Label}: {src.Type}");
+            }
+        }
+
+        // Duck type info
+        if (node.HasDuckConstraints && node.DuckTypeInfo != null)
+        {
+            Logger.Info($"--- Duck Type Constraints ---");
+            if (node.DuckTypeInfo.RequiredMethods.Count > 0)
+                Logger.Info($"  Required methods: {string.Join(", ", node.DuckTypeInfo.RequiredMethods)}");
+            if (node.DuckTypeInfo.RequiredProperties.Count > 0)
+                Logger.Info($"  Required properties: {string.Join(", ", node.DuckTypeInfo.RequiredProperties)}");
+        }
+
+        // Semantic model data (if available)
+        var semanticModel = node.SourceScript?.SemanticModel;
+        if (semanticModel != null && !string.IsNullOrEmpty(node.Label))
+        {
+            Logger.Info($"--- Semantic Model Data ---");
+
+            var symbol = semanticModel.FindSymbol(node.Label);
+            if (symbol != null)
+            {
+                Logger.Info($"  Symbol.Name: {symbol.Name}");
+                Logger.Info($"  Symbol.Kind: {symbol.Kind}");
+                Logger.Info($"  Symbol.TypeName: {symbol.TypeName ?? "null"}");
+            }
+            else
+            {
+                Logger.Info($"  Symbol not found in semantic model");
+            }
+
+            var unionType = semanticModel.GetUnionType(node.Label);
+            if (unionType != null && unionType.IsUnion)
+            {
+                Logger.Info($"  SemanticModel.GetUnionType: {string.Join("|", unionType.Types)}");
+            }
+
+            var duckType = semanticModel.GetDuckType(node.Label);
+            if (duckType != null && duckType.HasRequirements)
+            {
+                Logger.Info($"  SemanticModel.GetDuckType: methods={string.Join(",", duckType.RequiredMethods)} props={string.Join(",", duckType.RequiredProperties)}");
+            }
+
+            // Check narrowing at node's location
+            if (node.AstNode != null)
+            {
+                var narrowedType = semanticModel.GetNarrowedType(node.Label, node.AstNode);
+                if (!string.IsNullOrEmpty(narrowedType))
+                {
+                    Logger.Info($"  SemanticModel.GetNarrowedType: {narrowedType}");
+                }
+            }
+        }
+
+        Logger.Info("=== End TypeFlow Debug ===");
     }
 
     private void UpdateSignature(GDTypeFlowNode node)
@@ -299,7 +693,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         var semanticModel = node.SourceScript.SemanticModel;
         if (semanticModel == null)
         {
-            // Still try to show node info without semantic model
             if (IsExpressionNode(node.Kind))
             {
                 _signatureLabel.Text = BuildNodeSignatureBBCode(node);
@@ -314,7 +707,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         var symbol = semanticModel.FindSymbol(node.Label);
         if (symbol?.DeclarationNode == null)
         {
-            // Symbol not found - check if this is an expression node
             if (IsExpressionNode(node.Kind))
             {
                 _signatureLabel.Text = BuildNodeSignatureBBCode(node);
@@ -326,42 +718,142 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             return;
         }
 
-        // Build BBCode signature
         _signatureLabel.Text = BuildSignatureBBCode(symbol, semanticModel);
     }
 
-    private string BuildSignatureBBCode(GDShrapt.Semantics.GDSymbolInfo symbol, GDShrapt.Semantics.GDSemanticModel analyzer)
+    private void UpdateConfidence(GDTypeFlowNode node)
+    {
+        _confidenceBadge.SetConfidence(node.Confidence);
+
+        var desc = node.Confidence switch
+        {
+            >= 0.9f => "High confidence (explicit type)",
+            >= 0.7f => "Good confidence (inferred from context)",
+            >= 0.5f => "Medium confidence (partial inference)",
+            _ => "Low confidence (Variant or unknown)"
+        };
+
+        // Add source info
+        if (node.Kind == GDTypeFlowNodeKind.TypeAnnotation)
+            desc = "Explicit type annotation";
+        else if (node.Kind == GDTypeFlowNodeKind.Literal)
+            desc = "Inferred from literal value";
+        else if (node.Kind == GDTypeFlowNodeKind.MethodCall)
+            desc = "Inferred from method return type";
+
+        _confidenceDescLabel.Text = desc;
+    }
+
+    private void UpdateActionBar(GDTypeFlowNode node)
+    {
+        // Show quick fix for low confidence
+        var showQuickFix = node.Type == "Variant" || node.Confidence < 0.5f || node.IsUnionType;
+        _quickFixButton.Visible = showQuickFix;
+
+        // Type guard button is shown for union types - clicking shows preview
+        // Single-file operations with preview are allowed in Base
+        _addGuardButton.Visible = node.IsUnionType;
+
+        // Update suggestion
+        if (node.Type == "Variant" || node.Confidence < 0.5f)
+        {
+            _suggestionLabel.Text = "💡 Consider adding explicit type annotation";
+            _suggestionLabel.Visible = true;
+        }
+        else if (node.IsUnionType)
+        {
+            var types = node.UnionTypeInfo?.Types.Take(3).ToList() ?? new List<string>();
+            _suggestionLabel.Text = $"💡 Union type: {string.Join(" | ", types)}";
+            _suggestionLabel.Visible = true;
+        }
+        else if (node.HasDuckConstraints)
+        {
+            var count = (node.DuckTypeInfo?.RequiredMethods.Count ?? 0) + (node.DuckTypeInfo?.RequiredProperties.Count ?? 0);
+            _suggestionLabel.Text = $"💡 Duck type with {count} constraints";
+            _suggestionLabel.Visible = true;
+        }
+        else
+        {
+            _suggestionLabel.Visible = false;
+        }
+    }
+
+    private void ShowNoDataMessage(string message)
+    {
+        _signatureLabel.Text = $"[color=#999999]{message}[/color]";
+        _confidenceBadge.SetConfidence(0);
+        _confidenceDescLabel.Text = "";
+        _suggestionLabel.Visible = false;
+        _quickFixButton.Visible = false;
+        _addGuardButton.Visible = false;
+        _breakdownPanel.ClearAll();
+        _constraintsPanel.Clear();
+    }
+
+    #endregion
+
+    #region Layout Mode
+
+    private void OnLayoutModeChanged(GDResponsiveContainer.LayoutMode mode)
+    {
+        _currentLayoutMode = mode;
+        ApplyLayoutMode(mode);
+    }
+
+    private void ApplyLayoutMode(GDResponsiveContainer.LayoutMode mode)
+    {
+        switch (mode)
+        {
+            case GDResponsiveContainer.LayoutMode.Minimal:
+                // Hide tabs, show only signature
+                _breakdownPanel.Visible = false;
+                _constraintsPanel.SetCompactMode(true);
+                _confidenceBadge.SetCompactMode(true);
+                break;
+
+            case GDResponsiveContainer.LayoutMode.Compact:
+                // Show breakdown only
+                _breakdownPanel.Visible = true;
+                _breakdownPanel.SetCompactMode(true);
+                _constraintsPanel.SetCompactMode(true);
+                _confidenceBadge.SetCompactMode(true);
+                break;
+
+            case GDResponsiveContainer.LayoutMode.Normal:
+            case GDResponsiveContainer.LayoutMode.Wide:
+                // Show breakdown panel (Wide treated as Normal since canvas was removed)
+                _breakdownPanel.Visible = true;
+                _breakdownPanel.SetCompactMode(false);
+                _constraintsPanel.SetCompactMode(false);
+                _confidenceBadge.SetCompactMode(false);
+                break;
+        }
+    }
+
+    #endregion
+
+    #region Signature Building
+
+    private string BuildSignatureBBCode(Semantics.GDSymbolInfo symbol, GDSemanticModel analyzer)
     {
         var decl = symbol.DeclarationNode;
 
         if (decl is GDShrapt.Reader.GDMethodDeclaration method)
-        {
             return BuildMethodSignatureBBCode(method, analyzer);
-        }
 
         if (decl is GDShrapt.Reader.GDVariableDeclaration variable)
-        {
             return BuildVariableSignatureBBCode(variable, analyzer);
-        }
 
         if (decl is GDShrapt.Reader.GDParameterDeclaration param)
-        {
             return BuildParameterSignatureBBCode(param, analyzer);
-        }
 
-        // For non-standard nodes (method calls, indexers, etc.) - use node-based signature
         if (_focusedNode != null && IsExpressionNode(_focusedNode.Kind))
-        {
             return BuildNodeSignatureBBCode(_focusedNode);
-        }
 
         var typeStr = analyzer.GetTypeForNode(decl) ?? "Variant";
         return $"[color=#{ColorToHex(ParamColor)}]{symbol.Name}[/color]: [color=#{ColorToHex(TypeColor)}]{typeStr}[/color]";
     }
 
-    /// <summary>
-    /// Checks if the node kind represents an expression rather than a declaration.
-    /// </summary>
     private bool IsExpressionNode(GDTypeFlowNodeKind kind)
     {
         return kind == GDTypeFlowNodeKind.MethodCall ||
@@ -375,15 +867,13 @@ internal partial class GDTypeFlowPanel : AcceptDialog
                kind == GDTypeFlowNodeKind.Assignment;
     }
 
-    private string BuildMethodSignatureBBCode(GDShrapt.Reader.GDMethodDeclaration method, GDShrapt.Semantics.GDSemanticModel analyzer)
+    private string BuildMethodSignatureBBCode(GDShrapt.Reader.GDMethodDeclaration method, GDSemanticModel analyzer)
     {
         var sb = new System.Text.StringBuilder();
-
         sb.Append($"[color=#{ColorToHex(KeywordColor)}]func[/color] ");
 
         var methodName = method.Identifier?.Sequence ?? "unknown";
         sb.Append($"[color=#{ColorToHex(ParamColor)}]{methodName}[/color]");
-
         sb.Append($"[color=#{ColorToHex(SymbolColor)}]([/color]");
 
         var parameters = method.Parameters?.ToList() ?? new List<GDShrapt.Reader.GDParameterDeclaration>();
@@ -391,32 +881,58 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         {
             var param = parameters[i];
             var paramName = param.Identifier?.Sequence ?? $"arg{i}";
-            var paramType = analyzer.GetTypeForNode(param) ?? "Variant";
 
-            // Make parameter clickable
+            // Get parameter type: explicit annotation, or inferred union type from type guards/null checks
+            string paramType;
+            if (param.Type != null)
+            {
+                // Explicit type annotation
+                paramType = param.Type.BuildName();
+            }
+            else
+            {
+                // No explicit type - try to get union type from type guards and null checks
+                var unionType = analyzer.GetUnionType(paramName);
+                if (unionType != null && !unionType.IsEmpty)
+                {
+                    paramType = unionType.ToString();
+                }
+                else
+                {
+                    paramType = analyzer.GetTypeForNode(param) ?? "Variant";
+                }
+            }
+
             sb.Append($"[url={paramName}][color=#{ColorToHex(ParamColor)}]{paramName}[/color][/url]");
             sb.Append($"[color=#{ColorToHex(SymbolColor)}]: [/color]");
-            sb.Append($"[color=#{ColorToHex(TypeColor)}]{paramType}[/color]");
+            sb.Append(FormatTypeBBCode(paramType, paramName));
 
             if (i < parameters.Count - 1)
-            {
                 sb.Append($"[color=#{ColorToHex(SymbolColor)}], [/color]");
-            }
         }
 
         sb.Append($"[color=#{ColorToHex(SymbolColor)}])[/color]");
 
-        var returnType = analyzer.GetTypeForNode(method) ?? "void";
-        sb.Append($" [color=#{ColorToHex(SymbolColor)}]->[/color] ");
-        sb.Append($"[color=#{ColorToHex(TypeColor)}]{returnType}[/color]");
+        // Get return type: try union type first for methods with multiple return types
+        var returnUnion = analyzer.GetUnionType(methodName);
+        string returnType;
+        if (returnUnion != null && !returnUnion.IsEmpty)
+        {
+            returnType = returnUnion.ToString();
+        }
+        else
+        {
+            returnType = analyzer.GetTypeForNode(method) ?? "void";
+        }
+        sb.Append($" [color=#{ColorToHex(SymbolColor)}]→[/color] ");
+        sb.Append(FormatTypeBBCode(returnType, "return"));
 
         return sb.ToString();
     }
 
-    private string BuildVariableSignatureBBCode(GDShrapt.Reader.GDVariableDeclaration variable, GDShrapt.Semantics.GDSemanticModel analyzer)
+    private string BuildVariableSignatureBBCode(GDShrapt.Reader.GDVariableDeclaration variable, GDSemanticModel analyzer)
     {
         var sb = new System.Text.StringBuilder();
-
         sb.Append($"[color=#{ColorToHex(KeywordColor)}]var[/color] ");
 
         var varName = variable.Identifier?.Sequence ?? "unknown";
@@ -424,9 +940,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
 
         var varType = analyzer.GetTypeForNode(variable) ?? "Variant";
         sb.Append($"[color=#{ColorToHex(SymbolColor)}]: [/color]");
-        sb.Append($"[color=#{ColorToHex(TypeColor)}]{varType}[/color]");
+        sb.Append(FormatTypeBBCode(varType, varName));
 
-        // Show union type if present
         if (_focusedNode?.IsUnionType == true && _focusedNode.UnionTypeInfo != null)
         {
             var unionTypes = string.Join("|", _focusedNode.UnionTypeInfo.Types.Take(3));
@@ -435,24 +950,29 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             sb.Append($" [color=#888888]({unionTypes})[/color]");
         }
 
-        // Show duck type indicator if present
         if (_focusedNode?.HasDuckConstraints == true)
-        {
             sb.Append($" [color=#FFD700]duck[/color]");
-        }
 
         return sb.ToString();
     }
 
-    /// <summary>
-    /// Builds BBCode signature for non-standard nodes (method calls, indexers, etc.)
-    /// that don't have a direct declaration.
-    /// </summary>
+    private string BuildParameterSignatureBBCode(GDShrapt.Reader.GDParameterDeclaration param, GDSemanticModel analyzer)
+    {
+        var sb = new System.Text.StringBuilder();
+        var paramName = param.Identifier?.Sequence ?? "unknown";
+        sb.Append($"[color=#{ColorToHex(ParamColor)}]{paramName}[/color]");
+
+        var paramType = analyzer.GetTypeForNode(param) ?? "Variant";
+        sb.Append($"[color=#{ColorToHex(SymbolColor)}]: [/color]");
+        sb.Append(FormatTypeBBCode(paramType, paramName));
+
+        return sb.ToString();
+    }
+
     private string BuildNodeSignatureBBCode(GDTypeFlowNode node)
     {
         var sb = new System.Text.StringBuilder();
 
-        // Show node kind as keyword
         var kindKeyword = node.Kind switch
         {
             GDTypeFlowNodeKind.MethodCall => "call",
@@ -466,11 +986,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         };
 
         sb.Append($"[color=#{ColorToHex(KeywordColor)}]{kindKeyword}[/color] ");
-
-        // Show label (expression)
         sb.Append($"[color=#{ColorToHex(ParamColor)}]{node.Label}[/color]");
 
-        // Show SourceType if available
         if (!string.IsNullOrEmpty(node.SourceType) && node.SourceType != "Variant")
         {
             sb.Append($" [color=#888888]on [/color]");
@@ -482,29 +999,11 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             sb.Append($"[color=#{ColorToHex(ParamColor)}]{node.SourceObjectName}[/color]");
         }
 
-        // Show result type
         sb.Append($" [color=#{ColorToHex(SymbolColor)}]→[/color] ");
-        sb.Append($"[color=#{ColorToHex(TypeColor)}]{node.Type ?? "Variant"}[/color]");
+        sb.Append(FormatTypeBBCode(node.Type ?? "Variant", node.Label));
 
-        // Show description if available
         if (!string.IsNullOrEmpty(node.Description))
-        {
             sb.Append($" [color=#666666]({node.Description})[/color]");
-        }
-
-        return sb.ToString();
-    }
-
-    private string BuildParameterSignatureBBCode(GDShrapt.Reader.GDParameterDeclaration param, GDShrapt.Semantics.GDSemanticModel analyzer)
-    {
-        var sb = new System.Text.StringBuilder();
-
-        var paramName = param.Identifier?.Sequence ?? "unknown";
-        sb.Append($"[color=#{ColorToHex(ParamColor)}]{paramName}[/color]");
-
-        var paramType = analyzer.GetTypeForNode(param) ?? "Variant";
-        sb.Append($"[color=#{ColorToHex(SymbolColor)}]: [/color]");
-        sb.Append($"[color=#{ColorToHex(TypeColor)}]{paramType}[/color]");
 
         return sb.ToString();
     }
@@ -517,73 +1016,113 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         return $"{r:X2}{g:X2}{b:X2}";
     }
 
-    private void UpdateSuggestion(GDTypeFlowNode node)
+    /// <summary>
+    /// Formats a type for display, showing "Variant" as clickable "<Derivable>" in yellow with underline.
+    /// </summary>
+    private string FormatTypeBBCode(string typeName, string context = null)
     {
-        if (node == null)
+        if (typeName == "Variant" || string.IsNullOrEmpty(typeName))
         {
-            _suggestionLabel.Visible = false;
-            _quickFixButton.Visible = false;
-            return;
+            // Show as clickable <Derivable> in yellow with underline
+            var urlTarget = context ?? "derivable";
+            return $"[url={urlTarget}][color=#{ColorToHex(DerivableColor)}][u]<Derivable>[/u][/color][/url]";
         }
-
-        // Show suggestion for low confidence or union types
-        if (node.Type == "Variant" || node.Confidence < 0.5f)
-        {
-            _suggestionLabel.Text = "Consider adding explicit type annotation";
-            _suggestionLabel.Visible = true;
-            _quickFixButton.Visible = true;
-        }
-        else if (node.IsUnionType)
-        {
-            _suggestionLabel.Text = $"Union type: Consider explicit type annotation `: {node.UnionTypeInfo?.CommonBaseType ?? node.UnionTypeInfo?.Types.FirstOrDefault() ?? "Type"}`";
-            _suggestionLabel.Visible = true;
-            _quickFixButton.Visible = true;
-        }
-        else if (node.HasDuckConstraints)
-        {
-            var duckInfo = node.DuckTypeInfo;
-            var constraintCount = (duckInfo?.RequiredMethods.Count ?? 0) + (duckInfo?.RequiredProperties.Count ?? 0);
-            _suggestionLabel.Text = $"Duck type with {constraintCount} constraints - consider explicit type";
-            _suggestionLabel.Visible = true;
-            _quickFixButton.Visible = true;
-        }
-        else
-        {
-            _suggestionLabel.Visible = false;
-            _quickFixButton.Visible = false;
-        }
+        return $"[color=#{ColorToHex(TypeColor)}]{typeName}[/color]";
     }
 
-    private void ShowNoDataMessage(string message)
-    {
-        _signatureLabel.Text = $"[color=#999999]{message}[/color]";
-        _suggestionLabel.Visible = false;
-        _quickFixButton.Visible = false;
-        _canvas.DisplayGraph(null);
-    }
+    #endregion
 
     #region Event Handlers
 
-    private void OnBlockBodyClicked(GDTypeFlowNode node)
+    private void HandleKeyInput(InputEventKey key)
+    {
+        switch (key.Keycode)
+        {
+            case Key.Escape:
+                Hide();
+                break;
+
+            case Key.Backspace:
+            case Key.Left when key.AltPressed:
+                OnBackPressed();
+                break;
+
+            case Key.Tab:
+                _breakdownPanel.CycleTab();
+                break;
+
+            case Key.Enter:
+                if (_focusedNode != null)
+                    _navigationService?.NavigateToNode(_focusedNode);
+                break;
+
+            case Key.Key1 when key.AltPressed:
+                _tabBar.ActivateCursorTab();
+                break;
+        }
+    }
+
+    private void OnSymbolTabActivated(GDTypeFlowNode node)
+    {
+        if (node != null)
+        {
+            _followMode = false;
+            DisplayNode(node);
+        }
+    }
+
+    private void OnSymbolTabClosed(GDTypeFlowNode node)
+    {
+        // If the closed tab was the focused node, clear or switch to cursor
+        if (node != null && node == _focusedNode)
+        {
+            if (_tabBar.IsCursorTabActive)
+            {
+                _followMode = true;
+            }
+        }
+    }
+
+    private void OnCursorTabActivated()
+    {
+        _followMode = true;
+        // Will update on next cursor change
+    }
+
+    private void OnPinToggled(bool pressed)
+    {
+        _isPinned = pressed;
+        _pinButton.Text = pressed ? "📍" : "📌";
+    }
+
+    private void OnNodeNavigationRequested(GDTypeFlowNode node)
     {
         if (node == null)
             return;
 
-        // Navigate in editor (highlight the token)
         _navigationService?.NavigateToNode(node);
     }
 
-    private void OnBlockLabelClicked(GDTypeFlowNode node)
+    private void OnNodeOpenInTabRequested(GDTypeFlowNode node)
     {
         if (node == null)
             return;
 
+        NavigateToNode(node);
+    }
+
+    private void NavigateToNode(GDTypeFlowNode node)
+    {
         // Push current focus to navigation stack
         if (_focusedNode != null && _focusedNode != node)
         {
             _navigationStack.Push(_focusedNode);
             _backButton.Visible = true;
         }
+
+        // Add tab and show
+        _tabBar.AddSymbolTab(node);
+        _followMode = false;
 
         // Rebuild graph around clicked node
         if (node.SourceScript != null)
@@ -593,54 +1132,34 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             {
                 _currentSymbolName = node.Label;
                 _currentScript = node.SourceScript;
-                _titleLabel.Text = node.Label;
-                DisplayGraph(newRoot);
+                DisplayNode(newRoot);
             }
         }
 
-        // Navigate in editor
         _navigationService?.NavigateToNode(node);
-    }
-
-    private void OnEdgeClicked(GDTypeFlowEdge edge)
-    {
-        if (edge?.Target == null)
-            return;
-
-        // Scroll canvas to show the target node
-        _canvas.ScrollToNode(edge.Target);
-    }
-
-    private void OnEdgeHoverStart(GDTypeFlowEdge edge, Vector2 position)
-    {
-        if (edge?.Constraints != null && edge.Constraints.HasRequirements)
-        {
-            // Convert position to panel coordinates
-            var panelPos = _canvas.GlobalPosition + position;
-            _constraintTooltip.ShowForEdge(edge, panelPos);
-        }
-    }
-
-    private void OnEdgeHoverEnd()
-    {
-        _constraintTooltip.Hide();
     }
 
     private void OnSignatureMetaClicked(Variant meta)
     {
-        var paramName = meta.AsString();
-        if (string.IsNullOrEmpty(paramName) || _currentScript == null)
+        var targetName = meta.AsString();
+        if (string.IsNullOrEmpty(targetName) || _currentScript == null)
             return;
 
-        // Push current to navigation stack
+        // Handle click on <Derivable> type - trigger quick fix
+        if (targetName == "derivable" || targetName == "return")
+        {
+            OnQuickFixPressed();
+            return;
+        }
+
+        // For parameter names, try to navigate to parameter's type flow
         if (_focusedNode != null)
         {
             _navigationStack.Push(_focusedNode);
             _backButton.Visible = true;
         }
 
-        // Navigate to the parameter
-        ShowForSymbol(paramName, 0, _currentScript);
+        ShowForSymbol(targetName, 0, _currentScript);
     }
 
     private void OnBackPressed()
@@ -655,22 +1174,260 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         {
             _currentSymbolName = previousNode.Label;
             _currentScript = previousNode.SourceScript;
-            _titleLabel.Text = previousNode.Label;
+
+            // Activate the corresponding tab
+            _tabBar.ActivateTabForNode(previousNode);
 
             var rebuiltNode = _graphBuilder.BuildGraph(previousNode.Label, previousNode.SourceScript);
             if (rebuiltNode != null)
             {
-                DisplayGraph(rebuiltNode);
+                DisplayNode(rebuiltNode);
             }
 
-            // Navigate in editor
             _navigationService?.NavigateToNode(previousNode);
         }
     }
 
-    private void OnFitPressed()
+    private async void OnQuickFixPressed()
     {
-        _canvas.FitAllNodes();
+        if (_focusedNode == null || _currentScript == null)
+        {
+            Logger.Info("Quick fix: No focused node or script");
+            return;
+        }
+
+        var location = _focusedNode.Location;
+        if (location == null || !location.IsValid)
+        {
+            Logger.Info($"Quick fix: Invalid location for '{_focusedNode.Label}'");
+            return;
+        }
+
+        // Use refactoring service to plan the annotation
+        var service = new GDAddTypeAnnotationsService();
+        var options = new GDTypeAnnotationOptions
+        {
+            IncludeParameters = _focusedNode.Kind == GDTypeFlowNodeKind.Parameter,
+            IncludeLocals = _focusedNode.Kind == GDTypeFlowNodeKind.LocalVariable,
+            IncludeClassVariables = _focusedNode.Kind == GDTypeFlowNodeKind.MemberVariable,
+            MinimumConfidence = GDTypeConfidence.Low // Accept all confidence levels
+        };
+
+        var result = service.PlanFile(_currentScript, options);
+
+        if (result.Success && result.HasAnnotations)
+        {
+            var annotation = result.Annotations.FirstOrDefault(a => a.IdentifierName == _focusedNode.Label);
+            if (annotation != null)
+            {
+                // Show preview dialog before applying
+                await ShowQuickFixPreview(annotation);
+            }
+            else
+            {
+                Logger.Info($"Quick fix: No matching annotation found for '{_focusedNode.Label}'");
+            }
+        }
+        else
+        {
+            Logger.Info($"Quick fix: Service returned no annotations. Error: {result.ErrorMessage}");
+        }
+    }
+
+    private async Task ShowQuickFixPreview(GDTypeAnnotationPlan annotation)
+    {
+        var previewDialog = new RefactoringPreviewDialog();
+        AddChild(previewDialog);
+
+        try
+        {
+            var title = $"Add Type Annotation ({annotation.InferredType.Confidence})";
+            var targetDescription = annotation.Target switch
+            {
+                TypeAnnotationTarget.ClassVariable => "class variable",
+                TypeAnnotationTarget.LocalVariable => "local variable",
+                TypeAnnotationTarget.Parameter => "parameter",
+                _ => "declaration"
+            };
+
+            var originalCode = $"{annotation.IdentifierName}";
+            var resultCode = $"{annotation.IdentifierName}: {annotation.InferredType.TypeName}";
+
+            // Single-file apply with preview is allowed in Base
+            var canApply = true;
+
+            var dialogResult = await previewDialog.ShowForResult(
+                title,
+                $"// Add type annotation to {targetDescription}\n" +
+                $"// Inferred type: {annotation.InferredType.TypeName}\n" +
+                $"// Confidence: {annotation.InferredType.Confidence}\n" +
+                $"// Reason: {annotation.InferredType.Reason ?? "Type inference"}\n\n" +
+                originalCode,
+                resultCode,
+                canApply,
+                "Apply");
+
+            if (dialogResult.ShouldApply)
+            {
+                Logger.Info($"Quick fix: Applying ': {annotation.InferredType.TypeName}' to '{_focusedNode.Label}'");
+
+                // Fire event for plugin to handle the actual application
+                AddTypeAnnotationRequested?.Invoke(_currentScript, annotation);
+
+                // Refresh the graph to reflect the change
+                await Task.Delay(100); // Small delay to let file be saved
+                RefreshCurrentSymbol();
+            }
+        }
+        finally
+        {
+            previewDialog.QueueFree();
+        }
+    }
+
+    private async void OnAddTypeGuardPressed()
+    {
+        await ShowTypeGuardPreview(_focusedNode);
+    }
+
+    private async void OnAddInterfaceRequested(GDTypeFlowNode node)
+    {
+        if (node?.DuckTypeInfo == null || _currentScript == null)
+            return;
+
+        await ShowInterfacePreview(node);
+    }
+
+    private async void OnNarrowTypeRequested(GDTypeFlowNode node)
+    {
+        if (node?.UnionTypeInfo == null || _currentScript == null)
+            return;
+
+        await ShowTypeGuardPreview(node);
+    }
+
+    private async void OnAddTypeGuardRequestedInternal(GDTypeFlowNode node)
+    {
+        if (node == null || _currentScript == null)
+            return;
+
+        await ShowTypeGuardPreview(node);
+    }
+
+    private async Task ShowTypeGuardPreview(GDTypeFlowNode node)
+    {
+        if (node == null || _currentScript == null)
+            return;
+
+        var types = node.UnionTypeInfo?.Types.ToList() ?? new List<string>();
+        if (types.Count == 0 && !string.IsNullOrEmpty(node.Type))
+        {
+            types.Add(node.Type);
+        }
+
+        var previewDialog = new RefactoringPreviewDialog();
+        AddChild(previewDialog);
+
+        try
+        {
+            var title = "Add Type Guard";
+            var typesStr = string.Join(" | ", types.Take(5));
+            if (types.Count > 5) typesStr += "...";
+
+            // Generate example code for preview
+            var originalCode = $"# Before type guard\n{node.Label}  # type: {typesStr}";
+            var resultCode = $"# After type guard\nif {node.Label} is {types.FirstOrDefault() ?? "Type"}:\n    # {node.Label} is narrowed to {types.FirstOrDefault() ?? "Type"}\n    pass";
+
+            // Type guard generation is not yet implemented - show preview only
+            var canApply = false;
+
+            var dialogResult = await previewDialog.ShowForResult(
+                title,
+                $"// Add type guard for union type\n" +
+                $"// Symbol: {node.Label}\n" +
+                $"// Types: {typesStr}\n\n" +
+                originalCode,
+                resultCode,
+                canApply,
+                "Apply");
+
+            if (dialogResult.ShouldApply && canApply)
+            {
+                Logger.Info($"Type guard: Applying to '{node.Label}'");
+                AddTypeGuardRequested?.Invoke(_currentScript, node.Label, types);
+            }
+        }
+        finally
+        {
+            previewDialog.QueueFree();
+        }
+    }
+
+    private async Task ShowInterfacePreview(GDTypeFlowNode node)
+    {
+        if (node?.DuckTypeInfo == null || _currentScript == null)
+            return;
+
+        var duckType = node.DuckTypeInfo;
+        var previewDialog = new RefactoringPreviewDialog();
+        AddChild(previewDialog);
+
+        try
+        {
+            var title = "Generate Interface from Duck Type";
+            var methodsList = string.Join(", ", duckType.RequiredMethods.Keys.Take(5));
+            var propsList = string.Join(", ", duckType.RequiredProperties.Keys.Take(5));
+
+            // Generate interface preview
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"class_name I{node.Label}Interface");
+            sb.AppendLine();
+
+            foreach (var prop in duckType.RequiredProperties.Take(10))
+            {
+                var propType = !string.IsNullOrEmpty(prop.Value) ? prop.Value : "Variant";
+                sb.AppendLine($"var {prop.Key}: {propType}");
+            }
+
+            if (duckType.RequiredProperties.Count > 0 && duckType.RequiredMethods.Count > 0)
+                sb.AppendLine();
+
+            foreach (var method in duckType.RequiredMethods.Take(10))
+            {
+                var paramCount = method.Value >= 0 ? method.Value : 0;
+                var paramsStr = paramCount > 0
+                    ? string.Join(", ", Enumerable.Range(0, paramCount).Select(i => $"arg{i}"))
+                    : "";
+                sb.AppendLine($"func {method.Key}({paramsStr}) -> Variant:");
+                sb.AppendLine("    pass");
+                sb.AppendLine();
+            }
+
+            var originalCode = $"# Duck type constraints for '{node.Label}'\n" +
+                              $"# Required methods: {methodsList}\n" +
+                              $"# Required properties: {propsList}";
+            var resultCode = sb.ToString().TrimEnd();
+
+            // Interface generation is not yet implemented - show preview only
+            var canApply = false;
+
+            var dialogResult = await previewDialog.ShowForResult(
+                title,
+                originalCode,
+                resultCode,
+                canApply,
+                "Generate");
+
+            if (dialogResult.ShouldApply && canApply)
+            {
+                Logger.Info($"Interface generation: Creating for '{node.Label}'");
+                GenerateInterfaceRequested?.Invoke(_currentScript, duckType);
+            }
+        }
+        finally
+        {
+            previewDialog.QueueFree();
+        }
     }
 
     private void OnExportPressed()
@@ -694,12 +1451,6 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         DisplayServer.ClipboardSet(json);
 
         Logger.Info($"Type flow data exported to clipboard for '{_currentSymbolName}'");
-    }
-
-    private void OnQuickFixPressed()
-    {
-        // TODO: Integrate with refactoring system to add type annotation
-        Logger.Info($"Quick fix requested for '{_currentSymbolName}'");
     }
 
     #endregion

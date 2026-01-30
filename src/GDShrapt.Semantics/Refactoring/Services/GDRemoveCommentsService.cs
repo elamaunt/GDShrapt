@@ -7,14 +7,14 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for removing comments from GDScript code.
 /// </summary>
-public class GDRemoveCommentsService
+public class GDRemoveCommentsService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the remove comments refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Check if there are any comments to remove
@@ -26,7 +26,7 @@ public class GDRemoveCommentsService
     /// </summary>
     public int GetCommentCount(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return 0;
 
         return context.ClassDeclaration.AllTokens.OfType<GDComment>().Count();
@@ -37,7 +37,7 @@ public class GDRemoveCommentsService
     /// </summary>
     public int GetCommentCountInRange(GDRefactoringContext context, int startLine, int endLine)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return 0;
 
         return context.ClassDeclaration.AllTokens
@@ -88,7 +88,7 @@ public class GDRemoveCommentsService
     /// </summary>
     public GDRefactoringResult ExecuteInRange(GDRefactoringContext context, int startLine, int endLine)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return GDRefactoringResult.Failed("Invalid context");
 
         var filePath = context.Script.Reference.FullPath;
@@ -137,7 +137,7 @@ public class GDRemoveCommentsService
     /// </summary>
     public GDRemoveCommentsResult Plan(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return GDRemoveCommentsResult.Failed("Invalid context");
 
         var comments = context.ClassDeclaration.AllTokens
@@ -167,7 +167,7 @@ public class GDRemoveCommentsService
     /// </summary>
     public GDRemoveCommentsResult PlanInRange(GDRefactoringContext context, int startLine, int endLine)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return GDRemoveCommentsResult.Failed("Invalid context");
 
         var comments = context.ClassDeclaration.AllTokens

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace GDShrapt.Semantics;
 
@@ -34,6 +35,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly bool _enableFileWatcher;
+    private readonly GDScriptProjectOptions? _options;
     private FileSystemWatcher? _scriptsWatcher;
     private bool _disposed;
 
@@ -59,7 +61,41 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// </summary>
     public event EventHandler<GDScriptRenamedEventArgs>? ScriptRenamed;
 
+    /// <summary>
+    /// Fired when a script file changes incrementally.
+    /// Contains old and new AST for delta analysis.
+    /// Use this for semantic model invalidation and incremental updates.
+    /// </summary>
+    public event EventHandler<GDScriptIncrementalChangeEventArgs>? IncrementalChange;
+
     #endregion
+
+    /// <summary>
+    /// Emits an incremental change event. Used by LSP and external integrations.
+    /// </summary>
+    /// <param name="script">The script that changed.</param>
+    /// <param name="oldTree">The AST before the change.</param>
+    /// <param name="newTree">The AST after the change.</param>
+    /// <param name="changes">The text changes that were applied.</param>
+    /// <param name="kind">The kind of change.</param>
+    public void EmitIncrementalChange(
+        GDScriptFile script,
+        GDClassDeclaration? oldTree,
+        GDClassDeclaration? newTree,
+        IReadOnlyList<GDTextChange> changes,
+        GDIncrementalChangeKind kind = GDIncrementalChangeKind.Modified)
+    {
+        if (script.FullPath == null)
+            return;
+
+        IncrementalChange?.Invoke(this, new GDScriptIncrementalChangeEventArgs(
+            script.FullPath,
+            script,
+            oldTree,
+            newTree,
+            kind,
+            textChanges: changes));
+    }
 
     /// <summary>
     /// The project path.
@@ -94,6 +130,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public GDScriptProject(IGDProjectContext context, GDScriptProjectOptions? options = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _options = options;
         _fileSystem = options?.FileSystem ?? new GDDefaultFileSystem();
         _logger = options?.Logger ?? GDNullLogger.Instance;
         _enableFileWatcher = options?.EnableFileWatcher ?? false;
@@ -184,14 +221,92 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// <summary>
     /// Analyzes all scripts with type resolution.
     /// </summary>
-    public void AnalyzeAll()
+    /// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+    public void AnalyzeAll(CancellationToken cancellationToken = default)
     {
+        var config = _options?.SemanticsConfig ?? new GDSemanticsConfig();
         var runtimeProvider = CreateRuntimeProvider();
+        var nodeTypeInjector = CreateNodeTypeInjector();
 
-        foreach (var script in _scripts.Values)
+        // Sequential fallback when parallel is disabled or degree is 0
+        if (!config.EnableParallelAnalysis || config.MaxDegreeOfParallelism == 0)
         {
-            script.Analyze(runtimeProvider);
+            foreach (var script in _scripts.Values)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                script.Analyze(runtimeProvider, nodeTypeInjector);
+            }
+            return;
         }
+
+        // Parallel analysis
+        var options = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = ResolveParallelism(config.MaxDegreeOfParallelism),
+            CancellationToken = cancellationToken
+        };
+
+        var exceptions = new ConcurrentBag<Exception>();
+
+        try
+        {
+            Parallel.ForEach(_scripts.Values, options, script =>
+            {
+                try
+                {
+                    script.Analyze(runtimeProvider, nodeTypeInjector);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    exceptions.Add(ex);
+                    _logger.Error($"Error analyzing {script.FullPath}: {ex.Message}");
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+
+        if (!exceptions.IsEmpty)
+        {
+            throw new AggregateException("Errors during parallel analysis", exceptions);
+        }
+    }
+
+    /// <summary>
+    /// Analyzes all scripts asynchronously with type resolution.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token for cooperative cancellation.</param>
+    /// <returns>A task representing the analysis operation.</returns>
+    public Task AnalyzeAllAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.Run(() => AnalyzeAll(cancellationToken), cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolves the effective parallelism degree from configuration.
+    /// </summary>
+    private static int ResolveParallelism(int configValue)
+    {
+        return configValue < 0 ? Environment.ProcessorCount :
+               configValue == 0 ? 1 : configValue;
+    }
+
+    /// <summary>
+    /// Creates a node type injector for scene-based node type inference.
+    /// </summary>
+    private GDNodeTypeInjector? CreateNodeTypeInjector()
+    {
+        if (_sceneTypesProvider == null)
+            return null;
+
+        var godotTypesProvider = new GDGodotTypesProvider();
+        return new GDNodeTypeInjector(
+            _sceneTypesProvider,
+            this, // IGDScriptProvider
+            godotTypesProvider,
+            _logger);
     }
 
     /// <summary>
@@ -453,9 +568,51 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         var reference = new GDScriptReference(e.FullPath, _context);
         if (_scripts.TryGetValue(reference, out var script))
         {
-            script.Reload();
-            _logger.Debug($"Script changed: {e.Name}");
+            var oldTree = script.Class;
+
+            // Read new content
+            string newContent;
+            try
+            {
+                newContent = _fileSystem.ReadAllText(e.FullPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning($"Failed to read changed file: {ex.Message}");
+                return;
+            }
+
+            // Compute diff if we have previous content
+            IReadOnlyList<GDTextChange> changes = Array.Empty<GDTextChange>();
+            if (script.LastContent != null && GDTextDiffComputer.TextsDiffer(script.LastContent, newContent))
+            {
+                changes = GDTextDiffComputer.ComputeChanges(script.LastContent, newContent);
+            }
+
+            // Incremental reload
+            GDIncrementalReloadResult result;
+            if (changes.Count > 0)
+            {
+                result = script.Reload(newContent, changes);
+                _logger.Debug($"Script changed (incremental={result.WasIncremental}): {e.Name}");
+            }
+            else
+            {
+                script.Reload(newContent);
+                result = new GDIncrementalReloadResult(oldTree, script.Class, changes, false);
+                _logger.Debug($"Script changed (full reparse): {e.Name}");
+            }
+
             ScriptChanged?.Invoke(this, new GDScriptFileEventArgs(e.FullPath, script));
+
+            // Emit incremental change event with actual changes
+            IncrementalChange?.Invoke(this, new GDScriptIncrementalChangeEventArgs(
+                e.FullPath,
+                script,
+                result.OldTree,
+                result.NewTree,
+                GDIncrementalChangeKind.Modified,
+                textChanges: changes));
         }
     }
 
@@ -466,8 +623,18 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         if (_scripts.TryAdd(reference, script))
         {
             script.Reload();
+            var newTree = script.Class;
+
             _logger.Debug($"Script created: {e.Name}");
             ScriptCreated?.Invoke(this, new GDScriptFileEventArgs(e.FullPath, script));
+
+            // Emit incremental change event
+            IncrementalChange?.Invoke(this, new GDScriptIncrementalChangeEventArgs(
+                e.FullPath,
+                script,
+                null, // No old tree for new files
+                newTree,
+                GDIncrementalChangeKind.Created));
         }
     }
 
@@ -476,8 +643,18 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         var reference = new GDScriptReference(e.FullPath, _context);
         if (_scripts.TryRemove(reference, out var script))
         {
+            var oldTree = script.Class;
+
             _logger.Debug($"Script deleted: {e.Name}");
             ScriptDeleted?.Invoke(this, new GDScriptFileEventArgs(e.FullPath, script));
+
+            // Emit incremental change event
+            IncrementalChange?.Invoke(this, new GDScriptIncrementalChangeEventArgs(
+                e.FullPath,
+                script,
+                oldTree,
+                null, // No new tree for deleted files
+                GDIncrementalChangeKind.Deleted));
         }
     }
 
@@ -488,13 +665,25 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
         if (_scripts.TryRemove(oldReference, out var script))
         {
+            var oldTree = script.Class;
+
             // Create new script file at new location
             var newScript = new GDScriptFile(newReference, _fileSystem, _logger);
             _scripts.TryAdd(newReference, newScript);
             newScript.Reload();
+            var newTree = newScript.Class;
 
             _logger.Debug($"Script renamed: {e.OldName} -> {e.Name}");
             ScriptRenamed?.Invoke(this, new GDScriptRenamedEventArgs(e.OldFullPath, e.FullPath, newScript));
+
+            // Emit incremental change event
+            IncrementalChange?.Invoke(this, new GDScriptIncrementalChangeEventArgs(
+                e.FullPath,
+                newScript,
+                oldTree,
+                newTree,
+                GDIncrementalChangeKind.Renamed,
+                oldFilePath: e.OldFullPath));
         }
     }
 
@@ -549,4 +738,10 @@ public class GDScriptProjectOptions
     /// Whether to enable call site registry for incremental updates.
     /// </summary>
     public bool EnableCallSiteRegistry { get; set; } = false;
+
+    /// <summary>
+    /// Semantic analysis configuration.
+    /// If null, uses defaults from GDSemanticsConfig.
+    /// </summary>
+    public GDSemanticsConfig? SemanticsConfig { get; set; }
 }

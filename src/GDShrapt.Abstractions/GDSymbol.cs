@@ -122,6 +122,12 @@ public class GDSymbol
     public static GDSymbol Signal(string name, GDNode declaration)
         => new GDSymbol(name, GDSymbolKind.Signal, declaration);
 
+    /// <summary>
+    /// Creates a property symbol (a variable with get/set accessors).
+    /// </summary>
+    public static GDSymbol Property(string name, GDNode declaration, GDType? type = null, string? typeName = null, bool isStatic = false, GDTypeNode? typeNode = null)
+        => new GDSymbol(name, GDSymbolKind.Property, declaration, type, typeName, isStatic, typeNode);
+
     public static GDSymbol Class(string name, GDNode declaration)
         => new GDSymbol(name, GDSymbolKind.Class, declaration);
 

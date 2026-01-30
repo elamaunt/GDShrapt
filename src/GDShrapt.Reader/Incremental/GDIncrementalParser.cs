@@ -302,10 +302,8 @@ namespace GDShrapt.Reader
                 // Change completely encompasses the span
                 else if (change.Start <= originalStart && change.OldEnd >= originalEnd)
                 {
-                    // The entire span is affected - use change boundaries
+                    // The entire span is affected - adjust both boundaries
                     newStart = change.Start;
-                    newEnd = change.Start + change.NewLength + (originalEnd - originalStart) - (change.OldEnd - change.Start);
-                    // Simplify: just adjust for delta
                     newEnd = originalEnd + change.Delta;
                 }
             }

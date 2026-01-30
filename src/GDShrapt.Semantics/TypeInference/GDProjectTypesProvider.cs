@@ -16,9 +16,22 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     // Index by script path (for extends "res://path/to/script.gd" support)
     private readonly Dictionary<string, string> _pathToTypeName = new(StringComparer.OrdinalIgnoreCase);
 
+    // For lazy return type inference
+    private IGDRuntimeProvider? _compositeProvider;
+    private readonly HashSet<string> _methodsBeingInferred = new();
+
     public GDProjectTypesProvider(IGDScriptProvider scriptProvider)
     {
         _scriptProvider = scriptProvider ?? throw new ArgumentNullException(nameof(scriptProvider));
+    }
+
+    /// <summary>
+    /// Sets the composite runtime provider for lazy return type inference.
+    /// Must be called after the composite provider is constructed.
+    /// </summary>
+    internal void SetCompositeProvider(IGDRuntimeProvider compositeProvider)
+    {
+        _compositeProvider = compositeProvider;
     }
 
     /// <summary>
@@ -42,6 +55,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             var typeInfo = BuildTypeInfo(scriptInfo);
             _typeCache[typeName] = typeInfo;
 
+            // Register inner classes as separate types
+            RegisterInnerClasses(scriptInfo.Class, typeName);
+
             // Index by script path for "extends 'res://path/to/script.gd'" support
             if (!string.IsNullOrEmpty(scriptInfo.FullPath))
             {
@@ -58,6 +74,130 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Registers inner classes as separate types in the cache.
+    /// This enables proper inheritance resolution for inner class hierarchies.
+    /// </summary>
+    private void RegisterInnerClasses(GDClassDeclaration classDecl, string parentTypeName)
+    {
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDInnerClassDeclaration innerClass && innerClass.Identifier != null)
+            {
+                var innerClassName = innerClass.Identifier.Sequence;
+                var qualifiedName = $"{parentTypeName}.{innerClassName}";
+                var innerTypeInfo = BuildInnerClassTypeInfo(innerClass, parentTypeName);
+
+                // Register by short name for backward compatibility
+                _typeCache[innerClassName] = innerTypeInfo;
+
+                // Also register by qualified name (Parent.Inner) for proper resolution
+                _typeCache[qualifiedName] = innerTypeInfo;
+
+                // Recursively register nested inner classes with qualified names
+                RegisterNestedInnerClasses(innerClass, qualifiedName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Recursively registers nested inner classes.
+    /// </summary>
+    private void RegisterNestedInnerClasses(GDInnerClassDeclaration innerClass, string parentTypeName)
+    {
+        foreach (var member in innerClass.Members)
+        {
+            if (member is GDInnerClassDeclaration nestedClass && nestedClass.Identifier != null)
+            {
+                var nestedClassName = nestedClass.Identifier.Sequence;
+                var qualifiedName = $"{parentTypeName}.{nestedClassName}";
+                var nestedTypeInfo = BuildInnerClassTypeInfo(nestedClass, parentTypeName);
+
+                // Register by short name for backward compatibility
+                _typeCache[nestedClassName] = nestedTypeInfo;
+
+                // Also register by qualified name (Parent.Inner.Nested) for proper resolution
+                _typeCache[qualifiedName] = nestedTypeInfo;
+
+                // Continue recursion with qualified name
+                RegisterNestedInnerClasses(nestedClass, qualifiedName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds type info for an inner class declaration.
+    /// </summary>
+    private GDProjectTypeInfo BuildInnerClassTypeInfo(GDInnerClassDeclaration innerClass, string parentTypeName)
+    {
+        var info = new GDProjectTypeInfo
+        {
+            Name = innerClass.Identifier?.Sequence ?? "",
+            BaseTypeName = innerClass.BaseType?.BuildName() ?? parentTypeName,
+            IsAbstract = innerClass.CustomAttributes.Any(attr => attr.Attribute?.IsAbstract() == true)
+        };
+
+        // Extract members from inner class
+        foreach (var member in innerClass.Members)
+        {
+            switch (member)
+            {
+                case GDMethodDeclaration method when method.Identifier != null:
+                    var isMethodAbstract = method.AttributesDeclaredBefore
+                        .Any(attr => attr.Attribute?.IsAbstract() == true);
+
+                    info.Methods[method.Identifier.Sequence] = new GDProjectMethodInfo
+                    {
+                        Name = method.Identifier.Sequence,
+                        ReturnTypeName = method.ReturnType?.BuildName() ?? "Variant",
+                        IsStatic = method.IsStatic,
+                        IsAbstract = isMethodAbstract,
+                        Parameters = method.Parameters?
+                            .Where(p => p.Identifier != null)
+                            .Select(p => new GDProjectParameterInfo
+                            {
+                                Name = p.Identifier!.Sequence,
+                                TypeName = p.Type?.BuildName() ?? "Variant",
+                                HasDefaultValue = p.DefaultValue != null
+                            })
+                            .ToList() ?? new()
+                    };
+                    break;
+
+                case GDVariableDeclaration variable when variable.Identifier != null:
+                    info.Properties[variable.Identifier.Sequence] = new GDProjectPropertyInfo
+                    {
+                        Name = variable.Identifier.Sequence,
+                        TypeName = variable.Type?.BuildName() ?? "Variant",
+                        IsConstant = variable.ConstKeyword != null
+                    };
+                    break;
+
+                case GDSignalDeclaration signal when signal.Identifier != null:
+                    info.Signals[signal.Identifier.Sequence] = new GDProjectSignalInfo
+                    {
+                        Name = signal.Identifier.Sequence,
+                        Parameters = signal.Parameters?
+                            .Where(p => p.Identifier != null)
+                            .Select(p => new GDProjectParameterInfo
+                            {
+                                Name = p.Identifier!.Sequence,
+                                TypeName = p.Type?.BuildName() ?? "Variant",
+                                HasDefaultValue = p.DefaultValue != null
+                            })
+                            .ToList() ?? new()
+                    };
+                    break;
+
+                case GDInnerClassDeclaration nested when nested.Identifier != null:
+                    info.InnerClasses.Add(nested.Identifier.Sequence);
+                    break;
+            }
+        }
+
+        return info;
     }
 
     private GDProjectTypeInfo BuildTypeInfo(IGDScriptInfo scriptInfo)
@@ -86,10 +226,15 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     var isMethodAbstract = method.AttributesDeclaredBefore
                         .Any(attr => attr.Attribute?.IsAbstract() == true);
 
+                    var hasExplicitReturn = method.ReturnType != null;
+                    var explicitReturnType = method.ReturnType?.BuildName();
+
                     info.Methods[method.Identifier.Sequence] = new GDProjectMethodInfo
                     {
                         Name = method.Identifier.Sequence,
-                        ReturnTypeName = method.ReturnType?.BuildName() ?? "Variant",
+                        ReturnTypeName = explicitReturnType ?? "Variant",
+                        HasExplicitReturnType = hasExplicitReturn,
+                        MethodDeclaration = hasExplicitReturn ? null : method, // Keep reference for lazy inference
                         IsStatic = method.IsStatic,
                         IsAbstract = isMethodAbstract,
                         Parameters = method.Parameters?
@@ -207,9 +352,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         foreach (var method in typeInfo.Methods.Values)
         {
             var (minArgs, maxArgs) = CalculateArgConstraints(method.Parameters);
+            // Use lazy inference for return type
+            var returnType = GetMethodReturnType(method);
             members.Add(GDRuntimeMemberInfo.Method(
                 method.Name,
-                method.ReturnTypeName,
+                returnType,
                 minArgs,
                 maxArgs,
                 isVarArgs: false,
@@ -277,11 +424,15 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check methods
         if (projectType.Methods.TryGetValue(memberName, out var method))
         {
+            // Use lazy inference for return type
+            var returnType = GetMethodReturnType(method);
+            var (minArgs, maxArgs) = CalculateArgConstraints(method.Parameters);
+
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.Name,
-                method.ReturnTypeName,
-                method.Parameters.Count,
-                method.Parameters.Count,
+                returnType,
+                minArgs,
+                maxArgs,
                 isVarArgs: false,
                 isStatic: method.IsStatic,
                 isAbstract: method.IsAbstract);
@@ -333,6 +484,54 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Lazily infers the return type for a method without explicit type annotation.
+    /// Uses GDReturnTypeCollector to analyze the method body.
+    /// </summary>
+    private string GetMethodReturnType(GDProjectMethodInfo method)
+    {
+        // If has explicit type or already inferred, return cached value
+        if (method.HasExplicitReturnType || method.ReturnTypeInferred)
+            return method.ReturnTypeName;
+
+        // If no method declaration stored (shouldn't happen but be safe)
+        if (method.MethodDeclaration == null)
+            return method.ReturnTypeName;
+
+        // Prevent recursive inference
+        var methodKey = $"{method.MethodDeclaration.ClassDeclaration?.Identifier?.Sequence ?? ""}.{method.Name}";
+        if (!_methodsBeingInferred.Add(methodKey))
+            return method.ReturnTypeName; // Return Variant if in recursive inference
+
+        try
+        {
+            // Use composite provider for type inference (if available)
+            var provider = _compositeProvider;
+            if (provider == null)
+                return method.ReturnTypeName;
+
+            var collector = new GDReturnTypeCollector(method.MethodDeclaration, provider);
+            collector.Collect();
+
+            var unionType = collector.ComputeReturnUnionType();
+            if (!unionType.IsEmpty)
+            {
+                var inferredType = unionType.EffectiveType;
+                if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant" && inferredType != "null")
+                {
+                    method.ReturnTypeName = inferredType;
+                }
+            }
+
+            method.ReturnTypeInferred = true;
+            return method.ReturnTypeName;
+        }
+        finally
+        {
+            _methodsBeingInferred.Remove(methodKey);
+        }
     }
 
     public bool IsAssignableTo(string sourceType, string targetType)
@@ -447,6 +646,42 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     }
 
     /// <summary>
+    /// Finds all project types that have a specific method defined directly.
+    /// Used for duck-type inference.
+    /// </summary>
+    public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+    {
+        if (string.IsNullOrEmpty(methodName))
+            return Array.Empty<string>();
+
+        var result = new List<string>();
+        foreach (var kvp in _typeCache)
+        {
+            if (kvp.Value.Methods.ContainsKey(methodName))
+                result.Add(kvp.Key);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Finds all project types that have a specific property defined directly.
+    /// Used for duck-type inference.
+    /// </summary>
+    public IReadOnlyList<string> FindTypesWithProperty(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return Array.Empty<string>();
+
+        var result = new List<string>();
+        foreach (var kvp in _typeCache)
+        {
+            if (kvp.Value.Properties.ContainsKey(propertyName))
+                result.Add(kvp.Key);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Calculates MinArgs and MaxArgs from project parameter information.
     /// Note: GDScript does not support variadic parameters in user-defined functions.
     /// </summary>
@@ -481,10 +716,26 @@ public class GDProjectTypeInfo
 public class GDProjectMethodInfo
 {
     public string Name { get; init; } = "";
-    public string ReturnTypeName { get; init; } = "Variant";
+    public string ReturnTypeName { get; set; } = "Variant";
     public bool IsStatic { get; init; }
     public bool IsAbstract { get; init; }
     public List<GDProjectParameterInfo> Parameters { get; init; } = new();
+
+    /// <summary>
+    /// Whether the return type has an explicit annotation.
+    /// If false, ReturnTypeName may be "Variant" or inferred.
+    /// </summary>
+    public bool HasExplicitReturnType { get; init; }
+
+    /// <summary>
+    /// Reference to the method declaration for lazy return type inference.
+    /// </summary>
+    internal GDMethodDeclaration? MethodDeclaration { get; init; }
+
+    /// <summary>
+    /// Whether the return type has been inferred (for lazy inference).
+    /// </summary>
+    internal bool ReturnTypeInferred { get; set; }
 }
 
 public class GDProjectPropertyInfo

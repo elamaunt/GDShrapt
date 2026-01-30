@@ -13,22 +13,22 @@ public class GDLocationAdapterTests
     [TestMethod]
     public void ToLspRange_ValidPosition_ConvertsToZeroBased()
     {
-        // Arrange - GDShrapt uses 1-based, LSP uses 0-based
-        // Note: GDLocationAdapter.ToLspRange converts start but keeps end as-is for exclusive range
+        // Arrange - Line is 1-based (diagnostics), Column is 0-based (Godot standard)
+        // ToLspRange converts Line from 1-based to 0-based, Column stays 0-based
         int startLine = 1;
-        int startColumn = 1;
+        int startColumn = 0;  // 0-based (Godot standard)
         int endLine = 1;
-        int endColumn = 10;
+        int endColumn = 10;   // 0-based (Godot standard)
 
         // Act
         var range = GDLocationAdapter.ToLspRange(startLine, startColumn, endLine, endColumn);
 
         // Assert
         range.Should().NotBeNull();
-        range.Start.Line.Should().Be(0);       // 1-based -> 0-based
-        range.Start.Character.Should().Be(0);  // 1-based -> 0-based
-        range.End.Line.Should().Be(0);
-        range.End.Character.Should().Be(10);   // End character is exclusive in LSP
+        range.Start.Line.Should().Be(0);       // Line: 1-based -> 0-based
+        range.Start.Character.Should().Be(0);  // Column: 0-based (no conversion)
+        range.End.Line.Should().Be(0);         // Line: 1-based -> 0-based
+        range.End.Character.Should().Be(10);   // Column: 0-based (no conversion)
     }
 
     [TestMethod]

@@ -351,20 +351,24 @@ internal class GDReturnTypeCollector
         // Check if all branches of an if statement return
         if (statement is GDIfStatement ifStmt)
         {
-            var ifReturns = ifStmt.IfBranch?.Statements != null &&
-                            ifStmt.IfBranch.Statements.Any() &&
-                            IsReturningStatement(ifStmt.IfBranch.Statements.Last());
+            // If branch check
+            if (ifStmt.IfBranch?.Statements == null || !ifStmt.IfBranch.Statements.Any())
+                return false;
+            var ifReturns = IsReturningStatement(ifStmt.IfBranch.Statements.Last());
 
-            var elseReturns = ifStmt.ElseBranch?.Statements != null &&
-                              ifStmt.ElseBranch.Statements.Any() &&
-                              IsReturningStatement(ifStmt.ElseBranch.Statements.Last());
+            // Else branch check
+            if (ifStmt.ElseBranch?.Statements == null || !ifStmt.ElseBranch.Statements.Any())
+                return false;
+            var elseReturns = IsReturningStatement(ifStmt.ElseBranch.Statements.Last());
 
             // All elif branches must return too
             var elifsReturn = ifStmt.ElifBranchesList == null ||
                               ifStmt.ElifBranchesList.All(elif =>
-                                  elif.Statements != null &&
-                                  elif.Statements.Any() &&
-                                  IsReturningStatement(elif.Statements.Last()));
+                              {
+                                  if (elif.Statements == null || !elif.Statements.Any())
+                                      return false;
+                                  return IsReturningStatement(elif.Statements.Last());
+                              });
 
             return ifReturns && elseReturns && elifsReturn;
         }

@@ -147,7 +147,7 @@ internal class GDClassVariableCollector : GDVisitor
         // ClassName.new() has high confidence
         if (expr is GDCallExpression call &&
             call.CallerExpression is GDMemberOperatorExpression member &&
-            member.Identifier?.Sequence == "new")
+            member.Identifier?.Sequence == GDTypeInferenceConstants.ConstructorMethodName)
             return true;
 
         // Array/Dictionary initializers have certain confidence for container type

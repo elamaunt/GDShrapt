@@ -18,6 +18,14 @@ namespace GDShrapt.Reader
 
         internal override void HandleChar(char c, GDReadingState state)
         {
+            // Stop on whitespace for unquoted paths - operator keywords like 'as' follow
+            // But allow whitespace inside quoted paths ($"My Sprite")
+            if (!_allowNonStringIdentifiers && (c == ' ' || c == '\t'))
+            {
+                Complete(c, state);
+                return;
+            }
+
             if (c == '/' || c == ':' || c == '"' || c == '\'')
             {
                 Complete(c, state);

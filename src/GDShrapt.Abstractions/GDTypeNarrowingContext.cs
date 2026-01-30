@@ -58,6 +58,43 @@ public class GDTypeNarrowingContext
         EnsureDuckType(variableName).RequireProperty(propertyName);
     }
 
+    /// <summary>
+    /// Sets the concrete type for a variable.
+    /// Used when type can be exactly determined (e.g., x == 42 means x is int).
+    /// </summary>
+    public void SetConcreteType(string variableName, string concreteType)
+    {
+        var duckType = EnsureDuckType(variableName);
+        // Clear existing possible types and set the concrete one
+        duckType.PossibleTypes.Clear();
+        duckType.AddPossibleType(concreteType);
+        duckType.ConcreteType = concreteType;
+    }
+
+    /// <summary>
+    /// Marks a variable as validated (e.g., via Callable.is_valid()).
+    /// </summary>
+    public void MarkValidated(string variableName)
+    {
+        EnsureDuckType(variableName).IsValidated = true;
+    }
+
+    /// <summary>
+    /// Marks a variable as definitely not null.
+    /// </summary>
+    public void SetNotNull(string variableName)
+    {
+        EnsureDuckType(variableName).MayBeNull = false;
+    }
+
+    /// <summary>
+    /// Marks a variable as potentially null.
+    /// </summary>
+    public void SetMayBeNull(string variableName)
+    {
+        EnsureDuckType(variableName).MayBeNull = true;
+    }
+
     private GDDuckType EnsureDuckType(string variableName)
     {
         if (!_narrowedTypes.TryGetValue(variableName, out var duckType))

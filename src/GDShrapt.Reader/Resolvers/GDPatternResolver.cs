@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace GDShrapt.Reader
 
         public abstract string[] GeneratePatterns();
 
-        static readonly Dictionary<Type, string[]> _patternsCache = new Dictionary<Type, string[]>();
+        static readonly ConcurrentDictionary<Type, string[]> _patternsCache = new ConcurrentDictionary<Type, string[]>();
 
         /// <summary>
         /// Ordered patterns by length descending
@@ -125,16 +126,15 @@ namespace GDShrapt.Reader
 
             var type = GetType();
 
-            if (_patternsCache.TryGetValue(type, out _sortedPatterns))
-                return;
+            _sortedPatterns = _patternsCache.GetOrAdd(type, t =>
+            {
+                var patterns = GeneratePatterns();
 
-            var patterns = GeneratePatterns();
+                if (patterns == null || patterns.Length == 0)
+                    throw new Exception("Patterns list must contains at least one value.");
 
-            if (patterns == null || patterns.Length == 0)
-                throw new Exception("Patterns list must contains at least one value.");
-
-            // Prepare and save patterns
-            _patternsCache[type] = _sortedPatterns = patterns.Distinct().OrderByDescending(x => x.Length).ToArray();
+                return patterns.Distinct().OrderByDescending(x => x.Length).ToArray();
+            });
         }
 
         internal override void HandleNewLineChar(GDReadingState state)

@@ -1,4 +1,4 @@
-extends Node
+extends Node2D
 class_name TypeInferenceTest
 
 ## Test script for type inference capabilities.

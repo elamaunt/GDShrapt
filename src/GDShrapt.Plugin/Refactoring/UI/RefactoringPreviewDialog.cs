@@ -23,9 +23,13 @@ internal partial class RefactoringPreviewDialog : Window
     private Label _resultLabel;
     private CodeEdit _resultCode;
 
-    // Pro message
+    // Preview mode message panel
     private PanelContainer _proMessagePanel;
+    private VBoxContainer _proMessageContainer;
+    private HBoxContainer _proMessageHeader;
+    private Label _previewModeBadge;
     private Label _proMessageLabel;
+    private RichTextLabel _feedbackLink;
 
     // Buttons
     private HSeparator _buttonsSeparator;
@@ -132,14 +136,14 @@ internal partial class RefactoringPreviewDialog : Window
         _resultCode.Editable = false;
         _resultPanel.AddChild(_resultCode);
 
-        // Pro message panel (hidden by default)
+        // Preview mode message panel (hidden by default)
         _proMessagePanel = new PanelContainer
         {
             Visible = false
         };
         var proMessageStyle = new StyleBoxFlat
         {
-            BgColor = new Color(0.3f, 0.2f, 0.1f, 0.8f),
+            BgColor = new Color(0.2f, 0.25f, 0.3f, 0.9f),
             CornerRadiusTopLeft = 4,
             CornerRadiusTopRight = 4,
             CornerRadiusBottomLeft = 4,
@@ -152,13 +156,47 @@ internal partial class RefactoringPreviewDialog : Window
         _proMessagePanel.AddThemeStyleboxOverride("panel", proMessageStyle);
         _mainLayout.AddChild(_proMessagePanel);
 
+        _proMessageContainer = new VBoxContainer();
+        _proMessageContainer.AddThemeConstantOverride("separation", 4);
+        _proMessagePanel.AddChild(_proMessageContainer);
+
+        // Header with Preview Mode badge
+        _proMessageHeader = new HBoxContainer();
+        _proMessageHeader.AddThemeConstantOverride("separation", 8);
+        _proMessageContainer.AddChild(_proMessageHeader);
+
+        _previewModeBadge = new Label
+        {
+            Text = "Preview Mode",
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+        _previewModeBadge.AddThemeColorOverride("font_color", new Color(0.4f, 0.7f, 1.0f));
+        _previewModeBadge.AddThemeFontSizeOverride("font_size", 13);
+        _proMessageHeader.AddChild(_previewModeBadge);
+
         _proMessageLabel = new Label
         {
-            Text = "GDShrapt Pro required to apply this refactoring",
-            HorizontalAlignment = HorizontalAlignment.Center
+            Text = "Apply is not available yet. Use Copy to paste the changes manually.",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        _proMessageLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.8f, 0.4f));
-        _proMessagePanel.AddChild(_proMessageLabel);
+        _proMessageLabel.AddThemeColorOverride("font_color", new Color(0.8f, 0.8f, 0.8f));
+        _proMessageLabel.AddThemeFontSizeOverride("font_size", 11);
+        _proMessageContainer.AddChild(_proMessageLabel);
+
+        // Feedback link
+        _feedbackLink = new RichTextLabel
+        {
+            BbcodeEnabled = true,
+            FitContent = true,
+            ScrollActive = false,
+            SelectionEnabled = false,
+            CustomMinimumSize = new Vector2(0, 20)
+        };
+        _feedbackLink.AddThemeFontSizeOverride("normal_font_size", 11);
+        _feedbackLink.Text = "[url=https://github.com/elamaunt/GDShrapt/issues]Request this feature or report an issue[/url]";
+        _feedbackLink.MetaClicked += OnFeedbackLinkClicked;
+        _proMessageContainer.AddChild(_feedbackLink);
 
         // Buttons separator
         _buttonsSeparator = new HSeparator();
@@ -295,6 +333,15 @@ internal partial class RefactoringPreviewDialog : Window
         }
     }
 
+    private void OnFeedbackLinkClicked(Variant meta)
+    {
+        var url = meta.AsString();
+        if (!string.IsNullOrEmpty(url))
+        {
+            OS.ShellOpen(url);
+        }
+    }
+
     private void OnCancelled()
     {
         _completion?.TrySetResult(new RefactoringPreviewResult { ShouldApply = false, Cancelled = true });
@@ -337,10 +384,13 @@ internal partial class RefactoringPreviewDialog : Window
         _applyButton.Text = applyButtonLabel;
         _applyButton.Disabled = !canApply;
 
-        // Show/hide Pro message
-        if (!canApply && !string.IsNullOrEmpty(proRequiredMessage))
+        // Show/hide Preview Mode panel
+        if (!canApply)
         {
-            _proMessageLabel.Text = proRequiredMessage;
+            // Use custom message if provided, otherwise default Preview Mode message
+            _proMessageLabel.Text = !string.IsNullOrEmpty(proRequiredMessage)
+                ? proRequiredMessage
+                : "Apply is not available yet. Use Copy to paste the changes manually.";
             _proMessagePanel.Visible = true;
         }
         else

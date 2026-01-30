@@ -103,7 +103,7 @@ public class GDCrossFileReferenceFinder
                         script,
                         gdRef.ReferenceNode,
                         confidence,
-                        gdRef.ConfidenceReason ?? GetConfidenceReasonFromSemanticModel(memberAccess, confidence, semanticModel, declaringTypeName));
+                        gdRef.ConfidenceReason ?? GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
                 }
             }
             yield break;
@@ -258,42 +258,6 @@ public class GDCrossFileReferenceFinder
     /// Gets a human-readable reason for the confidence determination.
     /// </summary>
     private string GetConfidenceReason(
-        GDMemberOperatorExpression memberAccess,
-        GDReferenceConfidence confidence,
-        GDSemanticModel semanticModel,
-        string targetTypeName)
-    {
-        if (memberAccess.CallerExpression == null)
-            return "Caller expression is null";
-
-        var callerType = semanticModel.GetTypeForNode(memberAccess.CallerExpression);
-        var varName = GetRootVariableName(memberAccess.CallerExpression);
-
-        return confidence switch
-        {
-            GDReferenceConfidence.Strict when !string.IsNullOrEmpty(callerType) =>
-                $"Caller type '{callerType}' matches target type '{targetTypeName}'",
-
-            GDReferenceConfidence.Strict when varName != null =>
-                $"Variable '{varName}' type narrowed to '{targetTypeName}' by control flow",
-
-            GDReferenceConfidence.Potential when varName != null =>
-                $"Variable '{varName}' is untyped; duck type may be compatible with '{targetTypeName}'",
-
-            GDReferenceConfidence.Potential =>
-                $"Caller expression type unknown; may reference '{targetTypeName}'",
-
-            GDReferenceConfidence.NameMatch when !string.IsNullOrEmpty(callerType) =>
-                $"Caller type '{callerType}' does not match target type '{targetTypeName}'",
-
-            _ => "Unknown confidence reason"
-        };
-    }
-
-    /// <summary>
-    /// Gets a human-readable reason for the confidence determination using SemanticModel.
-    /// </summary>
-    private string GetConfidenceReasonFromSemanticModel(
         GDMemberOperatorExpression memberAccess,
         GDReferenceConfidence confidence,
         GDSemanticModel semanticModel,

@@ -1,6 +1,7 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -16,6 +17,11 @@ public class GDScriptFile : IGDScriptInfo
     private readonly IGDSemanticLogger _logger;
     private GDScriptReference _reference;
     private static readonly GDScriptReader Reader = new();
+
+    // Incremental parsing support
+    private string? _lastContent;
+    private readonly GDIncrementalParser _incrementalParser = new();
+    private readonly object _reloadLock = new();
 
     /// <summary>
     /// Reference to the script file.
@@ -58,6 +64,11 @@ public class GDScriptFile : IGDScriptInfo
     /// </summary>
     public string? ResPath => _reference.ResourcePath;
 
+    /// <summary>
+    /// The last content that was parsed (for incremental diff computation).
+    /// </summary>
+    public string? LastContent => _lastContent;
+
     // IGDScriptInfo implementation
     string? IGDScriptInfo.TypeName => TypeName;
     string? IGDScriptInfo.FullPath => FullPath;
@@ -91,41 +102,99 @@ public class GDScriptFile : IGDScriptInfo
 
     /// <summary>
     /// Reloads the script from the provided content.
+    /// Thread-safe: uses internal lock to prevent concurrent reloads.
     /// </summary>
     public void Reload(string content)
     {
-        WasReadError = false;
-        SemanticModel = null;
-
-        try
+        lock (_reloadLock)
         {
-            _logger.Debug($"Parsing: {Path.GetFileName(_reference.FullPath)}");
+            WasReadError = false;
+            SemanticModel = null;
 
-            Class = Reader.ParseFileContent(content);
+            try
+            {
+                _logger.Debug($"Parsing: {Path.GetFileName(_reference.FullPath)}");
 
-            TypeName = Class?.ClassName?.Identifier?.Sequence ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
-            IsGlobal = Class?.ClassName?.Identifier?.Sequence != null;
+                Class = Reader.ParseFileContent(content);
+                _lastContent = content;
 
-            _logger.Debug($"Loaded: {TypeName}");
+                TypeName = Class?.ClassName?.Identifier?.Sequence ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
+                IsGlobal = Class?.ClassName?.Identifier?.Sequence != null;
+
+                _logger.Debug($"Loaded: {TypeName}");
+            }
+            catch (Exception ex)
+            {
+                WasReadError = true;
+                _logger.Warning($"Parse error in {Path.GetFileName(_reference.FullPath)}: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+    }
+
+    /// <summary>
+    /// Reloads the script with explicit text changes (from LSP/Editor).
+    /// Uses incremental parsing when possible.
+    /// Thread-safe: uses internal lock to prevent concurrent reloads.
+    /// </summary>
+    /// <param name="newContent">The new content after changes.</param>
+    /// <param name="changes">The text changes that were applied.</param>
+    /// <returns>Result indicating whether incremental parsing was used.</returns>
+    public GDIncrementalReloadResult Reload(string newContent, IReadOnlyList<GDTextChange> changes)
+    {
+        lock (_reloadLock)
         {
-            WasReadError = true;
-            _logger.Warning($"Parse error in {Path.GetFileName(_reference.FullPath)}: {ex.Message}");
+            WasReadError = false;
+            var oldTree = Class;
+
+            try
+            {
+                bool wasIncremental = false;
+
+                if (oldTree != null && changes != null && changes.Count > 0)
+                {
+                    // Use incremental parser
+                    _logger.Debug($"Incremental reload: {Path.GetFileName(_reference.FullPath)}");
+                    Class = _incrementalParser.ParseIncremental(oldTree, newContent, changes);
+                    wasIncremental = true;
+                }
+                else
+                {
+                    // Fallback to full reparse
+                    _logger.Debug($"Full reload: {Path.GetFileName(_reference.FullPath)}");
+                    Class = Reader.ParseFileContent(newContent);
+                }
+
+                _lastContent = newContent;
+                TypeName = Class?.ClassName?.Identifier?.Sequence
+                    ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
+                IsGlobal = Class?.ClassName?.Identifier?.Sequence != null;
+                SemanticModel = null;
+
+                _logger.Debug($"Loaded (incremental={wasIncremental}): {TypeName}");
+                return new GDIncrementalReloadResult(oldTree, Class, changes, wasIncremental);
+            }
+            catch (Exception ex)
+            {
+                WasReadError = true;
+                _logger.Warning($"Parse error: {ex.Message}");
+                return GDIncrementalReloadResult.Failed(oldTree, ex);
+            }
         }
     }
 
     /// <summary>
     /// Analyzes the script with the provided runtime provider.
     /// </summary>
-    public void Analyze(IGDRuntimeProvider? runtimeProvider = null)
+    /// <param name="runtimeProvider">Runtime provider for type resolution.</param>
+    /// <param name="typeInjector">Optional type injector for scene-based node type inference.</param>
+    public void Analyze(IGDRuntimeProvider? runtimeProvider = null, IGDRuntimeTypeInjector? typeInjector = null)
     {
         if (Class == null)
             return;
 
         try
         {
-            SemanticModel = GDSemanticModel.Create(this, runtimeProvider);
+            SemanticModel = GDSemanticModel.Create(this, runtimeProvider, typeInjector);
             _logger.Debug($"Analysis complete: {SemanticModel.Symbols.Count()} symbols found");
         }
         catch (Exception ex)

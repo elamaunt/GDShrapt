@@ -5,12 +5,13 @@ namespace GDShrapt.Reader
     /// Codes are grouped by category:
     /// - GD1xxx: Syntax errors
     /// - GD2xxx: Scope errors
-    /// - GD3xxx: Type errors
-    /// - GD4xxx: Call errors
+    /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018)
+    /// - GD4xxx: Call errors (including signal types GD4009-4010)
     /// - GD5xxx: Control flow errors
     /// - GD6xxx: Indentation errors
     /// - GD7xxx: Duck typing errors
     /// - GD8xxx: Abstract errors
+    /// - GD9xxx: Static method errors
     /// </summary>
     public enum GDDiagnosticCode
     {
@@ -122,6 +123,70 @@ namespace GDShrapt.Reader
         /// </summary>
         ArgumentTypeMismatch = 3010,
 
+        /// <summary>
+        /// Accessing a member on a type that was excluded by flow analysis.
+        /// For example, calling String.to_upper() after type guards excluded String.
+        /// </summary>
+        ImpossibleTypeAccess = 3011,
+
+        /// <summary>
+        /// Recommendation to add type annotation for better analysis.
+        /// </summary>
+        TypeAnnotationRecommended = 3012,
+
+        /// <summary>
+        /// Indexer key type does not match expected type.
+        /// For example: arr["string"] where arr expects int key.
+        /// </summary>
+        IndexerKeyTypeMismatch = 3013,
+
+        /// <summary>
+        /// Attempting to use indexer on a non-indexable type.
+        /// For example: int[0] - int is not indexable.
+        /// </summary>
+        NotIndexable = 3014,
+
+        /// <summary>
+        /// Static index is out of range for known-size collections.
+        /// </summary>
+        IndexOutOfRange = 3015,
+
+        /// <summary>
+        /// Wrong number of type parameters for generic type.
+        /// For example: Array[int, String] instead of Array[int].
+        /// </summary>
+        WrongGenericParameterCount = 3016,
+
+        /// <summary>
+        /// Unknown or invalid type used as generic argument.
+        /// For example: Array[UnknownType].
+        /// </summary>
+        InvalidGenericArgument = 3017,
+
+        /// <summary>
+        /// Dictionary key type is not hashable.
+        /// For example: Dictionary[Array, int] - Array is not hashable.
+        /// </summary>
+        DictionaryKeyNotHashable = 3018,
+
+        /// <summary>
+        /// Comparison operator (&lt; &gt; &lt;= &gt;=) used with null type.
+        /// Runtime error in GDScript: "Invalid operands 'Nil' and 'int'".
+        /// </summary>
+        ComparisonWithNull = 3019,
+
+        /// <summary>
+        /// Comparison operator (&lt; &gt; &lt;= &gt;=) used with potentially null variable.
+        /// The variable has not been checked for null before the comparison.
+        /// </summary>
+        ComparisonWithPotentiallyNull = 3020,
+
+        /// <summary>
+        /// Comparison operator used with incompatible types.
+        /// For example: "str" &lt; 5 - String and int are not comparable.
+        /// </summary>
+        IncompatibleComparisonTypes = 3021,
+
         // Call errors (4xxx)
         /// <summary>
         /// Wrong number of arguments in a function call.
@@ -162,6 +227,16 @@ namespace GDShrapt.Reader
         /// A resource path in load/preload does not exist.
         /// </summary>
         ResourceNotFound = 4008,
+
+        /// <summary>
+        /// emit_signal called with argument type that doesn't match signal parameter.
+        /// </summary>
+        EmitSignalTypeMismatch = 4009,
+
+        /// <summary>
+        /// connect callback signature doesn't match signal parameters.
+        /// </summary>
+        ConnectCallbackTypeMismatch = 4010,
 
         // Control flow errors (5xxx)
         /// <summary>
@@ -261,6 +336,80 @@ namespace GDShrapt.Reader
         /// </summary>
         MemberNotGuaranteed = 7004,
 
+        // Nullable access warnings (7005-7009)
+        /// <summary>
+        /// Accessing member on a variable that may be null.
+        /// For example: x.foo where x = null.
+        /// </summary>
+        PotentiallyNullAccess = 7005,
+
+        /// <summary>
+        /// Using indexer on a variable that may be null.
+        /// For example: x[i] where x = null.
+        /// </summary>
+        PotentiallyNullIndexer = 7006,
+
+        /// <summary>
+        /// Calling method on a variable that may be null.
+        /// For example: x.method() where x = null.
+        /// </summary>
+        PotentiallyNullMethodCall = 7007,
+
+        /// <summary>
+        /// Accessing class-level variable that was initialized to null and not reassigned.
+        /// </summary>
+        ClassVariableMayBeNull = 7008,
+
+        /// <summary>
+        /// Using union type containing null without null check.
+        /// For example: using x: Node | null without if x != null.
+        /// </summary>
+        NullableTypeNotChecked = 7009,
+
+        // Redundant guard warnings (7010-7014)
+        /// <summary>
+        /// Type guard is redundant because variable already has the exact type.
+        /// For example: var x: Array; if x is Array.
+        /// </summary>
+        RedundantTypeGuard = 7010,
+
+        /// <summary>
+        /// Type guard is redundant because variable was already narrowed to this type.
+        /// For example: if x is Array: if x is Array.
+        /// </summary>
+        RedundantNarrowedTypeGuard = 7011,
+
+        /// <summary>
+        /// has_method/has/has_signal check is redundant because type is known to have it.
+        /// For example: var arr: Array; if arr.has_method("slice").
+        /// </summary>
+        RedundantHasMethodCheck = 7012,
+
+        /// <summary>
+        /// Null check is redundant because type cannot be null.
+        /// For example: var x: int = 5; if x != null.
+        /// </summary>
+        RedundantNullCheck = 7013,
+
+        /// <summary>
+        /// Truthiness check is redundant because type cannot be falsy.
+        /// For example: var x: int = 5; if x.
+        /// </summary>
+        RedundantTruthinessCheck = 7014,
+
+        // Dynamic call validation (7015-7016)
+        /// <summary>
+        /// Method specified in call()/callv() not found on the known type.
+        /// For example: node.call("unknown_method") where node: Node.
+        /// </summary>
+        DynamicMethodNotFound = 7015,
+
+        /// <summary>
+        /// Property specified in get()/set() not found on the known type.
+        /// For example: node.get("unknown_property") where node: Node.
+        /// </summary>
+        DynamicPropertyNotFound = 7016,
+
         // Abstract errors (8xxx)
         /// <summary>
         /// Abstract method has an implementation body.
@@ -285,7 +434,20 @@ namespace GDShrapt.Reader
         /// <summary>
         /// Cannot instantiate abstract class.
         /// </summary>
-        AbstractClassInstantiation = 8005
+        AbstractClassInstantiation = 8005,
+
+        // Static method errors (9xxx)
+        /// <summary>
+        /// Instance method called on class name (without instance).
+        /// For example: MyClass.instance_method() instead of instance.instance_method().
+        /// </summary>
+        InstanceMethodCalledAsStatic = 9001,
+
+        /// <summary>
+        /// Static method called on instance (warning, GDScript allows this).
+        /// For example: instance.static_method() instead of MyClass.static_method().
+        /// </summary>
+        StaticMethodCalledOnInstance = 9002
     }
 
     /// <summary>

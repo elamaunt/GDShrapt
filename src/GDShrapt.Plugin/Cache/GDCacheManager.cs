@@ -15,7 +15,7 @@ internal class GDCacheManager : IDisposable
     private const string LintSubDirectory = "lint";
     private const string IndexFileName = "cache.index.json";
 
-    private const int CurrentCacheVersion = 10;
+    private const int CurrentCacheVersion = 13;
 
     private readonly string _projectPath;
     private readonly string _cacheDirectory;

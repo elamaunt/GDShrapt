@@ -90,8 +90,7 @@ namespace GDShrapt.Linter
             AddRule(new GDStrictTypingRule());
             AddRule(new GDPrivateMethodCallRule());
             AddRule(new GDDuplicatedLoadRule());
-            AddRule(new GDAbstractMethodBodyRule());
-            AddRule(new GDAbstractClassRequiredRule());
+            // GDL220 and GDL221 removed - abstract method validation is handled by GDAbstractValidator (GD8001, GD8002)
             AddRule(new GDExpressionNotAssignedRule());
             AddRule(new GDNoSelfAssignRule());
             AddRule(new GDUselessAssignmentRule());

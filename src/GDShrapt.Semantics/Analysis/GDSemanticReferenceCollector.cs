@@ -17,6 +17,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
 {
     private readonly GDScriptFile _scriptFile;
     private readonly IGDRuntimeProvider? _runtimeProvider;
+    private readonly IGDRuntimeTypeInjector? _typeInjector;
     private GDTypeInferenceEngine? _typeEngine;
     private readonly GDTypeNarrowingAnalyzer? _narrowingAnalyzer;
 
@@ -44,17 +45,23 @@ internal class GDSemanticReferenceCollector : GDVisitor
     // Cache for inherited symbols (to avoid creating duplicates)
     private readonly Dictionary<string, GDSymbolInfo> _inheritedSymbolCache = new();
 
+    // Property accessors cache (property name -> (first accessor, second accessor))
+    private readonly Dictionary<string, (GDAccessorDeclaration? First, GDAccessorDeclaration? Second)> _propertyAccessors = new();
+
     /// <summary>
     /// Creates a new semantic reference collector.
     /// </summary>
     /// <param name="scriptFile">The script file to analyze.</param>
     /// <param name="runtimeProvider">Runtime provider for type resolution (includes Godot types, project types, etc.).</param>
+    /// <param name="typeInjector">Optional type injector for scene-based node type inference.</param>
     public GDSemanticReferenceCollector(
         GDScriptFile scriptFile,
-        IGDRuntimeProvider? runtimeProvider = null)
+        IGDRuntimeProvider? runtimeProvider = null,
+        IGDRuntimeTypeInjector? typeInjector = null)
     {
         _scriptFile = scriptFile ?? throw new ArgumentNullException(nameof(scriptFile));
         _runtimeProvider = runtimeProvider;
+        _typeInjector = typeInjector;
 
         if (runtimeProvider != null)
         {
@@ -85,11 +92,30 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var scopeValidator = new GDScopeValidator(validationContext);
         scopeValidator.Validate(_scriptFile.Class);
 
+        // Reset scope stack to class scope after validation
+        // GDScopeValidator.Validate() pops all scopes including global, which breaks
+        // GDTypeInferenceEngine.Lookup() since it needs access to class-level declarations
+        // (methods, signals, class variables). ResetToClass() restores both Global and Class scopes.
+        validationContext.Scopes.ResetToClass();
+
         // Create type engine with proper scopes (after all declarations are collected)
         // Store in field so it can be used during reference collection
-        _typeEngine = _runtimeProvider != null
-            ? new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes)
-            : null;
+        // If type injector is provided, use it for scene-based node type inference
+        if (_runtimeProvider != null)
+        {
+            if (_typeInjector != null)
+            {
+                var injectionContext = new GDTypeInjectionContext
+                {
+                    ScriptPath = _scriptFile.FullPath
+                };
+                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes, _typeInjector, injectionContext);
+            }
+            else
+            {
+                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes);
+            }
+        }
 
         _model = new GDSemanticModel(_scriptFile, _runtimeProvider, validationContext, _typeEngine);
 
@@ -158,6 +184,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     // Constants are GDVariableDeclaration with ConstKeyword
                     if (varDecl.ConstKeyword != null)
                         RegisterConstant(varDecl, context, declaringTypeName);
+                    // Properties are GDVariableDeclaration with get/set accessors
+                    else if (HasAccessors(varDecl))
+                        RegisterProperty(varDecl, context, declaringTypeName);
                     else
                         RegisterClassVariable(varDecl, context, declaringTypeName);
                     break;
@@ -179,6 +208,14 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Checks if a variable declaration has get/set accessors (making it a property).
+    /// </summary>
+    private static bool HasAccessors(GDVariableDeclaration varDecl)
+    {
+        return varDecl.FirstAccessorDeclarationNode != null || varDecl.SecondAccessorDeclarationNode != null;
     }
 
     private void RegisterInnerClass(GDInnerClassDeclaration innerClass, GDValidationContext context, string declaringTypeName)
@@ -225,6 +262,35 @@ internal class GDSemanticReferenceCollector : GDVisitor
             declaringScript: _scriptFile);
 
         _model!.RegisterSymbol(symbolInfo);
+    }
+
+    /// <summary>
+    /// Registers a property (a variable with get/set accessors).
+    /// </summary>
+    private void RegisterProperty(GDVariableDeclaration propDecl, GDValidationContext context, string declaringTypeName)
+    {
+        var name = propDecl.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(name))
+            return;
+
+        var typeNode = propDecl.Type;
+        var typeName = typeNode?.BuildName();
+        var isStatic = propDecl.StaticKeyword != null;
+
+        // Create property symbol
+        var symbol = GDSymbol.Property(name, propDecl, typeName: typeName, typeNode: typeNode, isStatic: isStatic);
+
+        context.Declare(symbol);
+
+        var symbolInfo = GDSymbolInfo.ClassMember(
+            symbol,
+            declaringTypeName: declaringTypeName,
+            declaringScript: _scriptFile);
+
+        _model!.RegisterSymbol(symbolInfo);
+
+        // Store property info for accessor resolution
+        _propertyAccessors[name] = (propDecl.FirstAccessorDeclarationNode, propDecl.SecondAccessorDeclarationNode);
     }
 
     private void RegisterMethod(GDMethodDeclaration methodDecl, GDValidationContext context, string declaringTypeName)
@@ -318,7 +384,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 if (!string.IsNullOrEmpty(paramName))
                 {
                     var typeNode = param.Type;
-                    var typeName = typeNode?.BuildName();
+                    // Use explicit type if present, otherwise Variant (for duck typing)
+                    var typeName = typeNode?.BuildName() ?? "Variant";
                     var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
 
                     // Pass the method as the declaring scope for parameter isolation
@@ -378,7 +445,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 if (!string.IsNullOrEmpty(paramName))
                 {
                     var typeNode = param.Type;
-                    var typeName = typeNode?.BuildName();
+                    // Use explicit type if present, otherwise Variant (for duck typing)
+                    var typeName = typeNode?.BuildName() ?? "Variant";
                     var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
 
                     // Pass the lambda as the declaring scope for parameter isolation
@@ -414,8 +482,20 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
     public override void Left(GDIfStatement ifStatement)
     {
+        // Check for early return pattern: if the if-branch contains an unconditional return,
+        // then the code after the if-statement should have the inverse narrowing
+        var afterIfNarrowing = ComputePostIfNarrowing(ifStatement);
+
         if (_narrowingStack.Count > 0)
             _currentNarrowingContext = _narrowingStack.Pop();
+
+        // Apply early return narrowing to code after this if-statement
+        if (afterIfNarrowing != null)
+        {
+            _currentNarrowingContext = afterIfNarrowing;
+            // Register for the containing method's statements that follow
+            _model!.SetPostIfNarrowing(ifStatement, afterIfNarrowing);
+        }
 
         PopScope();
     }
@@ -434,7 +514,11 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDIfBranch ifBranch)
     {
         // Restore parent context after leaving if branch
-        // (will be restored fully when leaving GDIfStatement)
+        // This ensures elif/else branches don't inherit if-branch narrowing
+        if (_narrowingStack.Count > 0)
+        {
+            _currentNarrowingContext = _narrowingStack.Peek();
+        }
     }
 
     public override void Visit(GDElifBranch elifBranch)
@@ -451,17 +535,78 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDElifBranch elifBranch)
     {
         // Restore parent context after leaving elif branch
+        // This ensures subsequent elif/else branches don't inherit this branch's narrowing
+        if (_narrowingStack.Count > 0)
+        {
+            _currentNarrowingContext = _narrowingStack.Peek();
+        }
     }
 
     public override void Visit(GDElseBranch elseBranch)
     {
         // In else branch, all previous conditions were false
-        // No specific narrowing here - the exclusion is handled by the context
+        // Reset narrowing context to parent (no narrowing from if/elif branches applies here)
+        // The _narrowingStack contains the parent context pushed in Visit(GDIfStatement)
+        if (_narrowingStack.Count > 0)
+        {
+            // Peek the parent context without popping (will be popped in Left(GDIfStatement))
+            _currentNarrowingContext = _narrowingStack.Peek();
+        }
+        else
+        {
+            // No parent context, use empty
+            _currentNarrowingContext = new GDTypeNarrowingContext();
+        }
     }
 
     public override void Left(GDElseBranch elseBranch)
     {
         // Nothing special to do
+    }
+
+    /// <summary>
+    /// Computes narrowing for code after an if-statement with early return.
+    /// If the if-branch contains unconditional return and no else branch,
+    /// the code after will have the inverse condition narrowing.
+    /// </summary>
+    private GDTypeNarrowingContext? ComputePostIfNarrowing(GDIfStatement ifStatement)
+    {
+        if (_narrowingAnalyzer == null)
+            return null;
+
+        var ifBranch = ifStatement.IfBranch;
+        if (ifBranch == null || ifBranch.Condition == null)
+            return null;
+
+        // Only apply if there's no actual else branch (early return pattern)
+        // Check for ElseKeyword since ElseBranch property creates empty branch if null
+        if (ifStatement.ElseBranch?.ElseKeyword != null)
+            return null;
+
+        // Check if if-branch has unconditional return
+        if (!BranchHasUnconditionalReturn(ifBranch))
+            return null;
+
+        // The code after the if has the inverse of the condition
+        return _narrowingAnalyzer.AnalyzeCondition(ifBranch.Condition, isNegated: true);
+    }
+
+    /// <summary>
+    /// Checks if a branch contains an unconditional return statement.
+    /// </summary>
+    private static bool BranchHasUnconditionalReturn(GDIfBranch branch)
+    {
+        var statements = branch.Statements;
+        if (statements == null || statements.Count == 0)
+            return false;
+
+        // Check if the last statement is a return
+        var lastStatement = statements.LastOrDefault();
+        if (lastStatement is GDExpressionStatement exprStmt)
+        {
+            return exprStmt.Expression is GDReturnExpression;
+        }
+        return lastStatement is GDReturnExpression;
     }
 
     public override void Visit(GDInnerClassDeclaration innerClass)
@@ -505,6 +650,67 @@ internal class GDSemanticReferenceCollector : GDVisitor
             _gdScopeStack.Pop();
             _currentGDScope = _gdScopeStack.Count > 0 ? _gdScopeStack.Peek() : null;
         }
+    }
+
+    #endregion
+
+    #region Property Accessor Handling
+
+    public override void Visit(GDGetAccessorBodyDeclaration getterBody)
+    {
+        // Getter body acts like a method scope
+        PushScope(GDScopeType.Method, getterBody);
+    }
+
+    public override void Left(GDGetAccessorBodyDeclaration getterBody)
+    {
+        PopScope();
+    }
+
+    public override void Visit(GDSetAccessorBodyDeclaration setterBody)
+    {
+        // Setter body acts like a method scope
+        PushScope(GDScopeType.Method, setterBody);
+
+        // Register the setter parameter
+        var param = setterBody.Parameter;
+        if (param != null)
+        {
+            var paramName = param.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(paramName))
+            {
+                // Try to infer type from the property declaration
+                var propType = GetPropertyTypeFromAccessor(setterBody);
+                var typeNode = param.Type;
+                var typeName = typeNode?.BuildName() ?? propType;
+
+                var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
+                var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: setterBody);
+                _model!.RegisterSymbol(symbolInfo);
+            }
+        }
+    }
+
+    public override void Left(GDSetAccessorBodyDeclaration setterBody)
+    {
+        PopScope();
+    }
+
+    /// <summary>
+    /// Gets the property type from an accessor by traversing up to the parent GDVariableDeclaration.
+    /// </summary>
+    private static string? GetPropertyTypeFromAccessor(GDNode accessor)
+    {
+        var current = accessor.Parent;
+        while (current != null)
+        {
+            if (current is GDVariableDeclaration varDecl)
+            {
+                return varDecl.Type?.BuildName();
+            }
+            current = current.Parent;
+        }
+        return null;
     }
 
     #endregion
@@ -784,6 +990,52 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
     public override void Visit(GDCallExpression callExpression)
     {
+        // Create reference for the called method
+        var callerExpr = callExpression.CallerExpression;
+        if (callerExpr != null)
+        {
+            // Direct function call: func_name()
+            if (callerExpr is GDIdentifierExpression idExpr)
+            {
+                var methodName = idExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(methodName))
+                {
+                    // Try to resolve locally first (local method)
+                    var methodSymbol = _model!.FindSymbolInScope(methodName, callExpression);
+                    if (methodSymbol != null)
+                    {
+                        CreateReference(methodSymbol, callExpression, GDReferenceConfidence.Strict);
+                    }
+                    else
+                    {
+                        // Try inherited method
+                        var inheritedSymbol = ResolveOrCreateInheritedSymbol(methodName);
+                        if (inheritedSymbol != null)
+                        {
+                            CreateReference(inheritedSymbol, callExpression, GDReferenceConfidence.Strict);
+                        }
+                    }
+                }
+            }
+            // Member method call: obj.method()
+            else if (callerExpr is GDMemberOperatorExpression memberOp)
+            {
+                var methodName = memberOp.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(methodName))
+                {
+                    var callerType = _typeEngine?.InferType(memberOp.CallerExpression);
+                    if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
+                    {
+                        var symbolInfo = ResolveMemberOnType(callerType, methodName);
+                        if (symbolInfo != null)
+                        {
+                            CreateReference(symbolInfo, callExpression, GDReferenceConfidence.Strict);
+                        }
+                    }
+                }
+            }
+        }
+
         RecordNodeType(callExpression);
     }
 
@@ -921,14 +1173,21 @@ internal class GDSemanticReferenceCollector : GDVisitor
             ConfidenceReason = BuildConfidenceReason(symbol, confidence)
         };
 
-        // Add type information if available
-        if (_typeEngine != null && node is GDExpression expr)
+        // Add type information if available (with recursion guard)
+        if (_typeEngine != null && node is GDExpression expr && _recordingTypes.Add(expr))
         {
-            var typeNode = _typeEngine.InferTypeNode(expr);
-            if (typeNode != null)
+            try
             {
-                reference.InferredType = typeNode.BuildName();
-                reference.InferredTypeNode = typeNode;
+                var typeNode = _typeEngine.InferTypeNode(expr);
+                if (typeNode != null)
+                {
+                    reference.InferredType = typeNode.BuildName();
+                    reference.InferredTypeNode = typeNode;
+                }
+            }
+            finally
+            {
+                _recordingTypes.Remove(expr);
             }
         }
 
@@ -953,15 +1212,29 @@ internal class GDSemanticReferenceCollector : GDVisitor
         };
     }
 
+    // Guard against recursive calls during type inference
+    private readonly HashSet<GDExpression> _recordingTypes = new();
+
     private void RecordNodeType(GDExpression expression)
     {
         if (_typeEngine == null)
             return;
 
-        var typeNode = _typeEngine.InferTypeNode(expression);
-        if (typeNode != null)
+        // Prevent infinite recursion
+        if (!_recordingTypes.Add(expression))
+            return;
+
+        try
         {
-            _model!.SetNodeType(expression, typeNode.BuildName(), typeNode);
+            var typeNode = _typeEngine.InferTypeNode(expression);
+            if (typeNode != null)
+            {
+                _model!.SetNodeType(expression, typeNode.BuildName(), typeNode);
+            }
+        }
+        finally
+        {
+            _recordingTypes.Remove(expression);
         }
     }
 
@@ -1004,7 +1277,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Pass scopes so that GDDuckTypeCollector can filter out typed variables.
         // Without scopes, ALL variables would be considered untyped and duck types
         // would be incorrectly collected for member access on typed variables.
-        var duckCollector = new GDDuckTypeCollector(context.Scopes);
+        // Pass runtimeProvider to filter out universal Object members (has_method, get_class, etc.)
+        // that exist on all objects and don't contribute to duck-type specificity.
+        var duckCollector = new GDDuckTypeCollector(context.Scopes, _runtimeProvider);
         duckCollector.Collect(classDecl);
 
         foreach (var kv in duckCollector.VariableDuckTypes)
@@ -1045,7 +1320,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     _model!.SetVariableProfile(kv.Key, kv.Value);
                 }
 
-                // Collect container usage profiles
+                // Collect container usage profiles (local containers)
                 var containerCollector = new GDContainerUsageCollector(context.Scopes, _typeEngine);
                 containerCollector.Collect(method);
 
@@ -1054,6 +1329,17 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     _model!.SetContainerProfile(kv.Key, kv.Value);
                 }
             }
+        }
+
+        // Collect class-level container usage profiles
+        // This tracks untyped class-level Array/Dictionary variables and infers element types from usage
+        var className = classDecl.ClassName?.Identifier?.Sequence ?? _scriptFile.TypeName ?? "";
+        var classContainerCollector = new GDClassContainerUsageCollector(classDecl, _typeEngine);
+        classContainerCollector.Collect(classDecl);
+
+        foreach (var kv in classContainerCollector.Profiles)
+        {
+            _model!.SetClassContainerProfile(className, kv.Key, kv.Value);
         }
     }
 

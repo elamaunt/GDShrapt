@@ -285,6 +285,14 @@ var MyVariable = 1
 
         public string? GetExpressionType(object expression)
             => null;
+
+        public bool IsLocalEnum(string typeName) => false;
+
+        public bool IsLocalEnumValue(string enumTypeName, string memberName) => false;
+
+        public bool IsLocalInnerClass(string typeName) => false;
+
+        public GDRuntimeMemberInfo? GetInnerClassMember(string innerClassName, string memberName) => null;
     }
 
     #endregion

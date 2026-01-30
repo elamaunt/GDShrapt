@@ -7,14 +7,14 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for extracting selected expressions into local variables.
 /// </summary>
-public class GDExtractVariableService
+public class GDExtractVariableService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the extract variable refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Must have an expression selected or be on an expression
@@ -24,9 +24,6 @@ public class GDExtractVariableService
     /// <summary>
     /// Plans the extract variable refactoring without applying changes.
     /// </summary>
-    /// <param name="context">The refactoring context</param>
-    /// <param name="variableName">Name for the new variable (optional)</param>
-    /// <returns>Plan result with preview information</returns>
     public GDExtractVariableResult Plan(GDRefactoringContext context, string variableName = null)
     {
         if (!CanExecute(context))
@@ -55,10 +52,6 @@ public class GDExtractVariableService
     /// <summary>
     /// Executes the extract variable refactoring.
     /// </summary>
-    /// <param name="context">The refactoring context</param>
-    /// <param name="variableName">Name for the new variable</param>
-    /// <param name="replaceAll">Whether to replace all occurrences of the same expression</param>
-    /// <returns>Result with text edits to apply</returns>
     public GDRefactoringResult Execute(GDRefactoringContext context, string variableName, bool replaceAll = false)
     {
         if (!CanExecute(context))
@@ -69,10 +62,10 @@ public class GDExtractVariableService
             return GDRefactoringResult.Failed("No expression selected");
 
         var normalizedName = GDNamingUtilities.NormalizeVariableName(variableName ?? "new_variable");
-        var filePath = context.Script.Reference.FullPath;
+        var filePath = GetFilePath(context);
 
         // Get the statement containing the expression
-        var containingStatement = FindContainingStatement(expression);
+        var containingStatement = expression.GetContainingStatement();
         if (containingStatement == null)
             return GDRefactoringResult.Failed("Could not find containing statement");
 
@@ -81,29 +74,14 @@ public class GDExtractVariableService
         var inferredType = helper.InferExpressionType(expression);
         var varDecl = BuildVariableDeclaration(normalizedName, inferredType.TypeName, expression.ToString());
 
-        var edits = new List<GDTextEdit>();
-
         // Get indentation for the variable declaration
-        var indent = GDIndentationUtilities.GetIndentation(containingStatement);
-
-        // Edit 1: Insert variable declaration before the containing statement
-        var insertEdit = new GDTextEdit(
-            filePath,
-            containingStatement.StartLine,
-            0,
-            "",
-            $"{indent}{varDecl}\n");
-        edits.Add(insertEdit);
-
-        // Edit 2: Replace the expression with the variable reference
+        var indent = containingStatement.GetIndentation();
         var expressionText = expression.ToString();
-        var replaceEdit = new GDTextEdit(
-            filePath,
-            expression.StartLine,
-            expression.StartColumn,
-            expressionText,
-            normalizedName);
-        edits.Add(replaceEdit);
+
+        // Build edits
+        var builder = GDTextEditBuilder.ForFile(filePath)
+            .InsertLine(containingStatement.StartLine, $"{indent}{varDecl}")
+            .Replace(expression.StartLine, expression.StartColumn, expressionText, normalizedName);
 
         // If replaceAll, find and replace other occurrences
         if (replaceAll)
@@ -113,18 +91,13 @@ public class GDExtractVariableService
             {
                 if (occurrence != expression) // Skip the original
                 {
-                    var occEdit = new GDTextEdit(
-                        filePath,
-                        occurrence.StartLine,
-                        occurrence.StartColumn,
-                        occurrence.ToString(),
-                        normalizedName);
-                    edits.Add(occEdit);
+                    builder.Replace(occurrence.StartLine, occurrence.StartColumn,
+                        occurrence.ToString(), normalizedName);
                 }
             }
         }
 
-        return GDRefactoringResult.Succeeded(edits);
+        return builder.ToResult();
     }
 
     /// <summary>
@@ -136,37 +109,17 @@ public class GDExtractVariableService
             return "value";
 
         // Try to derive name from expression type
-        switch (expression)
+        return expression switch
         {
-            case GDCallExpression call:
-                // Use function name as base
-                var funcName = call.CallerExpression?.ToString() ?? "result";
-                return GDNamingUtilities.ToSnakeCase(funcName);
-
-            case GDMemberOperatorExpression member:
-                // Use member name
-                var memberName = member.Identifier?.Sequence ?? "value";
-                return GDNamingUtilities.ToSnakeCase(memberName);
-
-            case GDIdentifierExpression ident:
-                // Already an identifier
-                return ident.Identifier?.Sequence ?? "value";
-
-            case GDStringExpression:
-                return "text";
-
-            case GDNumberExpression:
-                return "value";
-
-            case GDArrayInitializerExpression:
-                return "items";
-
-            case GDDictionaryInitializerExpression:
-                return "dict";
-
-            default:
-                return "value";
-        }
+            GDCallExpression call => GDNamingUtilities.ToSnakeCase(call.CallerExpression?.ToString() ?? "result"),
+            GDMemberOperatorExpression member => GDNamingUtilities.ToSnakeCase(member.Identifier?.Sequence ?? "value"),
+            GDIdentifierExpression ident => ident.Identifier?.Sequence ?? "value",
+            GDStringExpression => "text",
+            GDNumberExpression => "value",
+            GDArrayInitializerExpression => "items",
+            GDDictionaryInitializerExpression => "dict",
+            _ => "value"
+        };
     }
 
     #region Helper Methods
@@ -180,32 +133,10 @@ public class GDExtractVariableService
         return $"var {name} = {value}";
     }
 
-    private static GDStatement? FindContainingStatement(GDExpression expression)
-    {
-        var node = expression as GDNode;
-        while (node != null)
-        {
-            if (node.Parent is GDStatement stmt)
-                return stmt;
-            node = node.Parent as GDNode;
-        }
-        return null;
-    }
-
     private static List<GDExpression> FindOccurrences(GDClassDeclaration classDecl, GDExpression expression)
     {
-        var occurrences = new List<GDExpression>();
         var targetText = expression.ToString();
-
-        foreach (var expr in classDecl.AllNodes.OfType<GDExpression>())
-        {
-            if (expr.ToString() == targetText)
-            {
-                occurrences.Add(expr);
-            }
-        }
-
-        return occurrences;
+        return classDecl.FindNodes<GDExpression>(e => e.ToString() == targetText).ToList();
     }
 
     #endregion

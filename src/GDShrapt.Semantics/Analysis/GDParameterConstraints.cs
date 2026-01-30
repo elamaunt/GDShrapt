@@ -332,9 +332,16 @@ public class GDTypeSpecificConstraints
         if (ElementTypes.Count == 0)
             return ValueIsDerivable ? "<Derivable>" : "Variant";
 
-        var typeStr = ElementTypes.Count == 1
-            ? ElementTypes.First()
-            : string.Join(" | ", ElementTypes.OrderBy(t => t));
+        string typeStr;
+        if (ElementTypes.Count == 1)
+        {
+            // Safe: use FirstOrDefault to avoid race condition
+            typeStr = ElementTypes.FirstOrDefault() ?? "Variant";
+        }
+        else
+        {
+            typeStr = string.Join(" | ", ElementTypes.OrderBy(t => t));
+        }
 
         return ValueIsDerivable ? $"{typeStr}?" : typeStr;
     }
@@ -347,9 +354,16 @@ public class GDTypeSpecificConstraints
         if (KeyTypes.Count == 0)
             return KeyIsDerivable ? "<Derivable>" : "Variant";
 
-        var typeStr = KeyTypes.Count == 1
-            ? KeyTypes.First()
-            : string.Join(" | ", KeyTypes.OrderBy(t => t));
+        string typeStr;
+        if (KeyTypes.Count == 1)
+        {
+            // Safe: use FirstOrDefault to avoid race condition
+            typeStr = KeyTypes.FirstOrDefault() ?? "Variant";
+        }
+        else
+        {
+            typeStr = string.Join(" | ", KeyTypes.OrderBy(t => t));
+        }
 
         return KeyIsDerivable ? $"{typeStr}?" : typeStr;
     }

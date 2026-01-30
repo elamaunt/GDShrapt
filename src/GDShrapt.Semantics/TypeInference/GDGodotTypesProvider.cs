@@ -45,13 +45,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             }
         }
 
-        // Add primitive types that are not in TypeDatas
-        foreach (var primitiveType in new[] { "void", "bool", "int", "float", "String", "Variant" })
-        {
-            _knownTypes.Add(primitiveType);
-        }
-
-        // Add all GlobalTypes from TypesMap (includes PackedArray types, Array, Dictionary, etc.)
+        // Add all GlobalTypes from TypesMap (includes primitives, PackedArray types, Array, Dictionary, etc.)
         if (_assemblyData?.GlobalData?.GlobalTypes != null)
         {
             foreach (var globalType in _assemblyData.GlobalData.GlobalTypes.Keys)
@@ -153,6 +147,11 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (!visited.Add(typeName))
             return null;
 
+        // Check built-in type properties first (Vector2.x, Color.r, etc.)
+        var builtinMember = GetBuiltinTypeMember(typeName, memberName);
+        if (builtinMember != null)
+            return builtinMember;
+
         if (!_typeCache.TryGetValue(typeName, out var typeData))
         {
             // Try to find in base type hierarchy
@@ -164,12 +163,15 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             var method = methods[0];
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
-            return GDRuntimeMemberInfo.Method(
+            var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
                 method.GDScriptReturnTypeName ?? "Variant",
                 minArgs,
                 maxArgs,
                 isVarArgs);
+            // Assign parameters
+            memberInfo.Parameters = CreateParameterList(method.Parameters);
+            return memberInfo;
         }
 
         // Check properties
@@ -223,6 +225,59 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         return null;
     }
 
+    /// <summary>
+    /// Looks up properties and methods for built-in value types from TypesMap data.
+    /// These types have struct-like properties (x, y, z, r, g, b, etc.) that are essential for GDScript.
+    /// </summary>
+    private GDRuntimeMemberInfo? GetBuiltinTypeMember(string typeName, string memberName)
+    {
+        if (_assemblyData?.TypeDatas == null)
+            return null;
+
+        // Try to find type data by GDScript name (case-insensitive lookup)
+        if (!_assemblyData.TypeDatas.TryGetValue(typeName, out var typeVariants))
+            return null;
+
+        // Get the first type data variant
+        var typeData = typeVariants.Values.FirstOrDefault();
+        if (typeData == null)
+            return null;
+
+        // Check methods
+        if (typeData.MethodDatas?.TryGetValue(memberName, out var methods) == true && methods.Count > 0)
+        {
+            var method = methods[0];
+            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
+            var memberInfo = GDRuntimeMemberInfo.Method(
+                method.GDScriptName,
+                method.GDScriptReturnTypeName ?? "Variant",
+                minArgs,
+                isVarArgs ? int.MaxValue : maxArgs,
+                isVarArgs);
+            memberInfo.Parameters = CreateParameterList(method.Parameters);
+            return memberInfo;
+        }
+
+        // Check properties
+        if (typeData.PropertyDatas?.TryGetValue(memberName, out var property) == true)
+        {
+            return GDRuntimeMemberInfo.Property(
+                property.GDScriptName,
+                property.GDScriptTypeName ?? "Variant",
+                property.IsStatic);
+        }
+
+        // Check constants
+        if (typeData.Constants?.TryGetValue(memberName, out var constant) == true)
+        {
+            return GDRuntimeMemberInfo.Constant(
+                constant.GDScriptName ?? memberName,
+                constant.CSharpValueTypeName ?? "Variant");
+        }
+
+        return null;
+    }
+
     public string? GetBaseType(string typeName)
     {
         if (string.IsNullOrEmpty(typeName))
@@ -230,7 +285,11 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         if (_typeCache.TryGetValue(typeName, out var typeData))
         {
-            return typeData.GDScriptBaseTypeName;
+            var baseType = typeData.GDScriptBaseTypeName;
+            // Prevent self-referential base type (Object -> Object creates infinite loop)
+            if (baseType == typeName)
+                return null;
+            return baseType;
         }
 
         return null;
@@ -253,58 +312,204 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (targetType == "Variant")
             return true;
 
+        // Variant as source can be assigned to any type (runtime type check will occur)
+        // This is common in GDScript where untyped variables (Variant) are passed to typed contexts
+        if (sourceType == "Variant")
+            return true;
+
         // Numeric promotion
         if (sourceType == "int" && targetType == "float")
             return true;
 
-        // Check inheritance chain
-        var currentType = sourceType;
-        while (!string.IsNullOrEmpty(currentType))
+        // String <-> StringName implicit conversion
+        if ((sourceType == "String" && targetType == "StringName") ||
+            (sourceType == "StringName" && targetType == "String"))
+            return true;
+
+        // Extract base type names for generics (Array[int] -> Array)
+        var sourceBaseTypeName = ExtractBaseTypeName(sourceType);
+        var targetBaseTypeName = ExtractBaseTypeName(targetType);
+
+        // Generic type is assignable to its non-generic base (Array[int] -> Array)
+        if (sourceBaseTypeName == targetBaseTypeName && sourceBaseTypeName != sourceType)
+            return true;
+
+        // Check inheritance chain with cycle protection
+        var visited = new HashSet<string>();
+        var currentType = sourceBaseTypeName;
+        while (!string.IsNullOrEmpty(currentType) && visited.Add(currentType))
         {
-            if (currentType == targetType)
+            if (currentType == targetBaseTypeName)
                 return true;
 
-            currentType = GetBaseType(currentType);
+            var baseType = GetBaseType(currentType);
+
+            // Stop if base type is the same as current (self-referential)
+            if (baseType == currentType)
+                break;
+
+            currentType = baseType;
         }
 
         return false;
     }
 
+    /// <summary>
+    /// Extracts the base type name from a generic type.
+    /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
+    /// </summary>
+    private static string ExtractBaseTypeName(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return typeName;
+
+        var bracketIndex = typeName.IndexOf('[');
+        if (bracketIndex > 0)
+            return typeName.Substring(0, bracketIndex);
+
+        return typeName;
+    }
+
     public GDRuntimeFunctionInfo? GetGlobalFunction(string name)
     {
-        if (string.IsNullOrEmpty(name) || _assemblyData?.GlobalData?.MethodDatas == null)
+        if (string.IsNullOrEmpty(name))
+            return null;
+
+        // Handle GDScript-specific functions that have different signatures than their C# counterparts
+        var specialCase = GetSpecialCaseGlobalFunction(name);
+        if (specialCase != null)
+            return specialCase;
+
+        if (_assemblyData?.GlobalData?.MethodDatas == null)
             return null;
 
         if (_assemblyData.GlobalData.MethodDatas.TryGetValue(name, out var methods) && methods.Count > 0)
         {
             var method = methods[0];
-            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
+            // Consider ALL overloads to calculate the full range of acceptable argument counts
+            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraintsFromOverloads(methods);
+            var returnType = method.GDScriptReturnTypeName ?? "Variant";
 
+            // Create parameter list from first overload
+            var parameters = CreateParameterList(method.Parameters);
+
+            GDRuntimeFunctionInfo funcInfo;
             if (isVarArgs)
             {
-                return GDRuntimeFunctionInfo.VarArgs(
-                    method.GDScriptName,
-                    minArgs,
-                    method.GDScriptReturnTypeName ?? "Variant");
+                funcInfo = GDRuntimeFunctionInfo.VarArgs(name, minArgs, returnType);
             }
             else if (minArgs == maxArgs)
             {
-                return GDRuntimeFunctionInfo.Exact(
-                    method.GDScriptName,
-                    minArgs,
-                    method.GDScriptReturnTypeName ?? "Variant");
+                funcInfo = GDRuntimeFunctionInfo.Exact(name, minArgs, returnType);
             }
             else
             {
-                return GDRuntimeFunctionInfo.Range(
-                    method.GDScriptName,
-                    minArgs,
-                    maxArgs,
-                    method.GDScriptReturnTypeName ?? "Variant");
+                funcInfo = GDRuntimeFunctionInfo.Range(name, minArgs, maxArgs, returnType);
             }
+
+            // Assign parameters
+            funcInfo.Parameters = parameters;
+            return funcInfo;
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Handles GDScript-specific global functions that have different parameter signatures
+    /// than their C# counterparts in the TypesMap.
+    /// </summary>
+    private static GDRuntimeFunctionInfo? GetSpecialCaseGlobalFunction(string name)
+    {
+        return name switch
+        {
+            // range(end), range(begin, end), range(begin, end, step)
+            "range" => GDRuntimeFunctionInfo.Range("range", 1, 3, "Array"),
+
+            // assert(condition), assert(condition, message)
+            "assert" => GDRuntimeFunctionInfo.Range("assert", 1, 2, "void"),
+
+            // min(a, b, ...) - variadic, returns float (use mini() for int)
+            "min" => GDRuntimeFunctionInfo.VarArgs("min", 2, "float"),
+
+            // max(a, b, ...) - variadic, returns float (use maxi() for int)
+            "max" => GDRuntimeFunctionInfo.VarArgs("max", 2, "float"),
+
+            // mini(a, b, ...) - variadic integer minimum, returns int
+            "mini" => GDRuntimeFunctionInfo.VarArgs("mini", 2, "int"),
+
+            // maxi(a, b, ...) - variadic integer maximum, returns int
+            "maxi" => GDRuntimeFunctionInfo.VarArgs("maxi", 2, "int"),
+
+            // minf(a, b) - float minimum, returns float
+            "minf" => GDRuntimeFunctionInfo.Exact("minf", 2, "float"),
+
+            // maxf(a, b) - float maximum, returns float
+            "maxf" => GDRuntimeFunctionInfo.Exact("maxf", 2, "float"),
+
+            // clampi(value, min, max) - returns int
+            "clampi" => GDRuntimeFunctionInfo.Exact("clampi", 3, "int"),
+
+            // clampf(value, min, max) - returns float
+            "clampf" => GDRuntimeFunctionInfo.Exact("clampf", 3, "float"),
+
+            // abs(x) - returns float
+            "abs" => GDRuntimeFunctionInfo.Exact("abs", 1, "float"),
+
+            // absi(x) - returns int
+            "absi" => GDRuntimeFunctionInfo.Exact("absi", 1, "int"),
+
+            // absf(x) - returns float
+            "absf" => GDRuntimeFunctionInfo.Exact("absf", 1, "float"),
+
+            // str(value, ...) - variadic, returns String. Accepts 0 or more args: str() returns ""
+            "str" => GDRuntimeFunctionInfo.VarArgs("str", 0, "String"),
+
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Calculates MinArgs, MaxArgs, and IsVarArgs from ALL method overloads.
+    /// Takes the minimum MinArgs and maximum MaxArgs across all overloads.
+    /// </summary>
+    private static (int MinArgs, int MaxArgs, bool IsVarArgs) CalculateArgConstraintsFromOverloads(List<GDMethodData> methods)
+    {
+        if (methods == null || methods.Count == 0)
+            return (0, 0, false);
+
+        int overallMinArgs = int.MaxValue;
+        int overallMaxArgs = int.MinValue;
+        bool anyVarArgs = false;
+
+        foreach (var method in methods)
+        {
+            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
+
+            if (minArgs < overallMinArgs)
+                overallMinArgs = minArgs;
+
+            if (isVarArgs)
+            {
+                anyVarArgs = true;
+            }
+            else if (maxArgs > overallMaxArgs)
+            {
+                overallMaxArgs = maxArgs;
+            }
+        }
+
+        // If any overload is varargs, the function supports unlimited args
+        if (anyVarArgs)
+            return (overallMinArgs, -1, true);
+
+        // Handle edge case where no valid overloads were found
+        if (overallMinArgs == int.MaxValue)
+            overallMinArgs = 0;
+        if (overallMaxArgs == int.MinValue)
+            overallMaxArgs = 0;
+
+        return (overallMinArgs, overallMaxArgs, false);
     }
 
     public GDRuntimeTypeInfo? GetGlobalClass(string className)
@@ -412,6 +617,60 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     }
 
     /// <summary>
+    /// Finds all types that have a specific method defined directly (not inherited).
+    /// Used for duck typing inference to narrow down possible types.
+    /// </summary>
+    /// <param name="methodName">The method name to search for</param>
+    /// <returns>List of type names that have this method</returns>
+    public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+    {
+        if (string.IsNullOrEmpty(methodName))
+            return Array.Empty<string>();
+
+        var result = new List<string>();
+
+        foreach (var kvp in _typeCache)
+        {
+            var typeName = kvp.Key;
+            var typeData = kvp.Value;
+
+            if (typeData.MethodDatas?.ContainsKey(methodName) == true)
+            {
+                result.Add(typeName);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Finds all types that have a specific property defined directly (not inherited).
+    /// Used for duck typing inference to narrow down possible types.
+    /// </summary>
+    /// <param name="propertyName">The property name to search for</param>
+    /// <returns>List of type names that have this property</returns>
+    public IReadOnlyList<string> FindTypesWithProperty(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return Array.Empty<string>();
+
+        var result = new List<string>();
+
+        foreach (var kvp in _typeCache)
+        {
+            var typeName = kvp.Key;
+            var typeData = kvp.Value;
+
+            if (typeData.PropertyDatas?.ContainsKey(propertyName) == true)
+            {
+                result.Add(typeName);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Calculates MinArgs, MaxArgs, and IsVarArgs from parameter information.
     /// </summary>
     private static (int MinArgs, int MaxArgs, bool IsVarArgs) CalculateArgConstraints(GDParameterInfo[]? parameters)
@@ -438,5 +697,21 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         int maxArgs = isVarArgs ? -1 : parameters.Length;
 
         return (minArgs, maxArgs, isVarArgs);
+    }
+
+    /// <summary>
+    /// Creates a list of GDRuntimeParameterInfo from GDParameterInfo array.
+    /// </summary>
+    private static IReadOnlyList<GDRuntimeParameterInfo>? CreateParameterList(GDParameterInfo[]? parameters)
+    {
+        if (parameters == null || parameters.Length == 0)
+            return null;
+
+        return parameters.Select(p => new GDRuntimeParameterInfo(
+            p.CSharpName ?? "arg",
+            p.GDScriptTypeName ?? "Variant",
+            p.HasDefaultValue,
+            p.IsParams
+        )).ToList();
     }
 }

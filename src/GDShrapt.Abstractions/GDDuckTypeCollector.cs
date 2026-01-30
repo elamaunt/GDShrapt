@@ -1,25 +1,64 @@
 using GDShrapt.Reader;
+using System;
 using System.Collections.Generic;
 
 namespace GDShrapt.Abstractions;
 
 /// <summary>
 /// Collects duck type information by analyzing member accesses and method calls.
+/// Filters out universal Object members that exist on all objects.
 /// </summary>
 public class GDDuckTypeCollector : GDVisitor
 {
     private readonly Dictionary<string, GDDuckType> _variableDuckTypes;
     private readonly GDScopeStack? _scopes;
+    private readonly HashSet<string>? _objectMembers;
 
     /// <summary>
     /// Duck types collected for each variable.
     /// </summary>
     public IReadOnlyDictionary<string, GDDuckType> VariableDuckTypes => _variableDuckTypes;
 
-    public GDDuckTypeCollector(GDScopeStack? scopes)
+    /// <summary>
+    /// Creates a new duck type collector.
+    /// </summary>
+    /// <param name="scopes">Scope stack for checking variable types</param>
+    /// <param name="runtimeProvider">Runtime provider for getting Object members to filter</param>
+    public GDDuckTypeCollector(GDScopeStack? scopes, IGDRuntimeProvider? runtimeProvider = null)
     {
         _variableDuckTypes = new Dictionary<string, GDDuckType>();
         _scopes = scopes;
+        _objectMembers = BuildObjectMembersCache(runtimeProvider);
+    }
+
+    /// <summary>
+    /// Builds a cache of all Object class members to filter from duck-typing.
+    /// These are universal methods/properties available on ALL objects.
+    /// </summary>
+    private static HashSet<string>? BuildObjectMembersCache(IGDRuntimeProvider? runtimeProvider)
+    {
+        if (runtimeProvider == null)
+            return null;
+
+        var objectType = runtimeProvider.GetTypeInfo("Object");
+        if (objectType?.Members == null)
+            return null;
+
+        var members = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var member in objectType.Members)
+        {
+            if (!string.IsNullOrEmpty(member.Name))
+                members.Add(member.Name);
+        }
+        return members.Count > 0 ? members : null;
+    }
+
+    /// <summary>
+    /// Checks if a member name is a universal Object member that should be excluded from duck-typing.
+    /// </summary>
+    private bool IsObjectMember(string memberName)
+    {
+        return _objectMembers?.Contains(memberName) ?? false;
     }
 
     /// <summary>
@@ -36,13 +75,17 @@ public class GDDuckTypeCollector : GDVisitor
         if (varName == null)
             return;
 
-        // Check if variable is untyped
+        // Check if variable is untyped (no type or Variant type)
         var symbol = _scopes?.Lookup(varName);
-        if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
-            return; // Already has a known type
+        if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName) && symbol.TypeName != "Variant")
+            return; // Already has a known concrete type
 
         var memberName = memberOp.Identifier?.Sequence;
         if (string.IsNullOrEmpty(memberName))
+            return;
+
+        // Skip Object members - they exist on all objects
+        if (IsObjectMember(memberName))
             return;
 
         EnsureDuckType(varName).RequireProperty(memberName);
@@ -56,13 +99,17 @@ public class GDDuckTypeCollector : GDVisitor
             if (varName == null)
                 return;
 
-            // Check if variable is untyped
+            // Check if variable is untyped (no type or Variant type)
             var symbol = _scopes?.Lookup(varName);
-            if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
-                return;
+            if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName) && symbol.TypeName != "Variant")
+                return; // Already has a known concrete type
 
             var methodName = memberOp.Identifier?.Sequence;
             if (string.IsNullOrEmpty(methodName))
+                return;
+
+            // Skip Object methods - they exist on all objects
+            if (IsObjectMember(methodName))
                 return;
 
             EnsureDuckType(varName).RequireMethod(methodName);

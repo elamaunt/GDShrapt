@@ -48,7 +48,9 @@ namespace GDShrapt.Linter
                 var methodName = method.Identifier?.Sequence ?? "Function";
                 ReportIssue(
                     $"'{methodName}' has nesting depth of {maxFoundDepth} (max {maxDepth})",
-                    deepestToken ?? (GDSyntaxToken)method.Identifier ?? method.FuncKeyword,
+                    // Report on method identifier for consistency with other complexity rules
+                    // This allows # gdlint:ignore on the line before func to work correctly
+                    (GDSyntaxToken)method.Identifier ?? method.FuncKeyword,
                     "Consider extracting nested logic into separate functions");
             }
 

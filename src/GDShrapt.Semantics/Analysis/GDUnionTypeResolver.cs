@@ -37,6 +37,9 @@ internal class GDUnionTypeResolver
         if (unionType.IsSingleType)
         {
             // Single type - standard resolution
+            if (!unionType.Types.Any())
+                return GDReferenceConfidence.NameMatch;
+
             var member = _runtimeProvider.GetMember(unionType.Types.First(), memberName);
             return member != null ? GDReferenceConfidence.Strict : GDReferenceConfidence.NameMatch;
         }
@@ -80,6 +83,9 @@ internal class GDUnionTypeResolver
 
         if (unionType.IsSingleType)
         {
+            if (!unionType.Types.Any())
+                yield break;
+
             var typeInfo = _runtimeProvider.GetTypeInfo(unionType.Types.First());
             if (typeInfo?.Members != null)
             {
@@ -90,6 +96,9 @@ internal class GDUnionTypeResolver
         }
 
         // Get members from first type
+        if (!unionType.Types.Any())
+            yield break;
+
         var firstType = unionType.Types.First();
         var firstTypeInfo = _runtimeProvider.GetTypeInfo(firstType);
         if (firstTypeInfo?.Members == null)
@@ -158,7 +167,11 @@ internal class GDUnionTypeResolver
             return null;
 
         if (unionType.IsSingleType)
+        {
+            if (!unionType.Types.Any())
+                return null;
             return unionType.Types.First();
+        }
 
         return GDUnionTypeHelper.FindCommonBaseType(unionType.Types, _runtimeProvider);
     }

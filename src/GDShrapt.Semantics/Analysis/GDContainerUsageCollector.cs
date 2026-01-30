@@ -43,14 +43,22 @@ internal class GDContainerUsageCollector : GDVisitor
         if (varDecl.Type != null)
             return;
 
+        // Check if initializer is an array or dictionary literal directly
+        var isArrayLiteral = varDecl.Initializer is GDArrayInitializerExpression;
+        var isDictLiteral = varDecl.Initializer is GDDictionaryInitializerExpression;
+
+        // Also check inferred type for cases like [] or {}
         var initType = _typeEngine?.InferType(varDecl.Initializer);
-        if (initType != "Array" && initType != "Dictionary")
+        var isArray = isArrayLiteral || initType == "Array" || initType?.StartsWith("Array[") == true;
+        var isDict = isDictLiteral || initType == "Dictionary" || initType?.StartsWith("Dictionary[") == true;
+
+        if (!isArray && !isDict)
             return;
 
         var token = varDecl.AllTokens.FirstOrDefault();
         var profile = new GDContainerUsageProfile(varName)
         {
-            IsDictionary = initType == "Dictionary",
+            IsDictionary = isDict,
             DeclarationLine = token?.StartLine ?? 0,
             DeclarationColumn = token?.StartColumn ?? 0
         };
@@ -307,7 +315,7 @@ internal class GDContainerUsageCollector : GDVisitor
         // ClassName.new() has high confidence
         if (expr is GDCallExpression call &&
             call.CallerExpression is GDMemberOperatorExpression member &&
-            member.Identifier?.Sequence == "new")
+            member.Identifier?.Sequence == GDTypeInferenceConstants.ConstructorMethodName)
             return true;
 
         // If we got a concrete type, treat as high confidence

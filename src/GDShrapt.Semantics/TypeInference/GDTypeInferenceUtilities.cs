@@ -58,7 +58,7 @@ internal static class GDTypeInferenceUtilities
     /// <summary>
     /// Gets the element type for packed array types.
     /// </summary>
-    public static string GetPackedArrayElementType(string packedArrayType)
+    public static string? GetPackedArrayElementType(string packedArrayType)
     {
         return packedArrayType switch
         {
@@ -73,6 +73,45 @@ internal static class GDTypeInferenceUtilities
             "PackedColorArray" => "Color",
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Gets the element type for a collection type (Array, Dictionary, PackedArrays, etc.).
+    /// Uses structured type parsing instead of string manipulation.
+    /// </summary>
+    /// <param name="collectionType">The collection type name (e.g., "Array[String]", "Dictionary[int, String]", "PackedByteArray").</param>
+    /// <returns>The element type, or "Variant" for untyped collections, or null if not a collection.</returns>
+    public static string? GetCollectionElementType(string? collectionType)
+    {
+        if (string.IsNullOrEmpty(collectionType))
+            return null;
+
+        // Use structured parsing for generic types
+        var typeNode = CreateSimpleType(collectionType);
+        if (typeNode is GDArrayTypeNode arrayNode)
+            return arrayNode.InnerType?.BuildName() ?? "Variant";
+
+        if (typeNode is GDDictionaryTypeNode dictNode)
+            return dictNode.ValueType?.BuildName() ?? "Variant";
+
+        // PackedArrays
+        var packedElement = GetPackedArrayElementType(collectionType);
+        if (packedElement != null)
+            return packedElement;
+
+        // Untyped containers
+        if (collectionType is "Array" or "Dictionary")
+            return "Variant";
+
+        // Range iteration
+        if (collectionType is "int" or "Range")
+            return "int";
+
+        // String iteration returns String (single character)
+        if (collectionType is "String")
+            return "String";
+
+        return null;
     }
 
     /// <summary>

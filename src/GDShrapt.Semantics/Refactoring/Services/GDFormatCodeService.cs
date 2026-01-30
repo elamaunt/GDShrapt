@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// Service for formatting GDScript code.
 /// Wraps GDFormatter as a refactoring service.
 /// </summary>
-public class GDFormatCodeService
+public class GDFormatCodeService : GDRefactoringServiceBase
 {
     private readonly GDFormatter _formatter;
 
@@ -45,7 +45,7 @@ public class GDFormatCodeService
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        return context?.ClassDeclaration != null;
+        return IsContextValid(context);
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class GDFormatCodeService
     /// </summary>
     public bool IsFormatted(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return true;
 
         var originalCode = context.ClassDeclaration.ToString();
@@ -65,7 +65,7 @@ public class GDFormatCodeService
     /// </summary>
     public FormatCheckResult Check(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return FormatCheckResult.AlreadyFormatted(string.Empty);
 
         var originalCode = context.ClassDeclaration.ToString();

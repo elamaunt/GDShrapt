@@ -14,6 +14,7 @@
         void Visit(GDParameterDeclaration d);
         void Visit(GDSignalDeclaration d);
         void Visit(GDVariableDeclaration d);
+        void Visit(GDPassDeclaration d);
 
         void Visit(GDIfBranch b);
         void Visit(GDElseBranch b);
@@ -67,6 +68,7 @@
         void Left(GDEnumValueDeclaration decl);
         void Left(GDMatchCaseDeclaration decl);
         void Left(GDSignalDeclaration decl);
+        void Left(GDPassDeclaration d);
         void Left(GDClassMembersList list);
         void Left(GDDictionaryKeyValueDeclarationList list);
         void Left(GDElifBranchesList list);

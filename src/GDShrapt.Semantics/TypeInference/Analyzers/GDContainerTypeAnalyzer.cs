@@ -133,6 +133,7 @@ internal class GDContainerTypeAnalyzer
 
     /// <summary>
     /// Finds the dictionary initializer expression for a dictionary variable.
+    /// Searches in: scope stack, class members, and local statements (AST walk-up).
     /// </summary>
     public GDDictionaryInitializerExpression FindDictionaryInitializer(GDExpression dictExpr)
     {
@@ -145,7 +146,7 @@ internal class GDContainerTypeAnalyzer
             if (string.IsNullOrEmpty(name))
                 return null;
 
-            // Try scope first
+            // Try scope first (for class-level variables)
             if (_scopes != null)
             {
                 var symbol = _scopes.Lookup(name);
@@ -175,9 +176,74 @@ internal class GDContainerTypeAnalyzer
                     }
                 }
             }
+
+            // Try local statements by walking up AST to find variable declaration
+            // This handles local variables like: var results = {"key": []}
+            var localInit = FindLocalVariableInitializer(identExpr, name);
+            if (localInit is GDDictionaryInitializerExpression dictLocalInit)
+                return dictLocalInit;
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Finds a local variable declaration by walking up the AST from the usage site.
+    /// Returns the initializer expression if found.
+    /// </summary>
+    internal static GDExpression? FindLocalVariableInitializer(GDNode usageSite, string variableName)
+    {
+        // Walk up to find the containing statements list
+        var current = usageSite.Parent;
+        while (current != null)
+        {
+            // Check if we're in a statements list (method body, if body, etc.)
+            if (current is GDStatementsList statementsList)
+            {
+                // Search all statements for the variable declaration
+                // GDStatementsList implements IList<GDStatement>, iterate directly
+                foreach (var statement in statementsList)
+                {
+                    if (statement is GDVariableDeclarationStatement varStmt &&
+                        varStmt.Identifier?.Sequence == variableName)
+                    {
+                        return varStmt.Initializer;
+                    }
+
+                    // Stop searching when we reach the usage site (don't look at declarations after usage)
+                    if (ContainsNode(statement, usageSite))
+                        break;
+                }
+            }
+
+            // Also check for patterns in for loops: for x in array
+            if (current is GDForStatement forStmt &&
+                forStmt.Variable?.Sequence == variableName)
+            {
+                return forStmt.Collection;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if a node contains another node in its subtree.
+    /// </summary>
+    private static bool ContainsNode(GDNode container, GDNode target)
+    {
+        if (container == target)
+            return true;
+
+        foreach (var node in container.AllNodes)
+        {
+            if (node == target)
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

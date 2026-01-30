@@ -261,8 +261,61 @@ namespace GDShrapt.Reader
                 GDRuntimeMemberInfo.Method("make_read_only", "void", 0, 0),
             });
 
-            AddType("Callable", null, true);
-            AddType("Signal", null, true);
+            // Callable type with methods
+            AddTypeWithMembers("Callable", null, true, new[]
+            {
+                // Call methods
+                GDRuntimeMemberInfo.Method("call", "Variant", 0, int.MaxValue, true), // varargs
+                GDRuntimeMemberInfo.Method("callv", "Variant", 1, 1),
+                GDRuntimeMemberInfo.Method("call_deferred", "void", 0, int.MaxValue, true), // varargs
+
+                // Binding
+                GDRuntimeMemberInfo.Method("bind", "Callable", 0, int.MaxValue, true), // varargs
+                GDRuntimeMemberInfo.Method("bindv", "Callable", 1, 1),
+                GDRuntimeMemberInfo.Method("unbind", "Callable", 1, 1),
+                GDRuntimeMemberInfo.Method("get_bound_arguments", "Array", 0, 0),
+                GDRuntimeMemberInfo.Method("get_bound_arguments_count", "int", 0, 0),
+
+                // Validation
+                GDRuntimeMemberInfo.Method("is_valid", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_null", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_standard", "bool", 0, 0),
+                GDRuntimeMemberInfo.Method("is_custom", "bool", 0, 0),
+
+                // Information
+                GDRuntimeMemberInfo.Method("get_method", "StringName", 0, 0),
+                GDRuntimeMemberInfo.Method("get_object", "Object", 0, 0),
+                GDRuntimeMemberInfo.Method("get_object_id", "int", 0, 0),
+                GDRuntimeMemberInfo.Method("get_argument_count", "int", 0, 0),
+
+                // Hashing
+                GDRuntimeMemberInfo.Method("hash", "int", 0, 0),
+
+                // RPC
+                GDRuntimeMemberInfo.Method("rpc", "void", 0, int.MaxValue, true), // varargs
+                GDRuntimeMemberInfo.Method("rpc_id", "void", 1, int.MaxValue, true), // varargs
+            });
+
+            // Signal type with methods
+            AddTypeWithMembers("Signal", null, true, new[]
+            {
+                // Connection
+                GDRuntimeMemberInfo.Method("connect", "int", 1, 2),
+                GDRuntimeMemberInfo.Method("disconnect", "void", 1, 1),
+                GDRuntimeMemberInfo.Method("is_connected", "bool", 1, 1),
+                GDRuntimeMemberInfo.Method("get_connections", "Array", 0, 0),
+
+                // Emission
+                GDRuntimeMemberInfo.Method("emit", "void", 0, int.MaxValue, true), // varargs
+
+                // Information
+                GDRuntimeMemberInfo.Method("get_name", "StringName", 0, 0),
+                GDRuntimeMemberInfo.Method("get_object", "Object", 0, 0),
+                GDRuntimeMemberInfo.Method("get_object_id", "int", 0, 0),
+
+                // Validation
+                GDRuntimeMemberInfo.Method("is_null", "bool", 0, 0),
+            });
 
             // Vector types
             AddType("Vector2", null, true);

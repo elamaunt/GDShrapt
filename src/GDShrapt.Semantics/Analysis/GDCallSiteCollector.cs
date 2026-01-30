@@ -99,7 +99,6 @@ internal class GDCallSiteCollector
                 continue;
             visited.Add(key);
 
-            // Check if this type has the method
             if (_runtimeProvider != null)
             {
                 var member = _runtimeProvider.GetMember(typeName, methodName);
@@ -209,7 +208,6 @@ internal class GDCallSiteCollector
         /// </summary>
         private GDCallSiteInfo? TryCreateDynamicCallSiteInfo(GDCallExpression callExpr)
         {
-            // Check if this is obj.call("method", args...) or obj.callv("method", args)
             if (callExpr.CallerExpression is not GDMemberOperatorExpression memberExpr)
                 return null;
 
@@ -254,7 +252,7 @@ internal class GDCallSiteCollector
             if (methodName == "callv")
                 return null;
 
-            // Collect arguments (skip the first argument which is the method name)
+            // Skip first argument (method name string)
             var methodArgs = new List<GDArgumentInfo>();
             for (int i = 1; i < args.Count; i++)
             {
@@ -299,7 +297,6 @@ internal class GDCallSiteCollector
 
         private GDCallSiteInfo? TryCreateCallSiteInfo(GDCallExpression callExpr)
         {
-            // Get the method name from the call expression
             string? methodName = null;
             GDExpression? receiverExpr = null;
 
@@ -349,12 +346,14 @@ internal class GDCallSiteCollector
 
                 if (!string.IsNullOrEmpty(receiverType) && receiverType != "Variant")
                 {
-                    // Check if it's a Union type string
                     if (receiverType.Contains("|"))
                     {
                         unionReceiverType = receiverType;
                         // For Union types, check if ANY type in the union is compatible
-                        var types = receiverType.Split('|').Select(t => t.Trim()).ToList();
+                        var types = receiverType.Split('|').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList();
+                        if (types.Count == 0)
+                            return null;
+
                         var hasMatch = types.Any(t => IsTypeCompatible(t, _targetTypeName));
                         if (hasMatch)
                         {
@@ -386,10 +385,8 @@ internal class GDCallSiteCollector
                 }
             }
 
-            // Collect argument information
             var arguments = CollectArguments(callExpr);
 
-            // Create appropriate call site info
             if (isDuckTyped && receiverVariableName != null)
             {
                 return GDCallSiteInfo.CreateDuckTyped(

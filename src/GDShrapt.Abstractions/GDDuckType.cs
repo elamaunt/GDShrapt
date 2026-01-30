@@ -37,6 +37,21 @@ public class GDDuckType
     public HashSet<string> ExcludedTypes { get; } = new HashSet<string>();
 
     /// <summary>
+    /// Whether this type has been validated (e.g., via is_valid() for Callable).
+    /// </summary>
+    public bool IsValidated { get; set; }
+
+    /// <summary>
+    /// Whether this type may be null (for nullable type tracking).
+    /// </summary>
+    public bool MayBeNull { get; set; } = true;
+
+    /// <summary>
+    /// The concrete type, if known exactly.
+    /// </summary>
+    public string? ConcreteType { get; set; }
+
+    /// <summary>
     /// Adds a method requirement.
     /// </summary>
     public void RequireMethod(string name, int paramCount = -1)

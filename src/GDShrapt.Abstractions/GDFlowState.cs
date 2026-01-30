@@ -110,9 +110,19 @@ public class GDFlowState
         var flowType = new GDFlowVariableType { DeclaredType = declaredType };
 
         if (!string.IsNullOrEmpty(initType) && initType != "Variant")
+        {
             flowType.CurrentType.AddType(initType);
+            // If initialized with a non-null value, mark as not potentially null
+            if (initType != "null")
+                flowType.IsPotentiallyNull = false;
+        }
         else if (!string.IsNullOrEmpty(declaredType) && declaredType != "Variant")
+        {
             flowType.CurrentType.AddType(declaredType);
+            // Typed parameters/variables in GDScript are not null by default
+            // (they receive default value for their type, not null)
+            flowType.IsPotentiallyNull = false;
+        }
 
         _variables[name] = flowType;
     }
@@ -143,6 +153,45 @@ public class GDFlowState
         var narrowed = existing.Clone();
         narrowed.IsNarrowed = true;
         narrowed.NarrowedFromType = toType;
+        _variables[name] = narrowed;
+    }
+
+    /// <summary>
+    /// Applies type narrowing by intersection with a union type.
+    /// Used when a variable already has a union type and needs to be narrowed to types compatible
+    /// with a target (e.g., 'x in container' where container has known element type).
+    /// </summary>
+    /// <param name="name">Variable name</param>
+    /// <param name="intersection">The computed intersection union type</param>
+    public void NarrowToIntersection(string name, GDUnionType intersection)
+    {
+        if (string.IsNullOrEmpty(name) || intersection == null)
+            return;
+
+        var existing = GetVariableType(name);
+        if (existing == null)
+        {
+            // Variable not known - create with intersection type
+            var newType = new GDFlowVariableType
+            {
+                IsNarrowed = true,
+                NarrowedFromType = intersection.EffectiveType
+            };
+            foreach (var t in intersection.Types)
+                newType.CurrentType.AddType(t);
+            _variables[name] = newType;
+            return;
+        }
+
+        var narrowed = existing.Clone();
+        narrowed.IsNarrowed = true;
+        narrowed.NarrowedFromType = intersection.EffectiveType;
+
+        // Replace current type with intersection
+        narrowed.CurrentType = new GDUnionType { AllHighConfidence = intersection.AllHighConfidence };
+        foreach (var t in intersection.Types)
+            narrowed.CurrentType.AddType(t);
+
         _variables[name] = narrowed;
     }
 
@@ -243,6 +292,15 @@ public class GDFlowState
     }
 
     /// <summary>
+    /// Creates a full clone of this state (flattening parent chain).
+    /// Used for recording state snapshots at specific program points.
+    /// </summary>
+    public GDFlowState Clone()
+    {
+        return CloneState(this, null);
+    }
+
+    /// <summary>
     /// Creates a clone of a state with a new parent.
     /// </summary>
     private static GDFlowState CloneState(GDFlowState source, GDFlowState? newParent)
@@ -292,7 +350,11 @@ public class GDFlowState
         {
             DeclaredType = a.DeclaredType ?? b.DeclaredType,
             IsNarrowed = false,
-            NarrowedFromType = null
+            NarrowedFromType = null,
+            // Nullable: only guaranteed non-null if BOTH branches guarantee it
+            IsGuaranteedNonNull = a.IsGuaranteedNonNull && b.IsGuaranteedNonNull,
+            // Nullable: potentially null if EITHER branch is potentially null
+            IsPotentiallyNull = a.IsPotentiallyNull || b.IsPotentiallyNull
         };
 
         // Merge current types into Union
@@ -305,6 +367,46 @@ public class GDFlowState
         if (b.IsNarrowed && !string.IsNullOrEmpty(b.NarrowedFromType))
             merged.CurrentType.AddType(b.NarrowedFromType);
 
+        // Merge duck-type constraints (intersection: only keep what BOTH branches have)
+        if (a.DuckType != null && b.DuckType != null)
+        {
+            merged.DuckType = new GDDuckType();
+
+            // Methods must be present in BOTH branches
+            foreach (var kv in a.DuckType.RequiredMethods)
+            {
+                if (b.DuckType.RequiredMethods.ContainsKey(kv.Key))
+                    merged.DuckType.RequiredMethods[kv.Key] = kv.Value;
+            }
+
+            // Properties must be present in BOTH branches
+            foreach (var kv in a.DuckType.RequiredProperties)
+            {
+                if (b.DuckType.RequiredProperties.ContainsKey(kv.Key))
+                    merged.DuckType.RequiredProperties[kv.Key] = kv.Value;
+            }
+
+            // Signals must be present in BOTH branches
+            foreach (var s in a.DuckType.RequiredSignals)
+            {
+                if (b.DuckType.RequiredSignals.Contains(s))
+                    merged.DuckType.RequiredSignals.Add(s);
+            }
+
+            // Possible types: union (could be either)
+            foreach (var t in a.DuckType.PossibleTypes)
+                merged.DuckType.PossibleTypes.Add(t);
+            foreach (var t in b.DuckType.PossibleTypes)
+                merged.DuckType.PossibleTypes.Add(t);
+
+            // Excluded types: intersection (only exclude if both exclude)
+            foreach (var t in a.DuckType.ExcludedTypes)
+            {
+                if (b.DuckType.ExcludedTypes.Contains(t))
+                    merged.DuckType.ExcludedTypes.Add(t);
+            }
+        }
+
         return merged;
     }
 
@@ -314,6 +416,205 @@ public class GDFlowState
         var parentInfo = _parent != null ? " (has parent)" : "";
         return $"FlowState[{vars}]{parentInfo}";
     }
+
+    #region Nullable Analysis
+
+    /// <summary>
+    /// Marks a variable as guaranteed non-null at this program point.
+    /// Called after null checks (x != null) or truthiness checks (if x:).
+    /// </summary>
+    public void MarkNonNull(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return;
+
+        var existing = GetVariableType(name);
+        if (existing == null)
+        {
+            var newType = new GDFlowVariableType
+            {
+                IsGuaranteedNonNull = true,
+                IsPotentiallyNull = false
+            };
+            _variables[name] = newType;
+            return;
+        }
+
+        var updated = existing.Clone();
+        updated.IsGuaranteedNonNull = true;
+        updated.IsPotentiallyNull = false;
+        _variables[name] = updated;
+    }
+
+    /// <summary>
+    /// Marks a variable as potentially null (for else branches after null checks).
+    /// </summary>
+    public void MarkPotentiallyNull(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return;
+
+        var existing = GetVariableType(name);
+        if (existing == null)
+        {
+            var newType = new GDFlowVariableType
+            {
+                IsGuaranteedNonNull = false,
+                IsPotentiallyNull = true
+            };
+            _variables[name] = newType;
+            return;
+        }
+
+        var updated = existing.Clone();
+        updated.IsGuaranteedNonNull = false;
+        updated.IsPotentiallyNull = true;
+        _variables[name] = updated;
+    }
+
+    /// <summary>
+    /// Checks if a variable is potentially null at this program point.
+    /// </summary>
+    public bool IsVariablePotentiallyNull(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return true;
+
+        var varType = GetVariableType(name);
+        if (varType == null)
+            return true;
+
+        if (varType.IsGuaranteedNonNull)
+            return false;
+
+        if (IsNeverNullType(varType.DeclaredType))
+            return false;
+
+        if (IsNeverNullType(varType.EffectiveType))
+            return false;
+
+        return varType.IsPotentiallyNull;
+    }
+
+    /// <summary>
+    /// Returns true for types that can never be null (value types).
+    /// </summary>
+    private static bool IsNeverNullType(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        return typeName is "int" or "float" or "bool" or "String" or "StringName"
+            or "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i"
+            or "Color" or "Rect2" or "Rect2i" or "Transform2D" or "Transform3D"
+            or "Basis" or "Quaternion" or "Plane" or "AABB" or "Projection"
+            or "RID" or "Callable" or "Signal";
+    }
+
+    #endregion
+
+    #region Duck Type Constraints
+
+    /// <summary>
+    /// Gets or creates a variable type for the given name.
+    /// </summary>
+    private GDFlowVariableType GetOrEnsureVariableType(string name)
+    {
+        var existing = GetVariableType(name);
+        if (existing != null)
+        {
+            if (_variables.ContainsKey(name))
+                return existing;
+
+            var clone = existing.Clone();
+            _variables[name] = clone;
+            return clone;
+        }
+
+        var newType = new GDFlowVariableType();
+        _variables[name] = newType;
+        return newType;
+    }
+
+    /// <summary>
+    /// Records that a variable must have a specific method (from has_method check).
+    /// Delegates to GDDuckType.
+    /// </summary>
+    public void RequireMethod(string name, string methodName)
+    {
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(methodName))
+            return;
+
+        var varType = GetOrEnsureVariableType(name);
+        varType.DuckType ??= new GDDuckType();
+        varType.DuckType.RequireMethod(methodName);
+    }
+
+    /// <summary>
+    /// Records that a variable must have a specific property (from has check or property access).
+    /// Delegates to GDDuckType.
+    /// </summary>
+    public void RequireProperty(string name, string propertyName)
+    {
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(propertyName))
+            return;
+
+        var varType = GetOrEnsureVariableType(name);
+        varType.DuckType ??= new GDDuckType();
+        varType.DuckType.RequireProperty(propertyName);
+    }
+
+    /// <summary>
+    /// Records that a variable must have a specific signal (from has_signal check).
+    /// Delegates to GDDuckType.
+    /// </summary>
+    public void RequireSignal(string name, string signalName)
+    {
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(signalName))
+            return;
+
+        var varType = GetOrEnsureVariableType(name);
+        varType.DuckType ??= new GDDuckType();
+        varType.DuckType.RequireSignal(signalName);
+    }
+
+    /// <summary>
+    /// Checks if the variable has the specified method requirement from duck typing.
+    /// </summary>
+    public bool HasMethodRequirement(string name, string methodName)
+    {
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(methodName))
+            return false;
+
+        var varType = GetVariableType(name);
+        return varType?.DuckType?.RequiredMethods.ContainsKey(methodName) == true;
+    }
+
+    /// <summary>
+    /// Checks if the variable has the specified property requirement from duck typing.
+    /// </summary>
+    public bool HasPropertyRequirement(string name, string propertyName)
+    {
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(propertyName))
+            return false;
+
+        var varType = GetVariableType(name);
+        return varType?.DuckType?.RequiredProperties.ContainsKey(propertyName) == true;
+    }
+
+    /// <summary>
+    /// Checks if the variable has the specified signal requirement from duck typing.
+    /// </summary>
+    public bool HasSignalRequirement(string name, string signalName)
+    {
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(signalName))
+            return false;
+
+        var varType = GetVariableType(name);
+        return varType?.DuckType?.RequiredSignals.Contains(signalName) == true;
+    }
+
+    #endregion
 
     #region Fixed-Point Iteration Support
 

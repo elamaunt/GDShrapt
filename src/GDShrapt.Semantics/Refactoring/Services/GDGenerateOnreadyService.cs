@@ -7,14 +7,14 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for generating @onready variables from get_node() calls or $NodePath expressions.
 /// </summary>
-public class GDGenerateOnreadyService
+public class GDGenerateOnreadyService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the generate @onready refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Must be on a get_node() call or $NodePath expression
@@ -104,7 +104,7 @@ public class GDGenerateOnreadyService
     /// </summary>
     public GDRefactoringResult ConvertToOnready(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return GDRefactoringResult.Failed("Invalid context");
 
         // Find variable declaration at cursor

@@ -5,7 +5,7 @@
     {
         public new ITokenOrSkipReceiver<TOKEN> Owner { get; }
 
-        static TOKEN _token = new TOKEN();
+        static readonly TOKEN _token = new TOKEN();
 
         public override string Sequence => _token.Sequence;
 

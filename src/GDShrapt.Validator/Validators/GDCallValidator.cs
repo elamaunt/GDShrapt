@@ -7,14 +7,34 @@ namespace GDShrapt.Reader
     /// <summary>
     /// Validates function calls in GDScript.
     /// Uses function signatures collected by GDDeclarationCollector.
+    /// Optionally validates argument types when ArgumentTypeAnalyzer is provided.
     /// </summary>
     public class GDCallValidator : GDValidationVisitor
     {
         private readonly bool _checkResourcePaths;
+        private readonly IGDArgumentTypeAnalyzer? _argumentTypeAnalyzer;
+        private readonly bool _checkArgumentTypes;
+        private readonly GDDiagnosticSeverity _argumentTypeSeverity;
 
         public GDCallValidator(GDValidationContext context, bool checkResourcePaths = true) : base(context)
         {
             _checkResourcePaths = checkResourcePaths;
+            _argumentTypeAnalyzer = null;
+            _checkArgumentTypes = false;
+            _argumentTypeSeverity = GDDiagnosticSeverity.Warning;
+        }
+
+        public GDCallValidator(
+            GDValidationContext context,
+            bool checkResourcePaths,
+            IGDArgumentTypeAnalyzer? argumentTypeAnalyzer,
+            bool checkArgumentTypes,
+            GDDiagnosticSeverity argumentTypeSeverity) : base(context)
+        {
+            _checkResourcePaths = checkResourcePaths;
+            _argumentTypeAnalyzer = argumentTypeAnalyzer;
+            _checkArgumentTypes = checkArgumentTypes && argumentTypeAnalyzer != null;
+            _argumentTypeSeverity = argumentTypeSeverity;
         }
 
         public void Validate(GDNode node)
@@ -76,6 +96,61 @@ namespace GDShrapt.Reader
                     }
                 }
             }
+
+            // Validate argument types if enabled
+            if (_checkArgumentTypes && _argumentTypeAnalyzer != null)
+            {
+                ValidateArgumentTypes(callExpression);
+            }
+        }
+
+        /// <summary>
+        /// Validates argument types for a call expression using the semantic analyzer.
+        /// </summary>
+        private void ValidateArgumentTypes(GDCallExpression callExpression)
+        {
+            if (_argumentTypeAnalyzer == null)
+                return;
+
+            var diffs = _argumentTypeAnalyzer.GetAllArgumentTypeDiffs(callExpression);
+
+            foreach (var diff in diffs)
+            {
+                // Skip if should be skipped (Variant without constraints)
+                if (diff.ShouldSkip)
+                    continue;
+
+                // Skip if compatible
+                if (diff.IsCompatible)
+                    continue;
+
+                // Report the mismatch with detailed message
+                ReportArgumentTypeMismatch(callExpression, diff);
+            }
+        }
+
+        /// <summary>
+        /// Reports an argument type mismatch diagnostic.
+        /// </summary>
+        private void ReportArgumentTypeMismatch(GDCallExpression callExpression, GDArgumentTypeDiff diff)
+        {
+            // Use short message for inline display, detailed message for extended info
+            var shortMessage = diff.FormatShortMessage();
+            var detailedMessage = diff.FormatDetailedMessage();
+
+            // Choose the appropriate severity
+            switch (_argumentTypeSeverity)
+            {
+                case GDDiagnosticSeverity.Error:
+                    ReportError(GDDiagnosticCode.ArgumentTypeMismatch, shortMessage, callExpression);
+                    break;
+                case GDDiagnosticSeverity.Warning:
+                    ReportWarning(GDDiagnosticCode.ArgumentTypeMismatch, shortMessage, callExpression);
+                    break;
+                case GDDiagnosticSeverity.Hint:
+                    ReportHint(GDDiagnosticCode.ArgumentTypeMismatch, shortMessage, callExpression);
+                    break;
+            }
         }
 
         private void ValidateUserFunctionCall(string name, int argCount, GDCallExpression call)
@@ -136,6 +211,13 @@ namespace GDShrapt.Reader
             if (methodName == "new")
                 return;
 
+            // Skip lowercase identifiers - they are most likely variables, not type names.
+            // In GDScript, types and global classes use PascalCase (e.g., Array, Input, Node2D).
+            // Without semantic analysis, we cannot distinguish "array.is_empty()" (variable)
+            // from "Array.new()" (type). This heuristic avoids false positives.
+            if (!string.IsNullOrEmpty(typeName) && char.IsLower(typeName[0]))
+                return;
+
             // First check if it's a global class/singleton
             var globalClass = Context.RuntimeProvider.GetGlobalClass(typeName);
             if (globalClass != null)
@@ -178,40 +260,12 @@ namespace GDShrapt.Reader
                         call);
                 }
             }
-            // Also check if it's a known type (for static methods)
-            else if (Context.RuntimeProvider.IsKnownType(typeName))
-            {
-                // Get member info from the type, including inheritance chain
-                var memberInfo = FindMemberWithInheritance(typeName, methodName);
-                if (memberInfo == null)
-                {
-                    // Method not found on known type - report warning
-                    // Using warning since type hierarchy may be incomplete
-                    ReportWarning(
-                        GDDiagnosticCode.MethodNotFound,
-                        $"Method '{methodName}' not found on type '{typeName}'",
-                        call);
-                    return;
-                }
-
-                if (memberInfo.Kind == GDRuntimeMemberKind.Method)
-                {
-                    if (argCount < memberInfo.MinArgs)
-                    {
-                        ReportError(
-                            GDDiagnosticCode.WrongArgumentCount,
-                            $"'{typeName}.{methodName}' requires at least {memberInfo.MinArgs} argument(s), got {argCount}",
-                            call);
-                    }
-                    else if (!memberInfo.IsVarArgs && memberInfo.MaxArgs >= 0 && argCount > memberInfo.MaxArgs)
-                    {
-                        ReportError(
-                            GDDiagnosticCode.WrongArgumentCount,
-                            $"'{typeName}.{methodName}' takes at most {memberInfo.MaxArgs} argument(s), got {argCount}",
-                            call);
-                    }
-                }
-            }
+            // NOTE: We intentionally do NOT validate IsKnownType() here.
+            // GDCallValidator is a syntactic validator without access to semantic model.
+            // It cannot determine if an identifier is a variable name or a type name.
+            // Instance method validation (e.g., array.is_empty()) is handled by
+            // GDMemberAccessValidator in GDShrapt.Semantics.Validator, which has
+            // proper type inference via IGDMemberAccessAnalyzer.
         }
 
         /// <summary>

@@ -7,14 +7,14 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for inverting conditions in if/elif/while statements using De Morgan's laws.
 /// </summary>
-public class GDInvertConditionService
+public class GDInvertConditionService : GDRefactoringServiceBase
 {
     /// <summary>
     /// Checks if the invert condition refactoring can be executed at the given context.
     /// </summary>
     public bool CanExecute(GDRefactoringContext context)
     {
-        if (context?.ClassDeclaration == null)
+        if (!IsContextValid(context))
             return false;
 
         // Available when cursor is on if, elif, or while statement

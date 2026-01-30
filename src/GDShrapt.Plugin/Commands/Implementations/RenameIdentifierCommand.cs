@@ -43,10 +43,27 @@ internal class RenameIdentifierCommand : Command
             return;
         }
 
-        // Use GDPositionFinder for optimized identifier lookup (TryGetTokenByPosition with early exit)
+        // Use GDPositionFinder for optimized token lookup (TryGetTokenByPosition with early exit)
         var finder = new GDPositionFinder(@class);
-        var identifier = finder.FindIdentifierAtPosition(line, column);
+        var token = finder.FindTokenAtPosition(line, column);
 
+        // Handle GDPathSpecifier for NodePath ($Player, $Root/Child)
+        if (token is GDPathSpecifier pathSpec && pathSpec.Type == GDPathSpecifierType.Identifier)
+        {
+            var parentPathList = GDPositionFinder.FindParent<GDPathList>(token);
+            if (parentPathList != null)
+            {
+                if (await RenamePathListNodeFromSpecifier(controller, parentPathList, pathSpec))
+                {
+                    controller.Text = @class.ToString();
+                    return;
+                }
+            }
+            Logger.Info("Renaming cancelled: could not find PathList for PathSpecifier");
+            return;
+        }
+
+        var identifier = token as GDIdentifier;
         if (identifier == null)
         {
             Logger.Info("Renaming cancelled: no identifier");
@@ -262,6 +279,113 @@ internal class RenameIdentifierCommand : Command
 
         // Apply changes using Semantics service
         var renameResult = _renamer.ApplyRename(parameters.SelectedReferences, nodeName, newName);
+
+        if (!renameResult.Success)
+        {
+            Logger.Error($"Node rename failed: {renameResult.ErrorMessage}");
+            return false;
+        }
+
+        // Clear scene cache to reload updated scenes
+        Map.SceneTypesProvider?.ClearCache();
+
+        Logger.Info($"Node path renamed from '{nodeName}' to '{newName}'");
+        return true;
+    }
+
+    private async Task<bool> RenamePathListNodeFromSpecifier(
+        IScriptEditor scriptEditor,
+        GDPathList pathList,
+        GDPathSpecifier pathSpecifier)
+    {
+        Logger.Info("Renaming Path List Node from PathSpecifier");
+
+        if (pathSpecifier.Type != GDPathSpecifierType.Identifier)
+        {
+            Logger.Info("Cannot rename . or .. path specifiers");
+            return false;
+        }
+
+        var nodeName = pathSpecifier.IdentifierValue;
+        Logger.Info($"Renaming node path: {nodeName}");
+
+        // Initialize reference finder if needed
+        if (_referenceFinder == null)
+        {
+            _referenceFinder = new GDNodePathReferenceFinder(Map);
+        }
+
+        // Get the current script
+        var ScriptFile = scriptEditor?.ScriptFile;
+        if (ScriptFile == null)
+        {
+            Logger.Info("Current script not found");
+            return false;
+        }
+
+        // Find scenes that use this script
+        var scenes = _referenceFinder.GetScenesForScript(ScriptFile).ToList();
+
+        // Collect all references
+        var allReferences = new List<GDNodePathReference>();
+
+        // Add GDScript references
+        allReferences.AddRange(_referenceFinder.FindGDScriptReferences(nodeName));
+
+        // Add scene references for each scene
+        foreach (var scenePath in scenes)
+        {
+            allReferences.AddRange(_referenceFinder.FindSceneReferences(scenePath, nodeName));
+        }
+
+        if (allReferences.Count == 0)
+        {
+            Logger.Info("No references found for this node path");
+            // Just rename the local reference
+            var parameters = await AskParametersAndPrepareIdentifier(nodeName);
+            if (parameters == null)
+                return false;
+            pathSpecifier.IdentifierValue = parameters.NewName;
+            return true;
+        }
+
+        // Show dialog
+        if (_nodeRenamingDialog == null)
+        {
+            Editor.AddChild(_nodeRenamingDialog = new NodeRenamingDialog());
+        }
+
+        // Set warning if script is used in multiple scenes
+        if (scenes.Count > 1)
+        {
+            _nodeRenamingDialog.SetWarning($"Note: This script is used in {scenes.Count} scenes.");
+        }
+        else if (scenes.Count == 0)
+        {
+            _nodeRenamingDialog.SetWarning("Note: Could not find scene for this script. Only GDScript references will be renamed.");
+        }
+        else
+        {
+            _nodeRenamingDialog.SetWarning(null);
+        }
+
+        var dialogParams = await _nodeRenamingDialog.ShowForResult(nodeName, allReferences);
+        if (dialogParams == null || string.IsNullOrWhiteSpace(dialogParams.NewName))
+        {
+            Logger.Info("Node renaming cancelled");
+            return false;
+        }
+
+        var newName = InternalMethods.PrepareIdentifier(dialogParams.NewName, "");
+
+        // Initialize renamer if needed
+        if (_renamer == null)
+        {
+            _renamer = new GDNodePathRenamer(Map);
+        }
+
+        // Apply changes using Semantics service
+        var renameResult = _renamer.ApplyRename(dialogParams.SelectedReferences, nodeName, newName);
 
         if (!renameResult.Success)
         {

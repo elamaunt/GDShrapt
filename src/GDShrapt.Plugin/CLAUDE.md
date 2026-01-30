@@ -68,6 +68,55 @@ Godot Editor integration plugin. Production-ready (~95% complete).
 - Severity levels: Error, Warning, Hint, Info
 - Inline markers, gutter annotations, notification panel
 
+### Coordinate System
+
+| Component | Line | Column | Notes |
+|-----------|------|--------|-------|
+| AST (Parser) | 0-based | 0-based | Internal representation |
+| GDDiagnostic (Validator) | **1-based** | **0-based** | Validator output |
+| GDLintIssue (Linter) | **1-based** | **0-based** | Linter output |
+| GDUnifiedDiagnostic (Semantics) | **1-based** | **0-based** | Unified diagnostic format |
+| GDPluginDiagnostic | **0-based** | **0-based** | Plugin internal (after adapter) |
+| Godot CodeEdit API | **0-based** | **0-based** | SetLineBackgroundColor, etc. |
+| Godot EditScript API | **1-based** | **0-based** | EditorInterface.EditScript() |
+
+### Diagnostic Flow
+
+```
+GDDiagnosticsService (Semantics)
+    ↓ GDUnifiedDiagnostic (Line 1-based, Column 0-based)
+GDPluginDiagnosticAdapter.Convert()
+    ↓ Line -1 (convert to 0-based), Column unchanged
+GDPluginDiagnostic (Line 0-based, Column 0-based)
+    ↓
+ProblemsDock.CreateDiagnosticRow()
+    ↓ Display: Line +1 (show 1-based to user)
+    ↓ Metadata: stores 0-based Line for navigation
+UI shows: "Line N" (1-based, human-readable)
+    ↓
+ProblemsDock.OnItemActivated()
+    ↓ NavigateToItem(line + 1) → passes 1-based line
+GDShraptPlugin.OnNavigateToReference()
+    ↓ EditScript(line, column) → line is already 1-based
+Godot navigates to correct line
+```
+
+### Key Files
+
+| File | Responsibility |
+|------|----------------|
+| `GDPluginDiagnosticAdapter.cs` | Converts Semantics → Plugin coordinates |
+| `GDPluginDiagnostic.cs` | Plugin diagnostic model (0-based) |
+| `ProblemsDock.cs` | UI display (+1 for user) and navigation |
+| `GDShraptPlugin.cs` | EditScript navigation (expects 1-based) |
+
+## Known Limitations
+
+1. **Coordinate Systems** - Mixed 0-based/1-based across components (see table above)
+2. **Background Analysis** - May lag on large projects (priority queue helps)
+3. **Scene Sync** - Node renames only, not path refactoring
+4. **TypeFlow** - Single method visualization only
+
 ## Other Features
 
 - **Scene file watching**: Auto-detects node renames, syncs to GDScript
