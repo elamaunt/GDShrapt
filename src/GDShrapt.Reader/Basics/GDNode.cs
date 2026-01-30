@@ -147,10 +147,32 @@ namespace GDShrapt.Reader
                 token.AppendTo(builder);
         }
 
+        /// <summary>
+        /// Appends node content to builder with option to include ignored characters.
+        /// </summary>
+        /// <param name="builder">The StringBuilder to append to.</param>
+        /// <param name="includeIgnored">If true, includes ignored characters like \r.</param>
+        public override void AppendTo(StringBuilder builder, bool includeIgnored)
+        {
+            foreach (var token in Form)
+                token.AppendTo(builder, includeIgnored);
+        }
+
         public sealed override string ToString()
         {
             var builder = new StringBuilder();
             AppendTo(builder);
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Returns the original text with ignored characters (like \r) preserved.
+        /// Use this for text-based coordinate calculations.
+        /// </summary>
+        public string ToOriginalString()
+        {
+            var builder = new StringBuilder();
+            AppendTo(builder, includeIgnored: true);
             return builder.ToString();
         }
 
@@ -176,6 +198,11 @@ namespace GDShrapt.Reader
         }
 
         public override int Length => Tokens.Sum(x => x.Length);
+
+        /// <summary>
+        /// The length including ignored characters like \r.
+        /// </summary>
+        public override int OriginLength => Tokens.Sum(x => x.OriginLength);
 
         public override int NewLinesCount => Tokens.Sum(x => x.NewLinesCount);
 

@@ -90,6 +90,16 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
+        /// Adds token string representation to <see cref="StringBuilder"/> instance.
+        /// </summary>
+        /// <param name="builder">The StringBuilder to append to.</param>
+        /// <param name="includeIgnored">If true, includes ignored characters like \r; otherwise omits them.</param>
+        public virtual void AppendTo(StringBuilder builder, bool includeIgnored)
+        {
+            AppendTo(builder);
+        }
+
+        /// <summary>
         /// Creates deep clone of the current token and it's children.
         /// </summary>
         /// <returns>New token with all children (if node)</returns>
@@ -189,8 +199,15 @@ namespace GDShrapt.Reader
 
         /// <summary>
         /// The length of the code (represented by the token and its children) in characters. Calculating property.
+        /// This excludes ignored characters like \r for Godot compatibility.
         /// </summary>
         public abstract int Length { get; }
+
+        /// <summary>
+        /// The length including ignored characters like \r.
+        /// Used for text-based coordinate calculations.
+        /// </summary>
+        public virtual int OriginLength => Length;
 
         /// <summary>
         /// New line characters in the token. Checks children. Calculating property.
