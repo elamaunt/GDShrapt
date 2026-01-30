@@ -242,7 +242,6 @@ namespace GDShrapt.Reader.Tests
         #region Edge Cases
 
         [TestMethod]
-        [Ignore("Known issue: CR token order in AST for empty lines - needs parser fix")]
         public void Parse_EmptyLineWithCRLF_PreservesStructure()
         {
             var reader = new GDScriptReader();
@@ -277,7 +276,6 @@ namespace GDShrapt.Reader.Tests
         }
 
         [TestMethod]
-        [Ignore("Known issue: CR token order in multiline strings - needs parser fix")]
         public void Parse_MultilineString_WithCRLF()
         {
             var reader = new GDScriptReader();
@@ -319,7 +317,6 @@ namespace GDShrapt.Reader.Tests
         }
 
         [TestMethod]
-        [Ignore("Known issue: CR token order with multiple blank lines - needs parser fix")]
         public void Parse_WindowsStyleFile_FullRoundtrip()
         {
             var reader = new GDScriptReader();
@@ -352,7 +349,6 @@ func _ready():
         }
 
         [TestMethod]
-        [Ignore("Known issue: CR token order with trailing blank lines - needs parser fix")]
         public void Parse_TrailingCRLF_Preserved()
         {
             var reader = new GDScriptReader();
@@ -715,6 +711,68 @@ func _ready():
         {
             var reader = new GDScriptReader();
             var code = "var result = (\r\n\t(a + b) * (\r\n\t\tc - d\r\n\t) / (\r\n\t\te + f\r\n\t)\r\n)\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.ToOriginalString().Should().Be(code);
+            AssertHelper.NoInvalidTokens(tree);
+        }
+
+        // Additional CRLF Coverage
+
+        [TestMethod]
+        public void Parse_ReturnBreakContinue_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = "func test():\r\n\tfor i in range(10):\r\n\t\tif i == 5:\r\n\t\t\tbreak\r\n\t\tif i == 3:\r\n\t\t\tcontinue\r\n\treturn i\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.ToOriginalString().Should().Be(code);
+            AssertHelper.NoInvalidTokens(tree);
+        }
+
+        [TestMethod]
+        public void Parse_GetterSetter_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = "var _value: int\r\nvar value: int:\r\n\tget:\r\n\t\treturn _value\r\n\tset(v):\r\n\t\t_value = v\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.ToOriginalString().Should().Be(code);
+            AssertHelper.NoInvalidTokens(tree);
+        }
+
+        [TestMethod]
+        public void Parse_ExtendsClassName_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = "extends Node2D\r\n\r\nclass_name MyClass\r\n\r\n@tool\r\nvar x: int = 0\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.ToOriginalString().Should().Be(code);
+            AssertHelper.NoInvalidTokens(tree);
+        }
+
+        [TestMethod]
+        public void Parse_ConstDeclaration_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = "const MAX_VALUE: int = 100\r\nconst ITEMS: Array = [\r\n\t1,\r\n\t2,\r\n\t3\r\n]\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.ToOriginalString().Should().Be(code);
+            AssertHelper.NoInvalidTokens(tree);
+        }
+
+        [TestMethod]
+        public void Parse_NestedContainers_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = "var data = {\r\n\t\"items\": [\r\n\t\t{\"name\": \"a\"},\r\n\t\t{\"name\": \"b\"}\r\n\t],\r\n\t\"count\": 2\r\n}\r\n";
 
             var tree = reader.ParseFileContent(code);
 

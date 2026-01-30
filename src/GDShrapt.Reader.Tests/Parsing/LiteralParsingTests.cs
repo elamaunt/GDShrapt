@@ -243,11 +243,14 @@ World""""""
             Assert.IsNotNull(s4);
             Assert.IsNotNull(s5);
 
-            Assert.AreEqual("Hello\\\\\nWorld", s.Sequence);
+            // On Windows, verbatim strings use CRLF, so we need to check for both possibilities
+            // The parser preserves the original line endings from the source
+            var expectedNewLine = code.Contains("\r\n") ? "\r\n" : "\n";
+            Assert.AreEqual($"Hello\\\\{expectedNewLine}World", s.Sequence);
             Assert.AreEqual("HelloWorld", s2.Sequence);
             Assert.AreEqual("HelloWorld", s3.Sequence);
             Assert.AreEqual("Hello\\\\World", s4.Sequence);
-            Assert.AreEqual("Hello\\\\\nWorld", s5.Sequence);
+            Assert.AreEqual($"Hello\\\\{expectedNewLine}World", s5.Sequence);
 
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);

@@ -230,11 +230,9 @@ namespace GDShrapt.Reader
                         }
                         break;
                     case '\r':
-                        // CR should be sent before the corresponding NL
+                        // CR should complete comment (like NL does) and be sent as separate token
                         if (split != null)
                             split.Append(c);
-                        else if (comment != null)
-                            comment.Append(c);
                         else
                         {
                             // Flush any pending space before CR
@@ -244,6 +242,15 @@ namespace GDShrapt.Reader
                                 Owner.HandleReceivedToken(space);
                                 space = null;
                             }
+
+                            // Complete comment before CR (mirrors NL behavior)
+                            if (comment != null)
+                            {
+                                comment.Complete();
+                                Owner.HandleReceivedToken(comment);
+                                comment = null;
+                            }
+
                             Owner.HandleReceivedToken(new GDCarriageReturnToken());
                         }
                         break;

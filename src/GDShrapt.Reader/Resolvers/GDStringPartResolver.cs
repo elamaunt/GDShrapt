@@ -137,6 +137,23 @@ namespace GDShrapt.Reader
             HandleChar('\n', state);
         }
 
+        internal override void HandleCarriageReturnChar(GDReadingState state)
+        {
+            if (_bounder == GDStringBoundingChar.TripleSingleQuotas || _bounder == GDStringBoundingChar.SingleQuotas)
+            {
+                for (int i = 0; i < _boundingCharsCounter; i++)
+                    _stringBuilder.Append('\'');
+            }
+            else
+            {
+                for (int i = 0; i < _boundingCharsCounter; i++)
+                    _stringBuilder.Append('"');
+            }
+            _boundingCharsCounter = 0;
+
+            HandleChar('\r', state);
+        }
+
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
             if (_bounder == GDStringBoundingChar.TripleSingleQuotas || _bounder == GDStringBoundingChar.SingleQuotas)

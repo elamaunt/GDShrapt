@@ -93,7 +93,9 @@
 
         internal override void HandleNewLineChar(GDReadingState state)
         {
-            if (_form.IsOrLowerState(State.Parameters))
+            // Only push Parameters if we're inside parentheses but not yet completed
+            // Parameters or CloseBracket states mean we're still parsing inside ()
+            if (_form.State == State.Parameters || _form.State == State.CloseBracket)
             {
                 _form.State = State.CloseBracket;
                 state.PushAndPassNewLine(Parameters);
@@ -105,7 +107,9 @@
 
         internal override void HandleCarriageReturnChar(GDReadingState state)
         {
-            if (_form.IsOrLowerState(State.Parameters))
+            // Only push Parameters if we're inside parentheses but not yet completed
+            // Parameters or CloseBracket states mean we're still parsing inside ()
+            if (_form.State == State.Parameters || _form.State == State.CloseBracket)
             {
                 _form.State = State.CloseBracket;
                 state.Push(Parameters);
