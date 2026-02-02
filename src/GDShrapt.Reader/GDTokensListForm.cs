@@ -27,6 +27,7 @@ namespace GDShrapt.Reader
             get => (TOKEN)_statePoints[index].Value;
             set
             {
+                ThrowIfFrozen();
                 var node = _statePoints[index];
 
                 if (node.Value == value)
@@ -47,6 +48,7 @@ namespace GDShrapt.Reader
 
         public void Add(TOKEN item)
         {
+            ThrowIfFrozen();
             item.Parent = _owner;
             _statePoints.Add(_list.AddLast(item));
             StateIndex++;
@@ -62,6 +64,7 @@ namespace GDShrapt.Reader
 
         public override void AddAfterToken(GDSyntaxToken newToken, GDSyntaxToken afterThisToken)
         {
+            ThrowIfFrozen();
             if (newToken is TOKEN token)
             {
                 if (afterThisToken is TOKEN afterToken)
@@ -122,6 +125,7 @@ namespace GDShrapt.Reader
 
         public override void AddBeforeToken(GDSyntaxToken newToken, GDSyntaxToken beforeThisToken)
         {
+            ThrowIfFrozen();
             if (newToken is TOKEN token)
             {
                 if (beforeThisToken is TOKEN beforeToken)
@@ -178,6 +182,7 @@ namespace GDShrapt.Reader
 
         public override void AddBeforeToken(GDSyntaxToken newToken, int statePointIndex)
         {
+            ThrowIfFrozen();
             if (newToken is TOKEN token)
             {
                 if (statePointIndex < _statePoints.Count)
@@ -203,7 +208,8 @@ namespace GDShrapt.Reader
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
 
-            return _list.Contains(item);
+            // Use parent Contains which handles frozen state
+            return base.Contains(item);
         }
 
         public void CopyTo(TOKEN[] array, int arrayIndex)
@@ -224,6 +230,25 @@ namespace GDShrapt.Reader
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
 
+            if (_isFrozen && _frozenTokenIndex != null)
+            {
+                // When frozen, we need to find index in typed items only
+                // First check if item is in the snapshot at all
+                if (!_frozenTokenIndex.ContainsKey(item))
+                    return -1;
+
+                // Count typed items before this one
+                int typedIndex = 0;
+                foreach (var token in Direct())
+                {
+                    if (token == item)
+                        return typedIndex;
+                    if (token is TOKEN)
+                        typedIndex++;
+                }
+                return -1;
+            }
+
             var node = _list.Find(item);
 
             if (node == null)
@@ -234,6 +259,7 @@ namespace GDShrapt.Reader
 
         public void Insert(int index, TOKEN item)
         {
+            ThrowIfFrozen();
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
 
@@ -245,6 +271,7 @@ namespace GDShrapt.Reader
 
         public new void Clear()
         {
+            ThrowIfFrozen();
             var c = _statePoints.Count;
 
             for (int i = 0; i < c; i++)
@@ -264,6 +291,7 @@ namespace GDShrapt.Reader
 
         public bool Remove(TOKEN item)
         {
+            ThrowIfFrozen();
             if (item is null)
                 throw new ArgumentNullException(nameof(item));
 
@@ -282,6 +310,7 @@ namespace GDShrapt.Reader
 
         public void RemoveAt(int index)
         {
+            ThrowIfFrozen();
             var node = _statePoints[index];
 
             if (node.Value != null)
@@ -294,6 +323,17 @@ namespace GDShrapt.Reader
 
         IEnumerator<TOKEN> IEnumerable<TOKEN>.GetEnumerator()
         {
+            // Use base enumerator when frozen for thread-safety (it uses snapshot)
+            if (_isFrozen)
+            {
+                foreach (var token in Direct())
+                {
+                    if (token is TOKEN typedToken)
+                        yield return typedToken;
+                }
+                yield break;
+            }
+
             for (int i = 0; i < _statePoints.Count; i++)
                 yield return (TOKEN)_statePoints[i].Value;
         }

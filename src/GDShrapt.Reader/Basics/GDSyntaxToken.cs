@@ -210,6 +210,64 @@ namespace GDShrapt.Reader
         public virtual int OriginLength => Length;
 
         /// <summary>
+        /// Starting token's column including ignored characters like \r.
+        /// Used for text-based editing operations.
+        /// </summary>
+        public int OriginStartColumn
+        {
+            get
+            {
+                var parent = _parent;
+
+                if (parent == null)
+                    return 0;
+
+                int start = 0;
+                bool found = false;
+
+                foreach (var item in parent.TokensReversed)
+                {
+                    if (item == this)
+                    {
+                        found = true;
+                        continue;
+                    }
+
+                    if (!found)
+                        continue;
+
+                    if (item is GDNode node)
+                    {
+                        int tokensCount;
+                        if (node.CheckNewLineOrigin(out tokensCount))
+                        {
+                            return start + tokensCount;
+                        }
+                        else
+                        {
+                            start += tokensCount;
+                        }
+                    }
+                    else
+                    {
+                        if (item.NewLinesCount == 0)
+                            start += item.OriginLength;
+                        else
+                            return start;
+                    }
+                }
+
+                return parent.OriginStartColumn + start;
+            }
+        }
+
+        /// <summary>
+        /// Ending token's column including ignored characters like \r.
+        /// Used for text-based editing operations.
+        /// </summary>
+        public virtual int OriginEndColumn => OriginStartColumn + OriginLength;
+
+        /// <summary>
         /// New line characters in the token. Checks children. Calculating property.
         /// </summary>
         public abstract int NewLinesCount { get; }

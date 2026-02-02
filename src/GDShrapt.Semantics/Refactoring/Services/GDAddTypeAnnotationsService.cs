@@ -102,10 +102,11 @@ public class GDAddTypeAnnotationsService
             ? options.UnknownTypeFallback
             : inferredType.TypeName;
 
+        // Use Origin coordinates for text-based editing (includes \r in column calculation)
         var edit = new GDTextEdit(
             file.FullPath,
             identifier.EndLine,
-            identifier.EndColumn,
+            identifier.OriginEndColumn,
             "",
             $": {typeName}");
 

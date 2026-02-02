@@ -1,6 +1,7 @@
 using GDShrapt.Reader;
 using GDShrapt.TypesMap;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,8 +14,8 @@ namespace GDShrapt.Semantics;
 public class GDGodotTypesProvider : IGDRuntimeProvider
 {
     private readonly GDAssemblyData? _assemblyData;
-    private readonly Dictionary<string, GDTypeData> _typeCache = new();
-    private readonly HashSet<string> _knownTypes = new();
+    private readonly ConcurrentDictionary<string, GDTypeData> _typeCache = new();
+    private readonly ConcurrentDictionary<string, byte> _knownTypes = new(); // byte as placeholder for thread-safe set
 
     public GDGodotTypesProvider()
     {
@@ -36,12 +37,12 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         foreach (var kvp in _assemblyData.TypeDatas)
         {
             var gdScriptName = kvp.Key;
-            _knownTypes.Add(gdScriptName);
+            _knownTypes.TryAdd(gdScriptName, 0);
 
             // Take the first type data for each GDScript name
             if (kvp.Value.Count > 0)
             {
-                _typeCache[gdScriptName] = kvp.Value.Values.First();
+                _typeCache.TryAdd(gdScriptName, kvp.Value.Values.First());
             }
         }
 
@@ -50,7 +51,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             foreach (var globalType in _assemblyData.GlobalData.GlobalTypes.Keys)
             {
-                _knownTypes.Add(globalType);
+                _knownTypes.TryAdd(globalType, 0);
             }
         }
     }
@@ -60,7 +61,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        return _knownTypes.Contains(typeName) || _typeCache.ContainsKey(typeName);
+        return _knownTypes.ContainsKey(typeName) || _typeCache.ContainsKey(typeName);
     }
 
     public GDRuntimeTypeInfo? GetTypeInfo(string typeName)
@@ -613,7 +614,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     /// </summary>
     public IEnumerable<string> GetAllTypes()
     {
-        return _knownTypes;
+        return _knownTypes.Keys;
     }
 
     /// <summary>

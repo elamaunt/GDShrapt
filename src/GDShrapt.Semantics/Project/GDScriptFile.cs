@@ -122,6 +122,7 @@ public class GDScriptFile : IGDScriptInfo
                 _logger.Debug($"Parsing: {Path.GetFileName(_reference.FullPath)}");
 
                 Class = Reader.ParseFileContent(content);
+                Class?.Freeze(); // Freeze for thread-safe parallel analysis
                 _lastContent = content;
 
                 TypeName = Class?.ClassName?.Identifier?.Sequence ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
@@ -162,6 +163,7 @@ public class GDScriptFile : IGDScriptInfo
                     _logger.Debug($"Incremental reload: {Path.GetFileName(_reference.FullPath)}");
                     var result = _incrementalReader.ParseIncremental(oldTree, newContent, changes);
                     Class = result.Tree;
+                    Class?.Freeze(); // Freeze for thread-safe parallel analysis
                     wasIncremental = !result.IsFullReparse;
                 }
                 else
@@ -169,6 +171,7 @@ public class GDScriptFile : IGDScriptInfo
                     // Fallback to full reparse
                     _logger.Debug($"Full reload: {Path.GetFileName(_reference.FullPath)}");
                     Class = Reader.ParseFileContent(newContent);
+                    Class?.Freeze(); // Freeze for thread-safe parallel analysis
                 }
 
                 _lastContent = newContent;

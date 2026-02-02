@@ -1,4 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GDShrapt.Semantics.Tests;
 
@@ -305,6 +309,132 @@ public class GDGodotTypesProviderTests
         Assert.IsNotNull(sizeMember, "Rect2.size should be found");
         Assert.AreEqual("Vector2", posMember.Type, "Rect2.position should return Vector2");
         Assert.AreEqual("Vector2", sizeMember.Type, "Rect2.size should return Vector2");
+    }
+
+    #endregion
+
+    #region Thread Safety Tests
+
+    [TestMethod]
+    public void GDGodotTypesProvider_ConcurrentAccess_NoCrash()
+    {
+        var provider = new GDGodotTypesProvider();
+        var exceptions = new ConcurrentBag<Exception>();
+
+        Parallel.For(0, 100, i =>
+        {
+            try
+            {
+                // Various read operations
+                var isKnown = provider.IsKnownType("Node");
+                var types = provider.FindTypesWithMethod("get_name");
+                var member = provider.GetMember("Node2D", "position");
+                var baseType = provider.GetBaseType("Node2D");
+                var func = provider.GetGlobalFunction("print");
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        });
+
+        Assert.AreEqual(0, exceptions.Count,
+            $"Concurrent access should not throw. Errors: {string.Join("; ", exceptions.Select(e => e.Message))}");
+    }
+
+    [TestMethod]
+    public void GDGodotTypesProvider_MultipleInstances_ThreadSafe()
+    {
+        var exceptions = new ConcurrentBag<Exception>();
+
+        Parallel.For(0, 50, i =>
+        {
+            try
+            {
+                // Create new provider instance in each thread
+                var provider = new GDGodotTypesProvider();
+                Assert.IsTrue(provider.IsKnownType("Node"));
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        });
+
+        Assert.AreEqual(0, exceptions.Count,
+            $"Creating multiple instances should not throw. Errors: {string.Join("; ", exceptions.Select(e => e.Message))}");
+    }
+
+    [TestMethod]
+    public void GDGodotTypesProvider_IsKnownType_ConsistentResults()
+    {
+        var provider = new GDGodotTypesProvider();
+        var results = new ConcurrentBag<bool>();
+
+        Parallel.For(0, 100, i =>
+        {
+            results.Add(provider.IsKnownType("Vector2"));
+        });
+
+        // All results should be the same
+        Assert.IsTrue(results.All(r => r == true),
+            "All concurrent IsKnownType calls should return consistent results");
+    }
+
+    [TestMethod]
+    public void GDGodotTypesProvider_FindTypesWithMethod_ThreadSafe()
+    {
+        var provider = new GDGodotTypesProvider();
+        var exceptions = new ConcurrentBag<Exception>();
+        var results = new ConcurrentBag<int>();
+
+        Parallel.For(0, 50, i =>
+        {
+            try
+            {
+                var types = provider.FindTypesWithMethod("get_name");
+                results.Add(types.Count);
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        });
+
+        Assert.AreEqual(0, exceptions.Count);
+
+        // All threads should see the same result count
+        var distinctCounts = results.Distinct().ToList();
+        Assert.AreEqual(1, distinctCounts.Count,
+            "All concurrent FindTypesWithMethod calls should return consistent results");
+    }
+
+    [TestMethod]
+    public void GDGodotTypesProvider_GetAllTypes_ThreadSafe()
+    {
+        var provider = new GDGodotTypesProvider();
+        var exceptions = new ConcurrentBag<Exception>();
+        var results = new ConcurrentBag<int>();
+
+        Parallel.For(0, 50, i =>
+        {
+            try
+            {
+                var types = provider.GetAllTypes().ToList();
+                results.Add(types.Count);
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        });
+
+        Assert.AreEqual(0, exceptions.Count);
+
+        // All threads should see the same result count
+        var distinctCounts = results.Distinct().ToList();
+        Assert.AreEqual(1, distinctCounts.Count,
+            "All concurrent GetAllTypes calls should return consistent results");
     }
 
     #endregion

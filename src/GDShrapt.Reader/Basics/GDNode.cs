@@ -15,6 +15,17 @@ namespace GDShrapt.Reader
         public abstract GDTokensForm Form { get; }
 
         /// <summary>
+        /// Indicates whether the node is frozen (read-only, thread-safe).
+        /// </summary>
+        public bool IsFrozen => Form.IsFrozen;
+
+        /// <summary>
+        /// Makes the node and all its children immutable.
+        /// After Freeze: reading is thread-safe, modification throws InvalidOperationException.
+        /// </summary>
+        public void Freeze() => Form.Freeze();
+
+        /// <summary>
         /// Sets new tokens for the node's form. Tokens may be null
         /// </summary>
         public GDSyntaxToken[] FormTokensSetter
@@ -110,7 +121,7 @@ namespace GDShrapt.Reader
         }
 
         /// <summary>
-        /// Checks the last newLine in the node. If no new lines in the node returns the length of the token. 
+        /// Checks the last newLine in the node. If no new lines in the node returns the length of the token.
         /// Otherwise returns character count before the last new line.
         /// </summary>
         /// <param name="tokensCount">Count of the character before the last 'new line'</param>
@@ -124,6 +135,27 @@ namespace GDShrapt.Reader
                 if (token.NewLinesCount > 0)
                     return true;
                 tokensCount += token.Length;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks the last newLine in the node using OriginLength (includes \r).
+        /// If no new lines in the node returns the origin length of the token.
+        /// Otherwise returns character count before the last new line.
+        /// </summary>
+        /// <param name="tokensCount">Count of the character before the last 'new line' (including \r)</param>
+        /// <returns>Is 'new line' character exist in the node</returns>
+        public bool CheckNewLineOrigin(out int tokensCount)
+        {
+            tokensCount = 0;
+
+            foreach (var token in AllTokensReversed)
+            {
+                if (token.NewLinesCount > 0)
+                    return true;
+                tokensCount += token.OriginLength;
             }
 
             return false;
