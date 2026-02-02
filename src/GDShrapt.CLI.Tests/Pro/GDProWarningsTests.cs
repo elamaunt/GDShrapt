@@ -16,7 +16,6 @@ public class GDProWarningsTests
     [DataRow(GDProFeatureKind.GenerateOnready, "Generate @onready")]
     [DataRow(GDProFeatureKind.ApplyReorderMembers, "Apply member reordering")]
     [DataRow(GDProFeatureKind.BatchReorderMembers, "Batch reorder members")]
-    [DataRow(GDProFeatureKind.IncrementalAnalysis, "Incremental analysis")]
     [DataRow(GDProFeatureKind.PersistentCache, "Persistent cache")]
     [DataRow(GDProFeatureKind.SarifExport, "SARIF export")]
     [DataRow(GDProFeatureKind.BaselineComparison, "Baseline comparison")]
@@ -24,6 +23,17 @@ public class GDProWarningsTests
     [DataRow(GDProFeatureKind.PolicyEnforcement, "Policy enforcement")]
     [DataRow(GDProFeatureKind.HtmlReports, "HTML reports")]
     [DataRow(GDProFeatureKind.DebtScoring, "Technical debt scoring")]
+    [DataRow(GDProFeatureKind.DeadCodeRemoval, "Dead code removal")]
+    [DataRow(GDProFeatureKind.DependencyVisualization, "Dependency visualization")]
+    [DataRow(GDProFeatureKind.MetricsGates, "Metrics gates")]
+    [DataRow(GDProFeatureKind.CoverageGates, "Coverage gates")]
+    [DataRow(GDProFeatureKind.PatchExport, "Patch export")]
+    [DataRow(GDProFeatureKind.SafeDeletionPlan, "Safe deletion plan")]
+    [DataRow(GDProFeatureKind.DuplicateDetection, "Duplicate detection")]
+    [DataRow(GDProFeatureKind.SecurityScanning, "Security scanning")]
+    [DataRow(GDProFeatureKind.TrendAnalysis, "Trend analysis")]
+    [DataRow(GDProFeatureKind.SafeInline, "Safe inline")]
+    [DataRow(GDProFeatureKind.DuplicateExtractMethod, "Duplicate extract method")]
     public void GetFeatureName_ReturnsExpectedName(GDProFeatureKind feature, string expectedName)
     {
         // Act
@@ -34,25 +44,61 @@ public class GDProWarningsTests
     }
 
     [TestMethod]
-    public void WriteProNotAvailable_ContainsExpectedInfo()
+    public void WriteProNotAvailable_WhenWasEverLicensed_ContainsExpectedInfo()
     {
         // Arrange
         using var output = new StringWriter();
 
         // Act
-        GDProWarnings.WriteProNotAvailable(GDProFeatureKind.SarifExport, output);
+        GDProWarnings.WriteProNotAvailable(GDProFeatureKind.SarifExport, output, wasEverLicensed: true);
 
         // Assert
         var text = output.ToString();
         text.Should().Contain("[Warning]");
         text.Should().Contain("SARIF export");
-        text.Should().Contain("requires GDShrapt Pro");
-        text.Should().Contain("This build does not include Pro features");
+        text.Should().Contain("not available in this build");
         text.Should().Contain("https://gdshrapt.com/pro");
     }
 
     [TestMethod]
-    public void WriteLicenseRequired_ContainsActivationInstructions()
+    public void WriteProNotAvailable_WhenNeverLicensed_WritesNothing()
+    {
+        // Arrange
+        using var output = new StringWriter();
+
+        // Act
+        GDProWarnings.WriteProNotAvailable(GDProFeatureKind.SarifExport, output, wasEverLicensed: false);
+
+        // Assert
+        output.ToString().Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public void WriteLicenseRequired_WhenWasEverLicensed_ContainsRenewalInstructions()
+    {
+        // Arrange
+        using var output = new StringWriter();
+
+        // Act
+        GDProWarnings.WriteLicenseRequired(
+            GDProFeatureKind.BatchRefactoring,
+            GDProLicenseState.Expired,
+            output,
+            wasEverLicensed: true);
+
+        // Assert
+        var text = output.ToString();
+        text.Should().Contain("[Warning]");
+        text.Should().Contain("License expired");
+        text.Should().Contain("Batch refactoring");
+        text.Should().Contain("License status:");
+        text.Should().Contain("Expired");
+        text.Should().Contain("gdshrapt license activate");
+        text.Should().Contain("https://gdshrapt.com/pro");
+    }
+
+    [TestMethod]
+    public void WriteLicenseRequired_WhenNeverLicensed_WritesNothing()
     {
         // Arrange
         using var output = new StringWriter();
@@ -61,18 +107,11 @@ public class GDProWarningsTests
         GDProWarnings.WriteLicenseRequired(
             GDProFeatureKind.BatchRefactoring,
             GDProLicenseState.NotFound,
-            output);
+            output,
+            wasEverLicensed: false);
 
         // Assert
-        var text = output.ToString();
-        text.Should().Contain("[Warning]");
-        text.Should().Contain("Pro license required");
-        text.Should().Contain("Batch refactoring");
-        text.Should().Contain("License status:");
-        text.Should().Contain("Not found");
-        text.Should().Contain("gdshrapt license activate");
-        text.Should().Contain("GDSHRAPT_LICENSE_PATH");
-        text.Should().Contain("https://gdshrapt.com/pro");
+        output.ToString().Should().BeEmpty();
     }
 
     [TestMethod]
@@ -83,14 +122,15 @@ public class GDProWarningsTests
 
         // Act
         GDProWarnings.WriteLicenseRequired(
-            GDProFeatureKind.IncrementalAnalysis,
+            GDProFeatureKind.DeadCodeRemoval,
             GDProLicenseState.Expired,
-            output);
+            output,
+            wasEverLicensed: true);
 
         // Assert
         var text = output.ToString();
         text.Should().Contain("Expired");
-        text.Should().Contain("Incremental analysis");
+        text.Should().Contain("Dead code removal");
     }
 
     [TestMethod]
@@ -103,7 +143,8 @@ public class GDProWarningsTests
         GDProWarnings.WriteLicenseRequired(
             GDProFeatureKind.HtmlReports,
             GDProLicenseState.Invalid,
-            output);
+            output,
+            wasEverLicensed: true);
 
         // Assert
         var text = output.ToString();
@@ -147,17 +188,27 @@ public class GDProWarningsTests
     }
 
     [TestMethod]
-    public void GetShortWarning_ContainsFeatureName()
+    public void GetShortWarning_WhenWasEverLicensed_ContainsFeatureName()
     {
         // Act
-        var result = GDProWarnings.GetShortWarning(GDProFeatureKind.CIAnnotations);
+        var result = GDProWarnings.GetShortWarning(GDProFeatureKind.CIAnnotations, wasEverLicensed: true);
 
         // Assert
-        result.Should().Be("[Pro required: CI annotations]");
+        result.Should().Be("[License expired: CI annotations]");
     }
 
     [TestMethod]
-    public void GetShortWarning_AllFeatures_ReturnsValidFormat()
+    public void GetShortWarning_WhenNeverLicensed_ReturnsEmpty()
+    {
+        // Act
+        var result = GDProWarnings.GetShortWarning(GDProFeatureKind.CIAnnotations, wasEverLicensed: false);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public void GetShortWarning_AllFeatures_WhenWasEverLicensed_ReturnsValidFormat()
     {
         // Test all features
         var features = Enum.GetValues<GDProFeatureKind>();
@@ -165,10 +216,10 @@ public class GDProWarningsTests
         foreach (var feature in features)
         {
             // Act
-            var result = GDProWarnings.GetShortWarning(feature);
+            var result = GDProWarnings.GetShortWarning(feature, wasEverLicensed: true);
 
             // Assert
-            result.Should().StartWith("[Pro required: ");
+            result.Should().StartWith("[License expired: ");
             result.Should().EndWith("]");
             result.Should().NotContain("GDProFeatureKind"); // Should not contain enum type name
         }

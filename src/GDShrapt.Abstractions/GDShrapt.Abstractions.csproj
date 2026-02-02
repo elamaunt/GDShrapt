@@ -15,7 +15,7 @@
 Interfaces:
 - IGDFileSystem - File system abstraction for testing and flexible integration
 - IGDProjectContext - Godot project context with path resolution
-- IGDSemanticLogger - Logging abstraction for semantic analysis
+- IGDLogger - Logging abstraction for GDShrapt tooling
 
 Default Implementations:
 - GDDefaultFileSystem - Standard System.IO implementation

@@ -1,3 +1,4 @@
+using GDShrapt.Formatter;
 using GDShrapt.Reader;
 
 namespace GDShrapt.CLI.Core;
@@ -20,6 +21,11 @@ public class GDFormatterOptionsOverrides
     public LineWrapStyle? LineWrapStyle { get; set; }
     public int? ContinuationIndentSize { get; set; }
     public bool? UseBackslashContinuation { get; set; }
+    public bool? AddTrailingCommaWhenWrapped { get; set; }
+    public LineWrapStyle? ArrayWrapStyle { get; set; }
+    public LineWrapStyle? ParameterWrapStyle { get; set; }
+    public LineWrapStyle? DictionaryWrapStyle { get; set; }
+    public int? MinMethodChainLengthToWrap { get; set; }
 
     // Spacing
     public bool? SpaceAroundOperators { get; set; }
@@ -66,6 +72,16 @@ public class GDFormatterOptionsOverrides
             options.ContinuationIndentSize = ContinuationIndentSize.Value;
         if (UseBackslashContinuation.HasValue)
             options.UseBackslashContinuation = UseBackslashContinuation.Value;
+        if (AddTrailingCommaWhenWrapped.HasValue)
+            options.AddTrailingCommaWhenWrapped = AddTrailingCommaWhenWrapped.Value;
+        if (ArrayWrapStyle.HasValue)
+            options.ArrayWrapStyle = ArrayWrapStyle.Value;
+        if (ParameterWrapStyle.HasValue)
+            options.ParameterWrapStyle = ParameterWrapStyle.Value;
+        if (DictionaryWrapStyle.HasValue)
+            options.DictionaryWrapStyle = DictionaryWrapStyle.Value;
+        if (MinMethodChainLengthToWrap.HasValue)
+            options.MinMethodChainLengthToWrap = MinMethodChainLengthToWrap.Value;
 
         // Spacing
         if (SpaceAroundOperators.HasValue)

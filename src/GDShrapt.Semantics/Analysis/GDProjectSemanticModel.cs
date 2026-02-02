@@ -329,7 +329,7 @@ public class GDProjectSemanticModel : IDisposable
     /// var file = model.GetSemanticModel("res://scripts/player.gd");
     /// </code>
     /// </example>
-    public static GDProjectSemanticModel Load(string projectPath, IGDSemanticLogger? logger = null, bool enableSceneTypes = true)
+    public static GDProjectSemanticModel Load(string projectPath, IGDLogger? logger = null, bool enableSceneTypes = true)
     {
         if (string.IsNullOrEmpty(projectPath))
             throw new ArgumentNullException(nameof(projectPath));
@@ -349,7 +349,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <returns>A fully initialized project semantic model.</returns>
     public static Task<GDProjectSemanticModel> LoadAsync(
         string projectPath,
-        IGDSemanticLogger? logger = null,
+        IGDLogger? logger = null,
         bool enableSceneTypes = true,
         CancellationToken cancellationToken = default)
     {

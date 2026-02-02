@@ -6,20 +6,34 @@ namespace GDShrapt.Plugin;
 
 /// <summary>
 /// Log level for filtering messages.
+/// Aligned with GDLogLevel from Abstractions.
 /// </summary>
 public enum LogLevel
 {
-    Debug = 0,
-    Info = 1,
-    Warning = 2,
-    Error = 3
+    /// <summary>Most detailed, for deep troubleshooting.</summary>
+    Verbose = 0,
+
+    /// <summary>Development diagnostics.</summary>
+    Debug = 1,
+
+    /// <summary>Progress milestones and summaries (default).</summary>
+    Info = 2,
+
+    /// <summary>Recoverable issues.</summary>
+    Warning = 3,
+
+    /// <summary>Operation failures.</summary>
+    Error = 4,
+
+    /// <summary>No output except fatal errors.</summary>
+    Silent = 5
 }
 
 /// <summary>
 /// Centralized logging system for GDShrapt.Plugin.
 /// Supports console output, file logging, and event-based subscriptions.
 /// </summary>
-internal static class Logger
+public static class Logger
 {
     private static readonly object _lock = new();
     private static StreamWriter? _fileWriter;
@@ -27,7 +41,7 @@ internal static class Logger
     /// <summary>
     /// Minimum log level to output. Messages below this level are ignored.
     /// </summary>
-    public static LogLevel MinLevel { get; set; } = LogLevel.Debug;
+    public static LogLevel MinLevel { get; set; } = LogLevel.Info;
 
     /// <summary>
     /// Whether to write logs to a file.
@@ -46,7 +60,20 @@ internal static class Logger
     public static event Action<LogLevel, string, DateTime>? OnLogMessage;
 
     /// <summary>
-    /// Logs a debug message. Only shown when MinLevel is Debug.
+    /// Checks if a log level is enabled.
+    /// </summary>
+    public static bool IsEnabled(LogLevel level) => level >= MinLevel && MinLevel != LogLevel.Silent;
+
+    /// <summary>
+    /// Logs a verbose message. Most detailed for deep troubleshooting.
+    /// </summary>
+    public static void Verbose(string message)
+    {
+        Log(LogLevel.Verbose, message);
+    }
+
+    /// <summary>
+    /// Logs a debug message. Development diagnostics.
     /// </summary>
     public static void Debug(string message)
     {
@@ -95,12 +122,13 @@ internal static class Logger
 
     private static void Log(LogLevel level, string message)
     {
-        if (level < MinLevel)
+        if (level < MinLevel || MinLevel == LogLevel.Silent)
             return;
 
         var timestamp = DateTime.Now;
         var prefix = level switch
         {
+            LogLevel.Verbose => "[VERBOSE]",
             LogLevel.Debug => "[DEBUG]",
             LogLevel.Info => "[INFO]",
             LogLevel.Warning => "[WARN]",

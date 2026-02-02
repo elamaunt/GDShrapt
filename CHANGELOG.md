@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **GDShrapt.Abstractions** - Base interfaces for file system, project context, and logging abstractions
   - `IGDFileSystem` - File system abstraction for testing and flexible integration
   - `IGDProjectContext` - Godot project context with path resolution
-  - `IGDSemanticLogger` - Logging abstraction for semantic analysis
+  - `IGDLogger` - Logging abstraction for GDShrapt tooling
 
 - **GDShrapt.Semantics** - Godot-independent semantic analysis library
   - `GDScriptProject` - Project-level GDScript analysis

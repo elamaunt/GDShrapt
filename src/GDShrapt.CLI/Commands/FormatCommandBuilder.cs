@@ -11,7 +11,11 @@ namespace GDShrapt.CLI;
 /// </summary>
 public static class FormatCommandBuilder
 {
-    public static Command Build(Option<string> globalFormatOption)
+    public static Command Build(
+        Option<string> globalFormatOption,
+        Option<bool> verboseOption,
+        Option<bool> debugOption,
+        Option<bool> quietOption)
     {
         var command = new Command("format", "Format GDScript files");
 
@@ -61,11 +65,31 @@ public static class FormatCommandBuilder
         var useBackslashOption = new Option<bool?>(
             new[] { "--use-backslash" },
             "Use backslash continuation for method chains");
+        var addTrailingCommaWrappedOption = new Option<bool?>(
+            new[] { "--add-trailing-comma-wrapped" },
+            "Add trailing comma when wrapping collections");
+        var arrayWrapStyleOption = new Option<string?>(
+            new[] { "--array-wrap-style" },
+            "Array-specific wrap style (afteropen, before, hanging, compact, aligned)");
+        var parameterWrapStyleOption = new Option<string?>(
+            new[] { "--parameter-wrap-style" },
+            "Parameter-specific wrap style (afteropen, before, hanging, compact, aligned)");
+        var dictionaryWrapStyleOption = new Option<string?>(
+            new[] { "--dictionary-wrap-style" },
+            "Dictionary-specific wrap style (afteropen, before, hanging, compact, aligned)");
+        var minChainLengthToWrapOption = new Option<int?>(
+            new[] { "--min-chain-length-to-wrap" },
+            "Minimum method chain length to trigger wrapping (default: 2)");
         command.AddOption(maxLineLengthOption);
         command.AddOption(wrapLongLinesOption);
         command.AddOption(lineWrapStyleOption);
         command.AddOption(continuationIndentOption);
         command.AddOption(useBackslashOption);
+        command.AddOption(addTrailingCommaWrappedOption);
+        command.AddOption(arrayWrapStyleOption);
+        command.AddOption(parameterWrapStyleOption);
+        command.AddOption(dictionaryWrapStyleOption);
+        command.AddOption(minChainLengthToWrapOption);
 
         // Spacing options
         var spaceAroundOperatorsOption = new Option<bool?>(
@@ -159,6 +183,21 @@ public static class FormatCommandBuilder
 
             overrides.ContinuationIndentSize = context.ParseResult.GetValueForOption(continuationIndentOption);
             overrides.UseBackslashContinuation = context.ParseResult.GetValueForOption(useBackslashOption);
+            overrides.AddTrailingCommaWhenWrapped = context.ParseResult.GetValueForOption(addTrailingCommaWrappedOption);
+
+            var arrayWrapStyle = context.ParseResult.GetValueForOption(arrayWrapStyleOption);
+            if (arrayWrapStyle != null)
+                overrides.ArrayWrapStyle = OptionParsers.ParseLineWrapStyleExtended(arrayWrapStyle);
+
+            var parameterWrapStyle = context.ParseResult.GetValueForOption(parameterWrapStyleOption);
+            if (parameterWrapStyle != null)
+                overrides.ParameterWrapStyle = OptionParsers.ParseLineWrapStyleExtended(parameterWrapStyle);
+
+            var dictionaryWrapStyle = context.ParseResult.GetValueForOption(dictionaryWrapStyleOption);
+            if (dictionaryWrapStyle != null)
+                overrides.DictionaryWrapStyle = OptionParsers.ParseLineWrapStyleExtended(dictionaryWrapStyle);
+
+            overrides.MinMethodChainLengthToWrap = context.ParseResult.GetValueForOption(minChainLengthToWrapOption);
 
             // Spacing
             overrides.SpaceAroundOperators = context.ParseResult.GetValueForOption(spaceAroundOperatorsOption);

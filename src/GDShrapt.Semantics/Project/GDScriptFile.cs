@@ -14,7 +14,7 @@ namespace GDShrapt.Semantics;
 public class GDScriptFile : IGDScriptInfo
 {
     private readonly IGDFileSystem _fileSystem;
-    private readonly IGDSemanticLogger _logger;
+    private readonly IGDLogger _logger;
     private readonly bool _enableIncrementalParsing;
     private GDScriptReference _reference;
     private static readonly GDScriptReader Reader = new();
@@ -80,7 +80,7 @@ public class GDScriptFile : IGDScriptInfo
     public GDScriptFile(
         GDScriptReference reference,
         IGDFileSystem? fileSystem = null,
-        IGDSemanticLogger? logger = null,
+        IGDLogger? logger = null,
         bool enableIncrementalParsing = true)
     {
         _reference = reference;

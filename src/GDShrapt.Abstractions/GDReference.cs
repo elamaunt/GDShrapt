@@ -46,4 +46,10 @@ public class GDReference
     /// Human-readable reason for the confidence level.
     /// </summary>
     public string? ConfidenceReason { get; set; }
+
+    /// <summary>
+    /// The type name of the caller for member access (e.g., "OS" for OS.execute()).
+    /// Null for local function calls or variable references.
+    /// </summary>
+    public string? CallerTypeName { get; set; }
 }

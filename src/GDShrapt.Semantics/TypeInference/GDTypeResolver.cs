@@ -18,7 +18,7 @@ public class GDTypeResolver
     private readonly IGDScriptProvider? _scriptProvider;
     private readonly GDCompositeRuntimeProvider _compositeProvider;
     private readonly GDNodeTypeInjector? _nodeTypeInjector;
-    private readonly IGDSemanticLogger _logger;
+    private readonly IGDLogger _logger;
 
     public GDTypeResolver(
         GDGodotTypesProvider? godotTypesProvider = null,
@@ -26,7 +26,7 @@ public class GDTypeResolver
         GDAutoloadsProvider? autoloadsProvider = null,
         GDSceneTypesProvider? sceneTypesProvider = null,
         IGDScriptProvider? scriptProvider = null,
-        IGDSemanticLogger? logger = null)
+        IGDLogger? logger = null)
     {
         _godotTypesProvider = godotTypesProvider ?? new GDGodotTypesProvider();
         _projectTypesProvider = projectTypesProvider;

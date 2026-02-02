@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -33,8 +34,9 @@ public class GDValidateCommand : GDProjectCommandBase
         bool strict = false,
         GDSeverity? minSeverity = null,
         int? maxIssues = null,
-        GDGroupBy groupBy = GDGroupBy.File)
-        : base(projectPath, formatter, output, config)
+        GDGroupBy groupBy = GDGroupBy.File,
+        IGDLogger? logger = null)
+        : base(projectPath, formatter, output, config, logger)
     {
         _checks = checks;
         _strict = strict;

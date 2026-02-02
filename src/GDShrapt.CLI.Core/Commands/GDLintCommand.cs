@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -36,8 +37,9 @@ public class GDLintCommand : GDProjectCommandBase
         GDLintSeverity? minSeverity = null,
         int? maxIssues = null,
         GDGroupBy groupBy = GDGroupBy.File,
-        GDLinterOptionsOverrides? optionsOverrides = null)
-        : base(projectPath, formatter, output, config)
+        GDLinterOptionsOverrides? optionsOverrides = null,
+        IGDLogger? logger = null)
+        : base(projectPath, formatter, output, config, logger)
     {
         _optionsOverrides = optionsOverrides;
 

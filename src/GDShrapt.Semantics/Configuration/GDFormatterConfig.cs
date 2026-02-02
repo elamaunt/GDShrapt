@@ -101,6 +101,21 @@ public class GDFormatterConfig
     /// Style of line wrapping. Default: AfterOpeningBracket.
     /// </summary>
     public GDLineWrapStyle LineWrapStyle { get; set; } = GDLineWrapStyle.AfterOpeningBracket;
+
+    /// <summary>
+    /// Additional indent for continuation lines. Default: 4.
+    /// </summary>
+    public int ContinuationIndentSize { get; set; } = 4;
+
+    /// <summary>
+    /// Use backslash for line continuation. Default: false.
+    /// </summary>
+    public bool UseBackslashContinuation { get; set; } = false;
+
+    /// <summary>
+    /// Remove multiple trailing newlines, keeping only one. Default: true.
+    /// </summary>
+    public bool RemoveMultipleTrailingNewlines { get; set; } = true;
 }
 
 /// <summary>

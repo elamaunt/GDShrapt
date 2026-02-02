@@ -23,6 +23,12 @@ public sealed class GDTextEdit
     public int Column { get; }
 
     /// <summary>
+    /// The end line number (1-based) for multi-line edits.
+    /// If not set, the edit affects only the Line.
+    /// </summary>
+    public int EndLine { get; init; }
+
+    /// <summary>
     /// The text to be replaced.
     /// </summary>
     public string OldText { get; }

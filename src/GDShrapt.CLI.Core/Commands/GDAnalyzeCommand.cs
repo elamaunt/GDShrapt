@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
@@ -27,8 +28,9 @@ public class GDAnalyzeCommand : GDProjectCommandBase
         GDProjectConfig? config = null,
         GDSeverity? minSeverity = null,
         int? maxIssues = null,
-        GDGroupBy groupBy = GDGroupBy.File)
-        : base(projectPath, formatter, output, config)
+        GDGroupBy groupBy = GDGroupBy.File,
+        IGDLogger? logger = null)
+        : base(projectPath, formatter, output, config, logger)
     {
         _minSeverity = minSeverity;
         _maxIssues = maxIssues;

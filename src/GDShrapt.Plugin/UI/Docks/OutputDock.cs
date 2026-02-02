@@ -49,11 +49,12 @@ public partial class OutputDock : Control
         toolbar.AddChild(filterLabel);
 
         _levelFilter = new OptionButton();
+        _levelFilter.AddItem("Verbose", (int)LogLevel.Verbose);
         _levelFilter.AddItem("Debug", (int)LogLevel.Debug);
         _levelFilter.AddItem("Info", (int)LogLevel.Info);
         _levelFilter.AddItem("Warning", (int)LogLevel.Warning);
         _levelFilter.AddItem("Error", (int)LogLevel.Error);
-        _levelFilter.Select(1); // Default to Info
+        _levelFilter.Select(2); // Default to Info
         _levelFilter.ItemSelected += OnLevelFilterChanged;
         toolbar.AddChild(_levelFilter);
 
@@ -146,10 +147,11 @@ public partial class OutputDock : Control
     {
         return level switch
         {
-            LogLevel.Debug => "808080", // Gray
-            LogLevel.Info => "FFFFFF", // White
+            LogLevel.Verbose => "606060", // Dim gray
+            LogLevel.Debug => "808080",   // Gray
+            LogLevel.Info => "FFFFFF",    // White
             LogLevel.Warning => "FFD700", // Gold
-            LogLevel.Error => "FF4444", // Red
+            LogLevel.Error => "FF4444",   // Red
             _ => "FFFFFF"
         };
     }
@@ -158,6 +160,7 @@ public partial class OutputDock : Control
     {
         return level switch
         {
+            LogLevel.Verbose => "[VERBOSE]",
             LogLevel.Debug => "[DEBUG]",
             LogLevel.Info => "[INFO]",
             LogLevel.Warning => "[WARN]",

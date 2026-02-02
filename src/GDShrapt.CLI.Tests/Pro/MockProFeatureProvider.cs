@@ -11,6 +11,7 @@ internal class MockProFeatureProvider : IGDProFeatureProvider
 {
     public GDProLicenseState LicenseState { get; set; } = GDProLicenseState.Valid;
     public bool IsLicensed { get; set; } = true;
+    public bool WasEverLicensed { get; set; } = true;
     public string? LicenseeName { get; set; } = "Test User";
     public DateTime? ExpiresAt { get; set; } = DateTime.UtcNow.AddYears(1);
 
@@ -30,19 +31,20 @@ internal class MockProFeatureProvider : IGDProFeatureProvider
     }
 
     /// <summary>
-    /// Creates a mock provider with no valid license.
+    /// Creates a mock provider with no valid license (never purchased).
     /// </summary>
     public static MockProFeatureProvider Unlicensed()
     {
         return new MockProFeatureProvider
         {
             LicenseState = GDProLicenseState.NotFound,
-            IsLicensed = false
+            IsLicensed = false,
+            WasEverLicensed = false
         };
     }
 
     /// <summary>
-    /// Creates a mock provider with expired license.
+    /// Creates a mock provider with expired license (was purchased before).
     /// </summary>
     public static MockProFeatureProvider Expired()
     {
@@ -50,6 +52,7 @@ internal class MockProFeatureProvider : IGDProFeatureProvider
         {
             LicenseState = GDProLicenseState.Expired,
             IsLicensed = false,
+            WasEverLicensed = true,
             ExpiresAt = DateTime.UtcNow.AddDays(-1)
         };
     }

@@ -1,3 +1,5 @@
+using System;
+using GDShrapt.Linter;
 using GDShrapt.Reader;
 
 namespace GDShrapt.CLI.Core;
@@ -80,6 +82,29 @@ public class GDLinterOptionsOverrides
     public string? AbstractMethodPosition { get; set; }
     public string? PrivateMethodPosition { get; set; }
     public string? StaticMethodPosition { get; set; }
+
+    // Formatting/style checks (missing from CLI)
+    public Linter.GDIndentationStyle? IndentationStyle { get; set; }
+    public int? TabWidth { get; set; }
+    public bool? CheckTrailingWhitespace { get; set; }
+    public bool? CheckTrailingNewline { get; set; }
+    public bool? CheckSpaceAroundOperators { get; set; }
+    public bool? CheckSpaceAfterComma { get; set; }
+
+    // Blank lines config
+    public int? EmptyLinesBetweenFunctions { get; set; }
+    public int? MaxConsecutiveEmptyLines { get; set; }
+    public bool? RequireBlankLineAfterClassDecl { get; set; }
+    public bool? RequireTwoBlankLinesBetweenFunctions { get; set; }
+    public bool? RequireBlankLineBetweenMemberTypes { get; set; }
+
+    // Best practices
+    public bool? SuggestTypeHints { get; set; }
+    public bool? RequireTrailingComma { get; set; }
+    public bool? EnforceMemberOrdering { get; set; }
+
+    // Magic numbers whitelist
+    public string? AllowedMagicNumbers { get; set; }
 
     /// <summary>
     /// Applies overrides to the given linter options.
@@ -207,5 +232,49 @@ public class GDLinterOptionsOverrides
             options.PrivateMethodPosition = PrivateMethodPosition;
         if (StaticMethodPosition != null)
             options.StaticMethodPosition = StaticMethodPosition;
+
+        // Formatting/style checks
+        if (IndentationStyle.HasValue)
+            options.IndentationStyle = IndentationStyle.Value;
+        if (TabWidth.HasValue)
+            options.TabWidth = TabWidth.Value;
+        if (CheckTrailingWhitespace.HasValue)
+            options.CheckTrailingWhitespace = CheckTrailingWhitespace.Value;
+        if (CheckTrailingNewline.HasValue)
+            options.CheckTrailingNewline = CheckTrailingNewline.Value;
+        if (CheckSpaceAroundOperators.HasValue)
+            options.CheckSpaceAroundOperators = CheckSpaceAroundOperators.Value;
+        if (CheckSpaceAfterComma.HasValue)
+            options.CheckSpaceAfterComma = CheckSpaceAfterComma.Value;
+
+        // Blank lines config
+        if (EmptyLinesBetweenFunctions.HasValue)
+            options.EmptyLinesBetweenFunctions = EmptyLinesBetweenFunctions.Value;
+        if (MaxConsecutiveEmptyLines.HasValue)
+            options.MaxConsecutiveEmptyLines = MaxConsecutiveEmptyLines.Value;
+        if (RequireBlankLineAfterClassDecl.HasValue)
+            options.RequireBlankLineAfterClassDecl = RequireBlankLineAfterClassDecl.Value;
+        if (RequireTwoBlankLinesBetweenFunctions.HasValue)
+            options.RequireTwoBlankLinesBetweenFunctions = RequireTwoBlankLinesBetweenFunctions.Value;
+        if (RequireBlankLineBetweenMemberTypes.HasValue)
+            options.RequireBlankLineBetweenMemberTypes = RequireBlankLineBetweenMemberTypes.Value;
+
+        // Best practices
+        if (SuggestTypeHints.HasValue)
+            options.SuggestTypeHints = SuggestTypeHints.Value;
+        if (RequireTrailingComma.HasValue)
+            options.RequireTrailingComma = RequireTrailingComma.Value;
+        if (EnforceMemberOrdering.HasValue)
+            options.EnforceMemberOrdering = EnforceMemberOrdering.Value;
+
+        // Magic numbers whitelist (comma-separated)
+        if (!string.IsNullOrEmpty(AllowedMagicNumbers))
+        {
+            options.AllowedMagicNumbers.Clear();
+            foreach (var num in AllowedMagicNumbers.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                options.AllowedMagicNumbers.Add(num);
+            }
+        }
     }
 }

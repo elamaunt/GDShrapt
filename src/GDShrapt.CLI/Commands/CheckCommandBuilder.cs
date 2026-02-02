@@ -11,11 +11,16 @@ namespace GDShrapt.CLI;
 /// </summary>
 public static class CheckCommandBuilder
 {
-    public static Command Build(Option<string> globalFormatOption)
+    public static Command Build(
+        Option<string> globalFormatOption,
+        Option<bool> verboseOption,
+        Option<bool> debugOption,
+        Option<bool> globalQuietOption)
     {
         var command = new Command("check", "Check a GDScript project for errors (for CI/CD)");
 
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        // Note: check command has its own quiet option that suppresses output completely
         var quietOption = new Option<bool>(
             new[] { "--quiet", "-q" },
             "Suppress output, only return exit code");

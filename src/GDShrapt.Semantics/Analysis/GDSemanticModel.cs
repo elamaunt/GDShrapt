@@ -115,6 +115,11 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     // Flow-sensitive type analysis (SSA-style)
     private readonly Dictionary<GDMethodDeclaration, GDFlowAnalyzer> _methodFlowAnalyzers = new();
 
+    // Member access index: (CallerType, MemberName) -> references
+    // Used for querying built-in method calls like OS.execute() or global functions like str2var()
+    private readonly Dictionary<(string CallerType, string MemberName), List<GDReference>> _memberAccessByType =
+        new(MemberAccessKeyComparer.Instance);
+
     // Recursion guard for GetExpressionType to prevent infinite loops
     private readonly HashSet<GDExpression> _expressionTypeInProgress = new();
     private const int MaxExpressionTypeRecursionDepth = 50;
@@ -369,6 +374,45 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return Array.Empty<GDReference>();
 
         return GetReferencesTo(symbol);
+    }
+
+    /// <summary>
+    /// Gets all accesses to a specific member on a type (e.g., OS.execute, Node.add_child).
+    /// Works for both built-in types and user-defined types.
+    /// </summary>
+    /// <param name="typeName">The type name (e.g., "OS", "@GDScript", "Node")</param>
+    /// <param name="memberName">The member name (e.g., "execute", "str2var")</param>
+    /// <returns>All references to that member in this file.</returns>
+    public IReadOnlyList<GDReference> GetMemberAccesses(string typeName, string memberName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
+            return Array.Empty<GDReference>();
+
+        var key = (typeName, memberName);
+        return _memberAccessByType.TryGetValue(key, out var refs)
+            ? refs
+            : Array.Empty<GDReference>();
+    }
+
+    /// <summary>
+    /// Gets all accesses to a global function (e.g., str2var, load, preload).
+    /// Global functions in GDScript belong to "@GDScript" pseudo-type.
+    /// </summary>
+    public IReadOnlyList<GDReference> GetGlobalFunctionAccesses(string functionName)
+    {
+        return GetMemberAccesses("@GDScript", functionName);
+    }
+
+    /// <summary>
+    /// Checks if there are any accesses to a specific member on a type.
+    /// </summary>
+    public bool HasMemberAccesses(string typeName, string memberName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
+            return false;
+
+        var key = (typeName, memberName);
+        return _memberAccessByType.TryGetValue(key, out var refs) && refs.Count > 0;
     }
 
     #endregion
@@ -2299,6 +2343,24 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     /// <summary>
+    /// Adds a member access reference indexed by caller type and member name.
+    /// Used for querying built-in method calls like OS.execute() or global functions like str2var().
+    /// </summary>
+    internal void AddMemberAccess(string callerType, string memberName, GDReference reference)
+    {
+        if (string.IsNullOrEmpty(callerType) || string.IsNullOrEmpty(memberName) || reference == null)
+            return;
+
+        var key = (callerType, memberName);
+        if (!_memberAccessByType.TryGetValue(key, out var refs))
+        {
+            refs = new List<GDReference>();
+            _memberAccessByType[key] = refs;
+        }
+        refs.Add(reference);
+    }
+
+    /// <summary>
     /// Sets the inferred type for a node.
     /// </summary>
     internal void SetNodeType(GDNode node, string type, GDTypeNode? typeNode = null)
@@ -3095,6 +3157,32 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             GDTypeConfidence.Medium => GDReferenceConfidence.Potential,
             _ => GDReferenceConfidence.NameMatch
         };
+    }
+
+    #endregion
+
+    #region Member Access Key Comparer
+
+    /// <summary>
+    /// Case-insensitive comparer for member access lookup keys.
+    /// </summary>
+    private class MemberAccessKeyComparer : IEqualityComparer<(string, string)>
+    {
+        public static readonly MemberAccessKeyComparer Instance = new();
+
+        public bool Equals((string, string) x, (string, string) y) =>
+            string.Equals(x.Item1, y.Item1, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.Item2, y.Item2, StringComparison.OrdinalIgnoreCase);
+
+        public int GetHashCode((string, string) obj)
+        {
+            unchecked
+            {
+                var h1 = obj.Item1?.ToUpperInvariant().GetHashCode() ?? 0;
+                var h2 = obj.Item2?.ToUpperInvariant().GetHashCode() ?? 0;
+                return h1 * 397 ^ h2;
+            }
+        }
     }
 
     #endregion

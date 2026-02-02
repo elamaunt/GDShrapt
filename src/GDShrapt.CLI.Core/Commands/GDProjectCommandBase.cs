@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
@@ -16,6 +18,7 @@ public abstract class GDProjectCommandBase : IGDCommand
     protected readonly IGDOutputFormatter _formatter;
     protected readonly TextWriter _output;
     protected readonly GDProjectConfig? _config;
+    protected readonly IGDLogger _logger;
 
     /// <summary>
     /// Service registry for accessing CLI.Core handlers.
@@ -30,18 +33,22 @@ public abstract class GDProjectCommandBase : IGDCommand
         string projectPath,
         IGDOutputFormatter formatter,
         TextWriter? output = null,
-        GDProjectConfig? config = null)
+        GDProjectConfig? config = null,
+        IGDLogger? logger = null)
     {
         _projectPath = projectPath;
         _formatter = formatter;
         _output = output ?? Console.Out;
         _config = config;
+        _logger = logger ?? GDNullLogger.Instance;
     }
 
     public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            _logger.Debug($"Finding project root from: {_projectPath}");
+
             var projectRoot = GDProjectLoader.FindProjectRoot(_projectPath);
             if (projectRoot == null)
             {
@@ -49,8 +56,13 @@ public abstract class GDProjectCommandBase : IGDCommand
                 return Task.FromResult(GDExitCode.Fatal);
             }
 
+            _logger.Debug($"Found project root: {projectRoot}");
+            _logger.Info($"Loading project: {projectRoot}");
+
             var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
-            using var project = GDProjectLoader.LoadProject(projectRoot);
+            using var project = GDProjectLoader.LoadProject(projectRoot, _logger);
+
+            _logger.Debug($"Project loaded: {project.ScriptFiles.Count()} scripts");
 
             // Initialize service registry with base module
             var registry = new GDServiceRegistry();
@@ -61,6 +73,7 @@ public abstract class GDProjectCommandBase : IGDCommand
         }
         catch (Exception ex)
         {
+            _logger.Error("Command execution failed", ex);
             _formatter.WriteError(_output, ex.Message);
             return Task.FromResult(GDExitCode.Fatal);
         }

@@ -51,11 +51,6 @@ public enum GDProFeatureKind
 
     // Analysis
     /// <summary>
-    /// Incremental analysis (changed files only).
-    /// </summary>
-    IncrementalAnalysis,
-
-    /// <summary>
     /// Persistent analysis cache.
     /// </summary>
     PersistentCache,
@@ -89,5 +84,67 @@ public enum GDProFeatureKind
     /// <summary>
     /// Technical debt scoring and analysis.
     /// </summary>
-    DebtScoring
+    DebtScoring,
+
+    // Dead Code Analysis
+    /// <summary>
+    /// Remove dead code (--apply for dead-code command).
+    /// </summary>
+    DeadCodeRemoval,
+
+    /// <summary>
+    /// Export dependency graph in DOT or Mermaid format.
+    /// </summary>
+    DependencyVisualization,
+
+    // CI Gates
+    /// <summary>
+    /// Fail CI if metrics exceed thresholds.
+    /// </summary>
+    MetricsGates,
+
+    /// <summary>
+    /// Fail CI if type coverage drops below threshold.
+    /// </summary>
+    CoverageGates,
+
+    // Export & PR Integration
+    /// <summary>
+    /// Export dead code as patch/diff for PR review.
+    /// </summary>
+    PatchExport,
+
+    /// <summary>
+    /// Safe deletion with transaction and rollback on diagnostics regression.
+    /// </summary>
+    SafeDeletionPlan,
+
+    // Additional Analysis
+    /// <summary>
+    /// Detect duplicated code blocks.
+    /// </summary>
+    DuplicateDetection,
+
+    /// <summary>
+    /// Security vulnerability scanning.
+    /// </summary>
+    SecurityScanning,
+
+    /// <summary>
+    /// Trend analysis over time (metrics history).
+    /// </summary>
+    TrendAnalysis,
+
+    // Risky Refactoring
+    /// <summary>
+    /// Inline dead code functions at call sites before removal.
+    /// Risky operation with restrictions: no yield, no recursion, limited call sites.
+    /// </summary>
+    SafeInline,
+
+    // Duplicate Code Fixes
+    /// <summary>
+    /// Apply Extract Method refactoring for duplicate code.
+    /// </summary>
+    DuplicateExtractMethod
 }

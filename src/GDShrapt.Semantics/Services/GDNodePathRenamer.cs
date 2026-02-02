@@ -50,7 +50,7 @@ public sealed class GDNodeRenameResult
 public class GDNodePathRenamer
 {
     private readonly GDScriptProject _project;
-    private readonly IGDSemanticLogger _logger;
+    private readonly IGDLogger _logger;
 
     public GDNodePathRenamer(GDScriptProject project)
     {

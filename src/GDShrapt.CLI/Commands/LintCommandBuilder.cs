@@ -12,7 +12,11 @@ namespace GDShrapt.CLI;
 /// </summary>
 public static class LintCommandBuilder
 {
-    public static Command Build(Option<string> globalFormatOption)
+    public static Command Build(
+        Option<string> globalFormatOption,
+        Option<bool> verboseOption,
+        Option<bool> debugOption,
+        Option<bool> quietOption)
     {
         var command = new Command("lint", "Lint GDScript files for style and best practices");
 
@@ -245,6 +249,74 @@ public static class LintCommandBuilder
             "Enable inline comment suppression (gdlint:ignore)");
         command.AddOption(enableSuppressionOption);
 
+        // Formatting/style checks
+        var indentationStyleOption = new Option<string?>(
+            new[] { "--indentation-style" },
+            "Indentation style: tabs or spaces");
+        var tabWidthOption = new Option<int?>(
+            new[] { "--tab-width" },
+            "Tab width in spaces (default: 4)");
+        var checkTrailingWhitespaceOption = new Option<bool?>(
+            new[] { "--check-trailing-whitespace" },
+            "Check for trailing whitespace");
+        var checkTrailingNewlineOption = new Option<bool?>(
+            new[] { "--check-trailing-newline" },
+            "Check for trailing newline at end of file");
+        var checkSpaceAroundOperatorsOption = new Option<bool?>(
+            new[] { "--check-space-around-operators" },
+            "Check for space around operators");
+        var checkSpaceAfterCommaOption = new Option<bool?>(
+            new[] { "--check-space-after-comma" },
+            "Check for space after commas");
+        command.AddOption(indentationStyleOption);
+        command.AddOption(tabWidthOption);
+        command.AddOption(checkTrailingWhitespaceOption);
+        command.AddOption(checkTrailingNewlineOption);
+        command.AddOption(checkSpaceAroundOperatorsOption);
+        command.AddOption(checkSpaceAfterCommaOption);
+
+        // Blank lines config
+        var emptyLinesBetweenFunctionsOption = new Option<int?>(
+            new[] { "--empty-lines-between-functions" },
+            "Required empty lines between functions (default: 2)");
+        var maxConsecutiveEmptyLinesOption = new Option<int?>(
+            new[] { "--max-consecutive-empty-lines" },
+            "Maximum consecutive empty lines allowed");
+        var requireBlankAfterClassOption = new Option<bool?>(
+            new[] { "--require-blank-after-class" },
+            "Require blank line after class declaration");
+        var requireTwoBlankBetweenFunctionsOption = new Option<bool?>(
+            new[] { "--require-two-blank-between-functions" },
+            "Require two blank lines between functions");
+        var requireBlankBetweenMemberTypesOption = new Option<bool?>(
+            new[] { "--require-blank-between-member-types" },
+            "Require blank line between different member types");
+        command.AddOption(emptyLinesBetweenFunctionsOption);
+        command.AddOption(maxConsecutiveEmptyLinesOption);
+        command.AddOption(requireBlankAfterClassOption);
+        command.AddOption(requireTwoBlankBetweenFunctionsOption);
+        command.AddOption(requireBlankBetweenMemberTypesOption);
+
+        // Best practices
+        var suggestTypeHintsOption = new Option<bool?>(
+            new[] { "--suggest-type-hints" },
+            "Suggest adding type hints to variables");
+        var requireTrailingCommaOption = new Option<bool?>(
+            new[] { "--require-trailing-comma" },
+            "Require trailing comma in multi-line collections");
+        var enforceMemberOrderingOption = new Option<bool?>(
+            new[] { "--enforce-member-ordering" },
+            "Enforce member ordering in classes");
+        command.AddOption(suggestTypeHintsOption);
+        command.AddOption(requireTrailingCommaOption);
+        command.AddOption(enforceMemberOrderingOption);
+
+        // Magic numbers whitelist
+        var allowedMagicNumbersOption = new Option<string?>(
+            new[] { "--allowed-magic-numbers" },
+            "Comma-separated list of allowed magic numbers (e.g., 0,1,2,-1)");
+        command.AddOption(allowedMagicNumbersOption);
+
         // Member ordering options
         var abstractMethodPositionOption = new Option<string?>(
             new[] { "--abstract-method-position" },
@@ -286,6 +358,12 @@ public static class LintCommandBuilder
             var minSeverity = context.ParseResult.GetValueForOption(minSeverityOption);
             var maxIssues = context.ParseResult.GetValueForOption(maxIssuesOption);
             var groupBy = context.ParseResult.GetValueForOption(groupByOption);
+            var verbose = context.ParseResult.GetValueForOption(verboseOption);
+            var debug = context.ParseResult.GetValueForOption(debugOption);
+            var quiet = context.ParseResult.GetValueForOption(quietOption);
+
+            // Create logger from verbosity flags
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
 
             // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;
@@ -437,6 +515,31 @@ public static class LintCommandBuilder
             overrides.PrivateMethodPosition = context.ParseResult.GetValueForOption(privateMethodPositionOption);
             overrides.StaticMethodPosition = context.ParseResult.GetValueForOption(staticMethodPositionOption);
 
+            // Formatting/style checks
+            var indentationStyle = context.ParseResult.GetValueForOption(indentationStyleOption);
+            if (indentationStyle != null)
+                overrides.IndentationStyle = OptionParsers.ParseIndentationStyle(indentationStyle);
+            overrides.TabWidth = context.ParseResult.GetValueForOption(tabWidthOption);
+            overrides.CheckTrailingWhitespace = context.ParseResult.GetValueForOption(checkTrailingWhitespaceOption);
+            overrides.CheckTrailingNewline = context.ParseResult.GetValueForOption(checkTrailingNewlineOption);
+            overrides.CheckSpaceAroundOperators = context.ParseResult.GetValueForOption(checkSpaceAroundOperatorsOption);
+            overrides.CheckSpaceAfterComma = context.ParseResult.GetValueForOption(checkSpaceAfterCommaOption);
+
+            // Blank lines config
+            overrides.EmptyLinesBetweenFunctions = context.ParseResult.GetValueForOption(emptyLinesBetweenFunctionsOption);
+            overrides.MaxConsecutiveEmptyLines = context.ParseResult.GetValueForOption(maxConsecutiveEmptyLinesOption);
+            overrides.RequireBlankLineAfterClassDecl = context.ParseResult.GetValueForOption(requireBlankAfterClassOption);
+            overrides.RequireTwoBlankLinesBetweenFunctions = context.ParseResult.GetValueForOption(requireTwoBlankBetweenFunctionsOption);
+            overrides.RequireBlankLineBetweenMemberTypes = context.ParseResult.GetValueForOption(requireBlankBetweenMemberTypesOption);
+
+            // Best practices
+            overrides.SuggestTypeHints = context.ParseResult.GetValueForOption(suggestTypeHintsOption);
+            overrides.RequireTrailingComma = context.ParseResult.GetValueForOption(requireTrailingCommaOption);
+            overrides.EnforceMemberOrdering = context.ParseResult.GetValueForOption(enforceMemberOrderingOption);
+
+            // Magic numbers whitelist
+            overrides.AllowedMagicNumbers = context.ParseResult.GetValueForOption(allowedMagicNumbersOption);
+
             // Build config with fail-on overrides
             var failOn = context.ParseResult.GetValueForOption(failOnOption);
             GDProjectConfig? config = null;
@@ -455,7 +558,7 @@ public static class LintCommandBuilder
                 }
             }
 
-            var cmd = new GDLintCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, optionsOverrides: overrides);
+            var cmd = new GDLintCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, optionsOverrides: overrides, logger: logger);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

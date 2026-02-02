@@ -337,3 +337,58 @@ public class GDLspMarkupContent
     public static GDLspMarkupContent PlainText(string text) => new() { Kind = "plaintext", Value = text };
     public static GDLspMarkupContent Markdown(string text) => new() { Kind = "markdown", Value = text };
 }
+
+/// <summary>
+/// Represents information about programming constructs like variables, classes, interfaces etc.
+/// Used by workspace/symbol.
+/// </summary>
+public class GDLspSymbolInformation
+{
+    /// <summary>
+    /// The name of this symbol.
+    /// </summary>
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The kind of this symbol.
+    /// </summary>
+    [JsonPropertyName("kind")]
+    public GDLspSymbolKind Kind { get; set; }
+
+    /// <summary>
+    /// The location of this symbol.
+    /// </summary>
+    [JsonPropertyName("location")]
+    public GDLspLocation Location { get; set; } = new();
+
+    /// <summary>
+    /// The name of the symbol containing this symbol.
+    /// </summary>
+    [JsonPropertyName("containerName")]
+    public string? ContainerName { get; set; }
+}
+
+/// <summary>
+/// Parameters for the workspace/symbol request.
+/// </summary>
+public class GDWorkspaceSymbolParams
+{
+    /// <summary>
+    /// A query string to filter symbols by.
+    /// </summary>
+    [JsonPropertyName("query")]
+    public string Query { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Parameters for the workspace/didChangeConfiguration notification.
+/// </summary>
+public class GDDidChangeConfigurationParams
+{
+    /// <summary>
+    /// The actual changed settings.
+    /// </summary>
+    [JsonPropertyName("settings")]
+    public object? Settings { get; set; }
+}

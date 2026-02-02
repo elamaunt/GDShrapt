@@ -10,7 +10,11 @@ namespace GDShrapt.CLI;
 /// </summary>
 public static class RenameCommandBuilder
 {
-    public static Command Build(Option<string> globalFormatOption)
+    public static Command Build(
+        Option<string> globalFormatOption,
+        Option<bool> verboseOption,
+        Option<bool> debugOption,
+        Option<bool> quietOption)
     {
         var command = new Command("rename", "Rename a symbol across the project");
 

@@ -134,9 +134,9 @@ public class GDProIntegrationTests
     }
 
     [TestMethod]
-    public void TryUseFeature_WithUnlicensedProvider_WritesWarningAndReturnsFalse()
+    public void TryUseFeature_WithUnlicensedProvider_IsSilentAndReturnsFalse()
     {
-        // Arrange
+        // Arrange - user never purchased license
         var mockProvider = MockProFeatureProvider.Unlicensed();
         GDProIntegration.RegisterProvider(mockProvider);
         using var output = new StringWriter();
@@ -146,15 +146,14 @@ public class GDProIntegrationTests
 
         // Assert
         result.Should().BeFalse();
-        var outputText = output.ToString();
-        outputText.Should().Contain("Pro license required");
-        outputText.Should().Contain("SARIF export");
+        // Should be silent for users who never purchased
+        output.ToString().Should().BeEmpty();
     }
 
     [TestMethod]
     public void TryUseFeature_WithExpiredProvider_WritesWarningAndReturnsFalse()
     {
-        // Arrange
+        // Arrange - user previously had license but it expired
         var mockProvider = MockProFeatureProvider.Expired();
         GDProIntegration.RegisterProvider(mockProvider);
         using var output = new StringWriter();
@@ -165,7 +164,8 @@ public class GDProIntegrationTests
         // Assert
         result.Should().BeFalse();
         var outputText = output.ToString();
-        outputText.Should().Contain("Pro license required");
+        // Should show warning for users who had license before
+        outputText.Should().Contain("License expired");
         outputText.Should().Contain("Expired");
     }
 

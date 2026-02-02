@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using GDShrapt.CLI.Core;
+using GDShrapt.Linter;
 using GDShrapt.Reader;
 
 namespace GDShrapt.CLI;
@@ -142,6 +143,35 @@ public static class OptionParsers
             "afteropen" or "afteropening" or "afteropeningbracket" => LineWrapStyle.AfterOpeningBracket,
             "before" or "beforeelements" => LineWrapStyle.BeforeElements,
             _ => LineWrapStyle.AfterOpeningBracket
+        };
+    }
+
+    /// <summary>
+    /// Parses a line wrap style string to LineWrapStyle enum (extended with all options).
+    /// </summary>
+    public static LineWrapStyle ParseLineWrapStyleExtended(string? value)
+    {
+        return value?.ToLowerInvariant() switch
+        {
+            "afteropen" or "afteropening" or "afteropeningbracket" => LineWrapStyle.AfterOpeningBracket,
+            "before" or "beforeelements" => LineWrapStyle.BeforeElements,
+            "hanging" or "hangingindent" => LineWrapStyle.HangingIndent,
+            "compact" or "compactvertical" => LineWrapStyle.CompactVertical,
+            "aligned" => LineWrapStyle.Aligned,
+            _ => LineWrapStyle.AfterOpeningBracket
+        };
+    }
+
+    /// <summary>
+    /// Parses an indentation style string to GDIndentationStyle enum (for linter).
+    /// </summary>
+    public static GDIndentationStyle ParseIndentationStyle(string? value)
+    {
+        return value?.ToLowerInvariant() switch
+        {
+            "spaces" or "space" => GDIndentationStyle.Spaces,
+            "tabs" or "tab" => GDIndentationStyle.Tabs,
+            _ => GDIndentationStyle.Tabs
         };
     }
 }

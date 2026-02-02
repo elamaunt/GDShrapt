@@ -104,9 +104,9 @@ internal class MoveGetNodeToOnreadyAction : IGDRefactoringAction
         {
             var title = $"Move to @onready ({plan.TypeConfidence})";
 
-            // In Base Plugin: Apply is disabled (Pro required)
+            // In Base Plugin: Apply is disabled, preview only
             var canApply = false;
-            var proMessage = "GDShrapt Pro required to apply this refactoring";
+            var proMessage = "Preview only in this version";
 
             var result = await previewDialog.ShowForResult(
                 title,

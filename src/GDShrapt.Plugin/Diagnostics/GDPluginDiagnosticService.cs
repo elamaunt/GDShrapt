@@ -14,7 +14,10 @@ internal class GDPluginDiagnosticService : IDisposable
     private readonly GDCacheManager? _cacheManager;
 
     private readonly ConcurrentDictionary<string, IReadOnlyList<GDPluginDiagnostic>> _diagnostics = new();
-    private readonly SemaphoreSlim _analysisLock = new(1, 1);
+
+    // Use Interlocked for analysis guards instead of SemaphoreSlim to allow parallelism
+    private int _projectAnalysisInProgress = 0;
+    private int _scriptAnalysisInProgress = 0;
 
     private bool _disposedValue;
 
@@ -112,19 +115,18 @@ internal class GDPluginDiagnosticService : IDisposable
             return;
         }
 
+        // Track analysis in progress but don't block - allow parallel script analysis
+        Interlocked.Increment(ref _scriptAnalysisInProgress);
+
         try
         {
-            Logger.Info("Wait for lock..");
-
-            await _analysisLock.WaitAsync(cancellationToken);
-            Logger.Info("Lock entered");
+            Logger.Verbose($"Analyzing script: {ScriptFile.FullPath}");
 
             var content = await GetScriptContent(ScriptFile);
-            Logger.Info("Got script content");
 
             if (string.IsNullOrEmpty(content))
             {
-                Logger.Info("The content is empty");
+                Logger.Verbose($"Empty content: {ScriptFile.FullPath}");
                 ClearDiagnostics(ScriptFile);
                 return;
             }
@@ -132,46 +134,27 @@ internal class GDPluginDiagnosticService : IDisposable
             // Check cache first (skip if forceRefresh)
             var contentHash = ComputeHash(content);
 
-            Logger.Info("Content hash " + contentHash);
             if (!forceRefresh && _cacheManager != null && _cacheManager.TryGetLintCache(ScriptFile, contentHash, out var cached))
             {
                 _diagnostics[ScriptFile.FullPath] = cached;
                 NotifyDiagnosticsChanged(ScriptFile, cached);
-                Logger.Debug($"Using cached diagnostics for {ScriptFile.FullPath}");
+                Logger.Verbose($"Using cached diagnostics for {ScriptFile.FullPath}");
                 return;
             }
 
-            Logger.Info("Wait for binding");
-
-            // Wait for script to be parsed
-            //await ScriptFile.GetOrWaitAnalyzer();
-
-            Logger.Info("Ready");
-
             if (ScriptFile.Class == null)
             {
-                Logger.Debug($"Script has no AST class, skipping {ScriptFile.FullPath}");
+                Logger.Verbose($"Script has no AST class, skipping {ScriptFile.FullPath}");
                 ClearDiagnostics(ScriptFile);
                 return;
             }
 
-            Logger.Info("Get service");
-            // Create diagnostics service from config and run analysis asynchronously
+            // Create diagnostics service from config and run analysis
             var diagnosticsService = GDDiagnosticsService.FromConfig(_configManager.Config);
-
-            Logger.Info("Diagnosing initialised");
 
             // IMPORTANT: Use Diagnose(GDScriptFile) not Diagnose(GDClassDeclaration)
             // to get semantic model with inheritance support for proper member resolution
-            var result = await Task.Run(() =>
-                {
-                    Logger.Info("Diagnosing started");
-                    // Pass full ScriptFile to use semantic model with inheritance support
-                    return diagnosticsService.Diagnose(ScriptFile);
-                },
-                cancellationToken);
-          
-            Logger.Info("Diagnosing finished");
+            var result = await Task.Run(() => diagnosticsService.Diagnose(ScriptFile), cancellationToken);
 
             // Convert to Plugin diagnostics
             var diagnostics = result.Diagnostics
@@ -181,7 +164,7 @@ internal class GDPluginDiagnosticService : IDisposable
             // Run semantic validator for type-aware validation (member access, argument types, indexers, signals, generics)
             if (ScriptFile.SemanticModel != null)
             {
-                Logger.Info("Running semantic validation");
+                Logger.Verbose($"Running semantic validation for {ScriptFile.FullPath}");
                 var semanticValidatorOptions = new GDSemanticValidatorOptions
                 {
                     CheckTypes = true,
@@ -195,7 +178,7 @@ internal class GDPluginDiagnosticService : IDisposable
                 var semanticValidator = new GDSemanticValidator(ScriptFile.SemanticModel, semanticValidatorOptions);
                 var semanticResult = await Task.Run(() => semanticValidator.Validate(ScriptFile.Class), cancellationToken);
 
-                Logger.Info($"Semantic validation found {semanticResult.Diagnostics.Count} diagnostics");
+                Logger.Verbose($"Semantic validation found {semanticResult.Diagnostics.Count} diagnostics");
 
                 // Convert semantic diagnostics to plugin diagnostics
                 foreach (var diagnostic in semanticResult.Diagnostics)
@@ -203,10 +186,6 @@ internal class GDPluginDiagnosticService : IDisposable
                     var pluginDiagnostic = GDPluginDiagnosticAdapter.ConvertFromValidator(diagnostic, ScriptFile);
                     diagnostics.Add(pluginDiagnostic);
                 }
-            }
-            else
-            {
-                Logger.Info("Semantic model not available, skipping semantic validation");
             }
 
             // Store results
@@ -217,7 +196,7 @@ internal class GDPluginDiagnosticService : IDisposable
 
             NotifyDiagnosticsChanged(ScriptFile, diagnostics);
 
-            Logger.Debug($"Analyzed {ScriptFile.FullPath}: {diagnostics.Count} diagnostics");
+            Logger.Verbose($"Analyzed {ScriptFile.FullPath}: {diagnostics.Count} diagnostics");
         }
         catch (OperationCanceledException)
         {
@@ -225,58 +204,62 @@ internal class GDPluginDiagnosticService : IDisposable
         }
         catch (Exception ex)
         {
-            Logger.Error($"Error analyzing script: {ex.Message}");
+            Logger.Error($"Error analyzing script {ScriptFile.FullPath}: {ex.Message}");
         }
         finally
         {
-            _analysisLock.Release();
+            Interlocked.Decrement(ref _scriptAnalysisInProgress);
         }
     }
 
     /// <summary>
-    /// Analyzes all scripts in the project.
+    /// Analyzes all scripts in the project using parallel analysis from the semantic core.
+    /// This delegates to GDScriptProject.AnalyzeAllAsync() which uses Parallel.ForEach
+    /// with GDSemanticsConfig settings for optimal performance.
     /// </summary>
     /// <param name="forceRefresh">If true, skips cache and forces re-analysis of all scripts.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task AnalyzeProjectAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
     {
-        var startTime = DateTime.UtcNow;
-        var filesAnalyzed = 0;
+        // Prevent concurrent project-wide analysis
+        if (Interlocked.CompareExchange(ref _projectAnalysisInProgress, 1, 0) != 0)
+        {
+            Logger.Debug("Project analysis already in progress, skipping");
+            return;
+        }
 
-        Logger.Info("Starting project-wide analysis...");
+        var startTime = DateTime.UtcNow;
 
         try
         {
-            var maps = _scriptProject.ScriptFiles.ToList();
-            Logger.Info($"Found {maps.Count} scripts to analyze");
+            var scriptFiles = _scriptProject.ScriptFiles.ToList();
+            Logger.Info($"Starting project analysis: {scriptFiles.Count} scripts...");
 
-            if (maps.Count == 0)
+            if (scriptFiles.Count == 0)
             {
-                Logger.Info("No scripts found in project map. Skipping analysis.");
+                Logger.Info("No scripts found in project. Skipping analysis.");
                 return;
             }
 
-            int i = 0;
-            foreach (var map in maps)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
+            // STEP 1: Use GDScriptProject.AnalyzeAllAsync() for parallel semantic analysis
+            // This leverages existing Parallel.ForEach with GDSemanticsConfig settings
+            Logger.Debug("Running parallel semantic analysis via GDScriptProject.AnalyzeAllAsync()");
+            await _scriptProject.AnalyzeAllAsync(cancellationToken);
 
-                Logger.Info("Script analysing.. " + i++);
-                await AnalyzeScriptAsync(map, forceRefresh, cancellationToken);
-                Logger.Info("Script complete " + (i - 1));
-                filesAnalyzed++;
-            }
+            // STEP 2: Collect diagnostics from analyzed scripts (parallel)
+            Logger.Debug("Collecting diagnostics from analyzed scripts...");
+            await CollectDiagnosticsAsync(scriptFiles, forceRefresh, cancellationToken);
 
             var duration = DateTime.UtcNow - startTime;
             var summary = GetProjectSummary();
 
-            Logger.Debug($"Project analysis completed in {duration.TotalMilliseconds:F0}ms: {summary}");
+            Logger.Info($"Project analysis completed in {duration.TotalMilliseconds:F0}ms: {summary}");
 
             OnProjectAnalysisCompleted?.Invoke(new GDPluginProjectAnalysisCompletedEventArgs
             {
                 Summary = summary,
                 Duration = duration,
-                FilesAnalyzed = filesAnalyzed
+                FilesAnalyzed = scriptFiles.Count
             });
         }
         catch (OperationCanceledException)
@@ -287,6 +270,117 @@ internal class GDPluginDiagnosticService : IDisposable
         {
             Logger.Error($"Error during project analysis: {ex.Message}");
         }
+        finally
+        {
+            Interlocked.Exchange(ref _projectAnalysisInProgress, 0);
+        }
+    }
+
+    /// <summary>
+    /// Collects diagnostics from already-analyzed scripts.
+    /// Called after GDScriptProject.AnalyzeAllAsync() completes.
+    /// </summary>
+    private async Task CollectDiagnosticsAsync(
+        IReadOnlyList<GDScriptFile> scriptFiles,
+        bool forceRefresh,
+        CancellationToken cancellationToken)
+    {
+        // Get parallelism from project options
+        var maxParallelism = _scriptProject.Options?.SemanticsConfig?.MaxDegreeOfParallelism ?? -1;
+        if (maxParallelism < 0)
+            maxParallelism = Environment.ProcessorCount;
+        if (maxParallelism == 0)
+            maxParallelism = 1; // Sequential
+
+        var parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = maxParallelism,
+            CancellationToken = cancellationToken
+        };
+
+        // Create diagnostics service once (thread-safe)
+        var diagnosticsService = GDDiagnosticsService.FromConfig(_configManager.Config);
+
+        await Task.Run(() =>
+        {
+            Parallel.ForEach(scriptFiles, parallelOptions, scriptFile =>
+            {
+                try
+                {
+                    CollectScriptDiagnostics(scriptFile, diagnosticsService, forceRefresh);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Error collecting diagnostics for {scriptFile.FullPath}: {ex.Message}");
+                }
+            });
+        }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Collects diagnostics for a single script (called from parallel loop).
+    /// </summary>
+    private void CollectScriptDiagnostics(GDScriptFile scriptFile, GDDiagnosticsService diagnosticsService, bool forceRefresh)
+    {
+        if (!_configManager.Config.Linting.Enabled)
+        {
+            ClearDiagnostics(scriptFile);
+            return;
+        }
+
+        if (scriptFile.Class == null)
+        {
+            ClearDiagnostics(scriptFile);
+            return;
+        }
+
+        // Check cache
+        var content = scriptFile.Class.ToString();
+        var contentHash = ComputeHash(content);
+
+        if (!forceRefresh && _cacheManager != null && _cacheManager.TryGetLintCache(scriptFile, contentHash, out var cached))
+        {
+            _diagnostics[scriptFile.FullPath] = cached;
+            NotifyDiagnosticsChanged(scriptFile, cached);
+            return;
+        }
+
+        // Run diagnostics
+        var result = diagnosticsService.Diagnose(scriptFile);
+        var diagnostics = result.Diagnostics
+            .Select(d => GDPluginDiagnosticAdapter.Convert(d, scriptFile))
+            .ToList();
+
+        // Run semantic validator if available
+        if (scriptFile.SemanticModel != null)
+        {
+            var semanticValidatorOptions = new GDSemanticValidatorOptions
+            {
+                CheckTypes = true,
+                CheckMemberAccess = true,
+                CheckArgumentTypes = true,
+                CheckIndexers = true,
+                CheckSignalTypes = true,
+                CheckGenericTypes = true
+            };
+
+            var semanticValidator = new GDSemanticValidator(scriptFile.SemanticModel, semanticValidatorOptions);
+            var semanticResult = semanticValidator.Validate(scriptFile.Class);
+
+            foreach (var diagnostic in semanticResult.Diagnostics)
+            {
+                var pluginDiagnostic = GDPluginDiagnosticAdapter.ConvertFromValidator(diagnostic, scriptFile);
+                diagnostics.Add(pluginDiagnostic);
+            }
+        }
+
+        // Store results
+        _diagnostics[scriptFile.FullPath] = diagnostics;
+
+        // Cache results
+        _cacheManager?.StoreLintCache(scriptFile, contentHash, diagnostics);
+
+        NotifyDiagnosticsChanged(scriptFile, diagnostics);
     }
 
     /// <summary>
@@ -298,6 +392,14 @@ internal class GDPluginDiagnosticService : IDisposable
         {
             NotifyDiagnosticsChanged(script, Array.Empty<GDPluginDiagnostic>());
         }
+    }
+
+    /// <summary>
+    /// Clears diagnostics for a specific file path (used for rename operations).
+    /// </summary>
+    public void ClearDiagnosticsForPath(string fullPath)
+    {
+        _diagnostics.TryRemove(fullPath, out _);
     }
 
     /// <summary>
@@ -409,7 +511,6 @@ internal class GDPluginDiagnosticService : IDisposable
             if (disposing)
             {
                 _configManager.OnConfigChanged -= OnConfigChanged;
-                _analysisLock.Dispose();
             }
 
             _disposedValue = true;

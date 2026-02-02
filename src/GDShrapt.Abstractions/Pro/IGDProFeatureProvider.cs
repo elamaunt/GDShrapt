@@ -20,6 +20,14 @@ public interface IGDProFeatureProvider
     bool IsLicensed { get; }
 
     /// <summary>
+    /// Whether a license was ever found (even if now expired or invalid).
+    /// Use this to determine if "license required" messages should be shown.
+    /// Returns true for: Valid, Trial, Perpetual, Expired, UpdatesExpired, Invalid.
+    /// Returns false only for: NotFound, ProNotAvailable.
+    /// </summary>
+    bool WasEverLicensed { get; }
+
+    /// <summary>
     /// Checks if a specific Pro feature is enabled.
     /// </summary>
     /// <param name="feature">The feature to check.</param>

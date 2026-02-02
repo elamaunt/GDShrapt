@@ -16,7 +16,7 @@ public static class GDProjectLoader
     /// <param name="logger">Optional logger.</param>
     /// <param name="enableSceneTypes">Enable scene types provider for autoloads.</param>
     /// <returns>Loaded and analyzed project.</returns>
-    public static GDScriptProject LoadProject(string projectPath, IGDSemanticLogger? logger = null, bool enableSceneTypes = true)
+    public static GDScriptProject LoadProject(string projectPath, IGDLogger? logger = null, bool enableSceneTypes = true)
     {
         var fullPath = Path.GetFullPath(projectPath);
 
@@ -46,7 +46,7 @@ public static class GDProjectLoader
     /// <param name="projectPath">Path to the project directory.</param>
     /// <param name="logger">Optional logger.</param>
     /// <returns>Loaded but not analyzed project.</returns>
-    public static GDScriptProject LoadProjectWithoutAnalysis(string projectPath, IGDSemanticLogger? logger = null)
+    public static GDScriptProject LoadProjectWithoutAnalysis(string projectPath, IGDLogger? logger = null)
     {
         var fullPath = Path.GetFullPath(projectPath);
 

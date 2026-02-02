@@ -61,6 +61,10 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnNotification<GDDidCloseTextDocumentParams>("textDocument/didClose", HandleDidCloseAsync);
         _transport.OnNotification<GDDidSaveTextDocumentParams>("textDocument/didSave", HandleDidSaveAsync);
 
+        // Workspace
+        _transport.OnNotification<GDDidChangeConfigurationParams>("workspace/didChangeConfiguration", HandleDidChangeConfigurationAsync);
+        _transport.OnRequest<GDWorkspaceSymbolParams, GDLspSymbolInformation[]?>("workspace/symbol", HandleWorkspaceSymbolAsync);
+
         // Language features
         _transport.OnRequest<GDDefinitionParams, GDLspLocation?>("textDocument/definition", HandleDefinitionAsync);
         _transport.OnRequest<GDReferencesParams, GDLspLocation[]?>("textDocument/references", HandleReferencesAsync);
@@ -146,7 +150,8 @@ public class GDLanguageServer : IGDLanguageServer
                 InlayHintProvider = new GDInlayHintOptions
                 {
                     ResolveProvider = false
-                }
+                },
+                WorkspaceSymbolProvider = true
             },
             ServerInfo = new GDServerInfo
             {
@@ -251,6 +256,97 @@ public class GDLanguageServer : IGDLanguageServer
     {
         // Optionally trigger full analysis on save
         return Task.CompletedTask;
+    }
+
+    #endregion
+
+    #region Workspace Handlers
+
+    private async Task HandleDidChangeConfigurationAsync(GDDidChangeConfigurationParams @params)
+    {
+        // Reload configuration and refresh diagnostics
+        // The settings are in @params.Settings which can contain gdshrapt configuration
+        // For now, just refresh diagnostics for all open documents
+        if (_diagnosticPublisher != null && _documentManager != null)
+        {
+            await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
+        }
+    }
+
+    private Task<GDLspSymbolInformation[]?> HandleWorkspaceSymbolAsync(GDWorkspaceSymbolParams @params, CancellationToken ct)
+    {
+        if (_project == null)
+            return Task.FromResult<GDLspSymbolInformation[]?>(null);
+
+        var query = @params.Query?.ToLowerInvariant() ?? "";
+        var results = new System.Collections.Generic.List<GDLspSymbolInformation>();
+
+        foreach (var script in _project.ScriptFiles)
+        {
+            if (script.Class == null || script.FullPath == null)
+                continue;
+
+            var uri = GDDocumentManager.PathToUri(script.FullPath);
+
+            // Search class members
+            foreach (var member in script.Class.Members)
+            {
+                string? name = null;
+                GDLspSymbolKind kind = GDLspSymbolKind.Variable;
+                int line = 0;
+
+                if (member is Reader.GDMethodDeclaration method)
+                {
+                    name = method.Identifier?.ToString();
+                    kind = GDLspSymbolKind.Method;
+                    line = method.StartLine;
+                }
+                else if (member is Reader.GDVariableDeclaration variable)
+                {
+                    name = variable.Identifier?.ToString();
+                    kind = variable.IsConstant ? GDLspSymbolKind.Constant : GDLspSymbolKind.Variable;
+                    line = variable.StartLine;
+                }
+                else if (member is Reader.GDSignalDeclaration signal)
+                {
+                    name = signal.Identifier?.ToString();
+                    kind = GDLspSymbolKind.Event;
+                    line = signal.StartLine;
+                }
+                else if (member is Reader.GDEnumDeclaration enumDecl)
+                {
+                    name = enumDecl.Identifier?.ToString();
+                    kind = GDLspSymbolKind.Enum;
+                    line = enumDecl.StartLine;
+                }
+                else if (member is Reader.GDInnerClassDeclaration innerClass)
+                {
+                    name = innerClass.Identifier?.ToString();
+                    kind = GDLspSymbolKind.Class;
+                    line = innerClass.StartLine;
+                }
+
+                if (name != null && (string.IsNullOrEmpty(query) || name.ToLowerInvariant().Contains(query)))
+                {
+                    results.Add(new GDLspSymbolInformation
+                    {
+                        Name = name,
+                        Kind = kind,
+                        Location = new GDLspLocation
+                        {
+                            Uri = uri,
+                            Range = new GDLspRange
+                            {
+                                Start = new GDLspPosition { Line = line, Character = 0 },
+                                End = new GDLspPosition { Line = line, Character = 0 }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        return Task.FromResult<GDLspSymbolInformation[]?>(results.ToArray());
     }
 
     #endregion

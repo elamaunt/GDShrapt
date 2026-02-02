@@ -16,7 +16,7 @@ public static class GDProjectLoader
     /// <param name="projectPath">Path to the project directory (should contain project.godot).</param>
     /// <param name="logger">Optional logger.</param>
     /// <returns>Loaded and analyzed project.</returns>
-    public static GDScriptProject LoadProject(string projectPath, IGDSemanticLogger? logger = null)
+    public static GDScriptProject LoadProject(string projectPath, IGDLogger? logger = null)
     {
         return SemanticProjectLoader.LoadProject(projectPath, logger);
     }

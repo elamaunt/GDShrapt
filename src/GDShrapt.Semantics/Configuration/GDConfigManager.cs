@@ -32,7 +32,7 @@ public class GDConfigManager : IDisposable
     private readonly string _projectPath;
     private readonly string _configFilePath;
     private readonly bool _watchForChanges;
-    private readonly IGDSemanticLogger? _logger;
+    private readonly IGDLogger? _logger;
     private FileSystemWatcher? _watcher;
     private GDProjectConfig _config;
     private DateTime _lastLoadTime;
@@ -59,7 +59,7 @@ public class GDConfigManager : IDisposable
     /// <param name="projectPath">Path to the project root directory.</param>
     /// <param name="watchForChanges">If true, watches for external config file changes.</param>
     /// <param name="logger">Optional logger for diagnostic messages.</param>
-    public GDConfigManager(string projectPath, bool watchForChanges = false, IGDSemanticLogger? logger = null)
+    public GDConfigManager(string projectPath, bool watchForChanges = false, IGDLogger? logger = null)
     {
         _projectPath = projectPath;
         _configFilePath = Path.Combine(projectPath, ConfigFileName);

@@ -237,6 +237,12 @@ public class GDServerCapabilities
     /// </summary>
     [JsonPropertyName("inlayHintProvider")]
     public GDInlayHintOptions? InlayHintProvider { get; set; }
+
+    /// <summary>
+    /// The server provides workspace symbol support.
+    /// </summary>
+    [JsonPropertyName("workspaceSymbolProvider")]
+    public bool? WorkspaceSymbolProvider { get; set; }
 }
 
 /// <summary>

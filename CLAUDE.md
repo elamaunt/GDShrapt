@@ -108,7 +108,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 **Abstractions** - Core interfaces
 - `IGDRuntimeProvider` - Type system: `IsKnownType()`, `GetTypeInfo()`, `GetMember()`, `GetBaseType()`, `IsAssignableTo()`, `GetGlobalFunction()`, `GetGlobalClass()`, `GetAllTypes()`
-- `IGDProjectContext`, `IGDFileSystem`, `IGDSemanticLogger`
+- `IGDProjectContext`, `IGDFileSystem`, `IGDLogger`
 - `IGDMemberAccessAnalyzer` - Type inference: `GetMemberAccessConfidence()`, `GetExpressionType()`
 - Type abstractions: `GDRuntimeTypeInfo`, `GDRuntimeMemberInfo`, `GDUnionType`, `GDDuckType`
 - Scope: `GDScope`, `GDScopeStack`, `GDSymbol`, `GDSymbolKind`

@@ -301,7 +301,7 @@ internal partial class RenamePreviewDialog : AcceptDialog
 
         _proMessageLabel = new Label
         {
-            Text = "GDShrapt Pro required for Potential/NameMatch confidence",
+            Text = "Potential/NameMatch edits are preview only",
             HorizontalAlignment = HorizontalAlignment.Center
         };
         _proMessageLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.8f, 0.4f));
@@ -471,10 +471,10 @@ internal partial class RenamePreviewDialog : AcceptDialog
     {
         var confidence = (GDConfidenceMode)_confidenceOption.GetItemId(_confidenceOption.Selected);
 
-        // Check if can apply
+        // Check if can apply non-strict edits
         if (confidence != GDConfidenceMode.Strict && !_isProLicensed)
         {
-            Logger.Warning("RenamePreviewDialog: Cannot apply non-strict rename without Pro license");
+            Logger.Warning("RenamePreviewDialog: Cannot apply non-strict rename (preview only)");
             return;
         }
 

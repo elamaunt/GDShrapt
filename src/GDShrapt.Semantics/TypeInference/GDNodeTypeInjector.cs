@@ -17,13 +17,13 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
     private readonly GDSceneTypesProvider? _sceneProvider;
     private readonly IGDScriptProvider? _scriptProvider;
     private readonly GDGodotTypesProvider? _godotTypesProvider;
-    private readonly IGDSemanticLogger? _logger;
+    private readonly IGDLogger? _logger;
 
     public GDNodeTypeInjector(
         GDSceneTypesProvider? sceneProvider = null,
         IGDScriptProvider? scriptProvider = null,
         GDGodotTypesProvider? godotTypesProvider = null,
-        IGDSemanticLogger? logger = null)
+        IGDLogger? logger = null)
     {
         _sceneProvider = sceneProvider;
         _scriptProvider = scriptProvider;

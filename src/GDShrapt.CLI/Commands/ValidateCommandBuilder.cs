@@ -11,7 +11,11 @@ namespace GDShrapt.CLI;
 /// </summary>
 public static class ValidateCommandBuilder
 {
-    public static Command Build(Option<string> globalFormatOption)
+    public static Command Build(
+        Option<string> globalFormatOption,
+        Option<bool> verboseOption,
+        Option<bool> debugOption,
+        Option<bool> quietOption)
     {
         var command = new Command("validate", "Validate GDScript syntax and semantics");
 
@@ -79,6 +83,20 @@ public static class ValidateCommandBuilder
         command.AddOption(checkSignalsOption);
         command.AddOption(checkResourcePathsOption);
 
+        // Nullable/typing options
+        var nullableStrictnessOption = new Option<string?>(
+            new[] { "--nullable-strictness" },
+            "Nullable access check strictness: error, strict, normal, relaxed, off");
+        var warnDictionaryIndexerOption = new Option<bool?>(
+            new[] { "--warn-dictionary-indexer" },
+            "Warn on Dictionary indexer access (values may be null)");
+        var warnUntypedParametersOption = new Option<bool?>(
+            new[] { "--warn-untyped-parameters" },
+            "Warn on untyped function parameters");
+        command.AddOption(nullableStrictnessOption);
+        command.AddOption(warnDictionaryIndexerOption);
+        command.AddOption(warnUntypedParametersOption);
+
         // Fail threshold
         var failOnOption = new Option<string?>(
             new[] { "--fail-on" },
@@ -108,6 +126,12 @@ public static class ValidateCommandBuilder
             var minSeverity = context.ParseResult.GetValueForOption(minSeverityOption);
             var maxIssues = context.ParseResult.GetValueForOption(maxIssuesOption);
             var groupBy = context.ParseResult.GetValueForOption(groupByOption);
+            var verbose = context.ParseResult.GetValueForOption(verboseOption);
+            var debug = context.ParseResult.GetValueForOption(debugOption);
+            var quiet = context.ParseResult.GetValueForOption(quietOption);
+
+            // Create logger from verbosity flags
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
 
             // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;
@@ -155,25 +179,40 @@ public static class ValidateCommandBuilder
 
             validationChecks = checkOverrides.ApplyTo(validationChecks);
 
+            // Apply validation config overrides
+            var validationConfigOverrides = new GDValidationConfigOverrides
+            {
+                NullableStrictness = context.ParseResult.GetValueForOption(nullableStrictnessOption),
+                WarnOnDictionaryIndexer = context.ParseResult.GetValueForOption(warnDictionaryIndexerOption),
+                WarnOnUntypedParameters = context.ParseResult.GetValueForOption(warnUntypedParametersOption)
+            };
+
             // Build config with fail-on overrides
             var failOn = context.ParseResult.GetValueForOption(failOnOption);
             GDProjectConfig? config = null;
-            if (failOn != null)
+            if (failOn != null || validationConfigOverrides.NullableStrictness != null ||
+                validationConfigOverrides.WarnOnDictionaryIndexer.HasValue ||
+                validationConfigOverrides.WarnOnUntypedParameters.HasValue)
             {
                 config = new GDProjectConfig();
-                switch (failOn.ToLowerInvariant())
+                validationConfigOverrides.ApplyTo(config.Validation);
+
+                if (failOn != null)
                 {
-                    case "warning":
-                        config.Cli.FailOnWarning = true;
-                        break;
-                    case "hint":
-                        config.Cli.FailOnWarning = true;
-                        config.Cli.FailOnHint = true;
-                        break;
+                    switch (failOn.ToLowerInvariant())
+                    {
+                        case "warning":
+                            config.Cli.FailOnWarning = true;
+                            break;
+                        case "hint":
+                            config.Cli.FailOnWarning = true;
+                            config.Cli.FailOnHint = true;
+                            break;
+                    }
                 }
             }
 
-            var cmd = new GDValidateCommand(projectPath, formatter, config: config, checks: validationChecks, strict: strict, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode);
+            var cmd = new GDValidateCommand(projectPath, formatter, config: config, checks: validationChecks, strict: strict, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, logger: logger);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

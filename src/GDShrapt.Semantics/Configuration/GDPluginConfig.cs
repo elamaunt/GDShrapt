@@ -1,9 +1,10 @@
+using GDShrapt.Abstractions;
 using System.Collections.Generic;
 
 namespace GDShrapt.Semantics;
 
 /// <summary>
-/// Plugin-specific configuration (UI, notifications, cache, todo tags).
+/// Plugin-specific configuration (UI, notifications, cache, todo tags, analysis).
 /// These settings are specific to the Godot editor plugin and are
 /// ignored by CLI and LSP.
 /// </summary>
@@ -28,6 +29,132 @@ public class GDPluginConfig
     /// TODO/FIXME tags panel configuration.
     /// </summary>
     public GDTodoTagsConfig TodoTags { get; set; } = new();
+
+    /// <summary>
+    /// Analysis configuration (parallelism, logging, validation).
+    /// </summary>
+    public GDPluginAnalysisConfig Analysis { get; set; } = new();
+}
+
+/// <summary>
+/// Analysis configuration for the plugin.
+/// Controls parallelism, logging, validation checks, and performance.
+/// </summary>
+public class GDPluginAnalysisConfig
+{
+    /// <summary>
+    /// Log level for plugin output. Default: Info
+    /// </summary>
+    public GDLogLevel LogLevel { get; set; } = GDLogLevel.Info;
+
+    /// <summary>
+    /// Maximum degree of parallelism for analysis.
+    /// -1 = automatic (use all processors)
+    /// 0 = sequential (no parallelism)
+    /// Positive = explicit thread count
+    /// Default: -1
+    /// </summary>
+    public int MaxParallelism { get; set; } = -1;
+
+    /// <summary>
+    /// Timeout for analysis operations in seconds.
+    /// Default: 30
+    /// </summary>
+    public int TimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Enable incremental analysis (only re-analyze changed files).
+    /// Default: true
+    /// </summary>
+    public bool IncrementalEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Maximum number of issues to report (0 = unlimited).
+    /// Default: 0
+    /// </summary>
+    public int MaxIssues { get; set; } = 0;
+
+    /// <summary>
+    /// Debounce interval for file changes in milliseconds.
+    /// Default: 300
+    /// </summary>
+    public int FileChangeDebounceMs { get; set; } = 300;
+
+    /// <summary>
+    /// Enable syntax checking. Default: true
+    /// </summary>
+    public bool CheckSyntax { get; set; } = true;
+
+    /// <summary>
+    /// Enable scope checking. Default: true
+    /// </summary>
+    public bool CheckScope { get; set; } = true;
+
+    /// <summary>
+    /// Enable type checking. Default: true
+    /// </summary>
+    public bool CheckTypes { get; set; } = true;
+
+    /// <summary>
+    /// Enable function call checking. Default: true
+    /// </summary>
+    public bool CheckCalls { get; set; } = true;
+
+    /// <summary>
+    /// Enable control flow checking. Default: true
+    /// </summary>
+    public bool CheckControlFlow { get; set; } = true;
+
+    /// <summary>
+    /// Enable indentation checking. Default: true
+    /// </summary>
+    public bool CheckIndentation { get; set; } = true;
+
+    /// <summary>
+    /// Enable member access checking. Default: true
+    /// </summary>
+    public bool CheckMemberAccess { get; set; } = true;
+
+    /// <summary>
+    /// Enable abstract method checking. Default: true
+    /// </summary>
+    public bool CheckAbstract { get; set; } = true;
+
+    /// <summary>
+    /// Enable signal checking. Default: true
+    /// </summary>
+    public bool CheckSignals { get; set; } = true;
+
+    /// <summary>
+    /// Enable resource path checking. Default: true
+    /// </summary>
+    public bool CheckResourcePaths { get; set; } = true;
+
+    /// <summary>
+    /// Enable call site registry for cross-file dependency tracking.
+    /// Required for efficient incremental analysis.
+    /// Default: true
+    /// </summary>
+    public bool EnableCallSiteRegistry { get; set; } = true;
+
+    /// <summary>
+    /// Threshold for triggering full reparse during incremental updates.
+    /// If more than this fraction of the file changes, do full reparse.
+    /// Range: 0.1 - 1.0, Default: 0.5
+    /// </summary>
+    public double IncrementalFullReparseThreshold { get; set; } = 0.5;
+
+    /// <summary>
+    /// Maximum number of affected members before falling back to full analysis.
+    /// Default: 3
+    /// </summary>
+    public int IncrementalMaxAffectedMembers { get; set; } = 3;
+
+    /// <summary>
+    /// Number of files to process in parallel batches.
+    /// Default: 10
+    /// </summary>
+    public int ParallelBatchSize { get; set; } = 10;
 }
 
 /// <summary>

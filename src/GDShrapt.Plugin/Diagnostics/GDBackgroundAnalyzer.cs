@@ -6,153 +6,160 @@ using System.Threading.Tasks;
 namespace GDShrapt.Plugin;
 
 /// <summary>
-/// Manages background analysis of scripts with debouncing and prioritization.
+/// Manages background analysis of scripts.
+///
+/// SIMPLIFIED: The semantic core (GDScriptProject) now handles:
+/// - Debouncing via FileChangeDebounceMs
+/// - Parallel analysis via AnalyzeAllAsync()
+/// - File watching and ScriptChanged events
+///
+/// This class now only handles:
+/// - Priority queue for open tabs (immediate analysis)
+/// - Initial project analysis trigger on startup
 /// </summary>
 internal class GDBackgroundAnalyzer : IDisposable
 {
     private readonly GDPluginDiagnosticService _diagnosticService;
     private readonly GDScriptProject _scriptProject;
-
-    private readonly ConcurrentQueue<AnalysisRequest> _queue = new();
-    private readonly ConcurrentDictionary<string, DateTime> _pendingScripts = new();
-    private readonly SemaphoreSlim _queueSignal = new(0);
     private readonly CancellationTokenSource _cts = new();
 
-    private Task? _workerTask;
+    // Priority queue for open files (analyze immediately)
+    private readonly ConcurrentQueue<GDScriptFile> _priorityQueue = new();
+    private readonly SemaphoreSlim _prioritySignal = new(0);
+
+    private Task? _priorityWorkerTask;
     private bool _disposedValue;
-    private string? _priorityScript;
+    private bool _started;
 
-    private const double DebounceDelayMs = 500;
-    private const int MaxQueueSize = 100;
-
-    /// <summary>
-    /// Creates a new GDBackgroundAnalyzer.
-    /// </summary>
-    public GDBackgroundAnalyzer(GDPluginDiagnosticService diagnosticService, GDScriptProject ScriptProject)
+    public GDBackgroundAnalyzer(GDPluginDiagnosticService diagnosticService, GDScriptProject scriptProject)
     {
         _diagnosticService = diagnosticService;
-        _scriptProject = ScriptProject;
+        _scriptProject = scriptProject;
     }
 
     /// <summary>
-    /// Starts the background worker.
+    /// Starts the background analyzer.
     /// </summary>
     public void Start()
     {
-        if (_workerTask != null)
+        if (_started)
             return;
 
-        _workerTask = Task.Run(WorkerLoop);
+        _started = true;
+        _priorityWorkerTask = Task.Run(PriorityWorkerLoop);
         Logger.Debug("Background analyzer started");
     }
 
     /// <summary>
-    /// Stops the background worker.
+    /// Stops the background analyzer.
     /// </summary>
     public void Stop()
     {
         _cts.Cancel();
-        _queueSignal.Release(); // Unblock worker
+        _prioritySignal.Release(); // Unblock worker
 
         try
         {
-            _workerTask?.Wait(TimeSpan.FromSeconds(2));
+            _priorityWorkerTask?.Wait(TimeSpan.FromSeconds(2));
         }
-        catch (AggregateException ex)
+        catch (AggregateException)
         {
-            Logger.Debug($"Background analyzer stop timeout: {ex.InnerExceptions.Count} task(s) did not complete");
+            // Expected on cancellation
         }
 
         Logger.Debug("Background analyzer stopped");
     }
 
     /// <summary>
-    /// Queues a script for analysis with debouncing.
+    /// Queues a script for priority analysis (e.g., currently open file).
+    /// These are analyzed immediately without debouncing.
     /// </summary>
     public void QueueScriptAnalysis(GDScriptFile script, bool priority = false)
     {
         if (_cts.IsCancellationRequested)
             return;
 
-        var path = script.FullPath;
-        var now = DateTime.UtcNow;
-
-        // Update pending timestamp (for debouncing)
-        _pendingScripts[path] = now;
-
-        // Set as priority if requested (e.g., currently open file)
         if (priority)
-            _priorityScript = path;
-
-        // Don't queue if already pending
-        if (_queue.Count < MaxQueueSize)
         {
-            _queue.Enqueue(new AnalysisRequest
-            {
-                Script = script,
-                QueuedAt = now,
-                IsPriority = priority
-            });
-
-            _queueSignal.Release();
+            // Priority scripts go to fast-track queue
+            _priorityQueue.Enqueue(script);
+            _prioritySignal.Release();
         }
+        // Non-priority scripts are handled by the semantic core via ScriptChanged events
     }
 
     /// <summary>
-    /// Queues all project scripts for analysis.
+    /// Triggers project-wide analysis using the parallel analyzer in the semantic core.
     /// </summary>
     public void QueueProjectAnalysis()
     {
         if (_cts.IsCancellationRequested)
             return;
 
-        foreach (var script in _scriptProject.ScriptFiles)
-        {
-            QueueScriptAnalysis(script, priority: false);
-        }
+        Logger.Info("Queueing project analysis...");
 
-        Logger.Debug("Queued scripts for analysis");
+        // Use the parallel analysis from the semantic core
+        Task.Run(async () =>
+        {
+            try
+            {
+                await _diagnosticService.AnalyzeProjectAsync(forceRefresh: false, _cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.Debug("Project analysis cancelled");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Project analysis failed: {ex.Message}");
+            }
+        });
     }
 
     /// <summary>
     /// Sets the priority script (currently open file).
+    /// Queues it for immediate analysis.
     /// </summary>
     public void SetPriorityScript(GDScriptFile? script)
     {
-        _priorityScript = script?.FullPath;
+        if (script != null)
+        {
+            QueueScriptAnalysis(script, priority: true);
+        }
     }
 
-    private async Task WorkerLoop()
+    /// <summary>
+    /// Worker loop for priority (open tab) scripts.
+    /// These bypass debouncing for immediate feedback.
+    /// </summary>
+    private async Task PriorityWorkerLoop()
     {
-        Logger.Debug("Background analyzer worker started");
+        Logger.Verbose("Priority analyzer worker started");
 
         while (!_cts.IsCancellationRequested)
         {
             try
             {
-                // Wait for work
-                await _queueSignal.WaitAsync(_cts.Token);
+                await _prioritySignal.WaitAsync(_cts.Token);
 
-                // Debounce - wait a bit before processing
-                await Task.Delay(TimeSpan.FromMilliseconds(DebounceDelayMs), _cts.Token);
-
-                // Process queue
-                while (_queue.TryDequeue(out var request))
+                while (_priorityQueue.TryDequeue(out var script))
                 {
                     if (_cts.IsCancellationRequested)
                         break;
 
-                    // Check if this request is stale (newer request pending)
-                    if (_pendingScripts.TryGetValue(request.Script.FullPath, out var lastQueued))
+                    try
                     {
-                        if (request.QueuedAt < lastQueued)
-                        {
-                            // Skip - newer request pending
-                            continue;
-                        }
+                        Logger.Verbose($"Priority analysis: {script.FullPath}");
+                        await _diagnosticService.AnalyzeScriptAsync(script, forceRefresh: false, _cts.Token);
                     }
-
-                    await ProcessRequest(request);
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Debug($"Priority analysis failed for {script.FullPath}: {ex.Message}");
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -161,41 +168,12 @@ internal class GDBackgroundAnalyzer : IDisposable
             }
             catch (Exception ex)
             {
-                Logger.Error($"Background analyzer error: {ex.Message}");
-                await Task.Delay(1000); // Prevent tight loop on repeated errors
+                Logger.Error($"Priority worker error: {ex.Message}");
+                await Task.Delay(1000);
             }
         }
 
-        Logger.Debug("Background analyzer worker stopped");
-    }
-
-    private async Task ProcessRequest(AnalysisRequest request)
-    {
-        Logger.Debug("ProcessRequest called for " + request.Script.TypeName);
-        try
-        {
-            // Check if this is priority (process immediately)
-            var isPriority = request.IsPriority || request.Script.FullPath == _priorityScript;
-
-            if (!isPriority)
-            {
-                // Small delay between non-priority analyses to avoid blocking
-                await Task.Delay(50, _cts.Token);
-            }
-
-            await _diagnosticService.AnalyzeScriptAsync(request.Script, forceRefresh: false, _cts.Token);
-
-            // Remove from pending
-            _pendingScripts.TryRemove(request.Script.FullPath, out _);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            Logger.Debug($"Failed to analyze {request.Script.FullPath}: {ex.Message}");
-        }
+        Logger.Verbose("Priority analyzer worker stopped");
     }
 
     protected virtual void Dispose(bool disposing)
@@ -206,7 +184,7 @@ internal class GDBackgroundAnalyzer : IDisposable
             {
                 Stop();
                 _cts.Dispose();
-                _queueSignal.Dispose();
+                _prioritySignal.Dispose();
             }
 
             _disposedValue = true;
@@ -217,12 +195,5 @@ internal class GDBackgroundAnalyzer : IDisposable
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
-    }
-
-    private class AnalysisRequest
-    {
-        public required GDScriptFile Script { get; init; }
-        public DateTime QueuedAt { get; init; }
-        public bool IsPriority { get; init; }
     }
 }

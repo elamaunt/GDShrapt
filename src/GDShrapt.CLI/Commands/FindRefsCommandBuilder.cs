@@ -10,7 +10,11 @@ namespace GDShrapt.CLI;
 /// </summary>
 public static class FindRefsCommandBuilder
 {
-    public static Command Build(Option<string> globalFormatOption)
+    public static Command Build(
+        Option<string> globalFormatOption,
+        Option<bool> verboseOption,
+        Option<bool> debugOption,
+        Option<bool> quietOption)
     {
         var command = new Command("find-refs", "Find references to a symbol");
 

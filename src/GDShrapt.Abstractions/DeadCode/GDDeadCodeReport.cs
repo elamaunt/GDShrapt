@@ -1,0 +1,92 @@
+using System.Collections.Generic;
+using System.Linq;
+
+namespace GDShrapt.Abstractions;
+
+/// <summary>
+/// Report containing all detected dead code items.
+/// </summary>
+public class GDDeadCodeReport
+{
+    /// <summary>
+    /// All detected dead code items.
+    /// </summary>
+    public IReadOnlyList<GDDeadCodeItem> Items { get; set; } = new List<GDDeadCodeItem>();
+
+    /// <summary>
+    /// Total count of dead code items.
+    /// </summary>
+    public int TotalCount => Items.Count;
+
+    /// <summary>
+    /// Count of items with Strict confidence.
+    /// </summary>
+    public int StrictCount => Items.Count(i => i.Confidence == GDReferenceConfidence.Strict);
+
+    /// <summary>
+    /// Count of items with Potential confidence.
+    /// </summary>
+    public int PotentialCount => Items.Count(i => i.Confidence == GDReferenceConfidence.Potential);
+
+    /// <summary>
+    /// Count of items with NameMatch confidence.
+    /// </summary>
+    public int NameMatchCount => Items.Count(i => i.Confidence == GDReferenceConfidence.NameMatch);
+
+    /// <summary>
+    /// Count of unused variables.
+    /// </summary>
+    public int UnusedVariables => Items.Count(i => i.Kind == GDDeadCodeKind.Variable);
+
+    /// <summary>
+    /// Count of unused functions.
+    /// </summary>
+    public int UnusedFunctions => Items.Count(i => i.Kind == GDDeadCodeKind.Function);
+
+    /// <summary>
+    /// Count of unused signals.
+    /// </summary>
+    public int UnusedSignals => Items.Count(i => i.Kind == GDDeadCodeKind.Signal);
+
+    /// <summary>
+    /// Count of unreachable code blocks.
+    /// </summary>
+    public int UnreachableBlocks => Items.Count(i => i.Kind == GDDeadCodeKind.Unreachable);
+
+    /// <summary>
+    /// Groups items by file for easier navigation.
+    /// </summary>
+    public IEnumerable<IGrouping<string, GDDeadCodeItem>> ByFile =>
+        Items.GroupBy(i => i.FilePath);
+
+    /// <summary>
+    /// Groups items by kind for summary.
+    /// </summary>
+    public IEnumerable<IGrouping<GDDeadCodeKind, GDDeadCodeItem>> ByKind =>
+        Items.GroupBy(i => i.Kind);
+
+    /// <summary>
+    /// Gets only items with the specified confidence level or higher (more certain).
+    /// </summary>
+    public IEnumerable<GDDeadCodeItem> WithConfidence(GDReferenceConfidence maxConfidence) =>
+        Items.Where(i => i.Confidence <= maxConfidence);
+
+    /// <summary>
+    /// Creates an empty report.
+    /// </summary>
+    public static GDDeadCodeReport Empty => new GDDeadCodeReport();
+
+    /// <summary>
+    /// Whether the report has any items.
+    /// </summary>
+    public bool HasItems => Items.Count > 0;
+
+    public GDDeadCodeReport()
+    {
+    }
+
+    public GDDeadCodeReport(IReadOnlyList<GDDeadCodeItem> items)
+    {
+        Items = items;
+    }
+}

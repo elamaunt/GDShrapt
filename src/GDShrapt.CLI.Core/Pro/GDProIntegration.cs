@@ -86,9 +86,23 @@ public static class GDProIntegration
     }
 
     /// <summary>
+    /// Whether user was ever licensed (for showing renewal messages).
+    /// Returns false if Pro is not available or license was never found.
+    /// </summary>
+    public static bool WasEverLicensed
+    {
+        get
+        {
+            EnsureInitialized();
+            return _provider?.WasEverLicensed ?? false;
+        }
+    }
+
+    /// <summary>
     /// Attempts to use a Pro feature.
     /// Returns true if the feature is available, false otherwise.
-    /// Writes a warning message if the feature is not available.
+    /// Writes a warning message only if user was ever licensed (for renewal messages).
+    /// Silent for users who never purchased.
     /// </summary>
     /// <param name="feature">The feature to use.</param>
     /// <param name="output">Output writer for warnings (uses Console.Error if null).</param>
@@ -99,13 +113,14 @@ public static class GDProIntegration
 
         if (_provider == null)
         {
-            GDProWarnings.WriteProNotAvailable(feature, output ?? Console.Error);
+            // Pro not available - silent, no license ever existed
             return false;
         }
 
         if (!_provider.IsLicensed)
         {
-            GDProWarnings.WriteLicenseRequired(feature, _provider.LicenseState, output ?? Console.Error);
+            // License not valid - only warn if user was ever licensed
+            GDProWarnings.WriteLicenseRequired(feature, _provider.LicenseState, output ?? Console.Error, _provider.WasEverLicensed);
             return false;
         }
 

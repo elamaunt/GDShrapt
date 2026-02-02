@@ -947,7 +947,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var symbolInfo = ResolveMemberOnType(callerType, memberName);
             if (symbolInfo != null)
             {
-                CreateReference(symbolInfo, memberExpression, GDReferenceConfidence.Strict);
+                CreateReference(symbolInfo, memberExpression, GDReferenceConfidence.Strict, callerType);
             }
         }
         else
@@ -963,12 +963,12 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     var symbolInfo = ResolveMemberOnType(narrowedType, memberName);
                     if (symbolInfo != null)
                     {
-                        CreateReference(symbolInfo, memberExpression, GDReferenceConfidence.Strict);
+                        CreateReference(symbolInfo, memberExpression, GDReferenceConfidence.Strict, narrowedType);
                     }
                 }
                 else
                 {
-                    // Duck typed access
+                    // Duck typed access - no callerTypeName for duck-typed
                     var duckSymbol = GDSymbolInfo.DuckTyped(
                         memberName,
                         GDSymbolKind.Property,
@@ -1014,6 +1014,16 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         {
                             CreateReference(inheritedSymbol, callExpression, GDReferenceConfidence.Strict);
                         }
+                        else if (_runtimeProvider != null)
+                        {
+                            // Check if it's a global function (@GDScript built-in like str2var, load, etc.)
+                            var globalInfo = _runtimeProvider.GetMember("@GDScript", methodName);
+                            if (globalInfo != null)
+                            {
+                                var globalSymbol = GDSymbolInfo.BuiltIn(globalInfo, "@GDScript");
+                                CreateReference(globalSymbol, callExpression, GDReferenceConfidence.Strict, "@GDScript");
+                            }
+                        }
                     }
                 }
             }
@@ -1029,7 +1039,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         var symbolInfo = ResolveMemberOnType(callerType, methodName);
                         if (symbolInfo != null)
                         {
-                            CreateReference(symbolInfo, callExpression, GDReferenceConfidence.Strict);
+                            CreateReference(symbolInfo, callExpression, GDReferenceConfidence.Strict, callerType);
                         }
                     }
                 }
@@ -1161,7 +1171,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         return GDSymbolInfo.BuiltIn(memberInfo, declaringType);
     }
 
-    private void CreateReference(GDSymbolInfo symbol, GDNode node, GDReferenceConfidence confidence)
+    private void CreateReference(GDSymbolInfo symbol, GDNode node, GDReferenceConfidence confidence, string? callerTypeName = null)
     {
         var reference = new GDReference
         {
@@ -1170,7 +1180,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
             IsWrite = _inAssignmentLeft,
             IsRead = !_inAssignmentLeft,
             Confidence = confidence,
-            ConfidenceReason = BuildConfidenceReason(symbol, confidence)
+            ConfidenceReason = BuildConfidenceReason(symbol, confidence),
+            CallerTypeName = callerTypeName
         };
 
         // Add type information if available (with recursion guard)
@@ -1193,6 +1204,12 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
         _model!.AddReference(symbol, reference);
         _model.SetNodeSymbol(node, symbol);
+
+        // Index by caller type for member access queries (built-in methods, global functions, etc.)
+        if (!string.IsNullOrEmpty(callerTypeName))
+        {
+            _model.AddMemberAccess(callerTypeName, symbol.Name, reference);
+        }
     }
 
     private static string BuildConfidenceReason(GDSymbolInfo symbol, GDReferenceConfidence confidence)

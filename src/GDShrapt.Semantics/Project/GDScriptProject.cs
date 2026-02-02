@@ -31,7 +31,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private readonly ConcurrentDictionary<GDScriptReference, GDScriptFile> _scripts = new();
     private readonly IGDProjectContext _context;
     private readonly IGDFileSystem _fileSystem;
-    private readonly IGDSemanticLogger _logger;
+    private readonly IGDLogger _logger;
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly bool _enableFileWatcher;
@@ -122,7 +122,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// <summary>
     /// Logger for diagnostic output.
     /// </summary>
-    public IGDSemanticLogger Logger => _logger;
+    public IGDLogger Logger => _logger;
 
     /// <summary>
     /// Project options (may be null if created without options).
@@ -767,7 +767,7 @@ public class GDScriptProjectOptions
     /// <summary>
     /// Custom logger implementation.
     /// </summary>
-    public IGDSemanticLogger? Logger { get; set; }
+    public IGDLogger? Logger { get; set; }
 
     /// <summary>
     /// Whether to enable scene types provider for node path resolution.

@@ -47,12 +47,12 @@ public interface IGDProjectContext
 }
 ```
 
-### IGDSemanticLogger
+### IGDLogger
 
 Logging abstraction for semantic analysis:
 
 ```csharp
-public interface IGDSemanticLogger
+public interface IGDLogger
 {
     void Debug(string message);
     void Info(string message);

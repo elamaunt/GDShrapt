@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Tests;
 
@@ -9,6 +10,51 @@ namespace GDShrapt.CLI.Tests;
 /// </summary>
 public static class TestProjectHelper
 {
+    /// <summary>
+    /// Gets the path to the TestProject fixture.
+    /// The path is relative to the test assembly location.
+    /// </summary>
+    public static string GetTestProjectPath()
+    {
+        var currentDir = Directory.GetCurrentDirectory();
+        // Navigate from bin/Debug/net8.0 up to testproject
+        var testProjectPath = Path.GetFullPath(Path.Combine(
+            currentDir,
+            "..", "..", "..", "..", "..", // Up from bin/Debug/net8.0 to src, then up to GDShrapt root
+            "testproject",
+            "GDShrapt.TestProject"));
+
+        if (!Directory.Exists(testProjectPath))
+        {
+            throw new DirectoryNotFoundException(
+                $"TestProject not found at: {testProjectPath}. " +
+                $"Ensure testproject/GDShrapt.TestProject exists. " +
+                $"Current directory: {currentDir}");
+        }
+
+        return testProjectPath;
+    }
+
+    /// <summary>
+    /// Loads the TestProject fixture as GDScriptProject.
+    /// Returns a fully loaded and analyzed GDScriptProject.
+    /// </summary>
+    public static GDScriptProject LoadTestProject()
+    {
+        var path = GetTestProjectPath();
+        return GDProjectLoader.LoadProject(path);
+    }
+
+    /// <summary>
+    /// Gets the path to a specific test script in the TestProject.
+    /// </summary>
+    /// <param name="scriptName">Script name (e.g., "simple_class.gd")</param>
+    public static string GetTestScriptPath(string scriptName)
+    {
+        var projectPath = GetTestProjectPath();
+        return Path.Combine(projectPath, "test_scripts", scriptName);
+    }
+
     /// <summary>
     /// Creates a temporary Godot project with the specified scripts.
     /// </summary>

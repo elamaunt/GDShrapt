@@ -11,7 +11,11 @@ namespace GDShrapt.CLI;
 /// </summary>
 public static class AnalyzeCommandBuilder
 {
-    public static Command Build(Option<string> globalFormatOption)
+    public static Command Build(
+        Option<string> globalFormatOption,
+        Option<bool> verboseOption,
+        Option<bool> debugOption,
+        Option<bool> quietOption)
     {
         var command = new Command("analyze", "Analyze a GDScript project and output diagnostics");
 
@@ -43,6 +47,12 @@ public static class AnalyzeCommandBuilder
             var minSeverity = context.ParseResult.GetValueForOption(minSeverityOption);
             var maxIssues = context.ParseResult.GetValueForOption(maxIssuesOption);
             var groupBy = context.ParseResult.GetValueForOption(groupByOption);
+            var verbose = context.ParseResult.GetValueForOption(verboseOption);
+            var debug = context.ParseResult.GetValueForOption(debugOption);
+            var quiet = context.ParseResult.GetValueForOption(quietOption);
+
+            // Create logger from verbosity flags
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
 
             // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;
@@ -88,7 +98,7 @@ public static class AnalyzeCommandBuilder
             }
 
             var formatter = CommandHelpers.GetFormatter(format);
-            var cmd = new GDAnalyzeCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode);
+            var cmd = new GDAnalyzeCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, logger: logger);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

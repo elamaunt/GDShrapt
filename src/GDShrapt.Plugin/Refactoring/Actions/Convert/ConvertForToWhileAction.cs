@@ -68,9 +68,9 @@ internal class ConvertForToWhileAction : GDRefactoringActionBase
 
             var title = $"Convert for loop ({conversionTypeText}) to while";
 
-            // In Base Plugin: Apply is disabled (Pro required)
+            // In Base Plugin: Apply is disabled, preview only
             var canApply = false;
-            var proMessage = "GDShrapt Pro required to apply this refactoring";
+            var proMessage = "Preview only in this version";
 
             var result = await dialog.ShowForResult(
                 title,

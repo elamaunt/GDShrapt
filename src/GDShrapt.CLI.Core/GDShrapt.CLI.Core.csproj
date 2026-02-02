@@ -19,7 +19,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="GDShrapt.CLI" />
     <InternalsVisibleTo Include="GDShrapt.CLI.Tests" />
-    <InternalsVisibleTo Include="GDShrapt.Pro.CLI" />
   </ItemGroup>
 
 </Project>

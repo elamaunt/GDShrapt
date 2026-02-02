@@ -17,7 +17,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
 {
     private readonly string _projectPath;
     private readonly IGDFileSystem _fileSystem;
-    private readonly IGDSemanticLogger _logger;
+    private readonly IGDLogger _logger;
     private readonly Dictionary<string, GDSceneInfo> _sceneCache = new();
     private readonly Dictionary<string, GDNodeTypeInfo> _nodePathCache = new();
     private readonly Dictionary<string, GDSceneSnapshot> _snapshots = new();
@@ -45,7 +45,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
 
     #endregion
 
-    public GDSceneTypesProvider(string projectPath, IGDFileSystem? fileSystem = null, IGDSemanticLogger? logger = null)
+    public GDSceneTypesProvider(string projectPath, IGDFileSystem? fileSystem = null, IGDLogger? logger = null)
     {
         _projectPath = projectPath ?? throw new ArgumentNullException(nameof(projectPath));
         _fileSystem = fileSystem ?? new GDDefaultFileSystem();

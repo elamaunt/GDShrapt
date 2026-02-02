@@ -10,12 +10,18 @@ public class FormatCommandBuilderTests
 {
     private Command _command = null!;
     private Option<string> _formatOption = null!;
+    private Option<bool> _verboseOption = null!;
+    private Option<bool> _debugOption = null!;
+    private Option<bool> _quietOption = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _formatOption = new Option<string>("--format", () => "text");
-        _command = FormatCommandBuilder.Build(_formatOption);
+        _verboseOption = new Option<bool>("--verbose");
+        _debugOption = new Option<bool>("--debug");
+        _quietOption = new Option<bool>("--quiet");
+        _command = FormatCommandBuilder.Build(_formatOption, _verboseOption, _debugOption, _quietOption);
     }
 
     [TestMethod]

@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("GDShrapt.Plugin.Tests")]
-[assembly: InternalsVisibleTo("GDShrapt.Pro.Plugin")]
 
 namespace GDShrapt.Plugin;
 
@@ -64,7 +63,11 @@ public partial class GDShraptPlugin : EditorPlugin
     // Project Settings integration
     private ProjectSettingsRegistry _settingsRegistry;
 
-    internal GDScriptProject ScriptProject => _scriptProject;
+    // Pro incremental analyzer integration point
+    // Pro plugin can set this to enable advanced incremental analysis
+    private IGDPluginIncrementalAnalyzer? _incrementalAnalyzer;
+
+    protected internal GDScriptProject ScriptProject => _scriptProject;
     internal GDPluginDiagnosticService GDPluginDiagnosticService => _diagnosticService;
     internal GDConfigManager ConfigManager => _configManager;
     internal GDRefactoringActionProvider GDRefactoringActionProvider => _refactoringActionProvider;
@@ -73,18 +76,56 @@ public partial class GDShraptPlugin : EditorPlugin
     internal GDTypeResolver TypeResolver => _typeResolver;
     internal IGDServiceRegistry ServiceRegistry => _serviceRegistry;
 
+    /// <summary>
+    /// Pro incremental analyzer for advanced analysis with dependency tracking.
+    /// Pro plugin sets this to enable smarter incremental updates.
+    /// Base plugin uses simple per-file analysis when this is null.
+    /// </summary>
+    public IGDPluginIncrementalAnalyzer? IncrementalAnalyzer
+    {
+        get => _incrementalAnalyzer;
+        set => _incrementalAnalyzer = value;
+    }
+
     public override void _Ready()
     {
         try
         {
-            _scriptProject = new GDScriptProject(new GodotEditorProjectContext(), new GDScriptProjectOptions()
+            // Initialize configuration first (needed for Logger and project options)
+            var projectContext = new GodotEditorProjectContext();
+            _configManager = new GDConfigManager(projectContext.ProjectPath, watchForChanges: true);
+
+            // Configure Logger from plugin settings
+            var analysisConfig = _configManager.Config.Plugin?.Analysis;
+            Logger.MinLevel = analysisConfig?.LogLevel switch
+            {
+                Abstractions.GDLogLevel.Verbose => LogLevel.Verbose,
+                Abstractions.GDLogLevel.Debug => LogLevel.Debug,
+                Abstractions.GDLogLevel.Info => LogLevel.Info,
+                Abstractions.GDLogLevel.Warning => LogLevel.Warning,
+                Abstractions.GDLogLevel.Error => LogLevel.Error,
+                Abstractions.GDLogLevel.Silent => LogLevel.Silent,
+                _ => LogLevel.Info
+            };
+
+            // Build GDSemanticsConfig from plugin analysis settings
+            var semanticsConfig = new GDSemanticsConfig
+            {
+                MaxDegreeOfParallelism = analysisConfig?.MaxParallelism ?? -1,
+                EnableParallelAnalysis = (analysisConfig?.MaxParallelism ?? -1) != 0,
+                EnableIncrementalAnalysis = analysisConfig?.IncrementalEnabled ?? true,
+                EnableIncrementalParsing = analysisConfig?.IncrementalEnabled ?? true,
+                FileChangeDebounceMs = analysisConfig?.FileChangeDebounceMs ?? 300
+            };
+
+            _scriptProject = new GDScriptProject(projectContext, new GDScriptProjectOptions()
             {
                 EnableSceneTypesProvider = true,
-                EnableFileWatcher = true
+                EnableFileWatcher = true,
+                EnableCallSiteRegistry = true, // Enable cross-file dependency tracking
+                Logger = SemanticLoggerAdapter.Instance,
+                SemanticsConfig = semanticsConfig
             });
-
-            // Initialize configuration
-            _configManager = new GDConfigManager(_scriptProject.ProjectPath, watchForChanges: true);
 
             // Initialize Project Settings integration
             _settingsRegistry = new ProjectSettingsRegistry(_configManager);
@@ -102,6 +143,14 @@ public partial class GDShraptPlugin : EditorPlugin
             _diagnosticService = new GDPluginDiagnosticService(_scriptProject, _configManager, _cacheManager);
             _diagnosticService.OnDiagnosticsChanged += OnDiagnosticsChanged;
             _diagnosticService.OnProjectAnalysisCompleted += OnProjectAnalysisCompleted;
+
+            // Subscribe to script change events from the semantic core
+            // These events are triggered by the file watcher with debouncing from GDSemanticsConfig
+            _scriptProject.ScriptChanged += OnScriptChanged;
+            _scriptProject.ScriptCreated += OnScriptCreated;
+            _scriptProject.ScriptDeleted += OnScriptDeleted;
+            _scriptProject.ScriptRenamed += OnScriptRenamed;
+            _scriptProject.IncrementalChange += OnIncrementalChange;
 
             // Initialize background analyzer
             _backgroundAnalyzer = new GDBackgroundAnalyzer(_diagnosticService, _scriptProject);
@@ -176,6 +225,15 @@ public partial class GDShraptPlugin : EditorPlugin
         {
             _scriptProject.SceneTypesProvider.NodeRenameDetected -= OnNodeRenameDetected;
             _scriptProject.SceneTypesProvider.DisableFileWatcher();
+        }
+
+        // Unsubscribe from script change events
+        if (_scriptProject != null)
+        {
+            _scriptProject.ScriptChanged -= OnScriptChanged;
+            _scriptProject.ScriptCreated -= OnScriptCreated;
+            _scriptProject.ScriptDeleted -= OnScriptDeleted;
+            _scriptProject.IncrementalChange -= OnIncrementalChange;
         }
 
         // Shutdown diagnostics system
@@ -1484,6 +1542,101 @@ public partial class GDShraptPlugin : EditorPlugin
         {
             Logger.Error($"Failed to save script {ScriptFile.FullPath}: {ex.Message}");
         }
+    }
+
+    #endregion
+
+    #region Script Change Events
+
+    /// <summary>
+    /// Called when a script file is changed on disk.
+    /// The script has already been reloaded and re-analyzed by the semantic core.
+    /// </summary>
+    private void OnScriptChanged(object? sender, GDScriptFileEventArgs e)
+    {
+        Logger.Debug($"Script changed: {e.FullPath}");
+
+        if (e.Script == null)
+        {
+            Logger.Verbose($"Script object is null for changed file: {e.FullPath}");
+            return;
+        }
+
+        // Check if Pro incremental analyzer is available
+        if (_incrementalAnalyzer?.IsAvailable == true)
+        {
+            // Pro: use incremental analysis with dependency tracking
+            Logger.Verbose($"Using Pro incremental analyzer for: {e.FullPath}");
+            _ = _incrementalAnalyzer.AnalyzeChangedAsync(new[] { e.FullPath });
+        }
+        else
+        {
+            // Base: simple per-file analysis
+            // Note: The semantic core already handles debouncing via FileChangeDebounceMs
+            _ = _diagnosticService?.AnalyzeScriptAsync(e.Script);
+        }
+    }
+
+    /// <summary>
+    /// Called when a new script file is created.
+    /// </summary>
+    private void OnScriptCreated(object? sender, GDScriptFileEventArgs e)
+    {
+        Logger.Debug($"Script created: {e.FullPath}");
+
+        if (e.Script == null)
+        {
+            Logger.Verbose($"Script object is null for created file: {e.FullPath}");
+            return;
+        }
+
+        // Queue analysis for the new script
+        _ = _diagnosticService?.AnalyzeScriptAsync(e.Script);
+    }
+
+    /// <summary>
+    /// Called when a script file is deleted.
+    /// </summary>
+    private void OnScriptDeleted(object? sender, GDScriptFileEventArgs e)
+    {
+        Logger.Debug($"Script deleted: {e.FullPath}");
+
+        if (e.Script != null)
+        {
+            // Clear diagnostics for the deleted script
+            _diagnosticService?.ClearDiagnostics(e.Script);
+        }
+    }
+
+    /// <summary>
+    /// Called when a script file is renamed.
+    /// Clears diagnostics for old path and re-analyzes at new path.
+    /// </summary>
+    private void OnScriptRenamed(object? sender, GDScriptRenamedEventArgs e)
+    {
+        Logger.Debug($"Script renamed: {e.OldFullPath} -> {e.NewFullPath}");
+
+        // Clear diagnostics for the old path
+        _diagnosticService?.ClearDiagnosticsForPath(e.OldFullPath);
+
+        // Analyze at new path
+        if (e.Script != null)
+        {
+            _ = _diagnosticService?.AnalyzeScriptAsync(e.Script);
+        }
+    }
+
+    /// <summary>
+    /// Called for incremental changes with detailed AST delta information.
+    /// Pro plugins can use this for more sophisticated incremental analysis.
+    /// Base plugin just logs for debugging.
+    /// </summary>
+    private void OnIncrementalChange(object? sender, GDScriptIncrementalChangeEventArgs e)
+    {
+        Logger.Verbose($"Incremental change: {e.ChangeKind} in {e.FilePath}");
+
+        // Base plugin delegates to full script analysis
+        // Pro plugin can override to use more sophisticated incremental processing
     }
 
     #endregion
