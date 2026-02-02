@@ -1068,19 +1068,19 @@ namespace GDShrapt.Reader
         public bool HasTokens => _list.Count > _statePoints.Count || _statePoints.Any(x => x.Value != null);
 
         /// <summary>
-        /// Делает форму неизменяемой и создаёт кешированный снапшот для потокобезопасной итерации.
-        /// Рекурсивно замораживает все дочерние узлы.
+        /// Makes the form immutable and creates a cached snapshot for thread-safe iteration.
+        /// Recursively freezes all child nodes.
         /// </summary>
         public void Freeze()
         {
             if (_isFrozen)
                 return;
 
-            // Создаём снапшот до заморозки
+            // Create snapshot before freezing
             _frozenSnapshot = BuildSnapshot();
             _frozenSnapshotReversed = BuildSnapshotReversed();
 
-            // Строим индекс позиций для быстрого O(1) поиска
+            // Build position index for fast O(1) lookup
             _frozenTokenIndex = new Dictionary<GDSyntaxToken, int>(_frozenSnapshot.Length);
             for (int i = 0; i < _frozenSnapshot.Length; i++)
             {
@@ -1089,7 +1089,7 @@ namespace GDShrapt.Reader
 
             _isFrozen = true;
 
-            // Рекурсивно заморозить дочерние узлы
+            // Recursively freeze child nodes
             foreach (var token in _frozenSnapshot)
             {
                 if (token is GDNode node)
@@ -1422,7 +1422,7 @@ namespace GDShrapt.Reader
 
         public IEnumerator<GDSyntaxToken> GetEnumerator()
         {
-            // Если заморожено - возвращаем итератор снапшота для потокобезопасности
+            // If frozen - return snapshot iterator for thread safety
             if (_isFrozen && _frozenSnapshot != null)
                 return ((IEnumerable<GDSyntaxToken>)_frozenSnapshot).GetEnumerator();
 
@@ -1453,7 +1453,7 @@ namespace GDShrapt.Reader
 
         public IEnumerable<GDSyntaxToken> Direct()
         {
-            // Если заморожено - возвращаем кешированный снапшот для потокобезопасности
+            // If frozen - return cached snapshot for thread safety
             if (_isFrozen && _frozenSnapshot != null)
                 return _frozenSnapshot;
 
@@ -1477,7 +1477,7 @@ namespace GDShrapt.Reader
 
         public IEnumerable<GDSyntaxToken> Reversed()
         {
-            // Если заморожено - возвращаем кешированный снапшот для потокобезопасности
+            // If frozen - return cached snapshot for thread safety
             if (_isFrozen && _frozenSnapshotReversed != null)
                 return _frozenSnapshotReversed;
 
