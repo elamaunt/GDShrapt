@@ -87,17 +87,36 @@ namespace GDShrapt.Semantics
             var current = typeName;
             while (!string.IsNullOrEmpty(current))
             {
+                // Normalize generic types: Array[int] -> Array, Dictionary[String, int] -> Dictionary
+                var normalizedType = ExtractBaseTypeName(current);
+
                 // Prevent infinite loop on cyclic inheritance
-                if (!visited.Add(current))
+                if (!visited.Add(normalizedType))
                     return null;
 
-                var memberInfo = _runtimeProvider.GetMember(current, memberName);
+                var memberInfo = _runtimeProvider.GetMember(normalizedType, memberName);
                 if (memberInfo != null)
                     return memberInfo;
 
-                current = _runtimeProvider.GetBaseType(current);
+                current = _runtimeProvider.GetBaseType(normalizedType);
             }
             return null;
+        }
+
+        /// <summary>
+        /// Extracts the base type name from a generic type.
+        /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
+        /// </summary>
+        private static string ExtractBaseTypeName(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return typeName;
+
+            var bracketIndex = typeName.IndexOf('[');
+            if (bracketIndex > 0)
+                return typeName.Substring(0, bracketIndex);
+
+            return typeName;
         }
 
         /// <summary>
@@ -107,10 +126,10 @@ namespace GDShrapt.Semantics
         /// </summary>
         private string FindMethodReturnTypeInCommonTypes(string methodName)
         {
-            // Common types to check for method existence
-            string[] commonTypes = { "String", "Array", "Dictionary", "int", "float", "bool", "Vector2", "Vector3", "Color" };
+            // Use TypesMap via runtime provider instead of hardcoded list
+            var typesWithMethod = _runtimeProvider.FindTypesWithMethod(methodName);
 
-            foreach (var typeName in commonTypes)
+            foreach (var typeName in typesWithMethod)
             {
                 var memberInfo = _runtimeProvider.GetMember(typeName, methodName);
                 if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)

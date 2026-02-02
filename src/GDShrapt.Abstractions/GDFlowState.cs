@@ -481,7 +481,15 @@ public class GDFlowState
     /// <summary>
     /// Checks if a variable is potentially null at this program point.
     /// </summary>
-    public bool IsVariablePotentiallyNull(string name)
+    public bool IsVariablePotentiallyNull(string name) => IsVariablePotentiallyNull(name, null);
+
+    /// <summary>
+    /// Checks if a variable is potentially null at this program point.
+    /// Uses the runtime provider to check if the type is a builtin value type.
+    /// </summary>
+    /// <param name="name">Variable name</param>
+    /// <param name="runtimeProvider">Optional runtime provider for builtin type checks</param>
+    public bool IsVariablePotentiallyNull(string name, IGDRuntimeProvider? runtimeProvider)
     {
         if (string.IsNullOrEmpty(name))
             return true;
@@ -493,6 +501,17 @@ public class GDFlowState
         if (varType.IsGuaranteedNonNull)
             return false;
 
+        // Use runtime provider for accurate builtin type detection
+        if (runtimeProvider != null)
+        {
+            if (runtimeProvider.IsBuiltinType(varType.DeclaredType ?? ""))
+                return false;
+
+            if (runtimeProvider.IsBuiltinType(varType.EffectiveType))
+                return false;
+        }
+
+        // Fallback to static check for basic cases
         if (IsNeverNullType(varType.DeclaredType))
             return false;
 
@@ -504,6 +523,7 @@ public class GDFlowState
 
     /// <summary>
     /// Returns true for types that can never be null (value types).
+    /// This is a fallback static check - prefer using IGDRuntimeProvider.IsBuiltinType.
     /// </summary>
     private static bool IsNeverNullType(string? typeName)
     {
@@ -514,7 +534,12 @@ public class GDFlowState
             or "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i"
             or "Color" or "Rect2" or "Rect2i" or "Transform2D" or "Transform3D"
             or "Basis" or "Quaternion" or "Plane" or "AABB" or "Projection"
-            or "RID" or "Callable" or "Signal";
+            or "RID" or "Callable" or "Signal"
+            or "Array" or "Dictionary"
+            or "PackedByteArray" or "PackedInt32Array" or "PackedInt64Array"
+            or "PackedFloat32Array" or "PackedFloat64Array" or "PackedStringArray"
+            or "PackedVector2Array" or "PackedVector3Array" or "PackedColorArray"
+            or "NodePath";
     }
 
     #endregion

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Abstractions;
 
 namespace GDShrapt.Reader
@@ -386,6 +387,27 @@ namespace GDShrapt.Reader
                     types.Add(type);
             }
             return types;
+        }
+
+        public bool IsBuiltinType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsBuiltinType(typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+        {
+            var types = new HashSet<string>();
+            foreach (var provider in _providers)
+            {
+                foreach (var type in provider.FindTypesWithMethod(methodName))
+                    types.Add(type);
+            }
+            return types.ToList();
         }
 
         // IGDProjectRuntimeProvider implementation

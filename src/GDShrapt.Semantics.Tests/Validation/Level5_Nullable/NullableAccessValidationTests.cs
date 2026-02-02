@@ -888,6 +888,271 @@ func process(items: Array, data: Dictionary, name: String):
 
     #endregion
 
+    #region Builtin Type Method Returns - Should NOT Report (non-nullable)
+
+    [TestMethod]
+    public void ArrayFilterResult_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var arr: Array = [1, 2, 3]
+    var filtered = arr.filter(func(x): return x > 1)
+    var count = filtered.size()
+    return count
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Array.filter() returns non-null Array. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ArrayMapResult_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var arr: Array = [1, 2, 3]
+    var mapped = arr.map(func(x): return x * 2)
+    var first = mapped[0]
+    return first
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Array.map() returns non-null Array. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void DictionaryKeysResult_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var dict: Dictionary = {""a"": 1, ""b"": 2}
+    var keys = dict.keys()
+    var first = keys[0]
+    return first
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Dictionary.keys() returns non-null Array. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void StringMethodResult_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var str: String = ""hello""
+    var upper = str.to_upper()
+    var len = upper.length()
+    return len
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"String.to_upper() returns non-null String. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ChainedArrayMethods_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var arr: Array = [1, 2, 3, 4, 5]
+    var result = arr.filter(func(x): return x > 2).map(func(x): return x * 2)
+    var count = result.size()
+    return count
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Chained Array methods return non-null Array. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParameter_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var arr: Array = [""a"", ""b"", ""c""]
+    var result = arr.filter(func(x): return x.length() > 0)
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        // Lambda parameters receive collection elements - they should not be null
+        var lambdaParamDiagnostics = nullDiagnostics.Where(d => d.Message.Contains("'x'")).ToList();
+        Assert.AreEqual(0, lambdaParamDiagnostics.Count,
+            $"Lambda parameter 'x' should not be null. Found: {FormatDiagnostics(lambdaParamDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void UntypedVariableWithArrayInitializer_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var numbers = [1, 2, 3, 4, 5]
+    var filtered = numbers.filter(func(x): return x > 2)
+    var mapped = filtered.map(func(x): return x * 2)
+    return mapped.size()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Untyped variables with Array initializer should not be null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void PackedArraySlice_ShouldNotReportPotentiallyNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var arr: PackedStringArray = [""a"", ""b"", ""c""]
+    var sliced = arr.slice(0, 2)
+    var count = sliced.size()
+    return count
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"PackedArray.slice() returns non-null PackedArray. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Lambda Flow State Tests (verifies flow analysis works, not AST workaround)
+
+    [TestMethod]
+    public void NestedLambda_InnerParameterAccess_ShouldNotReportNull()
+    {
+        // This test verifies that flow state correctly tracks parameters in nested lambdas.
+        // An AST-based workaround would only check the immediate lambda, but flow state
+        // properly maintains scope hierarchy.
+        var code = @"
+extends Node
+
+func test():
+    var arr = [[1, 2], [3, 4]]
+    var result = arr.map(func(inner):
+        return inner.filter(func(x): return x > 1)
+    )
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        // Both 'inner' and 'x' are lambda parameters and should not be null
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Nested lambda parameters should not be null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NestedLambda_OuterParameterUsedInInner_ShouldNotReportNull()
+    {
+        // Tests that outer lambda parameter is visible in inner lambda via captured state
+        var code = @"
+extends Node
+
+func test():
+    var arr = [1, 2, 3]
+    var result = arr.map(func(outer):
+        var inner_arr = [10, 20]
+        return inner_arr.filter(func(inner): return inner > outer)
+    )
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        // 'outer' is from outer lambda, 'inner' is from inner lambda - both non-null
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Outer lambda parameter captured in inner lambda should not be null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParameterShadowing_ShouldTrackCorrectScope()
+    {
+        // Tests that parameter shadowing is handled correctly by flow state
+        // The inner 'x' shadows the outer 'x', each should be tracked independently
+        var code = @"
+extends Node
+
+func test():
+    var arr = [[""a"", ""bb""], [""ccc""]]
+    var result = arr.map(func(x):
+        return x.filter(func(x): return x.length() > 1)
+    )
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        // Both 'x' parameters (outer and inner, shadowed) should be non-null
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Shadowed lambda parameters should each be non-null in their scope. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParameterReassignment_ShouldTrackNullability()
+    {
+        // Tests that flow state tracks reassignment within lambda body
+        // This cannot be detected by AST-based workaround
+        var code = @"
+extends Node
+
+func test():
+    var arr = [""hello"", ""world""]
+    var result = arr.map(func(x):
+        var len = x.length()  # x is non-null here
+        return len
+    )
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Lambda parameter usage should be tracked by flow state. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TripleNestedLambda_AllParametersNonNull()
+    {
+        // Stress test for deeply nested lambdas
+        var code = @"
+extends Node
+
+func test():
+    var arr = [[[1, 2], [3]], [[4, 5, 6]]]
+    var result = arr.map(func(a):
+        return a.map(func(b):
+            return b.filter(func(c): return c > 0)
+        )
+    )
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        // a, b, c are all lambda parameters at different nesting levels
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"All nested lambda parameters should be non-null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)

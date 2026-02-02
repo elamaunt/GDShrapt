@@ -68,9 +68,26 @@ public interface IGDRuntimeProvider
     bool IsBuiltIn(string identifier);
 
     /// <summary>
+    /// Checks if a type is a builtin value type that can never be null.
+    /// In Godot 4, this includes: int, float, bool, String, Vector2/3/4, Color,
+    /// Transform2D/3D, Array, Dictionary, PackedArrays, etc.
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is a builtin value type (never null)</returns>
+    bool IsBuiltinType(string typeName);
+
+    /// <summary>
     /// Gets all known type names from this provider.
     /// Used for duck typing resolution to find compatible types.
     /// </summary>
     /// <returns>Enumerable of all known type names</returns>
     IEnumerable<string> GetAllTypes();
+
+    /// <summary>
+    /// Finds all types that have a specific method defined.
+    /// Used for duck typing and Variant method inference.
+    /// </summary>
+    /// <param name="methodName">The method name to search for</param>
+    /// <returns>List of type names that have this method</returns>
+    IReadOnlyList<string> FindTypesWithMethod(string methodName);
 }

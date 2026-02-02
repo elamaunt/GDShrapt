@@ -167,6 +167,16 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
         }
     }
 
+    public bool IsBuiltinType(string typeName)
+    {
+        return _builtInProvider.IsBuiltinType(typeName);
+    }
+
+    public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+    {
+        return _builtInProvider.FindTypesWithMethod(methodName);
+    }
+
     #endregion
 
     #region IGDProjectRuntimeProvider

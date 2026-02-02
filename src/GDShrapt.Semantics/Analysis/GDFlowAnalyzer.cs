@@ -677,14 +677,17 @@ internal class GDFlowAnalyzer : GDVisitor
 
     public override void Visit(GDMethodExpression lambdaExpr)
     {
-        // Record the flow state at lambda creation time
-        // This captures the types of variables visible to the lambda
+        // Record the flow state at lambda creation time (captured variables)
         _lambdaCaptureStates[lambdaExpr] = _currentState;
-        RecordState(lambdaExpr);
 
+        // Save parent state to restore after lambda
+        _stateStack.Push(_currentState);
+
+        // Create lambda scope with parameters
         var lambdaState = _currentState.CreateChild();
 
         // Add lambda parameters to the lambda state
+        // Lambda parameters are never null - they receive values from iteration
         if (lambdaExpr.Parameters != null)
         {
             foreach (var param in lambdaExpr.Parameters)
@@ -692,21 +695,22 @@ internal class GDFlowAnalyzer : GDVisitor
                 var paramName = param.Identifier?.Sequence;
                 var paramType = param.Type?.BuildName();
                 if (!string.IsNullOrEmpty(paramName))
+                {
                     lambdaState.DeclareVariable(paramName, paramType);
+                    lambdaState.MarkNonNull(paramName);
+                }
             }
         }
 
-        // Note: We don't walk into the lambda body here because:
-        // 1. Lambda body executes at call time, not definition time
-        // 2. Type inference inside lambda would need separate analysis
-        // 3. For now, captured variables use their type at definition time
-        // Future improvement: track lambda invocations and use call-time types
+        // Use lambdaState for body traversal so parameters are visible
+        _currentState = lambdaState;
+        RecordState(lambdaExpr);
     }
 
     public override void Left(GDMethodExpression lambdaExpr)
     {
-        // Lambda has its own scope, but doesn't affect outer flow state
-        // (variables assigned inside lambda don't escape to outer scope)
+        // Restore parent state - lambda assignments don't escape to outer scope
+        _currentState = _stateStack.Count > 0 ? _stateStack.Pop() : _currentState;
         RecordState(lambdaExpr);
     }
 

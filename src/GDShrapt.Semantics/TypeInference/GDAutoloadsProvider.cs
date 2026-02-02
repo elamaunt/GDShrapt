@@ -181,4 +181,16 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
         // They are accessed via GetGlobalClass() by name.
         return Enumerable.Empty<string>();
     }
+
+    public bool IsBuiltinType(string typeName)
+    {
+        // Autoloads are user-defined instances, not builtin value types
+        return false;
+    }
+
+    public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+    {
+        // Autoloads are instances, not type definitions
+        return Array.Empty<string>();
+    }
 }

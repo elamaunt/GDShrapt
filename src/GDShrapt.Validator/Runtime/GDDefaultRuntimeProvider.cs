@@ -604,6 +604,30 @@ namespace GDShrapt.Reader
             return _types.Keys;
         }
 
+        public bool IsBuiltinType(string typeName)
+        {
+            if (typeName == null)
+                return false;
+
+            // All types registered in GDDefaultRuntimeProvider are builtin value types
+            // (primitives, String, Array, Dictionary, Vector types, etc.)
+            return _types.ContainsKey(typeName);
+        }
+
+        public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+        {
+            if (string.IsNullOrEmpty(methodName))
+                return System.Array.Empty<string>();
+
+            var result = new List<string>();
+            foreach (var kvp in _types)
+            {
+                if (kvp.Value.Members?.Any(m => m.Name == methodName && m.Kind == GDRuntimeMemberKind.Method) == true)
+                    result.Add(kvp.Key);
+            }
+            return result;
+        }
+
         #endregion
     }
 }

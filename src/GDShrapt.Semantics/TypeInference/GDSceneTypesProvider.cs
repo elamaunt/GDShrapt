@@ -430,6 +430,18 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         return Enumerable.Empty<string>();
     }
 
+    public bool IsBuiltinType(string typeName)
+    {
+        // Scene types are not builtin value types
+        return false;
+    }
+
+    public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+    {
+        // Scene types don't define methods directly
+        return Array.Empty<string>();
+    }
+
     /// <summary>
     /// Clears all cached scene data.
     /// </summary>

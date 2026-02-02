@@ -661,6 +661,12 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         return _typeCache.Keys;
     }
 
+    public bool IsBuiltinType(string typeName)
+    {
+        // Project-defined types are never builtin value types
+        return false;
+    }
+
     /// <summary>
     /// Finds all project types that have a specific method defined directly.
     /// Used for duck-type inference.

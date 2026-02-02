@@ -428,6 +428,8 @@ public class UnionTypeResolverTests
         public GDRuntimeTypeInfo? GetGlobalClass(string className) => null;
         public bool IsBuiltIn(string identifier) => false;
         public IEnumerable<string> GetAllTypes() => _types.Keys;
+        public bool IsBuiltinType(string typeName) => false;
+        public IReadOnlyList<string> FindTypesWithMethod(string methodName) => Array.Empty<string>();
 
         private class MockTypeInfo
         {

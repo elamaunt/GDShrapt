@@ -559,6 +559,34 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     }
 
     /// <summary>
+    /// Checks if a type is a builtin value type that can never be null.
+    /// In Godot 4, this includes: int, float, bool, String, Vector2/3/4, Color,
+    /// Transform2D/3D, Array, Dictionary, PackedArrays, etc.
+    /// Uses GDTypeData.IsBuiltin from TypesMap for accurate detection.
+    /// </summary>
+    public bool IsBuiltinType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        // Handle generic types: Array[int] -> Array, Dictionary[String,int] -> Dictionary
+        var baseType = typeName;
+        var bracketIndex = typeName.IndexOf('[');
+        if (bracketIndex > 0)
+            baseType = typeName.Substring(0, bracketIndex);
+
+        // Check TypesMap cache (includes Vector2, Color, Array, Dictionary, etc.)
+        if (_typeCache.TryGetValue(baseType, out var typeData))
+            return typeData.IsBuiltin;
+
+        // Check GlobalTypes (int, float, bool, String, etc. are value types)
+        if (_assemblyData?.GlobalData?.GlobalTypes?.ContainsKey(baseType) == true)
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
     /// Gets all available method overloads for a type member.
     /// </summary>
     public IReadOnlyList<GDMethodData>? GetMethodOverloads(string typeName, string methodName)

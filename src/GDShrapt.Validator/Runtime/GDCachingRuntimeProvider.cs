@@ -153,5 +153,17 @@ namespace GDShrapt.Reader
             // Delegate to inner provider - no caching needed for enumeration
             return _inner.GetAllTypes();
         }
+
+        public bool IsBuiltinType(string typeName)
+        {
+            // Delegate to inner provider - caching could be added if needed
+            return _inner.IsBuiltinType(typeName);
+        }
+
+        public IReadOnlyList<string> FindTypesWithMethod(string methodName)
+        {
+            // Delegate to inner provider - caching could be added if needed
+            return _inner.FindTypesWithMethod(methodName);
+        }
     }
 }

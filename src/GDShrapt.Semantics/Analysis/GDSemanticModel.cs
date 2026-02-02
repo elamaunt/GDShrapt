@@ -991,7 +991,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (state == null)
             return true;
 
-        return state.IsVariablePotentiallyNull(variableName);
+        return state.IsVariablePotentiallyNull(variableName, _runtimeProvider);
     }
 
     /// <summary>
