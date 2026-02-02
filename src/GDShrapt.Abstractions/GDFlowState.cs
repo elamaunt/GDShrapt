@@ -93,7 +93,13 @@ public class GDFlowState
         // Replace current type with new one
         newType.CurrentType = new GDUnionType();
         if (!string.IsNullOrEmpty(typeName))
+        {
             newType.CurrentType.AddType(typeName);
+            // Update potentially-null flag based on assigned type
+            // If assigned a non-null value, variable is not potentially null
+            // If assigned null explicitly, variable is potentially null
+            newType.IsPotentiallyNull = (typeName == "null");
+        }
         newType.LastAssignmentNode = assignmentNode;
 
         _variables[name] = newType;
