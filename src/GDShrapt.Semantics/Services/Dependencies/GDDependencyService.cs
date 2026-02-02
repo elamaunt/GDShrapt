@@ -75,6 +75,13 @@ public class GDDependencyService
                     if (!string.IsNullOrEmpty(resolved))
                         deps.Add(resolved);
                 }
+                // Handle class_name extends (e.g., "extends BaseClass")
+                else if (!string.IsNullOrEmpty(extendsName) && !IsBuiltInType(extendsName))
+                {
+                    var resolved = ResolveClassName(extendsName);
+                    if (!string.IsNullOrEmpty(resolved))
+                        deps.Add(resolved);
+                }
             }
 
             fileDependencies[filePath] = deps;
@@ -174,7 +181,40 @@ public class GDDependencyService
     /// </summary>
     public GDFileDependencyInfo AnalyzeFile(GDScriptFile file)
     {
-        return AnalyzeFileInternal(file, new HashSet<string>(), new List<IReadOnlyList<string>>());
+        var info = AnalyzeFileInternal(file, new HashSet<string>(), new List<IReadOnlyList<string>>());
+
+        // Build direct dependencies for this single file
+        var deps = new List<string>();
+
+        if (!string.IsNullOrEmpty(info.ExtendsScript))
+        {
+            var resolvedPath = ResolveResPath(info.ExtendsScript, info.FilePath);
+            if (!string.IsNullOrEmpty(resolvedPath))
+                deps.Add(resolvedPath);
+        }
+        else if (!string.IsNullOrEmpty(info.ExtendsClass) && !IsBuiltInType(info.ExtendsClass))
+        {
+            var resolvedPath = ResolveClassName(info.ExtendsClass);
+            if (!string.IsNullOrEmpty(resolvedPath))
+                deps.Add(resolvedPath);
+        }
+
+        foreach (var preload in info.Preloads)
+        {
+            var resolvedPath = ResolveResPath(preload, info.FilePath);
+            if (!string.IsNullOrEmpty(resolvedPath))
+                deps.Add(resolvedPath);
+        }
+
+        foreach (var load in info.Loads)
+        {
+            var resolvedPath = ResolveResPath(load, info.FilePath);
+            if (!string.IsNullOrEmpty(resolvedPath))
+                deps.Add(resolvedPath);
+        }
+
+        info.Dependencies = deps.Distinct().ToList();
+        return info;
     }
 
     private GDFileDependencyInfo AnalyzeFileInternal(
@@ -283,6 +323,13 @@ public class GDDependencyService
                 if (!string.IsNullOrEmpty(resolvedPath))
                     deps.Add(resolvedPath);
             }
+            // Handle ExtendsClass (class_name references)
+            else if (!string.IsNullOrEmpty(file.ExtendsClass) && !IsBuiltInType(file.ExtendsClass))
+            {
+                var resolvedPath = ResolveClassName(file.ExtendsClass);
+                if (!string.IsNullOrEmpty(resolvedPath))
+                    deps.Add(resolvedPath);
+            }
 
             foreach (var preload in file.Preloads)
             {
@@ -385,6 +432,29 @@ public class GDDependencyService
         }
 
         return resPath;
+    }
+
+    private string? ResolveClassName(string className)
+    {
+        var script = _project.GetScriptByTypeName(className);
+        return script?.FullPath?.Replace('\\', '/');
+    }
+
+    private static bool IsBuiltInType(string typeName)
+    {
+        // Godot built-in types - not project dependencies
+        return typeName switch
+        {
+            "Node" or "Node2D" or "Node3D" or "Control" or "Resource" or "Object" or
+            "CharacterBody2D" or "CharacterBody3D" or "RigidBody2D" or "RigidBody3D" or
+            "Area2D" or "Area3D" or "StaticBody2D" or "StaticBody3D" or
+            "Sprite2D" or "Sprite3D" or "Camera2D" or "Camera3D" or
+            "Label" or "Button" or "TextEdit" or "LineEdit" or "Panel" or
+            "RefCounted" or "PackedScene" or "Texture2D" or "Texture3D" or
+            "AnimationPlayer" or "AudioStreamPlayer" or "Timer" or "Tween" or
+            "CanvasLayer" or "Viewport" or "SubViewport" or "Window" => true,
+            _ => false
+        };
     }
 
     #region Load Collector

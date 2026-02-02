@@ -1,5 +1,6 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
+using System.Linq;
 
 namespace GDShrapt.CLI.Core;
 
@@ -36,7 +37,10 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
 
         // Base: enforce Strict confidence
         var safeOptions = EnforceBaseConfidence(options);
-        return _service.AnalyzeFile(file, safeOptions);
+        var report = _service.AnalyzeFile(file, safeOptions);
+
+        // Filter to only Strict confidence items for Base
+        return FilterByConfidence(report, safeOptions.MaxConfidence);
     }
 
     /// <inheritdoc />
@@ -44,7 +48,26 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
     {
         // Base: enforce Strict confidence
         var safeOptions = EnforceBaseConfidence(options);
-        return _service.AnalyzeProject(safeOptions);
+        var report = _service.AnalyzeProject(safeOptions);
+
+        // Filter to only Strict confidence items for Base
+        return FilterByConfidence(report, safeOptions.MaxConfidence);
+    }
+
+    /// <summary>
+    /// Filters report items by maximum confidence level.
+    /// Base implementation filters to Strict only.
+    /// </summary>
+    protected virtual GDDeadCodeReport FilterByConfidence(GDDeadCodeReport report, GDReferenceConfidence maxConfidence)
+    {
+        if (maxConfidence == GDReferenceConfidence.Strict)
+        {
+            var filteredItems = report.Items
+                .Where(item => item.Confidence == GDReferenceConfidence.Strict)
+                .ToList();
+            return new GDDeadCodeReport(filteredItems);
+        }
+        return report;
     }
 
     /// <summary>

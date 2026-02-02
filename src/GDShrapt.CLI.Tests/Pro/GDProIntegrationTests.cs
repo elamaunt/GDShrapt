@@ -96,24 +96,21 @@ public class GDProIntegrationTests
     }
 
     [TestMethod]
-    public void TryUseFeature_WithoutProvider_WritesWarningAndReturnsFalse()
+    public void TryUseFeature_WithoutProvider_IsSilentAndReturnsFalse()
     {
         // Arrange
         using var output = new StringWriter();
-
-        // Act (force reset to ensure no provider)
         GDProIntegration.Reset();
 
         // Only test if Pro is not actually linked
         if (!GDProIntegration.IsProAvailable)
         {
+            // Act
             var result = GDProIntegration.TryUseFeature(GDProFeatureKind.SarifExport, output);
 
-            // Assert
+            // Assert - should be silent for users who never purchased Pro
             result.Should().BeFalse();
-            var outputText = output.ToString();
-            outputText.Should().Contain("requires GDShrapt Pro");
-            outputText.Should().Contain("SARIF export");
+            output.ToString().Should().BeEmpty();
         }
     }
 

@@ -54,10 +54,15 @@ public class GDProjectDependencyReport
 
     /// <summary>
     /// Gets dependency info for a specific file.
+    /// Normalizes path separators for cross-platform compatibility.
     /// </summary>
-    public GDFileDependencyInfo? GetFile(string filePath) =>
-        Files.FirstOrDefault(f =>
-            string.Equals(f.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+    public GDFileDependencyInfo? GetFile(string filePath)
+    {
+        // Normalize path separators for comparison
+        var normalizedPath = filePath.Replace('\\', '/');
+        return Files.FirstOrDefault(f =>
+            string.Equals(f.FilePath.Replace('\\', '/'), normalizedPath, StringComparison.OrdinalIgnoreCase));
+    }
 
     /// <summary>
     /// Creates an empty report.
