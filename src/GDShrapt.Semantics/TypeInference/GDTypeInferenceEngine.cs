@@ -1550,6 +1550,23 @@ namespace GDShrapt.Semantics
             // Use the typed resolver that works with GDTypeNode directly
             var resultNode = GDOperatorTypeResolver.ResolveOperatorTypeNode(opType.Value, leftTypeNode, rightTypeNode);
 
+            // For array addition with incompatible types, use GDInferredType to compute union
+            if (resultNode == null && opType == GDDualOperatorType.Addition)
+            {
+                var leftInferred = GDOperatorTypeResolver.ToInferredType(leftTypeNode);
+                var rightInferred = GDOperatorTypeResolver.ToInferredType(rightTypeNode);
+
+                if (leftInferred?.IsArray == true && rightInferred?.IsArray == true)
+                {
+                    var combinedArray = GDOperatorTypeResolver.ResolveArrayAddition(leftInferred, rightInferred);
+                    if (combinedArray != null)
+                    {
+                        // Return a simple type with the full type name (e.g., "Array[String|int]")
+                        return CreateSimpleType(combinedArray.FullTypeName);
+                    }
+                }
+            }
+
             // Fallback to string-based resolver if typed resolver returns null
             if (resultNode == null)
             {

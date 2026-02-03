@@ -50,13 +50,13 @@ public class GDContainerElementType
     {
         if (IsDictionary)
         {
-            var keyType = EffectiveKeyType ?? "Variant";
-            var valueType = EffectiveElementType;
+            var keyType = KeyUnionType?.UnionTypeName ?? "Variant";
+            var valueType = ElementUnionType.UnionTypeName;
             return $"Dictionary[{keyType}, {valueType}]";
         }
         else
         {
-            var elementType = EffectiveElementType;
+            var elementType = ElementUnionType.UnionTypeName;
             return elementType == "Variant" ? "Array" : $"Array[{elementType}]";
         }
     }

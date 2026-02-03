@@ -222,7 +222,112 @@ func test():
 
     #endregion
 
+    #region Union Type Tests - Explicit Typing
+
+    [TestMethod]
+    public void ArrayAddition_StringPlusInt_ReturnsUnionType()
+    {
+        var code = @"
+extends Node
+func test():
+    var a: Array[String] = [""a"", ""b""]
+    var b: Array[int] = [1, 2]
+    var c = a + b
+";
+        var model = CreateSemanticModel(code);
+        var cType = GetVariableType(model, "c");
+
+        Assert.AreEqual("Array[String|int]", cType,
+            $"Array[String] + Array[int] should be Array[String|int] (types sorted alphabetically)");
+    }
+
+    [TestMethod]
+    public void ArrayAddition_ChainedUnion_CombinesAllTypes()
+    {
+        var code = @"
+extends Node
+func test():
+    var a: Array[int] = [1]
+    var b: Array[String] = [""x""]
+    var c: Array[bool] = [true]
+    var result = a + b + c
+";
+        var model = CreateSemanticModel(code);
+        var resultType = GetVariableType(model, "result");
+
+        Assert.AreEqual("Array[String|bool|int]", resultType,
+            $"Array[int] + Array[String] + Array[bool] should be Array[String|bool|int]");
+    }
+
+    [TestMethod]
+    public void ArrayAddition_NodePlusSprite_ReturnsUnionType()
+    {
+        var code = @"
+extends Node
+func test():
+    var a: Array[Node] = []
+    var b: Array[Sprite2D] = []
+    var c = a + b
+";
+        var model = CreateSemanticModel(code);
+        var cType = GetVariableType(model, "c");
+
+        Assert.AreEqual("Array[Node|Sprite2D]", cType,
+            $"Array[Node] + Array[Sprite2D] should be Array[Node|Sprite2D]");
+    }
+
+    [TestMethod]
+    public void ArrayAddition_UnionPlusSingle_ExtendsUnion()
+    {
+        var code = @"
+extends Node
+func test():
+    var a: Array[int] = [1]
+    var b: Array[String] = [""x""]
+    var ab = a + b
+    var c: Array[bool] = [true]
+    var result = ab + c
+";
+        var model = CreateSemanticModel(code);
+        var resultType = GetVariableType(model, "result");
+
+        Assert.AreEqual("Array[String|bool|int]", resultType,
+            $"Array[String|int] + Array[bool] should be Array[String|bool|int]");
+    }
+
+    #endregion
+
     #region Helper Methods
+
+    private static GDSemanticModel CreateSemanticModel(string code)
+    {
+        var reference = new GDScriptReference("test://virtual/test_script.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(code);
+
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null,
+            null,
+            null);
+        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
+        return collector.BuildSemanticModel();
+    }
+
+    private static string GetVariableType(GDSemanticModel model, string varName)
+    {
+        // Find the variable declaration and get its inferred type
+        var varDecl = model.ScriptFile.Class?.AllNodes
+            .OfType<GDVariableDeclarationStatement>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == varName);
+
+        if (varDecl?.Initializer != null)
+        {
+            return model.GetExpressionType(varDecl.Initializer);
+        }
+
+        return null;
+    }
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
     {

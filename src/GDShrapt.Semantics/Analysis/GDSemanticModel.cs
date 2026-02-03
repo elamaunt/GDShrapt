@@ -483,6 +483,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             var varName = identExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName))
             {
+                // Check container usage profile FIRST for untyped containers
+                // This handles: var a = []; a.append(1) → a should be Array[int]
+                // Container profile has element type info from usage analysis
+                var containerType = GetInferredContainerType(varName);
+                if (containerType != null && containerType.HasElementTypes)
+                {
+                    return containerType.ToString();
+                }
+
                 var method = FindContainingMethodNode(expression);
                 if (method != null)
                 {
@@ -494,6 +503,24 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                     if (!string.IsNullOrEmpty(flowType) && flowType != "Variant")
                         return flowType;
                 }
+            }
+        }
+
+        // For array addition, skip cache and compute union type
+        // This handles: var c = a + b where a is Array[int] and b is Array[String]
+        if (expression is GDDualOperatorExpression dualOp &&
+            dualOp.Operator?.OperatorType == GDDualOperatorType.Addition)
+        {
+            var leftType = GetExpressionType(dualOp.LeftExpression);
+            var rightType = GetExpressionType(dualOp.RightExpression);
+
+            if (IsArrayType(leftType) && IsArrayType(rightType))
+            {
+                var leftInferred = ParseArrayType(leftType);
+                var rightInferred = ParseArrayType(rightType);
+                var combinedArray = Abstractions.GDInferredType.CombineArrays(leftInferred, rightInferred);
+                if (combinedArray != null)
+                    return combinedArray.FullTypeName;
             }
         }
 
@@ -647,6 +674,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 var resultType = GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
                 if (!string.IsNullOrEmpty(resultType))
                     return resultType;
+
+                // For array addition with incompatible types, compute union type using GDInferredType
+                // (Also handled before cache check in GetExpressionType, this is fallback)
+                if (opType.Value == GDDualOperatorType.Addition &&
+                    IsArrayType(leftType) && IsArrayType(rightType))
+                {
+                    var leftInferred = ParseArrayType(leftType);
+                    var rightInferred = ParseArrayType(rightType);
+                    var combinedArray = Abstractions.GDInferredType.CombineArrays(leftInferred, rightInferred);
+                    if (combinedArray != null)
+                        return combinedArray.FullTypeName;
+                }
             }
         }
 
@@ -688,6 +727,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                         return elementType;
                 }
             }
+        }
+
+        // For array initializers, compute union type from elements directly
+        // This handles: var arr = [1, "hello", true] → Array[String|bool|int]
+        if (expression is Reader.GDArrayInitializerExpression arrayInit && _typeEngine != null)
+        {
+            var unionType = ComputeArrayInitializerUnionType(arrayInit);
+            if (!string.IsNullOrEmpty(unionType))
+                return unionType;
         }
 
         // Use type engine for type inference
@@ -3416,6 +3464,76 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 return h1 * 397 ^ h2;
             }
         }
+    }
+
+    #endregion
+
+    #region Array Type Helpers
+
+    /// <summary>
+    /// Computes the union type for an array initializer expression.
+    /// </summary>
+    private string? ComputeArrayInitializerUnionType(Reader.GDArrayInitializerExpression arrayInit)
+    {
+        if (arrayInit?.Values == null || !arrayInit.Values.Any())
+            return null;
+
+        var elementTypes = new HashSet<string>();
+        foreach (var element in arrayInit.Values)
+        {
+            if (element != null)
+            {
+                var type = _typeEngine?.InferType(element);
+                if (!string.IsNullOrEmpty(type) && type != "Variant")
+                    elementTypes.Add(type);
+            }
+        }
+
+        if (elementTypes.Count == 0)
+            return "Array";
+
+        var unionType = string.Join("|", elementTypes.OrderBy(t => t, System.StringComparer.Ordinal));
+        return $"Array[{unionType}]";
+    }
+
+    /// <summary>
+    /// Checks if a type name represents an array type.
+    /// </summary>
+    private static bool IsArrayType(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+        return typeName == "Array" || typeName.StartsWith("Array[");
+    }
+
+    /// <summary>
+    /// Parses a type name string into a GDInferredType.
+    /// Handles Array, Array[T], and Array[T|U] formats.
+    /// </summary>
+    private static Abstractions.GDInferredType? ParseArrayType(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return null;
+
+        if (typeName == "Array")
+            return Abstractions.GDInferredType.Array();
+
+        if (typeName.StartsWith("Array[") && typeName.EndsWith("]"))
+        {
+            var elementType = typeName.Substring(6, typeName.Length - 7);
+            if (elementType.Contains("|"))
+            {
+                // Union type: Array[int|String]
+                var types = elementType.Split('|').Select(t => t.Trim()).ToArray();
+                return Abstractions.GDInferredType.ArrayWithUnion(types);
+            }
+            else
+            {
+                return Abstractions.GDInferredType.Array(elementType);
+            }
+        }
+
+        return null;
     }
 
     #endregion

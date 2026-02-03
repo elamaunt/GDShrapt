@@ -841,4 +841,87 @@ public class GDOperatorTypeResolverTests
     }
 
     #endregion
+
+    #region Typed Array Addition Tests
+
+    [TestMethod]
+    public void Addition_TypedArrays_SameType_PreservesType()
+    {
+        var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("int"));
+        var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("int"));
+
+        var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
+            GDDualOperatorType.Addition, left, right);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Array[int]", result.BuildName());
+    }
+
+    [TestMethod]
+    public void Addition_TypedArrays_IntPlusFloat_ReturnsArrayFloat()
+    {
+        var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("int"));
+        var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("float"));
+
+        var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
+            GDDualOperatorType.Addition, left, right);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Array[float]", result.BuildName());
+    }
+
+    [TestMethod]
+    public void Addition_TypedArrays_StringPlusInt_ReturnsUnionArray()
+    {
+        var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("String"));
+        var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("int"));
+
+        var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
+            GDDualOperatorType.Addition, left, right);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Array[String|int]", result.BuildName());
+    }
+
+    [TestMethod]
+    public void Addition_TypedArrays_UnionPlusSingle_ExtendsUnion()
+    {
+        // Array[String|int] + Array[bool] → Array[String|bool|int]
+        var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("String|int"));
+        var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("bool"));
+
+        var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
+            GDDualOperatorType.Addition, left, right);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Array[String|bool|int]", result.BuildName());
+    }
+
+    [TestMethod]
+    public void Addition_TypedArrays_NodePlusSprite_ReturnsUnion()
+    {
+        var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("Node"));
+        var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("Sprite2D"));
+
+        var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
+            GDDualOperatorType.Addition, left, right);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Array[Node|Sprite2D]", result.BuildName());
+    }
+
+    [TestMethod]
+    public void Addition_TypedArrays_UntypedPlusTyped_ReturnsUntyped()
+    {
+        var left = GDTypeNode.CreateArray(null);
+        var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("int"));
+
+        var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
+            GDDualOperatorType.Addition, left, right);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Array", result.BuildName());
+    }
+
+    #endregion
 }

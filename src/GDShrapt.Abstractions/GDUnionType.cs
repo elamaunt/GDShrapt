@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -51,6 +52,15 @@ public class GDUnionType
         IsSingleType ? Types.First() :
         !string.IsNullOrEmpty(CommonBaseType) ? CommonBaseType :
         "Variant";
+
+    /// <summary>
+    /// Gets the union type name: single type if one, or "A|B|C" format if multiple.
+    /// Unlike EffectiveType, this preserves union information instead of falling back to Variant.
+    /// </summary>
+    public string UnionTypeName =>
+        IsSingleType ? Types.First() :
+        IsEmpty ? "Variant" :
+        string.Join("|", Types.OrderBy(t => t, StringComparer.Ordinal));
 
     /// <summary>
     /// Adds a type to the union.

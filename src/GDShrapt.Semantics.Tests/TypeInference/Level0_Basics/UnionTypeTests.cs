@@ -335,4 +335,82 @@ public class UnionTypeTests
     }
 
     #endregion
+
+    #region UnionTypeName Tests
+
+    [TestMethod]
+    public void UnionTypeName_SingleType_ReturnsSingleType()
+    {
+        // Arrange
+        var union = new GDUnionType();
+        union.AddType("int", isHighConfidence: true);
+
+        // Assert
+        Assert.AreEqual("int", union.UnionTypeName);
+    }
+
+    [TestMethod]
+    public void UnionTypeName_MultipleTypes_ReturnsUnionSorted()
+    {
+        // Arrange
+        var union = new GDUnionType();
+        union.AddType("String", isHighConfidence: true);
+        union.AddType("int", isHighConfidence: true);
+        union.AddType("bool", isHighConfidence: true);
+
+        // Assert - alphabetically sorted
+        Assert.AreEqual("String|bool|int", union.UnionTypeName);
+    }
+
+    [TestMethod]
+    public void UnionTypeName_Empty_ReturnsVariant()
+    {
+        // Arrange
+        var union = new GDUnionType();
+
+        // Assert
+        Assert.AreEqual("Variant", union.UnionTypeName);
+    }
+
+    [TestMethod]
+    public void UnionTypeName_IgnoresVariant()
+    {
+        // Arrange
+        var union = new GDUnionType();
+        union.AddType("int", isHighConfidence: true);
+        union.AddType("Variant", isHighConfidence: true); // Should be ignored
+
+        // Assert
+        Assert.AreEqual("int", union.UnionTypeName);
+    }
+
+    [TestMethod]
+    public void UnionTypeName_VsEffectiveType_WithCommonBase()
+    {
+        // Arrange
+        var union = new GDUnionType();
+        union.AddType("Player", isHighConfidence: true);
+        union.AddType("Enemy", isHighConfidence: true);
+        union.CommonBaseType = "Entity";
+
+        // Assert - EffectiveType returns CommonBaseType, UnionTypeName returns union string
+        Assert.AreEqual("Entity", union.EffectiveType);
+        Assert.AreEqual("Enemy|Player", union.UnionTypeName);
+    }
+
+    [TestMethod]
+    public void UnionTypeName_VsEffectiveType_WithoutCommonBase()
+    {
+        // Arrange
+        var union = new GDUnionType();
+        union.AddType("String", isHighConfidence: true);
+        union.AddType("int", isHighConfidence: true);
+        // No CommonBaseType set
+
+        // Assert - EffectiveType returns Variant, UnionTypeName returns union string
+        Assert.AreEqual("Variant", union.EffectiveType);
+        Assert.AreEqual("String|int", union.UnionTypeName);
+    }
+
+    #endregion
 }
