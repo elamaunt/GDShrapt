@@ -1037,6 +1037,119 @@ func test():
 
     #endregion
 
+    #region Visitor Pattern Tests - No Duplicate Diagnostics
+
+    [TestMethod]
+    public void IndexerOnNullable_ReportsOnlyGD7006()
+    {
+        // Indexer should report GD7006, not GD7005 or GD7007
+        var code = @"
+func test():
+    var obj = null
+    var x = obj[0]
+";
+        var diagnostics = ValidateCode(code);
+        var relevantDiags = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.PotentiallyNullAccess ||
+            d.Code == GDDiagnosticCode.PotentiallyNullIndexer ||
+            d.Code == GDDiagnosticCode.PotentiallyNullMethodCall).ToList();
+
+        Assert.AreEqual(1, relevantDiags.Count,
+            $"Expected exactly 1 diagnostic for indexer access. Found: {FormatDiagnostics(relevantDiags)}");
+        Assert.AreEqual(GDDiagnosticCode.PotentiallyNullIndexer, relevantDiags[0].Code,
+            $"Indexer should report GD7006. Found: {relevantDiags[0].Code}");
+    }
+
+    [TestMethod]
+    public void NestedMethodCall_ReportsOnlyOuterNull()
+    {
+        // obj.method1().method2() - should only report for obj, not for method1() result
+        var code = @"
+func test():
+    var obj = null
+    obj.method1().method2()
+";
+        var diagnostics = ValidateCode(code);
+        var objDiags = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.PotentiallyNullMethodCall &&
+            d.Message.Contains("'obj'")).ToList();
+
+        Assert.AreEqual(1, objDiags.Count,
+            $"Nested method call should report exactly 1 diagnostic for 'obj'. Found: {FormatDiagnostics(objDiags)}");
+    }
+
+    [TestMethod]
+    public void PropertyThenMethod_ReportsBothAccessTypes()
+    {
+        // obj.prop.method() - currently reports both GD7005 (prop access) and GD7007 (method call)
+        // This is expected behavior: both the property access and method call are on potentially null obj
+        var code = @"
+func test():
+    var obj = null
+    obj.prop.method()
+";
+        var diagnostics = ValidateCode(code);
+        var objDiags = diagnostics.Where(d =>
+            (d.Code == GDDiagnosticCode.PotentiallyNullAccess ||
+             d.Code == GDDiagnosticCode.PotentiallyNullMethodCall) &&
+            d.Message.Contains("'obj'")).ToList();
+
+        // Reports both: GD7005 for obj.prop and GD7007 for .method()
+        Assert.AreEqual(2, objDiags.Count,
+            $"obj.prop.method() reports both property access and method call. Found: {FormatDiagnostics(objDiags)}");
+        Assert.IsTrue(objDiags.Any(d => d.Code == GDDiagnosticCode.PotentiallyNullAccess),
+            "Should include GD7005 for property access");
+        Assert.IsTrue(objDiags.Any(d => d.Code == GDDiagnosticCode.PotentiallyNullMethodCall),
+            "Should include GD7007 for method call");
+    }
+
+    [TestMethod]
+    public void MultipleIndependentAccesses_EachReportsOnce()
+    {
+        // Multiple independent accesses on same null variable
+        var code = @"
+func test():
+    var obj = null
+    obj.prop1
+    obj.method()
+    obj[0]
+";
+        var diagnostics = ValidateCode(code);
+        var objDiags = diagnostics.Where(d =>
+            d.Message.Contains("'obj'")).ToList();
+
+        // Each access should report once: GD7005 for prop, GD7007 for method, GD7006 for indexer
+        Assert.AreEqual(3, objDiags.Count,
+            $"Three independent accesses should report 3 diagnostics. Found: {FormatDiagnostics(objDiags)}");
+        Assert.IsTrue(objDiags.Any(d => d.Code == GDDiagnosticCode.PotentiallyNullAccess),
+            "Should include GD7005 for property access");
+        Assert.IsTrue(objDiags.Any(d => d.Code == GDDiagnosticCode.PotentiallyNullMethodCall),
+            "Should include GD7007 for method call");
+        Assert.IsTrue(objDiags.Any(d => d.Code == GDDiagnosticCode.PotentiallyNullIndexer),
+            "Should include GD7006 for indexer access");
+    }
+
+    [TestMethod]
+    public void ChainedCallsAfterNull_ReportsFirstAccessOnly()
+    {
+        // Long chain: obj.a().b().c() - should report GD7007 for obj.a() only
+        var code = @"
+func test():
+    var obj = null
+    obj.a().b().c()
+";
+        var diagnostics = ValidateCode(code);
+        var objDiags = diagnostics.Where(d =>
+            d.Message.Contains("'obj'")).ToList();
+
+        Assert.AreEqual(1, objDiags.Count,
+            $"Chained calls should report exactly 1 diagnostic for 'obj'. Found: {FormatDiagnostics(objDiags)}");
+        Assert.AreEqual(GDDiagnosticCode.PotentiallyNullMethodCall, objDiags[0].Code,
+            $"Should report GD7007 for the first method call. Found: {objDiags[0].Code}");
+    }
+
+    #endregion
+
     #region Lambda Flow State Tests (verifies flow analysis works, not AST workaround)
 
     [TestMethod]
@@ -1149,6 +1262,588 @@ func test():
         // a, b, c are all lambda parameters at different nesting levels
         Assert.AreEqual(0, nullDiagnostics.Count,
             $"All nested lambda parameters should be non-null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Type Guard Tests
+
+    [TestMethod]
+    public void OrTypeGuard_BothTypesProtectsFromNull()
+    {
+        var code = @"
+extends Node
+
+func test(value):
+    if value is String or value is StringName:
+        return value.length()
+    return 0
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"or type guard should protect from null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OrTypeGuard_MixedNumericTypes()
+    {
+        var code = @"
+extends Node
+
+func test(value):
+    if value is int or value is float:
+        return value * 2
+    return 0
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"or type guard with numeric types should protect from null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NegatedIsTypeGuard_EarlyReturn_ProtectsAfter()
+    {
+        var code = @"
+extends Node
+
+func test(value):
+    if not value is Dictionary:
+        return null
+    return value.keys()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'value'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"negated is guard with early return should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NegatedIsTypeGuard_WithStringReturn_ProtectsAfter()
+    {
+        var code = @"
+extends Node
+
+func test(data):
+    if not data is Dictionary:
+        return ""not dictionary""
+    var keys = data.keys()
+    return keys
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'data'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"negated is guard should protect data. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void WhileIsTypeGuard_ProtectsInBody()
+    {
+        var code = @"
+extends Node
+
+func test(data):
+    var current = data
+    while current is Dictionary:
+        var val = current.keys()
+        current = current.get(""next"")
+    return current
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'current'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"while is guard should protect in body. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void WhileAndCondition_ProtectsInBody()
+    {
+        var code = @"
+extends Node
+
+func test(data):
+    var current = data
+    while current is Dictionary and current.has(""next""):
+        var val = current.get(""value"")
+        current = current.get(""next"")
+    return current
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'current'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"while and condition should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TernaryIsTypeGuard_ProtectsInTrueBranch()
+    {
+        var code = @"
+extends Node
+
+func test(value):
+    var result = value.length() if value is String else 0
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"ternary is guard should protect true branch. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TernaryIsTypeGuard_FalseBranchNotProtected()
+    {
+        var code = @"
+extends Node
+
+func test(value):
+    var result = 0 if value is String else value.length()
+    return result
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Any(),
+            "False branch should still warn about potential null");
+    }
+
+    #endregion
+
+    #region Guard Clause Inside Nested Blocks
+
+    [TestMethod]
+    public void NullGuardWithBreak_InWhileLoop_ProtectsAfter()
+    {
+        var code = @"
+extends Node
+
+func test(tokens, pos):
+    var result = parse_term(tokens, pos)
+    if result == null:
+        return null
+
+    var value = result[""value""]
+    var new_pos = result[""pos""]
+
+    while new_pos < 10:
+        var right = parse_term(tokens, new_pos + 1)
+        if right == null:
+            break
+        value = value + right[""value""]
+        new_pos = right[""pos""]
+
+    return {""value"": value, ""pos"": new_pos}
+
+func parse_term(tokens, pos):
+    if pos < 0:
+        return null
+    return {""value"": 1, ""pos"": pos + 1}
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'right'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard clause with break should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NullGuardWithReturn_InNestedIf_ProtectsAfter()
+    {
+        var code = @"
+extends Node
+
+func test(tokens, pos):
+    if pos < 10:
+        var inner = parse_expr(tokens, pos)
+        if inner == null:
+            return null
+        var val = inner[""value""]
+        return val
+    return 0
+
+func parse_expr(tokens, pos):
+    if pos < 0:
+        return null
+    return {""value"": 1}
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'inner'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard clause with return should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NullGuardWithContinue_InForLoop_ProtectsAfter()
+    {
+        var code = @"
+extends Node
+
+func test(items):
+    var results = []
+    for item in items:
+        var data = get_data(item)
+        if data == null:
+            continue
+        results.append(data[""value""])
+    return results
+
+func get_data(item):
+    if item < 0:
+        return null
+    return {""value"": item * 2}
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'data'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard clause with continue should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NullGuardInNestedWhile_ProtectsAfter()
+    {
+        var code = @"
+extends Node
+
+func parse_expression(tokens, pos):
+    var left = parse_term(tokens, pos)
+    if left == null:
+        return null
+
+    var value = left[""value""]
+    var new_pos = left[""pos""]
+
+    while new_pos < tokens.size():
+        if tokens[new_pos] != ""+"":
+            break
+        var right = parse_term(tokens, new_pos + 1)
+        if right == null:
+            break
+        value = value + right[""value""]
+        new_pos = right[""pos""]
+
+    return {""value"": value, ""pos"": new_pos}
+
+func parse_term(tokens, pos):
+    return {""value"": 1, ""pos"": pos + 1}
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'right'") || d.Message.Contains("'left'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard clauses in nested while should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void CyclicInference_ParseExpr_Pattern()
+    {
+        // Real pattern from cyclic_inference.gd parse_expr function
+        var code = @"
+extends Node
+
+func parse_expr(tokens, pos):
+    var result = parse_term(tokens, pos)
+    if result == null:
+        return null
+
+    var value = result[""value""]
+    var new_pos = result[""pos""]
+
+    while new_pos < tokens.size():
+        var op = tokens[new_pos]
+        if op != ""+"" and op != ""-"":
+            break
+
+        var right = parse_term(tokens, new_pos + 1)
+        if right == null:
+            break
+
+        if op == ""+"":
+            value = value + right[""value""]
+        else:
+            value = value - right[""value""]
+        new_pos = right[""pos""]
+
+    return {""value"": value, ""pos"": new_pos}
+
+func parse_term(tokens, pos):
+    if pos >= tokens.size():
+        return null
+    return {""value"": 1, ""pos"": pos + 1}
+";
+        var diagnostics = ValidateCode(code);
+        // After 'if right == null: break', right is guaranteed non-null
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'right'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard clause with break in while should protect 'right'. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void CyclicInference_ParseFactor_Pattern()
+    {
+        // Real pattern from cyclic_inference.gd parse_factor function
+        var code = @"
+extends Node
+
+func parse_factor(tokens, pos):
+    if pos >= tokens.size():
+        return null
+
+    var token = tokens[pos]
+
+    if token == ""("":
+        var inner = parse_expr(tokens, pos + 1)
+        if inner == null:
+            return null
+        if inner[""pos""] >= tokens.size() or tokens[inner[""pos""]] != "")"":
+            return null
+        return {""value"": inner[""value""], ""pos"": inner[""pos""] + 1}
+
+    return {""value"": 0, ""pos"": pos + 1}
+
+func parse_expr(tokens, pos):
+    if pos >= tokens.size():
+        return null
+    return {""value"": 1, ""pos"": pos + 1}
+";
+        var diagnostics = ValidateCode(code);
+        // After 'if inner == null: return null', inner is guaranteed non-null
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'inner'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard clause with return in nested if should protect 'inner'. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Super Keyword Tests
+
+    [TestMethod]
+    public void SuperMethodCall_NeverWarnNull()
+    {
+        var code = @"
+extends Node
+
+func _ready():
+    super._ready()
+
+func custom_method():
+    pass
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'super'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"super should never warn about null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void SuperMethodCall_InOverriddenMethod_NeverWarnNull()
+    {
+        var code = @"
+extends Node2D
+
+func _process(delta: float):
+    super._process(delta)
+    position.x += 1
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'super'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"super in overridden method should never warn. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void SuperMethodCall_MultipleCallsInMethod_NeverWarnNull()
+    {
+        var code = @"
+extends Node
+
+func custom():
+    super.custom()
+    print(""after super"")
+    super.custom()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'super'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Multiple super calls should never warn. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Or Guard Clause Tests
+
+    [TestMethod]
+    public void NullOrInvalidGuard_ProtectsAfterReturn()
+    {
+        var code = @"
+extends Node
+
+var target: Node
+
+func attack():
+    if target == null or not is_instance_valid(target):
+        return
+    target.get_name()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'target'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard with 'null or not is_instance_valid' should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void InvalidOrNullGuard_ReversedOrder_ProtectsAfterReturn()
+    {
+        var code = @"
+extends Node
+
+var target: Node
+
+func attack():
+    if not is_instance_valid(target) or target == null:
+        return
+    target.get_name()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'target'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard with reversed 'not is_instance_valid or null' should protect. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NullOrNullGuard_BothSidesNullCheck_ProtectsAfterReturn()
+    {
+        var code = @"
+extends Node
+
+var a: Node
+var b: Node
+
+func test():
+    if a == null or b == null:
+        return
+    a.get_name()
+    b.get_name()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'a'") || d.Message.Contains("'b'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard with 'a == null or b == null' should protect both. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NullOrInvalid_WithAdditionalCondition_ProtectsAfterReturn()
+    {
+        var code = @"
+extends Node
+
+var target: Node
+
+func is_target_in_range() -> bool:
+    if target == null or not is_instance_valid(target):
+        return false
+    return position.distance_to(target.position) <= 100.0
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'target'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Guard should protect target.position access. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void NullOrInvalid_MultipleAccessesAfterGuard_AllProtected()
+    {
+        var code = @"
+extends Node
+
+var target: Node
+
+func process_target():
+    if target == null or not is_instance_valid(target):
+        return
+
+    var name = target.get_name()
+    var pos = target.position
+    target.queue_free()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'target'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"All accesses after guard should be protected. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Signal Tests
+
+    [TestMethod]
+    public void InheritedSignal_NeverWarnNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    tree_exiting.connect(func(): pass)
+    tree_entered.connect(func(): pass)
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'tree_exiting'") ||
+            d.Message.Contains("'tree_entered'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Inherited signals should never warn. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void CustomSignal_NeverWarnNull()
+    {
+        var code = @"
+extends Node
+
+signal my_signal(value: int)
+
+func test():
+    my_signal.connect(func(v): pass)
+    my_signal.emit(42)
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'my_signal'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Custom signals should never warn. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void SignalFromCanvasItem_NeverWarnNull()
+    {
+        var code = @"
+extends Node2D
+
+func test():
+    visibility_changed.connect(func(): pass)
+    hidden.connect(func(): pass)
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics).Where(d =>
+            d.Message.Contains("'visibility_changed'") ||
+            d.Message.Contains("'hidden'")).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"CanvasItem signals should never warn. Found: {FormatDiagnostics(nullDiagnostics)}");
     }
 
     #endregion

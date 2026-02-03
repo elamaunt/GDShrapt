@@ -34,6 +34,10 @@ namespace GDShrapt.Semantics
         // Optional provider for narrowed types from control flow analysis (e.g., after "if x is Type:")
         private Func<string, string> _narrowingTypeProvider;
 
+        // Optional fallback for symbol lookup when scope lookup fails
+        // Used to query SemanticModel's persisted symbol registry during validation
+        private Func<string, GDNode, GDSymbol> _symbolLookupFallback;
+
         // Specialized analyzers (lazy initialized)
         private GDContainerTypeAnalyzer _containerAnalyzer;
         private GDSignalTypeAnalyzer _signalAnalyzer;
@@ -140,6 +144,119 @@ namespace GDShrapt.Semantics
         }
 
         /// <summary>
+        /// Applies ReturnTypeRole metadata to infer more specific return type for container methods.
+        /// For example: Array[int].front() returns int, not Variant.
+        /// </summary>
+        /// <param name="memberInfo">The method info with potential ReturnTypeRole metadata</param>
+        /// <param name="callerType">The type of the caller (e.g., "Array[int]")</param>
+        /// <param name="callerExpr">The caller expression for further type inference</param>
+        /// <returns>The specific return type, or null to use the default</returns>
+        private string? ApplyReturnTypeRole(GDRuntimeMemberInfo memberInfo, string callerType, GDExpression? callerExpr)
+        {
+            var role = memberInfo.ReturnTypeRole;
+            if (string.IsNullOrEmpty(role))
+                return null;
+
+            // Get container type info
+            var containerInfo = ExtractContainerTypeInfo(callerType, callerExpr);
+            if (containerInfo == null)
+                return null;
+
+            return role switch
+            {
+                "element" => containerInfo.ElementType,
+                "key" => containerInfo.KeyType,
+                "value" => containerInfo.ValueType,
+                "self" => callerType,
+                "keys_array" => !string.IsNullOrEmpty(containerInfo.KeyType) ? $"Array[{containerInfo.KeyType}]" : "Array",
+                "values_array" => !string.IsNullOrEmpty(containerInfo.ValueType) ? $"Array[{containerInfo.ValueType}]" : "Array",
+                "callable_return_array" => null, // TODO: Handle map() return type based on callable return
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Extracts element, key, and value types from a container type.
+        /// </summary>
+        private ContainerTypeInfo? ExtractContainerTypeInfo(string callerType, GDExpression? callerExpr)
+        {
+            // Handle typed Array: Array[int] -> element=int
+            if (callerType.StartsWith("Array[") && callerType.EndsWith("]"))
+            {
+                var elementType = callerType.Substring(6, callerType.Length - 7);
+                return new ContainerTypeInfo { ElementType = elementType };
+            }
+
+            // Handle typed Dictionary: Dictionary[String, int] -> key=String, value=int
+            if (callerType.StartsWith("Dictionary[") && callerType.EndsWith("]"))
+            {
+                var inner = callerType.Substring(11, callerType.Length - 12);
+                var commaIndex = FindTopLevelComma(inner);
+                if (commaIndex > 0)
+                {
+                    var keyType = inner.Substring(0, commaIndex).Trim();
+                    var valueType = inner.Substring(commaIndex + 1).Trim();
+                    return new ContainerTypeInfo { KeyType = keyType, ValueType = valueType, ElementType = valueType };
+                }
+            }
+
+            // For untyped containers, try to infer from the expression
+            if (callerType == "Array" && callerExpr != null)
+            {
+                var inferredType = InferType(callerExpr);
+                if (inferredType != null && inferredType.StartsWith("Array[") && inferredType.EndsWith("]"))
+                {
+                    var elementType = inferredType.Substring(6, inferredType.Length - 7);
+                    return new ContainerTypeInfo { ElementType = elementType };
+                }
+            }
+
+            if (callerType == "Dictionary" && callerExpr != null)
+            {
+                var inferredType = InferType(callerExpr);
+                if (inferredType != null && inferredType.StartsWith("Dictionary[") && inferredType.EndsWith("]"))
+                {
+                    var inner = inferredType.Substring(11, inferredType.Length - 12);
+                    var commaIndex = FindTopLevelComma(inner);
+                    if (commaIndex > 0)
+                    {
+                        var keyType = inner.Substring(0, commaIndex).Trim();
+                        var valueType = inner.Substring(commaIndex + 1).Trim();
+                        return new ContainerTypeInfo { KeyType = keyType, ValueType = valueType, ElementType = valueType };
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Finds the top-level comma in a type string (not nested in brackets).
+        /// </summary>
+        private static int FindTopLevelComma(string str)
+        {
+            var depth = 0;
+            for (int i = 0; i < str.Length; i++)
+            {
+                var c = str[i];
+                if (c == '[') depth++;
+                else if (c == ']') depth--;
+                else if (c == ',' && depth == 0) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Container type information for type inference.
+        /// </summary>
+        private class ContainerTypeInfo
+        {
+            public string? ElementType { get; set; }
+            public string? KeyType { get; set; }
+            public string? ValueType { get; set; }
+        }
+
+        /// <summary>
         /// Sets a provider function for inferring container element types.
         /// Used to integrate with usage-based type inference from semantic analysis.
         /// </summary>
@@ -157,6 +274,17 @@ namespace GDShrapt.Semantics
         public void SetNarrowingTypeProvider(Func<string, string> provider)
         {
             _narrowingTypeProvider = provider;
+        }
+
+        /// <summary>
+        /// Sets a fallback function for symbol lookup when scope-based lookup fails.
+        /// Used to query SemanticModel's persisted symbol registry during validation,
+        /// when method scopes have been popped but symbols are still registered.
+        /// </summary>
+        /// <param name="fallback">Function that takes (name, contextNode) and returns a GDSymbol, or null</param>
+        public void SetSymbolLookupFallback(Func<string, GDNode, GDSymbol> fallback)
+        {
+            _symbolLookupFallback = fallback;
         }
 
         #region Analyzer Accessors (Lazy Initialization)
@@ -505,52 +633,62 @@ namespace GDShrapt.Semantics
             }
 
             // Check scope for declared symbols with full TypeNode
+            GDSymbol symbol = null;
             if (_scopes != null)
             {
-                var symbol = _scopes.Lookup(name);
-                if (symbol != null)
+                symbol = _scopes.Lookup(name);
+            }
+
+            // Fallback to symbol lookup function if scope lookup fails
+            // This is needed because method scopes are popped after Walk phase,
+            // but SemanticModel still has all symbols registered
+            if (symbol == null && _symbolLookupFallback != null)
+            {
+                symbol = _symbolLookupFallback(name, identExpr);
+            }
+
+            if (symbol != null)
+            {
+                // Prefer TypeNode if available (has generic type info)
+                if (symbol.TypeNode != null)
+                    return symbol.TypeNode;
+                // Fall back to TypeName
+                if (!string.IsNullOrEmpty(symbol.TypeName))
+                    return CreateSimpleType(symbol.TypeName);
+
+                // Handle enum symbols - enum type is the enum name itself
+                // This allows AIState.PATROL where AIState is a local enum
+                if (symbol.Kind == GDSymbolKind.Enum)
                 {
-                    // Prefer TypeNode if available (has generic type info)
-                    if (symbol.TypeNode != null)
-                        return symbol.TypeNode;
-                    // Fall back to TypeName
-                    if (!string.IsNullOrEmpty(symbol.TypeName))
-                        return CreateSimpleType(symbol.TypeName);
+                    return CreateSimpleType(symbol.Name);
+                }
 
-                    // Handle enum symbols - enum type is the enum name itself
-                    // This allows AIState.PATROL where AIState is a local enum
-                    if (symbol.Kind == GDSymbolKind.Enum)
-                    {
-                        return CreateSimpleType(symbol.Name);
-                    }
+                // Handle inner class symbols - class type is the class name
+                if (symbol.Kind == GDSymbolKind.Class)
+                {
+                    return CreateSimpleType(symbol.Name);
+                }
 
-                    // Handle inner class symbols - class type is the class name
-                    if (symbol.Kind == GDSymbolKind.Class)
-                    {
-                        return CreateSimpleType(symbol.Name);
-                    }
+                // Handle method reference - method used without calling it returns Callable
+                // Example: var cb = _on_timeout  →  cb is Callable
+                // This enables .bind(), .call(), .is_valid() methods on method references
+                if (symbol.Kind == GDSymbolKind.Method)
+                {
+                    return CreateSimpleType("Callable");
+                }
 
-                    // Handle method reference - method used without calling it returns Callable
-                    // Example: var cb = _on_timeout  →  cb is Callable
-                    // This enables .bind(), .call(), .is_valid() methods on method references
-                    if (symbol.Kind == GDSymbolKind.Method)
-                    {
-                        return CreateSimpleType("Callable");
-                    }
-
-                    // Fallback: infer type from initializer for understanding expression type
-                    // Handle local variables (statements)
-                    if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt &&
-                        varDeclStmt.Initializer != null)
-                    {
-                        return InferTypeNode(varDeclStmt.Initializer);
-                    }
-                    // Handle class-level variables (declarations)
-                    if (symbol.Declaration is GDVariableDeclaration varDecl &&
-                        varDecl.Initializer != null)
-                    {
-                        return InferTypeNode(varDecl.Initializer);
-                    }
+                // Fallback: infer type from initializer for understanding expression type
+                // Handle local variables (statements)
+                if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt &&
+                    varDeclStmt.Initializer != null)
+                {
+                    return InferTypeNode(varDeclStmt.Initializer);
+                }
+                // Handle class-level variables (declarations)
+                if (symbol.Declaration is GDVariableDeclaration varDecl &&
+                    varDecl.Initializer != null)
+                {
+                    return InferTypeNode(varDecl.Initializer);
                 }
             }
 
@@ -825,7 +963,11 @@ namespace GDShrapt.Semantics
 
                         var memberInfo = FindMemberWithInheritance(callerType, methodName);
                         if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
-                            return memberInfo.Type;
+                        {
+                            // Apply ReturnTypeRole if available to get more specific type
+                            var returnType = ApplyReturnTypeRole(memberInfo, callerType, memberExpr.CallerExpression);
+                            return returnType ?? memberInfo.Type;
+                        }
                     }
 
                     // For unknown/Variant caller type, try to find the method in common types

@@ -599,20 +599,30 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             }
         }
 
-        // For call expressions on narrowed types
-        if (expression is GDCallExpression callExpr &&
-            callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
+        // For call expressions, delegate to TypeEngine which properly applies ReturnTypeRole
+        // for container methods like front(), back(), get(), etc.
+        if (expression is GDCallExpression callExpr)
         {
-            var callerType = GetExpressionType(callMemberExpr.CallerExpression);
-            var methodName = callMemberExpr.Identifier?.Sequence;
-
-            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
-                !string.IsNullOrEmpty(methodName) && _runtimeProvider != null)
+            // Handle .new() constructor specially
+            if (callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
             {
-                var memberInfo = FindMemberWithInheritanceInternal(callerType, methodName);
-                if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
-                    return memberInfo.Type;
+                var methodName = callMemberExpr.Identifier?.Sequence;
+                if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
+                {
+                    var callerType = GetExpressionType(callMemberExpr.CallerExpression);
+                    if (!string.IsNullOrEmpty(callerType))
+                        return callerType;
+                }
+
+                // Debug: print TypeEngine result for call expressions
+                System.Console.WriteLine($"[DEBUG GetExpressionTypeCore] CallExpr method={methodName}");
             }
+
+            // Delegate to TypeEngine for all other call expressions - it applies ReturnTypeRole
+            var callResult = _typeEngine?.InferType(expression);
+            System.Console.WriteLine($"[DEBUG GetExpressionTypeCore] TypeEngine result={callResult ?? "null"}");
+            if (!string.IsNullOrEmpty(callResult))
+                return callResult;
         }
 
         // For binary operators, recursively resolve operand types using flow-sensitive analysis
@@ -774,7 +784,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (_methodFlowAnalyzers.TryGetValue(method, out var existing))
             return existing;
 
-        var analyzer = new GDFlowAnalyzer(_typeEngine, GetExpressionTypeWithoutFlow);
+        var analyzer = new GDFlowAnalyzer(_typeEngine, GetExpressionTypeWithoutFlow, GetOnreadyVariables);
         // Cache BEFORE Analyze to prevent infinite recursion if Analyze triggers GetOrCreateFlowAnalyzer
         _methodFlowAnalyzers[method] = analyzer;
         analyzer.Analyze(method);
@@ -790,24 +800,26 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (expression == null)
             return null;
 
-        // For call expressions like entity_manager.create_entity(), resolve through member access
-        if (expression is GDCallExpression callExpr &&
-            callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
+        // For call expressions, use TypeEngine which properly handles ReturnTypeRole metadata
+        // for container methods like front(), back(), get(), etc.
+        if (expression is GDCallExpression callExpr)
         {
-            var callerType = GetExpressionTypeWithoutFlow(callMemberExpr.CallerExpression);
-            var methodName = callMemberExpr.Identifier?.Sequence;
-
-            // Handle .new() constructor
-            if (methodName == GDTypeInferenceConstants.ConstructorMethodName && !string.IsNullOrEmpty(callerType))
-                return callerType;
-
-            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
-                !string.IsNullOrEmpty(methodName) && _runtimeProvider != null)
+            // Handle .new() constructor specially
+            if (callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
             {
-                var memberInfo = FindMemberWithInheritanceInternal(callerType, methodName);
-                if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
-                    return memberInfo.Type;
+                var methodName = callMemberExpr.Identifier?.Sequence;
+                if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
+                {
+                    var callerType = GetExpressionTypeWithoutFlow(callMemberExpr.CallerExpression);
+                    if (!string.IsNullOrEmpty(callerType))
+                        return callerType;
+                }
             }
+
+            // Delegate to TypeEngine for all other call expressions - it applies ReturnTypeRole
+            var callResult = _typeEngine?.InferType(expression);
+            if (!string.IsNullOrEmpty(callResult))
+                return callResult;
         }
 
         // For identifiers, try union types (class variables assigned in different methods)
@@ -840,9 +852,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         }
 
         // Fall back to type engine
-        var result = _typeEngine?.InferType(expression);
-        Console.WriteLine($"[GetExpressionTypeWithoutFlow] expr={expression.GetType().Name}, TypeEngine result={result ?? "null"}");
-        return result;
+        return _typeEngine?.InferType(expression);
     }
 
     /// <summary>
@@ -1082,6 +1092,144 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Checks if a variable has the @onready attribute.
+    /// </summary>
+    public bool IsOnreadyVariable(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return false;
+
+        var symbol = FindSymbol(variableName);
+        if (symbol?.DeclarationNode is not GDVariableDeclaration varDecl)
+            return false;
+
+        return varDecl.AttributesDeclaredBefore.Any(attr => attr.Attribute?.IsOnready() == true);
+    }
+
+    /// <summary>
+    /// Checks if a variable is initialized in _ready() method (not @onready, but assigned there).
+    /// </summary>
+    public bool IsReadyInitializedVariable(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return false;
+
+        var symbol = FindSymbol(variableName);
+        if (symbol?.DeclarationNode is not GDVariableDeclaration varDecl)
+            return false;
+
+        // Has initializer at class level — not a _ready() initialized variable
+        if (varDecl.Initializer != null)
+            return false;
+
+        // Check if there's an assignment in _ready()
+        return HasAssignmentInReadyMethod(variableName);
+    }
+
+    /// <summary>
+    /// Checks if a variable is either @onready or initialized in _ready().
+    /// </summary>
+    public bool IsOnreadyOrReadyInitializedVariable(string variableName)
+    {
+        return IsOnreadyVariable(variableName) || IsReadyInitializedVariable(variableName);
+    }
+
+    /// <summary>
+    /// Gets all @onready variable names in the current class.
+    /// </summary>
+    public IEnumerable<string> GetOnreadyVariables()
+    {
+        var classDecl = _scriptFile?.Class;
+        if (classDecl == null)
+            yield break;
+
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDVariableDeclaration varDecl)
+            {
+                if (varDecl.AttributesDeclaredBefore.Any(attr => attr.Attribute?.IsOnready() == true))
+                {
+                    var name = varDecl.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(name))
+                        yield return name;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks if there's an assignment to a variable in the _ready() method.
+    /// </summary>
+    private bool HasAssignmentInReadyMethod(string variableName)
+    {
+        var readyMethod = GetReadyMethod();
+        if (readyMethod == null)
+            return false;
+
+        // Walk the _ready() method looking for assignments to this variable
+        var visitor = new AssignmentFinder(variableName);
+        readyMethod.WalkIn(visitor);
+        return visitor.Found;
+    }
+
+    /// <summary>
+    /// Gets the _ready() method declaration if it exists.
+    /// </summary>
+    public GDMethodDeclaration? GetReadyMethod()
+    {
+        var classDecl = _scriptFile?.Class;
+        if (classDecl == null)
+            return null;
+
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDMethodDeclaration method && method.IsReady())
+                return method;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Helper visitor to find assignments to a specific variable.
+    /// </summary>
+    private class AssignmentFinder : GDVisitor
+    {
+        private readonly string _targetVariable;
+        public bool Found { get; private set; }
+
+        public AssignmentFinder(string targetVariable)
+        {
+            _targetVariable = targetVariable;
+        }
+
+        public override void Visit(GDExpressionStatement statement)
+        {
+            if (Found)
+                return;
+
+            base.Visit(statement);
+
+            // Check for assignment expression
+            if (statement.Expression is GDDualOperatorExpression dualOp)
+            {
+                if (dualOp.OperatorType == GDDualOperatorType.Assignment ||
+                    dualOp.OperatorType == GDDualOperatorType.AddAndAssign ||
+                    dualOp.OperatorType == GDDualOperatorType.SubtractAndAssign ||
+                    dualOp.OperatorType == GDDualOperatorType.MultiplyAndAssign ||
+                    dualOp.OperatorType == GDDualOperatorType.DivideAndAssign)
+                {
+                    if (dualOp.LeftExpression is GDIdentifierExpression leftIdent &&
+                        leftIdent.Identifier?.Sequence == _targetVariable)
+                    {
+                        Found = true;
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -3157,6 +3305,90 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             GDTypeConfidence.Medium => GDReferenceConfidence.Potential,
             _ => GDReferenceConfidence.NameMatch
         };
+    }
+
+    #endregion
+
+    #region Cross-Method Flow Analysis
+
+    private GDCrossMethodFlowState? _crossMethodState;
+    private GDMethodFlowSummaryRegistry? _flowSummaryRegistry;
+
+    /// <summary>
+    /// Checks if a variable is safe to access at a given method, considering cross-method analysis.
+    /// </summary>
+    public bool IsVariableSafeAtMethod(string varName, string methodName)
+    {
+        EnsureCrossMethodAnalysis();
+
+        if (_crossMethodState == null)
+            return false;
+
+        // If variable is not @onready or _ready() initialized, use regular flow analysis
+        if (!IsOnreadyOrReadyInitializedVariable(varName))
+            return false;
+
+        // Check method safety
+        var safety = GetMethodOnreadySafety(methodName);
+        if (safety != GDMethodOnreadySafety.Safe)
+            return false;
+
+        // Check if variable is guaranteed after ready and not conditionally initialized
+        return _crossMethodState.GuaranteedAfterReady.Contains(varName) &&
+               !_crossMethodState.MayBeNullAfterReady.Contains(varName);
+    }
+
+    /// <summary>
+    /// Gets the @onready safety level for a method.
+    /// </summary>
+    public GDMethodOnreadySafety GetMethodOnreadySafety(string methodName)
+    {
+        EnsureCrossMethodAnalysis();
+
+        if (_crossMethodState?.MethodSafetyCache.TryGetValue(methodName, out var safety) == true)
+            return safety;
+
+        return GDMethodOnreadySafety.Unknown;
+    }
+
+    /// <summary>
+    /// Checks if a variable has conditional initialization in _ready().
+    /// </summary>
+    public bool HasConditionalReadyInitialization(string varName)
+    {
+        EnsureCrossMethodAnalysis();
+        return _crossMethodState?.MayBeNullAfterReady.Contains(varName) ?? false;
+    }
+
+    /// <summary>
+    /// Gets the flow summary for a method.
+    /// </summary>
+    public GDMethodFlowSummary? GetMethodFlowSummary(string methodName)
+    {
+        EnsureCrossMethodAnalysis();
+        return _flowSummaryRegistry?.GetSummary(_scriptFile?.TypeName ?? "", methodName);
+    }
+
+    /// <summary>
+    /// Gets the cross-method flow state.
+    /// </summary>
+    public GDCrossMethodFlowState? GetCrossMethodFlowState()
+    {
+        EnsureCrossMethodAnalysis();
+        return _crossMethodState;
+    }
+
+    /// <summary>
+    /// Ensures cross-method analysis has been performed.
+    /// </summary>
+    private void EnsureCrossMethodAnalysis()
+    {
+        if (_crossMethodState != null)
+            return;
+
+        _flowSummaryRegistry = new GDMethodFlowSummaryRegistry();
+        var analyzer = new GDCrossMethodFlowAnalyzer(this, _flowSummaryRegistry);
+        _crossMethodState = analyzer.Analyze();
     }
 
     #endregion

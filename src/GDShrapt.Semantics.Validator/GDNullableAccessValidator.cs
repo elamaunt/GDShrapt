@@ -1,8 +1,38 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace GDShrapt.Semantics.Validator;
+
+/// <summary>
+/// Context for nullable access validation - extracted from the access node.
+/// Contains all information needed to analyze and report nullable access diagnostics.
+/// </summary>
+internal sealed class GDNullableAccessContext
+{
+    public required string VarName { get; init; }
+    public required GDNode AccessNode { get; init; }
+    public required GDExpression CallerExpr { get; init; }
+    public required GDDiagnosticCode Code { get; init; }
+
+    // Variable classification from semantic model
+    public bool IsOnreadyVariable { get; init; }
+    public bool IsReadyInitializedVariable { get; init; }
+    public bool HasConditionalReadyInit { get; init; }
+}
+
+/// <summary>
+/// Result of nullability safety analysis.
+/// Determines what kind of diagnostic (if any) should be reported.
+/// </summary>
+internal enum GDNullabilitySafetyResult
+{
+    Safe,              // No warning needed
+    UnsafeOnready,     // @onready variable in unsafe context
+    UnsafeReadyInit,   // _ready()-initialized variable in unsafe context
+    UnsafeConditional, // Conditional initialization in _ready()
+    UnsafeNullable     // Regular potentially-null variable
+}
 
 /// <summary>
 /// Validates access on potentially-null variables.
@@ -18,6 +48,13 @@ public class GDNullableAccessValidator : GDValidationVisitor
     private readonly GDNullableStrictnessMode _strictness;
     private readonly bool _warnOnDictionaryIndexer;
     private readonly bool _warnOnUntypedParameters;
+
+    /// <summary>
+    /// Tracks member expressions validated as part of method calls.
+    /// Used to prevent duplicate GD7005/GD7007 diagnostics when a member expression
+    /// is both a standalone access and the caller of a method call.
+    /// </summary>
+    private readonly HashSet<GDMemberOperatorExpression> _validatedMemberExpressions = new();
 
     public GDNullableAccessValidator(
         GDValidationContext context,
@@ -47,11 +84,17 @@ public class GDNullableAccessValidator : GDValidationVisitor
 
     public void Validate(GDNode? node)
     {
+        _validatedMemberExpressions.Clear();
         node?.WalkIn(this);
     }
 
     public override void Visit(GDMemberOperatorExpression memberAccess)
     {
+        // Skip if already validated as part of a method call
+        // In that case, Visit(GDCallExpression) already reported GD7007 instead
+        if (_validatedMemberExpressions.Contains(memberAccess))
+            return;
+
         ValidateNullAccess(memberAccess, memberAccess.CallerExpression, GDDiagnosticCode.PotentiallyNullAccess);
     }
 
@@ -60,6 +103,8 @@ public class GDNullableAccessValidator : GDValidationVisitor
         // Only validate member calls (obj.method())
         if (callExpr.CallerExpression is GDMemberOperatorExpression memberExpr)
         {
+            // Mark this member expression as validated to prevent duplicate GD7005/GD7007
+            _validatedMemberExpressions.Add(memberExpr);
             ValidateNullAccess(callExpr, memberExpr.CallerExpression, GDDiagnosticCode.PotentiallyNullMethodCall);
         }
     }
@@ -71,63 +116,169 @@ public class GDNullableAccessValidator : GDValidationVisitor
 
     private void ValidateNullAccess(GDNode accessNode, GDExpression? callerExpr, GDDiagnosticCode code)
     {
-        // Check strictness mode - if Off, skip all checks
-        if (_strictness == GDNullableStrictnessMode.Off)
+        // Step 1: Extract and validate context
+        var context = TryCreateAccessContext(accessNode, callerExpr, code);
+        if (context == null)
+            return; // Early exit conditions met
+
+        // Step 2: Analyze nullability safety
+        var safetyResult = AnalyzeNullabilitySafety(context);
+        if (safetyResult == GDNullabilitySafetyResult.Safe)
             return;
 
+        // Step 3: Build and report diagnostic
+        ReportNullableDiagnostic(context, safetyResult);
+    }
+
+    /// <summary>
+    /// Attempts to create a validation context. Returns null if validation should be skipped.
+    /// Handles all early exit conditions: strictness mode, null checks, guards, etc.
+    /// </summary>
+    private GDNullableAccessContext? TryCreateAccessContext(GDNode accessNode, GDExpression? callerExpr, GDDiagnosticCode code)
+    {
+        // Check strictness mode - if Off, skip all checks
+        if (_strictness == GDNullableStrictnessMode.Off)
+            return null;
+
         if (callerExpr == null)
-            return;
+            return null;
 
         // Get the root variable name from the caller expression
         var varName = GetRootVariableName(callerExpr);
         if (string.IsNullOrEmpty(varName))
-            return;
+            return null;
 
         // Skip 'self' - it's never null
         if (varName == "self")
-            return;
+            return null;
 
-        // Check if we're in the right side of an 'and' expression with a null guard on the left
-        // e.g., is_instance_valid(x) and x.visible - x is guaranteed non-null in the right side
-        if (IsGuardedByAndCondition(accessNode, varName))
-            return;
+        // Skip 'super' - it's a special keyword for parent class method calls, never null
+        if (varName == "super")
+            return null;
 
-        // Check if the variable is protected by a preceding guard clause
-        // e.g., if not is_instance_valid(x): return
-        //       x.property  # <-- x is safe here
-        if (IsProtectedByGuardClause(accessNode, varName))
-            return;
+        // Skip Signal type - signals are never null, they're built-in class properties
+        var exprType = _semanticModel.GetExpressionType(callerExpr);
+        if (exprType == "Signal")
+            return null;
+
+        // Check if guarded by null check in 'and' expression
+        if (GDNullGuardDetector.IsGuardedByNullCheck(accessNode, varName))
+            return null;
+
+        // Check if protected by guard clause with early return
+        if (GDNullGuardDetector.IsProtectedByGuardClause(accessNode, varName))
+            return null;
 
         // Skip untyped parameters based on options
         if (!_warnOnUntypedParameters && IsUntypedParameter(varName, accessNode))
-            return;
+            return null;
 
         // Skip dictionary indexer results based on options
         if (!_warnOnDictionaryIndexer && IsFromDictionaryIndexer(callerExpr))
-            return;
+            return null;
 
-        // Relaxed mode: only warn on explicitly nullable variables (var x = null)
-        if (_strictness == GDNullableStrictnessMode.Relaxed)
+        // Relaxed mode: only warn on explicitly nullable variables
+        if (_strictness == GDNullableStrictnessMode.Relaxed && !IsExplicitlyNullable(varName, accessNode))
+            return null;
+
+        // Build the context with semantic model information
+        return new GDNullableAccessContext
         {
-            if (!IsExplicitlyNullable(varName, accessNode))
-                return;
+            VarName = varName,
+            AccessNode = accessNode,
+            CallerExpr = callerExpr,
+            Code = code,
+            IsOnreadyVariable = _semanticModel.IsOnreadyVariable(varName),
+            IsReadyInitializedVariable = _semanticModel.IsReadyInitializedVariable(varName),
+            HasConditionalReadyInit = _semanticModel.HasConditionalReadyInitialization(varName)
+        };
+    }
+
+    /// <summary>
+    /// Analyzes the nullability safety of the access and returns the result.
+    /// </summary>
+    private GDNullabilitySafetyResult AnalyzeNullabilitySafety(GDNullableAccessContext context)
+    {
+        // Handle @onready and _ready()-initialized variables
+        if (context.IsOnreadyVariable || context.IsReadyInitializedVariable)
+        {
+            return AnalyzeOnreadySafety(context);
         }
 
-        // Check if the variable is potentially null at this location
-        if (_semanticModel.IsVariablePotentiallyNull(varName, accessNode))
+        // Regular variable - check if potentially null
+        if (_semanticModel.IsVariablePotentiallyNull(context.VarName, context.AccessNode))
         {
-            var memberName = GetAccessedMemberName(accessNode);
-            var message = string.IsNullOrEmpty(memberName)
-                ? $"Variable '{varName}' may be null"
-                : $"Variable '{varName}' may be null when accessing '{memberName}'";
-
-            // In Error mode, always report as error regardless of configured severity
-            var effectiveSeverity = _strictness == GDNullableStrictnessMode.Error
-                ? GDDiagnosticSeverity.Error
-                : _severity;
-
-            ReportDiagnosticWithSeverity(code, message, accessNode, effectiveSeverity);
+            return GDNullabilitySafetyResult.UnsafeNullable;
         }
+
+        return GDNullabilitySafetyResult.Safe;
+    }
+
+    /// <summary>
+    /// Analyzes safety for @onready and _ready()-initialized variables.
+    /// </summary>
+    private GDNullabilitySafetyResult AnalyzeOnreadySafety(GDNullableAccessContext context)
+    {
+        // Conditional initialization - needs null check even in lifecycle methods
+        if (context.HasConditionalReadyInit)
+        {
+            if (!_semanticModel.IsVariablePotentiallyNull(context.VarName, context.AccessNode))
+                return GDNullabilitySafetyResult.Safe;
+
+            return GDNullabilitySafetyResult.UnsafeConditional;
+        }
+
+        // Check if in lifecycle method that runs after _ready()
+        if (IsInLifecycleMethodAfterReady(context.AccessNode))
+            return GDNullabilitySafetyResult.Safe;
+
+        // Check if protected by is_node_ready() guard
+        if (IsInIsNodeReadyGuard(context.AccessNode))
+            return GDNullabilitySafetyResult.Safe;
+
+        // Check if method is safe via cross-method call-site analysis
+        if (IsMethodSafeForOnready(context.AccessNode))
+            return GDNullabilitySafetyResult.Safe;
+
+        // Not safe - return appropriate result type
+        return context.IsOnreadyVariable
+            ? GDNullabilitySafetyResult.UnsafeOnready
+            : GDNullabilitySafetyResult.UnsafeReadyInit;
+    }
+
+    /// <summary>
+    /// Reports the appropriate diagnostic based on the safety result.
+    /// </summary>
+    private void ReportNullableDiagnostic(GDNullableAccessContext context, GDNullabilitySafetyResult safetyResult)
+    {
+        var memberName = GetAccessedMemberName(context.AccessNode);
+        var message = BuildNullableWarningMessage(context.VarName, memberName, safetyResult);
+        ReportDiagnosticWithSeverity(context.Code, message, context.AccessNode, GetEffectiveSeverity());
+    }
+
+    /// <summary>
+    /// Builds the warning message based on the safety result type.
+    /// </summary>
+    private static string BuildNullableWarningMessage(string varName, string? memberName, GDNullabilitySafetyResult safetyResult)
+    {
+        var baseMessage = safetyResult switch
+        {
+            GDNullabilitySafetyResult.UnsafeOnready =>
+                $"Variable '{varName}' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard",
+
+            GDNullabilitySafetyResult.UnsafeReadyInit =>
+                $"Variable '{varName}' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check",
+
+            GDNullabilitySafetyResult.UnsafeConditional =>
+                $"Variable '{varName}' may not be initialized (conditional initialization in _ready())",
+
+            GDNullabilitySafetyResult.UnsafeNullable =>
+                $"Variable '{varName}' may be null",
+
+            _ => $"Variable '{varName}' may be null"
+        };
+
+        return BuildNullableMessage(baseMessage, memberName);
     }
 
     /// <summary>
@@ -135,7 +286,7 @@ public class GDNullableAccessValidator : GDValidationVisitor
     /// </summary>
     private bool IsUntypedParameter(string varName, GDNode atLocation)
     {
-        var method = FindContainingMethod(atLocation);
+        var method = GDNullGuardDetector.FindContainingMethod(atLocation);
         if (method?.Parameters == null)
             return false;
 
@@ -182,84 +333,62 @@ public class GDNullableAccessValidator : GDValidationVisitor
     }
 
     /// <summary>
-    /// Checks if the access node is guarded by a null check.
-    /// Handles patterns like:
-    /// - In 'and' expression: is_instance_valid(x) and x.visible, x != null and x.method(), x and x.property
-    /// - In if-body: if x: x.method(), if x and ...: x.method()
+    /// Builds a nullable access warning message with optional member name suffix.
     /// </summary>
-    private static bool IsGuardedByAndCondition(GDNode accessNode, string varName)
+    private static string BuildNullableMessage(string baseMessage, string? memberName)
     {
-        // Check if we're in the right side of an 'and' expression with a null guard on the left
-        if (IsGuardedByAndExpressionLeft(accessNode, varName))
-            return true;
-
-        // Check if we're in an if/elif body where the condition contains a truthiness guard
-        if (IsInIfBodyWithTruthinessGuard(accessNode, varName))
-            return true;
-
-        return false;
+        return string.IsNullOrEmpty(memberName)
+            ? baseMessage
+            : $"{baseMessage} when accessing '{memberName}'";
     }
 
     /// <summary>
-    /// Checks if the access node is in the right side of an 'and' expression with a null guard on the left.
-    /// Handles patterns like: is_instance_valid(x) and x.visible
-    ///                        x != null and x.method()
-    ///                        x and x.property
+    /// Gets the effective severity based on strictness mode.
     /// </summary>
-    private static bool IsGuardedByAndExpressionLeft(GDNode accessNode, string varName)
+    private GDDiagnosticSeverity GetEffectiveSeverity()
     {
-        // Walk up the tree to find if we're in the right side of an 'and' expression
-        var current = accessNode as GDNode;
-
-        while (current != null)
-        {
-            if (current is GDDualOperatorExpression dualOp)
-            {
-                var opType = dualOp.Operator?.OperatorType;
-                if (opType == GDDualOperatorType.And || opType == GDDualOperatorType.And2)
-                {
-                    // Check if we're in the right side of the 'and'
-                    if (IsDescendantOf(accessNode, dualOp.RightExpression))
-                    {
-                        // Check if the left side is a null guard for our variable
-                        if (IsNullGuardFor(dualOp.LeftExpression, varName))
-                            return true;
-                    }
-                }
-            }
-
-            current = current.Parent as GDNode;
-        }
-
-        return false;
+        return _strictness == GDNullableStrictnessMode.Error
+            ? GDDiagnosticSeverity.Error
+            : _severity;
     }
 
     /// <summary>
-    /// Checks if access is in if-body where the condition contains a truthiness guard.
-    /// Handles: if obj: obj.method()
-    ///          if obj and ...: obj.method()
-    ///          if is_instance_valid(obj): obj.method()
+    /// Checks if the access node is inside a lifecycle method that runs after _ready().
+    /// Methods like _process, _physics_process, _input, _draw are guaranteed to run after _ready.
     /// </summary>
-    private static bool IsInIfBodyWithTruthinessGuard(GDNode accessNode, string varName)
+    private static bool IsInLifecycleMethodAfterReady(GDNode accessNode)
     {
-        // Find containing GDIfBranch or GDElifBranch
+        var method = GDNullGuardDetector.FindContainingMethod(accessNode);
+        if (method == null)
+            return false;
+
+        return method.IsLifecycleMethodAfterReady();
+    }
+
+    /// <summary>
+    /// Checks if the access node is inside an is_node_ready() guard.
+    /// Pattern: if is_node_ready(): var.method()
+    /// </summary>
+    private static bool IsInIsNodeReadyGuard(GDNode accessNode)
+    {
+        // Find containing if/elif branch
         var current = accessNode?.Parent as GDNode;
         while (current != null)
         {
             if (current is GDIfBranch ifBranch)
             {
-                // Check that accessNode is in body (Statements), not in condition
-                if (ifBranch.Condition != null && !IsDescendantOf(accessNode, ifBranch.Condition))
+                // Check that accessNode is in body, not in condition
+                if (ifBranch.Condition != null && !GDNullGuardDetector.IsDescendantOf(accessNode, ifBranch.Condition))
                 {
-                    if (HasTruthinessGuardFor(ifBranch.Condition, varName))
+                    if (IsNodeReadyGuard(ifBranch.Condition))
                         return true;
                 }
             }
             else if (current is GDElifBranch elifBranch)
             {
-                if (elifBranch.Condition != null && !IsDescendantOf(accessNode, elifBranch.Condition))
+                if (elifBranch.Condition != null && !GDNullGuardDetector.IsDescendantOf(accessNode, elifBranch.Condition))
                 {
-                    if (HasTruthinessGuardFor(elifBranch.Condition, varName))
+                    if (IsNodeReadyGuard(elifBranch.Condition))
                         return true;
                 }
             }
@@ -269,30 +398,39 @@ public class GDNullableAccessValidator : GDValidationVisitor
     }
 
     /// <summary>
-    /// Checks if condition contains a truthiness guard for the variable.
+    /// Checks if the condition is or contains is_node_ready() call.
     /// </summary>
-    private static bool HasTruthinessGuardFor(GDExpression? condition, string varName)
+    private static bool IsNodeReadyGuard(GDExpression? condition)
     {
         if (condition == null)
             return false;
 
-        // Simple truthiness: if obj
-        if (condition is GDIdentifierExpression ident && ident.Identifier?.Sequence == varName)
-            return true;
+        // Direct is_node_ready() or self.is_node_ready() call
+        if (condition is GDCallExpression callExpr)
+        {
+            // is_node_ready()
+            if (callExpr.CallerExpression is GDIdentifierExpression funcIdent &&
+                funcIdent.Identifier?.Sequence == "is_node_ready")
+            {
+                return true;
+            }
 
-        // Use existing IsNullGuardFor for other patterns
-        // (is_instance_valid, != null, truthiness)
-        if (IsNullGuardFor(condition, varName))
-            return true;
+            // self.is_node_ready()
+            if (callExpr.CallerExpression is GDMemberOperatorExpression memberExpr &&
+                memberExpr.Identifier?.Sequence == "is_node_ready")
+            {
+                return true;
+            }
+        }
 
-        // and/or with guard on left: if obj and ... or if is_instance_valid(obj) and ...
+        // is_node_ready() in 'and' expression: is_node_ready() and ...
         if (condition is GDDualOperatorExpression dualOp)
         {
             var opType = dualOp.Operator?.OperatorType;
             if (opType == GDDualOperatorType.And || opType == GDDualOperatorType.And2)
             {
-                // Check the left part of and
-                if (HasTruthinessGuardFor(dualOp.LeftExpression, varName))
+                if (IsNodeReadyGuard(dualOp.LeftExpression) ||
+                    IsNodeReadyGuard(dualOp.RightExpression))
                     return true;
             }
         }
@@ -301,342 +439,22 @@ public class GDNullableAccessValidator : GDValidationVisitor
     }
 
     /// <summary>
-    /// Checks if the expression is a null guard for the specified variable.
-    /// Recognizes: is_instance_valid(var), var != null, var (truthiness check)
+    /// Checks if the method is safe for @onready variables via cross-method analysis.
+    /// A method is safe if all its callers are lifecycle methods or other safe methods.
     /// </summary>
-    private static bool IsNullGuardFor(GDExpression? expr, string varName)
+    private bool IsMethodSafeForOnready(GDNode accessNode)
     {
-        if (expr == null)
+        var method = GDNullGuardDetector.FindContainingMethod(accessNode);
+        if (method == null)
             return false;
 
-        // is_instance_valid(var)
-        if (expr is GDCallExpression callExpr)
-        {
-            if (callExpr.CallerExpression is GDIdentifierExpression funcIdent &&
-                funcIdent.Identifier?.Sequence == "is_instance_valid")
-            {
-                var args = callExpr.Parameters?.ToList();
-                if (args != null && args.Count > 0 && args[0] is GDIdentifierExpression argIdent)
-                {
-                    if (argIdent.Identifier?.Sequence == varName)
-                        return true;
-                }
-            }
-        }
-
-        // var != null
-        if (expr is GDDualOperatorExpression eqOp &&
-            eqOp.Operator?.OperatorType == GDDualOperatorType.NotEqual)
-        {
-            if (IsNullLiteral(eqOp.RightExpression) &&
-                eqOp.LeftExpression is GDIdentifierExpression leftIdent &&
-                leftIdent.Identifier?.Sequence == varName)
-                return true;
-
-            if (IsNullLiteral(eqOp.LeftExpression) &&
-                eqOp.RightExpression is GDIdentifierExpression rightIdent &&
-                rightIdent.Identifier?.Sequence == varName)
-                return true;
-        }
-
-        // var is Type (type guard implies non-null)
-        if (expr is GDDualOperatorExpression isOp &&
-            isOp.Operator?.OperatorType == GDDualOperatorType.Is)
-        {
-            if (isOp.LeftExpression is GDIdentifierExpression leftIsIdent &&
-                leftIsIdent.Identifier?.Sequence == varName)
-                return true;
-        }
-
-        // var == non_null_value (equality with non-null implies var is non-null)
-        // If var == "literal" then var cannot be null (equality would fail otherwise)
-        if (expr is GDDualOperatorExpression eqOp2 &&
-            eqOp2.Operator?.OperatorType == GDDualOperatorType.Equal)
-        {
-            // Check if left side is our variable
-            if (eqOp2.LeftExpression is GDIdentifierExpression leftIdent2 &&
-                leftIdent2.Identifier?.Sequence == varName)
-            {
-                if (IsNonNullExpression(eqOp2.RightExpression))
-                    return true;
-            }
-            // Check if right side is our variable
-            if (eqOp2.RightExpression is GDIdentifierExpression rightIdent2 &&
-                rightIdent2.Identifier?.Sequence == varName)
-            {
-                if (IsNonNullExpression(eqOp2.LeftExpression))
-                    return true;
-            }
-        }
-
-        // var (truthiness check)
-        if (expr is GDIdentifierExpression ident && ident.Identifier?.Sequence == varName)
-            return true;
-
-        // Recursively check nested 'and' expressions
-        // e.g., a and is_instance_valid(x) and x.visible
-        if (expr is GDDualOperatorExpression andOp)
-        {
-            var opType = andOp.Operator?.OperatorType;
-            if (opType == GDDualOperatorType.And || opType == GDDualOperatorType.And2)
-            {
-                if (IsNullGuardFor(andOp.LeftExpression, varName) ||
-                    IsNullGuardFor(andOp.RightExpression, varName))
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if an expression is a null literal.
-    /// </summary>
-    private static bool IsNullLiteral(GDExpression? expr)
-    {
-        return expr is GDIdentifierExpression ident && ident.Identifier?.Sequence == "null";
-    }
-
-    /// <summary>
-    /// Checks if an expression is guaranteed to be non-null.
-    /// Returns true for literals (strings, numbers, arrays, dicts, bools) which are never null.
-    /// </summary>
-    private static bool IsNonNullExpression(GDExpression? expr)
-    {
-        if (expr == null)
+        var methodName = method.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(methodName))
             return false;
 
-        // String, number, boolean, array, dictionary literals are never null
-        if (expr is GDStringExpression ||
-            expr is GDNumberExpression ||
-            expr is GDBoolExpression ||
-            expr is GDArrayInitializerExpression ||
-            expr is GDDictionaryInitializerExpression)
-            return true;
-
-        // null literal is obviously null
-        if (IsNullLiteral(expr))
-            return false;
-
-        // Other identifiers - assume they might be null (conservative)
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if the child node is a descendant of the parent node.
-    /// </summary>
-    private static bool IsDescendantOf(GDNode? child, GDNode? parent)
-    {
-        if (child == null || parent == null)
-            return false;
-
-        var current = child;
-        while (current != null)
-        {
-            if (current == parent)
-                return true;
-            current = current.Parent as GDNode;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if the access is protected by a preceding guard clause that handles the null case.
-    /// Pattern: if not is_instance_valid(x): return   (or x == null: return)
-    ///          x.property  # <-- x is guaranteed non-null here
-    /// </summary>
-    private static bool IsProtectedByGuardClause(GDNode accessNode, string varName)
-    {
-        // Find the containing statements list
-        var containingMethod = FindContainingMethod(accessNode);
-        if (containingMethod == null)
-            return false;
-
-        // Get all statements in the method
-        var statements = containingMethod.Statements?.ToList();
-        if (statements == null || statements.Count == 0)
-            return false;
-
-        // Find the statement containing our access
-        var accessStatementIndex = -1;
-        for (int i = 0; i < statements.Count; i++)
-        {
-            if (IsDescendantOf(accessNode, statements[i]))
-            {
-                accessStatementIndex = i;
-                break;
-            }
-        }
-
-        if (accessStatementIndex < 0)
-            return false;
-
-        // Look at preceding statements for guard clauses
-        for (int i = 0; i < accessStatementIndex; i++)
-        {
-            if (statements[i] is GDIfStatement ifStmt)
-            {
-                if (IsGuardClauseForVariable(ifStmt, varName))
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if the if statement is a guard clause that ensures the variable is valid.
-    /// A guard clause has:
-    /// - A condition that checks for null/invalid (not is_instance_valid(x), x == null)
-    /// - A body that exits early (return, break, continue)
-    /// </summary>
-    private static bool IsGuardClauseForVariable(GDIfStatement ifStmt, string varName)
-    {
-        var ifBranch = ifStmt.IfBranch;
-        if (ifBranch?.Condition == null)
-            return false;
-
-        // Check if condition is a negative null check
-        if (!IsNegativeNullCheckFor(ifBranch.Condition, varName))
-            return false;
-
-        // Check if body is an early exit
-        var statements = ifBranch.Statements?.ToList();
-        if (statements == null || statements.Count == 0)
-            return false;
-
-        // The body should be just an early exit (return, break, continue)
-        if (statements.Count == 1 && IsEarlyExit(statements[0]))
-            return true;
-
-        // Or the last statement should be an early exit
-        if (IsEarlyExit(statements[statements.Count - 1]))
-            return true;
-
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if the condition is a negative null check for the variable.
-    /// Patterns: not is_instance_valid(x), !is_instance_valid(x), x == null
-    /// </summary>
-    private static bool IsNegativeNullCheckFor(GDExpression condition, string varName)
-    {
-        // not is_instance_valid(x) or !is_instance_valid(x)
-        if (condition is GDSingleOperatorExpression singleOp)
-        {
-            var opType = singleOp.Operator?.OperatorType;
-            if (opType == GDSingleOperatorType.Not || opType == GDSingleOperatorType.Not2)
-            {
-                // The inner expression should be a positive null guard
-                if (IsPositiveNullGuardFor(singleOp.TargetExpression, varName))
-                    return true;
-            }
-        }
-
-        // x == null
-        if (condition is GDDualOperatorExpression eqOp &&
-            eqOp.Operator?.OperatorType == GDDualOperatorType.Equal)
-        {
-            if (IsNullLiteral(eqOp.RightExpression) &&
-                eqOp.LeftExpression is GDIdentifierExpression leftIdent &&
-                leftIdent.Identifier?.Sequence == varName)
-                return true;
-
-            if (IsNullLiteral(eqOp.LeftExpression) &&
-                eqOp.RightExpression is GDIdentifierExpression rightIdent &&
-                rightIdent.Identifier?.Sequence == varName)
-                return true;
-        }
-
-        // not x (falsy check)
-        if (condition is GDSingleOperatorExpression notOp)
-        {
-            var opType = notOp.Operator?.OperatorType;
-            if (opType == GDSingleOperatorType.Not || opType == GDSingleOperatorType.Not2)
-            {
-                if (notOp.TargetExpression is GDIdentifierExpression ident &&
-                    ident.Identifier?.Sequence == varName)
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if the expression is a positive null guard (is_instance_valid(x), x != null, x).
-    /// </summary>
-    private static bool IsPositiveNullGuardFor(GDExpression? expr, string varName)
-    {
-        if (expr == null)
-            return false;
-
-        // is_instance_valid(x)
-        if (expr is GDCallExpression callExpr)
-        {
-            if (callExpr.CallerExpression is GDIdentifierExpression funcIdent &&
-                funcIdent.Identifier?.Sequence == "is_instance_valid")
-            {
-                var args = callExpr.Parameters?.ToList();
-                if (args != null && args.Count > 0 && args[0] is GDIdentifierExpression argIdent)
-                {
-                    if (argIdent.Identifier?.Sequence == varName)
-                        return true;
-                }
-            }
-        }
-
-        // x != null
-        if (expr is GDDualOperatorExpression eqOp &&
-            eqOp.Operator?.OperatorType == GDDualOperatorType.NotEqual)
-        {
-            if (IsNullLiteral(eqOp.RightExpression) &&
-                eqOp.LeftExpression is GDIdentifierExpression leftIdent &&
-                leftIdent.Identifier?.Sequence == varName)
-                return true;
-
-            if (IsNullLiteral(eqOp.LeftExpression) &&
-                eqOp.RightExpression is GDIdentifierExpression rightIdent &&
-                rightIdent.Identifier?.Sequence == varName)
-                return true;
-        }
-
-        // x (truthiness check)
-        if (expr is GDIdentifierExpression ident && ident.Identifier?.Sequence == varName)
-            return true;
-
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if the statement is an early exit (return, break, continue).
-    /// In GDShrapt, these are wrapped in GDExpressionStatement.
-    /// </summary>
-    private static bool IsEarlyExit(GDStatement? stmt)
-    {
-        if (stmt is GDExpressionStatement exprStmt)
-        {
-            return exprStmt.Expression is GDReturnExpression
-                   || exprStmt.Expression is GDBreakExpression
-                   || exprStmt.Expression is GDContinueExpression;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Finds the containing method for a node.
-    /// </summary>
-    private static GDMethodDeclaration? FindContainingMethod(GDNode? node)
-    {
-        var current = node;
-        while (current != null)
-        {
-            if (current is GDMethodDeclaration method)
-                return method;
-            current = current.Parent as GDNode;
-        }
-        return null;
+        // Use the cross-method analysis API
+        var safety = _semanticModel.GetMethodOnreadySafety(methodName);
+        return safety == GDMethodOnreadySafety.Safe;
     }
 
     private static string? GetRootVariableName(GDExpression? expr)

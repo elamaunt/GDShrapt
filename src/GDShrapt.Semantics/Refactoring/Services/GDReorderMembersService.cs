@@ -9,27 +9,27 @@ namespace GDShrapt.Semantics;
 /// </summary>
 public class GDReorderMembersService : GDRefactoringServiceBase
 {
-    // Built-in Godot method names
+    // Built-in Godot method names - using constants from GDSpecialMethodHelper where available
     private static readonly HashSet<string> BuiltinMethodNames = new HashSet<string>
     {
-        "_init",
-        "_ready",
-        "_process",
-        "_physics_process",
-        "_enter_tree",
-        "_exit_tree",
-        "_input",
-        "_unhandled_input",
-        "_unhandled_key_input",
-        "_gui_input",
-        "_draw",
-        "_get",
-        "_set",
-        "_get_property_list",
-        "_notification",
-        "_to_string",
-        "_get_configuration_warning",
-        "_get_configuration_warnings"
+        GDSpecialMethodHelper.Init,
+        GDSpecialMethodHelper.Ready,
+        GDSpecialMethodHelper.Process,
+        GDSpecialMethodHelper.PhysicsProcess,
+        GDSpecialMethodHelper.EnterTree,
+        GDSpecialMethodHelper.ExitTree,
+        GDSpecialMethodHelper.Input,
+        GDSpecialMethodHelper.UnhandledInput,
+        GDSpecialMethodHelper.UnhandledKeyInput,
+        "_gui_input",  // Not in GDSpecialMethodHelper
+        GDSpecialMethodHelper.Draw,
+        GDSpecialMethodHelper.Get,
+        GDSpecialMethodHelper.Set,
+        GDSpecialMethodHelper.GetPropertyList,
+        GDSpecialMethodHelper.Notification,
+        GDSpecialMethodHelper.ToStringMethod,
+        "_get_configuration_warning",  // Legacy (Godot 3.x)
+        GDSpecialMethodHelper.GetConfigurationWarnings
     };
 
     /// <summary>

@@ -183,6 +183,49 @@ namespace GDShrapt.Linter
         /// </summary>
         public bool WarnAwaitInLoop { get; set; } = true;
 
+        // ===== Performance rules =====
+        /// <summary>
+        /// Warn about object allocations (new(), {}, []) inside loops.
+        /// </summary>
+        public bool WarnAllocationInLoop { get; set; } = false;
+
+        /// <summary>
+        /// Warn about get_node()/$path in _process/_physics_process.
+        /// </summary>
+        public bool WarnProcessGetNode { get; set; } = true;
+
+        /// <summary>
+        /// Warn about string concatenation with += inside loops.
+        /// </summary>
+        public bool WarnStringConcatInLoop { get; set; } = false;
+
+        // ===== Godot-specific rules =====
+        /// <summary>
+        /// Warn when Node.new() is not followed by add_child() or queue_free().
+        /// </summary>
+        public bool WarnOrphanNode { get; set; } = false;
+
+        /// <summary>
+        /// Warn when Input action name doesn't exist in project.godot.
+        /// </summary>
+        public bool WarnInvalidInputAction { get; set; } = false;
+
+        // ===== Correctness rules =====
+        /// <summary>
+        /// Warn when variable is used before being initialized.
+        /// </summary>
+        public bool WarnUninitializedVariable { get; set; } = false;
+
+        /// <summary>
+        /// Warn about unnecessary pass statements in non-empty blocks.
+        /// </summary>
+        public bool WarnUnnecessaryPass { get; set; } = false;
+
+        /// <summary>
+        /// Warn about private functions that are never called.
+        /// </summary>
+        public bool WarnUnusedFunctions { get; set; } = false;
+
         // Style options
         /// <summary>
         /// Whether to require trailing comma in multiline arrays and dictionaries.
@@ -505,6 +548,33 @@ namespace GDShrapt.Linter
 
             if (rule.RuleId == "GDL238") // no-debug-print
                 return WarnDebugPrint;
+
+            // Performance rules
+            if (rule.RuleId == "GDL240") // allocation-in-loop
+                return WarnAllocationInLoop;
+
+            if (rule.RuleId == "GDL241") // process-get-node
+                return WarnProcessGetNode;
+
+            if (rule.RuleId == "GDL242") // string-concat-loop
+                return WarnStringConcatInLoop;
+
+            // Godot-specific rules
+            if (rule.RuleId == "GDL245") // orphan-node
+                return WarnOrphanNode;
+
+            if (rule.RuleId == "GDL246") // invalid-input-action
+                return WarnInvalidInputAction;
+
+            // Correctness rules
+            if (rule.RuleId == "GDL250") // uninitialized-variable
+                return WarnUninitializedVariable;
+
+            if (rule.RuleId == "GDL251") // unnecessary-pass
+                return WarnUnnecessaryPass;
+
+            if (rule.RuleId == "GDL252") // unused-function
+                return WarnUnusedFunctions;
 
             // Formatting rules (text-based)
             if (rule.RuleId == "GDL502") // trailing-whitespace

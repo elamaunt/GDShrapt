@@ -24,6 +24,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
     // The semantic model being built
     private GDSemanticModel? _model;
 
+    // Validation context for TypeEngine scope management
+    private GDValidationContext? _validationContext;
+
     // Scope tracking (for internal use during collection)
     private readonly Stack<GDScopeInfo> _scopeStack = new();
     private GDScopeInfo? _currentScope;
@@ -74,29 +77,29 @@ internal class GDSemanticReferenceCollector : GDVisitor
     /// </summary>
     public GDSemanticModel BuildSemanticModel()
     {
-        var validationContext = new GDValidationContext(_runtimeProvider);
+        _validationContext = new GDValidationContext(_runtimeProvider);
 
         if (_scriptFile.Class == null)
         {
-            _model = new GDSemanticModel(_scriptFile, _runtimeProvider, validationContext, null);
+            _model = new GDSemanticModel(_scriptFile, _runtimeProvider, _validationContext, null);
             return _model;
         }
 
         // First pass: collect class-level declarations to populate scopes
         // Use validator's declaration collector to properly set up scopes
         var declarationCollector = new GDDeclarationCollector();
-        declarationCollector.Collect(_scriptFile.Class, validationContext);
+        declarationCollector.Collect(_scriptFile.Class, _validationContext);
 
         // Second pass: collect local declarations (local variables, parameters, iterators)
         // This is needed so GDTypeInferenceEngine can resolve local variable types
-        var scopeValidator = new GDScopeValidator(validationContext);
+        var scopeValidator = new GDScopeValidator(_validationContext);
         scopeValidator.Validate(_scriptFile.Class);
 
         // Reset scope stack to class scope after validation
         // GDScopeValidator.Validate() pops all scopes including global, which breaks
         // GDTypeInferenceEngine.Lookup() since it needs access to class-level declarations
         // (methods, signals, class variables). ResetToClass() restores both Global and Class scopes.
-        validationContext.Scopes.ResetToClass();
+        _validationContext.Scopes.ResetToClass();
 
         // Create type engine with proper scopes (after all declarations are collected)
         // Store in field so it can be used during reference collection
@@ -109,21 +112,30 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 {
                     ScriptPath = _scriptFile.FullPath
                 };
-                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes, _typeInjector, injectionContext);
+                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, _validationContext.Scopes, _typeInjector, injectionContext);
             }
             else
             {
-                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, validationContext.Scopes);
+                _typeEngine = new GDTypeInferenceEngine(_runtimeProvider, _validationContext.Scopes);
             }
         }
 
-        _model = new GDSemanticModel(_scriptFile, _runtimeProvider, validationContext, _typeEngine);
+        _model = new GDSemanticModel(_scriptFile, _runtimeProvider, _validationContext, _typeEngine);
 
         // Connect container type provider to type engine for usage-based inference
         // This must be done before walking the AST so that indexer type inference works
         if (_typeEngine != null)
         {
             _typeEngine.SetContainerTypeProvider(varName => _model.GetInferredContainerType(varName));
+
+            // Connect symbol lookup fallback for when scope-based lookup fails
+            // This is needed during validation when method scopes have been popped
+            // but SemanticModel still has all symbols registered
+            _typeEngine.SetSymbolLookupFallback((name, contextNode) =>
+            {
+                var symbolInfo = _model.FindSymbolInScope(name, contextNode);
+                return symbolInfo?.Symbol;
+            });
         }
 
         // Collect extends type usage
@@ -138,7 +150,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         }
 
         // Register declarations in semantic model
-        CollectDeclarations(_scriptFile.Class, validationContext);
+        CollectDeclarations(_scriptFile.Class, _validationContext);
 
         // Initialize scopes for reference collection (both internal GDScopeInfo and GDScope for references)
         _currentScope = new GDScopeInfo(GDScopeType.Global, _scriptFile.Class);
@@ -153,10 +165,10 @@ internal class GDSemanticReferenceCollector : GDVisitor
         _scriptFile.Class.WalkIn(this);
 
         // Collect duck types (pass scopes to filter out typed variables)
-        CollectDuckTypes(_scriptFile.Class, validationContext);
+        CollectDuckTypes(_scriptFile.Class, _validationContext);
 
         // Collect variable usage profiles for Union type inference
-        CollectVariableUsageProfiles(_scriptFile.Class, validationContext);
+        CollectVariableUsageProfiles(_scriptFile.Class, _validationContext);
 
         return _model;
     }
@@ -374,6 +386,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
     {
         PushScope(GDScopeType.Method, methodDeclaration);
 
+        // Also push scope in validation context for TypeEngine to access local symbols
+        _validationContext?.Scopes.Push(GDScopeType.Method, methodDeclaration);
+
         // Register parameters with the method as the declaring scope
         var parameters = methodDeclaration.Parameters;
         if (parameters != null)
@@ -391,6 +406,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     // Pass the method as the declaring scope for parameter isolation
                     var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: methodDeclaration);
                     _model!.RegisterSymbol(symbolInfo);
+
+                    // Also add to validation context scopes for TypeEngine
+                    _validationContext?.Scopes.TryDeclare(symbol);
                 }
             }
         }
@@ -399,11 +417,15 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDMethodDeclaration methodDeclaration)
     {
         PopScope();
+
+        // Also pop from validation context
+        _validationContext?.Scopes.Pop();
     }
 
     public override void Visit(GDForStatement forStatement)
     {
         PushScope(GDScopeType.ForLoop, forStatement);
+        _validationContext?.Scopes.Push(GDScopeType.ForLoop, forStatement);
 
         var iteratorName = forStatement.Variable?.Sequence;
         if (!string.IsNullOrEmpty(iteratorName))
@@ -413,27 +435,34 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var enclosingScope = FindEnclosingScopeNode(forStatement);
             var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope);
             _model!.RegisterSymbol(symbolInfo);
+
+            // Also add to validation context scopes for TypeEngine
+            _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
 
     public override void Left(GDForStatement forStatement)
     {
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     public override void Visit(GDWhileStatement whileStatement)
     {
         PushScope(GDScopeType.WhileLoop, whileStatement);
+        _validationContext?.Scopes.Push(GDScopeType.WhileLoop, whileStatement);
     }
 
     public override void Left(GDWhileStatement whileStatement)
     {
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     public override void Visit(GDMethodExpression methodExpression)
     {
         PushScope(GDScopeType.Lambda, methodExpression);
+        _validationContext?.Scopes.Push(GDScopeType.Lambda, methodExpression);
 
         // Register lambda parameters with the lambda as the declaring scope
         var parameters = methodExpression.Parameters;
@@ -452,6 +481,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     // Pass the lambda as the declaring scope for parameter isolation
                     var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: methodExpression);
                     _model!.RegisterSymbol(symbolInfo);
+
+                    // Also add to validation context scopes for TypeEngine
+                    _validationContext?.Scopes.TryDeclare(symbol);
                 }
             }
         }
@@ -460,21 +492,25 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDMethodExpression methodExpression)
     {
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     public override void Visit(GDMatchStatement matchStatement)
     {
         PushScope(GDScopeType.Match, matchStatement);
+        _validationContext?.Scopes.Push(GDScopeType.Match, matchStatement);
     }
 
     public override void Left(GDMatchStatement matchStatement)
     {
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     public override void Visit(GDIfStatement ifStatement)
     {
         PushScope(GDScopeType.Conditional, ifStatement);
+        _validationContext?.Scopes.Push(GDScopeType.Conditional, ifStatement);
 
         // Store parent narrowing context
         _narrowingStack.Push(_currentNarrowingContext ?? new GDTypeNarrowingContext());
@@ -498,6 +534,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         }
 
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     public override void Visit(GDIfBranch ifBranch)
@@ -614,12 +651,14 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Inner class symbol is already registered in CollectClassMembers/RegisterInnerClass
         // Here we just push scope for reference tracking during the visitor walk
         PushScope(GDScopeType.Class, innerClass);
+        _validationContext?.Scopes.Push(GDScopeType.Class, innerClass);
     }
 
     public override void Left(GDInnerClassDeclaration innerClass)
     {
         // Exit inner class scope
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     private void PushScope(GDScopeType type, GDNode node)
@@ -660,17 +699,20 @@ internal class GDSemanticReferenceCollector : GDVisitor
     {
         // Getter body acts like a method scope
         PushScope(GDScopeType.Method, getterBody);
+        _validationContext?.Scopes.Push(GDScopeType.Method, getterBody);
     }
 
     public override void Left(GDGetAccessorBodyDeclaration getterBody)
     {
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     public override void Visit(GDSetAccessorBodyDeclaration setterBody)
     {
         // Setter body acts like a method scope
         PushScope(GDScopeType.Method, setterBody);
+        _validationContext?.Scopes.Push(GDScopeType.Method, setterBody);
 
         // Register the setter parameter
         var param = setterBody.Parameter;
@@ -687,6 +729,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
                 var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: setterBody);
                 _model!.RegisterSymbol(symbolInfo);
+
+                // Also add to validation context scopes for TypeEngine
+                _validationContext?.Scopes.TryDeclare(symbol);
             }
         }
     }
@@ -694,6 +739,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDSetAccessorBodyDeclaration setterBody)
     {
         PopScope();
+        _validationContext?.Scopes.Pop();
     }
 
     /// <summary>
@@ -730,6 +776,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var enclosingScope = FindEnclosingScopeNode(variableDeclaration);
             var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope);
             _model!.RegisterSymbol(symbolInfo);
+
+            // Also add to validation context scopes for TypeEngine to access local variable types
+            _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
 
@@ -743,6 +792,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var enclosingScope = FindEnclosingScopeNode(matchCaseVariable);
             var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope);
             _model!.RegisterSymbol(symbolInfo);
+
+            // Also add to validation context scopes for TypeEngine
+            _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
 

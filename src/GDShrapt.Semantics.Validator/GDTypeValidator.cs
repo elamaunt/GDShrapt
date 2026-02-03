@@ -160,15 +160,216 @@ namespace GDShrapt.Semantics.Validator
             if (lambda.Parameters == null)
                 return;
 
+            // Try to get expected parameter types from call context (filter, map, reduce, etc.)
+            var expectedTypes = TryGetExpectedLambdaParameterTypes(lambda);
+
+            int paramIndex = 0;
             foreach (var param in lambda.Parameters)
             {
                 var paramName = param.Identifier?.Sequence;
                 if (string.IsNullOrEmpty(paramName))
+                {
+                    paramIndex++;
                     continue;
+                }
 
+                // 1. Explicit type annotation takes priority
                 var typeName = param.Type?.BuildName();
+
+                // 2. Infer from call context if no explicit type
+                if (string.IsNullOrEmpty(typeName) && expectedTypes != null && paramIndex < expectedTypes.Count)
+                {
+                    typeName = expectedTypes[paramIndex];
+                }
+
                 Context.Declare(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: param.Type));
+                paramIndex++;
             }
+        }
+
+        /// <summary>
+        /// Tries to infer lambda parameter types from the call context.
+        /// For example, in arr.filter(func(x): return x > 2), x should be inferred from arr's element type.
+        /// </summary>
+        private IReadOnlyList<string>? TryGetExpectedLambdaParameterTypes(GDMethodExpression lambda)
+        {
+            // Find the parent call expression (arr.filter(...))
+            var callExpr = FindParentCallExpression(lambda);
+            if (callExpr == null)
+                return null;
+
+            // Get the caller type and method name
+            var (callerType, methodName) = GetCallerTypeAndMethod(callExpr);
+            if (callerType == null || methodName == null)
+                return null;
+
+            // Get method info with callable metadata
+            var methodInfo = _semanticModel?.RuntimeProvider?.GetMember(callerType, methodName);
+            if (methodInfo?.Parameters == null)
+                return null;
+
+            // Find which argument position the lambda is at
+            var lambdaArgIndex = GetLambdaArgumentIndex(callExpr, lambda);
+            if (lambdaArgIndex < 0 || lambdaArgIndex >= methodInfo.Parameters.Count)
+                return null;
+
+            // Get callable metadata from the parameter
+            var paramInfo = methodInfo.Parameters[lambdaArgIndex];
+            if (paramInfo.CallableReceivesType == null)
+                return null;
+
+            // Get the container's element type
+            var containerElementType = GetContainerElementType(callExpr, callerType);
+            if (containerElementType == null)
+                return null;
+
+            // Build list of parameter types based on CallableReceivesType
+            return BuildLambdaParameterTypes(paramInfo.CallableReceivesType, containerElementType, paramInfo.CallableParameterCount ?? 1);
+        }
+
+        /// <summary>
+        /// Finds the parent GDCallExpression that contains the lambda.
+        /// </summary>
+        private static GDCallExpression? FindParentCallExpression(GDMethodExpression lambda)
+        {
+            GDNode? current = lambda.Parent;
+            while (current != null)
+            {
+                if (current is GDCallExpression call)
+                    return call;
+                current = current.Parent;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the caller type and method name from a call expression.
+        /// For arr.filter(...) returns (Array[int], "filter").
+        /// </summary>
+        private (string? CallerType, string? MethodName) GetCallerTypeAndMethod(GDCallExpression call)
+        {
+            if (call.CallerExpression is GDMemberOperatorExpression memberOp)
+            {
+                var methodName = memberOp.Identifier?.Sequence;
+                if (methodName == null)
+                    return (null, null);
+
+                // Get the type of the caller (e.g., arr in arr.filter())
+                var callerExpr = memberOp.CallerExpression;
+                if (callerExpr == null)
+                    return (null, methodName);
+
+                var callerType = _semanticModel?.GetExpressionType(callerExpr);
+                return (callerType, methodName);
+            }
+
+            return (null, null);
+        }
+
+        /// <summary>
+        /// Gets the index of the lambda expression in the call arguments.
+        /// </summary>
+        private static int GetLambdaArgumentIndex(GDCallExpression call, GDMethodExpression lambda)
+        {
+            if (call.Parameters == null)
+                return -1;
+
+            int index = 0;
+            foreach (var arg in call.Parameters)
+            {
+                if (arg == lambda || ContainsNode(arg, lambda))
+                    return index;
+                index++;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Checks if a node contains another node (for nested expressions).
+        /// </summary>
+        private static bool ContainsNode(GDNode parent, GDNode target)
+        {
+            if (parent == target)
+                return true;
+
+            var foundNodes = new List<GDNode>();
+            parent.WalkIn((GDVisitor)new NodeFinder(target, foundNodes));
+            return foundNodes.Count > 0;
+        }
+
+        private class NodeFinder : GDVisitor
+        {
+            private readonly GDNode _target;
+            private readonly List<GDNode> _found;
+
+            public NodeFinder(GDNode target, List<GDNode> found)
+            {
+                _target = target;
+                _found = found;
+            }
+
+            public override void WillVisit(GDNode node)
+            {
+                if (node == _target)
+                    _found.Add(node);
+            }
+        }
+
+        /// <summary>
+        /// Gets the element type of a container (Array[T] -> T, or inferred from usage).
+        /// </summary>
+        private string? GetContainerElementType(GDCallExpression call, string callerType)
+        {
+            // Try to extract from generic type annotation: Array[int] -> int
+            if (callerType.StartsWith("Array[") && callerType.EndsWith("]"))
+            {
+                return callerType.Substring(6, callerType.Length - 7);
+            }
+
+            // For non-generic Array, try to infer from the caller expression
+            if (callerType == "Array" && call.CallerExpression is GDMemberOperatorExpression memberOp)
+            {
+                var callerExpr = memberOp.CallerExpression;
+                if (callerExpr != null)
+                {
+                    // Use SemanticModel to get more detailed type info
+                    var detailedType = _semanticModel?.GetExpressionType(callerExpr);
+                    if (detailedType != null && detailedType.StartsWith("Array[") && detailedType.EndsWith("]"))
+                    {
+                        return detailedType.Substring(6, detailedType.Length - 7);
+                    }
+                }
+            }
+
+            // For Dictionary, extract value type
+            if (callerType.StartsWith("Dictionary[") && callerType.EndsWith("]"))
+            {
+                var inner = callerType.Substring(11, callerType.Length - 12);
+                var commaIndex = inner.IndexOf(',');
+                if (commaIndex > 0)
+                {
+                    return inner.Substring(commaIndex + 1).Trim();
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Builds list of parameter types based on CallableReceivesType metadata.
+        /// </summary>
+        private static IReadOnlyList<string> BuildLambdaParameterTypes(string receivesType, string elementType, int paramCount)
+        {
+            return receivesType switch
+            {
+                "element" => new[] { elementType },
+                "element_element" => new[] { elementType, elementType },
+                "accumulator_element" => new[] { "Variant", elementType },
+                "key" => new[] { elementType }, // For dictionary key iteration
+                "value" => new[] { elementType }, // For dictionary value iteration
+                "key_value" => new[] { "Variant", elementType }, // For dictionary key-value iteration
+                _ => Enumerable.Repeat("Variant", paramCount).ToArray()
+            };
         }
 
         private void RegisterLocalVariable(GDVariableDeclarationStatement varDecl)

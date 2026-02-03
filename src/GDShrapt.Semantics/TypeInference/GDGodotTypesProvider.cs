@@ -170,8 +170,11 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 minArgs,
                 maxArgs,
                 isVarArgs);
-            // Assign parameters
+            // Assign parameters with callable metadata
             memberInfo.Parameters = CreateParameterList(method.Parameters);
+            // Assign type inference metadata
+            memberInfo.ReturnTypeRole = method.ReturnTypeRole;
+            memberInfo.MergeTypeStrategy = method.MergeTypeStrategy;
             return memberInfo;
         }
 
@@ -256,6 +259,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 isVarArgs ? int.MaxValue : maxArgs,
                 isVarArgs);
             memberInfo.Parameters = CreateParameterList(method.Parameters);
+            // Assign type inference metadata
+            memberInfo.ReturnTypeRole = method.ReturnTypeRole;
+            memberInfo.MergeTypeStrategy = method.MergeTypeStrategy;
             return memberInfo;
         }
 
@@ -730,6 +736,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
     /// <summary>
     /// Creates a list of GDRuntimeParameterInfo from GDParameterInfo array.
+    /// Includes callable metadata for type inference (filter, map, reduce, etc.)
     /// </summary>
     private static IReadOnlyList<GDRuntimeParameterInfo>? CreateParameterList(GDParameterInfo[]? parameters)
     {
@@ -740,7 +747,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             p.CSharpName ?? "arg",
             p.GDScriptTypeName ?? "Variant",
             p.HasDefaultValue,
-            p.IsParams
+            p.IsParams,
+            p.CallableReceivesType,
+            p.CallableReturnsType,
+            p.CallableParameterCount
         )).ToList();
     }
 }

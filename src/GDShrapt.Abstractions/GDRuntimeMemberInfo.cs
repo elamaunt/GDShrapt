@@ -53,6 +53,18 @@ public class GDRuntimeMemberInfo
     public bool IsAbstract { get; set; }
 
     /// <summary>
+    /// For methods: role of return type relative to container for type inference.
+    /// Values: "element", "key", "value", "self", "keys_array", "values_array", "callable_return_array"
+    /// </summary>
+    public string? ReturnTypeRole { get; set; }
+
+    /// <summary>
+    /// For methods: strategy for type merging when method modifies container.
+    /// Values: "union_element", "union_key_value"
+    /// </summary>
+    public string? MergeTypeStrategy { get; set; }
+
+    /// <summary>
     /// Creates a new member info.
     /// </summary>
     public GDRuntimeMemberInfo(string name, GDRuntimeMemberKind kind, string? type = null)

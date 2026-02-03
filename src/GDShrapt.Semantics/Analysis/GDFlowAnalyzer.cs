@@ -15,6 +15,7 @@ internal class GDFlowAnalyzer : GDVisitor
 {
     private readonly GDTypeInferenceEngine? _typeEngine;
     private readonly Func<GDExpression, string?>? _expressionTypeProvider;
+    private readonly Func<IEnumerable<string>>? _onreadyVariablesProvider;
     private readonly Stack<GDFlowState> _stateStack = new();
     private readonly Stack<List<GDFlowState>> _branchStatesStack = new();
     private GDFlowState _currentState;
@@ -43,6 +44,18 @@ internal class GDFlowAnalyzer : GDVisitor
         : this(typeEngine)
     {
         _expressionTypeProvider = expressionTypeProvider;
+    }
+
+    /// <summary>
+    /// Creates a flow analyzer with expression type and onready variables providers.
+    /// </summary>
+    public GDFlowAnalyzer(
+        GDTypeInferenceEngine? typeEngine,
+        Func<GDExpression, string?>? expressionTypeProvider,
+        Func<IEnumerable<string>>? onreadyVariablesProvider)
+        : this(typeEngine, expressionTypeProvider)
+    {
+        _onreadyVariablesProvider = onreadyVariablesProvider;
     }
 
     /// <summary>
@@ -804,11 +817,12 @@ internal class GDFlowAnalyzer : GDVisitor
             ApplyTruthinessNarrowing(truthyIdent, state);
         }
 
-        // Handle: has_method(), has(), has_signal(), is_instance_valid()
+        // Handle: has_method(), has(), has_signal(), is_instance_valid(), is_node_ready()
         if (condition is GDCallExpression callExpr)
         {
             ApplyHasMethodNarrowing(callExpr, state);
             ApplyIsInstanceValidNarrowing(callExpr, state);
+            ApplyIsNodeReadyNarrowing(callExpr, state);
         }
 
         // Handle: not x
@@ -1332,6 +1346,38 @@ internal class GDFlowAnalyzer : GDVisitor
             var varName = checkedIdent.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName))
                 state.MarkNonNull(varName);
+        }
+    }
+
+    /// <summary>
+    /// Applies narrowing from is_node_ready() checks.
+    /// is_node_ready() -> all @onready and _ready()-initialized variables are guaranteed non-null.
+    /// </summary>
+    private void ApplyIsNodeReadyNarrowing(GDCallExpression callExpr, GDFlowState state)
+    {
+        // Handle is_node_ready() (Node method, no arguments)
+        string? funcName = null;
+
+        if (callExpr.CallerExpression is GDIdentifierExpression funcIdent)
+        {
+            funcName = funcIdent.Identifier?.Sequence;
+        }
+        else if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
+        {
+            // self.is_node_ready() pattern
+            funcName = memberOp.Identifier?.Sequence;
+        }
+
+        if (funcName != "is_node_ready")
+            return;
+
+        // Mark all @onready variables as non-null
+        if (_onreadyVariablesProvider != null)
+        {
+            foreach (var varName in _onreadyVariablesProvider())
+            {
+                state.MarkNonNull(varName);
+            }
         }
     }
 

@@ -680,5 +680,107 @@ func test(x):
         }
 
         #endregion
+
+        #region UnnecessaryPassRule (GDL251)
+
+        [TestMethod]
+        public void UnnecessaryPass_OnlyPass_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUnnecessaryPass = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func empty_func():
+    pass
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL251").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void UnnecessaryPass_WithOtherStatements_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnUnnecessaryPass = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    print(""hello"")
+    pass
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL251");
+        }
+
+        [TestMethod]
+        public void UnnecessaryPass_InEmptyIf_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUnnecessaryPass = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        pass
+    print(""done"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL251").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void UnnecessaryPass_InIfWithStatements_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnUnnecessaryPass = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test(x):
+    if x > 0:
+        print(""positive"")
+        pass
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL251");
+        }
+
+        [TestMethod]
+        public void UnnecessaryPass_InForLoop_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnUnnecessaryPass = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    for i in range(10):
+        print(i)
+        pass
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL251");
+        }
+
+        [TestMethod]
+        public void UnnecessaryPass_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUnnecessaryPass = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    print(""hello"")
+    pass
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL251").Should().BeEmpty();
+        }
+
+        #endregion
     }
 }

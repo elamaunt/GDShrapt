@@ -116,6 +116,22 @@ namespace GDShrapt.Linter
             AddRule(new GDCommentedCodeRule());
             AddRule(new GDDebugPrintRule());
 
+            // Performance rules
+            AddRule(new GDAllocationInLoopRule());
+            AddRule(new GDProcessGetNodeRule());
+            AddRule(new GDStringConcatLoopRule());
+
+            // Godot-specific rules
+            AddRule(new GDOrphanNodeRule());
+            AddRule(new GDInvalidInputActionRule());
+
+            // Correctness rules
+            AddRule(new GDUninitializedVariableRule());
+            AddRule(new GDUnusedFunctionRule());
+
+            // Style rules
+            AddRule(new GDUnnecessaryPassRule());
+
             // Organization rules
             AddRule(new GDMemberOrderingRule());
 

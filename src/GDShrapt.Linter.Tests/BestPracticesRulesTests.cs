@@ -1699,5 +1699,493 @@ func process_data(data):
         }
 
         #endregion
+
+        #region AllocationInLoopRule (GDL240)
+
+        [TestMethod]
+        public void AllocationInLoop_NewOutsideLoop_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnAllocationInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var vec = Vector2.new(0, 0)
+    for i in range(10):
+        print(i)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL240").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void AllocationInLoop_NewInsideForLoop_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnAllocationInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    for i in range(10):
+        var vec = Vector2.new(i, 0)
+        print(vec)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL240");
+        }
+
+        [TestMethod]
+        public void AllocationInLoop_DictInsideLoop_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnAllocationInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    for i in range(10):
+        var dict = {""key"": i}
+        print(dict)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL240");
+        }
+
+        [TestMethod]
+        public void AllocationInLoop_ArrayInsideLoop_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnAllocationInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    for i in range(10):
+        var arr = [1, 2, 3]
+        print(arr)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL240");
+        }
+
+        [TestMethod]
+        public void AllocationInLoop_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnAllocationInLoop = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    for i in range(10):
+        var vec = Vector2.new(i, 0)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL240").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region ProcessGetNodeRule (GDL241)
+
+        [TestMethod]
+        public void ProcessGetNode_OutsideProcess_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnProcessGetNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func _ready():
+    var node = get_node(""Child"")
+    print(node)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL241").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void ProcessGetNode_InProcess_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnProcessGetNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func _process(delta):
+    var node = get_node(""Child"")
+    print(node)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL241");
+        }
+
+        [TestMethod]
+        public void ProcessGetNode_InPhysicsProcess_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnProcessGetNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func _physics_process(delta):
+    var node = get_node(""Child"")
+    print(node)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL241");
+        }
+
+        [TestMethod]
+        public void ProcessGetNode_DollarPath_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnProcessGetNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func _process(delta):
+    var node = $Child
+    print(node)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL241");
+        }
+
+        [TestMethod]
+        public void ProcessGetNode_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnProcessGetNode = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func _process(delta):
+    var node = get_node(""Child"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL241").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region StringConcatLoopRule (GDL242)
+
+        [TestMethod]
+        public void StringConcatLoop_OutsideLoop_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnStringConcatInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var result = """"
+    result += ""hello""
+    print(result)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL242").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StringConcatLoop_InsideLoop_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnStringConcatInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var result = """"
+    for i in range(10):
+        result += ""item""
+    print(result)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL242");
+        }
+
+        [TestMethod]
+        public void StringConcatLoop_IntegerConcat_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnStringConcatInLoop = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var sum = 0
+    for i in range(10):
+        sum += i
+    print(sum)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL242").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void StringConcatLoop_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnStringConcatInLoop = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var result = """"
+    for i in range(10):
+        result += ""item""
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL242").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region OrphanNodeRule (GDL245)
+
+        [TestMethod]
+        public void OrphanNode_AddedToTree_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnOrphanNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = Node.new()
+    add_child(node)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL245").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void OrphanNode_NotAddedOrFreed_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnOrphanNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = Node.new()
+    print(node)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL245");
+        }
+
+        [TestMethod]
+        public void OrphanNode_QueueFreed_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnOrphanNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = Node.new()
+    node.queue_free()
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL245").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void OrphanNode_Returned_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnOrphanNode = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func create_node():
+    var node = Node.new()
+    return node
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL245").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void OrphanNode_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnOrphanNode = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var node = Node.new()
+    print(node)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL245").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region UninitializedVariableRule (GDL250)
+
+        [TestMethod]
+        public void UninitializedVariable_Initialized_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUninitializedVariable = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x = 10
+    print(x)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL250").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void UninitializedVariable_UsedBeforeAssign_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnUninitializedVariable = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x
+    print(x)
+    x = 10
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL250" && i.Message.Contains("x"));
+        }
+
+        [TestMethod]
+        public void UninitializedVariable_AssignedThenUsed_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUninitializedVariable = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x
+    x = 10
+    print(x)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL250").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void UninitializedVariable_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUninitializedVariable = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    var x
+    print(x)
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL250").Should().BeEmpty();
+        }
+
+        #endregion
+
+        #region UnusedFunctionRule (GDL252)
+
+        [TestMethod]
+        public void UnusedFunction_PrivateCalled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUnusedFunctions = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    _helper()
+
+func _helper():
+    print(""helping"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL252").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void UnusedFunction_PrivateNeverCalled_ReportsIssue()
+        {
+            var options = new GDLinterOptions { WarnUnusedFunctions = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func test():
+    print(""hello"")
+
+func _unused_helper():
+    print(""never called"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL252" && i.Message.Contains("_unused_helper"));
+        }
+
+        [TestMethod]
+        public void UnusedFunction_BuiltinCallback_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUnusedFunctions = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func _ready():
+    print(""ready"")
+
+func _process(delta):
+    pass
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL252").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void UnusedFunction_PublicNeverCalled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUnusedFunctions = true };
+            var linter = new GDLinter(options);
+            var code = @"
+func public_method():
+    print(""public"")
+";
+
+            var result = linter.LintCode(code);
+
+            // Public methods are not flagged
+            result.Issues.Where(i => i.RuleId == "GDL252").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void UnusedFunction_Disabled_NoIssue()
+        {
+            var options = new GDLinterOptions { WarnUnusedFunctions = false };
+            var linter = new GDLinter(options);
+            var code = @"
+func _unused_helper():
+    print(""never called"")
+";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL252").Should().BeEmpty();
+        }
+
+        #endregion
     }
 }

@@ -223,5 +223,36 @@ namespace GDShrapt.Reader
                    methodName == ValidateProperty ||
                    methodName == ToStringMethod;
         }
+
+        /// <summary>
+        /// Checks if the method is a lifecycle method that is guaranteed to run after _ready().
+        /// Includes: _process, _physics_process, _input, _unhandled_input, _unhandled_key_input,
+        /// _shortcut_input, _draw, and _ready itself.
+        /// </summary>
+        public static bool IsLifecycleMethodAfterReady(this GDMethodDeclaration method)
+        {
+            return method.IsProcessMethod() ||
+                   method.IsInputMethod() ||
+                   method.IsDraw() ||
+                   method.IsReady();
+        }
+
+        /// <summary>
+        /// Checks if the method name is a lifecycle method that runs after _ready().
+        /// </summary>
+        public static bool IsLifecycleMethodAfterReady(string methodName)
+        {
+            if (methodName == null)
+                return false;
+
+            return methodName == Ready ||
+                   methodName == Process ||
+                   methodName == PhysicsProcess ||
+                   methodName == Input ||
+                   methodName == UnhandledInput ||
+                   methodName == UnhandledKeyInput ||
+                   methodName == ShortcutInput ||
+                   methodName == Draw;
+        }
     }
 }
