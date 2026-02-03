@@ -617,7 +617,7 @@ namespace GDShrapt.Semantics.Validator
                 case GDDualOperatorType.Multiply:
                 case GDDualOperatorType.Division:
                 case GDDualOperatorType.Mod:
-                    if (!AreTypesCompatibleForArithmetic(leftType, rightType))
+                    if (!AreTypesCompatibleForArithmetic(left, right, leftType, rightType))
                     {
                         // String + anything is allowed in GDScript
                         if (op == GDDualOperatorType.Addition && (leftType == "String" || rightType == "String"))
@@ -1102,44 +1102,61 @@ namespace GDShrapt.Semantics.Validator
             return type ?? "Unknown";
         }
 
-        private bool AreTypesCompatibleForArithmetic(string left, string right)
+        private bool AreTypesCompatibleForArithmetic(
+            GDExpression leftExpr, GDExpression rightExpr,
+            string leftType, string rightType)
         {
-            if (left == "Unknown" || right == "Unknown")
+            if (leftType == "Unknown" || rightType == "Unknown")
                 return true;
 
             // Variant is dynamically typed and can hold any value, so arithmetic is allowed
-            if (left == "Variant" || right == "Variant")
+            if (leftType == "Variant" || rightType == "Variant")
                 return true;
 
-            if (IsNumericType(left) && IsNumericType(right))
+            if (IsNumericType(leftType) && IsNumericType(rightType))
                 return true;
 
-            if (left == right)
+            if (leftType == rightType)
+                return true;
+
+            // Array concatenation: use GDTypeNode to check array types (no string parsing)
+            if (AreArrayTypesForConcatenation(leftExpr, rightExpr))
                 return true;
 
             // Vector * scalar and scalar * Vector operations are valid
             // This includes *, / for scaling vectors
-            if (IsVectorType(left) && IsNumericType(right))
+            if (IsVectorType(leftType) && IsNumericType(rightType))
                 return true;
 
-            if (IsNumericType(left) && IsVectorType(right))
+            if (IsNumericType(leftType) && IsVectorType(rightType))
                 return true;
 
             // Transform * Vector and Vector * Transform operations are also valid
-            if (IsTransformType(left) && IsVectorType(right))
+            if (IsTransformType(leftType) && IsVectorType(rightType))
                 return true;
 
-            if (IsVectorType(left) && IsTransformType(right))
+            if (IsVectorType(leftType) && IsTransformType(rightType))
                 return true;
 
             // Color * scalar operations
-            if (left == "Color" && IsNumericType(right))
+            if (leftType == "Color" && IsNumericType(rightType))
                 return true;
 
-            if (IsNumericType(left) && right == "Color")
+            if (IsNumericType(leftType) && rightType == "Color")
                 return true;
 
             return false;
+        }
+
+        /// <summary>
+        /// Checks if both expressions are array types using GDTypeNode (no string parsing).
+        /// </summary>
+        private bool AreArrayTypesForConcatenation(GDExpression left, GDExpression right)
+        {
+            var leftTypeNode = _semanticModel?.GetTypeNodeForExpression(left);
+            var rightTypeNode = _semanticModel?.GetTypeNodeForExpression(right);
+
+            return leftTypeNode is GDArrayTypeNode && rightTypeNode is GDArrayTypeNode;
         }
 
         private bool IsNumericType(string type)

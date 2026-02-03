@@ -277,6 +277,11 @@ public enum GDContainerUsageKind
     IndexAssignment,
 
     /// <summary>
+    /// arr.merge(other_array) - merging arrays
+    /// </summary>
+    Merge,
+
+    /// <summary>
     /// Unknown usage pattern
     /// </summary>
     Unknown

@@ -177,6 +177,51 @@ internal class GDContainerUsageCollector : GDVisitor
                 }
                 break;
 
+            case "merge":
+            case "append_array":
+                // arr.merge(other_array) or arr.append_array(other_array)
+                // Infer element types from the argument array
+                {
+                    var argType = _typeEngine?.InferType(args[0]);
+                    if (!string.IsNullOrEmpty(argType) && argType.StartsWith("Array["))
+                    {
+                        // Extract element type from Array[T] or Array[T|U]
+                        var elementType = argType.Substring(6, argType.Length - 7);
+                        // If it's a union type, add each type separately
+                        var types = elementType.Split('|');
+                        foreach (var t in types)
+                        {
+                            var trimmed = t.Trim();
+                            if (!string.IsNullOrEmpty(trimmed))
+                            {
+                                profile.ValueUsages.Add(new GDContainerUsageObservation
+                                {
+                                    Kind = GDContainerUsageKind.Merge,
+                                    InferredType = trimmed,
+                                    IsHighConfidence = true,
+                                    Node = call,
+                                    Line = line,
+                                    Column = column
+                                });
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Untyped array or unknown - mark as Variant
+                        profile.ValueUsages.Add(new GDContainerUsageObservation
+                        {
+                            Kind = GDContainerUsageKind.Merge,
+                            InferredType = "Variant",
+                            IsHighConfidence = false,
+                            Node = call,
+                            Line = line,
+                            Column = column
+                        });
+                    }
+                }
+                break;
+
             case "get":
                 // dict.get(key, default) - infer type from default value
                 if (profile.IsDictionary && args.Count >= 2)

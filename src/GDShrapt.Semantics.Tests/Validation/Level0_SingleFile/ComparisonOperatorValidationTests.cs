@@ -292,6 +292,40 @@ func test():
             $"var x = true should infer bool type. Found: {FormatDiagnostics(diagnostics)}");
     }
 
+    [TestMethod]
+    public void VarWithMethodCallInitializer_NumericReturn_NoGD3020()
+    {
+        // Bug fix: method calls returning numeric types should not trigger GD3020
+        // distance_squared_to returns float (or int for Vector2i/Vector3i)
+        var code = @"
+extends Node2D
+
+func test(pos: Vector2):
+    var d = pos.distance_squared_to(global_position)
+    if d < 100:
+        pass
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Method call returning numeric should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    [TestMethod]
+    public void VarWithMethodCallInitializer_UntypedCaller_NoGD3020()
+    {
+        // Even with untyped caller, if the method returns numeric, no GD3020
+        var code = @"
+func test(position):
+    var nearest_dist = position.distance_squared_to(Vector2.ZERO)
+    var d = position.distance_squared_to(Vector2.ONE)
+    if d < nearest_dist:
+        pass
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Numeric method on untyped caller should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
     #endregion
 
     #region Equality Operators Allow Null
@@ -354,7 +388,10 @@ func test():
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
 
-        var runtimeProvider = GDDefaultRuntimeProvider.Instance;
+        // Use GDCompositeRuntimeProvider with GDGodotTypesProvider to get full Godot type info
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null, null, null);
         var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
         var semanticModel = collector.BuildSemanticModel();
 

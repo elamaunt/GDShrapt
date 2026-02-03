@@ -301,6 +301,83 @@ func test():
 
     #endregion
 
+    #region For-Loop Iterator Type Inference (GD3013 False Positive Fix)
+
+    [TestMethod]
+    public void ForLoop_IteratingArrayOfDictionary_ShouldNotReportGD3013()
+    {
+        // This was a false positive: call_info["method"] reported as
+        // "Type 'Array' expects integer index, got 'String'"
+        // because call_info (the iterator) was incorrectly typed as Array instead of Dictionary
+        var code = @"
+extends Node
+
+var _pending_calls = []
+
+func add_call():
+    _pending_calls.append({""method"": ""test"", ""args"": []})
+
+func build():
+    for call_info in _pending_calls:
+        if call_info.has(""method""):
+            print(call_info[""method""])
+";
+        var diagnostics = ValidateCode(code);
+        var indexerDiagnostics = FilterIndexerDiagnostics(diagnostics);
+
+        // Should NOT report GD3013 (IndexerKeyTypeMismatch) for call_info["method"]
+        // because call_info should be inferred as Variant (element of untyped array)
+        // and Variant accepts any key
+        Assert.IsFalse(indexerDiagnostics.Any(d =>
+            d.Code == GDDiagnosticCode.IndexerKeyTypeMismatch &&
+            d.Message.Contains("Array")),
+            $"Should NOT report IndexerKeyTypeMismatch for Dictionary iteration. Found: {FormatDiagnostics(indexerDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ForLoop_IteratingTypedArrayOfDictionary_ShouldNotReportGD3013()
+    {
+        // Explicit typed array of Dictionary
+        var code = @"
+extends Node
+
+var _pending_calls: Array[Dictionary] = []
+
+func build():
+    for call_info in _pending_calls:
+        print(call_info[""method""])
+";
+        var diagnostics = ValidateCode(code);
+        var indexerDiagnostics = FilterIndexerDiagnostics(diagnostics);
+
+        Assert.IsFalse(indexerDiagnostics.Any(d =>
+            d.Code == GDDiagnosticCode.IndexerKeyTypeMismatch),
+            $"Should NOT report IndexerKeyTypeMismatch for typed Array[Dictionary]. Found: {FormatDiagnostics(indexerDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ForLoop_IteratingTypedArrayOfInt_ShouldReportGD3013()
+    {
+        // This SHOULD report an error - array of int, string key doesn't make sense
+        var code = @"
+extends Node
+
+func test():
+    var items: Array[int] = [1, 2, 3]
+    for item in items:
+        print(item[""key""])
+";
+        var diagnostics = ValidateCode(code);
+        var indexerDiagnostics = FilterIndexerDiagnostics(diagnostics);
+
+        // Should report NotIndexable for int (int doesn't support indexing)
+        Assert.IsTrue(indexerDiagnostics.Any(d =>
+            d.Code == GDDiagnosticCode.NotIndexable),
+            $"Should report NotIndexable for int. Found: {FormatDiagnostics(indexerDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)

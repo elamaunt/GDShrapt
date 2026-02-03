@@ -79,6 +79,12 @@ namespace GDShrapt.Reader
                 return null;
             if (leftType == "Unknown" || rightType == "Unknown")
                 return "Unknown";
+
+            // String % anything = String (GDScript format string)
+            // Check BEFORE Variant fallback because String % Variant = String
+            if (op == GDDualOperatorType.Mod && (leftType == "String" || leftType == "StringName"))
+                return "String";
+
             if (leftType == "Variant" || rightType == "Variant")
                 return "Variant";
 
@@ -349,6 +355,11 @@ namespace GDShrapt.Reader
         /// </summary>
         private static GDTypeNode? ResolveModTypeNode(GDTypeNode left, GDTypeNode right)
         {
+            // String % anything = String (GDScript format string)
+            // Works with any right-hand type: int, float, String, Array, etc.
+            if (left.IsStringType())
+                return GDTypeNode.CreateSimple("String");
+
             // int % int = int
             if (left.IsIntType() && right.IsIntType())
                 return GDTypeNode.CreateSimple("int");
@@ -398,32 +409,6 @@ namespace GDShrapt.Reader
             // Incompatible types → return null to signal fallback to string-based resolver
             // The string-based resolver will return "Array[A|B]" union type
             return null;
-        }
-
-        /// <summary>
-        /// Creates a union type name, handling nested unions.
-        /// Example: ("int|String", "float") → "String|float|int"
-        /// </summary>
-        private static string CreateUnionTypeName(string type1, string type2)
-        {
-            var types = new HashSet<string>();
-            types.UnionWith(ExtractUnionTypes(type1));
-            types.UnionWith(ExtractUnionTypes(type2));
-
-            if (types.Count == 1)
-                return types.First();
-
-            return string.Join("|", types.OrderBy(t => t));
-        }
-
-        /// <summary>
-        /// Extracts individual types from a union type string.
-        /// </summary>
-        private static HashSet<string> ExtractUnionTypes(string typeName)
-        {
-            if (typeName.Contains("|"))
-                return new HashSet<string>(typeName.Split('|').Select(t => t.Trim()));
-            return new HashSet<string> { typeName };
         }
 
         /// <summary>
@@ -632,6 +617,11 @@ namespace GDShrapt.Reader
         /// </summary>
         private static string ResolveMod(string left, string right)
         {
+            // String % anything = String (GDScript format string)
+            // Works with any right-hand type: int, float, String, Array, etc.
+            if (left == "String" || left == "StringName")
+                return "String";
+
             // int % int = int
             if (left == "int" && right == "int")
                 return "int";
@@ -753,54 +743,6 @@ namespace GDShrapt.Reader
                 case "Vector4i": return "Vector4";
                 default: return integerVectorType;
             }
-        }
-
-        #endregion
-
-        #region GDInferredType Resolution
-
-        /// <summary>
-        /// Resolves the result type for array addition operations.
-        /// Returns GDInferredType which supports union types for incompatible element types.
-        /// </summary>
-        /// <param name="leftType">The inferred type of the left array</param>
-        /// <param name="rightType">The inferred type of the right array</param>
-        /// <returns>The combined array type with union element type if needed</returns>
-        public static GDShrapt.Abstractions.GDInferredType? ResolveArrayAddition(
-            GDShrapt.Abstractions.GDInferredType? leftType,
-            GDShrapt.Abstractions.GDInferredType? rightType)
-        {
-            return GDShrapt.Abstractions.GDInferredType.CombineArrays(leftType, rightType);
-        }
-
-        /// <summary>
-        /// Creates a GDInferredType from a GDTypeNode.
-        /// </summary>
-        public static GDShrapt.Abstractions.GDInferredType? ToInferredType(GDTypeNode? typeNode)
-        {
-            if (typeNode == null)
-                return null;
-
-            if (typeNode is GDArrayTypeNode arrayNode)
-            {
-                var result = GDShrapt.Abstractions.GDInferredType.Array();
-                if (arrayNode.InnerType != null)
-                {
-                    var innerTypeName = arrayNode.InnerType.BuildName();
-                    result.ElementType = new GDShrapt.Abstractions.GDUnionType();
-                    result.ElementType.AddType(innerTypeName);
-                }
-                return result;
-            }
-
-            if (typeNode is GDDictionaryTypeNode dictNode)
-            {
-                var keyType = dictNode.KeyType?.BuildName();
-                var valueType = dictNode.ValueType?.BuildName();
-                return GDShrapt.Abstractions.GDInferredType.Dictionary(keyType, valueType);
-            }
-
-            return GDShrapt.Abstractions.GDInferredType.Simple(typeNode.BuildName());
         }
 
         #endregion

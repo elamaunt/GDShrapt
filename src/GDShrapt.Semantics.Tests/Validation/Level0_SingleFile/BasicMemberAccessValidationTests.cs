@@ -306,6 +306,75 @@ func test():
 
     #endregion
 
+    #region Method Chain on Untyped Object (GD4002 False Positive Fix)
+
+    [TestMethod]
+    public void MethodChain_GetScriptGetPath_ShouldNotReportWrongType()
+    {
+        // This was a false positive: get_path().get_file() reported as
+        // "Method 'get_file' not found on type 'Vector3'"
+        // because FindMethodReturnTypeInCommonTypes found NavigationPathQueryResult3D.get_path() -> Vector3[]
+        // instead of Resource.get_path() -> String
+        var code = @"
+extends Node
+
+func get_script_name(obj):
+    return obj.get_script().get_path().get_file().get_basename()
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+
+        // Should NOT report GD4002 (MethodNotFound) claiming get_file doesn't exist on Vector3
+        Assert.IsFalse(memberDiagnostics.Any(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message.Contains("Vector3")),
+            $"Should NOT report MethodNotFound with Vector3 type. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void MethodChain_UntypedObject_ShouldNotInferWrongType()
+    {
+        // When caller type is unknown, we should NOT try to guess the return type
+        // from all types that have a method with that name
+        var code = @"
+extends Node
+
+func process_item(item):
+    return item.get_path().get_file()
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+
+        // Should NOT report GD4002 claiming Vector3 doesn't have get_file
+        Assert.IsFalse(memberDiagnostics.Any(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message.Contains("Vector3")),
+            $"Should NOT infer wrong type from method name search. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void UniqueMethodName_ShouldStillInferType()
+    {
+        // Methods unique to one type should still have their return type inferred
+        // e.g., to_upper() is unique to String, so return type should be String
+        var code = @"
+extends Node
+
+func process_text(text):
+    var upper = text.to_upper()
+    return upper.length()
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+
+        // Should NOT report any member access issues since to_upper() is unique to String
+        // and length() exists on String
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Unique method names should still allow type inference. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)

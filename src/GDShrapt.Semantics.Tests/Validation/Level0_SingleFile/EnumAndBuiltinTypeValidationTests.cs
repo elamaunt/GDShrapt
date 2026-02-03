@@ -511,6 +511,53 @@ func test():
             $"Dictionary.keys() should be recognized. Found: {FormatDiagnostics(methodNotFound)}");
     }
 
+    #endregion
+
+    #region GD7007: Godot API Return Types - No False Positives
+
+    [TestMethod]
+    public void GetNodesInGroup_ReturnsArray_NoGD7007()
+    {
+        // First verify the provider returns the correct type
+        var godotProvider = new GDGodotTypesProvider();
+
+        // Debug: get raw method data
+        var overloads = godotProvider.GetMethodOverloads("SceneTree", "get_nodes_in_group");
+        if (overloads != null && overloads.Count > 0)
+        {
+            var methodData = overloads[0];
+            Console.WriteLine($"GDScriptReturnTypeName: '{methodData.GDScriptReturnTypeName}'");
+            Console.WriteLine($"CSharpReturnTypeFullName: '{methodData.CSharpReturnTypeFullName}'");
+        }
+
+        var memberInfo = godotProvider.GetMember("SceneTree", "get_nodes_in_group");
+        Console.WriteLine($"GDGodotTypesProvider return type: '{memberInfo?.Type}'");
+
+        // Verify that the return type is Array[Node] or at least Array (not Array`1)
+        Assert.IsNotNull(memberInfo, "get_nodes_in_group method not found in SceneTree");
+        Assert.IsTrue(
+            memberInfo.Type == "Array[Node]" || memberInfo.Type == "Array",
+            $"Expected Array[Node] or Array, got '{memberInfo.Type}'");
+
+        // Test for false positive GD7007: get_nodes_in_group() always returns Array[Node], never null
+        var code = @"
+extends Node
+
+func test(type_filter: String):
+    var candidates = get_tree().get_nodes_in_group(type_filter)
+    if candidates.is_empty():
+        return null
+    return candidates[0]
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.PotentiallyNullMethodCall ||
+            d.Code == GDDiagnosticCode.PotentiallyNullAccess ||
+            d.Code == GDDiagnosticCode.PotentiallyNullIndexer).ToList();
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"get_nodes_in_group() returns Array, should not report GD7007. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
     [TestMethod]
     public void DictionaryMethod_Has_NoDiagnostic()
     {

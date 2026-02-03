@@ -164,9 +164,12 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             var method = methods[0];
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
+            var returnType = ConvertCSharpGenericToGDScript(
+                method.GDScriptReturnTypeName,
+                method.CSharpReturnTypeFullName) ?? "Variant";
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
-                method.GDScriptReturnTypeName ?? "Variant",
+                returnType,
                 minArgs,
                 maxArgs,
                 isVarArgs);
@@ -252,9 +255,12 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             var method = methods[0];
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
+            var returnType = ConvertCSharpGenericToGDScript(
+                method.GDScriptReturnTypeName,
+                method.CSharpReturnTypeFullName) ?? "Variant";
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
-                method.GDScriptReturnTypeName ?? "Variant",
+                returnType,
                 minArgs,
                 isVarArgs ? int.MaxValue : maxArgs,
                 isVarArgs);
@@ -761,5 +767,93 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             p.CallableReturnsType,
             p.CallableParameterCount
         )).ToList();
+    }
+
+    /// <summary>
+    /// Converts C# generic type notation to GDScript notation.
+    /// E.g., "Array`1" with CSharpFullName "Godot.Collections.Array`1[[Godot.Node, ...]]" → "Array[Node]"
+    /// </summary>
+    internal static string? ConvertCSharpGenericToGDScript(string? gdScriptTypeName, string? csharpFullTypeName)
+    {
+        // If not a generic type (no backtick), return as-is
+        // Note: backtick character is Unicode 0x60
+        if (gdScriptTypeName == null)
+            return gdScriptTypeName;
+
+        // Check for backtick character (0x60)
+        var backtickIndex = gdScriptTypeName.IndexOf('\u0060');
+        if (backtickIndex < 0)
+            return gdScriptTypeName;
+
+        // Extract base type name (before backtick)
+        var baseTypeName = gdScriptTypeName.Substring(0, backtickIndex);
+
+        // Try to extract generic argument from C# full type name
+        if (!string.IsNullOrEmpty(csharpFullTypeName))
+        {
+            var genericArg = ExtractGenericTypeArgument(csharpFullTypeName);
+            if (!string.IsNullOrEmpty(genericArg))
+            {
+                return $"{baseTypeName}[{genericArg}]";
+            }
+        }
+
+        // Fallback: return base type without generic parameter
+        return baseTypeName;
+    }
+
+    /// <summary>
+    /// Extracts the GDScript type name from a C# generic type full name.
+    /// E.g., "Godot.Collections.Array`1[[Godot.Node, GodotSharp, ...]]" → "Node"
+    /// </summary>
+    private static string? ExtractGenericTypeArgument(string csharpFullTypeName)
+    {
+        // Pattern: TypeName`N[[GenericArg1, Assembly, ...], [GenericArg2, Assembly, ...]]
+        // Find the first [[ which starts generic arguments
+        var startIndex = csharpFullTypeName.IndexOf("[[", StringComparison.Ordinal);
+        if (startIndex < 0)
+            return null;
+
+        startIndex += 2; // Skip "[["
+
+        // Find the comma or ] that ends the type name
+        var endIndex = csharpFullTypeName.IndexOfAny(new[] { ',', ']' }, startIndex);
+        if (endIndex < 0)
+            return null;
+
+        var fullArgTypeName = csharpFullTypeName.Substring(startIndex, endIndex - startIndex);
+
+        // Convert Godot full name to GDScript name
+        // E.g., "Godot.Node" → "Node", "Godot.Vector2" → "Vector2"
+        return ConvertCSharpTypeNameToGDScript(fullArgTypeName);
+    }
+
+    /// <summary>
+    /// Converts a C# type name to its GDScript equivalent.
+    /// E.g., "Godot.Node" → "Node", "System.Int32" → "int"
+    /// </summary>
+    private static string ConvertCSharpTypeNameToGDScript(string csharpTypeName)
+    {
+        // Handle common C# to GDScript mappings
+        return csharpTypeName switch
+        {
+            "System.Int32" or "System.Int64" or "Int32" or "Int64" => "int",
+            "System.Single" or "System.Double" or "Single" or "Double" => "float",
+            "System.Boolean" or "Boolean" => "bool",
+            "System.String" or "String" => "String",
+            _ => ExtractSimpleTypeName(csharpTypeName)
+        };
+    }
+
+    /// <summary>
+    /// Extracts simple type name from full name.
+    /// E.g., "Godot.Node" → "Node", "Godot.Collections.Array" → "Array"
+    /// </summary>
+    private static string ExtractSimpleTypeName(string fullTypeName)
+    {
+        var lastDotIndex = fullTypeName.LastIndexOf('.');
+        if (lastDotIndex >= 0 && lastDotIndex < fullTypeName.Length - 1)
+            return fullTypeName.Substring(lastDotIndex + 1);
+        return fullTypeName;
     }
 }

@@ -39,6 +39,12 @@ namespace GDShrapt.Semantics
         // Used to query SemanticModel's persisted symbol registry during validation
         private Func<string, GDNode, GDSymbol> _symbolLookupFallback;
 
+        // Optional registry for Callable call sites (used for lambda parameter inference)
+        private GDCallableCallSiteRegistry _callSiteRegistry;
+
+        // Optional source file context (used for call site resolution)
+        private GDScriptFile _sourceFile;
+
         // Specialized analyzers (lazy initialized)
         private GDContainerTypeAnalyzer _containerAnalyzer;
         private GDSignalTypeAnalyzer _signalAnalyzer;
@@ -128,20 +134,62 @@ namespace GDShrapt.Semantics
         /// For Variant callers, tries to find a method in common GDScript types.
         /// This handles cases like item.to_upper() where item is Variant but we can
         /// still infer the return type based on the method name.
+        /// Only returns a type if ALL types with this method return the SAME type.
+        /// This prevents false positives when methods like get_path() exist on multiple
+        /// types with different return types (e.g., Resource.get_path() -> String,
+        /// NavigationPathQueryResult3D.get_path() -> Vector3[]).
         /// </summary>
         private string FindMethodReturnTypeInCommonTypes(string methodName)
         {
             // Use TypesMap via runtime provider instead of hardcoded list
             var typesWithMethod = _runtimeProvider.FindTypesWithMethod(methodName);
 
+            string commonReturnType = null;
+            bool hasNumericTypes = false;
+            bool hasNonNumericTypes = false;
+
             foreach (var typeName in typesWithMethod)
             {
                 var memberInfo = _runtimeProvider.GetMember(typeName, methodName);
                 if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
-                    return memberInfo.Type;
+                {
+                    var returnType = memberInfo.Type;
+
+                    // Track numeric vs non-numeric return types
+                    if (IsNumericType(returnType))
+                        hasNumericTypes = true;
+                    else
+                        hasNonNumericTypes = true;
+
+                    if (commonReturnType == null)
+                    {
+                        commonReturnType = returnType;
+                    }
+                    else if (commonReturnType != returnType)
+                    {
+                        // Different types return different types for this method
+                        // Check if they're all numeric (int/float) - can use float as common type
+                        if (IsNumericType(commonReturnType) && IsNumericType(returnType))
+                        {
+                            // Use float as the widest numeric type
+                            commonReturnType = "float";
+                        }
+                        else
+                        {
+                            // Incompatible types (e.g., String vs NodePath vs Vector3[])
+                            // Cannot safely infer - return null to avoid false positives
+                            return null;
+                        }
+                    }
+                }
             }
 
-            return null;
+            // If we have only numeric types, return the common numeric type
+            // This handles distance_squared_to() which returns int or float
+            if (hasNumericTypes && !hasNonNumericTypes && commonReturnType != null)
+                return commonReturnType;
+
+            return commonReturnType;
         }
 
         /// <summary>
@@ -359,6 +407,22 @@ namespace GDShrapt.Semantics
         public void SetSymbolLookupFallback(Func<string, GDNode, GDSymbol> fallback)
         {
             _symbolLookupFallback = fallback;
+        }
+
+        /// <summary>
+        /// Sets the Callable call site registry for lambda parameter type inference.
+        /// </summary>
+        public void SetCallSiteRegistry(GDCallableCallSiteRegistry registry)
+        {
+            _callSiteRegistry = registry;
+        }
+
+        /// <summary>
+        /// Sets the source file context for call site resolution.
+        /// </summary>
+        public void SetSourceFile(GDScriptFile sourceFile)
+        {
+            _sourceFile = sourceFile;
         }
 
         #region Analyzer Accessors (Lazy Initialization)
@@ -1304,6 +1368,7 @@ namespace GDShrapt.Semantics
         /// <summary>
         /// Infers a lambda parameter type from its usage patterns within the lambda body.
         /// Uses the same duck-typing infrastructure as method parameters.
+        /// Also considers call sites if a registry is available.
         /// </summary>
         private string InferLambdaParameterType(GDMethodExpression lambda, GDParameterDeclaration param)
         {
@@ -1311,13 +1376,42 @@ namespace GDShrapt.Semantics
             if (string.IsNullOrEmpty(paramName))
                 return "Variant";
 
-            // Use existing analyzer infrastructure (already has AnalyzeLambda method!)
+            var paramIndex = GetParameterIndex(lambda, param);
+
+            // 1. Try to infer from call sites first (if registry available)
+            var callSiteType = InferLambdaParameterTypeFromCallSites(lambda, paramIndex);
+
+            // 2. Try to infer from body usage (duck-typing)
+            var bodyType = InferLambdaParameterTypeFromBody(lambda, paramName);
+
+            // 3. Merge results - prefer more specific type
+            return MergeInferredTypes(callSiteType, bodyType);
+        }
+
+        /// <summary>
+        /// Infers lambda parameter type from call sites including inter-procedural analysis.
+        /// </summary>
+        private string InferLambdaParameterTypeFromCallSites(GDMethodExpression lambda, int paramIndex)
+        {
+            if (_callSiteRegistry == null || paramIndex < 0)
+                return null;
+
+            // Use inter-procedural inference that includes call sites on method parameters
+            return _callSiteRegistry.InferParameterTypeWithFlow(lambda, _sourceFile, paramIndex);
+        }
+
+        /// <summary>
+        /// Infers lambda parameter type from body usage (duck-typing).
+        /// </summary>
+        private string InferLambdaParameterTypeFromBody(GDMethodExpression lambda, string paramName)
+        {
+            // Use existing analyzer infrastructure
             var constraints = GDParameterUsageAnalyzer.AnalyzeLambda(lambda, _runtimeProvider);
 
             if (!constraints.TryGetValue(paramName, out var paramConstraints) ||
                 !paramConstraints.HasConstraints)
             {
-                return "Variant";
+                return null;
             }
 
             // Use existing resolver infrastructure
@@ -1335,8 +1429,59 @@ namespace GDShrapt.Semantics
                 return string.Join(" | ", result.UnionTypes);
             }
 
-            // Fall back to TypeName or Variant
-            return !string.IsNullOrEmpty(result.TypeName) ? result.TypeName : "Variant";
+            // Fall back to TypeName or null
+            return !string.IsNullOrEmpty(result.TypeName) ? result.TypeName : null;
+        }
+
+        /// <summary>
+        /// Gets the index of a parameter in a lambda.
+        /// </summary>
+        private static int GetParameterIndex(GDMethodExpression lambda, GDParameterDeclaration param)
+        {
+            if (lambda?.Parameters == null)
+                return -1;
+
+            int index = 0;
+            foreach (var p in lambda.Parameters)
+            {
+                if (p == param)
+                    return index;
+                index++;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Merges two inferred types, preferring the more specific one.
+        /// </summary>
+        private static string MergeInferredTypes(string callSiteType, string bodyType)
+        {
+            // Both null -> Variant
+            if (string.IsNullOrEmpty(callSiteType) && string.IsNullOrEmpty(bodyType))
+                return "Variant";
+
+            // One null -> use the other
+            if (string.IsNullOrEmpty(callSiteType))
+                return bodyType;
+            if (string.IsNullOrEmpty(bodyType))
+                return callSiteType;
+
+            // Both "Variant" -> Variant
+            if (callSiteType == "Variant" && bodyType == "Variant")
+                return "Variant";
+
+            // One is Variant -> use the other
+            if (callSiteType == "Variant")
+                return bodyType;
+            if (bodyType == "Variant")
+                return callSiteType;
+
+            // Same type -> use it
+            if (callSiteType == bodyType)
+                return callSiteType;
+
+            // Different types -> prefer call site (more concrete usage)
+            return callSiteType;
         }
 
         /// <summary>
@@ -1550,19 +1695,20 @@ namespace GDShrapt.Semantics
             // Use the typed resolver that works with GDTypeNode directly
             var resultNode = GDOperatorTypeResolver.ResolveOperatorTypeNode(opType.Value, leftTypeNode, rightTypeNode);
 
-            // For array addition with incompatible types, use GDInferredType to compute union
+            // For array addition with incompatible types, use GDContainerElementType to compute union
             if (resultNode == null && opType == GDDualOperatorType.Addition)
             {
-                var leftInferred = GDOperatorTypeResolver.ToInferredType(leftTypeNode);
-                var rightInferred = GDOperatorTypeResolver.ToInferredType(rightTypeNode);
+                var leftContainer = GDContainerElementType.FromTypeNode(leftTypeNode);
+                var rightContainer = GDContainerElementType.FromTypeNode(rightTypeNode);
 
-                if (leftInferred?.IsArray == true && rightInferred?.IsArray == true)
+                if (leftContainer != null && rightContainer != null &&
+                    !leftContainer.IsDictionary && !rightContainer.IsDictionary)
                 {
-                    var combinedArray = GDOperatorTypeResolver.ResolveArrayAddition(leftInferred, rightInferred);
+                    var combinedArray = GDContainerElementType.CombineArrays(leftContainer, rightContainer);
                     if (combinedArray != null)
                     {
                         // Return a simple type with the full type name (e.g., "Array[String|int]")
-                        return CreateSimpleType(combinedArray.FullTypeName);
+                        return CreateSimpleType(combinedArray.ToString());
                     }
                 }
             }
@@ -1733,6 +1879,12 @@ namespace GDShrapt.Semantics
             // Complex types (generics, nested types) need to be parsed
             return TypeParser.ParseType(typeName);
         }
+
+        /// <summary>
+        /// Checks if a type is a numeric type (int or float).
+        /// </summary>
+        private static bool IsNumericType(string? type) =>
+            type == "int" || type == "float";
 
         /// <summary>
         /// Validates that a string is a valid GDScript identifier.

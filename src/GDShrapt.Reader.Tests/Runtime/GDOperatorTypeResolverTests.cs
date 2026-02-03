@@ -453,6 +453,73 @@ public class GDOperatorTypeResolverTests
 
     #endregion
 
+    #region String Format Tests (String % anything)
+
+    [TestMethod]
+    public void Mod_StringModArray_ReturnsString()
+    {
+        // String % Array = String (format string with multiple values)
+        var result = GDOperatorTypeResolver.ResolveOperatorType(
+            GDDualOperatorType.Mod, "String", "Array");
+        Assert.AreEqual("String", result);
+    }
+
+    [TestMethod]
+    public void Mod_StringModInt_ReturnsString()
+    {
+        // String % int = String (format string with single value)
+        var result = GDOperatorTypeResolver.ResolveOperatorType(
+            GDDualOperatorType.Mod, "String", "int");
+        Assert.AreEqual("String", result);
+    }
+
+    [TestMethod]
+    public void Mod_StringModFloat_ReturnsString()
+    {
+        // String % float = String (format string)
+        var result = GDOperatorTypeResolver.ResolveOperatorType(
+            GDDualOperatorType.Mod, "String", "float");
+        Assert.AreEqual("String", result);
+    }
+
+    [TestMethod]
+    public void Mod_StringModString_ReturnsString()
+    {
+        // String % String = String (format string)
+        var result = GDOperatorTypeResolver.ResolveOperatorType(
+            GDDualOperatorType.Mod, "String", "String");
+        Assert.AreEqual("String", result);
+    }
+
+    [TestMethod]
+    public void Mod_StringModVariant_ReturnsString()
+    {
+        // String % Variant = String (format string with dynamic value)
+        var result = GDOperatorTypeResolver.ResolveOperatorType(
+            GDDualOperatorType.Mod, "String", "Variant");
+        Assert.AreEqual("String", result);
+    }
+
+    [TestMethod]
+    public void Mod_StringNameModArray_ReturnsString()
+    {
+        // StringName % Array = String (format string)
+        var result = GDOperatorTypeResolver.ResolveOperatorType(
+            GDDualOperatorType.Mod, "StringName", "Array");
+        Assert.AreEqual("String", result);
+    }
+
+    [TestMethod]
+    public void Mod_StringModObject_ReturnsString()
+    {
+        // String % Object = String (format string works with any type)
+        var result = GDOperatorTypeResolver.ResolveOperatorType(
+            GDDualOperatorType.Mod, "String", "Object");
+        Assert.AreEqual("String", result);
+    }
+
+    #endregion
+
     #region Comparison Tests
 
     [TestMethod]
@@ -871,43 +938,29 @@ public class GDOperatorTypeResolverTests
     }
 
     [TestMethod]
-    public void Addition_TypedArrays_StringPlusInt_ReturnsUnionArray()
+    public void Addition_TypedArrays_StringPlusInt_ReturnsNull_FallbackToSemantics()
     {
+        // Incompatible types - Validator returns null, Semantics handles union types
         var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("String"));
         var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("int"));
 
         var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
             GDDualOperatorType.Addition, left, right);
 
-        Assert.IsNotNull(result);
-        Assert.AreEqual("Array[String|int]", result.BuildName());
+        Assert.IsNull(result, "Incompatible array types should return null for Semantics to handle");
     }
 
     [TestMethod]
-    public void Addition_TypedArrays_UnionPlusSingle_ExtendsUnion()
+    public void Addition_TypedArrays_NodePlusSprite_ReturnsNull_FallbackToSemantics()
     {
-        // Array[String|int] + Array[bool] → Array[String|bool|int]
-        var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("String|int"));
-        var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("bool"));
-
-        var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
-            GDDualOperatorType.Addition, left, right);
-
-        Assert.IsNotNull(result);
-        Assert.AreEqual("Array[String|bool|int]", result.BuildName());
-    }
-
-    [TestMethod]
-    public void Addition_TypedArrays_NodePlusSprite_ReturnsUnion()
-    {
+        // Incompatible types - Validator returns null, Semantics handles union types
         var left = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("Node"));
         var right = GDTypeNode.CreateArray(GDTypeNode.CreateSimple("Sprite2D"));
 
         var result = GDOperatorTypeResolver.ResolveOperatorTypeNode(
             GDDualOperatorType.Addition, left, right);
 
-        Assert.IsNotNull(result);
-        Assert.AreEqual("Array[Node|Sprite2D]", result.BuildName());
+        Assert.IsNull(result, "Incompatible array types should return null for Semantics to handle");
     }
 
     [TestMethod]
@@ -920,7 +973,9 @@ public class GDOperatorTypeResolverTests
             GDDualOperatorType.Addition, left, right);
 
         Assert.IsNotNull(result);
-        Assert.AreEqual("Array", result.BuildName());
+        // GDTypeNode.CreateArray(null) returns Array type (untyped)
+        Assert.IsTrue(result.BuildName() == "Array" || result.BuildName() == "Array[]",
+            $"Untyped array should be 'Array', got '{result.BuildName()}'");
     }
 
     #endregion

@@ -170,6 +170,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Collect variable usage profiles for Union type inference
         CollectVariableUsageProfiles(_scriptFile.Class, _validationContext);
 
+        // Collect Callable call sites for lambda parameter inference
+        CollectCallSites(_scriptFile.Class);
+
         return _model;
     }
 
@@ -430,7 +433,19 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var iteratorName = forStatement.Variable?.Sequence;
         if (!string.IsNullOrEmpty(iteratorName))
         {
-            var symbol = GDSymbol.Iterator(iteratorName, forStatement);
+            // Infer element type from collection for proper iterator typing
+            // This prevents false positives like GD3013 when iterating Array of Dictionary
+            string? elementTypeName = null;
+            if (forStatement.Collection != null && _typeEngine != null)
+            {
+                var collectionType = _typeEngine.InferType(forStatement.Collection);
+                if (!string.IsNullOrEmpty(collectionType))
+                {
+                    elementTypeName = GDTypeInferenceUtilities.GetCollectionElementType(collectionType);
+                }
+            }
+
+            var symbol = GDSymbol.Iterator(iteratorName, forStatement, typeName: elementTypeName);
             // Pass the enclosing method/lambda for scope isolation
             var enclosingScope = FindEnclosingScopeNode(forStatement);
             var symbolInfo = GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope);
@@ -1410,6 +1425,73 @@ internal class GDSemanticReferenceCollector : GDVisitor
         {
             _model!.SetClassContainerProfile(className, kv.Key, kv.Value);
         }
+    }
+
+    #endregion
+
+    #region Call Site Collection
+
+    /// <summary>
+    /// Collects Callable call sites for lambda parameter type inference.
+    /// </summary>
+    private void CollectCallSites(GDClassDeclaration classDecl)
+    {
+        if (classDecl == null)
+            return;
+
+        // Create collector with type inference callback
+        var collector = new GDCallableCallSiteCollector(
+            _scriptFile,
+            expr => _typeEngine?.InferType(expr));
+
+        collector.Collect(classDecl);
+
+        // Register in semantic model
+        var registry = _model!.GetOrCreateCallSiteRegistry();
+        registry.RegisterCollector(_scriptFile.FullPath ?? "", collector);
+
+        // Phase 2: Collect inter-procedural Callable flow
+        CollectCallableFlow(classDecl, registry);
+
+        // Also connect registry to type engine for lambda parameter inference
+        if (_typeEngine != null)
+        {
+            _typeEngine.SetCallSiteRegistry(registry);
+            _typeEngine.SetSourceFile(_scriptFile);
+        }
+    }
+
+    /// <summary>
+    /// Collects inter-procedural Callable flow (method profiles and argument bindings).
+    /// </summary>
+    private void CollectCallableFlow(GDClassDeclaration classDecl, GDCallableCallSiteRegistry registry)
+    {
+        // Method resolver for looking up method declarations
+        Func<string, GDMethodDeclaration?> methodResolver = methodName =>
+        {
+            if (classDecl.Members == null)
+                return null;
+
+            foreach (var member in classDecl.Members)
+            {
+                if (member is GDMethodDeclaration method &&
+                    method.Identifier?.Sequence == methodName)
+                {
+                    return method;
+                }
+            }
+            return null;
+        };
+
+        var flowCollector = new GDCallableFlowCollector(
+            _scriptFile,
+            expr => _typeEngine?.InferType(expr),
+            methodResolver);
+
+        flowCollector.Collect(classDecl);
+
+        // Register in registry
+        registry.RegisterFlowCollector(_scriptFile.FullPath ?? "", flowCollector);
     }
 
     #endregion

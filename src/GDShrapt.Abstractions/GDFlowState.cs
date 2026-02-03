@@ -524,13 +524,17 @@ public class GDFlowState
     /// <summary>
     /// Returns true for types that can never be null (value types).
     /// This is a fallback static check - prefer using IGDRuntimeProvider.IsBuiltinType.
+    /// Handles generic types like Array[Node], Dictionary[String, int].
     /// </summary>
     private static bool IsNeverNullType(string? typeName)
     {
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        return typeName is "int" or "float" or "bool" or "String" or "StringName"
+        // Extract base type for generics (Array[Node] -> Array, Dictionary[String, int] -> Dictionary)
+        var baseType = ExtractBaseTypeName(typeName);
+
+        return baseType is "int" or "float" or "bool" or "String" or "StringName"
             or "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i"
             or "Color" or "Rect2" or "Rect2i" or "Transform2D" or "Transform3D"
             or "Basis" or "Quaternion" or "Plane" or "AABB" or "Projection"
@@ -540,6 +544,22 @@ public class GDFlowState
             or "PackedFloat32Array" or "PackedFloat64Array" or "PackedStringArray"
             or "PackedVector2Array" or "PackedVector3Array" or "PackedColorArray"
             or "NodePath";
+    }
+
+    /// <summary>
+    /// Extracts the base type name from a generic type.
+    /// For example: "Array[Node]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
+    /// </summary>
+    private static string ExtractBaseTypeName(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return typeName;
+
+        var bracketIndex = typeName.IndexOf('[');
+        if (bracketIndex > 0)
+            return typeName.Substring(0, bracketIndex);
+
+        return typeName;
     }
 
     #endregion

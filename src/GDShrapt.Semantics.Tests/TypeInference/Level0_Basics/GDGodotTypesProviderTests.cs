@@ -252,6 +252,18 @@ public class GDGodotTypesProviderTests
     }
 
     [TestMethod]
+    public void P3_Vector2_HasDistanceSquaredTo()
+    {
+        var provider = new GDGodotTypesProvider();
+
+        var member = provider.GetMember("Vector2", "distance_squared_to");
+
+        Assert.IsNotNull(member, "Vector2.distance_squared_to should be found");
+        Assert.AreEqual(GDRuntimeMemberKind.Method, member.Kind);
+        Assert.AreEqual("float", member.Type, "Vector2.distance_squared_to should return float");
+    }
+
+    [TestMethod]
     public void P3_Vector2i_HasXYProperties()
     {
         var provider = new GDGodotTypesProvider();
@@ -435,6 +447,107 @@ public class GDGodotTypesProviderTests
         var distinctCounts = results.Distinct().ToList();
         Assert.AreEqual(1, distinctCounts.Count,
             "All concurrent GetAllTypes calls should return consistent results");
+    }
+
+    #endregion
+
+    #region P4: Generic Type Conversion
+
+    [TestMethod]
+    public void P4_SceneTree_GetNodesInGroup_ReturnsArrayNode()
+    {
+        // P4: get_nodes_in_group returns Array`1 which should be converted to Array[Node]
+        var provider = new GDGodotTypesProvider();
+
+        // First verify SceneTree is in the known types
+        var isKnown = provider.IsKnownType("SceneTree");
+        Console.WriteLine($"IsKnownType('SceneTree'): {isKnown}");
+
+        // Verify raw method data
+        var overloads = provider.GetMethodOverloads("SceneTree", "get_nodes_in_group");
+        Console.WriteLine($"GetMethodOverloads result: {(overloads == null ? "null" : $"{overloads.Count} overloads")}");
+        if (overloads != null && overloads.Count > 0)
+        {
+            var methodData = overloads[0];
+            Console.WriteLine($"GDScriptReturnTypeName: '{methodData.GDScriptReturnTypeName}'");
+            Console.WriteLine($"CSharpReturnTypeFullName: '{methodData.CSharpReturnTypeFullName}'");
+
+            // Call the conversion directly with the actual data
+            var directConversion = GDGodotTypesProvider.ConvertCSharpGenericToGDScript(
+                methodData.GDScriptReturnTypeName,
+                methodData.CSharpReturnTypeFullName);
+            Console.WriteLine($"Direct conversion result: '{directConversion}'");
+        }
+
+        // Now verify GetMember returns converted type
+        var member = provider.GetMember("SceneTree", "get_nodes_in_group");
+        Console.WriteLine($"GetMember result: {(member == null ? "null" : $"Type='{member.Type}', Kind={member.Kind}")}");
+        Assert.IsNotNull(member, "get_nodes_in_group method should be found");
+
+        // The return type should be Array[Node], not Array`1
+        Assert.IsTrue(
+            member.Type == "Array[Node]" || member.Type == "Array",
+            $"Expected Array[Node] or Array, got '{member.Type}'");
+    }
+
+    [TestMethod]
+    public void P4_GenericConversion_ExtractBacktickIndex()
+    {
+        // Debug test to verify backtick character detection
+        var testString = "Array`1";
+        var backtickIndex = testString.IndexOf('`');
+        Console.WriteLine($"Backtick index in 'Array`1': {backtickIndex}");
+        Assert.IsTrue(backtickIndex > 0, $"Backtick should be found, index: {backtickIndex}");
+
+        // Check if there's a different character
+        for (int i = 0; i < testString.Length; i++)
+        {
+            Console.WriteLine($"  char[{i}] = '{testString[i]}' (0x{((int)testString[i]):X4})");
+        }
+    }
+
+    [TestMethod]
+    public void P4_GenericConversion_ExtractGenericTypeArgument()
+    {
+        // Test the extraction pattern
+        var csharpFullTypeName = "Godot.Collections.Array`1[[Godot.Node, GodotSharp, Version=4.5.1.0, Culture=neutral, PublicKeyToken=null]]";
+
+        // Find the [[ pattern
+        var startIndex = csharpFullTypeName.IndexOf("[[", StringComparison.Ordinal);
+        Console.WriteLine($"StartIndex of '[[': {startIndex}");
+        Assert.IsTrue(startIndex > 0, "[[ should be found");
+
+        startIndex += 2; // Skip "[["
+
+        // Find the comma or ] that ends the type name
+        var endIndex = csharpFullTypeName.IndexOfAny(new[] { ',', ']' }, startIndex);
+        Console.WriteLine($"EndIndex of ',' or ']': {endIndex}");
+        Assert.IsTrue(endIndex > startIndex, "End delimiter should be found after start");
+
+        var fullArgTypeName = csharpFullTypeName.Substring(startIndex, endIndex - startIndex);
+        Console.WriteLine($"Extracted type name: '{fullArgTypeName}'");
+
+        // Should extract "Godot.Node"
+        Assert.AreEqual("Godot.Node", fullArgTypeName);
+
+        // Convert to simple name
+        var lastDotIndex = fullArgTypeName.LastIndexOf('.');
+        var simpleName = lastDotIndex >= 0 ? fullArgTypeName.Substring(lastDotIndex + 1) : fullArgTypeName;
+        Console.WriteLine($"Simple name: '{simpleName}'");
+        Assert.AreEqual("Node", simpleName);
+    }
+
+    [TestMethod]
+    public void P4_GenericConversion_FullConversion()
+    {
+        // Test the full conversion method
+        var gdScriptTypeName = "Array`1";
+        var csharpFullTypeName = "Godot.Collections.Array`1[[Godot.Node, GodotSharp, Version=4.5.1.0, Culture=neutral, PublicKeyToken=null]]";
+
+        var result = GDGodotTypesProvider.ConvertCSharpGenericToGDScript(gdScriptTypeName, csharpFullTypeName);
+        Console.WriteLine($"Conversion result: '{result}'");
+
+        Assert.AreEqual("Array[Node]", result, $"Expected Array[Node], got '{result}'");
     }
 
     #endregion

@@ -112,6 +112,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     // Class-level container usage profiles (class member variables)
     private readonly Dictionary<string, GDContainerUsageProfile> _classContainerProfiles = new();
 
+    // Callable call site registry for lambda parameter inference
+    private GDCallableCallSiteRegistry? _callSiteRegistry;
+
     // Flow-sensitive type analysis (SSA-style)
     private readonly Dictionary<GDMethodDeclaration, GDFlowAnalyzer> _methodFlowAnalyzers = new();
 
@@ -133,6 +136,11 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// The runtime provider for type resolution.
     /// </summary>
     public IGDRuntimeProvider? RuntimeProvider => _runtimeProvider;
+
+    /// <summary>
+    /// The Callable call site registry for lambda parameter inference.
+    /// </summary>
+    public GDCallableCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
 
     /// <summary>
     /// All symbols in this script.
@@ -511,16 +519,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (expression is GDDualOperatorExpression dualOp &&
             dualOp.Operator?.OperatorType == GDDualOperatorType.Addition)
         {
-            var leftType = GetExpressionType(dualOp.LeftExpression);
-            var rightType = GetExpressionType(dualOp.RightExpression);
+            var leftContainer = GetContainerTypeForExpression(dualOp.LeftExpression);
+            var rightContainer = GetContainerTypeForExpression(dualOp.RightExpression);
 
-            if (IsArrayType(leftType) && IsArrayType(rightType))
+            if (leftContainer != null && rightContainer != null &&
+                !leftContainer.IsDictionary && !rightContainer.IsDictionary)
             {
-                var leftInferred = ParseArrayType(leftType);
-                var rightInferred = ParseArrayType(rightType);
-                var combinedArray = Abstractions.GDInferredType.CombineArrays(leftInferred, rightInferred);
-                if (combinedArray != null)
-                    return combinedArray.FullTypeName;
+                var combined = GDContainerElementType.CombineArrays(leftContainer, rightContainer);
+                if (combined != null)
+                    return combined.ToString();
             }
         }
 
@@ -642,13 +649,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                         return callerType;
                 }
 
-                // Debug: print TypeEngine result for call expressions
-                System.Console.WriteLine($"[DEBUG GetExpressionTypeCore] CallExpr method={methodName}");
             }
 
             // Delegate to TypeEngine for all other call expressions - it applies ReturnTypeRole
             var callResult = _typeEngine?.InferType(expression);
-            System.Console.WriteLine($"[DEBUG GetExpressionTypeCore] TypeEngine result={callResult ?? "null"}");
             if (!string.IsNullOrEmpty(callResult))
                 return callResult;
         }
@@ -675,16 +679,20 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 if (!string.IsNullOrEmpty(resultType))
                     return resultType;
 
-                // For array addition with incompatible types, compute union type using GDInferredType
+                // For array addition with incompatible types, compute union type
                 // (Also handled before cache check in GetExpressionType, this is fallback)
-                if (opType.Value == GDDualOperatorType.Addition &&
-                    IsArrayType(leftType) && IsArrayType(rightType))
+                if (opType.Value == GDDualOperatorType.Addition)
                 {
-                    var leftInferred = ParseArrayType(leftType);
-                    var rightInferred = ParseArrayType(rightType);
-                    var combinedArray = Abstractions.GDInferredType.CombineArrays(leftInferred, rightInferred);
-                    if (combinedArray != null)
-                        return combinedArray.FullTypeName;
+                    var leftContainer = GetContainerTypeForExpression(dualOp.LeftExpression);
+                    var rightContainer = GetContainerTypeForExpression(dualOp.RightExpression);
+
+                    if (leftContainer != null && rightContainer != null &&
+                        !leftContainer.IsDictionary && !rightContainer.IsDictionary)
+                    {
+                        var combined = GDContainerElementType.CombineArrays(leftContainer, rightContainer);
+                        if (combined != null)
+                            return combined.ToString();
+                    }
                 }
             }
         }
@@ -917,6 +925,19 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             current = current.Parent;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Finds a local variable declaration in the containing method that appears before the given expression.
+    /// </summary>
+    private static GDVariableDeclarationStatement? FindLocalVariableDeclaration(GDExpression expr, string varName)
+    {
+        var method = FindContainingMethodNode(expr);
+        if (method?.Statements == null) return null;
+
+        var beforeLine = expr.StartLine;
+        return method.AllNodes.OfType<GDVariableDeclarationStatement>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == varName && v.StartLine < beforeLine);
     }
 
     /// <summary>
@@ -1969,6 +1990,64 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         return _containerProfiles.Values;
     }
 
+    /// <summary>
+    /// Gets GDContainerElementType for an expression (works with objects, not strings).
+    /// Used for array addition and other container operations.
+    /// </summary>
+    private GDContainerElementType? GetContainerTypeForExpression(GDExpression? expr)
+    {
+        if (expr == null) return null;
+
+        // For array addition - recursively combine
+        if (expr is GDDualOperatorExpression dualOp &&
+            dualOp.Operator?.OperatorType == GDDualOperatorType.Addition)
+        {
+            var left = GetContainerTypeForExpression(dualOp.LeftExpression);
+            var right = GetContainerTypeForExpression(dualOp.RightExpression);
+            if (left != null && right != null &&
+                !left.IsDictionary && !right.IsDictionary)
+            {
+                return GDContainerElementType.CombineArrays(left, right);
+            }
+        }
+
+        // For identifiers - check container profile first, then look up variable declaration
+        if (expr is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                // First try container profile (for variables with direct array usage)
+                var containerType = GetInferredContainerType(varName);
+                if (containerType != null)
+                    return containerType;
+
+                // For variables, look up their declaration
+                var varDecl = FindLocalVariableDeclaration(identExpr, varName);
+                if (varDecl != null)
+                {
+                    // If variable has explicit type annotation, use it
+                    if (varDecl.Type != null)
+                    {
+                        var typeFromAnnotation = GDContainerElementType.FromTypeNode(varDecl.Type);
+                        if (typeFromAnnotation != null)
+                            return typeFromAnnotation;
+                    }
+
+                    // Otherwise try to infer from initializer
+                    if (varDecl.Initializer != null)
+                    {
+                        return GetContainerTypeForExpression(varDecl.Initializer);
+                    }
+                }
+            }
+        }
+
+        // Fallback to TypeEngine → GDTypeNode → GDContainerElementType
+        var typeNode = _typeEngine?.InferTypeNode(expr);
+        return GDContainerElementType.FromTypeNode(typeNode);
+    }
+
     #endregion
 
     #region Confidence Analysis
@@ -2494,6 +2573,92 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     #endregion
 
     #region Internal Modification Methods (for collector)
+
+    /// <summary>
+    /// Sets the Callable call site registry.
+    /// </summary>
+    internal void SetCallSiteRegistry(GDCallableCallSiteRegistry registry)
+    {
+        _callSiteRegistry = registry;
+    }
+
+    /// <summary>
+    /// Gets or creates the Callable call site registry.
+    /// </summary>
+    internal GDCallableCallSiteRegistry GetOrCreateCallSiteRegistry()
+    {
+        _callSiteRegistry ??= new GDCallableCallSiteRegistry();
+        return _callSiteRegistry;
+    }
+
+    /// <summary>
+    /// Infers lambda parameter types from call sites.
+    /// </summary>
+    public IReadOnlyDictionary<int, GDUnionType> InferLambdaParameterTypesFromCallSites(GDMethodExpression lambda)
+    {
+        if (_callSiteRegistry == null || lambda == null)
+            return new Dictionary<int, GDUnionType>();
+
+        return _callSiteRegistry.InferParameterTypes(lambda, _scriptFile);
+    }
+
+    /// <summary>
+    /// Infers a specific lambda parameter type from call sites.
+    /// </summary>
+    public string? InferLambdaParameterTypeFromCallSites(GDMethodExpression lambda, int parameterIndex)
+    {
+        if (_callSiteRegistry == null || lambda == null)
+            return null;
+
+        return _callSiteRegistry.InferParameterType(lambda, _scriptFile, parameterIndex);
+    }
+
+    /// <summary>
+    /// Infers lambda parameter types including inter-procedural analysis.
+    /// This includes call sites from method parameters when the lambda is passed as argument.
+    /// </summary>
+    public IReadOnlyDictionary<int, GDUnionType> InferLambdaParameterTypesWithFlow(GDMethodExpression lambda)
+    {
+        if (_callSiteRegistry == null || lambda == null)
+            return new Dictionary<int, GDUnionType>();
+
+        return _callSiteRegistry.InferParameterTypesWithFlow(lambda, _scriptFile);
+    }
+
+    /// <summary>
+    /// Infers a specific lambda parameter type with inter-procedural analysis.
+    /// </summary>
+    public string? InferLambdaParameterTypeWithFlow(GDMethodExpression lambda, int parameterIndex)
+    {
+        if (_callSiteRegistry == null || lambda == null)
+            return null;
+
+        return _callSiteRegistry.InferParameterTypeWithFlow(lambda, _scriptFile, parameterIndex);
+    }
+
+    /// <summary>
+    /// Gets the method Callable profile for a method.
+    /// </summary>
+    public GDMethodCallableProfile? GetMethodCallableProfile(string methodName)
+    {
+        if (_callSiteRegistry == null || string.IsNullOrEmpty(methodName))
+            return null;
+
+        var className = _scriptFile?.Class?.ClassName?.Identifier?.Sequence;
+        var methodKey = GDMethodCallableProfile.CreateMethodKey(className, methodName);
+        return _callSiteRegistry.GetMethodProfile(methodKey);
+    }
+
+    /// <summary>
+    /// Gets argument bindings for a lambda (where it's passed to method parameters).
+    /// </summary>
+    public IReadOnlyList<GDCallableArgumentBinding> GetLambdaArgumentBindings(GDMethodExpression lambda)
+    {
+        if (_callSiteRegistry == null || lambda == null)
+            return Array.Empty<GDCallableArgumentBinding>();
+
+        return _callSiteRegistry.GetBindingsForLambda(lambda, _scriptFile);
+    }
 
     /// <summary>
     /// Registers a symbol in the model.
@@ -3494,46 +3659,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
         var unionType = string.Join("|", elementTypes.OrderBy(t => t, System.StringComparer.Ordinal));
         return $"Array[{unionType}]";
-    }
-
-    /// <summary>
-    /// Checks if a type name represents an array type.
-    /// </summary>
-    private static bool IsArrayType(string? typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return false;
-        return typeName == "Array" || typeName.StartsWith("Array[");
-    }
-
-    /// <summary>
-    /// Parses a type name string into a GDInferredType.
-    /// Handles Array, Array[T], and Array[T|U] formats.
-    /// </summary>
-    private static Abstractions.GDInferredType? ParseArrayType(string? typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return null;
-
-        if (typeName == "Array")
-            return Abstractions.GDInferredType.Array();
-
-        if (typeName.StartsWith("Array[") && typeName.EndsWith("]"))
-        {
-            var elementType = typeName.Substring(6, typeName.Length - 7);
-            if (elementType.Contains("|"))
-            {
-                // Union type: Array[int|String]
-                var types = elementType.Split('|').Select(t => t.Trim()).ToArray();
-                return Abstractions.GDInferredType.ArrayWithUnion(types);
-            }
-            else
-            {
-                return Abstractions.GDInferredType.Array(elementType);
-            }
-        }
-
-        return null;
     }
 
     #endregion
