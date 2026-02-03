@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -25,6 +26,13 @@ public class GDDuckType
     /// Signals that this duck type must have.
     /// </summary>
     public HashSet<string> RequiredSignals { get; } = new HashSet<string>();
+
+    /// <summary>
+    /// Operators that this duck type must support.
+    /// Key = operator type, Value = observed operand types from the other side of the operator.
+    /// </summary>
+    public Dictionary<GDDualOperatorType, List<string>> RequiredOperators { get; }
+        = new Dictionary<GDDualOperatorType, List<string>>();
 
     /// <summary>
     /// Known base types this could be (from 'is' checks).
@@ -76,6 +84,22 @@ public class GDDuckType
     }
 
     /// <summary>
+    /// Adds an operator requirement with optional operand type.
+    /// </summary>
+    /// <param name="op">The operator type (e.g., Addition, Subtraction)</param>
+    /// <param name="operandType">The type of the other operand (optional)</param>
+    public void RequireOperator(GDDualOperatorType op, string? operandType = null)
+    {
+        if (!RequiredOperators.TryGetValue(op, out var operands))
+        {
+            operands = new List<string>();
+            RequiredOperators[op] = operands;
+        }
+        if (operandType != null && !operands.Contains(operandType))
+            operands.Add(operandType);
+    }
+
+    /// <summary>
     /// Adds a possible type (from 'is' check).
     /// </summary>
     public void AddPossibleType(string typeName)
@@ -97,7 +121,8 @@ public class GDDuckType
     public bool HasRequirements =>
         RequiredMethods.Count > 0 ||
         RequiredProperties.Count > 0 ||
-        RequiredSignals.Count > 0;
+        RequiredSignals.Count > 0 ||
+        RequiredOperators.Count > 0;
 
     /// <summary>
     /// Merges another duck type into this one.
@@ -119,6 +144,19 @@ public class GDDuckType
         }
         foreach (var s in other.RequiredSignals)
             RequiredSignals.Add(s);
+        foreach (var kv in other.RequiredOperators)
+        {
+            if (!RequiredOperators.TryGetValue(kv.Key, out var operands))
+            {
+                operands = new List<string>();
+                RequiredOperators[kv.Key] = operands;
+            }
+            foreach (var op in kv.Value)
+            {
+                if (!operands.Contains(op))
+                    operands.Add(op);
+            }
+        }
         foreach (var t in other.PossibleTypes)
             PossibleTypes.Add(t);
         foreach (var t in other.ExcludedTypes)
@@ -157,6 +195,26 @@ public class GDDuckType
         foreach (var s in other.RequiredSignals)
             result.RequiredSignals.Add(s);
 
+        // Merge operator requirements
+        foreach (var kv in RequiredOperators)
+        {
+            var operands = new List<string>(kv.Value);
+            result.RequiredOperators[kv.Key] = operands;
+        }
+        foreach (var kv in other.RequiredOperators)
+        {
+            if (!result.RequiredOperators.TryGetValue(kv.Key, out var operands))
+            {
+                operands = new List<string>();
+                result.RequiredOperators[kv.Key] = operands;
+            }
+            foreach (var op in kv.Value)
+            {
+                if (!operands.Contains(op))
+                    operands.Add(op);
+            }
+        }
+
         // Intersect possible types
         if (PossibleTypes.Count > 0 && other.PossibleTypes.Count > 0)
         {
@@ -194,6 +252,8 @@ public class GDDuckType
             parts.Add($"is:{string.Join("|", PossibleTypes)}");
         if (RequiredMethods.Count > 0)
             parts.Add($"methods:{string.Join(",", RequiredMethods.Keys)}");
+        if (RequiredOperators.Count > 0)
+            parts.Add($"operators:{string.Join(",", RequiredOperators.Keys)}");
         if (RequiredProperties.Count > 0)
             parts.Add($"props:{string.Join(",", RequiredProperties.Keys)}");
         if (RequiredSignals.Count > 0)

@@ -87,5 +87,19 @@
         {
             return $"{Type}";
         }
+
+        public override bool IsNumericType() => Type?.IsInt == true || Type?.IsFloat == true;
+        public override bool IsIntType() => Type?.IsInt == true;
+        public override bool IsFloatType() => Type?.IsFloat == true;
+        public override bool IsStringType() => Type?.Sequence == "String" || Type?.Sequence == "StringName";
+        public override bool IsBoolType() => Type?.IsBool == true;
+        public override bool IsVectorType()
+        {
+            var seq = Type?.Sequence;
+            return seq == "Vector2" || seq == "Vector2i" ||
+                   seq == "Vector3" || seq == "Vector3i" ||
+                   seq == "Vector4" || seq == "Vector4i";
+        }
+        public override bool IsColorType() => Type?.IsColor == true;
     }
 }

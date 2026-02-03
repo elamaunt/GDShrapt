@@ -550,5 +550,80 @@ func test(a: bool, b: bool):
         }
 
         #endregion
+
+        #region Typed Variable with Null Initializer Tests
+
+        [TestMethod]
+        public void InferType_TypedClassVariable_WithNullInitializer_ReturnsExplicitType()
+        {
+            // Arrange: Class-level typed variable initialized with null
+            // This is a regression test for GD7002 false positive
+            var code = @"
+extends Node2D
+
+var target_entity: Node2D = null
+
+func test():
+    if is_instance_valid(target_entity):
+        var pos = target_entity.position
+";
+            var classDecl = _reader.ParseFileContent(code);
+            var context = new GDValidationContext();
+            var collector = new GDDeclarationCollector();
+            collector.Collect(classDecl, context);
+
+            var engine = new GDTypeInferenceEngine(
+                GDDefaultRuntimeProvider.Instance,
+                context.Scopes);
+
+            // Act: Find the identifier expression 'target_entity' used inside the if block
+            var identifiers = classDecl.AllNodes
+                .OfType<GDIdentifierExpression>()
+                .Where(id => id.Identifier?.Sequence == "target_entity")
+                .ToList();
+
+            // The second usage (inside if block) should still have type Node2D
+            var targetEntityExpr = identifiers.Last();
+            var typeNode = engine.InferTypeNode(targetEntityExpr);
+
+            // Assert: Should return Node2D (explicit type), NOT null or Variant
+            typeNode.Should().NotBeNull("typed variable should return its declared type");
+            typeNode!.BuildName().Should().Be("Node2D", "explicit type annotation should take priority over null initializer");
+        }
+
+        [TestMethod]
+        public void InferType_TypedLocalVariable_WithNullInitializer_ReturnsExplicitType()
+        {
+            // Note: Local variable type inference requires GDSemanticModel because
+            // method scopes are cleared after validation. This test uses SemanticModel
+            // which provides symbol lookup fallback for local variables.
+
+            // Arrange: Local typed variable initialized with null
+            var code = @"
+func test():
+    var entity: Node2D = null
+    if entity != null:
+        var pos = entity.position
+";
+            var reference = new GDScriptReference("test.gd");
+            var scriptFile = new GDScriptFile(reference);
+            scriptFile.Reload(code);
+
+            var runtimeProvider = new GDGodotTypesProvider();
+            var model = GDSemanticModel.Create(scriptFile, runtimeProvider);
+
+            // Act: Find the identifier expression 'entity' used inside the if block
+            var memberAccess = model.ScriptFile.Class!.AllNodes
+                .OfType<GDMemberOperatorExpression>()
+                .First(m => m.Identifier?.Sequence == "position");
+
+            var entityExpr = memberAccess.CallerExpression;
+            var typeName = model.GetExpressionType(entityExpr);
+
+            // Assert: Should return Node2D (explicit type), NOT null or Variant
+            typeName.Should().Be("Node2D", "explicit type annotation should take priority over null initializer");
+        }
+
+        #endregion
     }
 }

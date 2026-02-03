@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using GDShrapt.Validator;
 
 namespace GDShrapt.Semantics
 {
@@ -257,6 +258,79 @@ namespace GDShrapt.Semantics
         }
 
         /// <summary>
+        /// Applies ReturnTypeRole to infer return type from global function arguments.
+        /// For example: min(1, 2) returns int, min(1.0, 2.0) returns float.
+        /// </summary>
+        private string? ApplyFunctionReturnTypeRole(GDRuntimeFunctionInfo funcInfo, GDCallExpression callExpr)
+        {
+            var args = callExpr.Parameters?.ToList();
+            if (args == null || args.Count == 0)
+                return null;
+
+            return funcInfo.ReturnTypeRole switch
+            {
+                "first_arg" => InferType(args[0]),
+                "common_arg" => GetCommonArgumentType(args),
+                "common_two" => GetCommonArgumentType(args.Take(2).ToList()),
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Gets the common type of all arguments with numeric promotion.
+        /// int + int → int, int + float → float, Vector2 + Vector2 → Vector2
+        /// </summary>
+        private string? GetCommonArgumentType(List<GDExpression> args)
+        {
+            if (args.Count == 0)
+                return null;
+
+            var firstType = InferType(args[0]);
+            if (string.IsNullOrEmpty(firstType) || firstType == "Variant")
+                return "Variant";
+
+            var commonType = firstType;
+
+            for (int i = 1; i < args.Count; i++)
+            {
+                var argType = InferType(args[i]);
+                if (string.IsNullOrEmpty(argType) || argType == "Variant")
+                    return "Variant";
+
+                commonType = PromoteTypes(commonType, argType);
+                if (commonType == "Variant")
+                    return "Variant";
+            }
+
+            return commonType;
+        }
+
+        /// <summary>
+        /// Promotes two types to a common type.
+        /// int + float → float, same types → same type, incompatible → Variant
+        /// </summary>
+        private static string PromoteTypes(string type1, string type2)
+        {
+            if (type1 == type2)
+                return type1;
+
+            // Numeric promotion: int → float
+            if ((type1 == "int" && type2 == "float") || (type1 == "float" && type2 == "int"))
+                return "float";
+
+            // Vector types must match exactly
+            if (type1.StartsWith("Vector") && type2.StartsWith("Vector"))
+                return "Variant"; // Different vector types
+
+            // Color types
+            if (type1 == "Color" && type2 == "Color")
+                return "Color";
+
+            // Incompatible types
+            return "Variant";
+        }
+
+        /// <summary>
         /// Sets a provider function for inferring container element types.
         /// Used to integrate with usage-based type inference from semantic analysis.
         /// </summary>
@@ -412,7 +486,7 @@ namespace GDShrapt.Semantics
 
                 // Operators
                 case GDDualOperatorExpression dualOp:
-                    return CreateSimpleType(InferDualOperatorType(dualOp));
+                    return InferDualOperatorTypeNode(dualOp);
 
                 case GDSingleOperatorExpression singleOp:
                     return CreateSimpleType(InferSingleOperatorType(singleOp));
@@ -677,18 +751,26 @@ namespace GDShrapt.Semantics
                     return CreateSimpleType("Callable");
                 }
 
-                // Fallback: infer type from initializer for understanding expression type
+                // Fallback: infer type from declaration
                 // Handle local variables (statements)
-                if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt &&
-                    varDeclStmt.Initializer != null)
+                if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt)
                 {
-                    return InferTypeNode(varDeclStmt.Initializer);
+                    // Check explicit type annotation FIRST
+                    if (varDeclStmt.Type != null)
+                        return varDeclStmt.Type;
+                    // Then try initializer
+                    if (varDeclStmt.Initializer != null)
+                        return InferTypeNode(varDeclStmt.Initializer);
                 }
                 // Handle class-level variables (declarations)
-                if (symbol.Declaration is GDVariableDeclaration varDecl &&
-                    varDecl.Initializer != null)
+                if (symbol.Declaration is GDVariableDeclaration varDecl)
                 {
-                    return InferTypeNode(varDecl.Initializer);
+                    // Check explicit type annotation FIRST
+                    if (varDecl.Type != null)
+                        return varDecl.Type;
+                    // Then try initializer
+                    if (varDecl.Initializer != null)
+                        return InferTypeNode(varDecl.Initializer);
                 }
             }
 
@@ -843,7 +925,16 @@ namespace GDShrapt.Semantics
                 {
                     var funcInfo = _runtimeProvider.GetGlobalFunction(funcName);
                     if (funcInfo != null)
+                    {
+                        // Apply smart type inference based on ReturnTypeRole
+                        if (!string.IsNullOrEmpty(funcInfo.ReturnTypeRole))
+                        {
+                            var inferredType = ApplyFunctionReturnTypeRole(funcInfo, callExpr);
+                            if (!string.IsNullOrEmpty(inferredType))
+                                return inferredType;
+                        }
                         return funcInfo.ReturnType;
+                    }
 
                     // Could be type constructor (Vector2(), Color(), etc.)
                     if (_runtimeProvider.IsKnownType(funcName))
@@ -1432,6 +1523,74 @@ namespace GDShrapt.Semantics
 
             // Delegate to the centralized operator type resolver
             return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+        }
+
+        /// <summary>
+        /// Infers the type node for a binary operator expression.
+        /// Returns GDTypeNode directly without string conversion to preserve type information.
+        /// </summary>
+        private GDTypeNode InferDualOperatorTypeNode(GDDualOperatorExpression dualOp)
+        {
+            var opType = dualOp.Operator?.OperatorType;
+            if (opType == null)
+                return null;
+
+            // Special handling for 'as' operator - right side IS the type name
+            if (opType == GDDualOperatorType.As)
+            {
+                // Try to extract type node from expression
+                var typeNode = GetTypeNodeFromExpression(dualOp.RightExpression);
+                return typeNode ?? CreateSimpleType("Variant");
+            }
+
+            // Infer operand types as GDTypeNode directly
+            var leftTypeNode = InferTypeNode(dualOp.LeftExpression);
+            var rightTypeNode = InferTypeNode(dualOp.RightExpression);
+
+            // Use the typed resolver that works with GDTypeNode directly
+            var resultNode = GDOperatorTypeResolver.ResolveOperatorTypeNode(opType.Value, leftTypeNode, rightTypeNode);
+
+            // Fallback to string-based resolver if typed resolver returns null
+            if (resultNode == null)
+            {
+                var leftType = leftTypeNode?.BuildName();
+                var rightType = rightTypeNode?.BuildName();
+                var resultTypeName = GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+                return CreateSimpleType(resultTypeName);
+            }
+
+            return resultNode;
+        }
+
+        /// <summary>
+        /// Extracts a GDTypeNode from an expression used in type context (e.g., 'as' operator).
+        /// </summary>
+        private GDTypeNode GetTypeNodeFromExpression(GDExpression expr)
+        {
+            if (expr == null)
+                return null;
+
+            // Simple identifier: int, String, Node, etc.
+            if (expr is GDIdentifierExpression identExpr)
+            {
+                var typeName = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(typeName))
+                    return CreateSimpleType(typeName);
+            }
+
+            // Member expressions like SomeClass.InnerType
+            if (expr is GDMemberOperatorExpression memberExpr)
+            {
+                var callerType = GetTypeNodeFromExpression(memberExpr.CallerExpression);
+                var member = memberExpr.Identifier?.Sequence;
+                if (callerType != null && !string.IsNullOrEmpty(member))
+                {
+                    var fullName = $"{callerType.BuildName()}.{member}";
+                    return CreateSimpleType(fullName);
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

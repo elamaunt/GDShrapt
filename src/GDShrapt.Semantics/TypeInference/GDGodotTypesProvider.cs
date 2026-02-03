@@ -436,11 +436,11 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // assert(condition), assert(condition, message)
             "assert" => GDRuntimeFunctionInfo.Range("assert", 1, 2, "void"),
 
-            // min(a, b, ...) - variadic, returns float (use mini() for int)
-            "min" => GDRuntimeFunctionInfo.VarArgs("min", 2, "float"),
+            // min(a, b, ...) - variadic, returns common type of args (int+int→int, int+float→float)
+            "min" => GDRuntimeFunctionInfo.VarArgs("min", 2, "Variant", "common_arg"),
 
-            // max(a, b, ...) - variadic, returns float (use maxi() for int)
-            "max" => GDRuntimeFunctionInfo.VarArgs("max", 2, "float"),
+            // max(a, b, ...) - variadic, returns common type of args (int+int→int, int+float→float)
+            "max" => GDRuntimeFunctionInfo.VarArgs("max", 2, "Variant", "common_arg"),
 
             // mini(a, b, ...) - variadic integer minimum, returns int
             "mini" => GDRuntimeFunctionInfo.VarArgs("mini", 2, "int"),
@@ -454,20 +454,29 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // maxf(a, b) - float maximum, returns float
             "maxf" => GDRuntimeFunctionInfo.Exact("maxf", 2, "float"),
 
+            // clamp(value, min, max) - returns type of first arg
+            "clamp" => GDRuntimeFunctionInfo.Exact("clamp", 3, "Variant", "first_arg"),
+
             // clampi(value, min, max) - returns int
             "clampi" => GDRuntimeFunctionInfo.Exact("clampi", 3, "int"),
 
             // clampf(value, min, max) - returns float
             "clampf" => GDRuntimeFunctionInfo.Exact("clampf", 3, "float"),
 
-            // abs(x) - returns float
-            "abs" => GDRuntimeFunctionInfo.Exact("abs", 1, "float"),
+            // abs(x) - returns type of first arg (int→int, float→float)
+            "abs" => GDRuntimeFunctionInfo.Exact("abs", 1, "Variant", "first_arg"),
 
             // absi(x) - returns int
             "absi" => GDRuntimeFunctionInfo.Exact("absi", 1, "int"),
 
             // absf(x) - returns float
             "absf" => GDRuntimeFunctionInfo.Exact("absf", 1, "float"),
+
+            // sign(x) - returns int (always -1, 0, or 1)
+            "sign" => GDRuntimeFunctionInfo.Exact("sign", 1, "int"),
+
+            // lerp(a, b, weight) - returns common type of a and b (ignoring weight)
+            "lerp" => GDRuntimeFunctionInfo.Exact("lerp", 3, "Variant", "common_two"),
 
             // str(value, ...) - variadic, returns String. Accepts 0 or more args: str() returns ""
             "str" => GDRuntimeFunctionInfo.VarArgs("str", 0, "String"),

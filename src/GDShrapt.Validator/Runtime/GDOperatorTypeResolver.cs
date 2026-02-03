@@ -140,6 +140,290 @@ namespace GDShrapt.Reader
 
         #endregion
 
+        #region Type Node Resolution
+
+        /// <summary>
+        /// Resolves the result type node for a binary operator expression.
+        /// Returns the type node directly without string conversion.
+        /// </summary>
+        public static GDTypeNode? ResolveOperatorTypeNode(
+            GDDualOperatorType op,
+            GDTypeNode? leftTypeNode,
+            GDTypeNode? rightTypeNode)
+        {
+            // Fixed-result operators - always return specific type
+            switch (op)
+            {
+                case GDDualOperatorType.Equal:
+                case GDDualOperatorType.NotEqual:
+                case GDDualOperatorType.LessThan:
+                case GDDualOperatorType.MoreThan:
+                case GDDualOperatorType.LessThanOrEqual:
+                case GDDualOperatorType.MoreThanOrEqual:
+                case GDDualOperatorType.Is:
+                case GDDualOperatorType.In:
+                case GDDualOperatorType.And:
+                case GDDualOperatorType.And2:
+                case GDDualOperatorType.Or:
+                case GDDualOperatorType.Or2:
+                    return GDTypeNode.CreateSimple("bool");
+
+                case GDDualOperatorType.As:
+                    return rightTypeNode;
+            }
+
+            // For remaining operators, null types propagate as null
+            if (leftTypeNode == null || rightTypeNode == null)
+                return null;
+
+            switch (op)
+            {
+                case GDDualOperatorType.Addition:
+                    return ResolveAdditionTypeNode(leftTypeNode, rightTypeNode);
+
+                case GDDualOperatorType.Subtraction:
+                    return ResolveSubtractionTypeNode(leftTypeNode, rightTypeNode);
+
+                case GDDualOperatorType.Multiply:
+                    return ResolveMultiplicationTypeNode(leftTypeNode, rightTypeNode);
+
+                case GDDualOperatorType.Division:
+                    return ResolveDivisionTypeNode(leftTypeNode, rightTypeNode);
+
+                case GDDualOperatorType.Mod:
+                    return ResolveModTypeNode(leftTypeNode, rightTypeNode);
+
+                case GDDualOperatorType.Power:
+                    if (leftTypeNode.IsNumericType() && rightTypeNode.IsNumericType())
+                        return GDTypeNode.CreateSimple("float");
+                    return null;
+
+                case GDDualOperatorType.BitwiseAnd:
+                case GDDualOperatorType.BitwiseOr:
+                case GDDualOperatorType.Xor:
+                case GDDualOperatorType.BitShiftLeft:
+                case GDDualOperatorType.BitShiftRight:
+                    if (leftTypeNode.IsIntType() && rightTypeNode.IsIntType())
+                        return GDTypeNode.CreateSimple("int");
+                    return null;
+
+                case GDDualOperatorType.Assignment:
+                    return leftTypeNode;
+
+                case GDDualOperatorType.AddAndAssign:
+                case GDDualOperatorType.SubtractAndAssign:
+                case GDDualOperatorType.MultiplyAndAssign:
+                case GDDualOperatorType.DivideAndAssign:
+                case GDDualOperatorType.ModAndAssign:
+                case GDDualOperatorType.PowerAndAssign:
+                case GDDualOperatorType.BitwiseAndAndAssign:
+                case GDDualOperatorType.BitwiseOrAndAssign:
+                case GDDualOperatorType.XorAndAssign:
+                case GDDualOperatorType.BitShiftLeftAndAssign:
+                case GDDualOperatorType.BitShiftRightAndAssign:
+                    return leftTypeNode;
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Resolves addition with proper GDTypeNode handling.
+        /// </summary>
+        private static GDTypeNode? ResolveAdditionTypeNode(GDTypeNode left, GDTypeNode right)
+        {
+            // String concatenation
+            if (left.IsStringType() || right.IsStringType())
+                return GDTypeNode.CreateSimple("String");
+
+            // Numeric addition
+            if (left.IsNumericType() && right.IsNumericType())
+                return left.IsFloatType() || right.IsFloatType()
+                    ? GDTypeNode.CreateSimple("float")
+                    : GDTypeNode.CreateSimple("int");
+
+            // Vector addition - same types only
+            if (left.IsVectorType() && right.IsVectorType())
+            {
+                if (AreTypesEqual(left, right))
+                    return left;
+            }
+
+            // Color addition
+            if (left.IsColorType() && right.IsColorType())
+                return GDTypeNode.CreateSimple("Color");
+
+            // Array concatenation - preserve type info
+            if (left is GDArrayTypeNode leftArray && right is GDArrayTypeNode rightArray)
+            {
+                return CombineArrayTypes(leftArray, rightArray);
+            }
+
+            // Mixed array types (one typed, one untyped or plain Array)
+            if (left.IsArray && right.IsArray)
+                return GDTypeNode.CreateArray(null);
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves subtraction with proper GDTypeNode handling.
+        /// </summary>
+        private static GDTypeNode? ResolveSubtractionTypeNode(GDTypeNode left, GDTypeNode right)
+        {
+            // Numeric subtraction
+            if (left.IsNumericType() && right.IsNumericType())
+                return left.IsFloatType() || right.IsFloatType()
+                    ? GDTypeNode.CreateSimple("float")
+                    : GDTypeNode.CreateSimple("int");
+
+            // Vector subtraction - same types only
+            if (left.IsVectorType() && right.IsVectorType() && AreTypesEqual(left, right))
+                return left;
+
+            // Color subtraction
+            if (left.IsColorType() && right.IsColorType())
+                return GDTypeNode.CreateSimple("Color");
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves multiplication with proper GDTypeNode handling.
+        /// </summary>
+        private static GDTypeNode? ResolveMultiplicationTypeNode(GDTypeNode left, GDTypeNode right)
+        {
+            // String repetition
+            if ((left.IsStringType() && right.IsIntType()) ||
+                (left.IsIntType() && right.IsStringType()))
+                return GDTypeNode.CreateSimple("String");
+
+            // Numeric multiplication
+            if (left.IsNumericType() && right.IsNumericType())
+                return left.IsFloatType() || right.IsFloatType()
+                    ? GDTypeNode.CreateSimple("float")
+                    : GDTypeNode.CreateSimple("int");
+
+            // Vector * scalar or Vector * Vector
+            if (left.IsVectorType())
+            {
+                if (right.IsNumericType() || right.IsVectorType())
+                    return left;
+            }
+            if (right.IsVectorType() && left.IsNumericType())
+                return right;
+
+            // Color operations
+            if (left.IsColorType() && (right.IsNumericType() || right.IsColorType()))
+                return GDTypeNode.CreateSimple("Color");
+            if (left.IsNumericType() && right.IsColorType())
+                return GDTypeNode.CreateSimple("Color");
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves division with proper GDTypeNode handling.
+        /// </summary>
+        private static GDTypeNode? ResolveDivisionTypeNode(GDTypeNode left, GDTypeNode right)
+        {
+            // Numeric division always returns float
+            if (left.IsNumericType() && right.IsNumericType())
+                return GDTypeNode.CreateSimple("float");
+
+            // Vector / scalar or Vector / Vector
+            if (left.IsVectorType() && (right.IsNumericType() || right.IsVectorType()))
+                return left;
+
+            // Color operations
+            if (left.IsColorType() && (right.IsNumericType() || right.IsColorType()))
+                return GDTypeNode.CreateSimple("Color");
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves modulo with proper GDTypeNode handling.
+        /// </summary>
+        private static GDTypeNode? ResolveModTypeNode(GDTypeNode left, GDTypeNode right)
+        {
+            // int % int = int
+            if (left.IsIntType() && right.IsIntType())
+                return GDTypeNode.CreateSimple("int");
+
+            // Any float involvement = float
+            if (left.IsNumericType() && right.IsNumericType())
+                return GDTypeNode.CreateSimple("float");
+
+            // Vector % Vector or Vector % scalar
+            if (left.IsVectorType() && (right.IsVectorType() || right.IsNumericType()))
+                return left;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Combines two typed arrays for concatenation.
+        /// Rules:
+        /// - Same element type → preserve
+        /// - int + float → Array[float] (numeric widening)
+        /// - Incompatible types → untyped Array
+        /// - One untyped → untyped Array
+        /// </summary>
+        private static GDTypeNode CombineArrayTypes(GDArrayTypeNode left, GDArrayTypeNode right)
+        {
+            var leftInner = left.InnerType;
+            var rightInner = right.InnerType;
+
+            // Both untyped → untyped
+            if (leftInner == null || rightInner == null)
+                return GDTypeNode.CreateArray(null);
+
+            // Same type → preserve
+            if (AreTypesEqual(leftInner, rightInner))
+                return GDTypeNode.CreateArray(leftInner);
+
+            // Try numeric widening
+            if (leftInner.IsNumericType() && rightInner.IsNumericType())
+            {
+                // int + float → float
+                if (leftInner.IsFloatType() || rightInner.IsFloatType())
+                    return GDTypeNode.CreateArray(GDTypeNode.CreateSimple("float"));
+            }
+
+            // Incompatible types → untyped
+            return GDTypeNode.CreateArray(null);
+        }
+
+        /// <summary>
+        /// Compares two type nodes structurally.
+        /// </summary>
+        private static bool AreTypesEqual(GDTypeNode left, GDTypeNode right)
+        {
+            if (left == null || right == null)
+                return left == right;
+
+            // Compare simple types
+            if (left is GDSingleTypeNode leftSingle && right is GDSingleTypeNode rightSingle)
+                return leftSingle.Type?.Sequence == rightSingle.Type?.Sequence;
+
+            // Compare array types recursively
+            if (left is GDArrayTypeNode leftArray && right is GDArrayTypeNode rightArray)
+            {
+                if (leftArray.InnerType == null && rightArray.InnerType == null)
+                    return true;
+                if (leftArray.InnerType == null || rightArray.InnerType == null)
+                    return false;
+                return AreTypesEqual(leftArray.InnerType, rightArray.InnerType);
+            }
+
+            // For other types, compare by name
+            return left.BuildName() == right.BuildName();
+        }
+
+        #endregion
+
         #region Arithmetic Resolution
 
         /// <summary>

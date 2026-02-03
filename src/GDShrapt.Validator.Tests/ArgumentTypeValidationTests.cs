@@ -347,15 +347,17 @@ func test():
         }
 
         [TestMethod]
-        public void BuiltinFunction_ClampInvalid()
+        public void BuiltinFunction_ClampWithVariant_AcceptsAnyType()
         {
+            // In GDScript, clamp() accepts Variant and doesn't do compile-time type checking
+            // This is consistent with GDScript's duck-typed nature
             var code = @"
 func test():
     var x = clamp(""five"", 0, 10)
 ";
             var result = ValidateWithArgumentTypes(code);
-            // clamp expects numeric types
-            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.ArgumentTypeMismatch).Should().NotBeEmpty();
+            // clamp accepts Variant parameters - no compile-time type error
+            result.Diagnostics.Where(d => d.Code == GDDiagnosticCode.ArgumentTypeMismatch).Should().BeEmpty();
         }
 
         [TestMethod]

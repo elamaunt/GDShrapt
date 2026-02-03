@@ -188,17 +188,6 @@ public class DiagnosticsCollector
             sb.AppendLine();
         }
 
-        // All diagnostics raw list
-        sb.AppendLine("================================================================================");
-        sb.AppendLine("ALL DIAGNOSTICS (RAW)");
-        sb.AppendLine("================================================================================");
-        sb.AppendLine();
-
-        foreach (var diag in diagnostics.OrderBy(d => d.FilePath).ThenBy(d => d.StartLine))
-        {
-            sb.AppendLine($"{diag.FilePath}:{diag.StartLine}:{diag.StartColumn}: [{diag.Code}] {diag.Severity} ({diag.Source}) - {diag.Message}");
-        }
-
         return sb.ToString();
     }
 

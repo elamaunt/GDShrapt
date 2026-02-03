@@ -488,9 +488,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 {
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
-                    // Return flow type even if it's Variant - this is the authoritative type
-                    // at this location, and returning Variant is correct for untyped variables
-                    if (!string.IsNullOrEmpty(flowType))
+                    // Return flow type if it's concrete (not Variant)
+                    // If flow returns Variant, fall through to TypeEngine which may have
+                    // explicit type annotation from class-level variable declaration
+                    if (!string.IsNullOrEmpty(flowType) && flowType != "Variant")
                         return flowType;
                 }
             }

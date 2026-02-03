@@ -122,6 +122,10 @@ public class GDDynamicCallValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
             return; // Unknown type - skip
 
+        // Skip Dictionary - it can have any keys dynamically
+        if (callerType == "Dictionary" || callerType.StartsWith("Dictionary["))
+            return;
+
         // Check if the property exists on the type
         var memberInfo = FindMember(callerType, propertyName);
         if (memberInfo == null)
@@ -166,6 +170,10 @@ public class GDDynamicCallValidator : GDValidationVisitor
         var callerType = _semanticModel.GetExpressionType(callerExpr);
         if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
             return; // Unknown type - skip
+
+        // Skip Dictionary - it can have any keys dynamically
+        if (callerType == "Dictionary" || callerType.StartsWith("Dictionary["))
+            return;
 
         // Check if the property exists on the type
         var memberInfo = FindMember(callerType, propertyName);

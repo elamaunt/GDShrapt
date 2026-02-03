@@ -116,6 +116,79 @@ public class GDDuckTypeCollector : GDVisitor
         }
     }
 
+    public override void Visit(GDDualOperatorExpression dualOp)
+    {
+        var opType = dualOp.Operator?.OperatorType;
+        if (opType == null)
+            return;
+
+        // Only collect for arithmetic operators
+        if (!IsArithmeticOperator(opType.Value))
+            return;
+
+        // Left operand - if it's an untyped variable, record the operator requirement
+        var leftVar = GetRootVariableName(dualOp.LeftExpression);
+        if (leftVar != null && IsUntypedVariable(leftVar))
+        {
+            var rightType = InferSimpleType(dualOp.RightExpression);
+            EnsureDuckType(leftVar).RequireOperator(opType.Value, rightType);
+        }
+
+        // Right operand - if it's an untyped variable, record the operator requirement
+        var rightVar = GetRootVariableName(dualOp.RightExpression);
+        if (rightVar != null && IsUntypedVariable(rightVar))
+        {
+            var leftType = InferSimpleType(dualOp.LeftExpression);
+            EnsureDuckType(rightVar).RequireOperator(opType.Value, leftType);
+        }
+    }
+
+    /// <summary>
+    /// Checks if the operator is an arithmetic operator that restricts types.
+    /// </summary>
+    private static bool IsArithmeticOperator(GDDualOperatorType op)
+    {
+        return op == GDDualOperatorType.Addition ||
+               op == GDDualOperatorType.Subtraction ||
+               op == GDDualOperatorType.Multiply ||
+               op == GDDualOperatorType.Division ||
+               op == GDDualOperatorType.Mod;
+    }
+
+    /// <summary>
+    /// Checks if a variable is untyped (no type annotation or Variant type).
+    /// </summary>
+    private bool IsUntypedVariable(string varName)
+    {
+        var symbol = _scopes?.Lookup(varName);
+        return symbol == null || string.IsNullOrEmpty(symbol.TypeName) || symbol.TypeName == "Variant";
+    }
+
+    /// <summary>
+    /// Simple type inference for literal expressions.
+    /// </summary>
+    private static string? InferSimpleType(GDExpression? expr)
+    {
+        if (expr == null)
+            return null;
+
+        switch (expr)
+        {
+            case GDNumberExpression numExpr:
+                return numExpr.Number?.Sequence?.Contains(".") == true ? "float" : "int";
+            case GDStringExpression _:
+                return "String";
+            case GDBoolExpression _:
+                return "bool";
+            case GDArrayInitializerExpression _:
+                return "Array";
+            case GDDictionaryInitializerExpression _:
+                return "Dictionary";
+            default:
+                return null;
+        }
+    }
+
     private static string? GetRootVariableName(GDExpression? expr)
     {
         while (expr is GDMemberOperatorExpression member)

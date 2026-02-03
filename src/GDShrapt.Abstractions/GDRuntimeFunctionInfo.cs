@@ -38,6 +38,13 @@ public class GDRuntimeFunctionInfo
     public int MaxArgs { get; set; }
 
     /// <summary>
+    /// Role of return type for smart type inference.
+    /// Values: "common_arg" - returns common type of all arguments (with numeric promotion)
+    ///         "first_arg" - returns type of first argument
+    /// </summary>
+    public string? ReturnTypeRole { get; set; }
+
+    /// <summary>
     /// Creates a new function info.
     /// </summary>
     public GDRuntimeFunctionInfo(string name, string? returnType = null)
@@ -61,25 +68,25 @@ public class GDRuntimeFunctionInfo
     /// <summary>
     /// Creates a varargs function (accepts any number of arguments).
     /// </summary>
-    public static GDRuntimeFunctionInfo VarArgs(string name, int minArgs = 0, string? returnType = null)
+    public static GDRuntimeFunctionInfo VarArgs(string name, int minArgs = 0, string? returnType = null, string? returnTypeRole = null)
     {
-        return new GDRuntimeFunctionInfo(name, minArgs, -1, true, returnType);
+        return new GDRuntimeFunctionInfo(name, minArgs, -1, true, returnType) { ReturnTypeRole = returnTypeRole };
     }
 
     /// <summary>
     /// Creates a function with exact argument count.
     /// </summary>
-    public static GDRuntimeFunctionInfo Exact(string name, int argCount, string? returnType = null)
+    public static GDRuntimeFunctionInfo Exact(string name, int argCount, string? returnType = null, string? returnTypeRole = null)
     {
-        return new GDRuntimeFunctionInfo(name, argCount, argCount, false, returnType);
+        return new GDRuntimeFunctionInfo(name, argCount, argCount, false, returnType) { ReturnTypeRole = returnTypeRole };
     }
 
     /// <summary>
     /// Creates a function with argument range.
     /// </summary>
-    public static GDRuntimeFunctionInfo Range(string name, int minArgs, int maxArgs, string? returnType = null)
+    public static GDRuntimeFunctionInfo Range(string name, int minArgs, int maxArgs, string? returnType = null, string? returnTypeRole = null)
     {
-        return new GDRuntimeFunctionInfo(name, minArgs, maxArgs, false, returnType);
+        return new GDRuntimeFunctionInfo(name, minArgs, maxArgs, false, returnType) { ReturnTypeRole = returnTypeRole };
     }
 
     public override string ToString() => Name;
