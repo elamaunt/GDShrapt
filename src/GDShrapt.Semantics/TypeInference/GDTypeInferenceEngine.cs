@@ -1882,9 +1882,10 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Checks if a type is a numeric type (int or float).
+        /// Uses runtime provider for consistency with TypesMap.
         /// </summary>
-        private static bool IsNumericType(string? type) =>
-            type == "int" || type == "float";
+        private bool IsNumericType(string? type) =>
+            !string.IsNullOrEmpty(type) && _runtimeProvider.IsNumericType(type);
 
         /// <summary>
         /// Validates that a string is a valid GDScript identifier.

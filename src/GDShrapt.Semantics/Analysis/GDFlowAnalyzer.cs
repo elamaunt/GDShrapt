@@ -1159,8 +1159,8 @@ internal class GDFlowAnalyzer : GDVisitor
         };
     }
 
-    private static bool IsNumericType(string? type) =>
-        type == "int" || type == "float";
+    private bool IsNumericType(string? type) =>
+        !string.IsNullOrEmpty(type) && (_typeEngine?.RuntimeProvider?.IsNumericType(type) ?? (type == "int" || type == "float"));
 
     /// <summary>
     /// Checks if expression is a literal value (not a variable).

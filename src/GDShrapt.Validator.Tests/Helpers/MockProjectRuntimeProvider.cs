@@ -271,5 +271,21 @@ namespace GDShrapt.Reader.Tests.Helpers
         }
 
         #endregion
+
+        #region Type Traits - delegated to built-in provider
+
+        public bool IsNumericType(string typeName) => _builtInProvider.IsNumericType(typeName);
+        public bool IsIterableType(string typeName) => _builtInProvider.IsIterableType(typeName);
+        public bool IsIndexableType(string typeName) => _builtInProvider.IsIndexableType(typeName);
+        public bool IsNullableType(string typeName) => _builtInProvider.IsNullableType(typeName);
+        public bool IsVectorType(string typeName) => _builtInProvider.IsVectorType(typeName);
+        public bool IsContainerType(string typeName) => _builtInProvider.IsContainerType(typeName);
+        public bool IsPackedArrayType(string typeName) => _builtInProvider.IsPackedArrayType(typeName);
+        public string GetFloatVectorVariant(string integerVectorType) => _builtInProvider.GetFloatVectorVariant(integerVectorType);
+        public string GetPackedArrayElementType(string packedArrayType) => _builtInProvider.GetPackedArrayElementType(packedArrayType);
+        public string ResolveOperatorResult(string leftType, string operatorName, string rightType) => _builtInProvider.ResolveOperatorResult(leftType, operatorName, rightType);
+        public IReadOnlyList<string> GetTypesWithOperator(string operatorName) => _builtInProvider.GetTypesWithOperator(operatorName);
+
+        #endregion
     }
 }

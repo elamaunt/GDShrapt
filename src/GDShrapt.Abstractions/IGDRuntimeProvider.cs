@@ -90,4 +90,93 @@ public interface IGDRuntimeProvider
     /// <param name="methodName">The method name to search for</param>
     /// <returns>List of type names that have this method</returns>
     IReadOnlyList<string> FindTypesWithMethod(string methodName);
+
+    // ========================================
+    // Type Traits (from TypesMap)
+    // ========================================
+
+    /// <summary>
+    /// Checks if a type is numeric (int or float).
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is numeric</returns>
+    bool IsNumericType(string typeName);
+
+    /// <summary>
+    /// Checks if a type supports iteration (for-in loops).
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is iterable</returns>
+    bool IsIterableType(string typeName);
+
+    /// <summary>
+    /// Checks if a type supports indexing with [] operator.
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is indexable</returns>
+    bool IsIndexableType(string typeName);
+
+    /// <summary>
+    /// Checks if a type can be null.
+    /// Value types (int, float, Vector*, etc.) return false.
+    /// Reference types (Object, Node, Resource, etc.) return true.
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is nullable</returns>
+    bool IsNullableType(string typeName);
+
+    /// <summary>
+    /// Checks if a type is a vector type (Vector2, Vector3, Vector4 and their integer variants).
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is a vector</returns>
+    bool IsVectorType(string typeName);
+
+    /// <summary>
+    /// Checks if a type is a container type (Array, Dictionary, or typed variants).
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is a container</returns>
+    bool IsContainerType(string typeName);
+
+    /// <summary>
+    /// Checks if a type is a packed array type (PackedByteArray, PackedVector2Array, etc.).
+    /// </summary>
+    /// <param name="typeName">The type name to check</param>
+    /// <returns>True if the type is a packed array</returns>
+    bool IsPackedArrayType(string typeName);
+
+    /// <summary>
+    /// Gets the float variant of an integer vector type.
+    /// </summary>
+    /// <param name="integerVectorType">The integer vector type (e.g., "Vector2i")</param>
+    /// <returns>The float variant (e.g., "Vector2"), or null if not applicable</returns>
+    string? GetFloatVectorVariant(string integerVectorType);
+
+    /// <summary>
+    /// Gets the element type for a packed array.
+    /// </summary>
+    /// <param name="packedArrayType">The packed array type (e.g., "PackedInt32Array")</param>
+    /// <returns>The element type (e.g., "int"), or null if not a packed array</returns>
+    string? GetPackedArrayElementType(string packedArrayType);
+
+    // ========================================
+    // Operator Resolution (from TypesMap)
+    // ========================================
+
+    /// <summary>
+    /// Resolves the result type of a binary operator.
+    /// </summary>
+    /// <param name="leftType">The left operand type</param>
+    /// <param name="operatorName">The operator ("+", "-", "*", "/", "%", "**", etc.)</param>
+    /// <param name="rightType">The right operand type</param>
+    /// <returns>The result type, or null if the operator is not supported</returns>
+    string? ResolveOperatorResult(string leftType, string operatorName, string rightType);
+
+    /// <summary>
+    /// Gets all types that support a specific operator.
+    /// </summary>
+    /// <param name="operatorName">The operator name</param>
+    /// <returns>List of type names that support the operator</returns>
+    IReadOnlyList<string> GetTypesWithOperator(string operatorName);
 }

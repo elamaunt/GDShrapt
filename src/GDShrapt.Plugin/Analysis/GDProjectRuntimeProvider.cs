@@ -471,4 +471,20 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
     }
 
     #endregion
+
+    #region Type Traits - stub implementations
+
+    public bool IsNumericType(string typeName) => false;
+    public bool IsIterableType(string typeName) => false;
+    public bool IsIndexableType(string typeName) => false;
+    public bool IsNullableType(string typeName) => true;
+    public bool IsVectorType(string typeName) => false;
+    public bool IsContainerType(string typeName) => false;
+    public bool IsPackedArrayType(string typeName) => false;
+    public string? GetFloatVectorVariant(string integerVectorType) => null;
+    public string? GetPackedArrayElementType(string packedArrayType) => null;
+    public string? ResolveOperatorResult(string leftType, string operatorName, string rightType) => null;
+    public IReadOnlyList<string> GetTypesWithOperator(string operatorName) => System.Array.Empty<string>();
+
+    #endregion
 }

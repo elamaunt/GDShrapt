@@ -856,4 +856,349 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             return fullTypeName.Substring(lastDotIndex + 1);
         return fullTypeName;
     }
+
+    // ========================================
+    // Type Traits Implementation
+    // ========================================
+
+    // Pre-built sets for type traits (fallback when TypesMap lacks Traits data)
+    private static readonly HashSet<string> _numericTypes = new() { "int", "float" };
+    private static readonly HashSet<string> _vectorTypes = new()
+    {
+        "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i"
+    };
+    private static readonly HashSet<string> _integerVectorTypes = new()
+    {
+        "Vector2i", "Vector3i", "Vector4i"
+    };
+    private static readonly HashSet<string> _iterableTypes = new()
+    {
+        "Array", "Dictionary", "String",
+        "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
+        "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
+    };
+    private static readonly HashSet<string> _indexableTypes = new()
+    {
+        "Array", "Dictionary", "String",
+        "Vector2", "Vector3", "Vector4", "Vector2i", "Vector3i", "Vector4i",
+        "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
+        "PackedVector2Array", "PackedVector3Array", "PackedColorArray",
+        "Color", "Basis", "Transform2D", "Transform3D", "Projection"
+    };
+    private static readonly HashSet<string> _packedArrayTypes = new()
+    {
+        "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
+        "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
+    };
+    private static readonly HashSet<string> _containerTypes = new() { "Array", "Dictionary" };
+    private static readonly HashSet<string> _stringLikeTypes = new() { "String", "StringName" };
+
+    private static readonly Dictionary<string, string> _floatVectorVariants = new()
+    {
+        { "Vector2i", "Vector2" },
+        { "Vector3i", "Vector3" },
+        { "Vector4i", "Vector4" }
+    };
+
+    private static readonly Dictionary<string, string> _packedArrayElementTypes = new()
+    {
+        { "PackedByteArray", "int" },
+        { "PackedInt32Array", "int" },
+        { "PackedInt64Array", "int" },
+        { "PackedFloat32Array", "float" },
+        { "PackedFloat64Array", "float" },
+        { "PackedStringArray", "String" },
+        { "PackedVector2Array", "Vector2" },
+        { "PackedVector3Array", "Vector3" },
+        { "PackedColorArray", "Color" }
+    };
+
+    /// <inheritdoc/>
+    public bool IsNumericType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(typeName, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.IsNumeric;
+
+        // Fallback to hardcoded set
+        return _numericTypes.Contains(typeName);
+    }
+
+    /// <inheritdoc/>
+    public bool IsIterableType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var baseType = ExtractBaseTypeName(typeName);
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.IsIterable;
+
+        // Fallback to hardcoded set
+        return _iterableTypes.Contains(baseType);
+    }
+
+    /// <inheritdoc/>
+    public bool IsIndexableType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var baseType = ExtractBaseTypeName(typeName);
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.IsIndexable;
+
+        // Fallback to hardcoded set
+        return _indexableTypes.Contains(baseType);
+    }
+
+    /// <inheritdoc/>
+    public bool IsNullableType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return true; // Unknown types are assumed nullable
+
+        var baseType = ExtractBaseTypeName(typeName);
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.IsNullable;
+
+        // Fallback: builtin types are not nullable
+        return !IsBuiltinType(typeName);
+    }
+
+    /// <inheritdoc/>
+    public bool IsVectorType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(typeName, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.IsVector;
+
+        // Fallback to hardcoded set
+        return _vectorTypes.Contains(typeName);
+    }
+
+    /// <inheritdoc/>
+    public bool IsContainerType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var baseType = ExtractBaseTypeName(typeName);
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.IsContainer;
+
+        // Fallback to hardcoded set
+        return _containerTypes.Contains(baseType);
+    }
+
+    /// <inheritdoc/>
+    public bool IsPackedArrayType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(typeName, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.IsPackedArray;
+
+        // Fallback to hardcoded set
+        return _packedArrayTypes.Contains(typeName);
+    }
+
+    /// <inheritdoc/>
+    public string? GetFloatVectorVariant(string integerVectorType)
+    {
+        if (string.IsNullOrEmpty(integerVectorType))
+            return null;
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(integerVectorType, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.FloatVariant;
+
+        // Fallback to hardcoded mapping
+        return _floatVectorVariants.TryGetValue(integerVectorType, out var floatVariant)
+            ? floatVariant
+            : null;
+    }
+
+    /// <inheritdoc/>
+    public string? GetPackedArrayElementType(string packedArrayType)
+    {
+        if (string.IsNullOrEmpty(packedArrayType))
+            return null;
+
+        // Check TypesMap Traits first
+        if (_typeCache.TryGetValue(packedArrayType, out var typeData) && typeData.Traits != null)
+            return typeData.Traits.PackedElementType;
+
+        // Fallback to hardcoded mapping
+        return _packedArrayElementTypes.TryGetValue(packedArrayType, out var elementType)
+            ? elementType
+            : null;
+    }
+
+    // ========================================
+    // Operator Resolution Implementation
+    // ========================================
+
+    /// <inheritdoc/>
+    public string? ResolveOperatorResult(string leftType, string operatorName, string rightType)
+    {
+        if (string.IsNullOrEmpty(leftType) || string.IsNullOrEmpty(operatorName))
+            return null;
+
+        // Check TypesMap Operators first
+        if (_typeCache.TryGetValue(leftType, out var typeData) && typeData.Operators != null)
+        {
+            var overloads = typeData.Operators.GetByName(operatorName);
+            if (overloads != null)
+            {
+                // Find matching overload for right type
+                foreach (var overload in overloads)
+                {
+                    if (overload.RightType == rightType ||
+                        overload.RightType == null ||
+                        (overload.RightType == "Variant"))
+                    {
+                        return overload.ResultType;
+                    }
+
+                    // Check if rightType is assignable to overload.RightType
+                    if (!string.IsNullOrEmpty(overload.RightType) && IsAssignableTo(rightType, overload.RightType))
+                    {
+                        return overload.ResultType;
+                    }
+                }
+            }
+        }
+
+        // Fallback: use GDOperatorTypeResolver (legacy hardcoded logic)
+        // This will be removed in Этап 2
+        return ResolveOperatorFallback(leftType, operatorName, rightType);
+    }
+
+    /// <summary>
+    /// Fallback operator resolution using hardcoded rules.
+    /// This method will be removed after migrating all operator data to TypesMap.
+    /// </summary>
+    private static string? ResolveOperatorFallback(string leftType, string operatorName, string rightType)
+    {
+        // Convert operator name to GDDualOperatorType
+        GDDualOperatorType? opType = operatorName switch
+        {
+            "+" or "Addition" => GDDualOperatorType.Addition,
+            "-" or "Subtraction" => GDDualOperatorType.Subtraction,
+            "*" or "Multiplication" => GDDualOperatorType.Multiply,
+            "/" or "Division" => GDDualOperatorType.Division,
+            "%" or "Modulo" => GDDualOperatorType.Mod,
+            "**" or "Power" => GDDualOperatorType.Power,
+            "&" or "BitwiseAnd" => GDDualOperatorType.BitwiseAnd,
+            "|" or "BitwiseOr" => GDDualOperatorType.BitwiseOr,
+            "^" or "BitwiseXor" => GDDualOperatorType.Xor,
+            "<<" or "ShiftLeft" => GDDualOperatorType.BitShiftLeft,
+            ">>" or "ShiftRight" => GDDualOperatorType.BitShiftRight,
+            _ => null
+        };
+
+        if (opType == null)
+            return null;
+
+        return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyList<string> GetTypesWithOperator(string operatorName)
+    {
+        if (string.IsNullOrEmpty(operatorName))
+            return Array.Empty<string>();
+
+        var result = new List<string>();
+
+        // Check all types in cache for operator support
+        foreach (var kvp in _typeCache)
+        {
+            var typeName = kvp.Key;
+            var typeData = kvp.Value;
+
+            if (typeData.Operators != null)
+            {
+                var overloads = typeData.Operators.GetByName(operatorName);
+                if (overloads != null && overloads.Count > 0)
+                {
+                    result.Add(typeName);
+                }
+            }
+        }
+
+        // Fallback: add types from hardcoded sets if TypesMap lacks operator data
+        if (result.Count == 0)
+        {
+            result.AddRange(GetTypesWithOperatorFallback(operatorName));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Fallback for getting types with operator support.
+    /// This method will be removed after migrating all operator data to TypesMap.
+    /// </summary>
+    private static IEnumerable<string> GetTypesWithOperatorFallback(string operatorName)
+    {
+        return operatorName switch
+        {
+            "+" or "Addition" => new[]
+            {
+                "int", "float", "String", "StringName",
+                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                "Color", "Array",
+                "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+                "PackedFloat32Array", "PackedFloat64Array",
+                "PackedStringArray", "PackedVector2Array", "PackedVector3Array",
+                "PackedColorArray"
+            },
+            "-" or "Subtraction" => new[]
+            {
+                "int", "float",
+                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                "Color"
+            },
+            "*" or "Multiplication" => new[]
+            {
+                "int", "float",
+                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                "Color", "Quaternion", "Basis",
+                "Transform2D", "Transform3D"
+            },
+            "/" or "Division" => new[]
+            {
+                "int", "float",
+                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                "Color"
+            },
+            "%" or "Modulo" => new[]
+            {
+                "int", "float", "String",
+                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i"
+            },
+            _ => Array.Empty<string>()
+        };
+    }
 }

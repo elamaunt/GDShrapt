@@ -93,10 +93,15 @@ internal class GDDuckTypeResolver
     /// </summary>
     private bool TypeSupportsOperator(string typeName, GDDualOperatorType op, IReadOnlyList<string> operandTypes)
     {
-        // Get the set of types that support this operator
-        var supportingTypes = GetTypesForOperator(op);
-        if (supportingTypes == null || supportingTypes.Count == 0)
+        // Convert operator to string name for runtime provider
+        var operatorName = ConvertOperatorToString(op);
+        if (operatorName == null)
             return true; // Unknown operator, assume compatible
+
+        // Get types that support this operator from runtime provider
+        var supportingTypes = _runtimeProvider.GetTypesWithOperator(operatorName);
+        if (supportingTypes == null || supportingTypes.Count == 0)
+            return true; // No info about operator, assume compatible
 
         // Check if the type (or a base type) supports this operator
         return supportingTypes.Contains(typeName) ||
@@ -104,64 +109,24 @@ internal class GDDuckTypeResolver
     }
 
     /// <summary>
-    /// Gets the set of types that support a specific operator.
+    /// Converts GDDualOperatorType to string operator name for runtime provider.
     /// </summary>
-    private static HashSet<string>? GetTypesForOperator(GDDualOperatorType op)
+    private static string? ConvertOperatorToString(GDDualOperatorType op)
     {
-        switch (op)
+        return op switch
         {
-            case GDDualOperatorType.Addition:
-                // Types that support +: int, float, String, StringName, Vector*, Color, Array, PackedArray types
-                return new HashSet<string>
-                {
-                    "int", "float", "String", "StringName",
-                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                    "Color", "Array",
-                    "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-                    "PackedFloat32Array", "PackedFloat64Array",
-                    "PackedStringArray", "PackedVector2Array", "PackedVector3Array",
-                    "PackedColorArray"
-                };
-
-            case GDDualOperatorType.Subtraction:
-                // Types that support -: int, float, Vector*, Color
-                return new HashSet<string>
-                {
-                    "int", "float",
-                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                    "Color"
-                };
-
-            case GDDualOperatorType.Multiply:
-                // Types that support *: int, float, Vector*, Color, Quaternion, Basis, Transform*
-                return new HashSet<string>
-                {
-                    "int", "float",
-                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                    "Color", "Quaternion", "Basis",
-                    "Transform2D", "Transform3D"
-                };
-
-            case GDDualOperatorType.Division:
-                // Types that support /: int, float, Vector*, Color
-                return new HashSet<string>
-                {
-                    "int", "float",
-                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                    "Color"
-                };
-
-            case GDDualOperatorType.Mod:
-                // Types that support %: int, float, Vector*
-                return new HashSet<string>
-                {
-                    "int", "float",
-                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i"
-                };
-
-            default:
-                // Unknown operator - assume any type can work
-                return null;
-        }
+            GDDualOperatorType.Addition => "+",
+            GDDualOperatorType.Subtraction => "-",
+            GDDualOperatorType.Multiply => "*",
+            GDDualOperatorType.Division => "/",
+            GDDualOperatorType.Mod => "%",
+            GDDualOperatorType.Power => "**",
+            GDDualOperatorType.BitwiseAnd => "&",
+            GDDualOperatorType.BitwiseOr => "|",
+            GDDualOperatorType.Xor => "^",
+            GDDualOperatorType.BitShiftLeft => "<<",
+            GDDualOperatorType.BitShiftRight => ">>",
+            _ => null
+        };
     }
 }

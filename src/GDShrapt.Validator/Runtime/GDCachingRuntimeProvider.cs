@@ -165,5 +165,60 @@ namespace GDShrapt.Reader
             // Delegate to inner provider - caching could be added if needed
             return _inner.FindTypesWithMethod(methodName);
         }
+
+        public bool IsNumericType(string typeName)
+        {
+            return _inner.IsNumericType(typeName);
+        }
+
+        public bool IsIterableType(string typeName)
+        {
+            return _inner.IsIterableType(typeName);
+        }
+
+        public bool IsIndexableType(string typeName)
+        {
+            return _inner.IsIndexableType(typeName);
+        }
+
+        public bool IsNullableType(string typeName)
+        {
+            return _inner.IsNullableType(typeName);
+        }
+
+        public bool IsVectorType(string typeName)
+        {
+            return _inner.IsVectorType(typeName);
+        }
+
+        public bool IsContainerType(string typeName)
+        {
+            return _inner.IsContainerType(typeName);
+        }
+
+        public bool IsPackedArrayType(string typeName)
+        {
+            return _inner.IsPackedArrayType(typeName);
+        }
+
+        public string GetFloatVectorVariant(string integerVectorType)
+        {
+            return _inner.GetFloatVectorVariant(integerVectorType);
+        }
+
+        public string GetPackedArrayElementType(string packedArrayType)
+        {
+            return _inner.GetPackedArrayElementType(packedArrayType);
+        }
+
+        public string ResolveOperatorResult(string leftType, string operatorName, string rightType)
+        {
+            return _inner.ResolveOperatorResult(leftType, operatorName, rightType);
+        }
+
+        public IReadOnlyList<string> GetTypesWithOperator(string operatorName)
+        {
+            return _inner.GetTypesWithOperator(operatorName);
+        }
     }
 }

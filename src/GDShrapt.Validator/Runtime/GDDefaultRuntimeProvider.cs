@@ -629,5 +629,194 @@ namespace GDShrapt.Reader
         }
 
         #endregion
+
+        #region Type Traits Implementation
+
+        private static readonly HashSet<string> _numericTypes = new HashSet<string> { "int", "float" };
+        private static readonly HashSet<string> _vectorTypes = new HashSet<string>
+        {
+            "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i"
+        };
+        private static readonly HashSet<string> _iterableTypes = new HashSet<string>
+        {
+            "Array", "Dictionary", "String",
+            "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+            "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
+            "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
+        };
+        private static readonly HashSet<string> _indexableTypes = new HashSet<string>
+        {
+            "Array", "Dictionary", "String",
+            "Vector2", "Vector3", "Vector4", "Vector2i", "Vector3i", "Vector4i",
+            "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+            "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
+            "PackedVector2Array", "PackedVector3Array", "PackedColorArray",
+            "Color", "Basis", "Transform2D", "Transform3D", "Projection"
+        };
+        private static readonly HashSet<string> _packedArrayTypes = new HashSet<string>
+        {
+            "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+            "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
+            "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
+        };
+        private static readonly HashSet<string> _containerTypes = new HashSet<string> { "Array", "Dictionary" };
+
+        private static readonly Dictionary<string, string> _floatVectorVariants = new Dictionary<string, string>
+        {
+            { "Vector2i", "Vector2" },
+            { "Vector3i", "Vector3" },
+            { "Vector4i", "Vector4" }
+        };
+
+        private static readonly Dictionary<string, string> _packedArrayElementTypes = new Dictionary<string, string>
+        {
+            { "PackedByteArray", "int" },
+            { "PackedInt32Array", "int" },
+            { "PackedInt64Array", "int" },
+            { "PackedFloat32Array", "float" },
+            { "PackedFloat64Array", "float" },
+            { "PackedStringArray", "String" },
+            { "PackedVector2Array", "Vector2" },
+            { "PackedVector3Array", "Vector3" },
+            { "PackedColorArray", "Color" }
+        };
+
+        public bool IsNumericType(string typeName)
+        {
+            return !string.IsNullOrEmpty(typeName) && _numericTypes.Contains(typeName);
+        }
+
+        public bool IsIterableType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return false;
+            var baseType = ExtractBaseTypeName(typeName);
+            return _iterableTypes.Contains(baseType);
+        }
+
+        public bool IsIndexableType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return false;
+            var baseType = ExtractBaseTypeName(typeName);
+            return _indexableTypes.Contains(baseType);
+        }
+
+        public bool IsNullableType(string typeName)
+        {
+            // Value types are not nullable
+            return !IsBuiltinType(typeName);
+        }
+
+        public bool IsVectorType(string typeName)
+        {
+            return !string.IsNullOrEmpty(typeName) && _vectorTypes.Contains(typeName);
+        }
+
+        public bool IsContainerType(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return false;
+            var baseType = ExtractBaseTypeName(typeName);
+            return _containerTypes.Contains(baseType);
+        }
+
+        public bool IsPackedArrayType(string typeName)
+        {
+            return !string.IsNullOrEmpty(typeName) && _packedArrayTypes.Contains(typeName);
+        }
+
+        public string GetFloatVectorVariant(string integerVectorType)
+        {
+            if (string.IsNullOrEmpty(integerVectorType))
+                return null;
+            _floatVectorVariants.TryGetValue(integerVectorType, out var result);
+            return result;
+        }
+
+        public string GetPackedArrayElementType(string packedArrayType)
+        {
+            if (string.IsNullOrEmpty(packedArrayType))
+                return null;
+            _packedArrayElementTypes.TryGetValue(packedArrayType, out var result);
+            return result;
+        }
+
+        public string ResolveOperatorResult(string leftType, string operatorName, string rightType)
+        {
+            // Delegate to GDOperatorTypeResolver for now
+            GDDualOperatorType? opType = operatorName switch
+            {
+                "+" or "Addition" => GDDualOperatorType.Addition,
+                "-" or "Subtraction" => GDDualOperatorType.Subtraction,
+                "*" or "Multiplication" => GDDualOperatorType.Multiply,
+                "/" or "Division" => GDDualOperatorType.Division,
+                "%" or "Modulo" => GDDualOperatorType.Mod,
+                "**" or "Power" => GDDualOperatorType.Power,
+                "&" or "BitwiseAnd" => GDDualOperatorType.BitwiseAnd,
+                "|" or "BitwiseOr" => GDDualOperatorType.BitwiseOr,
+                "^" or "BitwiseXor" => GDDualOperatorType.Xor,
+                "<<" or "ShiftLeft" => GDDualOperatorType.BitShiftLeft,
+                ">>" or "ShiftRight" => GDDualOperatorType.BitShiftRight,
+                _ => null
+            };
+
+            if (opType == null)
+                return null;
+
+            return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+        }
+
+        public IReadOnlyList<string> GetTypesWithOperator(string operatorName)
+        {
+            return operatorName switch
+            {
+                "+" or "Addition" => new[]
+                {
+                    "int", "float", "String", "StringName",
+                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                    "Color", "Array",
+                    "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
+                    "PackedFloat32Array", "PackedFloat64Array",
+                    "PackedStringArray", "PackedVector2Array", "PackedVector3Array",
+                    "PackedColorArray"
+                },
+                "-" or "Subtraction" => new[]
+                {
+                    "int", "float",
+                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                    "Color"
+                },
+                "*" or "Multiplication" => new[]
+                {
+                    "int", "float",
+                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                    "Color", "Quaternion", "Basis",
+                    "Transform2D", "Transform3D"
+                },
+                "/" or "Division" => new[]
+                {
+                    "int", "float",
+                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
+                    "Color"
+                },
+                "%" or "Modulo" => new[]
+                {
+                    "int", "float", "String",
+                    "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i"
+                },
+                _ => System.Array.Empty<string>()
+            };
+        }
+
+        private static string ExtractBaseTypeName(string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return typeName;
+            var bracketIndex = typeName.IndexOf('[');
+            return bracketIndex > 0 ? typeName.Substring(0, bracketIndex) : typeName;
+        }
+
+        #endregion
     }
 }

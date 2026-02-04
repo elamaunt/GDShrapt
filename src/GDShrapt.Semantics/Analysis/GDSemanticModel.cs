@@ -82,10 +82,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly GDTypeInferenceEngine? _typeEngine;
     private readonly GDValidationContext? _validationContext;
 
-    // Symbol tracking
-    private readonly Dictionary<GDNode, GDSymbolInfo> _nodeToSymbol = new();
-    private readonly Dictionary<string, List<GDSymbolInfo>> _nameToSymbols = new();
-    private readonly Dictionary<GDSymbolInfo, List<GDReference>> _symbolReferences = new();
+    // Component registries
+    private readonly GDSymbolRegistry _symbolRegistry = new();
+    private readonly GDFlowAnalysisRegistry _flowRegistry = new();
 
     // Type tracking
     private readonly Dictionary<GDNode, string> _nodeTypes = new();
@@ -115,14 +114,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     // Callable call site registry for lambda parameter inference
     private GDCallableCallSiteRegistry? _callSiteRegistry;
 
-    // Flow-sensitive type analysis (SSA-style)
-    private readonly Dictionary<GDMethodDeclaration, GDFlowAnalyzer> _methodFlowAnalyzers = new();
-
-    // Member access index: (CallerType, MemberName) -> references
-    // Used for querying built-in method calls like OS.execute() or global functions like str2var()
-    private readonly Dictionary<(string CallerType, string MemberName), List<GDReference>> _memberAccessByType =
-        new(MemberAccessKeyComparer.Instance);
-
     // Recursion guard for GetExpressionType to prevent infinite loops
     private readonly HashSet<GDExpression> _expressionTypeInProgress = new();
     private const int MaxExpressionTypeRecursionDepth = 50;
@@ -145,7 +136,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// All symbols in this script.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> Symbols => _nameToSymbols.Values.SelectMany(x => x);
+    public IEnumerable<GDSymbolInfo> Symbols => _symbolRegistry.Symbols;
+
+    /// <summary>
+    /// Gets the symbol registry.
+    /// </summary>
+    public GDSymbolRegistry SymbolRegistry => _symbolRegistry;
 
     /// <summary>
     /// Creates a semantic model for a script file.
@@ -201,8 +197,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
         // Try to find the node that contains this identifier
         var parent = identifier.Parent as GDNode;
-        if (parent != null && _nodeToSymbol.TryGetValue(parent, out var symbolInfo))
-            return symbolInfo;
+        if (parent != null)
+        {
+            var symbolInfo = _symbolRegistry.GetSymbolForNode(parent);
+            if (symbolInfo != null)
+                return symbolInfo;
+        }
 
         // Try resolving by name
         var name = identifier.Sequence;
@@ -222,7 +222,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return null;
 
         // First check direct node mapping
-        if (_nodeToSymbol.TryGetValue(node, out var symbol))
+        var symbol = _symbolRegistry.GetSymbolForNode(node);
+        if (symbol != null)
             return symbol;
 
         // For identifier expressions, use scope-aware lookup
@@ -239,28 +240,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Finds a symbol by name. Returns the first match.
     /// </summary>
-    public GDSymbolInfo? FindSymbol(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return null;
-
-        return _nameToSymbols.TryGetValue(name, out var symbols) && symbols.Count > 0
-            ? symbols[0]
-            : null;
-    }
+    public GDSymbolInfo? FindSymbol(string name) => _symbolRegistry.FindSymbol(name);
 
     /// <summary>
     /// Finds all symbols with the given name (handles same-named symbols in different scopes).
     /// </summary>
-    public IEnumerable<GDSymbolInfo> FindSymbols(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return Enumerable.Empty<GDSymbolInfo>();
-
-        return _nameToSymbols.TryGetValue(name, out var symbols)
-            ? symbols
-            : Enumerable.Empty<GDSymbolInfo>();
-    }
+    public IEnumerable<GDSymbolInfo> FindSymbols(string name) => _symbolRegistry.FindSymbols(name);
 
     /// <summary>
     /// Finds a symbol by name, considering the scope context.
@@ -272,9 +257,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <returns>The symbol in the appropriate scope, or null if not found</returns>
     public GDSymbolInfo? FindSymbolInScope(string name, GDNode? contextNode)
     {
-        if (string.IsNullOrEmpty(name) || !_nameToSymbols.TryGetValue(name, out var symbols))
-            return null;
-
+        var symbols = _symbolRegistry.FindSymbols(name).ToList();
         if (symbols.Count == 0)
             return null;
 
@@ -367,9 +350,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (symbol == null)
             return Array.Empty<GDReference>();
 
-        return _symbolReferences.TryGetValue(symbol, out var refs)
-            ? refs
-            : Array.Empty<GDReference>();
+        return _symbolRegistry.GetReferences(symbol);
     }
 
     /// <summary>
@@ -396,10 +377,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
             return Array.Empty<GDReference>();
 
-        var key = (typeName, memberName);
-        return _memberAccessByType.TryGetValue(key, out var refs)
-            ? refs
-            : Array.Empty<GDReference>();
+        return _symbolRegistry.GetMemberAccessReferences(typeName, memberName);
     }
 
     /// <summary>
@@ -419,8 +397,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
             return false;
 
-        var key = (typeName, memberName);
-        return _memberAccessByType.TryGetValue(key, out var refs) && refs.Count > 0;
+        return _symbolRegistry.GetMemberAccessReferences(typeName, memberName).Count > 0;
     }
 
     #endregion
@@ -838,14 +815,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (method == null)
             return null;
 
-        if (_methodFlowAnalyzers.TryGetValue(method, out var existing))
-            return existing;
-
-        var analyzer = new GDFlowAnalyzer(_typeEngine, GetExpressionTypeWithoutFlow, GetOnreadyVariables);
-        // Cache BEFORE Analyze to prevent infinite recursion if Analyze triggers GetOrCreateFlowAnalyzer
-        _methodFlowAnalyzers[method] = analyzer;
-        analyzer.Analyze(method);
-        return analyzer;
+        return _flowRegistry.GetOrCreateFlowAnalyzer(method, _typeEngine, GetExpressionTypeWithoutFlow, () => GetOnreadyVariables());
     }
 
     /// <summary>
@@ -2663,64 +2633,23 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Registers a symbol in the model.
     /// </summary>
-    internal void RegisterSymbol(GDSymbolInfo symbol)
-    {
-        if (symbol == null)
-            return;
-
-        if (!_nameToSymbols.TryGetValue(symbol.Name, out var list))
-        {
-            list = new List<GDSymbolInfo>();
-            _nameToSymbols[symbol.Name] = list;
-        }
-        list.Add(symbol);
-
-        if (symbol.DeclarationNode != null)
-            _nodeToSymbol[symbol.DeclarationNode] = symbol;
-    }
+    internal void RegisterSymbol(GDSymbolInfo symbol) => _symbolRegistry.RegisterSymbol(symbol);
 
     /// <summary>
     /// Registers a node-to-symbol mapping.
     /// </summary>
-    internal void SetNodeSymbol(GDNode node, GDSymbolInfo symbol)
-    {
-        if (node != null && symbol != null)
-            _nodeToSymbol[node] = symbol;
-    }
+    internal void SetNodeSymbol(GDNode node, GDSymbolInfo symbol) => _symbolRegistry.RegisterNodeSymbol(node, symbol);
 
     /// <summary>
     /// Adds a reference to a symbol.
     /// </summary>
-    internal void AddReference(GDSymbolInfo symbol, GDReference reference)
-    {
-        if (symbol == null || reference == null)
-            return;
-
-        if (!_symbolReferences.TryGetValue(symbol, out var refs))
-        {
-            refs = new List<GDReference>();
-            _symbolReferences[symbol] = refs;
-        }
-        refs.Add(reference);
-    }
+    internal void AddReference(GDSymbolInfo symbol, GDReference reference) => _symbolRegistry.RegisterReference(symbol, reference);
 
     /// <summary>
     /// Adds a member access reference indexed by caller type and member name.
     /// Used for querying built-in method calls like OS.execute() or global functions like str2var().
     /// </summary>
-    internal void AddMemberAccess(string callerType, string memberName, GDReference reference)
-    {
-        if (string.IsNullOrEmpty(callerType) || string.IsNullOrEmpty(memberName) || reference == null)
-            return;
-
-        var key = (callerType, memberName);
-        if (!_memberAccessByType.TryGetValue(key, out var refs))
-        {
-            refs = new List<GDReference>();
-            _memberAccessByType[key] = refs;
-        }
-        refs.Add(reference);
-    }
+    internal void AddMemberAccess(string callerType, string memberName, GDReference reference) => _symbolRegistry.RegisterMemberAccess(callerType, memberName, reference);
 
     /// <summary>
     /// Sets the inferred type for a node.

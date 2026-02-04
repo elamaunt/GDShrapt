@@ -410,6 +410,120 @@ namespace GDShrapt.Reader
             return types.ToList();
         }
 
+        public bool IsNumericType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsNumericType(typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsIterableType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsIterableType(typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsIndexableType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsIndexableType(typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsNullableType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsNullableType(typeName))
+                    return true;
+            }
+            return true; // Default to nullable if unknown
+        }
+
+        public bool IsVectorType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsVectorType(typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsContainerType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsContainerType(typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsPackedArrayType(string typeName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsPackedArrayType(typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        public string GetFloatVectorVariant(string integerVectorType)
+        {
+            foreach (var provider in _providers)
+            {
+                var result = provider.GetFloatVectorVariant(integerVectorType);
+                if (result != null)
+                    return result;
+            }
+            return null;
+        }
+
+        public string GetPackedArrayElementType(string packedArrayType)
+        {
+            foreach (var provider in _providers)
+            {
+                var result = provider.GetPackedArrayElementType(packedArrayType);
+                if (result != null)
+                    return result;
+            }
+            return null;
+        }
+
+        public string ResolveOperatorResult(string leftType, string operatorName, string rightType)
+        {
+            foreach (var provider in _providers)
+            {
+                var result = provider.ResolveOperatorResult(leftType, operatorName, rightType);
+                if (result != null)
+                    return result;
+            }
+            return null;
+        }
+
+        public IReadOnlyList<string> GetTypesWithOperator(string operatorName)
+        {
+            var types = new HashSet<string>();
+            foreach (var provider in _providers)
+            {
+                foreach (var type in provider.GetTypesWithOperator(operatorName))
+                    types.Add(type);
+            }
+            return types.ToList();
+        }
+
         // IGDProjectRuntimeProvider implementation
 
         public GDScriptTypeInfo GetScriptType(string scriptPath)
