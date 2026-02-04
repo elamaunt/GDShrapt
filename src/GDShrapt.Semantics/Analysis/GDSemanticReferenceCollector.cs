@@ -1020,7 +1020,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         else
         {
             // Type unknown - check for type narrowing
-            var varName = GetRootVariableName(callerExpr);
+            var varName = GDFlowNarrowingHelpers.GetRootVariableName(callerExpr);
             if (!string.IsNullOrEmpty(varName))
             {
                 var narrowedType = _currentNarrowingContext?.GetConcreteType(varName);
@@ -1320,16 +1320,6 @@ internal class GDSemanticReferenceCollector : GDVisitor
         {
             _recordingTypes.Remove(expression);
         }
-    }
-
-    private static string? GetRootVariableName(GDExpression? expr)
-    {
-        while (expr is GDMemberOperatorExpression member)
-            expr = member.CallerExpression;
-        while (expr is GDIndexerExpression indexer)
-            expr = indexer.CallerExpression;
-
-        return (expr as GDIdentifierExpression)?.Identifier?.Sequence;
     }
 
     private static bool IsAssignmentOperator(GDDualOperatorType opType)

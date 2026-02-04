@@ -321,9 +321,6 @@ internal class GDFlowAnalyzer : GDVisitor
 
     #region For/While Loops
 
-    // Maximum iterations for fixed-point analysis to prevent infinite loops
-    private const int MaxFixedPointIterations = 10;
-
     // Track loop body states for fixed-point iteration
     private readonly Stack<LoopAnalysisContext> _loopContextStack = new();
 
@@ -355,7 +352,7 @@ internal class GDFlowAnalyzer : GDVisitor
         if (!string.IsNullOrEmpty(iteratorName))
         {
             var collectionType = _typeEngine?.InferType(forStmt.Collection);
-            var elementType = InferIteratorElementType(collectionType);
+            var elementType = GDLoopFlowHelpers.InferIteratorElementType(collectionType);
             context.IteratorName = iteratorName;
             context.IteratorType = elementType;
         }
@@ -381,12 +378,11 @@ internal class GDFlowAnalyzer : GDVisitor
         if (context != null)
         {
             // Perform fixed-point iteration to stabilize loop types
-            _currentState = ComputeLoopFixedPoint(
+            _currentState = GDLoopFlowHelpers.ComputeLoopFixedPoint(
                 context.PreLoopState,
                 _currentState,
                 context.IteratorName,
-                context.IteratorType,
-                forStmt.Statements);
+                context.IteratorType);
         }
         else
         {
@@ -429,12 +425,11 @@ internal class GDFlowAnalyzer : GDVisitor
         if (context != null)
         {
             // Perform fixed-point iteration to stabilize loop types
-            _currentState = ComputeLoopFixedPoint(
+            _currentState = GDLoopFlowHelpers.ComputeLoopFixedPoint(
                 context.PreLoopState,
                 _currentState,
                 null,
-                null,
-                whileStmt.Statements);
+                null);
         }
         else
         {
@@ -443,129 +438,6 @@ internal class GDFlowAnalyzer : GDVisitor
         }
 
         RecordState(whileStmt);
-    }
-
-    /// <summary>
-    /// Computes the fixed-point for loop type analysis.
-    /// Iterates until types stabilize or max iterations reached.
-    /// </summary>
-    private GDFlowState ComputeLoopFixedPoint(
-        GDFlowState preLoopState,
-        GDFlowState firstIterationState,
-        string? iteratorName,
-        string? iteratorType,
-        GDStatementsList? statements)
-    {
-        // Start with the result of the first iteration
-        var currentState = firstIterationState;
-
-        // Get initial snapshot
-        var previousSnapshot = currentState.GetTypeSnapshot();
-
-        // Iterate until fixed point or max iterations
-        for (int i = 0; i < MaxFixedPointIterations; i++)
-        {
-            // Simulate another iteration: loop body starts with types from either before the loop or after previous iteration
-            var mergedEntry = GDFlowState.MergeBranches(currentState, preLoopState, preLoopState);
-
-            var iterationState = mergedEntry.CreateChild();
-
-            // Re-declare iterator if present
-            if (!string.IsNullOrEmpty(iteratorName))
-            {
-                iterationState.DeclareVariable(iteratorName, null, iteratorType);
-            }
-
-            // Merge the new iteration state into current state
-            // This accumulates types across iterations
-            var changed = currentState.MergeInto(iterationState);
-
-            if (!changed)
-            {
-                break;
-            }
-
-            // Also check via snapshot comparison
-            var newSnapshot = currentState.GetTypeSnapshot();
-            if (currentState.MatchesSnapshot(previousSnapshot))
-            {
-                break;
-            }
-
-            previousSnapshot = newSnapshot;
-        }
-
-        // Final merge: loop may execute 0+ times
-        // So the result is the union of pre-loop state (0 iterations)
-        // and the fixed-point state (1+ iterations)
-        return GDFlowState.MergeBranches(currentState, preLoopState, preLoopState);
-    }
-
-    /// <summary>
-    /// Extracts the generic type parameter from a generic type string.
-    /// For example: "Array[int]" -> "int", "Dictionary[String, int]" -> "String, int"
-    /// </summary>
-    /// <param name="genericType">The generic type string.</param>
-    /// <param name="prefix">The type prefix (e.g., "Array[").</param>
-    /// <returns>The extracted type parameter, or null if not matching.</returns>
-    private static string? ExtractGenericTypeParameter(string genericType, string prefix)
-    {
-        if (string.IsNullOrEmpty(genericType) ||
-            !genericType.StartsWith(prefix) ||
-            !genericType.EndsWith("]"))
-        {
-            return null;
-        }
-
-        return genericType.Substring(prefix.Length, genericType.Length - prefix.Length - 1);
-    }
-
-    /// <summary>
-    /// Infers the element type from a collection type.
-    /// </summary>
-    private static string? InferIteratorElementType(string? collectionType)
-    {
-        if (string.IsNullOrEmpty(collectionType))
-            return "Variant";
-
-        // Handle typed arrays: Array[Type] -> Type
-        var arrayElementType = ExtractGenericTypeParameter(collectionType, GDTypeInferenceConstants.ArrayTypePrefix);
-        if (arrayElementType != null)
-        {
-            return arrayElementType;
-        }
-
-        // Handle range() -> int
-        if (collectionType == "Range" || collectionType == "int")
-            return "int";
-
-        // Handle String -> String (iterating chars)
-        if (collectionType == "String")
-            return "String";
-
-        // Handle Dictionary -> Variant (iterating keys)
-        if (collectionType == "Dictionary" || collectionType.StartsWith("Dictionary["))
-            return "Variant";
-
-        // Handle PackedArray types
-        if (collectionType.StartsWith("Packed") && collectionType.EndsWith("Array"))
-        {
-            // PackedStringArray -> String, PackedInt32Array -> int, etc.
-            var inner = collectionType.Substring(6, collectionType.Length - 11);
-            return inner switch
-            {
-                "String" => "String",
-                "Int32" or "Int64" => "int",
-                "Float32" or "Float64" => "float",
-                "Vector2" => "Vector2",
-                "Vector3" => "Vector3",
-                "Color" => "Color",
-                "Byte" => "int",
-                _ => "Variant"
-            };
-        }
-
-        return "Variant";
     }
 
     #endregion
@@ -768,7 +640,7 @@ internal class GDFlowAnalyzer : GDVisitor
             if (dualOp.LeftExpression is GDIdentifierExpression identExpr)
             {
                 var varName = identExpr.Identifier?.Sequence;
-                var typeName = GetTypeNameFromExpression(dualOp.RightExpression);
+                var typeName = GDLiteralTypeResolver.GetTypeNameFromExpression(dualOp.RightExpression);
 
                 if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(typeName))
                 {
@@ -795,12 +667,12 @@ internal class GDFlowAnalyzer : GDVisitor
             var opType = eqOp.Operator?.OperatorType;
             if (opType == GDDualOperatorType.NotEqual || opType == GDDualOperatorType.Equal)
             {
-                ApplyNullComparisonNarrowing(eqOp, state);
+                GDFlowNarrowingHelpers.ApplyNullComparisonNarrowing(eqOp, state);
 
                 // Also handle: x == literal (narrows to literal's type)
                 if (opType == GDDualOperatorType.Equal)
                 {
-                    ApplyLiteralComparisonNarrowing(eqOp, state);
+                    GDFlowNarrowingHelpers.ApplyLiteralComparisonNarrowing(eqOp, state);
                 }
             }
 
@@ -814,14 +686,14 @@ internal class GDFlowAnalyzer : GDVisitor
         // Handle: if x (truthiness check)
         if (condition is GDIdentifierExpression truthyIdent)
         {
-            ApplyTruthinessNarrowing(truthyIdent, state);
+            GDFlowNarrowingHelpers.ApplyTruthinessNarrowing(truthyIdent, state);
         }
 
         // Handle: has_method(), has(), has_signal(), is_instance_valid(), is_node_ready()
         if (condition is GDCallExpression callExpr)
         {
             ApplyHasMethodNarrowing(callExpr, state);
-            ApplyIsInstanceValidNarrowing(callExpr, state);
+            GDFlowNarrowingHelpers.ApplyIsInstanceValidNarrowing(callExpr, state);
             ApplyIsNodeReadyNarrowing(callExpr, state);
         }
 
@@ -850,17 +722,17 @@ internal class GDFlowAnalyzer : GDVisitor
 
         // variable == literal
         if (eqOp.LeftExpression is GDIdentifierExpression leftIdent &&
-            IsLiteralExpression(eqOp.RightExpression))
+            GDLiteralTypeResolver.IsLiteralExpression(eqOp.RightExpression))
         {
             varName = leftIdent.Identifier?.Sequence;
-            literalType = GetLiteralType(eqOp.RightExpression);
+            literalType = GDLiteralTypeResolver.GetLiteralType(eqOp.RightExpression);
         }
         // literal == variable
         else if (eqOp.RightExpression is GDIdentifierExpression rightIdent &&
-                 IsLiteralExpression(eqOp.LeftExpression))
+                 GDLiteralTypeResolver.IsLiteralExpression(eqOp.LeftExpression))
         {
             varName = rightIdent.Identifier?.Sequence;
-            literalType = GetLiteralType(eqOp.LeftExpression);
+            literalType = GDLiteralTypeResolver.GetLiteralType(eqOp.LeftExpression);
         }
 
         if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(literalType))
@@ -975,7 +847,7 @@ internal class GDFlowAnalyzer : GDVisitor
                 var typeName = varType?.EffectiveType;
                 if (!string.IsNullOrEmpty(typeName) && typeName != "Array" && typeName != "Dictionary")
                 {
-                    var extractedType = ExtractElementTypeFromTypeName(typeName);
+                    var extractedType = GDFlowNarrowingHelpers.ExtractElementTypeFromTypeName(typeName);
                     if (!string.IsNullOrEmpty(extractedType) && extractedType != "Variant")
                         return extractedType;
                 }
@@ -1006,7 +878,7 @@ internal class GDFlowAnalyzer : GDVisitor
         var inferredType = ResolveTypeWithFallback(containerExpr);
         if (!string.IsNullOrEmpty(inferredType))
         {
-            return ExtractElementTypeFromTypeName(inferredType);
+            return GDFlowNarrowingHelpers.ExtractElementTypeFromTypeName(inferredType);
         }
 
         return null;
@@ -1025,7 +897,7 @@ internal class GDFlowAnalyzer : GDVisitor
         string? commonType = null;
         foreach (var value in values)
         {
-            var elementType = GetLiteralType(value) ?? ResolveTypeWithFallback(value);
+            var elementType = GDLiteralTypeResolver.GetLiteralType(value) ?? ResolveTypeWithFallback(value);
             if (string.IsNullOrEmpty(elementType) || elementType == "Unknown")
                 continue;
 
@@ -1064,7 +936,7 @@ internal class GDFlowAnalyzer : GDVisitor
         string? commonKeyType = null;
         foreach (var kv in keyValues)
         {
-            var keyType = GetLiteralType(kv.Key) ?? ResolveTypeWithFallback(kv.Key);
+            var keyType = GDLiteralTypeResolver.GetLiteralType(kv.Key) ?? ResolveTypeWithFallback(kv.Key);
             if (string.IsNullOrEmpty(keyType) || keyType == "Unknown")
                 continue;
 
@@ -1086,186 +958,8 @@ internal class GDFlowAnalyzer : GDVisitor
     /// Extracts element/key type from a type name.
     /// Array[int] -> int, Dictionary[String, int] -> String, String -> String
     /// </summary>
-    private static string? ExtractElementTypeFromTypeName(string typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return null;
-
-        // Array[T] -> T
-        var arrayElement = ExtractGenericTypeParameter(typeName, GDTypeInferenceConstants.ArrayTypePrefix);
-        if (arrayElement != null)
-            return arrayElement;
-
-        // Dictionary[K, V] -> K (key type only)
-        if (typeName.StartsWith("Dictionary["))
-        {
-            var inner = typeName.Substring(11, typeName.Length - 12);
-            var commaIndex = FindTopLevelComma(inner);
-            if (commaIndex > 0)
-                return inner.Substring(0, commaIndex).Trim();
-        }
-
-        // String -> String
-        if (typeName == "String")
-            return "String";
-
-        // Range -> int
-        if (typeName == "Range")
-            return "int";
-
-        // PackedArrays
-        if (typeName.StartsWith("Packed") && typeName.EndsWith("Array"))
-            return InferPackedArrayElementType(typeName);
-
-        return null;
-    }
-
-    /// <summary>
-    /// Finds the first comma at the top level (not inside nested generics).
-    /// </summary>
-    private static int FindTopLevelComma(string str)
-    {
-        int depth = 0;
-        for (int i = 0; i < str.Length; i++)
-        {
-            var c = str[i];
-            if (c == '[')
-                depth++;
-            else if (c == ']')
-                depth--;
-            else if (c == ',' && depth == 0)
-                return i;
-        }
-        return -1;
-    }
-
-    /// <summary>
-    /// Infers element type from packed array type names.
-    /// </summary>
-    private static string? InferPackedArrayElementType(string typeName)
-    {
-        // PackedStringArray -> String, PackedInt32Array -> int, etc.
-        var inner = typeName.Substring(6, typeName.Length - 11);
-        return inner switch
-        {
-            "String" => "String",
-            "Int32" or "Int64" => "int",
-            "Float32" or "Float64" => "float",
-            "Vector2" => "Vector2",
-            "Vector3" => "Vector3",
-            "Color" => "Color",
-            "Byte" => "int",
-            _ => null
-        };
-    }
-
     private bool IsNumericType(string? type) =>
         !string.IsNullOrEmpty(type) && (_typeEngine?.RuntimeProvider?.IsNumericType(type) ?? (type == "int" || type == "float"));
-
-    /// <summary>
-    /// Checks if expression is a literal value (not a variable).
-    /// </summary>
-    private static bool IsLiteralExpression(GDExpression? expr)
-    {
-        return expr is GDNumberExpression ||
-               expr is GDStringExpression ||
-               expr is GDBoolExpression ||
-               expr is GDArrayInitializerExpression ||
-               expr is GDDictionaryInitializerExpression ||
-               IsNullLiteral(expr);
-    }
-
-    /// <summary>
-    /// Gets the type of a literal expression.
-    /// </summary>
-    private static string? GetLiteralType(GDExpression? expr)
-    {
-        return expr switch
-        {
-            GDNumberExpression numExpr => IsIntegerNumber(numExpr) ? "int" : "float",
-            GDStringExpression => "String",
-            GDBoolExpression => "bool",
-            GDArrayInitializerExpression => "Array",
-            GDDictionaryInitializerExpression => "Dictionary",
-            _ when IsNullLiteral(expr) => "null",
-            _ => null
-        };
-    }
-
-    /// <summary>
-    /// Checks if a number expression represents an integer (no decimal point).
-    /// </summary>
-    private static bool IsIntegerNumber(GDNumberExpression numExpr)
-    {
-        var sequence = numExpr.Number?.Sequence;
-        if (string.IsNullOrEmpty(sequence))
-            return true; // Default to int if unknown
-
-        // If it contains a dot, it's a float
-        return !sequence.Contains('.');
-    }
-
-    /// <summary>
-    /// Applies null comparison narrowing.
-    /// x != null -> MarkNonNull
-    /// x == null -> Mark as definitely null (inverse - for else branch)
-    /// </summary>
-    private void ApplyNullComparisonNarrowing(GDDualOperatorExpression eqOp, GDFlowState state)
-    {
-        var opType = eqOp.Operator?.OperatorType;
-        var leftExpr = eqOp.LeftExpression;
-        var rightExpr = eqOp.RightExpression;
-
-        string? varName = null;
-        bool rightIsNull = false;
-        bool leftIsNull = false;
-
-        // Check if right side is null (represented as GDIdentifierExpression with "null")
-        if (IsNullLiteral(rightExpr))
-        {
-            rightIsNull = true;
-            if (leftExpr is GDIdentifierExpression leftIdent)
-                varName = leftIdent.Identifier?.Sequence;
-        }
-        // Check if left side is null
-        else if (IsNullLiteral(leftExpr))
-        {
-            leftIsNull = true;
-            if (rightExpr is GDIdentifierExpression rightIdent)
-                varName = rightIdent.Identifier?.Sequence;
-        }
-
-        if (string.IsNullOrEmpty(varName))
-            return;
-
-        if (rightIsNull || leftIsNull)
-        {
-            if (opType == GDDualOperatorType.NotEqual)
-            {
-                // x != null -> x is guaranteed non-null
-                state.MarkNonNull(varName);
-            }
-            else if (opType == GDDualOperatorType.Equal)
-            {
-                // x == null -> x is definitely null in this branch
-                state.MarkPotentiallyNull(varName);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Applies truthiness narrowing.
-    /// if x: -> x is truthy (non-null, non-zero, non-empty)
-    /// </summary>
-    private void ApplyTruthinessNarrowing(GDIdentifierExpression identExpr, GDFlowState state)
-    {
-        var varName = identExpr.Identifier?.Sequence;
-        if (string.IsNullOrEmpty(varName))
-            return;
-
-        // Truthiness check implies non-null
-        state.MarkNonNull(varName);
-    }
 
     /// <summary>
     /// Applies narrowing from has_method/has/has_signal checks.
@@ -1281,7 +975,7 @@ internal class GDFlowAnalyzer : GDVisitor
             return;
 
         // Get the variable being checked
-        var callerVar = GetRootVariableName(memberOp.CallerExpression);
+        var callerVar = GDFlowNarrowingHelpers.GetRootVariableName(memberOp.CallerExpression);
         if (string.IsNullOrEmpty(callerVar))
             return;
 
@@ -1291,7 +985,7 @@ internal class GDFlowAnalyzer : GDVisitor
             return;
 
         var firstArg = args[0];
-        var checkedName = GetStringLiteralValue(firstArg);
+        var checkedName = GDLiteralTypeResolver.GetStringLiteralValue(firstArg);
         if (string.IsNullOrEmpty(checkedName))
             return;
 
@@ -1311,41 +1005,6 @@ internal class GDFlowAnalyzer : GDVisitor
                 state.RequireSignal(callerVar, checkedName);
                 state.MarkNonNull(callerVar);
                 break;
-        }
-    }
-
-    /// <summary>
-    /// Applies narrowing from is_instance_valid() checks.
-    /// is_instance_valid(x) -> x is guaranteed non-null and valid.
-    /// </summary>
-    private static void ApplyIsInstanceValidNarrowing(GDCallExpression callExpr, GDFlowState state)
-    {
-        // Handle both is_instance_valid(x) (global function) and obj.is_instance_valid() patterns
-        string? funcName = null;
-        GDExpression? checkedExpr = null;
-
-        if (callExpr.CallerExpression is GDIdentifierExpression funcIdent)
-        {
-            // Global function: is_instance_valid(x)
-            funcName = funcIdent.Identifier?.Sequence;
-            var args = callExpr.Parameters?.ToList();
-            if (args != null && args.Count > 0)
-                checkedExpr = args[0];
-        }
-        else if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
-        {
-            // Member method (less common, but handle it): obj.is_instance_valid() - not standard but just in case
-            funcName = memberOp.Identifier?.Sequence;
-        }
-
-        if (funcName != "is_instance_valid")
-            return;
-
-        if (checkedExpr is GDIdentifierExpression checkedIdent)
-        {
-            var varName = checkedIdent.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(varName))
-                state.MarkNonNull(varName);
         }
     }
 
@@ -1379,72 +1038,6 @@ internal class GDFlowAnalyzer : GDVisitor
                 state.MarkNonNull(varName);
             }
         }
-    }
-
-    /// <summary>
-    /// Gets the root variable name from an expression chain.
-    /// </summary>
-    private static string? GetRootVariableName(GDExpression? expr)
-    {
-        while (expr is GDMemberOperatorExpression member)
-            expr = member.CallerExpression;
-        while (expr is GDIndexerExpression indexer)
-            expr = indexer.CallerExpression;
-
-        if (expr is GDIdentifierExpression ident)
-            return ident.Identifier?.Sequence;
-
-        return null;
-    }
-
-    /// <summary>
-    /// Checks if an expression is a null literal.
-    /// In GDScript, null is represented as GDIdentifierExpression with "null" identifier.
-    /// </summary>
-    private static bool IsNullLiteral(GDExpression? expr)
-    {
-        if (expr is GDIdentifierExpression identExpr)
-        {
-            return identExpr.Identifier?.Sequence == "null";
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Extracts string literal value from an expression.
-    /// </summary>
-    private static string? GetStringLiteralValue(GDExpression? expr)
-    {
-        if (expr is GDStringExpression strExpr)
-        {
-            // Get value from the string node
-            var str = strExpr.String?.Sequence;
-            if (!string.IsNullOrEmpty(str))
-                return str;
-        }
-
-        return null;
-    }
-
-    private static string? GetTypeNameFromExpression(GDExpression? expr)
-    {
-        if (expr == null)
-            return null;
-
-        // Simple identifier: Dictionary, Array, Node, etc.
-        if (expr is GDIdentifierExpression identExpr)
-            return identExpr.Identifier?.Sequence;
-
-        // Could also handle member expressions like SomeClass.InnerType
-        if (expr is GDMemberOperatorExpression memberExpr)
-        {
-            var caller = GetTypeNameFromExpression(memberExpr.CallerExpression);
-            var member = memberExpr.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(caller) && !string.IsNullOrEmpty(member))
-                return $"{caller}.{member}";
-        }
-
-        return expr.ToString();
     }
 
     #endregion

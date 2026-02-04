@@ -388,19 +388,30 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(name))
             return null;
 
-        // Handle GDScript-specific functions that have different signatures than their C# counterparts
-        var specialCase = GetSpecialCaseGlobalFunction(name);
-        if (specialCase != null)
-            return specialCase;
-
         if (_assemblyData?.GlobalData?.MethodDatas == null)
             return null;
 
         if (_assemblyData.GlobalData.MethodDatas.TryGetValue(name, out var methods) && methods.Count > 0)
         {
             var method = methods[0];
-            // Consider ALL overloads to calculate the full range of acceptable argument counts
-            var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraintsFromOverloads(methods);
+
+            // Use explicit attributes from TypesMap if available, otherwise calculate from parameters
+            int minArgs, maxArgs;
+            bool isVarArgs;
+
+            if (method.MinArgs.HasValue || method.MaxArgs.HasValue || method.IsVarArgs)
+            {
+                // Use attributes from TypesMap (special functions like range, min, max, etc.)
+                minArgs = method.MinArgs ?? 0;
+                maxArgs = method.MaxArgs ?? minArgs;
+                isVarArgs = method.IsVarArgs;
+            }
+            else
+            {
+                // Calculate from parameters for regular functions
+                (minArgs, maxArgs, isVarArgs) = CalculateArgConstraintsFromOverloads(methods);
+            }
+
             var returnType = method.GDScriptReturnTypeName ?? "Variant";
 
             // Create parameter list from first overload
@@ -409,15 +420,15 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             GDRuntimeFunctionInfo funcInfo;
             if (isVarArgs)
             {
-                funcInfo = GDRuntimeFunctionInfo.VarArgs(name, minArgs, returnType);
+                funcInfo = GDRuntimeFunctionInfo.VarArgs(name, minArgs, returnType, method.ReturnTypeRole);
             }
             else if (minArgs == maxArgs)
             {
-                funcInfo = GDRuntimeFunctionInfo.Exact(name, minArgs, returnType);
+                funcInfo = GDRuntimeFunctionInfo.Exact(name, minArgs, returnType, method.ReturnTypeRole);
             }
             else
             {
-                funcInfo = GDRuntimeFunctionInfo.Range(name, minArgs, maxArgs, returnType);
+                funcInfo = GDRuntimeFunctionInfo.Range(name, minArgs, maxArgs, returnType, method.ReturnTypeRole);
             }
 
             // Assign parameters
@@ -426,69 +437,6 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Handles GDScript-specific global functions that have different parameter signatures
-    /// than their C# counterparts in the TypesMap.
-    /// </summary>
-    private static GDRuntimeFunctionInfo? GetSpecialCaseGlobalFunction(string name)
-    {
-        return name switch
-        {
-            // range(end), range(begin, end), range(begin, end, step)
-            "range" => GDRuntimeFunctionInfo.Range("range", 1, 3, "Array"),
-
-            // assert(condition), assert(condition, message)
-            "assert" => GDRuntimeFunctionInfo.Range("assert", 1, 2, "void"),
-
-            // min(a, b, ...) - variadic, returns common type of args (int+int→int, int+float→float)
-            "min" => GDRuntimeFunctionInfo.VarArgs("min", 2, "Variant", "common_arg"),
-
-            // max(a, b, ...) - variadic, returns common type of args (int+int→int, int+float→float)
-            "max" => GDRuntimeFunctionInfo.VarArgs("max", 2, "Variant", "common_arg"),
-
-            // mini(a, b, ...) - variadic integer minimum, returns int
-            "mini" => GDRuntimeFunctionInfo.VarArgs("mini", 2, "int"),
-
-            // maxi(a, b, ...) - variadic integer maximum, returns int
-            "maxi" => GDRuntimeFunctionInfo.VarArgs("maxi", 2, "int"),
-
-            // minf(a, b) - float minimum, returns float
-            "minf" => GDRuntimeFunctionInfo.Exact("minf", 2, "float"),
-
-            // maxf(a, b) - float maximum, returns float
-            "maxf" => GDRuntimeFunctionInfo.Exact("maxf", 2, "float"),
-
-            // clamp(value, min, max) - returns type of first arg
-            "clamp" => GDRuntimeFunctionInfo.Exact("clamp", 3, "Variant", "first_arg"),
-
-            // clampi(value, min, max) - returns int
-            "clampi" => GDRuntimeFunctionInfo.Exact("clampi", 3, "int"),
-
-            // clampf(value, min, max) - returns float
-            "clampf" => GDRuntimeFunctionInfo.Exact("clampf", 3, "float"),
-
-            // abs(x) - returns type of first arg (int→int, float→float)
-            "abs" => GDRuntimeFunctionInfo.Exact("abs", 1, "Variant", "first_arg"),
-
-            // absi(x) - returns int
-            "absi" => GDRuntimeFunctionInfo.Exact("absi", 1, "int"),
-
-            // absf(x) - returns float
-            "absf" => GDRuntimeFunctionInfo.Exact("absf", 1, "float"),
-
-            // sign(x) - returns int (always -1, 0, or 1)
-            "sign" => GDRuntimeFunctionInfo.Exact("sign", 1, "int"),
-
-            // lerp(a, b, weight) - returns common type of a and b (ignoring weight)
-            "lerp" => GDRuntimeFunctionInfo.Exact("lerp", 3, "Variant", "common_two"),
-
-            // str(value, ...) - variadic, returns String. Accepts 0 or more args: str() returns ""
-            "str" => GDRuntimeFunctionInfo.VarArgs("str", 0, "String"),
-
-            _ => null
-        };
     }
 
     /// <summary>
@@ -858,63 +806,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     }
 
     // ========================================
-    // Type Traits Implementation
+    // Type Traits Implementation (delegates to TypesMap)
     // ========================================
-
-    // Pre-built sets for type traits (fallback when TypesMap lacks Traits data)
-    private static readonly HashSet<string> _numericTypes = new() { "int", "float" };
-    private static readonly HashSet<string> _vectorTypes = new()
-    {
-        "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i"
-    };
-    private static readonly HashSet<string> _integerVectorTypes = new()
-    {
-        "Vector2i", "Vector3i", "Vector4i"
-    };
-    private static readonly HashSet<string> _iterableTypes = new()
-    {
-        "Array", "Dictionary", "String",
-        "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
-        "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
-    };
-    private static readonly HashSet<string> _indexableTypes = new()
-    {
-        "Array", "Dictionary", "String",
-        "Vector2", "Vector3", "Vector4", "Vector2i", "Vector3i", "Vector4i",
-        "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
-        "PackedVector2Array", "PackedVector3Array", "PackedColorArray",
-        "Color", "Basis", "Transform2D", "Transform3D", "Projection"
-    };
-    private static readonly HashSet<string> _packedArrayTypes = new()
-    {
-        "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
-        "PackedVector2Array", "PackedVector3Array", "PackedColorArray"
-    };
-    private static readonly HashSet<string> _containerTypes = new() { "Array", "Dictionary" };
-    private static readonly HashSet<string> _stringLikeTypes = new() { "String", "StringName" };
-
-    private static readonly Dictionary<string, string> _floatVectorVariants = new()
-    {
-        { "Vector2i", "Vector2" },
-        { "Vector3i", "Vector3" },
-        { "Vector4i", "Vector4" }
-    };
-
-    private static readonly Dictionary<string, string> _packedArrayElementTypes = new()
-    {
-        { "PackedByteArray", "int" },
-        { "PackedInt32Array", "int" },
-        { "PackedInt64Array", "int" },
-        { "PackedFloat32Array", "float" },
-        { "PackedFloat64Array", "float" },
-        { "PackedStringArray", "String" },
-        { "PackedVector2Array", "Vector2" },
-        { "PackedVector3Array", "Vector3" },
-        { "PackedColorArray", "Color" }
-    };
 
     /// <inheritdoc/>
     public bool IsNumericType(string typeName)
@@ -922,12 +815,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(typeName, out var typeData) && typeData.Traits != null)
             return typeData.Traits.IsNumeric;
 
-        // Fallback to hardcoded set
-        return _numericTypes.Contains(typeName);
+        return false;
     }
 
     /// <inheritdoc/>
@@ -938,12 +829,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         var baseType = ExtractBaseTypeName(typeName);
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
             return typeData.Traits.IsIterable;
 
-        // Fallback to hardcoded set
-        return _iterableTypes.Contains(baseType);
+        return false;
     }
 
     /// <inheritdoc/>
@@ -954,12 +843,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         var baseType = ExtractBaseTypeName(typeName);
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
             return typeData.Traits.IsIndexable;
 
-        // Fallback to hardcoded set
-        return _indexableTypes.Contains(baseType);
+        return false;
     }
 
     /// <inheritdoc/>
@@ -970,12 +857,11 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         var baseType = ExtractBaseTypeName(typeName);
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
             return typeData.Traits.IsNullable;
 
-        // Fallback: builtin types are not nullable
-        return !IsBuiltinType(typeName);
+        // Types not in cache (user-defined classes) are nullable
+        return true;
     }
 
     /// <inheritdoc/>
@@ -984,12 +870,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(typeName, out var typeData) && typeData.Traits != null)
             return typeData.Traits.IsVector;
 
-        // Fallback to hardcoded set
-        return _vectorTypes.Contains(typeName);
+        return false;
     }
 
     /// <inheritdoc/>
@@ -1000,12 +884,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         var baseType = ExtractBaseTypeName(typeName);
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(baseType, out var typeData) && typeData.Traits != null)
             return typeData.Traits.IsContainer;
 
-        // Fallback to hardcoded set
-        return _containerTypes.Contains(baseType);
+        return false;
     }
 
     /// <inheritdoc/>
@@ -1014,12 +896,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(typeName, out var typeData) && typeData.Traits != null)
             return typeData.Traits.IsPackedArray;
 
-        // Fallback to hardcoded set
-        return _packedArrayTypes.Contains(typeName);
+        return false;
     }
 
     /// <inheritdoc/>
@@ -1028,14 +908,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(integerVectorType))
             return null;
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(integerVectorType, out var typeData) && typeData.Traits != null)
             return typeData.Traits.FloatVariant;
 
-        // Fallback to hardcoded mapping
-        return _floatVectorVariants.TryGetValue(integerVectorType, out var floatVariant)
-            ? floatVariant
-            : null;
+        return null;
     }
 
     /// <inheritdoc/>
@@ -1044,18 +920,14 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(packedArrayType))
             return null;
 
-        // Check TypesMap Traits first
         if (_typeCache.TryGetValue(packedArrayType, out var typeData) && typeData.Traits != null)
             return typeData.Traits.PackedElementType;
 
-        // Fallback to hardcoded mapping
-        return _packedArrayElementTypes.TryGetValue(packedArrayType, out var elementType)
-            ? elementType
-            : null;
+        return null;
     }
 
     // ========================================
-    // Operator Resolution Implementation
+    // Operator Resolution Implementation (delegates to TypesMap)
     // ========================================
 
     /// <inheritdoc/>
@@ -1064,7 +936,6 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(leftType) || string.IsNullOrEmpty(operatorName))
             return null;
 
-        // Check TypesMap Operators first
         if (_typeCache.TryGetValue(leftType, out var typeData) && typeData.Operators != null)
         {
             var overloads = typeData.Operators.GetByName(operatorName);
@@ -1089,38 +960,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             }
         }
 
-        // Fallback: use GDOperatorTypeResolver (legacy hardcoded logic)
-        // This will be removed in Этап 2
-        return ResolveOperatorFallback(leftType, operatorName, rightType);
-    }
-
-    /// <summary>
-    /// Fallback operator resolution using hardcoded rules.
-    /// This method will be removed after migrating all operator data to TypesMap.
-    /// </summary>
-    private static string? ResolveOperatorFallback(string leftType, string operatorName, string rightType)
-    {
-        // Convert operator name to GDDualOperatorType
-        GDDualOperatorType? opType = operatorName switch
-        {
-            "+" or "Addition" => GDDualOperatorType.Addition,
-            "-" or "Subtraction" => GDDualOperatorType.Subtraction,
-            "*" or "Multiplication" => GDDualOperatorType.Multiply,
-            "/" or "Division" => GDDualOperatorType.Division,
-            "%" or "Modulo" => GDDualOperatorType.Mod,
-            "**" or "Power" => GDDualOperatorType.Power,
-            "&" or "BitwiseAnd" => GDDualOperatorType.BitwiseAnd,
-            "|" or "BitwiseOr" => GDDualOperatorType.BitwiseOr,
-            "^" or "BitwiseXor" => GDDualOperatorType.Xor,
-            "<<" or "ShiftLeft" => GDDualOperatorType.BitShiftLeft,
-            ">>" or "ShiftRight" => GDDualOperatorType.BitShiftRight,
-            _ => null
-        };
-
-        if (opType == null)
-            return null;
-
-        return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+        return null;
     }
 
     /// <inheritdoc/>
@@ -1147,58 +987,6 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             }
         }
 
-        // Fallback: add types from hardcoded sets if TypesMap lacks operator data
-        if (result.Count == 0)
-        {
-            result.AddRange(GetTypesWithOperatorFallback(operatorName));
-        }
-
         return result;
-    }
-
-    /// <summary>
-    /// Fallback for getting types with operator support.
-    /// This method will be removed after migrating all operator data to TypesMap.
-    /// </summary>
-    private static IEnumerable<string> GetTypesWithOperatorFallback(string operatorName)
-    {
-        return operatorName switch
-        {
-            "+" or "Addition" => new[]
-            {
-                "int", "float", "String", "StringName",
-                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                "Color", "Array",
-                "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-                "PackedFloat32Array", "PackedFloat64Array",
-                "PackedStringArray", "PackedVector2Array", "PackedVector3Array",
-                "PackedColorArray"
-            },
-            "-" or "Subtraction" => new[]
-            {
-                "int", "float",
-                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                "Color"
-            },
-            "*" or "Multiplication" => new[]
-            {
-                "int", "float",
-                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                "Color", "Quaternion", "Basis",
-                "Transform2D", "Transform3D"
-            },
-            "/" or "Division" => new[]
-            {
-                "int", "float",
-                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i",
-                "Color"
-            },
-            "%" or "Modulo" => new[]
-            {
-                "int", "float", "String",
-                "Vector2", "Vector2i", "Vector3", "Vector3i", "Vector4", "Vector4i"
-            },
-            _ => Array.Empty<string>()
-        };
     }
 }
