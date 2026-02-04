@@ -1,5 +1,5 @@
 extends Node
-class_name DiagnosticsTest_ComplexityRules
+class_name DiagnosticsTest_ComplexityRules # 2:0-GDL001-OK
 
 ## Tests for GDL222-232, GDL236 Complexity Rules
 ## Each section: VALID (no lint issue) | INVALID (triggers) | SUPPRESSED
@@ -25,7 +25,7 @@ func test_gdl225_valid(x: int) -> void:
 
 
 ## INVALID - nesting too deep - SHOULD trigger GDL225
-func test_gdl225_invalid(x: int) -> void:
+func test_gdl225_invalid(x: int) -> void: # 28:1-GDL513-OK, 28:5-GDL225-OK
 	if x > 0:  # Level 1
 		if x > 10:  # Level 2
 			if x > 100:  # Level 3
@@ -36,7 +36,7 @@ func test_gdl225_invalid(x: int) -> void:
 
 ## SUPPRESSED - GDL225 suppressed
 # gdlint:ignore = max-nesting-depth
-func test_gdl225_suppressed(x: int) -> void:
+func test_gdl225_suppressed(x: int) -> void: # 39:1-GDL513-OK
 	if x > 0:
 		if x > 10:
 			if x > 100:
@@ -50,7 +50,7 @@ func test_gdl225_suppressed(x: int) -> void:
 # =============================================================================
 
 ## VALID - local variables within limits
-func test_gdl226_valid() -> void:
+func test_gdl226_valid() -> void: # 53:1-GDL513-OK
 	var a := 1
 	var b := 2
 	var c := 3
@@ -60,7 +60,7 @@ func test_gdl226_valid() -> void:
 
 
 ## INVALID - too many local variables - SHOULD trigger GDL226
-func test_gdl226_invalid() -> void:  # GDL226: max-local-variables
+func test_gdl226_invalid() -> void: # 63:1-GDL513-OK, 63:5-GDL226-OK
 	var v1 := 1
 	var v2 := 2
 	var v3 := 3
@@ -82,7 +82,7 @@ func test_gdl226_invalid() -> void:  # GDL226: max-local-variables
 
 ## SUPPRESSED - GDL226 suppressed
 # gdlint:ignore = max-local-variables
-func test_gdl226_suppressed() -> void:  # Suppressed
+func test_gdl226_suppressed() -> void: # 85:1-GDL513-OK
 	var v1 := 1
 	var v2 := 2
 	var v3 := 3
@@ -107,7 +107,7 @@ func test_gdl226_suppressed() -> void:  # Suppressed
 # =============================================================================
 
 ## VALID - returns within limits
-func test_gdl223_valid(x: int) -> int:
+func test_gdl223_valid(x: int) -> int: # 110:1-GDL513-OK
 	if x < 0:
 		return -1
 	if x == 0:
@@ -120,7 +120,7 @@ func test_gdl223_valid(x: int) -> int:
 
 
 ## INVALID - too many return statements - SHOULD trigger GDL223
-func test_gdl223_invalid(x: int) -> int:  # GDL223: max-returns
+func test_gdl223_invalid(x: int) -> int: # 123:1-GDL513-OK, 123:5-GDL223-OK
 	if x == 0:
 		return 0
 	if x == 1:
@@ -140,7 +140,7 @@ func test_gdl223_invalid(x: int) -> int:  # GDL223: max-returns
 
 ## SUPPRESSED - GDL223 suppressed (also GDL228 since this function has many branches too)
 # gdlint:ignore = max-returns, max-branches
-func test_gdl223_suppressed(x: int) -> int:  # Suppressed
+func test_gdl223_suppressed(x: int) -> int: # 143:1-GDL513-OK
 	if x == 0:
 		return 0
 	if x == 1:
@@ -163,7 +163,7 @@ func test_gdl223_suppressed(x: int) -> int:  # Suppressed
 # =============================================================================
 
 ## VALID - branches within limits
-func test_gdl228_valid(x: int) -> String:
+func test_gdl228_valid(x: int) -> String: # 166:1-GDL513-OK
 	match x:
 		0:
 			return "zero"
@@ -176,7 +176,7 @@ func test_gdl228_valid(x: int) -> String:
 
 
 ## INVALID - too many branches - SHOULD trigger GDL228
-func test_gdl228_invalid(x: int) -> String:  # GDL228: max-branches
+func test_gdl228_invalid(x: int) -> String: # 179:1-GDL513-OK, 179:5-GDL223-OK, 179:5-GDL228-OK
 	if x == 0:
 		return "a"
 	elif x == 1:
@@ -208,7 +208,7 @@ func test_gdl228_invalid(x: int) -> String:  # GDL228: max-branches
 
 ## SUPPRESSED - GDL228 suppressed (also GDL223 since this function has many returns too)
 # gdlint:ignore = max-branches, max-returns
-func test_gdl228_suppressed(x: int) -> String:  # Suppressed
+func test_gdl228_suppressed(x: int) -> String: # 211:1-GDL513-OK
 	if x == 0:
 		return "a"
 	elif x == 1:

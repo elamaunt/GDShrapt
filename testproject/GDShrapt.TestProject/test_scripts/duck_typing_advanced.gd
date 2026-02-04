@@ -22,8 +22,8 @@ func process_attack(source, target):
 	# 'source' has .get_damage() - duck typed
 	# 'target' has .take_damage() - duck typed
 	# Return type depends on both
-	var damage = source.get_damage()
-	var result = target.take_damage(damage)
+	var damage = source.get_damage() # 25:14-GD7003-OK, 25:14-GD7007-OK
+	var result = target.take_damage(damage) # 26:14-GD7007-OK
 	last_attack_result = result
 	return result
 
@@ -33,7 +33,7 @@ func apply_to_all(targets, effect):
 	# 'effect' has .apply() method
 	var results = []
 	for t in targets:
-		var r = effect.apply(t)
+		var r = effect.apply(t) # 36:10-GD7007-OK
 		results.append(r)
 	return results
 
@@ -60,7 +60,7 @@ func execute_with_modifier(base_value, context = null):
 
 # === Union Types Through Branching ===
 
-func get_entity_by_name(entity_name):
+func get_entity_by_name(entity_name): # 63:1-GDL513-OK
 	# Returns different types based on name
 	match entity_name:
 		"player":
@@ -77,15 +77,15 @@ func get_entity_by_name(entity_name):
 
 func find_nearest(position, type_filter):
 	# Return type is Union[Node2D, null] but actual subtype varies
-	var candidates = get_tree().get_nodes_in_group(type_filter)
+	var candidates = get_tree().get_nodes_in_group(type_filter) # 80:18-GD7003-OK
 	if candidates.is_empty():
 		return null
 
 	var nearest = candidates[0]
-	var nearest_dist = position.distance_squared_to(nearest.global_position)
+	var nearest_dist = position.distance_squared_to(nearest.global_position) # 85:20-GD7007-OK, 85:49-GD3009-OK
 
 	for c in candidates:
-		var d = position.distance_squared_to(c.global_position)
+		var d = position.distance_squared_to(c.global_position) # 88:10-GD7007-OK, 88:39-GD3009-OK
 		if d < nearest_dist:
 			nearest = c
 			nearest_dist = d
@@ -124,7 +124,7 @@ func _create_component(type_name):
 			return null
 
 
-# === Signal-based polymorphism ===
+# === Signal-based polymorphism === # 128:1-GDL513-OK
 
 signal data_received(data)
 signal state_changed(old_state, new_state)
@@ -172,7 +172,7 @@ func _execute_dict_action(action_dict):
 
 # === Recursive type inference challenge ===
 
-func transform_data(data, transformer):
+func transform_data(data, transformer): # 175:1-GDL513-OK
 	# data could be: primitive, Array, Dictionary
 	# transformer is a Callable
 	# Return type matches input structure but with transformed values
@@ -188,12 +188,12 @@ func transform_data(data, transformer):
 			result[key] = transform_data(data[key], transformer)
 		return result
 	else:
-		return transformer.call(data)
+		return transformer.call(data) # 191:9-GD7007-OK
 
 
 # === Chained operations with type narrowing ===
 
-func process_chain(initial_value):
+func process_chain(initial_value): # 196:1-GDL513-OK
 	# Each step could return different types
 	var step1 = _step_parse(initial_value)      # String -> Variant (could be int, float, Array...)
 	var step2 = _step_validate(step1)           # Variant -> Variant|null
@@ -239,14 +239,14 @@ func _step_format(value):
 
 # === Helpers that return different types ===
 
-func _create_player():
+func _create_player(): # 242:1-GDL513-OK
 	return {"type": "player", "health": 100}
 
-func _create_enemy():
+func _create_enemy(): # 245:1-GDL513-OK
 	return {"type": "enemy", "health": 50, "damage": 10}
 
-func _create_npc():
+func _create_npc(): # 248:1-GDL513-OK
 	return {"type": "npc", "dialog": []}
 
-func _create_item():
+func _create_item(): # 251:1-GDL513-OK
 	return {"type": "item", "value": 25}

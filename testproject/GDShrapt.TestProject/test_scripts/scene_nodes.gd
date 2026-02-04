@@ -1,16 +1,16 @@
 extends Node2D
-class_name SceneNodes
+class_name SceneNodes  # 2:11-GDL222-OK
 
 ## Tests for scene node type flow tracking.
 ## get_node, @onready, and scene tree access patterns.
 
 
 # @onready with typed nodes
-@onready var player: CharacterBody2D = $Player
-@onready var health_bar: ProgressBar = $UI/HealthBar
-@onready var sprite: Sprite2D = $Player/Sprite2D
-@onready var collision: CollisionShape2D = $Player/CollisionShape2D
-@onready var animation_player: AnimationPlayer = $AnimationPlayer
+@onready var player: CharacterBody2D = $Player  # 9:9-GD3004-OK
+@onready var health_bar: ProgressBar = $UI/HealthBar  # 10:9-GD3004-OK
+@onready var sprite: Sprite2D = $Player/Sprite2D  # 11:9-GD3004-OK
+@onready var collision: CollisionShape2D = $Player/CollisionShape2D  # 12:9-GD3004-OK
+@onready var animation_player: AnimationPlayer = $AnimationPlayer  # 13:9-GD3004-OK
 
 
 # @onready with inferred type from path
@@ -54,25 +54,25 @@ func setup_player(p: CharacterBody2D):
 
 func get_player_position() -> Vector2:
 	# Accessing @onready node property
-	return player.global_position
+	return player.global_position  # 57:8-GD7005-OK
 
 
 func update_health_bar(health: int, max_health: int):
 	# Accessing typed @onready node
-	health_bar.max_value = max_health
-	health_bar.value = health
+	health_bar.max_value = max_health  # 62:1-GD7005-OK
+	health_bar.value = health  # 63:1-GD7005-OK
 
 
 func find_nodes_by_group() -> Array[Node]:
 	# get_tree() returns SceneTree
 	var tree = get_tree()
 	# get_nodes_in_group returns typed array
-	var players = tree.get_nodes_in_group("players")
+	var players = tree.get_nodes_in_group("players")  # 70:15-GD7007-OK
 	return players
 
 
 func find_first_in_group(group_name: String) -> Node:
-	var nodes = get_tree().get_nodes_in_group(group_name)
+	var nodes = get_tree().get_nodes_in_group(group_name)  # 75:13-GD7003-OK
 	if nodes.size() > 0:
 		return nodes[0]
 	return null
@@ -118,7 +118,7 @@ func reparent_node(node: Node, new_parent: Node):
 	# Reparenting pattern
 	var old_parent = node.get_parent()
 	if old_parent:
-		old_parent.remove_child(node)
+		old_parent.remove_child(node)  # 121:2-GD4002-OK
 	new_parent.add_child(node)
 
 
@@ -126,7 +126,7 @@ func instantiate_scene(scene: PackedScene) -> Node:
 	# Scene instantiation
 	var instance = scene.instantiate()
 	add_child(instance)
-	return instance
+	return instance  # 129:1-GD3007-OK
 
 
 func instantiate_typed(scene: PackedScene) -> CharacterBody2D:
@@ -185,8 +185,8 @@ func access_sibling() -> Node:
 	if parent == null:
 		return null
 
-	for child in parent.get_children():
-		if child != self and child.name == "Sibling":
+	for child in parent.get_children():  # 188:14-GD7007-OK
+		if child != self and child.name == "Sibling":  # 189:23-GD7005-OK
 			return child
 
 	return null
@@ -200,7 +200,7 @@ func access_node_via_path(path: NodePath) -> Node:
 
 func access_node_property_via_path(path: NodePath) -> Variant:
 	# Property path access
-	var node_path = path.get_as_property_path()
+	var node_path = path.get_as_property_path()  # 203:5-GDL201-OK
 	# This gets complex with property paths
 	return get_indexed(path)
 
@@ -208,8 +208,8 @@ func access_node_property_via_path(path: NodePath) -> Variant:
 func get_viewport_info() -> Dictionary:
 	# Viewport access
 	var viewport = get_viewport()
-	var size = viewport.get_visible_rect().size
-	var mouse_pos = viewport.get_mouse_position()
+	var size = viewport.get_visible_rect().size  # 211:12-GD7007-OK
+	var mouse_pos = viewport.get_mouse_position()  # 212:17-GD7007-OK
 	return {"size": size, "mouse": mouse_pos}
 
 

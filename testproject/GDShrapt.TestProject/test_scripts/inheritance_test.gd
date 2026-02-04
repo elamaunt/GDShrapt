@@ -26,11 +26,11 @@ func _physics_process(delta: float):
 
 func _process(_delta: float):
 	# Using inherited 'position' from Node2D
-	var current_pos = position
-	var global_pos = global_position
+	var current_pos = position  # 29:5-GDL201-OK
+	var global_pos = global_position  # 30:5-GDL201-OK
 
 	# Using inherited 'rotation' from Node2D
-	var current_rotation = rotation
+	var current_rotation = rotation  # 33:5-GDL201-OK
 	rotation_degrees = 45.0
 
 
@@ -77,72 +77,72 @@ func get_current_state() -> Dictionary:
 func use_collision_methods():
 	# CharacterBody2D collision methods
 	var slide_count = get_slide_collision_count()  # -> int
-	if slide_count > 0:
-		var collision = get_slide_collision(0)  # -> KinematicCollision2D
-		if collision:
-			var collider = collision.get_collider()  # -> Object
+	if slide_count > 0:  # 80:4-GD3020-OK
+		var collision = get_slide_collision(0)  # -> KinematicCollision2D  # 83:7-GDL201-OK
+		if collision:  # 84:7-GDL201-OK
+			var collider = collision.get_collider()  # -> Object  # 85:7-GDL201-OK
 			var normal = collision.get_normal()      # -> Vector2
 			var position_coll = collision.get_position()  # -> Vector2
 
 
 func use_node_methods():
 	# Node methods
-	var parent = get_parent()           # -> Node
-	var children = get_children()       # -> Array[Node]
-	var tree = get_tree()               # -> SceneTree
-	var node = get_node_or_null("Child")  # -> Node
+	var parent = get_parent()           # -> Node  # 90:5-GDL201-OK
+	var children = get_children()       # -> Array[Node]  # 91:5-GDL201-OK
+	var tree = get_tree()               # -> SceneTree  # 92:5-GDL201-OK
+	var node = get_node_or_null("Child")  # -> Node  # 93:5-GDL201-OK
 
 	# Object methods
-	var id = get_instance_id()          # -> int
-	var class_name_str = get_class()    # -> String
-	var is_type = is_class("Node2D")    # -> bool
+	var id = get_instance_id()          # -> int  # 96:5-GDL201-OK
+	var class_name_str = get_class()    # -> String  # 97:5-GDL201-OK
+	var is_type = is_class("Node2D")    # -> bool  # 98:5-GDL201-OK
 
 
 func use_node2d_methods():
 	# Node2D methods
-	var local = to_local(Vector2(100, 100))    # -> Vector2
-	var glob = to_global(Vector2(100, 100))    # -> Vector2
-	var transform = get_transform()            # -> Transform2D
-	var global_transform_val = get_global_transform()  # -> Transform2D
+	var local = to_local(Vector2(100, 100))    # -> Vector2  # 103:5-GDL201-OK
+	var glob = to_global(Vector2(100, 100))    # -> Vector2  # 104:5-GDL201-OK
+	var transform = get_transform()            # -> Transform2D  # 105:5-GDL201-OK
+	var global_transform_val = get_global_transform()  # -> Transform2D  # 106:5-GDL201-OK
 
 
-# Inner class extending built-in
+# Inner class extending built-in  # 109:1-GDL513-OK
 class ChildEnemy extends InheritanceTest:
 	var enemy_type: String = "basic"
 
-	func _physics_process(delta: float):
+	func _physics_process(delta: float):  # 113:1-GDL513-OK
 		# Can access parent's custom_speed
 		velocity.x = custom_speed * 0.5
 		# Can call parent's method
 		super._physics_process(delta)
 
-	func get_enemy_info() -> Dictionary:
+	func get_enemy_info() -> Dictionary:  # 119:1-GDL513-OK
 		var base_state = get_current_state()  # Inherited method
 		base_state["enemy_type"] = enemy_type
 		return base_state
 
 
-# Using super in various contexts
+# Using super in various contexts  # 126:1-GDL513-OK
 func attack() -> int:
 	return int(10 * _damage_multiplier)
 
 
-class StrongEnemy extends ChildEnemy:
+class StrongEnemy extends ChildEnemy:  # 136:1-GDL513-OK
 	func attack() -> int:
 		return super.attack() * 2  # Uses parent's attack
 
 
-# Accessing static methods from base
+# Accessing static methods from base  # 143:1-GDL513-OK
 func use_static_helpers():
 	# Input is a singleton, not really inheritance
-	var is_pressed = Input.is_action_pressed("ui_accept")  # -> bool
-	var strength = Input.get_action_strength("ui_right")   # -> float
+	var is_pressed = Input.is_action_pressed("ui_accept")  # -> bool  # 138:5-GDL201-OK
+	var strength = Input.get_action_strength("ui_right")   # -> float  # 139:5-GDL201-OK
 
 
 # Virtual method pattern
 func _on_ready():
 	# Called by _ready if exists
-	pass
+	pass  # 143:5-GDL203-OK
 
 
 func _ready():
@@ -150,7 +150,7 @@ func _ready():
 		_on_ready()
 
 
-# Override notification handling
+# Override notification handling  # 154:1-GDL513-OK
 func _notification(what: int):
 	match what:
 		NOTIFICATION_ENTER_TREE:
@@ -160,17 +160,17 @@ func _notification(what: int):
 
 
 func _on_enter_tree():
-	pass
+	pass  # 162:5-GDL203-OK
 
 
 func _on_exit_tree():
-	pass
+	pass  # 166:5-GDL203-OK
 
 
 # Using inherited signals
 signal custom_signal
 
-func emit_signals():
+func emit_signals():  # 173:1-GDL513-OK
 	# tree_exiting is inherited from Node
 	tree_exiting.connect(func(): print("Exiting"))
 
@@ -180,17 +180,17 @@ func emit_signals():
 	custom_signal.emit()
 
 
-# Property access chain through inheritance
+# Property access chain through inheritance  # 184:1-GDL513-OK
 func get_global_mouse_in_local() -> Vector2:
 	# get_viewport() -> Viewport -> get_mouse_position() -> Vector2
 	# to_local inherited from Node2D
 	var viewport = get_viewport()
-	var global_mouse = viewport.get_mouse_position()
+	var global_mouse = viewport.get_mouse_position()  # 188:20-GD7007-OK
 	return to_local(global_mouse)
 
 
-# Type checking against base classes
-func check_types(node: Node) -> String:
+# Type checking against base classes  # 193:1-GDL513-OK
+func check_types(node: Node) -> String:  # 193:5-GDL223-OK
 	if node is CharacterBody2D:
 		return "CharacterBody2D"
 	elif node is RigidBody2D:
@@ -203,6 +203,6 @@ func check_types(node: Node) -> String:
 		return "Node2D"
 	elif node is CanvasItem:
 		return "CanvasItem"
-	elif node is Node:
+	elif node is Node:  # 206:6-GD7010-OK
 		return "Node"
 	return "Unknown"

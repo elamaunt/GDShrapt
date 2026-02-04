@@ -1,5 +1,6 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using GDShrapt.Validator;
 
 namespace GDShrapt.Semantics.Validator;
 
@@ -166,7 +167,16 @@ public class GDSemanticValidator
             dynamicCallValidator.Validate(node);
         }
 
-        return context.BuildResult();
+        var result = context.BuildResult();
+
+        // Apply comment-based suppression if enabled
+        if (_options.EnableCommentSuppression && node != null)
+        {
+            var suppressionContext = GDValidatorSuppressionParser.Parse(node);
+            result.FilterSuppressed(suppressionContext);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -303,4 +313,10 @@ public class GDSemanticValidatorOptions
     /// Severity for comparison with potentially null variable warnings.
     /// </summary>
     public GDDiagnosticSeverity ComparisonNullSeverity { get; set; } = GDDiagnosticSeverity.Warning;
+
+    /// <summary>
+    /// Whether to enable comment-based suppression (# gd:ignore = CODE).
+    /// Default: true
+    /// </summary>
+    public bool EnableCommentSuppression { get; set; } = true;
 }

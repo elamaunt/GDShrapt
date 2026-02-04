@@ -353,3 +353,4 @@ MigrationBackup/
 /testproject/GDShrapt.TestProject/.gdshrapt
 DIAGNOSTICS.txt
 *.uid
+DIAGNOSTICS_VERIFICATION.txt

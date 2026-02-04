@@ -1,5 +1,5 @@
 extends Node
-class_name SignalCallbackChains
+class_name SignalCallbackChains # 2:11-GDL222-OK 2:11-GDL232-OK
 
 ## Complex signal and callback patterns.
 ## Tests type inference through async-like patterns.
@@ -43,7 +43,7 @@ func invoke_callback(name, args = []):
 		return null
 
 	var callback = callbacks[name]
-	return callback.callv(args)
+	return callback.callv(args) # 46:8-GD7007-OK
 
 
 func invoke_chain(name, initial_value):
@@ -52,11 +52,11 @@ func invoke_chain(name, initial_value):
 
 	var current = initial_value
 	for callback in callback_chains[name]:
-		current = callback.call(current)
+		current = callback.call(current) # 55:12-GD7007-OK
 	return current
 
 
-# === Promise-like pattern ===
+# === Promise-like pattern === # 75:1-GDL513-OK
 
 class AsyncOperation:
 	var _resolve_callback
@@ -72,19 +72,19 @@ class AsyncOperation:
 			_call_resolve()
 		return self
 
-	func catch_error(callback):
+	func catch_error(callback): # 81:1-GDL513-OK
 		_reject_callback = callback
 		if _state == "rejected":
 			_call_reject()
 		return self
 
-	func finally_do(callback):
+	func finally_do(callback): # 87:1-GDL513-OK
 		_finally_callback = callback
 		if _state != "pending":
 			_call_finally()
 		return self
 
-	func resolve(value):
+	func resolve(value): # 87:1-GDL513-OK
 		if _state != "pending":
 			return
 		_state = "resolved"
@@ -92,7 +92,7 @@ class AsyncOperation:
 		_call_resolve()
 		_call_finally()
 
-	func reject(error):
+	func reject(error): # 95:1-GDL513-OK
 		if _state != "pending":
 			return
 		_state = "rejected"
@@ -100,15 +100,15 @@ class AsyncOperation:
 		_call_reject()
 		_call_finally()
 
-	func _call_resolve():
+	func _call_resolve(): # 103:1-GDL513-OK
 		if _resolve_callback:
 			_resolve_callback.call(_value)
 
-	func _call_reject():
+	func _call_reject(): # 107:1-GDL513-OK
 		if _reject_callback:
 			_reject_callback.call(_error)
 
-	func _call_finally():
+	func _call_finally(): # 111:1-GDL513-OK
 		if _finally_callback:
 			_finally_callback.call()
 
@@ -127,10 +127,10 @@ func start_async_task(task_func):
 
 
 func _run_task(task_func, operation):
-	var resolve = func(value): operation.resolve(value)
-	var reject = func(error): operation.reject(error)
+	var resolve = func(value): operation.resolve(value) # 130:28-GD7007-OK
+	var reject = func(error): operation.reject(error) # 131:27-GD7007-OK
 
-	task_func.call(resolve, reject)
+	task_func.call(resolve, reject) # 133:1-GD7007-OK
 
 
 # === Event emitter pattern ===
@@ -164,7 +164,7 @@ func emit_event(event_name, data = null):
 	# Regular handlers
 	if event_handlers.has(event_name):
 		for handler in event_handlers[event_name]:
-			var result = handler.call(data)
+			var result = handler.call(data) # 167:16-GD7007-OK
 			results.append(result)
 
 	# Once handlers (remove after calling)
@@ -172,7 +172,7 @@ func emit_event(event_name, data = null):
 		var handlers = once_handlers[event_name].duplicate()
 		once_handlers[event_name].clear()
 		for handler in handlers:
-			var result = handler.call(data)
+			var result = handler.call(data) # 175:16-GD7007-OK
 			results.append(result)
 
 	return results
@@ -191,14 +191,14 @@ func run_pipeline(initial_data):
 	return _run_stage(0, initial_data)
 
 
-func _run_stage(index, data):
+func _run_stage(index, data): # 195:4-GD3020-OK
 	if index >= pipeline_stages.size():
 		return data
 
 	var stage = pipeline_stages[index]
 	var next = func(processed): return _run_stage(index + 1, processed)
 
-	return stage.process(data, next)
+	return stage.process(data, next) # 201:8-GD7003-OK 201:8-GD7007-OK
 
 
 # === Middleware pattern ===
@@ -223,14 +223,14 @@ func handle_request(request):
 	return context
 
 
-func _next_middleware(index, context):
+func _next_middleware(index, context): # 227:4-GD3020-OK
 	if index >= middleware_stack.size():
 		return
 
 	var middleware = middleware_stack[index]
 	var next = func(): _next_middleware(index + 1, context)
 
-	middleware.handle(context, next)
+	middleware.handle(context, next) # 233:1-GD7003-OK 233:1-GD7007-OK
 
 
 # === Reactive streams ===
@@ -248,40 +248,40 @@ class Observable:
 		_subscribers.append(subscription)
 		return subscription
 
-	func unsubscribe(subscription):
-		subscription["active"] = false
+	func unsubscribe(subscription): # 251:1-GDL513-OK
+		subscription["active"] = false # 252:2-GD7006-OK
 		_subscribers.erase(subscription)
 
-	func emit_next(value):
+	func emit_next(value): # 255:1-GDL513-OK
 		for sub in _subscribers:
-			if sub["active"] and sub["on_next"]:
-				sub["on_next"].call(value)
+			if sub["active"] and sub["on_next"]: # 257:6-GD7006-OK 257:24-GD7006-OK
+				sub["on_next"].call(value) # 258:4-GD7007-OK 258:4-GD7006-OK
 
-	func emit_error(error):
+	func emit_error(error): # 260:1-GDL513-OK
 		for sub in _subscribers:
-			if sub["active"] and sub["on_error"]:
-				sub["on_error"].call(error)
-			sub["active"] = false
+			if sub["active"] and sub["on_error"]: # 262:6-GD7006-OK 262:24-GD7006-OK
+				sub["on_error"].call(error) # 263:4-GD7007-OK 263:4-GD7006-OK
+			sub["active"] = false # 264:3-GD7006-OK
 
-	func emit_complete():
+	func emit_complete(): # 266:1-GDL513-OK
 		for sub in _subscribers:
-			if sub["active"] and sub["on_complete"]:
-				sub["on_complete"].call()
-			sub["active"] = false
+			if sub["active"] and sub["on_complete"]: # 268:6-GD7006-OK 268:24-GD7006-OK
+				sub["on_complete"].call() # 269:4-GD7007-OK 269:4-GD7006-OK
+			sub["active"] = false # 270:3-GD7006-OK
 
-	func map(transform):
+	func map(transform): # 272:1-GDL513-OK
 		var mapped = Observable.new()
 		subscribe(
-			func(value): mapped.emit_next(transform.call(value)),
+			func(value): mapped.emit_next(transform.call(value)), # 275:33-GD7007-OK
 			func(error): mapped.emit_error(error),
 			func(): mapped.emit_complete()
 		)
 		return mapped
 
-	func filter(predicate):
+	func filter(predicate): # 281:1-GDL513-OK
 		var filtered = Observable.new()
 		var on_next_filter = func(value):
-			if predicate.call(value):
+			if predicate.call(value): # 284:6-GD7007-OK
 				filtered.emit_next(value)
 		subscribe(
 			on_next_filter,
@@ -295,7 +295,7 @@ func create_observable():
 	return Observable.new()
 
 
-# === Debounce/Throttle ===
+# === Debounce/Throttle === # 299:1-GDL513-OK
 
 var debounce_timers = {}  # Dict[String, Timer]
 var throttle_locks = {}   # Dict[String, bool]
@@ -324,7 +324,7 @@ func debounce(key, delay, callback):
 	var timer = Timer.new()
 	timer.wait_time = delay
 	timer.one_shot = true
-	timer.timeout.connect(_on_debounce_timeout.bind(timer))
+	timer.timeout.connect(_on_debounce_timeout.bind(timer)) # 327:23-GD7007-OK
 	add_child(timer)
 	timer.start()
 	debounce_timers[key] = timer
@@ -340,29 +340,29 @@ func throttle(key, delay, callback):
 		return false  # Locked
 
 	throttle_locks[key] = true
-	callback.call()
+	callback.call() # 343:1-GD7007-OK
 
 	# Unlock after delay
 	var timer = Timer.new()
 	timer.wait_time = delay
 	timer.one_shot = true
-	timer.timeout.connect(_on_throttle_timeout.bind(key, timer))
+	timer.timeout.connect(_on_throttle_timeout.bind(key, timer)) # 349:23-GD7007-OK
 	add_child(timer)
 	timer.start()
 
 	return true
 
 
-# === Continuation passing ===
+# === Continuation passing === # 358:1-GDL513-OK
 
 func async_fetch(url, on_success, on_failure):
 	# Simulates async HTTP request
 	var result = _simulate_fetch(url)
 
 	if result["success"]:
-		on_success.call(result["data"])
+		on_success.call(result["data"]) # 363:2-GD7007-OK
 	else:
-		on_failure.call(result["error"])
+		on_failure.call(result["error"]) # 365:2-GD7007-OK
 
 
 func async_chain(operations, on_all_complete, on_any_error):
@@ -370,21 +370,21 @@ func async_chain(operations, on_all_complete, on_any_error):
 	_run_chain_step(operations, 0, null, on_all_complete, on_any_error)
 
 
-func _run_chain_step(operations, index, previous_result, on_complete, on_error):
+func _run_chain_step(operations, index, previous_result, on_complete, on_error): # 374:4-GD3020-OK 374:13-GD7007-OK
 	if index >= operations.size():
-		on_complete.call(previous_result)
+		on_complete.call(previous_result) # 375:2-GD7007-OK
 		return
 
-	var operation = operations[index]
+	var operation = operations[index] # 378:17-GD7006-OK
 
-	operation.call(
+	operation.call( # 380:1-GD7007-OK
 		previous_result,
 		func(result): _run_chain_step(operations, index + 1, result, on_complete, on_error),
 		on_error
 	)
 
 
-class ParallelContext:
+class ParallelContext: # 385:1-GDL513-OK
 	var results: Array
 	var completed_count: int = 0
 	var has_error: bool = false
@@ -415,20 +415,20 @@ func async_parallel(operations, on_all_complete, on_any_error):
 	# Execute all operations in parallel
 	var ctx = ParallelContext.new()
 	ctx.results = []
-	ctx.results.resize(operations.size())
-	ctx.total = operations.size()
+	ctx.results.resize(operations.size()) # 418:20-GD7007-OK
+	ctx.total = operations.size() # 419:13-GD7007-OK
 	ctx.on_complete = on_all_complete
 	ctx.on_error = on_any_error
 
-	for i in range(operations.size()):
+	for i in range(operations.size()): # 423:16-GD7007-OK
 		var success_handler = _create_parallel_success_handler(ctx, i)
 		var error_handler = _create_parallel_error_handler(ctx)
-		operations[i].call(success_handler, error_handler)
+		operations[i].call(success_handler, error_handler) # 426:2-GD7007-OK 426:2-GD7006-OK
 
 
 func _simulate_fetch(url):
 	# Fake implementation
-	if url.begins_with("http"):
+	if url.begins_with("http"): # 431:4-GD7007-OK
 		return {"success": true, "data": {"url": url, "content": "..."}}
 	return {"success": false, "error": "Invalid URL"}
 
@@ -444,13 +444,13 @@ class SignalWaitContext:
 
 func _on_signal_received(ctx: SignalWaitContext, args = []):
 	ctx.target.disconnect(ctx.signal_name, ctx.connection)
-	ctx.operation.resolve(args)
+	ctx.operation.resolve(args) # 447:1-GD7003-OK
 
 
 func _on_wait_timeout(ctx: SignalWaitContext):
 	if ctx.target.is_connected(ctx.signal_name, ctx.connection):
 		ctx.target.disconnect(ctx.signal_name, ctx.connection)
-		ctx.operation.reject("Timeout")
+		ctx.operation.reject("Timeout") # 453:2-GD7003-OK
 
 
 func wait_for_signal(target, signal_name, timeout = 5.0):
@@ -460,14 +460,14 @@ func wait_for_signal(target, signal_name, timeout = 5.0):
 	ctx.target = target
 	ctx.signal_name = signal_name
 	ctx.operation = operation
-	ctx.connection = _on_signal_received.bind(ctx)
+	ctx.connection = _on_signal_received.bind(ctx) # 463:18-GD7007-OK
 
-	target.connect(signal_name, ctx.connection)
+	target.connect(signal_name, ctx.connection) # 465:1-GD7007-OK
 
 	# Timeout
-	if timeout > 0:
-		var timer = get_tree().create_timer(timeout)
-		timer.timeout.connect(_on_wait_timeout.bind(ctx))
+	if timeout > 0: # 468:4-GD3020-OK
+		var timer = get_tree().create_timer(timeout) # 469:14-GD7003-OK
+		timer.timeout.connect(_on_wait_timeout.bind(ctx)) # 470:2-GD7005-OK 470:24-GD7007-OK
 
 	return operation
 
@@ -480,7 +480,7 @@ class ComposedCallback:
 	func call_composed(initial_value):
 		var current = initial_value
 		for cb in callbacks:
-			current = cb.call(current)
+			current = cb.call(current) # 483:13-GD7007-OK
 		return current
 
 
@@ -490,7 +490,7 @@ class ParallelCallback:
 	func call_parallel(value):
 		var results = []
 		for cb in callbacks:
-			results.append(cb.call(value))
+			results.append(cb.call(value)) # 493:18-GD7007-OK
 		return results
 
 
@@ -500,9 +500,9 @@ class ConditionalCallback:
 	var false_cb: Callable
 
 	func call_conditional(value):
-		if predicate.call(value):
-			return true_cb.call(value)
-		return false_cb.call(value)
+		if predicate.call(value): # 503:5-GD7007-OK
+			return true_cb.call(value) # 504:10-GD7007-OK
+		return false_cb.call(value) # 505:9-GD7007-OK
 
 
 class RetryCallback:
@@ -515,10 +515,10 @@ class RetryCallback:
 		var last_error = null
 
 		while attempt <= max_retries:
-			var result = callback.call(value)
+			var result = callback.call(value) # 518:16-GD7007-OK
 			if result is Dictionary and result.has("error"):
 				last_error = result["error"]
-				if not should_retry.call(last_error, attempt):
+				if not should_retry.call(last_error, attempt): # 521:11-GD7007-OK
 					return result
 				attempt += 1
 			else:

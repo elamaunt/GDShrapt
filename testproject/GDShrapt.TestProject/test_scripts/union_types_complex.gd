@@ -1,5 +1,5 @@
 extends Node
-class_name UnionTypesComplex
+class_name UnionTypesComplex # 2:11-GDL222-OK
 
 ## Complex Union type scenarios.
 ## Variables that can hold multiple different types at runtime.
@@ -38,9 +38,9 @@ func try_operation(input):
 
 func get_optional_player(player_id):
 	# Returns Player|null
-	var players = get_tree().get_nodes_in_group("players")
+	var players = get_tree().get_nodes_in_group("players") # 41:15-GD7003-OK
 	for p in players:
-		if p.get("id") == player_id:
+		if p.get("id") == player_id: # 43:5-GD7016-OK
 			return p
 	return null
 
@@ -55,7 +55,7 @@ func get_position_or_null(node_path):
 
 # === Branching Creates Unions ===
 
-func process_by_type(value):
+func process_by_type(value): # 58:1-GDL513-OK
 	# Return type is Union based on input type
 	if value is int:
 		return value * 2          # int path
@@ -70,7 +70,7 @@ func process_by_type(value):
 	return null                   # null path
 
 
-func conditional_return(condition, true_value, false_value):
+func conditional_return(condition, true_value, false_value): # 78:1-GDL513-OK
 	# Return type is Union of true_value type and false_value type
 	if condition:
 		return true_value
@@ -95,7 +95,7 @@ func complex_conditional():
 
 # === Match Creates Union ===
 
-func match_return(value):
+func match_return(value): # 98:1-GDL513-OK
 	match value:
 		0:
 			return "zero"          # String
@@ -114,7 +114,7 @@ func match_with_patterns(data):
 		{"type": "player", "health": var h}:
 			return h                # Extracted value (Variant)
 		{"type": "enemy", ..}:
-			return data["damage"]   # Variant from dict
+			return data["damage"]   # 117:10-GD7006-OK
 		[var first, ..]:
 			return first            # First element (Variant)
 		var x when x is int:
@@ -130,7 +130,7 @@ var mixed_array = [1, "two", 3.0, [4], {"five": 5}]
 
 func get_mixed_element(index):
 	# Return type is int|String|float|Array|Dictionary
-	if index < 0 or index >= mixed_array.size():
+	if index < 0 or index >= mixed_array.size(): # 133:4-GD3020-OK, 133:17-GD3020-OK
 		return null
 	return mixed_array[index]
 
@@ -183,7 +183,7 @@ func update_config(key, value):
 
 # === Nullable Chains ===
 
-func safe_get_nested(data, path):
+func safe_get_nested(data, path): # 186:1-GDL513-OK
 	# Each step could return null, final type is Variant|null
 	var current = data
 	for key in path:
@@ -209,7 +209,7 @@ func safe_chain_example():
 
 # === Discriminated Union (Tagged) ===
 
-func create_success(value):
+func create_success(value): # 212:1-GDL513-OK
 	return {"tag": "success", "value": value}
 
 
@@ -223,11 +223,11 @@ func create_loading():
 
 func handle_result(result):
 	# result is Tagged Union: Success|Error|Loading
-	match result.get("tag"):
+	match result.get("tag"): # 226:7-GD7007-OK
 		"success":
-			return result["value"]      # Variant (the success value)
+			return result["value"]      # 228:10-GD7006-OK
 		"error":
-			return "Error: " + result["message"]  # String
+			return "Error: " + result["message"]  # 230:22-GD7006-OK
 		"loading":
 			return null                  # null
 		_:
@@ -236,12 +236,12 @@ func handle_result(result):
 
 # === Higher-Order Functions with Union Returns ===
 
-func map_with_fallback(array, transform, fallback):
+func map_with_fallback(array, transform, fallback): # 239:1-GDL513-OK
 	# transform returns T|null, fallback is T
 	# Result is Array[T]
 	var results = []
 	for item in array:
-		var transformed = transform.call(item)
+		var transformed = transform.call(item) # 244:20-GD7007-OK
 		if transformed == null:
 			results.append(fallback)
 		else:
@@ -255,8 +255,8 @@ func filter_map(array, predicate, transform):
 	# Returns Array[U] (subset)
 	var results = []
 	for item in array:
-		if predicate.call(item):
-			results.append(transform.call(item))
+		if predicate.call(item): # 258:5-GD7007-OK
+			results.append(transform.call(item)) # 259:18-GD7007-OK
 	return results
 
 
@@ -266,13 +266,13 @@ func reduce_or_default(array, reducer, default_value):
 		return default_value
 	var acc = array[0]
 	for i in range(1, array.size()):
-		acc = reducer.call(acc, array[i])
+		acc = reducer.call(acc, array[i]) # 269:8-GD7007-OK
 	return acc
 
 
 # === Async-like Patterns ===
 
-signal result_ready(result)
+signal result_ready(result) # 274:1-GDL513-OK
 
 var pending_results = {}  # Dict[int, Variant|null]
 var next_request_id = 0
@@ -315,7 +315,7 @@ func get_result(request_id):
 
 # === Type Guards and Narrowing ===
 
-func is_numeric(value):
+func is_numeric(value): # 318:1-GDL513-OK
 	return value is int or value is float
 
 
@@ -330,7 +330,7 @@ func process_with_guards(value):
 		return value * 2
 	elif is_text(value):
 		# value should be String|StringName here
-		return value.length()
+		return value.length() # 333:9-GD7007-OK
 	elif value is Array:
 		# value is Array here
 		return value.size()
@@ -359,18 +359,18 @@ func validate_and_process(data):
 func _process_typed_data(data, type_str):
 	match type_str:
 		"number":
-			return data.get("value", 0)
+			return data.get("value", 0) # 362:10-GD7007-OK
 		"text":
-			return data.get("content", "")
+			return data.get("content", "") # 364:10-GD7007-OK
 		"list":
-			return data.get("items", [])
+			return data.get("items", []) # 366:10-GD7007-OK
 		_:
 			return data
 
 
 # === TypeFlow Test Method (for maximum coverage of node kinds) ===
 
-func type_flow_test_method(param: Variant) -> Variant:
+func type_flow_test_method(param: Variant) -> Variant: # 373:1-GDL513-OK
 	# 1. Parameter with type annotation
 	# 2. Local variable initialization from parameter
 	var local = param
@@ -382,9 +382,9 @@ func type_flow_test_method(param: Variant) -> Variant:
 	# 5. Type check (is Dictionary)
 	if local is Dictionary:
 		# 6. Method call on typed object
-		var value = local.get("key")
+		var value = local.get("key") # 387:6-GDL201-OK
 		# 7. Indexer access on Dictionary
-		var item = local["item"]
+		var item = local["item"] # 389:6-GDL201-OK
 		# 8. Method call (size)
 		var count = local.size()
 		return value  # 9. Return variable

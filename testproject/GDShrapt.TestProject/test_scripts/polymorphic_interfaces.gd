@@ -1,5 +1,5 @@
 extends Node
-class_name PolymorphicInterfaces
+class_name PolymorphicInterfaces  # 2:11-GDL222-OK
 
 ## Tests polymorphism without explicit interfaces.
 ## Duck typing through shared method signatures.
@@ -37,21 +37,21 @@ func register_updatable(entity):
 func damage_all(amount):
 	var results = []
 	for e in damageable_entities:
-		var before = e.get_health()
-		e.take_damage(amount)
-		var after = e.get_health()
+		var before = e.get_health()  # 40:15-GD7003-OK, 40:15-GD7007-OK
+		e.take_damage(amount)  # 41:2-GD7007-OK
+		var after = e.get_health()  # 42:14-GD7003-OK, 42:14-GD7007-OK
 		results.append({"entity": e, "damage": before - after})
 	return results
 
 
 func move_all_to(target):
 	for e in moveable_entities:
-		e.move_to(target)
+		e.move_to(target)  # 49:2-GD7003-OK, 49:2-GD7007-OK
 
 
 func update_all(delta):
 	for e in all_updatables:
-		e.update(delta)
+		e.update(delta)  # 54:2-GD7007-OK
 
 
 # === Strategy Pattern (Duck Typed) ===
@@ -88,8 +88,8 @@ func find_path(from_pos, to_pos):
 func select_target(available_targets):
 	if targeting_strategy:
 		return targeting_strategy.select_target(available_targets)
-	if not available_targets.is_empty():
-		return available_targets[0]
+	if not available_targets.is_empty():  # 91:8-GD7007-OK
+		return available_targets[0]  # 92:9-GD7006-OK
 	return null
 
 
@@ -101,7 +101,7 @@ var redo_stack = []
 
 func execute_command(command):
 	# command must have execute() -> Variant
-	var result = command.execute()
+	var result = command.execute()  # 104:14-GD7007-OK
 	command_history.append(command)
 	redo_stack.clear()
 	return result
@@ -113,7 +113,7 @@ func undo_last():
 
 	var command = command_history.pop_back()
 	# command must have undo() -> Variant
-	var result = command.undo()
+	var result = command.undo()  # 116:14-GD7007-OK
 	redo_stack.append(command)
 	return result
 
@@ -123,7 +123,7 @@ func redo_last():
 		return null
 
 	var command = redo_stack.pop_back()
-	var result = command.execute()
+	var result = command.execute()  # 126:14-GD7007-OK
 	command_history.append(command)
 	return result
 
@@ -151,7 +151,7 @@ func notify_observers(event_name, data):
 
 	var results = []
 	for obs in observers[event_name]:
-		var result = obs.on_event(event_name, data)
+		var result = obs.on_event(event_name, data)  # 154:15-GD7007-OK
 		results.append(result)
 	return results
 
@@ -163,7 +163,7 @@ var root_component  # Has: process(), get_children(), add_child(), remove_child(
 
 func process_tree(component):
 	# Process this component
-	var result = component.process()
+	var result = component.process()  # 166:14-GD7003-OK, 166:14-GD7007-OK
 
 	# Process children recursively
 	var children_results = []
@@ -176,7 +176,7 @@ func process_tree(component):
 
 func find_in_tree(component, predicate):
 	# predicate: (component) -> bool
-	if predicate.call(component):
+	if predicate.call(component):  # 179:4-GD7007-OK
 		return component
 
 	if component.has_method("get_children"):
@@ -192,7 +192,7 @@ func collect_from_tree(component, collector):
 	# collector: (component) -> Variant|null
 	var results = []
 
-	var value = collector.call(component)
+	var value = collector.call(component)  # 195:13-GD7007-OK
 	if value != null:
 		results.append(value)
 
@@ -221,7 +221,7 @@ func process_with_decorators(data):
 	for i in range(decorators.size()):
 		var decorator = decorators[i]
 		var next_func = _create_next_func(i + 1)
-		current = decorator.process(current, next_func)
+		current = decorator.process(current, next_func)  # 224:12-GD7003-OK, 224:12-GD7007-OK
 
 	# Finally apply base processor
 	if base_processor:
@@ -237,7 +237,7 @@ func _create_next_func(start_index):
 		for i in range(start_index, decorators.size()):
 			var decorator = decorators[i]
 			var next_func = _create_next_func(i + 1)
-			current = decorator.process(current, next_func)
+			current = decorator.process(current, next_func)  # 240:13-GD7003-OK, 240:13-GD7007-OK
 		if base_processor:
 			current = base_processor.process(current)
 		return current
@@ -258,17 +258,17 @@ func adapt_value(value, target_type):
 
 	if adapters.has(value_type + "_to_" + target_type):
 		var adapter = adapters[value_type + "_to_" + target_type]
-		return adapter.adapt(value)
+		return adapter.adapt(value)  # 261:9-GD7003-OK, 261:9-GD7007-OK
 
 	# Try generic adapter
 	if adapters.has("generic_to_" + target_type):
 		var adapter = adapters["generic_to_" + target_type]
-		return adapter.adapt(value)
+		return adapter.adapt(value)  # 266:9-GD7003-OK, 266:9-GD7007-OK
 
 	return value  # No adaptation
 
 
-func _get_type_name(value):
+func _get_type_name(value):  # 271:5-GDL223-OK
 	if value is int:
 		return "int"
 	if value is float:
@@ -294,28 +294,28 @@ var custom_iterator  # Has: has_next() -> bool, next() -> Variant, reset() -> vo
 func iterate_all(iterator):
 	# iterator must implement has_next() and next()
 	var results = []
-	iterator.reset()
-	while iterator.has_next():
-		results.append(iterator.next())
+	iterator.reset()  # 297:1-GD7007-OK
+	while iterator.has_next():  # 298:7-GD7003-OK, 298:7-GD7007-OK
+		results.append(iterator.next())  # 299:17-GD7007-OK
 	return results
 
 
 func iterate_with_transform(iterator, transform):
 	var results = []
-	iterator.reset()
-	while iterator.has_next():
-		var item = iterator.next()
-		results.append(transform.call(item))
+	iterator.reset()  # 305:1-GD7007-OK
+	while iterator.has_next():  # 306:7-GD7003-OK, 306:7-GD7007-OK
+		var item = iterator.next()  # 307:13-GD7007-OK
+		results.append(transform.call(item))  # 308:17-GD7007-OK
 	return results
 
 
 func iterate_until(iterator, predicate):
 	# Stop when predicate returns true
 	var results = []
-	iterator.reset()
-	while iterator.has_next():
-		var item = iterator.next()
-		if predicate.call(item):
+	iterator.reset()  # 315:1-GD7007-OK
+	while iterator.has_next():  # 316:7-GD7003-OK, 316:7-GD7007-OK
+		var item = iterator.next()  # 317:13-GD7007-OK
+		if predicate.call(item):  # 318:5-GD7007-OK
 			break
 		results.append(item)
 	return results
@@ -335,7 +335,7 @@ func create_instance(type_name, params = {}):
 		return null
 
 	var factory = factories[type_name]
-	return factory.create(params)
+	return factory.create(params)  # 338:8-GD7007-OK
 
 
 func create_multiple(type_name, count, params = {}):
@@ -361,7 +361,7 @@ func send_message(from_id, to_id, message):
 		return null
 
 	var recipient = colleagues[to_id]
-	return recipient.receive(from_id, message)
+	return recipient.receive(from_id, message)  # 364:8-GD7003-OK, 364:8-GD7007-OK
 
 
 func broadcast_message(from_id, message):

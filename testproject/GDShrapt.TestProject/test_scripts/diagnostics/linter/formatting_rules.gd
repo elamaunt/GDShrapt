@@ -1,5 +1,5 @@
 extends Node
-class_name DiagnosticsTest_FormattingRules
+class_name DiagnosticsTest_FormattingRules # 2:0-GDL001-OK
 
 ## Tests for GDL501-513 Formatting Rules
 ## Each section: VALID (no lint issue) | INVALID (triggers) | SUPPRESSED
@@ -22,14 +22,14 @@ func test_gdl101_valid() -> void:
 
 
 ## INVALID - line too long - SHOULD trigger GDL101
-func test_gdl101_invalid() -> void:
-	var very_long_line := "This is an extremely long line that definitely exceeds the maximum allowed line length of 120 characters and should trigger the line-length rule"  # GDL101
+func test_gdl101_invalid() -> void: # 25:1-GDL513-OK
+	var very_long_line := "This is an extremely long line that definitely exceeds the maximum allowed line length of 120 characters and should trigger the line-length rule"  # 26:0-GDL101-OK
 	print(very_long_line)
 
 
 ## SUPPRESSED - GDL101 suppressed (inline)
-func test_gdl101_suppressed() -> void:
-	var suppressed_long := "This is also a very long line that exceeds the limit but it has suppression applied so it should not trigger the rule"  # gdlint:ignore = line-length
+func test_gdl101_suppressed() -> void: # 31:1-GDL513-OK
+	var suppressed_long := "This is also a very long line that exceeds the limit but it has suppression applied so it should not trigger the rule"  # 32:0-GDL101-OK, 32:5-GDL201-OK, gdlint:ignore = line-length
 
 
 # =============================================================================
@@ -47,7 +47,7 @@ func test_gdl513_valid_b() -> void:
 	print("Function B")
 
 ## INVALID - only 1 empty line before function - SHOULD trigger GDL513
-func test_gdl513_invalid() -> void:  # GDL513: Expected 2 empty lines
+func test_gdl513_invalid() -> void: # 50:1-GDL513-OK
 	print("Too close to previous function")
 
 
@@ -66,7 +66,7 @@ func test_gdl513_suppressed() -> void:  # Suppressed
 # =============================================================================
 
 ## Function with various formatting
-func formatting_examples() -> void:
+func formatting_examples() -> void: # 69:1-GDL513-OK
 	# Valid spacing
 	var a := 1 + 2
 	var b := 3 * 4

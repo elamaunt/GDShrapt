@@ -1,5 +1,5 @@
 extends Node
-class_name GamePatterns
+class_name GamePatterns  # 2:11-GDL222-OK
 
 ## Real-world game patterns without strict typing.
 ## Common idioms from actual Godot games.
@@ -18,7 +18,7 @@ func add_item(item):
 
 
 func remove_item(index):
-	if index < 0 or index >= inventory.size():
+	if index < 0 or index >= inventory.size():  # 21:4-GD3020-OK, 21:17-GD3020-OK
 		return null
 	return inventory.pop_at(index)
 
@@ -27,7 +27,7 @@ func find_item(predicate):
 	# predicate: (item) -> bool
 	# Returns first matching item or null
 	for item in inventory:
-		if predicate.call(item):
+		if predicate.call(item):  # 30:5-GD7007-OK
 			return item
 	return null
 
@@ -35,7 +35,7 @@ func find_item(predicate):
 func find_all_items(predicate):
 	var result = []
 	for item in inventory:
-		if predicate.call(item):
+		if predicate.call(item):  # 38:5-GD7007-OK
 			result.append(item)
 	return result
 
@@ -45,7 +45,7 @@ func get_item_property(item, prop_name, default_val = null):
 	if item is Dictionary:
 		return item.get(prop_name, default_val)
 	if prop_name in item:
-		return item.get(prop_name)
+		return item.get(prop_name)  # 48:9-GD7007-OK
 	return default_val
 
 
@@ -53,7 +53,7 @@ func set_item_property(item, prop_name, value):
 	if item is Dictionary:
 		item[prop_name] = value
 	elif prop_name in item:
-		item.set(prop_name, value)
+		item.set(prop_name, value)  # 56:2-GD7007-OK
 
 
 func equip_item(slot, item):
@@ -77,7 +77,7 @@ func stack_items(item1, item2):
 	var max_stack = get_item_property(item1, "max_stack", 99)
 
 	var total = count1 + count2
-	if total <= max_stack:
+	if total <= max_stack:  # 80:4-GD3020-OK, 80:4-GD3020-OK
 		set_item_property(item1, "count", total)
 		return null  # item2 fully consumed
 	else:
@@ -140,8 +140,8 @@ func get_dialog_choices():
 	return available
 
 
-func _check_choice_condition(choice):
-	var condition = choice.get("condition")
+func _check_choice_condition(choice):  # 143:5-GDL223-OK
+	var condition = choice.get("condition")  # 144:17-GD7007-OK
 	if condition == null:
 		return true
 
@@ -161,13 +161,13 @@ func _check_choice_condition(choice):
 			"!=":
 				return current != value
 			">":
-				return current > value
+				return current > value  # 164:11-GD3020-OK, 164:11-GD3020-OK
 			"<":
-				return current < value
+				return current < value  # 166:11-GD3020-OK, 166:11-GD3020-OK
 			">=":
-				return current >= value
+				return current >= value  # 168:11-GD3020-OK, 168:11-GD3020-OK
 			"<=":
-				return current <= value
+				return current <= value  # 170:11-GD3020-OK, 170:11-GD3020-OK
 			"has":
 				return value in current if current is Array else false
 
@@ -176,7 +176,7 @@ func _check_choice_condition(choice):
 
 func select_choice(choice_index):
 	var choices = get_dialog_choices()
-	if choice_index < 0 or choice_index >= choices.size():
+	if choice_index < 0 or choice_index >= choices.size():  # 179:4-GD3020-OK, 179:24-GD3020-OK
 		return null
 
 	var choice = choices[choice_index]
@@ -191,7 +191,7 @@ func select_choice(choice_index):
 			dialog_variables[key] = dialog_variables.get(key, 0) + choice["add"][key]
 
 	# Navigate to next node
-	var next_id = choice.get("next")
+	var next_id = choice.get("next")  # 194:15-GD7007-OK
 	if next_id:
 		return start_dialog(next_id)
 
@@ -206,13 +206,13 @@ var quest_progress = {}   # Dict[String, Dict] - quest_id -> progress data
 
 
 func accept_quest(quest_data):
-	var quest_id = quest_data.get("id", str(randi()))
+	var quest_id = quest_data.get("id", str(randi()))  # 209:16-GD7007-OK
 	active_quests[quest_id] = quest_data
 	quest_progress[quest_id] = {}
 
 	# Initialize objectives
-	var objectives = quest_data.get("objectives", [])
-	for i in range(objectives.size()):
+	var objectives = quest_data.get("objectives", [])  # 214:18-GD7007-OK
+	for i in range(objectives.size()):  # 215:16-GD7007-OK
 		quest_progress[quest_id][i] = 0
 
 	return quest_id
@@ -234,14 +234,14 @@ func update_quest_objective(quest_id, objective_index, delta = 1):
 
 
 func _check_quest_completion(quest_id):
-	var quest = active_quests[quest_id]
+	var quest = active_quests[quest_id]  # 238:18-GD7007-OK
 	var objectives = quest.get("objectives", [])
 	var all_complete = true
 
-	for i in range(objectives.size()):
-		var required = objectives[i].get("count", 1)
+	for i in range(objectives.size()):  # 241:16-GD7007-OK
+		var required = objectives[i].get("count", 1)  # 242:17-GD7007-OK, 242:17-GD7006-OK
 		var current = quest_progress[quest_id].get(i, 0)
-		if current < required:
+		if current < required:  # 244:5-GD3020-OK, 244:5-GD3020-OK
 			all_complete = false
 			break
 
@@ -250,7 +250,7 @@ func _check_quest_completion(quest_id):
 
 
 func _complete_quest(quest_id):
-	var quest = active_quests[quest_id]
+	var quest = active_quests[quest_id]  # 258:15-GD7007-OK
 	completed_quests.append(quest_id)
 	active_quests.erase(quest_id)
 
@@ -287,17 +287,17 @@ func can_use_ability(ability_id, user):
 	if cooldowns.get(ability_id, 0.0) > 0:
 		return false
 
-	var ability = abilities[ability_id]
+	var ability = abilities[ability_id]  # 293:12-GD7007-OK
 
 	# Check resource cost
-	var cost = ability.get("cost", {})
+	var cost = ability.get("cost", {})  # 296:5-GD3020-OK, 296:15-GD7006-OK
 	for resource in cost:
 		var current = get_item_property(user, resource, 0)
 		if current < cost[resource]:
 			return false
 
 	# Check custom conditions
-	var conditions = ability.get("conditions", [])
+	var conditions = ability.get("conditions", [])  # 300:18-GD7007-OK
 	for condition in conditions:
 		if condition is Callable:
 			if not condition.call(user):
@@ -310,19 +310,19 @@ func use_ability(ability_id, user, targets = []):
 	if not can_use_ability(ability_id, user):
 		return null
 
-	var ability = abilities[ability_id]
+	var ability = abilities[ability_id]  # 316:12-GD7007-OK
 
 	# Apply cost
-	var cost = ability.get("cost", {})
+	var cost = ability.get("cost", {})  # 319:46-GD7006-OK
 	for resource in cost:
 		var current = get_item_property(user, resource, 0)
 		set_item_property(user, resource, current - cost[resource])
 
 	# Set cooldown
-	cooldowns[ability_id] = ability.get("cooldown", 0.0)
+	cooldowns[ability_id] = ability.get("cooldown", 0.0)  # 322:25-GD7007-OK
 
 	# Execute ability
-	var effect_func = ability.get("effect")
+	var effect_func = ability.get("effect")  # 325:19-GD7007-OK
 	var result = null
 
 	if effect_func is Callable:
@@ -331,13 +331,13 @@ func use_ability(ability_id, user, targets = []):
 		result = _apply_effect_template(effect_func, user, targets)
 
 	# Create lasting effect if needed
-	if ability.has("duration") and ability["duration"] > 0:
+	if ability.has("duration") and ability["duration"] > 0:  # 334:4-GD7007-OK, 334:32-GD7006-OK
 		active_effects.append({
 			"ability_id": ability_id,
 			"user": user,
 			"targets": targets,
 			"remaining": ability["duration"],
-			"tick_effect": ability.get("tick_effect")
+			"tick_effect": ability.get("tick_effect")  # 339:16-GD7006-OK, 340:18-GD7007-OK
 		})
 
 	return result
@@ -358,7 +358,7 @@ func _apply_effect_template(template, user, targets):
 				var scaling = dmg.get("scaling", {})
 				var total = base
 				for stat in scaling:
-					total += get_item_property(user, stat, 0) * scaling[stat]
+					total += get_item_property(user, stat, 0) * scaling[stat]  # 361:49-GD7006-OK
 				effect_result["damage"] = int(total)
 
 		if template.has("heal"):
@@ -381,15 +381,15 @@ func update_abilities(delta):
 	# Update active effects
 	var to_remove = []
 	for i in range(active_effects.size()):
-		var effect = active_effects[i]
+		var effect = active_effects[i]  # 385:2-GD7006-OK
 		effect["remaining"] -= delta
 
 		# Tick effect
-		if effect["tick_effect"] is Callable:
-			effect["tick_effect"].call(effect["user"], effect["targets"], delta)
+		if effect["tick_effect"] is Callable:  # 388:5-GD7006-OK
+			effect["tick_effect"].call(effect["user"], effect["targets"], delta)  # 389:3-GD7007-OK, 389:3-GD7006-OK, 389:30-GD7006-OK, 389:46-GD7006-OK, 389:0-GDL101-OK
 
 		if effect["remaining"] <= 0:
-			to_remove.append(i)
+			to_remove.append(i)  # 391:5-GD7006-OK
 
 	# Remove expired effects (reverse order)
 	for i in range(to_remove.size() - 1, -1, -1):
@@ -409,10 +409,10 @@ func can_craft(recipe_id):
 	if not recipes.has(recipe_id):
 		return false
 
-	var recipe = recipes[recipe_id]
-	var ingredients = recipe.get("ingredients", [])
+	var recipe = recipes[recipe_id]  # 413:19-GD7007-OK
+	var ingredients = recipe.get("ingredients", [])  # 416:20-GD7007-OK
 
-	for ingredient in ingredients:
+	for ingredient in ingredients:  # 417:23-GD7007-OK
 		var item_filter = ingredient.get("filter")
 		var required_count = ingredient.get("count", 1)
 
@@ -422,7 +422,7 @@ func can_craft(recipe_id):
 		for item in matching:
 			total += get_item_property(item, "count", 1)
 
-		if total < required_count:
+		if total < required_count:  # 425:5-GD3020-OK
 			return false
 
 	return true
@@ -455,13 +455,13 @@ func craft(recipe_id):
 	if not can_craft(recipe_id):
 		return null
 
-	var recipe = recipes[recipe_id]
-	var ingredients = recipe.get("ingredients", [])
+	var recipe = recipes[recipe_id]  # 459:19-GD7007-OK
+	var ingredients = recipe.get("ingredients", [])  # 463:20-GD7007-OK
 
 	# Consume ingredients
-	for ingredient in ingredients:
+	for ingredient in ingredients:  # 464:17-GD7007-OK
 		var item_filter = ingredient.get("filter")
-		var required = ingredient.get("count", 1)
+		var required = ingredient.get("count", 1)  # 466:8-GD3020-OK
 
 		while required > 0:
 			var item = _find_first_matching_item(item_filter)
@@ -470,7 +470,7 @@ func craft(recipe_id):
 				break
 
 			var count = get_item_property(item, "count", 1)
-			if count <= required:
+			if count <= required:  # 473:6-GD3020-OK, 473:6-GD3020-OK
 				inventory.erase(item)
 				required -= count
 			else:
@@ -478,7 +478,7 @@ func craft(recipe_id):
 				required = 0
 
 	# Create result
-	var result = recipe.get("result")
+	var result = recipe.get("result")  # 481:14-GD7007-OK
 	if result is Callable:
 		result = result.call()
 	elif result is Dictionary:
@@ -490,7 +490,7 @@ func craft(recipe_id):
 
 # === Save/Load system (no types) ===
 
-func save_game_state():
+func save_game_state():  # 493:1-GDL513-OK
 	return {
 		"inventory": _serialize_array(inventory),
 		"equipped": _serialize_dict(equipped),
@@ -504,13 +504,13 @@ func save_game_state():
 
 
 func load_game_state(data):
-	inventory = _deserialize_array(data.get("inventory", []))
-	equipped = _deserialize_dict(data.get("equipped", {}))
-	dialog_variables = data.get("dialog_variables", {})
-	active_quests = _deserialize_dict(data.get("active_quests", {}))
-	completed_quests = data.get("completed_quests", [])
-	quest_progress = data.get("quest_progress", {})
-	cooldowns = data.get("cooldowns", {})
+	inventory = _deserialize_array(data.get("inventory", []))  # 507:32-GD7007-OK
+	equipped = _deserialize_dict(data.get("equipped", {}))  # 508:30-GD7007-OK
+	dialog_variables = data.get("dialog_variables", {})  # 509:20-GD7007-OK
+	active_quests = _deserialize_dict(data.get("active_quests", {}))  # 510:35-GD7007-OK
+	completed_quests = data.get("completed_quests", [])  # 511:20-GD7007-OK
+	quest_progress = data.get("quest_progress", {})  # 512:18-GD7007-OK
+	cooldowns = data.get("cooldowns", {})  # 513:13-GD7007-OK
 
 
 func _serialize_array(arr):
@@ -523,7 +523,7 @@ func _serialize_array(arr):
 func _serialize_dict(dict):
 	var result = {}
 	for key in dict:
-		result[key] = _serialize_value(dict[key])
+		result[key] = _serialize_value(dict[key])  # 526:33-GD7006-OK
 	return result
 
 
@@ -551,7 +551,7 @@ func _deserialize_array(arr):
 func _deserialize_dict(dict):
 	var result = {}
 	for key in dict:
-		result[key] = _deserialize_value(dict[key])
+		result[key] = _deserialize_value(dict[key])  # 554:35-GD7006-OK
 	return result
 
 

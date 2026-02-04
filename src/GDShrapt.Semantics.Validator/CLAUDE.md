@@ -161,12 +161,39 @@ public class GDSemanticValidatorOptions
     public bool CheckIndexers { get; set; } = true;
     public bool CheckSignalTypes { get; set; } = true;
     public bool CheckGenericTypes { get; set; } = true;
+    public bool CheckDynamicCalls { get; set; } = true;
+
+    /// <summary>
+    /// Enable comment-based suppression (# gd:ignore = CODE).
+    /// Default: true
+    /// </summary>
+    public bool EnableCommentSuppression { get; set; } = true;
 
     public GDDiagnosticSeverity MemberAccessSeverity { get; set; } = Warning;
     public GDDiagnosticSeverity ArgumentTypeSeverity { get; set; } = Warning;
     public GDDiagnosticSeverity SignalTypeSeverity { get; set; } = Warning;
 }
 ```
+
+## Comment-Based Suppression
+
+Supports the same suppression syntax as GDValidator:
+
+```gdscript
+# Suppress single diagnostic
+var x = unsafe_call()  # gd:ignore = GD7003
+
+# Suppress multiple codes
+var y = problematic()  # gd:ignore = GD3001, GD3004
+
+# Suppress entire line (any code starting with pattern)
+var z = dynamic_thing()  # gd:ignore = GD7
+```
+
+**Implementation:**
+- Uses `GDValidatorSuppressionParser.Parse(node)` from GDShrapt.Validator
+- Applies `FilterSuppressed()` to results before returning
+- Enabled by default (`EnableCommentSuppression = true`)
 
 ## Relationship to GDValidator
 
@@ -210,3 +237,26 @@ Validation/
 ├── Level4_Generics/         - Generic type parameter validation
 └── ArgumentTypeValidatorTests.cs
 ```
+
+## Diagnostics Verification (TDD)
+
+All diagnostics are verified using test-driven development.
+
+**Marker Format:**
+```gdscript
+var x = obj.method()  # LINE:COL-CODE-OK
+
+# Multiple diagnostics on same line
+var y = data["a"]["b"]  # 15:10-GD7006-OK, 15:17-GD7006-OK
+```
+
+**Verification Test:**
+```bash
+dotnet test --filter "Name=AllDiagnostics_MustBeVerifiedOrExcluded"
+```
+
+**Report File:** `DIAGNOSTICS_VERIFICATION.txt` shows:
+- Total/Verified/Unverified/FP counts
+- Details for each unverified or false positive
+
+**Current Status:** 1048 diagnostics verified (Validator + Linter + Semantics)

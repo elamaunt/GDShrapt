@@ -191,12 +191,38 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 ## Testing
 
-Test projects mirror component structure. Total: 3,400+ tests (including semantic stress tests and benchmarks).
+Test projects mirror component structure. Total: 4,477+ tests (including semantic stress tests and benchmarks).
 
 Assertion helpers (`GDShrapt.Tests.Common`):
 - `AssertHelper.CompareCodeStrings()` - Compare ignoring whitespace
 - `AssertHelper.NoInvalidTokens()` - Verify no parsing errors
 - `GDRoundTripTestHelper` - Round-trip testing
+
+### Diagnostics Verification (TDD)
+
+All 1,048 diagnostics are verified using test-driven development. Each diagnostic in test files must have a verification marker.
+
+**Marker Format:**
+```gdscript
+var x = obj.method()  # LINE:COL-CODE-OK
+
+# Multiple diagnostics on same line
+var y = data["a"]["b"]  # 15:10-GD7006-OK, 15:17-GD7006-OK
+```
+
+**Marker Types:**
+- `-OK`: Diagnostic expected and verified
+- `-FP`: False positive (diagnostic should NOT be produced)
+- `-Skipped`: Known issue, test skipped
+
+**Verification Test:**
+```bash
+dotnet test src --filter "Name=AllDiagnostics_MustBeVerifiedOrExcluded"
+```
+
+**Report File:** `DIAGNOSTICS_VERIFICATION.txt` (auto-generated) shows verification status.
+
+**Test Script Files:** Located in `testproject/GDShrapt.TestProject/test_scripts/diagnostics/`
 
 ## Package Usage Examples
 

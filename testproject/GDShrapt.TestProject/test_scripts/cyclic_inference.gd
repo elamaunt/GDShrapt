@@ -1,5 +1,5 @@
 extends Node
-class_name CyclicInference
+class_name CyclicInference # 2:11-GDL222-OK
 
 ## Tests cyclic dependencies in type inference.
 ## Methods that call each other, creating inference cycles.
@@ -27,7 +27,7 @@ func process_b(input):
 
 # === Indirect Cycle: A -> B -> C -> A ===
 
-func transform_stage_1(data):
+func transform_stage_1(data): # 30:1-GDL513-OK
 	# First stage: could be String, int, or Array
 	if data is String:
 		return transform_stage_2(data.length())
@@ -46,14 +46,14 @@ func transform_stage_2(value):
 
 func transform_stage_3(value):
 	# Third stage: branches back to stage 1 or returns
-	if value > 100:
+	if value > 100: # 49:4-GD3020-OK
 		return value  # Base case
 	return transform_stage_1(str(value))  # Cycle back
 
 
 # === Mutual Recursion with Different Return Types ===
 
-func even_check(n):
+func even_check(n): # 56:1-GDL513-OK
 	# Returns bool, but depends on odd_check
 	if n == 0:
 		return true
@@ -81,7 +81,7 @@ func state_idle(context):
 
 func state_active(context):
 	# Receives from idle, can go to processing or back
-	var data = context.get("data")
+	var data = context.get("data") # 84:12-GD7007-OK
 	if data:
 		return state_processing(data)
 	return state_idle(context)
@@ -118,23 +118,23 @@ func process_item(item):
 
 # === Accumulator Pattern with Cycle ===
 
-func accumulate_left(list, func_ref, initial):
+func accumulate_left(list, func_ref, initial): # 121:1-GDL513-OK
 	# Standard fold-left, but calls itself
-	if list.is_empty():
+	if list.is_empty(): # 123:4-GD7007-OK
 		return initial
-	var head = list[0]
-	var tail = list.slice(1)
-	var new_acc = func_ref.call(initial, head)
+	var head = list[0] # 125:12-GD7006-OK
+	var tail = list.slice(1) # 126:12-GD7007-OK
+	var new_acc = func_ref.call(initial, head) # 127:15-GD7007-OK
 	return accumulate_left(tail, func_ref, new_acc)
 
 
 func accumulate_right(list, func_ref, initial):
 	# Fold-right, also recursive
-	if list.is_empty():
+	if list.is_empty(): # 133:4-GD7007-OK
 		return initial
-	var head = list[0]
-	var tail = list.slice(1)
-	return func_ref.call(head, accumulate_right(tail, func_ref, initial))
+	var head = list[0] # 135:12-GD7006-OK
+	var tail = list.slice(1) # 136:12-GD7007-OK
+	return func_ref.call(head, accumulate_right(tail, func_ref, initial)) # 137:8-GD7007-OK
 
 
 # === Cross-Reference Between Variables ===
@@ -177,21 +177,21 @@ func _compute_y_with_feedback(z_val):
 
 # === Visitor Pattern Creating Cycles ===
 
-func visit_node(node, visitor):
+func visit_node(node, visitor): # 180:1-GDL513-OK
 	# Node structure unknown, visitor has visit methods
-	var result = visitor.visit(node)
+	var result = visitor.visit(node) # 182:14-GD7003-OK, 182:14-GD7007-OK
 
 	if node.has("children"):
 		for child in node["children"]:
 			var child_result = visit_node(child, visitor)
-			result = visitor.combine(result, child_result)
+			result = visitor.combine(result, child_result) # 187:12-GD7003-OK, 187:12-GD7007-OK
 
 	return result
 
 
 func traverse_and_transform(root, transformer):
 	# Transformer returns new nodes, creating inference cycles
-	var new_node = transformer.transform(root)
+	var new_node = transformer.transform(root) # 194:16-GD7007-OK
 
 	if root.has("left"):
 		new_node["left"] = traverse_and_transform(root["left"], transformer)
@@ -213,8 +213,8 @@ func generator_next(gen_id):
 		generator_state[gen_id] = _init_generator(gen_id)
 
 	var state = generator_state[gen_id]
-	var current = state["current"]
-	state["current"] = _advance_generator(state)
+	var current = state["current"] # 216:15-GD7006-OK
+	state["current"] = _advance_generator(state) # 217:1-GD7006-OK
 
 	return current
 
@@ -225,8 +225,8 @@ func _init_generator(gen_id):
 
 func _advance_generator(state):
 	# Return type same as state["current"] but inference must track it
-	var current = state["current"]
-	var step = state["step"]
+	var current = state["current"] # 228:15-GD7006-OK
+	var step = state["step"] # 229:12-GD7006-OK
 
 	if current is int:
 		return current + step
@@ -240,7 +240,7 @@ func _advance_generator(state):
 
 # === Parser Combinators (Classic Cycle) ===
 
-func parse_expr(tokens, pos):
+func parse_expr(tokens, pos): # 243:1-GDL513-OK
 	# expr -> term (('+' | '-') term)*
 	var result = parse_term(tokens, pos)
 	if result == null:
@@ -249,8 +249,8 @@ func parse_expr(tokens, pos):
 	var value = result["value"]
 	var new_pos = result["pos"]
 
-	while new_pos < tokens.size():
-		var op = tokens[new_pos]
+	while new_pos < tokens.size(): # 252:7-GD3020-OK, 252:17-GD7007-OK
+		var op = tokens[new_pos] # 253:11-GD7006-OK
 		if op != "+" and op != "-":
 			break
 
@@ -276,8 +276,8 @@ func parse_term(tokens, pos):
 	var value = result["value"]
 	var new_pos = result["pos"]
 
-	while new_pos < tokens.size():
-		var op = tokens[new_pos]
+	while new_pos < tokens.size(): # 279:7-GD3020-OK, 279:17-GD7007-OK
+		var op = tokens[new_pos] # 280:11-GD7006-OK
 		if op != "*" and op != "/":
 			break
 
@@ -296,16 +296,16 @@ func parse_term(tokens, pos):
 
 func parse_factor(tokens, pos):
 	# factor -> NUMBER | '(' expr ')'
-	if pos >= tokens.size():
+	if pos >= tokens.size(): # 299:4-GD3020-OK, 299:11-GD7007-OK
 		return null
 
-	var token = tokens[pos]
+	var token = tokens[pos] # 302:13-GD7006-OK
 
 	if token == "(":
 		var inner = parse_expr(tokens, pos + 1)  # CYCLE: calls parse_expr
 		if inner == null:
 			return null
-		if inner["pos"] >= tokens.size() or tokens[inner["pos"]] != ")":
+		if inner["pos"] >= tokens.size() or tokens[inner["pos"]] != ")": # 308:21-GD7007-OK, 308:38-GD7006-OK
 			return null
 		return {"value": inner["value"], "pos": inner["pos"] + 1}
 

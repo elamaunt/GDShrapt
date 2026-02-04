@@ -53,6 +53,9 @@ Validators run sequentially. Order matters for dependency resolution.
 
 ## Suppression Syntax
 
+Two suppression syntaxes are supported:
+
+### Legacy Syntax
 ```gdscript
 # gdvalidate:ignore GD2001
 var x = undefined_var  # No warning
@@ -60,6 +63,22 @@ var x = undefined_var  # No warning
 # gdvalidate:ignore-next-line
 call_unknown()  # No warning
 ```
+
+### Modern Syntax (Recommended)
+```gdscript
+# Suppress single code
+var x = unsafe_call()  # gd:ignore = GD7003
+
+# Suppress multiple codes
+var y = problematic()  # gd:ignore = GD3001, GD3004
+
+# Suppress by prefix pattern (any code starting with GD7)
+var z = dynamic_thing()  # gd:ignore = GD7
+```
+
+### Used By
+- `GDValidator` - Uses `GDValidatorSuppressionParser.Parse()` internally
+- `GDSemanticValidator` - Uses the same parser via `EnableCommentSuppression` option
 
 ## Key Classes
 

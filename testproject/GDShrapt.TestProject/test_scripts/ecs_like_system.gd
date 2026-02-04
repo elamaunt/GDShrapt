@@ -1,5 +1,5 @@
 extends Node
-class_name ECSLikeSystem
+class_name ECSLikeSystem  # 2:11-GDL222-OK
 
 ## Entity-Component-System like architecture.
 ## Maximum dynamic typing and duck typing.
@@ -54,7 +54,7 @@ func get_entity(entity_id):
 
 # === Component management ===
 
-func add_component(entity_id, component_type, component):
+func add_component(entity_id, component_type, component):  # 57:1-GDL513-OK
 	# component can be any object/dictionary
 	if not components.has(component_type):
 		components[component_type] = {}
@@ -63,7 +63,7 @@ func add_component(entity_id, component_type, component):
 	return component
 
 
-func get_component(entity_id, component_type):
+func get_component(entity_id, component_type):  # 67:1-GDL513-OK
 	if not components.has(component_type):
 		return null
 	return components[component_type].get(entity_id)
@@ -90,7 +90,7 @@ func get_all_components(entity_id):
 
 # === Query system ===
 
-func query_entities(component_types):
+func query_entities(component_types):  # 93:1-GDL513-OK
 	# Returns entities that have ALL specified component types
 	var result = []
 
@@ -106,7 +106,7 @@ func query_entities(component_types):
 	return result
 
 
-func query_with_components(component_types):
+func query_with_components(component_types):  # 111:1-GDL513-OK
 	# Returns array of {entity_id, components: Dict}
 	var entity_ids = query_entities(component_types)
 	var result = []
@@ -134,14 +134,14 @@ func query_by_predicate(predicate):
 	for eid in entities:
 		var entity = entities[eid]
 		var comps = get_all_components(eid)
-		if predicate.call(eid, entity, comps):
+		if predicate.call(eid, entity, comps):  # 137:5-GD7007-OK
 			result.append(eid)
 	return result
 
 
 # === System management ===
 
-func register_system(system):
+func register_system(system):  # 144:1-GDL513-OK
 	# system must have update(delta, world) method
 	systems.append(system)
 
@@ -152,7 +152,7 @@ func unregister_system(system):
 
 func update_systems(delta):
 	for system in systems:
-		system.update(delta, self)
+		system.update(delta, self)  # 155:2-GD7007-OK
 
 
 # === Common component types (duck typed) ===
@@ -174,7 +174,7 @@ func create_velocity_component(linear = Vector2.ZERO, angular = 0.0):
 
 
 func create_health_component(current, maximum = -1):
-	if maximum < 0:
+	if maximum < 0:  # 177:4-GD3020-OK
 		maximum = current
 	return {"current": current, "max": maximum}
 
@@ -189,49 +189,49 @@ func create_ai_component(initial_state = "idle", behavior = null):
 
 # === Example systems (duck typed) ===
 
-class MovementSystem:
-	func update(delta, world):
+class MovementSystem:  # 193:1-GDL513-OK
+	func update(delta, world):  # 195:15-GD7007-OK
 		# Query entities with Transform and Velocity
 		var movers = world.query_entities(["Transform", "Velocity"])
 
 		for eid in movers:
-			var transform = world.get_component(eid, "Transform")
-			var velocity = world.get_component(eid, "Velocity")
+			var transform = world.get_component(eid, "Transform")  # 198:19-GD7007-OK
+			var velocity = world.get_component(eid, "Velocity")  # 199:18-GD7007-OK
 
-			transform["position"] += velocity["linear"] * delta
-			transform["rotation"] += velocity["angular"] * delta
+			transform["position"] += velocity["linear"] * delta  # 201:3-GD7006-OK, 201:28-GD7006-OK
+			transform["rotation"] += velocity["angular"] * delta  # 202:3-GD7006-OK, 202:28-GD7006-OK
 
 
 class HealthSystem:
 	signal entity_died(entity_id)
 
-	func update(delta, world):
-		var with_health = world.query_entities(["Health"])
+	func update(delta, world):  # 208:13-GDL202-OK
+		var with_health = world.query_entities(["Health"])  # 209:20-GD7007-OK
 
 		for eid in with_health:
-			var health = world.get_component(eid, "Health")
+			var health = world.get_component(eid, "Health")  # 212:16-GD7007-OK
 
-			if health["current"] <= 0:
+			if health["current"] <= 0:  # 214:6-GD7006-OK
 				entity_died.emit(eid)
 
 
 class AISystem:
-	func update(delta, world):
+	func update(delta, world):  # 220:20-GD7007-OK
 		var ai_entities = world.query_entities(["AI", "Transform"])
 
 		for eid in ai_entities:
-			var ai = world.get_component(eid, "AI")
-			var transform = world.get_component(eid, "Transform")
+			var ai = world.get_component(eid, "AI")  # 223:12-GD7007-OK
+			var transform = world.get_component(eid, "Transform")  # 224:19-GD7007-OK
 
-			if ai["behavior"]:
+			if ai["behavior"]:  # 226:6-GD7006-OK
 				var context = {
 					"entity_id": eid,
 					"transform": transform,
 					"world": world,
 					"delta": delta
 				}
-				var new_state = ai["behavior"].call(ai["state"], context)
-				if new_state:
+				var new_state = ai["behavior"].call(ai["state"], context)  # 233:20-GD7007-OK, 233:20-GD7006-OK, 233:40-GD7006-OK
+				if new_state:  # 235:5-GD7006-OK
 					ai["state"] = new_state
 
 
@@ -240,10 +240,9 @@ class AISystem:
 var archetypes = {}  # Dict[String, Array[Dict]] - archetype_name -> component definitions
 
 
-func define_archetype(name, component_defs):
+func define_archetype(name, component_defs):  # 247:1-GDL513-OK
 	# component_defs is Array of {type: String, factory: Callable or default_value}
 	archetypes[name] = component_defs
-
 
 func create_from_archetype(archetype_name, overrides = {}):
 	if not archetypes.has(archetype_name):
@@ -253,15 +252,15 @@ func create_from_archetype(archetype_name, overrides = {}):
 	var defs = archetypes[archetype_name]
 
 	for comp_def in defs:
-		var comp_type = comp_def["type"]
+		var comp_type = comp_def["type"]  # 255:18-GD7006-OK
 		var component
 
-		if overrides.has(comp_type):
-			component = overrides[comp_type]
-		elif comp_def.has("factory") and comp_def["factory"] is Callable:
-			component = comp_def["factory"].call()
+		if overrides.has(comp_type):  # 258:5-GD7007-OK
+			component = overrides[comp_type]  # 259:15-GD7006-OK
+		elif comp_def.has("factory") and comp_def["factory"] is Callable:  # 260:7-GD7007-OK, 260:35-GD7006-OK
+			component = comp_def["factory"].call()  # 261:15-GD7007-OK, 261:15-GD7006-OK
 		elif comp_def.has("default"):
-			component = comp_def["default"].duplicate() if comp_def["default"] is Dictionary or comp_def["default"] is Array else comp_def["default"]
+			component = comp_def["default"].duplicate() if comp_def["default"] is Dictionary or comp_def["default"] is Array else comp_def["default"]  # 263:0-GDL101-OK
 		else:
 			component = {}
 
@@ -287,8 +286,8 @@ func emit_event(event_type, data = null, source_entity = -1):
 func process_events(handler):
 	# handler: (event) -> void
 	while not event_queue.is_empty():
-		var event = event_queue.pop_front()
-		handler.call(event)
+		var event = event_queue.pop_front()  # 290:2-GD7007-OK
+		handler.call(event)  # 296:5-GD7006-OK
 
 
 func get_events_by_type(event_type):
@@ -310,7 +309,7 @@ func update_spatial_index():
 
 	var positioned = query_entities(["Transform"])
 	for eid in positioned:
-		var transform = get_component(eid, "Transform")
+		var transform = get_component(eid, "Transform")  # 313:28-GD7006-OK
 		var cell = _get_grid_cell(transform["position"])
 
 		if not spatial_grid.has(cell):
@@ -318,24 +317,24 @@ func update_spatial_index():
 		spatial_grid[cell].append(eid)
 
 
-func _get_grid_cell(position):
+func _get_grid_cell(position):  # 322:6-GD7005-OK, 323:6-GD7005-OK
 	return Vector2i(
 		int(position.x / grid_cell_size),
 		int(position.y / grid_cell_size)
 	)
 
 
-func query_nearby(position, radius):
+func query_nearby(position, radius):  # 327:5-GDL225-OK
 	var result = []
 	var center_cell = _get_grid_cell(position)
 	var cell_radius = int(ceil(radius / grid_cell_size))
 
 	for x in range(center_cell.x - cell_radius, center_cell.x + cell_radius + 1):
-		for y in range(center_cell.y - cell_radius, center_cell.y + cell_radius + 1):
+		for y in range(center_cell.y - cell_radius, center_cell.y + cell_radius + 1):  # 333:5-GDL225-OK
 			var cell = Vector2i(x, y)
 			if spatial_grid.has(cell):
 				for eid in spatial_grid[cell]:
-					var transform = get_component(eid, "Transform")
+					var transform = get_component(eid, "Transform")  # 338:8-GD3020-OK, 338:8-GD7007-OK, 338:8-GD7006-OK
 					if transform["position"].distance_to(position) <= radius:
 						result.append(eid)
 
@@ -344,7 +343,7 @@ func query_nearby(position, radius):
 
 # === Serialization ===
 
-func serialize_world():
+func serialize_world():  # 346:1-GDL513-OK
 	var data = {
 		"next_id": next_entity_id,
 		"entities": {},
@@ -352,11 +351,11 @@ func serialize_world():
 	}
 
 	for eid in entities:
-		var entity = entities[eid]
+		var entity = entities[eid]  # 356:11-GD7005-OK
 		data["entities"][eid] = {
 			"name": entity.name,
-			"tags": entity.tags,
-			"active": entity.active
+			"tags": entity.tags,  # 357:11-GD7005-OK
+			"active": entity.active  # 358:13-GD7005-OK
 		}
 
 	for comp_type in components:
@@ -366,31 +365,30 @@ func serialize_world():
 
 	return data
 
-
-func deserialize_world(data):
+func deserialize_world(data):  # 368:1-GDL513-OK
 	entities.clear()
 	components.clear()
 
-	next_entity_id = data.get("next_id", 1)
+	next_entity_id = data.get("next_id", 1)  # 372:18-GD7007-OK
 
-	for eid_str in data.get("entities", {}):
+	for eid_str in data.get("entities", {}):  # 374:16-GD7007-OK
 		var eid = int(eid_str)
-		var edata = data["entities"][eid_str]
-		var entity = Entity.new(eid, edata.get("name", ""))
-		entity.tags = edata.get("tags", [])
-		entity.active = edata.get("active", true)
+		var edata = data["entities"][eid_str]  # 376:14-GD7006-OK, 376:14-GD7006-OK
+		var entity = Entity.new(eid, edata.get("name", ""))  # 377:31-GD7007-OK
+		entity.tags = edata.get("tags", [])  # 378:16-GD7007-OK
+		entity.active = edata.get("active", true)  # 379:18-GD7007-OK
 		entities[eid] = entity
 
-	for comp_type in data.get("components", {}):
+	for comp_type in data.get("components", {}):  # 382:18-GD7007-OK
 		components[comp_type] = {}
-		for eid_str in data["components"][comp_type]:
+		for eid_str in data["components"][comp_type]:  # 384:17-GD7006-OK, 384:17-GD7006-OK
 			var eid = int(eid_str)
-			components[comp_type][eid] = data["components"][comp_type][eid_str]
+			components[comp_type][eid] = data["components"][comp_type][eid_str]  # 386:0-GDL101-OK, 386:32-GD7006-OK
 
 
 # === Debug utilities ===
 
-func debug_entity(entity_id):
+func debug_entity(entity_id):  # 391:1-GDL513-OK
 	var entity = get_entity(entity_id)
 	if not entity:
 		return "Entity not found"

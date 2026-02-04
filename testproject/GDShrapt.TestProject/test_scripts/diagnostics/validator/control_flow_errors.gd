@@ -1,5 +1,5 @@
 extends Node
-class_name DiagnosticsTest_ControlFlowErrors
+class_name DiagnosticsTest_ControlFlowErrors # 2:0-GDL001-OK
 
 ## Tests for GD5xxx Control Flow Error diagnostic codes
 ## Each section: VALID (no diagnostic) | INVALID (triggers) | SUPPRESSED
@@ -24,12 +24,12 @@ func test_gd5001_valid() -> void:
 
 
 ## INVALID - SHOULD trigger GD5001
-func test_gd5001_invalid() -> void:
-	break  # GD5001: break outside loop
+func test_gd5001_invalid() -> void: # 27:1-GDL513-OK
+	break  # 28:1-GD5001-OK
 
 
 ## SUPPRESSED - GD5001 suppressed
-func test_gd5001_suppressed() -> void:
+func test_gd5001_suppressed() -> void: # 32:1-GDL513-OK
 	# gd:ignore = GD5001
 	break  # Suppressed
 
@@ -39,7 +39,7 @@ func test_gd5001_suppressed() -> void:
 # =============================================================================
 
 ## VALID - should NOT trigger GD5002
-func test_gd5002_valid() -> void:
+func test_gd5002_valid() -> void: # 42:1-GDL513-OK
 	for i in range(10):
 		if i % 2 == 0:
 			continue  # continue inside loop - OK
@@ -47,12 +47,12 @@ func test_gd5002_valid() -> void:
 
 
 ## INVALID - SHOULD trigger GD5002
-func test_gd5002_invalid() -> void:
-	continue  # GD5002: continue outside loop
+func test_gd5002_invalid() -> void: # 50:1-GDL513-OK
+	continue  # 51:1-GD5002-OK
 
 
 ## SUPPRESSED - GD5002 suppressed
-func test_gd5002_suppressed() -> void:
+func test_gd5002_suppressed() -> void: # 55:1-GDL513-OK
 	# gd:ignore = GD5002
 	continue  # Suppressed
 
@@ -62,25 +62,25 @@ func test_gd5002_suppressed() -> void:
 # =============================================================================
 
 ## VALID - should NOT trigger GD5004
-func test_gd5004_valid() -> int:
+func test_gd5004_valid() -> int: # 65:1-GDL513-OK
 	var x := 42
 	print(x)
 	return x  # All code before return is reachable
 
 
 ## INVALID - SHOULD trigger GD5004
-func test_gd5004_invalid() -> int:
+func test_gd5004_invalid() -> int: # 72:1-GDL513-OK
 	return 42
-	var unreachable := 100  # GD5004: UnreachableCode
+	var unreachable := 100  # 74:1-GD5004-OK, 74:1-GDL210-OK
 	print(unreachable)
 	return unreachable
 
 
 ## SUPPRESSED - GD5004 suppressed
-func test_gd5004_suppressed() -> int:
+func test_gd5004_suppressed() -> int: # 80:1-GDL513-OK
 	return 42
 	# gd:ignore = GD5004
-	var suppressed := 100  # Suppressed
+	var suppressed := 100  # 83:1-GDL210-OK
 	return suppressed
 
 
@@ -98,11 +98,11 @@ func test_gd5010_valid() -> void:
 
 
 ## INVALID - SHOULD trigger GD5010
-func test_gd5010_invalid() -> void:
-	VALID_CONST = 100  # GD5010: Cannot reassign constant
+func test_gd5010_invalid() -> void: # 101:1-GDL513-OK
+	VALID_CONST = 100  # 102:1-GD5010-OK
 
 
 ## SUPPRESSED - GD5010 suppressed
-func test_gd5010_suppressed() -> void:
+func test_gd5010_suppressed() -> void: # 106:1-GDL513-OK
 	# gd:ignore = GD5010
 	VALID_CONST = 200  # Suppressed

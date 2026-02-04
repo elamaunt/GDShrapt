@@ -113,7 +113,7 @@ var narrowed = query.GetNarrowedType(varName, location);
   - `_unionTypeCache` → `GDUnionTypeService`
   - `_callSiteParameterTypes` → `GDUnionTypeService`
 - [x] All read methods delegate to services
-- [x] Tests passing (4009/4010 tests)
+- [x] Tests passing (4,477+ tests total)
 - [x] GDSemanticModel reduced from 3612 to 3470 lines (-142 lines)
 
 **Phase 7 (Future - Optional):**

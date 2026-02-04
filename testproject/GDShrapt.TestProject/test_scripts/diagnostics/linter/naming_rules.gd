@@ -20,7 +20,7 @@ extends Node
 # =============================================================================
 
 # VALID - PascalCase class name
-class_name DiagnosticsTest_NamingRules  # Note: underscore OK for test files
+class_name DiagnosticsTest_NamingRules  # 23:0-GDL001-OK
 
 
 # =============================================================================
@@ -28,30 +28,30 @@ class_name DiagnosticsTest_NamingRules  # Note: underscore OK for test files
 # =============================================================================
 
 ## VALID - snake_case function names
-func valid_function_name() -> void:
+func valid_function_name() -> void: # 31:5-GDL203-OK
 	pass
 
 
-func another_valid_name() -> void:
+func another_valid_name() -> void: # 35:5-GDL203-OK
 	pass
 
 
-func _private_function() -> void:
+func _private_function() -> void: # 39:5-GDL203-OK
 	pass
 
 
 ## INVALID - PascalCase/camelCase function names - SHOULD trigger GDL002
-func InvalidFunctionName() -> void:  # GDL002: should be snake_case
+func InvalidFunctionName() -> void: # 44:1-GDL513-OK, 44:5-GDL002-OK, 44:5-GDL203-OK
 	pass
 
 
-func camelCaseFunction() -> void:  # GDL002: should be snake_case
+func camelCaseFunction() -> void:  # 48:5-GDL002-OK, 48:5-GDL203-OK
 	pass
 
 
 ## SUPPRESSED - GDL002 suppressed
 # gdlint:ignore = function-name-case
-func SuppressedBadName() -> void:  # Suppressed
+func SuppressedBadName() -> void: # 54:1-GDL513-OK, 54:5-GDL203-OK
 	pass
 
 
@@ -60,14 +60,14 @@ func SuppressedBadName() -> void:  # Suppressed
 # =============================================================================
 
 ## VALID - snake_case variable names
-var valid_variable := 42
+var valid_variable := 42 # 63:1-GDL513-OK
 var another_valid_var: String = "test"
 var _private_var := 100
 
 
 ## INVALID - PascalCase/camelCase variable names - SHOULD trigger GDL003
-var InvalidVariableName := 1  # GDL003: should be snake_case
-var camelCaseVar := 2  # GDL003: should be snake_case
+var InvalidVariableName := 1  # 69:4-GDL003-OK
+var camelCaseVar := 2  # 70:4-GDL003-OK
 
 
 ## SUPPRESSED - GDL003 suppressed
@@ -86,8 +86,8 @@ const MAX_VALUE := 100
 
 
 ## INVALID - lowercase/PascalCase constant names - SHOULD trigger GDL004
-const invalidConstant := 1  # GDL004: should be UPPER_CASE
-const PascalConstant := 2  # GDL004: should be UPPER_CASE
+const invalidConstant := 1  # 89:6-GDL004-OK
+const PascalConstant := 2  # 90:6-GDL004-OK
 
 
 ## SUPPRESSED - GDL004 suppressed
@@ -106,8 +106,8 @@ signal health_changed(new_value: float)
 
 
 ## INVALID - PascalCase/camelCase signal names - SHOULD trigger GDL005
-signal InvalidSignalName  # GDL005: should be snake_case
-signal camelCaseSignal(value: int)  # GDL005: should be snake_case
+signal InvalidSignalName  # 109:7-GDL005-OK
+signal camelCaseSignal(value: int)  # 110:7-GDL005-OK
 
 
 ## SUPPRESSED - GDL005 suppressed
@@ -125,8 +125,8 @@ enum GameState { PLAYING, PAUSED, GAME_OVER }
 
 
 ## INVALID - snake_case/lowercase enum names - SHOULD trigger GDL006
-enum invalid_enum { VALUE }  # GDL006: should be PascalCase
-enum SHOUTING_ENUM { VALUE }  # GDL006: should be PascalCase (not UPPER_CASE)
+enum invalid_enum { VALUE }  # 128:5-GDL006-OK
+enum SHOUTING_ENUM { VALUE }  # 129:5-GDL006-OK
 
 
 ## SUPPRESSED - GDL006 suppressed
@@ -144,8 +144,8 @@ enum ValidEnumValues { FIRST_VALUE, SECOND_VALUE, THIRD }
 
 ## INVALID - lowercase/PascalCase enum values - SHOULD trigger GDL007
 enum InvalidEnumValues {
-	lowercase_value,  # GDL007: should be UPPER_CASE
-	PascalValue,  # GDL007: should be UPPER_CASE
+	lowercase_value,  # 147:1-GDL007-OK
+	PascalValue,  # 148:1-GDL007-OK
 	VALID_ONE
 }
 
@@ -165,16 +165,16 @@ class ValidInnerClass:
 
 
 class AnotherValidClass:
-	func do_something() -> void:
+	func do_something() -> void: # 168:6-GDL203-OK
 		pass
 
 
 ## INVALID - snake_case/lowercase inner class names - SHOULD trigger GDL009
-class invalid_inner_class:  # GDL009: should be PascalCase
+class invalid_inner_class:  # 173:6-GDL009-OK
 	var value := 0
 
 
-class anotherBadClass:  # GDL009: should be PascalCase
+class anotherBadClass:  # 177:6-GDL009-OK
 	pass
 
 
