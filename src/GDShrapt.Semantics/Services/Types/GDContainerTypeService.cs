@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Service for container type inference and profiling.
 /// Tracks element types for Array, Dictionary, and packed array variables.
 /// </summary>
-public class GDContainerTypeService
+internal class GDContainerTypeService
 {
     private readonly Dictionary<string, GDContainerUsageProfile> _containerProfiles = new();
     private readonly Dictionary<string, GDContainerUsageProfile> _classContainerProfiles = new();

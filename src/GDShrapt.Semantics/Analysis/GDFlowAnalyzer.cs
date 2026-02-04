@@ -30,6 +30,10 @@ internal class GDFlowAnalyzer : GDVisitor
     // Container usage profiles for untyped containers (for 'in' operator narrowing)
     private readonly Dictionary<string, GDContainerUsageProfile> _containerProfiles = new();
 
+    // Guard against infinite recursion in ResolveTypeWithFallback
+    private readonly HashSet<GDExpression> _resolvingExpressions = new();
+    private const int MaxResolveDepth = 30;
+
     public GDFlowAnalyzer(GDTypeInferenceEngine? typeEngine)
     {
         _typeEngine = typeEngine;
@@ -185,18 +189,33 @@ internal class GDFlowAnalyzer : GDVisitor
         if (expr == null)
             return null;
 
-        // Try expression type provider first (can use union types and richer inference)
-        var primaryType = _expressionTypeProvider?.Invoke(expr);
-        if (!string.IsNullOrEmpty(primaryType) && primaryType != "Variant")
-            return primaryType;
+        // Guard against infinite recursion
+        if (_resolvingExpressions.Contains(expr))
+            return null;
 
-        // Fall back to basic type engine inference
-        var fallbackType = _typeEngine?.InferType(expr);
-        if (!string.IsNullOrEmpty(fallbackType) && fallbackType != "Variant")
-            return fallbackType;
+        if (_resolvingExpressions.Count >= MaxResolveDepth)
+            return null;
 
-        // Return Variant as last resort if that's what we got
-        return primaryType ?? fallbackType;
+        _resolvingExpressions.Add(expr);
+        try
+        {
+            // Try expression type provider first (can use union types and richer inference)
+            var primaryType = _expressionTypeProvider?.Invoke(expr);
+            if (!string.IsNullOrEmpty(primaryType) && primaryType != "Variant")
+                return primaryType;
+
+            // Fall back to basic type engine inference
+            var fallbackType = _typeEngine?.InferType(expr);
+            if (!string.IsNullOrEmpty(fallbackType) && fallbackType != "Variant")
+                return fallbackType;
+
+            // Return Variant as last resort if that's what we got
+            return primaryType ?? fallbackType;
+        }
+        finally
+        {
+            _resolvingExpressions.Remove(expr);
+        }
     }
 
     #endregion

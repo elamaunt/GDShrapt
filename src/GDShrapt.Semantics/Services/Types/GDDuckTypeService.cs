@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Service for duck type constraint management.
 /// Tracks required methods and properties for Variant/untyped parameters.
 /// </summary>
-public class GDDuckTypeService
+internal class GDDuckTypeService
 {
     private readonly Dictionary<string, GDDuckType> _duckTypes = new();
     private readonly Dictionary<GDNode, GDTypeNarrowingContext> _narrowingContexts = new();

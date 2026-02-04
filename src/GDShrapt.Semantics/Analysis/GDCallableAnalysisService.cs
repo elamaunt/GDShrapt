@@ -14,7 +14,7 @@ namespace GDShrapt.Semantics;
 /// - Inter-procedural parameter type inference
 /// - Argument binding analysis
 /// </summary>
-public class GDCallableAnalysisService
+internal class GDCallableAnalysisService
 {
     private readonly GDCallableCallSiteRegistry _registry;
     private readonly Dictionary<string, GDCallableCallSiteCollector> _collectorsByFile = new();

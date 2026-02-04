@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Registry for type information, union types, and container types.
 /// Extracted from GDSemanticModel to provide cleaner separation of concerns.
 /// </summary>
-public class GDTypeRegistry
+internal class GDTypeRegistry
 {
     // Type tracking
     private readonly Dictionary<GDNode, string> _nodeTypes = new();

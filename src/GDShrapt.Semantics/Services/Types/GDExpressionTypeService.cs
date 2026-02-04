@@ -11,7 +11,7 @@ namespace GDShrapt.Semantics;
 /// Service for expression type inference.
 /// Extracted from GDSemanticModel to reduce its size.
 /// </summary>
-public class GDExpressionTypeService
+internal class GDExpressionTypeService
 {
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly GDTypeInferenceEngine? _typeEngine;
@@ -498,9 +498,14 @@ public class GDExpressionTypeService
         if (_runtimeProvider == null)
             return null;
 
+        var visited = new HashSet<string>();
         var currentType = typeName;
         while (!string.IsNullOrEmpty(currentType))
         {
+            // Prevent infinite loop on cyclic inheritance
+            if (!visited.Add(currentType))
+                return null;
+
             var member = _runtimeProvider.GetMember(currentType, memberName);
             if (member != null)
                 return member;

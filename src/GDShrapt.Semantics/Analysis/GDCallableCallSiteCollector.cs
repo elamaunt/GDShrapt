@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Collects .call() and .callv() call sites from GDScript code.
 /// Tracks assignments to identify which Callable definition is being called.
 /// </summary>
-public class GDCallableCallSiteCollector : GDVisitor
+internal class GDCallableCallSiteCollector : GDVisitor
 {
     private readonly List<GDCallableCallSiteInfo> _callSites = new();
     private readonly GDCallableTracker _tracker;

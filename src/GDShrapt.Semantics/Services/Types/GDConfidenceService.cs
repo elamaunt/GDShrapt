@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// Service for determining reference confidence levels.
 /// Analyzes member access expressions to determine if they are Strict, Potential, or NameMatch.
 /// </summary>
-public class GDConfidenceService
+internal class GDConfidenceService
 {
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly GDDuckTypeService _duckTypeService;

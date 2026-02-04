@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Service for Union type management and resolution.
 /// Tracks union types for Variant variables based on their assignments.
 /// </summary>
-public class GDUnionTypeService
+internal class GDUnionTypeService
 {
     private readonly Dictionary<string, GDUnionType> _unionTypeCache = new();
     private readonly Dictionary<string, GDUnionType> _callSiteParameterTypes = new();
@@ -45,7 +45,9 @@ public class GDUnionTypeService
 
         // Check cache first
         if (_unionTypeCache.TryGetValue(symbolName, out var cached))
+        {
             return cached;
+        }
 
         if (symbol?.DeclarationNode is GDMethodDeclaration method)
         {
@@ -72,7 +74,9 @@ public class GDUnionTypeService
         // Compute from variable profile (for local variables)
         var profile = GetVariableProfile(symbolName);
         if (profile == null)
+        {
             return null;
+        }
 
         var varUnion = profile.ComputeUnionType();
         EnrichUnionTypeIfNeeded(varUnion);

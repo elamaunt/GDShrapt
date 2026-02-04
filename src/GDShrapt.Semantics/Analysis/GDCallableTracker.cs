@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Tracks Callable assignments to variables for resolving call sites to definitions.
 /// Handles local variables, class variables, and aliases.
 /// </summary>
-public class GDCallableTracker
+internal class GDCallableTracker
 {
     private readonly Dictionary<string, List<GDCallableDefinition>> _localVariables = new();
     private readonly Dictionary<string, List<GDCallableDefinition>> _classVariables = new();

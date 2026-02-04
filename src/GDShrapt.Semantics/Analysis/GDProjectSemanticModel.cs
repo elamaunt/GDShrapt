@@ -82,7 +82,7 @@ public class GDProjectSemanticModel : IDisposable
     /// Class-level container registry for cross-file type inference.
     /// Thread-safe lazy initialization.
     /// </summary>
-    public GDClassContainerRegistry ContainerRegistry => _containerRegistry.Value;
+    internal GDClassContainerRegistry ContainerRegistry => _containerRegistry.Value;
 
     /// <summary>
     /// Type dependency graph for incremental invalidation.

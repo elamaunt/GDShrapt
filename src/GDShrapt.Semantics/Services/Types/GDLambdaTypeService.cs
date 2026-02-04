@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Service for lambda and Callable type inference.
 /// Provides methods for inferring lambda parameter types from call sites and inter-procedural analysis.
 /// </summary>
-public class GDLambdaTypeService
+internal class GDLambdaTypeService
 {
     /// <summary>
     /// Delegate for getting the call site registry.

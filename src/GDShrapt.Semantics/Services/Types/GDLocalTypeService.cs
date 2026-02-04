@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Service for local type analysis (inner classes and enums).
 /// Provides methods to check and query local type declarations.
 /// </summary>
-public class GDLocalTypeService
+internal class GDLocalTypeService
 {
     /// <summary>
     /// Delegate for finding symbols by name.

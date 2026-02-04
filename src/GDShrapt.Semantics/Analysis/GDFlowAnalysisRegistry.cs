@@ -80,7 +80,9 @@ internal class GDFlowAnalysisRegistry
         System.Func<IEnumerable<string>>? onreadyVarsGetter = null)
     {
         if (_methodFlowAnalyzers.TryGetValue(method, out var existing))
+        {
             return existing;
+        }
 
         var analyzer = new GDFlowAnalyzer(typeEngine, expressionTypeGetter, onreadyVarsGetter);
         // Cache BEFORE Analyze to prevent infinite recursion

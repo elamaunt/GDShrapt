@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// 1. Method profiles - what call sites exist on Callable parameters
 /// 2. Argument bindings - which lambdas are passed to which method parameters
 /// </summary>
-public class GDCallableFlowCollector : GDVisitor
+internal class GDCallableFlowCollector : GDVisitor
 {
     private readonly GDScriptFile? _sourceFile;
     private readonly Func<GDExpression, string?>? _typeInferrer;

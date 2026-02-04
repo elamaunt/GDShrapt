@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// Registry for Callable call sites across files.
 /// Maps lambda definitions to their call sites for parameter type inference.
 /// </summary>
-public class GDCallableCallSiteRegistry
+internal class GDCallableCallSiteRegistry
 {
     private readonly Dictionary<string, GDCallableDefinition> _definitions = new();
     private readonly Dictionary<string, List<GDCallableCallSiteInfo>> _callSitesByDefinition = new();

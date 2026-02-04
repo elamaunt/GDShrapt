@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Service for @onready and _ready() variable analysis.
 /// </summary>
-public class GDOnreadyService
+internal class GDOnreadyService
 {
     /// <summary>
     /// Delegate for finding symbol by name.

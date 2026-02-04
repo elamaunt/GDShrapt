@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// Service for argument type analysis in function calls.
 /// Extracted from GDSemanticModel to reduce its size.
 /// </summary>
-public class GDArgumentTypeService
+internal class GDArgumentTypeService
 {
     private readonly IGDRuntimeProvider? _runtimeProvider;
 

@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// including cross-file usages where one class's container is modified
 /// from another class.
 /// </summary>
-public class GDClassContainerRegistry
+internal class GDClassContainerRegistry
 {
     // Key: "ClassName.containerName"
     private readonly Dictionary<string, GDContainerUsageProfile> _profiles = new();

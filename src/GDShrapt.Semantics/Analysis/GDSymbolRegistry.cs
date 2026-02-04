@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Registry for symbols, their declarations, and references.
 /// Extracted from GDSemanticModel to provide cleaner separation of concerns.
 /// </summary>
-public class GDSymbolRegistry
+internal class GDSymbolRegistry
 {
     // Symbol tracking
     private readonly Dictionary<GDNode, GDSymbolInfo> _nodeToSymbol = new();

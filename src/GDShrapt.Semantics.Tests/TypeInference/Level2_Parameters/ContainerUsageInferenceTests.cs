@@ -60,8 +60,8 @@ func test():
         var model = CreateSemanticModel(code);
         var arrType = GetVariableType(model, "arr");
 
-        // Should be Array[String|bool|int]
-        arrType.Should().Be("Array[String|bool|int]");
+        // Should be Array with union of String, bool, int (order may vary)
+        AssertUnionTypeEquals(arrType, "Array[String|bool|int]");
     }
 
     [TestMethod]
@@ -215,6 +215,26 @@ func test():
         }
 
         return null;
+    }
+
+    private static void AssertUnionTypeEquals(string actual, string expected)
+    {
+        // Parse container types like "Array[String|bool|int]" and compare union contents ignoring order
+        var actualMatch = System.Text.RegularExpressions.Regex.Match(actual ?? "", @"^(\w+)\[(.+)\]$");
+        var expectedMatch = System.Text.RegularExpressions.Regex.Match(expected ?? "", @"^(\w+)\[(.+)\]$");
+
+        if (!actualMatch.Success || !expectedMatch.Success)
+        {
+            actual.Should().Be(expected);
+            return;
+        }
+
+        actualMatch.Groups[1].Value.Should().Be(expectedMatch.Groups[1].Value, "container type should match");
+
+        var actualTypes = actualMatch.Groups[2].Value.Split('|').OrderBy(t => t).ToArray();
+        var expectedTypes = expectedMatch.Groups[2].Value.Split('|').OrderBy(t => t).ToArray();
+
+        actualTypes.Should().BeEquivalentTo(expectedTypes, "union types should contain same elements");
     }
 
     #endregion

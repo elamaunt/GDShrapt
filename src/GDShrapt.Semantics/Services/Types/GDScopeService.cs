@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Service for scope-related symbol analysis.
 /// Determines declaration scopes, filters references by scope type, and handles local/class member classification.
 /// </summary>
-public class GDScopeService
+internal class GDScopeService
 {
     /// <summary>
     /// Delegate for getting references to a symbol.

@@ -124,7 +124,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// The Callable call site registry for lambda parameter inference.
     /// </summary>
-    public GDCallableCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
+    internal GDCallableCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
 
     /// <summary>
     /// All symbols in this script.
@@ -134,27 +134,27 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the symbol registry.
     /// </summary>
-    public GDSymbolRegistry SymbolRegistry => _symbolRegistry;
+    internal GDSymbolRegistry SymbolRegistry => _symbolRegistry;
 
     /// <summary>
     /// Gets the container type service.
     /// </summary>
-    public GDContainerTypeService ContainerTypeService => _containerTypeService;
+    internal GDContainerTypeService ContainerTypeService => _containerTypeService;
 
     /// <summary>
     /// Gets the union type service.
     /// </summary>
-    public GDUnionTypeService UnionTypeService => _unionTypeService;
+    internal GDUnionTypeService UnionTypeService => _unionTypeService;
 
     /// <summary>
     /// Gets the duck type service.
     /// </summary>
-    public GDDuckTypeService DuckTypeService => _duckTypeService;
+    internal GDDuckTypeService DuckTypeService => _duckTypeService;
 
     /// <summary>
     /// Gets the expression type service.
     /// </summary>
-    public GDExpressionTypeService ExpressionTypeService => _expressionTypeService;
+    internal GDExpressionTypeService ExpressionTypeService => _expressionTypeService;
 
     // Lazy-initialized unified type query interface
     private IGDUnifiedTypeQuery? _typeQuery;
