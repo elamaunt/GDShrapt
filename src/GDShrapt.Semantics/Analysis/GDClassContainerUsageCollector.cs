@@ -39,15 +39,12 @@ internal class GDClassContainerUsageCollector : GDVisitor
 
     /// <summary>
     /// Collects names of class-level untyped containers.
-    /// Phase 1: Variables with [] or {} initializer.
-    /// Phase 2: Variables without initializer (or null) where all assignments are containers.
     /// </summary>
     private HashSet<string> CollectClassContainerNames(GDClassDeclaration classDecl)
     {
         var names = new HashSet<string>();
         var candidatesForAssignmentAnalysis = new HashSet<string>();
 
-        // Phase 1: Static analysis of initializers
         foreach (var member in classDecl.Members ?? Enumerable.Empty<GDClassMember>())
         {
             if (member is GDVariableDeclaration varDecl)
@@ -81,13 +78,11 @@ internal class GDClassContainerUsageCollector : GDVisitor
                 }
                 else if (initializer == null || IsNullLiteral(initializer))
                 {
-                    // Phase 2 candidate: variable without initializer or with null
                     candidatesForAssignmentAnalysis.Add(varName);
                 }
             }
         }
 
-        // Phase 2: Assignment analysis for candidates
         if (candidatesForAssignmentAnalysis.Count > 0)
         {
             var assignmentVisitor = new AssignmentCollectorVisitor(candidatesForAssignmentAnalysis);
@@ -143,10 +138,8 @@ internal class GDClassContainerUsageCollector : GDVisitor
 
             var varDecl = FindVariableDeclaration(classDecl, name);
 
-            // Determine IsDictionary/IsArray (or IsUnion for mixed types)
             if (_inferredContainerTypes.TryGetValue(name, out var inferredType))
             {
-                // Type inferred from assignments (Phase 2)
                 if (inferredType.Contains(" | "))
                 {
                     // Union type: Array | Dictionary
@@ -162,7 +155,6 @@ internal class GDClassContainerUsageCollector : GDVisitor
             }
             else if (varDecl?.Initializer != null)
             {
-                // Type from initializer (Phase 1)
                 var initType = _typeEngine?.InferType(varDecl.Initializer);
                 profile.IsDictionary = initType == "Dictionary";
                 profile.IsArray = initType == "Array" || initType?.StartsWith("Array[") == true;

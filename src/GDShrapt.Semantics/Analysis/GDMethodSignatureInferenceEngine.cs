@@ -53,14 +53,11 @@ internal class GDMethodSignatureInferenceEngine
         if (_isBuilt)
             return;
 
-        // Step 1: Build dependency graph and detect cycles
         _cycleDetector.BuildDependencyGraph();
         _cycleDetector.DetectCycles();
 
-        // Step 2: Get inference order (topological sort with cycle handling)
         var inferenceOrder = _cycleDetector.GetInferenceOrder().ToList();
 
-        // Step 3: Infer types for each method in order
         foreach (var (methodKey, inCycle) in inferenceOrder)
         {
             var parts = methodKey.Split('.');
@@ -76,7 +73,6 @@ internal class GDMethodSignatureInferenceEngine
             }
         }
 
-        // Step 4: Build project report
         _projectReport = BuildProjectReport();
         _isBuilt = true;
     }

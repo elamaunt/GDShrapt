@@ -157,8 +157,8 @@ public class GDNullableAccessValidator : GDValidationVisitor
             return null;
 
         // Skip Signal type - signals are never null, they're built-in class properties
-        var exprType = _semanticModel.GetExpressionType(callerExpr);
-        if (exprType == "Signal")
+        var exprTypeInfo = _semanticModel.TypeSystem.GetType(callerExpr);
+        if (exprTypeInfo.DisplayName == "Signal")
             return null;
 
         // Check if guarded by null check in 'and' expression

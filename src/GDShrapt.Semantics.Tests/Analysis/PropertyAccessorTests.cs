@@ -355,8 +355,8 @@ var prop: int:
         if (scriptFile.Class == null)
             return (null, null);
 
-        var collector = new GDSemanticReferenceCollector(scriptFile);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze();
+        var semanticModel = scriptFile.SemanticModel!;
 
         return (scriptFile.Class, semanticModel);
     }

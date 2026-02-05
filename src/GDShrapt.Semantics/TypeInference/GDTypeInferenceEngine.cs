@@ -193,7 +193,7 @@ namespace GDShrapt.Semantics
                 "self" => callerType,
                 "keys_array" => !string.IsNullOrEmpty(containerInfo.KeyType) ? $"Array[{containerInfo.KeyType}]" : "Array",
                 "values_array" => !string.IsNullOrEmpty(containerInfo.ValueType) ? $"Array[{containerInfo.ValueType}]" : "Array",
-                "callable_return_array" => null, // TODO: Handle map() return type based on callable return
+                "callable_return_array" => null,
                 _ => null
             };
         }

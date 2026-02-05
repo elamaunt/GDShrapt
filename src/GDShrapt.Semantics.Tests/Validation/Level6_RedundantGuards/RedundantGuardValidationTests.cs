@@ -135,8 +135,8 @@ func test(x):
         var runtimeProvider = new GDCompositeRuntimeProvider(
             new GDGodotTypesProvider(),
             null, null, null);
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
 
         var options = new GDSemanticValidatorOptions
         {

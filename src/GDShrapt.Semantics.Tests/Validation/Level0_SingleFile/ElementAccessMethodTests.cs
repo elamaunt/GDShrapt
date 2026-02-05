@@ -254,38 +254,6 @@ func test():
     var nodes: Array[Node2D] = []
     var pos = nodes.front().position
 ";
-        // Debug: Check type inference directly
-        var reader = new GDScriptReader();
-        var classDecl = reader.ParseFileContent(code);
-        var provider = new GDGodotTypesProvider();
-        var engine = new GDTypeInferenceEngine(provider);
-
-        // Find the expression nodes.front().position
-        var testMethod = classDecl?.AllNodes.OfType<GDMethodDeclaration>().FirstOrDefault(m => m.Identifier?.Sequence == "test");
-        var varStmt = testMethod?.AllNodes.OfType<GDVariableDeclarationStatement>().LastOrDefault();
-        var initExpr = varStmt?.Initializer;
-
-        System.Console.WriteLine($"initExpr type: {initExpr?.GetType().Name}");
-        if (initExpr is GDMemberOperatorExpression memberExpr)
-        {
-            System.Console.WriteLine($"memberExpr.Identifier: {memberExpr.Identifier?.Sequence}");
-            System.Console.WriteLine($"memberExpr.CallerExpression type: {memberExpr.CallerExpression?.GetType().Name}");
-
-            var callerType = engine.InferType(memberExpr.CallerExpression);
-            System.Console.WriteLine($"CallerType from InferType: {callerType}");
-
-            if (memberExpr.CallerExpression is GDCallExpression callExpr)
-            {
-                System.Console.WriteLine($"callExpr.CallerExpression type: {callExpr.CallerExpression?.GetType().Name}");
-                if (callExpr.CallerExpression is GDMemberOperatorExpression innerMember)
-                {
-                    System.Console.WriteLine($"innerMember.Identifier: {innerMember.Identifier?.Sequence}");
-                    var innerCallerType = engine.InferType(innerMember.CallerExpression);
-                    System.Console.WriteLine($"innerCallerType: {innerCallerType}");
-                }
-            }
-        }
-
         var diagnostics = ValidateCode(code);
         var unguardedDiagnostics = FilterUnguardedDiagnostics(diagnostics);
         Assert.AreEqual(0, unguardedDiagnostics.Count,
@@ -328,8 +296,8 @@ func test():
             null,
             null,
             null);
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
 
         var options = new GDSemanticValidatorOptions
         {

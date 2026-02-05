@@ -656,22 +656,22 @@ internal partial class GDTypeFlowPanel : AcceptDialog
                 Logger.Info($"  Symbol not found in semantic model");
             }
 
-            var unionType = semanticModel.GetUnionType(node.Label);
+            var unionType = semanticModel.TypeSystem.GetUnionType(node.Label);
             if (unionType != null && unionType.IsUnion)
             {
-                Logger.Info($"  SemanticModel.GetUnionType: {string.Join("|", unionType.Types)}");
+                Logger.Info($"  TypeSystem.GetUnionType: {string.Join("|", unionType.Types)}");
             }
 
-            var duckType = semanticModel.GetDuckType(node.Label);
+            var duckType = semanticModel.TypeSystem.GetDuckType(node.Label);
             if (duckType != null && duckType.HasRequirements)
             {
-                Logger.Info($"  SemanticModel.GetDuckType: methods={string.Join(",", duckType.RequiredMethods)} props={string.Join(",", duckType.RequiredProperties)}");
+                Logger.Info($"  TypeSystem.GetDuckType: methods={string.Join(",", duckType.RequiredMethods)} props={string.Join(",", duckType.RequiredProperties)}");
             }
 
             // Check narrowing at node's location
             if (node.AstNode != null)
             {
-                var narrowedType = semanticModel.GetNarrowedType(node.Label, node.AstNode);
+                var narrowedType = semanticModel.TypeSystem.GetNarrowedType(node.Label, node.AstNode);
                 if (!string.IsNullOrEmpty(narrowedType))
                 {
                     Logger.Info($"  SemanticModel.GetNarrowedType: {narrowedType}");
@@ -850,7 +850,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         if (_focusedNode != null && IsExpressionNode(_focusedNode.Kind))
             return BuildNodeSignatureBBCode(_focusedNode);
 
-        var typeStr = analyzer.GetTypeForNode(decl) ?? "Variant";
+        var typeInfo = analyzer.TypeSystem.GetType(decl);
+        var typeStr = typeInfo.IsVariant ? "Variant" : typeInfo.DisplayName;
         return $"[color=#{ColorToHex(ParamColor)}]{symbol.Name}[/color]: [color=#{ColorToHex(TypeColor)}]{typeStr}[/color]";
     }
 
@@ -892,14 +893,15 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             else
             {
                 // No explicit type - try to get union type from type guards and null checks
-                var unionType = analyzer.GetUnionType(paramName);
+                var unionType = analyzer.TypeSystem.GetUnionType(paramName);
                 if (unionType != null && !unionType.IsEmpty)
                 {
                     paramType = unionType.ToString();
                 }
                 else
                 {
-                    paramType = analyzer.GetTypeForNode(param) ?? "Variant";
+                    var paramTypeInfo = analyzer.TypeSystem.GetType(param);
+                    paramType = paramTypeInfo.IsVariant ? "Variant" : paramTypeInfo.DisplayName;
                 }
             }
 
@@ -914,7 +916,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         sb.Append($"[color=#{ColorToHex(SymbolColor)}])[/color]");
 
         // Get return type: try union type first for methods with multiple return types
-        var returnUnion = analyzer.GetUnionType(methodName);
+        var returnUnion = analyzer.TypeSystem.GetUnionType(methodName);
         string returnType;
         if (returnUnion != null && !returnUnion.IsEmpty)
         {
@@ -922,7 +924,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         }
         else
         {
-            returnType = analyzer.GetTypeForNode(method) ?? "void";
+            var returnTypeInfo = analyzer.TypeSystem.GetType(method);
+            returnType = returnTypeInfo.IsVariant ? "void" : returnTypeInfo.DisplayName;
         }
         sb.Append($" [color=#{ColorToHex(SymbolColor)}]→[/color] ");
         sb.Append(FormatTypeBBCode(returnType, "return"));
@@ -938,7 +941,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         var varName = variable.Identifier?.Sequence ?? "unknown";
         sb.Append($"[color=#{ColorToHex(ParamColor)}]{varName}[/color]");
 
-        var varType = analyzer.GetTypeForNode(variable) ?? "Variant";
+        var varTypeInfo = analyzer.TypeSystem.GetType(variable);
+        var varType = varTypeInfo.IsVariant ? "Variant" : varTypeInfo.DisplayName;
         sb.Append($"[color=#{ColorToHex(SymbolColor)}]: [/color]");
         sb.Append(FormatTypeBBCode(varType, varName));
 
@@ -962,7 +966,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         var paramName = param.Identifier?.Sequence ?? "unknown";
         sb.Append($"[color=#{ColorToHex(ParamColor)}]{paramName}[/color]");
 
-        var paramType = analyzer.GetTypeForNode(param) ?? "Variant";
+        var paramTypeInfo = analyzer.TypeSystem.GetType(param);
+        var paramType = paramTypeInfo.IsVariant ? "Variant" : paramTypeInfo.DisplayName;
         sb.Append($"[color=#{ColorToHex(SymbolColor)}]: [/color]");
         sb.Append(FormatTypeBBCode(paramType, paramName));
 

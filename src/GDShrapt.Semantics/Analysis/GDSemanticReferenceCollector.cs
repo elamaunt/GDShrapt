@@ -1440,7 +1440,6 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var registry = _model!.GetOrCreateCallSiteRegistry();
         registry.RegisterCollector(_scriptFile.FullPath ?? "", collector);
 
-        // Phase 2: Collect inter-procedural Callable flow
         CollectCallableFlow(classDecl, registry);
 
         // Also connect registry to type engine for lambda parameter inference

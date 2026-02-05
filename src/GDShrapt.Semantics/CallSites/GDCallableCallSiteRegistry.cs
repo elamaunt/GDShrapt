@@ -17,7 +17,6 @@ internal class GDCallableCallSiteRegistry
     private readonly Dictionary<string, List<GDCallableCallSiteInfo>> _callSitesByVariable = new();
     private readonly Dictionary<string, GDCallableCallSiteCollector> _collectorsByFile = new();
 
-    // Phase 2: Inter-procedural tracking
     private readonly Dictionary<string, GDMethodCallableProfile> _methodProfiles = new();
     private readonly List<GDCallableArgumentBinding> _argumentBindings = new();
     private readonly Dictionary<string, List<GDCallableCallSiteInfo>> _callSitesByMethodParam = new();

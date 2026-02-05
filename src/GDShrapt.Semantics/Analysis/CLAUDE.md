@@ -216,13 +216,63 @@ GDProjectSemanticModel (entry point)
 **Responsibility:** Project-level semantic model. THE unified entry point for all GDScript semantic operations.
 
 **Public API:**
-- `Load(projectPath)` → Factory method
+
+#### Factory Methods
+- `Load(projectPath)` → Sync factory
+- `LoadAsync(projectPath)` → Async factory
+
+#### Semantic Model Access
 - `GetSemanticModel(file)` → Per-file model
-- `FindSymbolAcrossProject(name)` — Cross-file symbol search
+- `TypeSystem` → Project-level type system (`IGDProjectTypeSystem`)
+
+#### File-Level Delegation
+- `FindSymbolInFile(file, name)` → Symbol lookup (delegates to file model)
+- `GetSymbolAt(file, line, column)` → Position-based symbol
+- `GetExpressionType(expr)` → Auto-finds file
+- `GetTypeForNode(node)` → Auto-finds file
+- `GetSymbolForNode(node)` → Auto-finds file
+
+#### Cross-File Symbol Resolution
+- `FindSymbolsInProject(name)` → Search all files
+- `FindTypeDeclarations(typeName)` → Class declarations
+
+#### Container Profiles
+- `GetMergedContainerProfile(className, variableName)` → Cross-file usages
+- `GetContainerProfilesForClass(className)` → All profiles for class
+
+#### Project-Wide References
+- `GetReferencesInProject(symbol)` → All references across project
+- `GetMemberAccessesInProject(typeName, memberName)` → Member access tracking
+- `GetReferencesInFile(file, symbol)` → Delegates to file model
+
+#### Call Site Queries
+- `GetCallSitesForMethod(className, methodName)` → Find callers
+- `GetCallSitesForMethod(method)` → AST overload
+- `GetCallSitesInFile(filePath)` → Calls in file
+
+#### Type Inference
+- `InferMethodReturnType(className, methodName)` → Return type
+- `InferMethodReturnType(method)` → AST overload
+- `InferParameterTypesInProject(className, methodName)` → Local analysis
+- `InferParameterTypesInProject(method)` → AST overload
+- `InferParameterTypesWithCallSites(className, methodName)` → Cross-file
+- `InferParameterTypesWithCallSites(method)` → AST overload
+
+#### Signal Analysis
+- `SignalConnectionRegistry` → Registry access
+- `GetSignalsCallingMethod(className, methodName)` → Signals for callback
+- `GetSignalsCallingMethod(method)` → AST overload
+- `GetCallbacksForSignal(emitterType, signalName)` → Signal handlers
+- `InferCallbackParameterTypes(className, methodName)` → From signals
+- `InferCallbackParameterTypes(method)` → AST overload
+
+#### Helper Methods
+- `FindFileContaining(node)` → Find file for AST node
+
+#### Services
 - `Services` → Refactoring services
 - `Diagnostics` → Validation services
-- `SignalConnectionRegistry` → Signal connection tracking
-- `InferMethodReturnType()`, `InferParameterTypes()` — Type inference
+- `DependencyGraph` → Type dependency graph
 
 **Caching:**
 - `_fileModels` — Caches per-file semantic models
@@ -232,6 +282,10 @@ GDProjectSemanticModel (entry point)
 - Call site analysis via `GDCallSiteRegistry`
 - Signal connection tracking
 - Inference order computation (handles cycles)
+- Container profile merging from multiple files
+
+**AST Overloads:**
+All methods accepting `(className, methodName)` have overloads accepting `GDMethodDeclaration` for precise identification when the AST node is available
 
 ---
 

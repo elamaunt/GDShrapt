@@ -115,9 +115,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// <summary>
     /// Call site registry for incremental updates.
     /// May be null if call site tracking is not enabled.
-    /// Internal - use GDProjectSemanticModel API for cross-file queries.
     /// </summary>
-    internal GDCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
+    public GDCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
 
     /// <summary>
     /// Logger for diagnostic output.

@@ -103,7 +103,7 @@ namespace GDShrapt.Semantics.Validator
                     continue;
 
                 // Get expected type from parameter (annotation, type guards, or usage)
-                var expectedUnion = _semanticModel.GetUnionType(paramName);
+                var expectedUnion = _semanticModel.TypeSystem.GetUnionType(paramName);
                 var explicitType = param.Type?.BuildName();
 
                 string expectedType = null;
@@ -145,8 +145,10 @@ namespace GDShrapt.Semantics.Validator
         private string InferArgumentType(GDExpression arg)
         {
             // Use semantic model for type inference
-            var type = _semanticModel?.GetExpressionType(arg);
-            return !string.IsNullOrEmpty(type) ? type : "Unknown";
+            var typeInfo = _semanticModel?.TypeSystem.GetType(arg);
+            if (typeInfo == null || typeInfo.IsVariant)
+                return "Unknown";
+            return typeInfo.DisplayName;
         }
 
         /// <summary>

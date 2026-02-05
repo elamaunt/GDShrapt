@@ -1,0 +1,11 @@
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Linq;
+global using GDShrapt.Reader;
+global using GDShrapt.Linter;
+global using GDShrapt.Formatter;
+global using GDShrapt.Semantics;
+global using GDShrapt.Abstractions;
+global using Microsoft.VisualStudio.TestTools.UnitTesting;
+global using FluentAssertions;

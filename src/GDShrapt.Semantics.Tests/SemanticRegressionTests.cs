@@ -118,8 +118,8 @@ func test():
 
         Assert.IsNotNull(strCall, "Should find str() call");
 
-        var type = model.GetExpressionType(strCall);
-        Assert.AreEqual("String", type, "str() should return String type");
+        var typeInfo = model.TypeSystem.GetType(strCall);
+        Assert.AreEqual("String", typeInfo.DisplayName, "str() should return String type");
     }
 
     [TestMethod]
@@ -285,8 +285,8 @@ func test():
             null,
             null,
             null);
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
 
         var options = new GDSemanticValidatorOptions
         {
@@ -314,8 +314,8 @@ func test():
             null,
             null,
             null);
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        return collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        return scriptFile.SemanticModel!;
     }
 
     private static string FormatDiagnostics(IEnumerable<GDDiagnostic> diagnostics)

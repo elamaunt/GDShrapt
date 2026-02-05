@@ -301,7 +301,8 @@ public class TypeInferencePropertyTests
 
             foreach (var symbol in semanticModel.Symbols.OrderBy(s => s.Name))
             {
-                var type = semanticModel.GetEffectiveType(symbol.Name) ?? "null";
+                var typeInfo = semanticModel.TypeSystem.GetTypeInfo(symbol.Name);
+                var type = typeInfo?.InferredType?.DisplayName ?? "null";
                 results.Add($"{script.TypeName}.{symbol.Name}:{type}");
             }
         }

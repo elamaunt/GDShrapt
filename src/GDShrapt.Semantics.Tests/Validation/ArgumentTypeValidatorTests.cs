@@ -491,8 +491,8 @@ func test():
         scriptFile.Reload(code);
 
         var runtimeProvider = GDDefaultRuntimeProvider.Instance;
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
 
         var validator = new GDSemanticValidator(semanticModel, options);
         var result = validator.Validate(classDecl);

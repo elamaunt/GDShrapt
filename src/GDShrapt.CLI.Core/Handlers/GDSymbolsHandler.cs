@@ -81,6 +81,7 @@ public class GDSymbolsHandler : IGDSymbolsHandler
             return null;
 
         var file = _project.GetScript(filePath);
-        return file?.SemanticModel?.GetTypeForNode(node);
+        var typeInfo = file?.SemanticModel?.TypeSystem.GetType(node);
+        return typeInfo?.IsVariant == true ? null : typeInfo?.DisplayName;
     }
 }

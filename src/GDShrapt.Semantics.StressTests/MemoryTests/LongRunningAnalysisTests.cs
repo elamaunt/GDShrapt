@@ -77,8 +77,8 @@ public class LongRunningAnalysisTests
                 if (semanticModel == null) continue;
 
                 // Perform various type queries
-                _ = semanticModel.GetEffectiveType("health");
-                _ = semanticModel.GetEffectiveType("speed");
+                _ = semanticModel.TypeSystem.GetTypeInfo("health");
+                _ = semanticModel.TypeSystem.GetTypeInfo("speed");
                 _ = semanticModel.Symbols.ToList();
                 _ = semanticModel.GetMethods().ToList();
             }

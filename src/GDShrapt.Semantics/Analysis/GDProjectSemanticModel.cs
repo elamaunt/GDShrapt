@@ -15,10 +15,10 @@ namespace GDShrapt.Semantics;
 /// Provides access to:
 /// <list type="bullet">
 ///   <item><description>File-level semantic models via <see cref="GetSemanticModel(GDScriptFile)"/></description></item>
-///   <item><description>Cross-file symbol resolution via <see cref="FindSymbolAcrossProject"/></description></item>
+///   <item><description>Cross-file symbol resolution via <see cref="FindSymbolsInProject"/></description></item>
 ///   <item><description>Refactoring services via <see cref="Services"/></description></item>
 ///   <item><description>Diagnostics and validation via <see cref="Diagnostics"/></description></item>
-///   <item><description>Type inference queries via <see cref="InferMethodReturnType"/> and <see cref="InferParameterTypes"/></description></item>
+///   <item><description>Type inference queries via <see cref="InferMethodReturnType"/> and <see cref="InferParameterTypesInProject"/></description></item>
 /// </list>
 /// </para>
 ///
@@ -54,11 +54,18 @@ public class GDProjectSemanticModel : IDisposable
     private readonly bool _enableIncrementalAnalysis;
     private readonly bool _subscribeToChanges;
     private bool _disposed;
+    private IGDProjectTypeSystem? _typeSystem;
 
     /// <summary>
     /// The underlying project.
     /// </summary>
     public GDScriptProject Project => _project;
+
+    /// <summary>
+    /// Project-level type system for cross-file type resolution.
+    /// Provides unified access to type queries across all files.
+    /// </summary>
+    public IGDProjectTypeSystem TypeSystem => _typeSystem ??= new GDProjectTypeSystem(this);
 
     /// <summary>
     /// Refactoring and code action services.
@@ -106,7 +113,6 @@ public class GDProjectSemanticModel : IDisposable
         _project = project ?? throw new ArgumentNullException(nameof(project));
         _subscribeToChanges = subscribeToChanges;
 
-        // Resolve configuration: explicit > project options > defaults
         var semanticsConfig = config ?? project.Options?.SemanticsConfig ?? new GDSemanticsConfig();
         _debounceInterval = TimeSpan.FromMilliseconds(semanticsConfig.FileChangeDebounceMs);
         _enableIncrementalAnalysis = semanticsConfig.EnableIncrementalAnalysis;
@@ -146,7 +152,6 @@ public class GDProjectSemanticModel : IDisposable
     {
         var registry = new GDClassContainerRegistry();
 
-        // Phase 1: Collect single-file profiles from each script
         foreach (var scriptFile in _project.ScriptFiles)
         {
             var model = GetSemanticModel(scriptFile);
@@ -160,12 +165,10 @@ public class GDProjectSemanticModel : IDisposable
             }
         }
 
-        // Phase 2: Collect cross-file usages and merge them
         var crossFileCollector = new GDCrossFileContainerUsageCollector(_project);
 
         foreach (var profileEntry in registry.AllProfiles)
         {
-            // Parse key to get class and container name
             var parts = profileEntry.Key.Split(new[] { '.' }, 2);
             if (parts.Length != 2)
                 continue;
@@ -173,7 +176,6 @@ public class GDProjectSemanticModel : IDisposable
             var className = parts[0];
             var containerName = parts[1];
 
-            // Collect cross-file usages
             var crossFileUsages = crossFileCollector.CollectUsages(className, containerName);
             if (crossFileUsages.Count > 0)
             {
@@ -213,11 +215,9 @@ public class GDProjectSemanticModel : IDisposable
         if (scriptFile.Class == null)
             return dependencies;
 
-        // Check extends clause
         var extendsType = scriptFile.Class.Extends?.Type;
         if (extendsType != null)
         {
-            // Check if extends uses path (e.g., extends "res://scripts/base.gd")
             if (extendsType is GDStringTypeNode stringTypeNode)
             {
                 var path = stringTypeNode.Path?.Sequence;
@@ -232,7 +232,6 @@ public class GDProjectSemanticModel : IDisposable
             }
             else
             {
-                // Check extends by class name (e.g., extends MyClass)
                 var typeName = extendsType.BuildName();
                 if (!string.IsNullOrEmpty(typeName))
                 {
@@ -245,7 +244,6 @@ public class GDProjectSemanticModel : IDisposable
             }
         }
 
-        // Check preload references
         foreach (var preload in scriptFile.Class.AllNodes.OfType<GDCallExpression>())
         {
             if (preload.CallerExpression is GDIdentifierExpression idExpr &&
@@ -265,7 +263,6 @@ public class GDProjectSemanticModel : IDisposable
             }
         }
 
-        // Check type references in annotations
         foreach (var member in scriptFile.Class.Members)
         {
             if (member is GDVariableDeclaration varDecl && varDecl.Type != null)
@@ -280,7 +277,6 @@ public class GDProjectSemanticModel : IDisposable
 
             if (member is GDMethodDeclaration methodDecl)
             {
-                // Check return type
                 if (methodDecl.ReturnType != null)
                 {
                     var returnTypeName = methodDecl.ReturnType.BuildName();
@@ -291,7 +287,6 @@ public class GDProjectSemanticModel : IDisposable
                     }
                 }
 
-                // Check parameter types
                 if (methodDecl.Parameters != null)
                 {
                     foreach (var param in methodDecl.Parameters)
@@ -363,7 +358,6 @@ public class GDProjectSemanticModel : IDisposable
             var project = GDProjectLoader.LoadProject(projectPath, logger, enableSceneTypes);
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Parallel analysis
             project.AnalyzeAll(cancellationToken);
 
             return new GDProjectSemanticModel(project);
@@ -389,7 +383,6 @@ public class GDProjectSemanticModel : IDisposable
 
         return _fileModels.GetOrAdd(path, _ =>
         {
-            // Ensure the file is analyzed
             if (scriptFile.SemanticModel == null)
             {
                 var runtimeProvider = _project.CreateRuntimeProvider();
@@ -407,11 +400,9 @@ public class GDProjectSemanticModel : IDisposable
         if (string.IsNullOrEmpty(filePath))
             return null;
 
-        // Try cache first
         if (_fileModels.TryGetValue(filePath, out var cached))
             return cached;
 
-        // Find the script file
         var scriptFile = _project.ScriptFiles
             .FirstOrDefault(f => f.FullPath != null &&
                 f.FullPath.Equals(filePath, System.StringComparison.OrdinalIgnoreCase));
@@ -421,12 +412,100 @@ public class GDProjectSemanticModel : IDisposable
 
     #endregion
 
+    #region File-Level Delegation
+
+    /// <summary>
+    /// Finds a symbol by name in a specific file. Delegates to file-level semantic model.
+    /// </summary>
+    public GDSymbolInfo? FindSymbolInFile(GDScriptFile file, string name)
+    {
+        if (file == null || string.IsNullOrEmpty(name))
+            return null;
+
+        var model = GetSemanticModel(file);
+        return model?.FindSymbol(name);
+    }
+
+    /// <summary>
+    /// Gets the symbol at a specific position in a file. Delegates to file-level semantic model.
+    /// </summary>
+    public GDSymbolInfo? GetSymbolAt(GDScriptFile file, int line, int column)
+    {
+        if (file == null)
+            return null;
+
+        var model = GetSemanticModel(file);
+        return model?.GetSymbolAt(line, column);
+    }
+
+    /// <summary>
+    /// Gets the inferred type for an expression. Auto-finds the containing file.
+    /// </summary>
+    public string? GetExpressionType(GDExpression expr)
+    {
+        if (expr == null)
+            return null;
+
+        var file = FindFileContaining(expr);
+        if (file == null)
+            return null;
+
+        var model = GetSemanticModel(file);
+        return model?.GetExpressionType(expr);
+    }
+
+    /// <summary>
+    /// Gets the inferred type for any AST node. Auto-finds the containing file.
+    /// </summary>
+    public string? GetTypeForNode(GDNode node)
+    {
+        if (node == null)
+            return null;
+
+        var file = FindFileContaining(node);
+        if (file == null)
+            return null;
+
+        var model = GetSemanticModel(file);
+        return model?.GetTypeForNode(node);
+    }
+
+    /// <summary>
+    /// Gets the inferred type for any AST node in a specific file.
+    /// </summary>
+    public string? GetTypeForNode(GDScriptFile file, GDNode node)
+    {
+        if (file == null || node == null)
+            return null;
+
+        var model = GetSemanticModel(file);
+        return model?.GetTypeForNode(node);
+    }
+
+    /// <summary>
+    /// Gets the symbol for an AST node. Auto-finds the containing file.
+    /// </summary>
+    public GDSymbolInfo? GetSymbolForNode(GDNode node)
+    {
+        if (node == null)
+            return null;
+
+        var file = FindFileContaining(node);
+        if (file == null)
+            return null;
+
+        var model = GetSemanticModel(file);
+        return model?.GetSymbolForNode(node);
+    }
+
+    #endregion
+
     #region Cross-File Symbol Resolution
 
     /// <summary>
     /// Finds a symbol by name across the entire project.
     /// </summary>
-    public IEnumerable<(GDScriptFile File, GDSymbolInfo Symbol)> FindSymbolAcrossProject(string name)
+    public IEnumerable<(GDScriptFile File, GDSymbolInfo Symbol)> FindSymbolsInProject(string name)
     {
         if (string.IsNullOrEmpty(name))
             yield break;
@@ -449,8 +528,110 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     public IEnumerable<(GDScriptFile File, GDSymbolInfo Symbol)> FindTypeDeclarations(string typeName)
     {
-        return FindSymbolAcrossProject(typeName)
+        return FindSymbolsInProject(typeName)
             .Where(x => x.Symbol.Kind == GDSymbolKind.Class);
+    }
+
+    #endregion
+
+    #region Container Profiles
+
+    /// <summary>
+    /// Gets a merged container profile for a class-level variable.
+    /// Uses the project-wide container registry that includes cross-file usages.
+    /// </summary>
+    /// <param name="className">The class containing the container.</param>
+    /// <param name="variableName">The container variable name.</param>
+    /// <returns>The merged profile including cross-file usages, or null if not found.</returns>
+    public GDContainerUsageProfile? GetMergedContainerProfile(string className, string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return null;
+
+        return ContainerRegistry.GetProfile(className ?? "", variableName);
+    }
+
+    /// <summary>
+    /// Gets all container profiles for a class.
+    /// </summary>
+    /// <param name="className">The class name.</param>
+    /// <returns>Dictionary of container name to profile.</returns>
+    public IReadOnlyDictionary<string, GDContainerUsageProfile> GetContainerProfilesForClass(string className)
+    {
+        return ContainerRegistry.GetProfilesForClass(className ?? "");
+    }
+
+    #endregion
+
+    #region Project-Wide References
+
+    /// <summary>
+    /// Gets all references to a symbol across the entire project.
+    /// </summary>
+    /// <param name="symbol">The symbol to find references for.</param>
+    /// <returns>Enumerable of file and reference pairs.</returns>
+    public IEnumerable<(GDScriptFile File, GDReference Reference)> GetReferencesInProject(GDSymbolInfo symbol)
+    {
+        if (symbol == null)
+            yield break;
+
+        foreach (var scriptFile in _project.ScriptFiles)
+        {
+            var model = GetSemanticModel(scriptFile);
+            if (model == null)
+                continue;
+
+            var refs = model.GetReferencesTo(symbol);
+            if (refs == null)
+                continue;
+
+            foreach (var reference in refs)
+            {
+                yield return (scriptFile, reference);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets all member accesses to a type's member across the project.
+    /// </summary>
+    /// <param name="typeName">The type name (e.g., "OS", "Node").</param>
+    /// <param name="memberName">The member name (e.g., "execute", "add_child").</param>
+    /// <returns>Enumerable of file and reference pairs.</returns>
+    public IEnumerable<(GDScriptFile File, GDReference Reference)> GetMemberAccessesInProject(
+        string typeName,
+        string memberName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
+            yield break;
+
+        foreach (var scriptFile in _project.ScriptFiles)
+        {
+            var model = GetSemanticModel(scriptFile);
+            if (model == null)
+                continue;
+
+            var accesses = model.GetMemberAccesses(typeName, memberName);
+            if (accesses == null)
+                continue;
+
+            foreach (var access in accesses)
+            {
+                yield return (scriptFile, access);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets references to a symbol in a specific file. Delegates to file-level semantic model.
+    /// </summary>
+    public IReadOnlyList<GDReference>? GetReferencesInFile(GDScriptFile file, GDSymbolInfo symbol)
+    {
+        if (file == null || symbol == null)
+            return null;
+
+        var model = GetSemanticModel(file);
+        return model?.GetReferencesTo(symbol);
     }
 
     #endregion
@@ -516,7 +697,6 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     public GDInferredType? InferMethodReturnType(string className, string methodName)
     {
-        // Find the method declaration
         var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
         if (typeDecl.File == null)
             return null;
@@ -525,7 +705,6 @@ public class GDProjectSemanticModel : IDisposable
         if (model == null)
             return null;
 
-        // Find the method in the class
         var classDecl = typeDecl.File.Class;
         if (classDecl == null)
             return null;
@@ -537,7 +716,6 @@ public class GDProjectSemanticModel : IDisposable
         if (method == null)
             return null;
 
-        // Use the model to infer type
         var type = model.GetTypeForNode(method);
         return string.IsNullOrEmpty(type) || type == "Variant"
             ? GDInferredType.Unknown()
@@ -546,14 +724,14 @@ public class GDProjectSemanticModel : IDisposable
 
     /// <summary>
     /// Infers parameter types for a method using local usage analysis.
+    /// Project-level entry point that locates the method and delegates to file-level analysis.
     /// </summary>
-    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypes(
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesInProject(
         string className,
         string methodName)
     {
         var result = new Dictionary<string, GDInferredParameterType>();
 
-        // Find the method declaration
         var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
         if (typeDecl.File == null)
             return result;
@@ -562,7 +740,6 @@ public class GDProjectSemanticModel : IDisposable
         if (model == null)
             return result;
 
-        // Find the method
         var classDecl = typeDecl.File.Class;
         if (classDecl == null)
             return result;
@@ -574,7 +751,6 @@ public class GDProjectSemanticModel : IDisposable
         if (method == null)
             return result;
 
-        // Use local analysis
         return model.InferParameterTypes(method);
     }
 
@@ -595,7 +771,6 @@ public class GDProjectSemanticModel : IDisposable
     {
         var result = new Dictionary<string, GDInferredParameterType>();
 
-        // Find the method declaration
         var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
         if (typeDecl.File == null)
             return result;
@@ -604,7 +779,6 @@ public class GDProjectSemanticModel : IDisposable
         if (model == null)
             return result;
 
-        // Find the method
         var classDecl = typeDecl.File.Class;
         if (classDecl == null)
             return result;
@@ -616,16 +790,12 @@ public class GDProjectSemanticModel : IDisposable
         if (method == null)
             return result;
 
-        // Get local usage analysis
         var localTypes = model.InferParameterTypes(method);
 
-        // Get call site analysis if registry is available
         var callSiteRegistry = _project.CallSiteRegistry;
         if (callSiteRegistry != null)
         {
             var callSiteTypes = GetParameterTypesFromCallSites(className, methodName, method, callSiteRegistry);
-
-            // Merge local and call site results
             return MergeParameterTypes(localTypes, callSiteTypes, preferCallSites);
         }
 
@@ -643,7 +813,6 @@ public class GDProjectSemanticModel : IDisposable
     {
         var result = new Dictionary<string, GDInferredParameterType>();
 
-        // Get parameter names
         var paramNames = method.Parameters?
             .Select(p => p.Identifier?.Sequence)
             .Where(n => !string.IsNullOrEmpty(n))
@@ -653,12 +822,10 @@ public class GDProjectSemanticModel : IDisposable
         if (paramNames.Count == 0)
             return result;
 
-        // Create the analyzer
         var analyzer = new GDCallSiteTypeAnalyzer(
             callSiteRegistry,
             file => GetSemanticModel(file));
 
-        // Analyze call sites
         var callSiteResults = analyzer.AnalyzeCallSites(
             className,
             methodName,
@@ -694,7 +861,6 @@ public class GDProjectSemanticModel : IDisposable
     {
         var result = new Dictionary<string, GDInferredParameterType>();
 
-        // Get all parameter names
         var allParams = new HashSet<string>(localTypes.Keys);
         foreach (var key in callSiteTypes.Keys)
             allParams.Add(key);
@@ -705,18 +871,11 @@ public class GDProjectSemanticModel : IDisposable
             var hasCallSite = callSiteTypes.TryGetValue(paramName, out var callSite);
 
             if (hasLocal && hasCallSite)
-            {
-                // Both sources available - merge or prefer one
                 result[paramName] = MergeSingleParameterType(local!, callSite!, preferCallSites, paramName);
-            }
             else if (hasLocal)
-            {
                 result[paramName] = local!;
-            }
             else if (hasCallSite)
-            {
                 result[paramName] = callSite!;
-            }
         }
 
         return result;
@@ -731,7 +890,6 @@ public class GDProjectSemanticModel : IDisposable
         bool preferCallSites,
         string paramName)
     {
-        // If one is unknown, use the other
         if (local.IsUnknown && !callSite.IsUnknown)
             return callSite;
         if (callSite.IsUnknown && !local.IsUnknown)
@@ -739,26 +897,15 @@ public class GDProjectSemanticModel : IDisposable
         if (local.IsUnknown && callSite.IsUnknown)
             return local;
 
-        // If types match, use the one with higher confidence
         if (local.TypeName == callSite.TypeName)
-        {
             return local.Confidence >= callSite.Confidence ? local : callSite;
-        }
 
-        // Types differ - preference-based selection or union
         if (preferCallSites && callSite.Confidence >= GDTypeConfidence.Medium)
-        {
-            // Call site types are more reliable as they show actual usage
             return callSite;
-        }
 
         if (!preferCallSites && local.Confidence >= GDTypeConfidence.Medium)
-        {
-            // Local duck typing preferred
             return local;
-        }
 
-        // Create a union of both types
         var types = new List<string>();
         if (local.UnionTypes != null)
             types.AddRange(local.UnionTypes);
@@ -770,13 +917,11 @@ public class GDProjectSemanticModel : IDisposable
         else if (!string.IsNullOrEmpty(callSite.TypeName) && callSite.TypeName != "Variant")
             types.Add(callSite.TypeName);
 
-        // Deduplicate
         types = types.Distinct().ToList();
 
         if (types.Count == 0)
             return GDInferredParameterType.Unknown(paramName);
 
-        // Determine confidence (lower of the two sources)
         var confidence = local.Confidence < callSite.Confidence ? local.Confidence : callSite.Confidence;
 
         return GDInferredParameterType.Union(
@@ -801,28 +946,21 @@ public class GDProjectSemanticModel : IDisposable
         {
             _fileModels.TryRemove(filePath, out _);
 
-            // Also invalidate signal connections from this file
             if (_signalRegistry.IsValueCreated)
             {
                 _signalRegistry.Value.UnregisterFile(filePath);
-                // Re-collect connections for this file
                 var collector = new GDSignalConnectionCollector(_project);
                 var file = GetFileByPath(filePath);
                 if (file != null)
                 {
                     var connections = collector.CollectConnectionsInFile(file);
                     foreach (var connection in connections)
-                    {
                         _signalRegistry.Value.Register(connection);
-                    }
                 }
             }
 
-            // Invalidate container profiles from this file
             if (_containerRegistry.IsValueCreated)
-            {
                 _containerRegistry.Value.InvalidateFile(filePath);
-            }
         }
     }
 
@@ -850,7 +988,6 @@ public class GDProjectSemanticModel : IDisposable
         if (_disposed || string.IsNullOrEmpty(e.FilePath))
             return;
 
-        // Cancel previous pending invalidation for this file
         if (_pendingInvalidations.TryRemove(e.FilePath, out var oldCts))
         {
             try { oldCts.Cancel(); }
@@ -861,7 +998,6 @@ public class GDProjectSemanticModel : IDisposable
         var cts = new CancellationTokenSource();
         _pendingInvalidations[e.FilePath] = cts;
 
-        // Schedule debounced invalidation
         Task.Delay(_debounceInterval, cts.Token).ContinueWith(t =>
         {
             if (t.IsCanceled || _disposed)
@@ -877,7 +1013,6 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     private void ProcessIncrementalChange(GDScriptIncrementalChangeEventArgs e)
     {
-        // If incremental analysis is disabled, invalidate everything
         if (!_enableIncrementalAnalysis)
         {
             InvalidateAll();
@@ -885,36 +1020,27 @@ public class GDProjectSemanticModel : IDisposable
             return;
         }
 
-        // Incremental analysis: Invalidate only affected files
-
-        // Invalidate affected file
         InvalidateFile(e.FilePath);
 
-        // Handle rename - also invalidate old path
         if (e.ChangeKind == GDIncrementalChangeKind.Renamed && !string.IsNullOrEmpty(e.OldFilePath))
         {
             InvalidateFile(e.OldFilePath);
-            // Update dependency graph for rename
             if (_dependencyGraph.IsValueCreated)
             {
                 _dependencyGraph.Value.RemoveFile(e.OldFilePath);
             }
         }
 
-        // Update dependency graph for this file
         if (_dependencyGraph.IsValueCreated && e.Script != null)
         {
             if (e.ChangeKind == GDIncrementalChangeKind.Deleted)
-            {
                 _dependencyGraph.Value.RemoveFile(e.FilePath);
-            }
             else
             {
                 var dependencies = CollectFileDependencies(e.Script);
                 _dependencyGraph.Value.UpdateDependencies(e.FilePath, dependencies);
             }
 
-            // Invalidate files that depend on the changed file
             var dependents = _dependencyGraph.Value.GetDependents(e.FilePath);
             foreach (var dependent in dependents)
             {
@@ -923,7 +1049,6 @@ public class GDProjectSemanticModel : IDisposable
             }
         }
 
-        // Update call site registry incrementally if available
         var callSiteRegistry = _project.CallSiteRegistry;
         if (callSiteRegistry != null && e.OldTree != null && e.NewTree != null)
         {
@@ -937,7 +1062,6 @@ public class GDProjectSemanticModel : IDisposable
                 default);
         }
 
-        // Fire event for external subscribers
         FileInvalidated?.Invoke(this, e.FilePath);
     }
 
@@ -960,24 +1084,150 @@ public class GDProjectSemanticModel : IDisposable
         {
             if (disposing)
             {
-                // Unsubscribe from project events
                 if (_subscribeToChanges)
-                {
                     _project.IncrementalChange -= OnIncrementalChange;
-                }
 
-                // Cancel all pending invalidations
                 foreach (var cts in _pendingInvalidations.Values)
                 {
                     try { cts.Cancel(); cts.Dispose(); }
-                    catch { /* Ignore */ }
+                    catch { }
                 }
                 _pendingInvalidations.Clear();
-
                 _fileModels.Clear();
             }
             _disposed = true;
         }
+    }
+
+    #endregion
+
+    #region AST Overloads
+
+    /// <summary>
+    /// Gets the inferred return type for a method. Overload with AST node for precise identification.
+    /// </summary>
+    public GDInferredType? InferMethodReturnType(GDMethodDeclaration method)
+    {
+        if (method == null)
+            return null;
+
+        var file = FindFileContaining(method);
+        if (file == null)
+            return null;
+
+        var model = GetSemanticModel(file);
+        if (model == null)
+            return null;
+
+        var type = model.GetTypeForNode(method);
+        return string.IsNullOrEmpty(type) || type == "Variant"
+            ? GDInferredType.Unknown()
+            : GDInferredType.High(type, $"inferred from {method.Identifier?.Sequence}");
+    }
+
+    /// <summary>
+    /// Infers parameter types for a method (local analysis only). Overload with AST node for precise identification.
+    /// </summary>
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesInProject(GDMethodDeclaration method)
+    {
+        if (method == null)
+            return new Dictionary<string, GDInferredParameterType>();
+
+        var file = FindFileContaining(method);
+        if (file == null)
+            return new Dictionary<string, GDInferredParameterType>();
+
+        var model = GetSemanticModel(file);
+        return model?.InferParameterTypes(method) ?? new Dictionary<string, GDInferredParameterType>();
+    }
+
+    /// <summary>
+    /// Infers parameter types with call site analysis. Overload with AST node for precise identification.
+    /// </summary>
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesWithCallSites(
+        GDMethodDeclaration method,
+        bool preferCallSites = true)
+    {
+        if (method == null)
+            return new Dictionary<string, GDInferredParameterType>();
+
+        var file = FindFileContaining(method);
+        if (file == null)
+            return new Dictionary<string, GDInferredParameterType>();
+
+        var className = file.TypeName ?? "";
+        var methodName = method.Identifier?.Sequence ?? "";
+        return InferParameterTypesWithCallSites(className, methodName, preferCallSites);
+    }
+
+    /// <summary>
+    /// Gets all call sites for a method. Overload with AST node for precise identification.
+    /// </summary>
+    public IReadOnlyList<GDCallSiteEntry> GetCallSitesForMethod(GDMethodDeclaration method)
+    {
+        if (method == null)
+            return Array.Empty<GDCallSiteEntry>();
+
+        var file = FindFileContaining(method);
+        if (file == null)
+            return Array.Empty<GDCallSiteEntry>();
+
+        var className = file.TypeName ?? "";
+        var methodName = method.Identifier?.Sequence ?? "";
+        return GetCallSitesForMethod(className, methodName);
+    }
+
+    /// <summary>
+    /// Gets all signals that call a method. Overload with AST node for precise identification.
+    /// </summary>
+    public IReadOnlyList<GDSignalConnectionEntry> GetSignalsCallingMethod(GDMethodDeclaration method)
+    {
+        if (method == null)
+            return Array.Empty<GDSignalConnectionEntry>();
+
+        var file = FindFileContaining(method);
+        var className = file?.TypeName;
+        var methodName = method.Identifier?.Sequence ?? "";
+        return GetSignalsCallingMethod(className, methodName);
+    }
+
+    /// <summary>
+    /// Infers callback parameter types from signals. Overload with AST node for precise identification.
+    /// </summary>
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferCallbackParameterTypes(GDMethodDeclaration method)
+    {
+        if (method == null)
+            return new Dictionary<string, GDInferredParameterType>();
+
+        var file = FindFileContaining(method);
+        var className = file?.TypeName;
+        var methodName = method.Identifier?.Sequence ?? "";
+        return InferCallbackParameterTypes(className, methodName);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    /// <summary>
+    /// Finds the script file containing a given AST node.
+    /// Walks up the tree to find the root and matches it against project files.
+    /// </summary>
+    public GDScriptFile? FindFileContaining(GDNode? node)
+    {
+        if (node == null)
+            return null;
+
+        var current = node;
+        while (current.Parent != null)
+        {
+            if (current.Parent is GDNode parentNode)
+                current = parentNode;
+            else
+                break;
+        }
+
+        return _project.ScriptFiles.FirstOrDefault(f => f.Class == current);
     }
 
     #endregion
@@ -1025,14 +1275,12 @@ public class GDProjectSemanticModel : IDisposable
         if (connections.Count == 0)
             return result;
 
-        // Find the method to get parameter names
         GDMethodDeclaration? method = null;
         foreach (var file in _project.ScriptFiles)
         {
             if (file.Class == null)
                 continue;
 
-            // Check if this file contains the callback
             var fileTypeName = file.TypeName;
             if (className != null && fileTypeName != className)
                 continue;
@@ -1057,26 +1305,21 @@ public class GDProjectSemanticModel : IDisposable
         if (paramNames.Count == 0)
             return result;
 
-        // Try to get signal parameter types from the emitters
         var runtimeProvider = _project.CreateRuntimeProvider();
         foreach (var connection in connections)
         {
             if (string.IsNullOrEmpty(connection.EmitterType))
                 continue;
 
-            // Try to get signal info
             var signalMember = runtimeProvider?.GetMember(connection.EmitterType, connection.SignalName);
             if (signalMember == null || signalMember.Kind != GDRuntimeMemberKind.Signal)
                 continue;
 
-            // Signal parameters should match callback parameters
-            // For now, mark them as inferred from signal
             for (int i = 0; i < paramNames.Count; i++)
             {
                 var paramName = paramNames[i];
                 if (!result.ContainsKey(paramName))
                 {
-                    // Mark as inferred from signal (Variant for now, could be improved)
                     result[paramName] = GDInferredParameterType.Create(
                         paramName,
                         "Variant",

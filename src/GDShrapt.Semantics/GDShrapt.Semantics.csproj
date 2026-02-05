@@ -21,12 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="GDShrapt.Semantics.Tests" />
-    <InternalsVisibleTo Include="GDShrapt.Semantics.StressTests" />
-    <InternalsVisibleTo Include="GDShrapt.Semantics.Benchmarks" />
-    <InternalsVisibleTo Include="GDShrapt.Semantics.Validator" />
-    <InternalsVisibleTo Include="GDShrapt.Plugin" />
-    <InternalsVisibleTo Include="GDShrapt.CLI.Core" />
+    <InternalsVisibleTo Include="GDShrapt.Semantics.ComponentTests" />
   </ItemGroup>
 
 </Project>

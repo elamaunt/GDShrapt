@@ -88,7 +88,7 @@ public class TypeInferenceBenchmarks
 
         for (int i = 0; i < 30; i++)
         {
-            _ = semanticModel.GetEffectiveType($"variant_{i}");
+            _ = semanticModel.TypeSystem.GetTypeInfo($"variant_{i}");
         }
     }
 
@@ -157,14 +157,14 @@ public class SymbolLookupBenchmarks
     }
 
     [Benchmark]
-    public int GetEffectiveType_MultipleSymbols()
+    public int GetTypeInfo_MultipleSymbols()
     {
         var semanticModel = _targetScript!.SemanticModel!;
         int count = 0;
 
         foreach (var symbol in semanticModel.Symbols.Take(20))
         {
-            if (semanticModel.GetEffectiveType(symbol.Name) != null)
+            if (semanticModel.TypeSystem.GetTypeInfo(symbol.Name) != null)
                 count++;
         }
 

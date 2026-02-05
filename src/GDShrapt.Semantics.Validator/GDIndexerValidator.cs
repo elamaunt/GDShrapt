@@ -58,9 +58,10 @@ public class GDIndexerValidator : GDValidationVisitor
             return;
 
         // Get the type of the container being indexed
-        var callerType = _semanticModel.GetExpressionType(callerExpr);
-        if (string.IsNullOrEmpty(callerType))
+        var callerTypeInfo = _semanticModel.TypeSystem.GetType(callerExpr);
+        if (callerTypeInfo.IsVariant)
             return;
+        var callerType = callerTypeInfo.DisplayName;
 
         // Extract base type for generics (Array[int] -> Array)
         var baseType = ExtractBaseTypeName(callerType);
@@ -85,8 +86,11 @@ public class GDIndexerValidator : GDValidationVisitor
     private void ValidateKeyType(GDIndexerExpression indexer, string callerType, string baseType, GDExpression keyExpr)
     {
         // Get the type of the key expression
-        var keyType = _semanticModel.GetExpressionType(keyExpr);
-        if (string.IsNullOrEmpty(keyType) || keyType == "Variant" || keyType == "Unknown")
+        var keyTypeInfo = _semanticModel.TypeSystem.GetType(keyExpr);
+        if (keyTypeInfo.IsVariant)
+            return;
+        var keyType = keyTypeInfo.DisplayName;
+        if (keyType == "Unknown")
             return;
 
         // Integer-indexed types (Array, String, Packed*Array)

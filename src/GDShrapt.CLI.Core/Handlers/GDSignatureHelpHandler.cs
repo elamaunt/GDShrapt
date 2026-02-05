@@ -226,9 +226,9 @@ public class GDSignatureHelpHandler : IGDSignatureHelpHandler
             return null;
 
         // Use SemanticModel for type inference (per Rule 11)
-        var inferredType = semanticModel.GetTypeForNode(expression);
-        if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant")
-            return inferredType;
+        var typeInfo = semanticModel.TypeSystem.GetType(expression);
+        if (!typeInfo.IsVariant)
+            return typeInfo.DisplayName;
 
         // Fallback for identifier lookup via SemanticModel
         if (expression is GDIdentifierExpression idExpr)

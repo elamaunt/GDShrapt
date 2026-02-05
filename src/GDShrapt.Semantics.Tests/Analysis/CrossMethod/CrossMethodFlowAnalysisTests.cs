@@ -479,8 +479,8 @@ func unsafe_method():
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
 
-        var collector = new GDSemanticReferenceCollector(scriptFile);
-        return collector.BuildSemanticModel();
+        scriptFile.Analyze();
+        return scriptFile.SemanticModel!;
     }
 
     #endregion

@@ -37,6 +37,22 @@ public interface IGDTypeSystem
     string? GetNarrowedType(string variableName, GDNode atLocation);
 
     // ========================================
+    // Union and Duck Types
+    // ========================================
+
+    /// <summary>
+    /// Gets the union type for a symbol (variable, parameter, or return value).
+    /// Union types represent variables that can hold multiple types.
+    /// </summary>
+    GDUnionType? GetUnionType(string symbolName);
+
+    /// <summary>
+    /// Gets the duck type requirements for a variable.
+    /// Duck types represent inferred method/property requirements from usage.
+    /// </summary>
+    GDDuckType? GetDuckType(string variableName);
+
+    // ========================================
     // Container Analysis
     // ========================================
 

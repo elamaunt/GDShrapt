@@ -114,8 +114,8 @@ func test(node):
 
         Assert.IsNotNull(asExpr, "Should find 'as' expression");
 
-        var type = model.GetExpressionType(asExpr);
-        Assert.AreEqual("Sprite2D", type, "'node as Sprite2D' should infer as Sprite2D");
+        var typeInfo = model.TypeSystem.GetType(asExpr);
+        Assert.AreEqual("Sprite2D", typeInfo.DisplayName, "'node as Sprite2D' should infer as Sprite2D");
     }
 
     [TestMethod]
@@ -179,8 +179,8 @@ func test(obj):
 
         Assert.IsNotNull(asExpr, "Should find 'as' expression");
 
-        var type = model.GetExpressionType(asExpr);
-        Assert.AreEqual("MyInner", type, "'obj as MyInner' should infer as MyInner");
+        var typeInfo = model.TypeSystem.GetType(asExpr);
+        Assert.AreEqual("MyInner", typeInfo.DisplayName, "'obj as MyInner' should infer as MyInner");
     }
 
     [TestMethod]
@@ -313,8 +313,8 @@ func test():
             null,
             null,
             null);
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
 
         var options = new GDSemanticValidatorOptions
         {
@@ -342,8 +342,8 @@ func test():
             null,
             null,
             null);
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        return collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        return scriptFile.SemanticModel!;
     }
 
     private static GDValidationResult ValidateWithSyntaxValidator(string code)

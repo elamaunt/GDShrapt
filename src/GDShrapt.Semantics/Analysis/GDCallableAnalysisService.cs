@@ -61,13 +61,11 @@ internal class GDCallableAnalysisService
 
         var filePath = scriptFile.Reference?.FullPath ?? string.Empty;
 
-        // Phase 1: Collect call sites
         var collector = new GDCallableCallSiteCollector(scriptFile, typeInferrer);
         collector.Collect(scriptFile.Class);
         _registry.RegisterCollector(filePath, collector);
         _collectorsByFile[filePath] = collector;
 
-        // Phase 2: Collect inter-procedural flow
         var flowCollector = new GDCallableFlowCollector(scriptFile, typeInferrer, methodResolver);
         flowCollector.Collect(scriptFile.Class);
         _registry.RegisterFlowCollector(filePath, flowCollector);
@@ -233,7 +231,6 @@ internal class GDCallableAnalysisService
         if (paramTypes.Count == 0 && lambda.Parameters?.Count() == 0)
             return new GDCallableSemanticType();
 
-        // Build parameter type list
         var paramCount = lambda.Parameters?.Count() ?? 0;
         var parameterTypes = new List<GDSemanticType>();
 
@@ -250,13 +247,7 @@ internal class GDCallableAnalysisService
             }
         }
 
-        // Try to infer return type
         GDSemanticType? returnType = null;
-        if (returnTypeInferrer != null)
-        {
-            // Could analyze lambda body for return statements
-            // For now, leave as null (unknown)
-        }
 
         return new GDCallableSemanticType(returnType, parameterTypes);
     }

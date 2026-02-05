@@ -10,10 +10,7 @@ namespace GDShrapt.Semantics;
 /// </summary>
 internal class GDClassContainerRegistry
 {
-    // Key: "ClassName.containerName"
     private readonly Dictionary<string, GDContainerUsageProfile> _profiles = new();
-
-    // Track which files have contributed to the registry
     private readonly Dictionary<string, HashSet<string>> _fileContainers = new();
 
     /// <summary>
@@ -32,7 +29,6 @@ internal class GDClassContainerRegistry
         var key = BuildKey(className, containerName);
         _profiles[key] = profile;
 
-        // Track file association for incremental updates
         if (!string.IsNullOrEmpty(sourceFilePath))
         {
             if (!_fileContainers.TryGetValue(sourceFilePath, out var containers))

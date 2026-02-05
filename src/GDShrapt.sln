@@ -67,6 +67,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDShrapt.Semantics.Benchmar
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StressAndBenchmarks", "StressAndBenchmarks", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GDShrapt.Semantics.ComponentTests", "GDShrapt.Semantics.ComponentTests\GDShrapt.Semantics.ComponentTests.csproj", "{A1AA6B55-3A28-441A-83DF-60500FAFD25A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -389,6 +391,18 @@ Global
 		{EA373C94-DFE9-431B-A855-FB2AE0FF7B6A}.Release|x64.Build.0 = Release|Any CPU
 		{EA373C94-DFE9-431B-A855-FB2AE0FF7B6A}.Release|x86.ActiveCfg = Release|Any CPU
 		{EA373C94-DFE9-431B-A855-FB2AE0FF7B6A}.Release|x86.Build.0 = Release|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Release|x64.Build.0 = Release|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1AA6B55-3A28-441A-83DF-60500FAFD25A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

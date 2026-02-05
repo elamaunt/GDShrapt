@@ -259,7 +259,8 @@ namespace GDShrapt.Semantics.Validator
                 if (callerExpr == null)
                     return (null, methodName);
 
-                var callerType = _semanticModel?.GetExpressionType(callerExpr);
+                var callerTypeInfo = _semanticModel?.TypeSystem.GetType(callerExpr);
+                var callerType = callerTypeInfo?.IsVariant == true ? null : callerTypeInfo?.DisplayName;
                 return (callerType, methodName);
             }
 
@@ -333,7 +334,8 @@ namespace GDShrapt.Semantics.Validator
                 if (callerExpr != null)
                 {
                     // Use SemanticModel to get more detailed type info
-                    var detailedType = _semanticModel?.GetExpressionType(callerExpr);
+                    var detailedTypeInfo = _semanticModel?.TypeSystem.GetType(callerExpr);
+                    var detailedType = detailedTypeInfo?.IsVariant == true ? null : detailedTypeInfo?.DisplayName;
                     if (detailedType != null && detailedType.StartsWith("Array[") && detailedType.EndsWith("]"))
                     {
                         return detailedType.Substring(6, detailedType.Length - 7);
@@ -734,8 +736,8 @@ namespace GDShrapt.Semantics.Validator
             // Check if semantic model knows about null initialization
             if (_semanticModel != null)
             {
-                var type = _semanticModel.GetExpressionType(expr);
-                if (type == "null")
+                var typeInfo = _semanticModel.TypeSystem.GetType(expr);
+                if (typeInfo.DisplayName == "null")
                     return true;
             }
 
@@ -1098,8 +1100,10 @@ namespace GDShrapt.Semantics.Validator
             }
 
             // Fall back to semantic model for complex expressions
-            var type = _semanticModel?.GetExpressionType(expr);
-            return type ?? "Unknown";
+            var typeInfo = _semanticModel?.TypeSystem.GetType(expr);
+            if (typeInfo == null || typeInfo.IsVariant)
+                return "Unknown";
+            return typeInfo.DisplayName;
         }
 
         private bool AreTypesCompatibleForArithmetic(
@@ -1153,8 +1157,8 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private bool AreArrayTypesForConcatenation(GDExpression left, GDExpression right)
         {
-            var leftTypeNode = _semanticModel?.GetTypeNodeForExpression(left);
-            var rightTypeNode = _semanticModel?.GetTypeNodeForExpression(right);
+            var leftTypeNode = _semanticModel?.TypeSystem.GetTypeNode(left);
+            var rightTypeNode = _semanticModel?.TypeSystem.GetTypeNode(right);
 
             return leftTypeNode is GDArrayTypeNode && rightTypeNode is GDArrayTypeNode;
         }

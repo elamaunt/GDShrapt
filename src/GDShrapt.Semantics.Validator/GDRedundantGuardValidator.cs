@@ -263,7 +263,12 @@ public class GDRedundantGuardValidator : GDValidationVisitor
         // Get type info (use parent scope for redundancy check)
         var parentNode = GetParentScopeNode(contextNode);
         var flowVarType = _semanticModel.GetFlowVariableType(callerVar, parentNode ?? contextNode);
-        var effectiveType = flowVarType?.EffectiveType ?? _semanticModel.GetExpressionType(memberOp.CallerExpression);
+        string? effectiveType = flowVarType?.EffectiveType;
+        if (string.IsNullOrEmpty(effectiveType))
+        {
+            var callerTypeInfo = _semanticModel.TypeSystem.GetType(memberOp.CallerExpression);
+            effectiveType = callerTypeInfo.IsVariant ? null : callerTypeInfo.DisplayName;
+        }
 
         if (string.IsNullOrEmpty(effectiveType) || effectiveType == "Variant")
             return;

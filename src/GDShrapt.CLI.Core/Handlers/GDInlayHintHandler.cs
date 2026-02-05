@@ -134,9 +134,12 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                     continue;
 
                 // Try to infer type from initializer via SemanticModel
-                var typeName = varStmt.Initializer != null
-                    ? semanticModel.GetTypeForNode(varStmt.Initializer)
-                    : null;
+                string? typeName = null;
+                if (varStmt.Initializer != null)
+                {
+                    var typeInfo = semanticModel.TypeSystem.GetType(varStmt.Initializer);
+                    typeName = typeInfo.IsVariant ? null : typeInfo.DisplayName;
+                }
                 if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
                     continue;
 

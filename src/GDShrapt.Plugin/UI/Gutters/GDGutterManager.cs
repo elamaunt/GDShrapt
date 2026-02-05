@@ -771,12 +771,13 @@ internal class GDGutterManager
 
                     if (semanticModel != null)
                     {
-                        var callerType = semanticModel.GetTypeForNode(memberOp.CallerExpression);
+                        var callerTypeInfo = semanticModel.TypeSystem.GetType(memberOp.CallerExpression);
+                        var callerType = callerTypeInfo.IsVariant ? null : callerTypeInfo.DisplayName;
                         if (callerType == typeName)
                         {
                             strictCount++;
                         }
-                        else if (callerType == "Variant" || string.IsNullOrEmpty(callerType))
+                        else if (callerTypeInfo.IsVariant || string.IsNullOrEmpty(callerType))
                         {
                             potentialCount++;
                         }

@@ -317,7 +317,7 @@ internal class GDTypeFlowGraphBuilder
         if (semanticModel == null)
             return;
 
-        var unionType = semanticModel.GetUnionType(symbolName);
+        var unionType = semanticModel.TypeSystem.GetUnionType(symbolName);
         if (unionType != null && unionType.IsUnion)
         {
             node.IsUnionType = true;
@@ -341,7 +341,7 @@ internal class GDTypeFlowGraphBuilder
         if (semanticModel.ShouldSuppressDuckConstraints(symbolName))
             return;
 
-        var duckType = semanticModel.GetDuckType(symbolName);
+        var duckType = semanticModel.TypeSystem.GetDuckType(symbolName);
         if (duckType == null || !duckType.HasRequirements)
             return;
 
@@ -443,7 +443,8 @@ internal class GDTypeFlowGraphBuilder
                 if (string.IsNullOrEmpty(paramName))
                     continue;
 
-                var paramType = param.Type?.BuildName() ?? semanticModel.GetTypeForNode(param) ?? "Variant";
+                var paramTypeInfo = semanticModel.TypeSystem.GetType(param);
+                var paramType = param.Type?.BuildName() ?? (paramTypeInfo.IsVariant ? "Variant" : paramTypeInfo.DisplayName);
                 var paramNode = new GDTypeFlowNode
                 {
                     Id = GenerateNodeId(),
@@ -686,7 +687,8 @@ internal class GDTypeFlowGraphBuilder
     {
         var sourceObjectName = GetRootIdentifierName(indexer.CallerExpression);
         var sourceType = GetSourceType(indexer.CallerExpression, semanticModel);
-        var resultType = semanticModel.GetTypeForNode(indexer) ?? "Variant";
+        var indexerTypeInfo = semanticModel.TypeSystem.GetType(indexer);
+        var resultType = indexerTypeInfo.IsVariant ? "Variant" : indexerTypeInfo.DisplayName;
         var label = GetIndexerLabel(indexer);
         var description = GetDetailedDescription(indexer, GDTypeFlowNodeKind.IndexerAccess, null, semanticModel);
 
@@ -736,9 +738,16 @@ internal class GDTypeFlowGraphBuilder
     private GDTypeFlowNode CreateNodeFromReturn(GDReturnExpression ret, GDScriptFile script, GDSemanticModel semanticModel)
     {
         var label = GetReturnLabel(ret);
-        var returnedType = ret.Expression != null
-            ? (semanticModel.GetTypeForNode(ret.Expression) ?? "Variant")
-            : "void";
+        string returnedType;
+        if (ret.Expression != null)
+        {
+            var retTypeInfo = semanticModel.TypeSystem.GetType(ret.Expression);
+            returnedType = retTypeInfo.IsVariant ? "Variant" : retTypeInfo.DisplayName;
+        }
+        else
+        {
+            returnedType = "void";
+        }
         var description = GetDetailedDescription(ret, GDTypeFlowNodeKind.ReturnValue, null, semanticModel);
 
         return new GDTypeFlowNode
@@ -804,7 +813,8 @@ internal class GDTypeFlowGraphBuilder
                 if (assignment.RightExpression == null)
                     continue;
 
-                var exprType = semanticModel.GetTypeForNode(assignment.RightExpression);
+                var exprTypeInfo = semanticModel.TypeSystem.GetType(assignment.RightExpression);
+                var exprType = exprTypeInfo.IsVariant ? null : exprTypeInfo.DisplayName;
                 if (exprType == typeName)
                 {
                     var unionSourceNode = new GDTypeFlowNode
@@ -839,7 +849,8 @@ internal class GDTypeFlowGraphBuilder
         if (decl == null)
             return null;
 
-        var typeStr = semanticModel.GetTypeForNode(decl) ?? "Variant";
+        var typeInfoDecl = semanticModel.TypeSystem.GetType(decl);
+        var typeStr = typeInfoDecl.IsVariant ? "Variant" : typeInfoDecl.DisplayName;
         var kind = GetNodeKindFromSymbol(symbol);
         var confidence = CalculateConfidence(symbol, typeStr, semanticModel);
 
@@ -971,7 +982,8 @@ internal class GDTypeFlowGraphBuilder
     {
         var sourceObjectName = GetRootIdentifierName(memberAccess.CallerExpression);
         var sourceType = GetSourceType(memberAccess.CallerExpression, semanticModel);
-        var memberType = semanticModel.GetTypeForNode(memberAccess) ?? "Variant";
+        var memberTypeInfo = semanticModel.TypeSystem.GetType(memberAccess);
+        var memberType = memberTypeInfo.IsVariant ? "Variant" : memberTypeInfo.DisplayName;
         var label = GetMemberAccessLabel(memberAccess);
         var description = GetDetailedDescription(memberAccess, GDTypeFlowNodeKind.PropertyAccess, null, semanticModel);
 
@@ -1322,7 +1334,8 @@ internal class GDTypeFlowGraphBuilder
         if (node is GDCallExpression call &&
             call.CallerExpression is GDMemberOperatorExpression memberOp)
         {
-            var callerType = semanticModel?.GetTypeForNode(memberOp.CallerExpression);
+            var callerTypeInfo = semanticModel?.TypeSystem.GetType(memberOp.CallerExpression);
+            var callerType = callerTypeInfo?.IsVariant == true ? null : callerTypeInfo?.DisplayName;
             var methodName = memberOp.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
                 return $"{callerType}.{methodName}() call";
@@ -1338,7 +1351,8 @@ internal class GDTypeFlowGraphBuilder
     {
         if (node is GDIndexerExpression indexer)
         {
-            var callerType = semanticModel?.GetTypeForNode(indexer.CallerExpression);
+            var callerTypeInfo = semanticModel?.TypeSystem.GetType(indexer.CallerExpression);
+            var callerType = callerTypeInfo?.IsVariant == true ? null : callerTypeInfo?.DisplayName;
             if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
                 return $"{callerType} index access";
         }
@@ -1350,7 +1364,8 @@ internal class GDTypeFlowGraphBuilder
     /// </summary>
     private string GetSourceType(GDExpression callerExpr, GDSemanticModel semanticModel)
     {
-        var sourceType = semanticModel?.GetTypeForNode(callerExpr);
+        var srcTypeInfo = semanticModel?.TypeSystem.GetType(callerExpr);
+        var sourceType = srcTypeInfo?.IsVariant == true ? null : srcTypeInfo?.DisplayName;
         if (!string.IsNullOrEmpty(sourceType) && sourceType != "Variant")
             return sourceType;
         return null;
@@ -1363,7 +1378,8 @@ internal class GDTypeFlowGraphBuilder
     private string InferImprovedType(GDNode expression, GDSemanticModel semanticModel)
     {
         // Delegate all type inference to Semantics - no hardcoded types here
-        return semanticModel?.GetTypeForNode(expression) ?? "Variant";
+        var typeInfo = semanticModel?.TypeSystem.GetType(expression);
+        return typeInfo?.IsVariant == true ? "Variant" : (typeInfo?.DisplayName ?? "Variant");
     }
 
     /// <summary>

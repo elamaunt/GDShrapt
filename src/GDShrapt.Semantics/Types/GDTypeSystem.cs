@@ -21,10 +21,6 @@ public class GDTypeSystem : IGDTypeSystem
     /// <inheritdoc/>
     public IGDRuntimeProvider RuntimeProvider => _runtimeProvider;
 
-    // ========================================
-    // Type Queries
-    // ========================================
-
     /// <inheritdoc/>
     public GDSemanticType GetType(GDNode node)
     {
@@ -55,9 +51,17 @@ public class GDTypeSystem : IGDTypeSystem
         return _model.GetNarrowedType(variableName, atLocation);
     }
 
-    // ========================================
-    // Container Analysis
-    // ========================================
+    /// <inheritdoc/>
+    public GDUnionType? GetUnionType(string symbolName)
+    {
+        return _model.GetUnionType(symbolName);
+    }
+
+    /// <inheritdoc/>
+    public GDDuckType? GetDuckType(string variableName)
+    {
+        return _model.GetDuckType(variableName);
+    }
 
     /// <inheritdoc/>
     public GDContainerElementType? GetContainerElementType(string variableName)
@@ -71,10 +75,6 @@ public class GDTypeSystem : IGDTypeSystem
     {
         return _model.GetContainerProfile(variableName);
     }
-
-    // ========================================
-    // Type Relationships
-    // ========================================
 
     /// <inheritdoc/>
     public bool IsAssignableTo(string sourceType, string targetType)
@@ -96,7 +96,7 @@ public class GDTypeSystem : IGDTypeSystem
 
         var supportingTypes = _runtimeProvider.GetTypesWithOperator(operatorName);
         if (supportingTypes == null || supportingTypes.Count == 0)
-            return true; // No info, assume compatible
+            return true;
 
         return supportingTypes.Contains(typeName) ||
                supportingTypes.Any(st => _runtimeProvider.IsAssignableTo(typeName, st));
@@ -155,17 +155,12 @@ public class GDTypeSystem : IGDTypeSystem
         return _runtimeProvider.IsVectorType(typeName);
     }
 
-    // ========================================
-    // Type Info
-    // ========================================
-
     /// <inheritdoc/>
     public GDTypeInfo? GetTypeInfo(string variableName, GDNode? atLocation = null)
     {
         if (string.IsNullOrEmpty(variableName))
             return null;
 
-        // Try to get from flow analyzer first
         if (atLocation != null)
         {
             var narrowedType = _model.GetNarrowedType(variableName, atLocation);
@@ -174,12 +169,11 @@ public class GDTypeSystem : IGDTypeSystem
                 return new GDTypeInfo
                 {
                     NarrowedType = GDSemanticType.FromTypeName(narrowedType),
-                    Confidence = GDTypeConfidence.Certain // Narrowed type is certain from control flow
+                    Confidence = GDTypeConfidence.Certain
                 };
             }
         }
 
-        // Try to get container profile
         var containerProfile = _model.GetContainerProfile(variableName);
         if (containerProfile != null)
         {
@@ -188,11 +182,10 @@ public class GDTypeSystem : IGDTypeSystem
             {
                 InferredType = GDSemanticType.FromTypeName(containerTypeName),
                 ContainerInfo = containerProfile.ComputeInferredType(),
-                Confidence = GDTypeConfidence.High // Inferred from container analysis
+                Confidence = GDTypeConfidence.High
             };
         }
 
-        // Fallback: try to get symbol info
         var symbol = _model.FindSymbol(variableName);
         if (symbol != null)
         {
@@ -205,7 +198,7 @@ public class GDTypeSystem : IGDTypeSystem
                     ? GDSemanticType.FromTypeName(symbol.TypeName)
                     : GDVariantSemanticType.Instance,
                 Confidence = !string.IsNullOrEmpty(symbol.TypeName)
-                    ? GDTypeConfidence.Certain // Declared type
+                    ? GDTypeConfidence.Certain
                     : GDTypeConfidence.Unknown
             };
         }
@@ -238,10 +231,6 @@ public class GDTypeSystem : IGDTypeSystem
     {
         return _model.InferParameterType(param);
     }
-
-    // ========================================
-    // Helper Methods
-    // ========================================
 
     private static string? ConvertOperatorToString(GDDualOperatorType op)
     {

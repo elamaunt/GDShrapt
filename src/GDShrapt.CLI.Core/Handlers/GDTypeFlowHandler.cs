@@ -264,7 +264,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         RegisterNode(rootNode);
 
         // Add union type info
-        var unionType = semanticModel.GetUnionType(symbolName);
+        var unionType = semanticModel.TypeSystem.GetUnionType(symbolName);
         if (unionType?.IsUnion == true)
         {
             rootNode.IsUnionType = true;
@@ -278,7 +278,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         // Add duck type info (only if not suppressed for known types)
         if (!semanticModel.ShouldSuppressDuckConstraints(symbolName))
         {
-            var duckType = semanticModel.GetDuckType(symbolName);
+            var duckType = semanticModel.TypeSystem.GetDuckType(symbolName);
             if (duckType?.HasRequirements == true)
             {
                 rootNode.HasDuckConstraints = true;
@@ -305,7 +305,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         GDScriptFile script,
         GDSemanticModel semanticModel)
     {
-        var type = semanticModel.GetTypeForNode(symbol.DeclarationNode) ?? symbol.TypeName ?? "Variant";
+        var typeInfo = semanticModel.TypeSystem.GetType(symbol.DeclarationNode);
+        var type = typeInfo.IsVariant ? (symbol.TypeName ?? "Variant") : typeInfo.DisplayName;
         var kind = MapSymbolKind(symbol.Kind);
         var confidence = CalculateConfidence(symbol, type);
 
@@ -421,7 +422,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         // For parameters with default values
         if (symbol.DeclarationNode is GDParameterDeclaration param && param.DefaultValue != null)
         {
-            var defaultType = semanticModel.GetTypeForNode(param.DefaultValue) ?? "Variant";
+            var defaultTypeInfo = semanticModel.TypeSystem.GetType(param.DefaultValue);
+            var defaultType = defaultTypeInfo.IsVariant ? "Variant" : defaultTypeInfo.DisplayName;
             var defaultNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
@@ -443,7 +445,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         // For variables with initializers
         if (symbol.DeclarationNode is GDVariableDeclaration variable && variable.Initializer != null)
         {
-            var initType = semanticModel.GetTypeForNode(variable.Initializer) ?? "Variant";
+            var initTypeInfo = semanticModel.TypeSystem.GetType(variable.Initializer);
+            var initType = initTypeInfo.IsVariant ? "Variant" : initTypeInfo.DisplayName;
             var initNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
@@ -465,7 +468,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         // For local variable declarations with initializers
         if (symbol.DeclarationNode is GDVariableDeclarationStatement varStmt && varStmt.Initializer != null)
         {
-            var initType = semanticModel.GetTypeForNode(varStmt.Initializer) ?? "Variant";
+            var varInitTypeInfo = semanticModel.TypeSystem.GetType(varStmt.Initializer);
+            var initType = varInitTypeInfo.IsVariant ? "Variant" : varInitTypeInfo.DisplayName;
             var initNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
@@ -491,7 +495,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
             if (assignment.RightExpression == null)
                 continue;
 
-            var assignType = semanticModel.GetTypeForNode(assignment.RightExpression) ?? "Variant";
+            var assignTypeInfo = semanticModel.TypeSystem.GetType(assignment.RightExpression);
+            var assignType = assignTypeInfo.IsVariant ? "Variant" : assignTypeInfo.DisplayName;
             var assignNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
@@ -583,7 +588,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
                 else
                 {
                     // No explicit type - try to get union type from type guards and null checks
-                    var unionType = semanticModel.GetUnionType(paramName);
+                    var unionType = semanticModel.TypeSystem.GetUnionType(paramName);
                     if (unionType != null && !unionType.IsEmpty)
                     {
                         paramType = unionType.ToString();
@@ -591,7 +596,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
                     }
                     else
                     {
-                        paramType = semanticModel.GetTypeForNode(param) ?? "Variant";
+                        var paramTypeInfo = semanticModel.TypeSystem.GetType(param);
+                        paramType = paramTypeInfo.IsVariant ? "Variant" : paramTypeInfo.DisplayName;
                         confidence = 0.5f;
                     }
                 }
@@ -710,13 +716,14 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         var parent = reference.ReferenceNode?.Parent;
         if (parent != null)
         {
-            var parentType = semanticModel.GetTypeForNode(parent);
-            if (!string.IsNullOrEmpty(parentType))
-                return parentType;
+            var parentTypeInfo = semanticModel.TypeSystem.GetType(parent);
+            if (!parentTypeInfo.IsVariant)
+                return parentTypeInfo.DisplayName;
         }
 
         // Fall back to the reference's inferred type or default
-        return semanticModel.GetTypeForNode(reference.ReferenceNode) ?? defaultType ?? "Variant";
+        var refTypeInfo = semanticModel.TypeSystem.GetType(reference.ReferenceNode);
+        return refTypeInfo.IsVariant ? (defaultType ?? "Variant") : refTypeInfo.DisplayName;
     }
 
     /// <summary>
@@ -792,8 +799,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
                 // Check if this identifier is being accessed via member operator
                 if (parent is GDMemberOperatorExpression memberOp && memberOp.CallerExpression == node)
                 {
-                    var callerType = semanticModel.GetTypeForNode(node);
-                    return (name, callerType);
+                    var callerTypeInfo = semanticModel.TypeSystem.GetType(node);
+                    return (name, callerTypeInfo.IsVariant ? null : callerTypeInfo.DisplayName);
                 }
 
                 // Check if used as caller in a call expression
@@ -802,16 +809,16 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
                     if (call.CallerExpression is GDMemberOperatorExpression memOp &&
                         memOp.CallerExpression == node)
                     {
-                        var callerType = semanticModel.GetTypeForNode(node);
-                        return (name, callerType);
+                        var callCallerTypeInfo = semanticModel.TypeSystem.GetType(node);
+                        return (name, callCallerTypeInfo.IsVariant ? null : callCallerTypeInfo.DisplayName);
                     }
                 }
 
                 // Check if used in indexer
                 if (parent is GDIndexerExpression indexer && indexer.CallerExpression == node)
                 {
-                    var callerType = semanticModel.GetTypeForNode(node);
-                    return (name, callerType);
+                    var indexerTypeInfo = semanticModel.TypeSystem.GetType(node);
+                    return (name, indexerTypeInfo.IsVariant ? null : indexerTypeInfo.DisplayName);
                 }
 
                 return (name, null);
@@ -963,9 +970,16 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
             var returnStatements = method.AllNodes.OfType<GDReturnExpression>().Take(10);
             foreach (var ret in returnStatements)
             {
-                var returnedType = ret.Expression != null
-                    ? (semanticModel.GetTypeForNode(ret.Expression) ?? "Variant")
-                    : "void";
+                string returnedType;
+                if (ret.Expression != null)
+                {
+                    var retTypeInfo = semanticModel.TypeSystem.GetType(ret.Expression);
+                    returnedType = retTypeInfo.IsVariant ? "Variant" : retTypeInfo.DisplayName;
+                }
+                else
+                {
+                    returnedType = "void";
+                }
 
                 var returnNode = new GDTypeFlowNode
                 {
@@ -993,7 +1007,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
             if (reference.ReferenceNode == null)
                 continue;
 
-            var usageType = semanticModel.GetTypeForNode(reference.ReferenceNode) ?? node.Type;
+            var usageTypeInfo = semanticModel.TypeSystem.GetType(reference.ReferenceNode);
+            var usageType = usageTypeInfo.IsVariant ? node.Type : usageTypeInfo.DisplayName;
             var usageNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
@@ -1275,7 +1290,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         RegisterNode(node);
 
         // Add union type info
-        var unionType = semanticModel.GetUnionType(symbolName);
+        var unionType = semanticModel.TypeSystem.GetUnionType(symbolName);
         if (unionType?.IsUnion == true)
         {
             node.IsUnionType = true;
@@ -1289,7 +1304,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         // Add duck type info (only if not suppressed for known types)
         if (!semanticModel.ShouldSuppressDuckConstraints(symbolName))
         {
-            var duckType = semanticModel.GetDuckType(symbolName);
+            var duckType = semanticModel.TypeSystem.GetDuckType(symbolName);
             if (duckType?.HasRequirements == true)
             {
                 node.HasDuckConstraints = true;
@@ -1333,6 +1348,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         if (astNode == null)
             return null;
 
-        return script.SemanticModel.GetTypeForNode(astNode);
+        var typeInfo = script.SemanticModel.TypeSystem.GetType(astNode);
+        return typeInfo.IsVariant ? null : typeInfo.DisplayName;
     }
 }

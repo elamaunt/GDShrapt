@@ -391,13 +391,15 @@ func process_text(text):
 
         // Use composite provider that combines Godot types (Node2D.position, etc.)
         // with built-in GDScript types (String.length, Array.size, etc.)
+        // Use composite provider that combines Godot types (Node2D.position, etc.)
+        // with built-in GDScript types (String.length, Array.size, etc.)
         var runtimeProvider = new GDCompositeRuntimeProvider(
             new GDGodotTypesProvider(),
             null,  // projectTypesProvider
             null,  // autoloadsProvider
             null); // sceneTypesProvider
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
 
         var options = new GDSemanticValidatorOptions
         {

@@ -71,15 +71,15 @@ func get_j():
         Assert.IsNotNull(varDecl.Initializer, "Variable initializer not found");
 
         // Act - should not throw StackOverflowException
-        string? resultType = null;
+        GDSemanticType? resultType = null;
         var exception = Record.Exception(() =>
         {
-            resultType = model.GetExpressionType(varDecl.Initializer);
+            resultType = model.TypeSystem.GetType(varDecl.Initializer);
         });
 
         // Assert
-        Assert.IsNull(exception, $"GetExpressionType threw exception: {exception?.Message}");
-        // Type may be null or "Node" or something else - we just care it didn't overflow
+        Assert.IsNull(exception, $"TypeSystem.GetType threw exception: {exception?.Message}");
+        // Type may be Variant or "Node" or something else - we just care it didn't overflow
     }
 
     /// <summary>
@@ -123,14 +123,14 @@ func get_b_from_a():
         Assert.IsNotNull(varDecl.Initializer, "Variable initializer not found");
 
         // Act - should not throw StackOverflowException
-        string? resultType = null;
+        GDSemanticType? resultType = null;
         var exception = Record.Exception(() =>
         {
-            resultType = model.GetExpressionType(varDecl.Initializer);
+            resultType = model.TypeSystem.GetType(varDecl.Initializer);
         });
 
         // Assert
-        Assert.IsNull(exception, $"GetExpressionType threw exception: {exception?.Message}");
+        Assert.IsNull(exception, $"TypeSystem.GetType threw exception: {exception?.Message}");
     }
 
     /// <summary>
@@ -159,14 +159,14 @@ func test(a: bool, b: bool, c: bool, d: bool, e: bool):
         Assert.IsNotNull(varDecl.Initializer, "Variable initializer not found");
 
         // Act - should not throw StackOverflowException
-        string? resultType = null;
+        GDSemanticType? resultType = null;
         var exception = Record.Exception(() =>
         {
-            resultType = model.GetExpressionType(varDecl.Initializer);
+            resultType = model.TypeSystem.GetType(varDecl.Initializer);
         });
 
         // Assert
-        Assert.IsNull(exception, $"GetExpressionType threw exception: {exception?.Message}");
+        Assert.IsNull(exception, $"TypeSystem.GetType threw exception: {exception?.Message}");
         // Note: Ternary type inference returns null in some cases due to complex nesting
         // The main goal of this test is to ensure no StackOverflowException occurs
         // Type correctness is covered by other tests
@@ -204,16 +204,16 @@ func test():
         Assert.IsNotNull(yDecl.Initializer, "y initializer not found");
 
         // Act - should not throw StackOverflowException or get stuck in infinite recursion
-        string? resultType = null;
+        GDSemanticType? resultType = null;
         var exception = Record.Exception(() =>
         {
-            resultType = model.GetExpressionType(yDecl.Initializer);
+            resultType = model.TypeSystem.GetType(yDecl.Initializer);
         });
 
         // Assert
-        Assert.IsNull(exception, $"GetExpressionType threw exception: {exception?.Message}");
+        Assert.IsNull(exception, $"TypeSystem.GetType threw exception: {exception?.Message}");
         // The main goal of this test is to ensure no infinite recursion between
-        // GetExpressionType -> FlowAnalyzer -> callback -> GetExpressionTypeWithoutFlow
+        // TypeSystem.GetType -> FlowAnalyzer -> callback -> GetExpressionTypeWithoutFlow
         // The actual type result ("String" or "Variant") depends on flow analysis implementation
         // which is tested elsewhere in FlowSensitiveTypeTests
     }

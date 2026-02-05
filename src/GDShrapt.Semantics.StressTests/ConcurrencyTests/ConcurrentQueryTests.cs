@@ -40,7 +40,7 @@ public class ConcurrentQueryTests
                     _ = semanticModel.Symbols.ToList();
                     _ = semanticModel.GetMethods().ToList();
                     _ = semanticModel.FindSymbol("health");
-                    _ = semanticModel.GetEffectiveType("health");
+                    _ = semanticModel.TypeSystem.GetTypeInfo("health");
 
                     if (semanticModel != null)
                     {
@@ -172,7 +172,8 @@ public class ConcurrentQueryTests
                 // Resolve types for various symbols
                 foreach (var symbolName in new[] { "health", "speed", "is_alive", "max_health" })
                 {
-                    var type = semanticModel.GetEffectiveType(symbolName);
+                    var typeInfo = semanticModel.TypeSystem.GetTypeInfo(symbolName);
+                    var type = typeInfo?.InferredType?.DisplayName;
                     var key = $"{script.TypeName}.{symbolName}";
                     typeResults.TryAdd(key, type);
                 }

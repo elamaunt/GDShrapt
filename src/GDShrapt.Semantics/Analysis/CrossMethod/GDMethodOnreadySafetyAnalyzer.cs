@@ -29,16 +29,13 @@ namespace GDShrapt.Semantics
         {
             var safety = new Dictionary<string, GDMethodOnreadySafety>();
 
-            // Build caller graph from summaries
             BuildCallerGraph();
 
-            // Phase 1: Initialize safety based on method characteristics
             foreach (var summary in _registry.GetAllSummaries())
             {
                 safety[summary.MethodName] = summary.OnreadySafety;
             }
 
-            // Phase 2: Fixed-point iteration
             bool changed = true;
             int iterations = 0;
 
@@ -79,8 +76,6 @@ namespace GDShrapt.Semantics
                 }
             }
 
-            // Phase 3: Mark remaining Unknown methods as Unsafe
-            // (circular dependencies without any safe entry point)
             foreach (var methodName in safety.Keys.ToList())
             {
                 if (safety[methodName] == GDMethodOnreadySafety.Unknown)

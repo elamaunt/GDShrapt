@@ -356,8 +356,8 @@ func test():
             null,  // projectTypesProvider
             null,  // autoloadsProvider
             null); // sceneTypesProvider
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider);
-        var semanticModel = collector.BuildSemanticModel();
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
 
         var options = new GDSemanticValidatorOptions
         {

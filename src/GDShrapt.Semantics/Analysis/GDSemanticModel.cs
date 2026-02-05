@@ -63,7 +63,6 @@ public class GDTypeUsage
         Node = node;
         Kind = kind;
 
-        // Extract position from first token
         var token = node.AllTokens.FirstOrDefault();
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
@@ -82,11 +81,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly GDTypeInferenceEngine? _typeEngine;
     private readonly GDValidationContext? _validationContext;
 
-    // Component registries
     private readonly GDSymbolRegistry _symbolRegistry = new();
     private readonly GDFlowAnalysisRegistry _flowRegistry = new();
 
-    // Type services
     private readonly GDMemberResolver _memberResolver;
     private readonly GDContainerTypeService _containerTypeService;
     private readonly GDUnionTypeService _unionTypeService;
@@ -102,14 +99,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly GDFlowQueryService _flowQueryService;
     private readonly GDLambdaTypeService _lambdaTypeService;
 
-    // Type tracking (node-level, shared with expression type service)
     private readonly Dictionary<GDNode, string> _nodeTypes = new();
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes = new();
-
-    // Type usages (type annotations, is checks, extends)
     private readonly Dictionary<string, List<GDTypeUsage>> _typeUsages = new();
-
-    // Callable call site registry for lambda parameter inference
     private GDCallableCallSiteRegistry? _callSiteRegistry;
 
     /// <summary>
@@ -157,17 +149,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     internal GDExpressionTypeService ExpressionTypeService => _expressionTypeService;
 
-    // Lazy-initialized type system
     private IGDTypeSystem? _typeSystem;
 
     /// <summary>
     /// Gets the type system interface.
     /// Provides a unified entry point for all type-related queries.
     /// Returns GDSemanticType (not strings) and GDTypeInfo for rich type information.
+    /// Always available; uses NullRuntimeProvider if no RuntimeProvider was specified.
     /// </summary>
-    public IGDTypeSystem TypeSystem => _typeSystem ??= _runtimeProvider != null
-        ? new GDTypeSystem(this, _runtimeProvider)
-        : throw new InvalidOperationException("TypeSystem requires a RuntimeProvider. Use GDSemanticModel.Create() with a valid RuntimeProvider.");
+    public IGDTypeSystem TypeSystem => _typeSystem ??= new GDTypeSystem(this, _runtimeProvider ?? GDNullRuntimeProvider.Instance);
 
     /// <summary>
     /// Creates a semantic model for a script file.
@@ -184,7 +174,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         _validationContext = validationContext;
         _typeEngine = typeEngine;
 
-        // Initialize type services
         _memberResolver = new GDMemberResolver(runtimeProvider);
         _containerTypeService = new GDContainerTypeService(runtimeProvider);
         _unionTypeService = new GDUnionTypeService(runtimeProvider);
@@ -202,7 +191,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         _expressionTypeService.SetFindSymbolDelegate(FindSymbol);
         _expressionTypeService.SetGetOnreadyVariablesDelegate(GetOnreadyVariables);
 
-        // Initialize confidence service
         _confidenceService = new GDConfidenceService(
             runtimeProvider,
             _duckTypeService,
@@ -212,17 +200,14 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             FindSymbol,
             GetRootVariableName);
 
-        // Initialize argument type service
         _argumentTypeService = new GDArgumentTypeService(runtimeProvider);
         _argumentTypeService.SetFindSymbolDelegate(FindSymbol);
         _argumentTypeService.SetGetExpressionTypeDelegate(GetExpressionType);
         _argumentTypeService.SetFindMemberWithInheritanceDelegate(FindMemberWithInheritanceInternal);
         _argumentTypeService.SetBaseTypeName(scriptFile?.Class?.Extends?.Type?.BuildName());
 
-        // Initialize scope service
         _scopeService = new GDScopeService(GetReferencesTo);
 
-        // Initialize cross-method flow service
         _crossMethodFlowService = new GDCrossMethodFlowService(
             () =>
             {
@@ -233,20 +218,16 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             IsOnreadyOrReadyInitializedVariable,
             () => _scriptFile?.TypeName ?? "");
 
-        // Initialize local type service
         _localTypeService = new GDLocalTypeService(FindSymbols, FindMemberWithInheritanceInternal);
         _expressionTypeService.SetLocalTypeService(_localTypeService);
 
-        // Initialize onready service
         _onreadyService = new GDOnreadyService(FindSymbol, () => _scriptFile?.Class);
 
-        // Initialize flow query service
         _flowQueryService = new GDFlowQueryService(
             (method, varName, loc) => GetOrCreateFlowAnalyzer(method)?.GetTypeAtLocation(varName, loc),
             (method, varName, loc) => GetOrCreateFlowAnalyzer(method)?.GetVariableTypeAtLocation(varName, loc),
             (method, loc) => GetOrCreateFlowAnalyzer(method)?.GetStateAtLocation(loc));
 
-        // Initialize nullability service
         _nullabilityService = new GDNullabilityService(
             runtimeProvider,
             FindSymbol,
@@ -254,7 +235,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             _flowQueryService.GetFlowStateAtLocation,
             IsInheritedProperty);
 
-        // Initialize lambda type service
         _lambdaTypeService = new GDLambdaTypeService(
             () => _callSiteRegistry,
             () => _scriptFile,
@@ -297,7 +277,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (identifier == null)
             return null;
 
-        // Try to find the node that contains this identifier
         var parent = identifier.Parent as GDNode;
         if (parent != null)
         {
@@ -306,7 +285,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 return symbolInfo;
         }
 
-        // Try resolving by name
         var name = identifier.Sequence;
         if (!string.IsNullOrEmpty(name))
             return FindSymbol(name);
@@ -323,12 +301,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (node == null)
             return null;
 
-        // First check direct node mapping
         var symbol = _symbolRegistry.GetSymbolForNode(node);
         if (symbol != null)
             return symbol;
 
-        // For identifier expressions, use scope-aware lookup
         if (node is GDIdentifierExpression identExpr)
         {
             var name = identExpr.Identifier?.Sequence;
@@ -363,31 +339,26 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (symbols.Count == 0)
             return null;
 
-        // If no context or only one symbol, return first
         if (contextNode == null || symbols.Count == 1)
             return symbols[0];
 
         var contextMethod = FindEnclosingMethod(contextNode);
 
-        // First, try to find a local symbol in the same method
         foreach (var symbol in symbols)
         {
             if (symbol.DeclaringScopeNode != null)
             {
-                // Local symbol - check if in same method
-                if (symbol.DeclaringScopeNode == contextMethod)
+                    if (symbol.DeclaringScopeNode == contextMethod)
                     return symbol;
             }
         }
 
-        // Fall back to class-level symbols (DeclaringScopeNode == null)
         foreach (var symbol in symbols)
         {
             if (symbol.DeclaringScopeNode == null)
                 return symbol;
         }
 
-        // Last resort: return first symbol
         return symbols[0];
     }
 
@@ -515,15 +486,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (node == null)
             return null;
 
-        // Check cache first
         if (_nodeTypes.TryGetValue(node, out var cachedType))
             return cachedType;
 
-        // For expressions, use expression type inference
         if (node is GDExpression expr)
             return GetExpressionType(expr);
 
-        // For parameter declarations, use parameter type inference
         if (node is GDParameterDeclaration paramDecl)
         {
             var inferred = InferParameterType(paramDecl);
@@ -531,7 +499,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 return inferred.TypeName;
         }
 
-        // Fallback to type inference engine for declarations (variables, methods, etc.)
         return _typeEngine?.GetTypeForNode(node);
     }
 
@@ -544,15 +511,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (node == null)
             return null;
 
-        // Check cache first
         if (_nodeTypeNodes.TryGetValue(node, out var typeNode))
             return typeNode;
 
-        // For expressions, use expression type node inference
         if (node is GDExpression expr)
             return GetTypeNodeForExpression(expr);
 
-        // Fallback to type inference engine for declarations (variables, methods, etc.)
         return _typeEngine?.GetTypeNodeForNode(node);
     }
 
@@ -671,12 +635,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (string.IsNullOrEmpty(variableName) || _runtimeProvider == null)
             return false;
 
-        // Get the extends type for this script
         var extendsType = GetExtendsType();
         if (string.IsNullOrEmpty(extendsType))
             return false;
 
-        // Check if this is a property on the base type
         var member = TraverseInheritanceChain(extendsType, current =>
             _runtimeProvider.GetMember(current, variableName));
 
@@ -688,10 +650,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     private string? GetExtendsType()
     {
-        // Find the class declaration in the script
         var classDecl = _scriptFile?.Class;
         if (classDecl == null)
-            return "RefCounted"; // Default GDScript base
+            return "RefCounted";
 
         var extendsType = classDecl.Extends?.Type?.BuildName();
         return string.IsNullOrEmpty(extendsType) ? "RefCounted" : extendsType;
@@ -711,7 +672,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public GDDuckType? GetDuckType(string variableName)
     {
-        // Delegate to service (Phase 5 migration)
         return _duckTypeService.GetDuckType(variableName);
     }
 
@@ -722,7 +682,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     internal string? GetNarrowedType(string variableName, GDNode atLocation)
     {
-        // Delegate to service (Phase 5 migration)
         return _duckTypeService.GetNarrowedType(variableName, atLocation);
     }
 
@@ -736,7 +695,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (string.IsNullOrEmpty(variableName))
             return null;
 
-        // Check narrowing first
         if (atLocation != null)
         {
             var narrowed = GetNarrowedType(variableName, atLocation);
@@ -744,17 +702,14 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 return narrowed;
         }
 
-        // Check symbol type
         var symbol = FindSymbol(variableName);
         if (symbol?.TypeName != null && symbol.TypeName != "Variant")
             return symbol.TypeName;
 
-        // Duck type as string representation (for Variant or untyped)
         var duckType = GetDuckType(variableName);
         if (duckType != null)
             return duckType.ToString();
 
-        // Fallback to symbol type (including Variant)
         return symbol?.TypeName;
     }
 
@@ -843,7 +798,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public GDVariableUsageProfile? GetVariableProfile(string variableName)
     {
-        // Delegate to service (Phase 5 migration)
         return _unionTypeService.GetVariableProfile(variableName);
     }
 
@@ -867,7 +821,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public IEnumerable<GDVariableUsageProfile> GetAllVariableProfiles()
     {
-        // Delegate to service (Phase 6 migration)
         return _unionTypeService.GetAllVariableProfiles();
     }
 
@@ -899,7 +852,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (param == null)
             return null;
 
-        // Use analyzer to compute expected types (including usage constraints)
         var analyzer = new GDParameterTypeAnalyzer(_runtimeProvider, _typeEngine);
         var expectedUnion = analyzer.ComputeExpectedTypes(param, method, includeUsageConstraints: true);
 
@@ -913,7 +865,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             }
         }
 
-        // Compute the diff
         return GDParameterTypeDiff.Create(paramName, expectedUnion, actualUnion, _runtimeProvider);
     }
 
@@ -925,7 +876,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <returns>Union of types passed at call sites, or null if none.</returns>
     public GDUnionType? GetCallSiteTypes(string methodName, string paramName)
     {
-        // Delegate to service (Phase 6 migration)
         return _unionTypeService.GetCallSiteTypes(methodName, paramName);
     }
 
@@ -966,7 +916,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public GDContainerUsageProfile? GetContainerProfile(string variableName)
     {
-        // Delegate to service (Phase 5 migration)
         return _containerTypeService.GetContainerProfile(variableName);
     }
 
@@ -975,7 +924,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public GDContainerElementType? GetInferredContainerType(string variableName)
     {
-        // Delegate to service (Phase 5 migration)
         return _containerTypeService.GetInferredContainerType(variableName);
     }
 
@@ -1266,17 +1214,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (ifStatement == null || context == null)
             return;
 
-        // Get parent statements list and find statements after this if-statement
         if (ifStatement.Parent is GDStatementsList statementsList)
         {
             bool foundIf = false;
             foreach (var statement in statementsList)
             {
                 if (foundIf)
-                {
-                    // Apply narrowing context to all statements after the if (via service)
                     _duckTypeService.SetNarrowingContext(statement, context);
-                }
                 if (ReferenceEquals(statement, ifStatement))
                     foundIf = true;
             }
@@ -1338,7 +1282,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public GDContainerUsageProfile? GetClassContainerProfile(string className, string variableName)
     {
-        // Delegate to service (Phase 5 migration)
         return _containerTypeService.GetClassContainerProfile(className, variableName);
     }
 
@@ -1346,39 +1289,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Gets all class-level container profiles.
     /// </summary>
     public IReadOnlyDictionary<string, GDContainerUsageProfile> ClassContainerProfiles => _containerTypeService.ClassContainerProfiles;
-
-    /// <summary>
-    /// Gets a class-level container profile merged with cross-file usages.
-    /// This method combines local profile with usages collected from external files.
-    /// </summary>
-    /// <param name="className">The class name containing the container.</param>
-    /// <param name="variableName">The container variable name.</param>
-    /// <param name="project">Optional project for cross-file collection.</param>
-    /// <returns>Merged container profile, or null if not found.</returns>
-    public GDContainerUsageProfile? GetMergedContainerProfile(
-        string className,
-        string variableName,
-        GDScriptProject? project)
-    {
-        // Get local profile first
-        var localProfile = GetClassContainerProfile(className, variableName);
-        if (localProfile == null)
-            return null;
-
-        // If no project provided, return local profile only
-        if (project == null)
-            return localProfile;
-
-        // Collect cross-file usages and merge
-        var crossCollector = new GDCrossFileContainerUsageCollector(project);
-        var crossUsages = crossCollector.CollectUsages(className, variableName);
-
-        if (crossUsages.Count == 0)
-            return localProfile;
-
-        // Merge profiles
-        return GDCrossFileContainerUsageCollector.MergeProfiles(localProfile, crossUsages);
-    }
 
     /// <summary>
     /// Sets call site argument types for a parameter.
@@ -1442,7 +1352,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         while (!string.IsNullOrEmpty(current))
         {
             if (!visited.Add(current))
-                break; // Cycle detection
+                break;
 
             var result = finder(current);
             if (result != null)

@@ -86,10 +86,10 @@ public class GDSemanticSignalValidator : GDValidationVisitor
                 continue; // Variant accepts anything
 
             var argExpr = signalArgs[i];
-            var actualType = _semanticModel.GetExpressionType(argExpr);
-
-            if (string.IsNullOrEmpty(actualType) || actualType == "Variant" || actualType == "Unknown")
+            var actualTypeInfo = _semanticModel.TypeSystem.GetType(argExpr);
+            if (actualTypeInfo.IsVariant)
                 continue; // Cannot determine actual type
+            var actualType = actualTypeInfo.DisplayName;
 
             if (!AreTypesCompatible(actualType, expectedType))
             {
@@ -166,11 +166,13 @@ public class GDSemanticSignalValidator : GDValidationVisitor
                 return null; // Use current class signals
 
             // Use semantic model to get expression type
-            return _semanticModel.GetExpressionType(identExpr);
+            var typeInfo = _semanticModel.TypeSystem.GetType(identExpr);
+            return typeInfo.IsVariant ? null : typeInfo.DisplayName;
         }
 
         // For other expressions, use semantic model
-        return _semanticModel.GetExpressionType(memberExpr.CallerExpression);
+        var callerTypeInfo = _semanticModel.TypeSystem.GetType(memberExpr.CallerExpression);
+        return callerTypeInfo.IsVariant ? null : callerTypeInfo.DisplayName;
     }
 
     private string? ExtractStaticString(GDExpression? expr)

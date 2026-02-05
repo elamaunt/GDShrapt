@@ -77,9 +77,10 @@ public class GDDynamicCallValidator : GDValidationVisitor
         if (callerExpr == null)
             return;
 
-        var callerType = _semanticModel.GetExpressionType(callerExpr);
-        if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
+        var callerTypeInfo = _semanticModel.TypeSystem.GetType(callerExpr);
+        if (callerTypeInfo.IsVariant)
             return; // Unknown type - skip
+        var callerType = callerTypeInfo.DisplayName;
 
         // Check if the method exists on the type
         var memberInfo = FindMember(callerType, calledMethod);
@@ -118,9 +119,10 @@ public class GDDynamicCallValidator : GDValidationVisitor
         if (callerExpr == null)
             return;
 
-        var callerType = _semanticModel.GetExpressionType(callerExpr);
-        if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
+        var callerTypeInfo = _semanticModel.TypeSystem.GetType(callerExpr);
+        if (callerTypeInfo.IsVariant)
             return; // Unknown type - skip
+        var callerType = callerTypeInfo.DisplayName;
 
         // Skip Dictionary - it can have any keys dynamically
         if (callerType == "Dictionary" || callerType.StartsWith("Dictionary["))
@@ -167,9 +169,10 @@ public class GDDynamicCallValidator : GDValidationVisitor
         if (callerExpr == null)
             return;
 
-        var callerType = _semanticModel.GetExpressionType(callerExpr);
-        if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
+        var callerTypeInfo = _semanticModel.TypeSystem.GetType(callerExpr);
+        if (callerTypeInfo.IsVariant)
             return; // Unknown type - skip
+        var callerType = callerTypeInfo.DisplayName;
 
         // Skip Dictionary - it can have any keys dynamically
         if (callerType == "Dictionary" || callerType.StartsWith("Dictionary["))

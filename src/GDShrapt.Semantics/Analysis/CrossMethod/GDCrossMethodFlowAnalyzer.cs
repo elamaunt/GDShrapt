@@ -24,10 +24,8 @@ namespace GDShrapt.Semantics
         {
             var state = new GDCrossMethodFlowState();
 
-            // Phase 1: Build method flow summaries for all methods
             BuildMethodSummaries();
 
-            // Phase 2: Build call graphs
             var safetyAnalyzer = new GDMethodOnreadySafetyAnalyzer(_semanticModel, _registry);
             state.CallGraph.Clear();
             foreach (var kvp in safetyAnalyzer.GetCallGraph())
@@ -41,13 +39,10 @@ namespace GDShrapt.Semantics
                 state.CallerGraph[kvp.Key] = kvp.Value;
             }
 
-            // Phase 3: Compute method safety
             state.MethodSafetyCache = safetyAnalyzer.Analyze();
 
-            // Phase 4: Analyze _ready() for variable initialization
             AnalyzeReadyMethod(state);
 
-            // Phase 5: Store method summaries
             foreach (var summary in _registry.GetAllSummaries())
             {
                 state.MethodSummaries[summary.MethodName] = summary;
