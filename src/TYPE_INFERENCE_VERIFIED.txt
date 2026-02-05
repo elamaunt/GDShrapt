@@ -1,0 +1,275 @@
+# TYPE_INFERENCE_VERIFIED.txt
+# Manual verification of type inference results
+# Format: LINE:COL NODEKIND NAME -> TYPE # STATUS
+# STATUS: OK (correct), FP (false positive), SKIP (known issue)
+#
+# Instructions:
+# 1. Run the test: dotnet test --filter "Name=AllNodes_MustHaveVerifiedTypes"
+# 2. Copy entries from TYPE_INFERENCE_OUTPUT.txt or TYPE_INFERENCE_UNVERIFIED.txt
+# 3. Add # OK after each verified entry
+# 4. Re-run the test until all entries are verified
+
+# ============================================================================
+# test_scripts/ai_controller.gd
+# ============================================================================
+
+test_scripts/ai_controller.gd
+# === DECLARATIONS (from model.Symbols) ===
+0:0 Property Position -> Vector2 # OK
+10:0 Enum AIState -> AIState # OK
+12:8 Variable patrol_points -> Array[Vector2] # OK
+13:8 Variable move_speed -> float # OK
+14:8 Variable detection_range -> float # OK
+15:8 Variable attack_range -> float # OK
+17:0 Variable current_state -> AIState # OK
+18:0 Variable current_target_index -> int # OK
+19:0 Variable target_entity -> Node2D # OK
+20:0 Variable _path -> Array[Vector2] # OK
+22:0 Signal state_changed -> Signal(new_state: AIState) # OK
+23:0 Signal target_reached -> Signal # OK
+26:0 Method _ready -> void # OK
+32:0 Method _process -> void # OK
+32:14 Parameter delta -> float # OK
+48:0 Method _process_idle -> void # OK
+48:19 Parameter delta -> float # OK
+53:0 Method _process_patrol -> void # OK
+53:21 Parameter delta -> float # OK
+58:1 Variable target_point -> Vector2 # OK
+67:0 Method _process_chase -> void # OK
+67:20 Parameter delta -> float # OK
+76:0 Method _process_attack -> void # OK
+76:21 Parameter delta -> float # OK
+81:0 Method _process_flee -> void # OK
+81:19 Parameter delta -> float # OK
+85:2 Variable flee_direction -> Vector2 # OK
+89:0 Method find_path -> Array[Vector2] # OK
+89:15 Parameter target -> Vector2 # OK
+98:0 Method change_state -> void # OK
+98:18 Parameter new_state -> AIState # OK
+105:0 Method set_target -> void # OK
+105:16 Parameter entity -> Node2D # OK
+114:0 Method is_target_in_range -> bool # OK
+114:24 Parameter range_distance -> float # OK
+121:0 Method get_closest_patrol_point -> Vector2 # OK
+126:1 Variable closest -> Vector2 # OK
+127:1 Variable closest_dist -> float # OK
+129:1 Iterator point -> Vector2 # OK
+130:2 Variable dist -> float # OK
+
+# === EXPRESSIONS (from model.GetTypeForNode) ===
+
+# Array initializers - typed by context
+12:44 GDArrayInitializerExpression [...] -> Array # FP - should be Array[Vector2] in typed context
+20:28 GDArrayInitializerExpression [...] -> Array # FP - should be Array[Vector2] in typed context
+
+# Number literals
+13:32 GDNumberExpression 100.0 -> float # OK
+14:37 GDNumberExpression 200.0 -> float # OK
+15:34 GDNumberExpression 50.0 -> float # OK
+18:32 GDNumberExpression 0 -> int # OK
+62:41 GDNumberExpression 5.0 -> float # OK
+63:49 GDNumberExpression 1 -> int # OK
+126:29 GDNumberExpression 0 -> int # OK
+
+# Enum access - enum values are int in GDScript (FIXED)
+17:29 GDMemberOperatorExpression AIState.IDLE -> int # OK
+17:29 GDIdentifierExpression AIState -> AIState # OK
+36:2 GDMemberOperatorExpression AIState.IDLE -> int # OK
+36:2 GDIdentifierExpression AIState -> AIState # OK
+38:2 GDMemberOperatorExpression AIState.PATROL -> int # OK
+38:2 GDIdentifierExpression AIState -> AIState # OK
+40:2 GDMemberOperatorExpression AIState.CHASE -> int # OK
+40:2 GDIdentifierExpression AIState -> AIState # OK
+42:2 GDMemberOperatorExpression AIState.ATTACK -> int # OK
+42:2 GDIdentifierExpression AIState -> AIState # OK
+44:2 GDMemberOperatorExpression AIState.FLEE -> int # OK
+44:2 GDIdentifierExpression AIState -> AIState # OK
+70:15 GDMemberOperatorExpression AIState.IDLE -> int # OK
+70:15 GDIdentifierExpression AIState -> AIState # OK
+109:15 GDMemberOperatorExpression AIState.CHASE -> int # OK
+109:15 GDIdentifierExpression AIState -> AIState # OK
+111:15 GDMemberOperatorExpression AIState.IDLE -> int # OK
+111:15 GDIdentifierExpression AIState -> AIState # OK
+
+# null literal
+19:28 GDIdentifierExpression null -> null # OK
+108:14 GDIdentifierExpression null -> null # OK
+
+# Pass expression
+29:1 GDPassExpression pass -> void # OK
+50:1 GDPassExpression pass -> void # OK
+78:1 GDPassExpression pass -> void # OK
+
+# Variable identifiers
+35:7 GDIdentifierExpression current_state -> AIState # OK
+55:4 GDIdentifierExpression patrol_points -> Array[Vector2] # OK
+58:20 GDIdentifierExpression patrol_points -> Array[Vector2] # OK
+58:34 GDIdentifierExpression current_target_index -> int # OK
+60:1 GDIdentifierExpression position -> Vector2 # OK
+60:12 GDIdentifierExpression position -> Vector2 # OK
+60:33 GDIdentifierExpression target_point -> Vector2 # OK
+60:47 GDIdentifierExpression move_speed -> float # OK
+60:60 GDIdentifierExpression delta -> float # OK
+62:4 GDIdentifierExpression position -> Vector2 # OK
+62:25 GDIdentifierExpression target_point -> Vector2 # OK
+63:2 GDIdentifierExpression current_target_index -> int # OK
+63:26 GDIdentifierExpression current_target_index -> int # OK
+63:54 GDIdentifierExpression patrol_points -> Array[Vector2] # OK
+64:2 GDIdentifierExpression target_reached -> Signal # OK
+69:26 GDIdentifierExpression target_entity -> Node2D # OK
+73:1 GDIdentifierExpression position -> Vector2 # OK
+73:12 GDIdentifierExpression position -> Vector2 # OK
+73:33 GDIdentifierExpression target_entity -> Node2D # OK
+73:57 GDIdentifierExpression move_speed -> float # OK
+73:70 GDIdentifierExpression delta -> float # OK
+84:22 GDIdentifierExpression target_entity -> Node2D # OK
+85:24 GDIdentifierExpression position -> Vector2 # OK
+85:35 GDIdentifierExpression target_entity -> Node2D # OK
+86:2 GDIdentifierExpression position -> Vector2 # OK
+86:14 GDIdentifierExpression flee_direction -> Vector2 # OK
+86:31 GDIdentifierExpression move_speed -> float # OK
+86:44 GDIdentifierExpression delta -> float # OK
+93:1 GDIdentifierExpression _path -> Array[Vector2] # OK
+94:1 GDIdentifierExpression _path -> Array[Vector2] # OK
+94:14 GDIdentifierExpression target -> Vector2 # OK
+95:8 GDIdentifierExpression _path -> Array[Vector2] # OK
+100:4 GDIdentifierExpression current_state -> AIState # OK
+100:21 GDIdentifierExpression new_state -> AIState # OK
+101:2 GDIdentifierExpression current_state -> AIState # OK
+101:18 GDIdentifierExpression new_state -> AIState # OK
+102:2 GDIdentifierExpression state_changed -> Signal # OK
+102:21 GDIdentifierExpression new_state -> AIState # OK
+107:1 GDIdentifierExpression target_entity -> Node2D # OK
+107:17 GDIdentifierExpression entity -> Node2D # OK
+108:4 GDIdentifierExpression entity -> Node2D # OK
+116:26 GDIdentifierExpression target_entity -> Node2D # OK
+117:9 GDBoolExpression false -> bool # OK
+118:8 GDIdentifierExpression position -> Vector2 # OK
+118:37 GDIdentifierExpression target_entity -> Node2D # OK
+118:64 GDIdentifierExpression range_distance -> float # OK
+118:81 GDIdentifierExpression range_distance -> float # OK
+123:4 GDIdentifierExpression patrol_points -> Array[Vector2] # OK
+124:9 GDIdentifierExpression position -> Vector2 # OK
+126:15 GDIdentifierExpression patrol_points -> Array[Vector2] # OK
+127:20 GDIdentifierExpression position -> Vector2 # OK
+127:49 GDIdentifierExpression closest -> Vector2 # OK
+129:14 GDIdentifierExpression patrol_points -> Array[Vector2] # OK
+130:13 GDIdentifierExpression position -> Vector2 # OK
+130:42 GDIdentifierExpression point -> Vector2 # OK
+131:5 GDIdentifierExpression dist -> float # OK
+131:12 GDIdentifierExpression closest_dist -> float # OK
+132:3 GDIdentifierExpression closest -> Vector2 # OK
+132:13 GDIdentifierExpression point -> Vector2 # OK
+133:3 GDIdentifierExpression closest_dist -> float # OK
+133:18 GDIdentifierExpression dist -> float # OK
+135:8 GDIdentifierExpression closest -> Vector2 # OK
+
+# Method identifiers used as Callable
+37:3 GDIdentifierExpression _process_idle -> Callable # OK
+37:17 GDIdentifierExpression delta -> float # OK
+39:3 GDIdentifierExpression _process_patrol -> Callable # OK
+39:19 GDIdentifierExpression delta -> float # OK
+41:3 GDIdentifierExpression _process_chase -> Callable # OK
+41:18 GDIdentifierExpression delta -> float # OK
+43:3 GDIdentifierExpression _process_attack -> Callable # OK
+43:19 GDIdentifierExpression delta -> float # OK
+45:3 GDIdentifierExpression _process_flee -> Callable # OK
+45:17 GDIdentifierExpression delta -> float # OK
+70:2 GDIdentifierExpression change_state -> Callable # OK
+109:2 GDIdentifierExpression change_state -> Callable # OK
+111:2 GDIdentifierExpression change_state -> Callable # OK
+
+# Builtin function is_instance_valid
+69:8 GDIdentifierExpression is_instance_valid -> Variant # FP - should be Callable (builtin function)
+84:4 GDIdentifierExpression is_instance_valid -> Variant # FP - should be Callable (builtin function)
+116:8 GDIdentifierExpression is_instance_valid -> Variant # FP - should be Callable (builtin function)
+
+# Method calls
+37:3 GDCallExpression _process_idle() -> void # OK
+39:3 GDCallExpression _process_patrol() -> void # OK
+41:3 GDCallExpression _process_chase() -> void # OK
+43:3 GDCallExpression _process_attack() -> void # OK
+45:3 GDCallExpression _process_flee() -> void # OK
+55:4 GDCallExpression patrol_points.is_empty() -> bool # OK
+55:4 GDMemberOperatorExpression patrol_points.is_empty -> bool # OK
+60:12 GDCallExpression position.move_toward() -> Vector2 # OK
+60:12 GDMemberOperatorExpression position.move_toward -> Vector2 # OK
+62:4 GDCallExpression position.distance_to() -> float # OK
+62:4 GDMemberOperatorExpression position.distance_to -> float # OK
+63:54 GDCallExpression patrol_points.size() -> int # OK
+63:54 GDMemberOperatorExpression patrol_points.size -> int # OK
+64:2 GDCallExpression target_reached.emit() -> void # OK
+64:2 GDMemberOperatorExpression target_reached.emit -> void # OK
+69:8 GDCallExpression is_instance_valid() -> bool # OK
+70:2 GDCallExpression change_state() -> void # OK
+73:12 GDCallExpression position.move_toward() -> Vector2 # OK
+73:12 GDMemberOperatorExpression position.move_toward -> Vector2 # OK
+73:33 GDMemberOperatorExpression target_entity.position -> Vector2 # OK
+84:4 GDCallExpression is_instance_valid() -> bool # OK
+85:23 GDCallExpression (positionSubtractiontarget_entity.position).normalized() -> Vector2 # OK
+85:23 GDMemberOperatorExpression (positionSubtractiontarget_entity.position).normalized -> Vector2 # OK
+85:33 GDMemberOperatorExpression target_entity.position -> Vector2 # OK
+85:35 GDMemberOperatorExpression target_entity.position -> Vector2 # OK
+93:1 GDCallExpression _path.clear() -> void # OK
+93:1 GDMemberOperatorExpression _path.clear -> void # OK
+94:1 GDCallExpression _path.append() -> void # OK
+94:1 GDMemberOperatorExpression _path.append -> void # OK
+102:2 GDCallExpression state_changed.emit() -> void # OK
+102:2 GDMemberOperatorExpression state_changed.emit -> void # OK
+109:2 GDCallExpression change_state() -> void # OK
+111:2 GDCallExpression change_state() -> void # OK
+116:8 GDCallExpression is_instance_valid() -> bool # OK
+118:8 GDCallExpression position.distance_squared_to() -> float # OK
+118:8 GDMemberOperatorExpression position.distance_squared_to -> float # OK
+118:37 GDMemberOperatorExpression target_entity.position -> Vector2 # OK
+123:4 GDCallExpression patrol_points.is_empty() -> bool # OK
+123:4 GDMemberOperatorExpression patrol_points.is_empty -> bool # OK
+127:20 GDCallExpression position.distance_squared_to() -> float # OK
+127:20 GDMemberOperatorExpression position.distance_squared_to -> float # OK
+130:13 GDCallExpression position.distance_squared_to() -> float # OK
+130:13 GDMemberOperatorExpression position.distance_squared_to -> float # OK
+
+# Indexer expressions
+58:20 GDIndexerExpression patrol_points[] -> Vector2 # OK
+126:15 GDIndexerExpression patrol_points[] -> Vector2 # OK
+
+# Bracket expressions
+63:25 GDBracketExpression (current_target_indexAddition1) -> int # OK
+85:23 GDBracketExpression (positionSubtractiontarget_entity.position) -> Vector2 # OK
+
+# Return expressions - void returns show Variant which is FP
+56:2 GDReturnExpression return ? -> Variant # FP - should be void (empty return)
+71:2 GDReturnExpression return ? -> Variant # FP - should be void (empty return)
+95:1 GDReturnExpression return _path -> Variant # FP - should be Array[Vector2]
+117:2 GDReturnExpression return false -> Variant # FP - should be bool
+118:1 GDReturnExpression return position.distance_squared_to()LessThanOrEqualrange_distanceMultiplyrange_distance -> Variant # FP - should be bool
+124:2 GDReturnExpression return position -> Variant # FP - should be Vector2
+135:1 GDReturnExpression return closest -> Variant # FP - should be Vector2
+
+# Dual operator expressions
+60:1 GDDualOperatorExpression positionAssignmentposition.move_toward() -> Vector2 # OK
+60:47 GDDualOperatorExpression move_speedMultiplydelta -> float # OK
+62:4 GDDualOperatorExpression position.distance_to()LessThan5.0 -> bool # OK
+63:2 GDDualOperatorExpression current_target_indexAssignment(current_target_indexAddition1)Modpatrol_points.size() -> int # OK
+63:25 GDDualOperatorExpression (current_target_indexAddition1)Modpatrol_points.size() -> int # OK
+63:26 GDDualOperatorExpression current_target_indexAddition1 -> int # OK
+73:1 GDDualOperatorExpression positionAssignmentposition.move_toward() -> Vector2 # OK
+73:57 GDDualOperatorExpression move_speedMultiplydelta -> float # OK
+85:24 GDDualOperatorExpression positionSubtractiontarget_entity.position -> Vector2 # OK
+86:2 GDDualOperatorExpression positionAddAndAssignflee_directionMultiplymove_speedMultiplydelta -> Vector2 # OK
+86:14 GDDualOperatorExpression flee_directionMultiplymove_speedMultiplydelta -> Vector2 # OK
+86:14 GDDualOperatorExpression flee_directionMultiplymove_speed -> Vector2 # OK
+100:4 GDDualOperatorExpression current_stateNotEqualnew_state -> bool # OK
+101:2 GDDualOperatorExpression current_stateAssignmentnew_state -> AIState # OK
+107:1 GDDualOperatorExpression target_entityAssignmententity -> Node2D # OK
+108:4 GDDualOperatorExpression entityNotEqualnull -> bool # OK
+118:8 GDDualOperatorExpression position.distance_squared_to()LessThanOrEqualrange_distanceMultiplyrange_distance -> bool # OK
+118:64 GDDualOperatorExpression range_distanceMultiplyrange_distance -> float # OK
+131:5 GDDualOperatorExpression distLessThanclosest_dist -> bool # OK
+132:3 GDDualOperatorExpression closestAssignmentpoint -> Vector2 # OK
+133:3 GDDualOperatorExpression closest_distAssignmentdist -> float # OK
+
+# Single operator expressions
+69:4 GDSingleOperatorExpression Not2is_instance_valid() -> bool # OK
+116:4 GDSingleOperatorExpression Not2is_instance_valid() -> bool # OK
+

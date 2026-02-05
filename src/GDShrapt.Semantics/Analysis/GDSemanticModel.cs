@@ -87,6 +87,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly GDFlowAnalysisRegistry _flowRegistry = new();
 
     // Type services
+    private readonly GDMemberResolver _memberResolver;
     private readonly GDContainerTypeService _containerTypeService;
     private readonly GDUnionTypeService _unionTypeService;
     private readonly GDDuckTypeService _duckTypeService;
@@ -156,14 +157,17 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     internal GDExpressionTypeService ExpressionTypeService => _expressionTypeService;
 
-    // Lazy-initialized unified type query interface
-    private IGDUnifiedTypeQuery? _typeQuery;
+    // Lazy-initialized type system
+    private IGDTypeSystem? _typeSystem;
 
     /// <summary>
-    /// Gets the unified type query interface.
-    /// Provides a single entry point for all type-related queries.
+    /// Gets the type system interface.
+    /// Provides a unified entry point for all type-related queries.
+    /// Returns GDSemanticType (not strings) and GDTypeInfo for rich type information.
     /// </summary>
-    public IGDUnifiedTypeQuery TypeQuery => _typeQuery ??= new GDTypeQueryFacade(this);
+    public IGDTypeSystem TypeSystem => _typeSystem ??= _runtimeProvider != null
+        ? new GDTypeSystem(this, _runtimeProvider)
+        : throw new InvalidOperationException("TypeSystem requires a RuntimeProvider. Use GDSemanticModel.Create() with a valid RuntimeProvider.");
 
     /// <summary>
     /// Creates a semantic model for a script file.
@@ -181,6 +185,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         _typeEngine = typeEngine;
 
         // Initialize type services
+        _memberResolver = new GDMemberResolver(runtimeProvider);
         _containerTypeService = new GDContainerTypeService(runtimeProvider);
         _unionTypeService = new GDUnionTypeService(runtimeProvider);
         _unionTypeService.SetTypeEngine(typeEngine);
@@ -230,6 +235,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
         // Initialize local type service
         _localTypeService = new GDLocalTypeService(FindSymbols, FindMemberWithInheritanceInternal);
+        _expressionTypeService.SetLocalTypeService(_localTypeService);
 
         // Initialize onready service
         _onreadyService = new GDOnreadyService(FindSymbol, () => _scriptFile?.Class);
@@ -502,8 +508,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
     /// <summary>
     /// Gets the type for any AST node.
+    /// Internal - use TypeSystem.GetType() for external access.
     /// </summary>
-    public string? GetTypeForNode(GDNode node)
+    internal string? GetTypeForNode(GDNode node)
     {
         if (node == null)
             return null;
@@ -530,8 +537,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
     /// <summary>
     /// Gets the full type node for any AST node (with generics).
+    /// Internal - use TypeSystem.GetTypeNode() for external access.
     /// </summary>
-    public GDTypeNode? GetTypeNodeForNode(GDNode node)
+    internal GDTypeNode? GetTypeNodeForNode(GDNode node)
     {
         if (node == null)
             return null;
@@ -551,8 +559,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the inferred type for an expression.
     /// Uses flow-sensitive analysis when available.
+    /// Internal - use TypeSystem.GetType() for external access.
     /// </summary>
-    public string? GetExpressionType(GDExpression? expression)
+    internal string? GetExpressionType(GDExpression? expression)
     {
         return _expressionTypeService.GetExpressionType(expression);
     }
@@ -569,10 +578,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Internal method to avoid name collision with public API.
     /// </summary>
     private GDRuntimeMemberInfo? FindMemberWithInheritanceInternal(string typeName, string memberName)
-    {
-        return TraverseInheritanceChain(typeName, current =>
-            _runtimeProvider!.GetMember(current, memberName));
-    }
+        => _memberResolver.FindMember(typeName, memberName);
 
     /// <summary>
     /// Gets or creates a flow analyzer for a method.
@@ -597,8 +603,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the flow-sensitive type for a variable at a specific location.
     /// Returns null if flow analysis is not available.
+    /// Internal - use TypeSystem.GetTypeInfo() for external access.
     /// </summary>
-    public string? GetFlowSensitiveType(string variableName, GDNode atLocation)
+    internal string? GetFlowSensitiveType(string variableName, GDNode atLocation)
         => _flowQueryService.GetFlowSensitiveType(variableName, atLocation);
 
     /// <summary>
@@ -692,8 +699,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
     /// <summary>
     /// Gets the full type node (with generics) for an expression.
+    /// Internal - use TypeSystem.GetTypeNode() for external access.
     /// </summary>
-    public GDTypeNode? GetTypeNodeForExpression(GDExpression expression)
+    internal GDTypeNode? GetTypeNodeForExpression(GDExpression expression)
     {
         return _expressionTypeService.GetTypeNodeForExpression(expression);
     }
@@ -710,8 +718,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the narrowed type for a variable at a specific location (from if checks).
     /// Walks up the AST to find the nearest branch with narrowing info.
+    /// Internal - use TypeSystem.GetNarrowedType() or TypeSystem.GetTypeInfo() for external access.
     /// </summary>
-    public string? GetNarrowedType(string variableName, GDNode atLocation)
+    internal string? GetNarrowedType(string variableName, GDNode atLocation)
     {
         // Delegate to service (Phase 5 migration)
         return _duckTypeService.GetNarrowedType(variableName, atLocation);
@@ -720,8 +729,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the effective type for a variable at a location.
     /// Considers narrowing, declared type, and duck type.
+    /// Internal - use TypeSystem.GetTypeInfo() for external access.
     /// </summary>
-    public string? GetEffectiveType(string variableName, GDNode? atLocation = null)
+    internal string? GetEffectiveType(string variableName, GDNode? atLocation = null)
     {
         if (string.IsNullOrEmpty(variableName))
             return null;

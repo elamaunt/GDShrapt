@@ -213,6 +213,32 @@ public class GDTypeSystem : IGDTypeSystem
         return null;
     }
 
+    /// <inheritdoc/>
+    public GDTypeInfo GetExpressionTypeInfo(GDExpression expression)
+    {
+        if (expression == null)
+        {
+            return new GDTypeInfo
+            {
+                InferredType = GDVariantSemanticType.Instance,
+                Confidence = GDTypeConfidence.Unknown
+            };
+        }
+
+        var semanticType = GetType(expression);
+        return new GDTypeInfo
+        {
+            InferredType = semanticType,
+            Confidence = semanticType.IsVariant ? GDTypeConfidence.Unknown : GDTypeConfidence.High
+        };
+    }
+
+    /// <inheritdoc/>
+    public GDInferredParameterType InferParameterType(GDParameterDeclaration param)
+    {
+        return _model.InferParameterType(param);
+    }
+
     // ========================================
     // Helper Methods
     // ========================================

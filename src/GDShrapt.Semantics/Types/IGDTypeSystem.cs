@@ -105,6 +105,20 @@ public interface IGDTypeSystem
     GDTypeInfo? GetTypeInfo(string variableName, GDNode? atLocation = null);
 
     /// <summary>
+    /// Gets full type info for an expression.
+    /// </summary>
+    GDTypeInfo GetExpressionTypeInfo(GDExpression expression);
+
+    // ========================================
+    // Parameter Inference
+    // ========================================
+
+    /// <summary>
+    /// Infers the type of a parameter from usage analysis.
+    /// </summary>
+    GDInferredParameterType InferParameterType(GDParameterDeclaration param);
+
+    /// <summary>
     /// Gets the runtime provider used for type resolution.
     /// </summary>
     IGDRuntimeProvider RuntimeProvider { get; }

@@ -17,6 +17,7 @@ namespace GDShrapt.Semantics
         private readonly GDScopeStack _scopes;
         private readonly IGDRuntimeTypeInjector _typeInjector;
         private readonly GDTypeInjectionContext _injectionContext;
+        private readonly GDMemberResolver _memberResolver;
 
         // Cache for computed types to avoid recomputation
         private readonly Dictionary<GDNode, string> _typeCache;
@@ -87,48 +88,21 @@ namespace GDShrapt.Semantics
             _injectionContext = injectionContext ?? new GDTypeInjectionContext();
             _typeCache = new Dictionary<GDNode, string>();
             _typeNodeCache = new Dictionary<GDNode, GDTypeNode>();
+            _memberResolver = new GDMemberResolver(_runtimeProvider);
         }
 
         /// <summary>
         /// Finds a member in a type, traversing the inheritance chain if necessary.
         /// </summary>
         private GDRuntimeMemberInfo FindMemberWithInheritance(string typeName, string memberName)
-        {
-            var visited = new HashSet<string>();
-            var current = typeName;
-            while (!string.IsNullOrEmpty(current))
-            {
-                // Normalize generic types: Array[int] -> Array, Dictionary[String, int] -> Dictionary
-                var normalizedType = ExtractBaseTypeName(current);
-
-                // Prevent infinite loop on cyclic inheritance
-                if (!visited.Add(normalizedType))
-                    return null;
-
-                var memberInfo = _runtimeProvider.GetMember(normalizedType, memberName);
-                if (memberInfo != null)
-                    return memberInfo;
-
-                current = _runtimeProvider.GetBaseType(normalizedType);
-            }
-            return null;
-        }
+            => _memberResolver.FindMember(typeName, memberName);
 
         /// <summary>
         /// Extracts the base type name from a generic type.
         /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
         /// </summary>
         private static string ExtractBaseTypeName(string typeName)
-        {
-            if (string.IsNullOrEmpty(typeName))
-                return typeName;
-
-            var bracketIndex = typeName.IndexOf('[');
-            if (bracketIndex > 0)
-                return typeName.Substring(0, bracketIndex);
-
-            return typeName;
-        }
+            => GDMemberResolver.ExtractBaseTypeName(typeName);
 
         /// <summary>
         /// For Variant callers, tries to find a method in common GDScript types.

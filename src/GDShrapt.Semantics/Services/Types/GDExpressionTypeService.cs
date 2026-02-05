@@ -21,6 +21,7 @@ internal class GDExpressionTypeService
     private readonly GDFlowAnalysisRegistry _flowRegistry;
     private readonly Dictionary<GDNode, string> _nodeTypes;
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes;
+    private readonly GDMemberResolver _memberResolver;
 
     // Recursion guard
     private readonly HashSet<GDExpression> _expressionTypeInProgress = new();
@@ -29,6 +30,9 @@ internal class GDExpressionTypeService
     // Delegates to avoid circular dependencies
     private Func<string, GDSymbolInfo?>? _findSymbol;
     private Func<IEnumerable<string>>? _getOnreadyVariables;
+
+    // Local type service for enum access
+    private GDLocalTypeService? _localTypeService;
 
     internal GDExpressionTypeService(
         IGDRuntimeProvider? runtimeProvider,
@@ -48,6 +52,15 @@ internal class GDExpressionTypeService
         _flowRegistry = flowRegistry;
         _nodeTypes = nodeTypes;
         _nodeTypeNodes = nodeTypeNodes;
+        _memberResolver = new GDMemberResolver(runtimeProvider);
+    }
+
+    /// <summary>
+    /// Sets the local type service for enum access.
+    /// </summary>
+    internal void SetLocalTypeService(GDLocalTypeService? localTypeService)
+    {
+        _localTypeService = localTypeService;
     }
 
     /// <summary>
@@ -198,11 +211,22 @@ internal class GDExpressionTypeService
             var memberName = memberExpr.Identifier?.Sequence;
 
             if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
-                !string.IsNullOrEmpty(memberName) && _runtimeProvider != null)
+                !string.IsNullOrEmpty(memberName))
             {
-                var memberInfo = FindMemberWithInheritance(callerType, memberName);
-                if (memberInfo != null)
-                    return memberInfo.Type;
+                // Check if this is a local enum value access (e.g., AIState.IDLE)
+                if (_localTypeService != null && _localTypeService.IsLocalEnum(callerType))
+                {
+                    if (_localTypeService.IsLocalEnumValue(callerType, memberName))
+                        return "int"; // Enum values are always int in GDScript
+                }
+
+                // Fall back to runtime provider for other member access
+                if (_runtimeProvider != null)
+                {
+                    var memberInfo = FindMemberWithInheritance(callerType, memberName);
+                    if (memberInfo != null)
+                        return memberInfo.Type;
+                }
             }
         }
 
@@ -493,28 +517,8 @@ internal class GDExpressionTypeService
             _getOnreadyVariables ?? (() => Enumerable.Empty<string>()));
     }
 
-    private GDRuntimeMemberInfo? FindMemberWithInheritance(string typeName, string memberName)
-    {
-        if (_runtimeProvider == null)
-            return null;
-
-        var visited = new HashSet<string>();
-        var currentType = typeName;
-        while (!string.IsNullOrEmpty(currentType))
-        {
-            // Prevent infinite loop on cyclic inheritance
-            if (!visited.Add(currentType))
-                return null;
-
-            var member = _runtimeProvider.GetMember(currentType, memberName);
-            if (member != null)
-                return member;
-
-            var typeInfo = _runtimeProvider.GetTypeInfo(currentType);
-            currentType = typeInfo?.BaseType;
-        }
-        return null;
-    }
+    private GDRuntimeMemberInfo? FindMemberWithInheritance(string? typeName, string? memberName)
+        => _memberResolver.FindMember(typeName, memberName);
 
     private GDContainerElementType? GetContainerTypeForExpression(GDExpression? expr)
     {

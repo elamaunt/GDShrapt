@@ -12,6 +12,7 @@ public class GDTypeInferenceHelper
     private readonly GDSemanticModel? _semanticModel;
     private readonly GDTypeResolver? _typeResolver;
     private readonly IGDRuntimeProvider? _runtimeProvider;
+    private readonly GDMemberResolver _memberResolver;
 
     /// <summary>
     /// Creates a type inference helper with a semantic model.
@@ -21,6 +22,7 @@ public class GDTypeInferenceHelper
         _semanticModel = semanticModel;
         _typeResolver = null;
         _runtimeProvider = null;
+        _memberResolver = new GDMemberResolver(null);
     }
 
     /// <summary>
@@ -31,6 +33,7 @@ public class GDTypeInferenceHelper
         _semanticModel = null;
         _typeResolver = typeResolver;
         _runtimeProvider = typeResolver?.RuntimeProvider;
+        _memberResolver = new GDMemberResolver(_runtimeProvider);
     }
 
     /// <summary>
@@ -41,32 +44,14 @@ public class GDTypeInferenceHelper
         _semanticModel = semanticModel;
         _typeResolver = typeResolver;
         _runtimeProvider = typeResolver?.RuntimeProvider;
+        _memberResolver = new GDMemberResolver(_runtimeProvider);
     }
 
     /// <summary>
     /// Finds a member in a type, traversing the inheritance chain if necessary.
     /// </summary>
-    private GDRuntimeMemberInfo? FindMemberWithInheritance(string typeName, string memberName)
-    {
-        if (_runtimeProvider == null)
-            return null;
-
-        var visited = new HashSet<string>();
-        var current = typeName;
-        while (!string.IsNullOrEmpty(current))
-        {
-            // Prevent infinite loop on cyclic inheritance
-            if (!visited.Add(current))
-                return null;
-
-            var memberInfo = _runtimeProvider.GetMember(current, memberName);
-            if (memberInfo != null)
-                return memberInfo;
-
-            current = _runtimeProvider.GetBaseType(current);
-        }
-        return null;
-    }
+    private GDRuntimeMemberInfo? FindMemberWithInheritance(string? typeName, string? memberName)
+        => _memberResolver.FindMember(typeName, memberName);
 
     /// <summary>
     /// Infers the type of an expression with confidence level.
