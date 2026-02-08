@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -7,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Helper for type inference with confidence tracking.
 /// Wraps GDTypeInferenceEngine and adds confidence levels to results.
 /// </summary>
-public class GDTypeInferenceHelper
+internal class GDTypeInferenceHelper
 {
     private readonly GDSemanticModel? _semanticModel;
     private readonly GDTypeResolver? _typeResolver;
@@ -75,7 +76,7 @@ public class GDTypeInferenceHelper
 
         // 4. Try semantic model inference
         var analyzerType = _semanticModel?.GetTypeForNode(expression);
-        if (!string.IsNullOrEmpty(analyzerType) && analyzerType != "Variant")
+        if (!string.IsNullOrEmpty(analyzerType) && analyzerType != GDWellKnownTypes.Variant)
         {
             var confidence = DetermineConfidenceFromType(analyzerType);
             return GDInferredType.FromType(analyzerType, confidence, "From type analyzer");
@@ -85,10 +86,10 @@ public class GDTypeInferenceHelper
         if (_typeResolver != null)
         {
             var resolution = _typeResolver.ResolveExpressionType(expression);
-            if (resolution.IsResolved && !string.IsNullOrEmpty(resolution.TypeName) && resolution.TypeName != "Variant")
+            if (resolution.IsResolved && resolution.TypeName != null && !resolution.TypeName.IsVariant)
             {
                 var confidence = DetermineConfidenceFromSource(resolution.Source);
-                return GDInferredType.FromType(resolution.TypeName, confidence, $"From {resolution.Source}");
+                return GDInferredType.FromType(resolution.TypeName.DisplayName, confidence, $"From {resolution.Source}");
             }
         }
 
@@ -136,7 +137,7 @@ public class GDTypeInferenceHelper
 
         // Explicit type annotation
         var typeAnnotation = varDecl.Type?.BuildName();
-        if (!string.IsNullOrEmpty(typeAnnotation) && typeAnnotation != "Variant")
+        if (!string.IsNullOrEmpty(typeAnnotation) && typeAnnotation != GDWellKnownTypes.Variant)
             return GDInferredType.Certain(typeAnnotation, "Variable type annotation");
 
         // Infer from initializer
@@ -156,7 +157,7 @@ public class GDTypeInferenceHelper
 
         // Explicit type annotation
         var typeAnnotation = varStmt.Type?.BuildName();
-        if (!string.IsNullOrEmpty(typeAnnotation) && typeAnnotation != "Variant")
+        if (!string.IsNullOrEmpty(typeAnnotation) && typeAnnotation != GDWellKnownTypes.Variant)
             return GDInferredType.Certain(typeAnnotation, "Variable type annotation");
 
         // Infer from initializer
@@ -176,7 +177,7 @@ public class GDTypeInferenceHelper
 
         // Explicit type annotation
         var typeAnnotation = paramDecl.Type?.BuildName();
-        if (!string.IsNullOrEmpty(typeAnnotation) && typeAnnotation != "Variant")
+        if (!string.IsNullOrEmpty(typeAnnotation) && typeAnnotation != GDWellKnownTypes.Variant)
             return GDInferredType.Certain(typeAnnotation, "Parameter type annotation");
 
         // Infer from default value
@@ -223,13 +224,13 @@ public class GDTypeInferenceHelper
         if (parent is GDVariableDeclaration varDecl && varDecl.Initializer == expression)
         {
             type = varDecl.Type?.BuildName();
-            return !string.IsNullOrEmpty(type) && type != "Variant";
+            return !string.IsNullOrEmpty(type) && type != GDWellKnownTypes.Variant;
         }
 
         if (parent is GDVariableDeclarationStatement varStmt && varStmt.Initializer == expression)
         {
             type = varStmt.Type?.BuildName();
-            return !string.IsNullOrEmpty(type) && type != "Variant";
+            return !string.IsNullOrEmpty(type) && type != GDWellKnownTypes.Variant;
         }
 
         return false;
@@ -243,7 +244,7 @@ public class GDTypeInferenceHelper
         if (callExpr.CallerExpression is GDMemberOperatorExpression memberExpr)
         {
             var methodName = memberExpr.Identifier?.Sequence;
-            if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
+            if (methodName == GDWellKnownFunctions.Constructor)
             {
                 // Get the class name from caller
                 if (memberExpr.CallerExpression is GDIdentifierExpression identExpr)
@@ -308,7 +309,7 @@ public class GDTypeInferenceHelper
                         return GDInferredType.High(returnType, $"Return type of local method {funcName}()");
                 }
 
-                return GDInferredType.Medium("Variant", $"Return type unknown for {funcName}()");
+                return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Return type unknown for {funcName}()");
             }
         }
 
@@ -318,25 +319,25 @@ public class GDTypeInferenceHelper
             var methodName = memberExpr.Identifier?.Sequence;
 
             // .new() constructor
-            if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
+            if (methodName == GDWellKnownFunctions.Constructor)
             {
                 var callerType = InferExpressionType(memberExpr.CallerExpression);
                 if (!callerType.IsUnknown)
-                    return GDInferredType.High(callerType.TypeName, $"Constructor: {callerType.TypeName}.new()");
+                    return GDInferredType.High(callerType.TypeName.DisplayName, $"Constructor: {callerType.TypeName.DisplayName}.new()");
             }
 
             var callerTypeResult = InferExpressionType(memberExpr.CallerExpression);
 
             if (!callerTypeResult.IsUnknown && !string.IsNullOrEmpty(methodName))
             {
-                var memberInfo = FindMemberWithInheritance(callerTypeResult.TypeName, methodName);
+                var memberInfo = FindMemberWithInheritance(callerTypeResult.TypeName.DisplayName, methodName);
                 if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                 {
                     if (!string.IsNullOrEmpty(memberInfo.Type))
-                        return GDInferredType.High(memberInfo.Type, $"Return type of {callerTypeResult.TypeName}.{methodName}()");
+                        return GDInferredType.High(memberInfo.Type, $"Return type of {callerTypeResult.TypeName.DisplayName}.{methodName}()");
                 }
 
-                return GDInferredType.Medium("Variant", $"Return type unknown for {callerTypeResult.TypeName}.{methodName}()");
+                return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Return type unknown for {callerTypeResult.TypeName.DisplayName}.{methodName}()");
             }
 
             return GDInferredType.Unknown($"Caller type unknown for method {methodName}()");
@@ -352,14 +353,14 @@ public class GDTypeInferenceHelper
 
         if (!callerTypeResult.IsUnknown && !string.IsNullOrEmpty(memberName))
         {
-            var memberInfo = FindMemberWithInheritance(callerTypeResult.TypeName, memberName);
+            var memberInfo = FindMemberWithInheritance(callerTypeResult.TypeName.DisplayName, memberName);
             if (memberInfo != null && !string.IsNullOrEmpty(memberInfo.Type))
             {
-                return GDInferredType.High(memberInfo.Type, $"Property type: {callerTypeResult.TypeName}.{memberName}");
+                return GDInferredType.High(memberInfo.Type, $"Property type: {callerTypeResult.TypeName.DisplayName}.{memberName}");
             }
 
             // Member exists on type but type unknown
-            return GDInferredType.Medium("Variant", $"Property type unknown for {callerTypeResult.TypeName}.{memberName}");
+            return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Property type unknown for {callerTypeResult.TypeName.DisplayName}.{memberName}");
         }
 
         return GDInferredType.Unknown($"Cannot determine type for member {memberName}");
@@ -371,22 +372,16 @@ public class GDTypeInferenceHelper
         if (string.IsNullOrEmpty(name))
             return GDInferredType.Unknown("Identifier is empty");
 
-        // Built-in constants
-        switch (name)
+        if (GDWellKnownTypes.BuiltinIdentifierTypes.TryGetValue(name, out var builtinType))
         {
-            case "true":
-            case "false":
-                return GDInferredType.Certain("bool", "Boolean literal");
-            case "null":
-                return GDInferredType.Certain("null", "Null literal");
-            case "PI":
-            case "TAU":
-            case "INF":
-            case "NAN":
-                return GDInferredType.Certain("float", "Math constant");
-            case "self":
-                return GDInferredType.High("self", "Self reference");
+            var reason = builtinType == GDWellKnownTypes.Null ? "Null literal"
+                       : builtinType == GDWellKnownTypes.Numeric.Bool ? "Boolean literal"
+                       : "Math constant";
+            return GDInferredType.Certain(builtinType, reason);
         }
+
+        if (name == GDWellKnownTypes.Self)
+            return GDInferredType.High(GDWellKnownTypes.Self, "Self reference");
 
         // Known type name (used as value)
         if (_runtimeProvider?.IsKnownType(name) == true)
@@ -419,9 +414,9 @@ public class GDTypeInferenceHelper
 
             if (commonType == null)
             {
-                commonType = entryType.TypeName;
+                commonType = entryType.TypeName.DisplayName;
             }
-            else if (commonType != entryType.TypeName)
+            else if (commonType != entryType.TypeName.DisplayName)
             {
                 allSameType = false;
                 break;
@@ -429,7 +424,7 @@ public class GDTypeInferenceHelper
         }
 
         if (allSameType && !string.IsNullOrEmpty(commonType))
-            return GDInferredType.Medium($"Array[{commonType}]", $"Array with homogeneous {commonType} elements");
+            return GDInferredType.Medium(GDGenericTypeHelper.CreateArrayType(commonType), $"Array with homogeneous {commonType} elements");
 
         return GDInferredType.Medium("Array", "Array with mixed or unknown element types");
     }
@@ -454,11 +449,10 @@ public class GDTypeInferenceHelper
 
     private GDTypeConfidence DetermineConfidenceFromType(string typeName)
     {
-        if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+        if (string.IsNullOrEmpty(typeName) || typeName == GDWellKnownTypes.Variant)
             return GDTypeConfidence.Unknown;
 
-        // Primitive types have high confidence
-        if (typeName is "int" or "float" or "bool" or "String" or "void")
+        if (GDWellKnownTypes.IsPrimitiveType(typeName))
             return GDTypeConfidence.High;
 
         // Godot types have high confidence

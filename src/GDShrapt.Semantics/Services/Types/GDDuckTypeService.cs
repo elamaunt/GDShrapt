@@ -41,7 +41,7 @@ internal class GDDuckTypeService
             return null;
 
         var narrowingContext = FindNarrowingContextForNode(atLocation);
-        return narrowingContext?.GetConcreteType(variableName);
+        return narrowingContext?.GetConcreteType(variableName)?.DisplayName;
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ internal class GDDuckTypeService
         // If symbol has known concrete type, suppress duck constraints
         if (unionType?.IsSingleType == true)
         {
-            var type = unionType.EffectiveType;
+            var type = unionType.EffectiveType.DisplayName;
             if (IsConcreteType(type))
                 return true;
         }

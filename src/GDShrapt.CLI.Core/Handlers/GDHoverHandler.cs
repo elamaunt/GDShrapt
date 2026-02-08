@@ -28,8 +28,7 @@ public class GDHoverHandler : IGDHoverHandler
             return null;
 
         // Find the node at the position
-        var finder = new GDPositionFinder(script.Class);
-        var node = finder.FindNodeAtPosition(line, column);
+        var node = semanticModel.GetNodeAtPosition(line, column);
         if (node == null)
             return null;
 

@@ -85,7 +85,7 @@ func test():
         // Assert
         Assert.IsNotNull(union);
         Assert.IsTrue(union.IsSingleType);
-        Assert.AreEqual("int", union.EffectiveType);
+        Assert.AreEqual("int", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -106,8 +106,8 @@ func test():
         // Assert
         Assert.IsNotNull(union);
         Assert.IsTrue(union.IsUnion);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -129,7 +129,7 @@ func test():
         // Assert
         Assert.IsNotNull(union);
         Assert.IsTrue(union.IsSingleType);
-        Assert.AreEqual("int", union.EffectiveType);
+        Assert.AreEqual("int", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]

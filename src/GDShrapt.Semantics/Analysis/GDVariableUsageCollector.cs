@@ -54,7 +54,7 @@ internal class GDVariableUsageCollector : GDVisitor
         // If there's an initializer, record it as the first assignment
         if (varDecl.Initializer != null)
         {
-            var initType = _typeEngine?.InferType(varDecl.Initializer);
+            var initType = _typeEngine?.InferSemanticType(varDecl.Initializer);
             var isHighConfidence = DetermineHighConfidence(varDecl.Initializer, initType);
 
             var initToken = varDecl.Initializer.AllTokens.FirstOrDefault();
@@ -89,7 +89,7 @@ internal class GDVariableUsageCollector : GDVisitor
             var varName = identExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName) && _profiles.TryGetValue(varName, out var profile))
             {
-                var valueType = _typeEngine?.InferType(dualOp.RightExpression);
+                var valueType = _typeEngine?.InferSemanticType(dualOp.RightExpression);
                 var isHighConfidence = DetermineHighConfidence(dualOp.RightExpression, valueType);
 
                 var token = dualOp.AllTokens.FirstOrDefault();
@@ -106,9 +106,9 @@ internal class GDVariableUsageCollector : GDVisitor
         }
     }
 
-    private bool DetermineHighConfidence(GDExpression? expr, string? inferredType)
+    private bool DetermineHighConfidence(GDExpression? expr, GDSemanticType? inferredType)
     {
-        if (expr == null || string.IsNullOrEmpty(inferredType) || inferredType == "Variant")
+        if (expr == null || inferredType == null || inferredType.IsVariant)
             return false;
 
         // Literals have certain confidence
@@ -118,7 +118,7 @@ internal class GDVariableUsageCollector : GDVisitor
         // ClassName.new() has high confidence
         if (expr is GDCallExpression call &&
             call.CallerExpression is GDMemberOperatorExpression member &&
-            member.Identifier?.Sequence == GDTypeInferenceConstants.ConstructorMethodName)
+            member.Identifier?.Sequence == GDWellKnownFunctions.Constructor)
             return true;
 
         // Array/Dictionary initializers have certain confidence for container type
@@ -138,7 +138,7 @@ internal class GDVariableUsageCollector : GDVisitor
         }
 
         // If we got a concrete type, treat as high confidence
-        if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant" && !inferredType.StartsWith("Unknown"))
+        if (!inferredType.IsVariant && !inferredType.DisplayName.StartsWith("Unknown"))
             return true;
 
         return false;

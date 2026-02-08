@@ -1,5 +1,5 @@
 extends Node
-class_name GettersSetters
+class_name GettersSetters  # 2:11-GDL227-OK
 
 ## Tests for property get/set type flow.
 ## Properties with getters and setters have special type flow patterns.
@@ -102,7 +102,7 @@ var tracked_health: int:
 		health_changed.emit(old, _health)
 
 
-func _on_health_changed():
+func _on_health_changed():  # 105:5-GDL203-OK
 	pass
 
 
@@ -168,7 +168,7 @@ func test_config_property():
 
 
 # Nested property access patterns
-class Inner:
+class Inner:  # 171:1-GDL513-OK
 	var _value: int = 0
 
 	var value: int:
@@ -191,8 +191,8 @@ var inner: Inner:
 
 func test_nested_property():
 	# Accessing property of property
-	inner.value = 10
-	var d = inner.doubled
+	inner.value = 10  # 194:1-GD7005-OK
+	var d = inner.doubled  # 195:9-GD7005-OK
 	return d
 
 

@@ -1,7 +1,8 @@
-using GDShrapt.Abstractions;
+using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Reader;
 
-namespace GDShrapt.Semantics;
+namespace GDShrapt.Abstractions;
 
 /// <summary>
 /// Represents a union of multiple types (e.g., int | String).
@@ -33,18 +34,14 @@ public class GDUnionSemanticType : GDSemanticType
         if (other == null)
             return false;
 
-        // Anything is assignable to Variant
         if (other.IsVariant)
             return true;
 
-        // Union is assignable to target if ALL members are assignable
-        // (conservative approach - ensures the target can handle any value)
         return _types.All(t => t.IsAssignableTo(other, provider));
     }
 
     /// <summary>
     /// Checks if a type can be assigned INTO this union.
-    /// A type can be assigned to a union if it's assignable to at least one member.
     /// </summary>
     public bool CanAccept(GDSemanticType type, IGDRuntimeProvider? provider)
     {
@@ -74,7 +71,6 @@ public class GDUnionSemanticType : GDSemanticType
 
     public override GDTypeNode? ToTypeNode()
     {
-        // Union types cannot be represented as a single GDTypeNode
         return null;
     }
 
@@ -94,11 +90,12 @@ public class GDUnionSemanticType : GDSemanticType
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
-        foreach (var name in _types.Select(t => t.DisplayName).OrderBy(n => n))
+        unchecked
         {
-            hash.Add(name);
+            int hash = 17;
+            foreach (var name in _types.Select(t => t.DisplayName).OrderBy(n => n))
+                hash = hash * 31 + (name?.GetHashCode() ?? 0);
+            return hash;
         }
-        return hash.ToHashCode();
     }
 }

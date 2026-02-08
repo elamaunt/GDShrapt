@@ -18,7 +18,7 @@ public class GDTypeCoverageHandlerTests
     public void Setup()
     {
         _project = TestProjectHelper.LoadTestProject();
-        _handler = new GDTypeCoverageHandler(_project);
+        _handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(_project));
     }
 
     [TestCleanup]
@@ -219,7 +219,7 @@ func process_item(item: String) -> bool:
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDTypeCoverageHandler(project);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();
@@ -258,7 +258,7 @@ func get_health():
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDTypeCoverageHandler(project);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();
@@ -296,7 +296,7 @@ func untyped_func(b):
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDTypeCoverageHandler(project);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();
@@ -330,7 +330,7 @@ func _ready() -> void:
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDTypeCoverageHandler(project);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();
@@ -362,7 +362,7 @@ func _ready() -> void:
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDTypeCoverageHandler(project);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();

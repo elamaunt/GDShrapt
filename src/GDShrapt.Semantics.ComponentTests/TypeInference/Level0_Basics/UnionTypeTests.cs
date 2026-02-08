@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GDShrapt.Semantics.ComponentTests;
@@ -15,13 +16,13 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
+        union.AddTypeName("Player", isHighConfidence: true);
 
         // Assert
         Assert.IsTrue(union.IsSingleType);
         Assert.IsFalse(union.IsUnion);
         Assert.IsFalse(union.IsEmpty);
-        Assert.AreEqual("Player", union.EffectiveType);
+        Assert.AreEqual("Player", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -29,16 +30,16 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
-        union.AddType("Enemy", isHighConfidence: true);
+        union.AddTypeName("Player", isHighConfidence: true);
+        union.AddTypeName("Enemy", isHighConfidence: true);
 
         // Assert
         Assert.IsTrue(union.IsUnion);
         Assert.IsFalse(union.IsSingleType);
         Assert.IsFalse(union.IsEmpty);
         Assert.AreEqual(2, union.Types.Count);
-        Assert.IsTrue(union.Types.Contains("Player"));
-        Assert.IsTrue(union.Types.Contains("Enemy"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Player")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Enemy")));
     }
 
     [TestMethod]
@@ -48,7 +49,7 @@ public class UnionTypeTests
         var union = new GDUnionType();
 
         // Act
-        union.AddType("Variant", isHighConfidence: true);
+        union.AddTypeName("Variant", isHighConfidence: true);
 
         // Assert
         Assert.IsTrue(union.IsEmpty);
@@ -62,8 +63,8 @@ public class UnionTypeTests
         var union = new GDUnionType();
 
         // Act
-        union.AddType(null!, isHighConfidence: true);
-        union.AddType("", isHighConfidence: true);
+        union.AddTypeName(null!, isHighConfidence: true);
+        union.AddTypeName("", isHighConfidence: true);
 
         // Assert
         Assert.IsTrue(union.IsEmpty);
@@ -77,7 +78,7 @@ public class UnionTypeTests
 
         // Assert
         Assert.IsTrue(union.IsEmpty);
-        Assert.AreEqual("Variant", union.EffectiveType);
+        Assert.AreEqual("Variant", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -85,12 +86,12 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
-        union.AddType("Enemy", isHighConfidence: true);
-        union.CommonBaseType = "Entity";
+        union.AddTypeName("Player", isHighConfidence: true);
+        union.AddTypeName("Enemy", isHighConfidence: true);
+        union.CommonBaseType = GDSemanticType.FromRuntimeTypeName("Entity");
 
         // Assert
-        Assert.AreEqual("Entity", union.EffectiveType);
+        Assert.AreEqual("Entity", union.EffectiveType.DisplayName);
     }
 
     #endregion
@@ -102,8 +103,8 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
-        union.AddType("Enemy", isHighConfidence: true);
+        union.AddTypeName("Player", isHighConfidence: true);
+        union.AddTypeName("Enemy", isHighConfidence: true);
 
         // Assert
         Assert.IsTrue(union.AllHighConfidence);
@@ -114,8 +115,8 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
-        union.AddType("Enemy", isHighConfidence: false);
+        union.AddTypeName("Player", isHighConfidence: true);
+        union.AddTypeName("Enemy", isHighConfidence: false);
 
         // Assert
         Assert.IsFalse(union.AllHighConfidence);
@@ -126,8 +127,8 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: false);
-        union.AddType("Enemy", isHighConfidence: false);
+        union.AddTypeName("Player", isHighConfidence: false);
+        union.AddTypeName("Enemy", isHighConfidence: false);
 
         // Assert
         Assert.IsFalse(union.AllHighConfidence);
@@ -142,18 +143,18 @@ public class UnionTypeTests
     {
         // Arrange
         var union1 = new GDUnionType();
-        union1.AddType("Player", isHighConfidence: true);
+        union1.AddTypeName("Player", isHighConfidence: true);
 
         var union2 = new GDUnionType();
-        union2.AddType("Enemy", isHighConfidence: true);
+        union2.AddTypeName("Enemy", isHighConfidence: true);
 
         // Act
         union1.MergeWith(union2);
 
         // Assert
         Assert.AreEqual(2, union1.Types.Count);
-        Assert.IsTrue(union1.Types.Contains("Player"));
-        Assert.IsTrue(union1.Types.Contains("Enemy"));
+        Assert.IsTrue(union1.Types.Contains(GDSemanticType.FromRuntimeTypeName("Player")));
+        Assert.IsTrue(union1.Types.Contains(GDSemanticType.FromRuntimeTypeName("Enemy")));
     }
 
     [TestMethod]
@@ -161,10 +162,10 @@ public class UnionTypeTests
     {
         // Arrange
         var union1 = new GDUnionType();
-        union1.AddType("Player", isHighConfidence: true);
+        union1.AddTypeName("Player", isHighConfidence: true);
 
         var union2 = new GDUnionType();
-        union2.AddType("Enemy", isHighConfidence: false);
+        union2.AddTypeName("Enemy", isHighConfidence: false);
 
         // Act
         union1.MergeWith(union2);
@@ -178,7 +179,7 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
+        union.AddTypeName("Player", isHighConfidence: true);
 
         // Act
         union.MergeWith(null);
@@ -193,10 +194,10 @@ public class UnionTypeTests
     {
         // Arrange
         var union1 = new GDUnionType();
-        union1.AddType("Player", isHighConfidence: true);
+        union1.AddTypeName("Player", isHighConfidence: true);
 
         var union2 = new GDUnionType();
-        union2.AddType("Player", isHighConfidence: true);
+        union2.AddTypeName("Player", isHighConfidence: true);
 
         // Act
         union1.MergeWith(union2);
@@ -214,19 +215,19 @@ public class UnionTypeTests
     {
         // Arrange
         var union1 = new GDUnionType();
-        union1.AddType("Player", isHighConfidence: true);
-        union1.AddType("Enemy", isHighConfidence: true);
+        union1.AddTypeName("Player", isHighConfidence: true);
+        union1.AddTypeName("Enemy", isHighConfidence: true);
 
         var union2 = new GDUnionType();
-        union2.AddType("Enemy", isHighConfidence: true);
-        union2.AddType("NPC", isHighConfidence: true);
+        union2.AddTypeName("Enemy", isHighConfidence: true);
+        union2.AddTypeName("NPC", isHighConfidence: true);
 
         // Act
         var result = union1.IntersectWith(union2);
 
         // Assert
         Assert.AreEqual(1, result.Types.Count);
-        Assert.IsTrue(result.Types.Contains("Enemy"));
+        Assert.IsTrue(result.Types.Contains(GDSemanticType.FromRuntimeTypeName("Enemy")));
     }
 
     [TestMethod]
@@ -236,14 +237,14 @@ public class UnionTypeTests
         var union1 = new GDUnionType();
 
         var union2 = new GDUnionType();
-        union2.AddType("Player", isHighConfidence: true);
+        union2.AddTypeName("Player", isHighConfidence: true);
 
         // Act
         var result = union1.IntersectWith(union2);
 
         // Assert
         Assert.AreEqual(1, result.Types.Count);
-        Assert.IsTrue(result.Types.Contains("Player"));
+        Assert.IsTrue(result.Types.Contains(GDSemanticType.FromRuntimeTypeName("Player")));
     }
 
     [TestMethod]
@@ -251,7 +252,7 @@ public class UnionTypeTests
     {
         // Arrange
         var union1 = new GDUnionType();
-        union1.AddType("Player", isHighConfidence: true);
+        union1.AddTypeName("Player", isHighConfidence: true);
 
         var union2 = new GDUnionType();
 
@@ -260,7 +261,7 @@ public class UnionTypeTests
 
         // Assert
         Assert.AreEqual(1, result.Types.Count);
-        Assert.IsTrue(result.Types.Contains("Player"));
+        Assert.IsTrue(result.Types.Contains(GDSemanticType.FromRuntimeTypeName("Player")));
     }
 
     [TestMethod]
@@ -268,10 +269,10 @@ public class UnionTypeTests
     {
         // Arrange
         var union1 = new GDUnionType();
-        union1.AddType("Player", isHighConfidence: true);
+        union1.AddTypeName("Player", isHighConfidence: true);
 
         var union2 = new GDUnionType();
-        union2.AddType("Enemy", isHighConfidence: true);
+        union2.AddTypeName("Enemy", isHighConfidence: true);
 
         // Act
         var result = union1.IntersectWith(union2);
@@ -285,7 +286,7 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
+        union.AddTypeName("Player", isHighConfidence: true);
 
         // Act
         var result = union.IntersectWith(null);
@@ -313,7 +314,7 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
+        union.AddTypeName("Player", isHighConfidence: true);
 
         // Assert
         Assert.AreEqual("Player", union.ToString());
@@ -324,8 +325,8 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
-        union.AddType("Enemy", isHighConfidence: true);
+        union.AddTypeName("Player", isHighConfidence: true);
+        union.AddTypeName("Enemy", isHighConfidence: true);
 
         // Act
         var result = union.ToString();
@@ -343,7 +344,7 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("int", isHighConfidence: true);
+        union.AddTypeName("int", isHighConfidence: true);
 
         // Assert
         Assert.AreEqual("int", union.UnionTypeName);
@@ -354,9 +355,9 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("String", isHighConfidence: true);
-        union.AddType("int", isHighConfidence: true);
-        union.AddType("bool", isHighConfidence: true);
+        union.AddTypeName("String", isHighConfidence: true);
+        union.AddTypeName("int", isHighConfidence: true);
+        union.AddTypeName("bool", isHighConfidence: true);
 
         // Assert - alphabetically sorted
         Assert.AreEqual("String|bool|int", union.UnionTypeName);
@@ -377,8 +378,8 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("int", isHighConfidence: true);
-        union.AddType("Variant", isHighConfidence: true); // Should be ignored
+        union.AddTypeName("int", isHighConfidence: true);
+        union.AddTypeName("Variant", isHighConfidence: true); // Should be ignored
 
         // Assert
         Assert.AreEqual("int", union.UnionTypeName);
@@ -389,12 +390,12 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player", isHighConfidence: true);
-        union.AddType("Enemy", isHighConfidence: true);
-        union.CommonBaseType = "Entity";
+        union.AddTypeName("Player", isHighConfidence: true);
+        union.AddTypeName("Enemy", isHighConfidence: true);
+        union.CommonBaseType = GDSemanticType.FromRuntimeTypeName("Entity");
 
         // Assert - EffectiveType returns CommonBaseType, UnionTypeName returns union string
-        Assert.AreEqual("Entity", union.EffectiveType);
+        Assert.AreEqual("Entity", union.EffectiveType.DisplayName);
         Assert.AreEqual("Enemy|Player", union.UnionTypeName);
     }
 
@@ -403,12 +404,12 @@ public class UnionTypeTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("String", isHighConfidence: true);
-        union.AddType("int", isHighConfidence: true);
+        union.AddTypeName("String", isHighConfidence: true);
+        union.AddTypeName("int", isHighConfidence: true);
         // No CommonBaseType set
 
         // Assert - EffectiveType returns Variant, UnionTypeName returns union string
-        Assert.AreEqual("Variant", union.EffectiveType);
+        Assert.AreEqual("Variant", union.EffectiveType.DisplayName);
         Assert.AreEqual("String|int", union.UnionTypeName);
     }
 

@@ -28,12 +28,12 @@ internal static class GDLiteralTypeResolver
     {
         return expr switch
         {
-            GDNumberExpression numExpr => IsIntegerNumber(numExpr) ? "int" : "float",
-            GDStringExpression => "String",
-            GDBoolExpression => "bool",
-            GDArrayInitializerExpression => "Array",
-            GDDictionaryInitializerExpression => "Dictionary",
-            _ when IsNullLiteral(expr) => "null",
+            GDNumberExpression numExpr => IsIntegerNumber(numExpr) ? GDWellKnownTypes.Numeric.Int : GDWellKnownTypes.Numeric.Float,
+            GDStringExpression => GDWellKnownTypes.Strings.String,
+            GDBoolExpression => GDWellKnownTypes.Numeric.Bool,
+            GDArrayInitializerExpression => GDWellKnownTypes.Containers.Array,
+            GDDictionaryInitializerExpression => GDWellKnownTypes.Containers.Dictionary,
+            _ when IsNullLiteral(expr) => GDWellKnownTypes.Null,
             _ => null
         };
     }

@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Kind of Callable definition.
 /// </summary>
-public enum GDCallableDefinitionKind
+internal enum GDCallableDefinitionKind
 {
     /// <summary>
     /// Lambda expression (func(x): ...).
@@ -28,7 +28,7 @@ public enum GDCallableDefinitionKind
 /// Represents a Callable definition - either a lambda expression or a method reference.
 /// Used for tracking call sites and inferring parameter types.
 /// </summary>
-public class GDCallableDefinition
+internal class GDCallableDefinition
 {
     /// <summary>
     /// Kind of this Callable definition.

@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
@@ -14,11 +15,11 @@ internal class GDCallableCallSiteCollector : GDVisitor
     private readonly List<GDCallableCallSiteInfo> _callSites = new();
     private readonly GDCallableTracker _tracker;
     private readonly GDScriptFile? _sourceFile;
-    private readonly Func<GDExpression, string?>? _typeInferrer;
+    private readonly Func<GDExpression, GDSemanticType?>? _typeInferrer;
 
     public GDCallableCallSiteCollector(
         GDScriptFile? sourceFile = null,
-        Func<GDExpression, string?>? typeInferrer = null)
+        Func<GDExpression, GDSemanticType?>? typeInferrer = null)
     {
         _sourceFile = sourceFile;
         _typeInferrer = typeInferrer;

@@ -72,12 +72,12 @@ internal sealed class GDParameterTypeAnalyzer
 
         foreach (var guardType in context.TypeGuardTypes)
         {
-            union.AddType(guardType, isHighConfidence: true);
+            union.AddTypeName(guardType, isHighConfidence: true);
         }
 
         if (context.HasNullCheck)
         {
-            union.AddType("null", isHighConfidence: true);
+            union.AddTypeName("null", isHighConfidence: true);
         }
 
         // 4. Usage constraints (method calls, property accesses, etc.)
@@ -106,13 +106,10 @@ internal sealed class GDParameterTypeAnalyzer
         {
             foreach (var type in inferredType.UnionTypes)
             {
-                if (!string.IsNullOrEmpty(type))
-                {
-                    union.AddType(type, isHighConfidence: true);
-                }
+                union.AddType(type, isHighConfidence: true);
             }
         }
-        else if (!string.IsNullOrEmpty(inferredType.TypeName))
+        else if (!inferredType.TypeName.IsVariant)
         {
             union.AddType(inferredType.TypeName, isHighConfidence: true);
         }
@@ -123,7 +120,7 @@ internal sealed class GDParameterTypeAnalyzer
         var explicitType = param.Type?.BuildName();
         if (!string.IsNullOrEmpty(explicitType))
         {
-            union.AddType(explicitType, isHighConfidence: true);
+            union.AddTypeName(explicitType, isHighConfidence: true);
         }
     }
 
@@ -131,8 +128,8 @@ internal sealed class GDParameterTypeAnalyzer
     {
         if (param.DefaultValue != null && _typeEngine != null)
         {
-            var defaultType = _typeEngine.InferType(param.DefaultValue);
-            if (!string.IsNullOrEmpty(defaultType))
+            var defaultType = _typeEngine.InferSemanticType(param.DefaultValue);
+            if (!defaultType.IsVariant)
             {
                 union.AddType(defaultType, isHighConfidence: true);
             }
@@ -372,11 +369,11 @@ internal sealed class GDParameterTypeAnalyzer
         return pattern switch
         {
             GDNumberExpression numExpr => InferNumberType(numExpr),
-            GDStringExpression => "String",
-            GDBoolExpression => "bool",
-            GDArrayInitializerExpression => "Array",
-            GDDictionaryInitializerExpression => "Dictionary",
-            GDIdentifierExpression idExpr when idExpr.Identifier?.Sequence == "null" => "null",
+            GDStringExpression => GDWellKnownTypes.Strings.String,
+            GDBoolExpression => GDWellKnownTypes.Numeric.Bool,
+            GDArrayInitializerExpression => GDWellKnownTypes.Containers.Array,
+            GDDictionaryInitializerExpression => GDWellKnownTypes.Containers.Dictionary,
+            GDIdentifierExpression idExpr when idExpr.Identifier?.Sequence == GDWellKnownTypes.Null => GDWellKnownTypes.Null,
             GDMatchCaseVariableExpression => null,
             GDMatchDefaultOperatorExpression => null,
             _ => null
@@ -386,7 +383,7 @@ internal sealed class GDParameterTypeAnalyzer
     private static string InferNumberType(GDNumberExpression numExpr)
     {
         var numberType = numExpr.Number?.ResolveNumberType();
-        return numberType == GDNumberType.Double ? "float" : "int";
+        return numberType == GDNumberType.Double ? GDWellKnownTypes.Numeric.Float : GDWellKnownTypes.Numeric.Int;
     }
 
     #endregion
@@ -422,15 +419,15 @@ internal sealed class GDParameterTypeAnalyzer
 
         return suffix switch
         {
-            "NIL" => "null",
-            "BOOL" => "bool",
-            "INT" => "int",
-            "FLOAT" => "float",
-            "STRING" => "String",
-            "STRING_NAME" => "StringName",
-            "NODE_PATH" => "NodePath",
-            "OBJECT" => "Object",
-            "RID" => "Rid",
+            "NIL" => GDWellKnownTypes.Null,
+            "BOOL" => GDWellKnownTypes.Numeric.Bool,
+            "INT" => GDWellKnownTypes.Numeric.Int,
+            "FLOAT" => GDWellKnownTypes.Numeric.Float,
+            "STRING" => GDWellKnownTypes.Strings.String,
+            "STRING_NAME" => GDWellKnownTypes.Strings.StringName,
+            "NODE_PATH" => GDWellKnownTypes.Other.NodePath,
+            "OBJECT" => GDWellKnownTypes.Object,
+            "RID" => GDWellKnownTypes.Other.RID,
             "MAX" => null,
             var s when s.StartsWith("PACKED_") => ConvertPackedArrayName(s),
             _ => ConvertSnakeToPascalCase(suffix)

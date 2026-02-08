@@ -113,80 +113,13 @@ internal static class GDUnionTypeHelper
     }
 
     /// <summary>
-    /// Creates a typed Array type with the given element type.
-    /// </summary>
-    public static string CreateArrayType(string elementType)
-    {
-        if (string.IsNullOrEmpty(elementType) || elementType == "Variant")
-            return "Array";
-        return $"Array[{elementType}]";
-    }
-
-    /// <summary>
-    /// Creates a typed Dictionary type with the given key and value types.
-    /// </summary>
-    public static string CreateDictionaryType(string keyType, string valueType)
-    {
-        if (string.IsNullOrEmpty(keyType) || string.IsNullOrEmpty(valueType))
-            return "Dictionary";
-        if (keyType == "Variant" && valueType == "Variant")
-            return "Dictionary";
-        return $"Dictionary[{keyType}, {valueType}]";
-    }
-
-    /// <summary>
-    /// Extracts element type from an Array type string.
-    /// </summary>
-    public static string? ExtractArrayElementType(string arrayType)
-    {
-        if (string.IsNullOrEmpty(arrayType))
-            return null;
-
-        if (arrayType.StartsWith("Array[") && arrayType.EndsWith("]"))
-        {
-            return arrayType.Substring(6, arrayType.Length - 7);
-        }
-
-        if (arrayType == "Array")
-            return "Variant";
-
-        return null;
-    }
-
-    /// <summary>
-    /// Extracts key and value types from a Dictionary type string.
-    /// </summary>
-    public static (string? keyType, string? valueType) ExtractDictionaryTypes(string dictType)
-    {
-        if (string.IsNullOrEmpty(dictType))
-            return (null, null);
-
-        if (dictType.StartsWith("Dictionary[") && dictType.EndsWith("]"))
-        {
-            var inner = dictType.Substring(11, dictType.Length - 12);
-            var commaIndex = FindTopLevelComma(inner);
-            if (commaIndex > 0)
-            {
-                var keyType = inner.Substring(0, commaIndex).Trim();
-                var valueType = inner.Substring(commaIndex + 1).Trim();
-                return (keyType, valueType);
-            }
-        }
-
-        if (dictType == "Dictionary")
-            return ("Variant", "Variant");
-
-        return (null, null);
-    }
-
-    /// <summary>
     /// Merges two Array types into a union Array type.
     /// Array[int] + Array[float] -> Array[int|float]
     /// </summary>
     public static string MergeArrayTypes(string array1, string array2)
     {
-        var elem1 = ExtractArrayElementType(array1);
-        var elem2 = ExtractArrayElementType(array2);
+        var elem1 = GDGenericTypeHelper.ExtractArrayElementType(array1);
+        var elem2 = GDGenericTypeHelper.ExtractArrayElementType(array2);
 
         if (elem1 == null)
             return array2 ?? "Array";
@@ -194,7 +127,7 @@ internal static class GDUnionTypeHelper
             return array1;
 
         var unionElement = CreateUnionString(elem1, elem2);
-        return CreateArrayType(unionElement);
+        return GDGenericTypeHelper.CreateArrayType(unionElement);
     }
 
     /// <summary>
@@ -203,8 +136,8 @@ internal static class GDUnionTypeHelper
     /// </summary>
     public static string MergeDictionaryTypes(string dict1, string dict2)
     {
-        var (key1, val1) = ExtractDictionaryTypes(dict1);
-        var (key2, val2) = ExtractDictionaryTypes(dict2);
+        var (key1, val1) = GDGenericTypeHelper.ExtractDictionaryTypes(dict1);
+        var (key2, val2) = GDGenericTypeHelper.ExtractDictionaryTypes(dict2);
 
         if (key1 == null || val1 == null)
             return dict2 ?? "Dictionary";
@@ -213,23 +146,7 @@ internal static class GDUnionTypeHelper
 
         var unionKey = CreateUnionString(key1, key2);
         var unionValue = CreateUnionString(val1, val2);
-        return CreateDictionaryType(unionKey, unionValue);
-    }
-
-    /// <summary>
-    /// Finds the top-level comma in a type string (not nested in brackets).
-    /// </summary>
-    private static int FindTopLevelComma(string str)
-    {
-        var depth = 0;
-        for (int i = 0; i < str.Length; i++)
-        {
-            var c = str[i];
-            if (c == '[') depth++;
-            else if (c == ']') depth--;
-            else if (c == ',' && depth == 0) return i;
-        }
-        return -1;
+        return GDGenericTypeHelper.CreateDictionaryType(unionKey, unionValue);
     }
 
     #endregion

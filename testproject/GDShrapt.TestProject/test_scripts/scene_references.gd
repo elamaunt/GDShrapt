@@ -31,7 +31,7 @@ func _setup_ui() -> void:
 
 func _connect_signals() -> void:
 	if player and player.has_signal("health_changed"):
-		player.connect("health_changed", _on_player_health_changed)
+		player.connect("health_changed", _on_player_health_changed)  # 34:2-GD4006-OK
 
 
 func _on_player_health_changed(new_health: int) -> void:
@@ -47,25 +47,25 @@ func spawn_enemy(enemy_scene: PackedScene, spawn_pos: Vector2) -> Node2D:
 	# HACK: Using 'as Node2D' to force type, should use proper type checking
 	var enemy := enemy_scene.instantiate() as Node2D
 	enemy.position = spawn_pos
-	enemy_container.add_child(enemy)
+	enemy_container.add_child(enemy)  # 50:1-GD7007-OK
 	return enemy
 
 
 func get_enemies() -> Array[Node2D]:
 	var enemies: Array[Node2D] = []
-	for child in enemy_container.get_children():
+	for child in enemy_container.get_children():  # 56:14-GD7007-OK
 		if child is Node2D:
 			enemies.append(child)
 	return enemies
 
 
 func clear_enemies() -> void:
-	for child in enemy_container.get_children():
+	for child in enemy_container.get_children():  # 63:14-GD7007-OK
 		child.queue_free()
 
 
 func get_node_by_path(path: String) -> Node:
-	return get_node_or_null(path)
+	return get_node_or_null(path)  # 68:1-GD3007-OK
 
 
 func find_child_of_type(parent: Node, type_name: String) -> Node:

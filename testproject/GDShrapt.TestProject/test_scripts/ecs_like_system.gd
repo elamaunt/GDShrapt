@@ -63,7 +63,7 @@ func add_component(entity_id, component_type, component):  # 57:1-GDL513-OK
 	return component
 
 
-func get_component(entity_id, component_type):  # 67:1-GDL513-OK
+func get_component(entity_id, component_type):
 	if not components.has(component_type):
 		return null
 	return components[component_type].get(entity_id)
@@ -106,7 +106,7 @@ func query_entities(component_types):  # 93:1-GDL513-OK
 	return result
 
 
-func query_with_components(component_types):  # 111:1-GDL513-OK
+func query_with_components(component_types):
 	# Returns array of {entity_id, components: Dict}
 	var entity_ids = query_entities(component_types)
 	var result = []
@@ -330,7 +330,7 @@ func query_nearby(position, radius):  # 327:5-GDL225-OK
 	var cell_radius = int(ceil(radius / grid_cell_size))
 
 	for x in range(center_cell.x - cell_radius, center_cell.x + cell_radius + 1):
-		for y in range(center_cell.y - cell_radius, center_cell.y + cell_radius + 1):  # 333:5-GDL225-OK
+		for y in range(center_cell.y - cell_radius, center_cell.y + cell_radius + 1):
 			var cell = Vector2i(x, y)
 			if spatial_grid.has(cell):
 				for eid in spatial_grid[cell]:
@@ -383,7 +383,7 @@ func deserialize_world(data):  # 368:1-GDL513-OK
 		components[comp_type] = {}
 		for eid_str in data["components"][comp_type]:  # 384:17-GD7006-OK, 384:17-GD7006-OK
 			var eid = int(eid_str)
-			components[comp_type][eid] = data["components"][comp_type][eid_str]  # 386:0-GDL101-OK, 386:32-GD7006-OK
+			components[comp_type][eid] = data["components"][comp_type][eid_str]  # 386:32-GD7006-OK
 
 
 # === Debug utilities ===

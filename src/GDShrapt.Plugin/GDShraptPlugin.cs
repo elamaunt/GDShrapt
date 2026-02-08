@@ -1219,7 +1219,7 @@ public partial class GDShraptPlugin : EditorPlugin
 
         try
         {
-            Logger.Info($"Applying type annotation: {annotation.IdentifierName}: {annotation.InferredType.TypeName}");
+            Logger.Info($"Applying type annotation: {annotation.IdentifierName}: {annotation.InferredType.TypeName.DisplayName}");
 
             // Open the script and apply the edit
             var resPath = ToResPath(scriptFile.FullPath);

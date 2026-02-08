@@ -89,8 +89,8 @@ public class GDParameterTypeDiff
         GDUnionType actual,
         IGDRuntimeProvider? runtimeProvider = null)
     {
-        var expectedSet = new HashSet<string>(expected.Types);
-        var actualSet = new HashSet<string>(actual.Types);
+        var expectedSet = new HashSet<string>(expected.Types.Select(t => t.DisplayName));
+        var actualSet = new HashSet<string>(actual.Types.Select(t => t.DisplayName));
 
         // Calculate matching types
         var matching = expectedSet.Intersect(actualSet).ToList();
@@ -164,23 +164,10 @@ public class GDParameterTypeDiff
             return runtimeProvider.IsAssignableTo(sourceType, targetType);
         }
 
-        // Basic numeric compatibility
-        if (IsNumericType(sourceType) && IsNumericType(targetType))
-        {
-            // int is compatible with float
-            if (sourceType == "int" && targetType == "float")
-                return true;
-        }
+        if (GDTypeCompatibility.IsImplicitlyConvertible(sourceType, targetType))
+            return true;
 
         return false;
-    }
-
-    /// <summary>
-    /// Checks if a type is numeric.
-    /// </summary>
-    private static bool IsNumericType(string typeName)
-    {
-        return typeName is "int" or "float" or "bool";
     }
 
     /// <summary>

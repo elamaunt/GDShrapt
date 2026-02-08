@@ -50,7 +50,7 @@ internal class GDReturnStatementReport
             Line = returnInfo.Line,
             Column = returnInfo.Column,
             ReturnExpression = returnInfo.ExpressionText,
-            InferredType = returnInfo.InferredType,
+            InferredType = returnInfo.InferredType?.DisplayName,
             IsHighConfidence = returnInfo.IsHighConfidence,
             IsImplicit = returnInfo.IsImplicit,
             BranchContext = returnInfo.BranchContext

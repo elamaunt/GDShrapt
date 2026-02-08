@@ -77,7 +77,7 @@ func get_current_state() -> Dictionary:
 func use_collision_methods():
 	# CharacterBody2D collision methods
 	var slide_count = get_slide_collision_count()  # -> int
-	if slide_count > 0:  # 80:4-GD3020-OK
+	if slide_count > 0:
 		var collision = get_slide_collision(0)  # -> KinematicCollision2D  # 83:7-GDL201-OK
 		if collision:  # 84:7-GDL201-OK
 			var collider = collision.get_collider()  # -> Object  # 85:7-GDL201-OK
@@ -106,7 +106,7 @@ func use_node2d_methods():
 	var global_transform_val = get_global_transform()  # -> Transform2D  # 106:5-GDL201-OK
 
 
-# Inner class extending built-in  # 109:1-GDL513-OK
+# Inner class extending built-in
 class ChildEnemy extends InheritanceTest:
 	var enemy_type: String = "basic"
 
@@ -185,7 +185,7 @@ func get_global_mouse_in_local() -> Vector2:
 	# get_viewport() -> Viewport -> get_mouse_position() -> Vector2
 	# to_local inherited from Node2D
 	var viewport = get_viewport()
-	var global_mouse = viewport.get_mouse_position()  # 188:20-GD7007-OK
+	var global_mouse = viewport.get_mouse_position()
 	return to_local(global_mouse)
 
 

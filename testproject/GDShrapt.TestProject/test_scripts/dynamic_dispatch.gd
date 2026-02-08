@@ -400,8 +400,8 @@ func add_around(method_pattern, advice):
 func advised_call(obj, method_name, args = []):
 	# Apply before advice
 	for pattern in before_advice:
-		if method_name.match(pattern):  # 403:2-GD7007-OK, 403:5-GD7007-OK
-			for advice in before_advice[pattern]:  # 404:5-GD7007-OK
+		if method_name.match(pattern):  # 403:5-GD7007-OK
+			for advice in before_advice[pattern]:
 				advice.call(obj, method_name, args)  # 405:4-GD7007-OK
 
 	# Apply around advice or direct call
@@ -420,7 +420,7 @@ func advised_call(obj, method_name, args = []):
 	# Apply after advice
 	for pattern in after_advice:
 		if method_name.match(pattern):  # 422:5-GD7007-OK
-			for advice in after_advice[pattern]:  # 423:5-GD7007-OK
+			for advice in after_advice[pattern]:
 				advice.call(obj, method_name, args, result)  # 424:4-GD7007-OK
 
 	return result

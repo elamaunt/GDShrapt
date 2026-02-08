@@ -383,7 +383,7 @@ public class GDAddTypeAnnotationResult
         return new GDAddTypeAnnotationResult(
             true, null,
             identifierName,
-            inferredType?.TypeName ?? "Variant",
+            inferredType?.TypeName?.DisplayName ?? "Variant",
             target,
             inferredType?.Confidence ?? GDTypeConfidence.Unknown,
             inferredType?.Reason);

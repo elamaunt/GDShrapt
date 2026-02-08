@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GDShrapt.Semantics.ComponentTests;
@@ -43,7 +44,7 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
 
         // Act
         var confidence = resolver.GetMemberConfidence(union, null!);
@@ -58,7 +59,7 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
 
         // Act - 'common_prop' exists on TypeA
         var confidence = resolver.GetMemberConfidence(union, "common_prop");
@@ -73,7 +74,7 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
 
         // Act - 'nonexistent' doesn't exist on TypeA
         var confidence = resolver.GetMemberConfidence(union, "nonexistent");
@@ -89,8 +90,8 @@ public class UnionTypeResolverTests
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
         // Both TypeA and TypeB have 'common_prop'
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         var confidence = resolver.GetMemberConfidence(union, "common_prop");
@@ -106,8 +107,8 @@ public class UnionTypeResolverTests
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
         // TypeA has 'only_in_a' but TypeB doesn't
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         var confidence = resolver.GetMemberConfidence(union, "only_in_a");
@@ -122,8 +123,8 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         var confidence = resolver.GetMemberConfidence(union, "nonexistent");
@@ -156,7 +157,7 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
 
         // Act
         var members = resolver.GetCommonMembers(union).ToList();
@@ -172,8 +173,8 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         var members = resolver.GetCommonMembers(union).ToList();
@@ -210,7 +211,7 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
 
         // Act
         var partialMembers = resolver.GetPartialMembers(union).ToList();
@@ -225,8 +226,8 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         var partialMembers = resolver.GetPartialMembers(union).ToList();
@@ -269,7 +270,7 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
 
         // Act
         var commonBase = resolver.ComputeCommonBaseType(union);
@@ -285,8 +286,8 @@ public class UnionTypeResolverTests
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
         // TypeA and TypeB both inherit from BaseType
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         var commonBase = resolver.ComputeCommonBaseType(union);
@@ -305,7 +306,7 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
 
         // Act
         resolver.EnrichUnionType(union);
@@ -330,8 +331,8 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         resolver.EnrichUnionType(union);
@@ -346,14 +347,14 @@ public class UnionTypeResolverTests
         // Arrange
         var resolver = new GDUnionTypeResolver(CreateMockProvider());
         var union = new GDUnionType();
-        union.AddType("TypeA", isHighConfidence: true);
-        union.AddType("TypeB", isHighConfidence: true);
+        union.AddTypeName("TypeA", isHighConfidence: true);
+        union.AddTypeName("TypeB", isHighConfidence: true);
 
         // Act
         resolver.EnrichUnionType(union);
 
         // Assert
-        Assert.AreEqual("BaseType", union.CommonBaseType);
+        Assert.AreEqual("BaseType", union.CommonBaseType?.DisplayName);
         Assert.IsTrue(union.ConfidenceReason!.Contains("BaseType"));
     }
 

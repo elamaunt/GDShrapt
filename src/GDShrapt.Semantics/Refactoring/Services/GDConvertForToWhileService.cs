@@ -110,7 +110,7 @@ public class GDConvertForToWhileService : GDRefactoringServiceBase
         if (forStmt.Collection is GDCallExpression call)
         {
             var methodName = GetCallMethodName(call);
-            if (methodName == "range")
+            if (methodName == GDWellKnownFunctions.Range)
             {
                 return CreateRangeConversion(variable, call);
             }

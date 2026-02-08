@@ -117,7 +117,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         }
 
         // preload() and load()
-        if (callName == "preload" || callName == "load")
+        if (GDWellKnownFunctions.IsResourceLoader(callName))
         {
             var resourcePath = GDNodePathExtractor.ExtractResourcePath(call);
             if (!string.IsNullOrEmpty(resourcePath))

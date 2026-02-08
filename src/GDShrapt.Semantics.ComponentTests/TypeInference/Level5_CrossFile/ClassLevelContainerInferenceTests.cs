@@ -38,7 +38,7 @@ func create_entity():
         Assert.IsTrue(profile.IsDictionary, "Container should be detected as Dictionary");
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("Node2D", inferredType.EffectiveElementType,
+        Assert.AreEqual("Node2D", inferredType.EffectiveElementType.DisplayName,
             "Value type should be inferred from Node2D.new() assignment");
     }
 
@@ -64,7 +64,7 @@ func add_item():
         Assert.IsFalse(profile.IsDictionary, "Container should be detected as Array");
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("Node2D", inferredType.EffectiveElementType,
+        Assert.AreEqual("Node2D", inferredType.EffectiveElementType.DisplayName,
             "Element type should be inferred from append(Node2D.new())");
     }
 
@@ -89,7 +89,7 @@ func enqueue():
         Assert.IsNotNull(profile);
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("String", inferredType.EffectiveElementType);
+        Assert.AreEqual("String", inferredType.EffectiveElementType.DisplayName);
     }
 
     [TestMethod]
@@ -116,8 +116,8 @@ func setup():
         var inferredType = profile.ComputeInferredType();
         Assert.IsTrue(inferredType.ElementUnionType.IsUnion,
             "Multiple different types should create a union");
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("Node2D"));
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("Sprite2D"));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node2D")));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Sprite2D")));
     }
 
     [TestMethod]
@@ -143,9 +143,9 @@ func add():
         Assert.IsTrue(profile.IsDictionary);
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("String", inferredType.EffectiveKeyType,
+        Assert.AreEqual("String", inferredType.EffectiveKeyType?.DisplayName,
             "Key type should be inferred from string keys");
-        Assert.AreEqual("int", inferredType.EffectiveElementType,
+        Assert.AreEqual("int", inferredType.EffectiveElementType.DisplayName,
             "Value type should be inferred from int values");
     }
 
@@ -173,8 +173,8 @@ func add_node2d():
         Assert.IsNotNull(profile);
 
         var inferredType = profile.ComputeInferredType();
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("Node"));
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("Node2D"));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node")));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node2D")));
     }
 
     [TestMethod]
@@ -199,9 +199,9 @@ func add():
 
         var inferredType = profile.ComputeInferredType();
         // Should have types from both initializer and append
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("Node"));
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("Node2D"));
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("Sprite2D"));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node")));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node2D")));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Sprite2D")));
     }
 
     #endregion
@@ -349,7 +349,7 @@ func test():
         Assert.IsTrue(profile.IsDictionary, "Container should be detected as Dictionary");
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("Node", inferredType.EffectiveElementType,
+        Assert.AreEqual("Node", inferredType.EffectiveElementType.DisplayName,
             "Value type should be inferred from Node.new() assignment");
     }
 
@@ -377,7 +377,7 @@ func setup():
         Assert.IsFalse(profile.IsDictionary, "Container should be detected as Array");
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("Node2D", inferredType.EffectiveElementType);
+        Assert.AreEqual("Node2D", inferredType.EffectiveElementType.DisplayName);
     }
 
     [TestMethod]
@@ -404,7 +404,7 @@ func init():
         Assert.IsTrue(profile.IsDictionary);
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("String", inferredType.EffectiveElementType);
+        Assert.AreEqual("String", inferredType.EffectiveElementType.DisplayName);
     }
 
     [TestMethod]

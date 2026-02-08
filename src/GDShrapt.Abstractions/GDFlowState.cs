@@ -78,7 +78,7 @@ public class GDFlowState
     /// Sets the type of a variable (for assignments).
     /// Resets narrowing and replaces current type with new one.
     /// </summary>
-    public void SetVariableType(string name, string typeName, GDNode? assignmentNode = null)
+    public void SetVariableType(string name, GDSemanticType? typeName, GDNode? assignmentNode = null)
     {
         if (string.IsNullOrEmpty(name))
             return;
@@ -92,13 +92,10 @@ public class GDFlowState
 
         // Replace current type with new one
         newType.CurrentType = new GDUnionType();
-        if (!string.IsNullOrEmpty(typeName))
+        if (typeName != null && !typeName.IsVariant)
         {
             newType.CurrentType.AddType(typeName);
-            // Update potentially-null flag based on assigned type
-            // If assigned a non-null value, variable is not potentially null
-            // If assigned null explicitly, variable is potentially null
-            newType.IsPotentiallyNull = (typeName == "null");
+            newType.IsPotentiallyNull = (typeName is GDNullSemanticType);
         }
         newType.LastAssignmentNode = assignmentNode;
 
@@ -108,25 +105,22 @@ public class GDFlowState
     /// <summary>
     /// Declares a variable with optional explicit type.
     /// </summary>
-    public void DeclareVariable(string name, string? declaredType, string? initType = null)
+    public void DeclareVariable(string name, GDSemanticType? declaredType, GDSemanticType? initType = null)
     {
         if (string.IsNullOrEmpty(name))
             return;
 
         var flowType = new GDFlowVariableType { DeclaredType = declaredType };
 
-        if (!string.IsNullOrEmpty(initType) && initType != "Variant")
+        if (initType != null && !initType.IsVariant)
         {
             flowType.CurrentType.AddType(initType);
-            // If initialized with a non-null value, mark as not potentially null
-            if (initType != "null")
+            if (initType is not GDNullSemanticType)
                 flowType.IsPotentiallyNull = false;
         }
-        else if (!string.IsNullOrEmpty(declaredType) && declaredType != "Variant")
+        else if (declaredType != null && !declaredType.IsVariant)
         {
             flowType.CurrentType.AddType(declaredType);
-            // Typed parameters/variables in GDScript are not null by default
-            // (they receive default value for their type, not null)
             flowType.IsPotentiallyNull = false;
         }
 
@@ -137,15 +131,14 @@ public class GDFlowState
     /// Applies type narrowing (from 'is' check).
     /// Does not modify parent state.
     /// </summary>
-    public void NarrowType(string name, string toType)
+    public void NarrowType(string name, GDSemanticType toType)
     {
-        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(toType))
+        if (string.IsNullOrEmpty(name) || toType == null)
             return;
 
         var existing = GetVariableType(name);
         if (existing == null)
         {
-            // Variable not known - create with narrowed type
             var newType = new GDFlowVariableType
             {
                 IsNarrowed = true,
@@ -368,9 +361,9 @@ public class GDFlowState
         merged.CurrentType.MergeWith(b.CurrentType);
 
         // Also consider narrowed types if they differ from current
-        if (a.IsNarrowed && !string.IsNullOrEmpty(a.NarrowedFromType))
+        if (a.IsNarrowed && a.NarrowedFromType != null)
             merged.CurrentType.AddType(a.NarrowedFromType);
-        if (b.IsNarrowed && !string.IsNullOrEmpty(b.NarrowedFromType))
+        if (b.IsNarrowed && b.NarrowedFromType != null)
             merged.CurrentType.AddType(b.NarrowedFromType);
 
         // Merge duck-type constraints (intersection: only keep what BOTH branches have)
@@ -504,18 +497,18 @@ public class GDFlowState
         // Use runtime provider for accurate builtin type detection
         if (runtimeProvider != null)
         {
-            if (runtimeProvider.IsBuiltinType(varType.DeclaredType ?? ""))
+            if (varType.DeclaredType != null && runtimeProvider.IsBuiltinType(varType.DeclaredType.DisplayName))
                 return false;
 
-            if (runtimeProvider.IsBuiltinType(varType.EffectiveType))
+            if (runtimeProvider.IsBuiltinType(varType.EffectiveType.DisplayName))
                 return false;
         }
 
         // Fallback to static check for basic cases
-        if (IsNeverNullType(varType.DeclaredType))
+        if (IsNeverNullType(varType.DeclaredType?.DisplayName))
             return false;
 
-        if (IsNeverNullType(varType.EffectiveType))
+        if (IsNeverNullType(varType.EffectiveType.DisplayName))
             return false;
 
         return varType.IsPotentiallyNull;
@@ -747,12 +740,12 @@ public class GDFlowState
     /// Creates a snapshot of this state for fixed-point comparison.
     /// Only includes local variables, not parent chain.
     /// </summary>
-    public Dictionary<string, HashSet<string>> GetTypeSnapshot()
+    public Dictionary<string, HashSet<GDSemanticType>> GetTypeSnapshot()
     {
-        var snapshot = new Dictionary<string, HashSet<string>>();
+        var snapshot = new Dictionary<string, HashSet<GDSemanticType>>();
         foreach (var kvp in _variables)
         {
-            snapshot[kvp.Key] = new HashSet<string>(kvp.Value.CurrentType.Types);
+            snapshot[kvp.Key] = new HashSet<GDSemanticType>(kvp.Value.CurrentType.Types);
         }
         return snapshot;
     }
@@ -761,7 +754,7 @@ public class GDFlowState
     /// Checks if current state matches a previous snapshot.
     /// Used for fixed-point detection.
     /// </summary>
-    public bool MatchesSnapshot(Dictionary<string, HashSet<string>> snapshot)
+    public bool MatchesSnapshot(Dictionary<string, HashSet<GDSemanticType>> snapshot)
     {
         if (snapshot.Count != _variables.Count)
             return false;

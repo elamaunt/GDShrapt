@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// Analyzes argument types at call sites to infer parameter types.
 /// Uses flow-sensitive type analysis when available to get precise argument types.
 /// </summary>
-public class GDCallSiteTypeAnalyzer
+internal class GDCallSiteTypeAnalyzer
 {
     private readonly GDCallSiteRegistry _callSiteRegistry;
     private readonly Func<GDScriptFile, GDSemanticModel?> _getSemanticModel;
@@ -72,7 +72,7 @@ public class GDCallSiteTypeAnalyzer
         /// <summary>
         /// Gets the effective type (single type or union).
         /// </summary>
-        public string EffectiveType => ArgumentTypes.IsEmpty ? "Variant" : ArgumentTypes.EffectiveType;
+        public string EffectiveType => ArgumentTypes.IsEmpty ? GDWellKnownTypes.Variant : ArgumentTypes.EffectiveType.DisplayName;
 
         /// <summary>
         /// Gets confidence based on coverage.
@@ -195,13 +195,13 @@ public class GDCallSiteTypeAnalyzer
             // Try to get the type of the argument using flow-sensitive analysis
             var argType = GetArgumentType(argExpr, semanticModel, callSite);
 
-            if (string.IsNullOrEmpty(argType) || argType == "Variant")
+            if (string.IsNullOrEmpty(argType) || argType == GDWellKnownTypes.Variant)
             {
                 paramResult.UnknownTypeCount++;
             }
             else
             {
-                paramResult.ArgumentTypes.AddType(argType);
+                paramResult.ArgumentTypes.AddTypeName(argType);
                 paramResult.Sources.Add(new GDCallSiteArgumentSource(argType, callSite, argExpr));
             }
         }
@@ -219,7 +219,7 @@ public class GDCallSiteTypeAnalyzer
         if (semanticModel != null)
         {
             var type = semanticModel.GetExpressionType(argExpr);
-            if (!string.IsNullOrEmpty(type) && type != "Variant")
+            if (!string.IsNullOrEmpty(type) && type != GDWellKnownTypes.Variant)
                 return type;
         }
 
@@ -286,7 +286,7 @@ public class GDCallSiteTypeAnalyzer
             return GDInferredParameterType.Unknown(callSiteResult.ParameterName);
 
         var confidence = callSiteResult.GetConfidence();
-        var types = callSiteResult.ArgumentTypes.Types.ToList();
+        var types = callSiteResult.ArgumentTypes.Types.Select(t => t.DisplayName).ToList();
 
         // Format source description
         var sourceDesc = callSiteResult.Sources.Count > 0

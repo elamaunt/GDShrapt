@@ -198,14 +198,5 @@ public class GDGenericTypeValidator : GDValidationVisitor
     }
 
     private static string ExtractBaseTypeName(string typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return typeName;
-
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-            return typeName.Substring(0, bracketIndex);
-
-        return typeName;
-    }
+        => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 }

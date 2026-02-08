@@ -104,7 +104,7 @@ func test(obj):
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Enemy");
+        union.AddTypeName("Enemy");
 
         var report = new GDParameterInferenceReport
         {
@@ -123,8 +123,8 @@ func test(obj):
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Enemy");
-        union.AddType("Boss");
+        union.AddTypeName("Enemy");
+        union.AddTypeName("Boss");
 
         var report = new GDParameterInferenceReport
         {
@@ -254,7 +254,7 @@ func do_nothing():
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("int");
+        union.AddTypeName("int");
 
         var report = new GDReturnInferenceReport
         {
@@ -327,7 +327,7 @@ func do_nothing():
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Enemy");
+        union.AddTypeName("Enemy");
 
         var report = new GDMethodInferenceReport
         {
@@ -396,7 +396,7 @@ func do_nothing():
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("int");
+        union.AddTypeName("int");
 
         var report = new GDProjectInferenceReport
         {
@@ -512,7 +512,7 @@ func do_nothing():
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Enemy");
+        union.AddTypeName("Enemy");
 
         var report = new GDProjectInferenceReport
         {

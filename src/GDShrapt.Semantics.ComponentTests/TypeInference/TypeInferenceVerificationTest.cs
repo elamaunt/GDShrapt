@@ -9,6 +9,7 @@ namespace GDShrapt.Semantics.ComponentTests;
 /// Test fails until all entries are verified with # OK marker.
 /// </summary>
 [TestClass]
+[TestCategory("ManualVerification")]
 public class TypeInferenceVerificationTest
 {
     private static string GetSolutionRoot()

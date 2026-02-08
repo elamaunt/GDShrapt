@@ -402,7 +402,7 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
             if (node is GDCallExpression call)
             {
                 var callerName = GetCallerName(call);
-                if (callerName == "preload" || callerName == "load")
+                if (GDWellKnownFunctions.IsResourceLoader(callerName))
                 {
                     var firstParam = call.Parameters?.FirstOrDefault();
                     if (firstParam is GDStringExpression strExpr && strExpr.String != null)

@@ -40,7 +40,7 @@ internal class GDUnionTypeResolver
             if (!unionType.Types.Any())
                 return GDReferenceConfidence.NameMatch;
 
-            var member = _runtimeProvider.GetMember(unionType.Types.First(), memberName);
+            var member = _runtimeProvider.GetMember(unionType.Types.First().DisplayName, memberName);
             return member != null ? GDReferenceConfidence.Strict : GDReferenceConfidence.NameMatch;
         }
 
@@ -48,9 +48,9 @@ internal class GDUnionTypeResolver
         var typesWithMember = 0;
         var totalTypes = unionType.Types.Count;
 
-        foreach (var typeName in unionType.Types)
+        foreach (var type in unionType.Types)
         {
-            var member = _runtimeProvider.GetMember(typeName, memberName);
+            var member = _runtimeProvider.GetMember(type.DisplayName, memberName);
             if (member != null)
                 typesWithMember++;
         }
@@ -86,7 +86,7 @@ internal class GDUnionTypeResolver
             if (!unionType.Types.Any())
                 yield break;
 
-            var typeInfo = _runtimeProvider.GetTypeInfo(unionType.Types.First());
+            var typeInfo = _runtimeProvider.GetTypeInfo(unionType.Types.First().DisplayName);
             if (typeInfo?.Members != null)
             {
                 foreach (var member in typeInfo.Members)
@@ -100,7 +100,7 @@ internal class GDUnionTypeResolver
             yield break;
 
         var firstType = unionType.Types.First();
-        var firstTypeInfo = _runtimeProvider.GetTypeInfo(firstType);
+        var firstTypeInfo = _runtimeProvider.GetTypeInfo(firstType.DisplayName);
         if (firstTypeInfo?.Members == null)
             yield break;
 
@@ -108,9 +108,9 @@ internal class GDUnionTypeResolver
         foreach (var member in firstTypeInfo.Members)
         {
             var memberName = member.Name;
-            var inAllTypes = unionType.Types.All(typeName =>
+            var inAllTypes = unionType.Types.All(type =>
             {
-                var m = _runtimeProvider.GetMember(typeName, memberName);
+                var m = _runtimeProvider.GetMember(type.DisplayName, memberName);
                 return m != null;
             });
 
@@ -130,9 +130,10 @@ internal class GDUnionTypeResolver
         var allMembers = new Dictionary<string, List<string>>();
 
         // Collect all members from all types
-        foreach (var typeName in unionType.Types)
+        foreach (var type in unionType.Types)
         {
-            var typeInfo = _runtimeProvider.GetTypeInfo(typeName);
+            var typeDisplayName = type.DisplayName;
+            var typeInfo = _runtimeProvider.GetTypeInfo(typeDisplayName);
             if (typeInfo?.Members == null)
                 continue;
 
@@ -143,7 +144,7 @@ internal class GDUnionTypeResolver
                     typeList = new List<string>();
                     allMembers[member.Name] = typeList;
                 }
-                typeList.Add(typeName);
+                typeList.Add(typeDisplayName);
             }
         }
 
@@ -170,10 +171,10 @@ internal class GDUnionTypeResolver
         {
             if (!unionType.Types.Any())
                 return null;
-            return unionType.Types.First();
+            return unionType.Types.First().DisplayName;
         }
 
-        return GDUnionTypeHelper.FindCommonBaseType(unionType.Types, _runtimeProvider);
+        return GDUnionTypeHelper.FindCommonBaseType(unionType.Types.Select(t => t.DisplayName), _runtimeProvider);
     }
 
     /// <summary>
@@ -187,12 +188,12 @@ internal class GDUnionTypeResolver
         var commonBase = ComputeCommonBaseType(unionType);
         if (!string.IsNullOrEmpty(commonBase) && commonBase != "Object" && commonBase != "Variant")
         {
-            unionType.CommonBaseType = commonBase;
-            unionType.ConfidenceReason = $"Common base: {commonBase} for {string.Join(", ", unionType.Types)}";
+            unionType.CommonBaseType = GDSemanticType.FromRuntimeTypeName(commonBase);
+            unionType.ConfidenceReason = $"Common base: {commonBase} for {string.Join(", ", unionType.Types.Select(t => t.DisplayName))}";
         }
         else
         {
-            unionType.ConfidenceReason = $"Union of: {string.Join(", ", unionType.Types)}";
+            unionType.ConfidenceReason = $"Union of: {string.Join(", ", unionType.Types.Select(t => t.DisplayName))}";
         }
     }
 }

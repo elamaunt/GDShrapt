@@ -75,7 +75,7 @@ Central type resolution with smart member lookup.
 ### Forward Inference (expression → type)
 
 ```
-InferType(expression):
+InferTypeNode(expression):
   1. Check cache → return if found
   2. Check recursion guard → return "Variant" if cycling
   3. Match expression type:

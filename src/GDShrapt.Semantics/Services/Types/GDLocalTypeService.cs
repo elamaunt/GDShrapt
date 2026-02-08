@@ -14,7 +14,7 @@ internal class GDLocalTypeService
     /// <summary>
     /// Delegate for finding symbols by name.
     /// </summary>
-    public delegate IEnumerable<GDSymbolInfo> FindSymbolsDelegate(string name);
+    public delegate IReadOnlyList<GDSymbolInfo> FindSymbolsDelegate(string name);
 
     /// <summary>
     /// Delegate for finding member with inheritance.

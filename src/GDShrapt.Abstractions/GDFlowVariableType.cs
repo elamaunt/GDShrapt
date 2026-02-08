@@ -17,7 +17,7 @@ public class GDFlowVariableType
     /// <summary>
     /// The explicitly declared type (if any). Null for Variant variables.
     /// </summary>
-    public string? DeclaredType { get; set; }
+    public GDSemanticType? DeclaredType { get; set; }
 
     /// <summary>
     /// True if current type comes from type narrowing (temporary).
@@ -27,7 +27,7 @@ public class GDFlowVariableType
     /// <summary>
     /// The narrowing type that currently applies (for restoration).
     /// </summary>
-    public string? NarrowedFromType { get; set; }
+    public GDSemanticType? NarrowedFromType { get; set; }
 
     /// <summary>
     /// Last assignment AST node (for source tracking).
@@ -57,11 +57,11 @@ public class GDFlowVariableType
     /// Gets the effective type for display/inference.
     /// Priority: narrowing > declared (when current is null/generic base) > current inferred > declared > Variant
     /// </summary>
-    public string EffectiveType
+    public GDSemanticType EffectiveType
     {
         get
         {
-            if (IsNarrowed && !string.IsNullOrEmpty(NarrowedFromType))
+            if (IsNarrowed && NarrowedFromType != null)
                 return NarrowedFromType;
 
             if (!CurrentType.IsEmpty)
@@ -70,18 +70,18 @@ public class GDFlowVariableType
 
                 // If DeclaredType exists and CurrentType is only "null", prefer DeclaredType
                 // This ensures "var x: Node = null" returns "Node", not "null"
-                if (!string.IsNullOrEmpty(DeclaredType) && currentEffective == "null")
+                if (DeclaredType != null && currentEffective is GDNullSemanticType)
                     return DeclaredType;
 
                 // If DeclaredType is a generic version of CurrentType, prefer DeclaredType
                 // e.g., DeclaredType = "Dictionary[String,int]", CurrentType = "Dictionary"
-                if (!string.IsNullOrEmpty(DeclaredType) && IsGenericVersionOf(DeclaredType, currentEffective))
+                if (DeclaredType != null && IsGenericVersionOf(DeclaredType.DisplayName, currentEffective.DisplayName))
                     return DeclaredType;
 
                 return currentEffective;
             }
 
-            return DeclaredType ?? "Variant";
+            return DeclaredType ?? GDVariantSemanticType.Instance;
         }
     }
 
@@ -111,8 +111,8 @@ public class GDFlowVariableType
     {
         get
         {
-            if (IsNarrowed && !string.IsNullOrEmpty(NarrowedFromType))
-                return NarrowedFromType;
+            if (IsNarrowed && NarrowedFromType != null)
+                return NarrowedFromType.DisplayName;
 
             if (!CurrentType.IsEmpty)
             {
@@ -120,18 +120,18 @@ public class GDFlowVariableType
                 {
                     var singleType = CurrentType.Types.First();
                     // Prefer DeclaredType when current is null
-                    if (!string.IsNullOrEmpty(DeclaredType) && singleType == "null")
-                        return DeclaredType;
+                    if (DeclaredType != null && singleType is GDNullSemanticType)
+                        return DeclaredType.DisplayName;
                     // Prefer DeclaredType if it's a generic version
-                    if (!string.IsNullOrEmpty(DeclaredType) && IsGenericVersionOf(DeclaredType, singleType))
-                        return DeclaredType;
-                    return singleType;
+                    if (DeclaredType != null && IsGenericVersionOf(DeclaredType.DisplayName, singleType.DisplayName))
+                        return DeclaredType.DisplayName;
+                    return singleType.DisplayName;
                 }
                 if (CurrentType.IsUnion)
-                    return string.Join("|", CurrentType.Types.OrderBy(t => t));
+                    return string.Join("|", CurrentType.Types.Select(t => t.DisplayName).OrderBy(t => t));
             }
 
-            return DeclaredType ?? "Variant";
+            return DeclaredType?.DisplayName ?? "Variant";
         }
     }
 
@@ -182,7 +182,7 @@ public class GDFlowVariableType
     public override string ToString()
     {
         var prefix = IsNarrowed ? "[narrowed] " : "";
-        var declared = DeclaredType != null ? $" (declared: {DeclaredType})" : "";
+        var declared = DeclaredType != null ? $" (declared: {DeclaredType.DisplayName})" : "";
         return $"{prefix}{EffectiveTypeFormatted}{declared}";
     }
 }

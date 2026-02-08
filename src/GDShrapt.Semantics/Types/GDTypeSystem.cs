@@ -25,18 +25,23 @@ public class GDTypeSystem : IGDTypeSystem
     public GDSemanticType GetType(GDNode node)
     {
         var typeName = _model.GetTypeForNode(node);
-        return GDSemanticType.FromTypeName(typeName);
+        return GDSemanticType.FromRuntimeTypeName(typeName);
     }
 
     /// <inheritdoc/>
     public GDSemanticType GetType(GDExpression expr)
     {
+        // Try direct semantic type first (bypasses string serialization)
+        var semanticType = _model.GetSemanticTypeForExpression(expr);
+        if (semanticType != null)
+            return semanticType;
+
         var typeNode = _model.GetTypeNodeForExpression(expr);
         if (typeNode != null)
-            return GDSemanticType.FromTypeName(typeNode.BuildName());
+            return GDSemanticType.FromTypeNode(typeNode);
 
         var typeName = _model.GetTypeForNode(expr);
-        return GDSemanticType.FromTypeName(typeName);
+        return GDSemanticType.FromRuntimeTypeName(typeName);
     }
 
     /// <inheritdoc/>
@@ -168,7 +173,7 @@ public class GDTypeSystem : IGDTypeSystem
             {
                 return new GDTypeInfo
                 {
-                    NarrowedType = GDSemanticType.FromTypeName(narrowedType),
+                    NarrowedType = GDSemanticType.FromRuntimeTypeName(narrowedType),
                     Confidence = GDTypeConfidence.Certain
                 };
             }
@@ -180,7 +185,7 @@ public class GDTypeSystem : IGDTypeSystem
             var containerTypeName = containerProfile.IsDictionary ? "Dictionary" : "Array";
             return new GDTypeInfo
             {
-                InferredType = GDSemanticType.FromTypeName(containerTypeName),
+                InferredType = GDSemanticType.FromRuntimeTypeName(containerTypeName),
                 ContainerInfo = containerProfile.ComputeInferredType(),
                 Confidence = GDTypeConfidence.High
             };
@@ -192,10 +197,10 @@ public class GDTypeSystem : IGDTypeSystem
             return new GDTypeInfo
             {
                 DeclaredSemanticType = !string.IsNullOrEmpty(symbol.TypeName)
-                    ? GDSemanticType.FromTypeName(symbol.TypeName)
+                    ? GDSemanticType.FromRuntimeTypeName(symbol.TypeName)
                     : null,
                 InferredType = !string.IsNullOrEmpty(symbol.TypeName)
-                    ? GDSemanticType.FromTypeName(symbol.TypeName)
+                    ? GDSemanticType.FromRuntimeTypeName(symbol.TypeName)
                     : GDVariantSemanticType.Instance,
                 Confidence = !string.IsNullOrEmpty(symbol.TypeName)
                     ? GDTypeConfidence.Certain

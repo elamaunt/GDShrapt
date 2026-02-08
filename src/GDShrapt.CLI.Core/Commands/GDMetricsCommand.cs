@@ -36,7 +36,7 @@ public class GDMetricsCommand : GDProjectCommandBase
         GDProjectConfig config,
         CancellationToken cancellationToken)
     {
-        var handler = Registry?.GetService<IGDMetricsHandler>() ?? new GDMetricsHandler(project);
+        var handler = Registry?.GetService<IGDMetricsHandler>() ?? new GDMetricsHandler(new GDProjectSemanticModel(project));
 
         // Analyze based on scope
         GDProjectMetrics metrics;

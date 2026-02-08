@@ -1,6 +1,6 @@
-using GDShrapt.Abstractions;
+using System.Linq;
 
-namespace GDShrapt.Semantics;
+namespace GDShrapt.Abstractions;
 
 /// <summary>
 /// Represents the null type.
@@ -21,22 +21,17 @@ public sealed class GDNullSemanticType : GDSemanticType
 
     public override bool IsAssignableTo(GDSemanticType other, IGDRuntimeProvider? provider)
     {
-        // null is assignable to Variant
         if (other.IsVariant)
             return true;
 
-        // null is assignable to nullable types
         if (other.IsNullable)
             return true;
 
-        // null is assignable to union types that contain null
         if (other is GDUnionSemanticType union)
             return union.Types.Any(t => t is GDNullSemanticType);
 
-        // null is assignable to reference types (Object hierarchy)
         if (other is GDSimpleSemanticType simple && provider != null)
         {
-            // Check if type inherits from Object (reference type)
             var baseType = simple.TypeName;
             while (!string.IsNullOrEmpty(baseType))
             {

@@ -156,7 +156,7 @@ func compute_values(seed_value):
 
 
 func _compute_x(seed):
-	return seed * 2
+	return seed * 2  # 159:8-GD3002-OK
 
 
 func _compute_y(x_val):

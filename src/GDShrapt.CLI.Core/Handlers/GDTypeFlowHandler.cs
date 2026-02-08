@@ -80,8 +80,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
             return null;
 
         // Find the node at the position
-        var finder = new GDPositionFinder(script.Class);
-        var astNode = finder.FindNodeAtPosition(line, column);
+        var astNode = script.SemanticModel.GetNodeAtPosition(line, column);
         if (astNode == null)
             return null;
 
@@ -1343,8 +1342,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         if (script?.SemanticModel == null || script.Class == null)
             return null;
 
-        var finder = new GDPositionFinder(script.Class);
-        var astNode = finder.FindNodeAtPosition(line, column);
+        var astNode = script.SemanticModel.GetNodeAtPosition(line, column);
         if (astNode == null)
             return null;
 

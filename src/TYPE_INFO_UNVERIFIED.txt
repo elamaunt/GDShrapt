@@ -1,0 +1,3 @@
+# TYPE_INFO_UNVERIFIED.txt
+# Copy entries to TYPE_INFO_VERIFIED.txt and add # OK
+

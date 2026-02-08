@@ -18,7 +18,7 @@ public class GDDependencyHandlerTests
     public void Setup()
     {
         _project = TestProjectHelper.LoadTestProject();
-        _handler = new GDDependencyHandler(_project);
+        _handler = new GDDependencyHandler(new GDProjectSemanticModel(_project));
     }
 
     [TestCleanup]
@@ -204,7 +204,7 @@ func derived_method() -> void:
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDDependencyHandler(project);
+            var handler = new GDDependencyHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();
@@ -243,7 +243,7 @@ func _ready() -> void:
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDDependencyHandler(project);
+            var handler = new GDDependencyHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();
@@ -285,7 +285,7 @@ func get_a() -> CycleA:
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDDependencyHandler(project);
+            var handler = new GDDependencyHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();
@@ -319,7 +319,7 @@ extends ClassB
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDDependencyHandler(project);
+            var handler = new GDDependencyHandler(new GDProjectSemanticModel(project));
 
             // Act
             var report = handler.AnalyzeProject();

@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.TypesMap;
 using System;
@@ -94,7 +95,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                     var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
                     members.Add(GDRuntimeMemberInfo.Method(
                         method.GDScriptName,
-                        method.GDScriptReturnTypeName ?? "Variant",
+                        method.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant,
                         minArgs,
                         maxArgs,
                         isVarArgs));
@@ -108,7 +109,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             {
                 members.Add(GDRuntimeMemberInfo.Property(
                     propKvp.Value.GDScriptName,
-                    propKvp.Value.GDScriptTypeName ?? "Variant",
+                    propKvp.Value.GDScriptTypeName ?? GDWellKnownTypes.Variant,
                     propKvp.Value.IsStatic));
             }
         }
@@ -127,7 +128,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             {
                 members.Add(GDRuntimeMemberInfo.Constant(
                     constKvp.Value.GDScriptName ?? constKvp.Key,
-                    constKvp.Value.CSharpValueTypeName ?? "Variant"));
+                    constKvp.Value.CSharpValueTypeName ?? GDWellKnownTypes.Variant));
             }
         }
 
@@ -166,7 +167,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
             var returnType = ConvertCSharpGenericToGDScript(
                 method.GDScriptReturnTypeName,
-                method.CSharpReturnTypeFullName) ?? "Variant";
+                method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant;
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
                 returnType,
@@ -186,7 +187,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             return GDRuntimeMemberInfo.Property(
                 property.GDScriptName,
-                property.GDScriptTypeName ?? "Variant",
+                property.GDScriptTypeName ?? GDWellKnownTypes.Variant,
                 property.IsStatic);
         }
 
@@ -199,7 +200,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         // Check constants
         if (typeData.Constants?.TryGetValue(memberName, out var constant) == true)
         {
-            return GDRuntimeMemberInfo.Constant(constant.GDScriptName ?? memberName, constant.CSharpValueTypeName ?? "Variant");
+            return GDRuntimeMemberInfo.Constant(constant.GDScriptName ?? memberName, constant.CSharpValueTypeName ?? GDWellKnownTypes.Variant);
         }
 
         // Check enums
@@ -257,7 +258,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
             var returnType = ConvertCSharpGenericToGDScript(
                 method.GDScriptReturnTypeName,
-                method.CSharpReturnTypeFullName) ?? "Variant";
+                method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant;
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
                 returnType,
@@ -276,7 +277,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             return GDRuntimeMemberInfo.Property(
                 property.GDScriptName,
-                property.GDScriptTypeName ?? "Variant",
+                property.GDScriptTypeName ?? GDWellKnownTypes.Variant,
                 property.IsStatic);
         }
 
@@ -285,7 +286,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             return GDRuntimeMemberInfo.Constant(
                 constant.GDScriptName ?? memberName,
-                constant.CSharpValueTypeName ?? "Variant");
+                constant.CSharpValueTypeName ?? GDWellKnownTypes.Variant);
         }
 
         return null;
@@ -322,21 +323,15 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             return true;
 
         // Variant accepts anything
-        if (targetType == "Variant")
+        if (targetType == GDWellKnownTypes.Variant)
             return true;
 
         // Variant as source can be assigned to any type (runtime type check will occur)
         // This is common in GDScript where untyped variables (Variant) are passed to typed contexts
-        if (sourceType == "Variant")
+        if (sourceType == GDWellKnownTypes.Variant)
             return true;
 
-        // Numeric promotion
-        if (sourceType == "int" && targetType == "float")
-            return true;
-
-        // String <-> StringName implicit conversion
-        if ((sourceType == "String" && targetType == "StringName") ||
-            (sourceType == "StringName" && targetType == "String"))
+        if (GDTypeCompatibility.IsImplicitlyConvertible(sourceType, targetType))
             return true;
 
         // Extract base type names for generics (Array[int] -> Array)
@@ -373,14 +368,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     /// </summary>
     private static string ExtractBaseTypeName(string typeName)
     {
-        if (string.IsNullOrEmpty(typeName))
-            return typeName;
-
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-            return typeName.Substring(0, bracketIndex);
-
-        return typeName;
+        return GDGenericTypeHelper.ExtractBaseTypeName(typeName);
     }
 
     public GDRuntimeFunctionInfo? GetGlobalFunction(string name)
@@ -412,10 +400,12 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 (minArgs, maxArgs, isVarArgs) = CalculateArgConstraintsFromOverloads(methods);
             }
 
-            var returnType = method.GDScriptReturnTypeName ?? "Variant";
+            var returnType = method.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant;
 
-            // Create parameter list from first overload
-            var parameters = CreateParameterList(method.Parameters);
+            // Create parameter list: merge from all overloads if multiple exist
+            var parameters = methods.Count > 1
+                ? CreateMergedParameterList(methods)
+                : CreateParameterList(method.Parameters);
 
             GDRuntimeFunctionInfo funcInfo;
             if (isVarArgs)
@@ -433,6 +423,23 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
             // Assign parameters
             funcInfo.Parameters = parameters;
+
+            // Fill Overloads when multiple overloads exist
+            if (methods.Count > 1)
+            {
+                var overloads = new List<GDRuntimeFunctionOverload>(methods.Count);
+                foreach (var m in methods)
+                {
+                    overloads.Add(new GDRuntimeFunctionOverload
+                    {
+                        Parameters = CreateParameterList(m.Parameters),
+                        ReturnType = m.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant,
+                        ReturnTypeRole = m.ReturnTypeRole
+                    });
+                }
+                funcInfo.Overloads = overloads;
+            }
+
             return funcInfo;
         }
 
@@ -708,13 +715,67 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         return parameters.Select(p => new GDRuntimeParameterInfo(
             p.CSharpName ?? "arg",
-            p.GDScriptTypeName ?? "Variant",
+            p.GDScriptTypeName ?? GDWellKnownTypes.Variant,
             p.HasDefaultValue,
             p.IsParams,
             p.CallableReceivesType,
             p.CallableReturnsType,
             p.CallableParameterCount
         )).ToList();
+    }
+
+    /// <summary>
+    /// Creates merged parameter list from all overloads.
+    /// For each position, if all overloads have the same type → use that type, otherwise use Variant.
+    /// </summary>
+    private static IReadOnlyList<GDRuntimeParameterInfo>? CreateMergedParameterList(List<GDMethodData> methods)
+    {
+        if (methods == null || methods.Count == 0)
+            return null;
+
+        int maxParams = methods.Max(m => m.Parameters?.Length ?? 0);
+        if (maxParams == 0)
+            return null;
+
+        var result = new List<GDRuntimeParameterInfo>(maxParams);
+        for (int i = 0; i < maxParams; i++)
+        {
+            string? commonType = null;
+            bool allSame = true;
+            bool anyHasDefault = false;
+            bool anyIsParams = false;
+            string paramName = $"arg{i}";
+
+            foreach (var m in methods)
+            {
+                if (m.Parameters == null || i >= m.Parameters.Length)
+                {
+                    allSame = false;
+                    continue;
+                }
+
+                var p = m.Parameters[i];
+                var pType = p.GDScriptTypeName ?? GDWellKnownTypes.Variant;
+
+                if (commonType == null)
+                {
+                    commonType = pType;
+                    paramName = p.CSharpName ?? paramName;
+                }
+                else if (commonType != pType)
+                {
+                    allSame = false;
+                }
+
+                if (p.HasDefaultValue) anyHasDefault = true;
+                if (p.IsParams) anyIsParams = true;
+            }
+
+            var mergedType = allSame ? (commonType ?? GDWellKnownTypes.Variant) : GDWellKnownTypes.Variant;
+            result.Add(new GDRuntimeParameterInfo(paramName, mergedType, anyHasDefault, anyIsParams));
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -946,7 +1007,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 {
                     if (overload.RightType == rightType ||
                         overload.RightType == null ||
-                        (overload.RightType == "Variant"))
+                        (overload.RightType == GDWellKnownTypes.Variant))
                     {
                         return overload.ResultType;
                     }

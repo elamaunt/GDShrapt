@@ -21,16 +21,16 @@ public class UnionTypeIntersectionTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("int");
-        union.AddType("String");
-        union.AddType("null");
+        union.AddTypeName("int");
+        union.AddTypeName("String");
+        union.AddTypeName("null");
 
         // Act
-        var result = union.IntersectWithType("int", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("int"), null);
 
         // Assert
         Assert.IsTrue(result.IsSingleType, "Result should be single type");
-        Assert.AreEqual("int", result.EffectiveType, "Intersection of int|String|null with int should be int");
+        Assert.AreEqual("int", result.EffectiveType.DisplayName, "Intersection of int|String|null with int should be int");
     }
 
     [TestMethod]
@@ -38,15 +38,15 @@ public class UnionTypeIntersectionTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("int");
-        union.AddType("String");
+        union.AddTypeName("int");
+        union.AddTypeName("String");
 
         // Act
-        var result = union.IntersectWithType("String", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("String"), null);
 
         // Assert
         Assert.IsTrue(result.IsSingleType, "Result should be single type");
-        Assert.AreEqual("String", result.EffectiveType, "Intersection of int|String with String should be String");
+        Assert.AreEqual("String", result.EffectiveType.DisplayName, "Intersection of int|String with String should be String");
     }
 
     [TestMethod]
@@ -54,10 +54,10 @@ public class UnionTypeIntersectionTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("String");
+        union.AddTypeName("String");
 
         // Act
-        var result = union.IntersectWithType("int", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("int"), null);
 
         // Assert
         Assert.IsTrue(result.IsEmpty, "Intersection of String with int should be empty (incompatible types)");
@@ -70,11 +70,11 @@ public class UnionTypeIntersectionTests
         var union = new GDUnionType();
 
         // Act
-        var result = union.IntersectWithType("int", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("int"), null);
 
         // Assert
         Assert.IsTrue(result.IsSingleType, "Result should be single type");
-        Assert.AreEqual("int", result.EffectiveType, "Intersection of empty union with int should be int");
+        Assert.AreEqual("int", result.EffectiveType.DisplayName, "Intersection of empty union with int should be int");
     }
 
     [TestMethod]
@@ -82,14 +82,14 @@ public class UnionTypeIntersectionTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Node");
+        union.AddTypeName("Node");
 
         // Act
-        var result = union.IntersectWithType("Node", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("Node"), null);
 
         // Assert
         Assert.IsTrue(result.IsSingleType, "Result should be single type");
-        Assert.AreEqual("Node", result.EffectiveType, "Intersection of Node with Node should be Node");
+        Assert.AreEqual("Node", result.EffectiveType.DisplayName, "Intersection of Node with Node should be Node");
     }
 
     #endregion
@@ -101,15 +101,15 @@ public class UnionTypeIntersectionTests
     {
         // Arrange: int is compatible with float (numeric)
         var union = new GDUnionType();
-        union.AddType("int");
-        union.AddType("String");
+        union.AddTypeName("int");
+        union.AddTypeName("String");
 
         // Act
-        var result = union.IntersectWithType("float", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("float"), null);
 
         // Assert: int is compatible with float, so intersection should not be empty
         Assert.IsFalse(result.IsEmpty, "int is compatible with float (numeric), intersection should not be empty");
-        Assert.AreEqual("float", result.EffectiveType, "Result should be float (target type preferred)");
+        Assert.AreEqual("float", result.EffectiveType.DisplayName, "Result should be float (target type preferred)");
     }
 
     [TestMethod]
@@ -117,14 +117,14 @@ public class UnionTypeIntersectionTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("float");
+        union.AddTypeName("float");
 
         // Act
-        var result = union.IntersectWithType("int", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("int"), null);
 
         // Assert: float is compatible with int (numeric)
         Assert.IsFalse(result.IsEmpty, "float is compatible with int (numeric)");
-        Assert.AreEqual("int", result.EffectiveType);
+        Assert.AreEqual("int", result.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -132,11 +132,11 @@ public class UnionTypeIntersectionTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("int");
-        union.AddType("float");
+        union.AddTypeName("int");
+        union.AddTypeName("float");
 
         // Act
-        var result = union.IntersectWithType("int", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("int"), null);
 
         // Assert
         Assert.IsFalse(result.IsEmpty);
@@ -152,17 +152,17 @@ public class UnionTypeIntersectionTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Node");
-        union.AddType("RefCounted");
+        union.AddTypeName("Node");
+        union.AddTypeName("RefCounted");
 
         var provider = GDDefaultRuntimeProvider.Instance;
 
         // Act
-        var result = union.IntersectWithType("Node", provider);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("Node"), provider);
 
         // Assert: Only Node is compatible with Node (RefCounted is not a subclass)
         Assert.IsFalse(result.IsEmpty, "Node should be compatible with Node");
-        Assert.AreEqual("Node", result.EffectiveType);
+        Assert.AreEqual("Node", result.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -170,13 +170,13 @@ public class UnionTypeIntersectionTests
     {
         // Arrange: Sprite2D extends Node2D
         var union = new GDUnionType();
-        union.AddType("Node2D");
-        union.AddType("Sprite2D");
+        union.AddTypeName("Node2D");
+        union.AddTypeName("Sprite2D");
 
         var provider = GDDefaultRuntimeProvider.Instance;
 
         // Act
-        var result = union.IntersectWithType("Node2D", provider);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("Node2D"), provider);
 
         // Assert: Both types are compatible with Node2D (Sprite2D is subclass)
         Assert.IsFalse(result.IsEmpty);
@@ -187,17 +187,17 @@ public class UnionTypeIntersectionTests
     {
         // Arrange: Control inherits from Node (in TypesMap: Control -> Node)
         var union = new GDUnionType();
-        union.AddType("Control");
+        union.AddTypeName("Control");
 
         var provider = GDDefaultRuntimeProvider.Instance;
 
         // Act
-        var result = union.IntersectWithType("Node", provider);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("Node"), provider);
 
         // Assert: Control is assignable to Node, so intersection is valid
         Assert.IsFalse(result.IsEmpty,
             $"Control should be assignable to Node. IsAssignableTo={provider.IsAssignableTo("Control", "Node")}, BaseType={provider.GetBaseType("Control")}");
-        Assert.AreEqual("Control", result.EffectiveType, "Result should be Control (more specific type)");
+        Assert.AreEqual("Control", result.EffectiveType.DisplayName, "Result should be Control (more specific type)");
     }
 
     [TestMethod]
@@ -205,13 +205,13 @@ public class UnionTypeIntersectionTests
     {
         // Arrange: Node and String, intersect with Control (subclass of Node)
         var union = new GDUnionType();
-        union.AddType("Node");
-        union.AddType("String");
+        union.AddTypeName("Node");
+        union.AddTypeName("String");
 
         var provider = GDDefaultRuntimeProvider.Instance;
 
         // Act
-        var result = union.IntersectWithType("Control", provider);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("Control"), provider);
 
         // Assert: Control is a subclass of Node, so Node ∩ Control = Control (more specific)
         Assert.IsFalse(result.IsEmpty);
@@ -284,10 +284,10 @@ func test():
     {
         // Arrange: null cannot intersect with int
         var union = new GDUnionType();
-        union.AddType("null");
+        union.AddTypeName("null");
 
         // Act
-        var result = union.IntersectWithType("int", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("int"), null);
 
         // Assert
         Assert.IsTrue(result.IsEmpty, "null cannot intersect with int");
@@ -298,16 +298,16 @@ func test():
     {
         // Arrange: Variant is compatible with anything
         var union = new GDUnionType();
-        union.AddType("Variant");
+        union.AddTypeName("Variant");
 
         // Act
-        var result = union.IntersectWithType("int", null);
+        var result = union.IntersectWithType(GDSemanticType.FromRuntimeTypeName("int"), null);
 
         // Assert: Variant is filtered by AddType, so union might be empty
         // or Variant is treated specially
         // For now, we skip Variant in AddType, so union is empty
         // If empty, intersectWithType returns the target type
-        Assert.AreEqual("int", result.EffectiveType);
+        Assert.AreEqual("int", result.EffectiveType.DisplayName);
     }
 
     #endregion
@@ -338,14 +338,14 @@ func test():
 
         // Check for concrete type first
         var concreteType = context.GetConcreteType(variableName);
-        if (!string.IsNullOrEmpty(concreteType))
-            return new NarrowingResult(concreteType, concreteType != "null");
+        if (concreteType != null)
+            return new NarrowingResult(concreteType.DisplayName, concreteType.DisplayName != "null");
 
         // Check for duck type narrowing
         var duckType = context.GetNarrowedType(variableName);
         if (duckType != null && duckType.PossibleTypes.Count > 0)
         {
-            var narrowedType = duckType.PossibleTypes.First();
+            var narrowedType = duckType.PossibleTypes.First().DisplayName;
             return new NarrowingResult(narrowedType, true);
         }
 

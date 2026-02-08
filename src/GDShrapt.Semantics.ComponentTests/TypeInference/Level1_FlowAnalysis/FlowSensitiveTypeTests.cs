@@ -138,9 +138,9 @@ func test(cond: bool):
 
         if (flowType.CurrentType.IsUnion)
         {
-            Assert.IsTrue(flowType.CurrentType.Types.Contains("int"),
+            Assert.IsTrue(flowType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
                 $"Expected int in union, got: {string.Join(", ", flowType.CurrentType.Types)}");
-            Assert.IsTrue(flowType.CurrentType.Types.Contains("String"),
+            Assert.IsTrue(flowType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
                 $"Expected String in union, got: {string.Join(", ", flowType.CurrentType.Types)}");
         }
     }
@@ -172,7 +172,7 @@ func test(cond: bool):
 
         // Assert - should have both int (original) and String (from if branch)
         Assert.IsNotNull(flowType);
-        Assert.IsTrue(flowType.CurrentType.Types.Contains("int") || flowType.CurrentType.Types.Contains("String"),
+        Assert.IsTrue(flowType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")) || flowType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should have int or String, got: {flowType.EffectiveTypeFormatted}");
     }
 
@@ -219,15 +219,15 @@ func test(data):
         state.DeclareVariable("data", null); // Variant parameter
 
         // Narrow to Dictionary (inside if data is Dictionary:)
-        state.NarrowType("data", "Dictionary");
+        state.NarrowType("data", GDSemanticType.FromRuntimeTypeName("Dictionary"));
 
         // Verify narrowing
         var narrowedType = state.GetVariableType("data");
         Assert.IsNotNull(narrowedType);
-        Assert.AreEqual("Dictionary", narrowedType.EffectiveType);
+        Assert.AreEqual("Dictionary", narrowedType.EffectiveType.DisplayName);
 
         // Assignment resets narrowing: data = data.get("key") -> Variant
-        state.SetVariableType("data", "Variant");
+        state.SetVariableType("data", GDSemanticType.FromRuntimeTypeName("Variant"));
 
         // Act
         var afterAssignment = state.GetVariableType("data");
@@ -235,7 +235,7 @@ func test(data):
         // Assert - after reassignment, type should be Variant
         Assert.IsNotNull(afterAssignment);
         Assert.IsFalse(afterAssignment.IsNarrowed, "Narrowing should be reset after assignment");
-        Assert.AreEqual("Variant", afterAssignment.EffectiveType,
+        Assert.AreEqual("Variant", afterAssignment.EffectiveType.DisplayName,
             "After reassignment, type should be Variant (not narrowed Dictionary)");
     }
 
@@ -291,12 +291,12 @@ func test(data):
         var state = new GDFlowState();
 
         // Act
-        state.DeclareVariable("x", null, "int");
+        state.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Assert
         var varType = state.GetVariableType("x");
         Assert.IsNotNull(varType);
-        Assert.AreEqual("int", varType.EffectiveType);
+        Assert.AreEqual("int", varType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -304,15 +304,15 @@ func test(data):
     {
         // Arrange
         var state = new GDFlowState();
-        state.DeclareVariable("x", null, "int");
+        state.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Act
-        state.SetVariableType("x", "String");
+        state.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Assert
         var varType = state.GetVariableType("x");
         Assert.IsNotNull(varType);
-        Assert.AreEqual("String", varType.EffectiveType);
+        Assert.AreEqual("String", varType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -320,7 +320,7 @@ func test(data):
     {
         // Arrange
         var parent = new GDFlowState();
-        parent.DeclareVariable("x", null, "int");
+        parent.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Act
         var child = parent.CreateChild();
@@ -328,7 +328,7 @@ func test(data):
         // Assert
         var varType = child.GetVariableType("x");
         Assert.IsNotNull(varType);
-        Assert.AreEqual("int", varType.EffectiveType);
+        Assert.AreEqual("int", varType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -336,18 +336,18 @@ func test(data):
     {
         // Arrange
         var parent = new GDFlowState();
-        parent.DeclareVariable("x", null, "int");
+        parent.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
         var child = parent.CreateChild();
 
         // Act
-        child.SetVariableType("x", "String");
+        child.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Assert
         var childType = child.GetVariableType("x");
-        Assert.AreEqual("String", childType!.EffectiveType);
+        Assert.AreEqual("String", childType!.EffectiveType.DisplayName);
 
         var parentType = parent.GetVariableType("x");
-        Assert.AreEqual("int", parentType!.EffectiveType);
+        Assert.AreEqual("int", parentType!.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -358,10 +358,10 @@ func test(data):
         parent.DeclareVariable("x", null);
 
         var ifBranch = parent.CreateChild();
-        ifBranch.SetVariableType("x", "int");
+        ifBranch.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("int"));
 
         var elseBranch = parent.CreateChild();
-        elseBranch.SetVariableType("x", "String");
+        elseBranch.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act
         var merged = GDFlowState.MergeBranches(ifBranch, elseBranch, parent);
@@ -370,8 +370,8 @@ func test(data):
         var varType = merged.GetVariableType("x");
         Assert.IsNotNull(varType);
         Assert.IsTrue(varType.CurrentType.IsUnion, "Should be union type");
-        Assert.IsTrue(varType.CurrentType.Types.Contains("int"));
-        Assert.IsTrue(varType.CurrentType.Types.Contains("String"));
+        Assert.IsTrue(varType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(varType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -382,14 +382,14 @@ func test(data):
         state.DeclareVariable("x", null);
 
         // Act
-        state.NarrowType("x", "Dictionary");
+        state.NarrowType("x", GDSemanticType.FromRuntimeTypeName("Dictionary"));
 
         // Assert
         var varType = state.GetVariableType("x");
         Assert.IsNotNull(varType);
         Assert.IsTrue(varType.IsNarrowed);
-        Assert.AreEqual("Dictionary", varType.NarrowedFromType);
-        Assert.AreEqual("Dictionary", varType.EffectiveType);
+        Assert.AreEqual("Dictionary", varType.NarrowedFromType?.DisplayName);
+        Assert.AreEqual("Dictionary", varType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -398,16 +398,16 @@ func test(data):
         // Arrange
         var state = new GDFlowState();
         state.DeclareVariable("x", null);
-        state.NarrowType("x", "Dictionary");
+        state.NarrowType("x", GDSemanticType.FromRuntimeTypeName("Dictionary"));
 
         // Act
-        state.SetVariableType("x", "Variant");
+        state.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("Variant"));
 
         // Assert
         var varType = state.GetVariableType("x");
         Assert.IsNotNull(varType);
         Assert.IsFalse(varType.IsNarrowed);
-        Assert.AreEqual("Variant", varType.EffectiveType);
+        Assert.AreEqual("Variant", varType.EffectiveType.DisplayName);
     }
 
     #endregion
@@ -424,14 +424,14 @@ func test(data):
         // Simulate: for item in items (where items is Array[String])
         // The iterator should have the element type
         var loopState = state.CreateChild();
-        loopState.DeclareVariable("item", null, "String"); // Element type from Array[String]
+        loopState.DeclareVariable("item", null, GDSemanticType.FromRuntimeTypeName("String")); // Element type from Array[String]
 
         // Act
         var varType = loopState.GetVariableType("item");
 
         // Assert
         Assert.IsNotNull(varType);
-        Assert.AreEqual("String", varType.EffectiveType, "Iterator should have element type");
+        Assert.AreEqual("String", varType.EffectiveType.DisplayName, "Iterator should have element type");
     }
 
     [TestMethod]
@@ -440,11 +440,11 @@ func test(data):
         // Test the loop merge behavior directly
         // Arrange
         var parent = new GDFlowState();
-        parent.DeclareVariable("x", null, "int");
+        parent.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Simulate loop body: x = "hello"
         var loopBody = parent.CreateChild();
-        loopBody.SetVariableType("x", "String");
+        loopBody.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act - merge loop body with parent (loop may execute 0+ times)
         var afterLoop = GDFlowState.MergeBranches(loopBody, parent, parent);
@@ -452,7 +452,7 @@ func test(data):
         // Assert - should be Union of int and String
         var varType = afterLoop.GetVariableType("x");
         Assert.IsNotNull(varType);
-        Assert.IsTrue(varType.CurrentType.Types.Contains("int") || varType.CurrentType.Types.Contains("String"),
+        Assert.IsTrue(varType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")) || varType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should have int or String after loop, got: {varType.EffectiveTypeFormatted}");
     }
 
@@ -466,14 +466,14 @@ func test(data):
         // Simulate: for i in range(10)
         // range() returns a Range type which iterates int
         var loopState = state.CreateChild();
-        loopState.DeclareVariable("i", null, "int"); // Element type from range()
+        loopState.DeclareVariable("i", null, GDSemanticType.FromRuntimeTypeName("int")); // Element type from range()
 
         // Act
         var varType = loopState.GetVariableType("i");
 
         // Assert - range() produces integers
         Assert.IsNotNull(varType);
-        Assert.AreEqual("int", varType.EffectiveType, "range() iterator should be int");
+        Assert.AreEqual("int", varType.EffectiveType.DisplayName, "range() iterator should be int");
     }
 
     #endregion
@@ -492,7 +492,7 @@ func test(data):
 
         // Simulate entering while loop body with narrowing from condition "data is Dictionary"
         var loopState = parentState.CreateChild();
-        loopState.NarrowType("data", "Dictionary");
+        loopState.NarrowType("data", GDSemanticType.FromRuntimeTypeName("Dictionary"));
 
         // Act - inside the while loop body, query the type
         var varType = loopState.GetVariableType("data");
@@ -500,7 +500,7 @@ func test(data):
         // Assert - data should be narrowed to Dictionary inside while body
         Assert.IsNotNull(varType);
         Assert.IsTrue(varType.IsNarrowed, "Variable should be marked as narrowed");
-        Assert.AreEqual("Dictionary", varType.EffectiveType, "data should be narrowed to Dictionary in while condition");
+        Assert.AreEqual("Dictionary", varType.EffectiveType.DisplayName, "data should be narrowed to Dictionary in while condition");
     }
 
     [TestMethod]
@@ -532,7 +532,7 @@ func test():
 
         // Assert - should be Union (loop may not execute)
         Assert.IsNotNull(flowType);
-        Assert.IsTrue(flowType.CurrentType.Types.Contains("int") || flowType.CurrentType.Types.Contains("String"),
+        Assert.IsTrue(flowType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")) || flowType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should have int or String after while, got: {flowType.EffectiveTypeFormatted}");
     }
 
@@ -585,14 +585,14 @@ func test(value):
 
         // Simulate match case with binding: var x
         var caseState = state.CreateChild();
-        caseState.DeclareVariable("x", null, "Variant"); // Binding variable
+        caseState.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("Variant")); // Binding variable
 
         // Act
         var varType = caseState.GetVariableType("x");
 
         // Assert - binding variable should be declared
         Assert.IsNotNull(varType, "Match binding variable should be declared");
-        Assert.AreEqual("Variant", varType.EffectiveType);
+        Assert.AreEqual("Variant", varType.EffectiveType.DisplayName);
     }
 
     #endregion
@@ -605,14 +605,14 @@ func test(value):
         // Arrange
         var flowType = new GDFlowVariableType
         {
-            DeclaredType = "Object",
+            DeclaredType = GDSemanticType.FromRuntimeTypeName("Object"),
             IsNarrowed = true,
-            NarrowedFromType = "Player"
+            NarrowedFromType = GDSemanticType.FromRuntimeTypeName("Player")
         };
-        flowType.CurrentType.AddType("Variant");
+        flowType.CurrentType.AddTypeName("Variant");
 
         // Act & Assert
-        Assert.AreEqual("Player", flowType.EffectiveType);
+        Assert.AreEqual("Player", flowType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -621,12 +621,12 @@ func test(value):
         // Arrange
         var flowType = new GDFlowVariableType
         {
-            DeclaredType = "Object"
+            DeclaredType = GDSemanticType.FromRuntimeTypeName("Object")
         };
-        flowType.CurrentType.AddType("String");
+        flowType.CurrentType.AddTypeName("String");
 
         // Act & Assert
-        Assert.AreEqual("String", flowType.EffectiveType);
+        Assert.AreEqual("String", flowType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -635,11 +635,11 @@ func test(value):
         // Arrange
         var flowType = new GDFlowVariableType
         {
-            DeclaredType = "Node"
+            DeclaredType = GDSemanticType.FromRuntimeTypeName("Node")
         };
 
         // Act & Assert
-        Assert.AreEqual("Node", flowType.EffectiveType);
+        Assert.AreEqual("Node", flowType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -648,19 +648,19 @@ func test(value):
         // Arrange
         var original = new GDFlowVariableType
         {
-            DeclaredType = "Node",
+            DeclaredType = GDSemanticType.FromRuntimeTypeName("Node"),
             IsNarrowed = true,
-            NarrowedFromType = "Player"
+            NarrowedFromType = GDSemanticType.FromRuntimeTypeName("Player")
         };
-        original.CurrentType.AddType("Player");
+        original.CurrentType.AddTypeName("Player");
 
         // Act
         var clone = original.Clone();
-        clone.CurrentType.AddType("Enemy");
+        clone.CurrentType.AddTypeName("Enemy");
 
         // Assert - clone modification doesn't affect original
-        Assert.IsFalse(original.CurrentType.Types.Contains("Enemy"));
-        Assert.IsTrue(clone.CurrentType.Types.Contains("Enemy"));
+        Assert.IsFalse(original.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Enemy")));
+        Assert.IsTrue(clone.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("Enemy")));
     }
 
     #endregion
@@ -672,7 +672,7 @@ func test(value):
     {
         // Arrange
         var state = new GDFlowState();
-        state.DeclareVariable("x", null, "int");
+        state.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Act
         state.MarkTerminated(TerminationType.Return);
@@ -690,13 +690,13 @@ func test(value):
 
         // Arrange
         var parent = new GDFlowState();
-        parent.DeclareVariable("x", null, "int");
+        parent.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var ifBranch = parent.CreateChild();
         ifBranch.MarkTerminated(TerminationType.Return);
 
         var elseBranch = parent.CreateChild();
-        elseBranch.SetVariableType("x", "String");
+        elseBranch.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act
         var merged = GDFlowState.MergeBranches(ifBranch, elseBranch, parent);
@@ -704,7 +704,7 @@ func test(value):
         // Assert - since if-branch terminates, only else-branch contributes
         var xType = merged.GetVariableType("x");
         Assert.IsNotNull(xType);
-        Assert.AreEqual("String", xType.EffectiveType,
+        Assert.AreEqual("String", xType.EffectiveType.DisplayName,
             "If-branch terminates, so only else-branch type should be used");
         Assert.IsFalse(merged.IsTerminated, "Merged state should not be terminated");
     }
@@ -717,10 +717,10 @@ func test(value):
 
         // Arrange
         var parent = new GDFlowState();
-        parent.DeclareVariable("x", null, "int");
+        parent.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var ifBranch = parent.CreateChild();
-        ifBranch.SetVariableType("x", "String");
+        ifBranch.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         var elseBranch = parent.CreateChild();
         elseBranch.MarkTerminated(TerminationType.Return);
@@ -731,7 +731,7 @@ func test(value):
         // Assert - since else-branch terminates, only if-branch contributes
         var xType = merged.GetVariableType("x");
         Assert.IsNotNull(xType);
-        Assert.AreEqual("String", xType.EffectiveType,
+        Assert.AreEqual("String", xType.EffectiveType.DisplayName,
             "Else-branch terminates, so only if-branch type should be used");
         Assert.IsFalse(merged.IsTerminated, "Merged state should not be terminated");
     }
@@ -744,7 +744,7 @@ func test(value):
 
         // Arrange
         var parent = new GDFlowState();
-        parent.DeclareVariable("x", null, "int");
+        parent.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var ifBranch = parent.CreateChild();
         ifBranch.MarkTerminated(TerminationType.Return);
@@ -770,10 +770,10 @@ func test(value):
         parent.DeclareVariable("x", null);
 
         var ifBranch = parent.CreateChild();
-        ifBranch.SetVariableType("x", "String");
+        ifBranch.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         var elseBranch = parent.CreateChild();
-        elseBranch.SetVariableType("x", "int");
+        elseBranch.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("int"));
 
         // Act
         var merged = GDFlowState.MergeBranches(ifBranch, elseBranch, parent);
@@ -781,8 +781,8 @@ func test(value):
         // Assert - neither terminates, so Union is created
         var xType = merged.GetVariableType("x");
         Assert.IsNotNull(xType);
-        Assert.IsTrue(xType.CurrentType.Types.Contains("String"), "Should contain String");
-        Assert.IsTrue(xType.CurrentType.Types.Contains("int"), "Should contain int");
+        Assert.IsTrue(xType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")), "Should contain String");
+        Assert.IsTrue(xType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), "Should contain int");
         Assert.IsFalse(merged.IsTerminated);
     }
 
@@ -796,7 +796,7 @@ func test(value):
 
         // Arrange
         var parent = new GDFlowState();
-        parent.DeclareVariable("x", null, "Variant");
+        parent.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("Variant"));
 
         // If branch: x == null, returns (terminates)
         var ifBranch = parent.CreateChild();
@@ -811,7 +811,7 @@ func test(value):
         // Assert - if-branch terminated, so parent type flows through
         var xType = merged.GetVariableType("x");
         Assert.IsNotNull(xType);
-        Assert.AreEqual("Variant", xType.EffectiveType);
+        Assert.AreEqual("Variant", xType.EffectiveType.DisplayName);
         Assert.IsFalse(merged.IsTerminated);
     }
 
@@ -829,7 +829,7 @@ func test(value):
 
         // Arrange
         var parentState = new GDFlowState();
-        parentState.DeclareVariable("x", null, "int");
+        parentState.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Lambda captures the current state
         var lambdaState = parentState.CreateChild();
@@ -839,7 +839,7 @@ func test(value):
 
         // Assert - lambda sees parent's x as int
         Assert.IsNotNull(xType);
-        Assert.AreEqual("int", xType.EffectiveType, "Lambda should capture parent's variable type");
+        Assert.AreEqual("int", xType.EffectiveType.DisplayName, "Lambda should capture parent's variable type");
     }
 
     [TestMethod]
@@ -852,7 +852,7 @@ func test(value):
         // Arrange
         var parentState = new GDFlowState();
         var lambdaState = parentState.CreateChild();
-        lambdaState.DeclareVariable("param", "String");
+        lambdaState.DeclareVariable("param", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act
         var paramType = lambdaState.GetVariableType("param");
@@ -860,7 +860,7 @@ func test(value):
 
         // Assert
         Assert.IsNotNull(paramType);
-        Assert.AreEqual("String", paramType.EffectiveType);
+        Assert.AreEqual("String", paramType.EffectiveType.DisplayName);
         Assert.IsNull(parentParamType, "Parent should not see lambda parameter");
     }
 
@@ -875,18 +875,18 @@ func test(value):
 
         // Arrange
         var parentState = new GDFlowState();
-        parentState.DeclareVariable("x", null, "int");
+        parentState.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var lambdaState = parentState.CreateChild();
-        lambdaState.SetVariableType("x", "String");
+        lambdaState.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act
         var lambdaXType = lambdaState.GetVariableType("x");
         var parentXType = parentState.GetVariableType("x");
 
         // Assert
-        Assert.AreEqual("String", lambdaXType!.EffectiveType, "Lambda sees modified type");
-        Assert.AreEqual("int", parentXType!.EffectiveType, "Parent type unchanged");
+        Assert.AreEqual("String", lambdaXType!.EffectiveType.DisplayName, "Lambda sees modified type");
+        Assert.AreEqual("int", parentXType!.EffectiveType.DisplayName, "Parent type unchanged");
     }
 
     #endregion
@@ -909,10 +909,10 @@ func test(value):
     {
         // Arrange
         var state1 = new GDFlowState();
-        state1.DeclareVariable("x", null, "int");
+        state1.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var state2 = new GDFlowState();
-        state2.DeclareVariable("x", null, "int");
+        state2.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Act & Assert
         Assert.IsTrue(state1.IsSubsetOf(state2), "Same types should be subset");
@@ -923,11 +923,11 @@ func test(value):
     {
         // Arrange
         var state1 = new GDFlowState();
-        state1.DeclareVariable("x", null, "int");
+        state1.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var state2 = new GDFlowState();
-        state2.DeclareVariable("x", null, "int");
-        state2.SetVariableType("x", "String"); // Add more types
+        state2.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
+        state2.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String")); // Add more types
 
         // Now merge to get Union
         var merged = GDFlowState.MergeBranches(state1, state2, new GDFlowState());
@@ -942,10 +942,10 @@ func test(value):
     {
         // Arrange
         var state1 = new GDFlowState();
-        state1.DeclareVariable("x", null, "String");
+        state1.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("String"));
 
         var state2 = new GDFlowState();
-        state2.DeclareVariable("x", null, "int");
+        state2.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Act & Assert
         Assert.IsFalse(state1.IsSubsetOf(state2), "String is not subset of int");
@@ -956,10 +956,10 @@ func test(value):
     {
         // Arrange
         var state1 = new GDFlowState();
-        state1.DeclareVariable("x", null, "int");
+        state1.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var state2 = new GDFlowState();
-        state2.DeclareVariable("x", null, "String");
+        state2.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act
         var changed = state1.MergeInto(state2);
@@ -967,8 +967,8 @@ func test(value):
         // Assert
         Assert.IsTrue(changed, "Should report change when adding new type");
         var xType = state1.GetVariableType("x");
-        Assert.IsTrue(xType!.CurrentType.Types.Contains("int"));
-        Assert.IsTrue(xType!.CurrentType.Types.Contains("String"));
+        Assert.IsTrue(xType!.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(xType!.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -976,10 +976,10 @@ func test(value):
     {
         // Arrange
         var state1 = new GDFlowState();
-        state1.DeclareVariable("x", null, "int");
+        state1.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var state2 = new GDFlowState();
-        state2.DeclareVariable("x", null, "int");
+        state2.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Act
         var changed = state1.MergeInto(state2);
@@ -993,16 +993,16 @@ func test(value):
     {
         // Arrange
         var state = new GDFlowState();
-        state.DeclareVariable("x", null, "int");
-        state.DeclareVariable("y", null, "String");
+        state.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
+        state.DeclareVariable("y", null, GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act
         var snapshot = state.GetTypeSnapshot();
 
         // Assert
         Assert.AreEqual(2, snapshot.Count);
-        Assert.IsTrue(snapshot["x"].Contains("int"));
-        Assert.IsTrue(snapshot["y"].Contains("String"));
+        Assert.IsTrue(snapshot["x"].Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(snapshot["y"].Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -1010,7 +1010,7 @@ func test(value):
     {
         // Arrange
         var state = new GDFlowState();
-        state.DeclareVariable("x", null, "int");
+        state.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var snapshot = state.GetTypeSnapshot();
 
@@ -1023,12 +1023,12 @@ func test(value):
     {
         // Arrange
         var state = new GDFlowState();
-        state.DeclareVariable("x", null, "int");
+        state.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var snapshot = state.GetTypeSnapshot();
 
         // Modify state
-        state.SetVariableType("x", "String");
+        state.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Act & Assert
         Assert.IsFalse(state.MatchesSnapshot(snapshot), "Modified state should not match old snapshot");
@@ -1046,11 +1046,11 @@ func test(value):
 
         // Arrange: pre-loop state
         var preLoop = new GDFlowState();
-        preLoop.DeclareVariable("x", null, "int");
+        preLoop.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // First iteration: x = "hello"
         var firstIter = preLoop.CreateChild();
-        firstIter.SetVariableType("x", "String");
+        firstIter.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Simulate fixed-point: merge iteration back with pre-loop
         var merged = GDFlowState.MergeBranches(firstIter, preLoop, preLoop);
@@ -1058,8 +1058,8 @@ func test(value):
         // Assert - after merge, x should be Union(int, String)
         var xType = merged.GetVariableType("x");
         Assert.IsNotNull(xType);
-        Assert.IsTrue(xType.CurrentType.Types.Contains("int") || xType.CurrentType.Types.Contains("String"),
-            $"Expected union type, got: {xType.EffectiveType}");
+        Assert.IsTrue(xType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")) || xType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
+            $"Expected union type, got: {xType.EffectiveType.DisplayName}");
     }
 
     [TestMethod]
@@ -1068,11 +1068,11 @@ func test(value):
         // Test that same-type assignment doesn't create union
         // Arrange: pre-loop state
         var preLoop = new GDFlowState();
-        preLoop.DeclareVariable("x", null, "int");
+        preLoop.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // First iteration: x = 42 (still int)
         var firstIter = preLoop.CreateChild();
-        firstIter.SetVariableType("x", "int");
+        firstIter.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("int"));
 
         // Merge iteration back with pre-loop
         var merged = GDFlowState.MergeBranches(firstIter, preLoop, preLoop);
@@ -1080,7 +1080,7 @@ func test(value):
         // Assert - after merge, x should still be just int
         var xType = merged.GetVariableType("x");
         Assert.IsNotNull(xType);
-        Assert.AreEqual("int", xType.EffectiveType, "Same-type should not create union");
+        Assert.AreEqual("int", xType.EffectiveType.DisplayName, "Same-type should not create union");
         Assert.AreEqual(1, xType.CurrentType.Types.Count, "Should have only one type");
     }
 
@@ -1090,11 +1090,11 @@ func test(value):
         // Test while loop with type change
         // Arrange: pre-loop state
         var preLoop = new GDFlowState();
-        preLoop.DeclareVariable("x", null, "int");
+        preLoop.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Iteration: x = 3.14 (float)
         var iteration = preLoop.CreateChild();
-        iteration.SetVariableType("x", "float");
+        iteration.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("float"));
 
         // Merge
         var merged = GDFlowState.MergeBranches(iteration, preLoop, preLoop);
@@ -1103,8 +1103,8 @@ func test(value):
         var xType = merged.GetVariableType("x");
         Assert.IsNotNull(xType);
         Assert.IsTrue(
-            xType.CurrentType.Types.Contains("int") && xType.CurrentType.Types.Contains("float"),
-            $"Expected int | float, got: {xType.EffectiveType}");
+            xType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")) && xType.CurrentType.Types.Contains(GDSemanticType.FromRuntimeTypeName("float")),
+            $"Expected int | float, got: {xType.EffectiveType.DisplayName}");
     }
 
     [TestMethod]
@@ -1113,15 +1113,15 @@ func test(value):
         // Test nested loops: outer loop adds String, inner loop adds float
         // Arrange
         var initial = new GDFlowState();
-        initial.DeclareVariable("x", null, "int");
+        initial.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Outer loop iteration
         var outer = initial.CreateChild();
-        outer.SetVariableType("x", "String");
+        outer.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Inner loop iteration (inside outer)
         var inner = outer.CreateChild();
-        inner.SetVariableType("x", "float");
+        inner.SetVariableType("x", GDSemanticType.FromRuntimeTypeName("float"));
 
         // Merge inner with outer (inner loop exit)
         var innerMerged = GDFlowState.MergeBranches(inner, outer, outer);
@@ -1133,7 +1133,7 @@ func test(value):
         var xType = outerMerged.GetVariableType("x");
         Assert.IsNotNull(xType);
         Assert.IsTrue(xType.CurrentType.Types.Count >= 2,
-            $"Expected multiple types, got: {xType.EffectiveType}");
+            $"Expected multiple types, got: {xType.EffectiveType.DisplayName}");
     }
 
     [TestMethod]
@@ -1142,18 +1142,18 @@ func test(value):
         // Test loop with conditional: if branch assigns String, else branch assigns float
         // Arrange
         var preLoop = new GDFlowState();
-        preLoop.DeclareVariable("result", null, "int");
+        preLoop.DeclareVariable("result", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         // Loop iteration with conditional
         var loopBody = preLoop.CreateChild();
 
         // If branch: result = "hello"
         var ifBranch = loopBody.CreateChild();
-        ifBranch.SetVariableType("result", "String");
+        ifBranch.SetVariableType("result", GDSemanticType.FromRuntimeTypeName("String"));
 
         // Else branch: result = 3.14
         var elseBranch = loopBody.CreateChild();
-        elseBranch.SetVariableType("result", "float");
+        elseBranch.SetVariableType("result", GDSemanticType.FromRuntimeTypeName("float"));
 
         // Merge if/else
         var conditionMerged = GDFlowState.MergeBranches(ifBranch, elseBranch, loopBody);
@@ -1165,7 +1165,7 @@ func test(value):
         var resultType = loopMerged.GetVariableType("result");
         Assert.IsNotNull(resultType);
         Assert.IsTrue(resultType.CurrentType.Types.Count >= 2,
-            $"Expected multiple types from conditional in loop, got: {resultType.EffectiveType}");
+            $"Expected multiple types from conditional in loop, got: {resultType.EffectiveType.DisplayName}");
     }
 
     [TestMethod]
@@ -1174,10 +1174,10 @@ func test(value):
         // Test that repeated merging converges (no new types added)
         // Arrange
         var state = new GDFlowState();
-        state.DeclareVariable("x", null, "int");
+        state.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("int"));
 
         var iteration = new GDFlowState();
-        iteration.DeclareVariable("x", null, "String");
+        iteration.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("String"));
 
         // First merge
         var changed1 = state.MergeInto(iteration);
@@ -1185,7 +1185,7 @@ func test(value):
 
         // Second merge with same iteration state
         var iteration2 = new GDFlowState();
-        iteration2.DeclareVariable("x", null, "String");
+        iteration2.DeclareVariable("x", null, GDSemanticType.FromRuntimeTypeName("String"));
         var changed2 = state.MergeInto(iteration2);
         Assert.IsFalse(changed2, "Second merge with same type should not change state");
     }

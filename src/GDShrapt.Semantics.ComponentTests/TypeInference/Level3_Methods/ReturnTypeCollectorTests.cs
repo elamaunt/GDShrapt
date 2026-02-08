@@ -29,7 +29,7 @@ func test():
 
         // Assert
         Assert.AreEqual(1, collector.Returns.Count);
-        Assert.AreEqual("int", collector.Returns[0].InferredType);
+        Assert.AreEqual("int", collector.Returns[0].InferredType?.DisplayName);
         Assert.IsTrue(collector.Returns[0].IsHighConfidence);
     }
 
@@ -49,7 +49,7 @@ func test():
 
         // Assert
         Assert.AreEqual(1, collector.Returns.Count);
-        Assert.AreEqual("String", collector.Returns[0].InferredType);
+        Assert.AreEqual("String", collector.Returns[0].InferredType?.DisplayName);
     }
 
     #endregion
@@ -75,7 +75,7 @@ func test(condition):
 
         // Assert
         Assert.AreEqual(2, collector.Returns.Count);
-        var types = collector.Returns.Select(r => r.InferredType).ToList();
+        var types = collector.Returns.Select(r => r.InferredType?.DisplayName).ToList();
         Assert.IsTrue(types.Contains("int"));
         Assert.IsTrue(types.Contains("String"));
     }
@@ -189,7 +189,7 @@ func test():
 
         // Assert
         Assert.IsTrue(union.IsSingleType);
-        Assert.AreEqual("int", union.EffectiveType);
+        Assert.AreEqual("int", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -212,8 +212,8 @@ func test(condition):
 
         // Assert
         Assert.IsTrue(union.IsUnion);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -238,7 +238,7 @@ func test(x):
 
         // Assert
         Assert.IsTrue(union.IsSingleType);
-        Assert.AreEqual("int", union.EffectiveType);
+        Assert.AreEqual("int", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -257,7 +257,7 @@ func test():
         var union = collector.ComputeReturnUnionType();
 
         // Assert
-        Assert.IsTrue(union.Types.Contains("null"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")));
     }
 
     #endregion
@@ -341,7 +341,7 @@ func test(value):
         // 3 explicit returns + 1 implicit return = 4
         var matchReturns = collector.Returns.Where(r => r.BranchContext?.Contains("match case") ?? false).ToList();
         Assert.AreEqual(3, matchReturns.Count);
-        Assert.IsTrue(matchReturns.All(r => r.InferredType == "String"));
+        Assert.IsTrue(matchReturns.All(r => r.InferredType?.DisplayName == "String"));
     }
 
     #endregion

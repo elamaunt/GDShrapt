@@ -236,7 +236,7 @@ func test():
         // Assert
         Assert.AreEqual(1, callSites.Count);
         Assert.AreEqual(1, callSites[0].Arguments.Count);
-        Assert.AreEqual("int", callSites[0].Arguments[0].InferredType);
+        Assert.AreEqual("int", callSites[0].Arguments[0].InferredType?.DisplayName);
         Assert.IsTrue(callSites[0].Arguments[0].IsHighConfidence);
     }
 
@@ -372,7 +372,7 @@ func test():
         // ReceiverType might be Enemy or null depending on type inference depth
         // The important thing is the call site is collected with the correct arguments
         Assert.AreEqual(1, callSites[0].Arguments.Count);
-        Assert.AreEqual("int", callSites[0].Arguments[0].InferredType);
+        Assert.AreEqual("int", callSites[0].Arguments[0].InferredType?.DisplayName);
     }
 
     #endregion

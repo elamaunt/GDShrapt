@@ -21,7 +21,7 @@ func _ready() -> void:
 	used_signal.emit(42)
 
 
-func unused_function() -> void:
+func unused_function() -> void:  # 24:5-GDL203-OK
 	# This function is never called - should warn
 	pass
 
@@ -45,14 +45,14 @@ func shadowing_test() -> void:
 
 func another_shadowing() -> void:
 	# Shadows class member 'used_variable'
-	var used_variable := 100
+	var used_variable := 100  # 48:5-GDL211-OK
 	print(used_variable)
 
 
 func unreachable_code() -> int:
 	return 42
 	# Everything below is unreachable
-	var x := 10
+	var x := 10  # 55:1-GD5004-OK, 55:1-GDL210-OK
 	print(x)
 	return x
 
@@ -84,7 +84,7 @@ func deprecated_style() -> void:
 func potential_null_access() -> void:
 	var node = get_node_or_null("MaybeExists")
 	# Accessing without null check
-	print(node.name)
+	print(node.name)  # 87:7-GD3009-OK
 
 
 func unused_loop_variable() -> void:
@@ -105,7 +105,7 @@ func duplicate_keys() -> Dictionary:
 	return {
 		"key": 1,
 		"other": 2,
-		"key": 3  # Duplicate key
+		"key": 3  # Duplicate key  # 108:2-GDL214-OK
 	}
 
 

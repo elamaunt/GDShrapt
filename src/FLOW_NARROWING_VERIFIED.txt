@@ -1,0 +1,597 @@
+# FLOW_NARROWING_OUTPUT.txt
+# Auto-generated - do not edit manually
+# Format: method → narrowed identifiers within it
+
+test_scripts/cycles_test.gd
+  _reducer()
+    124:4 acc -> int (base: Variant) # OK
+    124:19 item -> int (base: Variant) # OK
+    125:9 acc -> int (base: Variant) # OK
+    125:15 item -> int (base: Variant) # OK
+    126:4 acc -> String (base: Variant) # OK
+    127:9 acc -> String (base: Variant) # OK
+
+test_scripts/cyclic_inference.gd
+  process_a()
+    15:4 input -> int (base: Variant) # OK
+    15:21 input -> int (base: Variant) # OK
+    16:19 input -> int (base: Variant) # OK
+
+  process_b()
+    22:4 input -> int (base: Variant) # OK
+    22:21 input -> int (base: Variant) # OK
+    23:19 input -> int (base: Variant) # OK
+
+  transform_stage_1()
+    31:4 data -> String (base: Variant) # OK
+    32:27 data -> String (base: Variant) # OK
+    33:6 data -> int (base: Variant) # OK
+    34:27 data -> int (base: Variant) # OK
+    35:6 data -> Array (base: Variant) # OK
+    36:27 data -> Array (base: Variant) # OK
+
+  even_check()
+    57:4 n -> int (base: Variant) # OK
+
+  odd_check()
+    64:4 n -> int (base: Variant) # OK
+
+  state_processing()
+    91:4 data -> Array (base: Variant) # OK
+    93:14 data -> Array (base: Variant) # OK
+
+  process_item()
+    109:4 item -> Dictionary (base: Variant) # OK
+    110:9 item -> Dictionary (base: Variant) # OK
+    111:4 item -> int (base: Variant) # OK
+    112:9 item -> int (base: Variant) # OK
+    113:4 item -> String (base: Variant) # OK
+    114:9 item -> String (base: Variant) # OK
+
+  _advance_generator()
+    230:4 current -> int (base: Variant) # OK
+    231:9 current -> int (base: Variant) # OK
+    232:4 current -> float (base: Variant) # OK
+    233:9 current -> float (base: Variant) # OK
+    234:4 current -> String (base: Variant) # OK
+    235:9 current -> String (base: Variant) # OK
+
+  parse_expr()
+    245:4 result -> null (base: null) # OK
+    257:5 right -> null (base: null) # OK
+    260:5 op -> String (base: Variant) # OK
+
+  parse_term()
+    272:4 result -> null (base: null) # OK
+    284:5 right -> null (base: null) # OK
+    287:5 op -> String (base: Variant) # OK
+
+  parse_factor()
+    303:4 token -> String (base: Variant) # OK
+    305:5 inner -> null (base: null) # OK
+
+test_scripts/diagnostics/validator/control_flow_errors.gd
+  test_gd5001_valid()
+    20:5 i -> int (base: Variant) # OK
+
+test_scripts/diagnostics/validator/duck_typing_errors.gd
+  test_gd7002_valid_guarded()
+    24:4 obj -> Node (base: Variant) # OK
+    25:8 obj -> Node (base: Variant) # OK
+
+  test_gd7003_valid_guarded()
+    51:4 obj -> Array (base: Variant) # OK
+    52:2 obj -> Array (base: Variant) # OK
+
+  test_mixed_guarded_unguarded()
+    83:4 obj -> Node (base: Variant) # OK
+    84:2 obj -> Node (base: Variant) # OK
+
+test_scripts/duck_typing_advanced.gd
+  _execute_action()
+    153:4 action -> String (base: Variant) # OK
+    154:33 action -> String (base: Variant) # OK
+    155:6 action -> Dictionary (base: Variant) # OK
+    156:30 action -> Dictionary (base: Variant) # OK
+    157:6 action -> Callable (base: Variant) # OK
+    158:9 action -> Callable (base: Variant) # OK
+
+  transform_data()
+    179:4 data -> Array (base: Variant) # OK
+    181:14 data -> Array (base: Variant) # OK
+    184:6 data -> Dictionary (base: Variant) # OK
+    186:13 data -> Dictionary (base: Variant) # OK
+    187:32 data -> Dictionary (base: Variant) # OK
+
+  _step_parse()
+    205:4 value -> String (base: Variant) # OK
+
+  _step_validate()
+    216:4 value -> null (base: Variant) # OK
+    218:4 value -> int (base: Variant) # OK
+    218:21 value -> int (base: Variant) # OK
+    220:4 value -> Array (base: Variant) # OK
+    220:23 value -> Array (base: Variant) # OK
+
+  _step_transform()
+    226:4 value -> int (base: Variant) # OK
+    227:9 value -> int (base: Variant) # OK
+    228:4 value -> float (base: Variant) # OK
+    229:9 value -> float (base: Variant) # OK
+    230:4 value -> Array (base: Variant) # OK
+    231:9 value -> Array (base: Variant) # OK
+
+test_scripts/dynamic_dispatch.gd
+  _serialize_value()
+    138:4 value -> null (base: Variant) # OK
+    142:4 value -> Vector2 (base: Variant) # OK
+    143:35 value -> Vector2 (base: Variant) # OK
+    143:49 value -> Vector2 (base: Variant) # OK
+    144:4 value -> Vector3 (base: Variant) # OK
+    145:35 value -> Vector3 (base: Variant) # OK
+    145:49 value -> Vector3 (base: Variant) # OK
+    145:63 value -> Vector3 (base: Variant) # OK
+    146:4 value -> Color (base: Variant) # OK
+    147:33 value -> Color (base: Variant) # OK
+    147:47 value -> Color (base: Variant) # OK
+    147:61 value -> Color (base: Variant) # OK
+    147:75 value -> Color (base: Variant) # OK
+    148:4 value -> Array (base: Variant) # OK
+    150:14 value -> Array (base: Variant) # OK
+    153:4 value -> Dictionary (base: Variant) # OK
+    155:13 value -> Dictionary (base: Variant) # OK
+    156:32 value -> Dictionary (base: Variant) # OK
+    158:4 value -> Object (base: Variant) # OK
+    159:26 value -> Object (base: Variant) # OK
+
+  _deserialize_value()
+    172:4 data -> null (base: Variant) # OK
+    176:4 data -> Array (base: Variant) # OK
+    178:14 data -> Array (base: Variant) # OK
+    181:4 data -> Dictionary (base: Variant) # OK
+
+  create_instance_by_name()
+    220:4 class_ref -> PackedScene (base: Variant) # OK
+    221:13 class_ref -> PackedScene (base: Variant) # OK
+    222:6 class_ref -> GDScript (base: Variant) # OK
+    223:13 class_ref -> GDScript (base: Variant) # OK
+
+test_scripts/ecs_like_system.gd
+  debug_entity()
+    392:8 entity -> null (base: Variant) # OK
+
+test_scripts/enemy_entity.gd
+  die()
+    91:4 last_damage_source -> PlayerEntity (base: Node) # OK
+    92:15 last_damage_source -> PlayerEntity (base: Node) # OK
+
+  take_damage()
+    102:17 source -> BaseEntity (base: Node) # OK
+    103:13 source -> BaseEntity (base: Node) # OK
+
+test_scripts/game_patterns.gd
+  get_item_property()
+    44:4 item -> Dictionary (base: Variant) # OK
+    45:9 item -> Dictionary (base: Variant) # OK
+
+  set_item_property()
+    52:4 item -> Dictionary (base: Variant) # OK
+    53:2 item -> Dictionary (base: Variant) # OK
+
+  load_dialog()
+    98:4 dialog_data -> String (base: Variant) # OK
+    99:34 dialog_data -> String (base: Variant) # OK
+    100:6 dialog_data -> Dictionary (base: Variant) # OK
+    101:16 dialog_data -> Dictionary (base: Variant) # OK
+
+  get_dialog_text()
+    116:4 current_node -> null (base: null) # OK
+
+  get_dialog_choices()
+    129:4 current_node -> null (base: null) # OK
+
+  _check_choice_condition()
+    144:4 condition -> null (base: Variant) # OK
+    147:4 condition -> String (base: Variant) # OK
+    148:30 condition -> String (base: Variant) # OK
+    149:4 condition -> Callable (base: Variant) # OK
+    150:9 condition -> Callable (base: Variant) # OK
+    151:4 condition -> Dictionary (base: Variant) # OK
+    152:17 condition -> Dictionary (base: Variant) # OK
+    153:11 condition -> Dictionary (base: Variant) # OK
+    154:14 condition -> Dictionary (base: Variant) # OK
+
+  can_use_ability()
+    301:5 condition -> Callable (base: Variant) # OK
+
+  use_ability()
+    327:4 effect_func -> Callable (base: Variant) # OK
+    328:11 effect_func -> Callable (base: Variant) # OK
+    329:6 effect_func -> Dictionary (base: Variant) # OK
+    330:34 effect_func -> Dictionary (base: Variant) # OK
+
+  _apply_effect_template()
+    353:6 dmg -> int (base: Variant) # OK
+    354:30 dmg -> int (base: Variant) # OK
+    355:8 dmg -> Dictionary (base: Variant) # OK
+    356:15 dmg -> Dictionary (base: Variant) # OK
+    357:18 dmg -> Dictionary (base: Variant) # OK
+
+  _matches_filter()
+    446:4 item_filter -> String (base: Variant) # OK
+    447:42 item_filter -> String (base: Variant) # OK
+    448:4 item_filter -> Callable (base: Variant) # OK
+    449:9 item_filter -> Callable (base: Variant) # OK
+
+  craft()
+    468:6 item -> null (base: Variant) # OK
+    481:4 result -> Callable (base: Variant) # OK
+    482:2 result -> Callable (base: Variant) # OK
+    482:11 result -> Callable (base: Variant) # OK
+    483:6 result -> Dictionary (base: Variant) # OK
+    484:2 result -> Dictionary (base: Variant) # OK
+    484:11 result -> Dictionary (base: Variant) # OK
+
+  _serialize_value()
+    532:4 value -> Vector2 (base: Variant) # OK
+    533:27 value -> Vector2 (base: Variant) # OK
+    533:41 value -> Vector2 (base: Variant) # OK
+    534:4 value -> Vector3 (base: Variant) # OK
+    535:27 value -> Vector3 (base: Variant) # OK
+    535:41 value -> Vector3 (base: Variant) # OK
+    535:55 value -> Vector3 (base: Variant) # OK
+    536:4 value -> Array (base: Variant) # OK
+    537:26 value -> Array (base: Variant) # OK
+    538:4 value -> Dictionary (base: Variant) # OK
+    539:25 value -> Dictionary (base: Variant) # OK
+
+  _deserialize_value()
+    558:4 value -> Dictionary (base: Variant) # OK
+    565:27 value -> Dictionary (base: Variant) # OK
+    566:4 value -> Array (base: Variant) # OK
+    567:28 value -> Array (base: Variant) # OK
+
+test_scripts/getters_setters.gd
+  test_property_chain()
+    153:4 node -> Node2D (base: T) # OK
+    155:12 node -> Node2D (base: T) # OK
+    156:13 node -> Node2D (base: T) # OK
+
+test_scripts/inheritance_test.gd
+  check_types()
+    193:4 node -> CharacterBody2D (base: Node) # OK
+    195:6 node -> RigidBody2D (base: Node) # OK
+    197:6 node -> StaticBody2D (base: Node) # OK
+    199:6 node -> CollisionObject2D (base: Node) # OK
+    201:6 node -> Node2D (base: Node) # OK
+    203:6 node -> CanvasItem (base: Node) # OK
+
+test_scripts/local_variables.gd
+  process_1()
+    16:4 data -> int (base: Variant) # OK
+    17:9 data -> int (base: Variant) # OK
+
+  process_2()
+    22:4 data -> int (base: Variant) # OK
+    23:9 data -> int (base: Variant) # OK
+
+  early_return_flow()
+    97:4 input -> null (base: Variant) # OK
+
+  process_input()
+    109:4 input -> int (base: Variant) # OK
+    110:9 input -> int (base: Variant) # OK
+
+  variable_with_default()
+    130:4 local -> null (base: Variant) # OK
+    131:2 local -> null (base: Variant) # OK
+
+  type_narrowing_local()
+    153:4 result -> Dictionary (base: Variant) # OK
+    155:13 result -> Dictionary (base: Variant) # OK
+    158:4 result -> Array (base: Variant) # OK
+    160:13 result -> Array (base: Variant) # OK
+
+test_scripts/method_chains.gd
+  optional_chain_pattern()
+    46:4 data -> null (base: Variant) # OK
+    50:4 level1 -> null (base: Variant) # OK
+    54:4 level2 -> null (base: Variant) # OK
+
+  node_chain()
+    91:4 parent -> null (base: T) # OK
+    95:4 grandparent -> null (base: null) # OK
+    98:4 grandparent -> Node2D (base: Node2D) # OK
+    99:9 grandparent -> Node2D (base: Node2D) # OK
+
+  mixed_chain()
+    106:4 input -> Dictionary (base: Variant) # OK
+    107:9 input -> Dictionary (base: Variant) # OK
+    108:6 input -> Array (base: Variant) # OK
+    109:13 input -> Array (base: Variant) # OK
+    110:6 input -> String (base: Variant) # OK
+    111:9 input -> String (base: Variant) # OK
+
+test_scripts/polymorphic_interfaces.gd
+  _get_type_name()
+    271:4 value -> int (base: Variant) # OK
+    273:4 value -> float (base: Variant) # OK
+    275:4 value -> String (base: Variant) # OK
+    277:4 value -> Array (base: Variant) # OK
+    279:4 value -> Dictionary (base: Variant) # OK
+    281:4 value -> Vector2 (base: Variant) # OK
+    283:4 value -> Vector3 (base: Variant) # OK
+
+  state_update()
+    393:5 result -> Dictionary (base: Dictionary) # OK
+    393:30 result -> Dictionary (base: Dictionary) # OK
+    394:16 result -> Dictionary (base: Dictionary) # OK
+
+test_scripts/scene_nodes.gd
+  _ready()
+    46:4 sprite_node -> Sprite2D (base: T) # OK
+    47:2 sprite_node -> Sprite2D (base: T) # OK
+
+  get_children_of_type()
+    84:5 child -> Sprite2D (base: Node) # OK
+    85:17 child -> Sprite2D (base: Node) # OK
+
+  get_parent_of_type()
+    110:5 current -> Control (base: T) # OK
+    111:10 current -> Control (base: T) # OK
+
+  process_all_children()
+    150:5 child -> Node2D (base: Node) # OK
+    151:3 child -> Node2D (base: Node) # OK
+    152:7 child -> Control (base: Node) # OK
+    153:3 child -> Control (base: Node) # OK
+
+  access_sibling()
+    184:4 parent -> null (base: T) # OK
+
+test_scripts/scene_references.gd
+  get_enemies()
+    56:5 child -> Node2D (base: Node) # OK
+    57:18 child -> Node2D (base: Node) # OK
+
+test_scripts/semantic_validation_demo.gd
+  member_access_validation_demo()
+    208:4 value -> Node2D (base: null) # OK
+    209:11 value -> Node2D (base: null) # OK
+
+  complex_scenario_3()
+    293:5 entity -> Node2D (base: Variant) # OK
+    295:3 entity -> Node2D (base: Variant) # OK
+    296:3 entity -> Node2D (base: Variant) # OK
+    297:7 entity -> Dictionary (base: Variant) # OK
+    299:15 entity -> Dictionary (base: Variant) # OK
+
+test_scripts/signal_callback_chains.gd
+  call_retry()
+    518:6 result -> Dictionary (base: Variant) # OK
+    518:31 result -> Dictionary (base: Variant) # OK
+    519:17 result -> Dictionary (base: Variant) # OK
+
+test_scripts/signals_test.gd
+  request_and_process()
+    128:5 data -> Dictionary (base: Variant) # OK
+    129:23 data -> Dictionary (base: Variant) # OK
+
+test_scripts/todo_examples.gd
+  validate_data()
+    62:5 item -> null (base: Variant) # OK
+
+test_scripts/type_guards.gd
+  process_value()
+    9:4 value -> null (base: Variant) # OK
+    12:4 value -> int (base: Variant) # OK
+    13:9 value -> int (base: Variant) # OK
+    15:4 value -> String (base: Variant) # OK
+    16:9 value -> String (base: Variant) # OK
+    18:4 value -> Array (base: Variant) # OK
+    19:9 value -> Array (base: Variant) # OK
+    21:4 value -> Dictionary (base: Variant) # OK
+    22:9 value -> Dictionary (base: Variant) # OK
+
+  nested_type_guards()
+    28:4 data -> null (base: Variant) # OK
+    31:4 data -> Dictionary (base: Variant) # OK
+    35:6 type_val -> String (base: Variant) # OK
+    37:11 type_val -> String (base: Variant) # OK
+
+  type_guard_with_and()
+    45:4 value -> Array (base: Variant) # OK
+    45:23 value -> Array (base: Variant) # OK
+    47:9 value -> Array (base: Variant) # OK
+    49:4 value -> String (base: Variant) # OK
+    49:28 value -> String (base: Variant) # OK
+    51:9 value -> String (base: Variant) # OK
+    53:4 value -> Dictionary (base: Variant) # OK
+    53:28 value -> Dictionary (base: Variant) # OK
+    55:9 value -> Dictionary (base: Variant) # OK
+
+  early_return_guard()
+    75:4 data -> null (base: Variant) # OK
+    84:12 data -> Dictionary (base: Variant) # OK
+
+  assignment_after_guard()
+    91:4 value -> int (base: Variant) # OK
+    92:11 value -> int (base: Variant) # OK
+    93:6 value -> String (base: Variant) # OK
+    94:11 value -> String (base: Variant) # OK
+
+  loop_with_guard()
+    105:5 item -> int (base: Variant) # OK
+    106:18 item -> int (base: Variant) # OK
+    107:7 item -> String (base: Variant) # OK
+    108:18 item -> String (base: Variant) # OK
+
+  using_custom_guard()
+    140:5 value -> Dictionary (base: Variant) # OK
+    141:10 value -> Dictionary (base: Variant) # OK
+
+  class_type_guard()
+    147:4 node -> CharacterBody2D (base: Node) # OK
+    149:2 node -> CharacterBody2D (base: Node) # OK
+    150:2 node -> CharacterBody2D (base: Node) # OK
+    153:4 node -> RigidBody2D (base: Node) # OK
+    155:2 node -> RigidBody2D (base: Node) # OK
+    158:4 node -> Area2D (base: Node) # OK
+    160:20 node -> Area2D (base: Node) # OK
+    163:4 node -> Node2D (base: Node) # OK
+    165:12 node -> Node2D (base: Node) # OK
+
+  negated_guard()
+    178:8 value -> Dictionary (base: Variant) # OK
+
+  multiple_guards_same_var()
+    194:4 value -> Dictionary (base: Variant) # OK
+    198:6 name -> String (base: Variant) # OK
+    199:24 name -> String (base: Variant) # OK
+    200:8 name -> int (base: Variant) # OK
+    201:31 name -> int (base: Variant) # OK
+
+  guard_with_method_call()
+    208:4 value -> Array (base: Variant) # OK
+    208:23 value -> Array (base: Variant) # OK
+    210:9 value -> Array (base: Variant) # OK
+
+  guard_propagation()
+    263:4 outer -> Dictionary (base: Variant) # OK
+    267:6 outer -> Dictionary (base: Variant) # OK
+    268:11 outer -> Dictionary (base: Variant) # OK
+
+test_scripts/union_returns.gd
+  success_or_error()
+    39:4 input -> null (base: Variant) # OK
+    41:4 input -> int (base: Variant) # OK
+    41:21 input -> int (base: Variant) # OK
+
+  load_resource()
+    66:4 resource -> null (base: Resource) # OK
+
+  process_input()
+    74:4 input -> int (base: Variant) # OK
+    75:9 input -> int (base: Variant) # OK
+    76:4 input -> float (base: Variant) # OK
+    77:9 input -> float (base: Variant) # OK
+    78:4 input -> String (base: Variant) # OK
+    79:9 input -> String (base: Variant) # OK
+    80:4 input -> Array (base: Variant) # OK
+    81:9 input -> Array (base: Variant) # OK
+    82:4 input -> Dictionary (base: Variant) # OK
+    83:9 input -> Dictionary (base: Variant) # OK
+
+  early_returns()
+    89:4 value -> null (base: Variant) # OK
+    92:4 value -> bool (base: Variant) # OK
+    93:9 value -> bool (base: Variant) # OK
+    95:4 value -> int (base: Variant) # OK
+    98:5 value -> int (base: Variant) # OK
+
+  loop_return()
+    113:5 item -> int (base: Variant) # OK
+    113:21 item -> int (base: Variant) # OK
+    114:35 item -> int (base: Variant) # OK
+    115:5 item -> String (base: Variant) # OK
+    115:24 item -> String (base: Variant) # OK
+    116:10 item -> String (base: Variant) # OK
+
+  recursive_return()
+    125:4 child -> String (base: String) # OK
+    126:35 child -> String (base: String) # OK
+
+  callback_return()
+    133:4 result -> null (base: Variant) # OK
+
+  exception_pattern()
+    142:6 data -> Dictionary (base: Variant) # OK
+    143:11 data -> Dictionary (base: Variant) # OK
+
+  result_monad()
+    155:4 value -> null (base: Variant) # OK
+    157:4 value -> int (base: Variant) # OK
+    157:21 value -> int (base: Variant) # OK
+
+  maybe_monad()
+    165:4 value -> null (base: Variant) # OK
+
+  validate_input()
+    205:4 input -> null (base: Variant) # OK
+    208:4 input -> Dictionary (base: Variant) # OK
+
+test_scripts/union_types_complex.gd
+  try_operation()
+    25:4 input -> null (base: Variant) # OK
+    27:4 input -> int (base: Variant) # OK
+    31:4 input -> String (base: Variant) # OK
+
+  get_position_or_null()
+    50:4 node -> Node2D (base: T) # OK
+    50:13 node -> Node2D (base: T) # OK
+    51:9 node -> Node2D (base: T) # OK
+
+  process_by_type()
+    59:4 value -> int (base: Variant) # OK
+    60:9 value -> int (base: Variant) # OK
+    61:6 value -> float (base: Variant) # OK
+    62:9 value -> float (base: Variant) # OK
+    63:6 value -> String (base: Variant) # OK
+    64:9 value -> String (base: Variant) # OK
+    65:6 value -> Array (base: Variant) # OK
+    66:9 value -> Array (base: Variant) # OK
+    67:6 value -> Dictionary (base: Variant) # OK
+    68:9 value -> Dictionary (base: Variant) # OK
+
+  _process_mixed_item()
+    148:4 item -> int (base: Variant) # OK
+    149:9 item -> int (base: Variant) # OK
+    150:4 item -> String (base: Variant) # OK
+    151:9 item -> String (base: Variant) # OK
+    152:4 item -> float (base: Variant) # OK
+    153:13 item -> float (base: Variant) # OK
+    154:4 item -> Array (base: Variant) # OK
+    155:9 item -> Array (base: Variant) # OK
+    156:4 item -> Dictionary (base: Variant) # OK
+    157:9 item -> Dictionary (base: Variant) # OK
+
+  safe_get_nested()
+    189:5 current -> null (base: Variant) # OK
+    191:5 current -> Dictionary (base: Variant) # OK
+    192:3 current -> Dictionary (base: Variant) # OK
+    192:13 current -> Dictionary (base: Variant) # OK
+    193:7 current -> Array (base: Variant) # OK
+    193:28 key -> int (base: Variant) # OK
+
+  map_with_fallback()
+    244:5 transformed -> null (base: Variant) # OK
+
+  _compute_result()
+    301:4 params -> String (base: Variant) # OK
+    302:9 params -> String (base: Variant) # OK
+    303:4 params -> int (base: Variant) # OK
+    304:9 params -> int (base: Variant) # OK
+    304:18 params -> int (base: Variant) # OK
+    305:4 params -> Array (base: Variant) # OK
+    306:9 params -> Array (base: Variant) # OK
+
+  process_with_guards()
+    333:6 value -> Array (base: Variant) # OK
+    335:9 value -> Array (base: Variant) # OK
+
+  validate_and_process()
+    341:4 data -> null (base: Variant) # OK
+    355:49 type_field -> String (base: Variant) # OK
+
+  type_flow_test_method()
+    378:4 local -> null (base: Variant) # OK
+    382:4 local -> Dictionary (base: Variant) # OK
+    384:14 local -> Dictionary (base: Variant) # OK
+    386:13 local -> Dictionary (base: Variant) # OK
+    388:14 local -> Dictionary (base: Variant) # OK
+    392:4 local -> Array (base: Variant) # OK
+    392:23 local -> Array (base: Variant) # OK
+    394:9 local -> Array (base: Variant) # OK
+    402:4 local -> String (base: Variant) # OK
+
+# Summary: 375 narrowings in 23 files

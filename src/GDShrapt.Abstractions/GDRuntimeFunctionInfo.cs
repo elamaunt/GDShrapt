@@ -45,6 +45,14 @@ public class GDRuntimeFunctionInfo
     public string? ReturnTypeRole { get; set; }
 
     /// <summary>
+    /// All concrete overloads of this function (each with specific parameter types).
+    /// Used for building generic Callable types with type constraints.
+    /// For example, abs has overloads: abs(int)->int and abs(float)->float,
+    /// yielding Callable&lt;T: int | float&gt;(T) -> T.
+    /// </summary>
+    public IReadOnlyList<GDRuntimeFunctionOverload>? Overloads { get; set; }
+
+    /// <summary>
     /// Creates a new function info.
     /// </summary>
     public GDRuntimeFunctionInfo(string name, string? returnType = null)

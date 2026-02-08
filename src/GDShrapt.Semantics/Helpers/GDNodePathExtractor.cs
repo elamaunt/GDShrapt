@@ -163,7 +163,7 @@ public static class GDNodePathExtractor
     public static bool IsPreloadOrLoadCall(GDCallExpression call)
     {
         var name = GetCallName(call);
-        return name == "preload" || name == "load";
+        return GDWellKnownFunctions.IsResourceLoader(name);
     }
 
     /// <summary>

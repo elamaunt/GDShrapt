@@ -36,7 +36,7 @@ func process(x):
 
         // Inject call site data - callers pass int
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
+        callSiteTypes.AddTypeName("int");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -45,7 +45,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"), "Union should contain int");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), "Union should contain int");
 
         Assert.IsNotNull(diff);
         Assert.IsFalse(diff.HasMismatch, "No mismatch when both sources agree on int");
@@ -68,8 +68,8 @@ func process(x):
 
         // Inject call site data - callers pass both int and String
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
-        callSiteTypes.AddType("String");
+        callSiteTypes.AddTypeName("int");
+        callSiteTypes.AddTypeName("String");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -78,8 +78,8 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
 
         Assert.IsNotNull(diff);
         Assert.IsFalse(diff.HasMismatch,
@@ -106,7 +106,7 @@ func process(x):
 
         // Inject call site data - callers pass String (not expected!)
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("String");
+        callSiteTypes.AddTypeName("String");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -136,7 +136,7 @@ func process(x):
 
         // Inject call site data - callers only pass int
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
+        callSiteTypes.AddTypeName("int");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -164,8 +164,8 @@ func process(x):
 
         // Inject call site data - callers pass int and float
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
-        callSiteTypes.AddType("float");
+        callSiteTypes.AddTypeName("int");
+        callSiteTypes.AddTypeName("float");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -201,7 +201,7 @@ func process(x):
 
         // Inject call site data - callers pass null
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("null");
+        callSiteTypes.AddTypeName("null");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -210,7 +210,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("null"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")),
             $"Union should contain null from null check. Types: [{string.Join(", ", union.Types)}]");
 
         Assert.IsNotNull(diff);
@@ -233,7 +233,7 @@ func process(x):
 
         // Inject call site data - callers pass null
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("null");
+        callSiteTypes.AddTypeName("null");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -265,9 +265,9 @@ func process(x):
 
         // Inject call site data - callers pass all expected types
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
-        callSiteTypes.AddType("String");
-        callSiteTypes.AddType("null");
+        callSiteTypes.AddTypeName("int");
+        callSiteTypes.AddTypeName("String");
+        callSiteTypes.AddTypeName("null");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -276,9 +276,9 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
-        Assert.IsTrue(union.Types.Contains("null"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")));
 
         Assert.IsNotNull(diff);
         Assert.IsFalse(diff.HasMismatch,
@@ -302,7 +302,7 @@ func process(x: int):
 
         // Inject call site data - callers pass int
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
+        callSiteTypes.AddTypeName("int");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -326,7 +326,7 @@ func process(x: int):
 
         // Inject call site data - callers pass String (wrong!)
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("String");
+        callSiteTypes.AddTypeName("String");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -352,8 +352,8 @@ func process(x: int):
 
         // Inject call site data - callers pass int and float
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
-        callSiteTypes.AddType("float");
+        callSiteTypes.AddTypeName("int");
+        callSiteTypes.AddTypeName("float");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -386,12 +386,12 @@ func process(a, b):
 
         // Inject call site data for both params
         var aTypes = new GDUnionType();
-        aTypes.AddType("int");
-        aTypes.AddType("float"); // Extra type not in type guard
+        aTypes.AddTypeName("int");
+        aTypes.AddTypeName("float"); // Extra type not in type guard
         semanticModel.SetCallSiteParameterTypes("process", "a", aTypes);
 
         var bTypes = new GDUnionType();
-        bTypes.AddType("String");
+        bTypes.AddTypeName("String");
         semanticModel.SetCallSiteParameterTypes("process", "b", bTypes);
 
         // Act
@@ -427,8 +427,8 @@ func process(x):
 
         // Inject call site data with additional type
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
-        callSiteTypes.AddType("String"); // Not in type guards
+        callSiteTypes.AddTypeName("int");
+        callSiteTypes.AddTypeName("String"); // Not in type guards
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act - GetUnionType should include call site types
@@ -436,8 +436,8 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"), "int from type guard");
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), "int from type guard");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"String from call sites should be in union. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -466,7 +466,7 @@ func outer(y):
 
         // Inject call site for inner - as if outer is calling it
         var innerCallSites = new GDUnionType();
-        innerCallSites.AddType("Array"); // outer might pass Array to inner
+        innerCallSites.AddTypeName("Array"); // outer might pass Array to inner
         semanticModel.SetCallSiteParameterTypes("inner", "x", innerCallSites);
 
         // Act
@@ -494,9 +494,9 @@ func process(x):
 
         // Inject call site data - callers pass Array and Dictionary (both have size())
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("Array");
-        callSiteTypes.AddType("Dictionary");
-        callSiteTypes.AddType("String"); // String also has .size() in some contexts
+        callSiteTypes.AddTypeName("Array");
+        callSiteTypes.AddTypeName("Dictionary");
+        callSiteTypes.AddTypeName("String"); // String also has .size() in some contexts
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -505,9 +505,9 @@ func process(x):
 
         // Assert - no type guards, so all call site types should be in union
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Array"));
-        Assert.IsTrue(union.Types.Contains("Dictionary"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Array")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Dictionary")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     #endregion
@@ -552,8 +552,8 @@ func process(x):
 
         // Inject call site data
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int");
-        callSiteTypes.AddType("String");
+        callSiteTypes.AddTypeName("int");
+        callSiteTypes.AddTypeName("String");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -561,8 +561,8 @@ func process(x):
 
         // Assert - union should have call site types
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -580,7 +580,7 @@ func process(x):
 
         // Inject call site data with same type
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("int", isHighConfidence: false);
+        callSiteTypes.AddTypeName("int", isHighConfidence: false);
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -588,7 +588,7 @@ func process(x):
 
         // Assert - int should appear once, not twice
         Assert.IsNotNull(union);
-        Assert.AreEqual(1, union.Types.Count(t => t == "int"),
+        Assert.AreEqual(1, union.Types.Count(t => t.DisplayName == "int"),
             "int should appear exactly once in union");
     }
 
@@ -613,11 +613,11 @@ func process(x = 42):
 
         // Assert - should infer int from default value
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from default value 42. Types: [{string.Join(", ", union.Types)}]");
 
         Assert.IsNotNull(diff);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"),
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Expected should contain int from default value. Types: [{string.Join(", ", diff.ExpectedTypes.Types)}]");
     }
 
@@ -637,7 +637,7 @@ func process(name = ""default""):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should infer String from default value. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -659,7 +659,7 @@ func process(x = null):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("null"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")),
             $"Should infer null from default value. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -679,8 +679,8 @@ func process(x: int = 42):
 
         // Assert - int should appear once (deduplicated)
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.AreEqual(1, union.Types.Count(t => t == "int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.AreEqual(1, union.Types.Count(t => t.DisplayName == "int"),
             "int should appear exactly once even with both annotation and default");
     }
 
@@ -701,7 +701,7 @@ func process(items = []):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Array"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Array")),
             $"Should infer Array from default value []. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -721,7 +721,7 @@ func process(config = {}):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Dictionary"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Dictionary")),
             $"Should infer Dictionary from default value {{}}. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -738,7 +738,7 @@ func process(x = 42):
 
         // Inject call site with String
         var callSiteTypes = new GDUnionType();
-        callSiteTypes.AddType("String");
+        callSiteTypes.AddTypeName("String");
         semanticModel.SetCallSiteParameterTypes("process", "x", callSiteTypes);
 
         // Act
@@ -746,9 +746,9 @@ func process(x = 42):
 
         // Assert - expected has int (from default), actual has String
         Assert.IsNotNull(diff);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"),
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             "Expected should have int from default value");
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("String"),
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             "Actual should have String from call site");
         Assert.IsTrue(diff.HasMismatch,
             "Should detect mismatch: expects int, gets String");
@@ -782,7 +782,7 @@ func process(x):
 
         // Assert - should infer int from match patterns
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from match patterns 1, 2. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -808,7 +808,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should infer String from match patterns. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -834,9 +834,9 @@ func process(x):
 
         // Assert - should infer int|String
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from match pattern 1. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should infer String from match pattern \"hello\". Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -860,7 +860,7 @@ func process(x):
 
         // Assert - should only infer int from literal, not from var binding
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from literal pattern. Types: [{string.Join(", ", union.Types)}]");
         // var binding doesn't constrain type
     }
@@ -885,7 +885,7 @@ func process(flag):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("bool"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("bool")),
             $"Should infer bool from match patterns. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -909,7 +909,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("null"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")),
             $"Should infer null from match pattern. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -935,7 +935,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from typeof(x) == TYPE_INT. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -957,7 +957,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should infer String from typeof check. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -979,7 +979,7 @@ func process(pos):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Vector2I"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Vector2I")),
             $"Should infer Vector2I from typeof check. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1001,7 +1001,7 @@ func process(pos):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Vector3I"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Vector3I")),
             $"Should infer Vector3I from typeof check. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1023,7 +1023,7 @@ func process(data):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Array"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Array")),
             $"Should infer Array from typeof check. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1047,9 +1047,9 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from first typeof check. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("float"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("float")),
             $"Should infer float from second typeof check. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1071,7 +1071,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int even with reversed comparison. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1096,7 +1096,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Player"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Player")),
             $"Should infer Player from assert(x is Player). Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1119,9 +1119,9 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Node"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node")),
             $"Should infer Node from assert. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("Sprite2D"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Sprite2D")),
             $"Should infer Sprite2D from type guard. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1147,7 +1147,7 @@ func process(x):
 
         // Assert - even with negation, we know x CAN be int
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from 'if not x is int' - negation still tells us x can be int. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1169,7 +1169,7 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should infer String from 'not (x is String)'. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1191,7 +1191,7 @@ func process(x):
 
         // Assert - double negation is positive, x is int
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from 'not not x is int'. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1215,9 +1215,9 @@ func process(x):
 
         // Assert - both int and String should be inferred
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from negative guard. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should infer String from positive guard. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1248,9 +1248,9 @@ func process(x):
 
         // Assert - should have Array (from guard) and int (from match)
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Array"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Array")),
             $"Should infer Array from type guard. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from match pattern. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1273,9 +1273,9 @@ func process(x):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Node"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node")),
             $"Should infer Node from assert. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from typeof check. Types: [{string.Join(", ", union.Types)}]");
     }
 
@@ -1305,15 +1305,15 @@ func process(x):
 
         // Assert - should have Object, Node, int, String, null
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("Object"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Object")),
             $"Should infer Object from assert. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("Node"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node")),
             $"Should infer Node from negative guard. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Should infer int from typeof check. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Should infer String from match pattern. Types: [{string.Join(", ", union.Types)}]");
-        Assert.IsTrue(union.Types.Contains("null"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")),
             $"Should infer null from match pattern. Types: [{string.Join(", ", union.Types)}]");
     }
 

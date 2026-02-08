@@ -90,7 +90,7 @@ public class GDCallSiteEntry : IEquatable<GDCallSiteEntry>
     /// <param name="targetClassName">The target class name.</param>
     /// <param name="targetMethodName">The target method name.</param>
     /// <param name="sourceMethodName">The name of the method containing the call.</param>
-    public static GDCallSiteEntry FromCallSiteInfo(
+    internal static GDCallSiteEntry FromCallSiteInfo(
         GDCallSiteInfo info,
         string targetClassName,
         string targetMethodName,

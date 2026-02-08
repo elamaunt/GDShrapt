@@ -10,7 +10,7 @@ var data_store: Dictionary = {}
 func process_chain():
 	var data = get_data()
 	# Chain: data.get().to_string().length()
-	var result = data.get("key", {}).get("nested", "default").length()
+	var result = data.get("key", {}).get("nested", "default").length()  # 13:14-GD7003-OK
 	return result
 
 
@@ -20,7 +20,7 @@ func get_data() -> Dictionary:
 
 func complex_chain(input: Array) -> int:
 	# Array -> filter -> map -> reduce chain
-	var filtered = input.filter(func(x): return x > 0)
+	var filtered = input.filter(func(x): return x > 0)  # 23:45-GD3020-OK
 	var mapped = filtered.map(func(x): return x * 2)
 	var sum = 0
 	for item in mapped:
@@ -74,15 +74,15 @@ class ConfigBuilder:
 		_name = name
 		return self
 
-	func set_value(value: int) -> ConfigBuilder:
+	func set_value(value: int) -> ConfigBuilder:  # 77:1-GDL513-OK
 		_value = value
 		return self
 
-	func set_enabled(enabled: bool) -> ConfigBuilder:
+	func set_enabled(enabled: bool) -> ConfigBuilder:  # 81:1-GDL513-OK
 		_enabled = enabled
 		return self
 
-	func build() -> Dictionary:
+	func build() -> Dictionary:  # 85:1-GDL513-OK
 		return {"name": _name, "value": _value, "enabled": _enabled}
 
 
@@ -92,7 +92,7 @@ func node_chain() -> Vector2:
 	if parent == null:
 		return Vector2.ZERO
 
-	var grandparent = parent.get_parent()
+	var grandparent = parent.get_parent()  # 95:19-GD4002-OK
 	if grandparent == null:
 		return Vector2.ZERO
 
@@ -105,7 +105,7 @@ func node_chain() -> Vector2:
 func mixed_chain(input) -> String:
 	# Mixed type chain with type narrowing
 	if input is Dictionary:
-		return input.get("name", "").to_upper()
+		return input.get("name", "").to_upper()  # 108:9-GD7003-OK
 	elif input is Array:
 		return str(input.size())
 	elif input is String:

@@ -86,18 +86,18 @@ public class GDTypeResolver
                 ? new GDTypeInferenceEngine(_compositeProvider, scopeStack, _nodeTypeInjector, injectionContext)
                 : new GDTypeInferenceEngine(_compositeProvider, scopeStack);
 
-            var typeName = engine.InferType(expression);
+            var semanticType = engine.InferSemanticType(expression);
             var typeNode = engine.InferTypeNode(expression);
 
-            if (string.IsNullOrEmpty(typeName))
+            if (semanticType == null || semanticType.IsVariant)
                 return GDTypeResolutionResult.Unknown();
 
             return new GDTypeResolutionResult
             {
-                TypeName = typeName,
+                TypeName = semanticType,
                 TypeNode = typeNode,
                 IsResolved = true,
-                Source = DetermineTypeSource(typeName)
+                Source = DetermineTypeSource(semanticType.DisplayName)
             };
         }
         catch (Exception ex)
@@ -124,7 +124,7 @@ public class GDTypeResolver
         {
             return new GDTypeResolutionResult
             {
-                TypeName = GetBuiltInType(name),
+                TypeName = GDSemanticType.FromRuntimeTypeName(GetBuiltInType(name)),
                 IsResolved = true,
                 Source = GDTypeSource.BuiltIn
             };
@@ -135,7 +135,7 @@ public class GDTypeResolver
         {
             return new GDTypeResolutionResult
             {
-                TypeName = name,
+                TypeName = GDSemanticType.FromRuntimeTypeName(name),
                 IsResolved = true,
                 Source = GDTypeSource.GodotApi
             };
@@ -149,7 +149,7 @@ public class GDTypeResolver
             {
                 return new GDTypeResolutionResult
                 {
-                    TypeName = name,
+                    TypeName = GDSemanticType.FromRuntimeTypeName(name),
                     IsResolved = true,
                     Source = GDTypeSource.Project
                 };
@@ -341,14 +341,14 @@ public class GDTypeResolver
 
     private string GetBuiltInType(string name)
     {
+        if (GDWellKnownTypes.BuiltinIdentifierTypes.TryGetValue(name, out var type))
+            return type == GDWellKnownTypes.Null ? GDWellKnownTypes.Variant : type;
+
         return name switch
         {
-            "true" or "false" => "bool",
-            "null" => "Variant",
-            "PI" or "TAU" or "INF" or "NAN" => "float",
-            "self" => "self",
+            GDWellKnownTypes.Self => GDWellKnownTypes.Self,
             "super" => "super",
-            _ => "Variant"
+            _ => GDWellKnownTypes.Variant
         };
     }
 

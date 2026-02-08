@@ -32,8 +32,9 @@ public class GDStatsCommand : GDProjectCommandBase
         GDProjectConfig config,
         CancellationToken cancellationToken)
     {
-        var metricsHandler = Registry?.GetService<IGDMetricsHandler>() ?? new GDMetricsHandler(project);
-        var coverageHandler = Registry?.GetService<IGDTypeCoverageHandler>() ?? new GDTypeCoverageHandler(project);
+        var projectModel = new GDProjectSemanticModel(project);
+        var metricsHandler = Registry?.GetService<IGDMetricsHandler>() ?? new GDMetricsHandler(projectModel);
+        var coverageHandler = Registry?.GetService<IGDTypeCoverageHandler>() ?? new GDTypeCoverageHandler(projectModel);
 
         var metrics = metricsHandler.AnalyzeProject();
         var coverage = coverageHandler.AnalyzeProject();

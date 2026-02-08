@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Contains information about a method call site.
 /// Used for parameter type inference from usage.
 /// </summary>
-public class GDCallSiteInfo
+internal class GDCallSiteInfo
 {
     /// <summary>
     /// The call expression node.
@@ -30,7 +30,7 @@ public class GDCallSiteInfo
     /// The type of the receiver expression (if method call on object).
     /// Null for direct function calls.
     /// </summary>
-    public string? ReceiverType { get; }
+    public GDSemanticType? ReceiverType { get; }
 
     /// <summary>
     /// Whether this call site comes from a duck-typed receiver.
@@ -43,9 +43,9 @@ public class GDCallSiteInfo
     public string? ReceiverVariableName { get; }
 
     /// <summary>
-    /// If the receiver has a Union type, the full Union type string.
+    /// If the receiver has a Union type, the full Union semantic type.
     /// </summary>
-    public string? UnionReceiverType { get; }
+    public GDSemanticType? UnionReceiverType { get; }
 
     /// <summary>
     /// Confidence level of this call site resolution.
@@ -84,7 +84,7 @@ public class GDCallSiteInfo
         GDCallExpression callExpression,
         GDScriptFile sourceScript,
         IReadOnlyList<GDArgumentInfo> arguments,
-        string? receiverType,
+        GDSemanticType? receiverType,
         GDReferenceConfidence confidence)
     {
         CallExpression = callExpression;
@@ -126,8 +126,8 @@ public class GDCallSiteInfo
         GDCallExpression callExpression,
         GDScriptFile sourceScript,
         IReadOnlyList<GDArgumentInfo> arguments,
-        string receiverType,
-        string unionReceiverType,
+        GDSemanticType receiverType,
+        GDSemanticType unionReceiverType,
         GDReferenceConfidence confidence)
     {
         return new GDCallSiteInfo(
@@ -146,11 +146,11 @@ public class GDCallSiteInfo
         GDCallExpression callExpression,
         GDScriptFile sourceScript,
         IReadOnlyList<GDArgumentInfo> arguments,
-        string? receiverType,
+        GDSemanticType? receiverType,
         GDReferenceConfidence confidence,
         bool isDuckTyped,
         string? receiverVariableName,
-        string? unionReceiverType)
+        GDSemanticType? unionReceiverType)
     {
         CallExpression = callExpression;
         SourceScript = sourceScript;
@@ -177,15 +177,15 @@ public class GDCallSiteInfo
     public override string ToString()
     {
         var location = $"{System.IO.Path.GetFileName(FilePath)}:{Line}:{Column}";
-        var argTypes = string.Join(", ", Arguments.Select(a => a.InferredType ?? "?"));
+        var argTypes = string.Join(", ", Arguments.Select(a => a.InferredType?.DisplayName ?? "?"));
         var confidence = Confidence.ToString().ToLower();
 
         if (IsDuckTyped)
             return $"[duck] {ReceiverVariableName}.call({argTypes}) @ {location}";
 
-        if (!string.IsNullOrEmpty(UnionReceiverType))
-            return $"[union:{UnionReceiverType}].call({argTypes}) @ {location} ({confidence})";
+        if (UnionReceiverType != null)
+            return $"[union:{UnionReceiverType.DisplayName}].call({argTypes}) @ {location} ({confidence})";
 
-        return $"{ReceiverType ?? "?"}.call({argTypes}) @ {location} ({confidence})";
+        return $"{ReceiverType?.DisplayName ?? "?"}.call({argTypes}) @ {location} ({confidence})";
     }
 }

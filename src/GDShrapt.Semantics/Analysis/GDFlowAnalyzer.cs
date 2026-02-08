@@ -88,7 +88,7 @@ internal class GDFlowAnalyzer : GDVisitor
                 var name = param.Identifier?.Sequence;
                 var declType = param.Type?.BuildName();
                 if (!string.IsNullOrEmpty(name))
-                    _currentState.DeclareVariable(name, declType);
+                    _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(declType));
             }
         }
 
@@ -127,7 +127,7 @@ internal class GDFlowAnalyzer : GDVisitor
             ? ResolveTypeWithFallback(varDecl.Initializer)
             : null;
 
-        _currentState.DeclareVariable(name, declType, initType);
+        _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(declType), GDSemanticType.FromRuntimeTypeName(initType));
         RecordState(varDecl);
     }
 
@@ -151,7 +151,7 @@ internal class GDFlowAnalyzer : GDVisitor
                     var rhsType = ResolveTypeWithFallback(dualOp.RightExpression);
                     if (!string.IsNullOrEmpty(rhsType))
                     {
-                        _currentState.SetVariableType(name, rhsType, dualOp);
+                        _currentState.SetVariableType(name, GDSemanticType.FromRuntimeTypeName(rhsType), dualOp);
                     }
                 }
             }
@@ -205,8 +205,9 @@ internal class GDFlowAnalyzer : GDVisitor
                 return primaryType;
 
             // Fall back to basic type engine inference
-            var fallbackType = _typeEngine?.InferType(expr);
-            if (!string.IsNullOrEmpty(fallbackType) && fallbackType != "Variant")
+            var fallbackSemanticType = _typeEngine?.InferSemanticType(expr);
+            var fallbackType = fallbackSemanticType?.DisplayName;
+            if (fallbackSemanticType != null && !fallbackSemanticType.IsVariant)
                 return fallbackType;
 
             // Return Variant as last resort if that's what we got
@@ -370,7 +371,7 @@ internal class GDFlowAnalyzer : GDVisitor
         var iteratorName = forStmt.Variable?.Sequence;
         if (!string.IsNullOrEmpty(iteratorName))
         {
-            var collectionType = _typeEngine?.InferType(forStmt.Collection);
+            var collectionType = _typeEngine?.InferSemanticType(forStmt.Collection)?.DisplayName;
             var elementType = GDLoopFlowHelpers.InferIteratorElementType(collectionType);
             context.IteratorName = iteratorName;
             context.IteratorType = elementType;
@@ -382,7 +383,7 @@ internal class GDFlowAnalyzer : GDVisitor
         var loopState = preLoopState.CreateChild();
         if (!string.IsNullOrEmpty(context.IteratorName))
         {
-            loopState.DeclareVariable(context.IteratorName, null, context.IteratorType);
+            loopState.DeclareVariable(context.IteratorName, null, GDSemanticType.FromRuntimeTypeName(context.IteratorType));
         }
 
         _currentState = loopState;
@@ -543,7 +544,7 @@ internal class GDFlowAnalyzer : GDVisitor
             if (!string.IsNullOrEmpty(name))
             {
                 // Binding variables get type from the matched value (Variant for now)
-                state.DeclareVariable(name, null, "Variant");
+                state.DeclareVariable(name, null, GDVariantSemanticType.Instance);
             }
             return;
         }
@@ -600,7 +601,7 @@ internal class GDFlowAnalyzer : GDVisitor
                 var paramType = param.Type?.BuildName();
                 if (!string.IsNullOrEmpty(paramName))
                 {
-                    lambdaState.DeclareVariable(paramName, paramType);
+                    lambdaState.DeclareVariable(paramName, GDSemanticType.FromRuntimeTypeName(paramType));
                     lambdaState.MarkNonNull(paramName);
                 }
             }
@@ -663,7 +664,7 @@ internal class GDFlowAnalyzer : GDVisitor
 
                 if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(typeName))
                 {
-                    state.NarrowType(varName, typeName);
+                    state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(typeName));
                     // Type narrowing implies non-null
                     state.MarkNonNull(varName);
                 }
@@ -756,7 +757,7 @@ internal class GDFlowAnalyzer : GDVisitor
 
         if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(literalType))
         {
-            state.NarrowType(varName, literalType);
+            state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(literalType));
             // Non-null literals mark variable as non-null
             if (literalType != "null")
                 state.MarkNonNull(varName);
@@ -796,7 +797,7 @@ internal class GDFlowAnalyzer : GDVisitor
         // If variable has a known union type, compute intersection
         if (currentVarType != null && !currentVarType.CurrentType.IsEmpty)
         {
-            var intersection = currentVarType.CurrentType.IntersectWithType(elementType, _typeEngine?.RuntimeProvider);
+            var intersection = currentVarType.CurrentType.IntersectWithType(GDSemanticType.FromRuntimeTypeName(elementType!), _typeEngine?.RuntimeProvider);
 
             if (!intersection.IsEmpty)
             {
@@ -807,13 +808,13 @@ internal class GDFlowAnalyzer : GDVisitor
             {
                 // Empty intersection means incompatible types, but GDScript is dynamic
                 // Still narrow to container element type (runtime might succeed)
-                state.NarrowType(varName, elementType);
+                state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(elementType));
             }
         }
         else
         {
             // No existing union type - use container element type directly
-            state.NarrowType(varName, elementType);
+            state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(elementType));
         }
 
         state.MarkNonNull(varName);
@@ -842,16 +843,16 @@ internal class GDFlowAnalyzer : GDVisitor
         // Handle string literals: "hello" -> String
         if (containerExpr is GDStringExpression)
         {
-            return "String";
+            return GDWellKnownTypes.Strings.String;
         }
 
         // Handle range() calls: range(1, 10) -> int
         if (containerExpr is GDCallExpression callExpr)
         {
             if (callExpr.CallerExpression is GDIdentifierExpression callIdent &&
-                callIdent.Identifier?.Sequence == "range")
+                callIdent.Identifier?.Sequence == GDWellKnownFunctions.Range)
             {
-                return "int";
+                return GDWellKnownTypes.Numeric.Int;
             }
         }
 
@@ -863,7 +864,7 @@ internal class GDFlowAnalyzer : GDVisitor
             {
                 // First try typed variable
                 var varType = _currentState.GetVariableType(varName);
-                var typeName = varType?.EffectiveType;
+                var typeName = varType?.EffectiveType.DisplayName;
                 if (!string.IsNullOrEmpty(typeName) && typeName != "Array" && typeName != "Dictionary")
                 {
                     var extractedType = GDFlowNarrowingHelpers.ExtractElementTypeFromTypeName(typeName);
@@ -878,14 +879,14 @@ internal class GDFlowAnalyzer : GDVisitor
                     // For Dictionary, key type is used for 'in' operator
                     if (profile.IsDictionary && inferredElementType.KeyUnionType != null)
                     {
-                        var keyType = inferredElementType.KeyUnionType.EffectiveType;
+                        var keyType = inferredElementType.KeyUnionType.EffectiveType.DisplayName;
                         if (!string.IsNullOrEmpty(keyType) && keyType != "Variant")
                             return keyType;
                     }
                     // For Array, element type is used
                     if (!inferredElementType.ElementUnionType.IsEmpty)
                     {
-                        var elementType = inferredElementType.ElementUnionType.EffectiveType;
+                        var elementType = inferredElementType.ElementUnionType.EffectiveType.DisplayName;
                         if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
                             return elementType;
                     }
@@ -930,12 +931,12 @@ internal class GDFlowAnalyzer : GDVisitor
                 if (IsNumericType(commonType) && IsNumericType(elementType))
                 {
                     // Keep as numeric (prefer float if mixed)
-                    commonType = (commonType == "float" || elementType == "float") ? "float" : "int";
+                    commonType = (commonType == GDWellKnownTypes.Numeric.Float || elementType == GDWellKnownTypes.Numeric.Float) ? GDWellKnownTypes.Numeric.Float : GDWellKnownTypes.Numeric.Int;
                 }
                 else
                 {
                     // Truly mixed types - cannot narrow
-                    return "Variant";
+                    return GDWellKnownTypes.Variant;
                 }
             }
         }
@@ -978,7 +979,7 @@ internal class GDFlowAnalyzer : GDVisitor
     /// Array[int] -> int, Dictionary[String, int] -> String, String -> String
     /// </summary>
     private bool IsNumericType(string? type) =>
-        !string.IsNullOrEmpty(type) && (_typeEngine?.RuntimeProvider?.IsNumericType(type) ?? (type == "int" || type == "float"));
+        !string.IsNullOrEmpty(type) && (_typeEngine?.RuntimeProvider?.IsNumericType(type) ?? GDWellKnownTypes.IsNumericType(type));
 
     /// <summary>
     /// Applies narrowing from has_method/has/has_signal checks.
@@ -1081,7 +1082,7 @@ internal class GDFlowAnalyzer : GDVisitor
     /// that contains the variable. Skips assignment expressions since they record
     /// post-assignment state but we need pre-assignment state when evaluating RHS.
     /// </summary>
-    public string? GetTypeAtLocation(string variableName, GDNode location)
+    public GDSemanticType? GetTypeAtLocation(string variableName, GDNode location)
     {
         if (string.IsNullOrEmpty(variableName) || location == null)
             return null;

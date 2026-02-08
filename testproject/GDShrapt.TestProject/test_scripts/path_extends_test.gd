@@ -11,7 +11,7 @@ func test_inherited_member_via_path() -> void:
 	print("Max health from path-based extends: ", max_health)
 
 	# current_health is also inherited
-	current_health = max_health / 2
+	current_health = max_health / 2  # 14:1-GD3001-OK
 	print("Current health: ", current_health)
 
 

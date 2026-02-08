@@ -18,13 +18,13 @@ public class ContainerUsageCollectorTests
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true
         });
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true
         });
 
@@ -34,7 +34,7 @@ public class ContainerUsageCollectorTests
         // Assert
         Assert.IsFalse(inferredType.IsDictionary);
         Assert.IsTrue(inferredType.ElementUnionType.IsSingleType);
-        Assert.AreEqual("int", inferredType.EffectiveElementType);
+        Assert.AreEqual("int", inferredType.EffectiveElementType.DisplayName);
     }
 
     [TestMethod]
@@ -45,13 +45,13 @@ public class ContainerUsageCollectorTests
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true
         });
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "String",
+            InferredType = GDSemanticType.FromRuntimeTypeName("String"),
             IsHighConfidence = true
         });
 
@@ -62,8 +62,8 @@ public class ContainerUsageCollectorTests
         Assert.IsFalse(inferredType.IsDictionary);
         Assert.IsTrue(inferredType.ElementUnionType.IsUnion);
         Assert.AreEqual(2, inferredType.ElementUnionType.Types.Count);
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("int"));
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("String"));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -74,13 +74,13 @@ public class ContainerUsageCollectorTests
         profile.KeyUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.IndexAssign,
-            InferredType = "String",
+            InferredType = GDSemanticType.FromRuntimeTypeName("String"),
             IsHighConfidence = true
         });
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.IndexAssign,
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true
         });
 
@@ -90,8 +90,8 @@ public class ContainerUsageCollectorTests
         // Assert
         Assert.IsTrue(inferredType.IsDictionary);
         Assert.IsNotNull(inferredType.KeyUnionType);
-        Assert.AreEqual("String", inferredType.EffectiveKeyType);
-        Assert.AreEqual("int", inferredType.EffectiveElementType);
+        Assert.AreEqual("String", inferredType.EffectiveKeyType?.DisplayName);
+        Assert.AreEqual("int", inferredType.EffectiveElementType.DisplayName);
     }
 
     [TestMethod]
@@ -105,7 +105,7 @@ public class ContainerUsageCollectorTests
 
         // Assert
         Assert.IsTrue(inferredType.ElementUnionType.IsEmpty);
-        Assert.AreEqual("Variant", inferredType.EffectiveElementType);
+        Assert.AreEqual("Variant", inferredType.EffectiveElementType.DisplayName);
     }
 
     [TestMethod]
@@ -122,7 +122,7 @@ public class ContainerUsageCollectorTests
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true
         });
 
@@ -131,7 +131,7 @@ public class ContainerUsageCollectorTests
 
         // Assert
         Assert.IsTrue(inferredType.ElementUnionType.IsSingleType);
-        Assert.AreEqual("int", inferredType.EffectiveElementType);
+        Assert.AreEqual("int", inferredType.EffectiveElementType.DisplayName);
     }
 
     #endregion
@@ -143,7 +143,7 @@ public class ContainerUsageCollectorTests
     {
         // Arrange
         var containerType = new GDContainerElementType { IsDictionary = false };
-        containerType.ElementUnionType.AddType("int", isHighConfidence: true);
+        containerType.ElementUnionType.AddTypeName("int", isHighConfidence: true);
 
         // Assert
         Assert.IsTrue(containerType.IsHomogeneous);
@@ -154,8 +154,8 @@ public class ContainerUsageCollectorTests
     {
         // Arrange
         var containerType = new GDContainerElementType { IsDictionary = false };
-        containerType.ElementUnionType.AddType("int", isHighConfidence: true);
-        containerType.ElementUnionType.AddType("String", isHighConfidence: true);
+        containerType.ElementUnionType.AddTypeName("int", isHighConfidence: true);
+        containerType.ElementUnionType.AddTypeName("String", isHighConfidence: true);
 
         // Assert
         Assert.IsFalse(containerType.IsHomogeneous);
@@ -166,7 +166,7 @@ public class ContainerUsageCollectorTests
     {
         // Arrange
         var containerType = new GDContainerElementType { IsDictionary = false };
-        containerType.ElementUnionType.AddType("int", isHighConfidence: true);
+        containerType.ElementUnionType.AddTypeName("int", isHighConfidence: true);
 
         // Assert
         Assert.IsNull(containerType.KeyUnionType);
@@ -178,7 +178,7 @@ public class ContainerUsageCollectorTests
     {
         // Arrange
         var containerType = new GDContainerElementType();
-        containerType.ElementUnionType.AddType("int", isHighConfidence: true);
+        containerType.ElementUnionType.AddTypeName("int", isHighConfidence: true);
 
         // Assert
         Assert.IsTrue(containerType.ElementUnionType.AllHighConfidence);
@@ -196,17 +196,17 @@ public class ContainerUsageCollectorTests
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Initialization,
-            InferredType = "int"
+            InferredType = GDSemanticType.FromRuntimeTypeName("int")
         });
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "int"
+            InferredType = GDSemanticType.FromRuntimeTypeName("int")
         });
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.IndexAssign,
-            InferredType = "int"
+            InferredType = GDSemanticType.FromRuntimeTypeName("int")
         });
 
         // Assert
@@ -224,12 +224,12 @@ public class ContainerUsageCollectorTests
         profile.KeyUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Initialization,
-            InferredType = "String"
+            InferredType = GDSemanticType.FromRuntimeTypeName("String")
         });
         profile.KeyUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.IndexAssign,
-            InferredType = "String"
+            InferredType = GDSemanticType.FromRuntimeTypeName("String")
         });
 
         // Assert
@@ -247,7 +247,7 @@ public class ContainerUsageCollectorTests
         var observation = new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true,
             Line = 5
         };
@@ -270,7 +270,7 @@ public class ContainerUsageCollectorTests
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = GDContainerUsageKind.Append,
-            InferredType = "int"
+            InferredType = GDSemanticType.FromRuntimeTypeName("int")
         });
 
         // Act

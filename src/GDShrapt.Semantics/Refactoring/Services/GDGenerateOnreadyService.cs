@@ -73,7 +73,7 @@ public class GDGenerateOnreadyService : GDRefactoringServiceBase
         var edits = new List<GDTextEdit>();
 
         // Build the @onready declaration using the type name from GDInferredType
-        var onreadyDecl = BuildOnreadyDeclaration(normalizedName, inferredType.TypeName, nodePath);
+        var onreadyDecl = BuildOnreadyDeclaration(normalizedName, inferredType.TypeName.DisplayName, nodePath);
 
         // Find insertion point for @onready (after class declarations, before methods)
         var insertionLine = FindOnreadyInsertionLine(context.ClassDeclaration);
@@ -365,7 +365,7 @@ public class GDGenerateOnreadyResult : GDRefactoringResult
         return new GDGenerateOnreadyResult(
             true, null, null,
             variableName, nodePath,
-            inferredType?.TypeName ?? "Node",
+            inferredType?.TypeName?.DisplayName ?? "Node",
             inferredType?.Confidence ?? GDTypeConfidence.Unknown,
             inferredType?.Reason);
     }

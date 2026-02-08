@@ -98,7 +98,7 @@ func _handle_death():
 
 
 # Signal with lambda handler
-func connect_with_lambda():
+func connect_with_lambda():  # 101:1-GDL513-OK
 	health_changed.connect(func(old, new):
 		print("Lambda handler: ", old, " -> ", new)
 	)
@@ -107,14 +107,14 @@ func connect_with_lambda():
 # Signal forwarding pattern
 signal forwarded_signal(value)
 
-func forward_signal():
+func forward_signal():  # 110:1-GDL513-OK
 	health_changed.connect(func(old, new):
 		forwarded_signal.emit(new)
 	)
 
 
 # Conditional signal emission
-func conditional_emit(condition: bool, value: int):
+func conditional_emit(condition: bool, value: int):  # 117:1-GDL513-OK
 	if condition:
 		health_changed.emit(_health, value)
 	else:
@@ -124,7 +124,7 @@ func conditional_emit(condition: bool, value: int):
 # Signal with return value pattern (via callback)
 signal request_data(callback: Callable)
 
-func request_and_process():
+func request_and_process():  # 127:1-GDL513-OK
 	request_data.emit(func(data):
 		if data is Dictionary:
 			print("Received: ", data)
@@ -133,7 +133,7 @@ func request_and_process():
 
 
 # Awaiting signals
-func async_operation():
+func async_operation():  # 136:1-GDL513-OK
 	emit_simple()
 	await simple_signal
 	print("Signal received, continuing")
@@ -162,15 +162,15 @@ func emit_custom():
 
 
 func _on_custom_data(data: CustomData):
-	var id = data.id
-	var name = data.name
-	var payload = data.payload
+	var id = data.id  # 165:5-GDL201-OK
+	var name = data.name  # 166:5-GDL201-OK
+	var payload = data.payload  # 167:5-GDL201-OK
 
 
 # Disconnect pattern
 var _connection: Callable
 
-func connect_tracked():
+func connect_tracked():  # 173:1-GDL513-OK
 	_connection = _on_health_changed
 	health_changed.connect(_connection)
 
@@ -185,7 +185,7 @@ signal chain_a
 signal chain_b
 signal chain_c
 
-func setup_chain():
+func setup_chain():  # 188:1-GDL513-OK
 	chain_a.connect(func(): chain_b.emit())
 	chain_b.connect(func(): chain_c.emit())
 
@@ -195,8 +195,8 @@ func trigger_chain():
 
 
 # Binding arguments
-func connect_with_bind():
-	simple_signal.connect(_on_simple_with_context.bind("extra_data", 42))
+func connect_with_bind():  # 198:1-GDL513-OK
+	simple_signal.connect(_on_simple_with_context.bind("extra_data", 42))  # 199:23-GD7007-OK
 
 
 func _on_simple_with_context(context: String, value: int):
@@ -204,10 +204,10 @@ func _on_simple_with_context(context: String, value: int):
 
 
 # One-shot connection
-func connect_one_shot():
+func connect_one_shot():  # 207:1-GDL513-OK
 	simple_signal.connect(_on_simple, CONNECT_ONE_SHOT)
 
 
 # Deferred connection
-func connect_deferred():
+func connect_deferred():  # 212:1-GDL513-OK
 	simple_signal.connect(_on_simple, CONNECT_DEFERRED)

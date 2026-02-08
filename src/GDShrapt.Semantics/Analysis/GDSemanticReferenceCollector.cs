@@ -438,7 +438,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
             string? elementTypeName = null;
             if (forStatement.Collection != null && _typeEngine != null)
             {
-                var collectionType = _typeEngine.InferType(forStatement.Collection);
+                var collectionType = _typeEngine.InferSemanticType(forStatement.Collection)?.DisplayName;
                 if (!string.IsNullOrEmpty(collectionType))
                 {
                     elementTypeName = GDTypeInferenceUtilities.GetCollectionElementType(collectionType);
@@ -552,11 +552,39 @@ internal class GDSemanticReferenceCollector : GDVisitor
         _validationContext?.Scopes.Pop();
     }
 
+    private string? ResolveVariableDeclaredType(string name, GDNode contextNode)
+    {
+        var symbol = _model?.FindSymbolInScope(name, contextNode);
+        if (symbol == null)
+            return null;
+
+        // Use explicit type annotation if available
+        if (symbol.TypeName != null)
+            return symbol.TypeName;
+
+        // Infer type from initializer for `:=` and untyped declarations
+        if (_typeEngine != null && symbol.DeclarationNode != null)
+        {
+            GDExpression? initializer = null;
+            if (symbol.DeclarationNode is GDVariableDeclarationStatement localVar)
+                initializer = localVar.Initializer;
+            else if (symbol.DeclarationNode is GDVariableDeclaration classVar)
+                initializer = classVar.Initializer;
+
+            if (initializer != null)
+                return _typeEngine.InferSemanticType(initializer)?.DisplayName;
+        }
+
+        return null;
+    }
+
     public override void Visit(GDIfBranch ifBranch)
     {
         // Analyze if-branch condition
         if (ifBranch.Condition != null && _narrowingAnalyzer != null)
         {
+            _narrowingAnalyzer.SetVariableTypeResolver(name =>
+                ResolveVariableDeclaredType(name, ifBranch));
             var ifNarrowing = _narrowingAnalyzer.AnalyzeCondition(ifBranch.Condition, isNegated: false);
             _currentNarrowingContext = ifNarrowing;
             _model!.SetNarrowingContext(ifBranch, ifNarrowing);
@@ -578,6 +606,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Analyze elif branch condition
         if (elifBranch.Condition != null && _narrowingAnalyzer != null)
         {
+            _narrowingAnalyzer.SetVariableTypeResolver(name =>
+                ResolveVariableDeclaredType(name, elifBranch));
             var elifNarrowing = _narrowingAnalyzer.AnalyzeCondition(elifBranch.Condition, isNegated: false);
             _currentNarrowingContext = elifNarrowing;
             _model!.SetNarrowingContext(elifBranch, elifNarrowing);
@@ -640,6 +670,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
             return null;
 
         // The code after the if has the inverse of the condition
+        _narrowingAnalyzer.SetVariableTypeResolver(name =>
+            ResolveVariableDeclaredType(name, ifBranch));
         return _narrowingAnalyzer.AnalyzeCondition(ifBranch.Condition, isNegated: true);
     }
 
@@ -911,42 +943,11 @@ internal class GDSemanticReferenceCollector : GDVisitor
         RecordNodeType(dualOperator);
     }
 
-    private static bool IsBuiltInType(string typeName)
-    {
-        return typeName switch
-        {
-            "int" or "float" or "bool" or "String" or "void" or "Variant" => true,
-            "Array" or "Dictionary" or "Callable" or "Signal" or "NodePath" or "StringName" => true,
-            "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i" => true,
-            "Rect2" or "Rect2i" or "AABB" or "Transform2D" or "Transform3D" => true,
-            "Basis" or "Projection" or "Quaternion" or "Plane" => true,
-            "Color" or "RID" or "Object" or "Nil" => true,
-            "PackedByteArray" or "PackedInt32Array" or "PackedInt64Array" => true,
-            "PackedFloat32Array" or "PackedFloat64Array" => true,
-            "PackedStringArray" or "PackedVector2Array" or "PackedVector3Array" => true,
-            "PackedColorArray" or "PackedVector4Array" => true,
-            _ => false
-        };
-    }
+    private static bool IsBuiltInType(string typeName) => GDWellKnownTypes.IsBuiltInType(typeName);
 
     private static string GetBaseTypeName(string typeName)
     {
-        // Extract base type from generics: Array[Player] -> Player
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-        {
-            var inner = typeName.Substring(bracketIndex + 1, typeName.Length - bracketIndex - 2);
-            // Handle nested: Dictionary[String,Player] -> just return first non-builtin
-            var parts = inner.Split(',');
-            foreach (var part in parts)
-            {
-                var trimmed = part.Trim();
-                if (!IsBuiltInType(trimmed))
-                    return trimmed;
-            }
-            return typeName.Substring(0, bracketIndex);
-        }
-        return typeName;
+        return GDGenericTypeHelper.ExtractBaseTypeName(typeName);
     }
 
     #endregion
@@ -1006,7 +1007,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         }
 
         // Infer caller type
-        var callerType = _typeEngine?.InferType(callerExpr);
+        var callerType = _typeEngine?.InferSemanticType(callerExpr)?.DisplayName;
 
         if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" && !callerType.StartsWith("Unknown"))
         {
@@ -1023,7 +1024,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var varName = GDFlowNarrowingHelpers.GetRootVariableName(callerExpr);
             if (!string.IsNullOrEmpty(varName))
             {
-                var narrowedType = _currentNarrowingContext?.GetConcreteType(varName);
+                var narrowedSemanticType = _currentNarrowingContext?.GetConcreteType(varName);
+                var narrowedType = narrowedSemanticType?.DisplayName;
                 if (!string.IsNullOrEmpty(narrowedType))
                 {
                     // Type was narrowed via 'is' check
@@ -1100,7 +1102,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var methodName = memberOp.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(methodName))
                 {
-                    var callerType = _typeEngine?.InferType(memberOp.CallerExpression);
+                    var callerType = _typeEngine?.InferSemanticType(memberOp.CallerExpression)?.DisplayName;
                     if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
                     {
                         var symbolInfo = ResolveMemberOnType(callerType, methodName);
@@ -1259,7 +1261,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var typeNode = _typeEngine.InferTypeNode(expr);
                 if (typeNode != null)
                 {
-                    reference.InferredType = typeNode.BuildName();
+                    reference.InferredType = GDSemanticType.FromTypeNode(typeNode);
                     reference.InferredTypeNode = typeNode;
                 }
             }
@@ -1432,7 +1434,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Create collector with type inference callback
         var collector = new GDCallableCallSiteCollector(
             _scriptFile,
-            expr => _typeEngine?.InferType(expr));
+            expr => _typeEngine?.InferSemanticType(expr));
 
         collector.Collect(classDecl);
 
@@ -1474,7 +1476,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
         var flowCollector = new GDCallableFlowCollector(
             _scriptFile,
-            expr => _typeEngine?.InferType(expr),
+            expr => _typeEngine?.InferSemanticType(expr),
             methodResolver);
 
         flowCollector.Collect(classDecl);

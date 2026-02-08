@@ -15,7 +15,7 @@ public class GDMetricsService
 {
     private readonly GDScriptProject _project;
 
-    public GDMetricsService(GDScriptProject project)
+    internal GDMetricsService(GDScriptProject project)
     {
         _project = project;
     }

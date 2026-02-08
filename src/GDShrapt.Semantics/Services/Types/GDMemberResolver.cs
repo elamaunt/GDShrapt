@@ -132,14 +132,7 @@ internal class GDMemberResolver
     /// </summary>
     public static string ExtractBaseTypeName(string? typeName)
     {
-        if (string.IsNullOrEmpty(typeName))
-            return typeName ?? string.Empty;
-
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-            return typeName.Substring(0, bracketIndex);
-
-        return typeName;
+        return GDGenericTypeHelper.ExtractBaseTypeName(typeName ?? string.Empty);
     }
 
     /// <summary>

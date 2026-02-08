@@ -62,13 +62,13 @@ internal class GDSignalTypeAnalyzer
 
         return methodName switch
         {
-            "emit_signal" => "void",           // emit_signal returns void (triggers handlers)
-            "connect" => "Error",              // connect returns Error (int enum in Godot 4)
-            "disconnect" => "void",            // disconnect returns void
-            "is_connected" => "bool",          // is_connected returns bool
-            "get_signal_connection_list" => "Array",  // Returns Array of Dictionaries
-            "get_signal_list" => "Array",      // Returns Array of Dictionaries
-            "has_signal" => "bool",            // has_signal returns bool
+            "emit_signal" => GDWellKnownTypes.Other.Error,
+            "connect" => GDWellKnownTypes.Other.Error,
+            "disconnect" => GDWellKnownTypes.Void,
+            "is_connected" => GDWellKnownTypes.Numeric.Bool,
+            "get_signal_connection_list" => "Array[Dictionary]",
+            "get_signal_list" => "Array[Dictionary]",
+            "has_signal" => GDWellKnownTypes.Numeric.Bool,
             _ => null
         };
     }

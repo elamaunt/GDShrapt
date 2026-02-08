@@ -322,7 +322,7 @@ internal class GDTypeFlowGraphBuilder
         {
             node.IsUnionType = true;
             node.UnionTypeInfo = unionType;
-            node.Type = string.Join("|", unionType.Types.Take(3));
+            node.Type = string.Join("|", unionType.Types.Take(3).Select(t => t.DisplayName));
             if (unionType.Types.Count > 3)
                 node.Type += "...";
         }
@@ -670,7 +670,7 @@ internal class GDTypeFlowGraphBuilder
         {
             Id = GenerateNodeId(),
             Label = label,
-            Type = reference.InferredType ?? "Variant",
+            Type = reference.InferredType?.DisplayName ?? "Variant",
             Kind = kind,
             Confidence = reference.Confidence == GDReferenceConfidence.Strict ? 0.9f : 0.5f,
             Description = $"Line {node.StartLine + 1}",
@@ -815,13 +815,13 @@ internal class GDTypeFlowGraphBuilder
 
                 var exprTypeInfo = semanticModel.TypeSystem.GetType(assignment.RightExpression);
                 var exprType = exprTypeInfo.IsVariant ? null : exprTypeInfo.DisplayName;
-                if (exprType == typeName)
+                if (exprType == typeName.DisplayName)
                 {
                     var unionSourceNode = new GDTypeFlowNode
                     {
                         Id = GenerateNodeId(),
                         Label = GetLabelFromExpression(assignment.RightExpression),
-                        Type = typeName,
+                        Type = typeName.DisplayName,
                         Kind = GetNodeKindFromExpression(assignment.RightExpression),
                         Confidence = 0.8f,
                         Description = $"Union member: {typeName}",
@@ -831,7 +831,7 @@ internal class GDTypeFlowGraphBuilder
                     };
                     rootNode.UnionSources.Add(unionSourceNode);
                     // Also add to inflows so they appear in the graph
-                    if (!rootNode.Inflows.Any(n => n.Type == typeName))
+                    if (!rootNode.Inflows.Any(n => n.Type == typeName.DisplayName))
                     {
                         rootNode.Inflows.Add(unionSourceNode);
                     }

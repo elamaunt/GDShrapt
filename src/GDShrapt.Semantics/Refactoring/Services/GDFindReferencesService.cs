@@ -334,7 +334,7 @@ public class GDFindReferencesService : GDRefactoringServiceBase
         var semanticModel = context.Script?.SemanticModel;
         if (semanticModel != null)
         {
-            var symbolInfo = semanticModel.GetSymbolAt(context.Cursor.Line, context.Cursor.Column);
+            var symbolInfo = semanticModel.GetSymbolAtPosition(context.Cursor.Line, context.Cursor.Column);
             if (symbolInfo != null)
             {
                 return ConvertToSymbolScope(symbolInfo, context);

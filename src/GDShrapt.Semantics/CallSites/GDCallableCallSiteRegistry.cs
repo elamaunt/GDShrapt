@@ -197,7 +197,7 @@ internal class GDCallableCallSiteRegistry
         {
             foreach (var arg in callSite.Arguments)
             {
-                if (string.IsNullOrEmpty(arg.InferredType) || arg.InferredType == "Variant")
+                if (arg.InferredType == null || arg.InferredType.IsVariant)
                     continue;
 
                 if (!result.TryGetValue(arg.Index, out var unionType))
@@ -222,7 +222,7 @@ internal class GDCallableCallSiteRegistry
 
         if (types.TryGetValue(parameterIndex, out var unionType))
         {
-            return unionType.EffectiveType;
+            return unionType.EffectiveType.DisplayName;
         }
 
         return null;
@@ -373,7 +373,7 @@ internal class GDCallableCallSiteRegistry
 
         if (types.TryGetValue(parameterIndex, out var unionType))
         {
-            return unionType.EffectiveType;
+            return unionType.EffectiveType.DisplayName;
         }
 
         return null;
@@ -402,7 +402,7 @@ internal class GDCallableCallSiteRegistry
         {
             foreach (var arg in callSite.Arguments)
             {
-                if (string.IsNullOrEmpty(arg.InferredType) || arg.InferredType == "Variant")
+                if (arg.InferredType == null || arg.InferredType.IsVariant)
                     continue;
 
                 if (!result.TryGetValue(arg.Index, out var unionType))

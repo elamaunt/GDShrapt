@@ -45,8 +45,8 @@ public class GDProjectSemanticModel : IDisposable
     private readonly GDScriptProject _project;
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, GDSemanticModel> _fileModels = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource> _pendingInvalidations = new();
-    private GDRefactoringServices? _services;
-    private GDDiagnosticsServices? _diagnostics;
+    private readonly Lazy<GDRefactoringServices> _services;
+    private readonly Lazy<GDDiagnosticsServices> _diagnostics;
     private readonly Lazy<GDSignalConnectionRegistry> _signalRegistry;
     private readonly Lazy<GDClassContainerRegistry> _containerRegistry;
     private readonly Lazy<GDTypeDependencyGraph> _dependencyGraph;
@@ -54,7 +54,11 @@ public class GDProjectSemanticModel : IDisposable
     private readonly bool _enableIncrementalAnalysis;
     private readonly bool _subscribeToChanges;
     private bool _disposed;
-    private IGDProjectTypeSystem? _typeSystem;
+    private readonly Lazy<IGDProjectTypeSystem> _typeSystem;
+    private readonly Lazy<GDDeadCodeService> _deadCode;
+    private readonly Lazy<GDMetricsService> _metrics;
+    private readonly Lazy<GDTypeCoverageService> _typeCoverage;
+    private readonly Lazy<GDDependencyService> _dependencies;
 
     /// <summary>
     /// The underlying project.
@@ -65,19 +69,19 @@ public class GDProjectSemanticModel : IDisposable
     /// Project-level type system for cross-file type resolution.
     /// Provides unified access to type queries across all files.
     /// </summary>
-    public IGDProjectTypeSystem TypeSystem => _typeSystem ??= new GDProjectTypeSystem(this);
+    public IGDProjectTypeSystem TypeSystem => _typeSystem.Value;
 
     /// <summary>
     /// Refactoring and code action services.
     /// Provides access to rename, find references, extract method, and other refactorings.
     /// </summary>
-    public GDRefactoringServices Services => _services ??= new GDRefactoringServices(_project);
+    public GDRefactoringServices Services => _services.Value;
 
     /// <summary>
     /// Diagnostics and validation services.
     /// Provides unified access to syntax checking, validation, and linting.
     /// </summary>
-    public GDDiagnosticsServices Diagnostics => _diagnostics ??= new GDDiagnosticsServices(_project);
+    public GDDiagnosticsServices Diagnostics => _diagnostics.Value;
 
     /// <summary>
     /// Signal connection registry for inter-procedural analysis.
@@ -98,6 +102,26 @@ public class GDProjectSemanticModel : IDisposable
     public GDTypeDependencyGraph DependencyGraph => _dependencyGraph.Value;
 
     /// <summary>
+    /// Dead code analysis service.
+    /// </summary>
+    public GDDeadCodeService DeadCode => _deadCode.Value;
+
+    /// <summary>
+    /// Code metrics analysis service.
+    /// </summary>
+    public GDMetricsService Metrics => _metrics.Value;
+
+    /// <summary>
+    /// Type annotation coverage analysis service.
+    /// </summary>
+    public GDTypeCoverageService TypeCoverage => _typeCoverage.Value;
+
+    /// <summary>
+    /// Dependency analysis service.
+    /// </summary>
+    public GDDependencyService Dependencies => _dependencies.Value;
+
+    /// <summary>
     /// Fired when a file is invalidated in the semantic model.
     /// </summary>
     public event EventHandler<string>? FileInvalidated;
@@ -116,6 +140,14 @@ public class GDProjectSemanticModel : IDisposable
         var semanticsConfig = config ?? project.Options?.SemanticsConfig ?? new GDSemanticsConfig();
         _debounceInterval = TimeSpan.FromMilliseconds(semanticsConfig.FileChangeDebounceMs);
         _enableIncrementalAnalysis = semanticsConfig.EnableIncrementalAnalysis;
+
+        _typeSystem = new Lazy<IGDProjectTypeSystem>(() => new GDProjectTypeSystem(this), LazyThreadSafetyMode.ExecutionAndPublication);
+        _services = new Lazy<GDRefactoringServices>(() => new GDRefactoringServices(_project), LazyThreadSafetyMode.ExecutionAndPublication);
+        _diagnostics = new Lazy<GDDiagnosticsServices>(() => new GDDiagnosticsServices(_project), LazyThreadSafetyMode.ExecutionAndPublication);
+        _deadCode = new Lazy<GDDeadCodeService>(() => new GDDeadCodeService(this), LazyThreadSafetyMode.ExecutionAndPublication);
+        _metrics = new Lazy<GDMetricsService>(() => new GDMetricsService(_project), LazyThreadSafetyMode.ExecutionAndPublication);
+        _typeCoverage = new Lazy<GDTypeCoverageService>(() => new GDTypeCoverageService(_project), LazyThreadSafetyMode.ExecutionAndPublication);
+        _dependencies = new Lazy<GDDependencyService>(() => new GDDependencyService(_project, SignalConnectionRegistry), LazyThreadSafetyMode.ExecutionAndPublication);
 
         _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
@@ -247,7 +279,7 @@ public class GDProjectSemanticModel : IDisposable
         foreach (var preload in scriptFile.Class.AllNodes.OfType<GDCallExpression>())
         {
             if (preload.CallerExpression is GDIdentifierExpression idExpr &&
-                idExpr.Identifier?.Sequence == "preload" &&
+                idExpr.Identifier?.Sequence == GDWellKnownFunctions.Preload &&
                 preload.Parameters?.Count > 0 &&
                 preload.Parameters[0] is GDStringExpression strExpr)
             {
@@ -388,8 +420,9 @@ public class GDProjectSemanticModel : IDisposable
                 var runtimeProvider = _project.CreateRuntimeProvider();
                 scriptFile.Analyze(runtimeProvider);
             }
-            return scriptFile.SemanticModel;
-        })!;
+            // Analyze() guarantees SemanticModel is set (even on parse failure, a minimal model is created)
+            return scriptFile.SemanticModel!;
+        });
     }
 
     /// <summary>
@@ -417,7 +450,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Finds a symbol by name in a specific file. Delegates to file-level semantic model.
     /// </summary>
-    public GDSymbolInfo? FindSymbolInFile(GDScriptFile file, string name)
+    internal GDSymbolInfo? FindSymbolInFile(GDScriptFile file, string name)
     {
         if (file == null || string.IsNullOrEmpty(name))
             return null;
@@ -429,19 +462,19 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets the symbol at a specific position in a file. Delegates to file-level semantic model.
     /// </summary>
-    public GDSymbolInfo? GetSymbolAt(GDScriptFile file, int line, int column)
+    internal GDSymbolInfo? GetSymbolAtPosition(GDScriptFile file, int line, int column)
     {
         if (file == null)
             return null;
 
         var model = GetSemanticModel(file);
-        return model?.GetSymbolAt(line, column);
+        return model?.GetSymbolAtPosition(line, column);
     }
 
     /// <summary>
     /// Gets the inferred type for an expression. Auto-finds the containing file.
     /// </summary>
-    public string? GetExpressionType(GDExpression expr)
+    internal string? GetExpressionType(GDExpression expr)
     {
         if (expr == null)
             return null;
@@ -457,7 +490,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets the inferred type for any AST node. Auto-finds the containing file.
     /// </summary>
-    public string? GetTypeForNode(GDNode node)
+    internal string? GetTypeForNode(GDNode node)
     {
         if (node == null)
             return null;
@@ -473,7 +506,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets the inferred type for any AST node in a specific file.
     /// </summary>
-    public string? GetTypeForNode(GDScriptFile file, GDNode node)
+    internal string? GetTypeForNode(GDScriptFile file, GDNode node)
     {
         if (file == null || node == null)
             return null;
@@ -485,7 +518,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets the symbol for an AST node. Auto-finds the containing file.
     /// </summary>
-    public GDSymbolInfo? GetSymbolForNode(GDNode node)
+    internal GDSymbolInfo? GetSymbolForNode(GDNode node)
     {
         if (node == null)
             return null;
@@ -505,7 +538,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Finds a symbol by name across the entire project.
     /// </summary>
-    public IEnumerable<(GDScriptFile File, GDSymbolInfo Symbol)> FindSymbolsInProject(string name)
+    internal IEnumerable<(GDScriptFile File, GDSymbolInfo Symbol)> FindSymbolsInProject(string name)
     {
         if (string.IsNullOrEmpty(name))
             yield break;
@@ -526,7 +559,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets all declarations of a type/class across the project.
     /// </summary>
-    public IEnumerable<(GDScriptFile File, GDSymbolInfo Symbol)> FindTypeDeclarations(string typeName)
+    internal IEnumerable<(GDScriptFile File, GDSymbolInfo Symbol)> FindTypeDeclarations(string typeName)
     {
         return FindSymbolsInProject(typeName)
             .Where(x => x.Symbol.Kind == GDSymbolKind.Class);
@@ -543,7 +576,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <param name="className">The class containing the container.</param>
     /// <param name="variableName">The container variable name.</param>
     /// <returns>The merged profile including cross-file usages, or null if not found.</returns>
-    public GDContainerUsageProfile? GetMergedContainerProfile(string className, string variableName)
+    internal GDContainerUsageProfile? GetMergedContainerProfile(string className, string variableName)
     {
         if (string.IsNullOrEmpty(variableName))
             return null;
@@ -556,7 +589,7 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     /// <param name="className">The class name.</param>
     /// <returns>Dictionary of container name to profile.</returns>
-    public IReadOnlyDictionary<string, GDContainerUsageProfile> GetContainerProfilesForClass(string className)
+    internal IReadOnlyDictionary<string, GDContainerUsageProfile> GetContainerProfilesForClass(string className)
     {
         return ContainerRegistry.GetProfilesForClass(className ?? "");
     }
@@ -625,13 +658,13 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets references to a symbol in a specific file. Delegates to file-level semantic model.
     /// </summary>
-    public IReadOnlyList<GDReference>? GetReferencesInFile(GDScriptFile file, GDSymbolInfo symbol)
+    public IReadOnlyList<GDReference> GetReferencesInFile(GDScriptFile file, GDSymbolInfo symbol)
     {
         if (file == null || symbol == null)
-            return null;
+            return Array.Empty<GDReference>();
 
         var model = GetSemanticModel(file);
-        return model?.GetReferencesTo(symbol);
+        return model?.GetReferencesTo(symbol) ?? Array.Empty<GDReference>();
     }
 
     #endregion
@@ -654,7 +687,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets all call sites from a specific file.
     /// </summary>
-    public IReadOnlyList<GDCallSiteEntry> GetCallSitesInFile(string filePath)
+    internal IReadOnlyList<GDCallSiteEntry> GetCallSitesInFile(string filePath)
     {
         var registry = _project.CallSiteRegistry;
         if (registry == null)
@@ -671,7 +704,7 @@ public class GDProjectSemanticModel : IDisposable
     /// Gets the optimal order for type inference (handles cycles).
     /// Useful for batch type inference operations.
     /// </summary>
-    public IEnumerable<(string MethodKey, bool InCycle)> GetInferenceOrder()
+    internal IEnumerable<(string MethodKey, bool InCycle)> GetInferenceOrder()
     {
         var cycleDetector = new GDInferenceCycleDetector(_project);
         cycleDetector.BuildDependencyGraph();
@@ -681,7 +714,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Detects all cycles in the type inference dependency graph.
     /// </summary>
-    public IEnumerable<IReadOnlyList<string>> DetectInferenceCycles()
+    internal IEnumerable<IReadOnlyList<string>> DetectInferenceCycles()
     {
         var cycleDetector = new GDInferenceCycleDetector(_project);
         cycleDetector.BuildDependencyGraph();
@@ -695,7 +728,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets the inferred type for a method across the project.
     /// </summary>
-    public GDInferredType? InferMethodReturnType(string className, string methodName)
+    internal GDInferredType? InferMethodReturnType(string className, string methodName)
     {
         var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
         if (typeDecl.File == null)
@@ -717,7 +750,7 @@ public class GDProjectSemanticModel : IDisposable
             return null;
 
         var type = model.GetTypeForNode(method);
-        return string.IsNullOrEmpty(type) || type == "Variant"
+        return string.IsNullOrEmpty(type) || type == GDWellKnownTypes.Variant
             ? GDInferredType.Unknown()
             : GDInferredType.High(type, $"inferred from {className}.{methodName}");
     }
@@ -726,7 +759,7 @@ public class GDProjectSemanticModel : IDisposable
     /// Infers parameter types for a method using local usage analysis.
     /// Project-level entry point that locates the method and delegates to file-level analysis.
     /// </summary>
-    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesInProject(
+    internal IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesInProject(
         string className,
         string methodName)
     {
@@ -764,7 +797,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <param name="methodName">The method name.</param>
     /// <param name="preferCallSites">If true, prefer call site types over local duck types when both are available.</param>
     /// <returns>Dictionary of parameter name to inferred type.</returns>
-    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesWithCallSites(
+    internal IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesWithCallSites(
         string className,
         string methodName,
         bool preferCallSites = true)
@@ -897,7 +930,7 @@ public class GDProjectSemanticModel : IDisposable
         if (local.IsUnknown && callSite.IsUnknown)
             return local;
 
-        if (local.TypeName == callSite.TypeName)
+        if (local.TypeName.Equals(callSite.TypeName))
             return local.Confidence >= callSite.Confidence ? local : callSite;
 
         if (preferCallSites && callSite.Confidence >= GDTypeConfidence.Medium)
@@ -906,18 +939,18 @@ public class GDProjectSemanticModel : IDisposable
         if (!preferCallSites && local.Confidence >= GDTypeConfidence.Medium)
             return local;
 
-        var types = new List<string>();
+        var typeNames = new List<string>();
         if (local.UnionTypes != null)
-            types.AddRange(local.UnionTypes);
-        else if (!string.IsNullOrEmpty(local.TypeName) && local.TypeName != "Variant")
-            types.Add(local.TypeName);
+            typeNames.AddRange(local.UnionTypes.Select(t => t.DisplayName));
+        else if (!local.TypeName.IsVariant)
+            typeNames.Add(local.TypeName.DisplayName);
 
         if (callSite.UnionTypes != null)
-            types.AddRange(callSite.UnionTypes);
-        else if (!string.IsNullOrEmpty(callSite.TypeName) && callSite.TypeName != "Variant")
-            types.Add(callSite.TypeName);
+            typeNames.AddRange(callSite.UnionTypes.Select(t => t.DisplayName));
+        else if (!callSite.TypeName.IsVariant)
+            typeNames.Add(callSite.TypeName.DisplayName);
 
-        types = types.Distinct().ToList();
+        var types = typeNames.Distinct().ToList();
 
         if (types.Count == 0)
             return GDInferredParameterType.Unknown(paramName);
@@ -1106,7 +1139,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets the inferred return type for a method. Overload with AST node for precise identification.
     /// </summary>
-    public GDInferredType? InferMethodReturnType(GDMethodDeclaration method)
+    internal GDInferredType? InferMethodReturnType(GDMethodDeclaration method)
     {
         if (method == null)
             return null;
@@ -1120,7 +1153,7 @@ public class GDProjectSemanticModel : IDisposable
             return null;
 
         var type = model.GetTypeForNode(method);
-        return string.IsNullOrEmpty(type) || type == "Variant"
+        return string.IsNullOrEmpty(type) || type == GDWellKnownTypes.Variant
             ? GDInferredType.Unknown()
             : GDInferredType.High(type, $"inferred from {method.Identifier?.Sequence}");
     }
@@ -1128,7 +1161,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Infers parameter types for a method (local analysis only). Overload with AST node for precise identification.
     /// </summary>
-    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesInProject(GDMethodDeclaration method)
+    internal IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesInProject(GDMethodDeclaration method)
     {
         if (method == null)
             return new Dictionary<string, GDInferredParameterType>();
@@ -1144,7 +1177,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Infers parameter types with call site analysis. Overload with AST node for precise identification.
     /// </summary>
-    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesWithCallSites(
+    internal IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypesWithCallSites(
         GDMethodDeclaration method,
         bool preferCallSites = true)
     {
@@ -1163,7 +1196,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets all call sites for a method. Overload with AST node for precise identification.
     /// </summary>
-    public IReadOnlyList<GDCallSiteEntry> GetCallSitesForMethod(GDMethodDeclaration method)
+    internal IReadOnlyList<GDCallSiteEntry> GetCallSitesForMethod(GDMethodDeclaration method)
     {
         if (method == null)
             return Array.Empty<GDCallSiteEntry>();
@@ -1180,7 +1213,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets all signals that call a method. Overload with AST node for precise identification.
     /// </summary>
-    public IReadOnlyList<GDSignalConnectionEntry> GetSignalsCallingMethod(GDMethodDeclaration method)
+    internal IReadOnlyList<GDSignalConnectionEntry> GetSignalsCallingMethod(GDMethodDeclaration method)
     {
         if (method == null)
             return Array.Empty<GDSignalConnectionEntry>();
@@ -1194,7 +1227,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Infers callback parameter types from signals. Overload with AST node for precise identification.
     /// </summary>
-    public IReadOnlyDictionary<string, GDInferredParameterType> InferCallbackParameterTypes(GDMethodDeclaration method)
+    internal IReadOnlyDictionary<string, GDInferredParameterType> InferCallbackParameterTypes(GDMethodDeclaration method)
     {
         if (method == null)
             return new Dictionary<string, GDInferredParameterType>();
@@ -1238,7 +1271,7 @@ public class GDProjectSemanticModel : IDisposable
     /// Gets all signals that call a specific callback method.
     /// Useful for understanding what events trigger a method.
     /// </summary>
-    public IReadOnlyList<GDSignalConnectionEntry> GetSignalsCallingMethod(string? className, string methodName)
+    internal IReadOnlyList<GDSignalConnectionEntry> GetSignalsCallingMethod(string? className, string methodName)
     {
         return SignalConnectionRegistry.GetSignalsCallingMethod(className, methodName);
     }
@@ -1247,7 +1280,7 @@ public class GDProjectSemanticModel : IDisposable
     /// Gets all callbacks connected to a specific signal.
     /// Useful for finding all handlers of a signal.
     /// </summary>
-    public IReadOnlyList<GDSignalConnectionEntry> GetCallbacksForSignal(string? emitterType, string signalName)
+    internal IReadOnlyList<GDSignalConnectionEntry> GetCallbacksForSignal(string? emitterType, string signalName)
     {
         return SignalConnectionRegistry.GetCallbacksForSignal(emitterType, signalName);
     }
@@ -1255,7 +1288,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Checks if a method is used as a signal callback.
     /// </summary>
-    public bool IsMethodUsedAsCallback(string? className, string methodName)
+    internal bool IsMethodUsedAsCallback(string? className, string methodName)
     {
         var connections = SignalConnectionRegistry.GetSignalsCallingMethod(className, methodName);
         return connections.Count > 0;
@@ -1265,7 +1298,7 @@ public class GDProjectSemanticModel : IDisposable
     /// Gets parameter types for a callback method based on the signals it's connected to.
     /// Analyzes the signal definitions to infer parameter types.
     /// </summary>
-    public IReadOnlyDictionary<string, GDInferredParameterType> InferCallbackParameterTypes(
+    internal IReadOnlyDictionary<string, GDInferredParameterType> InferCallbackParameterTypes(
         string? className,
         string methodName)
     {
@@ -1322,7 +1355,7 @@ public class GDProjectSemanticModel : IDisposable
                 {
                     result[paramName] = GDInferredParameterType.Create(
                         paramName,
-                        "Variant",
+                        GDWellKnownTypes.Variant,
                         GDTypeConfidence.Low,
                         $"inferred from signal {connection.EmitterType}.{connection.SignalName}");
                 }

@@ -37,7 +37,7 @@ public class GDDepsCommand : GDProjectCommandBase
         GDProjectConfig config,
         CancellationToken cancellationToken)
     {
-        var handler = Registry?.GetService<IGDDependencyHandler>() ?? new GDDependencyHandler(project);
+        var handler = Registry?.GetService<IGDDependencyHandler>() ?? new GDDependencyHandler(new GDProjectSemanticModel(project));
 
         // Single file or project-wide
         if (!string.IsNullOrEmpty(_options.FilePath))

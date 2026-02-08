@@ -466,7 +466,7 @@ func wait_for_signal(target, signal_name, timeout = 5.0):
 
 	# Timeout
 	if timeout > 0: # 468:4-GD3020-OK
-		var timer = get_tree().create_timer(timeout) # 469:14-GD7003-OK
+		var timer = get_tree().create_timer(timeout)
 		timer.timeout.connect(_on_wait_timeout.bind(ctx)) # 470:2-GD7005-OK 470:24-GD7007-OK
 
 	return operation

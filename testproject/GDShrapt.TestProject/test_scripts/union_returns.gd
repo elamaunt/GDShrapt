@@ -1,5 +1,5 @@
 extends Node
-class_name UnionReturns
+class_name UnionReturns  # 2:11-GDL222-OK
 
 ## Tests for functions with multiple return types (union types).
 ## Each return statement contributes to the function's return type.
@@ -94,7 +94,7 @@ func early_returns(value):
 		return value              # bool
 
 	if value is int:
-		if value < 0:
+		if value < 0:  # 97:5-GD3020-OK
 			return "negative"     # String
 		if value == 0:
 			return false          # bool
@@ -187,7 +187,7 @@ func union_in_match(data):
 		var x when x is int:
 			return x * 2                # int
 		var x when x is String:
-			return x.length()           # int
+			return x.length()           # int  # 190:10-GD7007-OK
 		_:
 			return null                 # null
 

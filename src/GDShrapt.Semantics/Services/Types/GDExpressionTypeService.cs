@@ -106,8 +106,8 @@ internal class GDExpressionTypeService
                 {
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
-                    if (!string.IsNullOrEmpty(flowType) && flowType != "Variant")
-                        return flowType;
+                    if (flowType != null && !flowType.IsVariant)
+                        return flowType.DisplayName;
                 }
             }
         }
@@ -166,8 +166,8 @@ internal class GDExpressionTypeService
                 {
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
-                    if (!string.IsNullOrEmpty(flowType) && flowType != "Variant")
-                        return flowType;
+                    if (flowType != null && !flowType.IsVariant)
+                        return flowType.DisplayName;
                 }
 
                 // Fall back to narrowing
@@ -181,8 +181,8 @@ internal class GDExpressionTypeService
                 if (unionType != null && unionType.IsSingleType)
                 {
                     var effectiveType = unionType.EffectiveType;
-                    if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant")
-                        return effectiveType;
+                    if (!effectiveType.IsVariant && effectiveType.DisplayName != "null")
+                        return effectiveType.DisplayName;
                 }
 
                 // Check if method reference
@@ -236,7 +236,7 @@ internal class GDExpressionTypeService
             if (callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
             {
                 var methodName = callMemberExpr.Identifier?.Sequence;
-                if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
+                if (methodName == GDWellKnownFunctions.Constructor)
                 {
                     var callerType = GetExpressionType(callMemberExpr.CallerExpression);
                     if (!string.IsNullOrEmpty(callerType))
@@ -244,7 +244,7 @@ internal class GDExpressionTypeService
                 }
             }
 
-            var callResult = _typeEngine?.InferType(expression);
+            var callResult = _typeEngine?.InferSemanticType(expression)?.DisplayName;
             if (!string.IsNullOrEmpty(callResult))
                 return callResult;
         }
@@ -256,7 +256,7 @@ internal class GDExpressionTypeService
 
             if (opType == GDDualOperatorType.As)
             {
-                return _typeEngine?.InferType(expression);
+                return _typeEngine?.InferSemanticType(expression)?.DisplayName;
             }
 
             var leftType = GetExpressionType(dualOp.LeftExpression);
@@ -316,8 +316,8 @@ internal class GDExpressionTypeService
                 if (containerType != null && containerType.HasElementTypes)
                 {
                     var elementType = containerType.EffectiveElementType;
-                    if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
-                        return elementType;
+                    if (!elementType.IsVariant)
+                        return elementType.DisplayName;
                 }
             }
         }
@@ -330,7 +330,7 @@ internal class GDExpressionTypeService
                 return unionType;
         }
 
-        return _typeEngine?.InferType(expression);
+        return _typeEngine?.InferSemanticType(expression)?.DisplayName;
     }
 
     /// <summary>
@@ -346,7 +346,7 @@ internal class GDExpressionTypeService
             if (callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
             {
                 var methodName = callMemberExpr.Identifier?.Sequence;
-                if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
+                if (methodName == GDWellKnownFunctions.Constructor)
                 {
                     var callerType = GetExpressionTypeWithoutFlow(callMemberExpr.CallerExpression);
                     if (!string.IsNullOrEmpty(callerType))
@@ -354,7 +354,7 @@ internal class GDExpressionTypeService
                 }
             }
 
-            var callResult = _typeEngine?.InferType(expression);
+            var callResult = _typeEngine?.InferSemanticType(expression)?.DisplayName;
             if (!string.IsNullOrEmpty(callResult))
                 return callResult;
         }
@@ -374,15 +374,15 @@ internal class GDExpressionTypeService
                 if (unionType != null && unionType.IsSingleType)
                 {
                     var effectiveType = unionType.EffectiveType;
-                    if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant" && effectiveType != "null")
+                    if (!effectiveType.IsVariant && effectiveType.DisplayName != "null")
                     {
-                        return effectiveType;
+                        return effectiveType.DisplayName;
                     }
                 }
             }
         }
 
-        return _typeEngine?.InferType(expression);
+        return _typeEngine?.InferSemanticType(expression)?.DisplayName;
     }
 
     /// <summary>
@@ -409,7 +409,7 @@ internal class GDExpressionTypeService
                 {
                     return new GDTypeResolutionResult
                     {
-                        TypeName = symbol.TypeName,
+                        TypeName = GDSemanticType.FromRuntimeTypeName(symbol.TypeName),
                         IsResolved = true,
                         Source = GDTypeSource.Project
                     };
@@ -420,12 +420,12 @@ internal class GDExpressionTypeService
         // 2. Delegate to TypeEngine for complex expressions (member access, calls, etc.)
         if (_typeEngine != null)
         {
-            var typeName = _typeEngine.InferType(expression);
-            if (!string.IsNullOrEmpty(typeName))
+            var semanticType = _typeEngine.InferSemanticType(expression);
+            if (semanticType != null && !semanticType.IsVariant)
             {
                 return new GDTypeResolutionResult
                 {
-                    TypeName = typeName,
+                    TypeName = semanticType,
                     IsResolved = true,
                     Source = GDTypeSource.Inferred
                 };
@@ -438,12 +438,12 @@ internal class GDExpressionTypeService
         if (_runtimeProvider != null)
         {
             var freshEngine = new GDTypeInferenceEngine(_runtimeProvider);
-            var typeName = freshEngine.InferType(expression);
-            if (!string.IsNullOrEmpty(typeName))
+            var semanticType = freshEngine.InferSemanticType(expression);
+            if (semanticType != null && !semanticType.IsVariant)
             {
                 return new GDTypeResolutionResult
                 {
-                    TypeName = typeName,
+                    TypeName = semanticType,
                     IsResolved = true,
                     Source = GDTypeSource.Inferred
                 };
@@ -653,6 +653,207 @@ internal class GDExpressionTypeService
         var sortedTypes = elementTypes.OrderBy(t => t).ToList();
         return $"Array[{string.Join("|", sortedTypes)}]";
     }
+
+    #region Semantic Type Resolution
+
+    /// <summary>
+    /// Gets a rich GDSemanticType for an expression, bypassing string serialization.
+    /// Currently handles global function identifiers to produce generic Callable types.
+    /// </summary>
+    public GDSemanticType? GetSemanticType(GDExpression? expression)
+    {
+        if (expression is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var funcInfo = _runtimeProvider?.GetGlobalFunction(varName);
+                if (funcInfo != null)
+                    return BuildCallableFromFunctionInfo(funcInfo);
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Builds a GDCallableSemanticType from GDRuntimeFunctionInfo.
+    /// When overloads exist, analyzes type dependencies across parameter positions
+    /// to produce generic type variables with constraints (e.g., Callable&lt;T: int | float&gt;(T) -> T).
+    /// </summary>
+    private static GDCallableSemanticType BuildCallableFromFunctionInfo(GDRuntimeFunctionInfo funcInfo)
+    {
+        var overloads = funcInfo.Overloads;
+
+        // No overloads or single overload → simple Callable
+        if (overloads == null || overloads.Count <= 1)
+        {
+            return BuildSimpleCallable(funcInfo);
+        }
+
+        // Multiple overloads → analyze for type variable patterns
+        return BuildGenericCallable(funcInfo, overloads);
+    }
+
+    private static GDCallableSemanticType BuildSimpleCallable(GDRuntimeFunctionInfo funcInfo)
+    {
+        var paramTypes = BuildParameterSemanticTypes(funcInfo.Parameters);
+        var returnType = GDSemanticType.FromRuntimeTypeName(funcInfo.ReturnType ?? "Variant");
+
+        return new GDCallableSemanticType(
+            returnType: returnType,
+            parameterTypes: paramTypes,
+            isVarArgs: funcInfo.IsVarArgs);
+    }
+
+    private static GDCallableSemanticType BuildGenericCallable(
+        GDRuntimeFunctionInfo funcInfo,
+        IReadOnlyList<GDRuntimeFunctionOverload> overloads)
+    {
+        // Determine max parameter count across overloads
+        int maxParams = 0;
+        foreach (var ov in overloads)
+        {
+            var count = ov.Parameters?.Count ?? 0;
+            if (count > maxParams) maxParams = count;
+        }
+
+        if (maxParams == 0)
+            return BuildSimpleCallable(funcInfo);
+
+        // Collect type sets per parameter position and for return type
+        var positionTypeSets = new List<HashSet<string>>(maxParams);
+        for (int i = 0; i < maxParams; i++)
+            positionTypeSets.Add(new HashSet<string>());
+
+        var returnTypeSet = new HashSet<string>();
+
+        foreach (var ov in overloads)
+        {
+            var ovParams = ov.Parameters;
+            if (ovParams != null)
+            {
+                for (int i = 0; i < ovParams.Count && i < maxParams; i++)
+                {
+                    positionTypeSets[i].Add(ovParams[i].Type ?? "Variant");
+                }
+            }
+            returnTypeSet.Add(ov.ReturnType ?? "Variant");
+        }
+
+        // Group positions by their type set (same set = same type variable)
+        // Key: sorted type set string, Value: list of positions
+        var groups = new Dictionary<string, List<int>>();
+        var positionKeys = new string[maxParams];
+
+        for (int i = 0; i < maxParams; i++)
+        {
+            var key = string.Join(",", positionTypeSets[i].OrderBy(t => t));
+            positionKeys[i] = key;
+            if (!groups.ContainsKey(key))
+                groups[key] = new List<int>();
+            groups[key].Add(i);
+        }
+
+        // Check if return type matches any group
+        var returnKey = string.Join(",", returnTypeSet.OrderBy(t => t));
+
+        // Only create type variables for positions that vary across overloads
+        // (positions with a single type are concrete)
+        var typeVarNames = new Dictionary<string, GDTypeVariableSemanticType>();
+        int typeVarIndex = 0;
+
+        foreach (var kvp in groups)
+        {
+            var typeSet = positionTypeSets[kvp.Value[0]];
+            if (typeSet.Count <= 1)
+                continue; // Concrete type, no type variable needed
+
+            var varName = typeVarIndex == 0 ? "T" : $"T{typeVarIndex + 1}";
+            typeVarIndex++;
+
+            var constraintTypes = typeSet
+                .Where(t => t != "Variant")
+                .OrderBy(t => t)
+                .Select(t => GDSemanticType.FromRuntimeTypeName(t))
+                .ToList();
+
+            GDSemanticType? constraint = constraintTypes.Count switch
+            {
+                0 => null,
+                1 => constraintTypes[0],
+                _ => new GDUnionSemanticType(constraintTypes)
+            };
+
+            typeVarNames[kvp.Key] = new GDTypeVariableSemanticType(varName, constraint);
+        }
+
+        // Build parameter types
+        var parameterTypes = new List<GDSemanticType>(maxParams);
+        for (int i = 0; i < maxParams; i++)
+        {
+            if (typeVarNames.TryGetValue(positionKeys[i], out var typeVar))
+            {
+                parameterTypes.Add(typeVar);
+            }
+            else
+            {
+                // Single concrete type
+                var singleType = positionTypeSets[i].FirstOrDefault() ?? "Variant";
+                parameterTypes.Add(GDSemanticType.FromRuntimeTypeName(singleType));
+            }
+        }
+
+        // Build return type
+        GDSemanticType returnType;
+        if (typeVarNames.TryGetValue(returnKey, out var returnTypeVar))
+        {
+            returnType = returnTypeVar;
+        }
+        else if (returnTypeSet.Count == 1)
+        {
+            returnType = GDSemanticType.FromRuntimeTypeName(returnTypeSet.First());
+        }
+        else
+        {
+            var returnSemanticTypes = returnTypeSet
+                .Where(t => t != "Variant")
+                .OrderBy(t => t)
+                .Select(t => GDSemanticType.FromRuntimeTypeName(t))
+                .ToList();
+
+            returnType = returnSemanticTypes.Count switch
+            {
+                0 => GDVariantSemanticType.Instance,
+                1 => returnSemanticTypes[0],
+                _ => new GDUnionSemanticType(returnSemanticTypes)
+            };
+        }
+
+        // Collect all unique type variables
+        var allTypeVars = typeVarNames.Values
+            .GroupBy(tv => tv.VariableName)
+            .Select(g => g.First())
+            .ToList();
+
+        return new GDCallableSemanticType(
+            returnType: returnType,
+            parameterTypes: parameterTypes,
+            isVarArgs: funcInfo.IsVarArgs,
+            typeParameters: allTypeVars.Count > 0 ? allTypeVars : null);
+    }
+
+    private static IReadOnlyList<GDSemanticType>? BuildParameterSemanticTypes(
+        IReadOnlyList<GDRuntimeParameterInfo>? parameters)
+    {
+        if (parameters == null || parameters.Count == 0)
+            return null;
+
+        return parameters
+            .Select(p => GDSemanticType.FromRuntimeTypeName(p.Type ?? "Variant"))
+            .ToList();
+    }
+
+    #endregion
 
     #region Parameter Type Inference
 

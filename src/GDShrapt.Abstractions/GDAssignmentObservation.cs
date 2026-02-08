@@ -11,7 +11,7 @@ public class GDAssignmentObservation
     /// <summary>
     /// The inferred type of the assigned value.
     /// </summary>
-    public string? InferredType { get; set; }
+    public GDSemanticType? InferredType { get; set; }
 
     /// <summary>
     /// Whether this type was inferred with high confidence.
@@ -47,7 +47,7 @@ public class GDAssignmentObservation
     public override string ToString()
     {
         var confidence = IsHighConfidence ? "High" : "Low";
-        return $"[Line {Line}] {Kind}: {InferredType ?? "unknown"} ({confidence})";
+        return $"[Line {Line}] {Kind}: {InferredType?.DisplayName ?? "unknown"} ({confidence})";
     }
 }
 

@@ -125,7 +125,7 @@ public class GDDynamicCallValidator : GDValidationVisitor
         var callerType = callerTypeInfo.DisplayName;
 
         // Skip Dictionary - it can have any keys dynamically
-        if (callerType == "Dictionary" || callerType.StartsWith("Dictionary["))
+        if (GDGenericTypeHelper.IsDictionaryType(callerType))
             return;
 
         // Check if the property exists on the type
@@ -175,7 +175,7 @@ public class GDDynamicCallValidator : GDValidationVisitor
         var callerType = callerTypeInfo.DisplayName;
 
         // Skip Dictionary - it can have any keys dynamically
-        if (callerType == "Dictionary" || callerType.StartsWith("Dictionary["))
+        if (GDGenericTypeHelper.IsDictionaryType(callerType))
             return;
 
         // Check if the property exists on the type
@@ -253,14 +253,5 @@ public class GDDynamicCallValidator : GDValidationVisitor
     }
 
     private static string ExtractBaseTypeName(string typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return typeName;
-
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-            return typeName.Substring(0, bracketIndex);
-
-        return typeName;
-    }
+        => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 }

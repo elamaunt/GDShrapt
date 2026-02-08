@@ -92,21 +92,22 @@ internal class GDCallSiteCollector
         visited ??= new HashSet<string>();
         var callSites = new List<GDCallSiteInfo>();
 
-        foreach (var typeName in unionType.Types)
+        foreach (var type in unionType.Types)
         {
-            var key = $"{typeName}.{methodName}";
+            var typeDisplayName = type.DisplayName;
+            var key = $"{typeDisplayName}.{methodName}";
             if (visited.Contains(key))
                 continue;
             visited.Add(key);
 
             if (_runtimeProvider != null)
             {
-                var member = _runtimeProvider.GetMember(typeName, methodName);
+                var member = _runtimeProvider.GetMember(typeDisplayName, methodName);
                 if (member == null || member.Kind != GDRuntimeMemberKind.Method)
                     continue;
             }
 
-            CollectCallSitesInternal(typeName, methodName, callSites, visited);
+            CollectCallSitesInternal(typeDisplayName, methodName, callSites, visited);
         }
 
         return callSites;
@@ -227,21 +228,20 @@ internal class GDCallSiteCollector
                 return null;
 
             // Get receiver type
-            var receiverType = _typeEngine?.InferType(memberExpr.CallerExpression);
+            var receiverSemanticType = _typeEngine?.InferSemanticType(memberExpr.CallerExpression);
             var receiverVariableName = GetRootVariableName(memberExpr.CallerExpression);
-            var isDuckTyped = string.IsNullOrEmpty(receiverType) || receiverType == "Variant";
+            var isDuckTyped = receiverSemanticType == null || receiverSemanticType.IsVariant;
 
             // Check type compatibility for non-duck-typed calls
             if (!isDuckTyped)
             {
-                if (receiverType!.Contains("|"))
+                if (receiverSemanticType is GDUnionSemanticType unionSemType)
                 {
                     // Union type - check if any matches
-                    var types = receiverType.Split('|').Select(t => t.Trim()).ToList();
-                    if (!types.Any(t => IsTypeCompatible(t, _targetTypeName)))
+                    if (!unionSemType.Types.Any(t => IsTypeCompatible(t.DisplayName, _targetTypeName)))
                         return null;
                 }
-                else if (!IsTypeCompatible(receiverType, _targetTypeName))
+                else if (!IsTypeCompatible(receiverSemanticType!.DisplayName, _targetTypeName))
                 {
                     return null;
                 }
@@ -263,8 +263,8 @@ internal class GDCallSiteCollector
                 }
                 else
                 {
-                    var argType = _typeEngine?.InferType(expr);
-                    var isHighConfidence = !string.IsNullOrEmpty(argType) && argType != "Variant";
+                    var argType = _typeEngine?.InferSemanticType(expr);
+                    var isHighConfidence = argType != null && !argType.IsVariant;
                     methodArgs.Add(new GDArgumentInfo(i - 1, expr, argType, isHighConfidence));
                 }
             }
@@ -288,7 +288,7 @@ internal class GDCallSiteCollector
                     callExpr,
                     _scriptFile,
                     methodArgs,
-                    receiverType,
+                    receiverSemanticType,
                     confidence);
                 info.IsDynamicCall = true;
                 return info;
@@ -317,8 +317,8 @@ internal class GDCallSiteCollector
                 return null;
 
             // Determine receiver type and confidence
-            string? receiverType = null;
-            string? unionReceiverType = null;
+            GDSemanticType? receiverType = null;
+            GDSemanticType? unionReceiverType = null;
             string? receiverVariableName = null;
             bool isDuckTyped = false;
             var confidence = GDReferenceConfidence.NameMatch;
@@ -329,7 +329,7 @@ internal class GDCallSiteCollector
                 var thisTypeName = _scriptFile.TypeName;
                 if (IsTypeCompatible(thisTypeName, _targetTypeName))
                 {
-                    receiverType = thisTypeName;
+                    receiverType = GDSemanticType.FromRuntimeTypeName(thisTypeName);
                     confidence = GDReferenceConfidence.Strict;
                 }
                 else
@@ -341,24 +341,26 @@ internal class GDCallSiteCollector
             else
             {
                 // Member call - infer receiver type
-                receiverType = _typeEngine?.InferType(receiverExpr);
+                var receiverSemanticType = _typeEngine?.InferSemanticType(receiverExpr);
+                receiverType = receiverSemanticType;
                 receiverVariableName = GetRootVariableName(receiverExpr);
 
-                if (!string.IsNullOrEmpty(receiverType) && receiverType != "Variant")
+                if (receiverSemanticType != null && !receiverSemanticType.IsVariant)
                 {
-                    if (receiverType.Contains("|"))
+                    if (receiverSemanticType is GDUnionSemanticType unionSemType)
                     {
-                        unionReceiverType = receiverType;
+                        unionReceiverType = unionSemType;
                         // For Union types, check if ANY type in the union is compatible
-                        var types = receiverType.Split('|').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList();
+                        var types = unionSemType.Types;
                         if (types.Count == 0)
                             return null;
 
-                        var hasMatch = types.Any(t => IsTypeCompatible(t, _targetTypeName));
+                        var hasMatch = types.Any(t => IsTypeCompatible(t.DisplayName, _targetTypeName));
                         if (hasMatch)
                         {
-                            receiverType = types.FirstOrDefault(t => IsTypeCompatible(t, _targetTypeName)) ?? types[0];
-                            confidence = types.All(t => IsTypeCompatible(t, _targetTypeName))
+                            var matchingType = types.FirstOrDefault(t => IsTypeCompatible(t.DisplayName, _targetTypeName));
+                            receiverType = matchingType ?? types[0];
+                            confidence = types.All(t => IsTypeCompatible(t.DisplayName, _targetTypeName))
                                 ? GDReferenceConfidence.Strict
                                 : GDReferenceConfidence.Potential;
                         }
@@ -367,7 +369,7 @@ internal class GDCallSiteCollector
                             return null; // No matching type in Union
                         }
                     }
-                    else if (IsTypeCompatible(receiverType, _targetTypeName))
+                    else if (IsTypeCompatible(receiverSemanticType.DisplayName, _targetTypeName))
                     {
                         confidence = GDReferenceConfidence.Strict;
                     }
@@ -395,7 +397,7 @@ internal class GDCallSiteCollector
                     arguments,
                     receiverVariableName);
             }
-            else if (!string.IsNullOrEmpty(unionReceiverType))
+            else if (unionReceiverType != null)
             {
                 return GDCallSiteInfo.CreateWithUnionReceiver(
                     callExpr,
@@ -433,8 +435,8 @@ internal class GDCallSiteCollector
                 }
                 else
                 {
-                    var argType = _typeEngine?.InferType(expr);
-                    var isHighConfidence = !string.IsNullOrEmpty(argType) && argType != "Variant";
+                    var argType = _typeEngine?.InferSemanticType(expr);
+                    var isHighConfidence = argType != null && !argType.IsVariant;
                     args.Add(new GDArgumentInfo(index, expr, argType, isHighConfidence));
                 }
                 index++;

@@ -95,7 +95,7 @@ internal class GDConfidenceService
                     if (!string.IsNullOrEmpty(memberName) && narrowedInfo.RequiredMethods.ContainsKey(memberName))
                         return GDReferenceConfidence.Potential;
 
-                    if (narrowedInfo.ExcludedTypes.Contains("null"))
+                    if (narrowedInfo.ExcludedTypes.Contains(GDNullSemanticType.Instance))
                         return GDReferenceConfidence.Potential;
                 }
             }
@@ -187,9 +187,9 @@ internal class GDConfidenceService
             var inferredType = localProfile.ComputeInferredType();
             var elementType = inferredType.EffectiveElementType;
 
-            if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+            if (!elementType.IsVariant)
             {
-                return GetMemberConfidenceOnType(elementType, memberName);
+                return GetMemberConfidenceOnType(elementType.DisplayName, memberName);
             }
         }
 
@@ -200,9 +200,9 @@ internal class GDConfidenceService
             var inferredType = classProfile.ComputeInferredType();
             var elementType = inferredType.EffectiveElementType;
 
-            if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+            if (!elementType.IsVariant)
             {
-                return GetMemberConfidenceOnType(elementType, memberName);
+                return GetMemberConfidenceOnType(elementType.DisplayName, memberName);
             }
 
             if (inferredType.ElementUnionType != null && inferredType.ElementUnionType.IsUnion)

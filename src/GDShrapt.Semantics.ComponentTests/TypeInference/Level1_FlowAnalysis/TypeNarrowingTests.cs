@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
@@ -35,7 +36,7 @@ func process(entity):
 
         // Assert
         var concreteType = narrowingContext.GetConcreteType("entity");
-        Assert.AreEqual("Player", concreteType, "Entity should be narrowed to Player in if branch");
+        Assert.AreEqual("Player", concreteType?.DisplayName, "Entity should be narrowed to Player in if branch");
     }
 
     [TestMethod]
@@ -62,7 +63,7 @@ func process(entity):
         // Assert
         var duckType = narrowingContext.GetNarrowedType("entity");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.ExcludedTypes.Contains("Player"), "Player should be excluded in else branch");
+        Assert.IsTrue(duckType.ExcludedTypes.Any(t => t.DisplayName == "Player"), "Player should be excluded in else branch");
     }
 
     [TestMethod]
@@ -89,7 +90,7 @@ func process(entity):
         // Assert
         var duckType = narrowingContext.GetNarrowedType("entity");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.ExcludedTypes.Contains("Player"), "Player should be excluded with 'not is' check");
+        Assert.IsTrue(duckType.ExcludedTypes.Any(t => t.DisplayName == "Player"), "Player should be excluded with 'not is' check");
     }
 
     #endregion
@@ -205,7 +206,7 @@ func process(obj):
         // Assert
         var duckType = narrowingContext.GetNarrowedType("obj");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.PossibleTypes.Contains("Entity"), "Should be narrowed to Entity");
+        Assert.IsTrue(duckType.PossibleTypes.Any(t => t.DisplayName == "Entity"), "Should be narrowed to Entity");
         Assert.IsTrue(duckType.RequiredMethods.ContainsKey("attack"), "Should require attack method");
     }
 
@@ -233,8 +234,8 @@ func process(obj):
         // Assert - in else branch, obj is NOT Player AND NOT Enemy
         var duckType = narrowingContext.GetNarrowedType("obj");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.ExcludedTypes.Contains("Player"), "Player should be excluded");
-        Assert.IsTrue(duckType.ExcludedTypes.Contains("Enemy"), "Enemy should be excluded");
+        Assert.IsTrue(duckType.ExcludedTypes.Any(t => t.DisplayName == "Player"), "Player should be excluded");
+        Assert.IsTrue(duckType.ExcludedTypes.Any(t => t.DisplayName == "Enemy"), "Enemy should be excluded");
     }
 
     #endregion
@@ -246,7 +247,7 @@ func process(obj):
     {
         // Arrange
         var parent = new GDTypeNarrowingContext();
-        parent.NarrowType("obj", "Entity");
+        parent.NarrowType("obj", GDSemanticType.FromRuntimeTypeName("Entity"));
 
         // Act
         var child = parent.CreateChild();
@@ -254,7 +255,7 @@ func process(obj):
         // Assert
         var narrowedType = child.GetNarrowedType("obj");
         Assert.IsNotNull(narrowedType);
-        Assert.IsTrue(narrowedType.PossibleTypes.Contains("Entity"), "Child should inherit parent's narrowing");
+        Assert.IsTrue(narrowedType.PossibleTypes.Any(t => t.DisplayName == "Entity"), "Child should inherit parent's narrowing");
     }
 
     [TestMethod]
@@ -262,7 +263,7 @@ func process(obj):
     {
         // Arrange
         var parent = new GDTypeNarrowingContext();
-        parent.NarrowType("obj", "Entity");
+        parent.NarrowType("obj", GDSemanticType.FromRuntimeTypeName("Entity"));
 
         var child = parent.CreateChild();
         child.RequireMethod("obj", "attack");
@@ -277,7 +278,7 @@ func process(obj):
         // Parent's narrowing is still accessible if child doesn't override
         var parentNarrowing = parent.GetNarrowedType("obj");
         Assert.IsNotNull(parentNarrowing);
-        Assert.IsTrue(parentNarrowing.PossibleTypes.Contains("Entity"));
+        Assert.IsTrue(parentNarrowing.PossibleTypes.Any(t => t.DisplayName == "Entity"));
     }
 
     #endregion
@@ -312,10 +313,10 @@ func process(obj):
     {
         // Arrange
         var ifBranch = new GDTypeNarrowingContext();
-        ifBranch.NarrowType("obj", "Player");
+        ifBranch.NarrowType("obj", GDSemanticType.FromRuntimeTypeName("Player"));
 
         var elseBranch = new GDTypeNarrowingContext();
-        elseBranch.NarrowType("obj", "Enemy");
+        elseBranch.NarrowType("obj", GDSemanticType.FromRuntimeTypeName("Enemy"));
 
         // Act
         var merged = GDTypeNarrowingContext.MergeBranches(ifBranch, elseBranch);
@@ -323,8 +324,8 @@ func process(obj):
         // Assert - both possible types should be present
         var duckType = merged.GetNarrowedType("obj");
         Assert.IsNotNull(duckType);
-        Assert.IsTrue(duckType.PossibleTypes.Contains("Player"), "Player should be in possible types");
-        Assert.IsTrue(duckType.PossibleTypes.Contains("Enemy"), "Enemy should be in possible types");
+        Assert.IsTrue(duckType.PossibleTypes.Any(t => t.DisplayName == "Player"), "Player should be in possible types");
+        Assert.IsTrue(duckType.PossibleTypes.Any(t => t.DisplayName == "Enemy"), "Enemy should be in possible types");
     }
 
     #endregion
@@ -357,9 +358,9 @@ func try_operation(input):
 
         // Assert - 'input * 2' after 'if input is int' should be inferred as int
         var actualTypes = string.Join(", ", union.Types);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Return type of 'input * 2' after 'is int' check should be 'int'. Actual types: [{actualTypes}]");
-        Assert.IsFalse(union.Types.Contains("Variant"),
+        Assert.IsFalse(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Variant")),
             $"Should not contain 'Variant' - narrowing should work. Actual types: [{actualTypes}]");
     }
 
@@ -391,11 +392,11 @@ func try_operation(input):
 
         // Assert - Both returns should be int (narrowing preserved through nested if)
         var actualTypes = string.Join(", ", union.Types);
-        var returnInfos = string.Join(", ", collector.Returns.Select(r => $"{r.ExpressionText}:{r.InferredType ?? "null"}"));
+        var returnInfos = string.Join(", ", collector.Returns.Select(r => $"{r.ExpressionText}:{r.InferredType?.DisplayName ?? "null"}"));
 
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"All returns inside 'is int' block should be 'int'. Actual types: [{actualTypes}], Returns: [{returnInfos}]");
-        Assert.IsFalse(union.Types.Contains("Variant"),
+        Assert.IsFalse(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Variant")),
             $"Should not contain 'Variant' - narrowing should be preserved. Actual types: [{actualTypes}]");
     }
 
@@ -426,7 +427,7 @@ func get_length(input):
 
         // Assert - input.length() should return int
         var actualTypes = string.Join(", ", union.Types);
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"input.length() on String should return 'int'. Actual types: [{actualTypes}]");
     }
 

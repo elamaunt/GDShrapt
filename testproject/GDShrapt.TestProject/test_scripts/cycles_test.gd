@@ -20,7 +20,7 @@ func get_initial():
 
 
 func transform(input):
-	return {"level": input.get("level", 0) + 1}
+	return {"level": input.get("level", 0) + 1}  # 23:18-GD7007-OK
 
 
 func accumulator_cycle():
@@ -137,7 +137,7 @@ func self_referential_update():
 		var old_value = counter.get("value")
 		counter = {
 			"value": old_value + 1,
-			"history": counter.get("history") + [old_value]  # Self-reference
+			"history": counter.get("history") + [old_value]  # Self-reference  # 140:14-GD3002-OK
 		}
 
 	return counter

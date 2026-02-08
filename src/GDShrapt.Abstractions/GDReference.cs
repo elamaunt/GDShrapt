@@ -20,7 +20,7 @@ public class GDReference
     /// <summary>
     /// The inferred type at this reference location.
     /// </summary>
-    public string? InferredType { get; set; }
+    public GDSemanticType? InferredType { get; set; }
 
     /// <summary>
     /// The full type node at this reference location.

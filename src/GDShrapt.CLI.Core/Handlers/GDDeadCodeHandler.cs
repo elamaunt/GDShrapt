@@ -25,7 +25,7 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
     {
         _projectModel = projectModel ?? throw new System.ArgumentNullException(nameof(projectModel));
         _project = projectModel.Project;
-        _service = new GDDeadCodeService(projectModel);
+        _service = projectModel.DeadCode;
     }
 
     /// <inheritdoc />

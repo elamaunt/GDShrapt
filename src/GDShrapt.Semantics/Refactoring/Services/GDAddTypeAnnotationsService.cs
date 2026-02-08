@@ -100,7 +100,7 @@ public class GDAddTypeAnnotationsService
 
         var typeName = inferredType.IsUnknown && options.UnknownTypeFallback != null
             ? options.UnknownTypeFallback
-            : inferredType.TypeName;
+            : inferredType.TypeName.DisplayName;
 
         // Use Origin coordinates for text-based editing (includes \r in column calculation)
         var edit = new GDTextEdit(

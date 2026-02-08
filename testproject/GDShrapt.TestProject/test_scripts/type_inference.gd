@@ -58,7 +58,7 @@ func array_operations() -> int:
 	var numbers := [1, 2, 3, 4, 5]
 
 	# Lambda return type inference
-	var filtered = numbers.filter(func(x): return x > 2)
+	var filtered = numbers.filter(func(x): return x > 2)  # 61:47-GD3020-OK
 	var mapped = filtered.map(func(x): return x * 2)
 	var reduced = mapped.reduce(func(a, b): return a + b)
 
@@ -176,7 +176,7 @@ func test_complex_expression_inference() -> float:
 
 
 # === Typed Dictionaries (for ComplexTypesTests) ===
-var string_int_dict: Dictionary[String, int] = {"a": 1, "b": 2}
+var string_int_dict: Dictionary[String, int] = {"a": 1, "b": 2}  # 179:1-GDL513-OK
 var string_float_dict: Dictionary[String, float] = {"x": 1.5, "y": 2.5}
 
 # === Nested generics ===

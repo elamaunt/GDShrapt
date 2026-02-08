@@ -67,7 +67,7 @@ public class GDTypeAnnotationPlan
     }
 
     public override string ToString() =>
-        $"{IdentifierName}: {InferredType.TypeName} ({InferredType.Confidence}) at {FilePath}:{Line}";
+        $"{IdentifierName}: {InferredType.TypeName.DisplayName} ({InferredType.Confidence}) at {FilePath}:{Line}";
 }
 
 /// <summary>

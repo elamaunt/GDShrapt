@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,9 +15,9 @@ internal class GDCallableTracker
     private readonly Dictionary<string, List<GDCallableDefinition>> _classVariables = new();
     private readonly Dictionary<string, string> _aliases = new();
     private readonly GDScriptFile? _sourceFile;
-    private readonly System.Func<GDExpression, string?>? _typeInferrer;
+    private readonly System.Func<GDExpression, GDSemanticType?>? _typeInferrer;
 
-    public GDCallableTracker(GDScriptFile? sourceFile = null, System.Func<GDExpression, string?>? typeInferrer = null)
+    public GDCallableTracker(GDScriptFile? sourceFile = null, System.Func<GDExpression, GDSemanticType?>? typeInferrer = null)
     {
         _sourceFile = sourceFile;
         _typeInferrer = typeInferrer;

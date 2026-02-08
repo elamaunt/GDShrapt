@@ -157,14 +157,14 @@ internal sealed class GDNodeTypeAnalyzer
         var explicitType = typeNode?.BuildName();
         if (!string.IsNullOrEmpty(explicitType))
         {
-            expectedUnion.AddType(explicitType, isHighConfidence: true);
+            expectedUnion.AddTypeName(explicitType, isHighConfidence: true);
         }
 
         // Initializer type
         if (initializer != null)
         {
-            var initType = _typeEngine?.InferType(initializer);
-            if (!string.IsNullOrEmpty(initType))
+            var initType = _typeEngine?.InferSemanticType(initializer);
+            if (initType != null && !initType.IsVariant)
             {
                 actualUnion.AddType(initType, isHighConfidence: true);
             }
@@ -255,13 +255,13 @@ internal sealed class GDNodeTypeAnalyzer
             var memberInfo = _runtimeProvider.GetMember(callerType, memberName);
             if (memberInfo != null && !string.IsNullOrEmpty(memberInfo.Type))
             {
-                expectedUnion.AddType(memberInfo.Type, isHighConfidence: true);
+                expectedUnion.AddTypeName(memberInfo.Type, isHighConfidence: true);
             }
         }
 
         // Infer actual type from the expression
-        var inferredType = _typeEngine?.InferType(memberExpr);
-        if (!string.IsNullOrEmpty(inferredType))
+        var inferredType = _typeEngine?.InferSemanticType(memberExpr);
+        if (inferredType != null && !inferredType.IsVariant)
         {
             actualUnion.AddType(inferredType, isHighConfidence: false);
         }
@@ -291,7 +291,7 @@ internal sealed class GDNodeTypeAnalyzer
                 var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
                 if (memberInfo != null && !string.IsNullOrEmpty(memberInfo.Type))
                 {
-                    expectedUnion.AddType(memberInfo.Type, isHighConfidence: true);
+                    expectedUnion.AddTypeName(memberInfo.Type, isHighConfidence: true);
                 }
             }
         }
@@ -306,15 +306,15 @@ internal sealed class GDNodeTypeAnalyzer
                     var returnType = method.ReturnType?.BuildName();
                     if (!string.IsNullOrEmpty(returnType))
                     {
-                        expectedUnion.AddType(returnType, isHighConfidence: true);
+                        expectedUnion.AddTypeName(returnType, isHighConfidence: true);
                     }
                 }
             }
         }
 
         // Infer actual type from the call expression
-        var inferredType = _typeEngine?.InferType(callExpr);
-        if (!string.IsNullOrEmpty(inferredType))
+        var inferredType = _typeEngine?.InferSemanticType(callExpr);
+        if (inferredType != null && !inferredType.IsVariant)
         {
             actualUnion.AddType(inferredType, isHighConfidence: false);
         }
@@ -339,13 +339,13 @@ internal sealed class GDNodeTypeAnalyzer
             {
                 // High confidence for typed collections, low for untyped
                 var isHighConfidence = elementType != "Variant";
-                expectedUnion.AddType(elementType, isHighConfidence);
+                expectedUnion.AddTypeName(elementType, isHighConfidence);
             }
         }
 
         // Infer actual type
-        var inferredType = _typeEngine?.InferType(indexerExpr);
-        if (!string.IsNullOrEmpty(inferredType))
+        var inferredType = _typeEngine?.InferSemanticType(indexerExpr);
+        if (inferredType != null && !inferredType.IsVariant)
         {
             actualUnion.AddType(inferredType, isHighConfidence: false);
         }
@@ -366,7 +366,7 @@ internal sealed class GDNodeTypeAnalyzer
         var returnType = method.ReturnType?.BuildName();
         if (!string.IsNullOrEmpty(returnType))
         {
-            expectedUnion.AddType(returnType, isHighConfidence: true);
+            expectedUnion.AddTypeName(returnType, isHighConfidence: true);
         }
 
         // Collect actual return types from return statements
@@ -374,23 +374,23 @@ internal sealed class GDNodeTypeAnalyzer
         {
             if (ret.Expression != null)
             {
-                var retType = _typeEngine?.InferType(ret.Expression);
-                if (!string.IsNullOrEmpty(retType))
+                var retType = _typeEngine?.InferSemanticType(ret.Expression);
+                if (retType != null && !retType.IsVariant)
                 {
                     actualUnion.AddType(retType, isHighConfidence: false);
                 }
             }
             else
             {
-                actualUnion.AddType("void", isHighConfidence: true);
+                actualUnion.AddTypeName("void", isHighConfidence: true);
             }
         }
 
         // If no explicit return and no return statements, method returns void
         if (method.ReturnType == null && !method.AllNodes.OfType<GDReturnExpression>().Any())
         {
-            expectedUnion.AddType("void", isHighConfidence: true);
-            actualUnion.AddType("void", isHighConfidence: true);
+            expectedUnion.AddTypeName("void", isHighConfidence: true);
+            actualUnion.AddTypeName("void", isHighConfidence: true);
         }
 
         return GDTypeDiff.Create(method, methodName, expectedUnion, actualUnion, null, null, _runtimeProvider);
@@ -411,14 +411,15 @@ internal sealed class GDNodeTypeAnalyzer
         // Infer iterator type from collection
         if (forStmt.Collection != null)
         {
-            var collectionType = _typeEngine?.InferType(forStmt.Collection);
-            if (!string.IsNullOrEmpty(collectionType))
+            var collectionSemanticType = _typeEngine?.InferSemanticType(forStmt.Collection);
+            var collectionType = collectionSemanticType?.DisplayName;
+            if (collectionSemanticType != null && !collectionSemanticType.IsVariant)
             {
                 // Use structured parsing from utilities
                 var elementType = GDTypeInferenceUtilities.GetCollectionElementType(collectionType);
                 if (!string.IsNullOrEmpty(elementType))
                 {
-                    actualUnion.AddType(elementType, isHighConfidence: false);
+                    actualUnion.AddTypeName(elementType, isHighConfidence: false);
                 }
             }
         }
@@ -437,8 +438,8 @@ internal sealed class GDNodeTypeAnalyzer
         var actualUnion = new GDUnionType();
 
         // Infer type from the expression
-        var inferredType = _typeEngine?.InferType(expr);
-        if (!string.IsNullOrEmpty(inferredType))
+        var inferredType = _typeEngine?.InferSemanticType(expr);
+        if (inferredType != null && !inferredType.IsVariant)
         {
             actualUnion.AddType(inferredType, isHighConfidence: false);
         }
@@ -477,8 +478,8 @@ internal sealed class GDNodeTypeAnalyzer
                 idExpr.Identifier?.Sequence == varName &&
                 expr.RightExpression != null)
             {
-                var assignedType = _typeEngine?.InferType(expr.RightExpression);
-                if (!string.IsNullOrEmpty(assignedType))
+                var assignedType = _typeEngine?.InferSemanticType(expr.RightExpression);
+                if (assignedType != null && !assignedType.IsVariant)
                 {
                     actualUnion.AddType(assignedType, isHighConfidence: false);
                 }

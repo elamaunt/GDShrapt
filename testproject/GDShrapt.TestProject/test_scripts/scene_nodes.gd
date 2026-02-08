@@ -19,7 +19,7 @@ class_name SceneNodes  # 2:11-GDL222-OK
 
 
 # @onready with get_node
-@onready var label: Label = get_node("UI/Label")
+@onready var label: Label = get_node("UI/Label")  # 22:9-GD3004-OK
 
 
 # @onready with optional node
@@ -67,12 +67,12 @@ func find_nodes_by_group() -> Array[Node]:
 	# get_tree() returns SceneTree
 	var tree = get_tree()
 	# get_nodes_in_group returns typed array
-	var players = tree.get_nodes_in_group("players")  # 70:15-GD7007-OK
+	var players = tree.get_nodes_in_group("players")
 	return players
 
 
 func find_first_in_group(group_name: String) -> Node:
-	var nodes = get_tree().get_nodes_in_group(group_name)  # 75:13-GD7003-OK
+	var nodes = get_tree().get_nodes_in_group(group_name)
 	if nodes.size() > 0:
 		return nodes[0]
 	return null
@@ -109,8 +109,8 @@ func get_parent_of_type() -> Control:
 	var current = get_parent()
 	while current != null:
 		if current is Control:
-			return current
-		current = current.get_parent()
+			return current  # 112:3-GD3007-OK
+		current = current.get_parent()  # 113:12-GD4002-OK
 	return null
 
 
@@ -185,8 +185,8 @@ func access_sibling() -> Node:
 	if parent == null:
 		return null
 
-	for child in parent.get_children():  # 188:14-GD7007-OK
-		if child != self and child.name == "Sibling":  # 189:23-GD7005-OK
+	for child in parent.get_children():  # 188:14-GD4002-OK
+		if child != self and child.name == "Sibling":  # 189:23-GD7005-OK, 189:23-GD3009-OK
 			return child
 
 	return null
@@ -195,7 +195,7 @@ func access_sibling() -> Node:
 func access_node_via_path(path: NodePath) -> Node:
 	# NodePath-based access
 	var node = get_node_or_null(path)
-	return node
+	return node  # 198:1-GD3007-OK
 
 
 func access_node_property_via_path(path: NodePath) -> Variant:
@@ -208,8 +208,8 @@ func access_node_property_via_path(path: NodePath) -> Variant:
 func get_viewport_info() -> Dictionary:
 	# Viewport access
 	var viewport = get_viewport()
-	var size = viewport.get_visible_rect().size  # 211:12-GD7007-OK
-	var mouse_pos = viewport.get_mouse_position()  # 212:17-GD7007-OK
+	var size = viewport.get_visible_rect().size
+	var mouse_pos = viewport.get_mouse_position()
 	return {"size": size, "mouse": mouse_pos}
 
 
@@ -221,4 +221,4 @@ func await_node_ready():
 
 func get_unique_node() -> Node:
 	# Unique name access (%)
-	return get_node("%UniqueNode")
+	return get_node("%UniqueNode")  # 224:1-GD3007-OK

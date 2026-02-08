@@ -88,8 +88,8 @@ func test():
 
             var diff = diffs.First();
             diff.Should().NotBeNull();
-            diff.ActualType.Should().Be("String", "Argument type should be String");
-            diff.ExpectedTypes.Should().Contain("int", "Expected type should be int");
+            diff.ActualType?.DisplayName.Should().Be("String", "Argument type should be String");
+            diff.ExpectedTypes.Select(t => t.DisplayName).Should().Contain("int", "Expected type should be int");
             diff.IsCompatible.Should().BeFalse("String is not compatible with int");
         }
 

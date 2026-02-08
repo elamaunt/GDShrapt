@@ -164,9 +164,10 @@ public class GDInlayHintHandler : IGDInlayHintHandler
             {
                 // Get iterator type via SemanticModel flow analysis
                 var iteratorName = forStmt.Variable.Sequence;
-                var typeName = !string.IsNullOrEmpty(iteratorName)
+                var typeNameSemantic = !string.IsNullOrEmpty(iteratorName)
                     ? semanticModel.GetFlowVariableType(iteratorName, forStmt)?.EffectiveType
                     : null;
+                var typeName = typeNameSemantic?.DisplayName;
 
                 if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
                 {

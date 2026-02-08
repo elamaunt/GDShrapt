@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// Service for cross-method flow analysis.
 /// Analyzes @onready variable safety across method boundaries.
 /// </summary>
-public class GDCrossMethodFlowService
+internal class GDCrossMethodFlowService
 {
     private GDCrossMethodFlowState? _crossMethodState;
     private GDMethodFlowSummaryRegistry? _flowSummaryRegistry;

@@ -53,7 +53,7 @@ internal class GDCallableAnalysisService
     /// <param name="methodResolver">Optional method resolver for inter-procedural analysis.</param>
     public void AnalyzeFile(
         GDScriptFile scriptFile,
-        Func<GDExpression, string?>? typeInferrer = null,
+        Func<GDExpression, GDSemanticType?>? typeInferrer = null,
         Func<string, GDMethodDeclaration?>? methodResolver = null)
     {
         if (scriptFile?.Class == null)
@@ -78,7 +78,7 @@ internal class GDCallableAnalysisService
     public void AnalyzeMethod(
         GDMethodDeclaration method,
         GDScriptFile? sourceFile = null,
-        Func<GDExpression, string?>? typeInferrer = null)
+        Func<GDExpression, GDSemanticType?>? typeInferrer = null)
     {
         if (method == null)
             return;
@@ -238,8 +238,7 @@ internal class GDCallableAnalysisService
         {
             if (paramTypes.TryGetValue(i, out var unionType))
             {
-                var typeName = unionType.EffectiveType;
-                parameterTypes.Add(GDSemanticType.FromTypeName(typeName));
+                parameterTypes.Add(unionType.EffectiveType);
             }
             else
             {

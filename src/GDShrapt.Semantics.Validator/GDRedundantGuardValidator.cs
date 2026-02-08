@@ -118,12 +118,12 @@ public class GDRedundantGuardValidator : GDValidationVisitor
 
         // Check if declared type matches (GD7010)
         // DeclaredType is set at variable declaration and doesn't change with narrowing
-        if (!string.IsNullOrEmpty(flowVarType.DeclaredType) &&
-            IsTypeMatch(flowVarType.DeclaredType, checkedType))
+        if (flowVarType.DeclaredType != null &&
+            IsTypeMatch(flowVarType.DeclaredType.DisplayName, checkedType))
         {
             ReportDiagnostic(
                 GDDiagnosticCode.RedundantTypeGuard,
-                $"Redundant type check: '{varName}' is already declared as '{flowVarType.DeclaredType}'",
+                $"Redundant type check: '{varName}' is already declared as '{flowVarType.DeclaredType.DisplayName}'",
                 isExpr);
             return;
         }
@@ -136,12 +136,12 @@ public class GDRedundantGuardValidator : GDValidationVisitor
             var parentFlowVarType = _semanticModel.GetFlowVariableType(varName, parentNode);
             if (parentFlowVarType != null &&
                 parentFlowVarType.IsNarrowed &&
-                !string.IsNullOrEmpty(parentFlowVarType.NarrowedFromType) &&
-                IsTypeMatch(parentFlowVarType.NarrowedFromType, checkedType))
+                parentFlowVarType.NarrowedFromType != null &&
+                IsTypeMatch(parentFlowVarType.NarrowedFromType.DisplayName, checkedType))
             {
                 ReportDiagnostic(
                     GDDiagnosticCode.RedundantNarrowedTypeGuard,
-                    $"Redundant type check: '{varName}' is already narrowed to '{parentFlowVarType.NarrowedFromType}'",
+                    $"Redundant type check: '{varName}' is already narrowed to '{parentFlowVarType.NarrowedFromType.DisplayName}'",
                     isExpr);
             }
         }
@@ -177,9 +177,9 @@ public class GDRedundantGuardValidator : GDValidationVisitor
             return;
 
         // Check if type is never-null (primitives) - uses declared type which doesn't change
-        if (IsNeverNullType(flowVarType.DeclaredType))
+        if (IsNeverNullType(flowVarType.DeclaredType?.DisplayName))
         {
-            var typeName = flowVarType.DeclaredType ?? "primitive";
+            var typeName = flowVarType.DeclaredType?.DisplayName ?? "primitive";
             ReportDiagnostic(
                 GDDiagnosticCode.RedundantNullCheck,
                 $"Redundant null check: '{varName}' of type '{typeName}' cannot be null",
@@ -221,7 +221,7 @@ public class GDRedundantGuardValidator : GDValidationVisitor
 
         // Check if type cannot be falsy (non-nullable reference types with no zero value)
         // For GDScript, most reference types can be falsy (null), but if we know it's non-null...
-        if (flowVarType.IsGuaranteedNonNull && IsNonZeroType(flowVarType.EffectiveType))
+        if (flowVarType.IsGuaranteedNonNull && IsNonZeroType(flowVarType.EffectiveType.DisplayName))
         {
             ReportDiagnostic(
                 GDDiagnosticCode.RedundantTruthinessCheck,
@@ -263,7 +263,8 @@ public class GDRedundantGuardValidator : GDValidationVisitor
         // Get type info (use parent scope for redundancy check)
         var parentNode = GetParentScopeNode(contextNode);
         var flowVarType = _semanticModel.GetFlowVariableType(callerVar, parentNode ?? contextNode);
-        string? effectiveType = flowVarType?.EffectiveType;
+        var effectiveSemanticType = flowVarType?.EffectiveType;
+        string? effectiveType = effectiveSemanticType?.DisplayName;
         if (string.IsNullOrEmpty(effectiveType))
         {
             var callerTypeInfo = _semanticModel.TypeSystem.GetType(memberOp.CallerExpression);

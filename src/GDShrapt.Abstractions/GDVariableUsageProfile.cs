@@ -47,7 +47,7 @@ public class GDVariableUsageProfile
 
         foreach (var assignment in Assignments)
         {
-            if (!string.IsNullOrEmpty(assignment.InferredType))
+            if (assignment.InferredType != null)
             {
                 union.AddType(assignment.InferredType, assignment.IsHighConfidence);
             }
@@ -59,7 +59,7 @@ public class GDVariableUsageProfile
         }
         else if (union.IsUnion)
         {
-            union.ConfidenceReason = $"Union of: {string.Join(", ", union.Types)}";
+            union.ConfidenceReason = $"Union of: {string.Join(", ", union.Types.Select(t => t.DisplayName))}";
         }
 
         return union;
@@ -68,10 +68,10 @@ public class GDVariableUsageProfile
     /// <summary>
     /// Gets all unique types assigned to this variable.
     /// </summary>
-    public IEnumerable<string> GetAssignedTypes()
+    public IEnumerable<GDSemanticType> GetAssignedTypes()
     {
         return Assignments
-            .Where(a => !string.IsNullOrEmpty(a.InferredType))
+            .Where(a => a.InferredType != null)
             .Select(a => a.InferredType!)
             .Distinct();
     }

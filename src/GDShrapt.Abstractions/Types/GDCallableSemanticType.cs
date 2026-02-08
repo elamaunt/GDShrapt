@@ -1,11 +1,13 @@
-using GDShrapt.Abstractions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Reader;
 
-namespace GDShrapt.Semantics;
+namespace GDShrapt.Abstractions;
 
 /// <summary>
 /// Represents a Callable type with optional return type and parameter information.
-/// Used for lambdas and function references.
+/// Used for lambdas, function references, and generic function signatures.
 /// </summary>
 public class GDCallableSemanticType : GDSemanticType
 {
@@ -24,33 +26,52 @@ public class GDCallableSemanticType : GDSemanticType
     /// </summary>
     public bool IsVarArgs { get; }
 
+    /// <summary>
+    /// Gets the type parameters for generic callable signatures.
+    /// </summary>
+    public IReadOnlyList<GDTypeVariableSemanticType>? TypeParameters { get; }
+
     public override string DisplayName
     {
         get
         {
-            if (ReturnType == null && ParameterTypes == null)
+            if (ReturnType == null && ParameterTypes == null && TypeParameters == null)
                 return "Callable";
 
             var paramsStr = ParameterTypes != null
-                ? $"({string.Join(", ", ParameterTypes.Select(p => p.DisplayName))})"
-                : "()";
+                ? string.Join(", ", ParameterTypes.Select(p => p.DisplayName))
+                : "";
 
-            var returnStr = ReturnType != null
+            if (IsVarArgs && !string.IsNullOrEmpty(paramsStr))
+                paramsStr += "...";
+            else if (IsVarArgs)
+                paramsStr = "Variant...";
+
+            var returnStr = ReturnType != null && !ReturnType.IsVariant
                 ? $" -> {ReturnType.DisplayName}"
                 : "";
 
-            return $"Callable{paramsStr}{returnStr}";
+            if (TypeParameters != null && TypeParameters.Count > 0)
+            {
+                var constraintStr = string.Join(", ",
+                    TypeParameters.Select(tp => tp.ConstraintDisplay));
+                return $"Callable<{constraintStr}>({paramsStr}){returnStr}";
+            }
+
+            return $"Callable({paramsStr}){returnStr}";
         }
     }
 
     public GDCallableSemanticType(
         GDSemanticType? returnType = null,
         IReadOnlyList<GDSemanticType>? parameterTypes = null,
-        bool isVarArgs = false)
+        bool isVarArgs = false,
+        IReadOnlyList<GDTypeVariableSemanticType>? typeParameters = null)
     {
         ReturnType = returnType;
         ParameterTypes = parameterTypes;
         IsVarArgs = isVarArgs;
+        TypeParameters = typeParameters;
     }
 
     public override bool IsAssignableTo(GDSemanticType other, IGDRuntimeProvider? provider)
@@ -58,29 +79,23 @@ public class GDCallableSemanticType : GDSemanticType
         if (other == null)
             return false;
 
-        // Anything is assignable to Variant
         if (other.IsVariant)
             return true;
 
-        // Callable is assignable to Callable
         if (other is GDCallableSemanticType otherCallable)
         {
-            // If target has no constraints, accept
             if (otherCallable.ReturnType == null && otherCallable.ParameterTypes == null)
                 return true;
 
-            // If this callable has no type info, can only assign to untyped callable
             if (ReturnType == null && ParameterTypes == null)
                 return otherCallable.ReturnType == null && otherCallable.ParameterTypes == null;
 
-            // Check return type compatibility (covariant)
             if (otherCallable.ReturnType != null && ReturnType != null)
             {
                 if (!ReturnType.IsAssignableTo(otherCallable.ReturnType, provider))
                     return false;
             }
 
-            // Check parameter compatibility (contravariant)
             if (otherCallable.ParameterTypes != null && ParameterTypes != null)
             {
                 if (ParameterTypes.Count != otherCallable.ParameterTypes.Count && !IsVarArgs && !otherCallable.IsVarArgs)
@@ -88,7 +103,6 @@ public class GDCallableSemanticType : GDSemanticType
 
                 for (int i = 0; i < Math.Min(ParameterTypes.Count, otherCallable.ParameterTypes.Count); i++)
                 {
-                    // Parameters are contravariant: target param must be assignable to source param
                     if (!otherCallable.ParameterTypes[i].IsAssignableTo(ParameterTypes[i], provider))
                         return false;
                 }
@@ -97,7 +111,6 @@ public class GDCallableSemanticType : GDSemanticType
             return true;
         }
 
-        // Check if other is simple type "Callable"
         if (other is GDSimpleSemanticType simple && simple.TypeName == "Callable")
             return true;
 
@@ -106,10 +119,8 @@ public class GDCallableSemanticType : GDSemanticType
 
     public override GDTypeNode? ToTypeNode()
     {
-        // Callable with type info cannot be represented as simple GDTypeNode
-        // Only basic "Callable" can be expressed
         if (ReturnType == null && ParameterTypes == null)
-            return null; // Would need to construct GDTypeNode for "Callable"
+            return null;
 
         return null;
     }
@@ -122,27 +133,48 @@ public class GDCallableSemanticType : GDSemanticType
         if (!Equals(ReturnType, other.ReturnType))
             return false;
 
-        if (ParameterTypes == null && other.ParameterTypes == null)
-            return true;
-
-        if (ParameterTypes == null || other.ParameterTypes == null)
+        if (IsVarArgs != other.IsVarArgs)
             return false;
 
-        if (ParameterTypes.Count != other.ParameterTypes.Count)
+        if (!SequenceEquals(ParameterTypes, other.ParameterTypes))
             return false;
 
-        return ParameterTypes.Zip(other.ParameterTypes, (a, b) => a.Equals(b)).All(x => x);
+        if (!SequenceEquals(TypeParameters, other.TypeParameters))
+            return false;
+
+        return true;
     }
 
     public override int GetHashCode()
     {
-        var hash = new HashCode();
-        hash.Add(ReturnType);
-        if (ParameterTypes != null)
+        unchecked
         {
-            foreach (var param in ParameterTypes)
-                hash.Add(param);
+            int hash = 17;
+            hash = hash * 31 + (ReturnType?.GetHashCode() ?? 0);
+            hash = hash * 31 + IsVarArgs.GetHashCode();
+            if (ParameterTypes != null)
+            {
+                foreach (var param in ParameterTypes)
+                    hash = hash * 31 + (param?.GetHashCode() ?? 0);
+            }
+            if (TypeParameters != null)
+            {
+                foreach (var tp in TypeParameters)
+                    hash = hash * 31 + (tp?.GetHashCode() ?? 0);
+            }
+            return hash;
         }
-        return hash.ToHashCode();
+    }
+
+    private static bool SequenceEquals<T>(IReadOnlyList<T>? a, IReadOnlyList<T>? b)
+    {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (a.Count != b.Count) return false;
+        for (int i = 0; i < a.Count; i++)
+        {
+            if (!Equals(a[i], b[i])) return false;
+        }
+        return true;
     }
 }

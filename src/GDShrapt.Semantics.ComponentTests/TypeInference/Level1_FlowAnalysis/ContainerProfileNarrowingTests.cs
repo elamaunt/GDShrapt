@@ -45,7 +45,7 @@ func test():
         Assert.AreEqual(3, profile.ValueUsageCount, "Should have 3 value usages");
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType.DisplayName,
             "Element type should be int from append(1), append(2), append(3)");
     }
 
@@ -76,7 +76,7 @@ func test():
         var profile = collector.Profiles["names"];
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("String", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("String", inferredType.ElementUnionType.EffectiveType.DisplayName,
             "Element type should be String from string appends");
     }
 
@@ -109,8 +109,8 @@ func test():
         var inferredType = profile.ComputeInferredType();
         Assert.IsTrue(inferredType.ElementUnionType.IsUnion,
             $"Element type should be union (int|String). Actual: {inferredType.ElementUnionType}");
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("int"), "Union should contain int");
-        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("String"), "Union should contain String");
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), "Union should contain int");
+        Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")), "Union should contain String");
     }
 
     [TestMethod]
@@ -142,7 +142,7 @@ func test():
 
         var inferredType = profile.ComputeInferredType();
         Assert.IsNotNull(inferredType.KeyUnionType, "Key type should be computed");
-        Assert.AreEqual("String", inferredType.KeyUnionType.EffectiveType,
+        Assert.AreEqual("String", inferredType.KeyUnionType.EffectiveType.DisplayName,
             "Key type should be String from string keys");
     }
 
@@ -173,9 +173,9 @@ func test():
         var inferredType = profile.ComputeInferredType();
 
         Assert.IsNotNull(inferredType.KeyUnionType, "Key type should be computed");
-        Assert.AreEqual("int", inferredType.KeyUnionType.EffectiveType,
+        Assert.AreEqual("int", inferredType.KeyUnionType.EffectiveType.DisplayName,
             "Key type should be int from int keys");
-        Assert.AreEqual("String", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("String", inferredType.ElementUnionType.EffectiveType.DisplayName,
             "Value type should be String");
     }
 
@@ -209,7 +209,7 @@ func test():
         Assert.AreEqual(3, profile.ValueUsageCount, "Should have 3 value usages from initializer");
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType.DisplayName,
             "Element type should be int from [1, 2, 3]");
     }
 
@@ -239,9 +239,9 @@ func test():
         Assert.IsTrue(profile.IsDictionary, "Should be marked as dictionary");
 
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("String", inferredType.KeyUnionType?.EffectiveType,
+        Assert.AreEqual("String", inferredType.KeyUnionType?.EffectiveType.DisplayName,
             "Key type should be String");
-        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType.DisplayName,
             "Value type should be int");
     }
 
@@ -272,7 +272,7 @@ func test():
         // Assert
         var profile = collector.Profiles["arr"];
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType);
+        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -298,7 +298,7 @@ func test():
         // Assert
         var profile = collector.Profiles["arr"];
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("float", inferredType.ElementUnionType.EffectiveType);
+        Assert.AreEqual("float", inferredType.ElementUnionType.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -324,7 +324,7 @@ func test():
         // Assert
         var profile = collector.Profiles["arr"];
         var inferredType = profile.ComputeInferredType();
-        Assert.AreEqual("bool", inferredType.ElementUnionType.EffectiveType);
+        Assert.AreEqual("bool", inferredType.ElementUnionType.EffectiveType.DisplayName);
     }
 
     #endregion
@@ -485,8 +485,8 @@ func test(x):
                 {
                     var inferredType = profile.ComputeInferredType();
                     var elementType = profile.IsDictionary
-                        ? inferredType.KeyUnionType?.EffectiveType
-                        : inferredType.ElementUnionType.EffectiveType;
+                        ? inferredType.KeyUnionType?.EffectiveType.DisplayName
+                        : inferredType.ElementUnionType.EffectiveType.DisplayName;
 
                     if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
                     {
@@ -500,13 +500,13 @@ func test(x):
         var context = analyzer.AnalyzeCondition(condition, isNegated: false);
 
         var concreteType = context.GetConcreteType(variableName);
-        if (!string.IsNullOrEmpty(concreteType))
-            return new NarrowingResult(concreteType, concreteType != "null");
+        if (concreteType != null)
+            return new NarrowingResult(concreteType.DisplayName, concreteType.DisplayName != "null");
 
         var duckType = context.GetNarrowedType(variableName);
         if (duckType != null && duckType.PossibleTypes.Count > 0)
         {
-            var narrowedType = duckType.PossibleTypes.First();
+            var narrowedType = duckType.PossibleTypes.First().DisplayName;
             return new NarrowingResult(narrowedType, true);
         }
 

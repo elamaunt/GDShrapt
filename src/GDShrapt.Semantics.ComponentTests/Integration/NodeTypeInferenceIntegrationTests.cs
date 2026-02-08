@@ -35,7 +35,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("CharacterBody2D", result.TypeName,
+        Assert.AreEqual("CharacterBody2D", result.TypeName.DisplayName,
             $"$Player should infer to CharacterBody2D, got {result.TypeName}");
     }
 
@@ -57,7 +57,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("Label", result.TypeName,
+        Assert.AreEqual("Label", result.TypeName.DisplayName,
             $"$UI/StatusLabel should infer to Label, got {result.TypeName}");
     }
 
@@ -79,7 +79,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("ProgressBar", result.TypeName,
+        Assert.AreEqual("ProgressBar", result.TypeName.DisplayName,
             $"$UI/HealthBar should infer to ProgressBar, got {result.TypeName}");
     }
 
@@ -101,7 +101,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("Node2D", result.TypeName,
+        Assert.AreEqual("Node2D", result.TypeName.DisplayName,
             $"$EnemyContainer should infer to Node2D, got {result.TypeName}");
     }
 
@@ -123,7 +123,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         // When node is not found, type inference falls back to default "Node"
-        Assert.AreEqual("Node", result.TypeName,
+        Assert.AreEqual("Node", result.TypeName.DisplayName,
             $"Non-existent node should infer to Node, got {result.TypeName}");
     }
 
@@ -149,7 +149,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("CharacterBody2D", result.TypeName,
+        Assert.AreEqual("CharacterBody2D", result.TypeName.DisplayName,
             $"get_node(\"Player\") should infer to CharacterBody2D, got {result.TypeName}");
     }
 
@@ -171,7 +171,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("Label", result.TypeName,
+        Assert.AreEqual("Label", result.TypeName.DisplayName,
             $"get_node(\"UI/StatusLabel\") should infer to Label, got {result.TypeName}");
     }
 
@@ -193,7 +193,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("Node2D", result.TypeName,
+        Assert.AreEqual("Node2D", result.TypeName.DisplayName,
             $"get_node_or_null(\"EnemyContainer\") should infer to Node2D, got {result.TypeName}");
     }
 
@@ -219,7 +219,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("PackedScene", result.TypeName,
+        Assert.AreEqual("PackedScene", result.TypeName.DisplayName,
             $"preload scene should infer to PackedScene, got {result.TypeName}");
     }
 
@@ -243,7 +243,7 @@ public class NodeTypeInferenceIntegrationTests
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
         // Should return the class_name if available, otherwise GDScript
-        Assert.IsTrue(result.TypeName == "BaseEntity" || result.TypeName == "GDScript",
+        Assert.IsTrue(result.TypeName.DisplayName == "BaseEntity" || result.TypeName.DisplayName == "GDScript",
             $"preload script should infer to BaseEntity or GDScript, got {result.TypeName}");
     }
 
@@ -266,7 +266,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("GDScript", result.TypeName,
+        Assert.AreEqual("GDScript", result.TypeName.DisplayName,
             $"preload script without class_name should infer to GDScript, got {result.TypeName}");
     }
 
@@ -288,7 +288,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         Assert.IsTrue(result.IsResolved, "Type should be resolved");
-        Assert.AreEqual("PackedScene", result.TypeName,
+        Assert.AreEqual("PackedScene", result.TypeName.DisplayName,
             $"load scene should infer to PackedScene, got {result.TypeName}");
     }
 
@@ -314,7 +314,7 @@ public class NodeTypeInferenceIntegrationTests
 
         // Assert
         // When script is not in any scene, can't resolve node type
-        Assert.AreEqual("Node", result.TypeName,
+        Assert.AreEqual("Node", result.TypeName.DisplayName,
             $"Script not in scene should return default Node, got {result.TypeName}");
     }
 
@@ -395,7 +395,7 @@ public class NodeTypeInferenceIntegrationTests
         var result = typeResolver.ResolveExpressionType(expr, script);
 
         // Assert
-        Assert.AreEqual("Resource", result.TypeName,
+        Assert.AreEqual("Resource", result.TypeName.DisplayName,
             $"Unknown extension should return Resource, got {result.TypeName}");
     }
 

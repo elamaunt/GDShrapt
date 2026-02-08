@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -60,19 +61,7 @@ internal static class GDTypeInferenceUtilities
     /// </summary>
     public static string? GetPackedArrayElementType(string packedArrayType)
     {
-        return packedArrayType switch
-        {
-            "PackedByteArray" => "int",
-            "PackedInt32Array" => "int",
-            "PackedInt64Array" => "int",
-            "PackedFloat32Array" => "float",
-            "PackedFloat64Array" => "float",
-            "PackedStringArray" => "String",
-            "PackedVector2Array" => "Vector2",
-            "PackedVector3Array" => "Vector3",
-            "PackedColorArray" => "Color",
-            _ => null
-        };
+        return GDPackedArrayTypes.GetElementType(packedArrayType);
     }
 
     /// <summary>

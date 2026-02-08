@@ -28,7 +28,7 @@ jobs:
     - name: Test with coverage
       run: |
         dotnet test src --no-build --configuration Release \
-          --filter "TestCategory!=StressTests&TestCategory!=LongRunning" \
+          --filter "TestCategory!=StressTests&TestCategory!=LongRunning&TestCategory!=ManualVerification" \
           --collect:"XPlat Code Coverage" \
           --logger "trx" \
           --results-directory ./TestResults

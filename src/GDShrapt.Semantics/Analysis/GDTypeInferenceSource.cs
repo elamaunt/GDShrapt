@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// Represents the source of a type inference - the AST node and reason that led to this inference.
 /// Used for navigation (clicking on type parts) and for tracking derivability.
 /// </summary>
-public class GDTypeInferenceSource
+internal class GDTypeInferenceSource
 {
     /// <summary>
     /// The AST node that is the source of this inference.
@@ -97,7 +97,7 @@ public class GDTypeInferenceSource
 /// <summary>
 /// The kind of inference that produced a type.
 /// </summary>
-public enum GDInferenceKind
+internal enum GDInferenceKind
 {
     /// <summary>
     /// Type was inferred from an explicit 'is' type check.
@@ -138,7 +138,7 @@ public enum GDInferenceKind
 /// <summary>
 /// A type member in a union with its inference source and derivability information.
 /// </summary>
-public class GDUnionTypeMember
+internal class GDUnionTypeMember
 {
     /// <summary>
     /// The base type name (e.g., "Dictionary", "Array").
@@ -175,7 +175,7 @@ public class GDUnionTypeMember
 /// Represents a generic type slot (key or value type) with its inference source
 /// and derivability marker.
 /// </summary>
-public class GDGenericTypeSlot
+internal class GDGenericTypeSlot
 {
     /// <summary>
     /// The type name. Can be a union like "int | String".

@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Used for type inference when method names, property names, or dictionary keys
 /// are passed as strings that can be resolved at compile time.
 /// </summary>
-public static class GDStaticStringExtractor
+internal static class GDStaticStringExtractor
 {
     /// <summary>
     /// Tries to extract a static string value from an expression.

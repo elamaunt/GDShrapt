@@ -282,9 +282,9 @@ internal partial class GDConstraintsPanel : PanelContainer
                 propName.AddThemeColorOverride("font_color", PropertyColor);
                 propRow.AddChild(propName);
 
-                if (!string.IsNullOrEmpty(prop.Value))
+                if (prop.Value != null)
                 {
-                    var propType = new Label { Text = $": {prop.Value}" };
+                    var propType = new Label { Text = $": {prop.Value.DisplayName}" };
                     propType.AddThemeFontSizeOverride("font_size", 10);
                     propType.AddThemeColorOverride("font_color", HintColor);
                     propRow.AddChild(propType);
@@ -359,7 +359,7 @@ internal partial class GDConstraintsPanel : PanelContainer
             bullet.AddThemeColorOverride("font_color", HintColor);
             typeRow.AddChild(bullet);
 
-            var typeLabel = new Label { Text = type };
+            var typeLabel = new Label { Text = type.DisplayName };
             typeLabel.AddThemeFontSizeOverride("font_size", 10);
             typeLabel.AddThemeColorOverride("font_color", new Color(0.4f, 0.76f, 0.65f));
             typeRow.AddChild(typeLabel);
@@ -385,9 +385,9 @@ internal partial class GDConstraintsPanel : PanelContainer
         }
 
         // Common base type if available
-        if (!string.IsNullOrEmpty(unionType.CommonBaseType))
+        if (unionType.CommonBaseType != null)
         {
-            var baseLabel = new Label { Text = $"  Common base: {unionType.CommonBaseType}" };
+            var baseLabel = new Label { Text = $"  Common base: {unionType.CommonBaseType.DisplayName}" };
             baseLabel.AddThemeFontSizeOverride("font_size", 10);
             baseLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.8f));
             _detailsContainer.AddChild(baseLabel);

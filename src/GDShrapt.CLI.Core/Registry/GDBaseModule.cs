@@ -37,14 +37,11 @@ public sealed class GDBaseModule : IGDModule
         // TypeFlow visualization
         registry.Register<IGDTypeFlowHandler>(new GDTypeFlowHandler(project));
 
-        // Metrics and analysis handlers
-        registry.Register<IGDMetricsHandler>(new GDMetricsHandler(project));
-
-        // Dead code handler requires semantic model for accurate analysis
+        // Analysis handlers — all routed through the project semantic model
         var projectModel = new GDProjectSemanticModel(project);
+        registry.Register<IGDMetricsHandler>(new GDMetricsHandler(projectModel));
         registry.Register<IGDDeadCodeHandler>(new GDDeadCodeHandler(projectModel));
-
-        registry.Register<IGDDependencyHandler>(new GDDependencyHandler(project));
-        registry.Register<IGDTypeCoverageHandler>(new GDTypeCoverageHandler(project));
+        registry.Register<IGDDependencyHandler>(new GDDependencyHandler(projectModel));
+        registry.Register<IGDTypeCoverageHandler>(new GDTypeCoverageHandler(projectModel));
     }
 }

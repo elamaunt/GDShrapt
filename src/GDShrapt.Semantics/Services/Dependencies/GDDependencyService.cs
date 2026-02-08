@@ -16,7 +16,7 @@ public class GDDependencyService
     private readonly GDScriptProject _project;
     private readonly GDSignalConnectionRegistry? _signalRegistry;
 
-    public GDDependencyService(GDScriptProject project)
+    internal GDDependencyService(GDScriptProject project)
     {
         _project = project;
         _signalRegistry = null;
@@ -26,7 +26,7 @@ public class GDDependencyService
     /// Creates a service with an explicit signal registry.
     /// Use this when you have a GDProjectSemanticModel.
     /// </summary>
-    public GDDependencyService(GDScriptProject project, GDSignalConnectionRegistry? signalRegistry)
+    internal GDDependencyService(GDScriptProject project, GDSignalConnectionRegistry? signalRegistry)
     {
         _project = project;
         _signalRegistry = signalRegistry;
@@ -471,12 +471,12 @@ public class GDDependencyService
             if (callerExpr is GDIdentifierExpression identExpr)
             {
                 var funcName = identExpr.Identifier?.Sequence;
-                if (funcName == "preload" || funcName == "load")
+                if (GDWellKnownFunctions.IsResourceLoader(funcName))
                 {
                     var path = ExtractFirstStringArg(node);
                     if (!string.IsNullOrEmpty(path))
                     {
-                        if (funcName == "preload")
+                        if (funcName == GDWellKnownFunctions.Preload)
                             Preloads.Add(path);
                         else
                             Loads.Add(path);

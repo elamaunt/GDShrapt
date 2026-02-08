@@ -1,7 +1,7 @@
-using GDShrapt.Abstractions;
+using System.Linq;
 using GDShrapt.Reader;
 
-namespace GDShrapt.Semantics;
+namespace GDShrapt.Abstractions;
 
 /// <summary>
 /// Represents a simple (non-union) type like int, String, Node, Array[int], etc.
@@ -20,6 +20,10 @@ public class GDSimpleSemanticType : GDSemanticType
 
     public override string DisplayName => TypeName;
 
+    public override bool IsArray => TypeName == "Array" || GDGenericTypeHelper.IsGenericArrayType(TypeName);
+
+    public override bool IsDictionary => TypeName == "Dictionary" || GDGenericTypeHelper.IsGenericDictionaryType(TypeName);
+
     public GDSimpleSemanticType(string typeName, GDTypeNode? astNode = null)
     {
         TypeName = typeName ?? "Variant";
@@ -31,19 +35,15 @@ public class GDSimpleSemanticType : GDSemanticType
         if (other == null)
             return false;
 
-        // Anything is assignable to Variant
         if (other.IsVariant)
             return true;
 
-        // Same type
         if (other is GDSimpleSemanticType simple && simple.TypeName == TypeName)
             return true;
 
-        // Check union - if this type is one of the union members
         if (other is GDUnionSemanticType union)
             return union.Types.Any(t => IsAssignableTo(t, provider));
 
-        // Check inheritance hierarchy
         if (provider != null && other is GDSimpleSemanticType targetSimple)
         {
             return IsSubtypeOf(TypeName, targetSimple.TypeName, provider);
@@ -74,12 +74,9 @@ public class GDSimpleSemanticType : GDSemanticType
         if (AstNode != null)
             return AstNode;
 
-        // Cannot create GDTypeNode for generic types with union parameters
         if (TypeName.Contains('|'))
             return null;
 
-        // For simple types, we could potentially create a GDTypeNode
-        // but this requires proper AST construction which is complex
         return null;
     }
 

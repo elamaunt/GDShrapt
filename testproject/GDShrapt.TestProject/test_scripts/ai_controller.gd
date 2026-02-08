@@ -15,7 +15,7 @@ enum AIState { IDLE, PATROL, CHASE, ATTACK, FLEE }
 @export var detection_range: float = 200.0
 @export var attack_range: float = 50.0
 
-var current_state: AIState = AIState.IDLE
+var current_state: AIState = AIState.IDLE  # 18:0-GD3004-OK
 var current_target_index: int = 0
 var target_entity: Node2D = null
 var _path: Array[Vector2] = []
@@ -46,7 +46,7 @@ func _process(delta: float) -> void:
 			_process_flee(delta)
 
 
-func _process_idle(delta: float) -> void:
+func _process_idle(delta: float) -> void:  # 49:5-GDL203-OK, 49:19-GDL202-OK
 	# NOTE: Idle state checks for nearby targets periodically
 	pass
 
@@ -68,13 +68,13 @@ func _process_patrol(delta: float) -> void:
 func _process_chase(delta: float) -> void:
 	# BUG: Chase behavior causes jittering at close range
 	if not is_instance_valid(target_entity):
-		change_state(AIState.IDLE)
+		change_state(AIState.IDLE)  # 71:15-GD3010-OK
 		return
 
 	position = position.move_toward(target_entity.position, move_speed * delta)
 
 
-func _process_attack(delta: float) -> void:
+func _process_attack(delta: float) -> void:  # 77:5-GDL203-OK, 77:21-GDL202-OK
 	# XXX: Attack logic not implemented
 	pass
 
@@ -107,9 +107,9 @@ func set_target(entity: Node2D) -> void:
 	# FIXME: Doesn't validate if entity is a valid target
 	target_entity = entity
 	if entity != null:
-		change_state(AIState.CHASE)
+		change_state(AIState.CHASE)  # 110:15-GD3010-OK
 	else:
-		change_state(AIState.IDLE)
+		change_state(AIState.IDLE)  # 112:15-GD3010-OK
 
 
 func is_target_in_range(range_distance: float) -> bool:

@@ -1,3 +1,5 @@
+using GDShrapt.Abstractions;
+
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -39,7 +41,7 @@ public sealed class GDInferredType
     /// <summary>
     /// The inferred type name.
     /// </summary>
-    public string TypeName { get; }
+    public GDSemanticType TypeName { get; }
 
     /// <summary>
     /// Confidence level of the inference.
@@ -66,9 +68,9 @@ public sealed class GDInferredType
     /// </summary>
     public bool IsHighOrBetter => Confidence <= GDTypeConfidence.High;
 
-    private GDInferredType(string typeName, GDTypeConfidence confidence, string? reason)
+    private GDInferredType(GDSemanticType typeName, GDTypeConfidence confidence, string? reason)
     {
-        TypeName = typeName ?? "Variant";
+        TypeName = typeName ?? GDVariantSemanticType.Instance;
         Confidence = confidence;
         Reason = reason;
     }
@@ -77,43 +79,43 @@ public sealed class GDInferredType
     /// Creates a certain type inference (explicit annotation or literal).
     /// </summary>
     public static GDInferredType Certain(string type) =>
-        new(type, GDTypeConfidence.Certain, "Explicit type annotation or literal");
+        new(GDSemanticType.FromRuntimeTypeName(type), GDTypeConfidence.Certain, "Explicit type annotation or literal");
 
     /// <summary>
     /// Creates a certain type inference with custom reason.
     /// </summary>
     public static GDInferredType Certain(string type, string reason) =>
-        new(type, GDTypeConfidence.Certain, reason);
+        new(GDSemanticType.FromRuntimeTypeName(type), GDTypeConfidence.Certain, reason);
 
     /// <summary>
     /// Creates a high-confidence type inference.
     /// </summary>
     public static GDInferredType High(string type, string reason) =>
-        new(type, GDTypeConfidence.High, reason);
+        new(GDSemanticType.FromRuntimeTypeName(type), GDTypeConfidence.High, reason);
 
     /// <summary>
     /// Creates a medium-confidence type inference.
     /// </summary>
     public static GDInferredType Medium(string type, string reason) =>
-        new(type, GDTypeConfidence.Medium, reason);
+        new(GDSemanticType.FromRuntimeTypeName(type), GDTypeConfidence.Medium, reason);
 
     /// <summary>
     /// Creates a low-confidence type inference.
     /// </summary>
     public static GDInferredType Low(string type, string reason) =>
-        new(type, GDTypeConfidence.Low, reason);
+        new(GDSemanticType.FromRuntimeTypeName(type), GDTypeConfidence.Low, reason);
 
     /// <summary>
     /// Creates an unknown type inference (Variant fallback).
     /// </summary>
     public static GDInferredType Unknown() =>
-        new("Variant", GDTypeConfidence.Unknown, "Type cannot be determined");
+        new(GDVariantSemanticType.Instance, GDTypeConfidence.Unknown, "Type cannot be determined");
 
     /// <summary>
     /// Creates an unknown type inference with custom reason.
     /// </summary>
     public static GDInferredType Unknown(string reason) =>
-        new("Variant", GDTypeConfidence.Unknown, reason);
+        new(GDVariantSemanticType.Instance, GDTypeConfidence.Unknown, reason);
 
     /// <summary>
     /// Creates a type inference from a type name with automatic confidence detection.
@@ -124,9 +126,9 @@ public sealed class GDInferredType
         if (string.IsNullOrEmpty(type) || type == "Variant")
             return Unknown(reason ?? "Type cannot be determined");
 
-        return new GDInferredType(type, confidence, reason);
+        return new GDInferredType(GDSemanticType.FromRuntimeTypeName(type), confidence, reason);
     }
 
     public override string ToString() =>
-        $"{TypeName} ({Confidence}{(Reason != null ? $": {Reason}" : "")})";
+        $"{TypeName.DisplayName} ({Confidence}{(Reason != null ? $": {Reason}" : "")})";
 }

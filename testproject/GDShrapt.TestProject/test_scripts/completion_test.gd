@@ -17,7 +17,7 @@ var my_array: Array[int] = []
 var my_dict: Dictionary = {}
 var my_vector: Vector2 = Vector2.ZERO
 var my_color: Color = Color.WHITE
-var my_enum: TestEnum = TestEnum.VALUE_ONE
+var my_enum: TestEnum = TestEnum.VALUE_ONE  # 20:0-GD3004-OK
 
 @onready var child_sprite: Sprite2D = $ChildSprite
 @onready var child_label: Label = $UI/Label
@@ -77,10 +77,10 @@ func test_vector_completion() -> void:
 
 func test_node_completion() -> void:
 	# After typing 'child_sprite.' - should show Sprite2D methods
-	child_sprite.texture = null
-	child_sprite.flip_h = true
-	child_sprite.centered = false
-	child_sprite.offset = Vector2(10, 10)
+	child_sprite.texture = null  # 80:1-GD7005-OK
+	child_sprite.flip_h = true  # 81:1-GD7005-OK
+	child_sprite.centered = false  # 82:1-GD7005-OK
+	child_sprite.offset = Vector2(10, 10)  # 83:1-GD7005-OK
 
 
 func test_color_completion() -> void:
@@ -94,19 +94,19 @@ func test_color_completion() -> void:
 
 func test_timer_completion() -> void:
 	# After typing 'timer_node.' - should show Timer methods
-	timer_node.start()
-	timer_node.stop()
-	timer_node.wait_time = 1.0
-	timer_node.one_shot = true
-	var time_left = timer_node.time_left
+	timer_node.start()  # 97:1-GD7007-OK
+	timer_node.stop()  # 98:1-GD7007-OK
+	timer_node.wait_time = 1.0  # 99:1-GD7005-OK
+	timer_node.one_shot = true  # 100:1-GD7005-OK
+	var time_left = timer_node.time_left  # 101:17-GD7005-OK
 	print(time_left)
 
 
 func test_enum_completion() -> void:
 	# After typing 'TestEnum.' - should show enum values
-	my_enum = TestEnum.VALUE_ONE
-	my_enum = TestEnum.VALUE_TWO
-	my_enum = TestEnum.VALUE_THREE
+	my_enum = TestEnum.VALUE_ONE  # 107:1-GD3001-OK
+	my_enum = TestEnum.VALUE_TWO  # 108:1-GD3001-OK
+	my_enum = TestEnum.VALUE_THREE  # 109:1-GD3001-OK
 
 	# After typing 'Key.' - should show global Key enum
 	var space_key: Key = KEY_SPACE

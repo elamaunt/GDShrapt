@@ -42,14 +42,14 @@ internal class GDDuckTypeResolver
             return true;
 
         // Check excluded types
-        if (duckType.ExcludedTypes.Contains(typeName))
+        if (duckType.ExcludedTypes.Any(t => t.DisplayName == typeName))
             return false;
 
         // Check if type is in possible types (if any defined)
         if (duckType.PossibleTypes.Count > 0)
         {
             var matchesPossible = duckType.PossibleTypes.Any(pt =>
-                pt == typeName || _runtimeProvider.IsAssignableTo(typeName, pt));
+                pt.DisplayName == typeName || _runtimeProvider.IsAssignableTo(typeName, pt.DisplayName));
             if (!matchesPossible)
                 return false;
         }
@@ -91,7 +91,7 @@ internal class GDDuckTypeResolver
     /// <summary>
     /// Checks if a type supports a specific operator with given operand types.
     /// </summary>
-    private bool TypeSupportsOperator(string typeName, GDDualOperatorType op, IReadOnlyList<string> operandTypes)
+    private bool TypeSupportsOperator(string typeName, GDDualOperatorType op, IReadOnlyList<GDSemanticType> operandTypes)
     {
         // Convert operator to string name for runtime provider
         var operatorName = ConvertOperatorToString(op);

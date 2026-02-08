@@ -53,9 +53,9 @@ public class UnionTypeComplexIntegrationTests
         // Assert
         Assert.IsTrue(union.IsUnion,
             $"Expected union type. Actual types: [{actualTypes}]");
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Union should contain 'int'. Actual types: [{actualTypes}]");
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Union should contain 'String'. Actual types: [{actualTypes}]");
     }
 
@@ -77,10 +77,10 @@ public class UnionTypeComplexIntegrationTests
         // Debug: Print actual inferred types for diagnostics
         var actualTypes = string.Join(", ", union.Types);
         var returnInfos = string.Join("\n", collector.Returns.Select(r =>
-            $"  Line {r.Line}: {r.InferredType ?? "null"} (expr: {r.ExpressionText ?? "implicit"})"));
+            $"  Line {r.Line}: {r.InferredType?.DisplayName ?? "null"} (expr: {r.ExpressionText ?? "implicit"})"));
 
         // Assert - Variant should NOT be in the union when narrowing works correctly
-        Assert.IsFalse(union.Types.Contains("Variant"),
+        Assert.IsFalse(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Variant")),
             $"Union should NOT contain 'Variant' - type narrowing should work. Actual types: [{actualTypes}]\nReturns:\n{returnInfos}");
     }
 
@@ -127,16 +127,16 @@ public class UnionTypeComplexIntegrationTests
         // Debug info
         var actualTypes = string.Join(", ", union.Types);
         var returnInfos = string.Join("\n", collector.Returns.Select(r =>
-            $"  Line {r.Line}: {r.InferredType ?? "null"} (expr: {r.ExpressionText ?? "implicit"})"));
+            $"  Line {r.Line}: {r.InferredType?.DisplayName ?? "null"} (expr: {r.ExpressionText ?? "implicit"})"));
 
         // Assert
         Assert.IsTrue(union.IsUnion,
             $"Expected union type. Actual types: [{actualTypes}]\nReturns:\n{returnInfos}");
-        Assert.IsTrue(union.Types.Contains("int"), $"Union should contain 'int'. Actual: [{actualTypes}]");
-        Assert.IsTrue(union.Types.Contains("float"), $"Union should contain 'float'. Actual: [{actualTypes}]");
-        Assert.IsTrue(union.Types.Contains("String"), $"Union should contain 'String'. Actual: [{actualTypes}]");
-        Assert.IsTrue(union.Types.Contains("Array"), $"Union should contain 'Array'. Actual: [{actualTypes}]");
-        Assert.IsTrue(union.Types.Contains("null"), $"Union should contain 'null'. Actual: [{actualTypes}]");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), $"Union should contain 'int'. Actual: [{actualTypes}]");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("float")), $"Union should contain 'float'. Actual: [{actualTypes}]");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")), $"Union should contain 'String'. Actual: [{actualTypes}]");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Array")), $"Union should contain 'Array'. Actual: [{actualTypes}]");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")), $"Union should contain 'null'. Actual: [{actualTypes}]");
     }
 
     /// <summary>
@@ -180,11 +180,11 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert
         Assert.IsTrue(union.IsUnion, "Expected union type");
-        Assert.IsTrue(union.Types.Contains("int"), "Union should contain 'int'");
-        Assert.IsTrue(union.Types.Contains("String"), "Union should contain 'String'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), "Union should contain 'int'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")), "Union should contain 'String'");
         // Array types now include element type, e.g., "Array[int]"
-        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Array")), "Union should contain 'Array' or 'Array[...]'");
-        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Dictionary")), "Union should contain 'Dictionary' or 'Dictionary[...]'");
+        Assert.IsTrue(union.Types.Any(t => t.DisplayName.StartsWith("Array")), "Union should contain 'Array' or 'Array[...]'");
+        Assert.IsTrue(union.Types.Any(t => t.DisplayName.StartsWith("Dictionary")), "Union should contain 'Dictionary' or 'Dictionary[...]'");
     }
 
     /// <summary>
@@ -229,11 +229,11 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert
         Assert.IsTrue(union.IsUnion, "Expected union type");
-        Assert.IsTrue(union.Types.Contains("String"), "Union should contain 'String'");
-        Assert.IsTrue(union.Types.Contains("float"), "Union should contain 'float'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")), "Union should contain 'String'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("float")), "Union should contain 'float'");
         // Array types now include element type, e.g., "Array[int]"
-        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Array")), "Union should contain 'Array' or 'Array[...]'");
-        Assert.IsTrue(union.Types.Any(t => t.StartsWith("Dictionary")), "Union should contain 'Dictionary' or 'Dictionary[...]'");
+        Assert.IsTrue(union.Types.Any(t => t.DisplayName.StartsWith("Array")), "Union should contain 'Array' or 'Array[...]'");
+        Assert.IsTrue(union.Types.Any(t => t.DisplayName.StartsWith("Dictionary")), "Union should contain 'Dictionary' or 'Dictionary[...]'");
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public class UnionTypeComplexIntegrationTests
         Assert.IsNotNull(union, "Union should not be null");
         Assert.IsTrue(collector.Returns.Count >= 4,
             $"Expected at least 4 return statements, got {collector.Returns.Count}");
-        Assert.IsTrue(union.Types.Contains("null"), "Union should contain 'null' from default case");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")), "Union should contain 'null' from default case");
     }
 
     #endregion
@@ -299,8 +299,8 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert
         Assert.IsNotNull(union, "Union should not be null");
-        Assert.IsTrue(union.Types.Contains("String"), "Union should contain 'String'");
-        Assert.IsTrue(union.Types.Contains("null"), "Union should contain 'null'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")), "Union should contain 'String'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")), "Union should contain 'null'");
     }
 
     /// <summary>
@@ -318,7 +318,7 @@ public class UnionTypeComplexIntegrationTests
         var union = collector.ComputeReturnUnionType();
 
         // Assert: create_success returns a Dictionary with tag and value
-        Assert.IsTrue(union.Types.Contains("Dictionary"), "Union should contain 'Dictionary'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Dictionary")), "Union should contain 'Dictionary'");
     }
 
     #endregion
@@ -348,9 +348,9 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert
         Assert.IsNotNull(union, "Union should not be null");
-        Assert.IsTrue(union.Types.Contains("String"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Union should contain 'String'. Actual types: [{actualTypes}]");
-        Assert.IsTrue(union.Types.Contains("int"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Union should contain 'int'. Actual types: [{actualTypes}]");
     }
 
@@ -392,7 +392,7 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert: Returns int from numeric, int from text.length(), int from Array.size(), and 0
         Assert.IsNotNull(union, "Union should not be null");
-        Assert.IsTrue(union.Types.Contains("int"), "Union should contain 'int'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), "Union should contain 'int'");
     }
 
     /// <summary>
@@ -417,7 +417,7 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert: Returns create_error (Dictionary) or create_success (Dictionary)
         Assert.IsNotNull(union, "Union should not be null");
-        Assert.IsTrue(union.Types.Contains("Dictionary"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Dictionary")),
             $"Union should contain 'Dictionary'. Actual types: [{actualTypes}]");
     }
 
@@ -447,7 +447,7 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert: Returns results array
         Assert.IsNotNull(union, "Union should not be null");
-        Assert.IsTrue(union.Types.Contains("Array"),
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Array")),
             $"Union should contain 'Array'. Actual types: [{actualTypes}]");
     }
 
@@ -492,7 +492,7 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert
         Assert.IsNotNull(union, "Union should not be null");
-        Assert.IsTrue(union.Types.Contains("null"), "Union should contain 'null'");
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")), "Union should contain 'null'");
     }
 
     #endregion
@@ -538,9 +538,9 @@ public class UnionTypeComplexIntegrationTests
         Assert.IsNotNull(unionType, "GetUnionType should return a union for method 'try_operation'");
         Assert.IsTrue(unionType.IsUnion,
             $"IsUnion should be true for try_operation. Actual types: [{string.Join(", ", unionType.Types)}]");
-        Assert.IsTrue(unionType.Types.Contains("int"),
+        Assert.IsTrue(unionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Union should contain 'int'. Actual types: [{string.Join(", ", unionType.Types)}]");
-        Assert.IsTrue(unionType.Types.Contains("String"),
+        Assert.IsTrue(unionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Union should contain 'String'. Actual types: [{string.Join(", ", unionType.Types)}]");
     }
 
@@ -560,7 +560,7 @@ public class UnionTypeComplexIntegrationTests
 
         // Assert
         Assert.IsNotNull(unionType, "GetUnionType should return a union for parameter 'input'");
-        Assert.IsTrue(unionType.Types.Contains("null"),
+        Assert.IsTrue(unionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")),
             $"Union should contain 'null' from null check. Actual types: [{string.Join(", ", unionType.Types)}]");
     }
 
@@ -582,9 +582,9 @@ public class UnionTypeComplexIntegrationTests
         Assert.IsNotNull(unionType, "GetUnionType should return a union for parameter 'input'");
         var actualTypes = string.Join(", ", unionType.Types);
 
-        Assert.IsTrue(unionType.Types.Contains("int"),
+        Assert.IsTrue(unionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Union should contain 'int' from is check. Actual types: [{actualTypes}]");
-        Assert.IsTrue(unionType.Types.Contains("String"),
+        Assert.IsTrue(unionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Union should contain 'String' from is check. Actual types: [{actualTypes}]");
     }
 

@@ -127,7 +127,7 @@ public static class GDRefactoringExtensions
     /// <summary>
     /// Creates a text edit builder for this context.
     /// </summary>
-    public static GDTextEditBuilder CreateEditBuilder(this GDRefactoringContext context)
+    internal static GDTextEditBuilder CreateEditBuilder(this GDRefactoringContext context)
     {
         var filePath = context.Script?.Reference?.FullPath;
         return GDTextEditBuilder.ForFile(filePath);

@@ -18,7 +18,7 @@ public class GDMetricsHandlerTests
     public void Setup()
     {
         _project = TestProjectHelper.LoadTestProject();
-        _handler = new GDMetricsHandler(_project);
+        _handler = new GDMetricsHandler(new GDProjectSemanticModel(_project));
     }
 
     [TestCleanup]
@@ -214,7 +214,7 @@ func single_method():
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDMetricsHandler(project);
+            var handler = new GDMetricsHandler(new GDProjectSemanticModel(project));
             var filePath = Path.Combine(tempPath, "single.gd");
 
             // Act
@@ -248,7 +248,7 @@ func complex_method(a, b, c, d):
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);
-            var handler = new GDMetricsHandler(project);
+            var handler = new GDMetricsHandler(new GDProjectSemanticModel(project));
             var filePath = Path.Combine(tempPath, "complex.gd");
 
             // Act

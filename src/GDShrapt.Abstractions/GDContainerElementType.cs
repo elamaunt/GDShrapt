@@ -26,12 +26,12 @@ public class GDContainerElementType
     /// <summary>
     /// Effective element type (single type, common base, or Variant).
     /// </summary>
-    public string EffectiveElementType => ElementUnionType.EffectiveType;
+    public GDSemanticType EffectiveElementType => ElementUnionType.EffectiveType;
 
     /// <summary>
     /// Effective key type for Dictionary.
     /// </summary>
-    public string? EffectiveKeyType => KeyUnionType?.EffectiveType;
+    public GDSemanticType? EffectiveKeyType => KeyUnionType?.EffectiveType;
 
     /// <summary>
     /// Overall confidence (delegated to ElementUnionType).
@@ -54,12 +54,12 @@ public class GDContainerElementType
         {
             var keyType = KeyUnionType?.UnionTypeName ?? "Variant";
             var valueType = ElementUnionType.UnionTypeName;
-            return $"Dictionary[{keyType}, {valueType}]";
+            return GDGenericTypeHelper.CreateDictionaryType(keyType, valueType);
         }
         else
         {
             var elementType = ElementUnionType.UnionTypeName;
-            return elementType == "Variant" ? "Array" : $"Array[{elementType}]";
+            return GDGenericTypeHelper.CreateArrayType(elementType);
         }
     }
 
@@ -81,7 +81,7 @@ public class GDContainerElementType
             {
                 var innerTypeName = arrayNode.InnerType.BuildName();
                 if (!string.IsNullOrEmpty(innerTypeName))
-                    result.ElementUnionType.AddType(innerTypeName);
+                    result.ElementUnionType.AddTypeName(innerTypeName);
             }
             return result;
         }
@@ -94,13 +94,13 @@ public class GDContainerElementType
                 result.KeyUnionType = new GDUnionType();
                 var keyTypeName = dictNode.KeyType.BuildName();
                 if (!string.IsNullOrEmpty(keyTypeName))
-                    result.KeyUnionType.AddType(keyTypeName);
+                    result.KeyUnionType.AddTypeName(keyTypeName);
             }
             if (dictNode.ValueType != null)
             {
                 var valueTypeName = dictNode.ValueType.BuildName();
                 if (!string.IsNullOrEmpty(valueTypeName))
-                    result.ElementUnionType.AddType(valueTypeName);
+                    result.ElementUnionType.AddTypeName(valueTypeName);
             }
             return result;
         }
@@ -138,18 +138,20 @@ public class GDContainerElementType
             var leftType = left.ElementUnionType.EffectiveType;
             var rightType = right.ElementUnionType.EffectiveType;
 
-            if (leftType == rightType)
+            if (leftType.Equals(rightType))
             {
                 result.ElementUnionType.AddType(leftType);
                 return result;
             }
 
             // Numeric widening: int + float → float
-            if ((leftType == "int" || leftType == "float") &&
-                (rightType == "int" || rightType == "float"))
+            var leftName = leftType.DisplayName;
+            var rightName = rightType.DisplayName;
+            if ((leftName == "int" || leftName == "float") &&
+                (rightName == "int" || rightName == "float"))
             {
-                var widenedType = (leftType == "float" || rightType == "float") ? "float" : "int";
-                result.ElementUnionType.AddType(widenedType);
+                var widenedType = (leftName == "float" || rightName == "float") ? "float" : "int";
+                result.ElementUnionType.AddTypeName(widenedType);
                 return result;
             }
         }

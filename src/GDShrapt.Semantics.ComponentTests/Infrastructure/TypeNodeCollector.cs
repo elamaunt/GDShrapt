@@ -29,6 +29,9 @@ public class TypeNodeCollector
         if (model == null || file.Class == null)
             return result;
 
+        // Track declaration positions to avoid duplicates with expressions
+        var declarationPositions = new HashSet<(int Line, int Column)>();
+
         // 1. DECLARATIONS - via model.Symbols API
         // Use TypeSystem.GetType for declarations to match what IDE shows to user
         foreach (var symbol in model.Symbols)
@@ -37,32 +40,39 @@ public class TypeNodeCollector
             int line = GetNodeLine(declNode);
             int column = GetNodeColumn(declNode);
 
-            // Use TypeSystem.GetType instead of symbol.TypeName for consistency with IDE
-            string type = declNode != null && model.RuntimeProvider != null
+            // Skip declarations with no position info (synthetic symbols)
+            if (line == 0 && column == 0)
+                continue;
+
+            // Use TypeSystem.GetType for all declarations (TypeSystem is always available)
+            string type = declNode != null
                 ? model.TypeSystem.GetType(declNode).DisplayName
                 : symbol.TypeName ?? "Variant";
             string kindName = symbol.Kind.ToString();
 
             result.Add(new TypedNode(line, column, symbol.Name, kindName, type));
+            declarationPositions.Add((line, column));
         }
 
         // 2. ALL EXPRESSIONS - via model.TypeSystem.GetType() API
         // This is EVERYTHING a user can click on in IDE!
-        if (model.RuntimeProvider != null)
+        // TypeSystem is always available (uses GDNullRuntimeProvider if no runtime)
+        foreach (var expr in file.Class.AllNodes.OfType<GDExpression>())
         {
-            foreach (var expr in file.Class.AllNodes.OfType<GDExpression>())
-            {
-                int line = GetNodeLine(expr);
-                int column = GetNodeColumn(expr);
+            int line = GetNodeLine(expr);
+            int column = GetNodeColumn(expr);
 
-                // Use the TypeSystem API to get type
-                string type = model.TypeSystem.GetType(expr).DisplayName;
+            // Skip expressions at declaration positions (already covered by Symbols)
+            if (declarationPositions.Contains((line, column)))
+                continue;
 
-                string name = GetExpressionDisplayName(expr);
-                string kind = expr.GetType().Name;
+            // Use the TypeSystem API to get type
+            string type = model.TypeSystem.GetType(expr).DisplayName;
 
-                result.Add(new TypedNode(line, column, name, kind, type));
-            }
+            string name = GetExpressionDisplayName(expr);
+            string kind = expr.GetType().Name;
+
+            result.Add(new TypedNode(line, column, name, kind, type));
         }
 
         return result.OrderBy(n => n.Line).ThenBy(n => n.Column).ToList();

@@ -19,10 +19,15 @@ internal class GDSymbolRegistry
     private readonly Dictionary<(string CallerType, string MemberName), List<GDReference>> _memberAccessByType =
         new(MemberAccessKeyComparer.Instance);
 
+    // Cached symbol lists (built lazily, never invalidated — registry is immutable after construction)
+    private IReadOnlyList<GDSymbolInfo>? _allSymbolsCache;
+    private readonly Dictionary<GDSymbolKind, IReadOnlyList<GDSymbolInfo>> _kindCache = new();
+
     /// <summary>
     /// All symbols in this registry.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> Symbols => _nameToSymbols.Values.SelectMany(x => x);
+    public IReadOnlyList<GDSymbolInfo> Symbols =>
+        _allSymbolsCache ??= _nameToSymbols.Values.SelectMany(x => x).ToList();
 
     /// <summary>
     /// Gets the symbol declared at a specific node.
@@ -47,13 +52,13 @@ internal class GDSymbolRegistry
     /// <summary>
     /// Finds all symbols with the given name.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> FindSymbols(string name)
+    public IReadOnlyList<GDSymbolInfo> FindSymbols(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return Enumerable.Empty<GDSymbolInfo>();
+            return Array.Empty<GDSymbolInfo>();
         return _nameToSymbols.TryGetValue(name, out var symbols)
             ? symbols
-            : Enumerable.Empty<GDSymbolInfo>();
+            : Array.Empty<GDSymbolInfo>();
     }
 
     /// <summary>
@@ -80,30 +85,35 @@ internal class GDSymbolRegistry
     /// <summary>
     /// Gets all symbols of a specific kind.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetSymbolsOfKind(GDSymbolKind kind)
+    public IReadOnlyList<GDSymbolInfo> GetSymbolsOfKind(GDSymbolKind kind)
     {
-        return Symbols.Where(s => s.Kind == kind);
+        if (!_kindCache.TryGetValue(kind, out var cached))
+        {
+            cached = Symbols.Where(s => s.Kind == kind).ToList();
+            _kindCache[kind] = cached;
+        }
+        return cached;
     }
 
     /// <summary>
     /// Gets all methods.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetMethods() => GetSymbolsOfKind(GDSymbolKind.Method);
+    public IReadOnlyList<GDSymbolInfo> GetMethods() => GetSymbolsOfKind(GDSymbolKind.Method);
 
     /// <summary>
     /// Gets all variables.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetVariables() => GetSymbolsOfKind(GDSymbolKind.Variable);
+    public IReadOnlyList<GDSymbolInfo> GetVariables() => GetSymbolsOfKind(GDSymbolKind.Variable);
 
     /// <summary>
     /// Gets all signals.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetSignals() => GetSymbolsOfKind(GDSymbolKind.Signal);
+    public IReadOnlyList<GDSymbolInfo> GetSignals() => GetSymbolsOfKind(GDSymbolKind.Signal);
 
     /// <summary>
     /// Gets all constants.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetConstants() => GetSymbolsOfKind(GDSymbolKind.Constant);
+    public IReadOnlyList<GDSymbolInfo> GetConstants() => GetSymbolsOfKind(GDSymbolKind.Constant);
 
     // ========================================
     // Registration Methods (internal)

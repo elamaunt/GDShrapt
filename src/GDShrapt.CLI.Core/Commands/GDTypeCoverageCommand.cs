@@ -36,7 +36,7 @@ public class GDTypeCoverageCommand : GDProjectCommandBase
         GDProjectConfig config,
         CancellationToken cancellationToken)
     {
-        var handler = Registry?.GetService<IGDTypeCoverageHandler>() ?? new GDTypeCoverageHandler(project);
+        var handler = Registry?.GetService<IGDTypeCoverageHandler>() ?? new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
 
         // Analyze based on scope
         GDTypeCoverageReport report;

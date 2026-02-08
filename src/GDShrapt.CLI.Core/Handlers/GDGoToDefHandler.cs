@@ -22,9 +22,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (script?.SemanticModel == null || script.Class == null)
             return null;
 
-        // Use GDPositionFinder to find the identifier at position
-        var finder = new GDPositionFinder(script.Class);
-        var identifier = finder.FindIdentifierAtPosition(line, column);
+        var identifier = script.SemanticModel.GetIdentifierAtPosition(line, column);
         if (identifier == null)
             return null;
 

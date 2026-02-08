@@ -50,7 +50,7 @@ func process(a):
             "Variable 'a' should require Addition operator");
 
         var operandTypes = duckType.RequiredOperators[GDDualOperatorType.Addition];
-        Assert.IsTrue(operandTypes.Contains("int"),
+        Assert.IsTrue(operandTypes.Any(t => t.DisplayName == "int"),
             "Addition operand type should include 'int'");
     }
 
@@ -69,7 +69,7 @@ func process(a):
             "Variable 'a' should require Addition operator");
 
         var operandTypes = duckType.RequiredOperators[GDDualOperatorType.Addition];
-        Assert.IsTrue(operandTypes.Contains("String"),
+        Assert.IsTrue(operandTypes.Any(t => t.DisplayName == "String"),
             "Addition operand type should include 'String'");
     }
 
@@ -177,7 +177,7 @@ func process(a, b):
         var resolver = new GDDuckTypeResolver(runtimeProvider);
 
         var duckType = new GDDuckType();
-        duckType.RequireOperator(GDDualOperatorType.Addition, "int");
+        duckType.RequireOperator(GDDualOperatorType.Addition, GDSemanticType.FromRuntimeTypeName("int"));
 
         var compatibleTypes = resolver.FindCompatibleTypes(duckType).ToList();
 
@@ -196,7 +196,7 @@ func process(a, b):
         var resolver = new GDDuckTypeResolver(runtimeProvider);
 
         var duckType = new GDDuckType();
-        duckType.RequireOperator(GDDualOperatorType.Subtraction, "int");
+        duckType.RequireOperator(GDDualOperatorType.Subtraction, GDSemanticType.FromRuntimeTypeName("int"));
 
         var compatibleTypes = resolver.FindCompatibleTypes(duckType).ToList();
 

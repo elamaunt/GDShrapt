@@ -10,12 +10,14 @@ namespace GDShrapt.CLI.Core;
 public class GDMetricsHandler : IGDMetricsHandler
 {
     protected readonly GDScriptProject _project;
+    protected readonly GDProjectSemanticModel _projectModel;
     protected readonly GDMetricsService _service;
 
-    public GDMetricsHandler(GDScriptProject project)
+    public GDMetricsHandler(GDProjectSemanticModel projectModel)
     {
-        _project = project;
-        _service = new GDMetricsService(project);
+        _projectModel = projectModel ?? throw new System.ArgumentNullException(nameof(projectModel));
+        _project = projectModel.Project;
+        _service = projectModel.Metrics;
     }
 
     /// <inheritdoc />

@@ -158,12 +158,12 @@ func class_type_guard(node: Node):
 
 	if node is Area2D:
 		# node is Area2D
-		var overlapping = node.get_overlapping_bodies()
+		var overlapping = node.get_overlapping_bodies()  # 161:6-GDL201-OK
 		return "area"
 
 	if node is Node2D:
 		# node is Node2D
-		var pos = node.global_position
+		var pos = node.global_position  # 166:6-GDL201-OK
 		return "node2d"
 
 	return "other"
@@ -183,7 +183,7 @@ func guard_in_while(data):
 	# Type guard in while condition
 	var current = data
 	while current is Dictionary and current.has("next"):
-		var value = current.get("value")
+		var value = current.get("value")  # 186:6-GDL201-OK
 		current = current.get("next")
 	return current
 
@@ -217,13 +217,13 @@ func structural_type_guard(obj):
 	# Duck typing guard - checking for methods/properties
 	if "position" in obj and "rotation" in obj:
 		# obj has position and rotation - likely Node2D-like
-		var pos = obj.position
-		var rot = obj.rotation
+		var pos = obj.position  # 220:12-GD7005-OK
+		var rot = obj.rotation  # 221:12-GD7005-OK
 		return [pos, rot]
 
 	if "velocity" in obj:
 		# obj has velocity - likely physics body
-		return obj.velocity
+		return obj.velocity  # 226:9-GD7005-OK
 
 	return null
 
@@ -250,7 +250,7 @@ func assert_type_guard(value):
 	# Assert as type guard (development only)
 	assert(value is Dictionary, "Expected Dictionary")
 	# After assert, value is Dictionary (in debug builds)
-	return value.keys()
+	return value.keys()  # 253:8-GD7007-OK
 
 
 func ternary_with_guard(value):
@@ -265,7 +265,7 @@ func guard_propagation(outer):
 		var inner_func = func():
 			# Should outer be narrowed here?
 			# Depends on analyzer implementation
-			if outer is Dictionary:  # Safe check
+			if outer is Dictionary:  # Safe check  # 268:6-GD7011-OK
 				return outer.keys()
 			return []
 		return inner_func.call()

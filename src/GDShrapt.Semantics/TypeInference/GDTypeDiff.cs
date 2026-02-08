@@ -56,22 +56,22 @@ public class GDTypeDiff
     /// The narrowed type at this specific location (flow-sensitive).
     /// Null if no narrowing applies.
     /// </summary>
-    public string? NarrowedType { get; }
+    public GDSemanticType? NarrowedType { get; }
 
     /// <summary>
     /// Types that are expected but not found in actual sources.
     /// </summary>
-    public IReadOnlyList<string> MissingTypes { get; }
+    public IReadOnlyList<GDSemanticType> MissingTypes { get; }
 
     /// <summary>
     /// Types that are in actual sources but not expected.
     /// </summary>
-    public IReadOnlyList<string> UnexpectedTypes { get; }
+    public IReadOnlyList<GDSemanticType> UnexpectedTypes { get; }
 
     /// <summary>
     /// Types that match between expected and actual.
     /// </summary>
-    public IReadOnlyList<string> MatchingTypes { get; }
+    public IReadOnlyList<GDSemanticType> MatchingTypes { get; }
 
     /// <summary>
     /// Confidence level for the type inference.
@@ -79,9 +79,9 @@ public class GDTypeDiff
     public GDTypeConfidence Confidence { get; }
 
     /// <summary>
-    /// The best inferred type name (single type or union representation).
+    /// The best inferred type (single type or union representation).
     /// </summary>
-    public string TypeName { get; }
+    public GDSemanticType TypeName { get; }
 
     /// <summary>
     /// Whether there are mismatches between expected and actual types.
@@ -106,7 +106,7 @@ public class GDTypeDiff
     /// <summary>
     /// Whether the type is narrowed at this location.
     /// </summary>
-    public bool IsNarrowed => !string.IsNullOrEmpty(NarrowedType);
+    public bool IsNarrowed => NarrowedType != null;
 
     /// <summary>
     /// Creates a new type diff.
@@ -117,12 +117,12 @@ public class GDTypeDiff
         GDUnionType expectedTypes,
         GDUnionType actualTypes,
         GDDuckType? duckConstraints,
-        string? narrowedType,
-        IReadOnlyList<string> missingTypes,
-        IReadOnlyList<string> unexpectedTypes,
-        IReadOnlyList<string> matchingTypes,
+        GDSemanticType? narrowedType,
+        IReadOnlyList<GDSemanticType> missingTypes,
+        IReadOnlyList<GDSemanticType> unexpectedTypes,
+        IReadOnlyList<GDSemanticType> matchingTypes,
         GDTypeConfidence confidence,
-        string typeName)
+        GDSemanticType typeName)
     {
         Node = node;
         SymbolName = symbolName;
@@ -149,20 +149,20 @@ public class GDTypeDiff
         string? narrowedType,
         IGDRuntimeProvider? runtimeProvider)
     {
-        var expectedSet = new HashSet<string>(expected.Types);
-        var actualSet = new HashSet<string>(actual.Types);
+        var expectedSet = new HashSet<GDSemanticType>(expected.Types);
+        var actualSet = new HashSet<GDSemanticType>(actual.Types);
 
         // Calculate matching types
         var matching = expectedSet.Intersect(actualSet).ToList();
 
         // Calculate missing types (expected but not in actual)
-        var missing = new List<string>();
+        var missing = new List<GDSemanticType>();
         foreach (var expectedType in expectedSet)
         {
             if (!actualSet.Contains(expectedType))
             {
                 bool isCompatible = actualSet.Any(actualType =>
-                    AreTypesCompatible(actualType, expectedType, runtimeProvider));
+                    AreTypesCompatible(actualType.DisplayName, expectedType.DisplayName, runtimeProvider));
 
                 if (!isCompatible)
                 {
@@ -172,13 +172,13 @@ public class GDTypeDiff
         }
 
         // Calculate unexpected types (actual but not in expected)
-        var unexpected = new List<string>();
+        var unexpected = new List<GDSemanticType>();
         foreach (var actualType in actualSet)
         {
             if (!expectedSet.Contains(actualType))
             {
                 bool isCompatible = expectedSet.Any(expectedType =>
-                    AreTypesCompatible(actualType, expectedType, runtimeProvider));
+                    AreTypesCompatible(actualType.DisplayName, expectedType.DisplayName, runtimeProvider));
 
                 if (!isCompatible)
                 {
@@ -187,14 +187,17 @@ public class GDTypeDiff
             }
         }
 
+        // Convert narrowedType string to GDSemanticType
+        var narrowedSemType = narrowedType != null ? GDSemanticType.FromRuntimeTypeName(narrowedType) : (GDSemanticType?)null;
+
         // Determine the best type name
-        string typeName;
+        GDSemanticType typeName;
         GDTypeConfidence confidence;
 
-        if (!string.IsNullOrEmpty(narrowedType))
+        if (narrowedSemType != null)
         {
             // Narrowed type takes priority
-            typeName = narrowedType;
+            typeName = narrowedSemType;
             confidence = GDTypeConfidence.High;
         }
         else if (expected.IsEmpty && actual.IsEmpty)
@@ -202,23 +205,26 @@ public class GDTypeDiff
             // Check duck constraints for possible types
             if (duckConstraints?.PossibleTypes.Count > 0)
             {
-                typeName = string.Join("|", duckConstraints.PossibleTypes);
+                var possibleList = duckConstraints.PossibleTypes.ToList();
+                typeName = possibleList.Count == 1 ? possibleList[0] : (GDSemanticType)new GDUnionSemanticType(possibleList);
                 confidence = GDTypeConfidence.Medium;
             }
             else
             {
-                typeName = "Variant";
+                typeName = GDVariantSemanticType.Instance;
                 confidence = GDTypeConfidence.Unknown;
             }
         }
         else if (!expected.IsEmpty)
         {
-            typeName = expected.ToString();
+            var expTypes = expected.Types.ToList();
+            typeName = expTypes.Count == 1 ? expTypes[0] : (GDSemanticType)new GDUnionSemanticType(expTypes);
             confidence = expected.AllHighConfidence ? GDTypeConfidence.High : GDTypeConfidence.Medium;
         }
         else
         {
-            typeName = actual.ToString();
+            var actTypes = actual.Types.ToList();
+            typeName = actTypes.Count == 1 ? actTypes[0] : (GDSemanticType)new GDUnionSemanticType(actTypes);
             confidence = actual.AllHighConfidence ? GDTypeConfidence.High : GDTypeConfidence.Medium;
         }
 
@@ -228,7 +234,7 @@ public class GDTypeDiff
             expected,
             actual,
             duckConstraints,
-            narrowedType,
+            narrowedSemType,
             missing,
             unexpected,
             matching,
@@ -248,11 +254,11 @@ public class GDTypeDiff
             new GDUnionType(),
             null,
             null,
-            new List<string>(),
-            new List<string>(),
-            new List<string>(),
+            new List<GDSemanticType>(),
+            new List<GDSemanticType>(),
+            new List<GDSemanticType>(),
             GDTypeConfidence.Unknown,
-            "Variant");
+            GDVariantSemanticType.Instance);
     }
 
     /// <summary>
@@ -277,19 +283,10 @@ public class GDTypeDiff
             return runtimeProvider.IsAssignableTo(sourceType, targetType);
         }
 
-        // Basic numeric compatibility
-        if (IsNumericType(sourceType) && IsNumericType(targetType))
-        {
-            if (sourceType == "int" && targetType == "float")
-                return true;
-        }
+        if (GDTypeCompatibility.IsImplicitlyConvertible(sourceType, targetType))
+            return true;
 
         return false;
-    }
-
-    private static bool IsNumericType(string typeName)
-    {
-        return typeName is "int" or "float" or "bool";
     }
 
     /// <summary>
@@ -300,14 +297,14 @@ public class GDTypeDiff
         var parts = new List<string>();
 
         // Type name
-        parts.Add($"Type: {TypeName}");
+        parts.Add($"Type: {TypeName.DisplayName}");
 
         // Confidence
         parts.Add($"Confidence: {Confidence}");
 
         // Narrowing info
         if (IsNarrowed)
-            parts.Add($"Narrowed to: {NarrowedType}");
+            parts.Add($"Narrowed to: {NarrowedType!.DisplayName}");
 
         // Expected vs actual
         if (HasExpectedTypes)
@@ -317,9 +314,9 @@ public class GDTypeDiff
 
         // Mismatches
         if (MissingTypes.Count > 0)
-            parts.Add($"Missing: {string.Join(", ", MissingTypes)}");
+            parts.Add($"Missing: {string.Join(", ", MissingTypes.Select(t => t.DisplayName))}");
         if (UnexpectedTypes.Count > 0)
-            parts.Add($"Unexpected: {string.Join(", ", UnexpectedTypes)}");
+            parts.Add($"Unexpected: {string.Join(", ", UnexpectedTypes.Select(t => t.DisplayName))}");
 
         // Duck constraints
         if (HasDuckConstraints)

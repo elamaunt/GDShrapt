@@ -72,7 +72,7 @@ public class GDExtractVariableService : GDRefactoringServiceBase
         // Build the variable declaration with inferred type
         var helper = new GDTypeInferenceHelper(context.GetSemanticModel());
         var inferredType = helper.InferExpressionType(expression);
-        var varDecl = BuildVariableDeclaration(normalizedName, inferredType.TypeName, expression.ToString());
+        var varDecl = BuildVariableDeclaration(normalizedName, inferredType.TypeName.DisplayName, expression.ToString());
 
         // Get indentation for the variable declaration
         var indent = containingStatement.GetIndentation();
@@ -223,7 +223,7 @@ public class GDExtractVariableResult : GDRefactoringResult
         return new GDExtractVariableResult(
             true, null, null,
             suggestedName,
-            inferredType?.TypeName,
+            inferredType?.TypeName?.DisplayName,
             inferredType?.Confidence ?? GDTypeConfidence.Unknown,
             inferredType?.Reason,
             occurrencesCount,

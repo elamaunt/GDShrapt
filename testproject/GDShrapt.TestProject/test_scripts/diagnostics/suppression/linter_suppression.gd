@@ -1,7 +1,7 @@
 # gdlint:ignore-file = line-length
 ## This file tests linter suppression with file-level suppression for line-length
 extends Node
-class_name DiagnosticsTest_LinterSuppression
+class_name DiagnosticsTest_LinterSuppression  # 4:0-GDL001-OK
 
 ## Tests for Linter Suppression Mechanisms
 ## Covers:
@@ -23,7 +23,7 @@ class_name DiagnosticsTest_LinterSuppression
 # gdlint:ignore = variable-name-case
 var SuppressedBadVar1 := 1  # SUPPRESSED - no GDL003 expected
 
-var NotSuppressedBadVar1 := 2  # NOT SUPPRESSED - GDL003 expected
+var NotSuppressedBadVar1 := 2  # NOT SUPPRESSED - GDL003 expected  # 26:4-GDL003-OK
 
 
 # =============================================================================
@@ -32,7 +32,7 @@ var NotSuppressedBadVar1 := 2  # NOT SUPPRESSED - GDL003 expected
 
 var SuppressedBadVar2 := 3  # gdlint:ignore = variable-name-case  # SUPPRESSED
 
-var NotSuppressedBadVar2 := 4  # NOT SUPPRESSED - GDL003 expected
+var NotSuppressedBadVar2 := 4  # NOT SUPPRESSED - GDL003 expected  # 35:4-GDL003-OK
 
 
 # =============================================================================
@@ -45,7 +45,7 @@ var BlockSuppressedVar2 := 6  # SUPPRESSED
 var BlockSuppressedVar3 := 7  # SUPPRESSED
 # gdlint:enable = variable-name-case
 
-var AfterEnableVar := 8  # NOT SUPPRESSED - GDL003 expected
+var AfterEnableVar := 8  # NOT SUPPRESSED - GDL003 expected  # 48:4-GDL003-OK
 
 
 # =============================================================================
@@ -67,14 +67,14 @@ const suppressedConst2 = 20  # SUPPRESSED
 var MultiSuppressedVar := 100  # SUPPRESSED for GDL003
 
 # gdlint:ignore = variable-name-case, function-name-case
-func MultiSuppressedFunc() -> void:  # SUPPRESSED for GDL002
+func MultiSuppressedFunc() -> void:  # SUPPRESSED for GDL002  # 70:5-GDL203-OK
 	pass
 
 
-var MultiNotSuppressedVar := 200  # NOT SUPPRESSED - GDL003 expected
+var MultiNotSuppressedVar := 200  # NOT SUPPRESSED - GDL003 expected  # 72:1-GDL513-OK, 74:4-GDL003-OK
 
 
-func MultiNotSuppressedFunc() -> void:  # NOT SUPPRESSED - GDL002 expected
+func MultiNotSuppressedFunc() -> void:  # NOT SUPPRESSED - GDL002 expected  # 77:5-GDL002-OK, 77:5-GDL203-OK
 	pass
 
 
@@ -85,7 +85,7 @@ func MultiNotSuppressedFunc() -> void:  # NOT SUPPRESSED - GDL002 expected
 # gdlint:ignore = GDL003
 var SuppressedById := 300  # SUPPRESSED using rule ID
 
-var NotSuppressedById := 400  # NOT SUPPRESSED - GDL003 expected
+var NotSuppressedById := 400  # NOT SUPPRESSED - GDL003 expected  # 86:1-GDL513-OK, 88:4-GDL003-OK
 
 
 # =============================================================================
@@ -104,15 +104,15 @@ func test_file_level_suppression() -> void:
 # =============================================================================
 ## These lines should ALWAYS produce lint issues (used for verification)
 
-var ControlBadVar1 := 500  # GDL003 expected
-var ControlBadVar2 := 600  # GDL003 expected
+var ControlBadVar1 := 500  # GDL003 expected  # 107:4-GDL003-OK
+var ControlBadVar2 := 600  # GDL003 expected  # 108:4-GDL003-OK
 
 
-func ControlBadFunc1() -> void:  # GDL002 expected
+func ControlBadFunc1() -> void:  # GDL002 expected  # 111:5-GDL002-OK, 111:5-GDL203-OK
 	pass
 
 
-func ControlBadFunc2() -> void:  # GDL002 expected
+func ControlBadFunc2() -> void:  # GDL002 expected  # 115:5-GDL002-OK, 115:5-GDL203-OK
 	pass
 
 

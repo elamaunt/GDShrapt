@@ -203,7 +203,7 @@ internal class GDCrossFileContainerUsageCollector
                 return;
 
             // Check if the receiver type matches target class
-            var receiverType = _typeEngine?.InferType(containerAccess.CallerExpression);
+            var receiverType = _typeEngine?.InferSemanticType(containerAccess.CallerExpression);
             if (!IsTypeMatch(receiverType))
                 return;
 
@@ -230,15 +230,15 @@ internal class GDCrossFileContainerUsageCollector
                 return;
 
             // Check if the receiver type matches target class
-            var receiverType = _typeEngine?.InferType(memberAccess.CallerExpression);
+            var receiverType = _typeEngine?.InferSemanticType(memberAccess.CallerExpression);
             if (!IsTypeMatch(receiverType))
                 return;
 
             // Collect key type
             if (indexer.InnerExpression != null)
             {
-                var keyType = _typeEngine?.InferType(indexer.InnerExpression);
-                if (!string.IsNullOrEmpty(keyType) && keyType != "Variant")
+                var keyType = _typeEngine?.InferSemanticType(indexer.InnerExpression);
+                if (keyType != null && !keyType.IsVariant)
                 {
                     var token = sourceNode.AllTokens.FirstOrDefault();
                     _observations.Add(new GDContainerUsageObservation
@@ -257,8 +257,8 @@ internal class GDCrossFileContainerUsageCollector
             // Collect value type
             if (valueExpr != null)
             {
-                var valueType = _typeEngine?.InferType(valueExpr);
-                if (!string.IsNullOrEmpty(valueType) && valueType != "Variant")
+                var valueType = _typeEngine?.InferSemanticType(valueExpr);
+                if (valueType != null && !valueType.IsVariant)
                 {
                     var token = sourceNode.AllTokens.FirstOrDefault();
                     _observations.Add(new GDContainerUsageObservation
@@ -285,8 +285,8 @@ internal class GDCrossFileContainerUsageCollector
             if (valueExpr == null)
                 return;
 
-            var valueType = _typeEngine?.InferType(valueExpr);
-            if (!string.IsNullOrEmpty(valueType) && valueType != "Variant")
+            var valueType = _typeEngine?.InferSemanticType(valueExpr);
+            if (valueType != null && !valueType.IsVariant)
             {
                 var token = sourceNode.AllTokens.FirstOrDefault();
                 _observations.Add(new GDContainerUsageObservation
@@ -302,11 +302,12 @@ internal class GDCrossFileContainerUsageCollector
             }
         }
 
-        private bool IsTypeMatch(string? typeName)
+        private bool IsTypeMatch(GDSemanticType? type)
         {
-            if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+            if (type == null || type.IsVariant)
                 return false;
 
+            var typeName = type.DisplayName;
             if (typeName == _targetClassName)
                 return true;
 

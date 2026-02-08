@@ -7,7 +7,7 @@ namespace GDShrapt.Semantics;
 /// Contains information about an argument at a call site.
 /// Used for parameter type inference from usage.
 /// </summary>
-public class GDArgumentInfo
+internal class GDArgumentInfo
 {
     /// <summary>
     /// The index of this argument (0-based).
@@ -20,9 +20,9 @@ public class GDArgumentInfo
     public GDExpression? Expression { get; }
 
     /// <summary>
-    /// The inferred type of the argument.
+    /// The inferred semantic type of the argument.
     /// </summary>
-    public string? InferredType { get; }
+    public GDSemanticType? InferredType { get; }
 
     /// <summary>
     /// Whether the type inference is high confidence.
@@ -50,7 +50,7 @@ public class GDArgumentInfo
     public GDArgumentInfo(
         int index,
         GDExpression? expression,
-        string? inferredType,
+        GDSemanticType? inferredType,
         bool isHighConfidence)
     {
         Index = index;
@@ -70,7 +70,7 @@ public class GDArgumentInfo
     public GDArgumentInfo(
         int index,
         GDExpression? expression,
-        string? inferredType,
+        GDSemanticType? inferredType,
         bool isHighConfidence,
         int line,
         int column)
@@ -87,7 +87,7 @@ public class GDArgumentInfo
     public override string ToString()
     {
         var confidence = IsHighConfidence ? "high" : "low";
-        return $"arg[{Index}]: {InferredType ?? "?"} ({confidence}) @ {Line}:{Column}";
+        return $"arg[{Index}]: {InferredType?.DisplayName ?? "?"} ({confidence}) @ {Line}:{Column}";
     }
 
     /// <summary>
@@ -95,6 +95,6 @@ public class GDArgumentInfo
     /// </summary>
     public static GDArgumentInfo Unknown(int index)
     {
-        return new GDArgumentInfo(index, null, null, false, 0, 0);
+        return new GDArgumentInfo(index, null, (GDSemanticType?)null, false, 0, 0);
     }
 }

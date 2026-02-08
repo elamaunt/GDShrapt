@@ -475,14 +475,14 @@ func test(x):
 
         // Check for concrete type first
         var concreteType = context.GetConcreteType(variableName);
-        if (!string.IsNullOrEmpty(concreteType))
-            return new NarrowingResult(concreteType, concreteType != "null");
+        if (concreteType != null)
+            return new NarrowingResult(concreteType.DisplayName, concreteType.DisplayName != "null");
 
         // Check for duck type narrowing
         var duckType = context.GetNarrowedType(variableName);
         if (duckType != null && duckType.PossibleTypes.Count > 0)
         {
-            var narrowedType = duckType.PossibleTypes.First();
+            var narrowedType = duckType.PossibleTypes.First().DisplayName;
             return new NarrowingResult(narrowedType, true);
         }
 

@@ -401,7 +401,7 @@ internal class GDCompletionContextBuilder
                 // SemanticModel internally handles TypeResolver fallback for Godot API, scene nodes, etc.
                 var result = semanticModel.ResolveStandaloneExpression(parsedExpr);
                 if (result.IsResolved)
-                    return result.TypeName;
+                    return result.TypeName.DisplayName;
             }
         }
         catch (Exception ex)

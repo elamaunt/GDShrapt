@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics;
 /// Profile of Callable parameter usage within a method.
 /// Tracks call sites on Callable-typed parameters (e.g., callback.call(42)).
 /// </summary>
-public class GDMethodCallableProfile
+internal class GDMethodCallableProfile
 {
     /// <summary>
     /// Unique key for this method (ClassName.MethodName).

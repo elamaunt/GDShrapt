@@ -39,7 +39,7 @@ func process(data: Dictionary) -> void:
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("data", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("Dictionary"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("Dictionary")));
         Assert.IsTrue(diff.HasExpectedTypes);
     }
 
@@ -61,7 +61,7 @@ func process(value):
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("value", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("Player"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("Player")));
     }
 
     [TestMethod]
@@ -83,7 +83,7 @@ func process(item):
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("item", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("null"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")));
     }
 
     [TestMethod]
@@ -107,8 +107,8 @@ func process(value):
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("value", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"));
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("String"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -129,7 +129,7 @@ func process(data):
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("data", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
     }
 
     [TestMethod]
@@ -150,7 +150,7 @@ func process(entity):
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("entity", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("Node2D"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("Node2D")));
     }
 
     #endregion
@@ -172,8 +172,8 @@ var score: int = 0
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("score", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"));
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("int"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
     }
 
     [TestMethod]
@@ -191,7 +191,7 @@ var name = ""Player""
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("name", diff.SymbolName);
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("String"));
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -212,7 +212,7 @@ func test():
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("value", diff.SymbolName);
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("int"));
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
     }
 
     #endregion
@@ -241,7 +241,7 @@ func test():
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("count", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
     }
 
     [TestMethod]
@@ -265,7 +265,7 @@ func test():
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("position", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("Vector2"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("Vector2")));
     }
 
     [TestMethod]
@@ -312,8 +312,8 @@ func calculate() -> int:
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("calculate", diff.SymbolName);
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"));
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("int"));
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
         Assert.IsFalse(diff.HasMismatch);
     }
 
@@ -333,7 +333,7 @@ func get_name():
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("get_name", diff.SymbolName);
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("String"));
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -354,8 +354,8 @@ func get_value(flag: bool):
 
         Assert.IsNotNull(diff);
         Assert.AreEqual("get_value", diff.SymbolName);
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("int"));
-        Assert.IsTrue(diff.ActualTypes.Types.Contains("String"));
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(diff.ActualTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     #endregion
@@ -425,7 +425,7 @@ func process(data):
         Assert.IsNotNull(diff);
         // Without any type info, should be Unknown
         Assert.AreEqual(GDTypeConfidence.Unknown, diff.Confidence);
-        Assert.AreEqual("Variant", diff.TypeName);
+        Assert.AreEqual("Variant", diff.TypeName.DisplayName);
     }
 
     #endregion

@@ -71,7 +71,7 @@ func export_to_json() -> String:
 	return str(data)
 
 
-func import_from_json(json_string: String) -> void:
+func import_from_json(json_string: String) -> void:  # 74:5-GDL203-OK, 74:22-GDL202-OK
 	# FIXME: No error handling for invalid JSON
 	# XXX: Consider using JSON.parse_string instead
 	pass

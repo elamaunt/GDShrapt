@@ -67,7 +67,7 @@ public class GDContainerUsageProfile
         // Fill ElementUnionType from value usages
         foreach (var usage in ValueUsages)
         {
-            if (!string.IsNullOrEmpty(usage.InferredType))
+            if (usage.InferredType != null)
             {
                 result.ElementUnionType.AddType(usage.InferredType, usage.IsHighConfidence);
             }
@@ -79,7 +79,7 @@ public class GDContainerUsageProfile
             result.KeyUnionType = new GDUnionType();
             foreach (var usage in KeyUsages)
             {
-                if (!string.IsNullOrEmpty(usage.InferredType))
+                if (usage.InferredType != null)
                 {
                     result.KeyUnionType.AddType(usage.InferredType, usage.IsHighConfidence);
                 }
@@ -128,16 +128,16 @@ public class GDContainerUsageProfile
     /// <summary>
     /// Adds a value usage observation.
     /// </summary>
-    public void AddValueUsage(string? inferredType, GDContainerUsageKind kind, GDNode? node)
+    public void AddValueUsage(GDSemanticType? inferredType, GDContainerUsageKind kind, GDNode? node)
     {
-        if (string.IsNullOrEmpty(inferredType))
+        if (inferredType == null || inferredType.IsVariant)
             return;
 
         ValueUsages.Add(new GDContainerUsageObservation
         {
             Kind = kind,
             InferredType = inferredType,
-            IsHighConfidence = !string.IsNullOrEmpty(inferredType) && inferredType != "Variant",
+            IsHighConfidence = !inferredType.IsVariant,
             Node = node,
             Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
             Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
@@ -147,16 +147,16 @@ public class GDContainerUsageProfile
     /// <summary>
     /// Adds a key usage observation (for dictionaries).
     /// </summary>
-    public void AddKeyUsage(string? inferredType, GDContainerUsageKind kind, GDNode? node)
+    public void AddKeyUsage(GDSemanticType? inferredType, GDContainerUsageKind kind, GDNode? node)
     {
-        if (string.IsNullOrEmpty(inferredType))
+        if (inferredType == null || inferredType.IsVariant)
             return;
 
         KeyUsages.Add(new GDContainerUsageObservation
         {
             Kind = kind,
             InferredType = inferredType,
-            IsHighConfidence = !string.IsNullOrEmpty(inferredType) && inferredType != "Variant",
+            IsHighConfidence = !inferredType.IsVariant,
             Node = node,
             Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
             Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
@@ -177,7 +177,7 @@ public class GDContainerUsageObservation
     /// <summary>
     /// Inferred type of the value/key.
     /// </summary>
-    public string? InferredType { get; set; }
+    public GDSemanticType? InferredType { get; set; }
 
     /// <summary>
     /// Whether this type was inferred with high confidence.
@@ -207,7 +207,7 @@ public class GDContainerUsageObservation
     public override string ToString()
     {
         var confidence = IsHighConfidence ? "High" : "Low";
-        return $"[Line {Line}] {Kind}: {InferredType ?? "unknown"} ({confidence})";
+        return $"[Line {Line}] {Kind}: {InferredType?.DisplayName ?? "unknown"} ({confidence})";
     }
 }
 

@@ -191,54 +191,14 @@ public class GDIndexerValidator : GDValidationVisitor
         return false;
     }
 
-    /// <summary>
-    /// Extracts the key type from a typed Dictionary.
-    /// For example: "Dictionary[String, int]" -> "String"
-    /// </summary>
     private static string? ExtractDictionaryKeyType(string typeName)
     {
-        var bracketStart = typeName.IndexOf('[');
-        if (bracketStart < 0)
-            return null;
-
-        var bracketEnd = typeName.LastIndexOf(']');
-        if (bracketEnd <= bracketStart)
-            return null;
-
-        var typeParams = typeName.Substring(bracketStart + 1, bracketEnd - bracketStart - 1);
-
-        // Find the comma that separates key and value types
-        // Need to handle nested generics: Dictionary[Array[int], String]
-        var depth = 0;
-        for (int i = 0; i < typeParams.Length; i++)
-        {
-            var c = typeParams[i];
-            if (c == '[') depth++;
-            else if (c == ']') depth--;
-            else if (c == ',' && depth == 0)
-            {
-                return typeParams.Substring(0, i).Trim();
-            }
-        }
-
-        return null;
+        var (keyType, _) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
+        return keyType;
     }
 
-    /// <summary>
-    /// Extracts the base type name from a generic type.
-    /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
-    /// </summary>
     private static string ExtractBaseTypeName(string typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return typeName;
-
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-            return typeName.Substring(0, bracketIndex);
-
-        return typeName;
-    }
+        => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 
     private bool AreTypesCompatible(string sourceType, string targetType)
     {

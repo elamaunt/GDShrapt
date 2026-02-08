@@ -3,7 +3,7 @@ namespace GDShrapt.Semantics
     /// <summary>
     /// Result of cross-method flow analysis for a class.
     /// </summary>
-    public class GDCrossMethodFlowState
+    internal class GDCrossMethodFlowState
     {
         /// <summary>
         /// Variables guaranteed non-null after _ready() completes.

@@ -33,13 +33,21 @@ GDProjectSemanticModel (entry point)
 **Responsibility:** File-level semantic model. The main API for querying types, symbols, and references.
 
 **Public API:**
-- `GetExpressionType(GDExpression)` → `string?` — Get inferred type for expression
-- `FindSymbol(name)` → `GDSymbolInfo?` — Find symbol by name
-- `FindSymbolInScope(name, node)` → `GDSymbolInfo?` — Scope-aware symbol lookup
-- `GetReferences(symbol)` → `IReadOnlyList<GDReference>` — Get all references to a symbol
-- `GetTypeDiffForNode(node)` → `GDTypeDiff` — Get detailed type analysis
-- `GetUnionType(name)` → `GDUnionType?` — Get union type for variable
-- `GetDuckType(name)` → `GDDuckType?` — Get duck typing constraints
+- **Properties:** `ScriptFile`, `RuntimeProvider`, `TypeSystem`, `Symbols` (`IReadOnlyList<GDSymbolInfo>`, cached)
+- **Factory:** `Create(GDScriptFile, IGDRuntimeProvider)`
+- **Symbol queries:** `FindSymbol(name)`, `FindSymbols(name)` → `IReadOnlyList<GDSymbolInfo>`, `FindSymbolInScope(name, node)`
+- **Symbol at position:** `GetSymbolAtPosition(line, column)`, `GetSymbolForNode(node)`
+- **Position (delegates to GDPositionFinder):** `GetNodeAtPosition(line, column)`, `GetIdentifierAtPosition(line, column)`, `GetTokenAtPosition(line, column)`
+- **References:** `GetReferencesTo(GDSymbolInfo)`, `GetReferencesTo(string)`
+- **Symbol filters:** `GetSymbolsOfKind()`, `GetMethods()`, `GetVariables()`, `GetSignals()`, `GetConstants()`, `GetEnums()`, `GetInnerClasses()` — all return `IReadOnlyList<GDSymbolInfo>` (cached via `GDSymbolRegistry`). `GetDeclaration()`
+- **Type queries:** `GetTypeForNode(node)`, `GetExpressionType(expr)`, `GetFlowVariableType()`, `GetFlowStateAtLocation()`
+- **Union/Duck:** `GetUnionType(name)`, `GetDuckType(name)`, `ShouldSuppressDuckConstraints()`
+- **Confidence:** `GetMemberAccessConfidence()`, `GetIdentifierConfidence()`, `GetConfidenceReason()`
+- **Type inference:** `InferParameterTypes(GDMethodDeclaration)`, `GetTypeDiffForNode(node)`
+- **Standalone:** `ResolveStandaloneExpression()`
+- **Type usages:** `GetTypeUsages(typeName)`
+
+Most internal methods (scope queries, nullability, onready, cross-method flow, lambda inference, container profiles) are `internal` — accessible only within `GDShrapt.Semantics` and `GDShrapt.Semantics.ComponentTests` (via IVT).
 
 **Cycle Protection:**
 - `_expressionTypeInProgress` HashSet prevents re-entrant `GetExpressionType` calls
@@ -217,28 +225,29 @@ GDProjectSemanticModel (entry point)
 
 **Public API:**
 
+#### Properties
+- `Project` → The underlying `GDScriptProject`
+- `TypeSystem` → Project-level type system (`IGDProjectTypeSystem`)
+- `Services` → Refactoring services (`GDRefactoringServices`)
+- `Diagnostics` → Validation services (`GDDiagnosticsServices`)
+
+#### Analysis Services (via lazy properties)
+- `DeadCode` → `GDDeadCodeService` (dead code analysis)
+- `Metrics` → `GDMetricsService` (code metrics)
+- `TypeCoverage` → `GDTypeCoverageService` (type annotation coverage)
+- `Dependencies` → `GDDependencyService` (dependency analysis)
+
+#### Registries
+- `SignalConnectionRegistry` → Signal connection registry
+- `DependencyGraph` → Type dependency graph for incremental invalidation
+
 #### Factory Methods
 - `Load(projectPath)` → Sync factory
 - `LoadAsync(projectPath)` → Async factory
 
 #### Semantic Model Access
-- `GetSemanticModel(file)` → Per-file model
-- `TypeSystem` → Project-level type system (`IGDProjectTypeSystem`)
-
-#### File-Level Delegation
-- `FindSymbolInFile(file, name)` → Symbol lookup (delegates to file model)
-- `GetSymbolAt(file, line, column)` → Position-based symbol
-- `GetExpressionType(expr)` → Auto-finds file
-- `GetTypeForNode(node)` → Auto-finds file
-- `GetSymbolForNode(node)` → Auto-finds file
-
-#### Cross-File Symbol Resolution
-- `FindSymbolsInProject(name)` → Search all files
-- `FindTypeDeclarations(typeName)` → Class declarations
-
-#### Container Profiles
-- `GetMergedContainerProfile(className, variableName)` → Cross-file usages
-- `GetContainerProfilesForClass(className)` → All profiles for class
+- `GetSemanticModel(GDScriptFile)` → Per-file model
+- `GetSemanticModel(string filePath)` → Per-file model by path
 
 #### Project-Wide References
 - `GetReferencesInProject(symbol)` → All references across project
@@ -247,45 +256,26 @@ GDProjectSemanticModel (entry point)
 
 #### Call Site Queries
 - `GetCallSitesForMethod(className, methodName)` → Find callers
-- `GetCallSitesForMethod(method)` → AST overload
-- `GetCallSitesInFile(filePath)` → Calls in file
 
-#### Type Inference
-- `InferMethodReturnType(className, methodName)` → Return type
-- `InferMethodReturnType(method)` → AST overload
-- `InferParameterTypesInProject(className, methodName)` → Local analysis
-- `InferParameterTypesInProject(method)` → AST overload
-- `InferParameterTypesWithCallSites(className, methodName)` → Cross-file
-- `InferParameterTypesWithCallSites(method)` → AST overload
+#### Invalidation
+- `InvalidateFile(filePath)` → Invalidate cached model for a file
+- `InvalidateAll()` → Clear all cached models
+- `FileInvalidated` event → Notifies when a file is invalidated
 
-#### Signal Analysis
-- `SignalConnectionRegistry` → Registry access
-- `GetSignalsCallingMethod(className, methodName)` → Signals for callback
-- `GetSignalsCallingMethod(method)` → AST overload
-- `GetCallbacksForSignal(emitterType, signalName)` → Signal handlers
-- `InferCallbackParameterTypes(className, methodName)` → From signals
-- `InferCallbackParameterTypes(method)` → AST overload
+#### Lifecycle
+- `Dispose()` → Clean up resources
 
-#### Helper Methods
-- `FindFileContaining(node)` → Find file for AST node
-
-#### Services
-- `Services` → Refactoring services
-- `Diagnostics` → Validation services
-- `DependencyGraph` → Type dependency graph
+All other methods (cross-file symbol resolution, type inference, signal queries, file-level delegation, container profiles) are `internal` — accessible only within `GDShrapt.Semantics` and `GDShrapt.Semantics.ComponentTests` (via IVT).
 
 **Caching:**
-- `_fileModels` — Caches per-file semantic models
-- `InvalidateFile(path)` — Invalidates cache on change
+- `_fileModels` — Thread-safe concurrent dictionary of per-file semantic models
+- All lazy properties use `Lazy<T>` with `LazyThreadSafetyMode.PublicationOnly` for thread safety:
+  `Services`, `Diagnostics`, `TypeSystem`, `DeadCode`, `Metrics`, `TypeCoverage`, `Dependencies`,
+  `SignalConnectionRegistry`, `ContainerRegistry`, `DependencyGraph`
 
-**Cross-File Features:**
-- Call site analysis via `GDCallSiteRegistry`
-- Signal connection tracking
-- Inference order computation (handles cycles)
-- Container profile merging from multiple files
-
-**AST Overloads:**
-All methods accepting `(className, methodName)` have overloads accepting `GDMethodDeclaration` for precise identification when the AST node is available
+**Return conventions:**
+- Collection methods (`GetReferencesInFile`, `GetReferencesInProject`, etc.) return empty collections, never null
+- Single-item queries return null for "not found"
 
 ---
 
@@ -303,10 +293,8 @@ Represents a reference to a symbol:
 - `IsRead`, `IsWrite`
 - `Confidence`, `InferredType`
 
-### GDCallSiteInfo
-Information about a function call site:
-- `CallerMethod`, `CallExpression`
-- `ArgumentTypes[]`
+### GDCallSiteInfo (internal)
+Information about a function call site. Internal to the assembly.
 
 ### GDReturnInfo
 Information about a return expression:
@@ -494,6 +482,17 @@ Tests are organized in `GDShrapt.Semantics.Tests/`:
 - `Level4_CrossMethod/` — Cross-method, cycles
 - `Level5_CrossFile/` — Cross-file inference
 - `Level6_Inheritance/` — Inheritance and base types
+- `TernaryTypeInferenceTests.cs` — Ternary `x if cond else y` type inference
+- `StaticVarTypeInferenceTests.cs` — `static var` type inference
+- `StringInterpolationTypeTests.cs` — String format `%` operator type
+- `ConstTypeInferenceTests.cs` — `const` declaration type from initializer
+
+### Analysis/
+- `PositionQueryTests.cs` — `GetNodeAtPosition`, `GetIdentifierAtPosition`, `GetTokenAtPosition`
+- `DeclarationEnumerationTests.cs` — `GetEnums`, `GetInnerClasses`, `GetDeclaration`, `ResolveStandaloneExpression`
+
+### ComponentTests/Analysis/
+- `ProjectSearchTests.cs` — `GetReferencesInProject`, `GetMemberAccessesInProject`, `GetReferencesInFile`, `GetCallSitesForMethod`
 
 ### Validation/
 - `Level0_SingleFile/` — Basic assignments, member access

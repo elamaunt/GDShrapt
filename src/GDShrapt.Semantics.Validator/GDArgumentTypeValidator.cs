@@ -114,7 +114,7 @@ namespace GDShrapt.Semantics.Validator
                 else if (expectedUnion != null && !expectedUnion.IsEmpty)
                 {
                     // For union types, we'll be more lenient - only report if no types match
-                    expectedType = expectedUnion.EffectiveType;
+                    expectedType = expectedUnion.EffectiveType.DisplayName;
                 }
 
                 if (string.IsNullOrEmpty(expectedType) || expectedType == "Variant")
@@ -188,13 +188,13 @@ namespace GDShrapt.Semantics.Validator
             if (expectedUnion != null && !expectedUnion.IsEmpty)
             {
                 // If actual type is in the union, it's compatible
-                if (expectedUnion.Types.Contains(actualType))
+                if (expectedUnion.Types.Any(t => t.DisplayName == actualType))
                     return true;
 
                 // Check inheritance for each type in union
                 foreach (var unionType in expectedUnion.Types)
                 {
-                    if (IsInheritanceCompatible(actualType, unionType))
+                    if (IsInheritanceCompatible(actualType, unionType.DisplayName))
                         return true;
                 }
             }

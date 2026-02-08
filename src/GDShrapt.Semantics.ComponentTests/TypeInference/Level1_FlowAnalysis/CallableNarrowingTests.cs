@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
@@ -37,7 +38,7 @@ func test(cb: Callable):
         // Assert - cb should be narrowed to valid (non-null) state
         var narrowedType = narrowingContext.GetNarrowedType("cb");
         Assert.IsNotNull(narrowedType, "cb should have narrowed type info after is_valid() check");
-        Assert.IsTrue(narrowedType.IsValidated || narrowedType.ConcreteType == "ValidCallable" ||
+        Assert.IsTrue(narrowedType.IsValidated || narrowedType.ConcreteType?.DisplayName == "ValidCallable" ||
                       !narrowedType.MayBeNull,
             "cb should be marked as validated/non-null after is_valid() check");
     }
@@ -99,7 +100,7 @@ func test(cb: Callable):
         var narrowedType = narrowingContext.GetNarrowedType("cb");
 
         // Either concrete type is "null" or narrowed type indicates null
-        Assert.IsTrue(concreteType == "null" ||
+        Assert.IsTrue(concreteType?.DisplayName == "null" ||
                       (narrowedType != null && narrowedType.MayBeNull),
             "cb should be narrowed to null after is_null() returns true");
     }
@@ -210,7 +211,7 @@ func test(cb: Callable):
         var concreteType = narrowingContext.GetConcreteType("cb");
         var narrowedType = narrowingContext.GetNarrowedType("cb");
 
-        Assert.IsTrue(concreteType == "null" ||
+        Assert.IsTrue(concreteType?.DisplayName == "null" ||
                       (narrowedType != null && narrowedType.MayBeNull),
             "cb should be narrowed to null/invalid after 'not cb' check");
     }

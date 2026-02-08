@@ -3,7 +3,7 @@ using GDShrapt.Reader;
 using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace GDShrapt.Semantics.Tests.Analysis.CrossMethod;
+namespace GDShrapt.Semantics.ComponentTests.Analysis.CrossMethod;
 
 [TestClass]
 public class CrossMethodFlowAnalysisTests

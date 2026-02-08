@@ -28,7 +28,7 @@ func attack(target: Node2D) -> void:
 	# TODO: Add attack animation and sound effects
 	# FIXME: Should validate target is not self
 	if target.has_method("take_damage"):
-		target.call("take_damage", 10 + combo_count)
+		target.call("take_damage", 10 + combo_count)  # 31:2-GD7015-OK
 		combo_count += 1
 
 
@@ -54,5 +54,5 @@ class InnerClass:
 	func increment() -> void:
 		value += 1
 
-	func get_value() -> int:
+	func get_value() -> int:  # 57:1-GDL513-OK
 		return value

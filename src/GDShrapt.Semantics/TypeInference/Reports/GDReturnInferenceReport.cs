@@ -18,7 +18,7 @@ internal class GDReturnInferenceReport
     /// <summary>
     /// Whether the method has an explicit return type annotation.
     /// </summary>
-    public bool HasExplicitType => !string.IsNullOrEmpty(ExplicitType) && ExplicitType != "Variant";
+    public bool HasExplicitType => !string.IsNullOrEmpty(ExplicitType) && ExplicitType != GDWellKnownTypes.Variant;
 
     /// <summary>
     /// The inferred Union type from return statements.
@@ -43,7 +43,7 @@ internal class GDReturnInferenceReport
             if (InferredUnionType != null && !InferredUnionType.IsEmpty)
                 return InferredUnionType.ToString();
 
-            return "Variant";
+            return GDWellKnownTypes.Variant;
         }
     }
 

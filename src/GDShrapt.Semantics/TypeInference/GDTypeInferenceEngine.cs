@@ -98,13 +98,6 @@ namespace GDShrapt.Semantics
             => _memberResolver.FindMember(typeName, memberName);
 
         /// <summary>
-        /// Extracts the base type name from a generic type.
-        /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
-        /// </summary>
-        private static string ExtractBaseTypeName(string typeName)
-            => GDMemberResolver.ExtractBaseTypeName(typeName);
-
-        /// <summary>
         /// For Variant callers, tries to find a method in common GDScript types.
         /// This handles cases like item.to_upper() where item is Variant but we can
         /// still infer the return type based on the method name.
@@ -191,8 +184,8 @@ namespace GDShrapt.Semantics
                 "key" => containerInfo.KeyType,
                 "value" => containerInfo.ValueType,
                 "self" => callerType,
-                "keys_array" => !string.IsNullOrEmpty(containerInfo.KeyType) ? $"Array[{containerInfo.KeyType}]" : "Array",
-                "values_array" => !string.IsNullOrEmpty(containerInfo.ValueType) ? $"Array[{containerInfo.ValueType}]" : "Array",
+                "keys_array" => GDGenericTypeHelper.CreateArrayType(containerInfo.KeyType),
+                "values_array" => GDGenericTypeHelper.CreateArrayType(containerInfo.ValueType),
                 "callable_return_array" => null,
                 _ => null
             };
@@ -203,70 +196,39 @@ namespace GDShrapt.Semantics
         /// </summary>
         private ContainerTypeInfo? ExtractContainerTypeInfo(string callerType, GDExpression? callerExpr)
         {
-            // Handle typed Array: Array[int] -> element=int
-            if (callerType.StartsWith("Array[") && callerType.EndsWith("]"))
-            {
-                var elementType = callerType.Substring(6, callerType.Length - 7);
-                return new ContainerTypeInfo { ElementType = elementType };
-            }
-
-            // Handle typed Dictionary: Dictionary[String, int] -> key=String, value=int
-            if (callerType.StartsWith("Dictionary[") && callerType.EndsWith("]"))
-            {
-                var inner = callerType.Substring(11, callerType.Length - 12);
-                var commaIndex = FindTopLevelComma(inner);
-                if (commaIndex > 0)
-                {
-                    var keyType = inner.Substring(0, commaIndex).Trim();
-                    var valueType = inner.Substring(commaIndex + 1).Trim();
-                    return new ContainerTypeInfo { KeyType = keyType, ValueType = valueType, ElementType = valueType };
-                }
-            }
+            var info = TryExtractContainerInfo(callerType);
+            if (info != null)
+                return info;
 
             // For untyped containers, try to infer from the expression
             if (callerType == "Array" && callerExpr != null)
             {
-                var inferredType = InferType(callerExpr);
-                if (inferredType != null && inferredType.StartsWith("Array[") && inferredType.EndsWith("]"))
-                {
-                    var elementType = inferredType.Substring(6, inferredType.Length - 7);
-                    return new ContainerTypeInfo { ElementType = elementType };
-                }
+                var inferredType = InferTypeNode(callerExpr)?.BuildName();
+                if (inferredType != null)
+                    return TryExtractContainerInfo(inferredType);
             }
 
             if (callerType == "Dictionary" && callerExpr != null)
             {
-                var inferredType = InferType(callerExpr);
-                if (inferredType != null && inferredType.StartsWith("Dictionary[") && inferredType.EndsWith("]"))
-                {
-                    var inner = inferredType.Substring(11, inferredType.Length - 12);
-                    var commaIndex = FindTopLevelComma(inner);
-                    if (commaIndex > 0)
-                    {
-                        var keyType = inner.Substring(0, commaIndex).Trim();
-                        var valueType = inner.Substring(commaIndex + 1).Trim();
-                        return new ContainerTypeInfo { KeyType = keyType, ValueType = valueType, ElementType = valueType };
-                    }
-                }
+                var inferredType = InferTypeNode(callerExpr)?.BuildName();
+                if (inferredType != null)
+                    return TryExtractContainerInfo(inferredType);
             }
 
             return null;
         }
 
-        /// <summary>
-        /// Finds the top-level comma in a type string (not nested in brackets).
-        /// </summary>
-        private static int FindTopLevelComma(string str)
+        private static ContainerTypeInfo? TryExtractContainerInfo(string typeName)
         {
-            var depth = 0;
-            for (int i = 0; i < str.Length; i++)
-            {
-                var c = str[i];
-                if (c == '[') depth++;
-                else if (c == ']') depth--;
-                else if (c == ',' && depth == 0) return i;
-            }
-            return -1;
+            var elementType = GDGenericTypeHelper.ExtractArrayElementType(typeName);
+            if (elementType != null)
+                return new ContainerTypeInfo { ElementType = elementType };
+
+            var (keyType, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
+            if (keyType != null && valueType != null)
+                return new ContainerTypeInfo { KeyType = keyType, ValueType = valueType, ElementType = valueType };
+
+            return null;
         }
 
         /// <summary>
@@ -291,7 +253,7 @@ namespace GDShrapt.Semantics
 
             return funcInfo.ReturnTypeRole switch
             {
-                "first_arg" => InferType(args[0]),
+                "first_arg" => InferTypeNode(args[0])?.BuildName(),
                 "common_arg" => GetCommonArgumentType(args),
                 "common_two" => GetCommonArgumentType(args.Take(2).ToList()),
                 _ => null
@@ -307,21 +269,21 @@ namespace GDShrapt.Semantics
             if (args.Count == 0)
                 return null;
 
-            var firstType = InferType(args[0]);
-            if (string.IsNullOrEmpty(firstType) || firstType == "Variant")
-                return "Variant";
+            var firstType = InferTypeNode(args[0])?.BuildName();
+            if (string.IsNullOrEmpty(firstType) || firstType == GDWellKnownTypes.Variant)
+                return GDWellKnownTypes.Variant;
 
             var commonType = firstType;
 
             for (int i = 1; i < args.Count; i++)
             {
-                var argType = InferType(args[i]);
-                if (string.IsNullOrEmpty(argType) || argType == "Variant")
-                    return "Variant";
+                var argType = InferTypeNode(args[i])?.BuildName();
+                if (string.IsNullOrEmpty(argType) || argType == GDWellKnownTypes.Variant)
+                    return GDWellKnownTypes.Variant;
 
                 commonType = PromoteTypes(commonType, argType);
-                if (commonType == "Variant")
-                    return "Variant";
+                if (commonType == GDWellKnownTypes.Variant)
+                    return GDWellKnownTypes.Variant;
             }
 
             return commonType;
@@ -336,20 +298,19 @@ namespace GDShrapt.Semantics
             if (type1 == type2)
                 return type1;
 
-            // Numeric promotion: int → float
-            if ((type1 == "int" && type2 == "float") || (type1 == "float" && type2 == "int"))
-                return "float";
+            var promoted = GDTypeCompatibility.ResolveNumericPromotion(type1, type2);
+            if (promoted != null)
+                return promoted;
 
             // Vector types must match exactly
             if (type1.StartsWith("Vector") && type2.StartsWith("Vector"))
-                return "Variant"; // Different vector types
+                return GDWellKnownTypes.Variant;
 
-            // Color types
-            if (type1 == "Color" && type2 == "Color")
-                return "Color";
+            if (type1 == GDWellKnownTypes.Other.Color && type2 == GDWellKnownTypes.Other.Color)
+                return GDWellKnownTypes.Other.Color;
 
             // Incompatible types
-            return "Variant";
+            return GDWellKnownTypes.Variant;
         }
 
         /// <summary>
@@ -405,7 +366,7 @@ namespace GDShrapt.Semantics
         /// Gets the container type analyzer (Array/Dictionary analysis).
         /// </summary>
         private GDContainerTypeAnalyzer ContainerAnalyzer =>
-            _containerAnalyzer ??= new GDContainerTypeAnalyzer(_scopes, InferType);
+            _containerAnalyzer ??= new GDContainerTypeAnalyzer(_scopes, expr => InferTypeNode(expr)?.BuildName());
 
         /// <summary>
         /// Gets the signal type analyzer (signals and await).
@@ -414,7 +375,7 @@ namespace GDShrapt.Semantics
             _signalAnalyzer ??= new GDSignalTypeAnalyzer(
                 _typeInjector,
                 _injectionContext,
-                InferType,
+                expr => InferTypeNode(expr)?.BuildName(),
                 FindMemberWithInheritance);
 
         /// <summary>
@@ -422,26 +383,27 @@ namespace GDShrapt.Semantics
         /// </summary>
         private GDMethodReturnTypeAnalyzer MethodReturnAnalyzer =>
             _methodReturnAnalyzer ??= new GDMethodReturnTypeAnalyzer(
-                InferType,
+                expr => InferTypeNode(expr)?.BuildName(),
                 InferTypeNode,
                 InferCallType);
 
         #endregion
 
         /// <summary>
-        /// Infers the type of an expression as a string.
-        /// Returns null if the type cannot be determined.
-        /// For lambda expressions, returns the full semantic Callable type with signature.
+        /// Infers the structural semantic type of an expression.
+        /// Returns GDContainerSemanticType for Array[T]/Dictionary[K,V],
+        /// GDCallableSemanticType for lambdas, GDSimpleSemanticType for simple types.
         /// </summary>
-        public string InferType(GDExpression expression)
+        public GDSemanticType InferSemanticType(GDExpression expression)
         {
-            // Special handling for lambda expressions - return full semantic type
-            if (expression is GDMethodExpression lambda)
-            {
-                return InferLambdaSemanticType(lambda);
-            }
+            if (expression == null)
+                return GDVariantSemanticType.Instance;
 
-            return InferTypeNode(expression)?.BuildName();
+            if (expression is GDMethodExpression lambda)
+                return GDSemanticType.FromRuntimeTypeName(InferLambdaSemanticType(lambda));
+
+            var typeNode = InferTypeNode(expression);
+            return GDSemanticType.FromTypeNode(typeNode);
         }
 
         /// <summary>
@@ -633,9 +595,9 @@ namespace GDShrapt.Semantics
                         if (inferredType != null && inferredType.HasElementTypes)
                         {
                             var effectiveType = inferredType.EffectiveElementType;
-                            if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant")
+                            if (!effectiveType.IsVariant)
                             {
-                                return CreateSimpleType(effectiveType);
+                                return CreateSimpleType(effectiveType.DisplayName);
                             }
                         }
                     }
@@ -648,7 +610,7 @@ namespace GDShrapt.Semantics
             // For PackedArrays (PackedByteArray, PackedInt32Array, etc.)
             if (!string.IsNullOrEmpty(containerType))
             {
-                var elementType = GetPackedArrayElementType(containerType);
+                var elementType = GDPackedArrayTypes.GetElementType(containerType);
                 if (elementType != null)
                 {
                     return CreateSimpleType(elementType);
@@ -671,41 +633,11 @@ namespace GDShrapt.Semantics
         }
 
         /// <summary>
-        /// Gets the element type for packed array types.
-        /// </summary>
-        private static string GetPackedArrayElementType(string packedArrayType)
-        {
-            switch (packedArrayType)
-            {
-                case "PackedByteArray":
-                    return "int";
-                case "PackedInt32Array":
-                    return "int";
-                case "PackedInt64Array":
-                    return "int";
-                case "PackedFloat32Array":
-                    return "float";
-                case "PackedFloat64Array":
-                    return "float";
-                case "PackedStringArray":
-                    return "String";
-                case "PackedVector2Array":
-                    return "Vector2";
-                case "PackedVector3Array":
-                    return "Vector3";
-                case "PackedColorArray":
-                    return "Color";
-                default:
-                    return null;
-            }
-        }
-
-        /// <summary>
         /// Creates a Variant type node.
         /// </summary>
         private static GDTypeNode CreateVariantTypeNode()
         {
-            return new GDSingleTypeNode { Type = new GDType { Sequence = "Variant" } };
+            return new GDSingleTypeNode { Type = new GDType { Sequence = GDWellKnownTypes.Variant } };
         }
 
         private GDTypeNode InferIdentifierTypeNode(GDIdentifierExpression identExpr)
@@ -714,25 +646,16 @@ namespace GDShrapt.Semantics
             if (string.IsNullOrEmpty(name))
                 return null;
 
-            // Check built-in constants
-            switch (name)
+            if (GDWellKnownTypes.BuiltinIdentifierTypes.TryGetValue(name, out var builtinType))
+                return CreateSimpleType(builtinType);
+
+            if (name == GDWellKnownTypes.Self)
+                return CreateSimpleType(GDWellKnownTypes.Self);
+
+            if (name == "super")
             {
-                case "true":
-                case "false":
-                    return CreateSimpleType("bool");
-                case "null":
-                    return CreateSimpleType("null");
-                case "PI":
-                case "TAU":
-                case "INF":
-                case "NAN":
-                    return CreateSimpleType("float");
-                case "self":
-                    return CreateSimpleType("self");
-                case "super":
-                    // super refers to the parent class type
-                    var parentType = GetParentClassType(identExpr);
-                    return CreateSimpleType(parentType ?? "RefCounted");
+                var parentType = GetParentClassType(identExpr);
+                return CreateSimpleType(parentType ?? GDWellKnownTypes.RefCounted);
             }
 
             // Check narrowing context first (type guards like "if x is Type:")
@@ -864,6 +787,11 @@ namespace GDShrapt.Semantics
             var globalClass = _runtimeProvider.GetGlobalClass(name);
             if (globalClass != null)
                 return CreateSimpleType(name);
+
+            // Check global functions (built-ins like print, max, min, str, range)
+            var globalFunc = _runtimeProvider.GetGlobalFunction(name);
+            if (globalFunc != null)
+                return CreateSimpleType("Callable");
 
             // AST fallback: search for local variable declaration by walking up the AST
             // This handles cases when scope is not populated (e.g., direct type engine usage)
@@ -1002,6 +930,22 @@ namespace GDShrapt.Semantics
                             }
                         }
                     }
+
+                    // Check inherited methods from base class (implicit self call)
+                    var classDecl = callExpr.RootClassDeclaration;
+                    if (classDecl != null)
+                    {
+                        var baseTypeName = GetClassBaseType(classDecl);
+                        if (!string.IsNullOrEmpty(baseTypeName))
+                        {
+                            var memberInfo = FindMemberWithInheritance(baseTypeName, funcName);
+                            if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
+                            {
+                                var returnType = ApplyReturnTypeRole(memberInfo, baseTypeName, identExpr);
+                                return returnType ?? memberInfo.Type;
+                            }
+                        }
+                    }
                 }
             }
             // Chained call: obj.method1().method2() - inner call is also a GDCallExpression
@@ -1026,9 +970,9 @@ namespace GDShrapt.Semantics
                 var methodName = memberExpr.Identifier?.Sequence;
 
                 // Handle .new() constructor - returns the class type itself
-                if (methodName == GDTypeInferenceConstants.ConstructorMethodName)
+                if (methodName == GDWellKnownFunctions.Constructor)
                 {
-                    var constructorType = InferType(memberExpr.CallerExpression);
+                    var constructorType = InferTypeNode(memberExpr.CallerExpression)?.BuildName();
                     if (!string.IsNullOrEmpty(constructorType))
                     {
                         // Verify it's a valid class type that can be instantiated
@@ -1051,7 +995,7 @@ namespace GDShrapt.Semantics
                 }
                 else
                 {
-                    callerType = InferType(memberExpr.CallerExpression);
+                    callerType = InferTypeNode(memberExpr.CallerExpression)?.BuildName();
                 }
 
                 if (!string.IsNullOrEmpty(methodName))
@@ -1101,7 +1045,7 @@ namespace GDShrapt.Semantics
 
                     // For unknown/Variant caller type, try to find the method in common types
                     // This handles cases like item.to_upper() or item.keys() where item is Variant or untyped parameter
-                    if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
+                    if (string.IsNullOrEmpty(callerType) || callerType == GDWellKnownTypes.Variant)
                     {
                         var fallbackType = FindMethodReturnTypeInCommonTypes(methodName);
                         if (!string.IsNullOrEmpty(fallbackType))
@@ -1192,7 +1136,7 @@ namespace GDShrapt.Semantics
                 return null; // Dynamic method name - cannot resolve
 
             // If caller type is known, look up the method
-            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
+            if (!string.IsNullOrEmpty(callerType) && callerType != GDWellKnownTypes.Variant)
             {
                 var memberInfo = FindMemberWithInheritance(callerType, targetMethodName);
                 if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
@@ -1257,13 +1201,13 @@ namespace GDShrapt.Semantics
         /// Returns a semantic type like Callable[[int, String], bool] for internal analysis.
         /// Note: GDTypeNode.BuildName() will return just "Callable" since GDScript
         /// doesn't have syntax for Callable generic parameters.
-        /// Use InferType() to get the full semantic type string.
+        /// Use InferSemanticType() to get the full semantic type.
         /// </summary>
         private GDTypeNode InferLambdaTypeWithSignature(GDMethodExpression lambda)
         {
             // For GDTypeNode we can only return simple Callable since the parser
             // doesn't support Callable[[params], return] syntax.
-            // The full semantic type is available via InferType() -> InferLambdaSemanticType()
+            // The full semantic type is available via InferSemanticType() -> InferLambdaSemanticType()
             return CreateSimpleType("Callable");
         }
 
@@ -1294,7 +1238,7 @@ namespace GDShrapt.Semantics
                     else if (param.DefaultValue != null)
                     {
                         // Infer type from default value
-                        var inferredType = InferType(param.DefaultValue);
+                        var inferredType = InferTypeNode(param.DefaultValue)?.BuildName();
                         if (!string.IsNullOrEmpty(inferredType) && inferredType != "null")
                         {
                             hasTypedParams = true;
@@ -1302,7 +1246,7 @@ namespace GDShrapt.Semantics
                         }
                         else
                         {
-                            paramTypes.Add("Variant");
+                            paramTypes.Add(GDWellKnownTypes.Variant);
                         }
                     }
                     else
@@ -1348,7 +1292,7 @@ namespace GDShrapt.Semantics
         {
             var paramName = param.Identifier?.Sequence;
             if (string.IsNullOrEmpty(paramName))
-                return "Variant";
+                return GDWellKnownTypes.Variant;
 
             var paramIndex = GetParameterIndex(lambda, param);
 
@@ -1397,14 +1341,15 @@ namespace GDShrapt.Semantics
             {
                 // Single type
                 if (result.UnionTypes.Count == 1)
-                    return result.UnionTypes[0];
+                    return result.UnionTypes[0].DisplayName;
 
                 // Union type: "Array | Dictionary"
-                return string.Join(" | ", result.UnionTypes);
+                return string.Join(" | ", result.UnionTypes.Select(t => t.DisplayName));
             }
 
             // Fall back to TypeName or null
-            return !string.IsNullOrEmpty(result.TypeName) ? result.TypeName : null;
+            var typeName = result.TypeName.DisplayName;
+            return !string.IsNullOrEmpty(typeName) ? typeName : null;
         }
 
         /// <summary>
@@ -1432,7 +1377,7 @@ namespace GDShrapt.Semantics
         {
             // Both null -> Variant
             if (string.IsNullOrEmpty(callSiteType) && string.IsNullOrEmpty(bodyType))
-                return "Variant";
+                return GDWellKnownTypes.Variant;
 
             // One null -> use the other
             if (string.IsNullOrEmpty(callSiteType))
@@ -1441,13 +1386,13 @@ namespace GDShrapt.Semantics
                 return callSiteType;
 
             // Both "Variant" -> Variant
-            if (callSiteType == "Variant" && bodyType == "Variant")
-                return "Variant";
+            if (callSiteType == GDWellKnownTypes.Variant && bodyType == GDWellKnownTypes.Variant)
+                return GDWellKnownTypes.Variant;
 
             // One is Variant -> use the other
-            if (callSiteType == "Variant")
+            if (callSiteType == GDWellKnownTypes.Variant)
                 return bodyType;
-            if (bodyType == "Variant")
+            if (bodyType == GDWellKnownTypes.Variant)
                 return callSiteType;
 
             // Same type -> use it
@@ -1479,12 +1424,12 @@ namespace GDShrapt.Semantics
 
                     if (string.IsNullOrEmpty(typeName) && param.DefaultValue != null)
                     {
-                        typeName = InferType(param.DefaultValue);
+                        typeName = InferTypeNode(param.DefaultValue)?.BuildName();
                     }
 
                     if (string.IsNullOrEmpty(typeName) || typeName == "null")
                     {
-                        typeName = "Variant";
+                        typeName = GDWellKnownTypes.Variant;
                     }
 
                     paramParts.Add($"{paramName}: {typeName}");
@@ -1517,12 +1462,12 @@ namespace GDShrapt.Semantics
 
                 if (string.IsNullOrEmpty(typeName) && param.DefaultValue != null)
                 {
-                    typeName = InferType(param.DefaultValue);
+                    typeName = InferTypeNode(param.DefaultValue)?.BuildName();
                 }
 
                 if (string.IsNullOrEmpty(typeName) || typeName == "null")
                 {
-                    typeName = "Variant";
+                    typeName = GDWellKnownTypes.Variant;
                 }
 
                 types.Add(typeName);
@@ -1612,7 +1557,7 @@ namespace GDShrapt.Semantics
         private string InferMemberType(GDMemberOperatorExpression memberExpr)
         {
             var memberName = memberExpr.Identifier?.Sequence;
-            var callerType = InferType(memberExpr.CallerExpression);
+            var callerType = InferTypeNode(memberExpr.CallerExpression)?.BuildName();
 
             if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(memberName))
             {
@@ -1634,11 +1579,11 @@ namespace GDShrapt.Semantics
             if (opType == GDDualOperatorType.As)
             {
                 var typeName = GetTypeNameFromExpression(dualOp.RightExpression);
-                return typeName ?? "Variant";
+                return typeName ?? GDWellKnownTypes.Variant;
             }
 
-            var leftType = InferType(dualOp.LeftExpression);
-            var rightType = InferType(dualOp.RightExpression);
+            var leftType = InferTypeNode(dualOp.LeftExpression)?.BuildName();
+            var rightType = InferTypeNode(dualOp.RightExpression)?.BuildName();
 
             // Delegate to the centralized operator type resolver
             return GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
@@ -1659,7 +1604,7 @@ namespace GDShrapt.Semantics
             {
                 // Try to extract type node from expression
                 var typeNode = GetTypeNodeFromExpression(dualOp.RightExpression);
-                return typeNode ?? CreateSimpleType("Variant");
+                return typeNode ?? CreateSimpleType(GDWellKnownTypes.Variant);
             }
 
             // Infer operand types as GDTypeNode directly
@@ -1761,7 +1706,7 @@ namespace GDShrapt.Semantics
             if (opType == null)
                 return null;
 
-            var operandType = InferType(singleOp.TargetExpression);
+            var operandType = InferTypeNode(singleOp.TargetExpression)?.BuildName();
 
             // Delegate to the centralized operator type resolver
             return GDOperatorTypeResolver.ResolveSingleOperatorType(opType.Value, operandType);
@@ -1940,7 +1885,7 @@ namespace GDShrapt.Semantics
                 }
                 else
                 {
-                    type = InferType(expression);
+                    type = InferTypeNode(expression)?.BuildName();
                 }
             }
             // Handle declarations
@@ -1967,7 +1912,7 @@ namespace GDShrapt.Semantics
                     }
                     else
                     {
-                        type = InferType(varDecl.Initializer);
+                        type = InferTypeNode(varDecl.Initializer)?.BuildName();
                     }
                 }
             }
@@ -1994,7 +1939,7 @@ namespace GDShrapt.Semantics
                     }
                     else
                     {
-                        type = InferType(varStmt.Initializer);
+                        type = InferTypeNode(varStmt.Initializer)?.BuildName();
                     }
                 }
             }
@@ -2002,7 +1947,7 @@ namespace GDShrapt.Semantics
             {
                 type = paramDecl.Type?.BuildName();
                 if (string.IsNullOrEmpty(type) && paramDecl.DefaultValue != null)
-                    type = InferType(paramDecl.DefaultValue);
+                    type = InferTypeNode(paramDecl.DefaultValue)?.BuildName();
             }
             else if (node is GDMethodDeclaration methodDecl)
             {
@@ -2030,7 +1975,7 @@ namespace GDShrapt.Semantics
                     foreach (var param in parameters)
                     {
                         var paramName = param.Identifier?.Sequence ?? "?";
-                        var paramType = param.Type?.BuildName() ?? "Variant";
+                        var paramType = param.Type?.BuildName() ?? GDWellKnownTypes.Variant;
                         paramStrings.Add($"{paramName}: {paramType}");
                     }
                     type = $"Signal({string.Join(", ", paramStrings)})";
@@ -2051,11 +1996,11 @@ namespace GDShrapt.Semantics
             // Handle return expression
             else if (node is GDReturnExpression returnExpr)
             {
-                type = returnExpr.Expression != null ? InferType(returnExpr.Expression) : "void";
+                type = returnExpr.Expression != null ? InferTypeNode(returnExpr.Expression)?.BuildName() : "void";
             }
             else if (node is GDExpressionStatement exprStmt)
             {
-                type = InferType(exprStmt.Expression);
+                type = InferTypeNode(exprStmt.Expression)?.BuildName();
             }
 
             // Cache and return
@@ -2150,7 +2095,7 @@ namespace GDShrapt.Semantics
                 {
                     if (targetNode == dualOp.RightExpression)
                     {
-                        return InferType(dualOp.LeftExpression);
+                        return InferTypeNode(dualOp.LeftExpression)?.BuildName();
                     }
                 }
             }
@@ -2245,7 +2190,7 @@ namespace GDShrapt.Semantics
             else if (caller is GDMemberOperatorExpression memberExpr)
             {
                 var methodName = memberExpr.Identifier?.Sequence;
-                var callerType = InferType(memberExpr.CallerExpression);
+                var callerType = InferTypeNode(memberExpr.CallerExpression)?.BuildName();
 
                 if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(methodName))
                 {

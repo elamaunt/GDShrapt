@@ -3,7 +3,7 @@ namespace GDShrapt.Semantics
     /// <summary>
     /// Summary of flow state for a method. Used for cross-method analysis.
     /// </summary>
-    public class GDMethodFlowSummary
+    internal class GDMethodFlowSummary
     {
         /// <summary>
         /// Method key in format "ClassName.MethodName"
@@ -49,7 +49,7 @@ namespace GDShrapt.Semantics
     /// <summary>
     /// State of a variable at method exit.
     /// </summary>
-    public class GDExitVariableState
+    internal class GDExitVariableState
     {
         /// <summary>
         /// Whether the variable is guaranteed non-null at exit.
@@ -75,7 +75,7 @@ namespace GDShrapt.Semantics
     /// <summary>
     /// Describes which branches of code initialize a variable.
     /// </summary>
-    public enum GDInitializationBranches
+    internal enum GDInitializationBranches
     {
         /// <summary>
         /// Variable is not initialized in this method.

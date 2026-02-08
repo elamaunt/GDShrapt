@@ -29,11 +29,11 @@ func bad_spacing(x:int,y:int,z:int)->int:
 
 
 func inconsistent_operators():
-	var a=10+5
-	var b = 20-10
-	var c=30 * 2
-	var d = 40/ 4
-	var e=a+b-c*d
+	var a=10+5  # 32:5-GDL211-OK
+	var b = 20-10  # 33:5-GDL211-OK
+	var c=30 * 2  # 34:5-GDL211-OK
+	var d = 40/ 4  # 35:5-GDL211-OK
+	var e=a+b-c*d  # 36:5-GDL211-OK
 	return e
 
 
@@ -64,8 +64,8 @@ func function_call_spacing():
 	return result
 
 
-func long_line_test(parameter_one: int, parameter_two: String, parameter_three: float, parameter_four: Array, parameter_five: Dictionary) -> Dictionary:
-	return {"param1": parameter_one, "param2": parameter_two, "param3": parameter_three, "param4": parameter_four, "param5": parameter_five}
+func long_line_test(parameter_one: int, parameter_two: String, parameter_three: float, parameter_four: Array, parameter_five: Dictionary) -> Dictionary:  # 67:0-GDL101-OK
+	return {"param1": parameter_one, "param2": parameter_two, "param3": parameter_three, "param4": parameter_four, "param5": parameter_five}  # 68:0-GDL101-OK
 
 
 func ternary_formatting(condition:bool)->int:
@@ -74,7 +74,7 @@ func ternary_formatting(condition:bool)->int:
 
 func lambda_formatting():
 	var arr=[1,2,3,4,5]
-	var filtered=arr.filter(func(x):return x>2)
+	var filtered=arr.filter(func(x):return x>2)  # 77:40-GD3020-OK
 	var mapped=arr.map(func(x):return x*2)
 	return [filtered,mapped]
 

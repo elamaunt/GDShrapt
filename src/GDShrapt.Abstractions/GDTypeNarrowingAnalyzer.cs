@@ -12,7 +12,7 @@ namespace GDShrapt.Abstractions;
 public class GDTypeNarrowingAnalyzer
 {
     private readonly IGDRuntimeProvider? _runtimeProvider;
-    private readonly Func<string, string?>? _variableTypeResolver;
+    private Func<string, string?>? _variableTypeResolver;
 
     public GDTypeNarrowingAnalyzer(
         IGDRuntimeProvider? runtimeProvider,
@@ -20,6 +20,15 @@ public class GDTypeNarrowingAnalyzer
     {
         _runtimeProvider = runtimeProvider;
         _variableTypeResolver = variableTypeResolver;
+    }
+
+    /// <summary>
+    /// Sets the variable type resolver for scope-aware type lookup.
+    /// Called before each AnalyzeCondition to provide current scope context.
+    /// </summary>
+    public void SetVariableTypeResolver(Func<string, string?>? resolver)
+    {
+        _variableTypeResolver = resolver;
     }
 
     /// <summary>
@@ -131,15 +140,20 @@ public class GDTypeNarrowingAnalyzer
         if (typeName == null)
             return;
 
+        // Skip tautological narrowing: variable already has this exact type
+        var declaredType = _variableTypeResolver?.Invoke(varName);
+        if (declaredType != null && declaredType == typeName)
+            return;
+
         if (isNegated)
         {
             // In else branch: obj is NOT this type
-            context.ExcludeType(varName, typeName);
+            context.ExcludeType(varName, GDSemanticType.FromRuntimeTypeName(typeName));
         }
         else
         {
             // In if branch: obj IS this type
-            context.NarrowType(varName, typeName);
+            context.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(typeName));
         }
     }
 
@@ -200,7 +214,7 @@ public class GDTypeNarrowingAnalyzer
                 if (!isNegated)
                 {
                     // In true branch: Callable is null
-                    context.SetConcreteType(varName, "null");
+                    context.SetConcreteType(varName, GDNullSemanticType.Instance);
                     context.SetMayBeNull(varName);
                 }
                 else
@@ -273,7 +287,7 @@ public class GDTypeNarrowingAnalyzer
         var elementType = InferContainerElementType(container);
         if (!string.IsNullOrEmpty(elementType) && elementType != "Variant" && elementType != "Unknown")
         {
-            context.SetConcreteType(varName, elementType);
+            context.SetConcreteType(varName, GDSemanticType.FromRuntimeTypeName(elementType));
         }
     }
 
@@ -335,17 +349,14 @@ public class GDTypeNarrowingAnalyzer
             return null;
 
         // Array[T] -> T
-        if (typeName.StartsWith("Array[") && typeName.EndsWith("]"))
-            return typeName.Substring(6, typeName.Length - 7);
+        var arrayElement = GDGenericTypeHelper.ExtractArrayElementType(typeName);
+        if (arrayElement != null)
+            return arrayElement;
 
         // Dictionary[K, V] -> K (key type for 'in')
-        if (typeName.StartsWith("Dictionary["))
-        {
-            var inner = typeName.Substring(11, typeName.Length - 12);
-            var commaIndex = FindTopLevelComma(inner);
-            if (commaIndex > 0)
-                return inner.Substring(0, commaIndex).Trim();
-        }
+        var (keyType, _) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
+        if (keyType != null)
+            return keyType;
 
         // String -> String
         if (typeName == "String")
@@ -356,47 +367,7 @@ public class GDTypeNarrowingAnalyzer
             return "int";
 
         // PackedArrays
-        if (typeName.StartsWith("Packed") && typeName.EndsWith("Array"))
-            return InferPackedArrayElementType(typeName);
-
-        return null;
-    }
-
-    /// <summary>
-    /// Finds the first top-level comma (not inside brackets) in a string.
-    /// </summary>
-    private static int FindTopLevelComma(string str)
-    {
-        int depth = 0;
-        for (int i = 0; i < str.Length; i++)
-        {
-            if (str[i] == '[') depth++;
-            else if (str[i] == ']') depth--;
-            else if (str[i] == ',' && depth == 0) return i;
-        }
-        return -1;
-    }
-
-    /// <summary>
-    /// Infers element type from PackedArray type name.
-    /// PackedInt32Array -> int, PackedStringArray -> String, etc.
-    /// </summary>
-    private static string? InferPackedArrayElementType(string typeName)
-    {
-        // Extract middle part: PackedXxxArray -> Xxx
-        var inner = typeName.Substring(6, typeName.Length - 11);
-        return inner switch
-        {
-            "String" => "String",
-            "Int32" or "Int64" => "int",
-            "Float32" or "Float64" => "float",
-            "Vector2" => "Vector2",
-            "Vector3" => "Vector3",
-            "Vector4" => "Vector4",
-            "Color" => "Color",
-            "Byte" => "int",
-            _ => null
-        };
+        return GDPackedArrayTypes.GetElementType(typeName);
     }
 
     /// <summary>
@@ -534,7 +505,12 @@ public class GDTypeNarrowingAnalyzer
 
         if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(literalType))
         {
-            context.SetConcreteType(varName, literalType);
+            // Skip tautological narrowing: variable already has this type
+            var declaredType = _variableTypeResolver?.Invoke(varName);
+            if (declaredType != null && declaredType == literalType)
+                return;
+
+            context.SetConcreteType(varName, GDSemanticType.FromRuntimeTypeName(literalType));
         }
     }
 
@@ -573,7 +549,7 @@ public class GDTypeNarrowingAnalyzer
         if (narrowsToNonNull)
         {
             // Mark variable as guaranteed non-null (narrowed away from null)
-            context.ExcludeType(varName, "null");
+            context.ExcludeType(varName, GDNullSemanticType.Instance);
         }
     }
 
@@ -591,7 +567,7 @@ public class GDTypeNarrowingAnalyzer
         {
             // if variable: -> variable is truthy (not null, not false, not 0, not empty)
             // For type narrowing, this means the variable is at least non-null
-            context.ExcludeType(varName, "null");
+            context.ExcludeType(varName, GDNullSemanticType.Instance);
             context.SetNotNull(varName);
             // For Callable, truthy also means valid
             context.MarkValidated(varName);
@@ -599,9 +575,14 @@ public class GDTypeNarrowingAnalyzer
         else
         {
             // if not variable: -> variable is falsy (null, false, 0, empty)
-            // For Callable, this means it's invalid/null
+            // For bool variables, "not bool_var" means false, not null - skip narrowing
+            var declaredType = _variableTypeResolver?.Invoke(varName);
+            if (declaredType == "bool")
+                return;
+
+            // For Callable and other types, this means it's invalid/null
             context.SetMayBeNull(varName);
-            context.SetConcreteType(varName, "null");
+            context.SetConcreteType(varName, GDNullSemanticType.Instance);
         }
     }
 

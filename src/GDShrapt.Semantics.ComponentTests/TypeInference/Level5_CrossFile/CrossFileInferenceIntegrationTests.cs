@@ -70,8 +70,8 @@ func test():
         var param = report.GetParameter("target");
         Assert.IsNotNull(param);
         Assert.IsNotNull(param.InferredUnionType);
-        Assert.IsTrue(param.InferredUnionType.Types.Contains("int"));
-        Assert.IsTrue(param.InferredUnionType.Types.Contains("String"));
+        Assert.IsTrue(param.InferredUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(param.InferredUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -153,8 +153,8 @@ func get_status(condition):
         Assert.IsNotNull(report);
         Assert.IsNotNull(report.ReturnTypeReport);
         Assert.IsNotNull(report.ReturnTypeReport.InferredUnionType);
-        Assert.IsTrue(report.ReturnTypeReport.InferredUnionType.Types.Contains("int"));
-        Assert.IsTrue(report.ReturnTypeReport.InferredUnionType.Types.Contains("String"));
+        Assert.IsTrue(report.ReturnTypeReport.InferredUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(report.ReturnTypeReport.InferredUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]

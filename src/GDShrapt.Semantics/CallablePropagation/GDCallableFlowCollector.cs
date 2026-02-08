@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace GDShrapt.Semantics;
 internal class GDCallableFlowCollector : GDVisitor
 {
     private readonly GDScriptFile? _sourceFile;
-    private readonly Func<GDExpression, string?>? _typeInferrer;
+    private readonly Func<GDExpression, GDSemanticType?>? _typeInferrer;
     private readonly Func<string, GDMethodDeclaration?>? _methodResolver;
 
     private readonly List<GDMethodCallableProfile> _methodProfiles = new();
@@ -29,7 +30,7 @@ internal class GDCallableFlowCollector : GDVisitor
 
     public GDCallableFlowCollector(
         GDScriptFile? sourceFile = null,
-        Func<GDExpression, string?>? typeInferrer = null,
+        Func<GDExpression, GDSemanticType?>? typeInferrer = null,
         Func<string, GDMethodDeclaration?>? methodResolver = null)
     {
         _sourceFile = sourceFile;

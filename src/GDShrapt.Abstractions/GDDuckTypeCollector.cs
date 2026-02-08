@@ -167,26 +167,22 @@ public class GDDuckTypeCollector : GDVisitor
     /// <summary>
     /// Simple type inference for literal expressions.
     /// </summary>
-    private static string? InferSimpleType(GDExpression? expr)
+    private static GDSemanticType? InferSimpleType(GDExpression? expr)
     {
         if (expr == null)
             return null;
 
-        switch (expr)
+        string? typeName = expr switch
         {
-            case GDNumberExpression numExpr:
-                return numExpr.Number?.Sequence?.Contains(".") == true ? "float" : "int";
-            case GDStringExpression _:
-                return "String";
-            case GDBoolExpression _:
-                return "bool";
-            case GDArrayInitializerExpression _:
-                return "Array";
-            case GDDictionaryInitializerExpression _:
-                return "Dictionary";
-            default:
-                return null;
-        }
+            GDNumberExpression numExpr => numExpr.Number?.Sequence?.Contains(".") == true ? "float" : "int",
+            GDStringExpression _ => "String",
+            GDBoolExpression _ => "bool",
+            GDArrayInitializerExpression _ => "Array",
+            GDDictionaryInitializerExpression _ => "Dictionary",
+            _ => null
+        };
+
+        return typeName != null ? new GDSimpleSemanticType(typeName) : null;
     }
 
     private static string? GetRootVariableName(GDExpression? expr)

@@ -1,6 +1,4 @@
-using GDShrapt.Abstractions;
-
-namespace GDShrapt.Semantics;
+namespace GDShrapt.Abstractions;
 
 /// <summary>
 /// Represents the Variant type (any type).
@@ -21,13 +19,9 @@ public sealed class GDVariantSemanticType : GDSemanticType
 
     public override bool IsAssignableTo(GDSemanticType other, IGDRuntimeProvider? provider)
     {
-        // Variant is assignable to Variant
         if (other.IsVariant)
             return true;
 
-        // Variant can potentially hold any value, so technically
-        // it's assignable to any type (runtime check)
-        // For static analysis, we're conservative and say true
         return true;
     }
 }

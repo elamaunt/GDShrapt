@@ -226,7 +226,7 @@ public class GDSemanticTypeTests
     [TestMethod]
     public void FromTypeName_SimpleType_ReturnsSimpleSemanticType()
     {
-        var type = GDSemanticType.FromTypeName("int");
+        var type = GDSemanticType.FromRuntimeTypeName("int");
 
         type.Should().BeOfType<GDSimpleSemanticType>();
         type.DisplayName.Should().Be("int");
@@ -235,7 +235,7 @@ public class GDSemanticTypeTests
     [TestMethod]
     public void FromTypeName_Variant_ReturnsVariantInstance()
     {
-        var type = GDSemanticType.FromTypeName("Variant");
+        var type = GDSemanticType.FromRuntimeTypeName("Variant");
 
         type.Should().BeSameAs(GDVariantSemanticType.Instance);
     }
@@ -243,7 +243,7 @@ public class GDSemanticTypeTests
     [TestMethod]
     public void FromTypeName_Null_ReturnsNullInstance()
     {
-        var type = GDSemanticType.FromTypeName("null");
+        var type = GDSemanticType.FromRuntimeTypeName("null");
 
         type.Should().BeSameAs(GDNullSemanticType.Instance);
     }
@@ -251,14 +251,14 @@ public class GDSemanticTypeTests
     [TestMethod]
     public void FromTypeName_NullOrEmpty_ReturnsVariant()
     {
-        GDSemanticType.FromTypeName(null).Should().BeSameAs(GDVariantSemanticType.Instance);
-        GDSemanticType.FromTypeName("").Should().BeSameAs(GDVariantSemanticType.Instance);
+        GDSemanticType.FromRuntimeTypeName(null).Should().BeSameAs(GDVariantSemanticType.Instance);
+        GDSemanticType.FromRuntimeTypeName("").Should().BeSameAs(GDVariantSemanticType.Instance);
     }
 
     [TestMethod]
     public void FromTypeName_UnionString_ReturnsUnionType()
     {
-        var type = GDSemanticType.FromTypeName("int|String");
+        var type = GDSemanticType.FromRuntimeTypeName("int|String");
 
         type.Should().BeOfType<GDUnionSemanticType>();
         var union = (GDUnionSemanticType)type;

@@ -686,7 +686,7 @@ func test():
     public void DictionaryGet_WithVector2Value_ReturnsKeySpecificType()
     {
         // Arrange - dictionary with Vector2 constructor (not static member, for testability)
-        // Note: Vector2.ZERO returns null because InferType(Vector2) for a static member access
+        // Note: Vector2.ZERO returns null because InferTypeNode(Vector2) for a static member access
         // doesn't recognize type names as callers. Using Vector2(0, 0) constructor instead.
         var code = @"
 var config = {

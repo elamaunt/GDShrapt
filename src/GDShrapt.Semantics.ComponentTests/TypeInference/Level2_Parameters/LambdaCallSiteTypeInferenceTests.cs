@@ -38,7 +38,7 @@ func test():
         // Verify argument type was captured
         var callSite = callSites[0];
         Assert.AreEqual(1, callSite.Arguments.Count);
-        Assert.AreEqual("int", callSite.Arguments[0].InferredType);
+        Assert.AreEqual("int", callSite.Arguments[0].InferredType?.DisplayName);
     }
 
     [TestMethod]
@@ -66,7 +66,7 @@ func test():
 
         // Should be union of int and String
         var unionType = paramTypes[0];
-        Assert.IsTrue(unionType.Types.Contains("int") || unionType.Types.Contains("String"),
+        Assert.IsTrue(unionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")) || unionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Expected int or String, got: {unionType}");
     }
 
@@ -210,7 +210,7 @@ func test():
         // All should be int
         foreach (var arg in callSites[0].Arguments)
         {
-            Assert.AreEqual("int", arg.InferredType, $"Arg {arg.Index} should be int");
+            Assert.AreEqual("int", arg.InferredType?.DisplayName, $"Arg {arg.Index} should be int");
         }
     }
 

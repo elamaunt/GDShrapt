@@ -21,32 +21,25 @@ internal static class GDFlowNarrowingHelpers
             return null;
 
         // Array[T] -> T
-        var arrayElement = ExtractGenericTypeParameter(typeName, GDTypeInferenceConstants.ArrayTypePrefix);
+        var arrayElement = GDGenericTypeHelper.ExtractArrayElementType(typeName);
         if (arrayElement != null)
             return arrayElement;
 
         // Dictionary[K, V] -> K (key type only)
-        if (typeName.StartsWith("Dictionary["))
-        {
-            var inner = typeName.Substring(11, typeName.Length - 12);
-            var commaIndex = FindTopLevelComma(inner);
-            if (commaIndex > 0)
-                return inner.Substring(0, commaIndex).Trim();
-        }
+        var (keyType, _) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
+        if (keyType != null)
+            return keyType;
 
         // String -> String
-        if (typeName == "String")
-            return "String";
+        if (typeName == GDWellKnownTypes.Strings.String)
+            return GDWellKnownTypes.Strings.String;
 
         // Range -> int
-        if (typeName == "Range")
-            return "int";
+        if (typeName == GDWellKnownTypes.Other.Range)
+            return GDWellKnownTypes.Numeric.Int;
 
         // PackedArrays
-        if (typeName.StartsWith("Packed") && typeName.EndsWith("Array"))
-            return InferPackedArrayElementType(typeName);
-
-        return null;
+        return GDPackedArrayTypes.GetElementType(typeName);
     }
 
     /// <summary>
@@ -63,45 +56,6 @@ internal static class GDFlowNarrowingHelpers
         }
 
         return genericType.Substring(prefix.Length, genericType.Length - prefix.Length - 1);
-    }
-
-    /// <summary>
-    /// Finds the first comma at the top level (not inside nested generics).
-    /// </summary>
-    public static int FindTopLevelComma(string str)
-    {
-        int depth = 0;
-        for (int i = 0; i < str.Length; i++)
-        {
-            var c = str[i];
-            if (c == '[')
-                depth++;
-            else if (c == ']')
-                depth--;
-            else if (c == ',' && depth == 0)
-                return i;
-        }
-        return -1;
-    }
-
-    /// <summary>
-    /// Infers element type from packed array type names.
-    /// PackedStringArray -> String, PackedInt32Array -> int, etc.
-    /// </summary>
-    public static string? InferPackedArrayElementType(string typeName)
-    {
-        var inner = typeName.Substring(6, typeName.Length - 11);
-        return inner switch
-        {
-            "String" => "String",
-            "Int32" or "Int64" => "int",
-            "Float32" or "Float64" => "float",
-            "Vector2" => "Vector2",
-            "Vector3" => "Vector3",
-            "Color" => "Color",
-            "Byte" => "int",
-            _ => null
-        };
     }
 
     /// <summary>
@@ -244,7 +198,7 @@ internal static class GDFlowNarrowingHelpers
 
         if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(literalType))
         {
-            state.NarrowType(varName, literalType);
+            state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(literalType));
             // Non-null literals mark variable as non-null
             if (literalType != "null")
                 state.MarkNonNull(varName);

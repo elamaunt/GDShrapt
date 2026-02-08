@@ -198,7 +198,7 @@ func process(entity):
     {
         // Arrange
         var duckType = new GDDuckType();
-        duckType.ExcludedTypes.Add("Enemy");
+        duckType.ExcludeTypeName("Enemy");
 
         var provider = new GDDefaultRuntimeProvider();
         var resolver = new GDDuckTypeResolver(provider);
@@ -215,8 +215,8 @@ func process(entity):
     {
         // Arrange
         var duckType = new GDDuckType();
-        duckType.PossibleTypes.Add("Player");
-        duckType.PossibleTypes.Add("Enemy");
+        duckType.AddPossibleTypeName("Player");
+        duckType.AddPossibleTypeName("Enemy");
 
         var provider = new GDDefaultRuntimeProvider();
         var resolver = new GDDuckTypeResolver(provider);
@@ -351,8 +351,8 @@ func process(data):
 
         // Assert - should infer Array (or union containing Array) because slice() is Array-specific
         // Note: slice() exists on Array and all Packed*Array types, so we may get a union
-        Assert.IsTrue(inferredType.TypeName.Contains("Array"),
-            $"Parameter using slice() should infer type containing Array. Got: {inferredType.TypeName}");
+        Assert.IsTrue(inferredType.TypeName.DisplayName.Contains("Array"),
+            $"Parameter using slice() should infer type containing Array. Got: {inferredType.TypeName.DisplayName}");
     }
 
     /// <summary>
@@ -386,8 +386,8 @@ func accumulate_left(list, func_ref, initial):
 
         // Assert - is_empty + slice + indexable = Array (or union containing Array)
         // Note: slice() + is_empty() exist on Array and Packed*Array types
-        Assert.IsTrue(inferredType.TypeName.Contains("Array"),
-            $"Parameter with is_empty() + slice() should infer type containing Array. Got: {inferredType.TypeName}");
+        Assert.IsTrue(inferredType.TypeName.DisplayName.Contains("Array"),
+            $"Parameter with is_empty() + slice() should infer type containing Array. Got: {inferredType.TypeName.DisplayName}");
     }
 
     /// <summary>
@@ -586,8 +586,8 @@ func process(node):
         var inferredType = model.InferParameterType(param);
 
         // Assert - should infer Node (or union containing Node)
-        Assert.IsTrue(inferredType.TypeName.Contains("Node"),
-            $"Multiple Node methods should infer type containing Node. Got: {inferredType.TypeName}");
+        Assert.IsTrue(inferredType.TypeName.DisplayName.Contains("Node"),
+            $"Multiple Node methods should infer type containing Node. Got: {inferredType.TypeName.DisplayName}");
     }
 
     #endregion

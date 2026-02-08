@@ -53,7 +53,7 @@ func setup():
         Assert.IsTrue(usages.Count >= 2,
             $"Should collect at least 2 usages from Game class. Actual: {usages.Count}");
 
-        var stringUsages = usages.Where(u => u.InferredType == "String").ToList();
+        var stringUsages = usages.Where(u => u.InferredType?.DisplayName == "String").ToList();
         Assert.IsTrue(stringUsages.Count >= 2,
             $"Should have at least 2 String usages from append calls. Actual: {stringUsages.Count}");
     }
@@ -93,7 +93,7 @@ func write_to_cache(cache: Cache):
         Assert.IsTrue(keyUsages.Count >= 2,
             $"Should have at least 2 key assignment usages. Actual: {keyUsages.Count}");
 
-        var stringKeyUsages = keyUsages.Where(u => u.InferredType == "String").ToList();
+        var stringKeyUsages = keyUsages.Where(u => u.InferredType?.DisplayName == "String").ToList();
         Assert.IsTrue(stringKeyUsages.Count >= 2,
             "Key type should be String");
     }
@@ -133,15 +133,15 @@ func add_item(item):
     {
         // Arrange
         var localProfile = new GDContainerUsageProfile("items");
-        localProfile.AddValueUsage("int", GDContainerUsageKind.Append, null);
-        localProfile.AddValueUsage("int", GDContainerUsageKind.Append, null);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append, null);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append, null);
 
         var crossFileUsages = new[]
         {
             new GDContainerUsageObservation
             {
                 Kind = GDContainerUsageKind.Append,
-                InferredType = "int",
+                InferredType = GDSemanticType.FromRuntimeTypeName("int"),
                 IsHighConfidence = true
             }
         };
@@ -154,7 +154,7 @@ func add_item(item):
             "Merged profile should have 3 value usages (2 local + 1 cross-file)");
 
         var inferredType = merged.ComputeInferredType();
-        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("int", inferredType.ElementUnionType.EffectiveType.DisplayName,
             "Merged element type should be int");
     }
 
@@ -163,14 +163,14 @@ func add_item(item):
     {
         // Arrange
         var localProfile = new GDContainerUsageProfile("items");
-        localProfile.AddValueUsage("int", GDContainerUsageKind.Append, null);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append, null);
 
         var crossFileUsages = new[]
         {
             new GDContainerUsageObservation
             {
                 Kind = GDContainerUsageKind.Append,
-                InferredType = "String",
+                InferredType = GDSemanticType.FromRuntimeTypeName("String"),
                 IsHighConfidence = true
             }
         };
@@ -196,14 +196,14 @@ func add_item(item):
     {
         // Arrange
         var localProfile = new GDContainerUsageProfile("cache") { IsDictionary = true };
-        localProfile.AddKeyUsage("String", GDContainerUsageKind.IndexAssign, null);
+        localProfile.AddKeyUsage(GDSemanticType.FromRuntimeTypeName("String"), GDContainerUsageKind.IndexAssign, null);
 
         var crossFileUsages = new[]
         {
             new GDContainerUsageObservation
             {
                 Kind = GDContainerUsageKind.KeyAssignment,
-                InferredType = "String",
+                InferredType = GDSemanticType.FromRuntimeTypeName("String"),
                 IsHighConfidence = true
             }
         };
@@ -216,7 +216,7 @@ func add_item(item):
             "Merged profile should have 2 key usages");
 
         var inferredType = merged.ComputeInferredType();
-        Assert.AreEqual("String", inferredType.KeyUnionType?.EffectiveType,
+        Assert.AreEqual("String", inferredType.KeyUnionType?.EffectiveType.DisplayName,
             "Merged key type should be String");
     }
 
@@ -295,7 +295,7 @@ func give_item():
             $"Element type should not be empty. Profile has {merged.ValueUsageCount} usages.");
 
         // The element type should be Resource (from both local append with typed param and cross-file)
-        Assert.AreEqual("Resource", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("Resource", inferredType.ElementUnionType.EffectiveType.DisplayName,
             $"Element type should be Resource. Actual: {inferredType.ElementUnionType}");
     }
 
@@ -331,14 +331,14 @@ func write(cache: Cache, data):
 
         // Create local profile for dictionary
         var localProfile = new GDContainerUsageProfile("entries") { IsDictionary = true };
-        localProfile.AddKeyUsage("int", GDContainerUsageKind.IndexAssign, null);
+        localProfile.AddKeyUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.IndexAssign, null);
 
         var merged = GDCrossFileContainerUsageCollector.MergeProfiles(localProfile, crossUsages);
         var inferredType = merged.ComputeInferredType();
 
         // Assert
         Assert.IsNotNull(inferredType.KeyUnionType, "Key type should be computed");
-        Assert.AreEqual("int", inferredType.KeyUnionType.EffectiveType,
+        Assert.AreEqual("int", inferredType.KeyUnionType.EffectiveType.DisplayName,
             $"Key type should be int. Actual: {inferredType.KeyUnionType}");
     }
 
@@ -381,13 +381,13 @@ func import_to(storage: Storage):
         var crossUsages = crossCollector.CollectUsages("Storage", "items");
 
         var localProfile = new GDContainerUsageProfile("items");
-        localProfile.AddValueUsage("Resource", GDContainerUsageKind.Append, null);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("Resource"), GDContainerUsageKind.Append, null);
 
         var merged = GDCrossFileContainerUsageCollector.MergeProfiles(localProfile, crossUsages);
         var inferredType = merged.ComputeInferredType();
 
         // Assert: All files add Resource, so unified type should be Resource
-        Assert.AreEqual("Resource", inferredType.ElementUnionType.EffectiveType,
+        Assert.AreEqual("Resource", inferredType.ElementUnionType.EffectiveType.DisplayName,
             $"All files add Resource, unified type should be Resource. Actual: {inferredType.ElementUnionType}");
     }
 
@@ -432,14 +432,14 @@ func add_str(c: Container):
         // Assert: Different files add different types, should create union
         Assert.IsTrue(
             inferredType.ElementUnionType.IsUnion ||
-            inferredType.ElementUnionType.EffectiveType == "Variant",
+            inferredType.ElementUnionType.EffectiveType.DisplayName == "Variant",
             $"Mixed types should create union or Variant. Actual: {inferredType.ElementUnionType}");
 
         if (inferredType.ElementUnionType.IsUnion)
         {
-            Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("int"),
+            Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
                 "Union should contain int");
-            Assert.IsTrue(inferredType.ElementUnionType.Types.Contains("String"),
+            Assert.IsTrue(inferredType.ElementUnionType.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
                 "Union should contain String");
         }
     }

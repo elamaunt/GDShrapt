@@ -620,7 +620,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         if (node.IsUnionType && node.UnionTypeInfo != null)
         {
             Logger.Info($"--- Union Type Info ---");
-            Logger.Info($"  Types: {string.Join(", ", node.UnionTypeInfo.Types)}");
+            Logger.Info($"  Types: {string.Join(", ", node.UnionTypeInfo.Types.Select(t => t.DisplayName))}");
             Logger.Info($"  Union Sources: {node.UnionSources.Count}");
             foreach (var src in node.UnionSources)
             {
@@ -659,7 +659,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             var unionType = semanticModel.TypeSystem.GetUnionType(node.Label);
             if (unionType != null && unionType.IsUnion)
             {
-                Logger.Info($"  TypeSystem.GetUnionType: {string.Join("|", unionType.Types)}");
+                Logger.Info($"  TypeSystem.GetUnionType: {string.Join("|", unionType.Types.Select(t => t.DisplayName))}");
             }
 
             var duckType = semanticModel.TypeSystem.GetDuckType(node.Label);
@@ -762,7 +762,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         }
         else if (node.IsUnionType)
         {
-            var types = node.UnionTypeInfo?.Types.Take(3).ToList() ?? new List<string>();
+            var types = node.UnionTypeInfo?.Types.Take(3).Select(t => t.DisplayName).ToList() ?? new List<string>();
             _suggestionLabel.Text = $"💡 Union type: {string.Join(" | ", types)}";
             _suggestionLabel.Visible = true;
         }
@@ -948,7 +948,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
 
         if (_focusedNode?.IsUnionType == true && _focusedNode.UnionTypeInfo != null)
         {
-            var unionTypes = string.Join("|", _focusedNode.UnionTypeInfo.Types.Take(3));
+            var unionTypes = string.Join("|", _focusedNode.UnionTypeInfo.Types.Take(3).Select(t => t.DisplayName));
             if (_focusedNode.UnionTypeInfo.Types.Count > 3)
                 unionTypes += "...";
             sb.Append($" [color=#888888]({unionTypes})[/color]");
@@ -1256,7 +1256,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             };
 
             var originalCode = $"{annotation.IdentifierName}";
-            var resultCode = $"{annotation.IdentifierName}: {annotation.InferredType.TypeName}";
+            var resultCode = $"{annotation.IdentifierName}: {annotation.InferredType.TypeName.DisplayName}";
 
             // Single-file apply with preview is allowed in Base
             var canApply = true;
@@ -1264,7 +1264,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
             var dialogResult = await previewDialog.ShowForResult(
                 title,
                 $"// Add type annotation to {targetDescription}\n" +
-                $"// Inferred type: {annotation.InferredType.TypeName}\n" +
+                $"// Inferred type: {annotation.InferredType.TypeName.DisplayName}\n" +
                 $"// Confidence: {annotation.InferredType.Confidence}\n" +
                 $"// Reason: {annotation.InferredType.Reason ?? "Type inference"}\n\n" +
                 originalCode,
@@ -1274,7 +1274,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
 
             if (dialogResult.ShouldApply)
             {
-                Logger.Info($"Quick fix: Applying ': {annotation.InferredType.TypeName}' to '{_focusedNode.Label}'");
+                Logger.Info($"Quick fix: Applying ': {annotation.InferredType.TypeName.DisplayName}' to '{_focusedNode.Label}'");
 
                 // Fire event for plugin to handle the actual application
                 AddTypeAnnotationRequested?.Invoke(_currentScript, annotation);
@@ -1324,7 +1324,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         if (node == null || _currentScript == null)
             return;
 
-        var types = node.UnionTypeInfo?.Types.ToList() ?? new List<string>();
+        var types = node.UnionTypeInfo?.Types.Select(t => t.DisplayName).ToList() ?? new List<string>();
         if (types.Count == 0 && !string.IsNullOrEmpty(node.Type))
         {
             types.Add(node.Type);
@@ -1390,7 +1390,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
 
             foreach (var prop in duckType.RequiredProperties.Take(10))
             {
-                var propType = !string.IsNullOrEmpty(prop.Value) ? prop.Value : "Variant";
+                var propType = prop.Value != null ? prop.Value.DisplayName : "Variant";
                 sb.AppendLine($"var {prop.Key}: {propType}");
             }
 

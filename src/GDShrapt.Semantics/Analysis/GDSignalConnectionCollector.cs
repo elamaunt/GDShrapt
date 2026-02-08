@@ -144,7 +144,7 @@ internal class GDSignalConnectionCollector
             string? emitterType = null;
             if (receiverExpr != null)
             {
-                emitterType = _typeEngine?.InferType(receiverExpr);
+                emitterType = _typeEngine?.InferSemanticType(receiverExpr)?.DisplayName;
             }
             else
             {
@@ -221,11 +221,11 @@ internal class GDSignalConnectionCollector
                             if (targetName == "self")
                                 className = null; // Self reference
                             else
-                                className = _typeEngine?.InferType(targetExpr);
+                                className = _typeEngine?.InferSemanticType(targetExpr)?.DisplayName;
                         }
                         else
                         {
-                            className = _typeEngine?.InferType(targetExpr);
+                            className = _typeEngine?.InferSemanticType(targetExpr)?.DisplayName;
                         }
 
                         if (methodExpr is GDStringExpression methodStr)
@@ -250,11 +250,11 @@ internal class GDSignalConnectionCollector
                 {
                     var callerName = callerIdent.Identifier?.Sequence;
                     if (callerName != "self")
-                        className = _typeEngine?.InferType(memberOp.CallerExpression);
+                        className = _typeEngine?.InferSemanticType(memberOp.CallerExpression)?.DisplayName;
                 }
                 else
                 {
-                    className = _typeEngine?.InferType(memberOp.CallerExpression);
+                    className = _typeEngine?.InferSemanticType(memberOp.CallerExpression)?.DisplayName;
                 }
 
                 return (className, methodName, false);

@@ -16,16 +16,16 @@ internal class GDParameterUsageAnalyzer : GDVisitor
     private readonly IGDRuntimeProvider? _runtimeProvider;
 
     // Alias tracking: maps local variable name to the parameter it was assigned from
-    // e.g., "var current = data" maps "current" → "data"
+    // e.g., "var current = data" maps "current" -> "data"
     private readonly Dictionary<string, string> _aliasToParameter = new();
 
     // Iterator tracking: maps iterator variable name to the parameter being iterated
-    // e.g., "for key in path" maps "key" → "path"
+    // e.g., "for key in path" maps "key" -> "path"
     private readonly Dictionary<string, string> _iteratorToParameter = new();
 
     // Tracks which parameters use an iterator as a key (for deferred type propagation)
-    // e.g., "current[key]" where key is iterator → "data" uses key from "path"
-    // Maps iterator variable name → list of parameters that use it as key
+    // e.g., "current[key]" where key is iterator -> "data" uses key from "path"
+    // Maps iterator variable name -> list of parameters that use it as key
     private readonly Dictionary<string, List<string>> _iteratorKeyUsers = new();
 
     /// <summary>
@@ -111,8 +111,15 @@ internal class GDParameterUsageAnalyzer : GDVisitor
             if (!string.IsNullOrEmpty(memberName))
             {
                 // Check if this is a method call or property access
-                if (memberOp.Parent is GDCallExpression)
+                if (memberOp.Parent is GDCallExpression callExpr)
+                {
                     _paramConstraints[rootVar].AddRequiredMethod(memberName);
+
+                    // Track argument types for signature matching
+                    var argTypes = ExtractCallArgTypes(callExpr);
+                    if (argTypes.Length > 0)
+                        _paramConstraints[rootVar].AddMethodCallArgTypes(memberName, argTypes);
+                }
                 else
                     _paramConstraints[rootVar].AddRequiredProperty(memberName);
             }
@@ -131,7 +138,7 @@ internal class GDParameterUsageAnalyzer : GDVisitor
     {
         base.Visit(forStmt);
 
-        // for x in param → param is iterable
+        // for x in param -> param is iterable
         var collectionVar = GetRootVariable(forStmt.Collection);
         if (collectionVar == null)
             return;
@@ -143,7 +150,7 @@ internal class GDParameterUsageAnalyzer : GDVisitor
         {
             _paramConstraints[collectionVar].AddIterableConstraint();
 
-            // Track iterator → parameter mapping for element type inference
+            // Track iterator -> parameter mapping for element type inference
             var iteratorName = forStmt.Variable?.Sequence;
             if (!string.IsNullOrEmpty(iteratorName))
             {
@@ -207,15 +214,15 @@ internal class GDParameterUsageAnalyzer : GDVisitor
                 var source = sourceNode != null
                     ? GDTypeInferenceSource.FromIndexer(sourceNode)
                     : null;
-                _paramConstraints[paramName].AddKeyTypeForType("Dictionary", elemType, source);
-                _paramConstraints[paramName].AddKeyTypeForType("Array", elemType, source);
+                _paramConstraints[paramName].AddKeyTypeForType(GDSemanticType.FromRuntimeTypeName("Dictionary"), elemType, source);
+                _paramConstraints[paramName].AddKeyTypeForType(GDSemanticType.FromRuntimeTypeName("Array"), elemType, source);
             }
             return;
         }
 
         // Infer key type from expression type
         var keyType = InferSimpleType(keyExpr);
-        if (!string.IsNullOrEmpty(keyType))
+        if (keyType != null)
         {
             _paramConstraints[paramName].AddKeyType(keyType);
 
@@ -223,46 +230,46 @@ internal class GDParameterUsageAnalyzer : GDVisitor
             var source = sourceNode != null
                 ? GDTypeInferenceSource.FromIndexer(sourceNode)
                 : null;
-            _paramConstraints[paramName].AddKeyTypeForType("Dictionary", keyType, source);
-            _paramConstraints[paramName].AddKeyTypeForType("Array", keyType, source);
+            _paramConstraints[paramName].AddKeyTypeForType(GDSemanticType.FromRuntimeTypeName("Dictionary"), keyType, source);
+            _paramConstraints[paramName].AddKeyTypeForType(GDSemanticType.FromRuntimeTypeName("Array"), keyType, source);
         }
     }
 
     /// <summary>
     /// Infers a simple type from an expression (literals, type checks).
     /// </summary>
-    private string? InferSimpleType(GDExpression? expr)
+    private GDSemanticType? InferSimpleType(GDExpression? expr)
     {
         return expr switch
         {
-            GDNumberExpression num => InferNumberType(num),
-            GDStringExpression => "String",
-            GDBoolExpression => "bool",
+            GDNumberExpression num => GDSemanticType.FromRuntimeTypeName(InferNumberTypeName(num)),
+            GDStringExpression => GDSemanticType.FromRuntimeTypeName(GDWellKnownTypes.Strings.String),
+            GDBoolExpression => GDSemanticType.FromRuntimeTypeName(GDWellKnownTypes.Numeric.Bool),
             GDIdentifierExpression ident => CheckIteratorType(ident.Identifier?.Sequence),
             _ => null
         };
     }
 
     /// <summary>
-    /// Infers type from a number expression.
+    /// Infers type name from a number expression.
     /// </summary>
-    private static string InferNumberType(GDNumberExpression num)
+    private static string InferNumberTypeName(GDNumberExpression num)
     {
         if (num.Number == null)
-            return "int";
+            return GDWellKnownTypes.Numeric.Int;
 
         return num.Number.ResolveNumberType() switch
         {
-            GDNumberType.LongDecimal or GDNumberType.LongBinary or GDNumberType.LongHexadecimal => "int",
-            GDNumberType.Double => "float",
-            _ => "int"
+            GDNumberType.LongDecimal or GDNumberType.LongBinary or GDNumberType.LongHexadecimal => GDWellKnownTypes.Numeric.Int,
+            GDNumberType.Double => GDWellKnownTypes.Numeric.Float,
+            _ => GDWellKnownTypes.Numeric.Int
         };
     }
 
     /// <summary>
     /// If the identifier is an iterator, return its tracked element types.
     /// </summary>
-    private string? CheckIteratorType(string? varName)
+    private GDSemanticType? CheckIteratorType(string? varName)
     {
         if (string.IsNullOrEmpty(varName))
             return null;
@@ -273,6 +280,34 @@ internal class GDParameterUsageAnalyzer : GDVisitor
             return null;
 
         return null;
+    }
+
+    /// <summary>
+    /// Extracts argument info from a call expression.
+    /// Each argument is classified as: resolved type, parameter reference, or unknown.
+    /// </summary>
+    private GDCallArgInfo[] ExtractCallArgTypes(GDCallExpression call)
+    {
+        var args = call.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return System.Array.Empty<GDCallArgInfo>();
+
+        return args.Select(arg =>
+        {
+            var simple = InferSimpleType(arg);
+            if (simple != null)
+                return GDCallArgInfo.FromType(simple);
+
+            var rootVar = GetRootVariable(arg);
+            if (rootVar != null)
+            {
+                rootVar = ResolveAlias(rootVar);
+                if (_parameterNames.Contains(rootVar))
+                    return GDCallArgInfo.FromParameter(rootVar);
+            }
+
+            return GDCallArgInfo.Unknown();
+        }).ToArray();
     }
 
     #endregion
@@ -300,7 +335,7 @@ internal class GDParameterUsageAnalyzer : GDVisitor
 
                 if (_parameterNames.Contains(paramName))
                 {
-                    // current.get(key) → data (via alias) has KeyType = typeof(key)
+                    // current.get(key) -> data (via alias) has KeyType = typeof(key)
                     var args = call.Parameters?.ToList();
                     if (args != null && args.Count >= 1)
                     {
@@ -353,18 +388,20 @@ internal class GDParameterUsageAnalyzer : GDVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
-        // Case 1: Type check on iterator → element type of the container parameter
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+
+        // Case 1: Type check on iterator -> element type of the container parameter
         if (_iteratorToParameter.TryGetValue(leftVar, out var containerParam))
         {
-            // "key is int" where "for key in path" → path has element type int
-            _paramConstraints[containerParam].AddElementType(typeName);
+            // "key is int" where "for key in path" -> path has element type int
+            _paramConstraints[containerParam].AddElementType(semanticType);
 
             // Also add to per-type constraints for Array (iterators come from Array/String/etc)
             var source = GDTypeInferenceSource.FromTypeCheck(dualOp, typeName);
-            _paramConstraints[containerParam].AddElementTypeForType("Array", typeName, source);
+            _paramConstraints[containerParam].AddElementTypeForType(GDSemanticType.FromRuntimeTypeName("Array"), semanticType, source);
 
             // Also propagate to any parameter that uses this iterator as key
-            PropagateIteratorTypeToKeyUsers(leftVar, typeName, dualOp);
+            PropagateIteratorTypeToKeyUsers(leftVar, semanticType, dualOp);
             return;
         }
 
@@ -378,19 +415,19 @@ internal class GDParameterUsageAnalyzer : GDVisitor
 
         if (isNegative)
         {
-            _paramConstraints[paramName].ExcludeType(typeName);
+            _paramConstraints[paramName].ExcludeType(semanticType);
         }
         else
         {
             // Add possible type with source for navigation
             var source = GDTypeInferenceSource.FromTypeCheck(dualOp, typeName);
-            _paramConstraints[paramName].AddPossibleTypeWithSource(typeName, source);
+            _paramConstraints[paramName].AddPossibleTypeWithSource(semanticType, source);
 
             // For Dictionary and Array, mark value as derivable if not already known
-            if (typeName == "Dictionary" || typeName == "Array")
+            if (GDWellKnownTypes.IsContainerType(typeName))
             {
                 _paramConstraints[paramName].MarkValueDerivable(
-                    typeName,
+                    semanticType,
                     dualOp,
                     "value type can be inferred from return statements or further usage");
             }
@@ -401,23 +438,23 @@ internal class GDParameterUsageAnalyzer : GDVisitor
     /// When an iterator's type is discovered, propagate it as key type to any
     /// parameter that uses this iterator for indexing or .get() calls.
     /// </summary>
-    private void PropagateIteratorTypeToKeyUsers(string iteratorVar, string typeName, GDNode? sourceNode = null)
+    private void PropagateIteratorTypeToKeyUsers(string iteratorVar, GDSemanticType type, GDNode? sourceNode = null)
     {
         // Find all parameters that use this iterator as a key
         if (_iteratorKeyUsers.TryGetValue(iteratorVar, out var users))
         {
             var source = sourceNode != null
-                ? GDTypeInferenceSource.FromTypeCheck(sourceNode, typeName)
+                ? GDTypeInferenceSource.FromTypeCheck(sourceNode, type.DisplayName)
                 : null;
 
             foreach (var paramName in users)
             {
-                _paramConstraints[paramName].AddKeyType(typeName);
+                _paramConstraints[paramName].AddKeyType(type);
 
                 // Add to per-type constraints for Dictionary (since .get() and [] use keys)
-                _paramConstraints[paramName].AddKeyTypeForType("Dictionary", typeName, source);
+                _paramConstraints[paramName].AddKeyTypeForType(GDSemanticType.FromRuntimeTypeName("Dictionary"), type, source);
                 // Array also uses keys for indexing
-                _paramConstraints[paramName].AddKeyTypeForType("Array", typeName, source);
+                _paramConstraints[paramName].AddKeyTypeForType(GDSemanticType.FromRuntimeTypeName("Array"), type, source);
             }
         }
     }
@@ -428,7 +465,7 @@ internal class GDParameterUsageAnalyzer : GDVisitor
 
     /// <summary>
     /// Gets the root variable name from an expression chain.
-    /// E.g., player.weapon.damage → "player"
+    /// E.g., player.weapon.damage -> "player"
     /// </summary>
     private string? GetRootVariable(GDExpression? expr)
     {

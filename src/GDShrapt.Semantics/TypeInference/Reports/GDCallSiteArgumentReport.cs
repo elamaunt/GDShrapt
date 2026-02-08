@@ -83,13 +83,13 @@ internal class GDCallSiteArgumentReport
             Line = argument.Line > 0 ? argument.Line : callSite.Line,
             Column = argument.Column > 0 ? argument.Column : callSite.Column,
             ArgumentExpression = argument.ExpressionText,
-            InferredType = argument.InferredType,
+            InferredType = argument.InferredType?.DisplayName,
             IsHighConfidence = argument.IsHighConfidence,
             IsDuckTyped = callSite.IsDuckTyped,
             ReceiverVariableName = callSite.ReceiverVariableName,
-            FromUnionReceiver = !string.IsNullOrEmpty(callSite.UnionReceiverType),
-            UnionReceiverType = callSite.UnionReceiverType,
-            ReceiverType = callSite.ReceiverType,
+            FromUnionReceiver = callSite.UnionReceiverType != null,
+            UnionReceiverType = callSite.UnionReceiverType?.DisplayName,
+            ReceiverType = callSite.ReceiverType?.DisplayName,
             Confidence = callSite.Confidence
         };
     }

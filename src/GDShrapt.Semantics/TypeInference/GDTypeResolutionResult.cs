@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -7,14 +8,13 @@ namespace GDShrapt.Semantics;
 /// </summary>
 public class GDTypeResolutionResult
 {
-    public string TypeName { get; init; } = "Variant";
+    public GDSemanticType TypeName { get; init; } = GDVariantSemanticType.Instance;
     public GDTypeNode? TypeNode { get; init; }
     public bool IsResolved { get; init; }
     public GDTypeSource Source { get; init; } = GDTypeSource.Unknown;
 
     public static GDTypeResolutionResult Unknown() => new()
     {
-        TypeName = "Variant",
         IsResolved = false,
         Source = GDTypeSource.Unknown
     };

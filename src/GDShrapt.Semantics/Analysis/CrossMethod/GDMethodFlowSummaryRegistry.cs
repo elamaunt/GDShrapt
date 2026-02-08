@@ -3,7 +3,7 @@ namespace GDShrapt.Semantics
     /// <summary>
     /// Registry for caching method flow summaries.
     /// </summary>
-    public class GDMethodFlowSummaryRegistry
+    internal class GDMethodFlowSummaryRegistry
     {
         private readonly object _lock = new();
         private readonly Dictionary<string, GDMethodFlowSummary> _summaries = new();

@@ -19,7 +19,7 @@ internal class GDReturnInfo
     /// The inferred type of the return expression.
     /// Null for implicit return (void) or return without value.
     /// </summary>
-    public string? InferredType { get; }
+    public GDSemanticType? InferredType { get; }
 
     /// <summary>
     /// Whether the type inference is high confidence.
@@ -56,7 +56,7 @@ internal class GDReturnInfo
     /// </summary>
     public GDReturnInfo(
         GDReturnExpression returnExpr,
-        string? inferredType,
+        GDSemanticType? inferredType,
         bool isHighConfidence,
         string? branchContext = null)
     {
@@ -98,7 +98,7 @@ internal class GDReturnInfo
         if (IsImplicit)
             return $"[implicit] -> null @ line {Line}";
 
-        var typeStr = InferredType ?? "void";
+        var typeStr = InferredType?.DisplayName ?? "void";
         var confidence = IsHighConfidence ? "high" : "low";
         var context = !string.IsNullOrEmpty(BranchContext) ? $" ({BranchContext})" : "";
         return $"return {ExpressionText ?? ""} -> {typeStr} ({confidence}){context} @ {Line}:{Column}";
@@ -159,7 +159,7 @@ internal class GDReturnTypeCollector
             // Set up type narrowing
             _narrowingAnalyzer = new GDTypeNarrowingAnalyzer(runtimeProvider);
             _typeEngine.SetNarrowingTypeProvider(varName =>
-                _currentNarrowingContext.GetConcreteType(varName));
+                _currentNarrowingContext.GetConcreteType(varName)?.DisplayName);
         }
     }
 
@@ -197,7 +197,7 @@ internal class GDReturnTypeCollector
         {
             case GDExpressionStatement exprStmt when exprStmt.Expression is GDReturnExpression returnExpr:
                 var inferredType = InferReturnType(returnExpr);
-                var isHighConfidence = !string.IsNullOrEmpty(inferredType) && inferredType != "Variant";
+                var isHighConfidence = inferredType != null && !inferredType.IsVariant;
                 var context = _branchContext.Count > 0 ? string.Join(" > ", _branchContext.Reverse()) : null;
                 _returns.Add(new GDReturnInfo(returnExpr, inferredType, isHighConfidence, context));
                 break;
@@ -246,7 +246,9 @@ internal class GDReturnTypeCollector
         // If no explicit type, try to infer from initializer
         if (string.IsNullOrEmpty(typeName) && varDecl.Initializer != null && _typeEngine != null)
         {
-            typeName = _typeEngine.InferType(varDecl.Initializer);
+            var inferredType = _typeEngine.InferSemanticType(varDecl.Initializer);
+            if (!inferredType.IsVariant)
+                typeName = inferredType.DisplayName;
         }
 
         typeName ??= "Variant";
@@ -326,12 +328,12 @@ internal class GDReturnTypeCollector
         }
     }
 
-    private string? InferReturnType(GDReturnExpression returnExpr)
+    private GDSemanticType? InferReturnType(GDReturnExpression returnExpr)
     {
         if (returnExpr.Expression == null)
             return null; // void return
 
-        return _typeEngine?.InferType(returnExpr.Expression);
+        return _typeEngine?.InferSemanticType(returnExpr.Expression);
     }
 
     private bool HasExplicitReturnAtEnd()
@@ -395,12 +397,12 @@ internal class GDReturnTypeCollector
             {
                 // Implicit return contributes "null" to the union
                 // In GDScript, methods without return value return null
-                union.AddType("null", isHighConfidence: true);
+                union.AddType(GDNullSemanticType.Instance, isHighConfidence: true);
             }
             else if (returnInfo.InferredType == null)
             {
                 // Explicit "return" without value also contributes "null"
-                union.AddType("null", isHighConfidence: true);
+                union.AddType(GDNullSemanticType.Instance, isHighConfidence: true);
             }
             else
             {

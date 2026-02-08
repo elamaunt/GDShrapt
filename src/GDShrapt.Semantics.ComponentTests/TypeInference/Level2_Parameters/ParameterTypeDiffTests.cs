@@ -18,10 +18,10 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
+        expected.AddTypeName("int");
 
         var actual = new GDUnionType();
-        actual.AddType("int");
+        actual.AddTypeName("int");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -39,12 +39,12 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
-        expected.AddType("String");
+        expected.AddTypeName("int");
+        expected.AddTypeName("String");
 
         var actual = new GDUnionType();
-        actual.AddType("int");
-        actual.AddType("String");
+        actual.AddTypeName("int");
+        actual.AddTypeName("String");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -61,12 +61,12 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
-        expected.AddType("String");
-        expected.AddType("Array");  // Use non-numeric type instead of float
+        expected.AddTypeName("int");
+        expected.AddTypeName("String");
+        expected.AddTypeName("Array");  // Use non-numeric type instead of float
 
         var actual = new GDUnionType();
-        actual.AddType("int");
+        actual.AddTypeName("int");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -83,12 +83,12 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
+        expected.AddTypeName("int");
 
         var actual = new GDUnionType();
-        actual.AddType("int");
-        actual.AddType("String");
-        actual.AddType("float");
+        actual.AddTypeName("int");
+        actual.AddTypeName("String");
+        actual.AddTypeName("float");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -105,12 +105,12 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
-        expected.AddType("null");
+        expected.AddTypeName("int");
+        expected.AddTypeName("null");
 
         var actual = new GDUnionType();
-        actual.AddType("int");
-        actual.AddType("null");
+        actual.AddTypeName("int");
+        actual.AddTypeName("null");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -124,10 +124,10 @@ public class ParameterTypeDiffTests
     {
         // Arrange - int is compatible with float
         var expected = new GDUnionType();
-        expected.AddType("float");
+        expected.AddTypeName("float");
 
         var actual = new GDUnionType();
-        actual.AddType("int");
+        actual.AddTypeName("int");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -143,8 +143,8 @@ public class ParameterTypeDiffTests
         var expected = new GDUnionType();
 
         var actual = new GDUnionType();
-        actual.AddType("int");
-        actual.AddType("String");
+        actual.AddTypeName("int");
+        actual.AddTypeName("String");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -161,8 +161,8 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
-        expected.AddType("String");
+        expected.AddTypeName("int");
+        expected.AddTypeName("String");
 
         var actual = new GDUnionType();
 
@@ -180,10 +180,10 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
+        expected.AddTypeName("int");
 
         var actual = new GDUnionType();
-        actual.AddType("int");
+        actual.AddTypeName("int");
 
         // Act
         var diff = GDParameterTypeDiff.Create("myParam", expected, actual);
@@ -199,10 +199,10 @@ public class ParameterTypeDiffTests
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
+        expected.AddTypeName("int");
 
         var actual = new GDUnionType();
-        actual.AddType("String");
+        actual.AddTypeName("String");
 
         // Act
         var diff = GDParameterTypeDiff.Create("myParam", expected, actual);
@@ -268,7 +268,7 @@ func test(x: int):
         // Assert
         Assert.IsNotNull(diff, "Should return diff for typed parameter");
         Assert.IsFalse(diff.ExpectedTypes.IsEmpty, "Expected types should include explicit annotation");
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"), "Expected should contain int");
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")), "Expected should contain int");
     }
 
     [TestMethod]
@@ -289,9 +289,9 @@ func test(x):
 
         // Assert
         Assert.IsNotNull(diff, "Should return diff for parameter with type guards");
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("int"),
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"Expected should contain int from type guard. Actual: [{string.Join(", ", diff.ExpectedTypes.Types)}]");
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("String"),
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")),
             $"Expected should contain String from type guard. Actual: [{string.Join(", ", diff.ExpectedTypes.Types)}]");
     }
 
@@ -312,7 +312,7 @@ func test(x):
 
         // Assert
         Assert.IsNotNull(diff, "Should return diff for parameter with null check");
-        Assert.IsTrue(diff.ExpectedTypes.Types.Contains("null"),
+        Assert.IsTrue(diff.ExpectedTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")),
             $"Expected should contain null from null check. Actual: [{string.Join(", ", diff.ExpectedTypes.Types)}]");
     }
 
@@ -343,12 +343,12 @@ func test(x):
         // Arrange - Variant is intentionally NOT added to unions (it means "any type")
         // So AddType("Variant") results in an empty union
         var expected = new GDUnionType();
-        expected.AddType("Variant");
+        expected.AddTypeName("Variant");
 
         var actual = new GDUnionType();
-        actual.AddType("int");
-        actual.AddType("String");
-        actual.AddType("Array");
+        actual.AddTypeName("int");
+        actual.AddTypeName("String");
+        actual.AddTypeName("Array");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
@@ -365,12 +365,12 @@ func test(x):
     {
         // Arrange
         var expected = new GDUnionType();
-        expected.AddType("int");
-        expected.AddType("float");
+        expected.AddTypeName("int");
+        expected.AddTypeName("float");
 
         var actual = new GDUnionType();
-        actual.AddType("String");
-        actual.AddType("Array");
+        actual.AddTypeName("String");
+        actual.AddTypeName("Array");
 
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);

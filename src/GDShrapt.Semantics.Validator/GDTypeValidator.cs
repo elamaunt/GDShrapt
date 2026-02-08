@@ -322,10 +322,9 @@ namespace GDShrapt.Semantics.Validator
         private string? GetContainerElementType(GDCallExpression call, string callerType)
         {
             // Try to extract from generic type annotation: Array[int] -> int
-            if (callerType.StartsWith("Array[") && callerType.EndsWith("]"))
-            {
-                return callerType.Substring(6, callerType.Length - 7);
-            }
+            var arrayElement = GDGenericTypeHelper.ExtractArrayElementType(callerType);
+            if (arrayElement != null)
+                return arrayElement;
 
             // For non-generic Array, try to infer from the caller expression
             if (callerType == "Array" && call.CallerExpression is GDMemberOperatorExpression memberOp)
@@ -336,23 +335,16 @@ namespace GDShrapt.Semantics.Validator
                     // Use SemanticModel to get more detailed type info
                     var detailedTypeInfo = _semanticModel?.TypeSystem.GetType(callerExpr);
                     var detailedType = detailedTypeInfo?.IsVariant == true ? null : detailedTypeInfo?.DisplayName;
-                    if (detailedType != null && detailedType.StartsWith("Array[") && detailedType.EndsWith("]"))
-                    {
-                        return detailedType.Substring(6, detailedType.Length - 7);
-                    }
+                    var detailedElement = GDGenericTypeHelper.ExtractArrayElementType(detailedType);
+                    if (detailedElement != null)
+                        return detailedElement;
                 }
             }
 
             // For Dictionary, extract value type
-            if (callerType.StartsWith("Dictionary[") && callerType.EndsWith("]"))
-            {
-                var inner = callerType.Substring(11, callerType.Length - 12);
-                var commaIndex = inner.IndexOf(',');
-                if (commaIndex > 0)
-                {
-                    return inner.Substring(commaIndex + 1).Trim();
-                }
-            }
+            var (_, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(callerType);
+            if (valueType != null)
+                return valueType;
 
             return null;
         }
@@ -494,21 +486,8 @@ namespace GDShrapt.Semantics.Validator
             return false;
         }
 
-        /// <summary>
-        /// Extracts the base type name from a generic type.
-        /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
-        /// </summary>
         private static string ExtractBaseTypeName(string typeName)
-        {
-            if (string.IsNullOrEmpty(typeName))
-                return typeName;
-
-            var bracketIndex = typeName.IndexOf('[');
-            if (bracketIndex > 0)
-                return typeName.Substring(0, bracketIndex);
-
-            return typeName;
-        }
+            => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 
         private void ValidateReturnType(GDReturnExpression returnExpr)
         {

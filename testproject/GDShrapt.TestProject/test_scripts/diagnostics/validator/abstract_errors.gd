@@ -22,7 +22,7 @@ class ValidAbstractClass:
 	func abstract_method() -> void  # 22:6-GDL203-OK
 
 
-## INVALID - @abstract method with implementation body (non-pass statement) # 25:0-GDL101-OK
+## INVALID - @abstract method with implementation body (non-pass statement)
 class InvalidAbstractWithBody:
 	@abstract
 	func abstract_with_body() -> void:  # 28:1-GD8002-OK, 28:1-GD8001-OK, 28:1-GDL513-OK

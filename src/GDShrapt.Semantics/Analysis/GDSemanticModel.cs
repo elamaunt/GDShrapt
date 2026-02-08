@@ -122,7 +122,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// All symbols in this script.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> Symbols => _symbolRegistry.Symbols;
+    public IReadOnlyList<GDSymbolInfo> Symbols => _symbolRegistry.Symbols;
 
     /// <summary>
     /// Gets the symbol registry.
@@ -266,7 +266,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the symbol at a specific position in the file.
     /// </summary>
-    public GDSymbolInfo? GetSymbolAt(int line, int column)
+    public GDSymbolInfo? GetSymbolAtPosition(int line, int column)
     {
         if (_scriptFile.Class == null)
             return null;
@@ -290,6 +290,51 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return FindSymbol(name);
 
         return null;
+    }
+
+    /// <summary>
+    /// Finds the AST node at the specified position.
+    /// </summary>
+    /// <param name="line">0-based line number.</param>
+    /// <param name="column">0-based column number.</param>
+    /// <returns>The parent node of the token at the position, or null.</returns>
+    public GDNode? GetNodeAtPosition(int line, int column)
+    {
+        if (_scriptFile.Class == null)
+            return null;
+
+        var finder = new GDPositionFinder(_scriptFile.Class);
+        return finder.FindNodeAtPosition(line, column);
+    }
+
+    /// <summary>
+    /// Finds the identifier at the specified position.
+    /// </summary>
+    /// <param name="line">0-based line number.</param>
+    /// <param name="column">0-based column number.</param>
+    /// <returns>The identifier at the position, or null if the token is not an identifier.</returns>
+    public GDIdentifier? GetIdentifierAtPosition(int line, int column)
+    {
+        if (_scriptFile.Class == null)
+            return null;
+
+        var finder = new GDPositionFinder(_scriptFile.Class);
+        return finder.FindIdentifierAtPosition(line, column);
+    }
+
+    /// <summary>
+    /// Finds the token at the specified position.
+    /// </summary>
+    /// <param name="line">0-based line number.</param>
+    /// <param name="column">0-based column number.</param>
+    /// <returns>The token at the position, or null.</returns>
+    public GDSyntaxToken? GetTokenAtPosition(int line, int column)
+    {
+        if (_scriptFile.Class == null)
+            return null;
+
+        var finder = new GDPositionFinder(_scriptFile.Class);
+        return finder.FindTokenAtPosition(line, column);
     }
 
     /// <summary>
@@ -323,7 +368,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Finds all symbols with the given name (handles same-named symbols in different scopes).
     /// </summary>
-    public IEnumerable<GDSymbolInfo> FindSymbols(string name) => _symbolRegistry.FindSymbols(name);
+    public IReadOnlyList<GDSymbolInfo> FindSymbols(string name) => _symbolRegistry.FindSymbols(name);
 
     /// <summary>
     /// Finds a symbol by name, considering the scope context.
@@ -335,7 +380,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <returns>The symbol in the appropriate scope, or null if not found</returns>
     public GDSymbolInfo? FindSymbolInScope(string name, GDNode? contextNode)
     {
-        var symbols = _symbolRegistry.FindSymbols(name).ToList();
+        var symbols = _symbolRegistry.FindSymbols(name);
         if (symbols.Count == 0)
             return null;
 
@@ -380,7 +425,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Resolves a member on a type, including inherited members.
     /// </summary>
-    public GDSymbolInfo? ResolveMember(string typeName, string memberName)
+    internal GDSymbolInfo? ResolveMember(string typeName, string memberName)
     {
         if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
             return null;
@@ -459,7 +504,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public IReadOnlyList<GDReference> GetGlobalFunctionAccesses(string functionName)
     {
-        return GetMemberAccesses("@GDScript", functionName);
+        return GetMemberAccesses(GDWellKnownTypes.GDScriptPseudoType, functionName);
     }
 
     /// <summary>
@@ -496,7 +541,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         {
             var inferred = InferParameterType(paramDecl);
             if (inferred.Confidence != GDTypeConfidence.Unknown)
-                return inferred.TypeName;
+                return inferred.TypeName.DisplayName;
         }
 
         return _typeEngine?.GetTypeForNode(node);
@@ -569,7 +614,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Returns null if flow analysis is not available.
     /// Internal - use TypeSystem.GetTypeInfo() for external access.
     /// </summary>
-    internal string? GetFlowSensitiveType(string variableName, GDNode atLocation)
+    internal GDSemanticType? GetFlowSensitiveType(string variableName, GDNode atLocation)
         => _flowQueryService.GetFlowSensitiveType(variableName, atLocation);
 
     /// <summary>
@@ -592,9 +637,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         => _nullabilityService.IsVariablePotentiallyNull(variableName, atLocation);
 
     /// <summary>
-    /// Public method to check if a type is an enum (for external access).
+    /// Checks if a type is a local enum type.
     /// </summary>
-    public bool IsLocalEnumType(string typeName)
+    internal bool IsLocalEnumType(string typeName)
         => _nullabilityService.IsEnumType(typeName);
 
     /// <summary>
@@ -618,13 +663,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets all @onready variable names in the current class.
     /// </summary>
-    public IEnumerable<string> GetOnreadyVariables()
+    internal IEnumerable<string> GetOnreadyVariables()
         => _onreadyService.GetOnreadyVariables();
 
     /// <summary>
     /// Gets the _ready() method declaration if it exists.
     /// </summary>
-    public GDMethodDeclaration? GetReadyMethod()
+    internal GDMethodDeclaration? GetReadyMethod()
         => _onreadyService.GetReadyMethod();
 
     /// <summary>
@@ -652,10 +697,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     {
         var classDecl = _scriptFile?.Class;
         if (classDecl == null)
-            return "RefCounted";
+            return GDWellKnownTypes.RefCounted;
 
         var extendsType = classDecl.Extends?.Type?.BuildName();
-        return string.IsNullOrEmpty(extendsType) ? "RefCounted" : extendsType;
+        return string.IsNullOrEmpty(extendsType) ? GDWellKnownTypes.RefCounted : extendsType;
     }
 
     /// <summary>
@@ -665,6 +710,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     internal GDTypeNode? GetTypeNodeForExpression(GDExpression expression)
     {
         return _expressionTypeService.GetTypeNodeForExpression(expression);
+    }
+
+    /// <summary>
+    /// Gets a rich GDSemanticType for an expression, bypassing string serialization.
+    /// Returns null if no rich type is available (falls back to string-based path).
+    /// </summary>
+    internal GDSemanticType? GetSemanticTypeForExpression(GDExpression expression)
+    {
+        return _expressionTypeService.GetSemanticType(expression);
     }
 
     /// <summary>
@@ -703,7 +757,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         }
 
         var symbol = FindSymbol(variableName);
-        if (symbol?.TypeName != null && symbol.TypeName != "Variant")
+        if (symbol?.TypeName != null && symbol.TypeName != GDWellKnownTypes.Variant)
             return symbol.TypeName;
 
         var duckType = GetDuckType(variableName);
@@ -740,7 +794,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Infers the type for a parameter based on its usage within the method.
     /// Returns Variant if cannot infer.
     /// </summary>
-    public GDInferredParameterType InferParameterType(GDParameterDeclaration param)
+    internal GDInferredParameterType InferParameterType(GDParameterDeclaration param)
     {
         return _expressionTypeService.InferParameterType(param);
     }
@@ -749,7 +803,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Gets the duck typing constraints for a parameter.
     /// Returns null if the parameter has no usage constraints.
     /// </summary>
-    public GDParameterConstraints? GetParameterConstraints(GDParameterDeclaration param)
+    internal GDParameterConstraints? GetParameterConstraints(GDParameterDeclaration param)
     {
         return _expressionTypeService.GetParameterConstraints(param);
     }
@@ -782,12 +836,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets all type usages in this script.
     /// </summary>
-    public IEnumerable<GDTypeUsage> AllTypeUsages => _typeUsages.Values.SelectMany(x => x);
+    internal IEnumerable<GDTypeUsage> AllTypeUsages => _typeUsages.Values.SelectMany(x => x);
 
     /// <summary>
     /// Gets all type names that are used in this script.
     /// </summary>
-    public IEnumerable<string> UsedTypeNames => _typeUsages.Keys;
+    internal IEnumerable<string> UsedTypeNames => _typeUsages.Keys;
 
     #endregion
 
@@ -796,7 +850,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the variable usage profile for a Variant variable.
     /// </summary>
-    public GDVariableUsageProfile? GetVariableProfile(string variableName)
+    internal GDVariableUsageProfile? GetVariableProfile(string variableName)
     {
         return _unionTypeService.GetVariableProfile(variableName);
     }
@@ -819,7 +873,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets all variable usage profiles (for UI display).
     /// </summary>
-    public IEnumerable<GDVariableUsageProfile> GetAllVariableProfiles()
+    internal IEnumerable<GDVariableUsageProfile> GetAllVariableProfiles()
     {
         return _unionTypeService.GetAllVariableProfiles();
     }
@@ -827,7 +881,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the member access confidence for a Union type.
     /// </summary>
-    public GDReferenceConfidence GetUnionMemberConfidence(GDUnionType unionType, string memberName)
+    internal GDReferenceConfidence GetUnionMemberConfidence(GDUnionType unionType, string memberName)
     {
         return _unionTypeService.GetUnionMemberConfidence(unionType, memberName);
     }
@@ -839,7 +893,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <param name="methodName">The method name.</param>
     /// <param name="paramName">The parameter name.</param>
     /// <returns>Type diff result, or null if parameter is not found.</returns>
-    public GDParameterTypeDiff? GetParameterTypeDiff(string methodName, string paramName)
+    internal GDParameterTypeDiff? GetParameterTypeDiff(string methodName, string paramName)
     {
         if (string.IsNullOrEmpty(methodName) || string.IsNullOrEmpty(paramName))
             return null;
@@ -874,7 +928,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <param name="methodName">The method name.</param>
     /// <param name="paramName">The parameter name.</param>
     /// <returns>Union of types passed at call sites, or null if none.</returns>
-    public GDUnionType? GetCallSiteTypes(string methodName, string paramName)
+    internal GDUnionType? GetCallSiteTypes(string methodName, string paramName)
     {
         return _unionTypeService.GetCallSiteTypes(methodName, paramName);
     }
@@ -914,7 +968,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the container usage profile for a variable.
     /// </summary>
-    public GDContainerUsageProfile? GetContainerProfile(string variableName)
+    internal GDContainerUsageProfile? GetContainerProfile(string variableName)
     {
         return _containerTypeService.GetContainerProfile(variableName);
     }
@@ -922,7 +976,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the inferred container element type.
     /// </summary>
-    public GDContainerElementType? GetInferredContainerType(string variableName)
+    internal GDContainerElementType? GetInferredContainerType(string variableName)
     {
         return _containerTypeService.GetInferredContainerType(variableName);
     }
@@ -930,7 +984,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets all container usage profiles (for UI display).
     /// </summary>
-    public IEnumerable<GDContainerUsageProfile> GetAllContainerProfiles()
+    internal IEnumerable<GDContainerUsageProfile> GetAllContainerProfiles()
     {
         return _containerTypeService.GetAllContainerProfiles();
     }
@@ -973,49 +1027,49 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the scope type where the symbol was declared.
     /// </summary>
-    public GDScopeType? GetDeclarationScopeType(GDSymbolInfo symbol)
+    internal GDScopeType? GetDeclarationScopeType(GDSymbolInfo symbol)
         => _scopeService.GetDeclarationScopeType(symbol);
 
     /// <summary>
     /// Gets references to a symbol filtered by scope type.
     /// </summary>
-    public IEnumerable<GDReference> GetReferencesInScope(GDSymbolInfo symbol, GDScopeType scopeType)
+    internal IEnumerable<GDReference> GetReferencesInScope(GDSymbolInfo symbol, GDScopeType scopeType)
         => _scopeService.GetReferencesInScope(symbol, scopeType);
 
     /// <summary>
     /// Gets references to a symbol filtered by multiple scope types.
     /// </summary>
-    public IEnumerable<GDReference> GetReferencesInScopes(GDSymbolInfo symbol, params GDScopeType[] scopeTypes)
+    internal IEnumerable<GDReference> GetReferencesInScopes(GDSymbolInfo symbol, params GDScopeType[] scopeTypes)
         => _scopeService.GetReferencesInScopes(symbol, scopeTypes);
 
     /// <summary>
     /// Gets references only within method/lambda scope (local references).
     /// </summary>
-    public IEnumerable<GDReference> GetLocalReferences(GDSymbolInfo symbol)
+    internal IEnumerable<GDReference> GetLocalReferences(GDSymbolInfo symbol)
         => _scopeService.GetLocalReferences(symbol);
 
     /// <summary>
     /// Determines if a symbol is a local variable (declared in method/lambda scope).
     /// </summary>
-    public bool IsLocalSymbol(GDSymbolInfo symbol)
+    internal bool IsLocalSymbol(GDSymbolInfo symbol)
         => _scopeService.IsLocalSymbol(symbol);
 
     /// <summary>
     /// Determines if a symbol is a class member (declared in class scope).
     /// </summary>
-    public bool IsClassMember(GDSymbolInfo symbol)
+    internal bool IsClassMember(GDSymbolInfo symbol)
         => _scopeService.IsClassMember(symbol);
 
     /// <summary>
     /// Gets the enclosing method/lambda scope for a reference.
     /// </summary>
-    public GDScope? GetEnclosingMethodScope(GDReference reference)
+    internal GDScope? GetEnclosingMethodScope(GDReference reference)
         => _scopeService.GetEnclosingMethodScope(reference);
 
     /// <summary>
     /// Gets references within the same method/lambda as the symbol's declaration.
     /// </summary>
-    public IEnumerable<GDReference> GetReferencesInDeclaringScope(GDSymbolInfo symbol)
+    internal IEnumerable<GDReference> GetReferencesInDeclaringScope(GDSymbolInfo symbol)
         => _scopeService.GetReferencesInDeclaringScope(symbol);
 
     #endregion
@@ -1025,7 +1079,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the expected type at a position (reverse type inference).
     /// </summary>
-    public string? GetExpectedType(GDNode node)
+    internal string? GetExpectedType(GDNode node)
     {
         return _typeEngine?.InferExpectedType(node);
     }
@@ -1045,40 +1099,37 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets symbols of a specific kind.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetSymbolsOfKind(GDSymbolKind kind)
-    {
-        return Symbols.Where(s => s.Kind == kind);
-    }
+    public IReadOnlyList<GDSymbolInfo> GetSymbolsOfKind(GDSymbolKind kind) => _symbolRegistry.GetSymbolsOfKind(kind);
 
     /// <summary>
     /// Gets all method symbols.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetMethods() => GetSymbolsOfKind(GDSymbolKind.Method);
+    public IReadOnlyList<GDSymbolInfo> GetMethods() => GetSymbolsOfKind(GDSymbolKind.Method);
 
     /// <summary>
     /// Gets all variable symbols (class-level).
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetVariables() => GetSymbolsOfKind(GDSymbolKind.Variable);
+    public IReadOnlyList<GDSymbolInfo> GetVariables() => GetSymbolsOfKind(GDSymbolKind.Variable);
 
     /// <summary>
     /// Gets all signal symbols.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetSignals() => GetSymbolsOfKind(GDSymbolKind.Signal);
+    public IReadOnlyList<GDSymbolInfo> GetSignals() => GetSymbolsOfKind(GDSymbolKind.Signal);
 
     /// <summary>
     /// Gets all constant symbols.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetConstants() => GetSymbolsOfKind(GDSymbolKind.Constant);
+    public IReadOnlyList<GDSymbolInfo> GetConstants() => GetSymbolsOfKind(GDSymbolKind.Constant);
 
     /// <summary>
     /// Gets all enum symbols.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetEnums() => GetSymbolsOfKind(GDSymbolKind.Enum);
+    public IReadOnlyList<GDSymbolInfo> GetEnums() => GetSymbolsOfKind(GDSymbolKind.Enum);
 
     /// <summary>
     /// Gets all inner class symbols.
     /// </summary>
-    public IEnumerable<GDSymbolInfo> GetInnerClasses() => GetSymbolsOfKind(GDSymbolKind.Class);
+    public IReadOnlyList<GDSymbolInfo> GetInnerClasses() => GetSymbolsOfKind(GDSymbolKind.Class);
 
     /// <summary>
     /// Gets the declaration node for a symbol.
@@ -1113,38 +1164,38 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Infers lambda parameter types from call sites.
     /// </summary>
-    public IReadOnlyDictionary<int, GDUnionType> InferLambdaParameterTypesFromCallSites(GDMethodExpression lambda)
+    internal IReadOnlyDictionary<int, GDUnionType> InferLambdaParameterTypesFromCallSites(GDMethodExpression lambda)
         => _lambdaTypeService.InferLambdaParameterTypesFromCallSites(lambda);
 
     /// <summary>
     /// Infers a specific lambda parameter type from call sites.
     /// </summary>
-    public string? InferLambdaParameterTypeFromCallSites(GDMethodExpression lambda, int parameterIndex)
+    internal string? InferLambdaParameterTypeFromCallSites(GDMethodExpression lambda, int parameterIndex)
         => _lambdaTypeService.InferLambdaParameterTypeFromCallSites(lambda, parameterIndex);
 
     /// <summary>
     /// Infers lambda parameter types including inter-procedural analysis.
     /// This includes call sites from method parameters when the lambda is passed as argument.
     /// </summary>
-    public IReadOnlyDictionary<int, GDUnionType> InferLambdaParameterTypesWithFlow(GDMethodExpression lambda)
+    internal IReadOnlyDictionary<int, GDUnionType> InferLambdaParameterTypesWithFlow(GDMethodExpression lambda)
         => _lambdaTypeService.InferLambdaParameterTypesWithFlow(lambda);
 
     /// <summary>
     /// Infers a specific lambda parameter type with inter-procedural analysis.
     /// </summary>
-    public string? InferLambdaParameterTypeWithFlow(GDMethodExpression lambda, int parameterIndex)
+    internal string? InferLambdaParameterTypeWithFlow(GDMethodExpression lambda, int parameterIndex)
         => _lambdaTypeService.InferLambdaParameterTypeWithFlow(lambda, parameterIndex);
 
     /// <summary>
     /// Gets the method Callable profile for a method.
     /// </summary>
-    public GDMethodCallableProfile? GetMethodCallableProfile(string methodName)
+    internal GDMethodCallableProfile? GetMethodCallableProfile(string methodName)
         => _lambdaTypeService.GetMethodCallableProfile(methodName);
 
     /// <summary>
     /// Gets argument bindings for a lambda (where it's passed to method parameters).
     /// </summary>
-    public IReadOnlyList<GDCallableArgumentBinding> GetLambdaArgumentBindings(GDMethodExpression lambda)
+    internal IReadOnlyList<GDCallableArgumentBinding> GetLambdaArgumentBindings(GDMethodExpression lambda)
         => _lambdaTypeService.GetLambdaArgumentBindings(lambda);
 
     /// <summary>
@@ -1280,7 +1331,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets a class-level container usage profile.
     /// </summary>
-    public GDContainerUsageProfile? GetClassContainerProfile(string className, string variableName)
+    internal GDContainerUsageProfile? GetClassContainerProfile(string className, string variableName)
     {
         return _containerTypeService.GetClassContainerProfile(className, variableName);
     }
@@ -1288,7 +1339,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets all class-level container profiles.
     /// </summary>
-    public IReadOnlyDictionary<string, GDContainerUsageProfile> ClassContainerProfiles => _containerTypeService.ClassContainerProfiles;
+    internal IReadOnlyDictionary<string, GDContainerUsageProfile> ClassContainerProfiles => _containerTypeService.ClassContainerProfiles;
 
     /// <summary>
     /// Sets call site argument types for a parameter.
@@ -1451,7 +1502,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Checks if a variable is safe to access at a given method, considering cross-method analysis.
     /// </summary>
-    public bool IsVariableSafeAtMethod(string varName, string methodName)
+    internal bool IsVariableSafeAtMethod(string varName, string methodName)
         => _crossMethodFlowService.IsVariableSafeAtMethod(varName, methodName);
 
     /// <summary>
@@ -1469,13 +1520,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets the flow summary for a method.
     /// </summary>
-    public GDMethodFlowSummary? GetMethodFlowSummary(string methodName)
+    internal GDMethodFlowSummary? GetMethodFlowSummary(string methodName)
         => _crossMethodFlowService.GetMethodFlowSummary(methodName);
 
     /// <summary>
     /// Gets the cross-method flow state.
     /// </summary>
-    public GDCrossMethodFlowState? GetCrossMethodFlowState()
+    internal GDCrossMethodFlowState? GetCrossMethodFlowState()
         => _crossMethodFlowService.GetCrossMethodFlowState();
 
     #endregion

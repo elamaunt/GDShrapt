@@ -280,13 +280,5 @@ public class GDRefactoringContext
     /// </summary>
     public GDSemanticModel? GetSemanticModel() => Script.SemanticModel;
 
-    /// <summary>
-    /// Infers the type of the given expression using the script's semantic model.
-    /// </summary>
-    public string? InferType(GDExpression expression)
-    {
-        return Script.SemanticModel?.GetTypeForNode(expression);
-    }
-
     #endregion
 }

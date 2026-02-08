@@ -34,7 +34,7 @@ func combo():
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
     }
 
     [TestMethod]
@@ -60,8 +60,8 @@ func test():
         // Assert
         Assert.IsNotNull(union);
         Assert.IsTrue(union.IsUnion);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -137,7 +137,7 @@ func get_health():
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
     }
 
     [TestMethod]
@@ -161,8 +161,8 @@ func get_value(condition):
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -206,7 +206,7 @@ func do_nothing():
 
         // Assert
         Assert.IsNotNull(union);
-        Assert.IsTrue(union.Types.Contains("null"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("null")));
     }
 
     #endregion
@@ -399,7 +399,7 @@ func bar():
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Enemy");
+        union.AddTypeName("Enemy");
 
         var report = new GDMethodInferenceReport
         {
@@ -691,7 +691,7 @@ func process():
         Assert.IsNotNull(model, "SemanticModel not found");
 
         // Check entity_manager type (class variable union type)
-        var entityManagerType = model.GetUnionType("entity_manager")?.EffectiveType;
+        var entityManagerType = model.GetUnionType("entity_manager")?.EffectiveType.DisplayName;
         System.Console.WriteLine($"entity_manager union type: {entityManagerType}");
 
         // Find the process method
@@ -759,15 +759,15 @@ func process():
 
         // Try getting type via type engine directly
         var typeEngine = new GDTypeInferenceEngine(provider);
-        var entityTypeFromEngine = typeEngine.InferType(entityIdAccess.CallerExpression);
-        System.Console.WriteLine($"TypeEngine.InferType(entity): {entityTypeFromEngine}");
+        var entityTypeFromEngine = typeEngine.InferSemanticType(entityIdAccess.CallerExpression)?.DisplayName;
+        System.Console.WriteLine($"TypeEngine.InferSemanticType(entity): {entityTypeFromEngine}");
 
         // Debug: test AST fallback directly
         var localInit = GDContainerTypeAnalyzer.FindLocalVariableInitializer(entityIdentifier, "entity");
         System.Console.WriteLine($"FindLocalVariableInitializer result: {localInit?.GetType().Name}");
         if (localInit != null)
         {
-            var localInitType = typeEngine.InferType(localInit);
+            var localInitType = typeEngine.InferSemanticType(localInit)?.DisplayName;
             System.Console.WriteLine($"LocalInit inferred type: {localInitType}");
         }
 

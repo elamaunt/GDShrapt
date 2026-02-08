@@ -98,12 +98,6 @@ public class GDProjectTypeSystem : IGDProjectTypeSystem
     }
 
     /// <inheritdoc />
-    public bool AreTypesCompatible(string sourceType, string targetType)
-    {
-        return IsAssignableTo(sourceType, targetType);
-    }
-
-    /// <inheritdoc />
     public bool IsAssignableTo(string sourceType, string targetType)
     {
         if (string.IsNullOrEmpty(sourceType) || string.IsNullOrEmpty(targetType))
@@ -112,7 +106,7 @@ public class GDProjectTypeSystem : IGDProjectTypeSystem
         if (sourceType == targetType)
             return true;
 
-        if (targetType == "Variant")
+        if (targetType == GDWellKnownTypes.Variant)
             return true;
 
         var provider = RuntimeProvider;
@@ -133,7 +127,7 @@ public class GDProjectTypeSystem : IGDProjectTypeSystem
 
         var provider = RuntimeProvider;
         if (provider == null)
-            return "Variant";
+            return GDWellKnownTypes.Variant;
 
         var validTypes = types.Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
         if (validTypes.Count == 0)
@@ -164,6 +158,6 @@ public class GDProjectTypeSystem : IGDProjectTypeSystem
                 return baseType;
         }
 
-        return "Variant";
+        return GDWellKnownTypes.Variant;
     }
 }

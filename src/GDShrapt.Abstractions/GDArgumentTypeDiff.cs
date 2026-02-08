@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Abstractions;
@@ -24,7 +25,7 @@ public class GDArgumentTypeDiff
     /// <summary>
     /// The actual argument type that was passed.
     /// </summary>
-    public string? ActualType { get; set; }
+    public GDSemanticType? ActualType { get; set; }
 
     /// <summary>
     /// Source of the actual type (e.g., "string literal", "variable 'x'", "function call result").
@@ -39,7 +40,7 @@ public class GDArgumentTypeDiff
     /// The expected parameter type(s) from the function signature.
     /// May contain multiple types for Union types or type guards.
     /// </summary>
-    public IReadOnlyList<string> ExpectedTypes { get; set; } = new List<string>();
+    public IReadOnlyList<GDSemanticType> ExpectedTypes { get; set; } = new List<GDSemanticType>();
 
     /// <summary>
     /// Source of the expected types (e.g., "type annotation", "type guard", "usage analysis").
@@ -113,9 +114,9 @@ public class GDArgumentTypeDiff
         {
             ParameterIndex = index,
             ParameterName = parameterName,
-            ActualType = actualType,
+            ActualType = actualType != null ? GDSemanticType.FromRuntimeTypeName(actualType) : null,
             ActualTypeSource = actualSource,
-            ExpectedTypes = expectedTypes,
+            ExpectedTypes = expectedTypes.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList(),
             ExpectedTypeSource = expectedSource,
             IsCompatible = true,
             Confidence = confidence
@@ -139,9 +140,9 @@ public class GDArgumentTypeDiff
         {
             ParameterIndex = index,
             ParameterName = parameterName,
-            ActualType = actualType,
+            ActualType = actualType != null ? GDSemanticType.FromRuntimeTypeName(actualType) : null,
             ActualTypeSource = actualSource,
-            ExpectedTypes = expectedTypes,
+            ExpectedTypes = expectedTypes.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList(),
             ExpectedTypeSource = expectedSource,
             IsCompatible = false,
             IncompatibilityReason = incompatibilityReason,
@@ -164,7 +165,7 @@ public class GDArgumentTypeDiff
         sb.AppendLine();
 
         // What was passed
-        sb.Append($"  Actual type:    {ActualType ?? "unknown"}");
+        sb.Append($"  Actual type:    {ActualType?.DisplayName ?? "unknown"}");
         if (!string.IsNullOrEmpty(ActualTypeSource))
             sb.Append($" (from {ActualTypeSource})");
         sb.AppendLine();
@@ -172,14 +173,14 @@ public class GDArgumentTypeDiff
         // What was expected
         if (ExpectedTypes.Count == 1)
         {
-            sb.Append($"  Expected type:  {ExpectedTypes[0]}");
+            sb.Append($"  Expected type:  {ExpectedTypes[0].DisplayName}");
             if (!string.IsNullOrEmpty(ExpectedTypeSource))
                 sb.Append($" (from {ExpectedTypeSource})");
             sb.AppendLine();
         }
         else if (ExpectedTypes.Count > 1)
         {
-            sb.Append($"  Expected types: {string.Join(" | ", ExpectedTypes)}");
+            sb.Append($"  Expected types: {string.Join(" | ", ExpectedTypes.Select(t => t.DisplayName))}");
             if (!string.IsNullOrEmpty(ExpectedTypeSource))
                 sb.Append($" (from {ExpectedTypeSource})");
             sb.AppendLine();
@@ -223,11 +224,11 @@ public class GDArgumentTypeDiff
 
         if (ExpectedTypes.Count == 1)
         {
-            return $"Argument {paramInfo} expects '{ExpectedTypes[0]}', got '{ActualType ?? "unknown"}'";
+            return $"Argument {paramInfo} expects '{ExpectedTypes[0].DisplayName}', got '{ActualType?.DisplayName ?? "unknown"}'";
         }
         else if (ExpectedTypes.Count > 1)
         {
-            return $"Argument {paramInfo} expects [{string.Join("|", ExpectedTypes)}], got '{ActualType ?? "unknown"}'";
+            return $"Argument {paramInfo} expects [{string.Join("|", ExpectedTypes.Select(t => t.DisplayName))}], got '{ActualType?.DisplayName ?? "unknown"}'";
         }
         else if (DuckConstraints != null && DuckConstraints.HasRequirements)
         {
@@ -237,13 +238,13 @@ public class GDArgumentTypeDiff
             if (DuckConstraints.RequiredProperties.Count > 0)
                 missing.Add($"properties: {string.Join(", ", DuckConstraints.RequiredProperties)}");
 
-            return $"Type '{ActualType ?? "unknown"}' does not have {string.Join(" and ", missing)}";
+            return $"Type '{ActualType?.DisplayName ?? "unknown"}' does not have {string.Join(" and ", missing)}";
         }
 
         return IncompatibilityReason ?? "Type mismatch";
     }
 
     public override string ToString() => IsCompatible
-        ? $"[OK] arg {ParameterIndex}: {ActualType}"
-        : $"[MISMATCH] arg {ParameterIndex}: {ActualType} vs {string.Join("|", ExpectedTypes)}";
+        ? $"[OK] arg {ParameterIndex}: {ActualType?.DisplayName}"
+        : $"[MISMATCH] arg {ParameterIndex}: {ActualType?.DisplayName} vs {string.Join("|", ExpectedTypes.Select(t => t.DisplayName))}";
 }

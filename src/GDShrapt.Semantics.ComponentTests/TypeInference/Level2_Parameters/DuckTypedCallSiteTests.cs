@@ -123,8 +123,8 @@ func test(entity):
         var duckTyped = callSites.FirstOrDefault(c => c.IsDuckTyped);
         Assert.IsNotNull(duckTyped);
         Assert.AreEqual(2, duckTyped.Arguments.Count);
-        Assert.AreEqual("int", duckTyped.Arguments[0].InferredType);
-        Assert.AreEqual("bool", duckTyped.Arguments[1].InferredType);
+        Assert.AreEqual("int", duckTyped.Arguments[0].InferredType?.DisplayName);
+        Assert.AreEqual("bool", duckTyped.Arguments[1].InferredType?.DisplayName);
     }
 
     #endregion

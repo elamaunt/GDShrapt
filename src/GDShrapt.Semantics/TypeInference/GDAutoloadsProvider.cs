@@ -143,7 +143,7 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
                     var paramCount = method.Parameters?.Count() ?? 0;
                     members.Add(GDRuntimeMemberInfo.Method(
                         method.Identifier.Sequence,
-                        method.ReturnType?.BuildName() ?? "Variant",
+                        method.ReturnType?.BuildName() ?? GDWellKnownTypes.Variant,
                         paramCount,
                         paramCount,
                         isVarArgs: false,
@@ -155,13 +155,13 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
                     {
                         members.Add(GDRuntimeMemberInfo.Constant(
                             variable.Identifier.Sequence,
-                            variable.Type?.BuildName() ?? "Variant"));
+                            variable.Type?.BuildName() ?? GDWellKnownTypes.Variant));
                     }
                     else
                     {
                         members.Add(GDRuntimeMemberInfo.Property(
                             variable.Identifier.Sequence,
-                            variable.Type?.BuildName() ?? "Variant",
+                            variable.Type?.BuildName() ?? GDWellKnownTypes.Variant,
                             variable.StaticKeyword != null));
                     }
                     break;

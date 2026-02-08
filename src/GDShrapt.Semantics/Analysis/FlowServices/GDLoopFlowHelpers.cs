@@ -40,7 +40,7 @@ internal static class GDLoopFlowHelpers
             // Re-declare iterator if present
             if (!string.IsNullOrEmpty(iteratorName))
             {
-                iterationState.DeclareVariable(iteratorName, null, iteratorType);
+                iterationState.DeclareVariable(iteratorName, null, GDSemanticType.FromRuntimeTypeName(iteratorType));
             }
 
             // Merge the new iteration state into current state
@@ -77,30 +77,27 @@ internal static class GDLoopFlowHelpers
             return "Variant";
 
         // Handle typed arrays: Array[Type] -> Type
-        var arrayElementType = GDFlowNarrowingHelpers.ExtractGenericTypeParameter(collectionType, GDTypeInferenceConstants.ArrayTypePrefix);
+        var arrayElementType = GDGenericTypeHelper.ExtractArrayElementType(collectionType);
         if (arrayElementType != null)
-        {
             return arrayElementType;
-        }
 
         // Handle range() -> int
-        if (collectionType == "Range" || collectionType == "int")
-            return "int";
+        if (collectionType == GDWellKnownTypes.Other.Range || collectionType == GDWellKnownTypes.Numeric.Int)
+            return GDWellKnownTypes.Numeric.Int;
 
         // Handle String -> String (iterating chars)
-        if (collectionType == "String")
-            return "String";
+        if (collectionType == GDWellKnownTypes.Strings.String)
+            return GDWellKnownTypes.Strings.String;
 
         // Handle Dictionary -> Variant (iterating keys)
-        if (collectionType == "Dictionary" || collectionType.StartsWith("Dictionary["))
-            return "Variant";
+        if (GDGenericTypeHelper.IsDictionaryType(collectionType))
+            return GDWellKnownTypes.Variant;
 
         // Handle PackedArray types
-        if (collectionType.StartsWith("Packed") && collectionType.EndsWith("Array"))
-        {
-            return GDFlowNarrowingHelpers.InferPackedArrayElementType(collectionType) ?? "Variant";
-        }
+        var packedElement = GDPackedArrayTypes.GetElementType(collectionType);
+        if (packedElement != null)
+            return packedElement;
 
-        return "Variant";
+        return GDWellKnownTypes.Variant;
     }
 }

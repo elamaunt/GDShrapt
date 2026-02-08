@@ -77,7 +77,7 @@ func get_entity_by_name(entity_name): # 63:1-GDL513-OK
 
 func find_nearest(position, type_filter):
 	# Return type is Union[Node2D, null] but actual subtype varies
-	var candidates = get_tree().get_nodes_in_group(type_filter) # 80:18-GD7003-OK
+	var candidates = get_tree().get_nodes_in_group(type_filter)
 	if candidates.is_empty():
 		return null
 

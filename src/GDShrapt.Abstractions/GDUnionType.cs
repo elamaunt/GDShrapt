@@ -5,20 +5,20 @@ using System.Linq;
 namespace GDShrapt.Abstractions;
 
 /// <summary>
-/// Represents a Union type - a combination of multiple possible types.
-/// Used when a variable can be one of several types (e.g., from multiple assignments).
+/// Represents a Union type - a mutable accumulator of multiple possible types.
+/// Used during analysis when a variable can be one of several types (e.g., from multiple assignments).
 /// </summary>
 public class GDUnionType
 {
     /// <summary>
     /// All types in the union.
     /// </summary>
-    public HashSet<string> Types { get; } = new HashSet<string>();
+    public HashSet<GDSemanticType> Types { get; } = new HashSet<GDSemanticType>();
 
     /// <summary>
     /// Common base type (if found via inheritance hierarchy).
     /// </summary>
-    public string? CommonBaseType { get; set; }
+    public GDSemanticType? CommonBaseType { get; set; }
 
     /// <summary>
     /// Whether all observed types have high confidence.
@@ -46,36 +46,45 @@ public class GDUnionType
     public bool IsUnion => Types.Count > 1;
 
     /// <summary>
-    /// Gets the effective type: single type if one, common base if available, or "Variant".
+    /// Gets the effective type: single type if one, common base if available, or Variant.
     /// </summary>
-    public string EffectiveType =>
+    public GDSemanticType EffectiveType =>
         IsSingleType ? Types.First() :
-        !string.IsNullOrEmpty(CommonBaseType) ? CommonBaseType :
-        "Variant";
+        CommonBaseType != null ? CommonBaseType :
+        GDVariantSemanticType.Instance;
 
     /// <summary>
     /// Gets the union type name: single type if one, or "A|B|C" format if multiple.
     /// Unlike EffectiveType, this preserves union information instead of falling back to Variant.
     /// </summary>
     public string UnionTypeName =>
-        IsSingleType ? Types.First() :
+        IsSingleType ? Types.First().DisplayName :
         IsEmpty ? "Variant" :
-        string.Join("|", Types.OrderBy(t => t, StringComparer.Ordinal));
+        string.Join("|", Types.Select(t => t.DisplayName).OrderBy(n => n, StringComparer.Ordinal));
 
     /// <summary>
     /// Adds a type to the union.
     /// </summary>
-    /// <param name="typeName">Type name to add</param>
-    /// <param name="isHighConfidence">Whether this type was inferred with high confidence</param>
-    public void AddType(string typeName, bool isHighConfidence = true)
+    public void AddType(GDSemanticType type, bool isHighConfidence = true)
+    {
+        if (type == null || type.IsVariant)
+            return;
+
+        Types.Add(type);
+
+        if (!isHighConfidence)
+            AllHighConfidence = false;
+    }
+
+    /// <summary>
+    /// Adds a type by name (convenience, creates GDSemanticType from runtime type name).
+    /// </summary>
+    public void AddTypeName(string typeName, bool isHighConfidence = true)
     {
         if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
             return;
 
-        Types.Add(typeName);
-
-        if (!isHighConfidence)
-            AllHighConfidence = false;
+        AddType(GDSemanticType.FromRuntimeTypeName(typeName), isHighConfidence);
     }
 
     /// <summary>
@@ -106,7 +115,6 @@ public class GDUnionType
             AllHighConfidence = AllHighConfidence && other.AllHighConfidence
         };
 
-        // If either is empty, use the other
         if (IsEmpty)
         {
             foreach (var t in other.Types)
@@ -120,7 +128,6 @@ public class GDUnionType
             return result;
         }
 
-        // Intersect
         foreach (var t in Types)
         {
             if (other.Types.Contains(t))
@@ -132,58 +139,48 @@ public class GDUnionType
 
     /// <summary>
     /// Computes type-safe intersection with a single target type, considering inheritance and numeric compatibility.
-    /// Used for type narrowing when checking 'x in container' where container has known element type.
     /// </summary>
-    /// <param name="targetType">The type to intersect with</param>
-    /// <param name="runtimeProvider">Optional runtime provider for inheritance checking</param>
-    /// <returns>A new GDUnionType containing only types compatible with targetType</returns>
-    public GDUnionType IntersectWithType(string targetType, IGDRuntimeProvider? runtimeProvider)
+    public GDUnionType IntersectWithType(GDSemanticType targetType, IGDRuntimeProvider? runtimeProvider)
     {
         var result = new GDUnionType { AllHighConfidence = AllHighConfidence };
 
-        // If this union is empty, return the target type
         if (IsEmpty)
         {
             result.Types.Add(targetType);
             return result;
         }
 
+        var targetName = targetType.DisplayName;
+
         foreach (var type in Types)
         {
-            // Skip null when intersecting with concrete types
-            if (type == "null" && targetType != "null")
+            var typeName = type.DisplayName;
+
+            if (type is GDNullSemanticType && targetType is not GDNullSemanticType)
                 continue;
 
-            // Exact match
-            if (type == targetType)
+            if (type.Equals(targetType))
             {
                 result.Types.Add(type);
                 continue;
             }
 
-            // Numeric compatibility: int <-> float
-            if (IsNumericType(type) && IsNumericType(targetType))
+            if (IsNumericType(typeName) && IsNumericType(targetName))
             {
-                // Prefer target type for narrowing
                 result.Types.Add(targetType);
                 continue;
             }
 
-            // Check inheritance via runtime provider
             if (runtimeProvider != null)
             {
-                // type is assignable to targetType (type is subclass of targetType)
-                if (runtimeProvider.IsAssignableTo(type, targetType))
+                if (runtimeProvider.IsAssignableTo(typeName, targetName))
                 {
-                    // Keep the more specific type (the subclass)
                     result.Types.Add(type);
                     continue;
                 }
 
-                // targetType is assignable to type (targetType is subclass of type)
-                if (runtimeProvider.IsAssignableTo(targetType, type))
+                if (runtimeProvider.IsAssignableTo(targetName, typeName))
                 {
-                    // Use the more specific type (targetType)
                     result.Types.Add(targetType);
                     continue;
                 }
@@ -193,13 +190,23 @@ public class GDUnionType
         return result;
     }
 
+    /// <summary>
+    /// Converts to an immutable GDSemanticType.
+    /// </summary>
+    public GDSemanticType ToSemanticType()
+    {
+        if (IsEmpty) return GDVariantSemanticType.Instance;
+        if (IsSingleType) return Types.First();
+        return new GDUnionSemanticType(Types);
+    }
+
     private static bool IsNumericType(string type) =>
         type == "int" || type == "float";
 
     public override string ToString()
     {
         if (IsEmpty) return "Variant";
-        if (IsSingleType) return Types.First();
-        return string.Join("|", Types.OrderBy(t => t));
+        if (IsSingleType) return Types.First().DisplayName;
+        return string.Join("|", Types.Select(t => t.DisplayName).OrderBy(n => n));
     }
 }

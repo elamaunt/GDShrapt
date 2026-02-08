@@ -12,7 +12,7 @@ public class GDTypeCoverageService
 {
     private readonly GDScriptProject _project;
 
-    public GDTypeCoverageService(GDScriptProject project)
+    internal GDTypeCoverageService(GDScriptProject project)
     {
         _project = project;
     }

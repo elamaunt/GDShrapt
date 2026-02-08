@@ -41,7 +41,7 @@ public class GDEdgeConstraints
         foreach (var kv in duckType.RequiredProperties)
         {
             if (kv.Value != null)
-                constraints.RequiredProperties[kv.Key] = kv.Value;
+                constraints.RequiredProperties[kv.Key] = kv.Value.DisplayName;
         }
 
         foreach (var signal in duckType.RequiredSignals)

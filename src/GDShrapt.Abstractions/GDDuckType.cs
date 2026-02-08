@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
@@ -20,7 +21,7 @@ public class GDDuckType
     /// Properties that this duck type must have.
     /// Key = property name, Value = observed type (or null if unknown).
     /// </summary>
-    public Dictionary<string, string?> RequiredProperties { get; } = new Dictionary<string, string?>();
+    public Dictionary<string, GDSemanticType?> RequiredProperties { get; } = new Dictionary<string, GDSemanticType?>();
 
     /// <summary>
     /// Signals that this duck type must have.
@@ -31,18 +32,18 @@ public class GDDuckType
     /// Operators that this duck type must support.
     /// Key = operator type, Value = observed operand types from the other side of the operator.
     /// </summary>
-    public Dictionary<GDDualOperatorType, List<string>> RequiredOperators { get; }
-        = new Dictionary<GDDualOperatorType, List<string>>();
+    public Dictionary<GDDualOperatorType, List<GDSemanticType>> RequiredOperators { get; }
+        = new Dictionary<GDDualOperatorType, List<GDSemanticType>>();
 
     /// <summary>
     /// Known base types this could be (from 'is' checks).
     /// </summary>
-    public HashSet<string> PossibleTypes { get; } = new HashSet<string>();
+    public HashSet<GDSemanticType> PossibleTypes { get; } = new HashSet<GDSemanticType>();
 
     /// <summary>
     /// Types that this is definitely NOT (from failed 'is' checks in else branches).
     /// </summary>
-    public HashSet<string> ExcludedTypes { get; } = new HashSet<string>();
+    public HashSet<GDSemanticType> ExcludedTypes { get; } = new HashSet<GDSemanticType>();
 
     /// <summary>
     /// Whether this type has been validated (e.g., via is_valid() for Callable).
@@ -57,7 +58,7 @@ public class GDDuckType
     /// <summary>
     /// The concrete type, if known exactly.
     /// </summary>
-    public string? ConcreteType { get; set; }
+    public GDSemanticType? ConcreteType { get; set; }
 
     /// <summary>
     /// Adds a method requirement.
@@ -70,7 +71,7 @@ public class GDDuckType
     /// <summary>
     /// Adds a property requirement.
     /// </summary>
-    public void RequireProperty(string name, string? type = null)
+    public void RequireProperty(string name, GDSemanticType? type = null)
     {
         RequiredProperties[name] = type;
     }
@@ -86,13 +87,11 @@ public class GDDuckType
     /// <summary>
     /// Adds an operator requirement with optional operand type.
     /// </summary>
-    /// <param name="op">The operator type (e.g., Addition, Subtraction)</param>
-    /// <param name="operandType">The type of the other operand (optional)</param>
-    public void RequireOperator(GDDualOperatorType op, string? operandType = null)
+    public void RequireOperator(GDDualOperatorType op, GDSemanticType? operandType = null)
     {
         if (!RequiredOperators.TryGetValue(op, out var operands))
         {
-            operands = new List<string>();
+            operands = new List<GDSemanticType>();
             RequiredOperators[op] = operands;
         }
         if (operandType != null && !operands.Contains(operandType))
@@ -102,17 +101,33 @@ public class GDDuckType
     /// <summary>
     /// Adds a possible type (from 'is' check).
     /// </summary>
-    public void AddPossibleType(string typeName)
+    public void AddPossibleType(GDSemanticType type)
     {
-        PossibleTypes.Add(typeName);
+        PossibleTypes.Add(type);
+    }
+
+    /// <summary>
+    /// Adds a possible type by name. Convenience method for AST boundary.
+    /// </summary>
+    public void AddPossibleTypeName(string typeName)
+    {
+        PossibleTypes.Add(GDSemanticType.FromRuntimeTypeName(typeName));
     }
 
     /// <summary>
     /// Excludes a type (from else branch of 'is' check).
     /// </summary>
-    public void ExcludeType(string typeName)
+    public void ExcludeType(GDSemanticType type)
     {
-        ExcludedTypes.Add(typeName);
+        ExcludedTypes.Add(type);
+    }
+
+    /// <summary>
+    /// Excludes a type by name. Convenience method for AST boundary.
+    /// </summary>
+    public void ExcludeTypeName(string typeName)
+    {
+        ExcludedTypes.Add(GDSemanticType.FromRuntimeTypeName(typeName));
     }
 
     /// <summary>
@@ -148,7 +163,7 @@ public class GDDuckType
         {
             if (!RequiredOperators.TryGetValue(kv.Key, out var operands))
             {
-                operands = new List<string>();
+                operands = new List<GDSemanticType>();
                 RequiredOperators[kv.Key] = operands;
             }
             foreach (var op in kv.Value)
@@ -198,14 +213,14 @@ public class GDDuckType
         // Merge operator requirements
         foreach (var kv in RequiredOperators)
         {
-            var operands = new List<string>(kv.Value);
+            var operands = new List<GDSemanticType>(kv.Value);
             result.RequiredOperators[kv.Key] = operands;
         }
         foreach (var kv in other.RequiredOperators)
         {
             if (!result.RequiredOperators.TryGetValue(kv.Key, out var operands))
             {
-                operands = new List<string>();
+                operands = new List<GDSemanticType>();
                 result.RequiredOperators[kv.Key] = operands;
             }
             foreach (var op in kv.Value)
@@ -249,7 +264,7 @@ public class GDDuckType
         var parts = new List<string>();
 
         if (PossibleTypes.Count > 0)
-            parts.Add($"is:{string.Join("|", PossibleTypes)}");
+            parts.Add($"is:{string.Join("|", PossibleTypes.Select(t => t.DisplayName))}");
         if (RequiredMethods.Count > 0)
             parts.Add($"methods:{string.Join(",", RequiredMethods.Keys)}");
         if (RequiredOperators.Count > 0)

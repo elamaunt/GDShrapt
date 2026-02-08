@@ -19,7 +19,7 @@ public class UnionReceiverCallTests
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player");
+        union.AddTypeName("Player");
 
         var project = CreateProject("""
 class_name Player
@@ -43,8 +43,8 @@ func attack(target):
     {
         // Arrange
         var union = new GDUnionType();
-        union.AddType("Player");
-        union.AddType("Enemy");
+        union.AddTypeName("Player");
+        union.AddTypeName("Enemy");
 
         var project = CreateProject("""
 class_name Player
@@ -82,8 +82,8 @@ func test():
     {
         // Arrange - Create a Union type with the same type appearing multiple times
         var union = new GDUnionType();
-        union.AddType("Player");
-        union.AddType("Player"); // Duplicate - should not cause issues
+        union.AddTypeName("Player");
+        union.AddTypeName("Player"); // Duplicate - should not cause issues
 
         var project = CreateProject("""
 class_name Player
@@ -107,8 +107,8 @@ func attack(target):
     {
         // Arrange - Only Player has attack method
         var union = new GDUnionType();
-        union.AddType("Player");
-        union.AddType("NPC"); // NPC doesn't have attack
+        union.AddTypeName("Player");
+        union.AddTypeName("NPC"); // NPC doesn't have attack
 
         var project = CreateProject("""
 class_name Player
@@ -160,7 +160,7 @@ func test():
 
         // Assert - Should collect both call sites with different argument types
         Assert.IsTrue(callSites.Count >= 2);
-        var argTypes = callSites.SelectMany(c => c.Arguments).Select(a => a.InferredType).ToHashSet();
+        var argTypes = callSites.SelectMany(c => c.Arguments).Select(a => a.InferredType?.DisplayName).ToHashSet();
         Assert.IsTrue(argTypes.Contains("int"));
         Assert.IsTrue(argTypes.Contains("String"));
     }
@@ -308,7 +308,7 @@ func attack(target):
     {
         // Arrange - Union contains a type that doesn't exist in the project
         var union = new GDUnionType();
-        union.AddType("NonExistentClass");
+        union.AddTypeName("NonExistentClass");
 
         var project = CreateProject("""
 class_name Player

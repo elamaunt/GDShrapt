@@ -1,7 +1,8 @@
-using GDShrapt.Abstractions;
+using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Reader;
 
-namespace GDShrapt.Semantics;
+namespace GDShrapt.Abstractions;
 
 /// <summary>
 /// Base class for semantic type representation.
@@ -34,6 +35,21 @@ public abstract class GDSemanticType
     public virtual bool IsNullable => false;
 
     /// <summary>
+    /// Gets whether this type is an Array type.
+    /// </summary>
+    public virtual bool IsArray => false;
+
+    /// <summary>
+    /// Gets whether this type is a Dictionary type.
+    /// </summary>
+    public virtual bool IsDictionary => false;
+
+    /// <summary>
+    /// Gets whether this type is a container type (Array or Dictionary).
+    /// </summary>
+    public virtual bool IsContainer => false;
+
+    /// <summary>
     /// Gets whether this type is a union type.
     /// </summary>
     public virtual bool IsUnion => false;
@@ -47,9 +63,43 @@ public abstract class GDSemanticType
     public override string ToString() => DisplayName;
 
     /// <summary>
-    /// Creates a semantic type from a type name string.
+    /// Creates a semantic type from an AST type node.
+    /// Directly converts GDArrayTypeNode/GDDictionaryTypeNode to GDContainerSemanticType
+    /// without string serialization.
     /// </summary>
-    public static GDSemanticType FromTypeName(string? typeName)
+    public static GDSemanticType FromTypeNode(GDTypeNode? typeNode)
+    {
+        if (typeNode == null)
+            return GDVariantSemanticType.Instance;
+
+        if (typeNode is GDArrayTypeNode arrayNode)
+        {
+            var elem = FromTypeNode(arrayNode.InnerType);
+            return new GDContainerSemanticType(isDictionary: false, elementType: elem);
+        }
+
+        if (typeNode is GDDictionaryTypeNode dictNode)
+        {
+            var key = FromTypeNode(dictNode.KeyType);
+            var val = FromTypeNode(dictNode.ValueType);
+            return new GDContainerSemanticType(isDictionary: true, elementType: val, keyType: key);
+        }
+
+        var name = typeNode.BuildName();
+        if (string.IsNullOrEmpty(name) || name == "Variant")
+            return GDVariantSemanticType.Instance;
+        if (name == "null")
+            return GDNullSemanticType.Instance;
+
+        return new GDSimpleSemanticType(name, typeNode);
+    }
+
+    /// <summary>
+    /// Converts a runtime type name string to GDSemanticType.
+    /// Use only at the boundary with IGDRuntimeProvider / TypesMap / GDFlowState data.
+    /// For AST types, use FromTypeNode() instead.
+    /// </summary>
+    public static GDSemanticType FromRuntimeTypeName(string? typeName)
     {
         if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
             return GDVariantSemanticType.Instance;
@@ -62,9 +112,31 @@ public abstract class GDSemanticType
         {
             var parts = typeName.Split('|');
             var types = parts
-                .Select(p => FromTypeName(p.Trim()))
+                .Select(p => FromRuntimeTypeName(p.Trim()))
                 .ToList();
             return new GDUnionSemanticType(types);
+        }
+
+        // Parse container types structurally
+        if (typeName.StartsWith("Array[") && typeName.EndsWith("]"))
+        {
+            var inner = typeName.Substring(6, typeName.Length - 7);
+            return new GDContainerSemanticType(isDictionary: false,
+                elementType: FromRuntimeTypeName(inner));
+        }
+
+        if (typeName.StartsWith("Dictionary[") && typeName.EndsWith("]"))
+        {
+            var inner = typeName.Substring(11, typeName.Length - 12);
+            var commaIndex = GDGenericTypeHelper.FindTopLevelComma(inner);
+            if (commaIndex > 0)
+            {
+                var key = inner.Substring(0, commaIndex).Trim();
+                var val = inner.Substring(commaIndex + 1).Trim();
+                return new GDContainerSemanticType(isDictionary: true,
+                    elementType: FromRuntimeTypeName(val),
+                    keyType: FromRuntimeTypeName(key));
+            }
         }
 
         return new GDSimpleSemanticType(typeName);

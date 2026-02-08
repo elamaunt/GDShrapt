@@ -48,12 +48,6 @@ public interface IGDProjectTypeSystem
     // ========================================
 
     /// <summary>
-    /// Checks if source type can be assigned to target type.
-    /// Uses project-wide type knowledge.
-    /// </summary>
-    bool AreTypesCompatible(string sourceType, string targetType);
-
-    /// <summary>
     /// Checks if a type is assignable to another type.
     /// Uses the project's composite runtime provider.
     /// </summary>

@@ -1,18 +1,13 @@
 using GDShrapt.Reader;
+using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
-namespace GDShrapt.Semantics.Tests;
+namespace GDShrapt.Semantics.ComponentTests.Analysis;
 
-/// <summary>
-/// Tests for Scope Filtering APIs in GDScriptAnalyzer.
-/// </summary>
 [TestClass]
 public class ScopeFilteringApiTests
 {
-    /// <summary>
-    /// Ensures the script has been analyzed.
-    /// </summary>
     private static void EnsureAnalyzed(GDScriptFile script)
     {
         if (script.SemanticModel == null)
@@ -26,15 +21,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsLocalSymbol_LocalVariable_ReturnsTrue()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act - find all symbols named "counter" and get the first one (local variable)
         var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
@@ -44,15 +36,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsLocalSymbol_Parameter_ReturnsTrue()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act - find parameter "value"
         var symbols = script.SemanticModel?.FindSymbols("value").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "value symbol not found");
         var symbol = symbols.First();
@@ -62,15 +51,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsLocalSymbol_ForIterator_ReturnsTrue()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act - find for iterator "i"
         var symbols = script.SemanticModel?.FindSymbols("i").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "i (for iterator) symbol not found");
         var symbol = symbols.First();
@@ -80,15 +66,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsLocalSymbol_ClassMember_ReturnsFalse()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
@@ -98,15 +81,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsLocalSymbol_Method_ReturnsFalse()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("test_rename_local_variable").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "test_rename_local_variable symbol not found");
         var symbol = symbols.First();
@@ -120,15 +100,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsClassMember_ClassVariable_ReturnsTrue()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
@@ -138,15 +115,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsClassMember_Method_ReturnsTrue()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("test_rename_local_variable").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "test_rename_local_variable symbol not found");
         var symbol = symbols.First();
@@ -156,15 +130,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsClassMember_Signal_ReturnsTrue()
     {
-        // Arrange - Use base_entity.gd which has signal declarations
         var script = TestProjectFixture.GetScript("base_entity.gd");
         Assert.IsNotNull(script, "base_entity.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("health_changed").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "health_changed signal not found");
         var symbol = symbols.First();
@@ -174,15 +145,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsClassMember_LocalVariable_ReturnsFalse()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
@@ -192,15 +160,12 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void IsClassMember_Parameter_ReturnsFalse()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("value").ToList();
 
-        // Assert
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "value symbol not found");
         var symbol = symbols.First();
@@ -214,76 +179,64 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetDeclarationScopeType_LocalVariable_ReturnsMethod()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
         var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
-        // Assert
         Assert.AreEqual(GDScopeType.Method, scopeType, "local variable should be declared in Method scope");
     }
 
     [TestMethod]
     public void GetDeclarationScopeType_ClassVariable_ReturnsClass()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
         var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
-        // Assert
         Assert.AreEqual(GDScopeType.Class, scopeType, "class variable should be declared in Class scope");
     }
 
     [TestMethod]
     public void GetDeclarationScopeType_ForIterator_ReturnsForLoop()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("i").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "i symbol not found");
         var symbol = symbols.First();
         var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
-        // Assert
         Assert.AreEqual(GDScopeType.ForLoop, scopeType, "for iterator should be declared in ForLoop scope");
     }
 
     [TestMethod]
     public void GetDeclarationScopeType_Method_ReturnsClass()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("test_rename_local_variable").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "method symbol not found");
         var symbol = symbols.First();
         var scopeType = script.SemanticModel?.GetDeclarationScopeType(symbol);
 
-        // Assert
         Assert.AreEqual(GDScopeType.Class, scopeType, "method should be declared in Class scope");
     }
 
@@ -294,23 +247,19 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetLocalReferences_LocalVariable_ReturnsOnlyMethodScopeRefs()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
         var localRefs = script.SemanticModel?.GetLocalReferences(symbol).ToList();
 
-        // Assert
         Assert.IsNotNull(localRefs);
         Assert.IsTrue(localRefs.Count > 0, "Should have local references");
 
-        // All references should be in local scopes (Method, ForLoop, Conditional, etc.)
         foreach (var reference in localRefs)
         {
             Assert.IsNotNull(reference.Scope, "Reference should have a scope");
@@ -322,21 +271,17 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetLocalReferences_ClassMember_IncludesAllMethodUsages()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
         var symbol = symbols.First();
         var localRefs = script.SemanticModel?.GetLocalReferences(symbol).ToList();
 
-        // Assert
         Assert.IsNotNull(localRefs);
-        // Class members can be used in methods - so local refs should include those usages
         Assert.IsTrue(localRefs.Count >= 3, $"Should have multiple local references to multiplier in test_rename_class_member, got {localRefs.Count}");
     }
 
@@ -347,19 +292,16 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetReferencesInScope_FilterByMethod_ReturnsOnlyMethodRefs()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
         var methodRefs = script.SemanticModel?.GetReferencesInScope(symbol, GDScopeType.Method).ToList();
 
-        // Assert
         Assert.IsNotNull(methodRefs);
 
         foreach (var reference in methodRefs)
@@ -371,19 +313,16 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetReferencesInScope_FilterByForLoop_ReturnsOnlyLoopRefs()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("i").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "i symbol not found");
         var symbol = symbols.First();
         var loopRefs = script.SemanticModel?.GetReferencesInScope(symbol, GDScopeType.ForLoop).ToList();
 
-        // Assert
         Assert.IsNotNull(loopRefs);
 
         foreach (var reference in loopRefs)
@@ -399,19 +338,16 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetReferencesInScopes_MultipleTypes_ReturnsMatchingRefs()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
         var refs = script.SemanticModel?.GetReferencesInScopes(symbol, GDScopeType.Method, GDScopeType.Conditional).ToList();
 
-        // Assert
         Assert.IsNotNull(refs);
         Assert.IsTrue(refs.Count > 0, "Should have references in Method or Conditional scopes");
 
@@ -430,23 +366,19 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetReferencesInDeclaringScope_LocalVariable_ReturnsOnlySameMethodRefs()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("counter").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "counter symbol not found");
         var symbol = symbols.First();
         var declaringScopeRefs = script.SemanticModel?.GetReferencesInDeclaringScope(symbol).ToList();
 
-        // Assert
         Assert.IsNotNull(declaringScopeRefs);
         Assert.IsTrue(declaringScopeRefs.Count > 0, "Should have references in declaring scope");
 
-        // All references should be within the same method that declares 'counter'
         var allRefs = script.SemanticModel?.GetReferencesTo(symbol).ToList();
         Assert.AreEqual(allRefs?.Count, declaringScopeRefs.Count,
             "For local variable, declaring scope refs should equal all refs");
@@ -455,12 +387,10 @@ public class ScopeFilteringApiTests
     [TestMethod]
     public void GetReferencesInDeclaringScope_ClassMember_ReturnsAllRefs()
     {
-        // Arrange
         var script = TestProjectFixture.GetScript("rename_test.gd");
         Assert.IsNotNull(script, "rename_test.gd not found");
         EnsureAnalyzed(script);
 
-        // Act
         var symbols = script.SemanticModel?.FindSymbols("multiplier").ToList();
         Assert.IsNotNull(symbols, "symbols list is null");
         Assert.IsTrue(symbols.Count > 0, "multiplier symbol not found");
@@ -468,11 +398,9 @@ public class ScopeFilteringApiTests
         var declaringScopeRefs = script.SemanticModel?.GetReferencesInDeclaringScope(symbol).ToList();
         var allRefs = script.SemanticModel?.GetReferencesTo(symbol).ToList();
 
-        // Assert
         Assert.IsNotNull(declaringScopeRefs);
         Assert.IsNotNull(allRefs);
 
-        // Class members can be accessed from any method, so all refs should be returned
         Assert.AreEqual(allRefs.Count, declaringScopeRefs.Count,
             "For class member, declaring scope refs should equal all refs");
     }

@@ -26,7 +26,7 @@ func try_operation(input):
 	if input == null:
 		return "Error: null input"
 	if input is int:
-		if input < 0:
+		if input < 0:  # 29:5-GD3020-OK
 			return "Error: negative value"
 		return input * 2
 	if input is String:
@@ -38,7 +38,7 @@ func try_operation(input):
 
 func get_optional_player(player_id):
 	# Returns Player|null
-	var players = get_tree().get_nodes_in_group("players") # 41:15-GD7003-OK
+	var players = get_tree().get_nodes_in_group("players")
 	for p in players:
 		if p.get("id") == player_id: # 43:5-GD7016-OK
 			return p
@@ -49,7 +49,7 @@ func get_position_or_null(node_path):
 	# Returns Vector2|null
 	var node = get_node_or_null(node_path)
 	if node and node is Node2D:
-		return node.global_position
+		return node.global_position  # 52:9-GD3009-OK
 	return null
 
 

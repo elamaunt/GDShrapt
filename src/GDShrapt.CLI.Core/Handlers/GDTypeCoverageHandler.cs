@@ -10,12 +10,14 @@ namespace GDShrapt.CLI.Core;
 public class GDTypeCoverageHandler : IGDTypeCoverageHandler
 {
     protected readonly GDScriptProject _project;
+    protected readonly GDProjectSemanticModel _projectModel;
     protected readonly GDTypeCoverageService _service;
 
-    public GDTypeCoverageHandler(GDScriptProject project)
+    public GDTypeCoverageHandler(GDProjectSemanticModel projectModel)
     {
-        _project = project;
-        _service = new GDTypeCoverageService(project);
+        _projectModel = projectModel ?? throw new System.ArgumentNullException(nameof(projectModel));
+        _project = projectModel.Project;
+        _service = projectModel.TypeCoverage;
     }
 
     /// <inheritdoc />

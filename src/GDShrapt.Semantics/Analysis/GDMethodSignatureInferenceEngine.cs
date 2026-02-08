@@ -234,7 +234,7 @@ internal class GDMethodSignatureInferenceEngine
             if (arg == null) continue;
 
             // Add to union
-            if (!string.IsNullOrEmpty(arg.InferredType))
+            if (arg.InferredType != null && !arg.InferredType.IsVariant)
             {
                 union.AddType(arg.InferredType, arg.IsHighConfidence);
             }

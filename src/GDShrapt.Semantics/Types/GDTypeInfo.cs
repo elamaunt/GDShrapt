@@ -183,13 +183,9 @@ public class GDTypeInfo
 
         var info = new GDTypeInfo
         {
-            DeclaredSemanticType = !string.IsNullOrEmpty(flowType.DeclaredType)
-                ? GDSemanticType.FromTypeName(flowType.DeclaredType)
-                : null,
-            InferredType = GDSemanticType.FromTypeName(flowType.EffectiveType),
-            NarrowedType = flowType.IsNarrowed && !string.IsNullOrEmpty(flowType.NarrowedFromType)
-                ? GDSemanticType.FromTypeName(flowType.NarrowedFromType)
-                : null,
+            DeclaredSemanticType = flowType.DeclaredType,
+            InferredType = flowType.EffectiveType,
+            NarrowedType = flowType.IsNarrowed ? flowType.NarrowedFromType : null,
             IsNullable = !flowType.IsGuaranteedNonNull,
             IsGuaranteedNonNull = flowType.IsGuaranteedNonNull,
             IsPotentiallyNull = flowType.IsPotentiallyNull,

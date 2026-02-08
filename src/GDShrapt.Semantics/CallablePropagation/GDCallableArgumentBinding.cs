@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics;
 /// Represents a binding between a lambda passed as argument and the method parameter it's passed to.
 /// Used for inter-procedural type inference: lambda → method parameter → call sites on parameter.
 /// </summary>
-public class GDCallableArgumentBinding
+internal class GDCallableArgumentBinding
 {
     /// <summary>
     /// The lambda definition being passed.

@@ -223,7 +223,7 @@ func test():
         var inferredTypes = model.InferLambdaParameterTypesWithFlow(lambda);
 
         Assert.IsTrue(inferredTypes.ContainsKey(0), "Should have type for parameter 0");
-        Assert.AreEqual("int", inferredTypes[0].EffectiveType);
+        Assert.AreEqual("int", inferredTypes[0].EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -246,8 +246,8 @@ func test():
 
         Assert.IsTrue(inferredTypes.ContainsKey(0), "Should have type for parameter 0");
         Assert.IsTrue(inferredTypes.ContainsKey(1), "Should have type for parameter 1");
-        Assert.AreEqual("int", inferredTypes[0].EffectiveType, "First param should be int");
-        Assert.AreEqual("String", inferredTypes[1].EffectiveType, "Second param should be String");
+        Assert.AreEqual("int", inferredTypes[0].EffectiveType.DisplayName, "First param should be int");
+        Assert.AreEqual("String", inferredTypes[1].EffectiveType.DisplayName, "Second param should be String");
     }
 
     [TestMethod]

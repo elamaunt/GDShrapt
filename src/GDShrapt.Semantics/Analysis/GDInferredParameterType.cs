@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +18,9 @@ public class GDInferredParameterType
     public string ParameterName { get; }
 
     /// <summary>
-    /// The inferred type name. For union types, this is the combined type (e.g., "int|String").
+    /// The inferred semantic type. For union types, this is the combined type.
     /// </summary>
-    public string TypeName { get; }
+    public GDSemanticType TypeName { get; }
 
     /// <summary>
     /// Confidence level of the inference.
@@ -34,12 +35,12 @@ public class GDInferredParameterType
     /// <summary>
     /// Individual types if this is a union type, null otherwise.
     /// </summary>
-    public IReadOnlyList<string>? UnionTypes { get; private init; }
+    public IReadOnlyList<GDSemanticType>? UnionTypes { get; private init; }
 
     /// <summary>
     /// Detailed union members with sources and derivability info.
     /// </summary>
-    public IReadOnlyList<GDUnionTypeMember>? UnionMembers { get; private init; }
+    internal IReadOnlyList<GDUnionTypeMember>? UnionMembers { get; private init; }
 
     /// <summary>
     /// Whether the inferred type is a union of multiple types.
@@ -73,7 +74,7 @@ public class GDInferredParameterType
     /// </summary>
     protected GDInferredParameterType(
         string paramName,
-        string typeName,
+        GDSemanticType typeName,
         GDTypeConfidence confidence,
         string? reason = null)
     {
@@ -93,19 +94,19 @@ public class GDInferredParameterType
         string typeName,
         GDTypeConfidence confidence,
         string? reason = null)
-        => new(paramName, typeName, confidence, reason);
+        => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), confidence, reason);
 
     /// <summary>
     /// Creates an unknown parameter type (Variant fallback).
     /// </summary>
     public static GDInferredParameterType Unknown(string paramName)
-        => new(paramName, "Variant", GDTypeConfidence.Unknown);
+        => new(paramName, GDVariantSemanticType.Instance, GDTypeConfidence.Unknown);
 
     /// <summary>
     /// Creates a parameter type from an explicit type annotation.
     /// </summary>
     public static GDInferredParameterType Declared(string paramName, string typeName)
-        => new(paramName, typeName, GDTypeConfidence.Certain, "explicit type annotation");
+        => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), GDTypeConfidence.Certain, "explicit type annotation");
 
     /// <summary>
     /// Creates a parameter type from duck typing analysis.
@@ -114,7 +115,7 @@ public class GDInferredParameterType
         string paramName,
         string typeName,
         GDParameterConstraints? constraints = null)
-        => new(paramName, typeName, GDTypeConfidence.Medium, "inferred from usage (duck typing)")
+        => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), GDTypeConfidence.Medium, "inferred from usage (duck typing)")
         {
             IsDuckTyped = true,
             SourceConstraints = constraints
@@ -127,7 +128,7 @@ public class GDInferredParameterType
         string paramName,
         string typeName,
         string sourceLocation)
-        => new(paramName, typeName, GDTypeConfidence.High, $"passed from {sourceLocation}");
+        => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), GDTypeConfidence.High, $"passed from {sourceLocation}");
 
     /// <summary>
     /// Creates a parameter type from a type check (is operator).
@@ -135,7 +136,7 @@ public class GDInferredParameterType
     public static GDInferredParameterType FromTypeCheck(
         string paramName,
         string typeName)
-        => new(paramName, typeName, GDTypeConfidence.High, "narrowed by type check");
+        => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), GDTypeConfidence.High, "narrowed by type check");
 
     /// <summary>
     /// Creates a union type from multiple candidate types.
@@ -149,20 +150,22 @@ public class GDInferredParameterType
         if (types == null || types.Count == 0)
             return Unknown(paramName);
 
-        if (types.Count == 1)
-            return new GDInferredParameterType(paramName, types[0], confidence, reason);
+        var semanticTypes = types.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList();
 
-        var effectiveType = string.Join("|", types);
+        if (semanticTypes.Count == 1)
+            return new GDInferredParameterType(paramName, semanticTypes[0], confidence, reason);
+
+        var effectiveType = new GDUnionSemanticType(semanticTypes);
         return new GDInferredParameterType(paramName, effectiveType, confidence, reason ?? "multiple types detected")
         {
-            UnionTypes = types
+            UnionTypes = semanticTypes
         };
     }
 
     /// <summary>
     /// Creates a union type with detailed member info including sources and derivability.
     /// </summary>
-    public static GDInferredParameterType UnionWithMembers(
+    internal static GDInferredParameterType UnionWithMembers(
         string paramName,
         List<GDUnionTypeMember> members,
         GDTypeConfidence confidence,
@@ -171,23 +174,23 @@ public class GDInferredParameterType
         if (members == null || members.Count == 0)
             return Unknown(paramName);
 
-        var types = members.Select(m => m.FormattedType).ToList();
+        var semanticTypes = members.Select(m => GDSemanticType.FromRuntimeTypeName(m.FormattedType)).ToList();
 
         if (members.Count == 1)
         {
-            return new GDInferredParameterType(paramName, types[0], confidence, "single type from constraints")
+            return new GDInferredParameterType(paramName, semanticTypes[0], confidence, "single type from constraints")
             {
                 UnionMembers = members,
-                UnionTypes = types,
+                UnionTypes = semanticTypes,
                 IsDuckTyped = true,
                 SourceConstraints = constraints
             };
         }
 
-        var effectiveType = string.Join(" | ", types);
+        var effectiveType = (GDSemanticType)new GDUnionSemanticType(semanticTypes);
         return new GDInferredParameterType(paramName, effectiveType, confidence, "union from type checks")
         {
-            UnionTypes = types,
+            UnionTypes = semanticTypes,
             UnionMembers = members,
             IsDuckTyped = true,
             SourceConstraints = constraints
@@ -243,7 +246,7 @@ public class GDInferredParameterType
     /// Converts to the general GDInferredType.
     /// </summary>
     public GDInferredType ToInferredType()
-        => GDInferredType.FromType(TypeName, Confidence, Reason);
+        => GDInferredType.FromType(TypeName.DisplayName, Confidence, Reason);
 
     /// <summary>
     /// Returns a compact string representation for debugging/display.
@@ -259,6 +262,6 @@ public class GDInferredParameterType
             GDTypeConfidence.Certain => ":",
             _ => ""
         };
-        return $"{ParameterName}{conf}{TypeName}";
+        return $"{ParameterName}{conf}{TypeName.DisplayName}";
     }
 }

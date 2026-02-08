@@ -7,12 +7,12 @@ namespace GDShrapt.Semantics;
 /// Service for flow-sensitive type queries.
 /// Provides methods to get flow-sensitive types and flow state at specific locations.
 /// </summary>
-public class GDFlowQueryService
+internal class GDFlowQueryService
 {
     /// <summary>
     /// Delegate for getting flow-sensitive type at a location.
     /// </summary>
-    public delegate string? GetFlowTypeDelegate(GDMethodDeclaration method, string variableName, GDNode atLocation);
+    public delegate GDSemanticType? GetFlowTypeDelegate(GDMethodDeclaration method, string variableName, GDNode atLocation);
 
     /// <summary>
     /// Delegate for getting flow variable type at a location.
@@ -45,7 +45,7 @@ public class GDFlowQueryService
     /// Gets the flow-sensitive type for a variable at a specific location.
     /// Returns null if flow analysis is not available.
     /// </summary>
-    public string? GetFlowSensitiveType(string variableName, GDNode atLocation)
+    public GDSemanticType? GetFlowSensitiveType(string variableName, GDNode atLocation)
     {
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;

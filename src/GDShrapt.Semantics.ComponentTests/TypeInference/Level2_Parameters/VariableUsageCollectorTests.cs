@@ -249,7 +249,7 @@ func test():
         var profile = new GDVariableUsageProfile("x");
         profile.Assignments.Add(new GDAssignmentObservation
         {
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true,
             Kind = GDAssignmentKind.Initialization
         });
@@ -259,7 +259,7 @@ func test():
 
         // Assert
         Assert.IsTrue(union.IsSingleType);
-        Assert.AreEqual("int", union.EffectiveType);
+        Assert.AreEqual("int", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -269,13 +269,13 @@ func test():
         var profile = new GDVariableUsageProfile("x");
         profile.Assignments.Add(new GDAssignmentObservation
         {
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true,
             Kind = GDAssignmentKind.Initialization
         });
         profile.Assignments.Add(new GDAssignmentObservation
         {
-            InferredType = "String",
+            InferredType = GDSemanticType.FromRuntimeTypeName("String"),
             IsHighConfidence = true,
             Kind = GDAssignmentKind.DirectAssignment
         });
@@ -286,8 +286,8 @@ func test():
         // Assert
         Assert.IsTrue(union.IsUnion);
         Assert.AreEqual(2, union.Types.Count);
-        Assert.IsTrue(union.Types.Contains("int"));
-        Assert.IsTrue(union.Types.Contains("String"));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -297,13 +297,13 @@ func test():
         var profile = new GDVariableUsageProfile("x");
         profile.Assignments.Add(new GDAssignmentObservation
         {
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true,
             Kind = GDAssignmentKind.Initialization
         });
         profile.Assignments.Add(new GDAssignmentObservation
         {
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true,
             Kind = GDAssignmentKind.DirectAssignment
         });
@@ -313,7 +313,7 @@ func test():
 
         // Assert
         Assert.IsTrue(union.IsSingleType);
-        Assert.AreEqual("int", union.EffectiveType);
+        Assert.AreEqual("int", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -329,7 +329,7 @@ func test():
         });
         profile.Assignments.Add(new GDAssignmentObservation
         {
-            InferredType = "int",
+            InferredType = GDSemanticType.FromRuntimeTypeName("int"),
             IsHighConfidence = true,
             Kind = GDAssignmentKind.DirectAssignment
         });
@@ -339,7 +339,7 @@ func test():
 
         // Assert
         Assert.IsTrue(union.IsSingleType);
-        Assert.AreEqual("int", union.EffectiveType);
+        Assert.AreEqual("int", union.EffectiveType.DisplayName);
     }
 
     [TestMethod]
@@ -347,17 +347,17 @@ func test():
     {
         // Arrange
         var profile = new GDVariableUsageProfile("x");
-        profile.Assignments.Add(new GDAssignmentObservation { InferredType = "int" });
-        profile.Assignments.Add(new GDAssignmentObservation { InferredType = "int" });
-        profile.Assignments.Add(new GDAssignmentObservation { InferredType = "String" });
+        profile.Assignments.Add(new GDAssignmentObservation { InferredType = GDSemanticType.FromRuntimeTypeName("int") });
+        profile.Assignments.Add(new GDAssignmentObservation { InferredType = GDSemanticType.FromRuntimeTypeName("int") });
+        profile.Assignments.Add(new GDAssignmentObservation { InferredType = GDSemanticType.FromRuntimeTypeName("String") });
 
         // Act
         var types = profile.GetAssignedTypes().ToList();
 
         // Assert
         Assert.AreEqual(2, types.Count);
-        Assert.IsTrue(types.Contains("int"));
-        Assert.IsTrue(types.Contains("String"));
+        Assert.IsTrue(types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -365,8 +365,8 @@ func test():
     {
         // Arrange
         var profile = new GDVariableUsageProfile("x");
-        profile.Assignments.Add(new GDAssignmentObservation { InferredType = "int", IsHighConfidence = true });
-        profile.Assignments.Add(new GDAssignmentObservation { InferredType = "float", IsHighConfidence = true });
+        profile.Assignments.Add(new GDAssignmentObservation { InferredType = GDSemanticType.FromRuntimeTypeName("int"), IsHighConfidence = true });
+        profile.Assignments.Add(new GDAssignmentObservation { InferredType = GDSemanticType.FromRuntimeTypeName("float"), IsHighConfidence = true });
 
         // Assert
         Assert.IsTrue(profile.AllHighConfidence);
@@ -377,8 +377,8 @@ func test():
     {
         // Arrange
         var profile = new GDVariableUsageProfile("x");
-        profile.Assignments.Add(new GDAssignmentObservation { InferredType = "int", IsHighConfidence = true });
-        profile.Assignments.Add(new GDAssignmentObservation { InferredType = "float", IsHighConfidence = false });
+        profile.Assignments.Add(new GDAssignmentObservation { InferredType = GDSemanticType.FromRuntimeTypeName("int"), IsHighConfidence = true });
+        profile.Assignments.Add(new GDAssignmentObservation { InferredType = GDSemanticType.FromRuntimeTypeName("float"), IsHighConfidence = false });
 
         // Assert
         Assert.IsFalse(profile.AllHighConfidence);

@@ -23,7 +23,7 @@ public class GDDeadCodeService
     /// </summary>
     /// <param name="projectModel">The project semantic model (required).</param>
     /// <exception cref="ArgumentNullException">Thrown if projectModel is null.</exception>
-    public GDDeadCodeService(GDProjectSemanticModel projectModel)
+    internal GDDeadCodeService(GDProjectSemanticModel projectModel)
     {
         _projectModel = projectModel ?? throw new ArgumentNullException(nameof(projectModel));
         _project = projectModel.Project;

@@ -66,10 +66,8 @@ internal class GDClassContainerUsageCollector : GDVisitor
                 if (!isContainer && initializer != null)
                 {
                     // Also check inferred type for edge cases
-                    var initType = _typeEngine?.InferType(initializer);
-                    isContainer = initType == "Array" || initType == "Dictionary" ||
-                                  initType?.StartsWith("Array[") == true ||
-                                  initType?.StartsWith("Dictionary[") == true;
+                    var initType = _typeEngine?.InferSemanticType(initializer);
+                    isContainer = initType?.IsArray == true || initType?.IsDictionary == true;
                 }
 
                 if (isContainer)
@@ -149,15 +147,15 @@ internal class GDClassContainerUsageCollector : GDVisitor
                 }
                 else
                 {
-                    profile.IsDictionary = inferredType == "Dictionary";
-                    profile.IsArray = inferredType == "Array";
+                    profile.IsDictionary = inferredType == GDWellKnownTypes.Containers.Dictionary;
+                    profile.IsArray = inferredType == GDWellKnownTypes.Containers.Array;
                 }
             }
             else if (varDecl?.Initializer != null)
             {
-                var initType = _typeEngine?.InferType(varDecl.Initializer);
-                profile.IsDictionary = initType == "Dictionary";
-                profile.IsArray = initType == "Array" || initType?.StartsWith("Array[") == true;
+                var initType = _typeEngine?.InferSemanticType(varDecl.Initializer);
+                profile.IsDictionary = initType?.IsDictionary == true;
+                profile.IsArray = initType?.IsArray == true;
 
                 // Collect types from initializer
                 CollectInitializerValues(varDecl.Initializer, profile);
@@ -189,7 +187,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
     private static bool IsNullLiteral(GDExpression? expr)
     {
         return expr is GDIdentifierExpression identExpr &&
-               identExpr.Identifier?.Sequence == GDTypeInferenceConstants.NullTypeName;
+               identExpr.Identifier?.Sequence == GDWellKnownTypes.Null;
     }
 
     public override void Visit(GDCallExpression callExpr)
@@ -238,7 +236,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
             case "append":
             case "push_back":
                 {
-                    var valueType = _typeEngine?.InferType(args[0]);
+                    var valueType = _typeEngine?.InferSemanticType(args[0]);
                     var isHighConfidence = DetermineHighConfidence(args[0], valueType);
                     profile.ValueUsages.Add(new GDContainerUsageObservation
                     {
@@ -254,7 +252,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
 
             case "push_front":
                 {
-                    var valueType = _typeEngine?.InferType(args[0]);
+                    var valueType = _typeEngine?.InferSemanticType(args[0]);
                     var isHighConfidence = DetermineHighConfidence(args[0], valueType);
                     profile.ValueUsages.Add(new GDContainerUsageObservation
                     {
@@ -271,7 +269,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
             case "insert":
                 if (args.Count >= 2)
                 {
-                    var valueType = _typeEngine?.InferType(args[1]);
+                    var valueType = _typeEngine?.InferSemanticType(args[1]);
                     var isHighConfidence = DetermineHighConfidence(args[1], valueType);
                     profile.ValueUsages.Add(new GDContainerUsageObservation
                     {
@@ -287,7 +285,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
 
             case "fill":
                 {
-                    var valueType = _typeEngine?.InferType(args[0]);
+                    var valueType = _typeEngine?.InferSemanticType(args[0]);
                     var isHighConfidence = DetermineHighConfidence(args[0], valueType);
                     profile.ValueUsages.Add(new GDContainerUsageObservation
                     {
@@ -305,7 +303,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                 // dict.get(key, default) - infer type from default value
                 if (profile.IsDictionary && args.Count >= 2)
                 {
-                    var keyType = _typeEngine?.InferType(args[0]);
+                    var keyType = _typeEngine?.InferSemanticType(args[0]);
                     var keyConfidence = DetermineHighConfidence(args[0], keyType);
                     profile.KeyUsages.Add(new GDContainerUsageObservation
                     {
@@ -317,7 +315,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                         Column = column
                     });
 
-                    var defaultType = _typeEngine?.InferType(args[1]);
+                    var defaultType = _typeEngine?.InferSemanticType(args[1]);
                     var defaultConfidence = DetermineHighConfidence(args[1], defaultType);
                     profile.ValueUsages.Add(new GDContainerUsageObservation
                     {
@@ -340,7 +338,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
         var column = token?.StartColumn ?? 0;
 
         // Track value type
-        var valueType = _typeEngine?.InferType(value);
+        var valueType = _typeEngine?.InferSemanticType(value);
         var valueConfidence = DetermineHighConfidence(value, valueType);
         profile.ValueUsages.Add(new GDContainerUsageObservation
         {
@@ -355,7 +353,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
         // For Dictionary, also track key type
         if (profile.IsDictionary)
         {
-            var keyType = _typeEngine?.InferType(indexer.InnerExpression);
+            var keyType = _typeEngine?.InferSemanticType(indexer.InnerExpression);
             var keyConfidence = DetermineHighConfidence(indexer.InnerExpression, keyType);
             profile.KeyUsages.Add(new GDContainerUsageObservation
             {
@@ -375,7 +373,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
         {
             foreach (var value in arrayInit.Values ?? Enumerable.Empty<GDExpression>())
             {
-                var valueType = _typeEngine?.InferType(value);
+                var valueType = _typeEngine?.InferSemanticType(value);
                 var isHighConfidence = DetermineHighConfidence(value, valueType);
                 var token = value.AllTokens.FirstOrDefault();
 
@@ -399,7 +397,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                 var column = token?.StartColumn ?? 0;
 
                 // Key
-                var keyType = _typeEngine?.InferType(kv.Key);
+                var keyType = _typeEngine?.InferSemanticType(kv.Key);
                 var keyConfidence = DetermineHighConfidence(kv.Key, keyType);
                 profile.KeyUsages.Add(new GDContainerUsageObservation
                 {
@@ -412,7 +410,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                 });
 
                 // Value
-                var valueType = _typeEngine?.InferType(kv.Value);
+                var valueType = _typeEngine?.InferSemanticType(kv.Value);
                 var valueConfidence = DetermineHighConfidence(kv.Value, valueType);
                 profile.ValueUsages.Add(new GDContainerUsageObservation
                 {
@@ -427,9 +425,9 @@ internal class GDClassContainerUsageCollector : GDVisitor
         }
     }
 
-    private bool DetermineHighConfidence(GDExpression? expr, string? inferredType)
+    private bool DetermineHighConfidence(GDExpression? expr, GDSemanticType? inferredType)
     {
-        if (expr == null || string.IsNullOrEmpty(inferredType) || inferredType == "Variant")
+        if (expr == null || inferredType == null || inferredType.IsVariant)
             return false;
 
         // Literals have certain confidence
@@ -439,11 +437,11 @@ internal class GDClassContainerUsageCollector : GDVisitor
         // ClassName.new() has high confidence
         if (expr is GDCallExpression call &&
             call.CallerExpression is GDMemberOperatorExpression member &&
-            member.Identifier?.Sequence == GDTypeInferenceConstants.ConstructorMethodName)
+            member.Identifier?.Sequence == GDWellKnownFunctions.Constructor)
             return true;
 
         // If we got a concrete type, treat as high confidence
-        if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant" && !inferredType.StartsWith("Unknown"))
+        if (!inferredType.IsVariant && !inferredType.DisplayName.StartsWith("Unknown"))
             return true;
 
         return false;

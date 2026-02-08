@@ -21,7 +21,7 @@ public class GDTypeNarrowingContext
     /// <summary>
     /// Narrows the type of a variable within this context.
     /// </summary>
-    public void NarrowType(string variableName, string toType)
+    public void NarrowType(string variableName, GDSemanticType toType)
     {
         EnsureDuckType(variableName).AddPossibleType(toType);
     }
@@ -29,7 +29,7 @@ public class GDTypeNarrowingContext
     /// <summary>
     /// Excludes a type from a variable (for else branches).
     /// </summary>
-    public void ExcludeType(string variableName, string type)
+    public void ExcludeType(string variableName, GDSemanticType type)
     {
         EnsureDuckType(variableName).ExcludeType(type);
     }
@@ -62,7 +62,7 @@ public class GDTypeNarrowingContext
     /// Sets the concrete type for a variable.
     /// Used when type can be exactly determined (e.g., x == 42 means x is int).
     /// </summary>
-    public void SetConcreteType(string variableName, string concreteType)
+    public void SetConcreteType(string variableName, GDSemanticType concreteType)
     {
         var duckType = EnsureDuckType(variableName);
         // Clear existing possible types and set the concrete one
@@ -118,7 +118,7 @@ public class GDTypeNarrowingContext
     /// <summary>
     /// Gets the most specific concrete type for a variable, if determinable.
     /// </summary>
-    public string? GetConcreteType(string variableName)
+    public GDSemanticType? GetConcreteType(string variableName)
     {
         var duckType = GetNarrowedType(variableName);
         if (duckType == null)

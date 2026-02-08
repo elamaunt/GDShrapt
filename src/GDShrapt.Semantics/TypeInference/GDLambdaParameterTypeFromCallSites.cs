@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Result of inferring a lambda parameter type from call sites.
 /// </summary>
-public class GDLambdaParameterTypeFromCallSites
+internal class GDLambdaParameterTypeFromCallSites
 {
     /// <summary>
     /// Name of the parameter.
@@ -36,7 +36,7 @@ public class GDLambdaParameterTypeFromCallSites
     /// <summary>
     /// The effective inferred type (single type, common base, or Variant).
     /// </summary>
-    public string EffectiveType => ArgumentTypes.EffectiveType;
+    public string EffectiveType => ArgumentTypes.EffectiveType.DisplayName;
 
     /// <summary>
     /// Whether this is a high-confidence inference.

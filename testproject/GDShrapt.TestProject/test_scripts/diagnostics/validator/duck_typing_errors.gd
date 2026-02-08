@@ -34,7 +34,7 @@ func test_gd7002_invalid(untyped_obj) -> void: # 30:1-GDL513-OK
 ## SUPPRESSED - GD7002 suppressed
 func test_gd7002_suppressed(untyped_obj) -> void: # 35:1-GDL513-OK
 	# gd:ignore = GD7002
-	print(untyped_obj.another_property)  # 37:7-GD7002-OK, 37:7-GD7005-OK
+	print(untyped_obj.another_property)  # 37:7-GD7005-OK
 
 
 # =============================================================================
@@ -61,7 +61,7 @@ func test_gd7003_invalid(untyped_obj) -> void: # 57:1-GDL513-OK
 ## SUPPRESSED - GD7003 suppressed
 func test_gd7003_suppressed(untyped_obj) -> void: # 62:1-GDL513-OK
 	# gd:ignore = GD7003
-	untyped_obj.another_method()  # 64:1-GD7003-OK, 64:1-GD7007-OK
+	untyped_obj.another_method()  # 64:1-GD7007-OK
 
 
 # =============================================================================

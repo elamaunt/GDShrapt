@@ -10,22 +10,14 @@ namespace GDShrapt.CLI.Core;
 public class GDDependencyHandler : IGDDependencyHandler
 {
     protected readonly GDScriptProject _project;
+    protected readonly GDProjectSemanticModel _projectModel;
     protected readonly GDDependencyService _service;
 
-    public GDDependencyHandler(GDScriptProject project)
+    public GDDependencyHandler(GDProjectSemanticModel projectModel)
     {
-        _project = project;
-        _service = new GDDependencyService(project);
-    }
-
-    /// <summary>
-    /// Creates a handler with an explicit signal registry.
-    /// Use this when you have a GDProjectSemanticModel.
-    /// </summary>
-    public GDDependencyHandler(GDScriptProject project, GDSignalConnectionRegistry? signalRegistry)
-    {
-        _project = project;
-        _service = new GDDependencyService(project, signalRegistry);
+        _projectModel = projectModel ?? throw new System.ArgumentNullException(nameof(projectModel));
+        _project = projectModel.Project;
+        _service = projectModel.Dependencies;
     }
 
     /// <inheritdoc />

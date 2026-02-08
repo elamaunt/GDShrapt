@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Information about a .call() or .callv() invocation on a Callable variable.
 /// </summary>
-public class GDCallableCallSiteInfo
+internal class GDCallableCallSiteInfo
 {
     /// <summary>
     /// The call expression AST node (e.g., cb.call(42)).
@@ -80,7 +81,7 @@ public class GDCallableCallSiteInfo
     public static GDCallableCallSiteInfo? TryCreate(
         GDCallExpression callExpr,
         GDScriptFile? sourceFile,
-        System.Func<GDExpression, string?>? typeInferrer = null)
+        System.Func<GDExpression, GDSemanticType?>? typeInferrer = null)
     {
         // Check if this is a .call() or .callv() invocation
         if (callExpr.CallerExpression is not GDMemberOperatorExpression memberOp)
@@ -142,7 +143,7 @@ public class GDCallableCallSiteInfo
 
     public override string ToString()
     {
-        var argsStr = string.Join(", ", Arguments.Select(a => a.InferredType ?? "?"));
+        var argsStr = string.Join(", ", Arguments.Select(a => a.InferredType?.DisplayName ?? "?"));
         var method = IsCallV ? "callv" : "call";
         return $"{CallableVariableName ?? "?"}.{method}({argsStr}) at {Line}:{Column}";
     }
@@ -151,7 +152,7 @@ public class GDCallableCallSiteInfo
 /// <summary>
 /// Information about an argument passed to .call().
 /// </summary>
-public class GDCallableArgumentInfo
+internal class GDCallableArgumentInfo
 {
     /// <summary>
     /// Index of the argument (0-based).
@@ -166,9 +167,9 @@ public class GDCallableArgumentInfo
     /// <summary>
     /// Inferred type of the argument.
     /// </summary>
-    public string? InferredType { get; }
+    public GDSemanticType? InferredType { get; }
 
-    public GDCallableArgumentInfo(int index, GDExpression expression, string? inferredType)
+    public GDCallableArgumentInfo(int index, GDExpression expression, GDSemanticType? inferredType)
     {
         Index = index;
         Expression = expression;
@@ -177,6 +178,6 @@ public class GDCallableArgumentInfo
 
     public override string ToString()
     {
-        return $"[{Index}]: {InferredType ?? "?"}";
+        return $"[{Index}]: {InferredType?.DisplayName ?? "?"}";
     }
 }

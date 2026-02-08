@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,42 +46,42 @@ public class GDParameterConstraints
     /// <summary>
     /// Possible types from 'is' type checks (e.g., if param is Node adds "Node").
     /// </summary>
-    public HashSet<string> PossibleTypes { get; } = new();
+    public HashSet<GDSemanticType> PossibleTypes { get; } = new();
 
     /// <summary>
     /// Types excluded by negative 'is' checks (e.g., if not param is Node adds "Node").
     /// </summary>
-    public HashSet<string> ExcludedTypes { get; } = new();
+    public HashSet<GDSemanticType> ExcludedTypes { get; } = new();
 
     /// <summary>
     /// Inferred element types for container parameters.
     /// Populated when parameter is used as iterable (for x in param) and x has type checks.
     /// </summary>
-    public HashSet<string> ElementTypes { get; } = new();
+    public HashSet<GDSemanticType> ElementTypes { get; } = new();
 
     /// <summary>
     /// Inferred key types for dictionary parameters.
     /// Populated when parameter is used with indexer or .get(key).
     /// </summary>
-    public HashSet<string> KeyTypes { get; } = new();
+    public HashSet<GDSemanticType> KeyTypes { get; } = new();
 
     #region Per-Type Constraints with Sources
 
     /// <summary>
     /// Per-type constraints with inference sources.
-    /// Key is the type name, value contains constraints specific to that type.
+    /// Key is the semantic type, value contains constraints specific to that type.
     /// </summary>
-    public Dictionary<string, GDTypeSpecificConstraints> TypeConstraints { get; } = new();
+    internal Dictionary<GDSemanticType, GDTypeSpecificConstraints> TypeConstraints { get; } = new();
 
     /// <summary>
     /// Gets or creates type-specific constraints for a given type.
     /// </summary>
-    public GDTypeSpecificConstraints GetOrCreateTypeConstraints(string typeName)
+    internal GDTypeSpecificConstraints GetOrCreateTypeConstraints(GDSemanticType type)
     {
-        if (!TypeConstraints.TryGetValue(typeName, out var constraints))
+        if (!TypeConstraints.TryGetValue(type, out var constraints))
         {
-            constraints = new GDTypeSpecificConstraints(typeName);
-            TypeConstraints[typeName] = constraints;
+            constraints = new GDTypeSpecificConstraints(type);
+            TypeConstraints[type] = constraints;
         }
         return constraints;
     }
@@ -88,7 +89,7 @@ public class GDParameterConstraints
     /// <summary>
     /// Adds a possible type with its inference source.
     /// </summary>
-    public void AddPossibleTypeWithSource(string type, GDTypeInferenceSource source)
+    internal void AddPossibleTypeWithSource(GDSemanticType type, GDTypeInferenceSource source)
     {
         PossibleTypes.Add(type);
         var tc = GetOrCreateTypeConstraints(type);
@@ -98,7 +99,7 @@ public class GDParameterConstraints
     /// <summary>
     /// Adds element type with the container type it applies to.
     /// </summary>
-    public void AddElementTypeForType(string containerType, string elementType, GDTypeInferenceSource? source = null)
+    internal void AddElementTypeForType(GDSemanticType containerType, GDSemanticType elementType, GDTypeInferenceSource? source = null)
     {
         ElementTypes.Add(elementType);
         var tc = GetOrCreateTypeConstraints(containerType);
@@ -110,7 +111,7 @@ public class GDParameterConstraints
     /// <summary>
     /// Adds key type with the container type it applies to.
     /// </summary>
-    public void AddKeyTypeForType(string containerType, string keyType, GDTypeInferenceSource? source = null)
+    internal void AddKeyTypeForType(GDSemanticType containerType, GDSemanticType keyType, GDTypeInferenceSource? source = null)
     {
         KeyTypes.Add(keyType);
         var tc = GetOrCreateTypeConstraints(containerType);
@@ -122,7 +123,7 @@ public class GDParameterConstraints
     /// <summary>
     /// Marks a type's value slot as derivable (can be inferred further).
     /// </summary>
-    public void MarkValueDerivable(string containerType, GDNode? sourceNode, string? reason = null)
+    public void MarkValueDerivable(GDSemanticType containerType, GDNode? sourceNode, string? reason = null)
     {
         var tc = GetOrCreateTypeConstraints(containerType);
         tc.ValueIsDerivable = true;
@@ -133,12 +134,37 @@ public class GDParameterConstraints
     /// <summary>
     /// Marks a type's key slot as derivable (can be inferred further).
     /// </summary>
-    public void MarkKeyDerivable(string containerType, GDNode? sourceNode, string? reason = null)
+    public void MarkKeyDerivable(GDSemanticType containerType, GDNode? sourceNode, string? reason = null)
     {
         var tc = GetOrCreateTypeConstraints(containerType);
         tc.KeyIsDerivable = true;
         tc.KeyDerivableNode = sourceNode;
         tc.KeyDerivableReason = reason;
+    }
+
+    #endregion
+
+    #region Method Call Argument Types
+
+    /// <summary>
+    /// Argument info for methods called on this parameter.
+    /// Key = method name, Value = list of argument info arrays per call.
+    /// E.g., param.has("key") -> { "has": [[FromType("String")]] }
+    /// E.g., param.set(other_param, val) -> { "set": [[FromParameter("other_param"), Unknown()]] }
+    /// </summary>
+    internal Dictionary<string, List<GDCallArgInfo[]>> MethodCallArgTypes { get; } = new();
+
+    /// <summary>
+    /// Records argument info for a method call on this parameter.
+    /// </summary>
+    internal void AddMethodCallArgTypes(string methodName, GDCallArgInfo[] argInfos)
+    {
+        if (!MethodCallArgTypes.TryGetValue(methodName, out var calls))
+        {
+            calls = new List<GDCallArgInfo[]>();
+            MethodCallArgTypes[methodName] = calls;
+        }
+        calls.Add(argInfos);
     }
 
     #endregion
@@ -180,28 +206,28 @@ public class GDParameterConstraints
     /// <summary>
     /// Adds a type that this parameter could be (from 'is' check).
     /// </summary>
-    public void AddPossibleType(string type) => PossibleTypes.Add(type);
+    public void AddPossibleType(GDSemanticType type) => PossibleTypes.Add(type);
 
     /// <summary>
     /// Adds a type that this parameter cannot be (from negative 'is' check).
     /// </summary>
-    public void ExcludeType(string type) => ExcludedTypes.Add(type);
+    public void ExcludeType(GDSemanticType type) => ExcludedTypes.Add(type);
 
     /// <summary>
     /// Adds an element type for container parameters (from iterator type checks).
     /// </summary>
-    public void AddElementType(string type)
+    public void AddElementType(GDSemanticType? type)
     {
-        if (!string.IsNullOrEmpty(type))
+        if (type != null)
             ElementTypes.Add(type);
     }
 
     /// <summary>
     /// Adds a key type for dictionary parameters (from .get(key) or [key] usage).
     /// </summary>
-    public void AddKeyType(string type)
+    public void AddKeyType(GDSemanticType? type)
     {
-        if (!string.IsNullOrEmpty(type))
+        if (type != null)
             KeyTypes.Add(type);
     }
 
@@ -234,13 +260,13 @@ public class GDParameterConstraints
         if (IsIndexable)
             parts.Add("indexable");
         if (PossibleTypes.Count > 0)
-            parts.Add($"maybe: [{string.Join("|", PossibleTypes)}]");
+            parts.Add($"maybe: [{string.Join("|", PossibleTypes.Select(t => t.DisplayName))}]");
         if (ExcludedTypes.Count > 0)
-            parts.Add($"not: [{string.Join("|", ExcludedTypes)}]");
+            parts.Add($"not: [{string.Join("|", ExcludedTypes.Select(t => t.DisplayName))}]");
         if (ElementTypes.Count > 0)
-            parts.Add($"elements: [{string.Join("|", ElementTypes)}]");
+            parts.Add($"elements: [{string.Join("|", ElementTypes.Select(t => t.DisplayName))}]");
         if (KeyTypes.Count > 0)
-            parts.Add($"keys: [{string.Join("|", KeyTypes)}]");
+            parts.Add($"keys: [{string.Join("|", KeyTypes.Select(t => t.DisplayName))}]");
         if (PassedToCalls.Count > 0)
             parts.Add($"passed:{PassedToCalls.Count}x");
 
@@ -254,12 +280,12 @@ public class GDParameterConstraints
 /// Constraints specific to a particular type in a union.
 /// E.g., for "Dictionary | Array", Dictionary has KeyTypes while Array does not.
 /// </summary>
-public class GDTypeSpecificConstraints
+internal class GDTypeSpecificConstraints
 {
     /// <summary>
-    /// The type name this constraints apply to.
+    /// The semantic type this constraints apply to.
     /// </summary>
-    public string TypeName { get; }
+    public GDSemanticType Type { get; }
 
     /// <summary>
     /// Sources that led to inferring this type.
@@ -269,12 +295,12 @@ public class GDTypeSpecificConstraints
     /// <summary>
     /// Element/value types specific to this container type.
     /// </summary>
-    public HashSet<string> ElementTypes { get; } = new();
+    public HashSet<GDSemanticType> ElementTypes { get; } = new();
 
     /// <summary>
     /// Key types specific to this container type (for Dictionary).
     /// </summary>
-    public HashSet<string> KeyTypes { get; } = new();
+    public HashSet<GDSemanticType> KeyTypes { get; } = new();
 
     /// <summary>
     /// Sources for element type inference.
@@ -319,9 +345,9 @@ public class GDTypeSpecificConstraints
     /// <summary>
     /// Creates type-specific constraints.
     /// </summary>
-    public GDTypeSpecificConstraints(string typeName)
+    public GDTypeSpecificConstraints(GDSemanticType type)
     {
-        TypeName = typeName;
+        Type = type;
     }
 
     /// <summary>
@@ -335,12 +361,11 @@ public class GDTypeSpecificConstraints
         string typeStr;
         if (ElementTypes.Count == 1)
         {
-            // Safe: use FirstOrDefault to avoid race condition
-            typeStr = ElementTypes.FirstOrDefault() ?? "Variant";
+            typeStr = ElementTypes.FirstOrDefault()?.DisplayName ?? "Variant";
         }
         else
         {
-            typeStr = string.Join(" | ", ElementTypes.OrderBy(t => t));
+            typeStr = string.Join(" | ", ElementTypes.Select(t => t.DisplayName).OrderBy(t => t));
         }
 
         return ValueIsDerivable ? $"{typeStr}?" : typeStr;
@@ -357,12 +382,11 @@ public class GDTypeSpecificConstraints
         string typeStr;
         if (KeyTypes.Count == 1)
         {
-            // Safe: use FirstOrDefault to avoid race condition
-            typeStr = KeyTypes.FirstOrDefault() ?? "Variant";
+            typeStr = KeyTypes.FirstOrDefault()?.DisplayName ?? "Variant";
         }
         else
         {
-            typeStr = string.Join(" | ", KeyTypes.OrderBy(t => t));
+            typeStr = string.Join(" | ", KeyTypes.Select(t => t.DisplayName).OrderBy(t => t));
         }
 
         return KeyIsDerivable ? $"{typeStr}?" : typeStr;
@@ -373,23 +397,58 @@ public class GDTypeSpecificConstraints
     /// </summary>
     public string FormatFullType()
     {
-        if (TypeName == "Array")
+        if (Type.DisplayName == GDWellKnownTypes.Containers.Array)
         {
             var elem = GetElementTypeString();
-            if (elem != "Variant" || ValueIsDerivable)
-                return $"Array[{elem}]";
-            return "Array";
+            if (elem != GDWellKnownTypes.Variant || ValueIsDerivable)
+                return GDGenericTypeHelper.CreateArrayType(elem);
+            return GDWellKnownTypes.Containers.Array;
         }
 
-        if (TypeName == "Dictionary")
+        if (Type.DisplayName == GDWellKnownTypes.Containers.Dictionary)
         {
             var key = GetKeyTypeString();
             var val = GetElementTypeString();
-            if (key != "Variant" || val != "Variant" || KeyIsDerivable || ValueIsDerivable)
-                return $"Dictionary[{key}, {val}]";
-            return "Dictionary";
+            if (key != GDWellKnownTypes.Variant || val != GDWellKnownTypes.Variant || KeyIsDerivable || ValueIsDerivable)
+                return GDGenericTypeHelper.CreateDictionaryType(key, val);
+            return GDWellKnownTypes.Containers.Dictionary;
         }
 
-        return TypeName;
+        return Type.DisplayName;
     }
+}
+
+/// <summary>
+/// Info about a single argument in a method call on a parameter.
+/// Either a resolved type, a reference to another parameter, or unknown (Variant).
+/// </summary>
+internal class GDCallArgInfo
+{
+    /// <summary>Resolved semantic type. Null if unresolved.</summary>
+    public GDSemanticType? ResolvedType { get; }
+
+    /// <summary>Name of the parameter this arg references. Null if not a parameter ref.</summary>
+    public string? ParameterRef { get; }
+
+    /// <summary>True when the argument type could not be determined.</summary>
+    public bool IsUnknown => ResolvedType == null && ParameterRef == null;
+
+    /// <summary>True when the argument is a reference to another method parameter.</summary>
+    public bool IsParameterRef => ParameterRef != null;
+
+    private GDCallArgInfo(GDSemanticType? resolvedType, string? parameterRef)
+    {
+        ResolvedType = resolvedType;
+        ParameterRef = parameterRef;
+    }
+
+    public static GDCallArgInfo FromType(GDSemanticType type) => new(type, null);
+    public static GDCallArgInfo FromParameter(string paramName) => new(null, paramName);
+    public static GDCallArgInfo Unknown() => new(null, null);
+
+    /// <summary>
+    /// Returns the effective type for compatibility checks.
+    /// Returns Variant for unknown/parameter-ref.
+    /// </summary>
+    public GDSemanticType EffectiveType => ResolvedType ?? GDVariantSemanticType.Instance;
 }

@@ -250,7 +250,7 @@ var cb = func(x: int, y: String) -> bool:
         Assert.IsNotNull(lambda, "Initializer should be a lambda");
 
         // Act - infer the full semantic type of the lambda expression
-        var type = engine.InferType(lambda);
+        var type = engine.InferSemanticType(lambda).DisplayName;
 
         // Assert - semantic type includes full signature
         Assert.IsNotNull(type, "Lambda type should be inferred");
@@ -283,7 +283,7 @@ var cb = func(): pass
         Assert.IsNotNull(lambda, "Initializer should be a lambda");
 
         // Act
-        var type = engine.InferType(lambda);
+        var type = engine.InferSemanticType(lambda).DisplayName;
 
         // Assert - no params, no return → simple Callable
         Assert.AreEqual("Callable", type,
@@ -312,7 +312,7 @@ var cb = func(x, y): return x + y
         Assert.IsNotNull(lambda, "Initializer should be a lambda");
 
         // Act
-        var type = engine.InferType(lambda);
+        var type = engine.InferSemanticType(lambda).DisplayName;
 
         // Assert - semantic type includes Variant for untyped params
         Assert.IsTrue(type.StartsWith("Callable"),
@@ -342,7 +342,7 @@ var cb: Callable = func(x: int): return x * 2
         Assert.IsNotNull(lambda, "Initializer should be a lambda");
 
         // Act
-        var type = engine.InferType(lambda);
+        var type = engine.InferSemanticType(lambda).DisplayName;
 
         // Assert - should be Callable with signature
         Assert.IsTrue(type.StartsWith("Callable"),
@@ -371,7 +371,7 @@ var cb = func(x: int, y: String) -> bool:
         Assert.IsNotNull(lambda, "Initializer should be a lambda");
 
         // Act - InferType returns semantic type with full signature
-        var type = engine.InferType(lambda);
+        var type = engine.InferSemanticType(lambda).DisplayName;
 
         // Assert exact format: Callable[[int, String], bool]
         Assert.AreEqual("Callable[[int, String], bool]", type,
@@ -401,7 +401,7 @@ var cb = func() -> int: return 42
         Assert.IsNotNull(lambda, "Initializer should be a lambda");
 
         // Act
-        var type = engine.InferType(lambda);
+        var type = engine.InferSemanticType(lambda).DisplayName;
 
         // Assert - no params but has return type: Callable[[], int]
         Assert.AreEqual("Callable[[], int]", type,
@@ -431,7 +431,7 @@ var cb = func(x: int): return x * 2
         Assert.IsNotNull(lambda, "Initializer should be a lambda");
 
         // Act
-        var type = engine.InferType(lambda);
+        var type = engine.InferSemanticType(lambda).DisplayName;
 
         // Assert: Callable[[int], int]
         Assert.AreEqual("Callable[[int], int]", type,

@@ -115,8 +115,8 @@ public class CrossMethodFlowTests
         // Assert
         Assert.AreEqual(1, result.Count);
         Assert.AreEqual(2, result["x"].CallSiteCount);
-        Assert.IsTrue(result["x"].ArgumentTypes.Types.Contains("int"));
-        Assert.IsTrue(result["x"].ArgumentTypes.Types.Contains("String"));
+        Assert.IsTrue(result["x"].ArgumentTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+        Assert.IsTrue(result["x"].ArgumentTypes.Types.Contains(GDSemanticType.FromRuntimeTypeName("String")));
     }
 
     [TestMethod]
@@ -366,7 +366,7 @@ public class CrossMethodFlowTests
     {
         // Arrange
         var callSiteResult = new GDCallSiteTypeAnalyzer.ParameterTypeFromCallSites("param", 0);
-        callSiteResult.ArgumentTypes.AddType("int");
+        callSiteResult.ArgumentTypes.AddTypeName("int");
         callSiteResult.CallSiteCount = 3;
         callSiteResult.UnknownTypeCount = 0;
 
@@ -375,7 +375,7 @@ public class CrossMethodFlowTests
 
         // Assert
         Assert.AreEqual("param", inferredType.ParameterName);
-        Assert.AreEqual("int", inferredType.TypeName);
+        Assert.AreEqual("int", inferredType.TypeName.DisplayName);
         Assert.AreEqual(GDTypeConfidence.High, inferredType.Confidence);
         Assert.IsFalse(inferredType.IsUnion);
     }
@@ -385,8 +385,8 @@ public class CrossMethodFlowTests
     {
         // Arrange
         var callSiteResult = new GDCallSiteTypeAnalyzer.ParameterTypeFromCallSites("param", 0);
-        callSiteResult.ArgumentTypes.AddType("int");
-        callSiteResult.ArgumentTypes.AddType("String");
+        callSiteResult.ArgumentTypes.AddTypeName("int");
+        callSiteResult.ArgumentTypes.AddTypeName("String");
         callSiteResult.CallSiteCount = 2;
         callSiteResult.UnknownTypeCount = 0;
 
@@ -397,8 +397,8 @@ public class CrossMethodFlowTests
         Assert.AreEqual("param", inferredType.ParameterName);
         Assert.IsTrue(inferredType.IsUnion);
         Assert.IsNotNull(inferredType.UnionTypes);
-        Assert.IsTrue(inferredType.UnionTypes.Contains("int"));
-        Assert.IsTrue(inferredType.UnionTypes.Contains("String"));
+        Assert.IsTrue(inferredType.UnionTypes.Any(t => t.DisplayName == "int"));
+        Assert.IsTrue(inferredType.UnionTypes.Any(t => t.DisplayName == "String"));
     }
 
     [TestMethod]
@@ -412,7 +412,7 @@ public class CrossMethodFlowTests
 
         // Assert
         Assert.IsTrue(inferredType.IsUnknown);
-        Assert.AreEqual("Variant", inferredType.TypeName);
+        Assert.AreEqual("Variant", inferredType.TypeName.DisplayName);
     }
 
     [TestMethod]
@@ -420,7 +420,7 @@ public class CrossMethodFlowTests
     {
         // Arrange
         var callSiteResult = new GDCallSiteTypeAnalyzer.ParameterTypeFromCallSites("param", 0);
-        callSiteResult.ArgumentTypes.AddType("int");
+        callSiteResult.ArgumentTypes.AddTypeName("int");
         callSiteResult.CallSiteCount = 10;
         callSiteResult.UnknownTypeCount = 2; // 80% known - should be medium
 

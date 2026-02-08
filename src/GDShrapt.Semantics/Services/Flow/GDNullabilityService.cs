@@ -10,7 +10,7 @@ namespace GDShrapt.Semantics;
 /// Service for nullability analysis.
 /// Provides methods to check if variables can be null at specific locations.
 /// </summary>
-public class GDNullabilityService
+internal class GDNullabilityService
 {
     private readonly IGDRuntimeProvider? _runtimeProvider;
 
@@ -22,7 +22,7 @@ public class GDNullabilityService
     /// <summary>
     /// Delegate for finding symbols by name.
     /// </summary>
-    public delegate IEnumerable<GDSymbolInfo> FindSymbolsDelegate(string name);
+    public delegate IReadOnlyList<GDSymbolInfo> FindSymbolsDelegate(string name);
 
     /// <summary>
     /// Delegate for getting flow state at location.

@@ -526,7 +526,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             string? inferredType = null;
             if (!unionType.IsEmpty)
             {
-                inferredType = unionType.EffectiveType;
+                inferredType = unionType.EffectiveType.DisplayName;
             }
 
             // Thread-safe update of method properties

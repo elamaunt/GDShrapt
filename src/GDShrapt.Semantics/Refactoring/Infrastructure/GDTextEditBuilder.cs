@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Fluent builder for creating GDTextEdit objects.
 /// </summary>
-public class GDTextEditBuilder
+internal class GDTextEditBuilder
 {
     private readonly List<GDTextEdit> _edits = new();
     private string? _filePath;

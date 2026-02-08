@@ -49,8 +49,8 @@ internal class GDFlowAnalysisRegistry
         // Get flow state at the specific location and check narrowing
         var flowState = analyzer.GetStateAtLocation(atLocation);
         var varType = flowState?.GetVariableType(variableName);
-        if (varType != null && varType.IsNarrowed && !string.IsNullOrEmpty(varType.NarrowedFromType))
-            return varType.NarrowedFromType;
+        if (varType != null && varType.IsNarrowed && varType.NarrowedFromType != null)
+            return varType.NarrowedFromType.DisplayName;
 
         return null;
     }
