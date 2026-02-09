@@ -163,11 +163,13 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         // Check methods
         if (typeData.MethodDatas?.TryGetValue(memberName, out var methods) == true && methods.Count > 0)
         {
-            var method = methods[0];
+            // GDScript has no generics — prefer non-generic overload when available
+            var method = SelectMethod(methods);
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
             var returnType = ConvertCSharpGenericToGDScript(
                 method.GDScriptReturnTypeName,
                 method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant;
+
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
                 returnType,
@@ -254,7 +256,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         // Check methods
         if (typeData.MethodDatas?.TryGetValue(memberName, out var methods) == true && methods.Count > 0)
         {
-            var method = methods[0];
+            // GDScript has no generics — prefer non-generic overload when available
+            var method = SelectMethod(methods);
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
             var returnType = ConvertCSharpGenericToGDScript(
                 method.GDScriptReturnTypeName,
@@ -381,7 +384,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         if (_assemblyData.GlobalData.MethodDatas.TryGetValue(name, out var methods) && methods.Count > 0)
         {
-            var method = methods[0];
+            var method = SelectMethod(methods);
 
             // Use explicit attributes from TypesMap if available, otherwise calculate from parameters
             int minArgs, maxArgs;
@@ -776,6 +779,18 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Selects the best method overload for GDScript.
+    /// GDScript has no generics, so non-generic overloads are preferred.
+    /// </summary>
+    private static GDMethodData SelectMethod(List<GDMethodData> methods)
+    {
+        if (methods.Count > 1)
+            return methods.FirstOrDefault(m => !m.IsGeneric) ?? methods[0];
+
+        return methods[0];
     }
 
     /// <summary>

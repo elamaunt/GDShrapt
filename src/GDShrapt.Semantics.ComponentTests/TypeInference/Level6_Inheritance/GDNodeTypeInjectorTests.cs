@@ -780,4 +780,304 @@ signal position_changed(x: float, y: float)
     }
 
     #endregion
+
+    #region Scene-Aware Instantiate Tests
+
+    [TestMethod]
+    public void InjectType_PreloadInstantiate_ReturnsRootNodeType()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Player"" type=""CharacterBody2D""]
+[node name=""CollisionShape"" type=""CollisionShape2D"" parent="".""]
+[node name=""Sprite"" type=""Sprite2D"" parent="".""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "player.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://player.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var call = _reader.ParseExpression("preload(\"res://player.tscn\").instantiate()") as GDCallExpression;
+        Assert.IsNotNull(call);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+        var type = injector.InjectType(call, context);
+
+        Assert.AreEqual("CharacterBody2D", type);
+    }
+
+    [TestMethod]
+    public void InjectType_PreloadInstantiate_WithScript_ReturnsScriptType()
+    {
+        var sceneContent = @"
+[gd_scene load_steps=2 format=3]
+[ext_resource type=""Script"" path=""res://player.gd"" id=""1""]
+[node name=""Player"" type=""CharacterBody2D""]
+script = ExtResource(""1"")
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "player.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://player.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var call = _reader.ParseExpression("preload(\"res://player.tscn\").instantiate()") as GDCallExpression;
+        Assert.IsNotNull(call);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+        var type = injector.InjectType(call, context);
+
+        Assert.AreEqual("Player", type);
+    }
+
+    [TestMethod]
+    public void InjectType_LoadInstantiate_ReturnsRootNodeType()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Enemy"" type=""Node2D""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "enemy.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://enemy.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var call = _reader.ParseExpression("load(\"res://enemy.tscn\").instantiate()") as GDCallExpression;
+        Assert.IsNotNull(call);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+        var type = injector.InjectType(call, context);
+
+        Assert.AreEqual("Node2D", type);
+    }
+
+    [TestMethod]
+    public void InjectType_VariableInstantiate_ReturnsRootType()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Enemy"" type=""Node2D""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "enemy.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://enemy.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+var enemy_scene = preload(""res://enemy.tscn"")
+
+func test():
+    var instance = enemy_scene.instantiate()
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var instantiateCall = FindCallExpression(classDecl, "instantiate");
+        Assert.IsNotNull(instantiateCall, "Should find instantiate() call in AST");
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+        var type = injector.InjectType(instantiateCall, context);
+
+        Assert.AreEqual("Node2D", type);
+    }
+
+    [TestMethod]
+    public void InjectType_NonSceneInstantiate_ReturnsNull()
+    {
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var call = _reader.ParseExpression("preload(\"res://texture.png\").instantiate()") as GDCallExpression;
+        Assert.IsNotNull(call);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+        var type = injector.InjectType(call, context);
+
+        Assert.IsNull(type);
+    }
+
+    [TestMethod]
+    public void InjectType_GetChildOnSceneInstance_ReturnsChildType()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Root"" type=""Node2D""]
+[node name=""Sprite"" type=""Sprite2D"" parent="".""]
+[node name=""Collision"" type=""CollisionShape2D"" parent="".""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "entity.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://entity.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+var entity = preload(""res://entity.tscn"").instantiate()
+
+func test():
+    var child0 = entity.get_child(0)
+    var child1 = entity.get_child(1)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+
+        var getChild0 = FindCallExpressionWithArg(classDecl, "get_child", "0");
+        Assert.IsNotNull(getChild0, "Should find get_child(0) in AST");
+        var type0 = injector.InjectType(getChild0, context);
+        Assert.AreEqual("Sprite2D", type0);
+
+        var getChild1 = FindCallExpressionWithArg(classDecl, "get_child", "1");
+        Assert.IsNotNull(getChild1, "Should find get_child(1) in AST");
+        var type1 = injector.InjectType(getChild1, context);
+        Assert.AreEqual("CollisionShape2D", type1);
+    }
+
+    [TestMethod]
+    public void InjectType_GetChildOutOfBounds_ReturnsNull()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Root"" type=""Node2D""]
+[node name=""OnlyChild"" type=""Sprite2D"" parent="".""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "small.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://small.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+var node = preload(""res://small.tscn"").instantiate()
+
+func test():
+    var child = node.get_child(99)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var getChild = FindCallExpression(classDecl, "get_child");
+        Assert.IsNotNull(getChild);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+        var type = injector.InjectType(getChild, context);
+
+        Assert.IsNull(type);
+    }
+
+    [TestMethod]
+    public void GetRootNodeType_ReturnsFirstNodeType()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Main"" type=""Control""]
+[node name=""Child"" type=""Button"" parent="".""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "ui.tscn"), sceneContent);
+
+        var provider = new GDSceneTypesProvider(projectPath, mockFs);
+        provider.LoadScene("res://ui.tscn");
+
+        Assert.AreEqual("Control", provider.GetRootNodeType("res://ui.tscn"));
+    }
+
+    [TestMethod]
+    public void GetDirectChildren_ReturnsImmediateChildren()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Root"" type=""Node2D""]
+[node name=""Child1"" type=""Sprite2D"" parent="".""]
+[node name=""Child2"" type=""CollisionShape2D"" parent="".""]
+[node name=""GrandChild"" type=""Label"" parent=""Child1""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "test.tscn"), sceneContent);
+
+        var provider = new GDSceneTypesProvider(projectPath, mockFs);
+        provider.LoadScene("res://test.tscn");
+
+        var children = provider.GetDirectChildren("res://test.tscn", ".");
+        Assert.AreEqual(2, children.Count);
+        Assert.AreEqual("Sprite2D", children[0].NodeType);
+        Assert.AreEqual("CollisionShape2D", children[1].NodeType);
+    }
+
+    private static GDCallExpression? FindCallExpression(GDClassDeclaration classDecl, string methodName)
+    {
+        GDCallExpression? found = null;
+        classDecl.WalkIn(new CallExpressionFinder(methodName, null, e => found = e));
+        return found;
+    }
+
+    private static GDCallExpression? FindCallExpressionWithArg(GDClassDeclaration classDecl, string methodName, string argValue)
+    {
+        GDCallExpression? found = null;
+        classDecl.WalkIn(new CallExpressionFinder(methodName, argValue, e => found = e));
+        return found;
+    }
+
+    private class CallExpressionFinder : GDVisitor
+    {
+        private readonly string _methodName;
+        private readonly string? _argValue;
+        private readonly System.Action<GDCallExpression> _onFound;
+
+        public CallExpressionFinder(string methodName, string? argValue, System.Action<GDCallExpression> onFound)
+        {
+            _methodName = methodName;
+            _argValue = argValue;
+            _onFound = onFound;
+        }
+
+        public override void Visit(GDCallExpression e)
+        {
+            var name = GDNodePathExtractor.GetCallName(e);
+            if (name == _methodName)
+            {
+                if (_argValue == null)
+                {
+                    _onFound(e);
+                }
+                else
+                {
+                    var args = e.Parameters?.ToList();
+                    if (args != null && args.Count > 0 && args[0] is GDNumberExpression num && num.Number?.Sequence == _argValue)
+                    {
+                        _onFound(e);
+                    }
+                }
+            }
+            base.Visit(e);
+        }
+    }
+
+    #endregion
 }

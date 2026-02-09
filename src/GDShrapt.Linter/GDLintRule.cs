@@ -1,5 +1,6 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,11 +8,12 @@ namespace GDShrapt.Linter
 {
     /// <summary>
     /// Base class for all lint rules.
+    /// Thread-safe: uses [ThreadStatic] fields for per-invocation state.
     /// </summary>
     public abstract class GDLintRule : GDVisitor
     {
-        private GDLintResult _result;
-        private GDLinterOptions _options;
+        [ThreadStatic] private static GDLintResult t_result;
+        [ThreadStatic] private static GDLinterOptions t_options;
 
         /// <summary>
         /// Unique identifier for this rule (e.g., "GDL001", "naming-class-case").
@@ -46,16 +48,24 @@ namespace GDShrapt.Linter
         /// <summary>
         /// Current linter options.
         /// </summary>
-        protected GDLinterOptions Options => _options;
+        protected GDLinterOptions Options => t_options;
 
         /// <summary>
         /// Runs this rule on the given node.
         /// </summary>
         internal virtual void Run(GDNode node, GDLintResult result, GDLinterOptions options)
         {
-            _result = result;
-            _options = options;
-            node?.WalkIn(this);
+            t_result = result;
+            t_options = options;
+            try
+            {
+                node?.WalkIn(this);
+            }
+            finally
+            {
+                t_result = null;
+                t_options = null;
+            }
         }
 
         /// <summary>
@@ -71,7 +81,7 @@ namespace GDShrapt.Linter
         /// </summary>
         protected void ReportIssue(GDLintSeverity severity, string message, GDSyntaxToken token, string suggestion = null)
         {
-            _result?.AddIssue(new GDLintIssue(
+            t_result?.AddIssue(new GDLintIssue(
                 RuleId,
                 Name,
                 severity,
@@ -108,7 +118,7 @@ namespace GDShrapt.Linter
                 issue.FixDescriptors = fixes.ToList();
             }
 
-            _result?.AddIssue(issue);
+            t_result?.AddIssue(issue);
         }
     }
 }

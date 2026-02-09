@@ -5,10 +5,9 @@ using System.Linq;
 namespace GDShrapt.Semantics.ComponentTests;
 
 /// <summary>
-/// Tests that document false positives in type inference.
-/// Each test represents a known gap in the type inference engine.
-/// Tests are marked [Ignore] because they test expected-but-not-yet-implemented behavior.
-/// When the FP is fixed, remove [Ignore] and the test should pass.
+/// Tests for type inference through GetTypeInfo().
+/// Verifies that initializer inference, method return types, and expression types are resolved.
+/// Remaining [Ignore] tests document known gaps (e.g., TypesMap generic return types).
 /// </summary>
 [TestClass]
 [TestCategory("ManualVerification")]
@@ -19,7 +18,6 @@ public class TypeInfoFPTests
     // ================================================================
 
     [TestMethod]
-    [Ignore("FP: := operator with int literal should infer int")]
     public void WalrusOperator_IntLiteral_ShouldInferInt()
     {
         var code = @"
@@ -36,7 +34,6 @@ var public_var := 42
     }
 
     [TestMethod]
-    [Ignore("FP: := operator with string literal should infer String")]
     public void WalrusOperator_StringLiteral_ShouldInferString()
     {
         var code = @"
@@ -51,7 +48,6 @@ var inferred_string := ""hello""
     }
 
     [TestMethod]
-    [Ignore("FP: const with literal should infer type")]
     public void ConstWithLiteral_ShouldInferType()
     {
         var code = @"
@@ -73,7 +69,6 @@ const STRING_CONSTANT := ""test""
     }
 
     [TestMethod]
-    [Ignore("FP: := with Vector2() constructor should infer Vector2")]
     public void WalrusOperator_Constructor_ShouldInferType()
     {
         var code = @"
@@ -97,7 +92,7 @@ var inferred_color := Color.RED
     // ================================================================
 
     [TestMethod]
-    [Ignore("FP: String.to_upper() should return String")]
+
     public void StringMethod_ToUpper_ShouldReturnString()
     {
         var code = @"
@@ -122,7 +117,7 @@ func test():
     }
 
     [TestMethod]
-    [Ignore("FP: Array.size() should return int")]
+
     public void ArrayMethod_Size_ShouldReturnInt()
     {
         var code = @"
@@ -147,7 +142,7 @@ func test():
     }
 
     [TestMethod]
-    [Ignore("FP: Dictionary.has() should return bool")]
+
     public void DictMethod_Has_ShouldReturnBool()
     {
         var code = @"
@@ -172,7 +167,7 @@ func test():
     }
 
     [TestMethod]
-    [Ignore("FP: Vector2.length() should return float")]
+
     public void Vector2Method_Length_ShouldReturnFloat()
     {
         var code = @"
@@ -197,7 +192,7 @@ func test():
     }
 
     [TestMethod]
-    [Ignore("FP: Color.darkened() should return Color")]
+
     public void ColorMethod_Darkened_ShouldReturnColor()
     {
         var code = @"
@@ -222,7 +217,6 @@ func test():
     }
 
     [TestMethod]
-    [Ignore("FP: Node built-in methods should return typed results")]
     public void NodeMethod_GetParent_ShouldReturnNode()
     {
         var code = @"
@@ -253,7 +247,7 @@ func test():
     // ================================================================
 
     [TestMethod]
-    [Ignore("FP: Array[T] subscript should return T")]
+
     public void TypedArraySubscript_ShouldReturnElementType()
     {
         var code = @"
@@ -276,7 +270,7 @@ func test():
     // ================================================================
 
     [TestMethod]
-    [Ignore("FP: int + int should infer int")]
+
     public void IntArithmetic_ShouldReturnInt()
     {
         var code = @"
@@ -294,7 +288,7 @@ func test(x: int, y: int, z: int):
     }
 
     [TestMethod]
-    [Ignore("FP: function call with explicit return type should infer result")]
+
     public void FunctionCallWithReturnType_ShouldInfer()
     {
         var code = @"
@@ -319,7 +313,7 @@ func test():
     // ================================================================
 
     [TestMethod]
-    [Ignore("FP: accessing typed property should infer property type")]
+
     public void PropertyAccess_ShouldInferPropertyType()
     {
         var code = @"
@@ -345,7 +339,7 @@ func test():
     }
 
     [TestMethod]
-    [Ignore("FP: .new() constructor should infer class type")]
+
     public void ConstructorCall_ShouldInferClassType()
     {
         var code = @"

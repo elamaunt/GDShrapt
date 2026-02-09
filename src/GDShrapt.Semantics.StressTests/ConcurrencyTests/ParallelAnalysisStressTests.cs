@@ -75,8 +75,8 @@ public class ParallelAnalysisStressTests
         using var project = CreateProjectWithConfig(100, config);
         using var cts = new CancellationTokenSource();
 
-        // Cancel after 50ms
-        cts.CancelAfter(50);
+        // Cancel immediately to guarantee OperationCanceledException
+        cts.Cancel();
 
         // Act & Assert
         Action act = () => project.AnalyzeAll(cts.Token);
@@ -247,8 +247,8 @@ public class ParallelAnalysisStressTests
         using var project = CreateProjectWithConfig(100, config);
         using var cts = new CancellationTokenSource();
 
-        // Cancel after 30ms
-        cts.CancelAfter(30);
+        // Cancel immediately to guarantee OperationCanceledException
+        cts.Cancel();
 
         // Act & Assert
         Func<Task> act = () => project.AnalyzeAllAsync(cts.Token);

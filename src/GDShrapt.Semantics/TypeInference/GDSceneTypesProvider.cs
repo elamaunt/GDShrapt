@@ -532,6 +532,33 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
     }
 
     /// <summary>
+    /// Gets the root node type of a scene (ScriptTypeName if available, otherwise NodeType).
+    /// </summary>
+    public string? GetRootNodeType(string scenePath)
+    {
+        if (!_sceneCache.TryGetValue(scenePath, out var sceneInfo))
+            return null;
+        if (sceneInfo.Nodes.Count == 0)
+            return null;
+        var root = sceneInfo.Nodes[0];
+        return root.ScriptTypeName ?? root.NodeType;
+    }
+
+    /// <summary>
+    /// Gets direct children of a node in a scene.
+    /// </summary>
+    public IReadOnlyList<GDNodeTypeInfo> GetDirectChildren(string scenePath, string parentNodePath)
+    {
+        if (!_sceneCache.TryGetValue(scenePath, out var sceneInfo))
+            return Array.Empty<GDNodeTypeInfo>();
+
+        return sceneInfo.Nodes
+            .Where(n => n.ParentPath == parentNodePath ||
+                         (parentNodePath == "." && string.IsNullOrEmpty(n.ParentPath) && n.Path != "."))
+            .ToList();
+    }
+
+    /// <summary>
     /// Gets the SceneInfo for a scene path.
     /// </summary>
     public GDSceneInfo? GetSceneInfo(string scenePath)

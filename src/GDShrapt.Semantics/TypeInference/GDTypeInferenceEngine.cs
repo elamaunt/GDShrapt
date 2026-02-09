@@ -1034,6 +1034,14 @@ namespace GDShrapt.Semantics
                                 return dynamicReturnType;
                         }
 
+                        // Try type injector for method return type override
+                        if (_typeInjector != null)
+                        {
+                            var injectedReturn = _typeInjector.GetMethodReturnType(methodName, callerType, null);
+                            if (!string.IsNullOrEmpty(injectedReturn))
+                                return injectedReturn;
+                        }
+
                         var memberInfo = FindMemberWithInheritance(callerType, methodName);
                         if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                         {

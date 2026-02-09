@@ -17,8 +17,6 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
     private readonly GDFileChangeTracker _tracker;
     private readonly GDDependencyGraph _dependencies;
     private readonly string _projectPath;
-    private readonly GDValidator _validator;
-    private readonly GDLinter _linter;
     private readonly GDValidationOptions _validationOptions;
     private readonly GDLinterOptions _linterOptions;
     private readonly IGDLogger? _logger;
@@ -54,9 +52,6 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
         _tracker = new GDFileChangeTracker();
         _dependencies = new GDDependencyGraph();
 
-        // Initialize validator and linter
-        _validator = new GDValidator();
-        _linter = new GDLinter(linterOptions ?? GDLinterOptions.Default);
         _validationOptions = validationOptions ?? GDValidationOptions.Default;
         _linterOptions = linterOptions ?? GDLinterOptions.Default;
 
@@ -263,14 +258,18 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
         };
 
         // Run validation and linting on the parsed AST
+        // Fresh instances per call — GDLinter/GDLintRule use instance state (GDBaseVisitor._nodesStack)
+        // that is not thread-safe when shared across parallel invocations
         if (script.Class != null)
         {
             var diagnostics = new List<GDSerializedDiagnostic>();
+            var validator = new GDValidator();
+            var linter = new GDLinter(_linterOptions);
 
             // Run validator
             try
             {
-                var validationResult = _validator.Validate(script.Class, _validationOptions);
+                var validationResult = validator.Validate(script.Class, _validationOptions);
                 foreach (var diagnostic in validationResult.Diagnostics)
                 {
                     diagnostics.Add(SerializeValidatorDiagnostic(diagnostic));
@@ -288,7 +287,7 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
             // Run linter
             try
             {
-                var lintResult = _linter.Lint(script.Class);
+                var lintResult = linter.Lint(script.Class);
                 foreach (var issue in lintResult.Issues)
                 {
                     diagnostics.Add(SerializeLintIssue(issue));

@@ -194,17 +194,38 @@ public class GDTypeSystem : IGDTypeSystem
         var symbol = _model.FindSymbol(variableName);
         if (symbol != null)
         {
+            // Explicit type annotation — highest priority
+            if (!string.IsNullOrEmpty(symbol.TypeName))
+            {
+                return new GDTypeInfo
+                {
+                    DeclaredSemanticType = GDSemanticType.FromRuntimeTypeName(symbol.TypeName),
+                    InferredType = GDSemanticType.FromRuntimeTypeName(symbol.TypeName),
+                    Confidence = GDTypeConfidence.Certain
+                };
+            }
+
+            // Try infer from initializer expression
+            var initializer = GetInitializerExpression(symbol);
+            if (initializer != null)
+            {
+                var helper = new GDTypeInferenceHelper(_model);
+                var inferred = helper.InferExpressionType(initializer);
+                if (!inferred.IsUnknown)
+                {
+                    return new GDTypeInfo
+                    {
+                        InferredType = inferred.TypeName,
+                        Confidence = inferred.Confidence
+                    };
+                }
+            }
+
+            // Fallback to Variant
             return new GDTypeInfo
             {
-                DeclaredSemanticType = !string.IsNullOrEmpty(symbol.TypeName)
-                    ? GDSemanticType.FromRuntimeTypeName(symbol.TypeName)
-                    : null,
-                InferredType = !string.IsNullOrEmpty(symbol.TypeName)
-                    ? GDSemanticType.FromRuntimeTypeName(symbol.TypeName)
-                    : GDVariantSemanticType.Instance,
-                Confidence = !string.IsNullOrEmpty(symbol.TypeName)
-                    ? GDTypeConfidence.Certain
-                    : GDTypeConfidence.Unknown
+                InferredType = GDVariantSemanticType.Instance,
+                Confidence = GDTypeConfidence.Unknown
             };
         }
 
@@ -235,6 +256,16 @@ public class GDTypeSystem : IGDTypeSystem
     public GDInferredParameterType InferParameterType(GDParameterDeclaration param)
     {
         return _model.InferParameterType(param);
+    }
+
+    private static GDExpression? GetInitializerExpression(GDSymbolInfo symbol)
+    {
+        return symbol.DeclarationNode switch
+        {
+            GDVariableDeclaration varDecl => varDecl.Initializer,
+            GDVariableDeclarationStatement varStmt => varStmt.Initializer,
+            _ => null
+        };
     }
 
     private static string? ConvertOperatorToString(GDDualOperatorType op)

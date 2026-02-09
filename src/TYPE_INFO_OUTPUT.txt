@@ -82,9 +82,9 @@ test_scripts/ai_controller.gd
 
   58:1 Variable target_point
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   67:20 Parameter delta
@@ -110,9 +110,9 @@ test_scripts/ai_controller.gd
 
   85:2 Variable flee_direction
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   89:15 Parameter target
@@ -145,16 +145,16 @@ test_scripts/ai_controller.gd
 
   126:1 Variable closest
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   127:1 Variable closest_dist
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   129:1 Iterator point
@@ -166,9 +166,9 @@ test_scripts/ai_controller.gd
 
   130:2 Variable dist
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
 
@@ -231,9 +231,9 @@ test_scripts/base_entity.gd
 
   32:1 Variable actual_damage
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   43:29 Parameter raw_damage
@@ -245,9 +245,9 @@ test_scripts/base_entity.gd
 
   45:1 Variable damage
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   49:10 Parameter amount
@@ -310,16 +310,16 @@ test_scripts/base_entity.gd
 test_scripts/completion_test.gd
   8:0 Constant MY_CONSTANT
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   9:0 Constant STRING_CONSTANT
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   11:0 Variable my_string
@@ -408,58 +408,58 @@ test_scripts/completion_test.gd
 
   35:1 Variable upper
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   36:1 Variable lower
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   37:1 Variable length
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   38:1 Variable trimmed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   39:1 Variable split_result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedStringArray
+    effective: PackedStringArray
+    confidence: Medium
     nullable: no
 
   48:1 Variable size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   49:1 Variable first
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   50:1 Variable last
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   59:1 Variable keys
@@ -478,86 +478,86 @@ test_scripts/completion_test.gd
 
   61:1 Variable has_key
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   62:1 Variable get_value
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   69:1 Variable normalized
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   70:1 Variable length
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   71:1 Variable length_squared
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   72:1 Variable rotated
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   73:1 Variable distance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   87:1 Variable lighter
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   88:1 Variable darker
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   89:1 Variable inverted
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   90:1 Variable hex
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   100:1 Variable time_left
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   111:1 Variable space_key
@@ -576,30 +576,30 @@ test_scripts/completion_test.gd
 
   118:1 Variable viewport
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Viewport
+    effective: Viewport
+    confidence: Medium
     nullable: no
 
   119:1 Variable tree
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SceneTree
+    effective: SceneTree
+    confidence: Medium
     nullable: no
 
   122:1 Variable pressed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   123:1 Variable mouse_pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   135:1 Variable vectors
@@ -704,9 +704,9 @@ test_scripts/cross_file_inference.gd
 
   36:1 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: Medium
     nullable: no
 
   40:2 Variable transform
@@ -748,7 +748,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   57:28 Parameter input
@@ -769,14 +769,14 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   61:1 Variable step3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   65:27 Parameter target
@@ -788,9 +788,9 @@ test_scripts/cross_file_inference.gd
 
   71:1 Variable op
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AsyncOperation
+    effective: AsyncOperation
+    confidence: Medium
     nullable: no
 
   76:22 Parameter data
@@ -811,7 +811,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   88:23 Parameter objects
@@ -872,9 +872,9 @@ test_scripts/cross_file_inference.gd
 
   146:1 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: Medium
     nullable: no
 
   150:1 Variable processed
@@ -895,7 +895,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   158:7 Parameter acc
@@ -914,9 +914,9 @@ test_scripts/cross_file_inference.gd
 
   181:0 Variable cross_file_callbacks
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   184:33 Parameter event_name
@@ -986,7 +986,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   228:21 Parameter data
@@ -1019,16 +1019,16 @@ test_scripts/cross_file_inference.gd
 
   240:3 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: Medium
     nullable: no
 
   250:3 Variable op
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AsyncOperation
+    effective: AsyncOperation
+    confidence: Medium
     nullable: no
 
   273:22 Parameter target
@@ -1077,7 +1077,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   307:27 Parameter depth
@@ -1112,14 +1112,14 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   314:1 Variable step3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   315:1 Variable step4
@@ -1183,9 +1183,9 @@ test_scripts/cycles_test.gd
 
   27:1 Variable sum
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   28:1 Variable items
@@ -1205,9 +1205,9 @@ test_scripts/cycles_test.gd
 
   36:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   37:1 Iterator i
@@ -1262,16 +1262,16 @@ test_scripts/cycles_test.gd
 
   74:1 Variable state
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   75:1 Variable iterations
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   92:1 Variable head
@@ -1299,9 +1299,9 @@ test_scripts/cycles_test.gd
 
   105:1 Variable iterator
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   107:1 Iterator i
@@ -1371,9 +1371,9 @@ test_scripts/cycles_test.gd
 
   136:2 Variable old_value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
 
@@ -1697,7 +1697,7 @@ test_scripts/cyclic_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   191:28 Parameter root
@@ -1724,9 +1724,9 @@ test_scripts/cyclic_inference.gd
 
   206:0 Variable generator_state
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   209:20 Parameter gen_id
@@ -1824,7 +1824,7 @@ test_scripts/cyclic_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   269:16 Parameter tokens
@@ -1873,7 +1873,7 @@ test_scripts/cyclic_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   296:18 Parameter tokens
@@ -1901,16 +1901,16 @@ test_scripts/cyclic_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
 
 test_scripts/diagnostics_issues.gd
   7:0 Variable unused_variable
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   8:0 Variable another_unused
@@ -1922,79 +1922,79 @@ test_scripts/diagnostics_issues.gd
 
   9:0 Variable _private_unused
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   12:0 Variable used_variable
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   33:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   41:1 Variable position
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   47:1 Variable used_variable
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   54:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   60:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   68:1 Variable flag
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   78:1 Variable name
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   79:1 Variable message
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   84:1 Variable node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   90:1 Iterator i
@@ -2021,60 +2021,60 @@ test_scripts/diagnostics_issues.gd
 
   112:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   118:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   125:1 Variable a
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   126:1 Variable b
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
 
 test_scripts/diagnostics/linter/best_practices_rules.gd
   16:0 Variable class_level_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   25:1 Variable used_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   31:1 Variable unused_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   38:1 Variable suppressed_unused
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   47:23 Parameter param
@@ -2100,44 +2100,44 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 
   88:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   97:1 Variable dead
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   105:1 Variable suppressed_dead
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   115:1 Variable local_only_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   121:1 Variable class_level_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   128:1 Variable class_level_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   137:23 Parameter a
@@ -2156,37 +2156,37 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 
   142:25 Parameter x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   147:28 Parameter x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   189:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   196:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   203:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
 
@@ -2214,261 +2214,261 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 
   53:1 Variable a
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   54:1 Variable b
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   55:1 Variable c
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   56:1 Variable d
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   57:1 Variable e
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   63:1 Variable v1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   64:1 Variable v2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   65:1 Variable v3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   66:1 Variable v4
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   67:1 Variable v5
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   68:1 Variable v6
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   69:1 Variable v7
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   70:1 Variable v8
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   71:1 Variable v9
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   72:1 Variable v10
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   73:1 Variable v11
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   74:1 Variable v12
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   75:1 Variable v13
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   76:1 Variable v14
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   77:1 Variable v15
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   78:1 Variable v16
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   85:1 Variable v1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   86:1 Variable v2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   87:1 Variable v3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   88:1 Variable v4
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   89:1 Variable v5
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   90:1 Variable v6
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   91:1 Variable v7
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   92:1 Variable v8
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   93:1 Variable v9
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   94:1 Variable v10
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   95:1 Variable v11
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   96:1 Variable v12
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   97:1 Variable v13
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   98:1 Variable v14
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   99:1 Variable v15
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   100:1 Variable v16
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   109:23 Parameter x
@@ -2517,37 +2517,37 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 test_scripts/diagnostics/linter/formatting_rules.gd
   19:1 Variable short_line
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   25:1 Variable very_long_line
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   31:1 Variable suppressed_long
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   70:1 Variable a
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   71:1 Variable b
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   74:1 Variable arr
@@ -2591,9 +2591,9 @@ test_scripts/diagnostics/linter/formatting_rules.gd
 test_scripts/diagnostics/linter/naming_rules.gd
   62:0 Variable valid_variable
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   63:0 Variable another_valid_var
@@ -2605,37 +2605,37 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   64:0 Variable _private_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   68:0 Variable InvalidVariableName
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   69:0 Variable camelCaseVar
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   74:0 Variable SuppressedBadVar
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   82:0 Constant VALID_CONSTANT
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   83:0 Constant ANOTHER_CONSTANT
@@ -2647,188 +2647,188 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   84:0 Constant MAX_VALUE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   88:0 Constant invalidConstant
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   89:0 Constant PascalConstant
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   94:0 Constant suppressedBadConst
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   163:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   173:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
 
 test_scripts/diagnostics/suppression/linter_suppression.gd
   23:0 Variable SuppressedBadVar1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   25:0 Variable NotSuppressedBadVar1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   32:0 Variable SuppressedBadVar2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   34:0 Variable NotSuppressedBadVar2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   42:0 Variable BlockSuppressedVar1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   43:0 Variable BlockSuppressedVar2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   44:0 Variable BlockSuppressedVar3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   47:0 Variable AfterEnableVar
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   55:0 Constant suppressedConst1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   56:0 Constant suppressedConst2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   66:0 Variable MultiSuppressedVar
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   73:0 Variable MultiNotSuppressedVar
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   85:0 Variable SuppressedById
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   87:0 Variable NotSuppressedById
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   97:1 Variable this_is_a_very_long_variable_name_that_would_normally_trigger_the_line_length_rule_but_it_is_suppressed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   106:0 Variable ControlBadVar1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   107:0 Variable ControlBadVar2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
 
 test_scripts/diagnostics/validator/abstract_errors.gd
   91:1 Variable impl
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ValidImplementation
+    effective: ValidImplementation
+    confidence: High
     nullable: no
 
   97:1 Variable obj
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: CannotInstantiate
+    effective: CannotInstantiate
+    confidence: High
     nullable: no
 
   104:1 Variable obj
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: CannotInstantiate
+    effective: CannotInstantiate
+    confidence: High
     nullable: no
 
 
@@ -2849,23 +2849,23 @@ test_scripts/diagnostics/validator/call_errors.gd
 
   28:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   34:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   41:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   51:1 Variable node
@@ -2891,9 +2891,9 @@ test_scripts/diagnostics/validator/call_errors.gd
 
   74:1 Variable callable
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
     nullable: no
 
   80:1 Variable number
@@ -2928,37 +2928,37 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 
   65:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   73:1 Variable unreachable
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   82:1 Variable suppressed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   90:0 Constant VALID_CONST
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   94:1 Variable mutable_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
 
@@ -3044,72 +3044,72 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
 test_scripts/diagnostics/validator/scope_errors.gd
   24:1 Variable defined_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   65:1 Variable unique_var_a
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   66:1 Variable unique_var_b
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   72:1 Variable duplicate_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   73:1 Variable duplicate_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   79:1 Variable suppressed_dup
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   81:1 Variable suppressed_dup
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   113:1 Variable val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   119:1 Variable val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   126:1 Variable val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
 
@@ -3242,9 +3242,9 @@ test_scripts/diagnostics/validator/type_errors.gd
 
   148:1 Variable val2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   154:1 Variable arr
@@ -3469,9 +3469,9 @@ test_scripts/duck_typing_advanced.gd
 
   35:2 Variable r
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: void
+    effective: void
+    confidence: High
     nullable: no
 
   42:0 Variable on_hit_callback
@@ -3546,16 +3546,16 @@ test_scripts/duck_typing_advanced.gd
 
   83:1 Variable nearest
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   84:1 Variable nearest_dist
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   86:1 Iterator c
@@ -3567,16 +3567,16 @@ test_scripts/duck_typing_advanced.gd
 
   87:2 Variable d
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   97:0 Variable component_cache
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   100:29 Parameter component_type
@@ -3590,7 +3590,7 @@ test_scripts/duck_typing_advanced.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   109:23 Parameter type_name
@@ -3602,16 +3602,16 @@ test_scripts/duck_typing_advanced.gd
 
   132:0 Variable pending_actions
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   133:0 Variable action_results
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   136:18 Parameter action
@@ -3709,28 +3709,28 @@ test_scripts/duck_typing_advanced.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   198:1 Variable step2
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   199:1 Variable step3
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   200:1 Variable step4
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   204:17 Parameter value
@@ -3779,9 +3779,9 @@ test_scripts/dynamic_dispatch.gd
 
   9:0 Variable processor_chain
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   12:20 Parameter obj
@@ -3905,9 +3905,9 @@ test_scripts/dynamic_dispatch.gd
 
   46:0 Variable dynamic_properties
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   49:18 Parameter obj
@@ -4010,9 +4010,9 @@ test_scripts/dynamic_dispatch.gd
 
   84:0 Variable message_handlers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   87:22 Parameter message_type
@@ -4059,9 +4059,9 @@ test_scripts/dynamic_dispatch.gd
 
   101:1 Variable handler_method
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   112:23 Parameter targets
@@ -4248,9 +4248,9 @@ test_scripts/dynamic_dispatch.gd
 
   206:0 Variable class_registry
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   209:20 Parameter name
@@ -4325,9 +4325,9 @@ test_scripts/dynamic_dispatch.gd
 
   246:1 Variable new_instance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: null
+    effective: null
+    confidence: Medium
     nullable: no
 
   252:21 Parameter obj
@@ -4346,9 +4346,9 @@ test_scripts/dynamic_dispatch.gd
 
   262:1 Variable _pending_calls
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   264:12 Parameter target
@@ -4409,9 +4409,9 @@ test_scripts/dynamic_dispatch.gd
 
   296:0 Variable dispatch_table
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   299:23 Parameter event_type
@@ -4500,9 +4500,9 @@ test_scripts/dynamic_dispatch.gd
 
   331:1 Variable _intercepts
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   333:12 Parameter target
@@ -4563,9 +4563,9 @@ test_scripts/dynamic_dispatch.gd
 
   357:1 Variable proxy
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: DynamicProxy
+    effective: DynamicProxy
+    confidence: High
     nullable: no
 
   360:1 Iterator method
@@ -4626,23 +4626,23 @@ test_scripts/dynamic_dispatch.gd
 
   378:0 Variable before_advice
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   379:0 Variable after_advice
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   380:0 Variable around_advice
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   383:16 Parameter method_pattern
@@ -4731,9 +4731,9 @@ test_scripts/dynamic_dispatch.gd
 
   408:1 Variable has_around
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   409:1 Iterator pattern
@@ -4745,9 +4745,9 @@ test_scripts/dynamic_dispatch.gd
 
   411:3 Variable proceed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable[[], Variant]
+    effective: Callable[[], Variant]
+    confidence: Medium
     nullable: no
 
   420:1 Iterator pattern
@@ -4768,30 +4768,30 @@ test_scripts/dynamic_dispatch.gd
 test_scripts/ecs_like_system.gd
   8:0 Variable entities
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   9:0 Variable next_entity_id
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   12:0 Variable components
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   15:0 Variable systems
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   21:1 Variable id
@@ -4810,16 +4810,16 @@ test_scripts/ecs_like_system.gd
 
   23:1 Variable tags
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   24:1 Variable active
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   26:12 Parameter entity_id
@@ -4845,9 +4845,9 @@ test_scripts/ecs_like_system.gd
 
   32:1 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: High
     nullable: no
 
   38:20 Parameter entity_id
@@ -4978,9 +4978,9 @@ test_scripts/ecs_like_system.gd
 
   97:2 Variable has_all
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   98:2 Iterator comp_type
@@ -5076,9 +5076,9 @@ test_scripts/ecs_like_system.gd
 
   134:2 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: High
     nullable: no
 
   135:2 Variable comps
@@ -5216,9 +5216,9 @@ test_scripts/ecs_like_system.gd
 
   194:2 Variable movers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   196:2 Iterator eid
@@ -5258,9 +5258,9 @@ test_scripts/ecs_like_system.gd
 
   208:2 Variable with_health
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   210:2 Iterator eid
@@ -5293,9 +5293,9 @@ test_scripts/ecs_like_system.gd
 
   219:2 Variable ai_entities
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   221:2 Iterator eid
@@ -5321,9 +5321,9 @@ test_scripts/ecs_like_system.gd
 
   226:4 Variable context
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   232:4 Variable new_state
@@ -5335,9 +5335,9 @@ test_scripts/ecs_like_system.gd
 
   239:0 Variable archetypes
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   242:22 Parameter name
@@ -5370,9 +5370,9 @@ test_scripts/ecs_like_system.gd
 
   250:1 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: High
     nullable: no
 
   251:1 Variable defs
@@ -5405,9 +5405,9 @@ test_scripts/ecs_like_system.gd
 
   273:0 Variable event_queue
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   276:16 Parameter event_type
@@ -5443,7 +5443,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   292:24 Parameter event_type
@@ -5464,21 +5464,21 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   302:0 Variable spatial_grid
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   303:0 Variable grid_cell_size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
   309:1 Variable positioned
@@ -5504,9 +5504,9 @@ test_scripts/ecs_like_system.gd
 
   312:2 Variable cell
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2i
+    effective: Vector2i
+    confidence: Medium
     nullable: no
 
   319:20 Parameter position
@@ -5539,16 +5539,16 @@ test_scripts/ecs_like_system.gd
 
   328:1 Variable center_cell
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2i
+    effective: Vector2i
+    confidence: Medium
     nullable: no
 
   329:1 Variable cell_radius
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   331:1 Iterator x
@@ -5567,9 +5567,9 @@ test_scripts/ecs_like_system.gd
 
   333:3 Variable cell
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2i
+    effective: Vector2i
+    confidence: Medium
     nullable: no
 
   335:4 Iterator eid
@@ -5603,9 +5603,9 @@ test_scripts/ecs_like_system.gd
 
   353:2 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: High
     nullable: no
 
   360:1 Iterator comp_type
@@ -5653,9 +5653,9 @@ test_scripts/ecs_like_system.gd
 
   376:2 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: High
     nullable: no
 
   381:1 Iterator comp_type
@@ -5688,16 +5688,16 @@ test_scripts/ecs_like_system.gd
 
   391:1 Variable entity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Entity
+    effective: Entity
+    confidence: High
     nullable: no
 
   395:1 Variable info
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   400:1 Iterator comp_type
@@ -5882,9 +5882,9 @@ test_scripts/extended_class.gd
 
   22:1 Variable reduced_damage
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   26:12 Parameter target
@@ -5990,9 +5990,9 @@ test_scripts/formatting_issues.gd
 
   23:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   31:1 Variable a
@@ -6063,9 +6063,9 @@ test_scripts/formatting_issues.gd
 
   59:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   61:1 Variable values
@@ -6184,53 +6184,53 @@ test_scripts/formatting_issues.gd
 
   103:1 Variable name
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   104:1 Variable count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   105:1 Variable msg1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   106:1 Variable msg2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
 
 test_scripts/game_patterns.gd
   8:0 Variable inventory
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   9:0 Variable equipped
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   10:0 Variable hotbar
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   13:14 Parameter item
@@ -6342,7 +6342,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   64:18 Parameter slot
@@ -6377,21 +6377,21 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   75:1 Variable count2
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   76:1 Variable max_stack
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   78:1 Variable total
@@ -6403,9 +6403,9 @@ test_scripts/game_patterns.gd
 
   90:0 Variable dialog_tree
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   91:0 Variable current_node
@@ -6417,16 +6417,16 @@ test_scripts/game_patterns.gd
 
   92:0 Variable dialog_variables
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   93:0 Variable dialog_history
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   96:17 Parameter dialog_data
@@ -6517,7 +6517,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   176:19 Parameter choice_index
@@ -6564,23 +6564,23 @@ test_scripts/game_patterns.gd
 
   202:0 Variable active_quests
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   203:0 Variable completed_quests
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   204:0 Variable quest_progress
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   207:18 Parameter quest_data
@@ -6655,9 +6655,9 @@ test_scripts/game_patterns.gd
 
   238:1 Variable all_complete
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   240:1 Iterator i
@@ -6678,7 +6678,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   251:21 Parameter quest_id
@@ -6711,23 +6711,23 @@ test_scripts/game_patterns.gd
 
   271:0 Variable abilities
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   272:0 Variable cooldowns
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   273:0 Variable active_effects
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   276:22 Parameter ability_id
@@ -6783,7 +6783,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   299:1 Variable conditions
@@ -6846,7 +6846,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   324:1 Variable effect_func
@@ -6986,9 +6986,9 @@ test_scripts/game_patterns.gd
 
   400:0 Variable recipes
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   403:21 Parameter recipe_id
@@ -7170,7 +7170,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   480:1 Variable result
@@ -7443,9 +7443,9 @@ test_scripts/getters_setters.gd
 
   99:2 Variable old
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   108:19 Parameter code
@@ -7485,37 +7485,37 @@ test_scripts/getters_setters.gd
 
   142:1 Variable h
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   144:1 Variable p
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   145:1 Variable a
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   146:1 Variable s
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   152:1 Variable node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   155:2 Variable pos
@@ -7527,9 +7527,9 @@ test_scripts/getters_setters.gd
 
   156:2 Variable gpos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   164:1 Variable c
@@ -7584,9 +7584,9 @@ test_scripts/getters_setters.gd
 
   194:1 Variable d
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   199:0 Variable _instance_counter
@@ -7605,9 +7605,9 @@ test_scripts/getters_setters.gd
 
   215:0 Variable _expensive_data
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: null
+    effective: null
+    confidence: Medium
     nullable: no
 
   217:0 Property expensive_data
@@ -7700,23 +7700,23 @@ test_scripts/inheritance_test.gd
 
   28:1 Variable current_pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   29:1 Variable global_pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   32:1 Variable current_rotation
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   44:17 Parameter amount
@@ -7742,44 +7742,44 @@ test_scripts/inheritance_test.gd
 
   78:1 Variable slide_count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   80:2 Variable collision
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: KinematicCollision2D
+    effective: KinematicCollision2D
+    confidence: Medium
     nullable: no
 
   82:3 Variable collider
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: GodotObject
+    effective: GodotObject
+    confidence: Medium
     nullable: no
 
   83:3 Variable normal
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   84:3 Variable position_coll
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   89:1 Variable parent
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   90:1 Variable children
@@ -7791,65 +7791,65 @@ test_scripts/inheritance_test.gd
 
   91:1 Variable tree
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SceneTree
+    effective: SceneTree
+    confidence: Medium
     nullable: no
 
   92:1 Variable node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   95:1 Variable id
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   96:1 Variable class_name_str
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   97:1 Variable is_type
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   102:1 Variable local
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   103:1 Variable glob
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   104:1 Variable transform
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Transform2D
+    effective: Transform2D
+    confidence: Medium
     nullable: no
 
   105:1 Variable global_transform_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Transform2D
+    effective: Transform2D
+    confidence: Medium
     nullable: no
 
   110:1 Variable enemy_type
@@ -7868,23 +7868,23 @@ test_scripts/inheritance_test.gd
 
   119:2 Variable base_state
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   137:1 Variable is_pressed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   138:1 Variable strength
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   153:19 Parameter what
@@ -7896,23 +7896,23 @@ test_scripts/inheritance_test.gd
 
   186:1 Variable viewport
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Viewport
+    effective: Viewport
+    confidence: Medium
     nullable: no
 
   187:1 Variable global_mouse
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   192:17 Parameter node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
 
@@ -8024,23 +8024,23 @@ test_scripts/local_variables.gd
 
   47:1 Variable outer
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   49:2 Variable outer_copy
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   50:2 Variable inner
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   57:1 Variable results
@@ -8073,16 +8073,16 @@ test_scripts/local_variables.gd
 
   67:1 Variable multiplier
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   68:1 Variable transform
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable[[int], Variant]
+    effective: Callable[[int], Variant]
+    confidence: Medium
     nullable: no
 
   68:22 Parameter x
@@ -8213,9 +8213,9 @@ test_scripts/local_variables.gd
 
   144:1 Variable d
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   149:26 Parameter value
@@ -8241,9 +8241,9 @@ test_scripts/local_variables.gd
 
   160:2 Variable size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   166:25 Parameter data
@@ -8269,37 +8269,37 @@ test_scripts/local_variables.gd
 
   176:1 Variable step1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   177:1 Variable step2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   178:1 Variable step3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   179:1 Variable step4
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   180:1 Variable step5
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
 
@@ -8363,9 +8363,9 @@ test_scripts/method_chains.gd
 
   24:1 Variable sum
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   25:1 Iterator item
@@ -8441,9 +8441,9 @@ test_scripts/method_chains.gd
 
   62:1 Variable builder
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ConfigBuilder
+    effective: ConfigBuilder
+    confidence: High
     nullable: no
 
   63:1 Variable result
@@ -8497,16 +8497,16 @@ test_scripts/method_chains.gd
 
   90:1 Variable parent
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   94:1 Variable grandparent
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   104:17 Parameter input
@@ -8576,9 +8576,9 @@ test_scripts/player_entity.gd
 
   30:1 Variable reduced_amount
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   42:25 Parameter value
@@ -8604,9 +8604,9 @@ test_scripts/player_entity.gd
 
   58:1 Variable xp_needed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   91:20 Parameter target
@@ -8625,32 +8625,32 @@ test_scripts/player_entity.gd
 
   96:1 Variable damage
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
 
 test_scripts/polymorphic_interfaces.gd
   14:0 Variable damageable_entities
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   15:0 Variable moveable_entities
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   16:0 Variable all_updatables
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   18:0 Variable active_entity
@@ -8823,16 +8823,16 @@ test_scripts/polymorphic_interfaces.gd
 
   97:0 Variable command_history
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   98:0 Variable redo_stack
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   101:21 Parameter command
@@ -8879,9 +8879,9 @@ test_scripts/polymorphic_interfaces.gd
 
   132:0 Variable observers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   135:18 Parameter event_name
@@ -9008,7 +9008,7 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   190:23 Parameter component
@@ -9055,9 +9055,9 @@ test_scripts/polymorphic_interfaces.gd
 
   208:0 Variable decorators
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   211:19 Parameter decorator
@@ -9097,9 +9097,9 @@ test_scripts/polymorphic_interfaces.gd
 
   222:2 Variable next_func
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
     nullable: no
 
   232:23 Parameter start_index
@@ -9139,16 +9139,16 @@ test_scripts/polymorphic_interfaces.gd
 
   238:3 Variable next_func
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
     nullable: no
 
   247:0 Variable adapters
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   250:22 Parameter type_name
@@ -9181,9 +9181,9 @@ test_scripts/polymorphic_interfaces.gd
 
   256:1 Variable value_type
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   259:2 Variable adapter
@@ -9251,9 +9251,9 @@ test_scripts/polymorphic_interfaces.gd
 
   306:2 Variable item
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: void
+    effective: void
+    confidence: High
     nullable: no
 
   311:19 Parameter iterator
@@ -9279,16 +9279,16 @@ test_scripts/polymorphic_interfaces.gd
 
   316:2 Variable item
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: void
+    effective: void
+    confidence: High
     nullable: no
 
   325:0 Variable factories
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   328:22 Parameter type_name
@@ -9364,16 +9364,16 @@ test_scripts/polymorphic_interfaces.gd
 
   343:2 Variable instance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: null
+    effective: null
+    confidence: Medium
     nullable: no
 
   351:0 Variable colleagues
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   354:24 Parameter id
@@ -9483,9 +9483,9 @@ test_scripts/polymorphic_interfaces.gd
 
   407:0 Variable memento_stack
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   408:0 Variable caretaker_data
@@ -9513,51 +9513,51 @@ test_scripts/polymorphic_interfaces.gd
 test_scripts/refactoring_targets.gd
   6:0 Constant MAGIC_NUMBER
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   7:0 Constant DEFAULT_SPEED
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
   8:0 Constant MAX_ENEMIES
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   10:0 Variable player_speed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
   11:0 Variable enemy_count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   12:0 Variable score
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   13:0 Variable is_game_active
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   24:21 Parameter base_value
@@ -9576,16 +9576,16 @@ test_scripts/refactoring_targets.gd
 
   26:1 Variable bonus
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   37:1 Variable final_score
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   43:1 Iterator i
@@ -9597,51 +9597,51 @@ test_scripts/refactoring_targets.gd
 
   44:2 Variable enemy_score
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   57:1 Variable pi_value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
   58:1 Variable circumference
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   62:1 Variable gravity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
   72:1 Variable has_won
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   73:1 Variable time_bonus
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   75:2 Variable final_score
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   81:15 Parameter points
@@ -9660,23 +9660,23 @@ test_scripts/refactoring_targets.gd
 
   98:1 Variable validated_x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   99:1 Variable validated_y
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   100:1 Variable validated_position
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   106:22 Parameter base_damage
@@ -9702,16 +9702,16 @@ test_scripts/refactoring_targets.gd
 
   108:1 Variable damage
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   116:1 Variable random_variance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
 
@@ -9725,23 +9725,23 @@ test_scripts/rename_test.gd
 
   7:0 Variable cached_score
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   8:0 Variable multiplier
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
   18:1 Variable counter
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   29:1 Iterator i
@@ -9767,9 +9767,9 @@ test_scripts/rename_test.gd
 
   35:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   47:1 Variable temp_value
@@ -9788,51 +9788,51 @@ test_scripts/rename_test.gd
 
   77:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   86:1 Variable x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   87:1 Variable y
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   88:1 Variable z
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   91:1 Variable sum
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   92:1 Variable product
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   93:1 Variable complex
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   105:1 Variable items
@@ -9866,9 +9866,9 @@ test_scripts/rename_test.gd
 
   122:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
 
@@ -9910,16 +9910,16 @@ test_scripts/scene_nodes.gd
 
   16:9 Variable ui_container
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   17:9 Variable camera
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   21:9 Variable label
@@ -9931,9 +9931,9 @@ test_scripts/scene_nodes.gd
 
   25:9 Variable optional_node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   29:8 Variable external_target
@@ -9952,23 +9952,23 @@ test_scripts/scene_nodes.gd
 
   35:1 Variable player_node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: CharacterBody2D
+    effective: CharacterBody2D
+    confidence: Medium
     nullable: no
 
   40:1 Variable optional
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   45:1 Variable sprite_node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   50:18 Parameter p
@@ -9994,9 +9994,9 @@ test_scripts/scene_nodes.gd
 
   67:1 Variable tree
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SceneTree
+    effective: SceneTree
+    confidence: Medium
     nullable: no
 
   69:1 Variable players
@@ -10064,16 +10064,16 @@ test_scripts/scene_nodes.gd
 
   99:2 Variable found
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   108:1 Variable current
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   116:19 Parameter node
@@ -10092,9 +10092,9 @@ test_scripts/scene_nodes.gd
 
   118:1 Variable old_parent
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   124:23 Parameter scene
@@ -10106,9 +10106,9 @@ test_scripts/scene_nodes.gd
 
   126:1 Variable instance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   131:23 Parameter scene
@@ -10120,9 +10120,9 @@ test_scripts/scene_nodes.gd
 
   133:1 Variable instance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   140:22 Parameter child_name
@@ -10148,30 +10148,30 @@ test_scripts/scene_nodes.gd
 
   158:1 Variable scene_owner
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   164:1 Variable copy
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node2D
+    effective: Node2D
+    confidence: Medium
     nullable: no
 
   170:1 Variable warnings
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedStringArray
+    effective: PackedStringArray
+    confidence: Medium
     nullable: no
 
   183:1 Variable parent
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   187:1 Iterator child
@@ -10204,30 +10204,30 @@ test_scripts/scene_nodes.gd
 
   202:1 Variable node_path
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: NodePath
+    effective: NodePath
+    confidence: Medium
     nullable: no
 
   209:1 Variable viewport
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Viewport
+    effective: Viewport
+    confidence: Medium
     nullable: no
 
   210:1 Variable size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   211:1 Variable mouse_pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
 
@@ -10290,9 +10290,9 @@ test_scripts/scene_references.gd
 
   47:1 Variable enemy
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node2D
+    effective: Node2D
+    confidence: Medium
     nullable: no
 
   54:1 Variable enemies
@@ -10346,9 +10346,9 @@ test_scripts/scene_references.gd
 
   74:2 Variable found
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
 
@@ -10404,9 +10404,9 @@ test_scripts/semantic_validation_demo.gd
 
   33:1 Variable _b
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   36:1 Variable text
@@ -10418,9 +10418,9 @@ test_scripts/semantic_validation_demo.gd
 
   37:1 Variable _c
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   40:1 Variable dict
@@ -10432,9 +10432,9 @@ test_scripts/semantic_validation_demo.gd
 
   41:1 Variable _d
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   42:1 Variable _e
@@ -10453,9 +10453,9 @@ test_scripts/semantic_validation_demo.gd
 
   46:1 Variable _f
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   49:1 Variable packed
@@ -10467,9 +10467,9 @@ test_scripts/semantic_validation_demo.gd
 
   50:1 Variable _g
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   55:1 Variable arr2
@@ -10495,9 +10495,9 @@ test_scripts/semantic_validation_demo.gd
 
   60:1 Variable _i
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   63:1 Variable text2
@@ -10509,9 +10509,9 @@ test_scripts/semantic_validation_demo.gd
 
   64:1 Variable _j
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   69:1 Variable num
@@ -10698,44 +10698,44 @@ test_scripts/semantic_validation_demo.gd
 
   203:1 Variable _pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   204:1 Variable _rot
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   207:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: null
+    effective: null
+    confidence: Medium
     nullable: no
 
   209:2 Variable _p
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   214:1 Variable unknown
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: null
+    effective: null
+    confidence: Medium
     nullable: no
 
   215:1 Variable _x
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   220:1 Variable text
@@ -10803,9 +10803,9 @@ test_scripts/semantic_validation_demo.gd
 
   270:1 Variable first_score
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   274:1 Variable _bad
@@ -10852,9 +10852,9 @@ test_scripts/semantic_validation_demo.gd
 
   312:2 Variable _name
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: StringName
+    effective: StringName
+    confidence: Medium
     nullable: no
 
   317:1 Variable v
@@ -10868,7 +10868,7 @@ test_scripts/semantic_validation_demo.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   328:1 Variable arr
@@ -10910,23 +10910,23 @@ test_scripts/signal_callback_chains.gd
 
   24:0 Variable callbacks
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   25:0 Variable callback_chains
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   27:0 Variable pending_operations
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   30:23 Parameter name
@@ -11029,9 +11029,9 @@ test_scripts/signal_callback_chains.gd
 
   64:1 Variable _state
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   65:1 Variable _value
@@ -11092,9 +11092,9 @@ test_scripts/signal_callback_chains.gd
 
   120:1 Variable op
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AsyncOperation
+    effective: AsyncOperation
+    confidence: Medium
     nullable: no
 
   128:15 Parameter task_func
@@ -11141,16 +11141,16 @@ test_scripts/signal_callback_chains.gd
 
   137:0 Variable event_handlers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   138:0 Variable once_handlers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   141:14 Parameter event_name
@@ -11253,9 +11253,9 @@ test_scripts/signal_callback_chains.gd
 
   182:0 Variable pipeline_stages
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   185:15 Parameter stage
@@ -11295,9 +11295,9 @@ test_scripts/signal_callback_chains.gd
 
   198:1 Variable next
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable[[Variant], Variant]
+    effective: Callable[[Variant], Variant]
+    confidence: Medium
     nullable: no
 
   198:17 Parameter processed
@@ -11309,9 +11309,9 @@ test_scripts/signal_callback_chains.gd
 
   205:0 Variable middleware_stack
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   208:20 Parameter middleware
@@ -11360,16 +11360,16 @@ test_scripts/signal_callback_chains.gd
 
   230:1 Variable next
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable[[Variant], Variant]
+    effective: Callable[[Variant], Variant]
+    confidence: Medium
     nullable: no
 
   238:1 Variable _subscribers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   240:16 Parameter on_next
@@ -11395,16 +11395,16 @@ test_scripts/signal_callback_chains.gd
 
   241:2 Variable subscription
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   250:18 Parameter subscription
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   254:16 Parameter value
@@ -11451,9 +11451,9 @@ test_scripts/signal_callback_chains.gd
 
   272:2 Variable mapped
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Observable
+    effective: Observable
+    confidence: High
     nullable: no
 
   274:8 Parameter value
@@ -11479,16 +11479,16 @@ test_scripts/signal_callback_chains.gd
 
   281:2 Variable filtered
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Observable
+    effective: Observable
+    confidence: High
     nullable: no
 
   282:2 Variable on_next_filter
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable[[Variant], void]
+    effective: Callable[[Variant], void]
+    confidence: Medium
     nullable: no
 
   282:28 Parameter value
@@ -11507,16 +11507,16 @@ test_scripts/signal_callback_chains.gd
 
   299:0 Variable debounce_timers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   300:0 Variable throttle_locks
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   303:0 Variable _pending_debounce_callback
@@ -11822,16 +11822,16 @@ test_scripts/signal_callback_chains.gd
 
   423:2 Variable success_handler
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
     nullable: no
 
   424:2 Variable error_handler
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
     nullable: no
 
   428:21 Parameter url
@@ -11934,9 +11934,9 @@ test_scripts/signal_callback_chains.gd
 
   477:1 Variable callbacks
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   479:20 Parameter initial_value
@@ -11962,9 +11962,9 @@ test_scripts/signal_callback_chains.gd
 
   487:1 Variable callbacks
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   489:20 Parameter value
@@ -12046,16 +12046,16 @@ test_scripts/signal_callback_chains.gd
 
   513:2 Variable attempt
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   514:2 Variable last_error
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: null
+    effective: null
+    confidence: Medium
     nullable: no
 
   517:3 Variable result
@@ -12074,9 +12074,9 @@ test_scripts/signal_callback_chains.gd
 
   531:1 Variable composed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ComposedCallback
+    effective: ComposedCallback
+    confidence: High
     nullable: no
 
   536:24 Parameter callbacks_array
@@ -12088,9 +12088,9 @@ test_scripts/signal_callback_chains.gd
 
   538:1 Variable parallel
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ParallelCallback
+    effective: ParallelCallback
+    confidence: High
     nullable: no
 
   543:26 Parameter predicate
@@ -12116,9 +12116,9 @@ test_scripts/signal_callback_chains.gd
 
   544:1 Variable cond
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ConditionalCallback
+    effective: ConditionalCallback
+    confidence: High
     nullable: no
 
   551:20 Parameter callback
@@ -12144,9 +12144,9 @@ test_scripts/signal_callback_chains.gd
 
   553:1 Variable retry
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: RetryCallback
+    effective: RetryCallback
+    confidence: High
     nullable: no
 
 
@@ -12181,9 +12181,9 @@ test_scripts/signals_test.gd
 
   38:1 Variable old
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   43:19 Parameter pos
@@ -12216,9 +12216,9 @@ test_scripts/signals_test.gd
 
   72:24 Parameter old
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   72:34 Parameter new
@@ -12265,9 +12265,9 @@ test_scripts/signals_test.gd
 
   101:29 Parameter old
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   101:34 Parameter new
@@ -12279,9 +12279,9 @@ test_scripts/signals_test.gd
 
   110:29 Parameter old
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   110:34 Parameter new
@@ -12314,9 +12314,9 @@ test_scripts/signals_test.gd
 
   142:1 Variable timer
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SceneTreeTimer
+    effective: SceneTreeTimer
+    confidence: Medium
     nullable: no
 
   149:1 Variable id
@@ -12421,9 +12421,9 @@ test_scripts/simple_class.gd
 
   15:0 Variable public_var
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   26:14 Parameter delta
@@ -12449,9 +12449,9 @@ test_scripts/simple_class.gd
 
   59:1 Variable instance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SimpleClass
+    effective: SimpleClass
+    confidence: High
     nullable: no
 
 
@@ -12466,86 +12466,86 @@ test_scripts/standard_methods.gd
 
   13:1 Variable size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   14:1 Variable count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   15:1 Variable find_idx
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   16:1 Variable rfind_idx
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   17:1 Variable bsearch
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   20:1 Variable is_empty
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   21:1 Variable has_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   22:1 Variable is_readonly
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   25:1 Variable front
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   26:1 Variable back
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   27:1 Variable pick
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   28:1 Variable reduce_val
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   28:34 Parameter acc
@@ -12614,37 +12614,37 @@ test_scripts/standard_methods.gd
 
   45:1 Variable size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   48:1 Variable is_empty
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   49:1 Variable has_key
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   50:1 Variable has_all
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   51:1 Variable is_readonly
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   54:1 Variable keys
@@ -12663,23 +12663,23 @@ test_scripts/standard_methods.gd
 
   58:1 Variable get_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   59:1 Variable get_default
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   60:1 Variable find_key
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   63:1 Variable duplicated
@@ -12698,548 +12698,548 @@ test_scripts/standard_methods.gd
 
   72:1 Variable text
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   75:1 Variable length
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   76:1 Variable count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   77:1 Variable find_pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   78:1 Variable rfind_pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   79:1 Variable hash_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   80:1 Variable unicode
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   83:1 Variable is_empty
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   84:1 Variable begins
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   85:1 Variable ends
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   86:1 Variable contains
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   87:1 Variable is_valid_id
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   88:1 Variable is_valid_int
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   89:1 Variable is_valid_float
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   92:1 Variable upper
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   93:1 Variable lower
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   94:1 Variable stripped
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   95:1 Variable replaced
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   96:1 Variable left_str
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   97:1 Variable right_str
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   98:1 Variable substr
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   99:1 Variable padded
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   100:1 Variable sha256
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   101:1 Variable md5
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   104:1 Variable split
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedStringArray
+    effective: PackedStringArray
+    confidence: Medium
     nullable: no
 
   107:1 Variable similarity
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   115:1 Variable vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   118:1 Variable length
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   119:1 Variable length_sq
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   120:1 Variable angle
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   121:1 Variable angle_to
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   122:1 Variable dot
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   123:1 Variable cross
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   124:1 Variable aspect
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   125:1 Variable distance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   128:1 Variable normalized
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   129:1 Variable rotated
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   130:1 Variable clamped
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   131:1 Variable abs_vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   132:1 Variable floor_vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   133:1 Variable ceil_vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   134:1 Variable round_vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   135:1 Variable lerp_vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   136:1 Variable direction
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   139:1 Variable is_normalized
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   140:1 Variable is_finite
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   141:1 Variable is_zero
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   149:1 Variable vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   151:1 Variable length
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   152:1 Variable normalized
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   153:1 Variable cross
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   154:1 Variable dot
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   155:1 Variable is_normalized
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   163:1 Variable t
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Transform2D
+    effective: Transform2D
+    confidence: Medium
     nullable: no
 
   165:1 Variable origin
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   166:1 Variable rotation
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   167:1 Variable scale
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   168:1 Variable inverted
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Transform2D
+    effective: Transform2D
+    confidence: Medium
     nullable: no
 
   169:1 Variable rotated
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   177:1 Variable c
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   180:1 Variable hue
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   181:1 Variable saturation
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   182:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   183:1 Variable luminance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   186:1 Variable darkened
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   187:1 Variable lightened
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   188:1 Variable inverted
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Transform2D
+    effective: Transform2D
+    confidence: Medium
     nullable: no
 
   189:1 Variable lerped
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   192:1 Variable html
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   195:1 Variable rgba32
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   196:1 Variable argb32
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   204:1 Variable r
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Rect2
+    effective: Rect2
+    confidence: Medium
     nullable: no
 
   206:1 Variable area
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   207:1 Variable center
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   208:1 Variable has_point
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   209:1 Variable intersects
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   210:1 Variable expanded
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Rect2
+    effective: Rect2
+    confidence: Medium
     nullable: no
 
   211:1 Variable grown
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Rect2
+    effective: Rect2
+    confidence: Medium
     nullable: no
 
   212:1 Variable merged
@@ -13251,191 +13251,191 @@ test_scripts/standard_methods.gd
 
   213:1 Variable intersection
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Rect2
+    effective: Rect2
+    confidence: Medium
     nullable: no
 
   221:1 Variable box
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AABB
+    effective: AABB
+    confidence: Medium
     nullable: no
 
   223:1 Variable center
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   224:1 Variable volume
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   225:1 Variable has_point
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   226:1 Variable intersects
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   227:1 Variable expanded
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Rect2
+    effective: Rect2
+    confidence: Medium
     nullable: no
 
   228:1 Variable grown
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Rect2
+    effective: Rect2
+    confidence: Medium
     nullable: no
 
   236:1 Variable p
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Plane
+    effective: Plane
+    confidence: Medium
     nullable: no
 
   238:1 Variable center
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   239:1 Variable normal
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector3
+    effective: Vector3
+    confidence: Medium
     nullable: no
 
   240:1 Variable d
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   241:1 Variable distance
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   242:1 Variable is_point_over
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   243:1 Variable intersection
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Rect2
+    effective: Rect2
+    confidence: Medium
     nullable: no
 
   251:1 Variable int_arr
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedInt32Array
+    effective: PackedInt32Array
+    confidence: Medium
     nullable: no
 
   252:1 Variable float_arr
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedFloat32Array
+    effective: PackedFloat32Array
+    confidence: Medium
     nullable: no
 
   253:1 Variable str_arr
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedStringArray
+    effective: PackedStringArray
+    confidence: Medium
     nullable: no
 
   254:1 Variable vec2_arr
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedVector2Array
+    effective: PackedVector2Array
+    confidence: Medium
     nullable: no
 
   255:1 Variable byte_arr
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedByteArray
+    effective: PackedByteArray
+    confidence: Medium
     nullable: no
 
   258:1 Variable int_size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   259:1 Variable float_size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   260:1 Variable str_has
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   261:1 Variable vec2_empty
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   264:1 Variable to_float
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedByteArray
+    effective: PackedByteArray
+    confidence: Medium
     nullable: no
 
   265:1 Variable compressed
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedByteArray
+    effective: PackedByteArray
+    confidence: Medium
     nullable: no
 
   273:1 Variable parent
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   274:1 Variable children
@@ -13447,165 +13447,165 @@ test_scripts/standard_methods.gd
 
   275:1 Variable child_count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   276:1 Variable index
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   277:1 Variable path
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: NodePath
+    effective: NodePath
+    confidence: Medium
     nullable: no
 
   278:1 Variable is_inside
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   279:1 Variable tree
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SceneTree
+    effective: SceneTree
+    confidence: Medium
     nullable: no
 
   280:1 Variable viewport
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Viewport
+    effective: Viewport
+    confidence: Medium
     nullable: no
 
   281:1 Variable owner_node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   282:1 Variable multiplayer_api
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: MultiplayerApi
+    effective: MultiplayerApi
+    confidence: Medium
     nullable: no
 
   291:1 Variable abs_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   292:1 Variable floor_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   293:1 Variable ceil_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   294:1 Variable round_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   295:1 Variable clamp_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   296:1 Variable lerp_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   297:1 Variable min_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   298:1 Variable max_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   299:1 Variable sign_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   300:1 Variable pow_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   301:1 Variable sqrt_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   302:1 Variable sin_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   303:1 Variable cos_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
 
 test_scripts/todo_examples.gd
   13:0 Variable data
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: Medium
     nullable: no
 
   14:0 Variable processed_count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   26:1 Iterator item
@@ -13617,9 +13617,9 @@ test_scripts/todo_examples.gd
 
   30:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   37:14 Parameter item
@@ -13776,14 +13776,14 @@ test_scripts/type_guards.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   165:2 Variable pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   171:19 Parameter value
@@ -13851,9 +13851,9 @@ test_scripts/type_guards.gd
 
   219:2 Variable pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   220:2 Variable rot
@@ -13874,7 +13874,7 @@ test_scripts/type_guards.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   248:23 Parameter value
@@ -13907,74 +13907,74 @@ test_scripts/type_guards.gd
 
   264:2 Variable inner_func
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable[[], Array]
+    effective: Callable[[], Array]
+    confidence: Medium
     nullable: no
 
 
 test_scripts/type_inference.gd
   7:0 Variable inferred_int
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   8:0 Variable inferred_float
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
   9:0 Variable inferred_string
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   10:0 Variable inferred_bool
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   11:0 Variable inferred_array
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array[int]
+    effective: Array[int]
+    confidence: Medium
     nullable: no
 
   12:0 Variable inferred_dict
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   13:0 Variable inferred_vector
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   14:0 Variable inferred_color
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Color
+    effective: Color
+    confidence: Medium
     nullable: no
 
   15:0 Variable inferred_null
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: null
+    effective: null
+    confidence: Medium
     nullable: no
 
   18:0 Variable int_array
@@ -14000,72 +14000,72 @@ test_scripts/type_inference.gd
 
   23:0 Variable nested_array
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array[Array[int]]
+    effective: Array[Array[int]]
+    confidence: Medium
     nullable: no
 
   24:0 Variable nested_dict
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   33:1 Variable sum
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   34:1 Variable product
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   35:1 Variable concat
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   36:1 Variable negated
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   48:1 Variable step1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: Certain
     nullable: no
 
   49:1 Variable step2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   50:1 Variable step3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   51:1 Variable step4
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   57:1 Variable numbers
@@ -14108,7 +14108,7 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   62:34 Parameter a
@@ -14134,72 +14134,72 @@ test_scripts/type_inference.gd
 
   70:1 Variable first
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   71:1 Variable front
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   72:1 Variable popped
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   79:1 Variable sprite
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Sprite2D
+    effective: Sprite2D
+    confidence: Medium
     nullable: no
 
   80:1 Variable label
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Label
+    effective: Label
+    confidence: Medium
     nullable: no
 
   90:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   91:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   93:1 Variable number
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   94:1 Variable clamped
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   100:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   113:1 Iterator i
@@ -14233,37 +14233,37 @@ test_scripts/type_inference.gd
 
   127:1 Variable name_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   128:1 Variable value_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   135:1 Variable pos
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   136:1 Variable tree
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SceneTree
+    effective: SceneTree
+    confidence: Medium
     nullable: no
 
   137:1 Variable time
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   142:19 Parameter x
@@ -14282,58 +14282,58 @@ test_scripts/type_inference.gd
 
   147:1 Variable vec
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Vector2
+    effective: Vector2
+    confidence: Medium
     nullable: no
 
   148:1 Variable length
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   154:1 Variable packed_ints
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedInt32Array
+    effective: PackedInt32Array
+    confidence: Medium
     nullable: no
 
   155:1 Variable packed_floats
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedFloat32Array
+    effective: PackedFloat32Array
+    confidence: Medium
     nullable: no
 
   156:1 Variable packed_strings
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: PackedStringArray
+    effective: PackedStringArray
+    confidence: Medium
     nullable: no
 
   159:1 Variable int_elem
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   160:1 Variable float_elem
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   161:1 Variable string_elem
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   167:1 Variable a
@@ -14352,16 +14352,16 @@ test_scripts/type_inference.gd
 
   169:1 Variable c
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   172:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   178:0 Variable string_int_dict
@@ -14408,16 +14408,16 @@ test_scripts/type_inference.gd
 
   193:1 Variable value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: float
+    effective: float
+    confidence: High
     nullable: no
 
   194:1 Variable value2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   201:1 Variable local_matrix
@@ -14436,9 +14436,9 @@ test_scripts/type_inference.gd
 
   203:1 Variable cell
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   206:1 Variable member_row
@@ -14457,9 +14457,9 @@ test_scripts/type_inference.gd
 
   215:1 Variable first
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   222:1 Variable untyped_arr
@@ -14485,9 +14485,9 @@ test_scripts/type_inference.gd
 
   227:1 Variable dict_val
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
 
@@ -14544,9 +14544,9 @@ test_scripts/union_returns.gd
 
   57:1 Variable node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   63:19 Parameter path
@@ -14558,9 +14558,9 @@ test_scripts/union_returns.gd
 
   65:1 Variable resource
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Resource
+    effective: Resource
+    confidence: Medium
     nullable: no
 
   72:19 Parameter input
@@ -14609,7 +14609,7 @@ test_scripts/union_returns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   130:21 Parameter callback
@@ -14623,7 +14623,7 @@ test_scripts/union_returns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   138:23 Parameter operation
@@ -14767,7 +14767,7 @@ test_scripts/union_returns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
 
@@ -14851,9 +14851,9 @@ test_scripts/union_types_complex.gd
 
   49:1 Variable node
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Node
+    effective: Node
+    confidence: Medium
     nullable: no
 
   57:21 Parameter value
@@ -14886,16 +14886,16 @@ test_scripts/union_types_complex.gd
 
   79:0 Variable flag_a
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   80:0 Variable flag_b
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: Certain
     nullable: no
 
   97:18 Parameter value
@@ -14936,10 +14936,11 @@ test_scripts/union_types_complex.gd
 
   127:0 Variable mixed_array
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array[Array[int] | Dictionary | float | int | String]
+    effective: Array[Array[int] | Dictionary | float | int | String]
+    confidence: Medium
     nullable: no
+    union: Array[Array[int]|Dictionary|float|int|String]
 
   130:23 Parameter index
     declared: (none)
@@ -14966,7 +14967,7 @@ test_scripts/union_types_complex.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   146:25 Parameter item
@@ -14978,9 +14979,9 @@ test_scripts/union_types_complex.gd
 
   163:0 Variable config
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   173:16 Parameter key
@@ -15045,14 +15046,14 @@ test_scripts/union_types_complex.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   205:1 Variable missing
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   211:20 Parameter value
@@ -15190,16 +15191,16 @@ test_scripts/union_types_complex.gd
 
   276:0 Variable pending_results
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: Medium
     nullable: no
 
   277:0 Variable next_request_id
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: Certain
     nullable: no
 
   280:19 Parameter params
@@ -15211,16 +15212,16 @@ test_scripts/union_types_complex.gd
 
   282:1 Variable request_id
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   292:23 Parameter request_id
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   292:35 Parameter params
@@ -15246,9 +15247,9 @@ test_scripts/union_types_complex.gd
 
   310:16 Parameter request_id
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   317:16 Parameter value
@@ -15332,9 +15333,9 @@ test_scripts/union_types_complex.gd
 
   388:2 Variable count
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
 
@@ -15349,9 +15350,9 @@ test_scripts/validation_edge_cases.gd
 
   14:1 Variable size
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   16:1 Variable dict
@@ -15363,37 +15364,37 @@ test_scripts/validation_edge_cases.gd
 
   19:1 Variable has
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: bool
+    effective: bool
+    confidence: High
     nullable: no
 
   25:1 Variable result
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   26:1 Variable result2
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   27:1 Variable result3
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   28:1 Variable result4
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   34:1 Variable _value

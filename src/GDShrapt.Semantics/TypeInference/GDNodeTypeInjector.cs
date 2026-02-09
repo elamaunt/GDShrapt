@@ -124,6 +124,22 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
                 return ResolvePreloadType(resourcePath);
         }
 
+        // preload("scene.tscn").instantiate() or scene_var.instantiate()
+        if (callName == "instantiate")
+        {
+            var scenePath = ExtractScenePathFromCaller(call);
+            if (!string.IsNullOrEmpty(scenePath))
+                return ResolveSceneRootType(scenePath);
+        }
+
+        // instance.get_child(N) where instance comes from scene instantiate
+        if (callName == "get_child" || callName == "get_child_or_null")
+        {
+            var result = InferGetChildOnSceneInstance(call);
+            if (!string.IsNullOrEmpty(result))
+                return result;
+        }
+
         return null;
     }
 
@@ -282,4 +298,134 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
     }
 
     public string? GetMethodReturnType(string methodName, string receiverType, IReadOnlyList<string> argumentTypes) => null;
+
+    private string? ExtractScenePathFromCaller(GDCallExpression instantiateCall)
+    {
+        var caller = instantiateCall.CallerExpression;
+        if (caller is not GDMemberOperatorExpression memberExpr)
+            return null;
+
+        // Direct: preload("res://scene.tscn").instantiate()
+        if (memberExpr.CallerExpression is GDCallExpression preloadCall)
+            return ExtractScenePathFromPreloadCall(preloadCall);
+
+        // Variable: scene_var.instantiate()
+        if (memberExpr.CallerExpression is GDIdentifierExpression identExpr)
+            return ExtractScenePathFromVariable(identExpr, instantiateCall);
+
+        return null;
+    }
+
+    private string? ExtractScenePathFromPreloadCall(GDCallExpression preloadCall)
+    {
+        var preloadName = GDNodePathExtractor.GetCallName(preloadCall);
+        if (!GDWellKnownFunctions.IsResourceLoader(preloadName))
+            return null;
+
+        var resourcePath = GDNodePathExtractor.ExtractResourcePath(preloadCall);
+        if (string.IsNullOrEmpty(resourcePath))
+            return null;
+
+        if (resourcePath.EndsWith(".tscn") || resourcePath.EndsWith(".scn"))
+            return resourcePath;
+
+        return null;
+    }
+
+    private string? ExtractScenePathFromVariable(GDIdentifierExpression identExpr, GDCallExpression contextCall)
+    {
+        var varName = identExpr.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(varName))
+            return null;
+
+        var classDecl = contextCall.RootClassDeclaration;
+        if (classDecl == null)
+            return null;
+
+        var initExpr = FindVariableInitializer(classDecl, varName);
+        if (initExpr is GDCallExpression preloadCall)
+            return ExtractScenePathFromPreloadCall(preloadCall);
+
+        return null;
+    }
+
+    private string? ResolveSceneRootType(string scenePath)
+    {
+        if (_sceneProvider == null)
+            return null;
+
+        if (_sceneProvider.GetSceneInfo(scenePath) == null)
+            _sceneProvider.LoadScene(scenePath);
+
+        return _sceneProvider.GetRootNodeType(scenePath);
+    }
+
+    private string? InferGetChildOnSceneInstance(GDCallExpression getChildCall)
+    {
+        if (_sceneProvider == null)
+            return null;
+
+        var caller = getChildCall.CallerExpression;
+        if (caller is not GDMemberOperatorExpression memberExpr)
+            return null;
+
+        if (memberExpr.CallerExpression is not GDIdentifierExpression identExpr)
+            return null;
+
+        var varName = identExpr.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(varName))
+            return null;
+
+        var classDecl = getChildCall.RootClassDeclaration;
+        if (classDecl == null)
+            return null;
+
+        var initExpr = FindVariableInitializer(classDecl, varName);
+        if (initExpr is not GDCallExpression instantiateCall)
+            return null;
+
+        var instantiateName = GDNodePathExtractor.GetCallName(instantiateCall);
+        if (instantiateName != "instantiate")
+            return null;
+
+        var scenePath = ExtractScenePathFromCaller(instantiateCall);
+        if (string.IsNullOrEmpty(scenePath))
+            return null;
+
+        if (_sceneProvider.GetSceneInfo(scenePath) == null)
+            _sceneProvider.LoadScene(scenePath);
+
+        var args = getChildCall.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return null;
+
+        if (args[0] is GDNumberExpression numExpr)
+        {
+            if (int.TryParse(numExpr.Number?.Sequence, out var index))
+            {
+                var children = _sceneProvider.GetDirectChildren(scenePath, ".");
+                if (index >= 0 && index < children.Count)
+                    return children[index].ScriptTypeName ?? children[index].NodeType;
+            }
+        }
+
+        return null;
+    }
+
+    private static GDExpression? FindVariableInitializer(GDClassDeclaration classDecl, string variableName)
+    {
+        if (classDecl.Members == null)
+            return null;
+
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDVariableDeclaration varDecl &&
+                varDecl.Identifier?.Sequence == variableName)
+            {
+                return varDecl.Initializer;
+            }
+        }
+
+        return null;
+    }
 }
