@@ -1,6 +1,8 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Semantics.Validator;
 
@@ -44,6 +46,7 @@ internal enum GDNullabilitySafetyResult
 public class GDNullableAccessValidator : GDValidationVisitor
 {
     private readonly GDSemanticModel _semanticModel;
+    private readonly GDProjectSemanticModel? _projectModel;
     private readonly GDDiagnosticSeverity _severity;
     private readonly GDNullableStrictnessMode _strictness;
     private readonly bool _warnOnDictionaryIndexer;
@@ -76,6 +79,7 @@ public class GDNullableAccessValidator : GDValidationVisitor
         : base(context)
     {
         _semanticModel = semanticModel;
+        _projectModel = options.ProjectModel;
         _severity = options.NullableAccessSeverity;
         _strictness = options.NullableStrictness;
         _warnOnDictionaryIndexer = options.WarnOnDictionaryIndexer;
@@ -116,6 +120,10 @@ public class GDNullableAccessValidator : GDValidationVisitor
 
     private void ValidateNullAccess(GDNode accessNode, GDExpression? callerExpr, GDDiagnosticCode code)
     {
+        // Check for conditional node access (GD7017) before variable-based analysis
+        if (callerExpr != null && TryReportConditionalNodeAccess(accessNode, callerExpr))
+            return;
+
         // Step 1: Extract and validate context
         var context = TryCreateAccessContext(accessNode, callerExpr, code);
         if (context == null)
@@ -244,6 +252,153 @@ public class GDNullableAccessValidator : GDValidationVisitor
         return context.IsOnreadyVariable
             ? GDNullabilitySafetyResult.UnsafeOnready
             : GDNullabilitySafetyResult.UnsafeReadyInit;
+    }
+
+    /// <summary>
+    /// Checks if the caller is a node access expression ($Path, %Name, get_node())
+    /// and the node may be conditionally present. Reports GD7017 if so.
+    /// Returns true if a diagnostic was reported (or the check handled the case).
+    /// </summary>
+    private bool TryReportConditionalNodeAccess(GDNode accessNode, GDExpression callerExpr)
+    {
+        if (_projectModel == null)
+            return false;
+
+        var sceneFlow = _projectModel.SceneFlow;
+        var sceneProvider = _projectModel.Project.SceneTypesProvider;
+        if (sceneProvider == null)
+            return false;
+
+        var scriptPath = _semanticModel.ScriptFile?.ResPath;
+        if (string.IsNullOrEmpty(scriptPath))
+            return false;
+
+        // Extract node path from the caller expression
+        string? nodePath = null;
+        bool isUniqueNode = false;
+
+        if (callerExpr is GDGetNodeExpression getNodeExpr)
+        {
+            nodePath = GDNodePathExtractor.ExtractFromGetNodeExpression(getNodeExpr);
+        }
+        else if (callerExpr is GDGetUniqueNodeExpression uniqueExpr)
+        {
+            nodePath = GDNodePathExtractor.ExtractFromUniqueNodeExpression(uniqueExpr);
+            isUniqueNode = true;
+        }
+        else if (callerExpr is GDCallExpression callExpr && GDNodePathExtractor.GetCallName(callExpr) == "get_node")
+        {
+            nodePath = GDNodePathExtractor.ExtractFromCallExpression(callExpr);
+        }
+
+        if (string.IsNullOrEmpty(nodePath))
+            return false;
+
+        // Check if guarded by has_node() check
+        if (IsGuardedByHasNodeCheck(accessNode, nodePath))
+            return false;
+
+        // Get scenes for this script
+        var scenes = sceneProvider.GetScenesForScript(scriptPath).ToList();
+        if (scenes.Count == 0)
+            return false;
+
+        // Check node presence prediction in each scene
+        foreach (var (scenePath, scriptNodePath) in scenes)
+        {
+            var fullPath = isUniqueNode ? nodePath : ResolveRelativePath(scriptNodePath, nodePath);
+            var prediction = sceneFlow.CheckNodePath(scenePath, fullPath);
+
+            if (prediction.Status == GDNodePresenceStatus.MayBeAbsent ||
+                prediction.Status == GDNodePresenceStatus.ConditionallyPresent)
+            {
+                var memberName = GetAccessedMemberName(accessNode);
+                var pathDisplay = isUniqueNode ? $"%{nodePath}" : $"${nodePath}";
+                var message = string.IsNullOrEmpty(memberName)
+                    ? $"Node '{pathDisplay}' may not be present at runtime ({prediction.Reason}). Add a null check"
+                    : $"Node '{pathDisplay}' may not be present at runtime ({prediction.Reason}) when accessing '{memberName}'. Add a null check";
+
+                ReportHint(GDDiagnosticCode.ConditionalNodeAccess, message, accessNode);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsGuardedByHasNodeCheck(GDNode accessNode, string nodePath)
+    {
+        var current = accessNode?.Parent as GDNode;
+        while (current != null)
+        {
+            if (current is GDIfBranch ifBranch && ifBranch.Condition != null &&
+                !GDNullGuardDetector.IsDescendantOf(accessNode, ifBranch.Condition))
+            {
+                if (IsHasNodeGuard(ifBranch.Condition, nodePath))
+                    return true;
+            }
+            else if (current is GDElifBranch elifBranch && elifBranch.Condition != null &&
+                     !GDNullGuardDetector.IsDescendantOf(accessNode, elifBranch.Condition))
+            {
+                if (IsHasNodeGuard(elifBranch.Condition, nodePath))
+                    return true;
+            }
+            current = current.Parent as GDNode;
+        }
+        return false;
+    }
+
+    private static bool IsHasNodeGuard(GDExpression? condition, string nodePath)
+    {
+        if (condition is GDCallExpression callExpr)
+        {
+            var name = GDNodePathExtractor.GetCallName(callExpr);
+            if (name == "has_node")
+            {
+                var path = GDNodePathExtractor.ExtractFromCallExpression(callExpr);
+                if (path == nodePath)
+                    return true;
+            }
+        }
+
+        if (condition is GDDualOperatorExpression dualOp)
+        {
+            var opType = dualOp.Operator?.OperatorType;
+            if (opType == GDDualOperatorType.And || opType == GDDualOperatorType.And2)
+            {
+                return IsHasNodeGuard(dualOp.LeftExpression, nodePath) ||
+                       IsHasNodeGuard(dualOp.RightExpression, nodePath);
+            }
+        }
+
+        return false;
+    }
+
+    private static string ResolveRelativePath(string basePath, string relativePath)
+    {
+        if (relativePath.StartsWith("/"))
+            return relativePath.TrimStart('/');
+
+        if (basePath == ".")
+            return relativePath;
+
+        var parts = basePath.Split('/').ToList();
+        var relParts = relativePath.Split('/');
+
+        foreach (var part in relParts)
+        {
+            if (part == "..")
+            {
+                if (parts.Count > 0)
+                    parts.RemoveAt(parts.Count - 1);
+            }
+            else if (part != "." && !string.IsNullOrEmpty(part))
+            {
+                parts.Add(part);
+            }
+        }
+
+        return string.Join("/", parts);
     }
 
     /// <summary>

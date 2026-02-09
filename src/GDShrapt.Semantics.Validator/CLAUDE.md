@@ -10,12 +10,17 @@ This library provides semantic validation that goes beyond syntax checking. It u
 
 ```
 GDSemanticValidator (orchestrator)
-├── GDTypeValidator         - Return types, operators, assignments
-├── GDMemberAccessValidator - Property/method resolution, duck typing
-├── GDArgumentTypeValidator - Call argument types
-├── GDIndexerValidator      - Indexer key types (Array/Dictionary/String)
-├── GDSemanticSignalValidator - Signal parameter types (emit_signal)
-└── GDGenericTypeValidator  - Generic type parameters (Array[T], Dictionary[K,V])
+├── GDTypeValidator             - Return types, operators, assignments
+├── GDMemberAccessValidator     - Property/method resolution, duck typing
+├── GDArgumentTypeValidator     - Call argument types
+├── GDIndexerValidator          - Indexer key types (Array/Dictionary/String)
+├── GDSemanticSignalValidator   - Signal parameter types (emit_signal)
+├── GDGenericTypeValidator      - Generic type parameters (Array[T], Dictionary[K,V])
+├── GDNullableAccessValidator   - Null access (GD7005-7009) + conditional node (GD7017)
+├── GDRedundantGuardValidator   - Redundant type guards (GD7010-7014)
+├── GDDynamicCallValidator      - Dynamic call/get/set (GD7015-7016)
+├── GDSceneNodeValidator        - Node path validation (GD4011, GD4012) [requires ProjectModel]
+└── GDNodeLifecycleValidator    - Node access lifecycle (GD7018)
 ```
 
 ## Entry Point
@@ -83,6 +88,30 @@ Validates generic type parameters:
 - Reports InvalidGenericArgument for unknown types
 - Reports DictionaryKeyNotHashable for non-hashable keys (Array, Dictionary, etc.)
 
+### GDSceneNodeValidator
+
+Validates node path expressions against scene data (requires `ProjectModel`):
+- `$Path`: checks if node exists in any scene using this script
+- `%Name`: checks if unique node exists in any scene
+- `get_node("path")`: validates static path exists in scene
+- Skips `get_node_or_null()` and `find_node()` (intentionally nullable)
+- Reports only when path not found in ALL scenes (not just some)
+
+### GDNodeLifecycleValidator
+
+Validates node access lifecycle:
+- Detects `$Node`, `%Unique`, `get_node()` in class-level initializers without `@onready`
+- Skips `const` declarations and `@onready` variables
+- Uses inner `GDNodeAccessDetector` visitor to walk initializer expressions
+
+### GD7017 ConditionalNodeAccess (in GDNullableAccessValidator)
+
+Extends `GDNullableAccessValidator` to check node access expressions:
+- When caller is `$Path`/`%Name`/`get_node()`, queries `SceneFlow.CheckNodePath()`
+- Reports Hint if node status is `MayBeAbsent` or `ConditionallyPresent`
+- Suppressed by `has_node()` guard
+- Requires `ProjectModel` in options
+
 ## Diagnostic Codes
 
 ### Type Errors (3xxx)
@@ -111,8 +140,10 @@ Validates generic type parameters:
 | GD4004 | NotCallable | Not a callable expression |
 | **GD4009** | EmitSignalTypeMismatch | emit_signal arg type mismatch |
 | **GD4010** | ConnectCallbackTypeMismatch | connect callback mismatch |
+| **GD4011** | InvalidNodePath | $Path or get_node() not found in scene |
+| **GD4012** | InvalidUniqueNode | %Name not found as unique in scene |
 
-### Duck Typing (7xxx)
+### Duck Typing / Nullable / Scene (7xxx)
 
 | Code | Name | Description |
 |------|------|-------------|
@@ -120,6 +151,11 @@ Validates generic type parameters:
 | GD7002 | UnguardedPropertyAccess | Property on untyped without guard |
 | GD7003 | UnguardedMethodCall | Method call on untyped |
 | GD7004 | MemberNotGuaranteed | Member not on any possible type |
+| GD7005-7009 | PotentiallyNull* | Access on potentially-null variable |
+| GD7010-7014 | Redundant* | Redundant type/null guards |
+| GD7015-7016 | Dynamic* | Dynamic call/get/set validation |
+| **GD7017** | ConditionalNodeAccess | Node may be absent (Hint) |
+| **GD7018** | NodeAccessBeforeReady | $Node without @onready (Warning) |
 
 #### GD7003 Warning Logic
 
@@ -162,16 +198,18 @@ public class GDSemanticValidatorOptions
     public bool CheckSignalTypes { get; set; } = true;
     public bool CheckGenericTypes { get; set; } = true;
     public bool CheckDynamicCalls { get; set; } = true;
+    public bool CheckNodePaths { get; set; } = true;      // GD4011, GD4012
+    public bool CheckNodeLifecycle { get; set; } = true;   // GD7018
 
-    /// <summary>
-    /// Enable comment-based suppression (# gd:ignore = CODE).
-    /// Default: true
-    /// </summary>
     public bool EnableCommentSuppression { get; set; } = true;
 
     public GDDiagnosticSeverity MemberAccessSeverity { get; set; } = Warning;
     public GDDiagnosticSeverity ArgumentTypeSeverity { get; set; } = Warning;
     public GDDiagnosticSeverity SignalTypeSeverity { get; set; } = Warning;
+    public GDDiagnosticSeverity NodePathSeverity { get; set; } = Warning;
+
+    // Project model (null = skip scene/resource validation)
+    public GDProjectSemanticModel? ProjectModel { get; set; }
 }
 ```
 
@@ -259,4 +297,4 @@ dotnet test --filter "Name=AllDiagnostics_MustBeVerifiedOrExcluded"
 - Total/Verified/Unverified/FP counts
 - Details for each unverified or false positive
 
-**Current Status:** 1048 diagnostics verified (Validator + Linter + Semantics)
+**Current Status:** 1065 diagnostics verified (Validator + Linter + Semantics)

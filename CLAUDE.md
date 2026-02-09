@@ -11,7 +11,7 @@ GDShrapt is a C# one-pass parser for GDScript 2.0 (Godot Engine). It builds lexi
 ```
 GDShrapt.Reader (base)
        ├── GDShrapt.Builder     - Code generation
-       ├── GDShrapt.Validator   - AST validation (GD1xxx-GD8xxx)
+       ├── GDShrapt.Validator   - AST validation (GD1xxx-GD8xxx, enum shared with Semantics.Validator)
        ├── GDShrapt.Linter      - Style checking (GDLxxx)
        └── GDShrapt.Formatter   - Code formatting (GDFxxx)
 
@@ -63,10 +63,10 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
   - GD1xxx: Syntax (InvalidToken, MissingSemicolon, UnexpectedToken, MissingColon, MissingBracket)
   - GD2xxx: Scope (UndefinedVariable/Function, DuplicateDeclaration, UndefinedSignal/EnumValue)
   - GD3xxx: Type (TypeMismatch, InvalidOperandType, UnknownType, ArgumentTypeMismatch)
-  - GD4xxx: Call (WrongArgumentCount, MethodNotFound, InvalidSignalConnection, ResourceNotFound)
+  - GD4xxx: Call (WrongArgumentCount, MethodNotFound, InvalidSignalConnection, ResourceNotFound, InvalidNodePath, InvalidUniqueNode)
   - GD5xxx: ControlFlow (Break/Continue/Return outside context, UnreachableCode, ConstantReassignment)
   - GD6xxx: Indentation (InconsistentIndentation, UnexpectedIndent/Dedent)
-  - GD7xxx: DuckTyping (UnguardedMethodAccess/PropertyAccess/MethodCall)
+  - GD7xxx: DuckTyping/Nullable/Scene (UnguardedAccess, PotentiallyNull, RedundantGuard, DynamicCall, ConditionalNodeAccess, NodeAccessBeforeReady)
   - GD8xxx: Abstract (AbstractMethodHasBody, ClassNotAbstract, AbstractMethodNotImplemented)
 - `GDValidationOptions`: CheckSyntax, CheckScope, CheckCalls, CheckControlFlow, CheckIndentation, CheckAbstract, CheckSignals, CheckMemberAccess, RuntimeProvider, EnableCommentSuppression
 
@@ -92,7 +92,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `GDScriptProject` - Orchestrator: `LoadScripts()`, `LoadScenes()`, `AnalyzeAll()`, file watching, events (ScriptChanged/Created/Deleted/Renamed)
 - `GDScriptFile` - Individual script with `Class` (AST), `Analyzer` (semantic model), `Reload()`
 - `GDSemanticModel` - Single-file type inference: `GetTypeForExpression()`, `GetTypeForNode()`, `FindReferences()`, `GetSymbolInfo()`, `GetMemberAccessConfidence()`
-- `GDProjectSemanticModel` - Cross-file analysis with incremental updates
+- `GDProjectSemanticModel` - Cross-file analysis with incremental updates, `SceneFlow`, `ResourceFlow`
 - Type inference: `GDTypeInferenceSource`, `GDDuckTypeResolver`, `GDParameterTypeResolver`, `GDMethodSignatureInferenceEngine`, `GDUnionTypeResolver`
 - Duck-type inference: `GDParameterUsageAnalyzer` (collects constraints), `GDParameterTypeResolver` (resolves to types via TypesMap)
 - `GDFlowAnalyzer` - Control flow analysis, reachability, type narrowing
@@ -105,6 +105,15 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `GDSemanticValidator` - Orchestrator: `Validate()`, `ValidateCode()`
 - `GDTypeValidator` - Type mismatches, assignment compatibility, return types
 - `GDMemberAccessValidator` - Method/property resolution with duck typing
+- `GDArgumentTypeValidator` - Call argument type checking
+- `GDIndexerValidator` - Indexer key type validation
+- `GDSemanticSignalValidator` - Signal parameter types (emit_signal)
+- `GDGenericTypeValidator` - Generic type parameters (Array[T], Dictionary[K,V])
+- `GDNullableAccessValidator` - Null access (GD7005-7009) + conditional node (GD7017)
+- `GDRedundantGuardValidator` - Redundant type guards (GD7010-7014)
+- `GDDynamicCallValidator` - Dynamic call/get/set (GD7015-7016)
+- `GDSceneNodeValidator` - Node path validation against scene data (GD4011, GD4012)
+- `GDNodeLifecycleValidator` - Node access lifecycle, @onready detection (GD7018)
 
 **Abstractions** - Core interfaces
 - `IGDRuntimeProvider` - Type system: `IsKnownType()`, `GetTypeInfo()`, `GetMember()`, `GetBaseType()`, `IsAssignableTo()`, `GetGlobalFunction()`, `GetGlobalClass()`, `GetAllTypes()`
@@ -191,7 +200,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 ## Testing
 
-Test projects mirror component structure. Total: 4,477+ tests (including semantic stress tests and benchmarks).
+Test projects mirror component structure. Total: 5,499+ tests (including semantic stress tests and benchmarks).
 
 Assertion helpers (`GDShrapt.Tests.Common`):
 - `AssertHelper.CompareCodeStrings()` - Compare ignoring whitespace
@@ -200,7 +209,7 @@ Assertion helpers (`GDShrapt.Tests.Common`):
 
 ### Diagnostics Verification (TDD)
 
-All 1,048 diagnostics are verified using test-driven development. Each diagnostic in test files must have a verification marker.
+All 1,065 diagnostics are verified using test-driven development. Each diagnostic in test files must have a verification marker.
 
 **Marker Format:**
 ```gdscript
@@ -337,7 +346,7 @@ Each component has its own CLAUDE.md. **Always update relevant CLAUDE.md files w
 | `src/GDShrapt.Semantics/Analysis/CLAUDE.md` | Folder | **Most detailed** - analyzers, duck-typing algorithm |
 | `src/GDShrapt.Semantics/TypeInference/CLAUDE.md` | Folder | Type inference engine, providers, caching |
 | `src/GDShrapt.Semantics/Refactoring/CLAUDE.md` | Folder | Refactoring services, Plan vs Execute |
-| `src/GDShrapt.Semantics.Validator/CLAUDE.md` | Package | Semantic validation, GD7003 logic |
+| `src/GDShrapt.Semantics.Validator/CLAUDE.md` | Package | Semantic validation, scene/node diagnostics, GD7003 logic |
 | `src/GDShrapt.Validator/CLAUDE.md` | Package | AST validation pipeline |
 | `src/GDShrapt.CLI.Core/CLAUDE.md` | Package | CLI handlers |
 | `src/GDShrapt.LSP/CLAUDE.md` | Package | LSP handlers |

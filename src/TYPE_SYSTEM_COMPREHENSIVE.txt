@@ -4157,6 +4157,106 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       84:2 obj -> Node (base: Variant)
 
 
+test_scripts/diagnostics/validator/scene_validation_errors.gd
+================================================================================
+
+--- 9:1 Variable btn ---
+  Type Info:
+    declared:     (none)
+    inferred:     Button
+    effective:    Button
+    confidence:   Medium
+    nullable:     no
+
+--- 10:1 Variable lbl ---
+  Type Info:
+    declared:     (none)
+    inferred:     Label
+    effective:    Label
+    confidence:   Medium
+    nullable:     no
+
+--- 11:1 Variable sub ---
+  Type Info:
+    declared:     (none)
+    inferred:     Panel
+    effective:    Panel
+    confidence:   Medium
+    nullable:     no
+
+--- 16:1 Variable missing ---
+  Type Info:
+    declared:     (none)
+    inferred:     Node
+    effective:    Node
+    confidence:   Medium
+    nullable:     no
+
+--- 17:1 Variable wrong ---
+  Type Info:
+    declared:     (none)
+    inferred:     Node
+    effective:    Node
+    confidence:   Medium
+    nullable:     no
+
+--- 22:1 Variable maybe ---
+  Type Info:
+    declared:     (none)
+    inferred:     Node
+    effective:    Node
+    confidence:   Medium
+    nullable:     no
+
+--- 32:1 Variable player ---
+  Type Info:
+    declared:     (none)
+    inferred:     CharacterBody2D
+    effective:    CharacterBody2D
+    confidence:   Medium
+    nullable:     no
+
+--- 37:1 Variable enemy ---
+  Type Info:
+    declared:     (none)
+    inferred:     Node
+    effective:    Node
+    confidence:   Medium
+    nullable:     no
+
+--- 45:0 Variable button ---
+  Type Info:
+    declared:     (none)
+    inferred:     Button
+    effective:    Button
+    confidence:   Medium
+    nullable:     no
+
+--- 48:9 Variable label ---
+  Type Info:
+    declared:     (none)
+    inferred:     Label
+    effective:    Label
+    confidence:   Medium
+    nullable:     no
+
+--- 51:0 Variable speed ---
+  Type Info:
+    declared:     (none)
+    inferred:     float
+    effective:    float
+    confidence:   Certain
+    nullable:     no
+
+--- 54:0 Variable panel ---
+  Type Info:
+    declared:     (none)
+    inferred:     Panel
+    effective:    Panel
+    confidence:   Medium
+    nullable:     no
+
+
 test_scripts/diagnostics/validator/scope_errors.gd
 ================================================================================
 
@@ -21379,4 +21479,4 @@ test_scripts/validation_edge_cases.gd
     nullable:     no
 
 
-# Summary: 47 files analyzed
+# Summary: 48 files analyzed

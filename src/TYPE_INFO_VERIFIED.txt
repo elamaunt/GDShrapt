@@ -3049,6 +3049,92 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
     nullable: no
 
 
+test_scripts/diagnostics/validator/scene_validation_errors.gd
+  9:1 Variable btn # OK
+    declared: (none)
+    inferred: Button
+    effective: Button
+    confidence: Medium
+    nullable: no
+
+  10:1 Variable lbl # OK
+    declared: (none)
+    inferred: Label
+    effective: Label
+    confidence: Medium
+    nullable: no
+
+  11:1 Variable sub # OK
+    declared: (none)
+    inferred: Panel
+    effective: Panel
+    confidence: Medium
+    nullable: no
+
+  16:1 Variable missing # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  17:1 Variable wrong # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  22:1 Variable maybe # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  32:1 Variable player # OK
+    declared: (none)
+    inferred: CharacterBody2D
+    effective: CharacterBody2D
+    confidence: Medium
+    nullable: no
+
+  37:1 Variable enemy # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  45:0 Variable button # OK
+    declared: (none)
+    inferred: Button
+    effective: Button
+    confidence: Medium
+    nullable: no
+
+  48:9 Variable label # OK
+    declared: (none)
+    inferred: Label
+    effective: Label
+    confidence: Medium
+    nullable: no
+
+  51:0 Variable speed # OK
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  54:0 Variable panel # OK
+    declared: (none)
+    inferred: Panel
+    effective: Panel
+    confidence: Medium
+    nullable: no
+
+
 test_scripts/diagnostics/validator/scope_errors.gd
   24:1 Variable defined_var # OK
     declared: (none)

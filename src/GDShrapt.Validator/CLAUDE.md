@@ -45,10 +45,10 @@ Validators run sequentially. Order matters for dependency resolution.
 | GD1xxx | Syntax | InvalidToken, MissingColon |
 | GD2xxx | Scope | UndefinedVariable, DuplicateDeclaration |
 | GD3xxx | Type | TypeMismatch (basic only) |
-| GD4xxx | Call | WrongArgumentCount, MethodNotFound |
+| GD4xxx | Call | WrongArgumentCount, MethodNotFound, InvalidNodePath (4011), InvalidUniqueNode (4012) |
 | GD5xxx | Control Flow | BreakOutsideLoop, UnreachableCode |
 | GD6xxx | Indentation | InconsistentIndentation |
-| GD7xxx | Duck Typing | (Semantics.Validator only) |
+| GD7xxx | Duck Typing / Nullable / Scene | (Semantics.Validator only) incl. ConditionalNodeAccess (7017), NodeAccessBeforeReady (7018) |
 | GD8xxx | Abstract | AbstractMethodNotImplemented |
 
 ## Suppression Syntax

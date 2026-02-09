@@ -167,6 +167,26 @@ public class GDSemanticValidator
             dynamicCallValidator.Validate(node);
         }
 
+        // Run scene node validator (requires semantic model + project model)
+        if (_options.CheckNodePaths && _semanticModel != null && _options.ProjectModel != null)
+        {
+            var sceneNodeValidator = new GDSceneNodeValidator(
+                context,
+                _semanticModel,
+                _options);
+            sceneNodeValidator.Validate(node);
+        }
+
+        // Run node lifecycle validator (requires semantic model)
+        if (_options.CheckNodeLifecycle && _semanticModel != null)
+        {
+            var lifecycleValidator = new GDNodeLifecycleValidator(
+                context,
+                _semanticModel,
+                _options);
+            lifecycleValidator.Validate(node);
+        }
+
         var result = context.BuildResult();
 
         // Apply comment-based suppression if enabled
@@ -319,4 +339,26 @@ public class GDSemanticValidatorOptions
     /// Default: true
     /// </summary>
     public bool EnableCommentSuppression { get; set; } = true;
+
+    /// <summary>
+    /// Whether to validate node paths ($Path, %Unique, get_node()) against scene data.
+    /// Requires ProjectModel to be provided.
+    /// </summary>
+    public bool CheckNodePaths { get; set; } = true;
+
+    /// <summary>
+    /// Whether to validate node access lifecycle ($Node without @onready).
+    /// </summary>
+    public bool CheckNodeLifecycle { get; set; } = true;
+
+    /// <summary>
+    /// Severity for invalid node path warnings.
+    /// </summary>
+    public GDDiagnosticSeverity NodePathSeverity { get; set; } = GDDiagnosticSeverity.Warning;
+
+    /// <summary>
+    /// Project-level semantic model (null = skip scene/resource validation).
+    /// Provides access to SceneFlow, ResourceFlow, and SceneTypesProvider.
+    /// </summary>
+    public GDProjectSemanticModel? ProjectModel { get; set; }
 }

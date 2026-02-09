@@ -231,6 +231,10 @@ Most internal methods (scope queries, nullability, onready, cross-method flow, l
 - `Services` → Refactoring services (`GDRefactoringServices`)
 - `Diagnostics` → Validation services (`GDDiagnosticsServices`)
 
+#### Flow Analysis Services (via lazy properties)
+- `SceneFlow` → `GDSceneFlowService` (scene hierarchy prediction, `CheckNodePath()`)
+- `ResourceFlow` → `GDResourceFlowService` (resource dependency graph)
+
 #### Analysis Services (via lazy properties)
 - `DeadCode` → `GDDeadCodeService` (dead code analysis)
 - `Metrics` → `GDMetricsService` (code metrics)
@@ -271,7 +275,7 @@ All other methods (cross-file symbol resolution, type inference, signal queries,
 - `_fileModels` — Thread-safe concurrent dictionary of per-file semantic models
 - All lazy properties use `Lazy<T>` with `LazyThreadSafetyMode.PublicationOnly` for thread safety:
   `Services`, `Diagnostics`, `TypeSystem`, `DeadCode`, `Metrics`, `TypeCoverage`, `Dependencies`,
-  `SignalConnectionRegistry`, `ContainerRegistry`, `DependencyGraph`
+  `SceneFlow`, `ResourceFlow`, `SignalConnectionRegistry`, `ContainerRegistry`, `DependencyGraph`
 
 **Return conventions:**
 - Collection methods (`GetReferencesInFile`, `GetReferencesInProject`, etc.) return empty collections, never null

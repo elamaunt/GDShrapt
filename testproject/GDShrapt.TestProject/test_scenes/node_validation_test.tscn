@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://test_scripts/diagnostics/validator/scene_validation_errors.gd" id="1_script"]
+
+[node name="Root" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Button" type="Button" parent="."]
+
+[node name="Label" type="Label" parent="."]
+
+[node name="Panel" type="Panel" parent="."]
+
+[node name="SubPanel" type="Panel" parent="Panel"]
+
+[node name="UniquePlayer" type="CharacterBody2D" parent="."]
+unique_name_in_owner = true

@@ -3987,6 +3987,45 @@ test_scripts/diagnostics/validator/scope_errors.gd
 127:1 GDIdentifierExpression print -> Callable # OK
 127:7 GDIdentifierExpression val -> int # OK
 
+test_scripts/diagnostics/validator/scene_validation_errors.gd
+8:0 Method test_gd4011_valid -> void # OK
+9:1 Variable btn -> Button # OK
+9:11 GDGetNodeExpression $Button  # 10:5-GDL201-OK -> Button # OK
+10:1 Variable lbl -> Label # OK
+10:11 GDCallExpression get_node() -> Label # OK
+10:11 GDIdentifierExpression get_node -> Node # OK
+10:20 GDStringExpression "Label" -> String # OK
+11:1 Variable sub -> Panel # OK
+11:11 GDGetNodeExpression $Panel/SubPanel  # 12:5-GDL201-OK -> Panel # OK
+15:0 Method test_gd4011_invalid -> void # OK
+16:1 Variable missing -> Node # OK
+16:15 GDGetNodeExpression $NonExistent  # 17:5-GDL201-OK, 17:15-GD4011-OK -> Node # OK
+17:1 Variable wrong -> Node # OK
+17:13 GDCallExpression get_node() -> Node # OK
+17:13 GDIdentifierExpression get_node -> Node # OK
+17:22 GDStringExpression "Wrong/Path" -> String # OK
+21:0 Method test_gd4011_nullable -> void # OK
+22:1 Variable maybe -> Node # OK
+22:13 GDCallExpression get_node_or_null() -> Node # OK
+22:13 GDIdentifierExpression get_node_or_null -> Node # OK
+22:30 GDStringExpression "MaybeExist..." -> String # OK
+31:0 Method test_gd4012_valid -> void # OK
+32:1 Variable player -> CharacterBody2D # OK
+32:14 GDGetUniqueNodeExpression %UniquePlayer -> CharacterBody2D # OK
+36:0 Method test_gd4012_invalid -> void # OK
+37:1 Variable enemy -> Node # OK
+37:13 GDGetUniqueNodeExpression %NonExistentEnemy -> Node # OK
+45:0 Variable button -> Button # OK
+45:13 GDGetNodeExpression $Button  # 46:0-GD7018-OK -> Button # OK
+48:9 Variable label -> Label # OK
+48:21 GDGetNodeExpression $Label -> Label # OK
+51:0 Variable speed -> float # OK
+51:19 GDNumberExpression 100.0 -> float # OK
+54:0 Variable panel -> Panel # OK
+54:12 GDCallExpression get_node() -> Panel # OK
+54:12 GDIdentifierExpression get_node -> Node # OK
+54:21 GDStringExpression "Panel" -> String # OK
+
 test_scripts/diagnostics/validator/type_errors.gd
 23:0 Method test_gd3001_valid -> void # OK
 24:1 Variable x -> int # OK

@@ -6,10 +6,10 @@ namespace GDShrapt.Reader
     /// - GD1xxx: Syntax errors
     /// - GD2xxx: Scope errors
     /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018)
-    /// - GD4xxx: Call errors (including signal types GD4009-4010)
+    /// - GD4xxx: Call errors (including signal types GD4009-4010, scene nodes GD4011-4012)
     /// - GD5xxx: Control flow errors
     /// - GD6xxx: Indentation errors
-    /// - GD7xxx: Duck typing errors
+    /// - GD7xxx: Duck typing errors (including scene node lifecycle GD7017-7018)
     /// - GD8xxx: Abstract errors
     /// - GD9xxx: Static method errors
     /// </summary>
@@ -238,6 +238,16 @@ namespace GDShrapt.Reader
         /// </summary>
         ConnectCallbackTypeMismatch = 4010,
 
+        /// <summary>
+        /// $Path or get_node("Path") not found in any scene using this script.
+        /// </summary>
+        InvalidNodePath = 4011,
+
+        /// <summary>
+        /// %Name not found as unique node in any scene using this script.
+        /// </summary>
+        InvalidUniqueNode = 4012,
+
         // Control flow errors (5xxx)
         /// <summary>
         /// A break statement is used outside of a loop.
@@ -409,6 +419,16 @@ namespace GDShrapt.Reader
         /// For example: node.get("unknown_property") where node: Node.
         /// </summary>
         DynamicPropertyNotFound = 7016,
+
+        /// <summary>
+        /// Accessing node predicted as MayBeAbsent or ConditionallyPresent without null check.
+        /// </summary>
+        ConditionalNodeAccess = 7017,
+
+        /// <summary>
+        /// $Node or get_node() in class-level initializer without @onready.
+        /// </summary>
+        NodeAccessBeforeReady = 7018,
 
         // Abstract errors (8xxx)
         /// <summary>

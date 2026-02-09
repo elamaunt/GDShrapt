@@ -20,6 +20,7 @@ namespace GDShrapt.Semantics.Tests.Diagnostics;
 public class DiagnosticsVerificationTest
 {
     private GDScriptProject _project = null!;
+    private GDProjectSemanticModel _projectModel = null!;
     private string _projectPath = null!;
     private List<DiagnosticInfo> _allDiagnostics = null!;
 
@@ -36,6 +37,8 @@ public class DiagnosticsVerificationTest
         _project.LoadScripts();
         _project.LoadScenes();
         _project.AnalyzeAll();
+
+        _projectModel = new GDProjectSemanticModel(_project);
 
         _allDiagnostics = CollectAllDiagnostics();
     }
@@ -395,7 +398,10 @@ public class DiagnosticsVerificationTest
                     CheckArgumentTypes = true,
                     CheckIndexers = true,
                     CheckSignalTypes = true,
-                    CheckGenericTypes = true
+                    CheckGenericTypes = true,
+                    CheckNodePaths = true,
+                    CheckNodeLifecycle = true,
+                    ProjectModel = _projectModel,
                 };
 
                 var semanticValidator = new GDSemanticValidator(scriptFile.SemanticModel, semanticValidatorOptions);

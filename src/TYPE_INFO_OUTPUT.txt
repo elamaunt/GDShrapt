@@ -3041,6 +3041,92 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
     nullable: no
 
 
+test_scripts/diagnostics/validator/scene_validation_errors.gd
+  9:1 Variable btn
+    declared: (none)
+    inferred: Button
+    effective: Button
+    confidence: Medium
+    nullable: no
+
+  10:1 Variable lbl
+    declared: (none)
+    inferred: Label
+    effective: Label
+    confidence: Medium
+    nullable: no
+
+  11:1 Variable sub
+    declared: (none)
+    inferred: Panel
+    effective: Panel
+    confidence: Medium
+    nullable: no
+
+  16:1 Variable missing
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  17:1 Variable wrong
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  22:1 Variable maybe
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  32:1 Variable player
+    declared: (none)
+    inferred: CharacterBody2D
+    effective: CharacterBody2D
+    confidence: Medium
+    nullable: no
+
+  37:1 Variable enemy
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Medium
+    nullable: no
+
+  45:0 Variable button
+    declared: (none)
+    inferred: Button
+    effective: Button
+    confidence: Medium
+    nullable: no
+
+  48:9 Variable label
+    declared: (none)
+    inferred: Label
+    effective: Label
+    confidence: Medium
+    nullable: no
+
+  51:0 Variable speed
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  54:0 Variable panel
+    declared: (none)
+    inferred: Panel
+    effective: Panel
+    confidence: Medium
+    nullable: no
+
+
 test_scripts/diagnostics/validator/scope_errors.gd
   24:1 Variable defined_var
     declared: (none)
@@ -15447,4 +15533,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 2186 entries in 47 files
+# Summary: 2198 entries in 48 files

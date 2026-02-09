@@ -13,6 +13,8 @@ Detailed documentation is in folder-level CLAUDE.md files:
 | `TypeInference/` | [TypeInference/CLAUDE.md](TypeInference/CLAUDE.md) | Type inference engine, providers, caching |
 | `Services/Types/` | [Services/Types/CLAUDE.md](Services/Types/CLAUDE.md) | Type services (Container, Union, Duck, Confidence) |
 | `Refactoring/` | [Refactoring/CLAUDE.md](Refactoring/CLAUDE.md) | 17 refactoring services, Plan vs Execute |
+| `SceneFlow/` | — | Scene hierarchy prediction, `GDSceneFlowService`, `CheckNodePath()` |
+| `ResourceFlow/` | — | Resource dependency graph, `GDResourceFlowService` |
 
 ## Public API Surface
 
@@ -43,6 +45,8 @@ Access through `file.SemanticModel?.Method()`.
 | `GetSemanticModel()` | Per-file model access |
 | `TypeSystem` | Project-level type system |
 | `Services` / `Diagnostics` | Refactoring / validation |
+| `SceneFlow` | Scene hierarchy analysis (`GDSceneFlowService`) |
+| `ResourceFlow` | Resource dependency graph (`GDResourceFlowService`) |
 | `DeadCode` / `Metrics` / `TypeCoverage` / `Dependencies` | Analysis services |
 | `GetReferencesInProject()` | Cross-file references |
 | `GetCallSitesForMethod()` | Call site queries |
