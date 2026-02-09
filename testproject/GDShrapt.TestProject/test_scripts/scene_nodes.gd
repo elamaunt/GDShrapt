@@ -110,7 +110,7 @@ func get_parent_of_type() -> Control:
 	while current != null:
 		if current is Control:
 			return current  # 112:3-GD3007-OK
-		current = current.get_parent()  # 113:12-GD4002-OK
+		current = current.get_parent()
 	return null
 
 
@@ -118,7 +118,7 @@ func reparent_node(node: Node, new_parent: Node):
 	# Reparenting pattern
 	var old_parent = node.get_parent()
 	if old_parent:
-		old_parent.remove_child(node)  # 121:2-GD4002-OK
+		old_parent.remove_child(node)
 	new_parent.add_child(node)
 
 
@@ -126,7 +126,7 @@ func instantiate_scene(scene: PackedScene) -> Node:
 	# Scene instantiation
 	var instance = scene.instantiate()
 	add_child(instance)
-	return instance  # 129:1-GD3007-OK
+	return instance
 
 
 func instantiate_typed(scene: PackedScene) -> CharacterBody2D:
@@ -185,8 +185,8 @@ func access_sibling() -> Node:
 	if parent == null:
 		return null
 
-	for child in parent.get_children():  # 188:14-GD4002-OK
-		if child != self and child.name == "Sibling":  # 189:23-GD7005-OK, 189:23-GD3009-OK
+	for child in parent.get_children():
+		if child != self and child.name == "Sibling":
 			return child
 
 	return null
@@ -195,7 +195,7 @@ func access_sibling() -> Node:
 func access_node_via_path(path: NodePath) -> Node:
 	# NodePath-based access
 	var node = get_node_or_null(path)
-	return node  # 198:1-GD3007-OK
+	return node
 
 
 func access_node_property_via_path(path: NodePath) -> Variant:
@@ -221,4 +221,4 @@ func await_node_ready():
 
 func get_unique_node() -> Node:
 	# Unique name access (%)
-	return get_node("%UniqueNode")  # 224:1-GD3007-OK
+	return get_node("%UniqueNode")

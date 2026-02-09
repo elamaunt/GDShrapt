@@ -253,9 +253,9 @@ test_scripts/game_patterns.gd
 
 test_scripts/getters_setters.gd
   test_property_chain()
-    153:4 node -> Node2D (base: T) # OK
-    155:12 node -> Node2D (base: T) # OK
-    156:13 node -> Node2D (base: T) # OK
+    153:4 node -> Node2D (base: Node) # OK
+    155:12 node -> Node2D (base: Node) # OK
+    156:13 node -> Node2D (base: Node) # OK
 
 test_scripts/inheritance_test.gd
   check_types()
@@ -299,10 +299,10 @@ test_scripts/method_chains.gd
     54:4 level2 -> null (base: Variant) # OK
 
   node_chain()
-    91:4 parent -> null (base: T) # OK
-    95:4 grandparent -> null (base: null) # OK
-    98:4 grandparent -> Node2D (base: Node2D) # OK
-    99:9 grandparent -> Node2D (base: Node2D) # OK
+    91:4 parent -> null (base: Node) # OK
+    95:4 grandparent -> null (base: Node) # OK
+    98:4 grandparent -> Node2D (base: Node) # OK
+    99:9 grandparent -> Node2D (base: Node) # OK
 
   mixed_chain()
     106:4 input -> Dictionary (base: Variant) # OK
@@ -329,16 +329,16 @@ test_scripts/polymorphic_interfaces.gd
 
 test_scripts/scene_nodes.gd
   _ready()
-    46:4 sprite_node -> Sprite2D (base: T) # OK
-    47:2 sprite_node -> Sprite2D (base: T) # OK
+    46:4 sprite_node -> Sprite2D (base: Node) # OK
+    47:2 sprite_node -> Sprite2D (base: Node) # OK
 
   get_children_of_type()
     84:5 child -> Sprite2D (base: Node) # OK
     85:17 child -> Sprite2D (base: Node) # OK
 
   get_parent_of_type()
-    110:5 current -> Control (base: T) # OK
-    111:10 current -> Control (base: T) # OK
+    110:5 current -> Control (base: Node) # OK
+    111:10 current -> Control (base: Node) # OK
 
   process_all_children()
     150:5 child -> Node2D (base: Node) # OK
@@ -347,7 +347,7 @@ test_scripts/scene_nodes.gd
     153:3 child -> Control (base: Node) # OK
 
   access_sibling()
-    184:4 parent -> null (base: T) # OK
+    184:4 parent -> null (base: Node) # OK
 
 test_scripts/scene_references.gd
   get_enemies()
@@ -527,9 +527,9 @@ test_scripts/union_types_complex.gd
     31:4 input -> String (base: Variant) # OK
 
   get_position_or_null()
-    50:4 node -> Node2D (base: T) # OK
-    50:13 node -> Node2D (base: T) # OK
-    51:9 node -> Node2D (base: T) # OK
+    50:4 node -> Node2D (base: Node) # OK
+    50:13 node -> Node2D (base: Node) # OK
+    51:9 node -> Node2D (base: Node) # OK
 
   process_by_type()
     59:4 value -> int (base: Variant) # OK

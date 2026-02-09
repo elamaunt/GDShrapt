@@ -84,7 +84,7 @@ func deprecated_style() -> void:
 func potential_null_access() -> void:
 	var node = get_node_or_null("MaybeExists")
 	# Accessing without null check
-	print(node.name)  # 87:7-GD3009-OK
+	print(node.name)
 
 
 func unused_loop_variable() -> void:

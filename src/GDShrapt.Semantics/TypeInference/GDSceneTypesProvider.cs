@@ -153,13 +153,16 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         // Split content into lines for line number tracking
         var lines = content.Split('\n');
 
-        // Parse external resources (scripts)
+        // Parse external resources (scripts, scenes, and all other resources)
         // Godot 4 format: [ext_resource type="Script" uid="..." path="res://..." id="..."]
         // Attributes can be in any order, so we need flexible parsing
         var extResources = new Dictionary<string, string>();
+        var sceneResources = new Dictionary<string, string>();
+        var allExtResources = new Dictionary<string, (string Path, string Type)>();
         var extResBlockRegex = new Regex(@"\[ext_resource\s+([^\]]+)\]", RegexOptions.Multiline);
         var pathRegex = new Regex(@"path=""([^""]+)""");
         var idRegex = new Regex(@"\sid=""([^""]+)""");  // Note: \s to avoid matching 'uid'
+        var typeRegex = new Regex(@"type=""([^""]+)""");
 
         foreach (Match blockMatch in extResBlockRegex.Matches(content))
         {
@@ -171,9 +174,18 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             {
                 var path = pathMatch.Groups[1].Value;
                 var id = idMatch.Groups[1].Value;
+
+                var extTypeMatch = typeRegex.Match(block);
+                var extType = extTypeMatch.Success ? extTypeMatch.Groups[1].Value : "Resource";
+                allExtResources[id] = (path, extType);
+
                 if (path.EndsWith(".gd"))
                 {
                     extResources[id] = path;
+                }
+                if (path.EndsWith(".tscn") || path.EndsWith(".scn"))
+                {
+                    sceneResources[id] = path;
                 }
             }
         }
@@ -188,14 +200,23 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         }
 
         // Parse nodes with line numbers
-        var nodeRegex = new Regex(@"\[node\s+name=""([^""]+)""(?:\s+type=""([^""]+)"")?(?:\s+parent=""([^""]*)"")?\]", RegexOptions.Multiline);
+        // Captures: name, type (optional), parent (optional), instance ExtResource id (optional)
+        // In .tscn format, instance nodes may have no type= attribute; attributes can appear in any order
+        var nodeRegex = new Regex(
+            @"\[node\s+name=""([^""]+)""" +
+            @"(?:\s+type=""([^""]+)"")?" +
+            @"(?:\s+parent=""([^""]*)"")?" +
+            @"(?:\s+instance=ExtResource\(\s*""?([^"")\s]+)""?\s*\))?" +
+            @"[^\]]*\]", RegexOptions.Multiline);
         var rootPath = "";
+        var subSceneRefs = new List<GDSubSceneReference>();
 
         foreach (Match match in nodeRegex.Matches(content))
         {
             var name = match.Groups[1].Value;
             var type = match.Groups[2].Success ? match.Groups[2].Value : "Node";
             var parent = match.Groups[3].Success ? match.Groups[3].Value : "";
+            var instanceId = match.Groups[4].Success ? match.Groups[4].Value : null;
 
             // Calculate line number from match position
             var lineNumber = content.Substring(0, match.Index).Count(c => c == '\n') + 1;
@@ -228,6 +249,21 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
                 SceneFullPath = fullPath,
                 OriginalLine = lineNumber <= lines.Length ? lines[lineNumber - 1].Trim() : null
             };
+
+            // Handle sub-scene instances
+            if (!string.IsNullOrEmpty(instanceId) && sceneResources.TryGetValue(instanceId, out var subScenePath))
+            {
+                nodeInfo.IsSubSceneInstance = true;
+                nodeInfo.SubScenePath = subScenePath;
+
+                subSceneRefs.Add(new GDSubSceneReference
+                {
+                    NodeName = name,
+                    NodePath = path,
+                    SubScenePath = subScenePath,
+                    LineNumber = lineNumber
+                });
+            }
 
             nodes.Add(nodeInfo);
         }
@@ -267,6 +303,56 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             }
         }
 
+        // Parse resource property assignments (texture = ExtResource("id"), material = ExtResource("id"), etc.)
+        // Excludes "script" which is already handled above
+        var resourceRefs = new List<GDSceneResourceReference>();
+        var propExtResRegex = new Regex(
+            @"^(\S+)\s*=\s*ExtResource\(\s*""?([^"")\s]+)""?\s*\)",
+            RegexOptions.Multiline);
+
+        foreach (Match propMatch in propExtResRegex.Matches(content))
+        {
+            var propertyName = propMatch.Groups[1].Value;
+            var extResId = propMatch.Groups[2].Value;
+
+            // Skip "script" — already handled by script parsing
+            if (propertyName == "script")
+                continue;
+
+            if (!allExtResources.TryGetValue(extResId, out var extResInfo))
+                continue;
+
+            var propLineNumber = content.Substring(0, propMatch.Index).Count(c => c == '\n') + 1;
+
+            // Find owning node by position
+            int propOwnerIndex = -1;
+            for (int i = nodeMatches.Count - 1; i >= 0; i--)
+            {
+                if (nodeMatches[i].Index < propMatch.Index)
+                {
+                    if (i + 1 >= nodeMatches.Count || nodeMatches[i + 1].Index > propMatch.Index)
+                    {
+                        propOwnerIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            var nodePath = propOwnerIndex >= 0 && propOwnerIndex < nodes.Count
+                ? nodes[propOwnerIndex].Path
+                : "";
+
+            resourceRefs.Add(new GDSceneResourceReference
+            {
+                ExtResourceId = extResId,
+                ResourcePath = extResInfo.Path,
+                ResourceType = extResInfo.Type,
+                NodePath = nodePath,
+                PropertyName = propertyName,
+                LineNumber = propLineNumber
+            });
+        }
+
         // Parse unique nodes (marked with unique_name_in_owner = true)
         var uniqueNodeRegex = new Regex(@"unique_name_in_owner\s*=\s*true", RegexOptions.Multiline);
         var uniqueNodes = new List<GDNodeTypeInfo>();
@@ -296,6 +382,9 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
 
         sceneInfo.Nodes = nodes;
         sceneInfo.UniqueNodes = uniqueNodes;
+        sceneInfo.SubSceneReferences = subSceneRefs;
+        sceneInfo.ResourceReferences = resourceRefs;
+        sceneInfo.AllExtResources = allExtResources;
 
         // Parse signal connections
         sceneInfo.SignalConnections = ParseSignalConnections(content, nodes);
@@ -556,6 +645,42 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             .Where(n => n.ParentPath == parentNodePath ||
                          (parentNodePath == "." && string.IsNullOrEmpty(n.ParentPath) && n.Path != "."))
             .ToList();
+    }
+
+    /// <summary>
+    /// Gets sub-scene references (instance=ExtResource) for a scene.
+    /// </summary>
+    public IReadOnlyList<GDSubSceneReference> GetSubSceneReferences(string scenePath)
+    {
+        if (_sceneCache.TryGetValue(scenePath, out var sceneInfo))
+            return sceneInfo.SubSceneReferences;
+        return Array.Empty<GDSubSceneReference>();
+    }
+
+    /// <summary>
+    /// Gets resource references (texture, material, font, etc.) from a scene file.
+    /// </summary>
+    public IReadOnlyList<GDSceneResourceReference> GetSceneResourceReferences(string scenePath)
+    {
+        if (_sceneCache.TryGetValue(scenePath, out var sceneInfo))
+            return sceneInfo.ResourceReferences;
+        return Array.Empty<GDSceneResourceReference>();
+    }
+
+    /// <summary>
+    /// Resolves the precise type of a resource by looking up ext_resource type attributes across loaded scenes.
+    /// </summary>
+    public string? GetResourceType(string resourcePath)
+    {
+        foreach (var scene in _sceneCache.Values)
+        {
+            foreach (var kvp in scene.AllExtResources)
+            {
+                if (kvp.Value.Path == resourcePath && kvp.Value.Type != "Resource")
+                    return kvp.Value.Type;
+            }
+        }
+        return null;
     }
 
     /// <summary>
@@ -1022,6 +1147,22 @@ public class GDSceneInfo
     /// Signal connections defined in this scene file.
     /// </summary>
     public IReadOnlyList<GDSignalConnectionInfo> SignalConnections { get; set; } = Array.Empty<GDSignalConnectionInfo>();
+
+    /// <summary>
+    /// Sub-scene instances (nodes with instance=ExtResource) in this scene.
+    /// </summary>
+    public IReadOnlyList<GDSubSceneReference> SubSceneReferences { get; set; } = Array.Empty<GDSubSceneReference>();
+
+    /// <summary>
+    /// Resource references from node property assignments (texture, material, font, etc.).
+    /// </summary>
+    public IReadOnlyList<GDSceneResourceReference> ResourceReferences { get; set; } = Array.Empty<GDSceneResourceReference>();
+
+    /// <summary>
+    /// All external resources declared in this scene, keyed by ID.
+    /// </summary>
+    public IReadOnlyDictionary<string, (string Path, string Type)> AllExtResources { get; set; }
+        = new Dictionary<string, (string, string)>();
 }
 
 /// <summary>
@@ -1095,6 +1236,16 @@ public class GDNodeTypeInfo
     /// Whether this node has unique_name_in_owner = true (accessible via %NodeName).
     /// </summary>
     public bool IsUnique { get; set; }
+
+    /// <summary>
+    /// Whether this node is a sub-scene instance (instance=ExtResource in .tscn).
+    /// </summary>
+    public bool IsSubSceneInstance { get; set; }
+
+    /// <summary>
+    /// Resource path of the sub-scene (.tscn/.scn) if this is a sub-scene instance.
+    /// </summary>
+    public string? SubScenePath { get; set; }
 }
 
 /// <summary>
@@ -1142,5 +1293,29 @@ public class GDNodeSnapshotInfo
     /// <summary>
     /// Line number (1-based) in the .tscn file.
     /// </summary>
+    public int LineNumber { get; init; }
+}
+
+/// <summary>
+/// Reference to a sub-scene instance in a .tscn file (instance=ExtResource).
+/// </summary>
+public class GDSubSceneReference
+{
+    public string NodeName { get; init; } = "";
+    public string NodePath { get; init; } = "";
+    public string SubScenePath { get; init; } = "";
+    public int LineNumber { get; init; }
+}
+
+/// <summary>
+/// A resource reference from a node property assignment in a scene file.
+/// </summary>
+public class GDSceneResourceReference
+{
+    public string ExtResourceId { get; init; } = "";
+    public string ResourcePath { get; init; } = "";
+    public string ResourceType { get; init; } = "Resource";
+    public string NodePath { get; init; } = "";
+    public string PropertyName { get; init; } = "";
     public int LineNumber { get; init; }
 }

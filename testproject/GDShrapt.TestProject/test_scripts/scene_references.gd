@@ -65,7 +65,7 @@ func clear_enemies() -> void:
 
 
 func get_node_by_path(path: String) -> Node:
-	return get_node_or_null(path)  # 68:1-GD3007-OK
+	return get_node_or_null(path)
 
 
 func find_child_of_type(parent: Node, type_name: String) -> Node:

@@ -182,7 +182,6 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
     {
         if (resourcePath.EndsWith(".gd"))
         {
-            // Try to get class_name from script
             var scriptInfo = _scriptProvider?.GetScriptByPath(resourcePath);
             if (scriptInfo?.TypeName != null)
                 return scriptInfo.TypeName;
@@ -193,28 +192,14 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
             return "PackedScene";
 
         if (resourcePath.EndsWith(".tres") || resourcePath.EndsWith(".res"))
+        {
+            var tresType = _sceneProvider?.GetResourceType(resourcePath);
+            if (!string.IsNullOrEmpty(tresType))
+                return tresType;
             return "Resource";
+        }
 
-        // Textures, audio, etc.
-        if (resourcePath.EndsWith(".png") || resourcePath.EndsWith(".jpg") ||
-            resourcePath.EndsWith(".jpeg") || resourcePath.EndsWith(".webp") ||
-            resourcePath.EndsWith(".svg"))
-            return "Texture2D";
-
-        if (resourcePath.EndsWith(".wav") || resourcePath.EndsWith(".ogg") ||
-            resourcePath.EndsWith(".mp3"))
-            return "AudioStream";
-
-        if (resourcePath.EndsWith(".ttf") || resourcePath.EndsWith(".otf"))
-            return "Font";
-
-        if (resourcePath.EndsWith(".json"))
-            return "JSON";
-
-        if (resourcePath.EndsWith(".glb") || resourcePath.EndsWith(".gltf"))
-            return "PackedScene"; // GLB/GLTF imports as scene
-
-        return "Resource";
+        return GDResourceCategoryResolver.TypeNameFromExtension(resourcePath);
     }
 
     private string ResolveRelativePath(string basePath, string relativePath)

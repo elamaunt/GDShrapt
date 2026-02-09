@@ -92,7 +92,7 @@ func node_chain() -> Vector2:
 	if parent == null:
 		return Vector2.ZERO
 
-	var grandparent = parent.get_parent()  # 95:19-GD4002-OK
+	var grandparent = parent.get_parent()
 	if grandparent == null:
 		return Vector2.ZERO
 

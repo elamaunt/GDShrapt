@@ -59,6 +59,8 @@ public class GDProjectSemanticModel : IDisposable
     private readonly Lazy<GDMetricsService> _metrics;
     private readonly Lazy<GDTypeCoverageService> _typeCoverage;
     private readonly Lazy<GDDependencyService> _dependencies;
+    private readonly Lazy<GDSceneFlowService> _sceneFlow;
+    private readonly Lazy<GDResourceFlowService> _resourceFlow;
 
     /// <summary>
     /// The underlying project.
@@ -122,6 +124,16 @@ public class GDProjectSemanticModel : IDisposable
     public GDDependencyService Dependencies => _dependencies.Value;
 
     /// <summary>
+    /// Scene composition and flow analysis service.
+    /// </summary>
+    public GDSceneFlowService SceneFlow => _sceneFlow.Value;
+
+    /// <summary>
+    /// Resource usage analysis service.
+    /// </summary>
+    public GDResourceFlowService ResourceFlow => _resourceFlow.Value;
+
+    /// <summary>
     /// Fired when a file is invalidated in the semantic model.
     /// </summary>
     public event EventHandler<string>? FileInvalidated;
@@ -148,6 +160,8 @@ public class GDProjectSemanticModel : IDisposable
         _metrics = new Lazy<GDMetricsService>(() => new GDMetricsService(_project), LazyThreadSafetyMode.ExecutionAndPublication);
         _typeCoverage = new Lazy<GDTypeCoverageService>(() => new GDTypeCoverageService(_project), LazyThreadSafetyMode.ExecutionAndPublication);
         _dependencies = new Lazy<GDDependencyService>(() => new GDDependencyService(_project, SignalConnectionRegistry), LazyThreadSafetyMode.ExecutionAndPublication);
+        _sceneFlow = new Lazy<GDSceneFlowService>(() => new GDSceneFlowService(this), LazyThreadSafetyMode.ExecutionAndPublication);
+        _resourceFlow = new Lazy<GDResourceFlowService>(() => new GDResourceFlowService(this), LazyThreadSafetyMode.ExecutionAndPublication);
 
         _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
