@@ -62,6 +62,10 @@ public class GDTypeNarrowingAnalyzer
                 AnalyzeInExpression(inOp, context, isNegated);
                 break;
 
+            case GDDualOperatorExpression notInOp when notInOp.Operator?.OperatorType == GDDualOperatorType.In && notInOp.NotKeyword != null:
+                AnalyzeInExpression(notInOp, context, !isNegated);
+                break;
+
             // P10: obj == null / obj != null - null check
             // Also: obj == literal (type narrowing)
             case GDDualOperatorExpression eqOp when eqOp.Operator?.OperatorType == GDDualOperatorType.Equal ||

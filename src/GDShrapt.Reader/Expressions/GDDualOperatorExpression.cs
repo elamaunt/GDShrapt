@@ -1,7 +1,8 @@
 ﻿namespace GDShrapt.Reader
 {
     public sealed class GDDualOperatorExpression : GDExpression,
-        ITokenOrSkipReceiver<GDExpression>, 
+        ITokenOrSkipReceiver<GDExpression>,
+        ITokenOrSkipReceiver<GDNotKeyword>,
         ITokenOrSkipReceiver<GDDualOperator>,
         ITokenReceiver<GDNewLine>,
         INewLineReceiver
@@ -9,41 +10,49 @@
         public override int Priority => GDHelper.GetOperatorPriority(OperatorType);
         public override GDAssociationOrderType AssociationOrder => GDHelper.GetOperatorAssociationOrder(OperatorType);
 
-        public GDExpression LeftExpression 
+        public GDExpression LeftExpression
         {
             get => _form.Token0;
             set => _form.Token0 = value;
         }
-        public GDDualOperator Operator
+        public GDNotKeyword NotKeyword
         {
             get => _form.Token1;
             set => _form.Token1 = value;
         }
-        public GDExpression RightExpression
+        public GDDualOperator Operator
         {
             get => _form.Token2;
             set => _form.Token2 = value;
         }
+        public GDExpression RightExpression
+        {
+            get => _form.Token3;
+            set => _form.Token3 = value;
+        }
 
         public GDDualOperatorType OperatorType
         {
-            get => _form.Token1 == null ? GDDualOperatorType.Null : _form.Token1.OperatorType;
+            get => _form.Token2 == null ? GDDualOperatorType.Null : _form.Token2.OperatorType;
         }
+
+        public bool IsNotIn => NotKeyword != null && OperatorType == GDDualOperatorType.In;
 
         public enum State
         {
             LeftExpression,
+            Not,
             DualOperator,
             RightExpression,
             Completed
         }
 
         readonly int _intendation;
-        readonly GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> _form;
+        readonly GDTokensForm<State, GDExpression, GDNotKeyword, GDDualOperator, GDExpression> _form;
         public bool AllowNewLines { get; }
 
-        public override GDTokensForm Form => _form; 
-        public GDTokensForm<State, GDExpression, GDDualOperator, GDExpression> TypedForm => _form;
+        public override GDTokensForm Form => _form;
+        public GDTokensForm<State, GDExpression, GDNotKeyword, GDDualOperator, GDExpression> TypedForm => _form;
         public GDDualOperatorExpression()
             : this(0, true)
         {
@@ -52,7 +61,7 @@
         public GDDualOperatorExpression(int intendation, bool allowNewLines)
         {
             _intendation = intendation;
-            _form = new GDTokensForm<State, GDExpression, GDDualOperator, GDExpression>(this);
+            _form = new GDTokensForm<State, GDExpression, GDNotKeyword, GDDualOperator, GDExpression>(this);
             AllowNewLines = allowNewLines;
         }
 
@@ -64,7 +73,7 @@
                     if (!this.ResolveSpaceToken(c, state))
                         this.ResolveExpression(c, state, _intendation, this);
                     break;
-                case State.DualOperator:
+                case State.Not:
                     // Indicates that it isn't a normal expression. The parent should handle the state.
                     if (LeftExpression == null)
                     {
@@ -73,6 +82,13 @@
                         return;
                     }
 
+                    if (!this.ResolveSpaceToken(c, state))
+                    {
+                        state.Push(new GDKeywordResolver<GDNotKeyword>(this));
+                        state.PassChar(c);
+                    }
+                    break;
+                case State.DualOperator:
                     if (!this.ResolveSpaceToken(c, state))
                         this.ResolveDualOperator(c, state);
                     break;
@@ -190,7 +206,7 @@
             if (_form.IsOrLowerState(State.LeftExpression))
             {
                 LeftExpression = token;
-                _form.State = State.DualOperator;
+                _form.State = State.Not;
                 return;
             }
 
@@ -208,13 +224,36 @@
         {
             if (_form.IsOrLowerState(State.LeftExpression))
             {
-                _form.State = State.DualOperator;
+                _form.State = State.Not;
                 return;
             }
 
             if (_form.IsOrLowerState(State.RightExpression))
             {
                 _form.State = State.Completed;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenReceiver<GDNotKeyword>.HandleReceivedToken(GDNotKeyword token)
+        {
+            if (_form.IsOrLowerState(State.Not))
+            {
+                NotKeyword = token;
+                _form.State = State.DualOperator;
+                return;
+            }
+
+            throw new GDInvalidStateException();
+        }
+
+        void ITokenSkipReceiver<GDNotKeyword>.HandleReceivedTokenSkip()
+        {
+            if (_form.IsOrLowerState(State.Not))
+            {
+                _form.State = State.DualOperator;
                 return;
             }
 

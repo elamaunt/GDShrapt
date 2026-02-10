@@ -476,6 +476,14 @@ namespace GDShrapt.Reader
         // Check for constant reassignment
         public override void Visit(GDDualOperatorExpression dualOperator)
         {
+            if (dualOperator.NotKeyword != null && dualOperator.OperatorType != GDDualOperatorType.In)
+            {
+                ReportError(
+                    GDDiagnosticCode.InvalidNotKeywordUsage,
+                    $"'not' keyword is only valid before 'in' operator (as 'not in'), but found before '{dualOperator.OperatorType.Print()}'",
+                    dualOperator);
+            }
+
             var opType = dualOperator.Operator?.OperatorType;
             if (opType == null)
                 return;

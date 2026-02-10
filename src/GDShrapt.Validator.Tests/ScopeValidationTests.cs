@@ -156,5 +156,45 @@ func test():
             var result = _validator.ValidateCode(code);
             result.Errors.Where(d => d.Code == GDDiagnosticCode.UndefinedVariable).Should().BeEmpty();
         }
+
+        [TestMethod]
+        public void NotInOperator_NoError()
+        {
+            var code = @"
+func test():
+    var arr = [1, 2, 3]
+    if 5 not in arr:
+        print(""not found"")
+";
+            var result = _validator.ValidateCode(code);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.InvalidNotKeywordUsage).Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void InOperator_NoError()
+        {
+            var code = @"
+func test():
+    var arr = [1, 2, 3]
+    if 5 in arr:
+        print(""found"")
+";
+            var result = _validator.ValidateCode(code);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.InvalidNotKeywordUsage).Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NotInOperator_NoDuplicateDiagnostics()
+        {
+            var code = @"
+func test():
+    var arr = [1, 2, 3]
+    if 5 not in arr:
+        print(""not found"")
+";
+            var result = _validator.ValidateCode(code);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.InvalidNotKeywordUsage).Should().BeEmpty();
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.InvalidToken && d.Message.Contains("not")).Should().BeEmpty("'not' keyword should not produce InvalidToken GD1001");
+        }
     }
 }

@@ -41,6 +41,12 @@ namespace GDShrapt.Reader
         /// </summary>
         MissingBracket = 1005,
 
+        /// <summary>
+        /// The 'not' keyword is only valid before the 'in' operator (as 'not in').
+        /// For example: x not + y is invalid.
+        /// </summary>
+        InvalidNotKeywordUsage = 1006,
+
         // Scope errors (2xxx)
         /// <summary>
         /// A variable is used but not defined.

@@ -324,5 +324,120 @@ func curry_test(f):
             AssertHelper.CompareCodeStrings(code, @class.ToString());
             AssertHelper.NoInvalidTokens(@class);
         }
+
+        [TestMethod]
+        public void ParseExpression_WithNotInOperator()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"x not in arr";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
+
+            var dualOperator = (GDDualOperatorExpression)expression;
+            Assert.AreEqual(GDDualOperatorType.In, dualOperator.OperatorType);
+            Assert.IsNotNull(dualOperator.NotKeyword);
+            Assert.IsTrue(dualOperator.IsNotIn);
+
+            Assert.IsInstanceOfType(dualOperator.LeftExpression, typeof(GDIdentifierExpression));
+            Assert.AreEqual("x", ((GDIdentifierExpression)dualOperator.LeftExpression).Identifier.Sequence);
+
+            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDIdentifierExpression));
+            Assert.AreEqual("arr", ((GDIdentifierExpression)dualOperator.RightExpression).Identifier.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        [TestMethod]
+        public void ParseExpression_WithNotInOperator_InConditionContext()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"area not in enemies_in_range";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
+
+            var dualOperator = (GDDualOperatorExpression)expression;
+            Assert.AreEqual(GDDualOperatorType.In, dualOperator.OperatorType);
+            Assert.IsNotNull(dualOperator.NotKeyword);
+            Assert.IsTrue(dualOperator.IsNotIn);
+
+            Assert.AreEqual("area", ((GDIdentifierExpression)dualOperator.LeftExpression).Identifier.Sequence);
+            Assert.AreEqual("enemies_in_range", ((GDIdentifierExpression)dualOperator.RightExpression).Identifier.Sequence);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        [TestMethod]
+        public void ParseExpression_NotAsUnaryOperator_StillWorks()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"not x";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDSingleOperatorExpression));
+
+            var singleOp = (GDSingleOperatorExpression)expression;
+            Assert.AreEqual(GDSingleOperatorType.Not2, singleOp.OperatorType);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        [TestMethod]
+        public void ParseExpression_NotInWithComplexExpressions()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"a + b not in get_list()";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
+
+            var dualOperator = (GDDualOperatorExpression)expression;
+            Assert.AreEqual(GDDualOperatorType.In, dualOperator.OperatorType);
+            Assert.IsNotNull(dualOperator.NotKeyword);
+            Assert.IsTrue(dualOperator.IsNotIn);
+
+            Assert.IsInstanceOfType(dualOperator.LeftExpression, typeof(GDDualOperatorExpression));
+            var leftAdd = (GDDualOperatorExpression)dualOperator.LeftExpression;
+            Assert.AreEqual(GDDualOperatorType.Addition, leftAdd.OperatorType);
+
+            Assert.IsInstanceOfType(dualOperator.RightExpression, typeof(GDCallExpression));
+
+            AssertHelper.NoInvalidTokens(expression);
+        }
+
+        [TestMethod]
+        public void ParseExpression_InOperator_StillWorks()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"x in arr";
+
+            var expression = reader.ParseExpression(code);
+
+            Assert.IsNotNull(expression);
+            Assert.IsInstanceOfType(expression, typeof(GDDualOperatorExpression));
+
+            var dualOperator = (GDDualOperatorExpression)expression;
+            Assert.AreEqual(GDDualOperatorType.In, dualOperator.OperatorType);
+
+            AssertHelper.CompareCodeStrings(code, expression.ToString());
+            AssertHelper.NoInvalidTokens(expression);
+        }
     }
 }

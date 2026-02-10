@@ -60,6 +60,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             // Register inner classes as separate types
             RegisterInnerClasses(scriptInfo.Class, typeName);
 
+            // Register enums as qualified types (e.g., Constants.TowerType)
+            RegisterEnumTypes(scriptInfo.Class, typeName);
+
             // Index by script path for "extends 'res://path/to/script.gd'" support
             if (!string.IsNullOrEmpty(scriptInfo.FullPath))
             {
@@ -100,8 +103,69 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
                 // Recursively register nested inner classes with qualified names
                 RegisterNestedInnerClasses(innerClass, qualifiedName);
+
+                // Register enums from inner classes
+                RegisterEnumTypesFromInnerClass(innerClass, qualifiedName);
             }
         }
+    }
+
+    private void RegisterEnumTypes(GDClassDeclaration classDecl, string parentTypeName)
+    {
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDEnumDeclaration enumDecl && enumDecl.Identifier != null)
+            {
+                var enumName = enumDecl.Identifier.Sequence;
+                var qualifiedName = $"{parentTypeName}.{enumName}";
+
+                var enumTypeInfo = BuildEnumTypeInfo(enumDecl);
+                _typeCache[qualifiedName] = enumTypeInfo;
+            }
+        }
+    }
+
+    private void RegisterEnumTypesFromInnerClass(GDInnerClassDeclaration innerClass, string parentTypeName)
+    {
+        foreach (var member in innerClass.Members)
+        {
+            if (member is GDEnumDeclaration enumDecl && enumDecl.Identifier != null)
+            {
+                var enumName = enumDecl.Identifier.Sequence;
+                var qualifiedName = $"{parentTypeName}.{enumName}";
+
+                var enumTypeInfo = BuildEnumTypeInfo(enumDecl);
+                _typeCache[qualifiedName] = enumTypeInfo;
+            }
+        }
+    }
+
+    private static GDProjectTypeInfo BuildEnumTypeInfo(GDEnumDeclaration enumDecl)
+    {
+        var enumName = enumDecl.Identifier!.Sequence;
+        var info = new GDProjectTypeInfo
+        {
+            Name = enumName,
+            BaseTypeName = "int"
+        };
+
+        if (enumDecl.Values != null)
+        {
+            foreach (var value in enumDecl.Values)
+            {
+                if (value.Identifier != null)
+                {
+                    info.Properties[value.Identifier.Sequence] = new GDProjectPropertyInfo
+                    {
+                        Name = value.Identifier.Sequence,
+                        TypeName = enumName,
+                        IsConstant = true
+                    };
+                }
+            }
+        }
+
+        return info;
     }
 
     /// <summary>

@@ -557,7 +557,7 @@ internal class GDReplExpressionEvaluator
 
             // Type checking
             GDDualOperatorType.Is => EvaluateIs(left, right),
-            GDDualOperatorType.In => EvaluateIn(left, right),
+            GDDualOperatorType.In => dualExpr.NotKeyword != null ? !EvaluateIn(left, right) : EvaluateIn(left, right),
 
             _ => throw new NotSupportedException($"Operator '{dualExpr.OperatorType}' is not supported")
         };

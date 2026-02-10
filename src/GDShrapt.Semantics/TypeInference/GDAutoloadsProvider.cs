@@ -34,25 +34,27 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
 
     public bool IsKnownType(string typeName)
     {
-        // Autoloads are not types themselves, they are instances
-        return false;
+        return _autoloads.ContainsKey(typeName);
     }
 
     public GDRuntimeTypeInfo? GetTypeInfo(string typeName)
     {
-        // Autoloads are not types
-        return null;
+        return GetGlobalClass(typeName);
     }
 
     public GDRuntimeMemberInfo? GetMember(string typeName, string memberName)
     {
-        // Autoloads are not types with members
-        return null;
+        var typeInfo = GetGlobalClass(typeName);
+        if (typeInfo == null)
+            return null;
+
+        return typeInfo.Members?.FirstOrDefault(m => m.Name == memberName);
     }
 
     public string? GetBaseType(string typeName)
     {
-        return null;
+        var typeInfo = GetGlobalClass(typeName);
+        return typeInfo?.BaseType;
     }
 
     public bool IsAssignableTo(string sourceType, string targetType)
@@ -103,8 +105,13 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
         // If it's a script, try to get type from script provider
         if (autoload.IsScript && _scriptProvider != null)
         {
-            var scriptInfo = _scriptProvider.Scripts
-                .FirstOrDefault(s => s.FullPath?.EndsWith(autoload.Path.Replace("res://", "").Replace("/", System.IO.Path.DirectorySeparatorChar.ToString())) == true);
+            var scriptInfo = _scriptProvider.GetScriptByPath(autoload.Path)
+                ?? _scriptProvider.Scripts.FirstOrDefault(s =>
+                    s.ResPath != null && s.ResPath.Equals(autoload.Path, System.StringComparison.OrdinalIgnoreCase))
+                ?? _scriptProvider.Scripts.FirstOrDefault(s =>
+                    s.FullPath != null && s.FullPath.EndsWith(
+                        autoload.Path.Replace("res://", "").Replace('\\', '/'),
+                        System.StringComparison.OrdinalIgnoreCase));
 
             if (scriptInfo != null)
             {
@@ -190,8 +197,14 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
 
     public IReadOnlyList<string> FindTypesWithMethod(string methodName)
     {
-        // Autoloads are instances, not type definitions
-        return Array.Empty<string>();
+        var result = new List<string>();
+        foreach (var autoload in _autoloads.Keys)
+        {
+            var typeInfo = GetGlobalClass(autoload);
+            if (typeInfo?.Members?.Any(m => m.Name == methodName && m.Kind == GDRuntimeMemberKind.Method) == true)
+                result.Add(autoload);
+        }
+        return result;
     }
 
     // Type Traits - stub implementations (delegated to composite/main provider)

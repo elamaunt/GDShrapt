@@ -89,7 +89,7 @@ func start_game() -> void:
     }
 
     [TestMethod]
-    public void IsKnownType_Always_ReturnsFalse()
+    public void IsKnownType_RegisteredAutoload_ReturnsTrue()
     {
         var autoloads = new[]
         {
@@ -97,8 +97,8 @@ func start_game() -> void:
         };
         var provider = new GDAutoloadsProvider(autoloads);
 
-        // Autoloads are not types, they are instances
-        Assert.IsFalse(provider.IsKnownType("Global"));
+        Assert.IsTrue(provider.IsKnownType("Global"));
+        Assert.IsFalse(provider.IsKnownType("NonExistent"));
     }
 
     [TestMethod]
@@ -165,6 +165,99 @@ func start_game() -> void:
     }
 
     [TestMethod]
+    public void GetMember_ExistingMethod_ReturnsMemberInfo()
+    {
+        var scriptContent = @"extends Node
+
+var player_data: Dictionary
+
+func start_game() -> void:
+    pass
+
+func get_score() -> int:
+    return 0";
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(scriptContent);
+
+        var mockScriptInfo = new MockScriptInfo
+        {
+            TypeName = "Global",
+            FullPath = "/project/global.gd",
+            Class = classDecl
+        };
+
+        var mockProvider = new MockScriptProvider(new[] { mockScriptInfo });
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "Global", Path = "res://global.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads, mockProvider);
+
+        var member = provider.GetMember("Global", "start_game");
+        Assert.IsNotNull(member);
+        Assert.AreEqual("start_game", member.Name);
+        Assert.AreEqual(GDRuntimeMemberKind.Method, member.Kind);
+
+        var property = provider.GetMember("Global", "player_data");
+        Assert.IsNotNull(property);
+        Assert.AreEqual("player_data", property.Name);
+        Assert.AreEqual(GDRuntimeMemberKind.Property, property.Kind);
+
+        Assert.IsNull(provider.GetMember("Global", "nonexistent"));
+        Assert.IsNull(provider.GetMember("NonExistent", "start_game"));
+    }
+
+    [TestMethod]
+    public void GetBaseType_ScriptAutoload_ReturnsBaseType()
+    {
+        var scriptContent = @"extends Node2D
+
+func do_something():
+    pass";
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(scriptContent);
+
+        var mockScriptInfo = new MockScriptInfo
+        {
+            TypeName = "MyAutoload",
+            FullPath = "/project/my_autoload.gd",
+            Class = classDecl
+        };
+
+        var mockProvider = new MockScriptProvider(new[] { mockScriptInfo });
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "MyAutoload", Path = "res://my_autoload.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads, mockProvider);
+
+        var baseType = provider.GetBaseType("MyAutoload");
+        Assert.AreEqual("Node2D", baseType);
+
+        Assert.IsNull(provider.GetBaseType("NonExistent"));
+    }
+
+    [TestMethod]
+    public void GetTypeInfo_ExistingAutoload_ReturnsTypeInfo()
+    {
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "Global", Path = "res://global.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads);
+
+        var typeInfo = provider.GetTypeInfo("Global");
+        Assert.IsNotNull(typeInfo);
+        Assert.AreEqual("Global", typeInfo.Name);
+
+        Assert.IsNull(provider.GetTypeInfo("NonExistent"));
+    }
+
+    [TestMethod]
     public void GetGlobalClass_WithConstants_ExtractsConstants()
     {
         var scriptContent = @"extends Node
@@ -195,5 +288,116 @@ const MAX_PLAYERS = 4";
         Assert.IsNotNull(typeInfo);
         Assert.IsTrue(typeInfo.Members.Any(m => m.Name == "VERSION"));
         Assert.IsTrue(typeInfo.Members.Any(m => m.Name == "MAX_PLAYERS"));
+    }
+
+    [TestMethod]
+    public void GetGlobalClass_ResPathMatching_ResolvesByResPath()
+    {
+        var scriptContent = @"extends Node
+
+func start_wave() -> void:
+    pass
+
+func can_afford(cost: int) -> bool:
+    return true";
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(scriptContent);
+
+        var mockScriptInfo = new MockScriptInfo
+        {
+            TypeName = "game_manager",
+            FullPath = "C:/project/src/autoload/game_manager.gd",
+            ResPath = "res://src/autoload/game_manager.gd",
+            Class = classDecl
+        };
+
+        var mockProvider = new MockScriptProvider(new[] { mockScriptInfo });
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "GameManager", Path = "res://src/autoload/game_manager.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads, mockProvider);
+
+        var typeInfo = provider.GetGlobalClass("GameManager");
+
+        Assert.IsNotNull(typeInfo);
+        Assert.AreEqual("GameManager", typeInfo.Name);
+        Assert.IsTrue(typeInfo.Members.Any(m => m.Name == "start_wave"));
+        Assert.IsTrue(typeInfo.Members.Any(m => m.Name == "can_afford"));
+    }
+
+    [TestMethod]
+    public void GetGlobalClass_NormalizedForwardSlashPaths_Resolves()
+    {
+        var scriptContent = @"extends Node
+
+func do_something() -> void:
+    pass";
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(scriptContent);
+
+        var mockScriptInfo = new MockScriptInfo
+        {
+            TypeName = "my_autoload",
+            FullPath = "C:/Users/dev/project/src/autoload/my_autoload.gd",
+            Class = classDecl
+        };
+
+        var mockProvider = new MockScriptProvider(new[] { mockScriptInfo });
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "MyAutoload", Path = "res://src/autoload/my_autoload.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads, mockProvider);
+
+        var typeInfo = provider.GetGlobalClass("MyAutoload");
+
+        Assert.IsNotNull(typeInfo);
+        Assert.IsTrue(typeInfo.Members.Any(m => m.Name == "do_something"));
+    }
+
+    [TestMethod]
+    public void GetMember_ResPathMatching_FindsMembers()
+    {
+        var scriptContent = @"extends Node
+
+var gold: int = 100
+
+func can_afford(cost: int) -> bool:
+    return gold >= cost
+
+func spend_gold(amount: int) -> void:
+    gold -= amount
+
+signal gold_changed";
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(scriptContent);
+
+        var mockScriptInfo = new MockScriptInfo
+        {
+            TypeName = "game_manager",
+            FullPath = "C:/project/src/autoload/game_manager.gd",
+            ResPath = "res://src/autoload/game_manager.gd",
+            Class = classDecl
+        };
+
+        var mockProvider = new MockScriptProvider(new[] { mockScriptInfo });
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "GameManager", Path = "res://src/autoload/game_manager.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads, mockProvider);
+
+        Assert.IsNotNull(provider.GetMember("GameManager", "can_afford"));
+        Assert.IsNotNull(provider.GetMember("GameManager", "spend_gold"));
+        Assert.IsNotNull(provider.GetMember("GameManager", "gold"));
+        Assert.IsNotNull(provider.GetMember("GameManager", "gold_changed"));
+        Assert.IsNull(provider.GetMember("GameManager", "nonexistent"));
     }
 }
