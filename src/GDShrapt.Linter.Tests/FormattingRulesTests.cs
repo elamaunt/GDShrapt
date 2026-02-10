@@ -350,6 +350,77 @@ func bar():
             result.Issues.Where(i => i.RuleId == "GDL513").Should().BeEmpty();
         }
 
+        [TestMethod]
+        public void EmptyLines_WithCommentBeforeFunction_NoIssue()
+        {
+            var code = "func foo():\n\tpass\n\n\n# Comment for next function\nfunc bar():\n\tpass\n";
+            var options = new GDLinterOptions { EmptyLinesBetweenFunctions = 2 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL513").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void EmptyLines_MultipleCommentsBeforeFunction_NoIssue()
+        {
+            var code = "func foo():\n\tpass\n\n\n# Category header\n# Detailed description\nfunc bar():\n\tpass\n";
+            var options = new GDLinterOptions { EmptyLinesBetweenFunctions = 2 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL513").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void EmptyLines_CommentButNotEnoughBlankLines_ReportsIssue()
+        {
+            var code = "func foo():\n\tpass\n\n# Comment\nfunc bar():\n\tpass\n";
+            var options = new GDLinterOptions { EmptyLinesBetweenFunctions = 2 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL513" &&
+                i.Message.Contains("Expected"));
+        }
+
+        [TestMethod]
+        public void EmptyLines_ManyFunctionsWithComments_NoIssue()
+        {
+            var code = @"func _ready():
+	super._ready()
+
+
+# Method without type annotations
+func take_damage(amount):
+	pass
+
+
+# Dodge check
+func _try_dodge():
+	return randf() < 0.15
+
+
+# Show dodge effect
+func _show_dodge_effect():
+	pass
+
+
+# Afterimages handling
+func _update_afterimages():
+	pass
+";
+            var options = new GDLinterOptions { EmptyLinesBetweenFunctions = 2 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL513").Should().BeEmpty();
+        }
+
         #endregion
     }
 }

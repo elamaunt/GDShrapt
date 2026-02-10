@@ -124,8 +124,7 @@ namespace GDShrapt.Linter
 
                 var lineIndent = CountLeadingWhitespace(line);
 
-                // If we hit a line with same or less indentation and it's not a comment
-                if (lineIndent <= funcIndent && !line.TrimStart().StartsWith("#"))
+                if (lineIndent <= funcIndent)
                 {
                     break;
                 }
