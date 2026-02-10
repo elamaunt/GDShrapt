@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>GDShrapt.CLI</RootNamespace>
-    <AssemblyName>gdshrapt</AssemblyName>
+    <AssemblyName>GDShrapt.CLI</AssemblyName>
 
     <!-- NuGet Tool Configuration -->
     <PackAsTool>true</PackAsTool>
