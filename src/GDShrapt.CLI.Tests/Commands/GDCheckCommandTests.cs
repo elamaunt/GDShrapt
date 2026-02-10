@@ -77,7 +77,7 @@ public class GDCheckCommandTests
 
         var output = new StringWriter();
         var formatter = new GDTextFormatter();
-        var command = new GDCheckCommand(testProjectPath, formatter, output, quiet: true);
+        var command = new GDCheckCommand(testProjectPath, formatter, output, silent: true);
 
         // Act
         var result = await command.ExecuteAsync();
@@ -203,7 +203,7 @@ public class GDCheckCommandTests
         _tempProjectPath = TestProjectHelper.CreateProjectWithBreakOutsideLoop();
         var output = new StringWriter();
         var formatter = new GDTextFormatter();
-        var command = new GDCheckCommand(_tempProjectPath, formatter, output, quiet: true);
+        var command = new GDCheckCommand(_tempProjectPath, formatter, output, silent: true);
 
         // Act
         var result = await command.ExecuteAsync();

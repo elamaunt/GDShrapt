@@ -34,6 +34,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private readonly IGDLogger _logger;
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
+    private readonly GDSceneChangeReanalysisService? _sceneChangeService;
     private readonly bool _enableFileWatcher;
     private readonly GDScriptProjectOptions? _options;
     private FileSystemWatcher? _scriptsWatcher;
@@ -67,6 +68,12 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// Use this for semantic model invalidation and incremental updates.
     /// </summary>
     public event EventHandler<GDScriptIncrementalChangeEventArgs>? IncrementalChange;
+
+    /// <summary>
+    /// Fired when scene changes affect scripts that need reanalysis.
+    /// Subscribe to this to update diagnostics when .tscn files change.
+    /// </summary>
+    public event EventHandler<GDSceneAffectedScriptsEventArgs>? SceneScriptsChanged;
 
     #endregion
 
@@ -147,6 +154,12 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         if (options?.EnableCallSiteRegistry == true)
         {
             _callSiteRegistry = new GDCallSiteRegistry();
+        }
+
+        if (options?.EnableSceneChangeReanalysis == true && _sceneTypesProvider != null)
+        {
+            _sceneChangeService = new GDSceneChangeReanalysisService(this, _sceneTypesProvider, _logger);
+            _sceneChangeService.ScriptsNeedReanalysis += OnSceneScriptsNeedReanalysis;
         }
 
         _logger.Debug("Project created");
@@ -564,6 +577,11 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
     #endregion
 
+    private void OnSceneScriptsNeedReanalysis(object? sender, GDSceneAffectedScriptsEventArgs e)
+    {
+        SceneScriptsChanged?.Invoke(this, e);
+    }
+
     #region FileSystemWatcher
 
     /// <summary>
@@ -585,6 +603,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         _scriptsWatcher.Created += OnFileCreated;
         _scriptsWatcher.Deleted += OnFileDeleted;
         _scriptsWatcher.Renamed += OnFileRenamed;
+        _scriptsWatcher.Error += OnWatcherError;
 
         _logger.Debug("FileSystemWatcher enabled");
     }
@@ -601,10 +620,26 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         _scriptsWatcher.Created -= OnFileCreated;
         _scriptsWatcher.Deleted -= OnFileDeleted;
         _scriptsWatcher.Renamed -= OnFileRenamed;
+        _scriptsWatcher.Error -= OnWatcherError;
         _scriptsWatcher.Dispose();
         _scriptsWatcher = null;
 
         _logger.Debug("FileSystemWatcher disabled");
+    }
+
+    private void OnWatcherError(object sender, ErrorEventArgs e)
+    {
+        _logger.Warning($"FileSystemWatcher error: {e.GetException().Message}");
+        try
+        {
+            DisableFileWatcher();
+            EnableFileWatcher();
+            _logger.Info("FileSystemWatcher restarted after error");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to restart FileSystemWatcher: {ex.Message}");
+        }
     }
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
@@ -739,6 +774,12 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         {
             if (disposing)
             {
+                if (_sceneChangeService != null)
+                {
+                    _sceneChangeService.ScriptsNeedReanalysis -= OnSceneScriptsNeedReanalysis;
+                    _sceneChangeService.Dispose();
+                }
+
                 DisableFileWatcher();
                 _scripts.Clear();
             }
@@ -782,6 +823,13 @@ public class GDScriptProjectOptions
     /// Whether to enable call site registry for incremental updates.
     /// </summary>
     public bool EnableCallSiteRegistry { get; set; } = false;
+
+    /// <summary>
+    /// Whether to enable scene change reanalysis service.
+    /// When true, scripts affected by .tscn file changes will be automatically detected.
+    /// Requires EnableSceneTypesProvider to be true.
+    /// </summary>
+    public bool EnableSceneChangeReanalysis { get; set; } = false;
 
     /// <summary>
     /// Semantic analysis configuration.

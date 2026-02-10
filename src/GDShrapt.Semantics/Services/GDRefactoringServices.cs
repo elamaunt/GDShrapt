@@ -26,6 +26,7 @@ namespace GDShrapt.Semantics;
 public class GDRefactoringServices
 {
     private readonly GDScriptProject _project;
+    private readonly GDProjectSemanticModel? _projectModel;
 
     // Lazy-initialized services (project-aware)
     private GDRenameService? _rename;
@@ -48,9 +49,10 @@ public class GDRefactoringServices
     private GDSnippetService? _snippets;
     private GDSurroundWithService? _surroundWith;
 
-    internal GDRefactoringServices(GDScriptProject project)
+    internal GDRefactoringServices(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
     {
         _project = project ?? throw new System.ArgumentNullException(nameof(project));
+        _projectModel = projectModel;
     }
 
     #region Navigation Services
@@ -75,7 +77,7 @@ public class GDRefactoringServices
     /// Rename symbol across the project.
     /// Plans and executes symbol renames with conflict detection.
     /// </summary>
-    public GDRenameService Rename => _rename ??= new GDRenameService(_project);
+    public GDRenameService Rename => _rename ??= new GDRenameService(_project, _projectModel);
 
     #endregion
 

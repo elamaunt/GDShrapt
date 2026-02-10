@@ -15,8 +15,11 @@ public sealed class GDBaseModule : IGDModule
     /// <inheritdoc />
     public void Configure(IGDServiceRegistry registry, GDScriptProject project)
     {
+        // Project semantic model (shared across handlers that need cross-file analysis)
+        var projectModel = new GDProjectSemanticModel(project);
+
         // Rename and refactoring
-        registry.Register<IGDRenameHandler>(new GDRenameHandler(project));
+        registry.Register<IGDRenameHandler>(new GDRenameHandler(project, projectModel));
         registry.Register<IGDFindRefsHandler>(new GDFindRefsHandler(project));
 
         // Code intelligence
@@ -38,7 +41,6 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<IGDTypeFlowHandler>(new GDTypeFlowHandler(project));
 
         // Analysis handlers — all routed through the project semantic model
-        var projectModel = new GDProjectSemanticModel(project);
         registry.Register<IGDMetricsHandler>(new GDMetricsHandler(projectModel));
         registry.Register<IGDDeadCodeHandler>(new GDDeadCodeHandler(projectModel));
         registry.Register<IGDDependencyHandler>(new GDDependencyHandler(projectModel));

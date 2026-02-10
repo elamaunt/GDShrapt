@@ -154,7 +154,7 @@ public class GDProjectSemanticModel : IDisposable
         _enableIncrementalAnalysis = semanticsConfig.EnableIncrementalAnalysis;
 
         _typeSystem = new Lazy<IGDProjectTypeSystem>(() => new GDProjectTypeSystem(this), LazyThreadSafetyMode.ExecutionAndPublication);
-        _services = new Lazy<GDRefactoringServices>(() => new GDRefactoringServices(_project), LazyThreadSafetyMode.ExecutionAndPublication);
+        _services = new Lazy<GDRefactoringServices>(() => new GDRefactoringServices(_project, this), LazyThreadSafetyMode.ExecutionAndPublication);
         _diagnostics = new Lazy<GDDiagnosticsServices>(() => new GDDiagnosticsServices(_project), LazyThreadSafetyMode.ExecutionAndPublication);
         _deadCode = new Lazy<GDDeadCodeService>(() => new GDDeadCodeService(this), LazyThreadSafetyMode.ExecutionAndPublication);
         _metrics = new Lazy<GDMetricsService>(() => new GDMetricsService(_project), LazyThreadSafetyMode.ExecutionAndPublication);

@@ -13,10 +13,12 @@ namespace GDShrapt.Semantics;
 public class GDRenameService
 {
     private readonly GDScriptProject _project;
+    private readonly GDProjectSemanticModel? _projectModel;
 
-    public GDRenameService(GDScriptProject project)
+    public GDRenameService(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
+        _projectModel = projectModel;
     }
 
     /// <summary>
@@ -58,14 +60,24 @@ public class GDRenameService
         // For class members, also search other scripts that might reference this symbol
         if (IsClassMemberSymbol(symbol) && containingScript != null)
         {
-            var crossFileFinder = new GDCrossFileReferenceFinder(_project);
+            var crossFileFinder = new GDCrossFileReferenceFinder(_project, _projectModel);
             var crossFileRefs = crossFileFinder.FindReferences(symbol, containingScript);
 
             AddCrossFileReferencesToEdits(crossFileRefs, strictEdits, potentialEdits, filesModified, oldName, newName);
         }
 
+        // class_name rename: find type usages across the project
+        if (containingScript != null && oldName == containingScript.TypeName && _projectModel != null)
+        {
+            CollectClassNameEdits(containingScript, oldName, newName, strictEdits, filesModified);
+        }
+
         if (strictEdits.Count == 0 && potentialEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
+
+        // Deduplicate edits
+        strictEdits = DeduplicateEdits(strictEdits);
+        potentialEdits = DeduplicateEdits(potentialEdits);
 
         // Sort edits by file, then by position (reverse order for applying)
         var sortedStrict = SortEditsReverse(strictEdits);
@@ -185,41 +197,73 @@ public class GDRenameService
         if (!ValidateIdentifier(newName, out var validationError))
             return GDRenameResult.Failed(validationError!);
 
-        var edits = new List<GDTextEdit>();
-        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // If filterFilePath is specified, try to find the symbol and use the full PlanRename(symbol, newName) path
+        if (!string.IsNullOrEmpty(filterFilePath))
+        {
+            var fullPath = Path.GetFullPath(filterFilePath);
+            var targetScript = _project.ScriptFiles
+                .FirstOrDefault(f => f.FullPath != null &&
+                    f.FullPath.Equals(fullPath, StringComparison.OrdinalIgnoreCase));
+
+            if (targetScript != null)
+            {
+                var model = _projectModel?.GetSemanticModel(targetScript) ?? targetScript.SemanticModel;
+                var symbol = model?.FindSymbol(oldName);
+
+                if (symbol != null)
+                    return PlanRename(symbol, newName);
+
+                // Check if this is a class_name
+                if (targetScript.TypeName == oldName)
+                    return PlanClassNameRename(targetScript, oldName, newName);
+            }
+        }
+
+        // No filter — find the symbol across the project
+        GDSymbolInfo? foundSymbol = null;
+        GDScriptFile? foundScript = null;
 
         foreach (var script in _project.ScriptFiles)
         {
             if (script.FullPath == null)
                 continue;
 
-            // If file filter is specified, only process that file
-            if (!string.IsNullOrEmpty(filterFilePath))
-            {
-                var fullPath = Path.GetFullPath(filterFilePath);
-                if (!script.FullPath.Equals(fullPath, StringComparison.OrdinalIgnoreCase))
-                    continue;
-            }
+            // Check for class_name match
+            if (script.TypeName == oldName)
+                return PlanClassNameRename(script, oldName, newName);
 
-            var fileEdits = CollectEditsFromScriptByName(script, oldName, newName);
-            if (fileEdits.Count > 0)
+            var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
+            var symbol = model?.FindSymbol(oldName);
+            if (symbol != null && foundSymbol == null)
             {
-                edits.AddRange(fileEdits);
-                filesModified.Add(script.FullPath);
+                foundSymbol = symbol;
+                foundScript = script;
             }
         }
 
-        if (edits.Count == 0)
+        if (foundSymbol != null)
+            return PlanRename(foundSymbol, newName);
+
+        return GDRenameResult.NoOccurrences(oldName);
+    }
+
+    /// <summary>
+    /// Plans a rename for a class_name type across the project.
+    /// </summary>
+    private GDRenameResult PlanClassNameRename(GDScriptFile containingScript, string oldName, string newName)
+    {
+        var strictEdits = new List<GDTextEdit>();
+        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        CollectClassNameEdits(containingScript, oldName, newName, strictEdits, filesModified);
+
+        if (strictEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
 
-        // Sort edits by file, then by position (reverse order for applying)
-        var sortedEdits = edits
-            .OrderBy(e => e.FilePath)
-            .ThenByDescending(e => e.Line)
-            .ThenByDescending(e => e.Column)
-            .ToList();
+        strictEdits = DeduplicateEdits(strictEdits);
+        var sortedStrict = SortEditsReverse(strictEdits);
 
-        return GDRenameResult.Successful(sortedEdits, filesModified.Count);
+        return GDRenameResult.SuccessfulWithConfidence(sortedStrict, new List<GDTextEdit>(), filesModified.Count);
     }
 
     /// <summary>
@@ -291,7 +335,7 @@ public class GDRenameService
              scope.Type == GDSymbolScopeType.ProjectWide) &&
             scope.ContainingScript != null)
         {
-            var crossFileFinder = new GDCrossFileReferenceFinder(_project);
+            var crossFileFinder = new GDCrossFileReferenceFinder(_project, _projectModel);
             var containingScript = scope.ContainingScript;
 
             // Create a temporary symbol for cross-file search
@@ -426,6 +470,78 @@ public class GDRenameService
     }
 
     #region Private helpers
+
+    /// <summary>
+    /// Collects edits for class_name rename across the project using type usages.
+    /// </summary>
+    private void CollectClassNameEdits(
+        GDScriptFile containingScript,
+        string oldName,
+        string newName,
+        List<GDTextEdit> strictEdits,
+        HashSet<string> filesModified)
+    {
+        if (_projectModel == null)
+            return;
+
+        // class_name declaration itself
+        var classNameIdent = containingScript.Class?.ClassName?.Identifier;
+        if (classNameIdent != null && containingScript.FullPath != null)
+        {
+            strictEdits.Add(new GDTextEdit(
+                containingScript.FullPath,
+                classNameIdent.StartLine,
+                classNameIdent.StartColumn,
+                oldName,
+                newName,
+                GDReferenceConfidence.Strict,
+                "class_name declaration"));
+            filesModified.Add(containingScript.FullPath);
+        }
+
+        // Find type usages across all project files
+        foreach (var script in _project.ScriptFiles)
+        {
+            if (script.FullPath == null)
+                continue;
+
+            var model = _projectModel.GetSemanticModel(script);
+            if (model == null)
+                continue;
+
+            var usages = model.GetTypeUsages(oldName);
+            foreach (var usage in usages)
+            {
+                strictEdits.Add(new GDTextEdit(
+                    script.FullPath,
+                    usage.Line,
+                    usage.Column,
+                    oldName,
+                    newName,
+                    GDReferenceConfidence.Strict,
+                    $"Type usage ({usage.Kind}) in {System.IO.Path.GetFileName(script.FullPath)}"));
+                filesModified.Add(script.FullPath);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Removes duplicate edits at the same file/line/column position.
+    /// </summary>
+    private static List<GDTextEdit> DeduplicateEdits(List<GDTextEdit> edits)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<GDTextEdit>(edits.Count);
+
+        foreach (var edit in edits)
+        {
+            var key = $"{edit.FilePath}|{edit.Line}:{edit.Column}";
+            if (seen.Add(key))
+                result.Add(edit);
+        }
+
+        return result;
+    }
 
     private GDScriptFile? FindScriptContainingSymbol(GDSymbolInfo symbol)
     {

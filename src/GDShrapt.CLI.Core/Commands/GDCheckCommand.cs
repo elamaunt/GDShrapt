@@ -17,18 +17,18 @@ public class GDCheckCommand : IGDCommand
     private readonly string _projectPath;
     private readonly IGDOutputFormatter _formatter;
     private readonly TextWriter _output;
-    private readonly bool _quiet;
+    private readonly bool _silent;
     private readonly GDProjectConfig? _config;
 
     public string Name => "check";
     public string Description => "Check a GDScript project for errors (for CI/CD)";
 
-    public GDCheckCommand(string projectPath, IGDOutputFormatter formatter, TextWriter? output = null, bool quiet = false, GDProjectConfig? config = null)
+    public GDCheckCommand(string projectPath, IGDOutputFormatter formatter, TextWriter? output = null, bool silent = false, GDProjectConfig? config = null)
     {
         _projectPath = projectPath;
         _formatter = formatter;
         _output = output ?? Console.Out;
-        _quiet = quiet;
+        _silent = silent;
         _config = config;
     }
 
@@ -39,8 +39,8 @@ public class GDCheckCommand : IGDCommand
             var projectRoot = GDProjectLoader.FindProjectRoot(_projectPath);
             if (projectRoot == null)
             {
-                if (!_quiet)
-                    _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}");
+                if (!_silent)
+                    _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}\n  Hint: Run from a Godot project directory, or specify the path: 'gdshrapt check /path/to/project'.");
                 return Task.FromResult(GDExitCode.Fatal);
             }
 
@@ -78,7 +78,7 @@ public class GDCheckCommand : IGDCommand
                 config.Cli.FailOnWarning,
                 config.Cli.FailOnHint);
 
-            if (!_quiet)
+            if (!_silent)
             {
                 if (exitCode == GDExitCode.Success)
                     _formatter.WriteMessage(_output, $"OK: {fileCount} files checked, {errorCount} errors, {warningCount} warnings, {hintCount} hints.");
@@ -90,8 +90,8 @@ public class GDCheckCommand : IGDCommand
         }
         catch (Exception ex)
         {
-            if (!_quiet)
-                _formatter.WriteError(_output, ex.Message);
+            if (!_silent)
+                _formatter.WriteError(_output, $"{ex.Message}\n  Hint: Use --debug for detailed diagnostic output.");
             return Task.FromResult(GDExitCode.Fatal);
         }
     }

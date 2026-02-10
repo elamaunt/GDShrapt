@@ -167,6 +167,12 @@ public class GDLanguageServer : IGDLanguageServer
     {
         IsInitialized = true;
 
+        // Subscribe to scene-triggered script reanalysis
+        if (_project != null)
+        {
+            _project.SceneScriptsChanged += OnSceneScriptsChanged;
+        }
+
         // Start background analysis after initialization completes
         // This prevents blocking the initialize request and allows the client to proceed
         if (_project != null)
@@ -192,6 +198,24 @@ public class GDLanguageServer : IGDLanguageServer
         }
 
         return Task.CompletedTask;
+    }
+
+    private void OnSceneScriptsChanged(object? sender, GDSceneAffectedScriptsEventArgs e)
+    {
+        if (_diagnosticPublisher == null)
+            return;
+
+        _ = Task.Run(async () =>
+        {
+            foreach (var script in e.AffectedScripts)
+            {
+                if (script.FullPath == null)
+                    continue;
+
+                var uri = GDDocumentManager.PathToUri(script.FullPath);
+                await _diagnosticPublisher.PublishDiagnosticsAsync(uri).ConfigureAwait(false);
+            }
+        });
     }
 
     private Task<object?> HandleShutdownAsync(object? @params, CancellationToken ct)
@@ -494,6 +518,11 @@ public class GDLanguageServer : IGDLanguageServer
 
         _disposed = true;
 
+        if (_project != null)
+        {
+            _project.SceneScriptsChanged -= OnSceneScriptsChanged;
+        }
+
         if (_diagnosticPublisher != null)
         {
             await _diagnosticPublisher.DisposeAsync().ConfigureAwait(false);
@@ -540,12 +569,17 @@ internal static class GDProjectLoader
         var context = new GDDefaultProjectContext(projectRoot);
         var project = new GDScriptProject(context, new GDScriptProjectOptions
         {
-            EnableSceneTypesProvider = true
+            EnableSceneTypesProvider = true,
+            EnableFileWatcher = true,
+            EnableSceneChangeReanalysis = true
         });
 
         project.LoadScripts();
         project.LoadScenes();
         // NOTE: AnalyzeAll() is NOT called here - do it asynchronously after initialized
+
+        // Enable scene file watcher for real-time scene change detection
+        project.SceneTypesProvider?.EnableFileWatcher();
 
         return project;
     }

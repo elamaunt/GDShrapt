@@ -15,13 +15,18 @@ public static class FormatCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("format", "Format GDScript files");
+        var command = new Command("format", "Auto-format GDScript files (indentation, spacing, blank lines).\n\nExamples:\n  gdshrapt format                          Format current directory\n  gdshrapt format player.gd                Format a single file\n  gdshrapt format --dry-run                Preview changes\n  gdshrapt format --check                  Check formatting (for CI)");
 
         // Path argument
         var pathArg = new Argument<string>("path", () => ".", "Path to file or directory");
+        var projectOption = new Option<string?>(
+            new[] { "--project", "-p" },
+            "Path to the Godot project (alternative to positional argument)");
         command.AddArgument(pathArg);
+        command.AddOption(projectOption);
 
         // Mode options
         var dryRunOption = new Option<bool>(
@@ -151,7 +156,8 @@ public static class FormatCommandBuilder
 
         command.SetHandler(async (InvocationContext context) =>
         {
-            var path = context.ParseResult.GetValueForArgument(pathArg);
+            var path = context.ParseResult.GetValueForOption(projectOption)
+                ?? context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
             var dryRun = context.ParseResult.GetValueForOption(dryRunOption);
             var check = context.ParseResult.GetValueForOption(checkOption);

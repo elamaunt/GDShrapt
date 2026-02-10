@@ -138,8 +138,25 @@ public sealed class GDCliLogger : IGDLogger
     /// <param name="verbose">Verbose mode (includes debug).</param>
     /// <param name="debug">Debug mode (includes timestamps).</param>
     /// <returns>Configured CLI logger.</returns>
-    public static GDCliLogger FromFlags(bool quiet = false, bool verbose = false, bool debug = false)
+    public static GDCliLogger FromFlags(bool quiet = false, bool verbose = false, bool debug = false, string? logLevel = null)
     {
+        // --log-level takes priority if specified
+        if (logLevel != null)
+        {
+            var (lvl, ts) = logLevel.ToLowerInvariant() switch
+            {
+                "silent" => (GDLogLevel.Silent, false),
+                "error" => (GDLogLevel.Error, false),
+                "warning" => (GDLogLevel.Warning, false),
+                "info" => (GDLogLevel.Info, false),
+                "debug" => (GDLogLevel.Debug, true),
+                "verbose" => (GDLogLevel.Verbose, false),
+                _ => (GDLogLevel.Info, false)
+            };
+            return new GDCliLogger(minLevel: lvl, showTimestamps: ts);
+        }
+
+        // Shorthand flags (priority: quiet > debug > verbose)
         GDLogLevel level;
         bool showTimestamps;
 

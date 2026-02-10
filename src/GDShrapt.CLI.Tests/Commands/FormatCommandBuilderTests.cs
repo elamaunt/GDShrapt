@@ -13,6 +13,7 @@ public class FormatCommandBuilderTests
     private Option<bool> _verboseOption = null!;
     private Option<bool> _debugOption = null!;
     private Option<bool> _quietOption = null!;
+    private Option<string?> _logLevelOption = null!;
 
     [TestInitialize]
     public void Setup()
@@ -21,7 +22,8 @@ public class FormatCommandBuilderTests
         _verboseOption = new Option<bool>("--verbose");
         _debugOption = new Option<bool>("--debug");
         _quietOption = new Option<bool>("--quiet");
-        _command = FormatCommandBuilder.Build(_formatOption, _verboseOption, _debugOption, _quietOption);
+        _logLevelOption = new Option<string?>("--log-level");
+        _command = FormatCommandBuilder.Build(_formatOption, _verboseOption, _debugOption, _quietOption, _logLevelOption);
     }
 
     [TestMethod]

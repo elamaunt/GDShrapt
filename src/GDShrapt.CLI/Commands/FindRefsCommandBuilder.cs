@@ -14,9 +14,10 @@ public static class FindRefsCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("find-refs", "Find references to a symbol");
+        var command = new Command("find-refs", "Find all usages of a symbol across the project.\n\nExamples:\n  gdshrapt find-refs my_variable           Find all references\n  gdshrapt find-refs health --file p.gd    Search in one file");
 
         var symbolArg = new Argument<string>("symbol", "Symbol name to find references for");
         var projectOption = new Option<string>(

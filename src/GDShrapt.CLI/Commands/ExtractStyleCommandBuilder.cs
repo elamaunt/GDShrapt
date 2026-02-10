@@ -14,9 +14,10 @@ public static class ExtractStyleCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("extract-style", "Extract formatting style from sample GDScript code");
+        var command = new Command("extract-style", "Detect formatting conventions from an existing GDScript file.\n\nExamples:\n  gdshrapt extract-style player.gd         Detect style (TOML)\n  gdshrapt extract-style player.gd -o json Output as JSON");
 
         var fileArg = new Argument<string>("file", "Path to the sample GDScript file");
         var outputFormatOption = new Option<string>(

@@ -14,9 +14,10 @@ public static class ParseCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("parse", "Parse a GDScript file and output its AST structure");
+        var command = new Command("parse", "Parse a GDScript file and display its abstract syntax tree.\n\nExamples:\n  gdshrapt parse player.gd                 Show AST tree\n  gdshrapt parse player.gd -o json         Output as JSON\n  gdshrapt parse player.gd -o tokens       Show token stream");
 
         var fileArg = new Argument<string>("file", "Path to the GDScript file");
         var outputFormatOption = new Option<string>(

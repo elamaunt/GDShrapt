@@ -13,6 +13,7 @@ namespace GDShrapt.Semantics.ComponentTests;
 public class TestProjectFixture
 {
     private static GDScriptProject? _project;
+    private static GDProjectSemanticModel? _projectModel;
     private static string? _projectPath;
     private static bool _initialized;
 
@@ -25,6 +26,18 @@ public class TestProjectFixture
         {
             EnsureInitialized();
             return _project!;
+        }
+    }
+
+    /// <summary>
+    /// The shared GDProjectSemanticModel instance.
+    /// </summary>
+    public static GDProjectSemanticModel ProjectModel
+    {
+        get
+        {
+            EnsureInitialized();
+            return _projectModel!;
         }
     }
 
@@ -63,6 +76,8 @@ public class TestProjectFixture
             _project.LoadScripts();
             _project.LoadScenes();
             _project.AnalyzeAll();
+
+            _projectModel = new GDProjectSemanticModel(_project);
 
             _initialized = true;
 

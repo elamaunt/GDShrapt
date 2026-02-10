@@ -15,28 +15,33 @@ public static class CheckCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> globalQuietOption)
+        Option<bool> globalQuietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("check", "Check a GDScript project for errors (for CI/CD)");
+        var command = new Command("check", "Quick project health check with exit codes for CI/CD pipelines.\n\nExamples:\n  gdshrapt check                           Check current directory\n  gdshrapt check --silent                  Only return exit code\n  gdshrapt check --fail-on warning         Fail on warnings too");
 
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
-        // Note: check command has its own quiet option that suppresses output completely
-        var quietOption = new Option<bool>(
-            new[] { "--quiet", "-q" },
-            "Suppress output, only return exit code");
+        var projectOption = new Option<string?>(
+            new[] { "--project", "-p" },
+            "Path to the Godot project (alternative to positional argument)");
+        var silentOption = new Option<bool>(
+            new[] { "--silent", "-s" },
+            "Suppress all output, only return exit code");
         var failOnOption = new Option<string?>(
             new[] { "--fail-on" },
             "Fail threshold: error (default), warning, or hint");
 
         command.AddArgument(pathArg);
-        command.AddOption(quietOption);
+        command.AddOption(projectOption);
+        command.AddOption(silentOption);
         command.AddOption(failOnOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
-            var projectPath = context.ParseResult.GetValueForArgument(pathArg);
+            var projectPath = context.ParseResult.GetValueForOption(projectOption)
+                ?? context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
-            var quiet = context.ParseResult.GetValueForOption(quietOption);
+            var silent = context.ParseResult.GetValueForOption(silentOption);
             var failOn = context.ParseResult.GetValueForOption(failOnOption);
 
             // Build config with fail-on overrides
@@ -58,7 +63,7 @@ public static class CheckCommandBuilder
             }
 
             var formatter = CommandHelpers.GetFormatter(format);
-            var cmd = new GDCheckCommand(projectPath, formatter, quiet: quiet, config: config);
+            var cmd = new GDCheckCommand(projectPath, formatter, silent: silent, config: config);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

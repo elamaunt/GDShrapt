@@ -15,13 +15,18 @@ public static class ValidateCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("validate", "Validate GDScript syntax and semantics");
+        var command = new Command("validate", "Validate GDScript for syntax errors, type mismatches, and semantic issues.\n\nExamples:\n  gdshrapt validate                        Validate current project\n  gdshrapt validate --check-types          Only type checking\n  gdshrapt validate --strict               Treat all issues as errors");
 
         // Path argument
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var projectOption = new Option<string?>(
+            new[] { "--project", "-p" },
+            "Path to the Godot project (alternative to positional argument)");
         command.AddArgument(pathArg);
+        command.AddOption(projectOption);
 
         // Check selection
         var checksOption = new Option<string?>(
@@ -119,7 +124,8 @@ public static class ValidateCommandBuilder
 
         command.SetHandler(async (InvocationContext context) =>
         {
-            var projectPath = context.ParseResult.GetValueForArgument(pathArg);
+            var projectPath = context.ParseResult.GetValueForOption(projectOption)
+                ?? context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
             var checks = context.ParseResult.GetValueForOption(checksOption);
             var strict = context.ParseResult.GetValueForOption(strictOption);
@@ -131,7 +137,8 @@ public static class ValidateCommandBuilder
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
             // Create logger from verbosity flags
-            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
+            var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
             // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;

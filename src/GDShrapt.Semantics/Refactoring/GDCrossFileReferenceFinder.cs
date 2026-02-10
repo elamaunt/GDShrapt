@@ -13,10 +13,12 @@ public class GDCrossFileReferenceFinder
     private readonly GDScriptProject _project;
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly GDDuckTypeResolver? _duckTypeResolver;
+    private readonly GDProjectSemanticModel? _projectModel;
 
-    public GDCrossFileReferenceFinder(GDScriptProject project)
+    public GDCrossFileReferenceFinder(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
     {
         _project = project;
+        _projectModel = projectModel;
         _runtimeProvider = project.CreateRuntimeProvider();
         if (_runtimeProvider != null)
             _duckTypeResolver = new GDDuckTypeResolver(_runtimeProvider);
@@ -57,99 +59,107 @@ public class GDCrossFileReferenceFinder
     /// <summary>
     /// Finds references to a member name in a single script.
     /// Uses SemanticModel when available for accurate reference collection.
+    /// Handles: dot-notation access, inherited direct usage, method overrides, super calls.
     /// </summary>
     private IEnumerable<GDCrossFileReference> FindReferencesInScript(
         GDScriptFile script,
         string memberName,
         string declaringTypeName)
     {
-        var semanticModel = script.SemanticModel;
+        var semanticModel = GetSemanticModel(script);
         if (semanticModel == null)
             yield break;
 
-        // Use SemanticModel directly
+        var isInherited = IsInheritedFile(script, declaringTypeName);
+
+        var references = semanticModel.GetReferencesTo(memberName);
+        foreach (var gdRef in references)
         {
-            var references = semanticModel.GetReferencesTo(memberName);
-            foreach (var gdRef in references)
+            if (gdRef.ReferenceNode == null)
+                continue;
+
+            // Determine if this reference is part of a member access pattern
+            var parentMemberAccess = gdRef.ReferenceNode.Parent as GDMemberOperatorExpression;
+            var isMemberAccessTarget = gdRef.ReferenceNode is GDMemberOperatorExpression;
+
+            // Case 1: The reference IS a member access expression (obj.member)
+            // Case 2: The reference's parent is a member access and this is NOT the caller
+            //         (i.e., this is the RHS identifier of obj.member)
+            var memberAccess = gdRef.ReferenceNode as GDMemberOperatorExpression;
+            bool isCallerOfMemberAccess = false;
+
+            if (memberAccess == null && parentMemberAccess != null)
             {
-                if (gdRef.ReferenceNode == null)
-                    continue;
-
-                // We're interested in member accesses on objects (cross-file context)
-                var memberAccess = gdRef.ReferenceNode as GDMemberOperatorExpression
-                    ?? gdRef.ReferenceNode.Parent as GDMemberOperatorExpression;
-
-                if (memberAccess != null)
+                // Check if ref node is the CallerExpression (e.g., health_changed in health_changed.emit)
+                // vs the accessed member (e.g., member in obj.member)
+                if (ReferenceEquals(parentMemberAccess.CallerExpression, gdRef.ReferenceNode))
                 {
-                    // Use confidence from SemanticModel (already computed with type info)
-                    var confidence = gdRef.Confidence;
-
-                    // Skip NameMatch - too weak for cross-file search
-                    if (confidence == GDReferenceConfidence.NameMatch)
-                        continue;
-
-                    // Verify type compatibility for cross-file references
-                    if (confidence == GDReferenceConfidence.Strict)
-                    {
-                        var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
-                        if (!string.IsNullOrEmpty(callerType) && !IsTypeCompatible(callerType, declaringTypeName))
-                        {
-                            // Type is known but incompatible - likely false positive
-                            continue;
-                        }
-                    }
-
-                    yield return new GDCrossFileReference(
-                        script,
-                        gdRef.ReferenceNode,
-                        confidence,
-                        gdRef.ConfidenceReason ?? GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
+                    isCallerOfMemberAccess = true;
+                    // Don't set memberAccess — this is not an obj.member pattern for cross-file
+                }
+                else
+                {
+                    memberAccess = parentMemberAccess;
                 }
             }
-            yield break;
+
+            if (memberAccess != null && !isCallerOfMemberAccess)
+            {
+                var confidence = gdRef.Confidence;
+
+                if (confidence == GDReferenceConfidence.NameMatch)
+                    continue;
+
+                if (confidence == GDReferenceConfidence.Strict)
+                {
+                    var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
+                    if (!string.IsNullOrEmpty(callerType) && !IsTypeCompatible(callerType, declaringTypeName))
+                        continue;
+                }
+
+                yield return new GDCrossFileReference(
+                    script,
+                    gdRef.ReferenceNode,
+                    confidence,
+                    gdRef.ConfidenceReason ?? GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
+            }
+            else if (isInherited)
+            {
+                // Direct identifier usage in a derived class:
+                // - `current_health += 10` (no member access parent)
+                // - `health_changed.emit()` (caller of a member access, i.e., signal/var used with dot)
+                yield return new GDCrossFileReference(
+                    script,
+                    gdRef.ReferenceNode,
+                    GDReferenceConfidence.Strict,
+                    $"Inherited member '{memberName}' used directly in derived class");
+            }
         }
 
-        // Fallback to manual visitor-based search when SemanticModel is not available
-        var classDecl = script.Class;
-        if (classDecl == null)
-            yield break;
-
-        // Find all member accesses with matching name
-        var visitor = new MemberAccessFinder(memberName);
-        classDecl.WalkIn(visitor);
-
-        foreach (var memberAccess in visitor.Found)
+        // For inherited files: also find method override declarations and super.method() calls
+        if (isInherited && script.Class != null)
         {
-            var confidence = DetermineConfidence(memberAccess, declaringTypeName, semanticModel);
-            if (confidence != GDReferenceConfidence.NameMatch)
+            foreach (var method in script.Class.Methods)
+            {
+                if (method.Identifier?.Sequence == memberName)
+                {
+                    yield return new GDCrossFileReference(
+                        script,
+                        method,
+                        GDReferenceConfidence.Strict,
+                        "Method override in derived class");
+                }
+            }
+
+            var superVisitor = new SuperCallFinder(memberName);
+            script.Class.WalkIn(superVisitor);
+            foreach (var node in superVisitor.Found)
             {
                 yield return new GDCrossFileReference(
                     script,
-                    memberAccess,
-                    confidence,
-                    GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
-            }
-        }
-
-        // Also find call expressions with matching name
-        var callVisitor = new CallExpressionFinder(memberName);
-        classDecl.WalkIn(callVisitor);
-
-        foreach (var callExpr in callVisitor.Found)
-        {
-            var memberAccess = callExpr.CallerExpression as GDMemberOperatorExpression;
-            if (memberAccess != null)
-            {
-                var confidence = DetermineConfidence(memberAccess, declaringTypeName, semanticModel);
-                if (confidence != GDReferenceConfidence.NameMatch)
-                {
-                    // Use memberAccess as the reference node (it's a GDNode via GDExpression)
-                    yield return new GDCrossFileReference(
-                        script,
-                        memberAccess,
-                        confidence,
-                        GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
-                }
+                    node,
+                    GDReferenceConfidence.Strict,
+                    $"super.{memberName}() call in derived class");
             }
         }
     }
@@ -229,13 +239,47 @@ public class GDCrossFileReferenceFinder
     /// </summary>
     private string GetDeclaringTypeName(GDScriptFile script, GDSymbolInfo symbol)
     {
-        // First check for class_name
-        var className = script.Class?.ClassName?.TypeName?.ToString();
+        // First check for class_name identifier
+        var className = script.Class?.ClassName?.Identifier?.Sequence;
         if (!string.IsNullOrEmpty(className))
             return className;
 
-        // Fall back to script path-based type
+        // Fall back to script's TypeName (from class_name or filename)
         return script.TypeName ?? script.Reference?.FullPath ?? "Unknown";
+    }
+
+    /// <summary>
+    /// Checks if a script inherits (directly or transitively) from the declaring type.
+    /// </summary>
+    private bool IsInheritedFile(GDScriptFile script, string declaringTypeName)
+    {
+        if (string.IsNullOrEmpty(declaringTypeName))
+            return false;
+
+        var scriptType = script.TypeName;
+        if (string.IsNullOrEmpty(scriptType) || scriptType == declaringTypeName)
+            return false;
+
+        // Check via project type system first (most accurate)
+        if (_projectModel?.TypeSystem != null)
+            return _projectModel.TypeSystem.IsAssignableTo(scriptType, declaringTypeName);
+
+        // Fallback to runtime provider
+        if (_runtimeProvider != null)
+            return _runtimeProvider.IsAssignableTo(scriptType, declaringTypeName);
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets the semantic model for a script, using GDProjectSemanticModel when available.
+    /// </summary>
+    private GDSemanticModel? GetSemanticModel(GDScriptFile script)
+    {
+        if (_projectModel != null)
+            return _projectModel.GetSemanticModel(script);
+
+        return script.SemanticModel;
     }
 
     /// <summary>
@@ -342,6 +386,35 @@ public class GDCrossFileReferenceFinder
                 {
                     _found.Add(callExpr);
                 }
+            }
+            base.Visit(callExpr);
+        }
+    }
+
+    /// <summary>
+    /// Visitor to find super.method() calls for a specific method name.
+    /// Matches the pattern: super.methodName(...)
+    /// </summary>
+    private class SuperCallFinder : GDVisitor
+    {
+        private readonly string _methodName;
+        private readonly List<GDNode> _found = new();
+
+        public IReadOnlyList<GDNode> Found => _found;
+
+        public SuperCallFinder(string methodName)
+        {
+            _methodName = methodName;
+        }
+
+        public override void Visit(GDCallExpression callExpr)
+        {
+            if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp
+                && memberOp.Identifier?.Sequence == _methodName
+                && memberOp.CallerExpression is GDIdentifierExpression ident
+                && ident.Identifier?.Sequence == "super")
+            {
+                _found.Add(callExpr);
             }
             base.Visit(callExpr);
         }

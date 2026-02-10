@@ -13,10 +13,10 @@ public class GDRenameHandler : IGDRenameHandler
     protected readonly GDScriptProject _project;
     protected readonly GDRenameService _service;
 
-    public GDRenameHandler(GDScriptProject project)
+    public GDRenameHandler(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
     {
         _project = project;
-        _service = new GDRenameService(project);
+        _service = new GDRenameService(project, projectModel);
     }
 
     /// <inheritdoc />

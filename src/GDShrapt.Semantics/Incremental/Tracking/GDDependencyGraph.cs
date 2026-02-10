@@ -110,6 +110,46 @@ public class GDDependencyGraph
     }
 
     /// <summary>
+    /// Sets scene-to-script dependencies. Each script depends on the scene,
+    /// so when the scene changes, GetTransitiveDependents(scenePath) returns affected scripts.
+    /// </summary>
+    public void SetSceneDependencies(string scenePath, IEnumerable<string> scriptPaths)
+    {
+        lock (_lock)
+        {
+            // Remove old reverse mappings for this scene
+            if (_dependents.TryGetValue(scenePath, out var oldDependents))
+            {
+                foreach (var script in oldDependents)
+                {
+                    if (_dependencies.TryGetValue(script, out var depSet))
+                    {
+                        depSet.Remove(scenePath);
+                    }
+                }
+                oldDependents.Clear();
+            }
+            else
+            {
+                _dependents[scenePath] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            // Add new dependencies: each script depends on the scene
+            foreach (var scriptPath in scriptPaths)
+            {
+                _dependents[scenePath].Add(scriptPath);
+
+                if (!_dependencies.TryGetValue(scriptPath, out var deps))
+                {
+                    deps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    _dependencies[scriptPath] = deps;
+                }
+                deps.Add(scenePath);
+            }
+        }
+    }
+
+    /// <summary>
     /// Removes a file from the dependency graph.
     /// </summary>
     public void RemoveFile(string filePath)

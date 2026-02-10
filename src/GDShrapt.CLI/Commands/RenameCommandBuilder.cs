@@ -14,9 +14,10 @@ public static class RenameCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("rename", "Rename a symbol across the project");
+        var command = new Command("rename", "Safely rename a variable, function, signal, or class across all files.\n\nExamples:\n  gdshrapt rename old_name new_name        Rename in current project\n  gdshrapt rename old new --dry-run        Preview changes only\n  gdshrapt rename old new --file player.gd Rename in one file");
 
         var oldNameArg = new Argument<string>("old-name", "Current symbol name");
         var newNameArg = new Argument<string>("new-name", "New symbol name");

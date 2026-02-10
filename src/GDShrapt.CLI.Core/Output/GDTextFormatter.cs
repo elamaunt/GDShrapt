@@ -44,12 +44,13 @@ public class GDTextFormatter : IGDOutputFormatter
             if (file.Diagnostics.Count == 0)
                 continue;
 
-            output.WriteLine($"--- {file.FilePath} ---");
+            output.WriteLine($"--- {GDAnsiColors.Bold(file.FilePath)} ---");
 
             foreach (var diag in file.Diagnostics)
             {
                 var severity = FormatSeverity(diag.Severity);
-                output.WriteLine($"  {file.FilePath}:{diag.Line}:{diag.Column}: {severity} {diag.Code}: {diag.Message}");
+                var code = GDAnsiColors.Dim(diag.Code);
+                output.WriteLine($"  {file.FilePath}:{diag.Line}:{diag.Column}: {severity} {code}: {diag.Message}");
             }
 
             output.WriteLine();
@@ -109,10 +110,10 @@ public class GDTextFormatter : IGDOutputFormatter
 
     private static string FormatSeverity(GDSeverity severity) => severity switch
     {
-        GDSeverity.Error => "error",
-        GDSeverity.Warning => "warning",
-        GDSeverity.Information => "info",
-        GDSeverity.Hint => "hint",
+        GDSeverity.Error => GDAnsiColors.Red("error"),
+        GDSeverity.Warning => GDAnsiColors.Yellow("warning"),
+        GDSeverity.Information => GDAnsiColors.Cyan("info"),
+        GDSeverity.Hint => GDAnsiColors.Blue("hint"),
         _ => "unknown"
     };
 
@@ -143,6 +144,6 @@ public class GDTextFormatter : IGDOutputFormatter
 
     public void WriteError(TextWriter output, string error)
     {
-        output.WriteLine($"Error: {error}");
+        output.WriteLine($"{GDAnsiColors.Red("Error")}: {error}");
     }
 }

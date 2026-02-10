@@ -123,6 +123,7 @@ public partial class GDShraptPlugin : EditorPlugin
                 EnableSceneTypesProvider = true,
                 EnableFileWatcher = true,
                 EnableCallSiteRegistry = true, // Enable cross-file dependency tracking
+                EnableSceneChangeReanalysis = true,
                 Logger = SemanticLoggerAdapter.Instance,
                 SemanticsConfig = semanticsConfig
             });
@@ -161,6 +162,9 @@ public partial class GDShraptPlugin : EditorPlugin
             // Initialize scene file watching using GDSceneTypesProvider from Semantics
             _scriptProject.SceneTypesProvider.NodeRenameDetected += OnNodeRenameDetected;
             _scriptProject.SceneTypesProvider.EnableFileWatcher();
+
+            // Subscribe to scene-triggered script reanalysis
+            _scriptProject.SceneScriptsChanged += OnSceneScriptsChanged;
 
             // Initialize refactoring system
             _refactoringActionProvider = new GDRefactoringActionProvider();
@@ -234,6 +238,7 @@ public partial class GDShraptPlugin : EditorPlugin
             _scriptProject.ScriptCreated -= OnScriptCreated;
             _scriptProject.ScriptDeleted -= OnScriptDeleted;
             _scriptProject.IncrementalChange -= OnIncrementalChange;
+            _scriptProject.SceneScriptsChanged -= OnSceneScriptsChanged;
         }
 
         // Shutdown diagnostics system
@@ -1542,6 +1547,26 @@ public partial class GDShraptPlugin : EditorPlugin
         {
             Logger.Error($"Failed to save script {ScriptFile.FullPath}: {ex.Message}");
         }
+    }
+
+    private void OnSceneScriptsChanged(object? sender, GDShrapt.Semantics.GDSceneAffectedScriptsEventArgs e)
+    {
+        Logger.Debug($"Scene '{e.ScenePath}' changed, reanalyzing {e.AffectedScripts.Count} script(s)");
+
+        Godot.Callable.From(() =>
+        {
+            foreach (var script in e.AffectedScripts)
+            {
+                try
+                {
+                    _ = _diagnosticService?.AnalyzeScriptAsync(script, forceRefresh: true);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Error reanalyzing script after scene change: {ex.Message}");
+                }
+            }
+        }).CallDeferred();
     }
 
     #endregion

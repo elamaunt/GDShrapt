@@ -15,11 +15,15 @@ public static class AnalyzeCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("analyze", "Analyze a GDScript project and output diagnostics");
+        var command = new Command("analyze", "Analyze a GDScript project and report all diagnostics (validation + linting).\n\nExamples:\n  gdshrapt analyze                         Analyze current directory\n  gdshrapt analyze ./my-project            Analyze specific project\n  gdshrapt analyze --format json           Output as JSON\n  gdshrapt analyze --fail-on warning       Fail on warnings (for CI)");
 
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var projectOption = new Option<string?>(
+            new[] { "--project", "-p" },
+            "Path to the Godot project (alternative to positional argument)");
         var failOnOption = new Option<string?>(
             new[] { "--fail-on" },
             "Fail threshold: error (default), warning, or hint");
@@ -34,6 +38,7 @@ public static class AnalyzeCommandBuilder
             "Group output by: file (default), rule, or severity");
 
         command.AddArgument(pathArg);
+        command.AddOption(projectOption);
         command.AddOption(failOnOption);
         command.AddOption(minSeverityOption);
         command.AddOption(maxIssuesOption);
@@ -41,7 +46,8 @@ public static class AnalyzeCommandBuilder
 
         command.SetHandler(async (InvocationContext context) =>
         {
-            var projectPath = context.ParseResult.GetValueForArgument(pathArg);
+            var projectPath = context.ParseResult.GetValueForOption(projectOption)
+                ?? context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
             var failOn = context.ParseResult.GetValueForOption(failOnOption);
             var minSeverity = context.ParseResult.GetValueForOption(minSeverityOption);
@@ -52,7 +58,8 @@ public static class AnalyzeCommandBuilder
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
             // Create logger from verbosity flags
-            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
+            var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
             // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;

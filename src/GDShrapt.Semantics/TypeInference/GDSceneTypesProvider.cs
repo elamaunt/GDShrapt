@@ -828,6 +828,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         _sceneWatcher.Created += OnSceneFileCreated;
         _sceneWatcher.Deleted += OnSceneFileDeleted;
         _sceneWatcher.Renamed += OnSceneFileRenamed;
+        _sceneWatcher.Error += OnSceneWatcherError;
 
         _logger.Debug($"Scene FileSystemWatcher enabled with {_snapshots.Count} initial snapshots");
     }
@@ -844,6 +845,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         _sceneWatcher.Created -= OnSceneFileCreated;
         _sceneWatcher.Deleted -= OnSceneFileDeleted;
         _sceneWatcher.Renamed -= OnSceneFileRenamed;
+        _sceneWatcher.Error -= OnSceneWatcherError;
         _sceneWatcher.Dispose();
         _sceneWatcher = null;
 
@@ -854,6 +856,21 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         }
 
         _logger.Debug("Scene FileSystemWatcher disabled");
+    }
+
+    private void OnSceneWatcherError(object sender, ErrorEventArgs e)
+    {
+        _logger.Warning($"Scene FileSystemWatcher error: {e.GetException().Message}");
+        try
+        {
+            DisableFileWatcher();
+            EnableFileWatcher();
+            _logger.Info("Scene FileSystemWatcher restarted after error");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to restart scene FileSystemWatcher: {ex.Message}");
+        }
     }
 
     /// <summary>

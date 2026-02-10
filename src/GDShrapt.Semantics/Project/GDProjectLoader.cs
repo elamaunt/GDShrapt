@@ -41,6 +41,27 @@ public static class GDProjectLoader
     }
 
     /// <summary>
+    /// Loads a project with custom options.
+    /// </summary>
+    public static GDScriptProject LoadProject(string projectPath, GDScriptProjectOptions options)
+    {
+        var fullPath = Path.GetFullPath(projectPath);
+
+        if (!Directory.Exists(fullPath))
+        {
+            throw new DirectoryNotFoundException($"Project directory not found: {fullPath}");
+        }
+
+        var context = new GDDefaultProjectContext(fullPath);
+        var project = new GDScriptProject(context, options);
+        project.LoadScripts();
+        project.LoadScenes();
+        project.AnalyzeAll();
+
+        return project;
+    }
+
+    /// <summary>
     /// Loads a project without analyzing (useful for lazy loading).
     /// </summary>
     /// <param name="projectPath">Path to the project directory.</param>

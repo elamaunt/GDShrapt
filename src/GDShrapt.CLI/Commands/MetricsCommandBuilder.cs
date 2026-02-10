@@ -14,11 +14,15 @@ public static class MetricsCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("metrics", "Calculate code complexity metrics");
+        var command = new Command("metrics", "Calculate cyclomatic complexity, maintainability index, and other metrics.\n\nExamples:\n  gdshrapt metrics                         All project metrics\n  gdshrapt metrics --sort-by complexity     Sort by complexity\n  gdshrapt metrics --top 10 --show-methods Top 10 with methods");
 
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var projectOption = new Option<string?>(
+            new[] { "--project", "-p" },
+            "Path to the Godot project (alternative to positional argument)");
 
         var fileOption = new Option<string?>(
             ["--file", "-f"],
@@ -43,6 +47,7 @@ public static class MetricsCommandBuilder
             "Show file-level details");
 
         command.AddArgument(pathArg);
+        command.AddOption(projectOption);
         command.AddOption(fileOption);
         command.AddOption(sortByOption);
         command.AddOption(topOption);
@@ -51,7 +56,8 @@ public static class MetricsCommandBuilder
 
         command.SetHandler(async (InvocationContext context) =>
         {
-            var projectPath = context.ParseResult.GetValueForArgument(pathArg);
+            var projectPath = context.ParseResult.GetValueForOption(projectOption)
+                ?? context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
             var file = context.ParseResult.GetValueForOption(fileOption);
             var sortBy = context.ParseResult.GetValueForOption(sortByOption);
@@ -62,7 +68,8 @@ public static class MetricsCommandBuilder
             var verbose = context.ParseResult.GetValueForOption(verboseOption);
             var debug = context.ParseResult.GetValueForOption(debugOption);
 
-            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
+            var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
             var formatter = CommandHelpers.GetFormatter(format);
 
             var options = new GDMetricsOptions

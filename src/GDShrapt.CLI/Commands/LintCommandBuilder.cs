@@ -16,13 +16,18 @@ public static class LintCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("lint", "Lint GDScript files for style and best practices");
+        var command = new Command("lint", "Check GDScript files for style violations, naming conventions, and best practices.\n\nUse --preset to apply predefined rule sets, or configure individual\noptions below. Individual options override preset values.\nMost options can also be set in .gdshrapt.json (see 'gdshrapt init').\n\nExamples:\n  gdshrapt lint                            Lint current project\n  gdshrapt lint --preset strict            Use strict rules\n  gdshrapt lint --rules GDL001,GDL003      Run specific rules\n  gdshrapt lint --category naming          Only naming rules");
 
         // Path argument
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var projectOption = new Option<string?>(
+            new[] { "--project", "-p" },
+            "Path to the Godot project (alternative to positional argument)");
         command.AddArgument(pathArg);
+        command.AddOption(projectOption);
 
         // Filtering options
         var rulesOption = new Option<string?>(
@@ -31,8 +36,12 @@ public static class LintCommandBuilder
         var categoryOption = new Option<string?>(
             new[] { "--category" },
             "Only run rules in category (naming, style, best-practices)");
+        var presetOption = new Option<string?>(
+            new[] { "--preset" },
+            "Apply a built-in lint preset (strict, relaxed, recommended, gdquest). Individual flags override preset values.");
         command.AddOption(rulesOption);
         command.AddOption(categoryOption);
+        command.AddOption(presetOption);
 
         // Naming convention options
         var classNameCaseOption = new Option<string?>(
@@ -353,7 +362,8 @@ public static class LintCommandBuilder
 
         command.SetHandler(async (InvocationContext context) =>
         {
-            var projectPath = context.ParseResult.GetValueForArgument(pathArg);
+            var projectPath = context.ParseResult.GetValueForOption(projectOption)
+                ?? context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
             var minSeverity = context.ParseResult.GetValueForOption(minSeverityOption);
             var maxIssues = context.ParseResult.GetValueForOption(maxIssuesOption);
@@ -363,7 +373,8 @@ public static class LintCommandBuilder
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
             // Create logger from verbosity flags
-            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
+            var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
             // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;
@@ -393,12 +404,23 @@ public static class LintCommandBuilder
 
             var formatter = CommandHelpers.GetFormatter(format);
 
-            // Build overrides from CLI flags
-            var overrides = new GDLinterOptionsOverrides();
+            // Load preset as baseline (if specified), then override with individual CLI flags
+            var preset = context.ParseResult.GetValueForOption(presetOption);
+            var overrides = GDLintPresets.GetPreset(preset) ?? new GDLinterOptionsOverrides();
+
+            if (preset != null && GDLintPresets.GetPreset(preset) == null)
+            {
+                logger.Warning($"Unknown preset '{preset}'. Available presets: {string.Join(", ", GDLintPresets.AvailablePresets)}");
+            }
 
             // Filtering (these are handled differently - passed directly to command)
-            overrides.Rules = context.ParseResult.GetValueForOption(rulesOption);
-            overrides.Category = context.ParseResult.GetValueForOption(categoryOption);
+            // Rules/Category always override preset (they filter which rules run, not rule config)
+            var rulesValue = context.ParseResult.GetValueForOption(rulesOption);
+            if (rulesValue != null)
+                overrides.Rules = rulesValue;
+            var categoryValue = context.ParseResult.GetValueForOption(categoryOption);
+            if (categoryValue != null)
+                overrides.Category = categoryValue;
 
             // Naming conventions
             var classNameCase = context.ParseResult.GetValueForOption(classNameCaseOption);
@@ -433,52 +455,124 @@ public static class LintCommandBuilder
             if (innerClassNameCase != null)
                 overrides.InnerClassNameCase = OptionParsers.ParseNamingCase(innerClassNameCase);
 
-            overrides.RequireUnderscoreForPrivate = context.ParseResult.GetValueForOption(requireUnderscoreOption);
+            var requireUnderscore = context.ParseResult.GetValueForOption(requireUnderscoreOption);
+            if (requireUnderscore.HasValue)
+                overrides.RequireUnderscoreForPrivate = requireUnderscore;
 
             // Limits
-            overrides.MaxLineLength = context.ParseResult.GetValueForOption(maxLineLengthOption);
-            overrides.MaxFileLines = context.ParseResult.GetValueForOption(maxFileLinesOption);
-            overrides.MaxParameters = context.ParseResult.GetValueForOption(maxParametersOption);
-            overrides.MaxFunctionLength = context.ParseResult.GetValueForOption(maxFunctionLengthOption);
-            overrides.MaxCyclomaticComplexity = context.ParseResult.GetValueForOption(maxComplexityOption);
+            var maxLineLength = context.ParseResult.GetValueForOption(maxLineLengthOption);
+            if (maxLineLength.HasValue)
+                overrides.MaxLineLength = maxLineLength;
+            var maxFileLines = context.ParseResult.GetValueForOption(maxFileLinesOption);
+            if (maxFileLines.HasValue)
+                overrides.MaxFileLines = maxFileLines;
+            var maxParameters = context.ParseResult.GetValueForOption(maxParametersOption);
+            if (maxParameters.HasValue)
+                overrides.MaxParameters = maxParameters;
+            var maxFunctionLength = context.ParseResult.GetValueForOption(maxFunctionLengthOption);
+            if (maxFunctionLength.HasValue)
+                overrides.MaxFunctionLength = maxFunctionLength;
+            var maxComplexity = context.ParseResult.GetValueForOption(maxComplexityOption);
+            if (maxComplexity.HasValue)
+                overrides.MaxCyclomaticComplexity = maxComplexity;
 
             // Complexity limits (new rules)
-            overrides.MaxPublicMethods = context.ParseResult.GetValueForOption(maxPublicMethodsOption);
-            overrides.MaxReturns = context.ParseResult.GetValueForOption(maxReturnsOption);
-            overrides.MaxNestingDepth = context.ParseResult.GetValueForOption(maxNestingDepthOption);
-            overrides.MaxLocalVariables = context.ParseResult.GetValueForOption(maxLocalVariablesOption);
-            overrides.MaxClassVariables = context.ParseResult.GetValueForOption(maxClassVariablesOption);
-            overrides.MaxBranches = context.ParseResult.GetValueForOption(maxBranchesOption);
-            overrides.MaxBooleanExpressions = context.ParseResult.GetValueForOption(maxBooleanExpressionsOption);
-            overrides.MaxInnerClasses = context.ParseResult.GetValueForOption(maxInnerClassesOption);
+            var maxPublicMethods = context.ParseResult.GetValueForOption(maxPublicMethodsOption);
+            if (maxPublicMethods.HasValue)
+                overrides.MaxPublicMethods = maxPublicMethods;
+            var maxReturns = context.ParseResult.GetValueForOption(maxReturnsOption);
+            if (maxReturns.HasValue)
+                overrides.MaxReturns = maxReturns;
+            var maxNestingDepth = context.ParseResult.GetValueForOption(maxNestingDepthOption);
+            if (maxNestingDepth.HasValue)
+                overrides.MaxNestingDepth = maxNestingDepth;
+            var maxLocalVariables = context.ParseResult.GetValueForOption(maxLocalVariablesOption);
+            if (maxLocalVariables.HasValue)
+                overrides.MaxLocalVariables = maxLocalVariables;
+            var maxClassVariables = context.ParseResult.GetValueForOption(maxClassVariablesOption);
+            if (maxClassVariables.HasValue)
+                overrides.MaxClassVariables = maxClassVariables;
+            var maxBranches = context.ParseResult.GetValueForOption(maxBranchesOption);
+            if (maxBranches.HasValue)
+                overrides.MaxBranches = maxBranches;
+            var maxBooleanExpressions = context.ParseResult.GetValueForOption(maxBooleanExpressionsOption);
+            if (maxBooleanExpressions.HasValue)
+                overrides.MaxBooleanExpressions = maxBooleanExpressions;
+            var maxInnerClasses = context.ParseResult.GetValueForOption(maxInnerClassesOption);
+            if (maxInnerClasses.HasValue)
+                overrides.MaxInnerClasses = maxInnerClasses;
 
             // Warnings
-            overrides.WarnUnusedVariables = context.ParseResult.GetValueForOption(warnUnusedVariablesOption);
-            overrides.WarnUnusedParameters = context.ParseResult.GetValueForOption(warnUnusedParametersOption);
-            overrides.WarnUnusedSignals = context.ParseResult.GetValueForOption(warnUnusedSignalsOption);
-            overrides.WarnEmptyFunctions = context.ParseResult.GetValueForOption(warnEmptyFunctionsOption);
-            overrides.WarnMagicNumbers = context.ParseResult.GetValueForOption(warnMagicNumbersOption);
-            overrides.WarnVariableShadowing = context.ParseResult.GetValueForOption(warnVariableShadowingOption);
-            overrides.WarnAwaitInLoop = context.ParseResult.GetValueForOption(warnAwaitInLoopOption);
-            overrides.WarnNoElifReturn = context.ParseResult.GetValueForOption(warnNoElifReturnOption);
-            overrides.WarnNoElseReturn = context.ParseResult.GetValueForOption(warnNoElseReturnOption);
-            overrides.WarnPrivateMethodCall = context.ParseResult.GetValueForOption(warnPrivateMethodCallOption);
-            overrides.WarnDuplicatedLoad = context.ParseResult.GetValueForOption(warnDuplicatedLoadOption);
+            var warnUnusedVariables = context.ParseResult.GetValueForOption(warnUnusedVariablesOption);
+            if (warnUnusedVariables.HasValue)
+                overrides.WarnUnusedVariables = warnUnusedVariables;
+            var warnUnusedParameters = context.ParseResult.GetValueForOption(warnUnusedParametersOption);
+            if (warnUnusedParameters.HasValue)
+                overrides.WarnUnusedParameters = warnUnusedParameters;
+            var warnUnusedSignals = context.ParseResult.GetValueForOption(warnUnusedSignalsOption);
+            if (warnUnusedSignals.HasValue)
+                overrides.WarnUnusedSignals = warnUnusedSignals;
+            var warnEmptyFunctions = context.ParseResult.GetValueForOption(warnEmptyFunctionsOption);
+            if (warnEmptyFunctions.HasValue)
+                overrides.WarnEmptyFunctions = warnEmptyFunctions;
+            var warnMagicNumbers = context.ParseResult.GetValueForOption(warnMagicNumbersOption);
+            if (warnMagicNumbers.HasValue)
+                overrides.WarnMagicNumbers = warnMagicNumbers;
+            var warnVariableShadowing = context.ParseResult.GetValueForOption(warnVariableShadowingOption);
+            if (warnVariableShadowing.HasValue)
+                overrides.WarnVariableShadowing = warnVariableShadowing;
+            var warnAwaitInLoop = context.ParseResult.GetValueForOption(warnAwaitInLoopOption);
+            if (warnAwaitInLoop.HasValue)
+                overrides.WarnAwaitInLoop = warnAwaitInLoop;
+            var warnNoElifReturn = context.ParseResult.GetValueForOption(warnNoElifReturnOption);
+            if (warnNoElifReturn.HasValue)
+                overrides.WarnNoElifReturn = warnNoElifReturn;
+            var warnNoElseReturn = context.ParseResult.GetValueForOption(warnNoElseReturnOption);
+            if (warnNoElseReturn.HasValue)
+                overrides.WarnNoElseReturn = warnNoElseReturn;
+            var warnPrivateMethodCall = context.ParseResult.GetValueForOption(warnPrivateMethodCallOption);
+            if (warnPrivateMethodCall.HasValue)
+                overrides.WarnPrivateMethodCall = warnPrivateMethodCall;
+            var warnDuplicatedLoad = context.ParseResult.GetValueForOption(warnDuplicatedLoadOption);
+            if (warnDuplicatedLoad.HasValue)
+                overrides.WarnDuplicatedLoad = warnDuplicatedLoad;
 
             // New warnings (new rules)
-            overrides.WarnExpressionNotAssigned = context.ParseResult.GetValueForOption(warnExpressionNotAssignedOption);
-            overrides.WarnUselessAssignment = context.ParseResult.GetValueForOption(warnUselessAssignmentOption);
-            overrides.WarnInconsistentReturn = context.ParseResult.GetValueForOption(warnInconsistentReturnOption);
-            overrides.WarnMissingReturn = context.ParseResult.GetValueForOption(warnMissingReturnOption);
-            overrides.WarnNoLonelyIf = context.ParseResult.GetValueForOption(warnNoLonelyIfOption);
+            var warnExpressionNotAssigned = context.ParseResult.GetValueForOption(warnExpressionNotAssignedOption);
+            if (warnExpressionNotAssigned.HasValue)
+                overrides.WarnExpressionNotAssigned = warnExpressionNotAssigned;
+            var warnUselessAssignment = context.ParseResult.GetValueForOption(warnUselessAssignmentOption);
+            if (warnUselessAssignment.HasValue)
+                overrides.WarnUselessAssignment = warnUselessAssignment;
+            var warnInconsistentReturn = context.ParseResult.GetValueForOption(warnInconsistentReturnOption);
+            if (warnInconsistentReturn.HasValue)
+                overrides.WarnInconsistentReturn = warnInconsistentReturn;
+            var warnMissingReturn = context.ParseResult.GetValueForOption(warnMissingReturnOption);
+            if (warnMissingReturn.HasValue)
+                overrides.WarnMissingReturn = warnMissingReturn;
+            var warnNoLonelyIf = context.ParseResult.GetValueForOption(warnNoLonelyIfOption);
+            if (warnNoLonelyIf.HasValue)
+                overrides.WarnNoLonelyIf = warnNoLonelyIf;
 
             // God class, commented code, debug print
-            overrides.WarnGodClass = context.ParseResult.GetValueForOption(warnGodClassOption);
-            overrides.WarnCommentedCode = context.ParseResult.GetValueForOption(warnCommentedCodeOption);
-            overrides.WarnDebugPrint = context.ParseResult.GetValueForOption(warnDebugPrintOption);
-            overrides.GodClassMaxVariables = context.ParseResult.GetValueForOption(godClassMaxVariablesOption);
-            overrides.GodClassMaxMethods = context.ParseResult.GetValueForOption(godClassMaxMethodsOption);
-            overrides.GodClassMaxLines = context.ParseResult.GetValueForOption(godClassMaxLinesOption);
+            var warnGodClass = context.ParseResult.GetValueForOption(warnGodClassOption);
+            if (warnGodClass.HasValue)
+                overrides.WarnGodClass = warnGodClass;
+            var warnCommentedCode = context.ParseResult.GetValueForOption(warnCommentedCodeOption);
+            if (warnCommentedCode.HasValue)
+                overrides.WarnCommentedCode = warnCommentedCode;
+            var warnDebugPrint = context.ParseResult.GetValueForOption(warnDebugPrintOption);
+            if (warnDebugPrint.HasValue)
+                overrides.WarnDebugPrint = warnDebugPrint;
+            var godClassMaxVariables = context.ParseResult.GetValueForOption(godClassMaxVariablesOption);
+            if (godClassMaxVariables.HasValue)
+                overrides.GodClassMaxVariables = godClassMaxVariables;
+            var godClassMaxMethods = context.ParseResult.GetValueForOption(godClassMaxMethodsOption);
+            if (godClassMaxMethods.HasValue)
+                overrides.GodClassMaxMethods = godClassMaxMethods;
+            var godClassMaxLines = context.ParseResult.GetValueForOption(godClassMaxLinesOption);
+            if (godClassMaxLines.HasValue)
+                overrides.GodClassMaxLines = godClassMaxLines;
 
             // Strict typing
             var strictTyping = context.ParseResult.GetValueForOption(strictTypingOption);
@@ -508,37 +602,73 @@ public static class LintCommandBuilder
                 overrides.StrictTypingReturnTypes = OptionParsers.ParseSeverity(strictTypingReturn);
 
             // Suppression
-            overrides.EnableCommentSuppression = context.ParseResult.GetValueForOption(enableSuppressionOption);
+            var enableSuppression = context.ParseResult.GetValueForOption(enableSuppressionOption);
+            if (enableSuppression.HasValue)
+                overrides.EnableCommentSuppression = enableSuppression;
 
             // Member ordering
-            overrides.AbstractMethodPosition = context.ParseResult.GetValueForOption(abstractMethodPositionOption);
-            overrides.PrivateMethodPosition = context.ParseResult.GetValueForOption(privateMethodPositionOption);
-            overrides.StaticMethodPosition = context.ParseResult.GetValueForOption(staticMethodPositionOption);
+            var abstractMethodPosition = context.ParseResult.GetValueForOption(abstractMethodPositionOption);
+            if (abstractMethodPosition != null)
+                overrides.AbstractMethodPosition = abstractMethodPosition;
+            var privateMethodPosition = context.ParseResult.GetValueForOption(privateMethodPositionOption);
+            if (privateMethodPosition != null)
+                overrides.PrivateMethodPosition = privateMethodPosition;
+            var staticMethodPosition = context.ParseResult.GetValueForOption(staticMethodPositionOption);
+            if (staticMethodPosition != null)
+                overrides.StaticMethodPosition = staticMethodPosition;
 
             // Formatting/style checks
             var indentationStyle = context.ParseResult.GetValueForOption(indentationStyleOption);
             if (indentationStyle != null)
                 overrides.IndentationStyle = OptionParsers.ParseIndentationStyle(indentationStyle);
-            overrides.TabWidth = context.ParseResult.GetValueForOption(tabWidthOption);
-            overrides.CheckTrailingWhitespace = context.ParseResult.GetValueForOption(checkTrailingWhitespaceOption);
-            overrides.CheckTrailingNewline = context.ParseResult.GetValueForOption(checkTrailingNewlineOption);
-            overrides.CheckSpaceAroundOperators = context.ParseResult.GetValueForOption(checkSpaceAroundOperatorsOption);
-            overrides.CheckSpaceAfterComma = context.ParseResult.GetValueForOption(checkSpaceAfterCommaOption);
+            var tabWidth = context.ParseResult.GetValueForOption(tabWidthOption);
+            if (tabWidth.HasValue)
+                overrides.TabWidth = tabWidth;
+            var checkTrailingWhitespace = context.ParseResult.GetValueForOption(checkTrailingWhitespaceOption);
+            if (checkTrailingWhitespace.HasValue)
+                overrides.CheckTrailingWhitespace = checkTrailingWhitespace;
+            var checkTrailingNewline = context.ParseResult.GetValueForOption(checkTrailingNewlineOption);
+            if (checkTrailingNewline.HasValue)
+                overrides.CheckTrailingNewline = checkTrailingNewline;
+            var checkSpaceAroundOperators = context.ParseResult.GetValueForOption(checkSpaceAroundOperatorsOption);
+            if (checkSpaceAroundOperators.HasValue)
+                overrides.CheckSpaceAroundOperators = checkSpaceAroundOperators;
+            var checkSpaceAfterComma = context.ParseResult.GetValueForOption(checkSpaceAfterCommaOption);
+            if (checkSpaceAfterComma.HasValue)
+                overrides.CheckSpaceAfterComma = checkSpaceAfterComma;
 
             // Blank lines config
-            overrides.EmptyLinesBetweenFunctions = context.ParseResult.GetValueForOption(emptyLinesBetweenFunctionsOption);
-            overrides.MaxConsecutiveEmptyLines = context.ParseResult.GetValueForOption(maxConsecutiveEmptyLinesOption);
-            overrides.RequireBlankLineAfterClassDecl = context.ParseResult.GetValueForOption(requireBlankAfterClassOption);
-            overrides.RequireTwoBlankLinesBetweenFunctions = context.ParseResult.GetValueForOption(requireTwoBlankBetweenFunctionsOption);
-            overrides.RequireBlankLineBetweenMemberTypes = context.ParseResult.GetValueForOption(requireBlankBetweenMemberTypesOption);
+            var emptyLinesBetweenFunctions = context.ParseResult.GetValueForOption(emptyLinesBetweenFunctionsOption);
+            if (emptyLinesBetweenFunctions.HasValue)
+                overrides.EmptyLinesBetweenFunctions = emptyLinesBetweenFunctions;
+            var maxConsecutiveEmptyLines = context.ParseResult.GetValueForOption(maxConsecutiveEmptyLinesOption);
+            if (maxConsecutiveEmptyLines.HasValue)
+                overrides.MaxConsecutiveEmptyLines = maxConsecutiveEmptyLines;
+            var requireBlankAfterClass = context.ParseResult.GetValueForOption(requireBlankAfterClassOption);
+            if (requireBlankAfterClass.HasValue)
+                overrides.RequireBlankLineAfterClassDecl = requireBlankAfterClass;
+            var requireTwoBlankBetweenFunctions = context.ParseResult.GetValueForOption(requireTwoBlankBetweenFunctionsOption);
+            if (requireTwoBlankBetweenFunctions.HasValue)
+                overrides.RequireTwoBlankLinesBetweenFunctions = requireTwoBlankBetweenFunctions;
+            var requireBlankBetweenMemberTypes = context.ParseResult.GetValueForOption(requireBlankBetweenMemberTypesOption);
+            if (requireBlankBetweenMemberTypes.HasValue)
+                overrides.RequireBlankLineBetweenMemberTypes = requireBlankBetweenMemberTypes;
 
             // Best practices
-            overrides.SuggestTypeHints = context.ParseResult.GetValueForOption(suggestTypeHintsOption);
-            overrides.RequireTrailingComma = context.ParseResult.GetValueForOption(requireTrailingCommaOption);
-            overrides.EnforceMemberOrdering = context.ParseResult.GetValueForOption(enforceMemberOrderingOption);
+            var suggestTypeHints = context.ParseResult.GetValueForOption(suggestTypeHintsOption);
+            if (suggestTypeHints.HasValue)
+                overrides.SuggestTypeHints = suggestTypeHints;
+            var requireTrailingComma = context.ParseResult.GetValueForOption(requireTrailingCommaOption);
+            if (requireTrailingComma.HasValue)
+                overrides.RequireTrailingComma = requireTrailingComma;
+            var enforceMemberOrdering = context.ParseResult.GetValueForOption(enforceMemberOrderingOption);
+            if (enforceMemberOrdering.HasValue)
+                overrides.EnforceMemberOrdering = enforceMemberOrdering;
 
             // Magic numbers whitelist
-            overrides.AllowedMagicNumbers = context.ParseResult.GetValueForOption(allowedMagicNumbersOption);
+            var allowedMagicNumbers = context.ParseResult.GetValueForOption(allowedMagicNumbersOption);
+            if (allowedMagicNumbers != null)
+                overrides.AllowedMagicNumbers = allowedMagicNumbers;
 
             // Build config with fail-on overrides
             var failOn = context.ParseResult.GetValueForOption(failOnOption);

@@ -14,11 +14,15 @@ public static class DeadCodeCommandBuilder
         Option<string> globalFormatOption,
         Option<bool> verboseOption,
         Option<bool> debugOption,
-        Option<bool> quietOption)
+        Option<bool> quietOption,
+        Option<string?> logLevelOption)
     {
-        var command = new Command("dead-code", "Find unused code (variables, functions, signals)");
+        var command = new Command("dead-code", "Detect unused variables, functions, signals, and unreachable code.\n\nExamples:\n  gdshrapt dead-code                       Find all dead code\n  gdshrapt dead-code --fail-if-found       Fail for CI if found\n  gdshrapt dead-code --kind Function       Only unused functions");
 
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var projectOption = new Option<string?>(
+            new[] { "--project", "-p" },
+            "Path to the Godot project (alternative to positional argument)");
 
         var fileOption = new Option<string?>(
             ["--file", "-f"],
@@ -73,6 +77,7 @@ public static class DeadCodeCommandBuilder
             "Exit with error code if any dead code is found (for CI)");
 
         command.AddArgument(pathArg);
+        command.AddOption(projectOption);
         command.AddOption(fileOption);
         command.AddOption(includeVarsOption);
         command.AddOption(noVarsOption);
@@ -88,7 +93,8 @@ public static class DeadCodeCommandBuilder
 
         command.SetHandler(async (InvocationContext context) =>
         {
-            var projectPath = context.ParseResult.GetValueForArgument(pathArg);
+            var projectPath = context.ParseResult.GetValueForOption(projectOption)
+                ?? context.ParseResult.GetValueForArgument(pathArg);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
             var file = context.ParseResult.GetValueForOption(fileOption);
             var includeVars = context.ParseResult.GetValueForOption(includeVarsOption);
@@ -106,7 +112,8 @@ public static class DeadCodeCommandBuilder
             var verbose = context.ParseResult.GetValueForOption(verboseOption);
             var debug = context.ParseResult.GetValueForOption(debugOption);
 
-            var logger = GDCliLogger.FromFlags(quiet, verbose, debug);
+            var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
+            var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
             var formatter = CommandHelpers.GetFormatter(format);
 
             var options = new GDDeadCodeCommandOptions

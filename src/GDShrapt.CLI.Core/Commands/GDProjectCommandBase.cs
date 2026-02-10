@@ -43,7 +43,7 @@ public abstract class GDProjectCommandBase : IGDCommand
         _logger = logger ?? GDNullLogger.Instance;
     }
 
-    public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
+    public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -52,15 +52,18 @@ public abstract class GDProjectCommandBase : IGDCommand
             var projectRoot = GDProjectLoader.FindProjectRoot(_projectPath);
             if (projectRoot == null)
             {
-                _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}");
-                return Task.FromResult(GDExitCode.Fatal);
+                _formatter.WriteError(_output, $"Could not find project.godot in or above: {_projectPath}\n  Hint: Run from a Godot project directory, or specify the path: 'gdshrapt {Name} /path/to/project'.");
+                return GDExitCode.Fatal;
             }
 
             _logger.Debug($"Found project root: {projectRoot}");
             _logger.Info($"Loading project: {projectRoot}");
 
             var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
-            using var project = GDProjectLoader.LoadProject(projectRoot, _logger);
+            var projectOptions = GetProjectOptions();
+            using var project = projectOptions != null
+                ? GDProjectLoader.LoadProject(projectRoot, projectOptions)
+                : GDProjectLoader.LoadProject(projectRoot, _logger);
 
             _logger.Debug($"Project loaded: {project.ScriptFiles.Count()} scripts");
 
@@ -69,13 +72,31 @@ public abstract class GDProjectCommandBase : IGDCommand
             registry.LoadModules(project, new GDBaseModule());
             Registry = registry;
 
-            return ExecuteOnProjectAsync(project, projectRoot, config, cancellationToken);
+            return await ExecuteOnProjectAsync(project, projectRoot, config, cancellationToken);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            _logger.Error("Directory not found", ex);
+            _formatter.WriteError(_output, $"Directory not found: {ex.Message}\n  Hint: Verify the project path exists.");
+            return GDExitCode.Fatal;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.Error("Permission denied", ex);
+            _formatter.WriteError(_output, $"Permission denied: {ex.Message}\n  Hint: Check file/directory permissions.");
+            return GDExitCode.Fatal;
+        }
+        catch (IOException ex)
+        {
+            _logger.Error("File access error", ex);
+            _formatter.WriteError(_output, $"File access error: {ex.Message}\n  Hint: Check if files are locked by another process.");
+            return GDExitCode.Fatal;
         }
         catch (Exception ex)
         {
             _logger.Error("Command execution failed", ex);
-            _formatter.WriteError(_output, ex.Message);
-            return Task.FromResult(GDExitCode.Fatal);
+            _formatter.WriteError(_output, $"{ex.Message}\n  Hint: Use --debug for detailed diagnostic output.");
+            return GDExitCode.Fatal;
         }
     }
 
@@ -94,6 +115,12 @@ public abstract class GDProjectCommandBase : IGDCommand
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Override to provide custom project options (e.g., for watch mode with file watchers).
+    /// Return null to use default options.
+    /// </summary>
+    protected virtual GDScriptProjectOptions? GetProjectOptions() => null;
+
+    /// <summary>
     /// Gets relative path from full path and base path.
     /// </summary>
     protected static string GetRelativePath(string fullPath, string basePath)
@@ -102,7 +129,7 @@ public abstract class GDProjectCommandBase : IGDCommand
         {
             return Path.GetRelativePath(basePath, fullPath);
         }
-        catch
+        catch (ArgumentException)
         {
             return fullPath;
         }

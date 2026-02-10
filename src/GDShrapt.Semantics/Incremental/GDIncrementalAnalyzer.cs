@@ -73,6 +73,9 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
 
         try
         {
+            // Build scene dependencies so scene changes cascade to scripts
+            BuildSceneDependencies(project);
+
             // Detect changes
             var changes = _tracker.DetectChanges(project);
 
@@ -451,6 +454,30 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
         }
 
         return null;
+    }
+
+    private void BuildSceneDependencies(GDScriptProject project)
+    {
+        if (project.SceneTypesProvider == null)
+            return;
+
+        foreach (var scene in project.SceneTypesProvider.AllScenes)
+        {
+            var scriptPaths = new List<string>();
+            foreach (var scriptResPath in scene.ScriptToNodePath.Keys)
+            {
+                var script = project.GetScriptByResourcePath(scriptResPath);
+                if (script?.FullPath != null)
+                {
+                    scriptPaths.Add(script.FullPath);
+                }
+            }
+
+            if (scriptPaths.Count > 0)
+            {
+                _dependencies.SetSceneDependencies(scene.FullPath, scriptPaths);
+            }
+        }
     }
 
     private void AddCachedResults(

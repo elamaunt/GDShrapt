@@ -22,6 +22,14 @@ public static class GDProjectLoader
     }
 
     /// <summary>
+    /// Loads a project with custom options.
+    /// </summary>
+    public static GDScriptProject LoadProject(string projectPath, GDScriptProjectOptions options)
+    {
+        return SemanticProjectLoader.LoadProject(projectPath, options);
+    }
+
+    /// <summary>
     /// Finds the project root by looking for project.godot file.
     /// </summary>
     /// <param name="startPath">Starting path to search from.</param>
