@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using GDShrapt.CLI.Core;
@@ -21,7 +21,6 @@ public static class LintCommandBuilder
     {
         var command = new Command("lint", "Check GDScript files for style violations, naming conventions, and best practices.\n\nUse --preset to apply predefined rule sets, or configure individual\noptions below. Individual options override preset values.\nMost options can also be set in .gdshrapt.json (see 'gdshrapt init').\n\nExamples:\n  gdshrapt lint                            Lint current project\n  gdshrapt lint --preset strict            Use strict rules\n  gdshrapt lint --rules GDL001,GDL003      Run specific rules\n  gdshrapt lint --category naming          Only naming rules");
 
-        // Path argument
         var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
@@ -29,7 +28,6 @@ public static class LintCommandBuilder
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
 
-        // Filtering options
         var rulesOption = new Option<string?>(
             new[] { "--rules", "-r" },
             "Only run specific rules (comma-separated, e.g., GDL001,GDL003)");
@@ -372,11 +370,9 @@ public static class LintCommandBuilder
             var debug = context.ParseResult.GetValueForOption(debugOption);
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
-            // Create logger from verbosity flags
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
-            // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;
             if (groupBy != null)
             {
@@ -388,7 +384,6 @@ public static class LintCommandBuilder
                 };
             }
 
-            // Parse min severity to linter severity
             GDLintSeverity? minSev = null;
             if (minSeverity != null)
             {
@@ -422,7 +417,6 @@ public static class LintCommandBuilder
             if (categoryValue != null)
                 overrides.Category = categoryValue;
 
-            // Naming conventions
             var classNameCase = context.ParseResult.GetValueForOption(classNameCaseOption);
             if (classNameCase != null)
                 overrides.ClassNameCase = OptionParsers.ParseNamingCase(classNameCase);
@@ -459,7 +453,6 @@ public static class LintCommandBuilder
             if (requireUnderscore.HasValue)
                 overrides.RequireUnderscoreForPrivate = requireUnderscore;
 
-            // Limits
             var maxLineLength = context.ParseResult.GetValueForOption(maxLineLengthOption);
             if (maxLineLength.HasValue)
                 overrides.MaxLineLength = maxLineLength;
@@ -476,7 +469,6 @@ public static class LintCommandBuilder
             if (maxComplexity.HasValue)
                 overrides.MaxCyclomaticComplexity = maxComplexity;
 
-            // Complexity limits (new rules)
             var maxPublicMethods = context.ParseResult.GetValueForOption(maxPublicMethodsOption);
             if (maxPublicMethods.HasValue)
                 overrides.MaxPublicMethods = maxPublicMethods;
@@ -502,7 +494,6 @@ public static class LintCommandBuilder
             if (maxInnerClasses.HasValue)
                 overrides.MaxInnerClasses = maxInnerClasses;
 
-            // Warnings
             var warnUnusedVariables = context.ParseResult.GetValueForOption(warnUnusedVariablesOption);
             if (warnUnusedVariables.HasValue)
                 overrides.WarnUnusedVariables = warnUnusedVariables;
@@ -537,7 +528,6 @@ public static class LintCommandBuilder
             if (warnDuplicatedLoad.HasValue)
                 overrides.WarnDuplicatedLoad = warnDuplicatedLoad;
 
-            // New warnings (new rules)
             var warnExpressionNotAssigned = context.ParseResult.GetValueForOption(warnExpressionNotAssignedOption);
             if (warnExpressionNotAssigned.HasValue)
                 overrides.WarnExpressionNotAssigned = warnExpressionNotAssigned;
@@ -554,7 +544,6 @@ public static class LintCommandBuilder
             if (warnNoLonelyIf.HasValue)
                 overrides.WarnNoLonelyIf = warnNoLonelyIf;
 
-            // God class, commented code, debug print
             var warnGodClass = context.ParseResult.GetValueForOption(warnGodClassOption);
             if (warnGodClass.HasValue)
                 overrides.WarnGodClass = warnGodClass;
@@ -574,7 +563,6 @@ public static class LintCommandBuilder
             if (godClassMaxLines.HasValue)
                 overrides.GodClassMaxLines = godClassMaxLines;
 
-            // Strict typing
             var strictTyping = context.ParseResult.GetValueForOption(strictTypingOption);
             if (strictTyping != null)
             {
@@ -601,12 +589,10 @@ public static class LintCommandBuilder
             if (strictTypingReturn != null)
                 overrides.StrictTypingReturnTypes = OptionParsers.ParseSeverity(strictTypingReturn);
 
-            // Suppression
             var enableSuppression = context.ParseResult.GetValueForOption(enableSuppressionOption);
             if (enableSuppression.HasValue)
                 overrides.EnableCommentSuppression = enableSuppression;
 
-            // Member ordering
             var abstractMethodPosition = context.ParseResult.GetValueForOption(abstractMethodPositionOption);
             if (abstractMethodPosition != null)
                 overrides.AbstractMethodPosition = abstractMethodPosition;
@@ -617,7 +603,6 @@ public static class LintCommandBuilder
             if (staticMethodPosition != null)
                 overrides.StaticMethodPosition = staticMethodPosition;
 
-            // Formatting/style checks
             var indentationStyle = context.ParseResult.GetValueForOption(indentationStyleOption);
             if (indentationStyle != null)
                 overrides.IndentationStyle = OptionParsers.ParseIndentationStyle(indentationStyle);
@@ -637,7 +622,6 @@ public static class LintCommandBuilder
             if (checkSpaceAfterComma.HasValue)
                 overrides.CheckSpaceAfterComma = checkSpaceAfterComma;
 
-            // Blank lines config
             var emptyLinesBetweenFunctions = context.ParseResult.GetValueForOption(emptyLinesBetweenFunctionsOption);
             if (emptyLinesBetweenFunctions.HasValue)
                 overrides.EmptyLinesBetweenFunctions = emptyLinesBetweenFunctions;
@@ -654,7 +638,6 @@ public static class LintCommandBuilder
             if (requireBlankBetweenMemberTypes.HasValue)
                 overrides.RequireBlankLineBetweenMemberTypes = requireBlankBetweenMemberTypes;
 
-            // Best practices
             var suggestTypeHints = context.ParseResult.GetValueForOption(suggestTypeHintsOption);
             if (suggestTypeHints.HasValue)
                 overrides.SuggestTypeHints = suggestTypeHints;
@@ -665,12 +648,10 @@ public static class LintCommandBuilder
             if (enforceMemberOrdering.HasValue)
                 overrides.EnforceMemberOrdering = enforceMemberOrdering;
 
-            // Magic numbers whitelist
             var allowedMagicNumbers = context.ParseResult.GetValueForOption(allowedMagicNumbersOption);
             if (allowedMagicNumbers != null)
                 overrides.AllowedMagicNumbers = allowedMagicNumbers;
 
-            // Build config with fail-on overrides
             var failOn = context.ParseResult.GetValueForOption(failOnOption);
             GDProjectConfig? config = null;
             if (failOn != null)

@@ -136,11 +136,9 @@ public static class ValidateCommandBuilder
             var debug = context.ParseResult.GetValueForOption(debugOption);
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
-            // Create logger from verbosity flags
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
-            // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;
             if (groupBy != null)
             {
@@ -152,7 +150,6 @@ public static class ValidateCommandBuilder
                 };
             }
 
-            // Parse min severity
             GDSeverity? minSev = null;
             if (minSeverity != null)
             {
@@ -169,7 +166,6 @@ public static class ValidateCommandBuilder
             var formatter = CommandHelpers.GetFormatter(format);
             var validationChecks = OptionParsers.ParseValidationChecks(checks);
 
-            // Apply individual check overrides
             var checkOverrides = new GDValidationCheckOverrides
             {
                 CheckSyntax = context.ParseResult.GetValueForOption(checkSyntaxOption),
@@ -186,7 +182,6 @@ public static class ValidateCommandBuilder
 
             validationChecks = checkOverrides.ApplyTo(validationChecks);
 
-            // Apply validation config overrides
             var validationConfigOverrides = new GDValidationConfigOverrides
             {
                 NullableStrictness = context.ParseResult.GetValueForOption(nullableStrictnessOption),
@@ -194,7 +189,6 @@ public static class ValidateCommandBuilder
                 WarnOnUntypedParameters = context.ParseResult.GetValueForOption(warnUntypedParametersOption)
             };
 
-            // Build config with fail-on overrides
             var failOn = context.ParseResult.GetValueForOption(failOnOption);
             GDProjectConfig? config = null;
             if (failOn != null || validationConfigOverrides.NullableStrictness != null ||

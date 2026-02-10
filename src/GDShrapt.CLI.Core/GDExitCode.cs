@@ -42,15 +42,12 @@ public static class GDExitCode
         bool failOnWarning = false,
         bool failOnHint = false)
     {
-        // Errors always result in exit code 2
         if (errorCount > 0)
             return Errors;
 
-        // Warnings result in exit code 1 if fail-on-warning is set
         if (failOnWarning && warningCount > 0)
             return WarningsOrHints;
 
-        // Hints result in exit code 1 if fail-on-hint is set
         if (failOnHint && hintCount > 0)
             return WarningsOrHints;
 

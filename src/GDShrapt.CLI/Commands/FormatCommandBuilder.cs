@@ -20,7 +20,6 @@ public static class FormatCommandBuilder
     {
         var command = new Command("format", "Auto-format GDScript files (indentation, spacing, blank lines).\n\nExamples:\n  gdshrapt format                          Format current directory\n  gdshrapt format player.gd                Format a single file\n  gdshrapt format --dry-run                Preview changes\n  gdshrapt format --check                  Check formatting (for CI)");
 
-        // Path argument
         var pathArg = new Argument<string>("path", () => ".", "Path to file or directory");
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
@@ -164,22 +163,18 @@ public static class FormatCommandBuilder
 
             var formatter = CommandHelpers.GetFormatter(format);
 
-            // Build overrides from CLI flags
             var overrides = new GDFormatterOptionsOverrides();
 
-            // Indentation
             var indentStyle = context.ParseResult.GetValueForOption(indentStyleOption);
             if (indentStyle != null)
                 overrides.IndentStyle = OptionParsers.ParseIndentStyle(indentStyle);
 
             overrides.IndentSize = context.ParseResult.GetValueForOption(indentSizeOption);
 
-            // Line ending
             var lineEnding = context.ParseResult.GetValueForOption(lineEndingOption);
             if (lineEnding != null)
                 overrides.LineEnding = OptionParsers.ParseLineEnding(lineEnding);
 
-            // Line length and wrapping
             overrides.MaxLineLength = context.ParseResult.GetValueForOption(maxLineLengthOption);
             overrides.WrapLongLines = context.ParseResult.GetValueForOption(wrapLongLinesOption);
 
@@ -205,7 +200,6 @@ public static class FormatCommandBuilder
 
             overrides.MinMethodChainLengthToWrap = context.ParseResult.GetValueForOption(minChainLengthToWrapOption);
 
-            // Spacing
             overrides.SpaceAroundOperators = context.ParseResult.GetValueForOption(spaceAroundOperatorsOption);
             overrides.SpaceAfterComma = context.ParseResult.GetValueForOption(spaceAfterCommaOption);
             overrides.SpaceAfterColon = context.ParseResult.GetValueForOption(spaceAfterColonOption);
@@ -214,12 +208,10 @@ public static class FormatCommandBuilder
             overrides.SpaceInsideBrackets = context.ParseResult.GetValueForOption(spaceInsideBracketsOption);
             overrides.SpaceInsideBraces = context.ParseResult.GetValueForOption(spaceInsideBracesOption);
 
-            // Blank lines
             overrides.BlankLinesBetweenFunctions = context.ParseResult.GetValueForOption(blankLinesBetweenFunctionsOption);
             overrides.BlankLinesAfterClassDeclaration = context.ParseResult.GetValueForOption(blankLinesAfterClassDeclOption);
             overrides.BlankLinesBetweenMemberTypes = context.ParseResult.GetValueForOption(blankLinesBetweenMemberTypesOption);
 
-            // Cleanup
             overrides.RemoveTrailingWhitespace = context.ParseResult.GetValueForOption(removeTrailingWhitespaceOption);
             overrides.EnsureTrailingNewline = context.ParseResult.GetValueForOption(ensureTrailingNewlineOption);
             overrides.RemoveMultipleTrailingNewlines = context.ParseResult.GetValueForOption(removeMultipleNewlinesOption);

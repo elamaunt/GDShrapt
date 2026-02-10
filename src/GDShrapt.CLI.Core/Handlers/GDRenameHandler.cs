@@ -6,7 +6,6 @@ namespace GDShrapt.CLI.Core;
 /// <summary>
 /// Base rename handler that wraps GDRenameService.
 /// Supports only Strict confidence mode (deterministic, type-verified edits).
-/// Pro version adds Potential and NameMatch confidence modes.
 /// </summary>
 public class GDRenameHandler : IGDRenameHandler
 {

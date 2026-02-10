@@ -74,6 +74,47 @@ var type = semanticModel?.GetTypeForNode(node);
 // - GetMethods(), GetVariables(), GetSignals(), etc.
 ```
 
+## Exit Codes
+
+**CRITICAL:** Always use `GDExitCode` constants, never magic numbers.
+
+| Constant | Value | Meaning |
+|----------|-------|---------|
+| `GDExitCode.Success` | 0 | No issues |
+| `GDExitCode.WarningsOrHints` | 1 | Warnings/hints found (when fail-on configured), or check-only "needs formatting" |
+| `GDExitCode.Errors` | 2 | Errors found in codebase |
+| `GDExitCode.Fatal` | 3 | Project not found, configuration error, or unrecoverable exception |
+
+Use `GDExitCode.FromResults()` for analysis commands. Use `GDExitCode.Fatal` for infrastructure failures (project not found, handler not available).
+
+## Experimental Features
+
+Features under active development use `[Experimental]` prefix in their description:
+
+```csharp
+// Command:
+var command = new Command("watch", "[Experimental] Watch for file changes...");
+
+// Option:
+var opt = new Option<bool>("--incremental", "[Experimental] Only analyze changed files...");
+```
+
+**Experimental features:** `watch` command.
+
+## Potential References Messaging (Rename)
+
+**CRITICAL:** Base CLI must NOT show Pro upsell messages. Potential (duck-typed) references are shown as informational, without advertising Pro:
+
+```csharp
+// Dry-run: show list with neutral label
+"Potential references (5) [lower confidence, not applied]:"
+
+// Apply mode: inform about exclusion
+"5 duck-typed reference(s) found but not applied (lower confidence)."
+```
+
+Never use "Use GDShrapt Pro" or "[Pro only]" in Base CLI output.
+
 ## Known Limitations
 
 1. **Service Priority** - Higher priority modules override lower, no merge

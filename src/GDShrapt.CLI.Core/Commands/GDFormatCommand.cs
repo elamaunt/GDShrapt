@@ -8,9 +8,6 @@ using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
 
-/// <summary>
-/// Formats GDScript files.
-/// </summary>
 public class GDFormatCommand : IGDCommand
 {
     private readonly string _path;
@@ -38,12 +35,8 @@ public class GDFormatCommand : IGDCommand
         _dryRun = dryRun;
         _checkOnly = checkOnly;
 
-        // Start with provided options or try to load from config
         var options = formatterOptions ?? LoadFormatterOptions();
-
-        // Apply CLI overrides on top
         optionsOverrides?.ApplyTo(options);
-
         _codeFormatter = new GDFormatter(options);
     }
 
@@ -51,7 +44,6 @@ public class GDFormatCommand : IGDCommand
     {
         try
         {
-            // Try to find project root and load config
             var fullPath = Path.GetFullPath(_path);
             var searchPath = File.Exists(fullPath) ? Path.GetDirectoryName(fullPath) : fullPath;
 
@@ -90,13 +82,13 @@ public class GDFormatCommand : IGDCommand
             else
             {
                 _outputFormatter.WriteError(_output, $"Path not found: {fullPath}");
-                return Task.FromResult(2);
+                return Task.FromResult(GDExitCode.Errors);
             }
         }
         catch (Exception ex)
         {
             _outputFormatter.WriteError(_output, ex.Message);
-            return Task.FromResult(2);
+            return Task.FromResult(GDExitCode.Errors);
         }
     }
 
@@ -105,7 +97,7 @@ public class GDFormatCommand : IGDCommand
         if (!filePath.EndsWith(".gd", StringComparison.OrdinalIgnoreCase))
         {
             _outputFormatter.WriteError(_output, $"Not a GDScript file: {filePath}");
-            return 2;
+            return GDExitCode.Errors;
         }
 
         var content = File.ReadAllText(filePath, Encoding.UTF8);
@@ -118,7 +110,7 @@ public class GDFormatCommand : IGDCommand
         catch (Exception ex)
         {
             _outputFormatter.WriteError(_output, $"Failed to format: {filePath} - {ex.Message}");
-            return 1;
+            return GDExitCode.Errors;
         }
 
         if (content == formatted)
@@ -127,24 +119,24 @@ public class GDFormatCommand : IGDCommand
             {
                 _outputFormatter.WriteMessage(_output, $"Already formatted: {filePath}");
             }
-            return 0;
+            return GDExitCode.Success;
         }
 
         if (_checkOnly)
         {
             _outputFormatter.WriteMessage(_output, $"Would format: {filePath}");
-            return 1;
+            return GDExitCode.WarningsOrHints;
         }
 
         if (_dryRun)
         {
             _outputFormatter.WriteMessage(_output, $"[Dry run] Would format: {filePath}");
-            return 0;
+            return GDExitCode.Success;
         }
 
         File.WriteAllText(filePath, formatted, Encoding.UTF8);
         _outputFormatter.WriteMessage(_output, $"Formatted: {filePath}");
-        return 0;
+        return GDExitCode.Success;
     }
 
     private int FormatDirectory(string dirPath)
@@ -154,7 +146,7 @@ public class GDFormatCommand : IGDCommand
         if (files.Length == 0)
         {
             _outputFormatter.WriteMessage(_output, $"No GDScript files found in: {dirPath}");
-            return 0;
+            return GDExitCode.Success;
         }
 
         var formattedCount = 0;
@@ -164,15 +156,15 @@ public class GDFormatCommand : IGDCommand
         foreach (var file in files)
         {
             var result = FormatFile(file);
-            if (result == 1 && _checkOnly)
+            if (result == GDExitCode.WarningsOrHints && _checkOnly)
             {
                 wouldFormatCount++;
             }
-            else if (result == 1)
+            else if (result >= GDExitCode.Errors)
             {
                 errorCount++;
             }
-            else if (result == 0 && !_checkOnly)
+            else if (result == GDExitCode.Success && !_checkOnly)
             {
                 formattedCount++;
             }
@@ -183,16 +175,16 @@ public class GDFormatCommand : IGDCommand
             if (wouldFormatCount > 0)
             {
                 _outputFormatter.WriteMessage(_output, $"{wouldFormatCount} file(s) need formatting.");
-                return 1;
+                return GDExitCode.WarningsOrHints;
             }
             else
             {
                 _outputFormatter.WriteMessage(_output, $"All {files.Length} file(s) are properly formatted.");
-                return 0;
+                return GDExitCode.Success;
             }
         }
 
         _outputFormatter.WriteMessage(_output, $"Processed {files.Length} file(s): {formattedCount} formatted, {errorCount} error(s).");
-        return errorCount > 0 ? 1 : 0;
+        return errorCount > 0 ? GDExitCode.Errors : GDExitCode.Success;
     }
 }

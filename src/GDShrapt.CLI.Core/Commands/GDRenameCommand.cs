@@ -9,7 +9,6 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Renames a symbol across the project.
-/// Uses IGDRenameHandler from CLI.Core for rename logic.
 /// </summary>
 public class GDRenameCommand : IGDCommand
 {
@@ -52,12 +51,11 @@ public class GDRenameCommand : IGDCommand
             if (projectRoot == null)
             {
                 _formatter.WriteError(_output, $"Could not find project.godot in or above: {searchPath}");
-                return Task.FromResult(2);
+                return Task.FromResult(GDExitCode.Fatal);
             }
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
 
-            // Initialize service registry and get rename handler
             var registry = new GDServiceRegistry();
             registry.LoadModules(project, new GDBaseModule());
             var renameHandler = registry.GetService<IGDRenameHandler>();
@@ -65,17 +63,21 @@ public class GDRenameCommand : IGDCommand
             if (renameHandler == null)
             {
                 _formatter.WriteError(_output, "Rename handler not available");
-                return Task.FromResult(2);
+                return Task.FromResult(GDExitCode.Fatal);
             }
 
-            // Validate new name
+            if (!renameHandler.ValidateIdentifier(_oldName, out var oldNameError))
+            {
+                _formatter.WriteError(_output, oldNameError ?? $"Invalid identifier: {_oldName}");
+                return Task.FromResult(GDExitCode.Errors);
+            }
+
             if (!renameHandler.ValidateIdentifier(_newName, out var validationError))
             {
                 _formatter.WriteError(_output, validationError ?? $"Invalid identifier: {_newName}");
-                return Task.FromResult(2);
+                return Task.FromResult(GDExitCode.Errors);
             }
 
-            // Plan the rename
             var result = renameHandler.Plan(_oldName, _newName, _filePath);
 
             if (!result.Success)
@@ -103,10 +105,8 @@ public class GDRenameCommand : IGDCommand
 
             if (_dryRun)
             {
-                // Show all edits in dry-run mode
                 _formatter.WriteMessage(_output, $"[Dry run] Would rename {result.Edits.Count} occurrence(s) in {result.FileCount} file(s):");
 
-                // Show strict edits
                 if (result.StrictEdits.Count > 0)
                 {
                     _formatter.WriteMessage(_output, $"\n  Strict references ({result.StrictEdits.Count}):");
@@ -122,10 +122,9 @@ public class GDRenameCommand : IGDCommand
                     }
                 }
 
-                // Show potential edits (Pro-only)
                 if (result.PotentialEdits.Count > 0)
                 {
-                    _formatter.WriteMessage(_output, $"\n  Potential references ({result.PotentialEdits.Count}) [Pro only]:");
+                    _formatter.WriteMessage(_output, $"\n  Potential references ({result.PotentialEdits.Count}) [lower confidence, not applied]:");
                     var potentialByFile = result.PotentialEdits.GroupBy(e => e.FilePath);
                     foreach (var fileGroup in potentialByFile)
                     {
@@ -140,18 +139,17 @@ public class GDRenameCommand : IGDCommand
             }
             else
             {
-                // Base CLI: Apply only Strict edits (Potential/NameMatch require Pro)
+                // Base CLI: Apply only Strict edits (type-verified)
                 if (result.StrictEdits.Count == 0)
                 {
-                    _formatter.WriteMessage(_output, $"No confirmed references found for '{_oldName}'.");
+                    _formatter.WriteMessage(_output, $"No type-verified references found for '{_oldName}'.");
                     if (result.PotentialEdits.Count > 0)
                     {
-                        _formatter.WriteMessage(_output, $"{result.PotentialEdits.Count} potential reference(s) found. Use GDShrapt Pro to apply them.");
+                        _formatter.WriteMessage(_output, $"{result.PotentialEdits.Count} duck-typed reference(s) found but not applied (lower confidence).");
                     }
                     return Task.FromResult(0);
                 }
 
-                // Apply Strict edits only
                 var strictByFile = result.StrictEdits.GroupBy(e => e.FilePath);
                 foreach (var fileGroup in strictByFile)
                 {
@@ -161,11 +159,9 @@ public class GDRenameCommand : IGDCommand
                 var strictFileCount = result.StrictEdits.Select(e => e.FilePath).Distinct().Count();
                 _formatter.WriteMessage(_output, $"Renamed {result.StrictEdits.Count} confirmed reference(s) in {strictFileCount} file(s).");
 
-                // Inform about Potential edits (Pro-only)
                 if (result.PotentialEdits.Count > 0)
                 {
-                    _formatter.WriteMessage(_output, $"\n{result.PotentialEdits.Count} additional potential reference(s) found.");
-                    _formatter.WriteMessage(_output, "Use GDShrapt Pro with --confidence=potential to apply them.");
+                    _formatter.WriteMessage(_output, $"\n{result.PotentialEdits.Count} additional duck-typed reference(s) found but not applied (lower confidence).");
                 }
             }
 
@@ -174,7 +170,7 @@ public class GDRenameCommand : IGDCommand
         catch (Exception ex)
         {
             _formatter.WriteError(_output, ex.Message);
-            return Task.FromResult(2);
+            return Task.FromResult(GDExitCode.Errors);
         }
     }
 

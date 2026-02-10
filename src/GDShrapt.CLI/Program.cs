@@ -22,13 +22,11 @@ public class Program
 
         var rootCommand = new RootCommand("GDShrapt - GDScript analysis and refactoring CLI");
 
-        // Global options - Output format
         var formatOption = new Option<string>(
             aliases: new[] { "--format", "-f" },
             getDefaultValue: () => "text",
             description: "Output format (text, json)");
 
-        // Global options - Verbosity
         var verboseOption = new Option<bool>(
             aliases: new[] { "--verbose", "-v" },
             description: "Shorthand for --log-level verbose");
@@ -41,7 +39,6 @@ public class Program
             aliases: new[] { "--quiet", "-q" },
             description: "Shorthand for --log-level error");
 
-        // Global options - Performance and execution
         var maxParallelismOption = new Option<int?>(
             aliases: new[] { "--max-parallelism" },
             description: "Maximum parallelism (-1 = auto, 0 = sequential)");
@@ -84,7 +81,6 @@ public class Program
             return 1;
         }
 
-        // Add all commands using builders
         rootCommand.AddCommand(AnalyzeCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
         rootCommand.AddCommand(CheckCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
         rootCommand.AddCommand(LintCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
@@ -96,7 +92,6 @@ public class Program
         rootCommand.AddCommand(ParseCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
         rootCommand.AddCommand(ExtractStyleCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
 
-        // Analysis commands
         rootCommand.AddCommand(MetricsCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
         rootCommand.AddCommand(DeadCodeCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
         rootCommand.AddCommand(DepsCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
@@ -106,7 +101,7 @@ public class Program
         rootCommand.AddCommand(InitCommandBuilder.Build());
         rootCommand.AddCommand(WatchCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
 
-        // Configure ANSI colors based on --color option (parse early before command execution)
+        // Pre-parse: --color must apply before command execution
         var colorArg = GetOptionValue(args, "--color");
         GDAnsiColors.Configure(colorArg);
 

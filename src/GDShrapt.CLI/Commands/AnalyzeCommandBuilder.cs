@@ -57,11 +57,9 @@ public static class AnalyzeCommandBuilder
             var debug = context.ParseResult.GetValueForOption(debugOption);
             var quiet = context.ParseResult.GetValueForOption(quietOption);
 
-            // Create logger from verbosity flags
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
-            // Parse group-by
             GDGroupBy groupByMode = GDGroupBy.File;
             if (groupBy != null)
             {
@@ -73,7 +71,6 @@ public static class AnalyzeCommandBuilder
                 };
             }
 
-            // Build config with fail-on overrides
             GDProjectConfig? config = null;
             if (failOn != null)
             {
@@ -90,7 +87,6 @@ public static class AnalyzeCommandBuilder
                 }
             }
 
-            // Parse min severity
             GDSeverity? minSev = null;
             if (minSeverity != null)
             {

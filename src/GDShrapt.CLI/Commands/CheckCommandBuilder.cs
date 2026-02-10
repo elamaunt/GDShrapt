@@ -44,7 +44,6 @@ public static class CheckCommandBuilder
             var silent = context.ParseResult.GetValueForOption(silentOption);
             var failOn = context.ParseResult.GetValueForOption(failOnOption);
 
-            // Build config with fail-on overrides
             GDProjectConfig? config = null;
             if (failOn != null)
             {
@@ -58,7 +57,6 @@ public static class CheckCommandBuilder
                         config.Cli.FailOnWarning = true;
                         config.Cli.FailOnHint = true;
                         break;
-                    // "error" is the default, no changes needed
                 }
             }
 

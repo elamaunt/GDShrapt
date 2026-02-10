@@ -9,8 +9,6 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Analyzes a GDScript project and outputs diagnostics.
-/// Exit codes: 0=Success, 1=Warnings/Hints (if fail-on configured), 2=Errors, 3=Fatal.
-/// Uses the unified GDDiagnosticsService for consistent diagnostics across CLI, LSP, and Plugin.
 /// </summary>
 public class GDAnalyzeCommand : GDProjectCommandBase
 {
