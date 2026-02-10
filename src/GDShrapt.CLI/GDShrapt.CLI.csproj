@@ -9,21 +9,7 @@
     <RootNamespace>GDShrapt.CLI</RootNamespace>
     <AssemblyName>GDShrapt.CLI</AssemblyName>
 
-    <!-- NuGet Tool Configuration -->
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>gdshrapt</ToolCommandName>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
-
-    <!-- Package Metadata -->
-    <PackageId>GDShrapt.CLI</PackageId>
-    <Version>6.0.0</Version>
-    <Authors>elamaunt</Authors>
-    <Description>GDScript analysis and refactoring CLI tool for Godot Engine</Description>
-    <PackageTags>godot;gdscript;linter;analyzer;cli;refactoring</PackageTags>
-    <PackageProjectUrl>https://github.com/elamaunt/GDShrapt</PackageProjectUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/elamaunt/GDShrapt</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
