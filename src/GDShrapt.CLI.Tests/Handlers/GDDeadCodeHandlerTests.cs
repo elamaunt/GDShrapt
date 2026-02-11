@@ -1173,4 +1173,281 @@ func get_health_display() -> String:
             TestProjectHelper.DeleteTempProject(tempPath);
         }
     }
+
+    // === Override method / polymorphic call tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_OverrideMethodCalledViaBaseType_NoFalsePositive()
+    {
+        var entityCode = @"extends Node2D
+class_name Entity
+
+var _health: int = 100
+
+func take_damage(amount: int) -> void:
+    _health -= amount
+
+func is_alive() -> bool:
+    return _health > 0
+
+func get_health() -> int:
+    return _health
+";
+        var enemyBasicCode = @"extends Entity
+class_name EnemyBasic
+
+func take_damage(amount: int) -> void:
+    _health -= amount * 2
+";
+        var enemyFastCode = @"extends Entity
+class_name EnemyFast
+
+func take_damage(amount: int) -> void:
+    _health -= amount
+";
+        var towerCode = @"extends Node2D
+
+var target: Entity
+
+func _process(_delta: float) -> void:
+    if target != null:
+        target.take_damage(10)
+        if target.is_alive():
+            print(target.get_health())
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("entity.gd", entityCode),
+            ("enemy_basic.gd", enemyBasicCode),
+            ("enemy_fast.gd", enemyFastCode),
+            ("tower.gd", towerCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "take_damage",
+                "take_damage is called on Entity type, all overrides are used");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "is_alive",
+                "is_alive is called on Entity type");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "get_health",
+                "get_health is called on Entity type");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_DeepOverrideChain_NoFalsePositive()
+    {
+        var entityCode = @"extends Node2D
+class_name Entity
+
+func take_damage(amount: int) -> void:
+    pass
+";
+        var enemyBaseCode = @"extends Entity
+class_name EnemyBase
+
+func take_damage(amount: int) -> void:
+    pass
+";
+        var enemyTankCode = @"extends EnemyBase
+class_name EnemyTank
+
+func take_damage(amount: int) -> void:
+    pass
+";
+        var towerCode = @"extends Node2D
+
+func shoot(target: Entity) -> void:
+    target.take_damage(10)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("entity.gd", entityCode),
+            ("enemy_base.gd", enemyBaseCode),
+            ("enemy_tank.gd", enemyTankCode),
+            ("tower.gd", towerCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "take_damage",
+                "All take_damage overrides should be recognized as used through the 3-level chain");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_UnusedOverride_StillReported()
+    {
+        var baseCode = @"extends Node
+class_name BaseClass
+
+func never_called() -> void:
+    pass
+";
+        var childCode = @"extends BaseClass
+class_name ChildClass
+
+func never_called() -> void:
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("base_class.gd", baseCode),
+            ("child_class.gd", childCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "never_called",
+                "Both base and child never_called should be reported as dead");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Constants cross-file access tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_ConstantUsedCrossFile_NoFalsePositive()
+    {
+        var constantsCode = @"extends RefCounted
+class_name Constants
+
+const MAX_WAVES: int = 10
+const STARTING_GOLD: int = 100
+const UNUSED_CONST: int = 999
+";
+        var gameCode = @"extends Node
+
+func _ready() -> void:
+    print(Constants.MAX_WAVES)
+    var gold = Constants.STARTING_GOLD
+    print(gold)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("constants.gd", constantsCode),
+            ("game.gd", gameCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                IncludeConstants = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Constant && item.Name == "MAX_WAVES",
+                "MAX_WAVES is used cross-file via Constants.MAX_WAVES");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Constant && item.Name == "STARTING_GOLD",
+                "STARTING_GOLD is used cross-file via Constants.STARTING_GOLD");
+
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Constant && item.Name == "UNUSED_CONST");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_ConstantUsedViaAutoload_NoFalsePositive()
+    {
+        var constantsCode = @"extends Node
+
+const MAX_WAVES: int = 10
+";
+        var gameCode = @"extends Node
+
+func _ready() -> void:
+    print(Constants.MAX_WAVES)
+";
+        var tempPath = TestProjectHelper.CreateTempProjectWithAutoloads(
+            new[] { ("constants.gd", constantsCode), ("game.gd", gameCode) },
+            new[] { ("Constants", "constants.gd") });
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                IncludeConstants = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Constant && item.Name == "MAX_WAVES",
+                "MAX_WAVES is used cross-file via Constants.MAX_WAVES autoload");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
 }

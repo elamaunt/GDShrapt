@@ -339,37 +339,37 @@ public class ProjectSearchTests
     }
 
     [TestMethod]
-    public void GetCallSitesForMethod_DuckTypedCallsRegisteredUnderWildcard()
+    public void GetCallSitesForMethod_TypedCallsRegisteredUnderResolvedType()
     {
-        // Arrange: base_obj.base_method() in user.gd is a member access call,
-        // which the call site updater registers as duck-typed with target class "*"
+        // Arrange: base_obj.base_method() in user.gd is a typed call (base_obj: BaseClass),
+        // so call site updater resolves the type and registers under "BaseClass"
         var project = CreateMultiFileProjectWithCallSites();
         var model = new GDProjectSemanticModel(project);
 
         // Act
-        var callSites = model.GetCallSitesForMethod("*", "base_method");
+        var callSites = model.GetCallSitesForMethod("BaseClass", "base_method");
 
         // Assert
         callSites.Should().NotBeNull("call sites list should not be null");
-        callSites.Should().NotBeEmpty("base_obj.base_method() is a duck-typed call registered under wildcard");
+        callSites.Should().NotBeEmpty("base_obj.base_method() is a typed call registered under BaseClass");
     }
 
     [TestMethod]
-    public void GetCallSitesForMethod_DuckTypedEntryIsFlagged()
+    public void GetCallSitesForMethod_TypedEntryIsNotDuckTyped()
     {
         // Arrange
         var project = CreateMultiFileProjectWithCallSites();
         var model = new GDProjectSemanticModel(project);
 
         // Act
-        var callSites = model.GetCallSitesForMethod("*", "base_method");
+        var callSites = model.GetCallSitesForMethod("BaseClass", "base_method");
 
         // Assert
         callSites.Should().NotBeEmpty();
         foreach (var entry in callSites)
         {
-            entry.IsDuckTyped.Should().BeTrue("member access calls are duck-typed");
-            entry.Confidence.Should().Be(GDReferenceConfidence.Potential);
+            entry.IsDuckTyped.Should().BeFalse("typed member access calls are not duck-typed");
+            entry.Confidence.Should().Be(GDReferenceConfidence.Strict);
         }
     }
 

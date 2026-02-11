@@ -31,12 +31,23 @@ public class GDDeadCodeCommand : GDProjectCommandBase
         _options = options ?? new GDDeadCodeCommandOptions();
     }
 
+    protected override GDScriptProjectOptions? GetProjectOptions()
+    {
+        return new GDScriptProjectOptions
+        {
+            EnableCallSiteRegistry = true
+        };
+    }
+
     protected override Task<int> ExecuteOnProjectAsync(
         GDScriptProject project,
         string projectRoot,
         GDProjectConfig config,
         CancellationToken cancellationToken)
     {
+        // Build call site registry for cross-file call tracking
+        project.BuildCallSiteRegistry(cancellationToken);
+
         // Create semantic model for accurate dead code detection
         var projectModel = new GDProjectSemanticModel(project);
         var handler = Registry?.GetService<IGDDeadCodeHandler>() ?? new GDDeadCodeHandler(projectModel);

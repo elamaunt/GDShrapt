@@ -227,9 +227,7 @@ namespace GDShrapt.Semantics
                 if (string.IsNullOrEmpty(calledName))
                     continue;
 
-                // Determine target class (for now, use duck-typing approach)
-                // A more sophisticated implementation would use type inference
-                var (targetClassName, confidence, isDuckTyped) = InferTargetClass(call, file);
+                var (targetClassName, confidence, isDuckTyped) = InferTargetClass(call, file, method);
 
                 if (string.IsNullOrEmpty(targetClassName))
                     continue;
@@ -268,23 +266,23 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Infers the target class for a call expression.
+        /// Resolves typed receivers (parameters, variables, super) when possible.
         /// </summary>
         private (string? ClassName, GDReferenceConfidence Confidence, bool IsDuckTyped) InferTargetClass(
             GDCallExpression call,
-            GDScriptFile file)
+            GDScriptFile file,
+            GDMethodDeclaration method)
         {
             var callee = call.CallerExpression;
 
             // Simple identifier: foo() - this is a call to self or global
             if (callee is GDIdentifierExpression)
             {
-                // Check if it's a method on this class
                 var className = file.TypeName ?? file.Class?.ClassName?.Identifier?.ToString();
                 if (!string.IsNullOrEmpty(className))
                 {
                     return (className, GDReferenceConfidence.Strict, false);
                 }
-                // Otherwise it might be a global/built-in function
                 return (null, GDReferenceConfidence.NameMatch, false);
             }
 
@@ -293,27 +291,94 @@ namespace GDShrapt.Semantics
             {
                 var receiver = memberExpr.CallerExpression;
 
-                // self.foo()
-                if (receiver is GDIdentifierExpression selfIdent &&
-                    selfIdent.Identifier?.Sequence == "self")
+                if (receiver is GDIdentifierExpression receiverIdent)
                 {
-                    var className = file.TypeName ?? file.Class?.ClassName?.Identifier?.ToString();
-                    return (className, GDReferenceConfidence.Strict, false);
+                    var receiverName = receiverIdent.Identifier?.Sequence;
+
+                    // self.foo()
+                    if (receiverName == "self")
+                    {
+                        var className = file.TypeName ?? file.Class?.ClassName?.Identifier?.ToString();
+                        return (className, GDReferenceConfidence.Strict, false);
+                    }
+
+                    // super.foo() → parent class
+                    if (receiverName == "super")
+                    {
+                        var parentType = file.Class?.Extends?.Type?.BuildName();
+                        if (!string.IsNullOrEmpty(parentType))
+                            return (parentType, GDReferenceConfidence.Strict, false);
+                    }
+
+                    // Try to resolve receiver type from parameter declarations
+                    var paramType = ResolveIdentifierType(receiverName, method, file);
+                    if (!string.IsNullOrEmpty(paramType))
+                        return (paramType, GDReferenceConfidence.Strict, false);
                 }
 
-                // Try to get type from the receiver
-                // For now, use duck-typing (method name match)
-                // A full implementation would use type inference engine
-                var methodName = GetCalledMethodName(call);
-                if (!string.IsNullOrEmpty(methodName))
+                // Fallback: duck-typed call
+                var calledMethodName = GetCalledMethodName(call);
+                if (!string.IsNullOrEmpty(calledMethodName))
                 {
-                    // Duck-typed call - we'll index by method name
-                    // The registry will need to handle lookups by method name alone
                     return ("*", GDReferenceConfidence.Potential, true);
                 }
             }
 
             return (null, GDReferenceConfidence.NameMatch, false);
+        }
+
+        /// <summary>
+        /// Tries to resolve the type of an identifier from method parameters,
+        /// local variable declarations, or class-level variable declarations.
+        /// </summary>
+        private string ResolveIdentifierType(
+            string identifierName,
+            GDMethodDeclaration method,
+            GDScriptFile file)
+        {
+            if (string.IsNullOrEmpty(identifierName))
+                return null;
+
+            // Check method parameters
+            if (method.Parameters != null)
+            {
+                foreach (var param in method.Parameters)
+                {
+                    if (param.Identifier?.Sequence == identifierName && param.Type != null)
+                    {
+                        var typeName = param.Type.BuildName();
+                        if (!string.IsNullOrEmpty(typeName))
+                            return typeName;
+                    }
+                }
+            }
+
+            // Check local variable declarations (var x: Type) in the method body
+            foreach (var varDecl in method.AllNodes.OfType<GDVariableDeclarationStatement>())
+            {
+                if (varDecl.Identifier?.Sequence == identifierName && varDecl.Type != null)
+                {
+                    var typeName = varDecl.Type.BuildName();
+                    if (!string.IsNullOrEmpty(typeName))
+                        return typeName;
+                }
+            }
+
+            // Check class-level variable declarations
+            if (file.Class != null)
+            {
+                foreach (var member in file.Class.Members.OfType<GDVariableDeclaration>())
+                {
+                    if (member.Identifier?.Sequence == identifierName && member.Type != null)
+                    {
+                        var typeName = member.Type.BuildName();
+                        if (!string.IsNullOrEmpty(typeName))
+                            return typeName;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

@@ -159,7 +159,7 @@ public class GDDeadCodeService
         // 6. Find unused constants
         if (options.IncludeConstants)
         {
-            foreach (var item in FindUnusedConstants(file, classDecl, semanticModel, options))
+            foreach (var item in FindUnusedConstants(file, classDecl, effectiveNames, semanticModel, options))
                 yield return item;
         }
 
@@ -369,6 +369,21 @@ public class GDDeadCodeService
             return (true, GDReferenceConfidence.Strict, "Has cross-file callers");
         }
 
+        // 3.6 Check if this is an override of a base class method that has callers
+        if (IsOverrideMethodUsed(file, methodName))
+            return (true, GDReferenceConfidence.Strict, "Override of called base method");
+
+        // 3.7 Check duck-typed ("*") call site entries — calls on unresolved receiver types
+        if (_callSiteRegistry != null)
+        {
+            var duckCallers = _callSiteRegistry.GetCallersOf("*", methodName);
+            if (duckCallers.Count > 0)
+            {
+                return (false, GDReferenceConfidence.Potential,
+                    $"May be called via duck-typing ({duckCallers.Count} potential site(s))");
+            }
+        }
+
         // 4. Check duck-type calls (by method name only) if allowed
         if (options.MaxConfidence >= GDReferenceConfidence.NameMatch && _callSiteRegistry != null)
         {
@@ -384,6 +399,63 @@ public class GDDeadCodeService
         }
 
         return (false, GDReferenceConfidence.Strict, "No callers found");
+    }
+
+    /// <summary>
+    /// Checks if a method is an override of a base class method that has callers.
+    /// If ParentClass.M() is called anywhere, ChildClass.M() (an override) is also used.
+    /// </summary>
+    private bool IsOverrideMethodUsed(GDScriptFile file, string methodName)
+    {
+        if (file.Class == null)
+            return false;
+
+        var extendsTypeName = file.Class.Extends?.Type?.BuildName();
+        if (string.IsNullOrEmpty(extendsTypeName))
+            return false;
+
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var current = extendsTypeName;
+
+        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        {
+            var parentFile = _project.GetScriptByTypeName(current);
+            if (parentFile?.Class == null)
+                break;
+
+            var hasMethod = parentFile.Class.Members
+                .OfType<GDMethodDeclaration>()
+                .Any(m => m.Identifier?.Sequence == methodName);
+
+            if (hasMethod)
+            {
+                var parentEffectiveNames = GetEffectiveClassNames(parentFile, parentFile.TypeName);
+
+                if (_callSiteRegistry != null)
+                {
+                    foreach (var name in parentEffectiveNames)
+                    {
+                        if (_callSiteRegistry.GetCallersOf(name, methodName).Count > 0)
+                            return true;
+                    }
+                }
+
+                if (HasCrossFileMemberAccess(parentFile, parentEffectiveNames, methodName))
+                    return true;
+
+                var parentModel = _projectModel.GetSemanticModel(parentFile);
+                if (parentModel != null)
+                {
+                    var sym = parentModel.FindSymbol(methodName);
+                    if (sym != null && parentModel.GetReferencesTo(sym).Count > 0)
+                        return true;
+                }
+            }
+
+            current = parentFile.Class.Extends?.Type?.BuildName();
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -648,6 +720,7 @@ public class GDDeadCodeService
     private IEnumerable<GDDeadCodeItem> FindUnusedConstants(
         GDScriptFile file,
         GDClassDeclaration classDecl,
+        List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
@@ -679,6 +752,10 @@ public class GDDeadCodeService
 
             if (reads.Count == 0)
             {
+                // Check cross-file access using all effective names
+                if (HasCrossFileMemberAccess(file, effectiveNames, constName))
+                    continue;
+
                 var token = constant.Identifier ?? constant.AllTokens.FirstOrDefault();
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Constant, constName, file.FullPath ?? "")
