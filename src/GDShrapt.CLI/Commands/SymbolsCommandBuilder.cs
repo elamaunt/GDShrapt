@@ -17,7 +17,7 @@ public static class SymbolsCommandBuilder
         Option<bool> quietOption,
         Option<string?> logLevelOption)
     {
-        var command = new Command("symbols", "List all classes, functions, variables, and signals in a file.\n\nExamples:\n  gdshrapt symbols player.gd               List symbols\n  gdshrapt symbols player.gd --format json JSON output");
+        var command = new Command("symbols", "List all symbols (classes, functions, variables, signals, constants) in a GDScript file.\nShows symbol kind, type annotation, and location.\n\nExamples:\n  gdshrapt symbols player.gd                             List all symbols\n  gdshrapt symbols scripts/entity.gd --format json       Output as JSON");
 
         var fileArg = new Argument<string>("file", "Path to the GDScript file");
         command.AddArgument(fileArg);

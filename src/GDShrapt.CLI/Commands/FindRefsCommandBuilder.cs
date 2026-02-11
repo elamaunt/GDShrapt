@@ -17,30 +17,40 @@ public static class FindRefsCommandBuilder
         Option<bool> quietOption,
         Option<string?> logLevelOption)
     {
-        var command = new Command("find-refs", "Find all usages of a symbol across the project.\n\nExamples:\n  gdshrapt find-refs my_variable           Find all references\n  gdshrapt find-refs health --file p.gd    Search in one file");
+        var command = new Command("find-refs", "Find all references to a symbol across the project.\nSearch by name or by position in a file (--line/--column).\n\nExamples:\n  gdshrapt find-refs health                              Find by symbol name\n  gdshrapt find-refs take_damage -p ./my-project         Search in specific project\n  gdshrapt find-refs health --file player.gd             Search in one file only\n  gdshrapt find-refs --file player.gd --line 15          Find symbol at line 15\n  gdshrapt find-refs --file player.gd --line 15 --column 8  With column\n  gdshrapt find-refs health --format json                 Output as JSON");
 
-        var symbolArg = new Argument<string>("symbol", "Symbol name to find references for");
+        var symbolArg = new Argument<string?>("symbol", () => null, "Symbol name to find references for (optional if --line is used)");
         var projectOption = new Option<string>(
             new[] { "--project", "-p" },
             getDefaultValue: () => ".",
             description: "Path to the Godot project");
         var fileOption = new Option<string?>(
             new[] { "--file" },
-            "Limit search to a specific file");
+            "Path to a specific GDScript file (required with --line)");
+        var lineOption = new Option<int?>(
+            new[] { "--line" },
+            "Line number (1-based) to identify symbol at position. Requires --file");
+        var columnOption = new Option<int?>(
+            new[] { "--column" },
+            "Column number (1-based, default: 1). Used with --line");
 
         command.AddArgument(symbolArg);
         command.AddOption(projectOption);
         command.AddOption(fileOption);
+        command.AddOption(lineOption);
+        command.AddOption(columnOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
             var symbol = context.ParseResult.GetValueForArgument(symbolArg);
             var projectPath = context.ParseResult.GetValueForOption(projectOption)!;
             var filePath = context.ParseResult.GetValueForOption(fileOption);
+            var line = context.ParseResult.GetValueForOption(lineOption);
+            var column = context.ParseResult.GetValueForOption(columnOption);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
 
             var formatter = CommandHelpers.GetFormatter(format);
-            var cmd = new GDFindRefsCommand(symbol, projectPath, filePath, formatter);
+            var cmd = new GDFindRefsCommand(symbol, projectPath, filePath, formatter, line: line, column: column);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 
