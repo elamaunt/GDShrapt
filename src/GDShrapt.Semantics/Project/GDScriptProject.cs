@@ -39,6 +39,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private readonly GDScriptProjectOptions? _options;
     private FileSystemWatcher? _scriptsWatcher;
     private bool _disposed;
+    private IReadOnlyList<GDAutoloadEntry>? _autoloadEntries;
 
     #region Events
 
@@ -124,6 +125,23 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// May be null if call site tracking is not enabled.
     /// </summary>
     public GDCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
+
+    /// <summary>
+    /// Autoload entries parsed from project.godot.
+    /// Lazy-loaded on first access.
+    /// </summary>
+    public IReadOnlyList<GDAutoloadEntry> AutoloadEntries
+    {
+        get
+        {
+            if (_autoloadEntries == null)
+            {
+                var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
+                _autoloadEntries = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
+            }
+            return _autoloadEntries;
+        }
+    }
 
     /// <summary>
     /// Logger for diagnostic output.

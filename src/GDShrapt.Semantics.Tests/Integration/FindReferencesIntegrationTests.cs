@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 using System.Linq;
 
 namespace GDShrapt.Semantics.Tests;
@@ -441,6 +442,214 @@ public class FindReferencesIntegrationTests
 
         var references = IntegrationTestHelpers.CollectReferencesInScript(script, "non_existent_symbol_xyz");
         Assert.AreEqual(0, references.Count, "Non-existent symbol should return empty");
+    }
+
+    #endregion
+
+    #region Cross-File Autoload and Static References
+
+    [TestMethod]
+    public void FindReferences_AutoloadMethodCalledCrossFile_DetectsReference()
+    {
+        // Arrange — GameManager autoload with start_game(), called from main.gd
+        var tempDir = Path.Combine(Path.GetTempPath(), "GDShrapt_Test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(tempDir, "game_manager.gd"),
+                "extends Node\nclass_name GameManager\n\nfunc start_game() -> void:\n\tpass\n");
+            File.WriteAllText(Path.Combine(tempDir, "main.gd"),
+                "extends Node\n\nfunc _ready() -> void:\n\tGameManager.start_game()\n");
+            File.WriteAllText(Path.Combine(tempDir, "project.godot"),
+                "[gd_resource]\n\n[autoload]\nGameManager=\"*res://game_manager.gd\"\n");
+
+            using var project = GDProjectLoader.LoadProject(tempDir);
+
+            // Get semantic models
+            var mainScript = project.ScriptFiles.FirstOrDefault(f =>
+                f.FullPath != null && f.FullPath.EndsWith("main.gd"));
+            Assert.IsNotNull(mainScript, "main.gd not found");
+
+            var mainModel = mainScript.SemanticModel;
+            Assert.IsNotNull(mainModel, "main.gd semantic model should exist");
+
+            // Act — check that main.gd has member access for GameManager.start_game
+            var hasAccess = mainModel.HasMemberAccesses("GameManager", "start_game");
+
+            // Assert
+            Assert.IsTrue(hasAccess,
+                "main.gd should have member access reference for GameManager.start_game");
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [TestMethod]
+    public void FindReferences_StaticMethodCrossFile_DetectsReference()
+    {
+        // Arrange — Constants class with static method, called from enemy.gd
+        var tempDir = Path.Combine(Path.GetTempPath(), "GDShrapt_Test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(tempDir, "constants.gd"),
+                "extends RefCounted\nclass_name Constants\n\nstatic func get_enemy_data(enemy_type: int) -> Dictionary:\n\treturn {}\n");
+            File.WriteAllText(Path.Combine(tempDir, "enemy.gd"),
+                "extends Node\n\nfunc _ready() -> void:\n\tvar data = Constants.get_enemy_data(1)\n\tprint(data)\n");
+            File.WriteAllText(Path.Combine(tempDir, "project.godot"),
+                "[gd_resource]\n");
+
+            using var project = GDProjectLoader.LoadProject(tempDir);
+
+            // Get semantic model for enemy.gd
+            var enemyScript = project.ScriptFiles.FirstOrDefault(f =>
+                f.FullPath != null && f.FullPath.EndsWith("enemy.gd"));
+            Assert.IsNotNull(enemyScript, "enemy.gd not found");
+
+            var enemyModel = enemyScript.SemanticModel;
+            Assert.IsNotNull(enemyModel, "enemy.gd semantic model should exist");
+
+            // Act — check that enemy.gd has member access for Constants.get_enemy_data
+            var hasAccess = enemyModel.HasMemberAccesses("Constants", "get_enemy_data");
+
+            // Assert
+            Assert.IsTrue(hasAccess,
+                "enemy.gd should have member access reference for Constants.get_enemy_data");
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [TestMethod]
+    public void FindReferences_AutoloadMethodInSubdirectory_DetectsReference()
+    {
+        // Arrange — autoload in subdirectory, non-static method with params
+        var tempDir = Path.Combine(Path.GetTempPath(), "GDShrapt_Test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            // Create subdirectory structure
+            var autoloadDir = Path.Combine(tempDir, "src", "autoload");
+            var systemsDir = Path.Combine(tempDir, "src", "systems");
+            Directory.CreateDirectory(autoloadDir);
+            Directory.CreateDirectory(systemsDir);
+
+            File.WriteAllText(Path.Combine(autoloadDir, "game_manager.gd"),
+                "extends Node\nclass_name GameManager\n\nvar current_gold: int = 100\n\nfunc spend_gold(amount: int) -> bool:\n\treturn current_gold >= amount\n");
+            File.WriteAllText(Path.Combine(systemsDir, "tower_placement.gd"),
+                "extends Node\n\nfunc _try_place() -> void:\n\tif not GameManager.spend_gold(50):\n\t\treturn\n\tprint(\"placed\")\n");
+            File.WriteAllText(Path.Combine(tempDir, "project.godot"),
+                "[gd_resource]\n\n[autoload]\nGameManager=\"*res://src/autoload/game_manager.gd\"\n");
+
+            using var project = GDProjectLoader.LoadProject(tempDir);
+
+            // Get semantic model for tower_placement.gd
+            var callerScript = project.ScriptFiles.FirstOrDefault(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("tower_placement.gd"));
+            Assert.IsNotNull(callerScript, "tower_placement.gd not found");
+
+            var callerModel = callerScript.SemanticModel;
+            Assert.IsNotNull(callerModel, "tower_placement.gd semantic model should exist");
+
+            // Act — check that tower_placement.gd has member access for GameManager.spend_gold
+            var hasAccess = callerModel.HasMemberAccesses("GameManager", "spend_gold");
+
+            // Assert
+            Assert.IsTrue(hasAccess,
+                "tower_placement.gd should have member access reference for GameManager.spend_gold");
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [TestMethod]
+    public void FindReferences_AutoloadWithoutClassName_DetectsReference()
+    {
+        // Arrange — autoload registered as "GameManager" but script has NO class_name
+        // Reference collector should store member access under autoload name "GameManager"
+        var tempDir = Path.Combine(Path.GetTempPath(), "GDShrapt_Test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var autoloadDir = Path.Combine(tempDir, "src", "autoload");
+            Directory.CreateDirectory(autoloadDir);
+
+            // No class_name GameManager — just extends Node
+            File.WriteAllText(Path.Combine(autoloadDir, "game_manager.gd"),
+                "extends Node\n\nfunc spend_gold(amount: int) -> bool:\n\treturn amount > 0\n");
+            File.WriteAllText(Path.Combine(tempDir, "caller.gd"),
+                "extends Node\n\nfunc _ready() -> void:\n\tif not GameManager.spend_gold(50):\n\t\treturn\n");
+            File.WriteAllText(Path.Combine(tempDir, "project.godot"),
+                "[gd_resource]\n\n[autoload]\nGameManager=\"*res://src/autoload/game_manager.gd\"\n");
+
+            using var project = GDProjectLoader.LoadProject(tempDir);
+
+            var callerScript = project.ScriptFiles.FirstOrDefault(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("caller.gd"));
+            Assert.IsNotNull(callerScript, "caller.gd not found");
+
+            var callerModel = callerScript.SemanticModel;
+            Assert.IsNotNull(callerModel, "caller.gd semantic model should exist");
+
+            // Act — reference collector stores access under "GameManager" (autoload name)
+            var hasAccess = callerModel.HasMemberAccesses("GameManager", "spend_gold");
+
+            // Assert
+            Assert.IsTrue(hasAccess,
+                "caller.gd should have member access reference for GameManager.spend_gold even without class_name");
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [TestMethod]
+    public void FindReferences_InheritedMethodCalledInChild_DetectsReference()
+    {
+        // Arrange — entity.gd defines heal(), enemy.gd extends Entity and calls bare heal()
+        var tempDir = Path.Combine(Path.GetTempPath(), "GDShrapt_Test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(tempDir, "entity.gd"),
+                "extends Node2D\nclass_name Entity\n\nfunc heal(amount: int) -> void:\n\tpass\n");
+            File.WriteAllText(Path.Combine(tempDir, "enemy.gd"),
+                "extends Entity\n\nfunc _ability_heal() -> void:\n\theal(50)\n");
+            File.WriteAllText(Path.Combine(tempDir, "project.godot"),
+                "[gd_resource]\n");
+
+            using var project = GDProjectLoader.LoadProject(tempDir);
+
+            var enemyScript = project.ScriptFiles.FirstOrDefault(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("enemy.gd"));
+            Assert.IsNotNull(enemyScript, "enemy.gd not found");
+
+            var enemyModel = enemyScript.SemanticModel;
+            Assert.IsNotNull(enemyModel, "enemy.gd semantic model should exist");
+
+            // Act — bare heal() call should register as member access on Entity
+            var hasAccess = enemyModel.HasMemberAccesses("Entity", "heal");
+
+            // Assert
+            Assert.IsTrue(hasAccess,
+                "enemy.gd should have member access reference for Entity.heal via inherited bare call");
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
     }
 
     #endregion

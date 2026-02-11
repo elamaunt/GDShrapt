@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Tests;
@@ -147,6 +148,32 @@ config/name=""TestProject""
                 // Ignore cleanup errors
             }
         }
+    }
+
+    /// <summary>
+    /// Creates a temporary Godot project with autoload entries in project.godot.
+    /// </summary>
+    /// <param name="scripts">Tuples of (filename, content) for .gd files</param>
+    /// <param name="autoloads">Tuples of (name, path) for autoload entries</param>
+    /// <returns>Path to the temporary project directory</returns>
+    public static string CreateTempProjectWithAutoloads(
+        (string name, string content)[] scripts,
+        (string name, string path)[] autoloads)
+    {
+        var tempPath = CreateTempProject(scripts);
+
+        var projectGodotPath = Path.Combine(tempPath, "project.godot");
+        var content = File.ReadAllText(projectGodotPath);
+        var sb = new StringBuilder(content);
+        sb.AppendLine();
+        sb.AppendLine("[autoload]");
+        foreach (var (name, path) in autoloads)
+        {
+            sb.AppendLine($"{name}=\"*res://{path}\"");
+        }
+        File.WriteAllText(projectGodotPath, sb.ToString());
+
+        return tempPath;
     }
 
     // === Preset scenarios ===

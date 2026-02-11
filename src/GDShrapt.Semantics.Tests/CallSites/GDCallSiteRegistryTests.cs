@@ -492,4 +492,82 @@ public class GDCallSiteRegistryTests
     }
 
     #endregion
+
+    #region Autoload and Static Method Tests
+
+    [TestMethod]
+    public void GetCallersOf_AutoloadMethod_FindsCallers()
+    {
+        // Arrange — simulate cross-file call from main.gd to GameManager.start_game
+        var registry = new GDCallSiteRegistry();
+        var entry = new GDCallSiteEntry(
+            sourceFilePath: "C:/project/main.gd",
+            sourceMethodName: "_ready",
+            line: 5,
+            column: 4,
+            targetClassName: "GameManager",
+            targetMethodName: "start_game");
+
+        // Act
+        registry.Register(entry);
+        var callers = registry.GetCallersOf("GameManager", "start_game");
+
+        // Assert
+        callers.Should().HaveCount(1);
+        callers[0].SourceFilePath.Should().Be("C:/project/main.gd");
+        callers[0].SourceMethodName.Should().Be("_ready");
+        callers[0].TargetClassName.Should().Be("GameManager");
+        callers[0].TargetMethodName.Should().Be("start_game");
+    }
+
+    [TestMethod]
+    public void GetCallersOf_StaticMethod_FindsCallers()
+    {
+        // Arrange — simulate cross-file call from enemy.gd to Constants.get_enemy_data
+        var registry = new GDCallSiteRegistry();
+        var entry = new GDCallSiteEntry(
+            sourceFilePath: "C:/project/enemy.gd",
+            sourceMethodName: "_ready",
+            line: 4,
+            column: 15,
+            targetClassName: "Constants",
+            targetMethodName: "get_enemy_data");
+
+        // Act
+        registry.Register(entry);
+        var callers = registry.GetCallersOf("Constants", "get_enemy_data");
+
+        // Assert
+        callers.Should().HaveCount(1);
+        callers[0].SourceFilePath.Should().Be("C:/project/enemy.gd");
+        callers[0].TargetClassName.Should().Be("Constants");
+        callers[0].TargetMethodName.Should().Be("get_enemy_data");
+    }
+
+    [TestMethod]
+    public void GetCallersOf_NonStaticAutoloadMethod_FindsCallers()
+    {
+        // Arrange — simulate cross-file call to non-static autoload method
+        var registry = new GDCallSiteRegistry();
+        var entry = new GDCallSiteEntry(
+            sourceFilePath: "C:/project/src/systems/tower_placement.gd",
+            sourceMethodName: "_try_place_tower",
+            line: 8,
+            column: 12,
+            targetClassName: "GameManager",
+            targetMethodName: "spend_gold");
+
+        // Act
+        registry.Register(entry);
+        var callers = registry.GetCallersOf("GameManager", "spend_gold");
+
+        // Assert
+        callers.Should().HaveCount(1);
+        callers[0].SourceFilePath.Should().Be("C:/project/src/systems/tower_placement.gd");
+        callers[0].SourceMethodName.Should().Be("_try_place_tower");
+        callers[0].TargetClassName.Should().Be("GameManager");
+        callers[0].TargetMethodName.Should().Be("spend_gold");
+    }
+
+    #endregion
 }

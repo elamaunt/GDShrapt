@@ -16,6 +16,7 @@ public class GDDeadCodeService
     private readonly GDScriptProject _project;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly GDSignalConnectionRegistry _signalRegistry;
+    private Dictionary<string, string>? _autoloadNamesByPath;
 
 
     /// <summary>
@@ -29,6 +30,53 @@ public class GDDeadCodeService
         _project = projectModel.Project;
         _callSiteRegistry = _project.CallSiteRegistry;
         _signalRegistry = projectModel.SignalConnectionRegistry;
+    }
+
+    /// <summary>
+    /// Gets the autoload name for a script file, if registered as an autoload.
+    /// Returns null if the file is not an autoload.
+    /// </summary>
+    private string? GetAutoloadName(GDScriptFile file)
+    {
+        if (_autoloadNamesByPath == null)
+        {
+            _autoloadNamesByPath = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in _project.AutoloadEntries)
+            {
+                // Resolve res:// path to full path, normalize to forward slashes
+                // to match GDScriptReference.NormalizePath convention
+                var resPath = entry.Path;
+                if (resPath.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                    resPath = resPath.Substring(6);
+
+                var fullPath = System.IO.Path.GetFullPath(
+                    System.IO.Path.Combine(_project.ProjectPath, resPath))
+                    .Replace('\\', '/').TrimEnd('/');
+                _autoloadNamesByPath[fullPath] = entry.Name;
+            }
+        }
+
+        if (file.FullPath != null && _autoloadNamesByPath.TryGetValue(file.FullPath, out var name))
+            return name;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all names under which a file's members can be accessed cross-file.
+    /// Includes the TypeName (class_name or filename) and the autoload name if different.
+    /// </summary>
+    private List<string> GetEffectiveClassNames(GDScriptFile file, string? className)
+    {
+        var names = new List<string>();
+        if (!string.IsNullOrEmpty(className))
+            names.Add(className);
+
+        var autoloadName = GetAutoloadName(file);
+        if (!string.IsNullOrEmpty(autoloadName) && !names.Contains(autoloadName, StringComparer.OrdinalIgnoreCase))
+            names.Add(autoloadName);
+
+        return names;
     }
 
     /// <summary>
@@ -62,6 +110,7 @@ public class GDDeadCodeService
 
         var classDecl = file.Class;
         var className = file.TypeName ?? classDecl.ClassName?.Identifier?.Sequence;
+        var effectiveNames = GetEffectiveClassNames(file, className);
 
         // Get semantic model for this file
         var semanticModel = _projectModel.GetSemanticModel(file);
@@ -75,21 +124,21 @@ public class GDDeadCodeService
         // 1. Find unused variables
         if (options.IncludeVariables)
         {
-            foreach (var item in FindUnusedVariables(file, classDecl, semanticModel, options))
+            foreach (var item in FindUnusedVariables(file, classDecl, effectiveNames, semanticModel, options))
                 yield return item;
         }
 
         // 2. Find unused functions
         if (options.IncludeFunctions)
         {
-            foreach (var item in FindUnusedFunctions(file, classDecl, className, semanticModel, options))
+            foreach (var item in FindUnusedFunctions(file, classDecl, effectiveNames, semanticModel, options))
                 yield return item;
         }
 
         // 3. Find unused signals
         if (options.IncludeSignals)
         {
-            foreach (var item in FindUnusedSignals(file, classDecl, className, semanticModel, options))
+            foreach (var item in FindUnusedSignals(file, classDecl, effectiveNames, semanticModel, options))
                 yield return item;
         }
 
@@ -136,6 +185,7 @@ public class GDDeadCodeService
     private IEnumerable<GDDeadCodeItem> FindUnusedVariables(
         GDScriptFile file,
         GDClassDeclaration classDecl,
+        List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
@@ -171,6 +221,11 @@ public class GDDeadCodeService
 
             if (reads.Count == 0)
             {
+                // Check cross-file access using all effective names
+                // (includes both TypeName and autoload name)
+                if (HasCrossFileMemberAccess(file, effectiveNames, varName))
+                    continue;
+
                 var token = variable.Identifier ?? variable.AllTokens.FirstOrDefault();
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
                 {
@@ -192,7 +247,7 @@ public class GDDeadCodeService
     private IEnumerable<GDDeadCodeItem> FindUnusedFunctions(
         GDScriptFile file,
         GDClassDeclaration classDecl,
-        string? className,
+        List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
@@ -218,7 +273,7 @@ public class GDDeadCodeService
 
             // Check if method has any callers
             var (hasCallers, confidence, reason) = CheckMethodCallers(
-                className, methodName, semanticModel, options);
+                file, effectiveNames, methodName, semanticModel, options);
 
             if (!hasCallers)
             {
@@ -241,30 +296,60 @@ public class GDDeadCodeService
     }
 
     /// <summary>
+    /// Checks if any other file in the project has member accesses matching any of the effective names.
+    /// </summary>
+    private bool HasCrossFileMemberAccess(GDScriptFile file, List<string> effectiveNames, string memberName)
+    {
+        if (effectiveNames.Count == 0)
+            return false;
+
+        foreach (var otherFile in _project.ScriptFiles)
+        {
+            if (otherFile == file || otherFile.Class == null)
+                continue;
+
+            var otherModel = _projectModel.GetSemanticModel(otherFile);
+            if (otherModel == null)
+                continue;
+
+            foreach (var name in effectiveNames)
+            {
+                if (otherModel.HasMemberAccesses(name, memberName))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Checks if a method has any callers using semantic registries.
     /// Returns (hasCallers, confidence, reason).
     /// </summary>
     private (bool HasCallers, GDReferenceConfidence Confidence, string Reason) CheckMethodCallers(
-        string? className,
+        GDScriptFile file,
+        List<string> effectiveNames,
         string methodName,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
-        // 1. Check cross-file calls via CallSiteRegistry
-        if (_callSiteRegistry != null && !string.IsNullOrEmpty(className))
+        // 1. Check cross-file calls via CallSiteRegistry (check all effective names)
+        if (_callSiteRegistry != null)
         {
-            var callers = _callSiteRegistry.GetCallersOf(className, methodName);
-            if (callers.Count > 0)
+            foreach (var name in effectiveNames)
             {
-                return (true, GDReferenceConfidence.Strict, "Has callers");
+                var callers = _callSiteRegistry.GetCallersOf(name, methodName);
+                if (callers.Count > 0)
+                    return (true, GDReferenceConfidence.Strict, "Has callers");
             }
         }
 
-        // 2. Check signal connections
-        var signalConnections = _signalRegistry.GetSignalsCallingMethod(className, methodName);
-        if (signalConnections.Count > 0)
+        // 2. Check signal connections (check all effective names)
+        foreach (var name in effectiveNames)
         {
-            return (true, GDReferenceConfidence.Strict, "Connected to signals");
+            var signalConnections = _signalRegistry.GetSignalsCallingMethod(name, methodName);
+            if (signalConnections.Count > 0)
+                return (true, GDReferenceConfidence.Strict, "Connected to signals");
         }
 
         // 3. Check local references within the file via semantic model
@@ -272,11 +357,16 @@ public class GDDeadCodeService
         if (symbol != null)
         {
             var refs = semanticModel.GetReferencesTo(symbol);
-            // References count > 0 means there are calls (the definition itself is not a reference)
             if (refs.Count > 0)
             {
                 return (true, GDReferenceConfidence.Strict, "Has local references");
             }
+        }
+
+        // 3.5 Check cross-file member access (e.g., GameManager.start_game() from another file)
+        if (HasCrossFileMemberAccess(file, effectiveNames, methodName))
+        {
+            return (true, GDReferenceConfidence.Strict, "Has cross-file callers");
         }
 
         // 4. Check duck-type calls (by method name only) if allowed
@@ -302,7 +392,7 @@ public class GDDeadCodeService
     private IEnumerable<GDDeadCodeItem> FindUnusedSignals(
         GDScriptFile file,
         GDClassDeclaration classDecl,
-        string? className,
+        List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
@@ -330,9 +420,31 @@ public class GDDeadCodeService
             // Check for emit calls - references where signal is accessed for .emit()
             bool isEmitted = signalRefs.Any(r => IsSignalEmitReference(r));
 
-            // Check if signal has connections via registry
-            var connections = _signalRegistry.GetCallbacksForSignal(className, signalName);
-            bool hasConnections = connections.Count > 0;
+            // Check if signal has connections via registry (check all effective names)
+            bool hasConnections = false;
+            foreach (var name in effectiveNames)
+            {
+                var connections = _signalRegistry.GetCallbacksForSignal(name, signalName);
+                if (connections.Count > 0)
+                {
+                    hasConnections = true;
+                    break;
+                }
+            }
+
+            // Broader connection check: match by signal name with any emitter type
+            if (!hasConnections)
+            {
+                var allConns = _signalRegistry.GetAllConnections();
+                hasConnections = allConns.Any(c => c.SignalName == signalName &&
+                    (effectiveNames.Any(n => c.EmitterType == n) || c.EmitterType == null));
+            }
+
+            // Cross-file signal usage detection
+            if (!isEmitted && !hasConnections)
+            {
+                isEmitted = HasCrossFileMemberAccess(file, effectiveNames, signalName);
+            }
 
             if (!isEmitted && !hasConnections)
             {

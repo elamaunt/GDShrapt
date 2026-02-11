@@ -981,7 +981,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var inheritedSymbol = ResolveOrCreateInheritedSymbol(name);
         if (inheritedSymbol != null)
         {
-            CreateReference(inheritedSymbol, identifierExpression, GDReferenceConfidence.Strict);
+            CreateReference(inheritedSymbol, identifierExpression, GDReferenceConfidence.Strict,
+                callerTypeName: inheritedSymbol.DeclaringTypeName);
             RecordNodeType(identifierExpression);
             return;
         }
@@ -1081,7 +1082,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         var inheritedSymbol = ResolveOrCreateInheritedSymbol(methodName);
                         if (inheritedSymbol != null)
                         {
-                            CreateReference(inheritedSymbol, callExpression, GDReferenceConfidence.Strict);
+                            CreateReference(inheritedSymbol, callExpression, GDReferenceConfidence.Strict,
+                                callerTypeName: inheritedSymbol.DeclaringTypeName);
                         }
                         else if (_runtimeProvider != null)
                         {

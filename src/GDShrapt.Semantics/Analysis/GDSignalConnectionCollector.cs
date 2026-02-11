@@ -123,7 +123,62 @@ internal class GDSignalConnectionCollector
                 return;
 
             var args = callExpr.Parameters?.ToList();
-            if (args == null || args.Count < 2)
+            if (args == null || args.Count < 1)
+                return;
+
+            // GDScript 4.x: signal_ref.connect(callback) — 1 argument, signal name from receiver chain
+            if (args.Count == 1)
+            {
+                string? gdScript4SignalName = null;
+                string? gdScript4EmitterType = null;
+
+                if (receiverExpr is GDMemberOperatorExpression signalMemberOp)
+                {
+                    // Events.enemy_killed.connect(cb) or $Button.pressed.connect(cb)
+                    gdScript4SignalName = signalMemberOp.Identifier?.Sequence;
+                    var emitterExpr = signalMemberOp.CallerExpression;
+                    if (emitterExpr != null)
+                    {
+                        gdScript4EmitterType = _typeEngine?.InferSemanticType(emitterExpr)?.DisplayName;
+                        if (string.IsNullOrEmpty(gdScript4EmitterType) && emitterExpr is GDIdentifierExpression emitterIdent)
+                            gdScript4EmitterType = emitterIdent.Identifier?.Sequence;
+                    }
+                    else
+                    {
+                        gdScript4EmitterType = _scriptFile.TypeName;
+                    }
+                }
+                else if (receiverExpr is GDIdentifierExpression signalIdent)
+                {
+                    // my_signal.connect(cb) — local signal on self
+                    gdScript4SignalName = signalIdent.Identifier?.Sequence;
+                    gdScript4EmitterType = _scriptFile.TypeName;
+                }
+
+                if (!string.IsNullOrEmpty(gdScript4SignalName))
+                {
+                    var (cbClassName, cbMethodName, isDynCb) = ExtractCallback(args[0]);
+                    if (string.IsNullOrEmpty(cbMethodName))
+                        return;
+
+                    var gdScript4Confidence = isDynCb || string.IsNullOrEmpty(gdScript4EmitterType) || gdScript4EmitterType == "Variant"
+                        ? GDReferenceConfidence.Potential
+                        : GDReferenceConfidence.Strict;
+
+                    _connections.Add(new GDSignalConnectionEntry(
+                        _scriptFile.FullPath ?? _scriptFile.Reference.FullPath,
+                        _currentMethodName,
+                        callExpr.StartLine, callExpr.StartColumn,
+                        gdScript4EmitterType, gdScript4SignalName,
+                        cbClassName, cbMethodName,
+                        isDynamicSignal: false, isDynamicCallback: isDynCb,
+                        isSceneConnection: false, gdScript4Confidence));
+                    return;
+                }
+            }
+
+            // GDScript 3.x: obj.connect("signal_name", callback) — 2+ arguments
+            if (args.Count < 2)
                 return;
 
             // Parse signal name (first argument)
