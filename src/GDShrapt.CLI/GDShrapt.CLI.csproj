@@ -8,6 +8,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>GDShrapt.CLI</RootNamespace>
     <AssemblyName>GDShrapt.CLI</AssemblyName>
+    <PackageId>GDShrapt.CLI.Base</PackageId>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
