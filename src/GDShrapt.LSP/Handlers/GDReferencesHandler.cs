@@ -38,21 +38,20 @@ public class GDReferencesHandler
         var symbolName = definition.SymbolName;
 
         // Delegate to CLI.Core handler
-        var result = _findRefsHandler.FindReferences(symbolName, filePath);
-        if (result == null || result.Count == 0)
+        var groups = _findRefsHandler.FindReferences(symbolName, filePath);
+        if (groups == null || groups.Count == 0)
             return Task.FromResult<GDLspLocation[]?>(null);
+
+        // Flatten groups (including nested overrides) into a single list
+        var allRefs = FlattenLocations(groups);
 
         // Filter results based on IncludeDeclaration
-        var filteredResults = @params.Context.IncludeDeclaration
-            ? result
-            : result.Where(r => !r.IsDeclaration).ToList();
-
-        if (filteredResults.Count == 0)
-            return Task.FromResult<GDLspLocation[]?>(null);
+        if (!@params.Context.IncludeDeclaration)
+            allRefs = allRefs.Where(r => !r.IsDeclaration);
 
         // Convert CLI.Core results to LSP locations
         var locations = new List<GDLspLocation>();
-        foreach (var reference in filteredResults)
+        foreach (var reference in allRefs)
         {
             locations.Add(new GDLspLocation
             {
@@ -66,5 +65,17 @@ public class GDReferencesHandler
         }
 
         return Task.FromResult<GDLspLocation[]?>(locations.ToArray());
+    }
+
+    private static IEnumerable<CLI.Core.GDReferenceLocation> FlattenLocations(IEnumerable<GDReferenceGroup> groups)
+    {
+        foreach (var group in groups)
+        {
+            foreach (var loc in group.Locations)
+                yield return loc;
+
+            foreach (var loc in FlattenLocations(group.Overrides))
+                yield return loc;
+        }
     }
 }

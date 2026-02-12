@@ -8,6 +8,8 @@ namespace GDShrapt.CLI.Tests;
 [TestClass]
 public class GDRenameCommandTests
 {
+    private string? _tempProjectPath;
+
     private static string GetTestProjectPath()
     {
         var currentDir = Directory.GetCurrentDirectory();
@@ -15,8 +17,15 @@ public class GDRenameCommandTests
         return testProjectPath;
     }
 
+    [TestCleanup]
+    public void Cleanup()
+    {
+        if (_tempProjectPath != null)
+            TestProjectHelper.DeleteTempProject(_tempProjectPath);
+    }
+
     [TestMethod]
-    public async Task ExecuteAsync_WithInvalidPath_ReturnsTwo()
+    public async Task ExecuteAsync_WithInvalidPath_ReturnsFatal()
     {
         // Arrange
         var output = new StringWriter();
@@ -27,7 +36,7 @@ public class GDRenameCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(2);
+        result.Should().Be(GDExitCode.Fatal);
     }
 
     [TestMethod]
@@ -190,5 +199,140 @@ public class GDRenameCommandTests
         var outputText = output.ToString();
         // Should find references in multiple files if max_health exists
         (outputText.Length > 0).Should().BeTrue("Should produce output for cross-file symbol");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_WithLineOption_ResolvesSymbolAndRenames()
+    {
+        // Arrange
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("player.gd", @"extends Node2D
+class_name Player
+
+var speed: float = 100.0
+
+func move(delta: float) -> void:
+    position.x += speed * delta
+"));
+
+        var filePath = Path.Combine(_tempProjectPath, "player.gd");
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+
+        // Line 4 (1-based) = "var speed: float = 100.0", column 5 (1-based) = "speed"
+        var command = new GDRenameCommand(
+            null, "velocity", _tempProjectPath, filePath, formatter, output,
+            dryRun: true, line: 4, column: 5);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        var outputText = output.ToString();
+        result.Should().Be(0);
+        outputText.Should().Contain("speed");
+        outputText.Should().Contain("velocity");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_WithLineOption_NoFile_ReturnsError()
+    {
+        // Arrange
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("test.gd", @"extends Node
+var x: int = 1
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+
+        // --line without --file should fail
+        var command = new GDRenameCommand(
+            null, "y", _tempProjectPath, null, formatter, output,
+            dryRun: true, line: 2);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(GDExitCode.Fatal);
+        var outputText = output.ToString();
+        outputText.Should().Contain("--file");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_WithLineOption_NoSymbolAtPosition_ReturnsError()
+    {
+        // Arrange
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("test.gd", @"extends Node
+
+func _ready() -> void:
+    pass
+"));
+
+        var filePath = Path.Combine(_tempProjectPath, "test.gd");
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+
+        // Line 4 = "    pass" — no renameable symbol at column 0
+        var command = new GDRenameCommand(
+            null, "new_name", _tempProjectPath, filePath, formatter, output,
+            dryRun: true, line: 4, column: 0);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().BeGreaterThanOrEqualTo(1, "No symbol at 'pass' position should return error");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_InheritanceChain_AllOverridesFoundAsStrict()
+    {
+        // Arrange: base -> child -> grandchild with overrides + super calls
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("base.gd", @"extends Node2D
+class_name BaseClass
+
+func take_damage(amount: int) -> void:
+    print(amount)
+"),
+            ("child.gd", @"extends BaseClass
+class_name ChildClass
+
+func take_damage(amount: int) -> void:
+    super.take_damage(amount)
+    print(""child"")
+"),
+            ("grandchild.gd", @"extends ChildClass
+class_name GrandChild
+
+func take_damage(amount: int) -> void:
+    super.take_damage(amount)
+    print(""grand"")
+"),
+            ("caller.gd", @"extends Node
+
+func test(target: BaseClass) -> void:
+    target.take_damage(10)
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDRenameCommand(
+            "take_damage", "receive_damage", _tempProjectPath, null, formatter, output,
+            dryRun: true);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("Strict references");
+        outputText.Should().Contain("base.gd");
+        outputText.Should().Contain("child.gd");
+        outputText.Should().Contain("grandchild.gd");
     }
 }

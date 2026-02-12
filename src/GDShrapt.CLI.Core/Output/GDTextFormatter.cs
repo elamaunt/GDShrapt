@@ -129,12 +129,93 @@ public class GDTextFormatter : IGDOutputFormatter
 
     public void WriteReferences(TextWriter output, IEnumerable<GDReferenceInfo> references)
     {
-        foreach (var reference in references)
+        var grouped = references
+            .GroupBy(r => r.FilePath)
+            .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var group in grouped)
         {
-            var marker = reference.IsDeclaration ? "[decl]" : reference.IsWrite ? "[write]" : "[read]";
-            var context = string.IsNullOrEmpty(reference.Context) ? "" : $" // {reference.Context}";
-            output.WriteLine($"  {reference.FilePath}:{reference.Line}:{reference.Column} {marker}{context}");
+            output.WriteLine($"  --- {GDAnsiColors.Bold(group.Key)} ---");
+
+            foreach (var reference in group.OrderBy(r => r.Line).ThenBy(r => r.Column))
+            {
+                WriteReferenceLine(output, reference, "  ");
+            }
         }
+    }
+
+    public void WriteReferenceGroups(TextWriter output, IEnumerable<GDReferenceGroupInfo> groups)
+    {
+        foreach (var group in groups)
+        {
+            WriteGroupTree(output, group, indent: "");
+            output.WriteLine();
+        }
+    }
+
+    private static void WriteGroupTree(TextWriter output, GDReferenceGroupInfo group, string indent)
+    {
+        var header = !string.IsNullOrEmpty(group.ClassName)
+            ? GDAnsiColors.Bold(group.ClassName)
+            : GDAnsiColors.Bold(group.DeclarationFilePath);
+
+        if (group.IsInherited)
+            output.WriteLine($"{indent}{header} ({group.DeclarationFilePath})");
+        else
+            output.WriteLine($"{indent}{header} ({group.DeclarationFilePath}:{group.DeclarationLine})");
+
+        foreach (var reference in group.References.OrderBy(r => r.Line).ThenBy(r => r.Column))
+        {
+            WriteReferenceLine(output, reference, indent, group.IsInherited);
+        }
+
+        var overrides = group.Overrides;
+        for (int i = 0; i < overrides.Count; i++)
+        {
+            var isLast = i == overrides.Count - 1;
+            var branch = isLast ? "\u2514\u2500\u2500 " : "\u251c\u2500\u2500 ";
+            var childIndent = indent + (isLast ? "    " : "\u2502   ");
+
+            var ovr = overrides[i];
+            var ovrHeader = !string.IsNullOrEmpty(ovr.ClassName)
+                ? GDAnsiColors.Bold(ovr.ClassName)
+                : GDAnsiColors.Bold(ovr.DeclarationFilePath);
+
+            if (ovr.IsInherited)
+                output.WriteLine($"{indent}{branch}{ovrHeader} ({ovr.DeclarationFilePath})");
+            else
+                output.WriteLine($"{indent}{branch}{ovrHeader} ({ovr.DeclarationFilePath}:{ovr.DeclarationLine})");
+
+            foreach (var reference in ovr.References.OrderBy(r => r.Line).ThenBy(r => r.Column))
+            {
+                WriteReferenceLine(output, reference, childIndent, ovr.IsInherited);
+            }
+
+            if (ovr.Overrides.Count > 0)
+            {
+                WriteGroupTree(output, ovr, childIndent);
+            }
+        }
+    }
+
+    private static void WriteReferenceLine(TextWriter output, GDReferenceInfo reference, string indent = "", bool isInherited = false)
+    {
+        string marker;
+        if (isInherited)
+            marker = reference.IsWrite ? "[write-base]" : "[read-base]";
+        else if (reference.IsOverride)
+            marker = "[overr]";
+        else if (reference.IsDeclaration)
+            marker = "[decl]";
+        else if (reference.IsSuperCall)
+            marker = "[read-base]";
+        else if (reference.IsWrite)
+            marker = "[write]";
+        else
+            marker = "[read]";
+
+        var context = string.IsNullOrEmpty(reference.Context) ? "" : $" // {reference.Context}";
+        output.WriteLine($"{indent}  {reference.Line}:{reference.Column} {marker}{context}");
     }
 
     public void WriteMessage(TextWriter output, string message)

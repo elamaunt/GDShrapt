@@ -1252,7 +1252,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
             IsRead = !_inAssignmentLeft,
             Confidence = confidence,
             ConfidenceReason = BuildConfidenceReason(symbol, confidence),
-            CallerTypeName = callerTypeName
+            CallerTypeName = callerTypeName,
+            IdentifierToken = ResolveIdentifierToken(node)
         };
 
         // Add type information if available (with recursion guard)
@@ -1281,6 +1282,26 @@ internal class GDSemanticReferenceCollector : GDVisitor
         {
             _model.AddMemberAccess(callerTypeName, symbol.Name, reference);
         }
+    }
+
+    private static GDSyntaxToken? ResolveIdentifierToken(GDNode node)
+    {
+        if (node is GDMemberOperatorExpression memberOp)
+            return memberOp.Identifier;
+
+        if (node is GDCallExpression callExpr)
+        {
+            if (callExpr.CallerExpression is GDMemberOperatorExpression callerMemberOp)
+                return callerMemberOp.Identifier;
+
+            if (callExpr.CallerExpression is GDIdentifierExpression callerIdExpr)
+                return callerIdExpr.Identifier;
+        }
+
+        if (node is GDIdentifierExpression idExpr)
+            return idExpr.Identifier;
+
+        return null;
     }
 
     private static string BuildConfidenceReason(GDSymbolInfo symbol, GDReferenceConfidence confidence)

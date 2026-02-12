@@ -47,13 +47,20 @@ public class GDFindRefsCommand : IGDCommand
     {
         try
         {
+            // Early validation: need either symbol name or --line
+            if (string.IsNullOrEmpty(_symbolName) && !_line.HasValue)
+            {
+                _formatter.WriteError(_output, "Specify a symbol name or use --line to identify symbol by position.\n  Usage: gdshrapt find-refs <symbol> [--file <file>]\n         gdshrapt find-refs --file <file> --line <line>");
+                return Task.FromResult(GDExitCode.Fatal);
+            }
+
             var searchPath = _filePath ?? _projectPath;
             var projectRoot = GDProjectLoader.FindProjectRoot(searchPath);
 
             if (projectRoot == null)
             {
-                _formatter.WriteError(_output, $"Could not find project.godot in or above: {searchPath}");
-                return Task.FromResult(2);
+                _formatter.WriteError(_output, $"Could not find project.godot in or above: {searchPath}\n  Hint: Run from a Godot project directory, or specify the path: 'gdshrapt find-refs <symbol> -p /path/to/project'.");
+                return Task.FromResult(GDExitCode.Fatal);
             }
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
@@ -124,27 +131,21 @@ public class GDFindRefsCommand : IGDCommand
             }
 
             // Use handler to find references
-            var locations = findRefsHandler.FindReferences(symbolName, fullFilePath);
+            var refGroups = findRefsHandler.FindReferences(symbolName, fullFilePath);
 
-            // Convert to GDReferenceInfo for output
-            var references = locations.Select(loc => new GDReferenceInfo
-            {
-                FilePath = GetRelativePath(loc.FilePath, projectRoot),
-                Line = loc.Line,
-                Column = loc.Column,
-                IsDeclaration = loc.IsDeclaration,
-                IsWrite = loc.IsWrite,
-                Context = loc.Context
-            }).ToList();
+            // Convert to output models
+            var outputGroups = refGroups.Select(g => MapGroup(g, projectRoot)).ToList();
 
-            if (references.Count == 0)
+            var totalRefs = CountRefs(outputGroups);
+
+            if (totalRefs == 0)
             {
                 _formatter.WriteMessage(_output, $"No references found for: {symbolName}");
                 return Task.FromResult(0);
             }
 
-            _formatter.WriteMessage(_output, $"Found {references.Count} reference(s) to '{symbolName}':");
-            _formatter.WriteReferences(_output, references);
+            _formatter.WriteMessage(_output, $"Found {totalRefs} reference(s) to '{symbolName}':");
+            _formatter.WriteReferenceGroups(_output, outputGroups);
 
             return Task.FromResult(0);
         }
@@ -153,6 +154,42 @@ public class GDFindRefsCommand : IGDCommand
             _formatter.WriteError(_output, ex.Message);
             return Task.FromResult(2);
         }
+    }
+
+    private static GDReferenceGroupInfo MapGroup(GDReferenceGroup g, string projectRoot)
+    {
+        return new GDReferenceGroupInfo
+        {
+            ClassName = g.ClassName,
+            DeclarationFilePath = GetRelativePath(g.DeclarationFilePath, projectRoot),
+            DeclarationLine = g.DeclarationLine,
+            DeclarationColumn = g.DeclarationColumn,
+            IsOverride = g.IsOverride,
+            IsInherited = g.IsInherited,
+            References = g.Locations.Select(loc => new GDReferenceInfo
+            {
+                FilePath = GetRelativePath(loc.FilePath, projectRoot),
+                Line = loc.Line,
+                Column = loc.Column,
+                IsDeclaration = loc.IsDeclaration,
+                IsOverride = loc.IsOverride,
+                IsSuperCall = loc.IsSuperCall,
+                IsWrite = loc.IsWrite,
+                Context = loc.Context
+            }).ToList(),
+            Overrides = g.Overrides.Select(o => MapGroup(o, projectRoot)).ToList()
+        };
+    }
+
+    private static int CountRefs(List<GDReferenceGroupInfo> groups)
+    {
+        int count = 0;
+        foreach (var g in groups)
+        {
+            count += g.References.Count;
+            count += CountRefs(g.Overrides);
+        }
+        return count;
     }
 
     private static string GetRelativePath(string fullPath, string basePath)

@@ -38,6 +38,12 @@ public class GDJsonFormatter : IGDOutputFormatter
         output.WriteLine(json);
     }
 
+    public void WriteReferenceGroups(TextWriter output, IEnumerable<GDReferenceGroupInfo> groups)
+    {
+        var json = JsonSerializer.Serialize(groups, s_options);
+        output.WriteLine(json);
+    }
+
     public void WriteMessage(TextWriter output, string message)
     {
         var obj = new { message };

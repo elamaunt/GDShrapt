@@ -19,10 +19,23 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     private readonly HashSet<string> _visitedNodesInSession = new();
     private readonly Dictionary<string, GDTypeFlowNode> _nodeRegistry = new();
     private int _nodeIdCounter;
+    private IGDRuntimeProvider? _cachedRuntimeProvider;
 
     public GDTypeFlowHandler(GDScriptProject project)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
+    }
+
+    protected IGDRuntimeProvider? GetRuntimeProvider()
+    {
+        if (_cachedRuntimeProvider != null)
+            return _cachedRuntimeProvider;
+
+        _cachedRuntimeProvider = _project.ScriptFiles
+            .FirstOrDefault(s => s.SemanticModel?.RuntimeProvider != null)
+            ?.SemanticModel?.RuntimeProvider;
+
+        return _cachedRuntimeProvider;
     }
 
     /// <inheritdoc />
@@ -358,7 +371,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
             return 1.0f;
 
         // Check if it's a known type via RuntimeProvider
-        var runtimeProvider = _project.CreateRuntimeProvider();
+        var runtimeProvider = GetRuntimeProvider();
         if (runtimeProvider != null && runtimeProvider.IsKnownType(type))
             return 0.9f;
 
@@ -581,7 +594,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
                 if (param.Type != null)
                 {
                     // Explicit type annotation - high confidence
-                    paramType = param.Type.BuildName();
+                    var paramTypeInfo = semanticModel.TypeSystem.GetType(param);
+                    paramType = paramTypeInfo.IsVariant ? "Variant" : paramTypeInfo.DisplayName;
                     confidence = 1.0f;
                 }
                 else
@@ -623,7 +637,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         // Add return type annotation if present
         if (method.ReturnType != null)
         {
-            var returnType = method.ReturnType.BuildName();
+            var returnTypeInfo = semanticModel.TypeSystem.GetType(method.ReturnType);
+            var returnType = returnTypeInfo.IsVariant ? "Variant" : returnTypeInfo.DisplayName;
             var returnAnnotationNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
@@ -1138,7 +1153,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         if (type == "Variant" || string.IsNullOrEmpty(type))
             return 0.2f;
 
-        var runtimeProvider = _project.CreateRuntimeProvider();
+        var runtimeProvider = GetRuntimeProvider();
         if (runtimeProvider != null && runtimeProvider.IsKnownType(type))
             return 0.9f;
 

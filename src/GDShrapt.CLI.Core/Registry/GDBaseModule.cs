@@ -20,7 +20,7 @@ public sealed class GDBaseModule : IGDModule
 
         // Rename and refactoring
         registry.Register<IGDRenameHandler>(new GDRenameHandler(project, projectModel));
-        registry.Register<IGDFindRefsHandler>(new GDFindRefsHandler(project));
+        registry.Register<IGDFindRefsHandler>(new GDFindRefsHandler(project, projectModel));
 
         // Code intelligence
         registry.Register<IGDCompletionHandler>(new GDCompletionHandler(project));

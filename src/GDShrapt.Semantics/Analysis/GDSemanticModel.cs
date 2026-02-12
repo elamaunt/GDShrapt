@@ -691,6 +691,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     /// <summary>
+    /// Gets the base type name for this script (the extends clause).
+    /// Returns "RefCounted" for scripts without explicit extends.
+    /// </summary>
+    public string BaseTypeName => GetExtendsType() ?? GDWellKnownTypes.RefCounted;
+
+    /// <summary>
     /// Gets the extends type for the current script.
     /// </summary>
     private string? GetExtendsType()

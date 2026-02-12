@@ -52,4 +52,11 @@ public class GDReference
     /// Null for local function calls or variable references.
     /// </summary>
     public string? CallerTypeName { get; set; }
+
+    /// <summary>
+    /// The specific identifier token that this reference points to.
+    /// For member access (e.g., super.take_damage()), this is the "take_damage" identifier,
+    /// not the entire expression node. Use this for precise edit positioning.
+    /// </summary>
+    public GDSyntaxToken? IdentifierToken { get; set; }
 }

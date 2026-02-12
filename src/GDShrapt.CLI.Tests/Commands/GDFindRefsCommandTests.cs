@@ -36,7 +36,7 @@ public class GDFindRefsCommandTests
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(2);
+        result.Should().Be(GDExitCode.Fatal);
     }
 
     [TestMethod]
@@ -167,7 +167,7 @@ var health: int = 100
         var result = await command.ExecuteAsync();
 
         // Assert
-        result.Should().Be(2);
+        result.Should().Be(GDExitCode.Fatal);
         output.ToString().Should().Contain("symbol name");
     }
 
@@ -211,5 +211,320 @@ func _ready() -> void:
         // Assert
         result.Should().Be(0);
         output.ToString().Should().Contain("health");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_OverriddenMethod_ShowsOverrMarker()
+    {
+        // Arrange: entity.gd defines take_damage, enemy.gd overrides it
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("entity.gd", @"class_name Entity
+extends Node
+
+func take_damage(amount: int) -> void:
+    pass
+"),
+            ("enemy.gd", @"class_name Enemy
+extends Entity
+
+func take_damage(amount: int) -> void:
+    print(amount)
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("take_damage", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[overr]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_NonOverriddenMethod_ShowsDeclNotOverr()
+    {
+        // Arrange: single class, no inheritance
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("player.gd", @"class_name Player
+extends Node
+
+func attack() -> void:
+    pass
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("attack", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("[decl]");
+        outputText.Should().NotContain("[overr]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_DeepInheritanceOverride_ShowsOverrMarker()
+    {
+        // Arrange: A -> B -> C, method defined in A, overridden in C
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("base_entity.gd", @"class_name BaseEntity
+extends Node
+
+func process_turn() -> void:
+    pass
+"),
+            ("entity.gd", @"class_name Entity
+extends BaseEntity
+"),
+            ("enemy.gd", @"class_name Enemy
+extends Entity
+
+func process_turn() -> void:
+    print(""enemy turn"")
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("process_turn", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        // base_entity.gd has [decl], enemy.gd has [overr]
+        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[overr]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_SuperCall_ShowsReadBaseMarker()
+    {
+        // Arrange: entity.gd defines take_damage, enemy.gd overrides and calls super
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("entity.gd", @"class_name Entity
+extends Node
+
+func take_damage(amount: int) -> void:
+    pass
+"),
+            ("enemy.gd", @"class_name Enemy
+extends Entity
+
+func take_damage(amount: int) -> void:
+    super.take_damage(amount)
+    print(amount)
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("take_damage", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[overr]");
+        outputText.Should().Contain("[read-base]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_WriteReference_ShowsWriteMarker()
+    {
+        // Arrange: health is declared, then assigned in _ready
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("test.gd", @"extends Node
+
+var health: int = 100
+
+func _ready() -> void:
+    health = 50
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("health", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[write]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_ReadReference_ShowsReadMarker()
+    {
+        // Arrange: health is declared, then read in a print call
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("test.gd", @"extends Node
+
+var health: int = 100
+
+func _ready() -> void:
+    print(health)
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("health", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[read]");
+        outputText.Should().NotContain("[write]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_MixedReadWrite_ShowsBothMarkers()
+    {
+        // Arrange: health is declared, written, and read
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("test.gd", @"extends Node
+
+var health: int = 100
+
+func _ready() -> void:
+    health = 50
+    print(health)
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("health", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[write]");
+        outputText.Should().Contain("[read]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_SameNameDifferentFiles_GroupsSeparately()
+    {
+        // Arrange: 'data' declared independently in two files
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("enemy.gd", @"extends Node
+
+var data: Dictionary = {}
+
+func _ready() -> void:
+    data[""speed""] = 10
+"),
+            ("tower.gd", @"extends Node
+
+var data: Dictionary = {}
+
+func _ready() -> void:
+    print(data)
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("data", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        // Should have two separate [decl] markers — one per file
+        var declCount = outputText.Split("[decl]").Length - 1;
+        declCount.Should().Be(2, "each file's 'data' is an independent declaration");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_InheritedVariableUsedInChild_ShowsWriteBaseMarker()
+    {
+        // Arrange: 'target' declared in base, written in child (no local declaration)
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("projectile_base.gd", @"extends Node2D
+class_name ProjectileBase
+
+var target: Node2D = null
+
+func _ready() -> void:
+    print(target)
+"),
+            ("projectile_aoe.gd", @"extends ProjectileBase
+
+func fire(node: Node2D) -> void:
+    target = node
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("target", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        // Root group: ProjectileBase with declaration
+        outputText.Should().Contain("[decl]");
+        // Child inherited usage: [write-base] instead of [write]
+        outputText.Should().Contain("[write-base]");
+        // Should NOT have bare [write] for inherited usage
+        outputText.Should().NotContain("[write]",
+            "inherited variable writes should be [write-base], not [write]");
+    }
+
+    [TestMethod]
+    public async Task ExecuteAsync_InheritedVariableReadInChild_ShowsReadBaseMarker()
+    {
+        // Arrange: 'max_health' declared in base, read in child
+        _tempProjectPath = TestProjectHelper.CreateTempProject(
+            ("entity.gd", @"extends Node
+class_name Entity
+
+var max_health: int = 100
+"),
+            ("enemy.gd", @"extends Entity
+
+func show_info() -> void:
+    print(max_health)
+"));
+
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDFindRefsCommand("max_health", _tempProjectPath, null, formatter, output);
+
+        // Act
+        var result = await command.ExecuteAsync();
+
+        // Assert
+        result.Should().Be(0);
+        var outputText = output.ToString();
+        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[read-base]");
     }
 }

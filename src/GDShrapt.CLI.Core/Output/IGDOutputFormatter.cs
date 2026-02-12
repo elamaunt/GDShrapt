@@ -32,6 +32,11 @@ public interface IGDOutputFormatter
     void WriteReferences(TextWriter output, IEnumerable<GDReferenceInfo> references);
 
     /// <summary>
+    /// Writes reference groups to the output, grouped by declaration.
+    /// </summary>
+    void WriteReferenceGroups(TextWriter output, IEnumerable<GDReferenceGroupInfo> groups);
+
+    /// <summary>
     /// Writes a simple message.
     /// </summary>
     void WriteMessage(TextWriter output, string message);
@@ -139,7 +144,24 @@ public class GDReferenceInfo
     public int Column { get; set; }
     public string? Context { get; set; }
     public bool IsDeclaration { get; set; }
+    public bool IsOverride { get; set; }
+    public bool IsSuperCall { get; set; }
     public bool IsWrite { get; set; }
+}
+
+/// <summary>
+/// A group of references belonging to one declaration.
+/// </summary>
+public class GDReferenceGroupInfo
+{
+    public string? ClassName { get; set; }
+    public string DeclarationFilePath { get; set; } = string.Empty;
+    public int DeclarationLine { get; set; }
+    public int DeclarationColumn { get; set; }
+    public bool IsOverride { get; set; }
+    public bool IsInherited { get; set; }
+    public List<GDReferenceInfo> References { get; set; } = new();
+    public List<GDReferenceGroupInfo> Overrides { get; set; } = new();
 }
 
 /// <summary>

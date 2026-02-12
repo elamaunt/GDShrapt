@@ -49,8 +49,8 @@ internal class GDTextEditBuilder
         if (_filePath == null || node == null) return this;
         _edits.Add(new GDTextEdit(
             _filePath,
-            node.StartLine,
-            node.StartColumn,
+            node.StartLine + 1,
+            node.StartColumn + 1,
             node.ToString(),
             newText));
         return this;

@@ -12,25 +12,29 @@ namespace GDShrapt.CLI.Core;
 /// </summary>
 public class GDRenameCommand : IGDCommand
 {
-    private readonly string _oldName;
+    private readonly string? _oldName;
     private readonly string _newName;
     private readonly string? _filePath;
     private readonly string _projectPath;
     private readonly IGDOutputFormatter _formatter;
     private readonly TextWriter _output;
     private readonly bool _dryRun;
+    private readonly int? _line;
+    private readonly int? _column;
 
     public string Name => "rename";
     public string Description => "Rename a symbol across the project";
 
     public GDRenameCommand(
-        string oldName,
+        string? oldName,
         string newName,
         string projectPath,
         string? filePath,
         IGDOutputFormatter formatter,
         TextWriter? output = null,
-        bool dryRun = false)
+        bool dryRun = false,
+        int? line = null,
+        int? column = null)
     {
         _oldName = oldName;
         _newName = newName;
@@ -39,6 +43,8 @@ public class GDRenameCommand : IGDCommand
         _formatter = formatter;
         _output = output ?? Console.Out;
         _dryRun = dryRun;
+        _line = line;
+        _column = column;
     }
 
     public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -66,9 +72,51 @@ public class GDRenameCommand : IGDCommand
                 return Task.FromResult(GDExitCode.Fatal);
             }
 
-            if (!renameHandler.ValidateIdentifier(_oldName, out var oldNameError))
+            // Resolve symbol name from position if --line is used
+            string oldName;
+            if (_line.HasValue)
             {
-                _formatter.WriteError(_output, oldNameError ?? $"Invalid identifier: {_oldName}");
+                if (string.IsNullOrEmpty(_filePath))
+                {
+                    _formatter.WriteError(_output, "The --file option is required when using --line.");
+                    return Task.FromResult(GDExitCode.Fatal);
+                }
+
+                var goToDefHandler = registry.GetService<IGDGoToDefHandler>();
+                if (goToDefHandler == null)
+                {
+                    _formatter.WriteError(_output, "Go-to-definition handler not available.");
+                    return Task.FromResult(GDExitCode.Fatal);
+                }
+
+                var fullFilePath = Path.GetFullPath(_filePath);
+                var col = _column ?? 1;
+                var line0 = _line.Value - 1;
+                var col0 = col - 1;
+                var definition = goToDefHandler.FindDefinition(fullFilePath, line0, col0);
+
+                if (definition == null || string.IsNullOrEmpty(definition.SymbolName))
+                {
+                    _formatter.WriteError(_output, $"No symbol found at line {_line.Value}, column {col}.");
+                    return Task.FromResult(GDExitCode.Errors);
+                }
+
+
+                oldName = definition.SymbolName;
+            }
+            else if (!string.IsNullOrEmpty(_oldName))
+            {
+                oldName = _oldName;
+            }
+            else
+            {
+                _formatter.WriteError(_output, "Specify a symbol name or use --line to identify by position.");
+                return Task.FromResult(GDExitCode.Fatal);
+            }
+
+            if (!renameHandler.ValidateIdentifier(oldName, out var oldNameError))
+            {
+                _formatter.WriteError(_output, oldNameError ?? $"Invalid identifier: {oldName}");
                 return Task.FromResult(GDExitCode.Errors);
             }
 
@@ -78,7 +126,7 @@ public class GDRenameCommand : IGDCommand
                 return Task.FromResult(GDExitCode.Errors);
             }
 
-            var result = renameHandler.Plan(_oldName, _newName, _filePath);
+            var result = renameHandler.Plan(oldName, _newName, _filePath);
 
             if (!result.Success)
             {

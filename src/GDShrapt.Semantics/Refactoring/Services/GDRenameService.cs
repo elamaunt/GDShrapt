@@ -109,8 +109,8 @@ public class GDRenameService
 
             edits.Add(new GDTextEdit(
                 filePath,
-                r.Line,
-                r.Column,
+                r.Line + 1,
+                r.Column + 1,
                 oldName,
                 newName,
                 confidence,
@@ -142,8 +142,8 @@ public class GDRenameService
 
             edits.Add(new GDTextEdit(
                 filePath,
-                r.Line,
-                r.Column,
+                r.Line + 1,
+                r.Column + 1,
                 oldName,
                 newName,
                 confidence,
@@ -219,9 +219,11 @@ public class GDRenameService
             }
         }
 
-        // No filter — find the symbol across the project
-        GDSymbolInfo? foundSymbol = null;
-        GDScriptFile? foundScript = null;
+        // No filter — iterate ALL files via SemanticModel (same approach as GDFindRefsHandler)
+        var strictEdits = new List<GDTextEdit>();
+        var potentialEdits = new List<GDTextEdit>();
+        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var typesWithMember = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var script in _project.ScriptFiles)
         {
@@ -233,18 +235,43 @@ public class GDRenameService
                 return PlanClassNameRename(script, oldName, newName);
 
             var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
-            var symbol = model?.FindSymbol(oldName);
-            if (symbol != null && foundSymbol == null)
+            if (model == null)
+                continue;
+
+            var symbol = model.FindSymbol(oldName);
+            if (symbol == null)
+                continue;
+
+            // Track ALL type names that have this member — needed for member access queries
+            if (!string.IsNullOrEmpty(script.TypeName))
+                typesWithMember.Add(script.TypeName);
+
+            // Per-file: declaration + references via SemanticModel
+            var scriptEdits = CollectEditsFromScript(script, symbol, oldName, newName);
+            strictEdits.AddRange(scriptEdits);
+            if (scriptEdits.Count > 0)
+                filesModified.Add(script.FullPath);
+        }
+
+        // Member access queries for cross-file obj.method() and super.method() patterns
+        // Query for ALL types that have the member, not just the declaring type
+        if (typesWithMember.Count > 0 && _projectModel != null)
+        {
+            foreach (var typeName in typesWithMember)
             {
-                foundSymbol = symbol;
-                foundScript = script;
+                CollectMemberAccessEdits(typeName, oldName, newName,
+                    strictEdits, potentialEdits, filesModified);
             }
         }
 
-        if (foundSymbol != null)
-            return PlanRename(foundSymbol, newName);
+        if (strictEdits.Count == 0 && potentialEdits.Count == 0)
+            return GDRenameResult.NoOccurrences(oldName);
 
-        return GDRenameResult.NoOccurrences(oldName);
+        strictEdits = DeduplicateEdits(strictEdits);
+        potentialEdits = DeduplicateEdits(potentialEdits);
+
+        return GDRenameResult.SuccessfulWithConfidence(
+            SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count);
     }
 
     /// <summary>
@@ -427,6 +454,9 @@ public class GDRenameService
     /// <returns>The modified content.</returns>
     public string ApplyEdits(string content, IEnumerable<GDTextEdit> edits)
     {
+        // Detect original line ending style
+        var lineEnding = content.Contains("\r\n") ? "\r\n" : "\n";
+
         var lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
 
         foreach (var edit in edits)
@@ -454,7 +484,7 @@ public class GDRenameService
             lines[lineIndex] = line.Substring(0, column) + edit.NewText + line.Substring(endColumn);
         }
 
-        return string.Join(Environment.NewLine, lines);
+        return string.Join(lineEnding, lines);
     }
 
     /// <summary>
@@ -490,8 +520,8 @@ public class GDRenameService
         {
             strictEdits.Add(new GDTextEdit(
                 containingScript.FullPath,
-                classNameIdent.StartLine,
-                classNameIdent.StartColumn,
+                classNameIdent.StartLine + 1,
+                classNameIdent.StartColumn + 1,
                 oldName,
                 newName,
                 GDReferenceConfidence.Strict,
@@ -514,8 +544,8 @@ public class GDRenameService
             {
                 strictEdits.Add(new GDTextEdit(
                     script.FullPath,
-                    usage.Line,
-                    usage.Column,
+                    usage.Line + 1,
+                    usage.Column + 1,
                     oldName,
                     newName,
                     GDReferenceConfidence.Strict,
@@ -581,24 +611,33 @@ public class GDRenameService
             return edits;
 
         // Add declaration
-        if (symbol.DeclarationNode != null)
+        if (symbol.DeclarationIdentifier != null)
         {
-            edits.Add(new GDTextEdit(filePath, symbol.DeclarationNode.StartLine, symbol.DeclarationNode.StartColumn, oldName, newName));
+            edits.Add(new GDTextEdit(filePath,
+                symbol.DeclarationIdentifier.StartLine + 1,
+                symbol.DeclarationIdentifier.StartColumn + 1,
+                oldName, newName));
         }
 
         // Add all references
         var refs = semanticModel.GetReferencesTo(symbol);
         foreach (var reference in refs)
         {
-            var node = reference.ReferenceNode;
-            if (node == null)
+            if (reference.ReferenceNode == null)
                 continue;
 
             // Skip if it's the declaration (already added)
-            if (node == symbol.DeclarationNode)
+            if (reference.ReferenceNode == symbol.DeclarationNode)
                 continue;
 
-            edits.Add(new GDTextEdit(filePath, node.StartLine, node.StartColumn, oldName, newName));
+            var identToken = reference.IdentifierToken;
+            if (identToken == null)
+                continue;
+
+            edits.Add(new GDTextEdit(filePath,
+                identToken.StartLine + 1,
+                identToken.StartColumn + 1,
+                oldName, newName));
         }
 
         return edits;
@@ -618,6 +657,44 @@ public class GDRenameService
             return edits;
 
         return CollectEditsFromScript(script, symbol, oldName, newName);
+    }
+
+    /// <summary>
+    /// Collects edits from member access patterns (super.method(), obj.method()) across the project
+    /// using GDProjectSemanticModel.GetMemberAccessesInProject().
+    /// </summary>
+    private void CollectMemberAccessEdits(
+        string declaringTypeName,
+        string oldName,
+        string newName,
+        List<GDTextEdit> strictEdits,
+        List<GDTextEdit> potentialEdits,
+        HashSet<string> filesModified)
+    {
+        var memberAccesses = _projectModel!.GetMemberAccessesInProject(declaringTypeName, oldName);
+
+        foreach (var (file, reference) in memberAccesses)
+        {
+            if (file.FullPath == null)
+                continue;
+
+            var identToken = reference.IdentifierToken;
+            if (identToken == null)
+                continue;
+
+            var targetEdits = reference.Confidence == GDReferenceConfidence.Strict
+                ? strictEdits : potentialEdits;
+
+            targetEdits.Add(new GDTextEdit(
+                file.FullPath,
+                identToken.StartLine + 1,
+                identToken.StartColumn + 1,
+                oldName,
+                newName,
+                reference.Confidence,
+                reference.ConfidenceReason));
+            filesModified.Add(file.FullPath);
+        }
     }
 
     #endregion

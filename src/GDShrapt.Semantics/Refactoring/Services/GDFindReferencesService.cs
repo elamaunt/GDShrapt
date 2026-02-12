@@ -662,8 +662,7 @@ public class GDFindReferencesService : GDRefactoringServiceBase
             if (node == null)
                 continue;
 
-            // Find the identifier within the node
-            var identifier = FindIdentifierInNode(node, scope.SymbolName);
+            var identifier = gdRef.IdentifierToken as GDIdentifier;
             if (identifier == null)
                 continue;
 
@@ -687,10 +686,9 @@ public class GDFindReferencesService : GDRefactoringServiceBase
         }
 
         // Also add the declaration if not already included
-        if (symbolInfo.DeclarationNode != null)
+        if (symbolInfo.DeclarationIdentifier is GDIdentifier declId)
         {
-            var declId = FindIdentifierInNode(symbolInfo.DeclarationNode, scope.SymbolName);
-            if (declId != null && !results.Any(r => r.Line == declId.StartLine && r.Column == declId.StartColumn))
+            if (!results.Any(r => r.Line == declId.StartLine && r.Column == declId.StartColumn))
             {
                 var (contextText, hlStart, hlEnd) = GetContextWithHighlight(declId);
                 results.Add(new GDReferenceLocation(
@@ -701,7 +699,7 @@ public class GDFindReferencesService : GDRefactoringServiceBase
                     declId.EndColumn,
                     GDReferenceKind.Declaration,
                     GDReferenceConfidence.Strict,
-                    symbolInfo.DeclarationNode,
+                    symbolInfo.DeclarationNode!,
                     contextText,
                     hlStart,
                     hlEnd,

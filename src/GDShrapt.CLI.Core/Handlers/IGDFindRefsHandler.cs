@@ -9,12 +9,55 @@ namespace GDShrapt.CLI.Core;
 public interface IGDFindRefsHandler
 {
     /// <summary>
-    /// Finds all references to a symbol across the project.
+    /// Finds all references to a symbol across the project, grouped by declaration.
     /// </summary>
-    /// <param name="symbolName">Name of the symbol to find.</param>
-    /// <param name="filePath">Optional file path to limit scope.</param>
-    /// <returns>List of references found.</returns>
-    IReadOnlyList<GDReferenceLocation> FindReferences(string symbolName, string? filePath = null);
+    IReadOnlyList<GDReferenceGroup> FindReferences(string symbolName, string? filePath = null);
+}
+
+/// <summary>
+/// A group of references tied to a single declaration.
+/// </summary>
+public class GDReferenceGroup
+{
+    /// <summary>
+    /// Class name where the original declaration lives (e.g. "TowerBase").
+    /// </summary>
+    public string? ClassName { get; set; }
+
+    /// <summary>
+    /// File where the symbol is declared.
+    /// </summary>
+    public required string DeclarationFilePath { get; init; }
+
+    /// <summary>
+    /// Line of the declaration (1-based).
+    /// </summary>
+    public int DeclarationLine { get; init; }
+
+    /// <summary>
+    /// Column of the declaration (0-based).
+    /// </summary>
+    public int DeclarationColumn { get; init; }
+
+    /// <summary>
+    /// Whether this declaration overrides a base class member.
+    /// </summary>
+    public bool IsOverride { get; init; }
+
+    /// <summary>
+    /// Whether this group uses an inherited symbol (no local declaration).
+    /// </summary>
+    public bool IsInherited { get; init; }
+
+    /// <summary>
+    /// Reference locations belonging to this declaration's own file.
+    /// </summary>
+    public List<GDReferenceLocation> Locations { get; init; } = new();
+
+    /// <summary>
+    /// Child classes that override this symbol, each with their own locations.
+    /// </summary>
+    public List<GDReferenceGroup> Overrides { get; init; } = new();
 }
 
 /// <summary>
@@ -41,6 +84,16 @@ public class GDReferenceLocation
     /// Whether this is the declaration of the symbol.
     /// </summary>
     public bool IsDeclaration { get; init; }
+
+    /// <summary>
+    /// Whether this declaration is an override of a base class member.
+    /// </summary>
+    public bool IsOverride { get; init; }
+
+    /// <summary>
+    /// Whether this is a super.method() call to the base class.
+    /// </summary>
+    public bool IsSuperCall { get; init; }
 
     /// <summary>
     /// Whether this is a write reference (assignment).

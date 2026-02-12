@@ -245,6 +245,74 @@ func die():
     }
 
     [TestMethod]
+    public void SemanticModel_BaseTypeName_ExplicitExtends_ReturnsExtendsType()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        var project = TestProjectFixture.Project;
+        var runtimeProvider = project.CreateRuntimeProvider();
+        if (script.SemanticModel == null)
+        {
+            script.Analyze(runtimeProvider);
+        }
+
+        // Act
+        var baseTypeName = script.SemanticModel!.BaseTypeName;
+
+        // Assert
+        Assert.AreEqual("Node2D", baseTypeName,
+            "BaseTypeName should return the extends type from semantic model");
+    }
+
+    [TestMethod]
+    public void SemanticModel_BaseTypeName_NoExtends_ReturnsRefCounted()
+    {
+        // Arrange - create a script without extends clause
+        var project = new GDScriptProject("""
+class_name TestNoExtends
+
+func helper():
+    pass
+""");
+        project.AnalyzeAll();
+
+        var script = project.ScriptFiles.First();
+        Assert.IsNotNull(script.SemanticModel);
+
+        // Act
+        var baseTypeName = script.SemanticModel!.BaseTypeName;
+
+        // Assert
+        Assert.AreEqual("RefCounted", baseTypeName,
+            "BaseTypeName should return RefCounted for scripts without extends");
+    }
+
+    [TestMethod]
+    public void SemanticModel_BaseTypeName_MatchesRuntimeProvider()
+    {
+        // Arrange
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        Assert.IsNotNull(script, "base_entity.gd not found");
+
+        var project = TestProjectFixture.Project;
+        var runtimeProvider = project.CreateRuntimeProvider();
+        if (script.SemanticModel == null)
+        {
+            script.Analyze(runtimeProvider);
+        }
+
+        // Act
+        var fromSemanticModel = script.SemanticModel!.BaseTypeName;
+        var fromRuntimeProvider = runtimeProvider.GetBaseType(script.TypeName);
+
+        // Assert - both APIs should return the same result
+        Assert.AreEqual(fromSemanticModel, fromRuntimeProvider,
+            "BaseTypeName from SemanticModel should match GetBaseType from RuntimeProvider");
+    }
+
+    [TestMethod]
     public void SemanticModel_InheritanceChain_IsCorrect()
     {
         // Arrange

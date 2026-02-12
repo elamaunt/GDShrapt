@@ -29,6 +29,11 @@ public class GDSymbolInfo
     public GDNode? DeclarationNode { get; }
 
     /// <summary>
+    /// The identifier token within the declaration node.
+    /// </summary>
+    public GDSyntaxToken? DeclarationIdentifier { get; }
+
+    /// <summary>
     /// The type name of this symbol (e.g., "int", "String", "Player").
     /// </summary>
     public string? TypeName { get; }
@@ -102,6 +107,7 @@ public class GDSymbolInfo
         Name = symbol.Name;
         Kind = symbol.Kind;
         DeclarationNode = symbol.Declaration;
+        DeclarationIdentifier = ResolveDeclarationIdentifier(symbol.Declaration, symbol.Name);
         TypeName = symbol.TypeName;
         TypeNode = symbol.TypeNode;
         IsStatic = symbol.IsStatic;
@@ -230,5 +236,25 @@ public class GDSymbolInfo
         var inherited = IsInherited ? " (inherited)" : "";
         var declaring = DeclaringTypeName != null ? $" in {DeclaringTypeName}" : "";
         return $"{Kind}: {Name}{declaring}{inherited} [{Confidence}]";
+    }
+
+    private static GDSyntaxToken? ResolveDeclarationIdentifier(GDNode? node, string name)
+    {
+        if (node == null)
+            return null;
+
+        if (node is GDIdentifiableClassMember identifiable && identifiable.Identifier?.Sequence == name)
+            return identifiable.Identifier;
+
+        if (node is GDVariableDeclaration varDecl && varDecl.Identifier?.Sequence == name)
+            return varDecl.Identifier;
+
+        if (node is GDParameterDeclaration param && param.Identifier?.Sequence == name)
+            return param.Identifier;
+
+        if (node is GDMatchCaseVariableExpression matchVar && matchVar.Identifier?.Sequence == name)
+            return matchVar.Identifier;
+
+        return null;
     }
 }
