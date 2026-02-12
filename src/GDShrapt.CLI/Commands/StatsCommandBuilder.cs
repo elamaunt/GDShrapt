@@ -19,7 +19,7 @@ public static class StatsCommandBuilder
     {
         var command = new Command("stats", "Show a combined summary of project size, complexity, and health.\n\nExamples:\n  gdshrapt stats                           Project statistics\n  gdshrapt stats --format json             JSON output");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

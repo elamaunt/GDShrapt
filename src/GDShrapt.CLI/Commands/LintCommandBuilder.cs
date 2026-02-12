@@ -21,7 +21,7 @@ public static class LintCommandBuilder
     {
         var command = new Command("lint", "Check GDScript files for style violations, naming conventions, and best practices.\n\nUse --preset to apply predefined rule sets, or configure individual\noptions below. Individual options override preset values.\nMost options can also be set in .gdshrapt.json (see 'gdshrapt init').\n\nExamples:\n  gdshrapt lint                            Lint current project\n  gdshrapt lint --preset strict            Use strict rules\n  gdshrapt lint --rules GDL001,GDL003      Run specific rules\n  gdshrapt lint --category naming          Only naming rules");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

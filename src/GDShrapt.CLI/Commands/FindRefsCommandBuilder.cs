@@ -19,7 +19,8 @@ public static class FindRefsCommandBuilder
     {
         var command = new Command("find-refs", "Find all references to a symbol across the project.\nSearch by name or by position in a file (--line/--column).\n\nExamples:\n  gdshrapt find-refs health                              Find by symbol name\n  gdshrapt find-refs take_damage -p ./my-project         Search in specific project\n  gdshrapt find-refs health --file player.gd             Search in one file only\n  gdshrapt find-refs --file player.gd --line 15          Find symbol at line 15\n  gdshrapt find-refs --file player.gd --line 15 --column 8  With column\n  gdshrapt find-refs health --format json                 Output as JSON");
 
-        var symbolArg = new Argument<string?>("symbol", () => null, "Symbol name to find references for (optional if --line is used)");
+        var symbolArg = new Argument<string?>("symbol", "Symbol name to find references for (optional if --line is used)");
+        symbolArg.Arity = ArgumentArity.ZeroOrOne;
         var projectOption = new Option<string>(
             new[] { "--project", "-p" },
             getDefaultValue: () => ".",

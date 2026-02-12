@@ -15578,4 +15578,46 @@ test_scripts/validation_edge_cases.gd
     confidence: Certain
     nullable: no
 
+test_scripts/reflection_test.gd
+  6:0 Constant SIGNAL_NAME # OK
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  7:0 Constant METHOD_NAME # OK
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  9:0 Variable player_speed # OK
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  25:1 Variable speed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Medium
+    nullable: no
+
+  30:1 Variable cb # OK
+    declared: (none)
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
+    nullable: no
+
+  31:1 Variable cb2 # OK
+    declared: (none)
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
+    nullable: no
 

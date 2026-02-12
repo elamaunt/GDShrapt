@@ -23,7 +23,7 @@ public static class WatchCommandBuilder
             "  gdshrapt watch ./my-project              Watch specific project\n" +
             "  gdshrapt watch --format json             Output as JSON");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

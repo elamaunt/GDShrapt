@@ -433,4 +433,121 @@ public class ProjectWideRenameTests
     }
 
     #endregion
+
+    #region Reflection-Style String Literal Tests
+
+    [TestMethod]
+    public void PlanRename_EmitSignal_StringLiteralInPotentialEdits()
+    {
+        var result = PlanRename("game_started", "reflection_test.gd");
+
+        result.Success.Should().BeTrue();
+
+        // emit_signal("game_started") should produce a Potential edit
+        result.PotentialEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("reflection_test.gd") &&
+            e.ConfidenceReason != null && e.ConfidenceReason.Contains("emit_signal"),
+            "emit_signal(\"game_started\") should be a potential edit");
+
+        // has_signal("game_started") should produce a Potential edit
+        result.PotentialEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("reflection_test.gd") &&
+            e.ConfidenceReason != null && e.ConfidenceReason.Contains("has_signal"),
+            "has_signal(\"game_started\") should be a potential edit");
+
+        // emit_signal(SIGNAL_NAME) where const SIGNAL_NAME = "game_started" should also produce a Potential edit
+        // The edit should point to the const initializer string literal
+        var constResolvedEdits = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("reflection_test.gd") &&
+                        e.ConfidenceReason != null && e.ConfidenceReason.Contains("emit_signal"))
+            .ToList();
+        constResolvedEdits.Count.Should().BeGreaterThanOrEqualTo(2,
+            "both emit_signal(\"game_started\") and emit_signal(SIGNAL_NAME) should be found");
+    }
+
+    [TestMethod]
+    public void PlanRename_Call_StringLiteralInPotentialEdits()
+    {
+        var result = PlanRename("start", "reflection_test.gd");
+
+        result.Success.Should().BeTrue();
+
+        var potentialInReflectionTest = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("reflection_test.gd"))
+            .ToList();
+
+        // call("start"), call_deferred("start"), has_method("start"), call(METHOD_NAME),
+        // Callable(self, "start"), Callable(self, METHOD_NAME)
+        // That's 6 potential edits from reflection_test.gd
+        potentialInReflectionTest.Count.Should().BeGreaterThanOrEqualTo(4,
+            "call/call_deferred/has_method/Callable with string literal 'start' should be found");
+
+        // Specifically: has_method("start")
+        potentialInReflectionTest.Should().Contain(e =>
+            e.ConfidenceReason != null && e.ConfidenceReason.Contains("has_method"),
+            "has_method(\"start\") should be found");
+
+        // Specifically: call("start")
+        potentialInReflectionTest.Should().Contain(e =>
+            e.ConfidenceReason != null && e.ConfidenceReason.Contains("call("),
+            "call(\"start\") should be found");
+    }
+
+    [TestMethod]
+    public void PlanRename_GetSet_StringLiteralInPotentialEdits()
+    {
+        var result = PlanRename("player_speed", "reflection_test.gd");
+
+        result.Success.Should().BeTrue();
+
+        // get("player_speed") and set("player_speed", ...) in reflection_test.gd
+        var potentialInReflectionTest = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("reflection_test.gd"))
+            .ToList();
+
+        potentialInReflectionTest.Should().Contain(e =>
+            e.ConfidenceReason != null && e.ConfidenceReason.Contains("get("),
+            "get(\"player_speed\") should produce a potential edit");
+
+        potentialInReflectionTest.Should().Contain(e =>
+            e.ConfidenceReason != null && e.ConfidenceReason.Contains("set("),
+            "set(\"player_speed\", ...) should produce a potential edit");
+    }
+
+    [TestMethod]
+    public void PlanRename_ConstResolvedToOriginalLiteral_PositionCorrect()
+    {
+        var result = PlanRename("game_started", "reflection_test.gd");
+
+        result.Success.Should().BeTrue();
+
+        // The const SIGNAL_NAME = "game_started" is on line 7
+        // emit_signal(SIGNAL_NAME) should resolve to the const and the edit should
+        // point to "game_started" inside the const definition
+        var constLiteralEdit = result.PotentialEdits
+            .FirstOrDefault(e => e.FilePath != null && e.FilePath.EndsWith("reflection_test.gd") &&
+                                  e.Line == 7);
+        constLiteralEdit.Should().NotBeNull(
+            "emit_signal(SIGNAL_NAME) should produce edit pointing to const SIGNAL_NAME = \"game_started\" on line 7");
+    }
+
+    [TestMethod]
+    public void PlanRename_StringConcatenation_ProducesWarningNotEdit()
+    {
+        var result = PlanRename("game_started", "reflection_test.gd");
+
+        result.Success.Should().BeTrue();
+
+        // emit_signal("game" + "_started") should NOT produce an edit
+        // (concatenation cannot be auto-edited)
+        // But it SHOULD produce a warning
+        result.Warnings.Should().NotBeEmpty(
+            "concatenated string matching symbol name should produce a warning");
+
+        result.Warnings.Should().Contain(w =>
+            w.Message.Contains("concatenated") || w.Message.Contains("manual"),
+            "warning should mention concatenated/manual update");
+    }
+
+    #endregion
 }

@@ -1097,6 +1097,31 @@ internal class GDSemanticReferenceCollector : GDVisitor
                             }
                         }
                     }
+
+                    // Direct reflection-style calls: emit_signal("name"), Callable(obj, "name")
+                    switch (methodName)
+                    {
+                        case "has_method":
+                        case "call":
+                        case "call_deferred":
+                            TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Method, methodName);
+                            break;
+
+                        case "has_signal":
+                        case "emit_signal":
+                        case "connect":
+                            TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Signal, methodName);
+                            break;
+
+                        case "get":
+                        case "set":
+                            TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Property, methodName);
+                            break;
+
+                        case "Callable":
+                            TrackStringLiteralArg(callExpression, 1, GDSymbolKind.Method, "Callable");
+                            break;
+                    }
                 }
             }
             // Member method call: obj.method()
@@ -1115,25 +1140,25 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         }
                     }
 
-                    // has_method("name") — track the string literal as a Potential reference
-                    if (methodName == "has_method")
+                    // Reflection-style calls — track string literal args as Potential references
+                    switch (methodName)
                     {
-                        var args = callExpression.Parameters?.ToList();
-                        if (args != null && args.Count >= 1 && args[0] is GDStringExpression strArg)
-                        {
-                            var referencedMethodName = GDLiteralTypeResolver.GetStringLiteralValue(strArg);
-                            if (!string.IsNullOrEmpty(referencedMethodName))
-                            {
-                                var hasMethodSymbol = GDSymbolInfo.DuckTyped(
-                                    referencedMethodName,
-                                    GDSymbolKind.Method,
-                                    null,
-                                    $"has_method(\"{referencedMethodName}\") string literal");
+                        case "has_method":
+                        case "call":
+                        case "call_deferred":
+                            TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Method, methodName);
+                            break;
 
-                                CreateReference(hasMethodSymbol, strArg, GDReferenceConfidence.Potential,
-                                    callerTypeName: GDWellKnownTypes.Variant);
-                            }
-                        }
+                        case "has_signal":
+                        case "emit_signal":
+                        case "connect":
+                            TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Signal, methodName);
+                            break;
+
+                        case "get":
+                        case "set":
+                            TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Property, methodName);
+                            break;
                     }
                 }
             }
@@ -1264,6 +1289,47 @@ internal class GDSemanticReferenceCollector : GDVisitor
         return GDSymbolInfo.BuiltIn(memberInfo, declaringType);
     }
 
+    /// <summary>
+    /// Tracks a string literal argument in a reflection-style call (has_method, emit_signal, call, etc.)
+    /// as a Potential reference. For concatenated strings, records a warning instead.
+    /// </summary>
+    private void TrackStringLiteralArg(
+        GDCallExpression callExpression,
+        int argIndex,
+        GDSymbolKind symbolKind,
+        string callerMethodName)
+    {
+        var args = callExpression.Parameters?.ToList();
+        if (args == null || args.Count <= argIndex)
+            return;
+
+        var argExpr = args[argIndex] as GDExpression;
+        if (argExpr == null)
+            return;
+
+        var resolver = GDStaticStringExtractor.CreateClassResolver(
+            callExpression.RootClassDeclaration);
+        var (literalValue, sourceNode) = GDStaticStringExtractor.TryExtractStringWithNode(
+            argExpr, resolver);
+
+        if (string.IsNullOrEmpty(literalValue))
+            return;
+
+        if (sourceNode != null)
+        {
+            var reason = $"{callerMethodName}(\"{literalValue}\") string literal";
+            var symbol = GDSymbolInfo.DuckTyped(literalValue, symbolKind, null, reason);
+            CreateReference(symbol, sourceNode, GDReferenceConfidence.Potential,
+                callerTypeName: GDWellKnownTypes.Variant);
+        }
+        else
+        {
+            // Concatenated or composite string — cannot auto-edit, record warning
+            _model?.AddStringReferenceWarning(literalValue, argExpr,
+                $"{callerMethodName}() contains concatenated string that evaluates to \"{literalValue}\" — manual update required");
+        }
+    }
+
     private void CreateReference(GDSymbolInfo symbol, GDNode node, GDReferenceConfidence confidence, string? callerTypeName = null)
     {
         var reference = new GDReference
@@ -1327,6 +1393,10 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Note: StartColumn points to opening quote; rename service must offset +1
         if (node is GDStringExpression strExpr)
             return strExpr.String;
+
+        // StringName literal (e.g., &"method_name")
+        if (node is GDStringNameExpression strNameExpr)
+            return strNameExpr.String;
 
         return null;
     }

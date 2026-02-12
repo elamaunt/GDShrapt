@@ -20,7 +20,7 @@ public static class CheckCommandBuilder
     {
         var command = new Command("check", "Quick project health check with exit codes for CI/CD pipelines.\n\nExamples:\n  gdshrapt check                           Check current directory\n  gdshrapt check --silent                  Only return exit code\n  gdshrapt check --fail-on warning         Fail on warnings too");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

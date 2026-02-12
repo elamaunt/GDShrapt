@@ -19,7 +19,7 @@ public static class DepsCommandBuilder
     {
         var command = new Command("deps", "Visualize file dependencies (extends, preload) and detect circular imports.\n\nExamples:\n  gdshrapt deps                            Show dependency graph\n  gdshrapt deps --fail-on-cycles           Fail if cycles found\n  gdshrapt deps --show-coupled             Show most coupled files");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

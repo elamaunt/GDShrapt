@@ -77,6 +77,12 @@ public class GDRenameService
         // .tscn signal connections: [connection method="oldName"]
         CollectTscnEdits(oldName, newName, strictEdits, filesModified);
 
+        // Reflection-style string literal references (has_method, emit_signal, call, etc.)
+        if (_projectModel != null)
+        {
+            CollectAllMemberAccessEdits(oldName, newName, strictEdits, potentialEdits, filesModified);
+        }
+
         if (strictEdits.Count == 0 && potentialEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
 
@@ -87,8 +93,9 @@ public class GDRenameService
         // Sort edits by file, then by position (reverse order for applying)
         var sortedStrict = SortEditsReverse(strictEdits);
         var sortedPotential = SortEditsReverse(potentialEdits);
+        var warnings = CollectStringReferenceWarnings(oldName);
 
-        return GDRenameResult.SuccessfulWithConfidence(sortedStrict, sortedPotential, filesModified.Count);
+        return GDRenameResult.SuccessfulWithConfidence(sortedStrict, sortedPotential, filesModified.Count, warnings);
     }
 
     /// <summary>
@@ -298,9 +305,10 @@ public class GDRenameService
 
                 strictEdits = DeduplicateEdits(strictEdits);
                 potentialEdits = DeduplicateEdits(potentialEdits);
+                var warnings = CollectStringReferenceWarnings(oldName);
 
                 return GDRenameResult.SuccessfulWithConfidence(
-                    SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count);
+                    SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count, warnings);
             }
 
             return bestResult;
@@ -792,6 +800,34 @@ public class GDRenameService
                 reference.ConfidenceReason));
             filesModified.Add(file.FullPath);
         }
+    }
+
+    /// <summary>
+    /// Collects string reference warnings (e.g. concatenated strings matching oldName) from all semantic models.
+    /// </summary>
+    private List<GDRenameWarning> CollectStringReferenceWarnings(string oldName)
+    {
+        var warnings = new List<GDRenameWarning>();
+        if (_projectModel == null)
+            return warnings;
+
+        foreach (var script in _project.ScriptFiles)
+        {
+            var model = _projectModel.GetSemanticModel(script);
+            if (model == null)
+                continue;
+
+            foreach (var w in model.GetStringReferenceWarnings(oldName))
+            {
+                warnings.Add(new GDRenameWarning(
+                    script.FullPath ?? "",
+                    w.Node.StartLine + 1,
+                    w.Node.StartColumn + 1,
+                    w.Reason));
+            }
+        }
+
+        return warnings;
     }
 
     private void CollectTscnEdits(

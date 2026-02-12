@@ -19,7 +19,7 @@ public static class TypeCoverageCommandBuilder
     {
         var command = new Command("type-coverage", "Report how much of your code has explicit type annotations.\n\nExamples:\n  gdshrapt type-coverage                   Project-wide coverage\n  gdshrapt type-coverage --file player.gd  Single file coverage");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

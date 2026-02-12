@@ -20,7 +20,7 @@ public static class AnalyzeCommandBuilder
     {
         var command = new Command("analyze", "Analyze a GDScript project and report all diagnostics (validation + linting).\n\nExamples:\n  gdshrapt analyze                         Analyze current directory\n  gdshrapt analyze ./my-project            Analyze specific project\n  gdshrapt analyze --format json           Output as JSON\n  gdshrapt analyze --fail-on warning       Fail on warnings (for CI)");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

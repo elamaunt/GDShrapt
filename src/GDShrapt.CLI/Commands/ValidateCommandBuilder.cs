@@ -21,7 +21,7 @@ public static class ValidateCommandBuilder
         var command = new Command("validate", "Validate GDScript for syntax errors, type mismatches, and semantic issues.\n\nExamples:\n  gdshrapt validate                        Validate current project\n  gdshrapt validate --check-types          Only type checking\n  gdshrapt validate --strict               Treat all issues as errors");
 
         // Path argument
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

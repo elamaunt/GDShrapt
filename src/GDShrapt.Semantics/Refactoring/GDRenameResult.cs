@@ -36,6 +36,11 @@ public sealed class GDRenameResult
     public IReadOnlyList<GDRenameConflict> Conflicts { get; }
 
     /// <summary>
+    /// Warnings about references that could not be auto-edited (e.g. concatenated strings).
+    /// </summary>
+    public IReadOnlyList<GDRenameWarning> Warnings { get; }
+
+    /// <summary>
     /// Error message if the rename cannot be performed.
     /// </summary>
     public string? ErrorMessage { get; }
@@ -51,13 +56,15 @@ public sealed class GDRenameResult
         IReadOnlyList<GDTextEdit> potentialEdits,
         IReadOnlyList<GDRenameConflict> conflicts,
         string? errorMessage,
-        int fileCount)
+        int fileCount,
+        IReadOnlyList<GDRenameWarning>? warnings = null)
     {
         Success = success;
         StrictEdits = strictEdits;
         PotentialEdits = potentialEdits;
         Edits = strictEdits.Concat(potentialEdits).ToList();
         Conflicts = conflicts;
+        Warnings = warnings ?? System.Array.Empty<GDRenameWarning>();
         ErrorMessage = errorMessage;
         FileCount = fileCount;
     }
@@ -76,9 +83,10 @@ public sealed class GDRenameResult
     public static GDRenameResult SuccessfulWithConfidence(
         IReadOnlyList<GDTextEdit> strictEdits,
         IReadOnlyList<GDTextEdit> potentialEdits,
-        int fileCount)
+        int fileCount,
+        IReadOnlyList<GDRenameWarning>? warnings = null)
     {
-        return new GDRenameResult(true, strictEdits, potentialEdits, System.Array.Empty<GDRenameConflict>(), null, fileCount);
+        return new GDRenameResult(true, strictEdits, potentialEdits, System.Array.Empty<GDRenameConflict>(), null, fileCount, warnings);
     }
 
     /// <summary>

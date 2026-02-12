@@ -19,7 +19,7 @@ public static class DeadCodeCommandBuilder
     {
         var command = new Command("dead-code", "Detect unused variables, functions, signals, and unreachable code.\n\nExamples:\n  gdshrapt dead-code                       Find all dead code\n  gdshrapt dead-code --fail-if-found       Fail for CI if found\n  gdshrapt dead-code --kind Function       Only unused functions");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

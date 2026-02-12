@@ -48,7 +48,60 @@ internal static class GDStaticStringExtractor
             }
         }
 
+        // Static string concatenation: "a" + "b"
+        if (expr is GDDualOperatorExpression dualOp
+            && dualOp.OperatorType == GDDualOperatorType.Addition)
+        {
+            var leftVal = TryExtractString(dualOp.LeftExpression, resolveVariable);
+            var rightVal = TryExtractString(dualOp.RightExpression, resolveVariable);
+            if (leftVal != null && rightVal != null)
+                return leftVal + rightVal;
+        }
+
         return null;
+    }
+
+    /// <summary>
+    /// Tries to extract a static string value from an expression, also returning the source AST node
+    /// where the string literal physically resides (for rename edit positioning).
+    /// Returns (value, sourceNode) where:
+    /// - sourceNode != null: editable (direct literal, StringName, or const-resolved)
+    /// - sourceNode == null but value != null: not editable (e.g. concatenation) — warning only
+    /// </summary>
+    public static (string? value, GDExpression? sourceNode) TryExtractStringWithNode(
+        GDExpression? expr,
+        Func<string, GDExpression?>? resolveVariable = null)
+    {
+        if (expr == null)
+            return (null, null);
+
+        if (expr is GDStringExpression strExpr)
+            return (strExpr.String?.Sequence, strExpr);
+
+        if (expr is GDStringNameExpression stringNameExpr)
+            return (stringNameExpr.String?.Sequence, stringNameExpr);
+
+        if (expr is GDIdentifierExpression idExpr && resolveVariable != null)
+        {
+            var varName = idExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var initExpr = resolveVariable(varName);
+                return TryExtractStringWithNode(initExpr, null);
+            }
+        }
+
+        // Static concatenation: value computable but no single source node for editing
+        if (expr is GDDualOperatorExpression dualOp
+            && dualOp.OperatorType == GDDualOperatorType.Addition)
+        {
+            var (leftVal, _) = TryExtractStringWithNode(dualOp.LeftExpression, resolveVariable);
+            var (rightVal, _) = TryExtractStringWithNode(dualOp.RightExpression, resolveVariable);
+            if (leftVal != null && rightVal != null)
+                return (leftVal + rightVal, null);
+        }
+
+        return (null, null);
     }
 
     /// <summary>

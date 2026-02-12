@@ -9817,6 +9817,50 @@ test_scripts/refactoring_targets.gd
     nullable: no
 
 
+test_scripts/reflection_test.gd
+  6:0 Constant SIGNAL_NAME
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  7:0 Constant METHOD_NAME
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  9:0 Variable player_speed
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  25:1 Variable speed
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Medium
+    nullable: no
+
+  30:1 Variable cb
+    declared: (none)
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
+    nullable: no
+
+  31:1 Variable cb2
+    declared: (none)
+    inferred: Callable
+    effective: Callable
+    confidence: Medium
+    nullable: no
+
+
 test_scripts/rename_test.gd
   6:0 Variable local_speed
     declared: (none)
@@ -15572,4 +15616,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 2203 entries in 50 files
+# Summary: 2209 entries in 51 files

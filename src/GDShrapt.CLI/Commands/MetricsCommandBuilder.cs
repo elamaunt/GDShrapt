@@ -19,7 +19,7 @@ public static class MetricsCommandBuilder
     {
         var command = new Command("metrics", "Calculate cyclomatic complexity, maintainability index, and other metrics.\n\nExamples:\n  gdshrapt metrics                         All project metrics\n  gdshrapt metrics --sort-by complexity     Sort by complexity\n  gdshrapt metrics --top 10 --show-methods Top 10 with methods");
 
-        var pathArg = new Argument<string>("project-path", () => ".", "Path to the Godot project");
+        var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
             new[] { "--project", "-p" },
             "Path to the Godot project (alternative to positional argument)");

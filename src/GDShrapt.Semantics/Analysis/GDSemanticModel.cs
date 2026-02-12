@@ -102,6 +102,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly Dictionary<GDNode, string> _nodeTypes = new();
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes = new();
     private readonly Dictionary<string, List<GDTypeUsage>> _typeUsages = new();
+    private readonly List<GDStringReferenceWarning> _stringReferenceWarnings = new();
     private GDCallableCallSiteRegistry? _callSiteRegistry;
 
     /// <summary>
@@ -1232,6 +1233,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Used for querying built-in method calls like OS.execute() or global functions like str2var().
     /// </summary>
     internal void AddMemberAccess(string callerType, string memberName, GDReference reference) => _symbolRegistry.RegisterMemberAccess(callerType, memberName, reference);
+
+    /// <summary>
+    /// Adds a warning for a string reference that cannot be auto-edited (e.g. concatenated string).
+    /// </summary>
+    internal void AddStringReferenceWarning(string memberName, GDNode node, string reason)
+        => _stringReferenceWarnings.Add(new GDStringReferenceWarning(memberName, node, reason));
+
+    /// <summary>
+    /// Gets string reference warnings for a specific member name.
+    /// </summary>
+    internal IReadOnlyList<GDStringReferenceWarning> GetStringReferenceWarnings(string memberName)
+        => _stringReferenceWarnings.Where(w => w.MemberName == memberName).ToList();
 
     /// <summary>
     /// Sets the inferred type for a node.

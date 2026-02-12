@@ -32,7 +32,7 @@ Source: base_entity.gd
 Result: Success
 =======================================
 
-Strict edits (8):
+Strict edits (9):
   test_scripts/base_entity.gd:
     10:8 health_changed -> health_changed_renamed [Strict] # OK
     37:2 health_changed -> health_changed_renamed [Strict] # OK
@@ -41,8 +41,20 @@ Strict edits (8):
     95:2 health_changed -> health_changed_renamed [Strict] # OK
     102:2 health_changed -> health_changed_renamed [Strict] # OK
     109:2 health_changed -> health_changed_renamed [Strict] # OK
+  test_scripts/path_extends_test.gd:
+    30:2 health_changed -> health_changed_renamed [Strict] (Member of res://test_scripts/base_entity.gd) # OK
   test_scripts/player_entity.gd:
     74:2 health_changed -> health_changed_renamed [Strict] (Inherited member 'health_changed' used directly in derived class) # OK
+
+Potential edits (5):
+  test_scripts/scene_references.gd:
+    33:35 health_changed -> health_changed_renamed [Potential] (has_signal("health_changed") string literal) # OK
+    34:19 health_changed -> health_changed_renamed [Potential] (connect("health_changed") string literal) # OK
+  test_scripts/semantic_validation_demo.gd:
+    91:15 health_changed -> health_changed_renamed [Potential] (emit_signal("health_changed") string literal) # OK
+    95:15 health_changed -> health_changed_renamed [Potential] (emit_signal("health_changed") string literal) # OK
+  test_scripts/simple_class.gd:
+    33:15 health_changed -> health_changed_renamed [Potential] (emit_signal("health_changed") string literal) # OK
 
 ---
 
@@ -52,17 +64,37 @@ Source: base_entity.gd
 Result: Success
 =======================================
 
-Strict edits (6):
+Strict edits (10):
   test_scenes/connection_test.tscn:
     14:76 take_damage -> take_damage_renamed [Strict] (.tscn signal connection method="take_damage") # OK
   test_scripts/base_entity.gd:
     28:6 take_damage -> take_damage_renamed [Strict] # OK
   test_scripts/enemy_entity.gd:
+    60:9 take_damage -> take_damage_renamed [Strict] (Member of BaseEntity) # OK
     99:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class) # OK
     100:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class) # OK
+  test_scripts/extended_class.gd:
+    24:8 take_damage -> take_damage_renamed [Strict] (Member of SimpleClass) # OK
+  test_scripts/path_extends_test.gd:
+    20:2 take_damage -> take_damage_renamed [Strict] (Member of res://test_scripts/base_entity.gd) # OK
   test_scripts/player_entity.gd:
     30:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class) # OK
     40:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class) # OK
+    98:9 take_damage -> take_damage_renamed [Strict] (Member of BaseEntity) # OK
+
+Potential edits (7):
+  test_scripts/cross_file_inference.gd:
+    92:22 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal) # OK
+  test_scripts/duck_caller.gd:
+    12:25 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal) # OK
+    13:11 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'entity') # OK
+  test_scripts/duck_typing_advanced.gd:
+    26:22 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'target') # OK
+  test_scripts/extended_class.gd:
+    30:24 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal) # OK
+    31:16 take_damage -> take_damage_renamed [Potential] (call("take_damage") string literal) # OK
+  test_scripts/polymorphic_interfaces.gd:
+    41:5 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'e') # OK
 
 ---
 
@@ -123,7 +155,7 @@ Source: base_entity.gd
 Result: Success
 =======================================
 
-Strict edits (27):
+Strict edits (28):
   test_scripts/base_entity.gd:
     18:5 current_health -> current_health_renamed [Strict] # OK
     24:2 current_health -> current_health_renamed [Strict] # OK
@@ -149,6 +181,8 @@ Strict edits (27):
     109:22 current_health -> current_health_renamed [Strict] # OK
   test_scripts/enemy_entity.gd:
     121:13 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class) # OK
+  test_scripts/path_extends_test.gd:
+    14:2 current_health -> current_health_renamed [Strict] (Member of res://test_scripts/base_entity.gd) # OK
   test_scripts/player_entity.gd:
     27:2 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class) # OK
     70:2 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class) # OK
@@ -211,6 +245,11 @@ Strict edits (13):
     56:3 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class) # OK
     58:16 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class) # OK
 
+Potential edits (2):
+  test_scripts/reflection_test.gd:
+    26:19 player_speed -> player_speed_renamed [Potential] (get("player_speed") string literal) # OK
+    27:7 player_speed -> player_speed_renamed [Potential] (set("player_speed") string literal) # OK
+
 ---
 
-# Summary: 10 cases, 91 strict edits, 0 potential edits
+# Summary: 10 cases, 97 strict edits, 14 potential edits
