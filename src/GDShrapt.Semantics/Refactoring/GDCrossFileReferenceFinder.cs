@@ -146,6 +146,8 @@ public class GDCrossFileReferenceFinder
                     yield return new GDCrossFileReference(
                         script,
                         method,
+                        method.Identifier.StartLine,
+                        method.Identifier.StartColumn,
                         GDReferenceConfidence.Strict,
                         "Method override in derived class");
                 }
@@ -155,9 +157,14 @@ public class GDCrossFileReferenceFinder
             script.Class.WalkIn(superVisitor);
             foreach (var node in superVisitor.Found)
             {
+                var superCallIdentifier = (node as GDCallExpression)?.CallerExpression
+                    is GDMemberOperatorExpression superMemberOp ? superMemberOp.Identifier : null;
+
                 yield return new GDCrossFileReference(
                     script,
                     node,
+                    superCallIdentifier?.StartLine ?? node.StartLine,
+                    superCallIdentifier?.StartColumn ?? node.StartColumn,
                     GDReferenceConfidence.Strict,
                     $"super.{memberName}() call in derived class");
             }
@@ -478,14 +485,14 @@ public class GDCrossFileReference
     public string? Reason { get; }
 
     /// <summary>
-    /// Line number of the reference (1-based).
+    /// Line number of the reference (0-based).
     /// </summary>
-    public int Line => Node.StartLine;
+    public int Line { get; }
 
     /// <summary>
-    /// Column number of the reference (1-based).
+    /// Column number of the reference (0-based).
     /// </summary>
-    public int Column => Node.StartColumn;
+    public int Column { get; }
 
     /// <summary>
     /// Full file path of the script.
@@ -500,6 +507,24 @@ public class GDCrossFileReference
     {
         Script = script;
         Node = node;
+        Line = node.StartLine;
+        Column = node.StartColumn;
+        Confidence = confidence;
+        Reason = reason;
+    }
+
+    public GDCrossFileReference(
+        GDScriptFile script,
+        GDNode node,
+        int line,
+        int column,
+        GDReferenceConfidence confidence,
+        string? reason = null)
+    {
+        Script = script;
+        Node = node;
+        Line = line;
+        Column = column;
         Confidence = confidence;
         Reason = reason;
     }

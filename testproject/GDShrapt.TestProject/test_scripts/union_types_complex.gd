@@ -55,7 +55,7 @@ func get_position_or_null(node_path):
 
 # === Branching Creates Unions ===
 
-func process_by_type(value): # 58:1-GDL513-OK
+func process_by_type(value):
 	# Return type is Union based on input type
 	if value is int:
 		return value * 2          # int path
@@ -95,7 +95,7 @@ func complex_conditional():
 
 # === Match Creates Union ===
 
-func match_return(value): # 98:1-GDL513-OK
+func match_return(value):
 	match value:
 		0:
 			return "zero"          # String
@@ -128,7 +128,7 @@ func match_with_patterns(data):
 var mixed_array = [1, "two", 3.0, [4], {"five": 5}]
 
 
-func get_mixed_element(index):
+func get_mixed_element(index): # 124:1-GDL513-OK
 	# Return type is int|String|float|Array|Dictionary
 	if index < 0 or index >= mixed_array.size(): # 133:4-GD3020-OK, 133:17-GD3020-OK
 		return null
@@ -171,7 +171,7 @@ var config = {
 }
 
 
-func get_config(key):
+func get_config(key): # 160:1-GDL513-OK
 	# Return type is String|int|float|bool|Array|Dictionary|null
 	return config.get(key)
 
@@ -183,7 +183,7 @@ func update_config(key, value):
 
 # === Nullable Chains ===
 
-func safe_get_nested(data, path): # 186:1-GDL513-OK
+func safe_get_nested(data, path):
 	# Each step could return null, final type is Variant|null
 	var current = data
 	for key in path:
@@ -209,7 +209,7 @@ func safe_chain_example():
 
 # === Discriminated Union (Tagged) ===
 
-func create_success(value): # 212:1-GDL513-OK
+func create_success(value):
 	return {"tag": "success", "value": value}
 
 
@@ -236,7 +236,7 @@ func handle_result(result):
 
 # === Higher-Order Functions with Union Returns ===
 
-func map_with_fallback(array, transform, fallback): # 239:1-GDL513-OK
+func map_with_fallback(array, transform, fallback):
 	# transform returns T|null, fallback is T
 	# Result is Array[T]
 	var results = []
@@ -272,13 +272,13 @@ func reduce_or_default(array, reducer, default_value):
 
 # === Async-like Patterns ===
 
-signal result_ready(result) # 274:1-GDL513-OK
+signal result_ready(result)
 
 var pending_results = {}  # Dict[int, Variant|null]
 var next_request_id = 0
 
 
-func async_request(params):
+func async_request(params): # 271:1-GDL513-OK
 	# Returns request_id (int), result comes later via signal
 	var request_id = next_request_id
 	next_request_id += 1
@@ -315,7 +315,7 @@ func get_result(request_id):
 
 # === Type Guards and Narrowing ===
 
-func is_numeric(value): # 318:1-GDL513-OK
+func is_numeric(value):
 	return value is int or value is float
 
 
@@ -370,7 +370,7 @@ func _process_typed_data(data, type_str):
 
 # === TypeFlow Test Method (for maximum coverage of node kinds) ===
 
-func type_flow_test_method(param: Variant) -> Variant: # 373:1-GDL513-OK
+func type_flow_test_method(param: Variant) -> Variant:
 	# 1. Parameter with type annotation
 	# 2. Local variable initialization from parameter
 	var local = param

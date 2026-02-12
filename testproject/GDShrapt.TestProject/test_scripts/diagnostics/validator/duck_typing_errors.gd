@@ -21,18 +21,18 @@ func test_gd7002_valid_typed() -> void:
 
 
 ## VALID - should NOT trigger GD7002 (with type guard)
-func test_gd7002_valid_guarded(obj) -> void: # 24:1-GDL513-OK
+func test_gd7002_valid_guarded(obj) -> void:
 	if obj is Node:
 		print(obj.name)  # Type guarded - no warning
 
 
 ## INVALID - SHOULD trigger GD7002
-func test_gd7002_invalid(untyped_obj) -> void: # 30:1-GDL513-OK
+func test_gd7002_invalid(untyped_obj) -> void:
 	print(untyped_obj.some_property)  # 31:7-GD7002-OK, 31:7-GD7005-OK
 
 
 ## SUPPRESSED - GD7002 suppressed
-func test_gd7002_suppressed(untyped_obj) -> void: # 35:1-GDL513-OK
+func test_gd7002_suppressed(untyped_obj) -> void:
 	# gd:ignore = GD7002
 	print(untyped_obj.another_property)  # 37:7-GD7005-OK
 
@@ -42,24 +42,24 @@ func test_gd7002_suppressed(untyped_obj) -> void: # 35:1-GDL513-OK
 # =============================================================================
 
 ## VALID - should NOT trigger GD7003 (typed variable)
-func test_gd7003_valid_typed() -> void: # 45:1-GDL513-OK
+func test_gd7003_valid_typed() -> void:
 	var arr: Array = [1, 2, 3]
 	arr.append(4)  # Typed - no warning
 
 
 ## VALID - should NOT trigger GD7003 (with type guard)
-func test_gd7003_valid_guarded(obj) -> void: # 51:1-GDL513-OK
+func test_gd7003_valid_guarded(obj) -> void:
 	if obj is Array:
 		obj.append(1)  # Type guarded - no warning
 
 
 ## INVALID - SHOULD trigger GD7003
-func test_gd7003_invalid(untyped_obj) -> void: # 57:1-GDL513-OK
+func test_gd7003_invalid(untyped_obj) -> void:
 	untyped_obj.some_method()  # 58:1-GD7003-OK, 58:1-GD7007-OK
 
 
 ## SUPPRESSED - GD7003 suppressed
-func test_gd7003_suppressed(untyped_obj) -> void: # 62:1-GDL513-OK
+func test_gd7003_suppressed(untyped_obj) -> void:
 	# gd:ignore = GD7003
 	untyped_obj.another_method()  # 64:1-GD7007-OK
 
@@ -69,14 +69,14 @@ func test_gd7003_suppressed(untyped_obj) -> void: # 62:1-GDL513-OK
 # =============================================================================
 
 ## Multiple unguarded accesses in one function
-func test_multiple_unguarded(obj1, obj2) -> void: # 72:1-GDL513-OK
+func test_multiple_unguarded(obj1, obj2) -> void:
 	# Each of these should trigger GD7003
 	obj1.method_a()  # 74:1-GD7003-OK, 74:1-GD7007-OK
 	obj2.method_b()  # 75:1-GD7003-OK, 75:1-GD7007-OK
 
 
 ## Mixed guarded and unguarded
-func test_mixed_guarded_unguarded(obj) -> void: # 79:1-GDL513-OK
+func test_mixed_guarded_unguarded(obj) -> void:
 	# Unguarded - should warn
 	obj.unguarded_call()  # 81:1-GD4002-OK
 

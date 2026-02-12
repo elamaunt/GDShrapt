@@ -66,7 +66,7 @@ class AsyncOperation:
 	var _value
 	var _error
 
-	func then(callback):
+	func then(callback): # 57:1-GDL513-OK
 		_resolve_callback = callback
 		if _state == "resolved":
 			_call_resolve()
@@ -139,7 +139,7 @@ var event_handlers = {}  # Dict[String, Array[Callable]]
 var once_handlers = {}   # Dict[String, Array[Callable]] - remove after first call
 
 
-func on_event(event_name, handler):
+func on_event(event_name, handler): # 134:1-GDL513-OK
 	if not event_handlers.has(event_name):
 		event_handlers[event_name] = []
 	event_handlers[event_name].append(handler)
@@ -183,7 +183,7 @@ func emit_event(event_name, data = null):
 var pipeline_stages = []  # Array of stages, each with process(data, next)
 
 
-func add_stage(stage):
+func add_stage(stage): # 179:1-GDL513-OK
 	pipeline_stages.append(stage)
 
 
@@ -206,7 +206,7 @@ func _run_stage(index, data): # 195:4-GD3020-OK
 var middleware_stack = []  # Array of middleware with handle(context, next)
 
 
-func use_middleware(middleware):
+func use_middleware(middleware): # 202:1-GDL513-OK
 	middleware_stack.append(middleware)
 
 
@@ -238,7 +238,7 @@ func _next_middleware(index, context): # 227:4-GD3020-OK
 class Observable:
 	var _subscribers = []
 
-	func subscribe(on_next, on_error = null, on_complete = null):
+	func subscribe(on_next, on_error = null, on_complete = null): # 234:1-GDL513-OK
 		var subscription = {
 			"on_next": on_next,
 			"on_error": on_error,
@@ -295,7 +295,7 @@ func create_observable():
 	return Observable.new()
 
 
-# === Debounce/Throttle === # 299:1-GDL513-OK
+# === Debounce/Throttle === #
 
 var debounce_timers = {}  # Dict[String, Timer]
 var throttle_locks = {}   # Dict[String, bool]
@@ -305,7 +305,7 @@ var _pending_debounce_callback
 var _pending_debounce_key: String
 
 
-func _on_debounce_timeout(timer: Timer):
+func _on_debounce_timeout(timer: Timer): # 296:1-GDL513-OK
 	if _pending_debounce_callback:
 		_pending_debounce_callback.call()
 	timer.queue_free()
@@ -353,7 +353,7 @@ func throttle(key, delay, callback):
 	return true
 
 
-# === Continuation passing === # 358:1-GDL513-OK
+# === Continuation passing === #
 
 func async_fetch(url, on_success, on_failure):
 	# Simulates async HTTP request
@@ -442,7 +442,7 @@ class SignalWaitContext:
 	var connection: Callable
 
 
-func _on_signal_received(ctx: SignalWaitContext, args = []):
+func _on_signal_received(ctx: SignalWaitContext, args = []): # 434:1-GDL513-OK
 	ctx.target.disconnect(ctx.signal_name, ctx.connection)
 	ctx.operation.resolve(args) # 447:1-GD7003-OK
 
@@ -477,7 +477,7 @@ func wait_for_signal(target, signal_name, timeout = 5.0):
 class ComposedCallback:
 	var callbacks: Array
 
-	func call_composed(initial_value):
+	func call_composed(initial_value): # 473:1-GDL513-OK
 		var current = initial_value
 		for cb in callbacks:
 			current = cb.call(current) # 483:13-GD7007-OK

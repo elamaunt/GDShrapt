@@ -4185,6 +4185,18 @@ test_scripts/union_types_complex.gd
     reason: explicit type annotation
 
 
+test_scripts/unrelated_class.gd
+  9:17 Parameter amount in take_damage # OK
+    inferred-type: int
+    confidence: Certain
+    reason: explicit type annotation
+
+  13:14 Parameter delta in _process # OK
+    inferred-type: float
+    confidence: Certain
+    reason: explicit type annotation
+
+
 test_scripts/validation_edge_cases.gd
   36:16 Parameter v in set_value # OK
     inferred-type: int

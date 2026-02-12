@@ -110,7 +110,7 @@ func use_node2d_methods():
 class ChildEnemy extends InheritanceTest:
 	var enemy_type: String = "basic"
 
-	func _physics_process(delta: float):  # 113:1-GDL513-OK
+	func _physics_process(delta: float):
 		# Can access parent's custom_speed
 		velocity.x = custom_speed * 0.5
 		# Can call parent's method
@@ -122,17 +122,17 @@ class ChildEnemy extends InheritanceTest:
 		return base_state
 
 
-# Using super in various contexts  # 126:1-GDL513-OK
+# Using super in various contexts  #
 func attack() -> int:
 	return int(10 * _damage_multiplier)
 
 
-class StrongEnemy extends ChildEnemy:  # 136:1-GDL513-OK
+class StrongEnemy extends ChildEnemy:
 	func attack() -> int:
 		return super.attack() * 2  # Uses parent's attack
 
 
-# Accessing static methods from base  # 143:1-GDL513-OK
+# Accessing static methods from base  #
 func use_static_helpers():
 	# Input is a singleton, not really inheritance
 	var is_pressed = Input.is_action_pressed("ui_accept")  # -> bool  # 138:5-GDL201-OK
@@ -150,7 +150,7 @@ func _ready():
 		_on_ready()
 
 
-# Override notification handling  # 154:1-GDL513-OK
+# Override notification handling  #
 func _notification(what: int):
 	match what:
 		NOTIFICATION_ENTER_TREE:
@@ -170,7 +170,7 @@ func _on_exit_tree():
 # Using inherited signals
 signal custom_signal
 
-func emit_signals():  # 173:1-GDL513-OK
+func emit_signals():
 	# tree_exiting is inherited from Node
 	tree_exiting.connect(func(): print("Exiting"))
 
@@ -180,7 +180,7 @@ func emit_signals():  # 173:1-GDL513-OK
 	custom_signal.emit()
 
 
-# Property access chain through inheritance  # 184:1-GDL513-OK
+# Property access chain through inheritance  #
 func get_global_mouse_in_local() -> Vector2:
 	# get_viewport() -> Viewport -> get_mouse_position() -> Vector2
 	# to_local inherited from Node2D
@@ -189,7 +189,7 @@ func get_global_mouse_in_local() -> Vector2:
 	return to_local(global_mouse)
 
 
-# Type checking against base classes  # 193:1-GDL513-OK
+# Type checking against base classes  #
 func check_types(node: Node) -> String:  # 193:5-GDL223-OK
 	if node is CharacterBody2D:
 		return "CharacterBody2D"

@@ -41,7 +41,7 @@ func _private_function() -> void: # 39:5-GDL203-OK
 
 
 ## INVALID - PascalCase/camelCase function names - SHOULD trigger GDL002
-func InvalidFunctionName() -> void: # 44:1-GDL513-OK, 44:5-GDL002-OK, 44:5-GDL203-OK
+func InvalidFunctionName() -> void: # 44:5-GDL002-OK, 44:5-GDL203-OK
 	pass
 
 
@@ -51,16 +51,16 @@ func camelCaseFunction() -> void:  # 48:5-GDL002-OK, 48:5-GDL203-OK
 
 ## SUPPRESSED - GDL002 suppressed
 # gdlint:ignore = function-name-case
-func SuppressedBadName() -> void: # 54:1-GDL513-OK, 54:5-GDL203-OK
+func SuppressedBadName() -> void: # 54:5-GDL203-OK
 	pass
 
 
-# =============================================================================
+# =============================================================================, 56:1-GDL513-OK
 # GDL003: variable-name-case (snake_case required)
 # =============================================================================
 
 ## VALID - snake_case variable names
-var valid_variable := 42 # 63:1-GDL513-OK
+var valid_variable := 42
 var another_valid_var: String = "test"
 var _private_var := 100
 

@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://connection_test_scene"]
+
+[ext_resource type="Script" path="res://test_scripts/base_entity.gd" id="1_base"]
+
+[node name="ConnectionTest" type="Node2D"]
+
+[node name="Entity" type="Node2D" parent="."]
+script = ExtResource("1_base")
+
+[node name="DamageTimer" type="Timer" parent="Entity"]
+wait_time = 1.0
+autostart = false
+
+[connection signal="timeout" from="Entity/DamageTimer" to="Entity" method="take_damage"]

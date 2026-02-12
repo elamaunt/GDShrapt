@@ -4645,6 +4645,26 @@ test_scripts/diagnostics/validator/type_errors.gd
     nullable:     no
 
 
+test_scripts/duck_caller.gd
+================================================================================
+
+--- 6:0 Variable entities ---
+  Type Info:
+    declared:     (none)
+    inferred:     Array
+    effective:    Array
+    confidence:   Medium
+    nullable:     no
+
+--- 10:1 Iterator entity ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Certain
+    nullable:     no
+
+
 test_scripts/duck_typing_advanced.gd
 ================================================================================
 
@@ -4710,7 +4730,7 @@ test_scripts/duck_typing_advanced.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass
+    inferred:     BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass | UnrelatedClass
     confidence:   Medium
     reason:       union from type checks
     duck-typed:   yes
@@ -21347,6 +21367,42 @@ test_scripts/union_types_complex.gd
       402:4 local -> String (base: Variant)
 
 
+test_scripts/unrelated_class.gd
+================================================================================
+
+--- 6:0 Variable damage_log ---
+  Type Info:
+    declared:     (none)
+    inferred:     Array
+    effective:    Array
+    confidence:   Certain
+    nullable:     no
+
+--- 9:17 Parameter amount ---
+  Type Info:
+    declared:     (none)
+    inferred:     int
+    effective:    int
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     int
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 13:14 Parameter delta ---
+  Type Info:
+    declared:     (none)
+    inferred:     float
+    effective:    float
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     float
+    confidence:   Certain
+    reason:       explicit type annotation
+
+
 test_scripts/validation_edge_cases.gd
 ================================================================================
 
@@ -21479,4 +21535,4 @@ test_scripts/validation_edge_cases.gd
     nullable:     no
 
 
-# Summary: 48 files analyzed
+# Summary: 50 files analyzed

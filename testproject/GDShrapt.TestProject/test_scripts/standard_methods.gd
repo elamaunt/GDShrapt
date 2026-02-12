@@ -39,7 +39,7 @@ func test_array_methods(): # 10:5-GDL226-OK
 
 # === Dictionary Methods ===
 
-func test_dict_methods(): # 42:1-GDL513-OK
+func test_dict_methods():
 	var dict = {"a": 1, "b": 2, "c": 3}
 
 	# Methods returning int
@@ -69,7 +69,7 @@ func test_dict_methods(): # 42:1-GDL513-OK
 
 # === String Methods ===
 
-func test_string_methods(): # 72:1-GDL513-OK, 72:5-GDL226-OK
+func test_string_methods(): # 72:5-GDL226-OK
 	var text = "  Hello World  "
 
 	# Methods returning int
@@ -112,7 +112,7 @@ func test_string_methods(): # 72:1-GDL513-OK, 72:5-GDL226-OK
 
 # === Vector2 Methods ===
 
-func test_vector2_methods(): # 115:1-GDL513-OK, 115:5-GDL226-OK
+func test_vector2_methods(): # 115:5-GDL226-OK
 	var vec = Vector2(3, 4)
 
 	# Methods returning float
@@ -146,7 +146,7 @@ func test_vector2_methods(): # 115:1-GDL513-OK, 115:5-GDL226-OK
 
 # === Vector3 Methods ===
 
-func test_vector3_methods(): # 149:1-GDL513-OK
+func test_vector3_methods():
 	var vec = Vector3(1, 2, 3)
 
 	var length = vec.length()           # -> float
@@ -160,7 +160,7 @@ func test_vector3_methods(): # 149:1-GDL513-OK
 
 # === Transform2D Methods ===
 
-func test_transform2d_methods(): # 163:1-GDL513-OK
+func test_transform2d_methods():
 	var t = Transform2D.IDENTITY
 
 	var origin = t.get_origin()         # -> Vector2
@@ -174,7 +174,7 @@ func test_transform2d_methods(): # 163:1-GDL513-OK
 
 # === Color Methods ===
 
-func test_color_methods(): # 177:1-GDL513-OK
+func test_color_methods():
 	var c = Color.RED
 
 	# Methods returning float
@@ -201,7 +201,7 @@ func test_color_methods(): # 177:1-GDL513-OK
 
 # === Rect2 Methods ===
 
-func test_rect2_methods(): # 204:1-GDL513-OK
+func test_rect2_methods():
 	var r = Rect2(0, 0, 100, 100)
 
 	var area = r.get_area()             # -> float
@@ -218,7 +218,7 @@ func test_rect2_methods(): # 204:1-GDL513-OK
 
 # === AABB Methods ===
 
-func test_aabb_methods(): # 221:1-GDL513-OK
+func test_aabb_methods():
 	var box = AABB(Vector3.ZERO, Vector3.ONE)
 
 	var center = box.get_center()       # -> Vector3
@@ -233,7 +233,7 @@ func test_aabb_methods(): # 221:1-GDL513-OK
 
 # === Plane Methods ===
 
-func test_plane_methods(): # 236:1-GDL513-OK
+func test_plane_methods():
 	var p = Plane(Vector3.UP, 0)
 
 	var center = p.center               # -> Vector3 (property)
@@ -248,7 +248,7 @@ func test_plane_methods(): # 236:1-GDL513-OK
 
 # === PackedArrays Methods ===
 
-func test_packed_arrays(): # 251:1-GDL513-OK
+func test_packed_arrays():
 	var int_arr = PackedInt32Array([1, 2, 3])
 	var float_arr = PackedFloat32Array([1.0, 2.0, 3.0])
 	var str_arr = PackedStringArray(["a", "b", "c"])
@@ -270,7 +270,7 @@ func test_packed_arrays(): # 251:1-GDL513-OK
 
 # === Node-specific Methods ===
 
-func test_node_methods(): # 273:1-GDL513-OK
+func test_node_methods():
 	var parent = get_parent()           # -> Node
 	var children = get_children()       # -> Array[Node]
 	var child_count = get_child_count()  # -> int
@@ -287,7 +287,7 @@ func test_node_methods(): # 273:1-GDL513-OK
 
 # === Math Functions ===
 
-func test_math_functions(): # 290:1-GDL513-OK
+func test_math_functions():
 	# Global math functions
 	var abs_val = abs(-5)               # -> int/float
 	var floor_val = floor(3.7)          # -> float

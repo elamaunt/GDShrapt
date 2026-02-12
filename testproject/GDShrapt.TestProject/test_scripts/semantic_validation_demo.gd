@@ -82,7 +82,7 @@ func indexer_validation_demo() -> void:  # 25:5-GDL226-OK
 # =============================================================================
 # SECTION 2: Signal Type Validation (GD4009)
 # =============================================================================
-# 86:1-GDL513-OK
+
 func signal_type_validation_demo() -> void:
 	# --- VALID CASES ---
 
@@ -112,7 +112,7 @@ func signal_type_validation_demo() -> void:
 # =============================================================================
 # SECTION 3: Generic Type Validation (GD3017, GD3018)
 # =============================================================================
-# 116:1-GDL513-OK
+
 func generic_type_validation_demo() -> void:
 	# --- VALID CASES ---
 
@@ -151,7 +151,7 @@ func generic_type_validation_demo() -> void:
 # =============================================================================
 # SECTION 4: Argument Type Validation (GD3010)
 # =============================================================================
-# 155:1-GDL513-OK
+
 func take_int(x: int) -> void:
 	print(x)
 # 158:1-GDL513-OK
@@ -195,7 +195,7 @@ func argument_type_validation_demo() -> void:
 # =============================================================================
 # SECTION 5: Member Access Validation (GD3009, GD7001, GD7002)
 # =============================================================================
-# 199:1-GDL513-OK
+
 func member_access_validation_demo() -> void:
 	# --- VALID CASES ---
 
@@ -230,7 +230,7 @@ func get_unknown_value():
 # =============================================================================
 # SECTION 6: Type Assignment Validation (GD3003)
 # =============================================================================
-# 234:1-GDL513-OK
+
 func type_assignment_validation_demo() -> void:
 	# --- VALID CASES ---
 
@@ -259,7 +259,7 @@ func type_assignment_validation_demo() -> void:
 # =============================================================================
 # SECTION 7: Combined Scenarios
 # =============================================================================
-# 263:1-GDL513-OK
+
 func complex_scenario_1() -> void:
 	# Typed dictionary with typed array values
 	var data: Dictionary[String, Array[int]] = {
@@ -303,7 +303,7 @@ func complex_scenario_3(entities: Array) -> void:
 # =============================================================================
 # SECTION 8: Edge Cases
 # =============================================================================
-# 307:1-GDL513-OK
+
 func null_handling() -> void:
 	# Null assignment to typed variable
 	var node: Node = null  # OK - null is assignable to reference types

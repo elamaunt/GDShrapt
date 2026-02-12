@@ -52,15 +52,17 @@ Source: base_entity.gd
 Result: Success
 =======================================
 
-Strict edits (5):
+Strict edits (6):
+  test_scenes/connection_test.tscn:
+    14:76 take_damage -> take_damage_renamed [Strict] (.tscn signal connection method="take_damage") # OK
   test_scripts/base_entity.gd:
     28:6 take_damage -> take_damage_renamed [Strict] # OK
   test_scripts/enemy_entity.gd:
-    99:1 take_damage -> take_damage_renamed [Strict] (Method override in derived class) # OK
-    100:2 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class) # OK
+    99:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class) # OK
+    100:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class) # OK
   test_scripts/player_entity.gd:
-    30:1 take_damage -> take_damage_renamed [Strict] (Method override in derived class) # OK
-    40:2 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class) # OK
+    30:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class) # OK
+    40:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class) # OK
 
 ---
 
@@ -100,9 +102,8 @@ Source: rename_test.gd
 Result: Success
 =======================================
 
-Strict edits (11):
+Strict edits (10):
   test_scripts/rename_test.gd:
-    19:6 counter -> counter_renamed [Strict] # OK
     20:2 counter -> counter_renamed [Strict] # OK
     21:2 counter -> counter_renamed [Strict] # OK
     22:2 counter -> counter_renamed [Strict] # OK

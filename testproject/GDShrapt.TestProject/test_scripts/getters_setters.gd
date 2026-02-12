@@ -167,8 +167,8 @@ func test_config_property():
 	return config
 
 
-# Nested property access patterns
-class Inner:  # 171:1-GDL513-OK
+# Nested property access patterns, 168:1-GDL513-OK
+class Inner:
 	var _value: int = 0
 
 	var value: int:
@@ -204,7 +204,7 @@ var instance_id: int:
 		return _instance_counter
 
 
-func _init():
+func _init(): # 197:1-GDL513-OK
 	_instance_counter = _get_next_id()
 
 
@@ -222,7 +222,7 @@ var expensive_data:
 		return _expensive_data
 
 
-func _compute_expensive() -> Dictionary:
+func _compute_expensive() -> Dictionary: # 213:1-GDL513-OK
 	return {"computed": true, "value": randf()}
 
 

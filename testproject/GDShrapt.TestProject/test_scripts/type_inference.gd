@@ -176,7 +176,7 @@ func test_complex_expression_inference() -> float:
 
 
 # === Typed Dictionaries (for ComplexTypesTests) ===
-var string_int_dict: Dictionary[String, int] = {"a": 1, "b": 2}  # 179:1-GDL513-OK
+var string_int_dict: Dictionary[String, int] = {"a": 1, "b": 2}
 var string_float_dict: Dictionary[String, float] = {"x": 1.5, "y": 2.5}
 
 # === Nested generics ===
@@ -188,7 +188,7 @@ var complex_dict: Dictionary[String, Array[int]] = {"nums": [1, 2, 3]}
 var entity_array: Array[Node2D] = []
 
 
-func test_typed_dictionary_inference() -> void:
+func test_typed_dictionary_inference() -> void: # 176:1-GDL513-OK
 	# Dictionary with typed key-value pairs
 	var dict: Dictionary[String, int] = {"x": 10, "y": 20}
 	var value := dict["x"]  # Should be int

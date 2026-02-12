@@ -27,7 +27,7 @@ func test_ignore_next_line() -> void:
 # SECTION 2: gd:ignore - Inline Suppression
 # =============================================================================
 
-func test_ignore_inline() -> void:  # 30:1-GDL513-OK
+func test_ignore_inline() -> void:
 	print(undefined_var_suppressed_2)  # gd:ignore = GD2001  # SUPPRESSED
 
 	print(undefined_var_not_suppressed_2)  # NOT SUPPRESSED - GD2001 expected  # 33:7-GD2001-OK
@@ -37,7 +37,7 @@ func test_ignore_inline() -> void:  # 30:1-GDL513-OK
 # SECTION 3: gd:disable / gd:enable - Block Suppression
 # =============================================================================
 
-func test_disable_enable_block() -> void:  # 40:1-GDL513-OK
+func test_disable_enable_block() -> void:
 	# gd:disable = GD2001
 	print(undefined_in_block_1)  # SUPPRESSED
 	print(undefined_in_block_2)  # SUPPRESSED
@@ -51,7 +51,7 @@ func test_disable_enable_block() -> void:  # 40:1-GDL513-OK
 # SECTION 4: gd:disable without enable (until EOF)
 # =============================================================================
 
-func test_disable_to_eof() -> void:  # 54:1-GDL513-OK
+func test_disable_to_eof() -> void:
 	print(before_disable)  # NOT SUPPRESSED - GD2001 expected  # 55:7-GD2001-OK
 
 	# gd:disable = GD5001
@@ -66,7 +66,7 @@ func test_disable_to_eof() -> void:  # 54:1-GDL513-OK
 # SECTION 5: Multiple Rules Suppression
 # =============================================================================
 
-func test_multiple_rules() -> void:  # 69:1-GDL513-OK
+func test_multiple_rules() -> void: # 60:1-GDL513-OK
 	# gd:ignore = GD2001, GD2002
 	unknown_function(undefined_multi_var)  # SUPPRESSED - both codes
 
@@ -77,7 +77,7 @@ func test_multiple_rules() -> void:  # 69:1-GDL513-OK
 # SECTION 6: Case Insensitive
 # =============================================================================
 
-func test_case_insensitive() -> void:  # 80:1-GDL513-OK
+func test_case_insensitive() -> void:
 	# GD:IGNORE = gd2001
 	print(undefined_case_test)  # SUPPRESSED - should work case-insensitively
 
@@ -87,7 +87,7 @@ func test_case_insensitive() -> void:  # 80:1-GDL513-OK
 # =============================================================================
 ## These lines should ALWAYS produce diagnostics (used for verification)
 
-func test_control_unsuppressed() -> void:  # 90:1-GDL513-OK
+func test_control_unsuppressed() -> void:
 	print(control_undefined_1)  # GD2001 expected  # 91:7-GD2001-OK
 	print(control_undefined_2)  # GD2001 expected  # 92:7-GD2001-OK
 	print(control_undefined_3)  # GD2001 expected  # 93:7-GD2001-OK

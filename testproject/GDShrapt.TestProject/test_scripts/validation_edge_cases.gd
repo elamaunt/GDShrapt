@@ -22,7 +22,7 @@ func test_variant_methods():
 
 # Test 2: String formatting (should NOT warn)
 # GDScript supports "format %s" % value syntax for string formatting.
-func test_string_format(): # 25:1-GDL513-OK
+func test_string_format():
 	var result = "Value: %d" % 42  # Valid # 26:5-GDL201-OK
 	var result2 = "Values: %s" % [1, 2, 3]  # Valid # 27:5-GDL201-OK
 	var result3 = "Count: %d, Name: %s" % [42, "test"]  # Valid # 28:5-GDL201-OK
@@ -34,14 +34,14 @@ func test_string_format(): # 25:1-GDL513-OK
 class SimpleBuilder:
 	var _value: int = 0
 
-	func set_value(v: int) -> SimpleBuilder: # 37:1-GDL513-OK
+	func set_value(v: int) -> SimpleBuilder:
 		_value = v
 		return self  # Should NOT warn - self is a SimpleBuilder
 
 
 # Test 4: Null default parameter (should allow any type)
 # When a parameter has = null as default, it accepts any value.
-func process_data(data = null): # 44:1-GDL513-OK
+func process_data(data = null):
 	if data != null:
 		print(data)
 
@@ -55,7 +55,7 @@ func test_null_param():
 
 # Test 5: String to StringName (should NOT warn)
 # GDScript implicitly converts String to StringName and vice versa.
-func test_stringname(): # 58:1-GDL513-OK
+func test_stringname():
 	var sn: StringName = "test"  # Valid implicit conversion # 60:5-GDL201-OK
 	var sn2: StringName = &"test"  # Explicit StringName literal
 

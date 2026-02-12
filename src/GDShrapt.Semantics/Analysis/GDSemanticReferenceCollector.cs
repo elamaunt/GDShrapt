@@ -1038,14 +1038,15 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 }
                 else
                 {
-                    // Duck typed access - no callerTypeName for duck-typed
+                    // Duck typed access - index as Variant for cross-file rename discovery
                     var duckSymbol = GDSymbolInfo.DuckTyped(
                         memberName,
                         GDSymbolKind.Property,
                         null,
                         $"Duck-typed access on '{varName}'");
 
-                    CreateReference(duckSymbol, memberExpression, GDReferenceConfidence.Potential);
+                    CreateReference(duckSymbol, memberExpression, GDReferenceConfidence.Potential,
+                        callerTypeName: GDWellKnownTypes.Variant);
                 }
             }
         }
@@ -1111,6 +1112,27 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         if (symbolInfo != null)
                         {
                             CreateReference(symbolInfo, callExpression, GDReferenceConfidence.Strict, callerType);
+                        }
+                    }
+
+                    // has_method("name") — track the string literal as a Potential reference
+                    if (methodName == "has_method")
+                    {
+                        var args = callExpression.Parameters?.ToList();
+                        if (args != null && args.Count >= 1 && args[0] is GDStringExpression strArg)
+                        {
+                            var referencedMethodName = GDLiteralTypeResolver.GetStringLiteralValue(strArg);
+                            if (!string.IsNullOrEmpty(referencedMethodName))
+                            {
+                                var hasMethodSymbol = GDSymbolInfo.DuckTyped(
+                                    referencedMethodName,
+                                    GDSymbolKind.Method,
+                                    null,
+                                    $"has_method(\"{referencedMethodName}\") string literal");
+
+                                CreateReference(hasMethodSymbol, strArg, GDReferenceConfidence.Potential,
+                                    callerTypeName: GDWellKnownTypes.Variant);
+                            }
                         }
                     }
                 }
@@ -1300,6 +1322,11 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
         if (node is GDIdentifierExpression idExpr)
             return idExpr.Identifier;
+
+        // String literal (e.g., has_method("method_name")) — return the GDStringNode
+        // Note: StartColumn points to opening quote; rename service must offset +1
+        if (node is GDStringExpression strExpr)
+            return strExpr.String;
 
         return null;
     }

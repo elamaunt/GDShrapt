@@ -61,7 +61,7 @@ var movement_strategy    # Has: compute_path(from, to) -> Array[Vector2]
 var targeting_strategy   # Has: select_target(entities) -> Entity|null
 
 
-func set_damage_calculator(calculator):
+func set_damage_calculator(calculator): # 55:1-GDL513-OK
 	damage_calculator = calculator
 
 
@@ -99,7 +99,7 @@ var command_history = []  # Array of commands with execute() and undo()
 var redo_stack = []
 
 
-func execute_command(command):
+func execute_command(command): # 94:1-GDL513-OK
 	# command must have execute() -> Variant
 	var result = command.execute()  # 104:14-GD7007-OK
 	command_history.append(command)
@@ -133,7 +133,7 @@ func redo_last():
 var observers = {}  # Dict[String, Array] - event_name -> observers with on_event()
 
 
-func add_observer(event_name, observer):
+func add_observer(event_name, observer): # 129:1-GDL513-OK
 	# observer must have on_event(event_name, data)
 	if not observers.has(event_name):
 		observers[event_name] = []
@@ -161,7 +161,7 @@ func notify_observers(event_name, data):
 var root_component  # Has: process(), get_children(), add_child(), remove_child()
 
 
-func process_tree(component):
+func process_tree(component): # 157:1-GDL513-OK
 	# Process this component
 	var result = component.process()  # 166:14-GD7003-OK, 166:14-GD7007-OK
 
@@ -209,7 +209,7 @@ var base_processor    # Has: process(data) -> data
 var decorators = []   # Each has: process(data, next) -> data
 
 
-func add_decorator(decorator):
+func add_decorator(decorator): # 204:1-GDL513-OK
 	decorators.append(decorator)
 
 
@@ -248,7 +248,7 @@ func _create_next_func(start_index):
 var adapters = {}  # Dict[String, Adapter] - type_name -> adapter with adapt()
 
 
-func register_adapter(type_name, adapter):
+func register_adapter(type_name, adapter): # 244:1-GDL513-OK
 	adapters[type_name] = adapter
 
 
@@ -291,7 +291,7 @@ func _get_type_name(value):  # 271:5-GDL223-OK
 var custom_iterator  # Has: has_next() -> bool, next() -> Variant, reset() -> void
 
 
-func iterate_all(iterator):
+func iterate_all(iterator): # 287:1-GDL513-OK
 	# iterator must implement has_next() and next()
 	var results = []
 	iterator.reset()  # 297:1-GD7007-OK
@@ -326,7 +326,7 @@ func iterate_until(iterator, predicate):
 var factories = {}  # Dict[String, Factory] - type -> factory with create()
 
 
-func register_factory(type_name, factory):
+func register_factory(type_name, factory): # 322:1-GDL513-OK
 	factories[type_name] = factory
 
 
@@ -352,7 +352,7 @@ func create_multiple(type_name, count, params = {}):
 var colleagues = {}  # Dict[String, Colleague] - id -> object with receive()
 
 
-func register_colleague(id, colleague):
+func register_colleague(id, colleague): # 348:1-GDL513-OK
 	colleagues[id] = colleague
 
 
@@ -377,7 +377,7 @@ func broadcast_message(from_id, message):
 var current_state  # Has: enter(), exit(), update(delta), handle_input(event)
 
 
-func change_state(new_state):
+func change_state(new_state): # 373:1-GDL513-OK
 	if current_state:
 		current_state.exit()
 
@@ -409,7 +409,7 @@ var memento_stack = []  # Array of mementos with get_state() and restore()
 var caretaker_data      # Current state, type varies
 
 
-func save_state():
+func save_state(): # 404:1-GDL513-OK
 	if caretaker_data and caretaker_data.has_method("create_memento"):
 		var memento = caretaker_data.create_memento()
 		memento_stack.append(memento)

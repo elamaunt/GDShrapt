@@ -13,13 +13,13 @@ func test_gd4011_valid() -> void:
 
 
 ## INVALID - node does not exist
-func test_gd4011_invalid() -> void:  # 16:1-GDL513-OK
+func test_gd4011_invalid() -> void:
 	var missing = $NonExistent  # 17:5-GDL201-OK, 17:15-GD4011-OK
 	var wrong = get_node("Wrong/Path")  # 18:5-GDL201-OK, 18:13-GD4011-OK
 
 
 ## VALID - get_node_or_null is intentionally nullable
-func test_gd4011_nullable() -> void:  # 22:1-GDL513-OK
+func test_gd4011_nullable() -> void:
 	var maybe = get_node_or_null("MaybeExists")  # 23:5-GDL201-OK
 
 
@@ -29,12 +29,12 @@ func test_gd4011_nullable() -> void:  # 22:1-GDL513-OK
 
 
 ## VALID - unique node exists
-func test_gd4012_valid() -> void:  # 32:1-GDL513-OK
+func test_gd4012_valid() -> void: # 24:1-GDL513-OK
 	var player = %UniquePlayer  # 33:5-GDL201-OK
 
 
 ## INVALID - unique node not found
-func test_gd4012_invalid() -> void:  # 37:1-GDL513-OK
+func test_gd4012_invalid() -> void:
 	var enemy = %NonExistentEnemy  # 38:5-GDL201-OK, 38:13-GD4012-OK
 
 

@@ -32,7 +32,7 @@ func _ready():
 
 # === Cross-file method calls ===
 
-func process_entity(entity_data): # 35:1-GDL513-OK
+func process_entity(entity_data):
 	# Calls into ECSLikeSystem
 	var entity = entity_manager.create_entity(entity_data.get("name", "")) # 37:14-GD7007-OK, 37:43-GD7007-OK
 
@@ -99,7 +99,7 @@ func register_handlers(objects):
 
 # === Union types from cross-file calls ===
 
-func get_result_from_anywhere(source_name, key): # 102:1-GDL513-OK
+func get_result_from_anywhere(source_name, key):
 	# Return type is union of all possible sources
 	match source_name:
 		"entity":
@@ -140,7 +140,7 @@ func execute_on_handler(handler_type, action, args = []):
 
 # === Complex cross-file chains ===
 
-func complex_chain_operation(initial_data): # 143:1-GDL513-OK
+func complex_chain_operation(initial_data):
 	# Chain through multiple systems, inferring types at each step
 
 	# Step 1: Create entity
@@ -182,7 +182,7 @@ func complex_chain_operation(initial_data): # 143:1-GDL513-OK
 var cross_file_callbacks = {}
 
 
-func register_cross_file_handler(event_name, handler_type):
+func register_cross_file_handler(event_name, handler_type): # 178:1-GDL513-OK
 	match handler_type:
 		"entity_create":
 			cross_file_callbacks[event_name] = _create_entity_handler()
@@ -222,7 +222,7 @@ func invoke_cross_file(event_name, data):
 
 # === Factory using multiple file classes ===
 
-func _on_effect_result(result): # 225:1-GDL513-OK
+func _on_effect_result(result):
 	union_handler.operation_result = result # 226:1-GD7005-OK
 
 
@@ -271,7 +271,7 @@ func create_game_object(object_type, params = {}):
 
 # === Bidirectional dependencies ===
 
-func _on_hit_callback(target, damage): # 274:1-GDL513-OK
+func _on_hit_callback(target, damage):
 	var health = entity_manager.get_component(target, "Health") # 275:14-GD7007-OK
 	if health:
 		health["current"] -= damage
@@ -305,7 +305,7 @@ func setup_bidirectional():
 
 # === Testing inference limits ===
 
-func stress_test_inference(depth, initial_value): # 308:1-GDL513-OK
+func stress_test_inference(depth, initial_value):
 	# Deep recursive cross-file calls to test inference limits
 	if depth <= 0: # 310:4-GD3020-OK
 		return initial_value

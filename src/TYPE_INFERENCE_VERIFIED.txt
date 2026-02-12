@@ -4259,6 +4259,21 @@ test_scripts/diagnostics/validator/type_errors.gd
 238:1 GDIdentifierExpression print -> Callable # OK
 238:7 GDIdentifierExpression dict -> Dictionary[Dictionary,int] # OK
 
+test_scripts/duck_caller.gd
+6:0 Variable entities -> Array # OK
+6:15 GDArrayInitializerExpression [...] -> Array # OK
+9:0 Method process_entities -> void # OK
+10:1 Iterator entity -> Variant # OK
+10:15 GDIdentifierExpression entities -> Array # OK
+11:5 GDCallExpression entity.has_method() -> bool # OK
+11:5 GDMemberOperatorExpression entity.has_method -> Variant # OK
+11:5 GDIdentifierExpression entity -> Variant # OK
+11:23 GDStringExpression "take_damag..." -> String # OK
+12:3 GDCallExpression entity.take_damage() -> Variant # OK
+12:3 GDMemberOperatorExpression entity.take_damage -> Variant # OK
+12:3 GDIdentifierExpression entity -> Variant # OK
+12:22 GDNumberExpression 5 -> int # OK
+
 test_scripts/duck_typing_advanced.gd
 9:0 Variable attacker -> Variant # OK
 10:0 Variable defender -> Variant # OK
@@ -17445,6 +17460,21 @@ test_scripts/union_types_complex.gd
 403:9 GDStringExpression "matched" -> String # OK
 405:1 GDReturnExpression return "fallback" -> Variant # FP
 405:8 GDStringExpression "fallback" -> String # OK
+
+test_scripts/unrelated_class.gd
+6:0 Variable damage_log -> Array # OK
+6:24 GDArrayInitializerExpression [...] -> Array # OK
+9:0 Method take_damage -> void # OK
+9:17 Parameter amount -> int # OK
+10:1 GDCallExpression damage_log.append() -> void # OK
+10:1 GDMemberOperatorExpression damage_log.append -> void # OK
+10:1 GDIdentifierExpression damage_log -> Array # OK
+10:19 GDIdentifierExpression amount -> int # OK
+13:0 Method _process -> void # OK
+13:14 Parameter delta -> float # OK
+14:1 GDCallExpression take_damage() -> void # OK
+14:1 GDIdentifierExpression take_damage -> Callable # OK
+14:13 GDNumberExpression 10 -> int # OK
 
 test_scripts/validation_edge_cases.gd
 10:0 Method test_variant_methods -> void # OK

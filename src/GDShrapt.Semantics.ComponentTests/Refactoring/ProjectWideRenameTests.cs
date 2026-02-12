@@ -171,6 +171,30 @@ public class ProjectWideRenameTests
             "enemy_entity.gd should have override declaration + super.take_damage() call");
     }
 
+    [TestMethod]
+    public void PlanRename_Method_OverrideAndSuperCallPositionsPointToIdentifier()
+    {
+        var result = PlanRename("take_damage", "base_entity.gd");
+
+        result.Success.Should().BeTrue();
+
+        // Override declaration: "func take_damage(..." — column must point to "take_damage", not "func"
+        var overrideEdit = result.StrictEdits
+            .FirstOrDefault(e => e.FilePath != null && e.FilePath.EndsWith("enemy_entity.gd") &&
+                                 e.ConfidenceReason != null && e.ConfidenceReason.Contains("Method override"));
+        overrideEdit.Should().NotBeNull("enemy_entity.gd should have override edit");
+        overrideEdit!.Column.Should().Be(6,
+            "override edit column should point to 'take_damage' identifier (col 6), not 'func' keyword (col 1)");
+
+        // Super call: "\tsuper.take_damage(..." — column must point to "take_damage", not "super"
+        var superEdit = result.StrictEdits
+            .FirstOrDefault(e => e.FilePath != null && e.FilePath.EndsWith("enemy_entity.gd") &&
+                                 e.ConfidenceReason != null && e.ConfidenceReason.Contains("super."));
+        superEdit.Should().NotBeNull("enemy_entity.gd should have super call edit");
+        superEdit!.Column.Should().Be(8,
+            "super call edit column should point to 'take_damage' identifier (col 8), not start of call expression");
+    }
+
     #endregion
 
     #region Signal Tests
@@ -308,6 +332,104 @@ public class ProjectWideRenameTests
 
         files.Count.Should().BeGreaterThanOrEqualTo(2,
             "take_damage edits should span multiple files (base + overrides)");
+    }
+
+    #endregion
+
+    #region Bug Fix Tests — Same-Name Different Class, Duck-Typed, has_method, .tscn
+
+    [TestMethod]
+    public void PlanRenameByName_SameNameDifferentClass_NotInStrictEdits()
+    {
+        // Bug 1: PlanRename(string) treats same-named methods on unrelated classes as same symbol
+        // UnrelatedClass.take_damage() should NOT appear in strict edits when renaming BaseEntity.take_damage
+        var result = Service.PlanRename("take_damage", "take_damage_renamed");
+
+        result.Success.Should().BeTrue();
+
+        // UnrelatedClass.take_damage should NOT be in strict edits
+        var unrelatedEdits = result.StrictEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("unrelated_class.gd"))
+            .ToList();
+
+        unrelatedEdits.Should().BeEmpty(
+            "UnrelatedClass.take_damage is on an unrelated type (not in BaseEntity hierarchy) " +
+            "and should not be in strict edits");
+
+        // BaseEntity hierarchy files SHOULD still be in strict edits
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("base_entity.gd"),
+            "base_entity.gd defines take_damage");
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("enemy_entity.gd"),
+            "enemy_entity.gd overrides take_damage");
+    }
+
+    [TestMethod]
+    public void PlanRenameByName_DuckTypedMemberAccess_InPotentialEdits()
+    {
+        // Bug 2: Duck-typed member access (entity.take_damage on untyped var) not found
+        var result = Service.PlanRename("take_damage", "take_damage_renamed");
+
+        result.Success.Should().BeTrue();
+
+        // duck_caller.gd: entity.take_damage(5) should be in potential edits
+        var allEdits = result.StrictEdits.Concat(result.PotentialEdits).ToList();
+        var duckCallerEdits = allEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd"))
+            .ToList();
+
+        duckCallerEdits.Should().NotBeEmpty(
+            "duck_caller.gd calls entity.take_damage(5) via duck-typing on untyped array; " +
+            "should appear in edits (at least as Potential)");
+
+        // The duck-typed call should be Potential confidence
+        var potentialDuckEdits = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd"))
+            .ToList();
+
+        potentialDuckEdits.Should().NotBeEmpty(
+            "duck-typed entity.take_damage() call should have Potential confidence");
+    }
+
+    [TestMethod]
+    public void PlanRenameByName_HasMethodString_InPotentialEdits()
+    {
+        // Bug 3: has_method("take_damage") string literals not tracked as references
+        var result = Service.PlanRename("take_damage", "take_damage_renamed");
+
+        result.Success.Should().BeTrue();
+
+        // duck_caller.gd: has_method("take_damage") should be in potential edits
+        var allEdits = result.StrictEdits.Concat(result.PotentialEdits).ToList();
+        var hasMethodEdits = allEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd") &&
+                        e.OldText == "take_damage")
+            .ToList();
+
+        // Should have at least 2 edits in duck_caller.gd:
+        // 1. has_method("take_damage") string literal
+        // 2. entity.take_damage(5) duck-typed call
+        hasMethodEdits.Count.Should().BeGreaterThanOrEqualTo(2,
+            "duck_caller.gd should have both has_method string and duck-typed call edits");
+    }
+
+    [TestMethod]
+    public void PlanRenameByName_TscnConnection_Found()
+    {
+        // Bug 4: .tscn [connection method="take_damage"] not scanned
+        var result = Service.PlanRename("take_damage", "take_damage_renamed");
+
+        result.Success.Should().BeTrue();
+
+        // connection_test.tscn has [connection ... method="take_damage"]
+        var allEdits = result.StrictEdits.Concat(result.PotentialEdits).ToList();
+        var tscnEdits = allEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith(".tscn"))
+            .ToList();
+
+        tscnEdits.Should().NotBeEmpty(
+            ".tscn files with [connection method=\"take_damage\"] should be found by rename");
     }
 
     #endregion

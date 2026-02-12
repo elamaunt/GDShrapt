@@ -54,7 +54,7 @@ func get_entity(entity_id):
 
 # === Component management ===
 
-func add_component(entity_id, component_type, component):  # 57:1-GDL513-OK
+func add_component(entity_id, component_type, component):
 	# component can be any object/dictionary
 	if not components.has(component_type):
 		components[component_type] = {}
@@ -90,7 +90,7 @@ func get_all_components(entity_id):
 
 # === Query system ===
 
-func query_entities(component_types):  # 93:1-GDL513-OK
+func query_entities(component_types):
 	# Returns entities that have ALL specified component types
 	var result = []
 
@@ -141,7 +141,7 @@ func query_by_predicate(predicate):
 
 # === System management ===
 
-func register_system(system):  # 144:1-GDL513-OK
+func register_system(system):
 	# system must have update(delta, world) method
 	systems.append(system)
 
@@ -165,7 +165,7 @@ func update_systems(delta):
 # AI component: {state: String, target: int, behavior: Callable}
 
 
-func create_transform_component(pos = Vector2.ZERO, rot = 0.0, scl = Vector2.ONE):
+func create_transform_component(pos = Vector2.ZERO, rot = 0.0, scl = Vector2.ONE): # 156:1-GDL513-OK
 	return {"position": pos, "rotation": rot, "scale": scl}
 
 
@@ -189,7 +189,7 @@ func create_ai_component(initial_state = "idle", behavior = null):
 
 # === Example systems (duck typed) ===
 
-class MovementSystem:  # 193:1-GDL513-OK
+class MovementSystem:
 	func update(delta, world):  # 195:15-GD7007-OK
 		# Query entities with Transform and Velocity
 		var movers = world.query_entities(["Transform", "Velocity"])
@@ -240,7 +240,7 @@ class AISystem:
 var archetypes = {}  # Dict[String, Array[Dict]] - archetype_name -> component definitions
 
 
-func define_archetype(name, component_defs):  # 247:1-GDL513-OK
+func define_archetype(name, component_defs):  # 247:1-GDL513-OK, 236:1-GDL513-OK
 	# component_defs is Array of {type: String, factory: Callable or default_value}
 	archetypes[name] = component_defs
 
@@ -274,7 +274,7 @@ func create_from_archetype(archetype_name, overrides = {}):
 var event_queue = []  # Array of {type: String, data: Variant, source: int}
 
 
-func emit_event(event_type, data = null, source_entity = -1):
+func emit_event(event_type, data = null, source_entity = -1): # 270:1-GDL513-OK
 	event_queue.append({
 		"type": event_type,
 		"data": data,
@@ -304,7 +304,7 @@ var spatial_grid = {}  # Dict[Vector2i, Array[int]] - grid cell -> entity ids
 var grid_cell_size = 64.0
 
 
-func update_spatial_index():
+func update_spatial_index(): # 299:1-GDL513-OK
 	spatial_grid.clear()
 
 	var positioned = query_entities(["Transform"])
@@ -343,7 +343,7 @@ func query_nearby(position, radius):  # 327:5-GDL225-OK
 
 # === Serialization ===
 
-func serialize_world():  # 346:1-GDL513-OK
+func serialize_world():
 	var data = {
 		"next_id": next_entity_id,
 		"entities": {},
@@ -388,7 +388,7 @@ func deserialize_world(data):  # 368:1-GDL513-OK
 
 # === Debug utilities ===
 
-func debug_entity(entity_id):  # 391:1-GDL513-OK
+func debug_entity(entity_id):
 	var entity = get_entity(entity_id)
 	if not entity:
 		return "Entity not found"

@@ -43,7 +43,7 @@ public class RenameVerificationParser
     // Pattern for file path line under edits section
     // Example:   test_scripts/base_entity.gd:
     private static readonly Regex FilePathPattern = new(
-        @"^\s{2}(\S+\.gd):$",
+        @"^\s{2}(\S+\.(?:gd|tscn)):$",
         RegexOptions.Compiled);
 
     // Pattern for rename case header

@@ -45,7 +45,7 @@ var damage_modifier  # Callable: (int) -> int OR (int, Node) -> int
 var filter_func      # Callable: (Variant) -> bool
 
 
-func register_callback(callback):
+func register_callback(callback): # 39:1-GDL513-OK
 	on_hit_callback = callback
 
 
@@ -60,7 +60,7 @@ func execute_with_modifier(base_value, context = null):
 
 # === Union Types Through Branching ===
 
-func get_entity_by_name(entity_name): # 63:1-GDL513-OK
+func get_entity_by_name(entity_name):
 	# Returns different types based on name
 	match entity_name:
 		"player":
@@ -98,7 +98,7 @@ func find_nearest(position, type_filter):
 var component_cache = {}  # Dict[String, Variant] - values are mixed types
 
 
-func get_or_create_component(component_type):
+func get_or_create_component(component_type): # 94:1-GDL513-OK
 	if component_cache.has(component_type):
 		return component_cache[component_type]
 
@@ -124,7 +124,7 @@ func _create_component(type_name):
 			return null
 
 
-# === Signal-based polymorphism === # 128:1-GDL513-OK
+# === Signal-based polymorphism === #
 
 signal data_received(data)
 signal state_changed(old_state, new_state)
@@ -134,7 +134,7 @@ var pending_actions = []  # Array of mixed action types
 var action_results = {}   # Dict mapping action -> result (both unknown types)
 
 
-func queue_action(action):
+func queue_action(action): # 125:1-GDL513-OK
 	pending_actions.append(action)
 
 
@@ -172,7 +172,7 @@ func _execute_dict_action(action_dict):
 
 # === Recursive type inference challenge ===
 
-func transform_data(data, transformer): # 175:1-GDL513-OK
+func transform_data(data, transformer):
 	# data could be: primitive, Array, Dictionary
 	# transformer is a Callable
 	# Return type matches input structure but with transformed values
@@ -193,7 +193,7 @@ func transform_data(data, transformer): # 175:1-GDL513-OK
 
 # === Chained operations with type narrowing ===
 
-func process_chain(initial_value): # 196:1-GDL513-OK
+func process_chain(initial_value):
 	# Each step could return different types
 	var step1 = _step_parse(initial_value)      # String -> Variant (could be int, float, Array...)
 	var step2 = _step_validate(step1)           # Variant -> Variant|null
@@ -239,7 +239,7 @@ func _step_format(value):
 
 # === Helpers that return different types ===
 
-func _create_player(): # 242:1-GDL513-OK
+func _create_player():
 	return {"type": "player", "health": 100}
 
 func _create_enemy(): # 245:1-GDL513-OK

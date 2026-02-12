@@ -74,6 +74,9 @@ public class GDRenameService
             CollectClassNameEdits(containingScript, oldName, newName, strictEdits, filesModified);
         }
 
+        // .tscn signal connections: [connection method="oldName"]
+        CollectTscnEdits(oldName, newName, strictEdits, filesModified);
+
         if (strictEdits.Count == 0 && potentialEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
 
@@ -221,19 +224,25 @@ public class GDRenameService
             }
         }
 
-        // No filter — iterate ALL files via SemanticModel (same approach as GDFindRefsHandler)
-        var strictEdits = new List<GDTextEdit>();
-        var potentialEdits = new List<GDTextEdit>();
-        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // No filter — find all definitions of oldName, group by type hierarchy,
+        // and delegate to PlanRename(GDSymbolInfo) for each independent hierarchy.
+
+        // 1. Check for class_name match first
+        foreach (var script in _project.ScriptFiles)
+        {
+            if (script.FullPath != null && script.TypeName == oldName)
+                return PlanClassNameRename(script, oldName, newName);
+        }
+
+        // 2. Collect all scripts where oldName is defined as a class member
+        var definitions = new List<(GDScriptFile Script, GDSymbolInfo Symbol)>();
+        GDScriptFile? localOnlyScript = null;
+        GDSymbolInfo? localOnlySymbol = null;
 
         foreach (var script in _project.ScriptFiles)
         {
             if (script.FullPath == null)
                 continue;
-
-            // Check for class_name match
-            if (script.TypeName == oldName)
-                return PlanClassNameRename(script, oldName, newName);
 
             var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
             if (model == null)
@@ -243,28 +252,65 @@ public class GDRenameService
             if (symbol == null)
                 continue;
 
-            // Per-file: declaration + references via SemanticModel
-            var scriptEdits = CollectEditsFromScript(script, symbol, oldName, newName);
-            strictEdits.AddRange(scriptEdits);
-            if (scriptEdits.Count > 0)
-                filesModified.Add(script.FullPath);
+            if (IsClassMemberSymbol(symbol))
+                definitions.Add((script, symbol));
+            else if (localOnlyScript == null)
+            {
+                localOnlyScript = script;
+                localOnlySymbol = symbol;
+            }
         }
 
-        // Member access queries for cross-file obj.method() and super.method() patterns
-        // Query ALL member accesses by member name, regardless of caller type
-        if (_projectModel != null)
+        // 3. If class member definitions found, group by type hierarchy.
+        //    Process each hierarchy via PlanRename(GDSymbolInfo) independently.
+        //    Return only the hierarchy with the most strict edits (the primary one).
+        //    Same-named members on unrelated types are excluded from strict edits.
+        //    Then augment with duck-typed/has_method member access references.
+        if (definitions.Count > 0)
         {
-            CollectAllMemberAccessEdits(oldName, newName, strictEdits, potentialEdits, filesModified);
+            var hierarchyRoots = FindHierarchyRoots(definitions);
+
+            // Pick the hierarchy with the most strict edits
+            GDRenameResult? bestResult = null;
+            foreach (var root in hierarchyRoots)
+            {
+                var result = PlanRename(root.Symbol, newName);
+                if (result.Success && (bestResult == null || result.StrictEdits.Count > bestResult.StrictEdits.Count))
+                    bestResult = result;
+            }
+
+            if (bestResult == null)
+                return GDRenameResult.NoOccurrences(oldName);
+
+            // Augment with duck-typed and has_method() references from member access index
+            if (_projectModel != null)
+            {
+                var strictEdits = new List<GDTextEdit>(bestResult.StrictEdits);
+                var potentialEdits = new List<GDTextEdit>(bestResult.PotentialEdits);
+                var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var edit in strictEdits.Concat(potentialEdits))
+                {
+                    if (edit.FilePath != null)
+                        filesModified.Add(edit.FilePath);
+                }
+
+                CollectAllMemberAccessEdits(oldName, newName, strictEdits, potentialEdits, filesModified);
+
+                strictEdits = DeduplicateEdits(strictEdits);
+                potentialEdits = DeduplicateEdits(potentialEdits);
+
+                return GDRenameResult.SuccessfulWithConfidence(
+                    SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count);
+            }
+
+            return bestResult;
         }
 
-        if (strictEdits.Count == 0 && potentialEdits.Count == 0)
-            return GDRenameResult.NoOccurrences(oldName);
+        // 4. Local variable only — single-file edits
+        if (localOnlyScript != null && localOnlySymbol != null)
+            return PlanRename(localOnlySymbol, newName);
 
-        strictEdits = DeduplicateEdits(strictEdits);
-        potentialEdits = DeduplicateEdits(potentialEdits);
-
-        return GDRenameResult.SuccessfulWithConfidence(
-            SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count);
+        return GDRenameResult.NoOccurrences(oldName);
     }
 
     /// <summary>
@@ -594,6 +640,63 @@ public class GDRenameService
         };
     }
 
+    /// <summary>
+    /// Groups same-named class member definitions by type hierarchy and returns
+    /// the root (most-base) definition for each independent hierarchy.
+    /// </summary>
+    private List<(GDScriptFile Script, GDSymbolInfo Symbol)> FindHierarchyRoots(
+        List<(GDScriptFile Script, GDSymbolInfo Symbol)> definitions)
+    {
+        if (definitions.Count == 1 || _projectModel?.TypeSystem == null)
+            return definitions;
+
+        var roots = new List<(GDScriptFile Script, GDSymbolInfo Symbol)>();
+        var assigned = new HashSet<int>();
+
+        for (int i = 0; i < definitions.Count; i++)
+        {
+            if (assigned.Contains(i))
+                continue;
+
+            var root = definitions[i];
+            var rootType = root.Script.TypeName;
+
+            // Find the root of the hierarchy containing this definition
+            for (int j = 0; j < definitions.Count; j++)
+            {
+                if (i == j || assigned.Contains(j))
+                    continue;
+
+                var other = definitions[j];
+                var otherType = other.Script.TypeName;
+
+                if (rootType == null || otherType == null)
+                    continue;
+
+                if (_projectModel.TypeSystem.IsAssignableTo(rootType, otherType))
+                {
+                    // otherType is a base of rootType → other is more-base
+                    assigned.Add(i);
+                    root = other;
+                    rootType = otherType;
+                }
+                else if (_projectModel.TypeSystem.IsAssignableTo(otherType, rootType))
+                {
+                    // rootType is a base of otherType → mark other as covered
+                    assigned.Add(j);
+                }
+            }
+
+            if (!assigned.Contains(i))
+            {
+                roots.Add(root);
+                assigned.Add(i);
+            }
+        }
+
+        return roots;
+    }
+
     private List<GDTextEdit> CollectEditsFromScript(GDScriptFile script, GDSymbolInfo symbol, string oldName, string newName)
     {
         var edits = new List<GDTextEdit>();
@@ -676,16 +779,78 @@ public class GDRenameService
             var targetEdits = reference.Confidence == GDReferenceConfidence.Strict
                 ? strictEdits : potentialEdits;
 
+            // String literal tokens (e.g., has_method("name")) need +1 column offset for the opening quote
+            var columnOffset = identToken is GDStringNode ? 2 : 1;
+
             targetEdits.Add(new GDTextEdit(
                 file.FullPath,
                 identToken.StartLine + 1,
-                identToken.StartColumn + 1,
+                identToken.StartColumn + columnOffset,
                 oldName,
                 newName,
                 reference.Confidence,
                 reference.ConfidenceReason));
             filesModified.Add(file.FullPath);
         }
+    }
+
+    private void CollectTscnEdits(
+        string oldName,
+        string newName,
+        List<GDTextEdit> strictEdits,
+        HashSet<string> filesModified)
+    {
+        var sceneProvider = _project.SceneTypesProvider;
+        if (sceneProvider == null)
+            return;
+
+        foreach (var scene in sceneProvider.AllScenes)
+        {
+            if (string.IsNullOrEmpty(scene.FullPath))
+                continue;
+
+            foreach (var conn in scene.SignalConnections)
+            {
+                if (conn.Method != oldName)
+                    continue;
+
+                // Find the column of the method name within the connection line
+                // Format: [connection ... method="take_damage" ...]
+                var column = FindMethodColumnInTscn(scene.FullPath, conn.LineNumber, oldName);
+
+                strictEdits.Add(new GDTextEdit(
+                    scene.FullPath,
+                    conn.LineNumber,
+                    column,
+                    oldName,
+                    newName,
+                    GDReferenceConfidence.Strict,
+                    $".tscn signal connection method=\"{oldName}\""));
+                filesModified.Add(scene.FullPath);
+            }
+        }
+    }
+
+    private int FindMethodColumnInTscn(string filePath, int lineNumber, string methodName)
+    {
+        try
+        {
+            var lines = File.ReadAllLines(filePath);
+            if (lineNumber > 0 && lineNumber <= lines.Length)
+            {
+                var line = lines[lineNumber - 1];
+                var marker = $"method=\"{methodName}\"";
+                var idx = line.IndexOf(marker, StringComparison.Ordinal);
+                if (idx >= 0)
+                    return idx + "method=\"".Length + 1; // 1-based column, inside the quotes
+            }
+        }
+        catch
+        {
+            // Fall back to column 1 if file can't be read
+        }
+
+        return 1;
     }
 
     #endregion

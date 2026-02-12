@@ -3460,6 +3460,22 @@ test_scripts/diagnostics/validator/type_errors.gd
     nullable: no
 
 
+test_scripts/duck_caller.gd
+  6:0 Variable entities
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Medium
+    nullable: no
+
+  10:1 Iterator entity
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+
 test_scripts/duck_typing_advanced.gd
   9:0 Variable attacker
     declared: (none)
@@ -15425,6 +15441,29 @@ test_scripts/union_types_complex.gd
     nullable: no
 
 
+test_scripts/unrelated_class.gd
+  6:0 Variable damage_log
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  9:17 Parameter amount
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  13:14 Parameter delta
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+
 test_scripts/validation_edge_cases.gd
   11:1 Variable arr
     declared: (none)
@@ -15533,4 +15572,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 2198 entries in 48 files
+# Summary: 2203 entries in 50 files

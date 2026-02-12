@@ -47,7 +47,7 @@ func call_all_matching(obj, prefix, args = []):
 var dynamic_properties = {}  # Mirror of object properties
 
 
-func get_property(obj, prop_name, default_value = null):
+func get_property(obj, prop_name, default_value = null): # 43:1-GDL513-OK
 	if obj and prop_name in obj:
 		return obj.get(prop_name)
 	return default_value
@@ -85,7 +85,7 @@ func apply_properties(obj):
 var message_handlers = {}  # Dict[String, Callable]
 
 
-func register_handler(message_type, handler):
+func register_handler(message_type, handler): # 81:1-GDL513-OK
 	message_handlers[message_type] = handler
 
 
@@ -119,7 +119,7 @@ func broadcast_message(targets, message):
 
 # === Reflection-based serialization ===
 
-func serialize_object(obj): # 122:1-GDL513-OK
+func serialize_object(obj):
 	var data = {}
 
 	# Get all exported properties
@@ -207,7 +207,7 @@ func _deserialize_typed(data):
 var class_registry = {}  # Dict[String, GDScript or PackedScene]
 
 
-func register_class(name, class_ref):
+func register_class(name, class_ref): # 203:1-GDL513-OK
 	class_registry[name] = class_ref
 
 
@@ -262,7 +262,7 @@ class DynamicBuilder:
 	var _target
 	var _pending_calls = []
 
-	func _init(target = null):
+	func _init(target = null): # 257:1-GDL513-OK
 		_target = target if target else {}
 
 	func set_target(target): # 268:1-GDL513-OK
@@ -297,7 +297,7 @@ func create_builder(target = null):
 var dispatch_table = {}  # Dict[String, Dict[String, Callable]]
 
 
-func register_dispatch(event_type, handler_name, handler):
+func register_dispatch(event_type, handler_name, handler): # 293:1-GDL513-OK
 	if not dispatch_table.has(event_type):
 		dispatch_table[event_type] = {}
 	dispatch_table[event_type][handler_name] = handler
@@ -331,7 +331,7 @@ class DynamicProxy:
 	var _target
 	var _intercepts = {}  # Dict[String, Callable]
 
-	func _init(target):
+	func _init(target): # 326:1-GDL513-OK
 		_target = target
 
 	func intercept(method_name, interceptor): # 337:1-GDL513-OK
@@ -381,7 +381,7 @@ var after_advice = {}    # Dict[String, Array[Callable]]
 var around_advice = {}   # Dict[String, Callable]
 
 
-func add_before(method_pattern, advice):
+func add_before(method_pattern, advice): # 375:1-GDL513-OK
 	if not before_advice.has(method_pattern):
 		before_advice[method_pattern] = []
 	before_advice[method_pattern].append(advice)

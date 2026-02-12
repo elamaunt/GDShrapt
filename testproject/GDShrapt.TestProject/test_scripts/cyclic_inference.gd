@@ -27,7 +27,7 @@ func process_b(input):
 
 # === Indirect Cycle: A -> B -> C -> A ===
 
-func transform_stage_1(data): # 30:1-GDL513-OK
+func transform_stage_1(data):
 	# First stage: could be String, int, or Array
 	if data is String:
 		return transform_stage_2(data.length())
@@ -53,7 +53,7 @@ func transform_stage_3(value):
 
 # === Mutual Recursion with Different Return Types ===
 
-func even_check(n): # 56:1-GDL513-OK
+func even_check(n):
 	# Returns bool, but depends on odd_check
 	if n == 0:
 		return true
@@ -72,7 +72,7 @@ func odd_check(n):
 var state_machine_value  # Changes type based on state transitions
 
 
-func state_idle(context):
+func state_idle(context): # 68:1-GDL513-OK
 	# Context type unknown, return type depends on transition
 	if context.has("trigger"):
 		return state_active(context)
@@ -118,7 +118,7 @@ func process_item(item):
 
 # === Accumulator Pattern with Cycle ===
 
-func accumulate_left(list, func_ref, initial): # 121:1-GDL513-OK
+func accumulate_left(list, func_ref, initial):
 	# Standard fold-left, but calls itself
 	if list.is_empty(): # 123:4-GD7007-OK
 		return initial
@@ -144,7 +144,7 @@ var computed_y  # Depends on computed_x
 var computed_z  # Depends on both
 
 
-func compute_values(seed_value):
+func compute_values(seed_value): # 138:1-GDL513-OK
 	# Creates dependency cycle between member variables
 	computed_x = _compute_x(seed_value)
 	computed_y = _compute_y(computed_x)
@@ -177,7 +177,7 @@ func _compute_y_with_feedback(z_val):
 
 # === Visitor Pattern Creating Cycles ===
 
-func visit_node(node, visitor): # 180:1-GDL513-OK
+func visit_node(node, visitor):
 	# Node structure unknown, visitor has visit methods
 	var result = visitor.visit(node) # 182:14-GD7003-OK, 182:14-GD7007-OK
 
@@ -207,7 +207,7 @@ func traverse_and_transform(root, transformer):
 var generator_state = {}
 
 
-func generator_next(gen_id):
+func generator_next(gen_id): # 203:1-GDL513-OK
 	# Returns current value and advances state
 	if not generator_state.has(gen_id):
 		generator_state[gen_id] = _init_generator(gen_id)
@@ -240,7 +240,7 @@ func _advance_generator(state):
 
 # === Parser Combinators (Classic Cycle) ===
 
-func parse_expr(tokens, pos): # 243:1-GDL513-OK
+func parse_expr(tokens, pos):
 	# expr -> term (('+' | '-') term)*
 	var result = parse_term(tokens, pos)
 	if result == null:
