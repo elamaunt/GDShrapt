@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="GDShrapt.Semantics.ComponentTests" />
-    <InternalsVisibleTo Include="GDShrapt.Semantics.Tests" />
+    <InternalsVisibleTo Include="GDShrapt.Semantics.ComponentTests" Key="$(GDShraptPublicKey)" />
+    <InternalsVisibleTo Include="GDShrapt.Semantics.Tests" Key="$(GDShraptPublicKey)" />
   </ItemGroup>
 
 </Project>

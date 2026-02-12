@@ -4,8 +4,6 @@ using GDShrapt.CLI.Core;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("GDShrapt.Plugin.Tests")]
-
 namespace GDShrapt.Plugin;
 
 public partial class GDShraptPlugin : EditorPlugin

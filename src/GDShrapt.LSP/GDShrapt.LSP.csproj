@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="GDShrapt.LSP.Tests" />
+    <InternalsVisibleTo Include="GDShrapt.LSP.Tests" Key="$(GDShraptPublicKey)" />
   </ItemGroup>
 
 </Project>

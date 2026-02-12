@@ -17,8 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="GDShrapt.CLI" />
-    <InternalsVisibleTo Include="GDShrapt.CLI.Tests" />
+    <InternalsVisibleTo Include="GDShrapt.CLI" Key="$(GDShraptPublicKey)" />
+    <InternalsVisibleTo Include="GDShrapt.CLI.Tests" Key="$(GDShraptPublicKey)" />
   </ItemGroup>
 
 </Project>
