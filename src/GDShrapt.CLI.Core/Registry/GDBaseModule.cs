@@ -17,15 +17,17 @@ public sealed class GDBaseModule : IGDModule
     {
         // Project semantic model (shared across handlers that need cross-file analysis)
         var projectModel = new GDProjectSemanticModel(project);
+        registry.Register<GDProjectSemanticModel>(projectModel);
+
+        // Code intelligence (registered first — used by other handlers)
+        registry.Register<IGDCompletionHandler>(new GDCompletionHandler(project));
+        var goToDefHandler = new GDGoToDefHandler(project);
+        registry.Register<IGDGoToDefHandler>(goToDefHandler);
+        registry.Register<IGDSymbolsHandler>(new GDSymbolsHandler(project));
 
         // Rename and refactoring
-        registry.Register<IGDRenameHandler>(new GDRenameHandler(project, projectModel));
+        registry.Register<IGDRenameHandler>(new GDRenameHandler(project, projectModel, goToDefHandler));
         registry.Register<IGDFindRefsHandler>(new GDFindRefsHandler(project, projectModel));
-
-        // Code intelligence
-        registry.Register<IGDCompletionHandler>(new GDCompletionHandler(project));
-        registry.Register<IGDGoToDefHandler>(new GDGoToDefHandler(project));
-        registry.Register<IGDSymbolsHandler>(new GDSymbolsHandler(project));
 
         // Diagnostics and formatting
         registry.Register<IGDDiagnosticsHandler>(new GDDiagnosticsHandler(project));
@@ -45,5 +47,7 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<IGDDeadCodeHandler>(new GDDeadCodeHandler(projectModel));
         registry.Register<IGDDependencyHandler>(new GDDependencyHandler(projectModel));
         registry.Register<IGDTypeCoverageHandler>(new GDTypeCoverageHandler(projectModel));
+        registry.Register<IGDDuplicateHandler>(new GDDuplicateHandler(projectModel));
+        registry.Register<IGDSecurityHandler>(new GDSecurityHandler(projectModel));
     }
 }

@@ -12,6 +12,8 @@ namespace GDShrapt.Semantics;
 /// </summary>
 public class GDRenameService
 {
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
+
     private readonly GDScriptProject _project;
     private readonly GDProjectSemanticModel? _projectModel;
 
@@ -223,7 +225,6 @@ public class GDRenameService
         var strictEdits = new List<GDTextEdit>();
         var potentialEdits = new List<GDTextEdit>();
         var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var typesWithMember = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var script in _project.ScriptFiles)
         {
@@ -242,10 +243,6 @@ public class GDRenameService
             if (symbol == null)
                 continue;
 
-            // Track ALL type names that have this member — needed for member access queries
-            if (!string.IsNullOrEmpty(script.TypeName))
-                typesWithMember.Add(script.TypeName);
-
             // Per-file: declaration + references via SemanticModel
             var scriptEdits = CollectEditsFromScript(script, symbol, oldName, newName);
             strictEdits.AddRange(scriptEdits);
@@ -254,14 +251,10 @@ public class GDRenameService
         }
 
         // Member access queries for cross-file obj.method() and super.method() patterns
-        // Query for ALL types that have the member, not just the declaring type
-        if (typesWithMember.Count > 0 && _projectModel != null)
+        // Query ALL member accesses by member name, regardless of caller type
+        if (_projectModel != null)
         {
-            foreach (var typeName in typesWithMember)
-            {
-                CollectMemberAccessEdits(typeName, oldName, newName,
-                    strictEdits, potentialEdits, filesModified);
-            }
+            CollectAllMemberAccessEdits(oldName, newName, strictEdits, potentialEdits, filesModified);
         }
 
         if (strictEdits.Count == 0 && potentialEdits.Count == 0)
@@ -494,9 +487,9 @@ public class GDRenameService
     /// <param name="edits">The edits to apply.</param>
     public void ApplyEditsToFile(string filePath, IEnumerable<GDTextEdit> edits)
     {
-        var content = File.ReadAllText(filePath, Encoding.UTF8);
+        var content = File.ReadAllText(filePath, Utf8NoBom);
         var modified = ApplyEdits(content, edits);
-        File.WriteAllText(filePath, modified, Encoding.UTF8);
+        File.WriteAllText(filePath, modified, Utf8NoBom);
     }
 
     #region Private helpers
@@ -660,20 +653,18 @@ public class GDRenameService
     }
 
     /// <summary>
-    /// Collects edits from member access patterns (super.method(), obj.method()) across the project
-    /// using GDProjectSemanticModel.GetMemberAccessesInProject().
+    /// Collects edits from ALL member access patterns for a given member name across the project,
+    /// regardless of caller type. Ensures super.method() calls are found even when
+    /// the caller type differs from script.TypeName.
     /// </summary>
-    private void CollectMemberAccessEdits(
-        string declaringTypeName,
+    private void CollectAllMemberAccessEdits(
         string oldName,
         string newName,
         List<GDTextEdit> strictEdits,
         List<GDTextEdit> potentialEdits,
         HashSet<string> filesModified)
     {
-        var memberAccesses = _projectModel!.GetMemberAccessesInProject(declaringTypeName, oldName);
-
-        foreach (var (file, reference) in memberAccesses)
+        foreach (var (file, reference) in _projectModel!.GetAllMemberAccessesForMemberInProject(oldName))
         {
             if (file.FullPath == null)
                 continue;

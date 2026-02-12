@@ -83,6 +83,21 @@ internal class GDSymbolRegistry
     }
 
     /// <summary>
+    /// Gets all member access references for a given member name, across all caller types.
+    /// </summary>
+    public IEnumerable<(string CallerType, IReadOnlyList<GDReference> References)> GetAllMemberAccessesForMember(string memberName)
+    {
+        if (string.IsNullOrEmpty(memberName))
+            yield break;
+
+        foreach (var kvp in _memberAccessByType)
+        {
+            if (string.Equals(kvp.Key.MemberName, memberName, StringComparison.Ordinal))
+                yield return (kvp.Key.CallerType, kvp.Value);
+        }
+    }
+
+    /// <summary>
     /// Gets all symbols of a specific kind.
     /// </summary>
     public IReadOnlyList<GDSymbolInfo> GetSymbolsOfKind(GDSymbolKind kind)

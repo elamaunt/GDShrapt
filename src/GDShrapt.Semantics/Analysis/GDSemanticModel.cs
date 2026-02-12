@@ -499,6 +499,14 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     /// <summary>
+    /// Gets all member access references for a given member name, across all caller types.
+    /// </summary>
+    internal IEnumerable<(string CallerType, IReadOnlyList<GDReference> References)> GetAllMemberAccessesForMember(string memberName)
+    {
+        return _symbolRegistry.GetAllMemberAccessesForMember(memberName);
+    }
+
+    /// <summary>
     /// Gets all accesses to a global function (e.g., str2var, load, preload).
     /// Global functions in GDScript belong to "@GDScript" pseudo-type.
     /// </summary>

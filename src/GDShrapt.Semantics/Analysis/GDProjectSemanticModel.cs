@@ -61,6 +61,8 @@ public class GDProjectSemanticModel : IDisposable
     private readonly Lazy<GDDependencyService> _dependencies;
     private readonly Lazy<GDSceneFlowService> _sceneFlow;
     private readonly Lazy<GDResourceFlowService> _resourceFlow;
+    private readonly Lazy<GDDuplicateDetectionService> _duplicates;
+    private readonly Lazy<GDSecurityScanningService> _security;
 
     /// <summary>
     /// The underlying project.
@@ -134,6 +136,16 @@ public class GDProjectSemanticModel : IDisposable
     public GDResourceFlowService ResourceFlow => _resourceFlow.Value;
 
     /// <summary>
+    /// Duplicate code detection service.
+    /// </summary>
+    public GDDuplicateDetectionService Duplicates => _duplicates.Value;
+
+    /// <summary>
+    /// Security vulnerability scanning service.
+    /// </summary>
+    public GDSecurityScanningService Security => _security.Value;
+
+    /// <summary>
     /// Fired when a file is invalidated in the semantic model.
     /// </summary>
     public event EventHandler<string>? FileInvalidated;
@@ -162,6 +174,8 @@ public class GDProjectSemanticModel : IDisposable
         _dependencies = new Lazy<GDDependencyService>(() => new GDDependencyService(_project, SignalConnectionRegistry), LazyThreadSafetyMode.ExecutionAndPublication);
         _sceneFlow = new Lazy<GDSceneFlowService>(() => new GDSceneFlowService(this), LazyThreadSafetyMode.ExecutionAndPublication);
         _resourceFlow = new Lazy<GDResourceFlowService>(() => new GDResourceFlowService(this), LazyThreadSafetyMode.ExecutionAndPublication);
+        _duplicates = new Lazy<GDDuplicateDetectionService>(() => new GDDuplicateDetectionService(this), LazyThreadSafetyMode.ExecutionAndPublication);
+        _security = new Lazy<GDSecurityScanningService>(() => new GDSecurityScanningService(this), LazyThreadSafetyMode.ExecutionAndPublication);
 
         _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
@@ -665,6 +679,31 @@ public class GDProjectSemanticModel : IDisposable
             foreach (var access in accesses)
             {
                 yield return (scriptFile, access);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets all member accesses for a given member name across the entire project,
+    /// regardless of caller type.
+    /// </summary>
+    internal IEnumerable<(GDScriptFile File, GDReference Reference)> GetAllMemberAccessesForMemberInProject(string memberName)
+    {
+        if (string.IsNullOrEmpty(memberName))
+            yield break;
+
+        foreach (var scriptFile in _project.ScriptFiles)
+        {
+            var model = GetSemanticModel(scriptFile);
+            if (model == null)
+                continue;
+
+            foreach (var (_, references) in model.GetAllMemberAccessesForMember(memberName))
+            {
+                foreach (var reference in references)
+                {
+                    yield return (scriptFile, reference);
+                }
             }
         }
     }

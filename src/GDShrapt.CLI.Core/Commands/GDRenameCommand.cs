@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Semantics;
@@ -82,27 +81,14 @@ public class GDRenameCommand : IGDCommand
                     return Task.FromResult(GDExitCode.Fatal);
                 }
 
-                var goToDefHandler = registry.GetService<IGDGoToDefHandler>();
-                if (goToDefHandler == null)
+                var resolved = renameHandler.ResolveSymbolAtPosition(_filePath, _line.Value, _column ?? 1);
+                if (resolved == null)
                 {
-                    _formatter.WriteError(_output, "Go-to-definition handler not available.");
-                    return Task.FromResult(GDExitCode.Fatal);
-                }
-
-                var fullFilePath = Path.GetFullPath(_filePath);
-                var col = _column ?? 1;
-                var line0 = _line.Value - 1;
-                var col0 = col - 1;
-                var definition = goToDefHandler.FindDefinition(fullFilePath, line0, col0);
-
-                if (definition == null || string.IsNullOrEmpty(definition.SymbolName))
-                {
-                    _formatter.WriteError(_output, $"No symbol found at line {_line.Value}, column {col}.");
+                    _formatter.WriteError(_output, $"No symbol found at line {_line.Value}, column {_column ?? 1}.");
                     return Task.FromResult(GDExitCode.Errors);
                 }
 
-
-                oldName = definition.SymbolName;
+                oldName = resolved;
             }
             else if (!string.IsNullOrEmpty(_oldName))
             {
@@ -142,13 +128,13 @@ public class GDRenameCommand : IGDCommand
                 {
                     _formatter.WriteError(_output, result.ErrorMessage ?? "Rename failed");
                 }
-                return Task.FromResult(1);
+                return Task.FromResult(GDExitCode.WarningsOrHints);
             }
 
             if (result.Edits.Count == 0)
             {
-                _formatter.WriteMessage(_output, $"No occurrences of '{_oldName}' found.");
-                return Task.FromResult(0);
+                _formatter.WriteMessage(_output, $"No occurrences of '{oldName}' found.");
+                return Task.FromResult(GDExitCode.Success);
             }
 
             if (_dryRun)
@@ -158,12 +144,11 @@ public class GDRenameCommand : IGDCommand
                 if (result.StrictEdits.Count > 0)
                 {
                     _formatter.WriteMessage(_output, $"\n  Strict references ({result.StrictEdits.Count}):");
-                    var strictByFile = result.StrictEdits.GroupBy(e => e.FilePath);
-                    foreach (var fileGroup in strictByFile)
+                    foreach (var fileGroup in result.GetStrictEditsByFile())
                     {
-                        var relativePath = GetRelativePath(fileGroup.Key, projectRoot);
+                        var relativePath = Path.GetRelativePath(projectRoot, fileGroup.Key);
                         _formatter.WriteMessage(_output, $"    {relativePath}:");
-                        foreach (var edit in fileGroup)
+                        foreach (var edit in fileGroup.Value)
                         {
                             _formatter.WriteMessage(_output, $"      Line {edit.Line}: {edit.OldText} -> {edit.NewText}");
                         }
@@ -173,12 +158,11 @@ public class GDRenameCommand : IGDCommand
                 if (result.PotentialEdits.Count > 0)
                 {
                     _formatter.WriteMessage(_output, $"\n  Potential references ({result.PotentialEdits.Count}) [lower confidence, not applied]:");
-                    var potentialByFile = result.PotentialEdits.GroupBy(e => e.FilePath);
-                    foreach (var fileGroup in potentialByFile)
+                    foreach (var fileGroup in result.GetPotentialEditsByFile())
                     {
-                        var relativePath = GetRelativePath(fileGroup.Key, projectRoot);
+                        var relativePath = Path.GetRelativePath(projectRoot, fileGroup.Key);
                         _formatter.WriteMessage(_output, $"    {relativePath}:");
-                        foreach (var edit in fileGroup)
+                        foreach (var edit in fileGroup.Value)
                         {
                             _formatter.WriteMessage(_output, $"      Line {edit.Line}: {edit.OldText} -> {edit.NewText} ({edit.ConfidenceReason ?? "duck-typed"})");
                         }
@@ -190,22 +174,16 @@ public class GDRenameCommand : IGDCommand
                 // Base CLI: Apply only Strict edits (type-verified)
                 if (result.StrictEdits.Count == 0)
                 {
-                    _formatter.WriteMessage(_output, $"No type-verified references found for '{_oldName}'.");
+                    _formatter.WriteMessage(_output, $"No type-verified references found for '{oldName}'.");
                     if (result.PotentialEdits.Count > 0)
                     {
                         _formatter.WriteMessage(_output, $"{result.PotentialEdits.Count} duck-typed reference(s) found but not applied (lower confidence).");
                     }
-                    return Task.FromResult(0);
+                    return Task.FromResult(GDExitCode.Success);
                 }
 
-                var strictByFile = result.StrictEdits.GroupBy(e => e.FilePath);
-                foreach (var fileGroup in strictByFile)
-                {
-                    renameHandler.ApplyEdits(fileGroup.Key, fileGroup);
-                }
-
-                var strictFileCount = result.StrictEdits.Select(e => e.FilePath).Distinct().Count();
-                _formatter.WriteMessage(_output, $"Renamed {result.StrictEdits.Count} confirmed reference(s) in {strictFileCount} file(s).");
+                var fileCount = renameHandler.ApplyEdits(result.StrictEdits);
+                _formatter.WriteMessage(_output, $"Renamed {result.StrictEdits.Count} confirmed reference(s) in {fileCount} file(s).");
 
                 if (result.PotentialEdits.Count > 0)
                 {
@@ -213,24 +191,12 @@ public class GDRenameCommand : IGDCommand
                 }
             }
 
-            return Task.FromResult(0);
+            return Task.FromResult(GDExitCode.Success);
         }
         catch (Exception ex)
         {
             _formatter.WriteError(_output, ex.Message);
             return Task.FromResult(GDExitCode.Errors);
-        }
-    }
-
-    private static string GetRelativePath(string fullPath, string basePath)
-    {
-        try
-        {
-            return Path.GetRelativePath(basePath, fullPath);
-        }
-        catch
-        {
-            return fullPath;
         }
     }
 }

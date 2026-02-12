@@ -11,6 +11,15 @@ namespace GDShrapt.CLI.Core;
 public interface IGDRenameHandler
 {
     /// <summary>
+    /// Resolves the symbol name at a given file position.
+    /// </summary>
+    /// <param name="filePath">Full path to the file.</param>
+    /// <param name="line">Line number (1-based).</param>
+    /// <param name="column">Column number (1-based).</param>
+    /// <returns>Symbol name or null if not found.</returns>
+    string? ResolveSymbolAtPosition(string filePath, int line, int column);
+
+    /// <summary>
     /// Validates that a name is a valid GDScript identifier.
     /// </summary>
     /// <param name="name">The identifier to validate.</param>
@@ -33,4 +42,12 @@ public interface IGDRenameHandler
     /// <param name="filePath">Path to the file to modify.</param>
     /// <param name="edits">Edits to apply.</param>
     void ApplyEdits(string filePath, IEnumerable<GDTextEdit> edits);
+
+    /// <summary>
+    /// Applies a list of edits across multiple files.
+    /// Groups edits by file internally.
+    /// </summary>
+    /// <param name="edits">Edits to apply.</param>
+    /// <returns>Number of modified files.</returns>
+    int ApplyEdits(IReadOnlyList<GDTextEdit> edits);
 }

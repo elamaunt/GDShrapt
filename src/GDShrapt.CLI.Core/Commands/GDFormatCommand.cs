@@ -10,6 +10,8 @@ namespace GDShrapt.CLI.Core;
 
 public class GDFormatCommand : IGDCommand
 {
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
+
     private readonly string _path;
     private readonly IGDOutputFormatter _outputFormatter;
     private readonly TextWriter _output;
@@ -100,7 +102,7 @@ public class GDFormatCommand : IGDCommand
             return GDExitCode.Errors;
         }
 
-        var content = File.ReadAllText(filePath, Encoding.UTF8);
+        var content = File.ReadAllText(filePath, Utf8NoBom);
 
         string formatted;
         try
@@ -134,7 +136,7 @@ public class GDFormatCommand : IGDCommand
             return GDExitCode.Success;
         }
 
-        File.WriteAllText(filePath, formatted, Encoding.UTF8);
+        File.WriteAllText(filePath, formatted, Utf8NoBom);
         _outputFormatter.WriteMessage(_output, $"Formatted: {filePath}");
         return GDExitCode.Success;
     }
