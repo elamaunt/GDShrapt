@@ -138,7 +138,7 @@ public static class GDProIntegration
     /// Called by Pro module during startup.
     /// </summary>
     /// <param name="provider">The provider to register.</param>
-    public static void RegisterProvider(IGDProFeatureProvider provider)
+    internal static void RegisterProvider(IGDProFeatureProvider provider)
     {
         lock (_lock)
         {
