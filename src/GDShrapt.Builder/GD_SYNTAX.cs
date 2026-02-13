@@ -92,6 +92,8 @@ namespace GDShrapt.Builder
             public static GDPathSpecifier PathSpecifier(GDPathSpecifierType specifier) => new GDPathSpecifier() { Type = specifier };
             public static GDPathSpecifier PathSpecifier(string identifier) => new GDPathSpecifier() { Type = GDPathSpecifierType.Identifier, IdentifierValue = identifier ?? throw new ArgumentNullException(nameof(identifier)) };
 
+            public static GDNotKeyword NotKeyword => new GDNotKeyword();
+
             public static GDDualOperator DualOperator(GDDualOperatorType type) => new GDDualOperator()
             {
                 OperatorType = type

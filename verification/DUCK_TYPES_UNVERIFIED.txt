@@ -1,0 +1,3 @@
+# DUCK_TYPES_UNVERIFIED.txt
+# Copy entries to DUCK_TYPES_VERIFIED.txt and add # OK
+

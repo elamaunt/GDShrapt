@@ -226,9 +226,29 @@ namespace GDShrapt.Builder
             public static GDDualOperatorExpression DualOperator(GDExpression left, GDDualOperator @operator, GDExpression right) => new GDDualOperatorExpression()
             {
                 LeftExpression = left,
-                [1] = Syntax.Space(),
-                Operator = @operator,
                 [2] = Syntax.Space(),
+                Operator = @operator,
+                [3] = Syntax.Space(),
+                RightExpression = right
+            };
+
+            public static GDDualOperatorExpression In(GDExpression left, GDExpression right) => new GDDualOperatorExpression()
+            {
+                LeftExpression = left,
+                [2] = Syntax.Space(),
+                Operator = Syntax.DualOperator(GDDualOperatorType.In),
+                [3] = Syntax.Space(),
+                RightExpression = right
+            };
+
+            public static GDDualOperatorExpression NotIn(GDExpression left, GDExpression right) => new GDDualOperatorExpression()
+            {
+                LeftExpression = left,
+                [1] = Syntax.Space(),
+                NotKeyword = Syntax.NotKeyword,
+                [2] = Syntax.Space(),
+                Operator = Syntax.DualOperator(GDDualOperatorType.In),
+                [3] = Syntax.Space(),
                 RightExpression = right
             };
 

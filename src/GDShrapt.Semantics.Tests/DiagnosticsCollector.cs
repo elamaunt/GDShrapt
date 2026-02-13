@@ -45,7 +45,7 @@ public class DiagnosticsCollector
         // Generate plain text report (same format as plugin output)
         var repoRoot = GetRepoRoot();
         var plainText = GeneratePlainTextReport(allDiagnostics, project);
-        var txtOutputPath = Path.Combine(repoRoot, "DIAGNOSTICS.txt");
+        var txtOutputPath = Path.Combine(repoRoot, "verification", "DIAGNOSTICS.txt");
         File.WriteAllText(txtOutputPath, plainText);
 
         Console.WriteLine($"Diagnostics saved to: {txtOutputPath}");

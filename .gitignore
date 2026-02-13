@@ -351,15 +351,4 @@ MigrationBackup/
 /.claude
 /testproject/GDShrapt.TestProject/.godot
 /testproject/GDShrapt.TestProject/.gdshrapt
-DIAGNOSTICS.txt
 *.uid
-DIAGNOSTICS_VERIFICATION.txt
-src/TYPE_INFERENCE_UNVERIFIED.txt
-src/TYPE_INFERENCE_OUTPUT.txt
-src/DUCK_TYPES_OUTPUT.txt
-src/FLOW_NARROWING_OUTPUT.txt
-src/FLOW_NARROWING_UNVERIFIED.txt
-src/DUCK_TYPES_UNVERIFIED.txt
-src/RENAME_VERIFICATION_OUTPUT.txt
-src/TYPE_INFO_OUTPUT.txt
-src/TYPE_INFO_OUTPUT.txt

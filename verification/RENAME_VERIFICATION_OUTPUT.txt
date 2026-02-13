@@ -1,0 +1,214 @@
+# RENAME_VERIFICATION_OUTPUT.txt
+# Auto-generated - do not edit manually
+# Format: LINE:COL OldName -> NewName [Confidence] (Reason)
+
+=======================================
+RENAME: BaseEntity -> BaseEntity_renamed
+Source: base_entity.gd
+Result: Success
+=======================================
+
+Strict edits (11):
+  test_scripts/base_entity.gd:
+    2:12 BaseEntity -> BaseEntity_renamed [Strict] (class_name declaration)
+  test_scripts/enemy_entity.gd:
+    1:1 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (Extends) in enemy_entity.gd)
+    1:9 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
+    11:32 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
+    20:13 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
+    39:29 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
+    81:34 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
+    103:18 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeCheck) in enemy_entity.gd)
+  test_scripts/player_entity.gd:
+    1:1 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (Extends) in player_entity.gd)
+    1:9 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in player_entity.gd)
+    92:29 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in player_entity.gd)
+
+---
+
+=======================================
+RENAME: health_changed -> health_changed_renamed
+Source: base_entity.gd
+Result: Success
+=======================================
+
+Strict edits (8):
+  test_scripts/base_entity.gd:
+    10:8 health_changed -> health_changed_renamed [Strict]
+    37:2 health_changed -> health_changed_renamed [Strict]
+    55:2 health_changed -> health_changed_renamed [Strict]
+    76:2 health_changed -> health_changed_renamed [Strict]
+    95:2 health_changed -> health_changed_renamed [Strict]
+    102:2 health_changed -> health_changed_renamed [Strict]
+    109:2 health_changed -> health_changed_renamed [Strict]
+  test_scripts/player_entity.gd:
+    74:2 health_changed -> health_changed_renamed [Strict] (Inherited member 'health_changed' used directly in derived class)
+
+---
+
+=======================================
+RENAME: take_damage -> take_damage_renamed
+Source: base_entity.gd
+Result: Success
+=======================================
+
+Strict edits (5):
+  test_scripts/base_entity.gd:
+    28:6 take_damage -> take_damage_renamed [Strict]
+  test_scripts/enemy_entity.gd:
+    99:1 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
+    100:2 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
+  test_scripts/player_entity.gd:
+    30:1 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
+    40:2 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
+
+---
+
+=======================================
+RENAME: MAGIC_NUMBER -> MAGIC_NUMBER_RENAMED
+Source: refactoring_targets.gd
+Result: Success
+=======================================
+
+Strict edits (1):
+  test_scripts/refactoring_targets.gd:
+    7:7 MAGIC_NUMBER -> MAGIC_NUMBER_RENAMED [Strict]
+
+---
+
+=======================================
+RENAME: armor -> armor_renamed
+Source: player_entity.gd
+Result: Success
+=======================================
+
+Strict edits (7):
+  test_scripts/player_entity.gd:
+    14:13 armor -> armor_renamed [Strict]
+    34:35 armor -> armor_renamed [Strict]
+    50:2 armor -> armor_renamed [Strict]
+    51:21 armor -> armor_renamed [Strict]
+    71:2 armor -> armor_renamed [Strict]
+    75:21 armor -> armor_renamed [Strict]
+    118:12 armor -> armor_renamed [Strict]
+
+---
+
+=======================================
+RENAME: counter -> counter_renamed
+Source: rename_test.gd
+Result: Success
+=======================================
+
+Strict edits (10):
+  test_scripts/rename_test.gd:
+    20:2 counter -> counter_renamed [Strict]
+    21:2 counter -> counter_renamed [Strict]
+    22:2 counter -> counter_renamed [Strict]
+    23:27 counter -> counter_renamed [Strict]
+    24:2 counter -> counter_renamed [Strict]
+    24:12 counter -> counter_renamed [Strict]
+    25:29 counter -> counter_renamed [Strict]
+    27:5 counter -> counter_renamed [Strict]
+    28:3 counter -> counter_renamed [Strict]
+    30:17 counter -> counter_renamed [Strict]
+
+---
+
+=======================================
+RENAME: current_health -> current_health_renamed
+Source: base_entity.gd
+Result: Success
+=======================================
+
+Strict edits (27):
+  test_scripts/base_entity.gd:
+    18:5 current_health -> current_health_renamed [Strict]
+    24:2 current_health -> current_health_renamed [Strict]
+    34:2 current_health -> current_health_renamed [Strict]
+    37:22 current_health -> current_health_renamed [Strict]
+    40:5 current_health -> current_health_renamed [Strict]
+    54:2 current_health -> current_health_renamed [Strict]
+    54:23 current_health -> current_health_renamed [Strict]
+    55:22 current_health -> current_health_renamed [Strict]
+    63:2 current_health -> current_health_renamed [Strict]
+    75:2 current_health -> current_health_renamed [Strict]
+    76:22 current_health -> current_health_renamed [Strict]
+    82:15 current_health -> current_health_renamed [Strict]
+    86:9 current_health -> current_health_renamed [Strict]
+    92:3 current_health -> current_health_renamed [Strict]
+    94:3 current_health -> current_health_renamed [Strict]
+    94:24 current_health -> current_health_renamed [Strict]
+    95:22 current_health -> current_health_renamed [Strict]
+    100:2 current_health -> current_health_renamed [Strict]
+    102:22 current_health -> current_health_renamed [Strict]
+    107:2 current_health -> current_health_renamed [Strict]
+    107:23 current_health -> current_health_renamed [Strict]
+    109:22 current_health -> current_health_renamed [Strict]
+  test_scripts/enemy_entity.gd:
+    121:13 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class)
+  test_scripts/player_entity.gd:
+    27:2 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class)
+    70:2 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class)
+    74:22 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class)
+    116:13 current_health -> current_health_renamed [Strict] (Inherited member 'current_health' used directly in derived class)
+
+---
+
+=======================================
+RENAME: calculate_score -> calculate_score_renamed
+Source: refactoring_targets.gd
+Result: Success
+=======================================
+
+Strict edits (2):
+  test_scripts/refactoring_targets.gd:
+    25:6 calculate_score -> calculate_score_renamed [Strict]
+    45:21 calculate_score -> calculate_score_renamed [Strict]
+
+---
+
+=======================================
+RENAME: score_changed -> score_changed_renamed
+Source: refactoring_targets.gd
+Result: Success
+=======================================
+
+Strict edits (6):
+  test_scripts/refactoring_targets.gd:
+    16:8 score_changed -> score_changed_renamed [Strict]
+    85:2 score_changed -> score_changed_renamed [Strict]
+  test_scripts/rename_test.gd:
+    63:2 score_changed -> score_changed_renamed [Strict] (Inherited member 'score_changed' used directly in derived class)
+    64:2 score_changed -> score_changed_renamed [Strict] (Inherited member 'score_changed' used directly in derived class)
+    67:9 score_changed -> score_changed_renamed [Strict] (Inherited member 'score_changed' used directly in derived class)
+    68:3 score_changed -> score_changed_renamed [Strict] (Inherited member 'score_changed' used directly in derived class)
+
+---
+
+=======================================
+RENAME: player_speed -> player_speed_renamed
+Source: refactoring_targets.gd
+Result: Success
+=======================================
+
+Strict edits (13):
+  test_scripts/refactoring_targets.gd:
+    11:5 player_speed -> player_speed_renamed [Strict]
+    59:37 player_speed -> player_speed_renamed [Strict]
+    127:2 player_speed -> player_speed_renamed [Strict]
+    134:12 player_speed -> player_speed_renamed [Strict]
+  test_scripts/rename_test.gd:
+    7:20 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    14:16 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    48:20 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    49:19 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    52:2 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    53:23 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    55:5 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    56:3 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+    58:16 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
+
+---
+
+# Summary: 10 cases, 90 strict edits, 0 potential edits

@@ -485,6 +485,97 @@ namespace GDShrapt.Reader.Tests.Building
             AssertHelper.NoInvalidTokens(expr);
         }
 
+        [TestMethod]
+        public void BuildOperator_In()
+        {
+            var expr = GD.Expression.In(
+                GD.Expression.Identifier("x"),
+                GD.Expression.Identifier("arr")
+            );
+
+            var code = expr.ToString();
+
+            Assert.AreEqual("x in arr", code);
+            Assert.AreEqual(GDDualOperatorType.In, expr.OperatorType);
+            Assert.IsNull(expr.NotKeyword);
+            Assert.IsFalse(expr.IsNotIn);
+            AssertHelper.NoInvalidTokens(expr);
+        }
+
+        [TestMethod]
+        public void BuildOperator_In_WithDualOperator()
+        {
+            var expr = GD.Expression.DualOperator(
+                GD.Expression.Identifier("key"),
+                GD.Syntax.DualOperator(GDDualOperatorType.In),
+                GD.Expression.Identifier("dict")
+            );
+
+            var code = expr.ToString();
+
+            Assert.AreEqual("key in dict", code);
+            Assert.AreEqual(GDDualOperatorType.In, expr.OperatorType);
+            Assert.IsNull(expr.NotKeyword);
+            AssertHelper.NoInvalidTokens(expr);
+        }
+
+        [TestMethod]
+        public void BuildOperator_NotIn()
+        {
+            var expr = GD.Expression.NotIn(
+                GD.Expression.Identifier("x"),
+                GD.Expression.Identifier("arr")
+            );
+
+            var code = expr.ToString();
+
+            Assert.AreEqual("x not in arr", code);
+            Assert.AreEqual(GDDualOperatorType.In, expr.OperatorType);
+            Assert.IsNotNull(expr.NotKeyword);
+            Assert.IsTrue(expr.IsNotIn);
+            AssertHelper.NoInvalidTokens(expr);
+        }
+
+        [TestMethod]
+        public void BuildOperator_NotIn_WithComplexExpressions()
+        {
+            var expr = GD.Expression.NotIn(
+                GD.Expression.String("key"),
+                GD.Expression.Call(
+                    GD.Expression.Member(
+                        GD.Expression.Identifier("obj"),
+                        GD.Syntax.Identifier("keys")
+                    )
+                )
+            );
+
+            var code = expr.ToString();
+
+            Assert.IsTrue(code.Contains("\"key\""));
+            Assert.IsTrue(code.Contains("not in"));
+            Assert.IsTrue(code.Contains("obj.keys()"));
+            Assert.IsTrue(expr.IsNotIn);
+            AssertHelper.NoInvalidTokens(expr);
+        }
+
+        [TestMethod]
+        public void BuildOperator_NotIn_RoundTrip()
+        {
+            var expr = GD.Expression.NotIn(
+                GD.Expression.Identifier("item"),
+                GD.Expression.Identifier("inventory")
+            );
+
+            var code = expr.ToString();
+            var reader = new GDScriptReader();
+            var parsed = reader.ParseExpression(code);
+
+            Assert.IsInstanceOfType(parsed, typeof(GDDualOperatorExpression));
+            var dualOp = (GDDualOperatorExpression)parsed;
+            Assert.IsTrue(dualOp.IsNotIn);
+            Assert.AreEqual(code, parsed.ToString());
+        }
+
         #endregion
 
         #region Operator Precedence and Brackets

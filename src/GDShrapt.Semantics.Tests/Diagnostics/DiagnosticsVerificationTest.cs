@@ -351,7 +351,7 @@ public class DiagnosticsVerificationTest
 
         // Write to file
         var repoRoot = GetRepoRoot();
-        var outputPath = Path.Combine(repoRoot, "DIAGNOSTICS_VERIFICATION.txt");
+        var outputPath = Path.Combine(repoRoot, "verification", "DIAGNOSTICS_VERIFICATION.txt");
         File.WriteAllText(outputPath, sb.ToString());
 
         Console.WriteLine($"Verification report saved to: {outputPath}");

@@ -1,0 +1,1104 @@
+================================================================================
+GDShrapt Diagnostics Report
+Generated: 2026-02-13 14:17:01
+Project: testproject/GDShrapt.TestProject
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+Total diagnostics: 911
+Scripts analyzed:  53
+
+By Severity:
+  Error     :    30
+  Hint      :   101
+  Info      :    32
+  Warning   :   748
+
+By Source:
+  Linter              :   376
+  SemanticValidator   :   503
+  Validator           :    32
+
+By Code (Top 30):
+  GD7007    :  262  (Variable 'x' may be null when accessing 'length')
+  GDL201    :  155  (Local variable 'item' is declared but never used)
+  GDL513    :   99  (Expected 2 empty line(s) before function, found 1)
+  GD7006    :   82  (Variable 'subscription' may be null when accessing '[...]')
+  GD3020    :   40  (Variable 'value' may be null; comparison with '<' would c...)
+  GD7005    :   27  (Variable 'timer' may be null when accessing 'timeout')
+  GD7003    :   26  (Calling method 'process' on untyped variable 'stage' with...)
+  GDL203    :   25  (Function 'import_from_json' only contains 'pass')
+  GDL001    :   12  (Class name 'DiagnosticsTest_ControlFlowErrors' should use...)
+  GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
+  GDL222    :   11  ('UnionReturns' has 22 public methods (max 20))
+  GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
+  GD3004    :    9  (Type mismatch: cannot assign 'int' to variable of type 'T...)
+  GD3009    :    9  (Property 'nonexistent_property_xyz' not found on type 'Node')
+  GDL101    :    9  (Line 212 exceeds 120 characters (length: 146))
+  GDL202    :    7  (Parameter 'json_string' is declared but never used)
+  GD3001    :    7  (Type mismatch in assignment: cannot assign 'int' to 'Test...)
+  GDL211    :    7  (Local variable 'used_variable' shadows a class-level vari...)
+  GD3010    :    6  (Argument type mismatch for 'x' in call to '_take_int': ex...)
+  GDL223    :    6  ('test_gdl223_invalid' has 8 return statements (max 6))
+  GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
+  GDL210    :    5  (Unreachable code detected)
+  GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
+  GD4009    :    5  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
+  GD3013    :    5  (Type 'Array' expects integer index, got 'String')
+  GDL226    :    5  ('test_gdl226_invalid' has 16 local variables (max 15))
+  GD4002    :    4  (Method 'nonexistent_method_xyz' not found on type 'Node')
+  GD3014    :    4  (Type 'int' does not support indexing)
+  GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
+  GD4006    :    3  (Signal 'health_changed' not found on type 'CharacterBody2D')
+
+================================================================================
+DIAGNOSTICS BY FILE
+================================================================================
+
+--- test_scripts/ai_controller.gd (8 diagnostics) ---
+
+    18:0   [GD3004] Warning - Type mismatch: cannot assign 'int' to variable of type 'AIState'
+    49:5   [GDL203] Info - Function '_process_idle' only contains 'pass'
+    49:19  [GDL202] Info - Parameter 'delta' is declared but never used
+    71:15  [GD3010] Warning - Argument type mismatch for 'new_state' in call to 'change_state': expected 'AIState', got 'int'
+    77:5   [GDL203] Info - Function '_process_attack' only contains 'pass'
+    77:21  [GDL202] Info - Parameter 'delta' is declared but never used
+   110:15  [GD3010] Warning - Argument type mismatch for 'new_state' in call to 'change_state': expected 'AIState', got 'int'
+   112:15  [GD3010] Warning - Argument type mismatch for 'new_state' in call to 'change_state': expected 'AIState', got 'int'
+
+--- test_scripts/completion_test.gd (13 diagnostics) ---
+
+    20:0   [GD3004] Warning - Type mismatch: cannot assign 'int' to variable of type 'TestEnum'
+    80:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'texture'
+    81:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'flip_h'
+    82:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'centered'
+    83:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'offset'
+    97:1   [GD7007] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'start'
+    98:1   [GD7007] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'stop'
+    99:1   [GD7005] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'wait_time'
+   100:1   [GD7005] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'one_shot'
+   101:17  [GD7005] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'time_left'
+   107:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'int' to 'TestEnum'
+   108:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'int' to 'TestEnum'
+   109:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'int' to 'TestEnum'
+
+--- test_scripts/cross_file_inference.gd (70 diagnostics) ---
+
+    37:14  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
+    37:43  [GD7007] Warning - Variable 'entity_data' may be null when accessing 'get'
+    41:18  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'
+    42:2   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
+    45:15  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_health_component'
+    46:2   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
+    51:36  [GDL202] Info - Parameter 'amount' is declared but never used
+    53:14  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_attack'
+    60:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'
+    61:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_stage_1'
+    62:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'even_check'
+    66:27  [GDL202] Info - Parameter 'target' is declared but never used
+    68:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_event'
+    69:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_event'
+    72:10  [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'
+    78:21  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+    78:37  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+    78:53  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+    93:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_damageable'
+    95:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_moveable'
+    97:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_updatable'
+   106:10  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_entity'
+   108:10  [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_config'
+   110:10  [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_property'
+   112:10  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_entity_by_name'
+   147:14  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
+   148:1   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
+   151:17  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_data'
+   157:14  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'accumulate_left'
+   164:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'
+   171:1   [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'set_property'
+   178:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   202:27  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_attack'
+   207:2   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'
+   207:28  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   207:42  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   212:0   [GDL101] Warning - Line 212 exceeds 120 characters (length: 146)
+   212:27  [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'call_if_exists'
+   218:16  [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
+   226:1   [GD7005] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'operation_result'
+   230:8   [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'
+   234:8   [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'
+   241:16  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
+   242:3   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
+   243:4   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'
+   243:46  [GD7007] Warning - Variable 'params' may be null when accessing 'get'
+   244:3   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
+   245:4   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_health_component'
+   245:43  [GD7007] Warning - Variable 'params' may be null when accessing 'get'
+   246:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_damageable'
+   247:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_moveable'
+   251:12  [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'
+   275:14  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_component'
+   278:2   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'
+   288:1   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'destroy_entity'
+   289:1   [GD7005] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'current_target'
+   293:15  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_component'
+   301:1   [GD7005] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_hit_callback'
+   302:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_callback'
+   303:1   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'set_damage_calculator'
+   310:4   [GD3020] Warning - Variable 'depth' may be null; comparison with '<=' would cause runtime error
+   313:13  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_data'
+   314:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'
+   315:13  [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'
+   316:13  [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'serialize_object'
+   332:35  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
+   333:33  [GD4002] Warning - Method 'process_by_type' not found on type 'DuckTypingAdvanced'
+   333:33  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'
+   334:34  [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'try_operation'
+   335:35  [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'
+
+--- test_scripts/cycles_test.gd (2 diagnostics) ---
+
+    23:18  [GD7007] Warning - Variable 'input' may be null when accessing 'get'
+   140:14  [GD3002] Warning - Potential type mismatch in arithmetic operation: Array + Array[int]
+
+--- test_scripts/cyclic_inference.gd (35 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'CyclicInference' has 22 public methods (max 20)
+    49:4   [GD3020] Warning - Variable 'value' may be null; comparison with '>' would cause runtime error
+    68:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+    84:12  [GD7007] Warning - Variable 'context' may be null when accessing 'get'
+   123:4   [GD7007] Warning - Variable 'list' may be null when accessing 'is_empty'
+   125:12  [GD7006] Warning - Variable 'list' may be null when accessing '[...]'
+   126:12  [GD7007] Warning - Variable 'list' may be null when accessing 'slice'
+   127:15  [GD7007] Warning - Variable 'func_ref' may be null when accessing 'call'
+   133:4   [GD7007] Warning - Variable 'list' may be null when accessing 'is_empty'
+   135:12  [GD7006] Warning - Variable 'list' may be null when accessing '[...]'
+   136:12  [GD7007] Warning - Variable 'list' may be null when accessing 'slice'
+   137:8   [GD7007] Warning - Variable 'func_ref' may be null when accessing 'call'
+   138:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   159:8   [GD3002] Warning - Potential type mismatch in arithmetic operation: Callable(int) -> void * int
+   182:14  [GD7003] Warning - Calling method 'visit' on untyped variable 'visitor' without type guard
+   182:14  [GD7007] Warning - Variable 'visitor' may be null when accessing 'visit'
+   187:12  [GD7003] Warning - Calling method 'combine' on untyped variable 'visitor' without type guard
+   187:12  [GD7007] Warning - Variable 'visitor' may be null when accessing 'combine'
+   194:16  [GD7007] Warning - Variable 'transformer' may be null when accessing 'transform'
+   203:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   216:15  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
+   217:1   [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
+   228:15  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
+   229:12  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
+   252:7   [GD3020] Warning - Variable 'new_pos' may be null; comparison with '<' would cause runtime error
+   252:17  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
+   253:11  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
+   279:7   [GD3020] Warning - Variable 'new_pos' may be null; comparison with '<' would cause runtime error
+   279:17  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
+   280:11  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
+   299:4   [GD3020] Warning - Variable 'pos' may be null; comparison with '>=' would cause runtime error
+   299:11  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
+   302:13  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
+   308:21  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
+   308:38  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
+
+--- test_scripts/diagnostics_issues.gd (5 diagnostics) ---
+
+    24:5   [GDL203] Info - Function 'unused_function' only contains 'pass'
+    48:5   [GDL211] Warning - Local variable 'used_variable' shadows a class-level variable
+    55:1   [GD5004] Warning - Unreachable code detected after return/break/continue statement
+    55:1   [GDL210] Warning - Unreachable code detected
+   108:2   [GDL214] Error - Duplicate dictionary key: '"key"'
+
+--- test_scripts/diagnostics/linter/best_practices_rules.gd (13 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_BestPractices' should use PascalCase
+     2:11  [GDL222] Warning - 'DiagnosticsTest_BestPractices' has 24 public methods (max 20)
+    32:5   [GDL201] Warning - Local variable 'unused_var' is declared but never used
+    53:25  [GDL202] Info - Parameter 'unused_param' is declared but never used
+    73:5   [GDL203] Info - Function 'test_gdl203_invalid' only contains 'pass'
+    98:1   [GD5004] Warning - Unreachable code detected after return/break/continue statement
+    98:1   [GDL210] Warning - Unreachable code detected
+   106:1   [GD5004] Warning - Unreachable code detected after return/break/continue statement
+   122:5   [GDL211] Warning - Local variable 'class_level_var' shadows a class-level variable
+   144:10  [GDL213] Warning - Comparing 'x' with itself is always true
+   171:2   [GDL214] Error - Duplicate dictionary key: '"duplicate"'
+   180:2   [GDL214] Error - Duplicate dictionary key: '"dup"'
+   198:1   [GDL230] Warning - Self-assignment of 'x'
+
+--- test_scripts/diagnostics/linter/complexity_rules.gd (6 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_ComplexityRules' should use PascalCase
+    28:5   [GDL225] Warning - 'test_gdl225_invalid' has nesting depth of 5 (max 4)
+    63:5   [GDL226] Warning - 'test_gdl226_invalid' has 16 local variables (max 15)
+   123:5   [GDL223] Warning - 'test_gdl223_invalid' has 8 return statements (max 6)
+   179:5   [GDL223] Warning - 'test_gdl228_invalid' has 14 return statements (max 6)
+   179:5   [GDL228] Warning - 'test_gdl228_invalid' has 13 branches (max 12)
+
+--- test_scripts/diagnostics/linter/formatting_rules.gd (6 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_FormattingRules' should use PascalCase
+    26:0   [GDL101] Warning - Line 26 exceeds 120 characters (length: 187)
+    32:0   [GDL101] Warning - Line 32 exceeds 120 characters (length: 206)
+    32:5   [GDL201] Warning - Local variable 'suppressed_long' is declared but never used
+    33:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+    50:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+
+--- test_scripts/diagnostics/linter/naming_rules.gd (23 diagnostics) ---
+
+    23:0   [GDL001] Warning - Class name 'DiagnosticsTest_NamingRules' should use PascalCase
+    31:5   [GDL203] Info - Function 'valid_function_name' only contains 'pass'
+    35:5   [GDL203] Info - Function 'another_valid_name' only contains 'pass'
+    39:5   [GDL203] Info - Function '_private_function' only contains 'pass'
+    44:5   [GDL002] Warning - Function name 'InvalidFunctionName' should use snake_case
+    44:5   [GDL203] Info - Function 'InvalidFunctionName' only contains 'pass'
+    48:5   [GDL002] Warning - Function name 'camelCaseFunction' should use snake_case
+    48:5   [GDL203] Info - Function 'camelCaseFunction' only contains 'pass'
+    54:5   [GDL203] Info - Function 'SuppressedBadName' only contains 'pass'
+    56:1   [GDL513] Hint - Too many empty lines before function (40), expected 2
+    69:4   [GDL003] Warning - Variable name 'InvalidVariableName' should use snake_case
+    70:4   [GDL003] Warning - Variable name 'camelCaseVar' should use snake_case
+    89:6   [GDL004] Warning - Constant name 'invalidConstant' should use SCREAMING_SNAKE_CASE
+    90:6   [GDL004] Warning - Constant name 'PascalConstant' should use SCREAMING_SNAKE_CASE
+   109:7   [GDL005] Warning - Signal name 'InvalidSignalName' should use snake_case
+   110:7   [GDL005] Warning - Signal name 'camelCaseSignal' should use snake_case
+   128:5   [GDL006] Warning - Enum name 'invalid_enum' should use PascalCase
+   129:5   [GDL006] Warning - Enum name 'SHOUTING_ENUM' should use PascalCase
+   147:1   [GDL007] Warning - Enum value 'lowercase_value' should use SCREAMING_SNAKE_CASE
+   148:1   [GDL007] Warning - Enum value 'PascalValue' should use SCREAMING_SNAKE_CASE
+   168:6   [GDL203] Info - Function 'do_something' only contains 'pass'
+   173:6   [GDL009] Warning - Inner class name 'invalid_inner_class' should use PascalCase
+   177:6   [GDL009] Warning - Inner class name 'anotherBadClass' should use PascalCase
+
+--- test_scripts/diagnostics/suppression/linter_suppression.gd (18 diagnostics) ---
+
+     4:0   [GDL001] Warning - Class name 'DiagnosticsTest_LinterSuppression' should use PascalCase
+    26:4   [GDL003] Warning - Variable name 'NotSuppressedBadVar1' should use snake_case
+    35:4   [GDL003] Warning - Variable name 'NotSuppressedBadVar2' should use snake_case
+    48:4   [GDL003] Warning - Variable name 'AfterEnableVar' should use snake_case
+    70:5   [GDL203] Info - Function 'MultiSuppressedFunc' only contains 'pass'
+    72:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+    74:4   [GDL003] Warning - Variable name 'MultiNotSuppressedVar' should use snake_case
+    77:5   [GDL002] Warning - Function name 'MultiNotSuppressedFunc' should use snake_case
+    77:5   [GDL203] Info - Function 'MultiNotSuppressedFunc' only contains 'pass'
+    79:1   [GDL513] Hint - Too many empty lines before function (7), expected 2
+    88:4   [GDL003] Warning - Variable name 'NotSuppressedById' should use snake_case
+   100:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   107:4   [GDL003] Warning - Variable name 'ControlBadVar1' should use snake_case
+   108:4   [GDL003] Warning - Variable name 'ControlBadVar2' should use snake_case
+   111:5   [GDL002] Warning - Function name 'ControlBadFunc1' should use snake_case
+   111:5   [GDL203] Info - Function 'ControlBadFunc1' only contains 'pass'
+   115:5   [GDL002] Warning - Function name 'ControlBadFunc2' should use snake_case
+   115:5   [GDL203] Info - Function 'ControlBadFunc2' only contains 'pass'
+
+--- test_scripts/diagnostics/suppression/validator_suppression.gd (13 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_ValidatorSuppression' should use PascalCase
+    23:7   [GD2001] Error - Undefined identifier: 'undefined_var_not_suppressed_1'
+    33:7   [GD2001] Error - Undefined identifier: 'undefined_var_not_suppressed_2'
+    47:7   [GD2001] Error - Undefined identifier: 'undefined_after_enable'
+    55:7   [GD2001] Error - Undefined identifier: 'before_disable'
+    59:1   [GD5004] Warning - Unreachable code detected after return/break/continue statement
+    59:1   [GDL210] Warning - Unreachable code detected
+    60:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+    73:1   [GD2001] Error - Undefined identifier: 'unknown_function_2'
+    73:20  [GD2001] Error - Undefined identifier: 'undefined_multi_var_2'
+    91:7   [GD2001] Error - Undefined identifier: 'control_undefined_1'
+    92:7   [GD2001] Error - Undefined identifier: 'control_undefined_2'
+    93:7   [GD2001] Error - Undefined identifier: 'control_undefined_3'
+
+--- test_scripts/diagnostics/validator/abstract_errors.gd (12 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_AbstractErrors' should use PascalCase
+     2:11  [GDL232] Warning - 'DiagnosticsTest_AbstractErrors' has 9 inner classes (max 5)
+    22:6   [GDL203] Info - Function 'abstract_method' is empty
+    28:1   [GD8002] Error - Inner class contains abstract methods but is not marked @abstract
+    28:1   [GD8001] Error - Abstract method should not have an implementation body
+    36:1   [GD8002] Error - Inner class contains abstract methods but is not marked @abstract
+    48:6   [GDL203] Info - Function 'must_implement' is empty
+    54:1   [GD8002] Error - Inner class contains abstract methods but is not marked @abstract
+    54:6   [GDL203] Info - Function 'abstract_method' is empty
+    65:6   [GDL203] Info - Function 'required_method' is empty
+    87:6   [GDL203] Info - Function 'do_something' is empty
+    98:12  [GD8005] Error - Cannot instantiate abstract class 'CannotInstantiate'
+
+--- test_scripts/diagnostics/validator/call_errors.gd (5 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_CallErrors' should use PascalCase
+    35:15  [GD4001] Error - '_func_two_args' requires at least 2 argument(s), got 1
+    59:1   [GD4002] Warning - Method 'nonexistent_method_xyz' not found on type 'Node'
+   103:1   [GD4005] Error - Signal 'typed_signal' expects 2 argument(s), got 1
+   123:29  [GD4009] Warning - Signal 'typed_signal' parameter 1 expects 'int', got 'String'
+
+--- test_scripts/diagnostics/validator/control_flow_errors.gd (8 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_ControlFlowErrors' should use PascalCase
+    28:1   [GD5001] Error - 'break' can only be used inside a loop
+    51:1   [GD5002] Error - 'continue' can only be used inside a loop
+    74:1   [GD5004] Warning - Unreachable code detected after return/break/continue statement
+    74:1   [GDL210] Warning - Unreachable code detected
+    83:1   [GDL210] Warning - Unreachable code detected
+    85:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   102:1   [GD5010] Error - Cannot assign to constant 'VALID_CONST'
+
+--- test_scripts/diagnostics/validator/duck_typing_errors.gd (13 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_DuckTypingErrors' should use PascalCase
+    31:7   [GD7002] Warning - Accessing property 'some_property' on untyped variable 'untyped_obj' without type guard
+    31:7   [GD7005] Warning - Variable 'untyped_obj' may be null when accessing 'some_property'
+    37:7   [GD7005] Warning - Variable 'untyped_obj' may be null when accessing 'another_property'
+    58:1   [GD7003] Warning - Calling method 'some_method' on untyped variable 'untyped_obj' without type guard
+    58:1   [GD7007] Warning - Variable 'untyped_obj' may be null when accessing 'some_method'
+    64:1   [GD7007] Warning - Variable 'untyped_obj' may be null when accessing 'another_method'
+    74:1   [GD7003] Warning - Calling method 'method_a' on untyped variable 'obj1' without type guard
+    74:1   [GD7007] Warning - Variable 'obj1' may be null when accessing 'method_a'
+    75:1   [GD7003] Warning - Calling method 'method_b' on untyped variable 'obj2' without type guard
+    75:1   [GD7007] Warning - Variable 'obj2' may be null when accessing 'method_b'
+    81:1   [GD4002] Warning - Method 'unguarded_call' not found on type 'Node'
+    88:1   [GD4002] Warning - Method 'another_unguarded' not found on type 'Node'
+
+--- test_scripts/diagnostics/validator/scene_validation_errors.gd (11 diagnostics) ---
+
+    10:5   [GDL201] Warning - Local variable 'btn' is declared but never used
+    11:5   [GDL201] Warning - Local variable 'lbl' is declared but never used
+    12:5   [GDL201] Warning - Local variable 'sub' is declared but never used
+    17:5   [GDL201] Warning - Local variable 'missing' is declared but never used
+    18:5   [GDL201] Warning - Local variable 'wrong' is declared but never used
+    23:5   [GDL201] Warning - Local variable 'maybe' is declared but never used
+    24:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+    33:5   [GDL201] Warning - Local variable 'player' is declared but never used
+    38:5   [GDL201] Warning - Local variable 'enemy' is declared but never used
+    46:0   [GD7018] Warning - Node access in class-level initializer without @onready — node tree is not available yet. Add @onready annotation
+    55:0   [GD7018] Warning - Node access in class-level initializer without @onready — node tree is not available yet. Add @onready annotation
+
+--- test_scripts/diagnostics/validator/scope_errors.gd (10 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_ScopeErrors' should use PascalCase
+    31:7   [GD2001] Error - Undefined identifier: 'undefined_var_1'
+    51:1   [GD2001] Error - Undefined identifier: 'nonexistent_global_function'
+    57:1   [GD2001] Error - Undefined identifier: 'another_nonexistent_function'
+    74:1   [GD2003] Error - 'duplicate_var' is already declared in this scope
+    84:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+    99:1   [GD4006] Warning - Signal 'completely_undefined_signal_xyz' not found on type 'self'
+   105:1   [GD4006] Warning - Signal 'another_undefined_signal_abc' not found on type 'self'
+   120:12  [GD3009] Warning - Enum value 'NONEXISTENT_VALUE' not found in enum 'TestEnum'
+   127:12  [GD3009] Warning - Enum value 'ANOTHER_FAKE_VALUE' not found in enum 'TestEnum'
+
+--- test_scripts/diagnostics/validator/type_errors.gd (12 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_TypeErrors' should use PascalCase
+     2:11  [GDL222] Warning - 'DiagnosticsTest_TypeErrors' has 27 public methods (max 20)
+    33:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'float' to 'int'
+    55:1   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'Sprite2D'
+    79:1   [GD3006] Warning - Unknown type: 'CompletelyUnknownType'
+   103:7   [GD3009] Warning - Property 'nonexistent_property_xyz' not found on type 'Node'
+   111:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   129:11  [GD3010] Warning - Argument type mismatch for 'x' in call to '_take_int': expected 'int', got 'String'
+   156:11  [GD3013] Warning - Type 'Array' expects integer index, got 'String'
+   182:11  [GD3014] Error - Type 'int' does not support indexing
+   207:16  [GD3017] Warning - Unknown type 'NonExistentTypeXYZ' used in Array type parameter
+   231:22  [GD3018] Warning - Type 'Array' is not hashable and cannot be used as Dictionary key
+
+--- test_scripts/duck_typing_advanced.gd (15 diagnostics) ---
+
+    25:14  [GD7003] Warning - Calling method 'get_damage' on untyped variable 'source' without type guard
+    25:14  [GD7007] Warning - Variable 'source' may be null when accessing 'get_damage'
+    26:14  [GD7007] Warning - Variable 'target' may be null when accessing 'take_damage'
+    36:10  [GD7007] Warning - Variable 'effect' may be null when accessing 'apply'
+    39:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+    85:20  [GD7007] Warning - Variable 'position' may be null when accessing 'distance_squared_to'
+    85:49  [GD3009] Warning - Property 'global_position' not found on type 'Node'
+    88:10  [GD7007] Warning - Variable 'position' may be null when accessing 'distance_squared_to'
+    88:39  [GD3009] Warning - Property 'global_position' not found on type 'Node'
+    94:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   125:1   [GDL513] Hint - Too many empty lines before function (6), expected 2
+   191:9   [GD7007] Warning - Variable 'transformer' may be null when accessing 'call'
+   245:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   248:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   251:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+
+--- test_scripts/dynamic_dispatch.gd (70 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'DynamicDispatch' has 27 public methods (max 20)
+    21:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
+    22:9   [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
+    23:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
+    24:9   [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
+    30:5   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
+    31:10  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
+    38:15  [GD7007] Warning - Variable 'obj' may be null when accessing 'get_method_list'
+    41:19  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
+    43:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+    66:3   [GD7007] Warning - Variable 'target' may be null when accessing 'set'
+    66:20  [GD7007] Warning - Variable 'source' may be null when accessing 'get'
+    73:30  [GD7007] Warning - Variable 'obj' may be null when accessing 'get'
+    80:3   [GD7007] Warning - Variable 'obj' may be null when accessing 'set'
+    81:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+    94:16  [GD7007] Warning - Variable 'message' may be null when accessing 'get'
+    95:16  [GD7007] Warning - Variable 'message' may be null when accessing 'get'
+   103:4   [GD7007] Warning - Variable 'target' may be null when accessing 'has_method'
+   104:9   [GD7007] Warning - Variable 'target' may be null when accessing 'call'
+   126:13  [GD7007] Warning - Variable 'obj' may be null when accessing 'get_property_list'
+   132:15  [GD7007] Warning - Variable 'obj' may be null when accessing 'get'
+   138:5   [GDL223] Warning - '_serialize_value' has 9 return statements (max 6)
+   168:34  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   169:3   [GD7007] Warning - Variable 'obj' may be null when accessing 'set'
+   194:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   197:18  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   197:29  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   199:18  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   199:29  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   199:40  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   201:0   [GDL101] Warning - Line 201 exceeds 120 characters (length: 132)
+   201:16  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   201:27  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   201:38  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   201:49  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   203:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   231:3   [GD7007] Warning - Variable 'instance' may be null when accessing 'set'
+   231:21  [GD7006] Warning - Variable 'init_params' may be null when accessing '[...]'
+   256:8   [GD7003] Warning - Calling method 'get_file' on untyped expression without type guard
+   256:8   [GD7003] Warning - Calling method 'get_path' on untyped expression without type guard
+   256:8   [GD7007] Warning - Variable 'obj' may be null when accessing 'get_script'
+   257:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   268:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   272:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   276:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   280:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   283:7   [GD7007] Warning - Variable '_target' may be null when accessing 'has_method'
+   284:5   [GD7007] Warning - Variable '_target' may be null when accessing 'callv'
+   287:5   [GD7007] Warning - Variable '_target' may be null when accessing 'set'
+   293:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   307:18  [GD7007] Warning - Variable 'event' may be null when accessing 'get'
+   313:27  [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
+   319:18  [GD7007] Warning - Variable 'event' may be null when accessing 'get'
+   326:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   337:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   340:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   344:5   [GD7007] Warning - Variable '_target' may be null when accessing 'has_method'
+   345:10  [GD7007] Warning - Variable '_target' may be null when accessing 'callv'
+   349:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   361:15  [GD7007] Warning - Variable 'target' may be null when accessing 'get_method_list'
+   371:2   [GD7007] Warning - Variable 'logger' may be null when accessing 'call'
+   373:2   [GD7007] Warning - Variable 'logger' may be null when accessing 'call'
+   375:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   403:5   [GD7007] Warning - Variable 'method_name' may be null when accessing 'match'
+   405:4   [GD7007] Warning - Variable 'advice' may be null when accessing 'call'
+   411:5   [GD7007] Warning - Variable 'method_name' may be null when accessing 'match'
+   412:32  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
+   418:11  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
+   422:5   [GD7007] Warning - Variable 'method_name' may be null when accessing 'match'
+   424:4   [GD7007] Warning - Variable 'advice' may be null when accessing 'call'
+
+--- test_scripts/ecs_like_system.gd (62 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'ECSLikeSystem' has 31 public methods (max 20)
+   137:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+   155:2   [GD7007] Warning - Variable 'system' may be null when accessing 'update'
+   156:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   177:4   [GD3020] Warning - Variable 'maximum' may be null; comparison with '<' would cause runtime error
+   195:15  [GD7007] Warning - Variable 'world' may be null when accessing 'query_entities'
+   198:19  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
+   199:18  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
+   201:3   [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
+   201:28  [GD7006] Warning - Variable 'velocity' may be null when accessing '[...]'
+   202:3   [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
+   202:28  [GD7006] Warning - Variable 'velocity' may be null when accessing '[...]'
+   208:13  [GDL202] Info - Parameter 'delta' is declared but never used
+   209:20  [GD7007] Warning - Variable 'world' may be null when accessing 'query_entities'
+   212:16  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
+   214:6   [GD7006] Warning - Variable 'health' may be null when accessing '[...]'
+   220:20  [GD7007] Warning - Variable 'world' may be null when accessing 'query_entities'
+   223:12  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
+   224:19  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
+   226:6   [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
+   233:20  [GD7007] Warning - Variable 'ai' may be null when accessing 'call'
+   233:20  [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
+   233:40  [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
+   235:5   [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
+   236:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   247:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   255:18  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
+   258:5   [GD7007] Warning - Variable 'overrides' may be null when accessing 'has'
+   259:15  [GD7006] Warning - Variable 'overrides' may be null when accessing '[...]'
+   260:7   [GD7007] Warning - Variable 'comp_def' may be null when accessing 'has'
+   260:35  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
+   261:15  [GD7007] Warning - Variable 'comp_def' may be null when accessing 'call'
+   261:15  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
+   263:0   [GDL101] Warning - Line 263 exceeds 120 characters (length: 159)
+   270:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   290:2   [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
+   296:5   [GD7006] Warning - Variable 'event' may be null when accessing '[...]'
+   299:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   313:28  [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
+   322:6   [GD7005] Warning - Variable 'position' may be null when accessing 'x'
+   323:6   [GD7005] Warning - Variable 'position' may be null when accessing 'y'
+   327:5   [GDL225] Warning - 'query_nearby' has nesting depth of 5 (max 4)
+   338:8   [GD3020] Warning - Variable 'radius' may be null; comparison with '<=' would cause runtime error
+   338:8   [GD7007] Warning - Variable 'transform' may be null when accessing 'distance_to'
+   338:8   [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
+   356:11  [GD7005] Warning - Variable 'entity' may be null when accessing 'name'
+   357:11  [GD7005] Warning - Variable 'entity' may be null when accessing 'tags'
+   358:13  [GD7005] Warning - Variable 'entity' may be null when accessing 'active'
+   368:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   372:18  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   374:16  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   376:14  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   376:14  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   377:31  [GD7007] Warning - Variable 'edata' may be null when accessing 'get'
+   378:16  [GD7007] Warning - Variable 'edata' may be null when accessing 'get'
+   379:18  [GD7007] Warning - Variable 'edata' may be null when accessing 'get'
+   382:18  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   384:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   384:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   386:32  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   386:32  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   386:32  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+
+--- test_scripts/enemy_entity.gd (1 diagnostics) ---
+
+    94:2   [GD7007] Warning - Variable 'player' may be null when accessing 'gain_experience'
+
+--- test_scripts/extended_class.gd (2 diagnostics) ---
+
+    31:2   [GD7015] Warning - Method 'take_damage' not found on type 'Node2D'
+    57:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+
+--- test_scripts/formatting_issues.gd (8 diagnostics) ---
+
+    32:5   [GDL211] Warning - Local variable 'a' shadows a class-level variable
+    33:5   [GDL211] Warning - Local variable 'b' shadows a class-level variable
+    34:5   [GDL211] Warning - Local variable 'c' shadows a class-level variable
+    35:5   [GDL211] Warning - Local variable 'd' shadows a class-level variable
+    36:5   [GDL211] Warning - Local variable 'e' shadows a class-level variable
+    67:0   [GDL101] Warning - Line 67 exceeds 120 characters (length: 170)
+    68:0   [GDL101] Warning - Line 68 exceeds 120 characters (length: 155)
+    77:40  [GD3020] Warning - Variable 'x' may be null; comparison with '>' would cause runtime error
+
+--- test_scripts/game_patterns.gd (77 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'GamePatterns' has 27 public methods (max 20)
+    21:4   [GD3020] Warning - Variable 'index' may be null; comparison with '<' would cause runtime error
+    21:17  [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
+    30:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+    38:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+    48:9   [GD7007] Warning - Variable 'item' may be null when accessing 'get'
+    56:2   [GD7007] Warning - Variable 'item' may be null when accessing 'set'
+    80:4   [GD3020] Warning - Variable 'total' may be null; comparison with '<=' would cause runtime error
+    80:4   [GD3020] Warning - Variable 'max_stack' may be null; comparison with '<=' would cause runtime error
+    87:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   143:5   [GDL223] Warning - '_check_choice_condition' has 11 return statements (max 6)
+   144:17  [GD7007] Warning - Variable 'choice' may be null when accessing 'get'
+   164:11  [GD3020] Warning - Variable 'current' may be null; comparison with '>' would cause runtime error
+   164:11  [GD3020] Warning - Variable 'value' may be null; comparison with '>' would cause runtime error
+   166:11  [GD3020] Warning - Variable 'current' may be null; comparison with '<' would cause runtime error
+   166:11  [GD3020] Warning - Variable 'value' may be null; comparison with '<' would cause runtime error
+   168:11  [GD3020] Warning - Variable 'current' may be null; comparison with '>=' would cause runtime error
+   168:11  [GD3020] Warning - Variable 'value' may be null; comparison with '>=' would cause runtime error
+   170:11  [GD3020] Warning - Variable 'current' may be null; comparison with '<=' would cause runtime error
+   170:11  [GD3020] Warning - Variable 'value' may be null; comparison with '<=' would cause runtime error
+   179:4   [GD3020] Warning - Variable 'choice_index' may be null; comparison with '<' would cause runtime error
+   179:24  [GD3020] Warning - Variable 'choice_index' may be null; comparison with '>=' would cause runtime error
+   194:15  [GD7007] Warning - Variable 'choice' may be null when accessing 'get'
+   199:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   209:16  [GD7007] Warning - Variable 'quest_data' may be null when accessing 'get'
+   214:18  [GD7007] Warning - Variable 'quest_data' may be null when accessing 'get'
+   215:16  [GD7007] Warning - Variable 'objectives' may be null when accessing 'size'
+   238:18  [GD7007] Warning - Variable 'quest' may be null when accessing 'get'
+   241:16  [GD7007] Warning - Variable 'objectives' may be null when accessing 'size'
+   242:17  [GD7007] Warning - Variable 'objectives' may be null when accessing 'get'
+   242:17  [GD7006] Warning - Variable 'objectives' may be null when accessing '[...]'
+   244:5   [GD3020] Warning - Variable 'current' may be null; comparison with '<' would cause runtime error
+   244:5   [GD3020] Warning - Variable 'required' may be null; comparison with '<' would cause runtime error
+   258:15  [GD7007] Warning - Variable 'quest' may be null when accessing 'get'
+   268:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   293:12  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
+   296:5   [GD3020] Warning - Variable 'current' may be null; comparison with '<' would cause runtime error
+   296:15  [GD7006] Warning - Variable 'cost' may be null when accessing '[...]'
+   300:18  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
+   316:12  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
+   319:46  [GD7006] Warning - Variable 'cost' may be null when accessing '[...]'
+   322:25  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
+   325:19  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
+   334:4   [GD7007] Warning - Variable 'ability' may be null when accessing 'has'
+   334:32  [GD7006] Warning - Variable 'ability' may be null when accessing '[...]'
+   339:16  [GD7006] Warning - Variable 'ability' may be null when accessing '[...]'
+   340:18  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
+   361:49  [GD7006] Warning - Variable 'scaling' may be null when accessing '[...]'
+   385:2   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
+   388:5   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
+   389:0   [GDL101] Warning - Line 389 exceeds 120 characters (length: 160)
+   389:3   [GD7007] Warning - Variable 'effect' may be null when accessing 'call'
+   389:3   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
+   389:30  [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
+   389:46  [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
+   391:5   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
+   397:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   413:19  [GD7007] Warning - Variable 'recipe' may be null when accessing 'get'
+   416:20  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
+   417:23  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
+   425:5   [GD3020] Warning - Variable 'required_count' may be null; comparison with '<' would cause runtime error
+   459:19  [GD7007] Warning - Variable 'recipe' may be null when accessing 'get'
+   463:20  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
+   464:17  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
+   466:8   [GD3020] Warning - Variable 'required' may be null; comparison with '>' would cause runtime error
+   473:6   [GD3020] Warning - Variable 'count' may be null; comparison with '<=' would cause runtime error
+   473:6   [GD3020] Warning - Variable 'required' may be null; comparison with '<=' would cause runtime error
+   481:14  [GD7007] Warning - Variable 'recipe' may be null when accessing 'get'
+   507:32  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   508:30  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   509:20  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   510:35  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   511:20  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   512:18  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   513:13  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   526:33  [GD7006] Warning - Variable 'dict' may be null when accessing '[...]'
+   554:35  [GD7006] Warning - Variable 'dict' may be null when accessing '[...]'
+
+--- test_scripts/getters_setters.gd (7 diagnostics) ---
+
+     2:11  [GDL227] Warning - 'GettersSetters' has 22 member variables (max 20)
+   105:5   [GDL203] Info - Function '_on_health_changed' only contains 'pass'
+   168:1   [GDL513] Hint - Too many empty lines before function (9), expected 2
+   194:1   [GD7005] Warning - Variable 'inner' may be null when accessing 'value'
+   195:9   [GD7005] Warning - Variable 'inner' may be null when accessing 'doubled'
+   197:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   213:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+
+--- test_scripts/global.gd (3 diagnostics) ---
+
+    18:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    21:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    25:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+
+--- test_scripts/inheritance_test.gd (25 diagnostics) ---
+
+    29:5   [GDL201] Warning - Local variable 'current_pos' is declared but never used
+    30:5   [GDL201] Warning - Local variable 'global_pos' is declared but never used
+    33:5   [GDL201] Warning - Local variable 'current_rotation' is declared but never used
+    83:7   [GDL201] Warning - Local variable 'collider' is declared but never used
+    84:7   [GDL201] Warning - Local variable 'normal' is declared but never used
+    85:7   [GDL201] Warning - Local variable 'position_coll' is declared but never used
+    90:5   [GDL201] Warning - Local variable 'parent' is declared but never used
+    91:5   [GDL201] Warning - Local variable 'children' is declared but never used
+    92:5   [GDL201] Warning - Local variable 'tree' is declared but never used
+    93:5   [GDL201] Warning - Local variable 'node' is declared but never used
+    96:5   [GDL201] Warning - Local variable 'id' is declared but never used
+    97:5   [GDL201] Warning - Local variable 'class_name_str' is declared but never used
+    98:5   [GDL201] Warning - Local variable 'is_type' is declared but never used
+   103:5   [GDL201] Warning - Local variable 'local' is declared but never used
+   104:5   [GDL201] Warning - Local variable 'glob' is declared but never used
+   105:5   [GDL201] Warning - Local variable 'transform' is declared but never used
+   106:5   [GDL201] Warning - Local variable 'global_transform_val' is declared but never used
+   119:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   138:5   [GDL201] Warning - Local variable 'is_pressed' is declared but never used
+   139:5   [GDL201] Warning - Local variable 'strength' is declared but never used
+   143:5   [GDL203] Info - Function '_on_ready' only contains 'pass'
+   162:5   [GDL203] Info - Function '_on_enter_tree' only contains 'pass'
+   166:5   [GDL203] Info - Function '_on_exit_tree' only contains 'pass'
+   193:5   [GDL223] Warning - 'check_types' has 8 return statements (max 6)
+   206:6   [GD7010] Hint - Redundant type check: 'node' is already declared as 'Node'
+
+--- test_scripts/method_chains.gd (6 diagnostics) ---
+
+    13:14  [GD7003] Warning - Calling method 'length' on untyped expression without type guard
+    23:45  [GD3020] Warning - Variable 'x' may be null; comparison with '>' would cause runtime error
+    77:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    81:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    85:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   108:9   [GD7003] Warning - Calling method 'to_upper' on untyped expression without type guard
+
+--- test_scripts/path_extends_test.gd (1 diagnostics) ---
+
+    14:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'float' to 'int'
+
+--- test_scripts/polymorphic_interfaces.gd (56 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'PolymorphicInterfaces' has 40 public methods (max 20)
+    40:15  [GD7003] Warning - Calling method 'get_health' on untyped variable 'e' without type guard
+    40:15  [GD7007] Warning - Variable 'e' may be null when accessing 'get_health'
+    41:2   [GD7007] Warning - Variable 'e' may be null when accessing 'take_damage'
+    42:14  [GD7003] Warning - Calling method 'get_health' on untyped variable 'e' without type guard
+    42:14  [GD7007] Warning - Variable 'e' may be null when accessing 'get_health'
+    49:2   [GD7003] Warning - Calling method 'move_to' on untyped variable 'e' without type guard
+    49:2   [GD7007] Warning - Variable 'e' may be null when accessing 'move_to'
+    54:2   [GD7007] Warning - Variable 'e' may be null when accessing 'update'
+    55:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+    91:8   [GD7007] Warning - Variable 'available_targets' may be null when accessing 'is_empty'
+    92:9   [GD7006] Warning - Variable 'available_targets' may be null when accessing '[...]'
+    94:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   104:14  [GD7007] Warning - Variable 'command' may be null when accessing 'execute'
+   116:14  [GD7007] Warning - Variable 'command' may be null when accessing 'undo'
+   126:14  [GD7007] Warning - Variable 'command' may be null when accessing 'execute'
+   129:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   154:15  [GD7007] Warning - Variable 'obs' may be null when accessing 'on_event'
+   157:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   166:14  [GD7003] Warning - Calling method 'process' on untyped variable 'component' without type guard
+   166:14  [GD7007] Warning - Variable 'component' may be null when accessing 'process'
+   179:4   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+   195:13  [GD7007] Warning - Variable 'collector' may be null when accessing 'call'
+   204:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   224:12  [GD7003] Warning - Calling method 'process' on untyped variable 'decorator' without type guard
+   224:12  [GD7007] Warning - Variable 'decorator' may be null when accessing 'process'
+   240:13  [GD7003] Warning - Calling method 'process' on untyped variable 'decorator' without type guard
+   240:13  [GD7007] Warning - Variable 'decorator' may be null when accessing 'process'
+   244:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   261:9   [GD7003] Warning - Calling method 'adapt' on untyped variable 'adapter' without type guard
+   261:9   [GD7007] Warning - Variable 'adapter' may be null when accessing 'adapt'
+   266:9   [GD7003] Warning - Calling method 'adapt' on untyped variable 'adapter' without type guard
+   266:9   [GD7007] Warning - Variable 'adapter' may be null when accessing 'adapt'
+   271:5   [GDL223] Warning - '_get_type_name' has 8 return statements (max 6)
+   287:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   297:1   [GD7007] Warning - Variable 'iterator' may be null when accessing 'reset'
+   298:7   [GD7003] Warning - Calling method 'has_next' on untyped variable 'iterator' without type guard
+   298:7   [GD7007] Warning - Variable 'iterator' may be null when accessing 'has_next'
+   299:17  [GD7007] Warning - Variable 'iterator' may be null when accessing 'next'
+   305:1   [GD7007] Warning - Variable 'iterator' may be null when accessing 'reset'
+   306:7   [GD7003] Warning - Calling method 'has_next' on untyped variable 'iterator' without type guard
+   306:7   [GD7007] Warning - Variable 'iterator' may be null when accessing 'has_next'
+   307:13  [GD7007] Warning - Variable 'iterator' may be null when accessing 'next'
+   308:17  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
+   315:1   [GD7007] Warning - Variable 'iterator' may be null when accessing 'reset'
+   316:7   [GD7003] Warning - Calling method 'has_next' on untyped variable 'iterator' without type guard
+   316:7   [GD7007] Warning - Variable 'iterator' may be null when accessing 'has_next'
+   317:13  [GD7007] Warning - Variable 'iterator' may be null when accessing 'next'
+   318:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+   322:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   338:8   [GD7007] Warning - Variable 'factory' may be null when accessing 'create'
+   348:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   364:8   [GD7003] Warning - Calling method 'receive' on untyped variable 'recipient' without type guard
+   364:8   [GD7007] Warning - Variable 'recipient' may be null when accessing 'receive'
+   373:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   404:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+
+--- test_scripts/reflection_test.gd (3 diagnostics) ---
+
+    26:5   [GDL201] Warning - Local variable 'speed' is declared but never used
+    31:5   [GDL201] Warning - Local variable 'cb' is declared but never used
+    32:5   [GDL201] Warning - Local variable 'cb2' is declared but never used
+
+--- test_scripts/scene_nodes.gd (12 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'SceneNodes' has 22 public methods (max 20)
+     9:9   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'CharacterBody2D'
+    10:9   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'ProgressBar'
+    11:9   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'Sprite2D'
+    12:9   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'CollisionShape2D'
+    13:9   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'AnimationPlayer'
+    22:9   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'Label'
+    57:8   [GD7005] Warning - Variable 'player' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'global_position'
+    62:1   [GD7005] Warning - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'max_value'
+    63:1   [GD7005] Warning - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'value'
+   112:3   [GD3007] Warning - Cannot return 'Node' from function with return type 'Control'
+   203:5   [GDL201] Warning - Local variable 'node_path' is declared but never used
+
+--- test_scripts/scene_references.gd (4 diagnostics) ---
+
+    34:2   [GD4006] Warning - Signal 'health_changed' not found on type 'CharacterBody2D'
+    50:1   [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'add_child'
+    56:14  [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'
+    63:14  [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'
+
+--- test_scripts/semantic_validation_demo.gd (45 diagnostics) ---
+
+    25:5   [GDL226] Warning - 'indexer_validation_demo' has 25 local variables (max 15)
+    57:10  [GD3013] Warning - Type 'Array' expects integer index, got 'String'
+    61:10  [GD3013] Warning - Dictionary expects key of type 'String', got 'int'
+    65:10  [GD3013] Warning - Type 'String' expects integer index, got 'String'
+    71:10  [GD3014] Error - Type 'int' does not support indexing
+    75:10  [GD3014] Error - Type 'float' does not support indexing
+    79:10  [GD3014] Error - Type 'bool' does not support indexing
+   100:30  [GD4009] Warning - Signal 'player_scored' parameter 1 expects 'int', got 'String'
+   103:31  [GD4009] Warning - Signal 'item_collected' parameter 1 expects 'int', got 'Array[int]'
+   106:31  [GD4009] Warning - Signal 'item_collected' parameter 1 expects 'int', got 'float'
+   109:34  [GD4009] Warning - Signal 'player_scored' parameter 2 expects 'String', got 'int'
+   120:5   [GDL201] Warning - Local variable 'int_array' is declared but never used
+   121:5   [GDL201] Warning - Local variable 'string_array' is declared but never used
+   122:5   [GDL201] Warning - Local variable 'node_array' is declared but never used
+   125:5   [GDL201] Warning - Local variable 'dict1' is declared but never used
+   126:5   [GDL201] Warning - Local variable 'dict2' is declared but never used
+   127:5   [GDL201] Warning - Local variable 'dict3' is declared but never used
+   128:5   [GDL201] Warning - Local variable 'dict4' is declared but never used
+   131:5   [GDL201] Warning - Local variable 'nested' is declared but never used
+   136:5   [GDL201] Warning - Local variable 'bad_arr' is declared but never used
+   136:20  [GD3017] Warning - Unknown type 'UnknownType' used in Array type parameter
+   137:5   [GDL201] Warning - Local variable 'bad_dict' is declared but never used
+   137:34  [GD3017] Warning - Unknown type 'NonExistentClass' used as Dictionary value type
+   142:5   [GDL201] Warning - Local variable 'arr_key_dict' is declared but never used
+   142:30  [GD3018] Warning - Type 'Array' is not hashable and cannot be used as Dictionary key
+   145:0   [GDL101] Warning - Line 145 exceeds 120 characters (length: 148)
+   145:5   [GDL201] Warning - Local variable 'dict_key_dict' is declared but never used
+   145:31  [GD3018] Warning - Type 'Dictionary' is not hashable and cannot be used as Dictionary key
+   148:5   [GDL201] Warning - Local variable 'packed_key' is declared but never used
+   148:28  [GD3018] Warning - Type 'PackedByteArray' is not hashable and cannot be used as Dictionary key
+   158:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 0
+   161:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 0
+   164:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 0
+   167:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 0
+   185:10  [GD3010] Warning - Argument type mismatch for 'x' in call to 'take_int': expected 'int', got 'String'
+   188:13  [GD3010] Warning - Argument type mismatch for 's' in call to 'take_string': expected 'String', got 'int'
+   216:10  [GD3009] Warning - Property 'some_property' not found on type 'null'
+   216:10  [GD7005] Warning - Variable 'unknown' may be null when accessing 'some_property'
+   222:12  [GD3009] Warning - Property 'nonexistent_property' not found on type 'String'
+   242:5   [GDL201] Warning - Local variable 'node' is declared but never used
+   245:5   [GDL201] Warning - Local variable 'f' is declared but never used
+   251:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'String' to 'int'
+   256:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'Node' to 'Node2D'
+   275:12  [GD3013] Warning - Dictionary expects key of type 'String', got 'int'
+   324:10  [GD3009] Warning - Property 'some_member' not found on type 'Dictionary'
+
+--- test_scripts/signal_callback_chains.gd (84 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'SignalCallbackChains' has 25 public methods (max 20)
+     2:11  [GDL232] Warning - 'SignalCallbackChains' has 8 inner classes (max 5)
+    46:8   [GD7007] Warning - Variable 'callback' may be null when accessing 'callv'
+    55:12  [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
+    57:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+    75:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    81:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    87:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    95:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   103:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   107:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   111:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   130:28  [GD7007] Warning - Variable 'operation' may be null when accessing 'resolve'
+   131:27  [GD7007] Warning - Variable 'operation' may be null when accessing 'reject'
+   133:1   [GD7007] Warning - Variable 'task_func' may be null when accessing 'call'
+   134:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   167:16  [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
+   175:16  [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
+   179:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   195:4   [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
+   201:8   [GD7003] Warning - Calling method 'process' on untyped variable 'stage' without type guard
+   201:8   [GD7007] Warning - Variable 'stage' may be null when accessing 'process'
+   202:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   227:4   [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
+   233:1   [GD7003] Warning - Calling method 'handle' on untyped variable 'middleware' without type guard
+   233:1   [GD7007] Warning - Variable 'middleware' may be null when accessing 'handle'
+   234:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   251:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   252:2   [GD7006] Warning - Variable 'subscription' may be null when accessing '[...]'
+   255:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   257:6   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   257:24  [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   258:4   [GD7007] Warning - Variable 'sub' may be null when accessing 'call'
+   258:4   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   260:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   262:6   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   262:24  [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   263:4   [GD7007] Warning - Variable 'sub' may be null when accessing 'call'
+   263:4   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   264:3   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   266:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   268:6   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   268:24  [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   269:4   [GD7007] Warning - Variable 'sub' may be null when accessing 'call'
+   269:4   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   270:3   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
+   272:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   275:33  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
+   281:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   284:6   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+   296:1   [GDL513] Hint - Too many empty lines before function (7), expected 2
+   327:23  [GD7007] Warning - Variable '_on_debounce_timeout' may be null when accessing 'bind'
+   343:1   [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
+   349:23  [GD7007] Warning - Variable '_on_throttle_timeout' may be null when accessing 'bind'
+   363:2   [GD7007] Warning - Variable 'on_success' may be null when accessing 'call'
+   365:2   [GD7007] Warning - Variable 'on_failure' may be null when accessing 'call'
+   374:4   [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
+   374:13  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
+   375:2   [GD7007] Warning - Variable 'on_complete' may be null when accessing 'call'
+   378:17  [GD7006] Warning - Variable 'operations' may be null when accessing '[...]'
+   380:1   [GD7007] Warning - Variable 'operation' may be null when accessing 'call'
+   385:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   418:20  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
+   419:13  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
+   423:16  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
+   426:2   [GD7007] Warning - Variable 'operations' may be null when accessing 'call'
+   426:2   [GD7006] Warning - Variable 'operations' may be null when accessing '[...]'
+   431:4   [GD7007] Warning - Variable 'url' may be null when accessing 'begins_with'
+   434:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   447:1   [GD7003] Warning - Calling method 'resolve' on untyped variable 'ctx' without type guard
+   453:2   [GD7003] Warning - Calling method 'reject' on untyped variable 'ctx' without type guard
+   463:18  [GD7007] Warning - Variable '_on_signal_received' may be null when accessing 'bind'
+   465:1   [GD7007] Warning - Variable 'target' may be null when accessing 'connect'
+   468:4   [GD3020] Warning - Variable 'timeout' may be null; comparison with '>' would cause runtime error
+   470:2   [GD7005] Warning - Variable 'timer' may be null when accessing 'timeout'
+   470:24  [GD7007] Warning - Variable '_on_wait_timeout' may be null when accessing 'bind'
+   473:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   483:13  [GD7007] Warning - Variable 'cb' may be null when accessing 'call'
+   493:18  [GD7007] Warning - Variable 'cb' may be null when accessing 'call'
+   503:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+   504:10  [GD7007] Warning - Variable 'true_cb' may be null when accessing 'call'
+   505:9   [GD7007] Warning - Variable 'false_cb' may be null when accessing 'call'
+   518:16  [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
+   521:11  [GD7007] Warning - Variable 'should_retry' may be null when accessing 'call'
+
+--- test_scripts/signals_test.gd (5 diagnostics) ---
+
+   146:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   165:5   [GDL201] Warning - Local variable 'id' is declared but never used
+   166:5   [GDL201] Warning - Local variable 'name' is declared but never used
+   167:5   [GDL201] Warning - Local variable 'payload' is declared but never used
+   199:23  [GD7007] Warning - Variable '_on_simple_with_context' may be null when accessing 'bind'
+
+--- test_scripts/standard_methods.gd (94 diagnostics) ---
+
+    10:5   [GDL226] Warning - 'test_array_methods' has 17 local variables (max 15)
+    15:5   [GDL201] Warning - Local variable 'count' is declared but never used
+    16:5   [GDL201] Warning - Local variable 'find_idx' is declared but never used
+    17:5   [GDL201] Warning - Local variable 'rfind_idx' is declared but never used
+    18:5   [GDL201] Warning - Local variable 'bsearch' is declared but never used
+    23:5   [GDL201] Warning - Local variable 'is_readonly' is declared but never used
+    27:5   [GDL201] Warning - Local variable 'back' is declared but never used
+    28:5   [GDL201] Warning - Local variable 'pick' is declared but never used
+    29:5   [GDL201] Warning - Local variable 'reduce_val' is declared but never used
+    33:5   [GDL201] Warning - Local variable 'sliced' is declared but never used
+    34:5   [GDL201] Warning - Local variable 'filtered' is declared but never used
+    34:43  [GD3020] Warning - Variable 'x' may be null; comparison with '>' would cause runtime error
+    35:5   [GDL201] Warning - Local variable 'mapped' is declared but never used
+    51:5   [GDL201] Warning - Local variable 'has_all' is declared but never used
+    52:5   [GDL201] Warning - Local variable 'is_readonly' is declared but never used
+    56:5   [GDL201] Warning - Local variable 'values' is declared but never used
+    60:5   [GDL201] Warning - Local variable 'get_default' is declared but never used
+    61:5   [GDL201] Warning - Local variable 'find_key' is declared but never used
+    64:5   [GDL201] Warning - Local variable 'duplicated' is declared but never used
+    65:5   [GDL201] Warning - Local variable 'merged' is declared but never used
+    72:5   [GDL226] Warning - 'test_string_methods' has 26 local variables (max 15)
+    77:5   [GDL201] Warning - Local variable 'count' is declared but never used
+    78:5   [GDL201] Warning - Local variable 'find_pos' is declared but never used
+    79:5   [GDL201] Warning - Local variable 'rfind_pos' is declared but never used
+    80:5   [GDL201] Warning - Local variable 'hash_val' is declared but never used
+    81:5   [GDL201] Warning - Local variable 'unicode' is declared but never used
+    85:5   [GDL201] Warning - Local variable 'begins' is declared but never used
+    86:5   [GDL201] Warning - Local variable 'ends' is declared but never used
+    87:5   [GDL201] Warning - Local variable 'contains' is declared but never used
+    88:5   [GDL201] Warning - Local variable 'is_valid_id' is declared but never used
+    89:5   [GDL201] Warning - Local variable 'is_valid_int' is declared but never used
+    90:5   [GDL201] Warning - Local variable 'is_valid_float' is declared but never used
+    94:5   [GDL201] Warning - Local variable 'lower' is declared but never used
+    95:5   [GDL201] Warning - Local variable 'stripped' is declared but never used
+    96:5   [GDL201] Warning - Local variable 'replaced' is declared but never used
+    97:5   [GDL201] Warning - Local variable 'left_str' is declared but never used
+    98:5   [GDL201] Warning - Local variable 'right_str' is declared but never used
+    99:5   [GDL201] Warning - Local variable 'substr' is declared but never used
+   100:5   [GDL201] Warning - Local variable 'padded' is declared but never used
+   101:5   [GDL201] Warning - Local variable 'sha256' is declared but never used
+   102:5   [GDL201] Warning - Local variable 'md5' is declared but never used
+   108:5   [GDL201] Warning - Local variable 'similarity' is declared but never used
+   115:5   [GDL226] Warning - 'test_vector2_methods' has 21 local variables (max 15)
+   120:5   [GDL201] Warning - Local variable 'length_sq' is declared but never used
+   122:5   [GDL201] Warning - Local variable 'angle_to' is declared but never used
+   123:5   [GDL201] Warning - Local variable 'dot' is declared but never used
+   124:5   [GDL201] Warning - Local variable 'cross' is declared but never used
+   125:5   [GDL201] Warning - Local variable 'aspect' is declared but never used
+   126:5   [GDL201] Warning - Local variable 'distance' is declared but never used
+   130:5   [GDL201] Warning - Local variable 'rotated' is declared but never used
+   131:5   [GDL201] Warning - Local variable 'clamped' is declared but never used
+   132:5   [GDL201] Warning - Local variable 'abs_vec' is declared but never used
+   133:5   [GDL201] Warning - Local variable 'floor_vec' is declared but never used
+   134:5   [GDL201] Warning - Local variable 'ceil_vec' is declared but never used
+   135:5   [GDL201] Warning - Local variable 'round_vec' is declared but never used
+   136:5   [GDL201] Warning - Local variable 'lerp_vec' is declared but never used
+   137:5   [GDL201] Warning - Local variable 'direction' is declared but never used
+   141:5   [GDL201] Warning - Local variable 'is_finite' is declared but never used
+   142:5   [GDL201] Warning - Local variable 'is_zero' is declared but never used
+   156:5   [GDL201] Warning - Local variable 'is_normalized' is declared but never used
+   170:5   [GDL201] Warning - Local variable 'rotated' is declared but never used
+   182:5   [GDL201] Warning - Local variable 'saturation' is declared but never used
+   183:5   [GDL201] Warning - Local variable 'value' is declared but never used
+   184:5   [GDL201] Warning - Local variable 'luminance' is declared but never used
+   188:5   [GDL201] Warning - Local variable 'lightened' is declared but never used
+   189:5   [GDL201] Warning - Local variable 'inverted' is declared but never used
+   190:5   [GDL201] Warning - Local variable 'lerped' is declared but never used
+   197:5   [GDL201] Warning - Local variable 'argb32' is declared but never used
+   210:5   [GDL201] Warning - Local variable 'intersects' is declared but never used
+   211:5   [GDL201] Warning - Local variable 'expanded' is declared but never used
+   213:5   [GDL201] Warning - Local variable 'merged' is declared but never used
+   214:5   [GDL201] Warning - Local variable 'intersection' is declared but never used
+   227:5   [GDL201] Warning - Local variable 'intersects' is declared but never used
+   228:5   [GDL201] Warning - Local variable 'expanded' is declared but never used
+   241:5   [GDL201] Warning - Local variable 'd' is declared but never used
+   244:5   [GDL201] Warning - Local variable 'intersection' is declared but never used
+   260:5   [GDL201] Warning - Local variable 'float_size' is declared but never used
+   265:5   [GDL201] Warning - Local variable 'to_float' is declared but never used
+   266:5   [GDL201] Warning - Local variable 'compressed' is declared but never used
+   277:5   [GDL201] Warning - Local variable 'index' is declared but never used
+   278:5   [GDL201] Warning - Local variable 'path' is declared but never used
+   280:5   [GDL201] Warning - Local variable 'tree' is declared but never used
+   281:5   [GDL201] Warning - Local variable 'viewport' is declared but never used
+   282:5   [GDL201] Warning - Local variable 'owner_node' is declared but never used
+   283:5   [GDL201] Warning - Local variable 'multiplayer_api' is declared but never used
+   294:5   [GDL201] Warning - Local variable 'ceil_val' is declared but never used
+   295:5   [GDL201] Warning - Local variable 'round_val' is declared but never used
+   297:5   [GDL201] Warning - Local variable 'lerp_val' is declared but never used
+   298:5   [GDL201] Warning - Local variable 'min_val' is declared but never used
+   299:5   [GDL201] Warning - Local variable 'max_val' is declared but never used
+   300:5   [GDL201] Warning - Local variable 'sign_val' is declared but never used
+   301:5   [GDL201] Warning - Local variable 'pow_val' is declared but never used
+   303:5   [GDL201] Warning - Local variable 'sin_val' is declared but never used
+   304:5   [GDL201] Warning - Local variable 'cos_val' is declared but never used
+
+--- test_scripts/todo_examples.gd (2 diagnostics) ---
+
+    74:5   [GDL203] Info - Function 'import_from_json' only contains 'pass'
+    74:22  [GDL202] Info - Parameter 'json_string' is declared but never used
+
+--- test_scripts/type_guards.gd (8 diagnostics) ---
+
+   161:6   [GDL201] Warning - Local variable 'overlapping' is declared but never used
+   166:6   [GDL201] Warning - Local variable 'pos' is declared but never used
+   186:6   [GDL201] Warning - Local variable 'value' is declared but never used
+   220:12  [GD7005] Warning - Variable 'obj' may be null when accessing 'position'
+   221:12  [GD7005] Warning - Variable 'obj' may be null when accessing 'rotation'
+   226:9   [GD7005] Warning - Variable 'obj' may be null when accessing 'velocity'
+   253:8   [GD7007] Warning - Variable 'value' may be null when accessing 'keys'
+   268:6   [GD7011] Hint - Redundant type check: 'outer' is already narrowed to 'Dictionary'
+
+--- test_scripts/type_inference.gd (2 diagnostics) ---
+
+    61:47  [GD3020] Warning - Variable 'x' may be null; comparison with '>' would cause runtime error
+   176:1   [GDL513] Hint - Too many empty lines before function (6), expected 2
+
+--- test_scripts/union_returns.gd (3 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'UnionReturns' has 22 public methods (max 20)
+    97:5   [GD3020] Warning - Variable 'value' may be null; comparison with '<' would cause runtime error
+   190:10  [GD7007] Warning - Variable 'x' may be null when accessing 'length'
+
+--- test_scripts/union_types_complex.gd (24 diagnostics) ---
+
+     2:11  [GDL222] Warning - 'UnionTypesComplex' has 28 public methods (max 20)
+    29:5   [GD3020] Warning - Variable 'input' may be null; comparison with '<' would cause runtime error
+    43:5   [GD7016] Warning - Property 'id' not found on type 'Node'
+    52:9   [GD3009] Warning - Property 'global_position' not found on type 'Node'
+    78:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+   117:10  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
+   124:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   133:4   [GD3020] Warning - Variable 'index' may be null; comparison with '<' would cause runtime error
+   133:17  [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
+   160:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   226:7   [GD7007] Warning - Variable 'result' may be null when accessing 'get'
+   228:10  [GD7006] Warning - Variable 'result' may be null when accessing '[...]'
+   230:22  [GD7006] Warning - Variable 'result' may be null when accessing '[...]'
+   244:20  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
+   258:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
+   259:18  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
+   269:8   [GD7007] Warning - Variable 'reducer' may be null when accessing 'call'
+   271:1   [GDL513] Hint - Too many empty lines before function (6), expected 2
+   333:9   [GD7007] Warning - Variable 'value' may be null when accessing 'length'
+   362:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   364:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   366:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
+   387:6   [GDL201] Warning - Local variable 'item' is declared but never used
+   389:6   [GDL201] Warning - Local variable 'count' is declared but never used
+
+--- test_scripts/validation_edge_cases.gd (9 diagnostics) ---
+
+    15:5   [GDL201] Warning - Local variable 'size' is declared but never used
+    20:5   [GDL201] Warning - Local variable 'has' is declared but never used
+    26:5   [GDL201] Warning - Local variable 'result' is declared but never used
+    27:5   [GDL201] Warning - Local variable 'result2' is declared but never used
+    28:5   [GDL201] Warning - Local variable 'result3' is declared but never used
+    29:5   [GDL201] Warning - Local variable 'result4' is declared but never used
+    60:5   [GDL201] Warning - Local variable 'sn2' is declared but never used
+    62:5   [GDL201] Warning - Local variable 's' is declared but never used
+    65:5   [GDL201] Warning - Local variable 'name' is declared but never used
+

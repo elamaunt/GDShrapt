@@ -1,0 +1,3 @@
+# TYPE_INFERENCE_UNVERIFIED.txt
+# Copy entries to TYPE_INFERENCE_VERIFIED.txt and add # OK
+
