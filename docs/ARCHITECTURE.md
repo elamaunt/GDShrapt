@@ -48,7 +48,7 @@ Shared interfaces and contracts
         │
         ▼
 AST Tooling Layer
-├── Validator   (AST-based diagnostics GD1xxx–GD8xxx)
+├── Validator   (AST-based diagnostics GD1xxx–GD9xxx)
 ├── Linter      (style rules GDLxxx)
 ├── Formatter   (safe formatting GDFxxx)
 └── Builder     (code generation utilities)
@@ -92,7 +92,7 @@ Performs:
 - Control-flow checks
 - Basic data-flow checks
 
-Outputs diagnostics: `GD1xxx–GD8xxx`
+Outputs diagnostics: `GD1xxx–GD9xxx`
 
 #### Linter
 
@@ -173,10 +173,9 @@ Each inferred reference is assigned a **confidence level**:
 
 | Level      | Meaning                            |
 |------------|------------------------------------|
-| Certain    | Proven semantic reference          |
-| High       | Strongly inferred                  |
-| Medium     | Context-dependent                  |
-| Low        | Heuristic                          |
+| Strict     | Type is known and resolved         |
+| Potential  | Duck-typed or type narrowed        |
+| NameMatch  | Name match only (no type info)     |
 
 ---
 
