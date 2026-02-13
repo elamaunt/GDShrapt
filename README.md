@@ -138,7 +138,8 @@ Reader → AST → Semantic Model → Refactoring Engine → Integrations
 
 Each layer depends only on lower layers, ensuring consistent behavior across tools.
 For a detailed breakdown of the semantic engine and layering, see  
-[📐 Full Architecture Document](docs/ARCHITECTURE.md)
+[Full Architecture Document](docs/ARCHITECTURE.md)
+
 ---
 
 ## Commercial Edition (Overview)
