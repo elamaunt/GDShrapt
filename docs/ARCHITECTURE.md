@@ -124,14 +124,17 @@ Utility layer for:
 
 ### 3. GDShrapt.Abstractions
 
-Defines:
+Provides shared contracts and data models used across the platform:
 
-- Shared interfaces
-- Diagnostic contracts
-- Symbol models
-- Refactoring plans
+- Diagnostic models
+- Symbol and type DTOs
+- Refactoring plan structures
+- Service interfaces
 
-This layer isolates higher-level tooling from concrete implementations.
+This package is a **shared contracts layer**, not a strict architectural boundary.
+It does not isolate semantic or AST layers, but ensures consistent data exchange
+between CLI, LSP, Plugin, and analysis components.
+
 
 ---
 
@@ -206,7 +209,7 @@ Provides:
 - Output formatters
 - Parallel execution control
 - Timeout management
-- Pro feature discovery (reflection)
+- Pro feature discovery
 
 CLI is a thin orchestration layer over the semantic core.
 
@@ -298,12 +301,6 @@ Goals:
 ---
 
 ## Pro Integration Model
-
-Pro features are implemented as:
-
-- Optional NuGet package
-- Discovered via reflection
-- Activated by license provider
 
 The open-source core contains:
 
