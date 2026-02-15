@@ -109,6 +109,86 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
     }
 
     /// <summary>
+    /// Returns project types that have at least one scene node with non-zero collision_layer.
+    /// These types can potentially participate in physics interactions (area_entered, etc.).
+    /// </summary>
+    public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer()
+    {
+        var seen = new HashSet<string>();
+        var result = new List<string>();
+
+        foreach (var sceneInfo in _sceneCache.Values)
+        {
+            foreach (var node in sceneInfo.Nodes)
+            {
+                if (node.CollisionLayer == 0 && node.CollisionMask == 0) continue;
+
+                var type = node.ScriptTypeName ?? node.NodeType;
+                if (!string.IsNullOrEmpty(type) && seen.Add(type))
+                    result.Add(type);
+            }
+        }
+
+        return result;
+    }
+
+    public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails()
+    {
+        var result = new List<GDCollisionLayerInfo>();
+        foreach (var sceneInfo in _sceneCache.Values)
+        {
+            foreach (var node in sceneInfo.Nodes)
+            {
+                if (node.CollisionLayer == 0 && node.CollisionMask == 0) continue;
+                var type = node.ScriptTypeName ?? node.NodeType;
+                if (!string.IsNullOrEmpty(type))
+                    result.Add(new GDCollisionLayerInfo(type, node.CollisionLayer, node.CollisionMask, node.SceneFullPath ?? ""));
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Returns project types that have at least one scene node with non-zero avoidance_layers.
+    /// These types can potentially participate in navigation avoidance interactions.
+    /// </summary>
+    public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers()
+    {
+        var seen = new HashSet<string>();
+        var result = new List<string>();
+
+        foreach (var sceneInfo in _sceneCache.Values)
+        {
+            foreach (var node in sceneInfo.Nodes)
+            {
+                if (node.AvoidanceLayers == 0 && node.AvoidanceMask == 0) continue;
+
+                var type = node.ScriptTypeName ?? node.NodeType;
+                if (!string.IsNullOrEmpty(type) && seen.Add(type))
+                    result.Add(type);
+            }
+        }
+
+        return result;
+    }
+
+    public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails()
+    {
+        var result = new List<GDAvoidanceLayerInfo>();
+        foreach (var sceneInfo in _sceneCache.Values)
+        {
+            foreach (var node in sceneInfo.Nodes)
+            {
+                if (node.AvoidanceLayers == 0 && node.AvoidanceMask == 0) continue;
+                var type = node.ScriptTypeName ?? node.NodeType;
+                if (!string.IsNullOrEmpty(type))
+                    result.Add(new GDAvoidanceLayerInfo(type, node.AvoidanceLayers, node.AvoidanceMask, node.SceneFullPath ?? ""));
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Gets the script path attached to a node.
     /// </summary>
     public string? GetNodeScript(string scenePath, string nodePath)
@@ -351,6 +431,71 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
                 PropertyName = propertyName,
                 LineNumber = propLineNumber
             });
+        }
+
+        // Parse collision_layer and collision_mask numeric properties
+        var collisionRegex = new Regex(@"^(collision_layer|collision_mask)\s*=\s*(\d+)", RegexOptions.Multiline);
+
+        foreach (Match colMatch in collisionRegex.Matches(content))
+        {
+            if (!int.TryParse(colMatch.Groups[2].Value, out var value))
+                continue;
+
+            var isLayer = colMatch.Groups[1].Value == "collision_layer";
+
+            // Find owning node by position (same pattern as script/resource parsing)
+            int colOwnerIndex = -1;
+            for (int i = nodeMatches.Count - 1; i >= 0; i--)
+            {
+                if (nodeMatches[i].Index < colMatch.Index)
+                {
+                    if (i + 1 >= nodeMatches.Count || nodeMatches[i + 1].Index > colMatch.Index)
+                    {
+                        colOwnerIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (colOwnerIndex >= 0 && colOwnerIndex < nodes.Count)
+            {
+                if (isLayer)
+                    nodes[colOwnerIndex].CollisionLayer = value;
+                else
+                    nodes[colOwnerIndex].CollisionMask = value;
+            }
+        }
+
+        // Parse avoidance_layers and avoidance_mask (NavigationAgent2D/3D)
+        var avoidanceRegex = new Regex(@"^(avoidance_layers|avoidance_mask)\s*=\s*(\d+)", RegexOptions.Multiline);
+
+        foreach (Match avMatch in avoidanceRegex.Matches(content))
+        {
+            if (!int.TryParse(avMatch.Groups[2].Value, out var value))
+                continue;
+
+            var isLayers = avMatch.Groups[1].Value == "avoidance_layers";
+
+            int avOwnerIndex = -1;
+            for (int i = nodeMatches.Count - 1; i >= 0; i--)
+            {
+                if (nodeMatches[i].Index < avMatch.Index)
+                {
+                    if (i + 1 >= nodeMatches.Count || nodeMatches[i + 1].Index > avMatch.Index)
+                    {
+                        avOwnerIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (avOwnerIndex >= 0 && avOwnerIndex < nodes.Count)
+            {
+                if (isLayers)
+                    nodes[avOwnerIndex].AvoidanceLayers = value;
+                else
+                    nodes[avOwnerIndex].AvoidanceMask = value;
+            }
         }
 
         // Parse unique nodes (marked with unique_name_in_owner = true)
@@ -1253,6 +1398,30 @@ public class GDNodeTypeInfo
     /// Whether this node has unique_name_in_owner = true (accessible via %NodeName).
     /// </summary>
     public bool IsUnique { get; set; }
+
+    /// <summary>
+    /// Collision layer bitmask from scene file (0 if not set).
+    /// Non-zero means this node can potentially participate in physics interactions.
+    /// </summary>
+    public int CollisionLayer { get; set; }
+
+    /// <summary>
+    /// Collision mask bitmask from scene file (0 if not set).
+    /// Determines which layers this node detects/interacts with.
+    /// </summary>
+    public int CollisionMask { get; set; }
+
+    /// <summary>
+    /// Navigation avoidance layers bitmask from scene file (0 if not set).
+    /// Used by NavigationAgent2D/3D for avoidance interactions.
+    /// </summary>
+    public int AvoidanceLayers { get; set; }
+
+    /// <summary>
+    /// Navigation avoidance mask bitmask from scene file (0 if not set).
+    /// Determines which avoidance layers this agent detects.
+    /// </summary>
+    public int AvoidanceMask { get; set; }
 
     /// <summary>
     /// Whether this node is a sub-scene instance (instance=ExtResource in .tscn).

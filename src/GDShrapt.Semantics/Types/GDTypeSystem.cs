@@ -209,7 +209,7 @@ public class GDTypeSystem : IGDTypeSystem
             var initializer = GetInitializerExpression(symbol);
             if (initializer != null)
             {
-                var helper = new GDTypeInferenceHelper(_model);
+                var helper = new GDTypeConfidenceResolver(_model);
                 var inferred = helper.InferExpressionType(initializer);
                 if (!inferred.IsUnknown)
                 {

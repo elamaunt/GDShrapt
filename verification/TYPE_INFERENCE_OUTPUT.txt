@@ -1002,7 +1002,7 @@ test_scripts/cross_file_inference.gd
 109:10 GDCallExpression dynamic_caller.get_property() -> Variant
 109:10 GDMemberOperatorExpression dynamic_caller.get_property -> Variant
 109:10 GDIdentifierExpression dynamic_caller -> DynamicDispatch
-109:38 GDIdentifierExpression self -> self
+109:38 GDIdentifierExpression self -> CrossFileInference
 109:44 GDIdentifierExpression key -> Variant
 110:2 GDStringExpression "duck" -> String
 111:3 GDReturnExpression return duck_handler.get_entity_by_name() -> Variant
@@ -4251,6 +4251,21 @@ test_scripts/diagnostics/validator/type_errors.gd
 238:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
 238:7 GDIdentifierExpression dict -> Dictionary[Dictionary, int]
 
+test_scripts/duck_caller.gd
+6:0 Variable entities -> Array
+6:15 GDArrayInitializerExpression [...] -> Array
+9:0 Method process_entities -> void
+10:1 Iterator entity -> Variant
+10:15 GDIdentifierExpression entities -> Array
+11:5 GDCallExpression entity.has_method() -> bool
+11:5 GDMemberOperatorExpression entity.has_method -> Variant
+11:5 GDIdentifierExpression entity -> Variant
+11:23 GDStringExpression "take_damag..." -> String
+12:3 GDCallExpression entity.take_damage() -> Variant
+12:3 GDMemberOperatorExpression entity.take_damage -> Variant
+12:3 GDIdentifierExpression entity -> Variant
+12:22 GDNumberExpression 5 -> int
+
 test_scripts/duck_typing_advanced.gd
 9:0 Variable attacker -> Variant
 10:0 Variable defender -> Variant
@@ -4259,7 +4274,7 @@ test_scripts/duck_typing_advanced.gd
 17:0 Variable active_effect -> Variant
 20:0 Method process_attack -> void
 20:20 Parameter source -> Variant
-20:28 Parameter target -> BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass
+20:28 Parameter target -> BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass | UnrelatedClass
 24:1 Variable damage -> Variant
 24:14 GDCallExpression source.get_damage() -> Variant
 24:14 GDMemberOperatorExpression source.get_damage -> Variant
@@ -4476,7 +4491,7 @@ test_scripts/duck_typing_advanced.gd
 147:1 GDIdentifierExpression action_completed -> Signal
 147:23 GDIdentifierExpression action -> Variant
 147:31 GDIdentifierExpression result -> Dictionary
-147:39 GDIdentifierExpression self -> self
+147:39 GDIdentifierExpression self -> DuckTypingAdvanced
 148:1 GDReturnExpression return result -> Variant
 148:8 GDIdentifierExpression result -> Dictionary
 151:0 Method _execute_action -> null | String | Variant | Variant
@@ -5380,14 +5395,14 @@ test_scripts/dynamic_dispatch.gd
 265:12 GDIdentifierExpression target -> Variant
 265:22 GDIdentifierExpression target -> Variant
 265:34 GDDictionaryInitializerExpression {...} -> Dictionary
-267:1 Method set_target -> self
+267:1 Method set_target -> DynamicDispatch
 267:17 Parameter target -> Variant
 268:2 GDDualOperatorExpression _targetAssignmenttarget -> Variant
 268:2 GDIdentifierExpression _target -> Variant
 268:12 GDIdentifierExpression target -> Variant
 269:2 GDReturnExpression return self -> Variant
-269:9 GDIdentifierExpression self -> self
-271:1 Method call_method -> self
+269:9 GDIdentifierExpression self -> DynamicDispatch
+271:1 Method call_method -> DynamicDispatch
 271:18 Parameter method_name -> Variant
 271:31 Parameter args -> Array
 271:38 GDArrayInitializerExpression [...] -> Array
@@ -5400,8 +5415,8 @@ test_scripts/dynamic_dispatch.gd
 272:48 GDStringExpression "args" -> String
 272:56 GDIdentifierExpression args -> Variant
 273:2 GDReturnExpression return self -> Variant
-273:9 GDIdentifierExpression self -> self
-275:1 Method set_prop -> self
+273:9 GDIdentifierExpression self -> DynamicDispatch
+275:1 Method set_prop -> DynamicDispatch
 275:15 Parameter prop_name -> Variant
 275:26 Parameter value -> Variant
 276:2 GDCallExpression _pending_calls.append() -> void
@@ -5413,7 +5428,7 @@ test_scripts/dynamic_dispatch.gd
 276:48 GDStringExpression "value" -> String
 276:57 GDIdentifierExpression value -> Variant
 277:2 GDReturnExpression return self -> Variant
-277:9 GDIdentifierExpression self -> self
+277:9 GDIdentifierExpression self -> DynamicDispatch
 279:1 Method build -> void
 280:2 Iterator call_info -> Variant
 280:19 GDIdentifierExpression _pending_calls -> Array
@@ -6093,7 +6108,7 @@ test_scripts/ecs_like_system.gd
 154:2 GDMemberOperatorExpression system.update -> Variant
 154:2 GDIdentifierExpression system -> Variant
 154:16 GDIdentifierExpression delta -> Variant
-154:23 GDIdentifierExpression self -> self
+154:23 GDIdentifierExpression self -> ECSLikeSystem
 167:0 Method create_transform_component -> Dictionary
 167:32 Parameter pos -> Vector2
 167:38 GDMemberOperatorExpression Vector2.ZERO -> Vector2
@@ -6904,7 +6919,7 @@ test_scripts/enemy_entity.gd
 59:1 GDMemberOperatorExpression target.take_damage -> void
 59:1 GDIdentifierExpression target -> BaseEntity
 59:20 GDIdentifierExpression attack_power -> int
-59:34 GDIdentifierExpression self -> self
+59:34 GDIdentifierExpression self -> EnemyEntity
 60:1 GDCallExpression attack_performed.emit() -> void
 60:1 GDMemberOperatorExpression attack_performed.emit -> void
 60:1 GDIdentifierExpression attack_performed -> Signal
@@ -10010,21 +10025,21 @@ test_scripts/method_chains.gd
 73:2 GDIdentifierExpression _name -> String
 73:10 GDIdentifierExpression name -> String
 74:2 GDReturnExpression return self -> Variant
-74:9 GDIdentifierExpression self -> self
+74:9 GDIdentifierExpression self -> MethodChains
 76:1 Method set_value -> ConfigBuilder
 76:16 Parameter value -> int
 77:2 GDDualOperatorExpression _valueAssignmentvalue -> int
 77:2 GDIdentifierExpression _value -> int
 77:11 GDIdentifierExpression value -> int
 78:2 GDReturnExpression return self -> Variant
-78:9 GDIdentifierExpression self -> self
+78:9 GDIdentifierExpression self -> MethodChains
 80:1 Method set_enabled -> ConfigBuilder
 80:18 Parameter enabled -> bool
 81:2 GDDualOperatorExpression _enabledAssignmentenabled -> bool
 81:2 GDIdentifierExpression _enabled -> bool
 81:13 GDIdentifierExpression enabled -> bool
 82:2 GDReturnExpression return self -> Variant
-82:9 GDIdentifierExpression self -> self
+82:9 GDIdentifierExpression self -> MethodChains
 84:1 Method build -> Dictionary
 85:2 GDReturnExpression return {...} -> Variant
 85:9 GDDictionaryInitializerExpression {...} -> Dictionary
@@ -10288,7 +10303,7 @@ test_scripts/player_entity.gd
 97:1 GDMemberOperatorExpression target.take_damage -> void
 97:1 GDIdentifierExpression target -> BaseEntity
 97:20 GDIdentifierExpression damage -> int
-97:28 GDIdentifierExpression self -> self
+97:28 GDIdentifierExpression self -> PlayerEntity
 98:1 GDDualOperatorExpression combo_countAddAndAssign1 -> int
 98:1 GDIdentifierExpression combo_count -> int
 98:16 GDNumberExpression 1 -> int
@@ -11197,7 +11212,7 @@ test_scripts/refactoring_targets.gd
 50:4 GDSingleOperatorExpression Not2is_instance_valid() -> bool
 50:8 GDCallExpression is_instance_valid() -> bool
 50:8 GDIdentifierExpression is_instance_valid -> Callable(GodotObject) -> bool
-50:26 GDIdentifierExpression self -> self
+50:26 GDIdentifierExpression self -> RefactoringTargets
 51:2 GDReturnExpression return ? -> Variant
 53:4 GDSingleOperatorExpression Not2is_game_active -> bool
 53:8 GDIdentifierExpression is_game_active -> bool
@@ -11362,6 +11377,71 @@ test_scripts/refactoring_targets.gd
 133:11 GDIdentifierExpression player_speed -> float
 134:2 GDStringExpression "active" -> String
 134:12 GDIdentifierExpression is_game_active -> bool
+
+test_scripts/reflection_test.gd
+3:0 Signal game_started -> Signal
+4:0 Signal health_updated -> Signal(value: float)
+6:0 Constant SIGNAL_NAME -> String
+6:20 GDStringExpression "game_start..." -> String
+7:0 Constant METHOD_NAME -> String
+7:20 GDStringExpression "start" -> String
+9:0 Variable player_speed -> float
+9:26 GDNumberExpression 10.0 -> float
+12:0 Method start -> void
+13:1 GDCallExpression emit_signal() -> Error
+13:1 GDIdentifierExpression emit_signal -> Error
+13:13 GDStringExpression "game_start..." -> String
+14:1 GDCallExpression emit_signal() -> Error
+14:1 GDIdentifierExpression emit_signal -> Error
+14:13 GDIdentifierExpression SIGNAL_NAME -> String
+17:0 Method check_reflections -> void
+18:4 GDCallExpression has_signal() -> bool
+18:4 GDIdentifierExpression has_signal -> bool
+18:15 GDStringExpression "game_start..." -> String
+19:2 GDPassExpression pass -> void
+20:4 GDCallExpression has_method() -> bool
+20:4 GDIdentifierExpression has_method -> bool
+20:15 GDStringExpression "start" -> String
+21:2 GDPassExpression pass -> void
+22:1 GDCallExpression call() -> Variant
+22:1 GDIdentifierExpression call -> Variant
+22:6 GDStringExpression "start" -> String
+23:1 GDCallExpression call_deferred() -> Variant
+23:1 GDIdentifierExpression call_deferred -> Variant
+23:15 GDStringExpression "start" -> String
+24:1 GDCallExpression call() -> Variant
+24:1 GDIdentifierExpression call -> Variant
+24:6 GDIdentifierExpression METHOD_NAME -> String
+25:1 Variable speed -> Variant
+25:13 GDCallExpression get() -> Variant
+25:13 GDIdentifierExpression get -> Variant
+25:17 GDStringExpression "player_spe..." -> String
+26:1 GDCallExpression set() -> void
+26:1 GDIdentifierExpression set -> void
+26:5 GDStringExpression "player_spe..." -> String
+26:21 GDNumberExpression 20.0 -> float
+29:0 Method create_callable -> void
+30:1 Variable cb -> Callable
+30:10 GDCallExpression Callable() -> Callable
+30:10 GDIdentifierExpression Callable -> Callable
+30:19 GDIdentifierExpression self -> ReflectionTest
+30:25 GDStringExpression "start" -> String
+31:1 Variable cb2 -> Callable
+31:11 GDCallExpression Callable() -> Callable
+31:11 GDIdentifierExpression Callable -> Callable
+31:20 GDIdentifierExpression self -> ReflectionTest
+31:26 GDIdentifierExpression METHOD_NAME -> String
+34:0 Method concat_cases -> void
+35:1 GDCallExpression emit_signal() -> Error
+35:1 GDIdentifierExpression emit_signal -> Error
+35:13 GDDualOperatorExpression "game"Addition"_started" -> String
+35:13 GDStringExpression "game" -> String
+35:22 GDStringExpression "_started" -> String
+36:1 GDCallExpression call() -> Variant
+36:1 GDIdentifierExpression call -> Variant
+36:6 GDDualOperatorExpression "st"Addition"art" -> String
+36:6 GDStringExpression "st" -> String
+36:13 GDStringExpression "art" -> String
 
 test_scripts/rename_test.gd
 6:0 Variable local_speed -> Variant
@@ -11785,7 +11865,7 @@ test_scripts/scene_nodes.gd
 91:1 GDReturnExpression return _find_recursive() -> Variant
 91:8 GDCallExpression _find_recursive() -> Node
 91:8 GDIdentifierExpression _find_recursive -> Callable
-91:24 GDIdentifierExpression self -> self
+91:24 GDIdentifierExpression self -> SceneNodes
 91:30 GDIdentifierExpression node_name -> String
 94:0 Method _find_recursive -> Node
 94:21 Parameter node -> Node
@@ -11958,7 +12038,7 @@ test_scripts/scene_nodes.gd
 188:5 GDDualOperatorExpression childNotEqualselfAnd2child.nameEqual"Sibling" -> bool
 188:5 GDDualOperatorExpression childNotEqualself -> bool
 188:5 GDIdentifierExpression child -> Node
-188:14 GDIdentifierExpression self -> self
+188:14 GDIdentifierExpression self -> SceneNodes
 188:23 GDDualOperatorExpression child.nameEqual"Sibling" -> bool
 188:23 GDMemberOperatorExpression child.name -> StringName
 188:23 GDIdentifierExpression child -> Node
@@ -12635,7 +12715,7 @@ test_scripts/signal_callback_chains.gd
 64:14 GDStringExpression "pending" -> String
 65:1 Variable _value -> Variant
 66:1 Variable _error -> Variant
-68:1 Method then -> self
+68:1 Method then -> SignalCallbackChains
 68:11 Parameter callback -> Variant
 69:2 GDDualOperatorExpression _resolve_callbackAssignmentcallback -> Variant
 69:2 GDIdentifierExpression _resolve_callback -> Variant
@@ -12646,8 +12726,8 @@ test_scripts/signal_callback_chains.gd
 71:3 GDCallExpression _call_resolve() -> Variant
 71:3 GDIdentifierExpression _call_resolve -> Callable
 72:2 GDReturnExpression return self -> Variant
-72:9 GDIdentifierExpression self -> self
-74:1 Method catch_error -> self
+72:9 GDIdentifierExpression self -> SignalCallbackChains
+74:1 Method catch_error -> SignalCallbackChains
 74:18 Parameter callback -> Variant
 75:2 GDDualOperatorExpression _reject_callbackAssignmentcallback -> Variant
 75:2 GDIdentifierExpression _reject_callback -> Variant
@@ -12658,8 +12738,8 @@ test_scripts/signal_callback_chains.gd
 77:3 GDCallExpression _call_reject() -> Variant
 77:3 GDIdentifierExpression _call_reject -> Callable
 78:2 GDReturnExpression return self -> Variant
-78:9 GDIdentifierExpression self -> self
-80:1 Method finally_do -> self
+78:9 GDIdentifierExpression self -> SignalCallbackChains
+80:1 Method finally_do -> SignalCallbackChains
 80:17 Parameter callback -> Variant
 81:2 GDDualOperatorExpression _finally_callbackAssignmentcallback -> Variant
 81:2 GDIdentifierExpression _finally_callback -> Variant
@@ -12670,7 +12750,7 @@ test_scripts/signal_callback_chains.gd
 83:3 GDCallExpression _call_finally() -> Variant
 83:3 GDIdentifierExpression _call_finally -> Callable
 84:2 GDReturnExpression return self -> Variant
-84:9 GDIdentifierExpression self -> self
+84:9 GDIdentifierExpression self -> SignalCallbackChains
 86:1 Method resolve -> null
 86:14 Parameter value -> Variant
 87:5 GDDualOperatorExpression _stateNotEqual"pending" -> bool
@@ -16063,7 +16143,7 @@ test_scripts/type_inference.gd
 214:1 GDCallExpression nodes.append() -> void
 214:1 GDMemberOperatorExpression nodes.append -> void
 214:1 GDIdentifierExpression nodes -> Array[Node2D]
-214:14 GDIdentifierExpression self -> self
+214:14 GDIdentifierExpression self -> TypeInferenceTest
 215:1 Variable first -> Node2D
 215:14 GDIndexerExpression nodes[] -> Node2D
 215:14 GDIdentifierExpression nodes -> Array[Node2D]
@@ -17438,6 +17518,21 @@ test_scripts/union_types_complex.gd
 405:1 GDReturnExpression return "fallback" -> Variant
 405:8 GDStringExpression "fallback" -> String
 
+test_scripts/unrelated_class.gd
+6:0 Variable damage_log -> Array
+6:24 GDArrayInitializerExpression [...] -> Array
+9:0 Method take_damage -> void
+9:17 Parameter amount -> int
+10:1 GDCallExpression damage_log.append() -> void
+10:1 GDMemberOperatorExpression damage_log.append -> void
+10:1 GDIdentifierExpression damage_log -> Array
+10:19 GDIdentifierExpression amount -> int
+13:0 Method _process -> void
+13:14 Parameter delta -> float
+14:1 GDCallExpression take_damage() -> void
+14:1 GDIdentifierExpression take_damage -> Callable
+14:13 GDNumberExpression 10 -> int
+
 test_scripts/validation_edge_cases.gd
 10:0 Method test_variant_methods -> void
 11:1 Variable arr -> Array
@@ -17499,7 +17594,7 @@ test_scripts/validation_edge_cases.gd
 37:2 GDIdentifierExpression _value -> int
 37:11 GDIdentifierExpression v -> int
 38:2 GDReturnExpression return self -> Variant
-38:9 GDIdentifierExpression self -> self
+38:9 GDIdentifierExpression self -> validation_edge_cases
 43:0 Method process_data -> void
 43:18 Parameter data -> null
 43:25 GDIdentifierExpression null -> null
@@ -17541,4 +17636,4 @@ test_scripts/validation_edge_cases.gd
 68:1 GDReturnExpression return "hello" -> Variant
 68:8 GDStringExpression "hello" -> String
 
-# Summary: 17439 nodes in 50 files
+# Summary: 17528 nodes in 53 files

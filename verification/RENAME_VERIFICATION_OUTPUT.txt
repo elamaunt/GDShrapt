@@ -44,6 +44,16 @@ Strict edits (8):
   test_scripts/player_entity.gd:
     74:2 health_changed -> health_changed_renamed [Strict] (Inherited member 'health_changed' used directly in derived class)
 
+Potential edits (5):
+  test_scripts/scene_references.gd:
+    33:35 health_changed -> health_changed_renamed [Potential] (has_signal("health_changed") string literal)
+    34:19 health_changed -> health_changed_renamed [Potential] (connect("health_changed") string literal)
+  test_scripts/semantic_validation_demo.gd:
+    91:15 health_changed -> health_changed_renamed [Potential] (emit_signal("health_changed") string literal)
+    95:15 health_changed -> health_changed_renamed [Potential] (emit_signal("health_changed") string literal)
+  test_scripts/simple_class.gd:
+    33:15 health_changed -> health_changed_renamed [Potential] (emit_signal("health_changed") string literal)
+
 ---
 
 =======================================
@@ -52,15 +62,33 @@ Source: base_entity.gd
 Result: Success
 =======================================
 
-Strict edits (5):
+Strict edits (8):
+  test_scenes/connection_test.tscn:
+    14:76 take_damage -> take_damage_renamed [Strict] (.tscn signal connection method="take_damage" (target: BaseEntity))
   test_scripts/base_entity.gd:
     28:6 take_damage -> take_damage_renamed [Strict]
   test_scripts/enemy_entity.gd:
-    99:1 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
-    100:2 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
+    60:9 take_damage -> take_damage_renamed [Strict] (Member of BaseEntity)
+    99:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
+    100:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
   test_scripts/player_entity.gd:
-    30:1 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
-    40:2 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
+    30:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
+    40:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
+    98:9 take_damage -> take_damage_renamed [Strict] (Member of BaseEntity)
+
+Potential edits (7):
+  test_scripts/cross_file_inference.gd:
+    92:22 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
+  test_scripts/duck_caller.gd:
+    12:25 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
+    13:11 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'entity')
+  test_scripts/duck_typing_advanced.gd:
+    26:22 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'target')
+  test_scripts/extended_class.gd:
+    30:24 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
+    31:16 take_damage -> take_damage_renamed [Potential] (call("take_damage") string literal)
+  test_scripts/polymorphic_interfaces.gd:
+    41:5 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'e')
 
 ---
 
@@ -209,6 +237,11 @@ Strict edits (13):
     56:3 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
     58:16 player_speed -> player_speed_renamed [Strict] (Inherited member 'player_speed' used directly in derived class)
 
+Potential edits (2):
+  test_scripts/reflection_test.gd:
+    26:19 player_speed -> player_speed_renamed [Potential] (get("player_speed") string literal)
+    27:7 player_speed -> player_speed_renamed [Potential] (set("player_speed") string literal)
+
 ---
 
-# Summary: 10 cases, 90 strict edits, 0 potential edits
+# Summary: 10 cases, 93 strict edits, 14 potential edits

@@ -798,7 +798,7 @@ test_scripts/duck_typing_advanced.gd
       signals: (none)
 
   20:28 Parameter target in process_attack
-    inferred-type: BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass
+    inferred-type: BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass | UnrelatedClass
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -4185,6 +4185,18 @@ test_scripts/union_types_complex.gd
     reason: explicit type annotation
 
 
+test_scripts/unrelated_class.gd
+  9:17 Parameter amount in take_damage
+    inferred-type: int
+    confidence: Certain
+    reason: explicit type annotation
+
+  13:14 Parameter delta in _process
+    inferred-type: float
+    confidence: Certain
+    reason: explicit type annotation
+
+
 test_scripts/validation_edge_cases.gd
   36:16 Parameter v in set_value
     inferred-type: int
@@ -4196,4 +4208,4 @@ test_scripts/validation_edge_cases.gd
     confidence: Unknown
 
 
-# Summary: 697 parameters in 40 files (248 duck-typed)
+# Summary: 699 parameters in 41 files (248 duck-typed)

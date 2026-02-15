@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics;
 /// Static helper methods for loop flow analysis.
 /// Provides fixed-point iteration and iterator type inference.
 /// </summary>
-internal static class GDLoopFlowHelpers
+internal static class GDLoopFlowHelper
 {
     /// <summary>
     /// Maximum iterations for fixed-point loop analysis.

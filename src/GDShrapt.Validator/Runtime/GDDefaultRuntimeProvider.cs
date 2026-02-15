@@ -809,6 +809,26 @@ namespace GDShrapt.Reader
             };
         }
 
+        public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer()
+        {
+            return System.Array.Empty<string>();
+        }
+
+        public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails()
+        {
+            return System.Array.Empty<GDCollisionLayerInfo>();
+        }
+
+        public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers()
+        {
+            return System.Array.Empty<string>();
+        }
+
+        public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails()
+        {
+            return System.Array.Empty<GDAvoidanceLayerInfo>();
+        }
+
         private static string ExtractBaseTypeName(string typeName)
         {
             if (string.IsNullOrEmpty(typeName))

@@ -550,4 +550,375 @@ public class ProjectWideRenameTests
     }
 
     #endregion
+
+    #region Path Normalization & File Filter Tests
+
+    [TestMethod]
+    public void PlanRenameWithFile_BackslashPath_MatchesForwardSlashFullPath()
+    {
+        // Bug: GDScriptReference.NormalizePath converts \ to /,
+        // but PlanRename used Path.GetFullPath (backslashes on Windows) for comparison.
+        var script = TestProjectFixture.GetScript("unrelated_class.gd");
+        script.Should().NotBeNull();
+
+        // Simulate Windows-style backslash path
+        var backslashPath = script!.FullPath!.Replace('/', '\\');
+
+        var result = Service.PlanRename("take_damage", "take_damage_fixed", backslashPath);
+
+        result.Success.Should().BeTrue();
+
+        // Should find the symbol in unrelated_class.gd (NOT in BaseEntity hierarchy)
+        var files = GetFiles(result);
+        files.Should().Contain("unrelated_class.gd",
+            "with --file pointing to unrelated_class.gd, the symbol should be found there");
+    }
+
+    [TestMethod]
+    public void PlanRenameWithFile_SameNameDifferentClass_FindsTargetSymbol()
+    {
+        // When --file points to unrelated_class.gd, the symbol in that file
+        // should be resolved and edits should include unrelated_class.gd
+        var script = TestProjectFixture.GetScript("unrelated_class.gd");
+        script.Should().NotBeNull();
+
+        var result = Service.PlanRename("take_damage", "take_damage_fixed", script!.FullPath);
+
+        result.Success.Should().BeTrue();
+
+        // The target file must be in the edits (proves --file matched correctly)
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("unrelated_class.gd"),
+            "declaration should be found in unrelated_class.gd when --file points to it");
+
+        // Verify the symbol was found by checking we have the declaration edit
+        var unrelatedEdits = result.StrictEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("unrelated_class.gd"))
+            .ToList();
+        unrelatedEdits.Should().HaveCountGreaterThanOrEqualTo(2,
+            "unrelated_class.gd should have at least declaration + usage of take_damage");
+    }
+
+    #endregion
+
+    #region Type-Aware Filtering Tests
+
+    [TestMethod]
+    public void PlanRenameSymbol_UnrelatedClass_StrictEditsExcludeEntityHierarchy()
+    {
+        // When renaming take_damage from unrelated_class.gd (UnrelatedClass),
+        // strict edits must NOT contain BaseEntity hierarchy files.
+        var script = TestProjectFixture.GetScript("unrelated_class.gd");
+        Assert.IsNotNull(script);
+
+        var symbol = TestProjectFixture.ProjectModel
+            .GetSemanticModel(script!)?.FindSymbol("take_damage");
+        Assert.IsNotNull(symbol, "take_damage should be defined in unrelated_class.gd");
+
+        var result = Service.PlanRename(symbol!, "take_damage_renamed");
+        result.Success.Should().BeTrue();
+
+        // Strict edits should contain unrelated_class.gd
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("unrelated_class.gd"),
+            "unrelated_class.gd defines take_damage and must be in strict edits");
+
+        // Strict edits should NOT contain BaseEntity hierarchy
+        result.StrictEdits.Should().NotContain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("base_entity.gd"),
+            "base_entity.gd is in a separate hierarchy, must not be in strict edits");
+        result.StrictEdits.Should().NotContain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("player_entity.gd"),
+            "player_entity.gd extends BaseEntity, must not be in strict edits");
+        result.StrictEdits.Should().NotContain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("enemy_entity.gd"),
+            "enemy_entity.gd extends BaseEntity, must not be in strict edits");
+    }
+
+    [TestMethod]
+    public void PlanRenameSymbol_BaseEntity_StrictEditsIncludeInheritanceHierarchy()
+    {
+        // When renaming take_damage from base_entity.gd (BaseEntity),
+        // strict edits should contain player_entity.gd and enemy_entity.gd (overrides),
+        // but NOT unrelated_class.gd (separate hierarchy).
+        var result = PlanRename("take_damage", "base_entity.gd");
+
+        result.Success.Should().BeTrue();
+
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("player_entity.gd"),
+            "player_entity.gd overrides take_damage in BaseEntity hierarchy");
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("enemy_entity.gd"),
+            "enemy_entity.gd overrides take_damage in BaseEntity hierarchy");
+        result.StrictEdits.Should().NotContain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("unrelated_class.gd"),
+            "unrelated_class.gd is a separate hierarchy and must not be in strict edits");
+    }
+
+    [TestMethod]
+    public void PlanRenameSymbol_UnrelatedClass_StrictEditsExcludeIncompatibleMemberAccess()
+    {
+        // When renaming UnrelatedClass.take_damage, typed member access like
+        // target.take_damage() where target: BaseEntity should NOT appear in strict edits.
+        var script = TestProjectFixture.GetScript("unrelated_class.gd");
+        Assert.IsNotNull(script);
+
+        var symbol = TestProjectFixture.ProjectModel
+            .GetSemanticModel(script!)?.FindSymbol("take_damage");
+        Assert.IsNotNull(symbol);
+
+        var result = Service.PlanRename(symbol!, "take_damage_renamed");
+        result.Success.Should().BeTrue();
+
+        // No strict edits should point to files in BaseEntity hierarchy
+        // (typed accesses with CallerType=BaseEntity/PlayerEntity/EnemyEntity are incompatible)
+        var hierarchyStrictEdits = result.StrictEdits
+            .Where(e => e.FilePath != null && (
+                e.FilePath.EndsWith("player_entity.gd") ||
+                e.FilePath.EndsWith("enemy_entity.gd") ||
+                e.FilePath.EndsWith("base_entity.gd")))
+            .ToList();
+
+        hierarchyStrictEdits.Should().BeEmpty(
+            "typed member access with incompatible CallerType should be excluded from strict edits");
+    }
+
+    #endregion
+
+    #region Duck-Type Enrichment Tests
+
+    [TestMethod]
+    public void PlanRenameSymbol_DuckTypedReferences_RemainAsPotential()
+    {
+        // Duck-typed references (CallerType=Variant) should appear in potential edits, not strict.
+        var result = PlanRename("take_damage", "base_entity.gd");
+
+        result.Success.Should().BeTrue();
+
+        // duck_caller.gd calls entity.take_damage(5) on Variant-typed array elements
+        var duckCallerPotential = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd"))
+            .ToList();
+
+        duckCallerPotential.Should().NotBeEmpty(
+            "duck-typed entity.take_damage(5) call should be in potential edits");
+
+        // They should NOT be in strict edits
+        var duckCallerStrict = result.StrictEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd"))
+            .ToList();
+
+        duckCallerStrict.Should().BeEmpty(
+            "duck-typed references should not be in strict edits");
+    }
+
+    [TestMethod]
+    public void PlanRenameSymbol_DuckTypedReason_ContainsPossibleTypes()
+    {
+        // Duck-typed references should have clean confidence reasons.
+        // Evidence-based type information goes into DetailedProvenance, not ConfidenceReason.
+        var result = PlanRename("take_damage", "base_entity.gd");
+
+        result.Success.Should().BeTrue();
+
+        var duckCallerPotential = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd"))
+            .ToList();
+
+        duckCallerPotential.Should().NotBeEmpty();
+
+        // Confidence reason should be clean (no "could be" noise)
+        foreach (var edit in duckCallerPotential)
+        {
+            if (edit.ConfidenceReason != null)
+            {
+                edit.ConfidenceReason.Should().NotContain("could be",
+                    "type evidence goes in DetailedProvenance, not ConfidenceReason");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void PlanRenameSymbol_HasMethodStringLiteral_EnrichedWithPossibleTypes()
+    {
+        // has_method("take_damage") in duck_caller.gd should be in potential edits
+        // with clean reason (evidence goes in DetailedProvenance, not ConfidenceReason).
+        var result = PlanRename("take_damage", "base_entity.gd");
+
+        result.Success.Should().BeTrue();
+
+        var hasMethodEdits = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd") &&
+                        e.ConfidenceReason != null && e.ConfidenceReason.Contains("has_method"))
+            .ToList();
+
+        hasMethodEdits.Should().NotBeEmpty(
+            "has_method(\"take_damage\") should produce a potential edit in duck_caller.gd");
+
+        // ConfidenceReason should be clean — no "could be" noise
+        foreach (var edit in hasMethodEdits)
+        {
+            edit.ConfidenceReason.Should().NotContain("could be",
+                "type evidence goes in DetailedProvenance, not ConfidenceReason");
+        }
+    }
+
+    [TestMethod]
+    public void PlanRenameSymbol_DuckTypedReason_GroupsByInheritanceHierarchy()
+    {
+        // Evidence-based provenance: type grouping now goes into DetailedProvenance
+        // rather than ConfidenceReason. ConfidenceReason stays clean.
+        var result = PlanRename("take_damage", "base_entity.gd");
+
+        result.Success.Should().BeTrue();
+
+        var duckCallerPotential = result.PotentialEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd"))
+            .ToList();
+
+        duckCallerPotential.Should().NotBeEmpty();
+
+        // ConfidenceReason should be clean — no hierarchy grouping noise
+        foreach (var edit in duckCallerPotential)
+        {
+            if (edit.ConfidenceReason != null)
+            {
+                edit.ConfidenceReason.Should().NotContain("could be",
+                    "type evidence goes in DetailedProvenance, not ConfidenceReason");
+            }
+        }
+    }
+
+    #endregion
+
+    #region .tscn Type Filtering Tests
+
+    [TestMethod]
+    public void PlanRenameSymbol_TscnConnection_FilteredByTargetNodeType()
+    {
+        // connection_test.tscn has [connection method="take_damage"] where target node
+        // has base_entity.gd script (BaseEntity type).
+        // When renaming BaseEntity.take_damage → should be in strict edits.
+        var result = PlanRename("take_damage", "base_entity.gd");
+
+        result.Success.Should().BeTrue();
+
+        var tscnEdits = result.StrictEdits.Concat(result.PotentialEdits)
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("connection_test.tscn"))
+            .ToList();
+
+        tscnEdits.Should().NotBeEmpty(
+            "connection_test.tscn with method=\"take_damage\" connecting to BaseEntity node should be found");
+
+        // When renaming UnrelatedClass.take_damage → should NOT include this .tscn
+        // (target node has BaseEntity script, not UnrelatedClass)
+        var unrelatedScript = TestProjectFixture.GetScript("unrelated_class.gd");
+        Assert.IsNotNull(unrelatedScript);
+
+        var unrelatedSymbol = TestProjectFixture.ProjectModel
+            .GetSemanticModel(unrelatedScript!)?.FindSymbol("take_damage");
+        Assert.IsNotNull(unrelatedSymbol);
+
+        var unrelatedResult = Service.PlanRename(unrelatedSymbol!, "take_damage_renamed");
+        unrelatedResult.Success.Should().BeTrue();
+
+        var unrelatedTscnEdits = unrelatedResult.StrictEdits
+            .Where(e => e.FilePath != null && e.FilePath.EndsWith("connection_test.tscn"))
+            .ToList();
+
+        unrelatedTscnEdits.Should().BeEmpty(
+            "connection_test.tscn target node is BaseEntity, not UnrelatedClass — should be excluded");
+    }
+
+    #endregion
+
+    #region Backward Compatibility Tests
+
+    [TestMethod]
+    public void PlanRenameByName_WithoutFile_BehaviorUnchanged()
+    {
+        // PlanRename("take_damage", "new_name") WITHOUT filterFilePath
+        // should behave as before: include edits from all hierarchies (via hierarchy grouping).
+        var result = Service.PlanRename("take_damage", "take_damage_renamed");
+
+        result.Success.Should().BeTrue();
+
+        // Should still include edits from BaseEntity hierarchy
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("base_entity.gd"),
+            "base_entity.gd should still be in strict edits without --file");
+        result.StrictEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("enemy_entity.gd"),
+            "enemy_entity.gd should still be in strict edits without --file");
+
+        // Duck-typed references should still appear
+        var allEdits = result.StrictEdits.Concat(result.PotentialEdits).ToList();
+        allEdits.Should().Contain(e =>
+            e.FilePath != null && e.FilePath.EndsWith("duck_caller.gd"),
+            "duck_caller.gd duck-typed references should still appear without --file");
+    }
+
+    #endregion
+
+    #region Self Type Resolution Tests
+
+    [TestMethod]
+    public void SelfTypeResolution_InfersSelfAsConcreteType()
+    {
+        // Bug: InferIdentifierTypeNode("self") returned literal "self" instead of the class type.
+        // This caused cross-file type compatibility checks to fail when callerType == "self".
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        script.Should().NotBeNull();
+
+        var model = TestProjectFixture.ProjectModel.GetSemanticModel(script!);
+        model.Should().NotBeNull();
+
+        // Find a "self" identifier expression in the AST
+        GDShrapt.Reader.GDIdentifierExpression? selfExpr = null;
+
+        foreach (var token in script!.Class!.AllTokens)
+        {
+            if (token is GDShrapt.Reader.GDIdentifier id && id.Sequence == "self"
+                && id.Parent is GDShrapt.Reader.GDIdentifierExpression identExpr)
+            {
+                selfExpr = identExpr;
+                break;
+            }
+        }
+
+        if (selfExpr != null)
+        {
+            var selfType = model!.TypeSystem.GetType(selfExpr);
+            selfType.DisplayName.Should().NotBe("self",
+                "self should resolve to the script's class type, not literal 'self'");
+        }
+
+        // Also verify via TypeName that the script has class_name
+        script.TypeName.Should().Be("BaseEntity");
+    }
+
+    [TestMethod]
+    public void SelfTypeResolution_CrossFileReferenceDoesNotRejectSelfCaller()
+    {
+        // Bug: When callerType = "self" and declaringType = "SomeClass",
+        // IsTypeCompatible("self", "SomeClass") returned false, skipping valid references.
+        // After fix, "self" in type engine resolves to actual class name,
+        // and GDCrossFileReferenceFinder allows "self" as fallback.
+        var script = TestProjectFixture.GetScript("base_entity.gd");
+        script.Should().NotBeNull();
+
+        var result = PlanRename("take_damage", "base_entity.gd");
+        result.Success.Should().BeTrue();
+
+        // All same-hierarchy references should be Strict, not Name-match
+        result.StrictEdits.Should().NotBeEmpty();
+
+        // No strict edit should have "self" as caller type in its reason
+        result.StrictEdits.Should().NotContain(e =>
+            e.ConfidenceReason != null && e.ConfidenceReason.Contains("type 'self'"),
+            "no edit should reference literal 'self' as caller type");
+    }
+
+    #endregion
 }

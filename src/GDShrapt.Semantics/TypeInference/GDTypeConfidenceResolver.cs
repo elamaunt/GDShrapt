@@ -8,7 +8,7 @@ namespace GDShrapt.Semantics;
 /// Helper for type inference with confidence tracking.
 /// Wraps GDTypeInferenceEngine and adds confidence levels to results.
 /// </summary>
-internal class GDTypeInferenceHelper
+internal class GDTypeConfidenceResolver
 {
     private readonly GDSemanticModel? _semanticModel;
     private readonly GDTypeResolver? _typeResolver;
@@ -18,7 +18,7 @@ internal class GDTypeInferenceHelper
     /// <summary>
     /// Creates a type inference helper with a semantic model.
     /// </summary>
-    public GDTypeInferenceHelper(GDSemanticModel? semanticModel)
+    public GDTypeConfidenceResolver(GDSemanticModel? semanticModel)
     {
         _semanticModel = semanticModel;
         _typeResolver = null;
@@ -29,7 +29,7 @@ internal class GDTypeInferenceHelper
     /// <summary>
     /// Creates a type inference helper with a type resolver.
     /// </summary>
-    public GDTypeInferenceHelper(GDTypeResolver? typeResolver)
+    public GDTypeConfidenceResolver(GDTypeResolver? typeResolver)
     {
         _semanticModel = null;
         _typeResolver = typeResolver;
@@ -40,7 +40,7 @@ internal class GDTypeInferenceHelper
     /// <summary>
     /// Creates a type inference helper with both semantic model and type resolver.
     /// </summary>
-    public GDTypeInferenceHelper(GDSemanticModel? semanticModel, GDTypeResolver? typeResolver)
+    public GDTypeConfidenceResolver(GDSemanticModel? semanticModel, GDTypeResolver? typeResolver)
     {
         _semanticModel = semanticModel;
         _typeResolver = typeResolver;

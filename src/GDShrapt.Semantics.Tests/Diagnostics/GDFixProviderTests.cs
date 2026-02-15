@@ -348,5 +348,9 @@ func test():
         public string? GetPackedArrayElementType(string packedArrayType) => null;
         public string? ResolveOperatorResult(string leftType, string operatorName, string rightType) => null;
         public IReadOnlyList<string> GetTypesWithOperator(string operatorName) => Array.Empty<string>();
+        public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer() => Array.Empty<string>();
+        public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => Array.Empty<GDCollisionLayerInfo>();
+        public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
+        public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
     }
 }

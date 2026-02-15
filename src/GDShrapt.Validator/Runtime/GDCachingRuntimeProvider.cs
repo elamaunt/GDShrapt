@@ -220,5 +220,25 @@ namespace GDShrapt.Reader
         {
             return _inner.GetTypesWithOperator(operatorName);
         }
+
+        public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer()
+        {
+            return _inner.GetTypesWithNonZeroCollisionLayer();
+        }
+
+        public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails()
+        {
+            return _inner.GetCollisionLayerDetails();
+        }
+
+        public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers()
+        {
+            return _inner.GetTypesWithNonZeroAvoidanceLayers();
+        }
+
+        public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails()
+        {
+            return _inner.GetAvoidanceLayerDetails();
+        }
     }
 }

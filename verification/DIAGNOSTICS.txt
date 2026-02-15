@@ -1,56 +1,56 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-02-13 14:17:01
+Generated: 2026-02-15 22:57:03
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 911
+Total diagnostics: 915
 Scripts analyzed:  53
 
 By Severity:
   Error     :    30
   Hint      :   101
   Info      :    32
-  Warning   :   748
+  Warning   :   752
 
 By Source:
   Linter              :   376
-  SemanticValidator   :   503
+  SemanticValidator   :   507
   Validator           :    32
 
 By Code (Top 30):
-  GD7007    :  262  (Variable 'x' may be null when accessing 'length')
-  GDL201    :  155  (Local variable 'item' is declared but never used)
-  GDL513    :   99  (Expected 2 empty line(s) before function, found 1)
-  GD7006    :   82  (Variable 'subscription' may be null when accessing '[...]')
-  GD3020    :   40  (Variable 'value' may be null; comparison with '<' would c...)
+  GD7007    :  262  (Variable 'result' may be null when accessing 'get')
+  GDL201    :  155  (Local variable 'current_pos' is declared but never used)
+  GDL513    :   99  (Too many empty lines before function (6), expected 2)
+  GD7006    :   82  (Variable 'data' may be null when accessing '[...]')
+  GD3020    :   40  (Variable 'x' may be null; comparison with '>' would cause...)
   GD7005    :   27  (Variable 'timer' may be null when accessing 'timeout')
   GD7003    :   26  (Calling method 'process' on untyped variable 'stage' with...)
-  GDL203    :   25  (Function 'import_from_json' only contains 'pass')
-  GDL001    :   12  (Class name 'DiagnosticsTest_ControlFlowErrors' should use...)
+  GDL203    :   25  (Function '_on_ready' only contains 'pass')
+  GDL001    :   12  (Class name 'DiagnosticsTest_NamingRules' should use Pasca...)
   GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
-  GDL222    :   11  ('UnionReturns' has 22 public methods (max 20))
+  GDL222    :   11  ('UnionTypesComplex' has 28 public methods (max 20))
+  GD3009    :    9  (Property 'global_position' not found on type 'Node')
   GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
-  GD3004    :    9  (Type mismatch: cannot assign 'int' to variable of type 'T...)
-  GD3009    :    9  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GDL101    :    9  (Line 212 exceeds 120 characters (length: 146))
-  GDL202    :    7  (Parameter 'json_string' is declared but never used)
+  GD3004    :    9  (Type mismatch: cannot assign 'int' to variable of type 'T...)
+  GDL202    :    7  (Parameter 'amount' is declared but never used)
   GD3001    :    7  (Type mismatch in assignment: cannot assign 'int' to 'Test...)
   GDL211    :    7  (Local variable 'used_variable' shadows a class-level vari...)
-  GD3010    :    6  (Argument type mismatch for 'x' in call to '_take_int': ex...)
-  GDL223    :    6  ('test_gdl223_invalid' has 8 return statements (max 6))
-  GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
-  GDL210    :    5  (Unreachable code detected)
+  GDL223    :    6  ('check_types' has 8 return statements (max 6))
+  GD3010    :    6  (Argument type mismatch for 'x' in call to 'take_int': exp...)
+  GD3007    :    5  (Cannot return 'validation_edge_cases' from function with ...)
   GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
   GD4009    :    5  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
+  GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
+  GDL210    :    5  (Unreachable code detected)
+  GDL226    :    5  ('test_array_methods' has 17 local variables (max 15))
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
-  GDL226    :    5  ('test_gdl226_invalid' has 16 local variables (max 15))
-  GD4002    :    4  (Method 'nonexistent_method_xyz' not found on type 'Node')
+  GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
   GD3014    :    4  (Type 'int' does not support indexing)
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
-  GD4006    :    3  (Signal 'health_changed' not found on type 'CharacterBody2D')
 
 ================================================================================
 DIAGNOSTICS BY FILE
@@ -696,12 +696,15 @@ DIAGNOSTICS BY FILE
    193:5   [GDL223] Warning - 'check_types' has 8 return statements (max 6)
    206:6   [GD7010] Hint - Redundant type check: 'node' is already declared as 'Node'
 
---- test_scripts/method_chains.gd (6 diagnostics) ---
+--- test_scripts/method_chains.gd (9 diagnostics) ---
 
     13:14  [GD7003] Warning - Calling method 'length' on untyped expression without type guard
     23:45  [GD3020] Warning - Variable 'x' may be null; comparison with '>' would cause runtime error
+    75:2   [GD3007] Warning - Cannot return 'MethodChains' from function with return type 'ConfigBuilder'
     77:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    79:2   [GD3007] Warning - Cannot return 'MethodChains' from function with return type 'ConfigBuilder'
     81:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    83:2   [GD3007] Warning - Cannot return 'MethodChains' from function with return type 'ConfigBuilder'
     85:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    108:9   [GD7003] Warning - Calling method 'to_upper' on untyped expression without type guard
 
@@ -1090,7 +1093,7 @@ DIAGNOSTICS BY FILE
    387:6   [GDL201] Warning - Local variable 'item' is declared but never used
    389:6   [GDL201] Warning - Local variable 'count' is declared but never used
 
---- test_scripts/validation_edge_cases.gd (9 diagnostics) ---
+--- test_scripts/validation_edge_cases.gd (10 diagnostics) ---
 
     15:5   [GDL201] Warning - Local variable 'size' is declared but never used
     20:5   [GDL201] Warning - Local variable 'has' is declared but never used
@@ -1098,6 +1101,7 @@ DIAGNOSTICS BY FILE
     27:5   [GDL201] Warning - Local variable 'result2' is declared but never used
     28:5   [GDL201] Warning - Local variable 'result3' is declared but never used
     29:5   [GDL201] Warning - Local variable 'result4' is declared but never used
+    39:2   [GD3007] Warning - Cannot return 'validation_edge_cases' from function with return type 'SimpleBuilder'
     60:5   [GDL201] Warning - Local variable 'sn2' is declared but never used
     62:5   [GDL201] Warning - Local variable 's' is declared but never used
     65:5   [GDL201] Warning - Local variable 'name' is declared but never used

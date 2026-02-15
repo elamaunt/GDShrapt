@@ -196,7 +196,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         // Check signals
         if (typeData.SignalDatas?.TryGetValue(memberName, out var signal) == true)
         {
-            return GDRuntimeMemberInfo.Signal(signal.GDScriptName);
+            var memberInfo = GDRuntimeMemberInfo.Signal(signal.GDScriptName);
+            memberInfo.Parameters = CreateParameterList(signal.Parameters);
+            return memberInfo;
         }
 
         // Check constants
@@ -1065,4 +1067,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         return result;
     }
+
+    public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer() => Array.Empty<string>();
+    public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => Array.Empty<GDCollisionLayerInfo>();
+    public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
+    public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
 }

@@ -25,6 +25,10 @@ internal sealed class GDNullRuntimeProvider : IGDRuntimeProvider
     public bool IsBuiltinType(string typeName) => false;
     public IEnumerable<string> GetAllTypes() => [];
     public IReadOnlyList<string> FindTypesWithMethod(string methodName) => [];
+    public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer() => [];
+    public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => [];
+    public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => [];
+    public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => [];
     public bool IsNumericType(string typeName) => GDWellKnownTypes.IsNumericType(typeName);
     public bool IsStringType(string typeName) => GDWellKnownTypes.IsStringType(typeName);
     public bool IsVectorType(string typeName) => GDWellKnownTypes.IsVectorType(typeName);

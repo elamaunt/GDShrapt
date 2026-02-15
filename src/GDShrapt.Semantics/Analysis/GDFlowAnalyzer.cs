@@ -372,7 +372,7 @@ internal class GDFlowAnalyzer : GDVisitor
         if (!string.IsNullOrEmpty(iteratorName))
         {
             var collectionType = _typeEngine?.InferSemanticType(forStmt.Collection)?.DisplayName;
-            var elementType = GDLoopFlowHelpers.InferIteratorElementType(collectionType);
+            var elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType);
             context.IteratorName = iteratorName;
             context.IteratorType = elementType;
         }
@@ -398,7 +398,7 @@ internal class GDFlowAnalyzer : GDVisitor
         if (context != null)
         {
             // Perform fixed-point iteration to stabilize loop types
-            _currentState = GDLoopFlowHelpers.ComputeLoopFixedPoint(
+            _currentState = GDLoopFlowHelper.ComputeLoopFixedPoint(
                 context.PreLoopState,
                 _currentState,
                 context.IteratorName,
@@ -445,7 +445,7 @@ internal class GDFlowAnalyzer : GDVisitor
         if (context != null)
         {
             // Perform fixed-point iteration to stabilize loop types
-            _currentState = GDLoopFlowHelpers.ComputeLoopFixedPoint(
+            _currentState = GDLoopFlowHelper.ComputeLoopFixedPoint(
                 context.PreLoopState,
                 _currentState,
                 null,
@@ -687,12 +687,12 @@ internal class GDFlowAnalyzer : GDVisitor
             var opType = eqOp.Operator?.OperatorType;
             if (opType == GDDualOperatorType.NotEqual || opType == GDDualOperatorType.Equal)
             {
-                GDFlowNarrowingHelpers.ApplyNullComparisonNarrowing(eqOp, state);
+                GDFlowNarrowingHelper.ApplyNullComparisonNarrowing(eqOp, state);
 
                 // Also handle: x == literal (narrows to literal's type)
                 if (opType == GDDualOperatorType.Equal)
                 {
-                    GDFlowNarrowingHelpers.ApplyLiteralComparisonNarrowing(eqOp, state);
+                    GDFlowNarrowingHelper.ApplyLiteralComparisonNarrowing(eqOp, state);
                 }
             }
 
@@ -706,14 +706,14 @@ internal class GDFlowAnalyzer : GDVisitor
         // Handle: if x (truthiness check)
         if (condition is GDIdentifierExpression truthyIdent)
         {
-            GDFlowNarrowingHelpers.ApplyTruthinessNarrowing(truthyIdent, state);
+            GDFlowNarrowingHelper.ApplyTruthinessNarrowing(truthyIdent, state);
         }
 
         // Handle: has_method(), has(), has_signal(), is_instance_valid(), is_node_ready()
         if (condition is GDCallExpression callExpr)
         {
             ApplyHasMethodNarrowing(callExpr, state);
-            GDFlowNarrowingHelpers.ApplyIsInstanceValidNarrowing(callExpr, state);
+            GDFlowNarrowingHelper.ApplyIsInstanceValidNarrowing(callExpr, state);
             ApplyIsNodeReadyNarrowing(callExpr, state);
         }
 
@@ -867,7 +867,7 @@ internal class GDFlowAnalyzer : GDVisitor
                 var typeName = varType?.EffectiveType.DisplayName;
                 if (!string.IsNullOrEmpty(typeName) && typeName != "Array" && typeName != "Dictionary")
                 {
-                    var extractedType = GDFlowNarrowingHelpers.ExtractElementTypeFromTypeName(typeName);
+                    var extractedType = GDFlowNarrowingHelper.ExtractElementTypeFromTypeName(typeName);
                     if (!string.IsNullOrEmpty(extractedType) && extractedType != "Variant")
                         return extractedType;
                 }
@@ -898,7 +898,7 @@ internal class GDFlowAnalyzer : GDVisitor
         var inferredType = ResolveTypeWithFallback(containerExpr);
         if (!string.IsNullOrEmpty(inferredType))
         {
-            return GDFlowNarrowingHelpers.ExtractElementTypeFromTypeName(inferredType);
+            return GDFlowNarrowingHelper.ExtractElementTypeFromTypeName(inferredType);
         }
 
         return null;
@@ -995,7 +995,7 @@ internal class GDFlowAnalyzer : GDVisitor
             return;
 
         // Get the variable being checked
-        var callerVar = GDFlowNarrowingHelpers.GetRootVariableName(memberOp.CallerExpression);
+        var callerVar = GDFlowNarrowingHelper.GetRootVariableName(memberOp.CallerExpression);
         if (string.IsNullOrEmpty(callerVar))
             return;
 

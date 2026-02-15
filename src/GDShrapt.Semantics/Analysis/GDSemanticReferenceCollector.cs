@@ -1022,7 +1022,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         else
         {
             // Type unknown - check for type narrowing
-            var varName = GDFlowNarrowingHelpers.GetRootVariableName(callerExpr);
+            var varName = GDFlowNarrowingHelper.GetRootVariableName(callerExpr);
             if (!string.IsNullOrEmpty(varName))
             {
                 var narrowedSemanticType = _currentNarrowingContext?.GetConcreteType(varName);

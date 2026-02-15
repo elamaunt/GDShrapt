@@ -295,4 +295,38 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
                 types.Add(type);
         return types.ToList();
     }
+
+    public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer()
+    {
+        var types = new HashSet<string>();
+        foreach (var provider in _providers)
+            foreach (var type in provider.GetTypesWithNonZeroCollisionLayer())
+                types.Add(type);
+        return types.ToList();
+    }
+
+    public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails()
+    {
+        var result = new List<GDCollisionLayerInfo>();
+        foreach (var provider in _providers)
+            result.AddRange(provider.GetCollisionLayerDetails());
+        return result;
+    }
+
+    public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers()
+    {
+        var types = new HashSet<string>();
+        foreach (var provider in _providers)
+            foreach (var type in provider.GetTypesWithNonZeroAvoidanceLayers())
+                types.Add(type);
+        return types.ToList();
+    }
+
+    public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails()
+    {
+        var result = new List<GDAvoidanceLayerInfo>();
+        foreach (var provider in _providers)
+            result.AddRange(provider.GetAvoidanceLayerDetails());
+        return result;
+    }
 }

@@ -485,6 +485,10 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
     public string? GetPackedArrayElementType(string packedArrayType) => null;
     public string? ResolveOperatorResult(string leftType, string operatorName, string rightType) => null;
     public IReadOnlyList<string> GetTypesWithOperator(string operatorName) => System.Array.Empty<string>();
+    public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer() => System.Array.Empty<string>();
+    public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => System.Array.Empty<GDCollisionLayerInfo>();
+    public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => System.Array.Empty<string>();
+    public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => System.Array.Empty<GDAvoidanceLayerInfo>();
 
     #endregion
 }

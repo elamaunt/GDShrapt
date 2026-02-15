@@ -91,6 +91,28 @@ public interface IGDRuntimeProvider
     /// <returns>List of type names that have this method</returns>
     IReadOnlyList<string> FindTypesWithMethod(string methodName);
 
+    /// <summary>
+    /// Returns types that have at least one scene node with non-zero collision_layer.
+    /// These types can potentially participate in physics interactions.
+    /// </summary>
+    IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer();
+
+    /// <summary>
+    /// Returns detailed collision layer info: type name, layer value, and scene path.
+    /// </summary>
+    IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails();
+
+    /// <summary>
+    /// Returns types that have at least one scene node with non-zero avoidance_layers.
+    /// These types can potentially participate in navigation avoidance interactions.
+    /// </summary>
+    IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers();
+
+    /// <summary>
+    /// Returns detailed avoidance layer info: type name, layers value, mask value, and scene path.
+    /// </summary>
+    IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails();
+
     // ========================================
     // Type Traits (from TypesMap)
     // ========================================

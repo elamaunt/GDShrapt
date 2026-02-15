@@ -149,7 +149,7 @@ finally
 | File | Purpose |
 |------|---------|
 | `GDTypeInferenceEngine.cs` | Core inference engine |
-| `GDTypeInferenceHelper.cs` | Static helper methods |
+| `GDTypeConfidenceResolver.cs` | Confidence-tracking type inference facade |
 | `GDTypeResolver.cs` | Type resolution with inheritance |
 | `GDCompositeRuntimeProvider.cs` | Provider composition |
 | `GDGodotTypesProvider.cs` | TypesMap access |

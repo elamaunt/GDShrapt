@@ -650,7 +650,11 @@ namespace GDShrapt.Semantics
                 return CreateSimpleType(builtinType);
 
             if (name == GDWellKnownTypes.Self)
-                return CreateSimpleType(GDWellKnownTypes.Self);
+            {
+                var selfType = identExpr.RootClassDeclaration?.ClassName?.Identifier?.Sequence
+                    ?? _sourceFile?.TypeName;
+                return CreateSimpleType(!string.IsNullOrEmpty(selfType) ? selfType : GDWellKnownTypes.Self);
+            }
 
             if (name == "super")
             {
@@ -799,6 +803,42 @@ namespace GDShrapt.Semantics
             if (localInit != null)
                 return InferTypeNode(localInit);
 
+            // AST fallback: check enclosing method parameters
+            // This handles cases when method scope is not pushed (e.g., GDCallSiteCollector)
+            var paramType = FindEnclosingMethodParameterType(identExpr, name);
+            if (paramType != null)
+                return paramType;
+
+            return null;
+        }
+
+        private static GDTypeNode FindEnclosingMethodParameterType(GDNode node, string paramName)
+        {
+            var current = node.Parent;
+            while (current != null)
+            {
+                if (current is GDMethodDeclaration method)
+                {
+                    foreach (var param in method.Parameters)
+                    {
+                        if (param.Identifier?.Sequence == paramName && param.Type != null)
+                            return param.Type;
+                    }
+                    return null;
+                }
+
+                if (current is GDMethodExpression lambda)
+                {
+                    foreach (var param in lambda.Parameters)
+                    {
+                        if (param.Identifier?.Sequence == paramName && param.Type != null)
+                            return param.Type;
+                    }
+                    return null;
+                }
+
+                current = current.Parent;
+            }
             return null;
         }
 

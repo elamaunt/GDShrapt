@@ -87,7 +87,7 @@ public class GDAddTypeAnnotationService : GDRefactoringServiceBase
         if (!CanExecute(context))
             return GDAddTypeAnnotationResult.Failed("Cannot add type annotation at this position");
 
-        var helper = new GDTypeInferenceHelper(context.GetSemanticModel());
+        var helper = new GDTypeConfidenceResolver(context.GetSemanticModel());
 
         // Try class-level variable
         var varDecl = GetVariableDeclaration(context);

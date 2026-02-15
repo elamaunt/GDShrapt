@@ -285,6 +285,10 @@ namespace GDShrapt.Reader.Tests.Helpers
         public string GetPackedArrayElementType(string packedArrayType) => _builtInProvider.GetPackedArrayElementType(packedArrayType);
         public string ResolveOperatorResult(string leftType, string operatorName, string rightType) => _builtInProvider.ResolveOperatorResult(leftType, operatorName, rightType);
         public IReadOnlyList<string> GetTypesWithOperator(string operatorName) => _builtInProvider.GetTypesWithOperator(operatorName);
+        public IReadOnlyList<string> GetTypesWithNonZeroCollisionLayer() => _builtInProvider.GetTypesWithNonZeroCollisionLayer();
+        public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => _builtInProvider.GetCollisionLayerDetails();
+        public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => _builtInProvider.GetTypesWithNonZeroAvoidanceLayers();
+        public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => _builtInProvider.GetAvoidanceLayerDetails();
 
         #endregion
     }

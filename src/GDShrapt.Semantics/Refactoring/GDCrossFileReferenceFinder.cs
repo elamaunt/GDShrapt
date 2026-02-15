@@ -113,7 +113,9 @@ public class GDCrossFileReferenceFinder
                 if (confidence == GDReferenceConfidence.Strict)
                 {
                     var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
-                    if (!string.IsNullOrEmpty(callerType) && !IsTypeCompatible(callerType, declaringTypeName))
+                    if (!string.IsNullOrEmpty(callerType)
+                        && callerType != GDWellKnownTypes.Self
+                        && !IsTypeCompatible(callerType, declaringTypeName))
                         continue;
                 }
 

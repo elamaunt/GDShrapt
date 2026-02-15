@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// Static helper methods for flow-sensitive type narrowing.
 /// Extracted from GDFlowAnalyzer to reduce its size.
 /// </summary>
-internal static class GDFlowNarrowingHelpers
+internal static class GDFlowNarrowingHelper
 {
     /// <summary>
     /// Extracts element/key type from a type name.

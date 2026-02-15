@@ -221,7 +221,16 @@ public class GDProjectSemanticModel : IDisposable
             var className = scriptFile.TypeName ?? "";
             foreach (var kv in model.ClassContainerProfiles)
             {
-                registry.Register(className, kv.Key, kv.Value, scriptFile.FullPath);
+                // kv.Key is composite "className.variableName" from GDContainerTypeService
+                // Extract just the variable name to avoid double-prefixing in the registry
+                var containerName = kv.Key;
+                var prefix = className + ".";
+                if (!string.IsNullOrEmpty(className) && containerName.StartsWith(prefix))
+                {
+                    containerName = containerName.Substring(prefix.Length);
+                }
+
+                registry.Register(className, containerName, kv.Value, scriptFile.FullPath);
             }
         }
 

@@ -70,7 +70,7 @@ public class GDAddTypeAnnotationsService
     private static void TryAddAnnotationCore(
         GDScriptFile file,
         IAnnotationContext context,
-        GDTypeInferenceHelper helper,
+        GDTypeConfidenceResolver helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations)
     {
@@ -135,7 +135,7 @@ public class GDAddTypeAnnotationsService
         if (file?.Class == null)
             return GDAddTypeAnnotationsResult.Failed("File has no class declaration");
 
-        var helper = new GDTypeInferenceHelper(file.SemanticModel);
+        var helper = new GDTypeConfidenceResolver(file.SemanticModel);
         var annotations = new List<GDTypeAnnotationPlan>();
 
         CollectAnnotations(file, file.Class, helper, options, annotations);
@@ -149,7 +149,7 @@ public class GDAddTypeAnnotationsService
     internal void CollectAnnotations(
         GDScriptFile file,
         GDClassDeclaration classDecl,
-        GDTypeInferenceHelper helper,
+        GDTypeConfidenceResolver helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations)
     {
@@ -185,7 +185,7 @@ public class GDAddTypeAnnotationsService
     private void CollectMethodAnnotations(
         GDScriptFile file,
         GDMethodDeclaration methodDecl,
-        GDTypeInferenceHelper helper,
+        GDTypeConfidenceResolver helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations)
     {
@@ -208,7 +208,7 @@ public class GDAddTypeAnnotationsService
     private static void CollectLocalVariableAnnotations(
         GDScriptFile file,
         IEnumerable<GDStatement> statements,
-        GDTypeInferenceHelper helper,
+        GDTypeConfidenceResolver helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations)
     {
@@ -222,13 +222,13 @@ public class GDAddTypeAnnotationsService
     private sealed class LocalVariableAnnotationsCollector : GDStatementTraverser
     {
         private readonly GDScriptFile _file;
-        private readonly GDTypeInferenceHelper _helper;
+        private readonly GDTypeConfidenceResolver _helper;
         private readonly GDTypeAnnotationOptions _options;
         private readonly List<GDTypeAnnotationPlan> _annotations;
 
         public LocalVariableAnnotationsCollector(
             GDScriptFile file,
-            GDTypeInferenceHelper helper,
+            GDTypeConfidenceResolver helper,
             GDTypeAnnotationOptions options,
             List<GDTypeAnnotationPlan> annotations)
         {
@@ -248,7 +248,7 @@ public class GDAddTypeAnnotationsService
     private static void TryAddVariableAnnotation(
         GDScriptFile file,
         GDVariableDeclaration varDecl,
-        GDTypeInferenceHelper helper,
+        GDTypeConfidenceResolver helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations) =>
         TryAddAnnotationCore(file, new VariableAnnotationContext(varDecl), helper, options, annotations);
@@ -256,7 +256,7 @@ public class GDAddTypeAnnotationsService
     private static void TryAddLocalVariableAnnotation(
         GDScriptFile file,
         GDVariableDeclarationStatement varStmt,
-        GDTypeInferenceHelper helper,
+        GDTypeConfidenceResolver helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations) =>
         TryAddAnnotationCore(file, new LocalVariableAnnotationContext(varStmt), helper, options, annotations);
@@ -264,7 +264,7 @@ public class GDAddTypeAnnotationsService
     private static void TryAddParameterAnnotation(
         GDScriptFile file,
         GDParameterDeclaration param,
-        GDTypeInferenceHelper helper,
+        GDTypeConfidenceResolver helper,
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations) =>
         TryAddAnnotationCore(file, new ParameterAnnotationContext(param), helper, options, annotations);
