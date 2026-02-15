@@ -6,7 +6,7 @@
 # GDShrapt
 
 <p align="center">
-  <a href="https://www.nuget.org/packages/GDShrapt.Reader"><img src="https://img.shields.io/nuget/v/GDShrapt.Reader.svg" alt="NuGet" /></a>
+  <a href="https://www.nuget.org/packages/GDShrapt.CLI"><img src="https://img.shields.io/nuget/v/GDShrapt.CLI.svg" alt="NuGet" /></a>
   <a href="https://github.com/elamaunt/GDShrapt/actions/workflows/dotnet.yml"><img src="https://github.com/elamaunt/GDShrapt/actions/workflows/dotnet.yml/badge.svg" alt="Build" /></a>
   <a href="https://codecov.io/gh/elamaunt/GDShrapt"><img src="https://codecov.io/gh/elamaunt/GDShrapt/branch/main/graph/badge.svg" alt="Coverage" /></a>
   <img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/elamaunt/f47cdb337674014c25610e6ba59d8426/raw/gdshrapt-tests.json" alt="Tests" />
