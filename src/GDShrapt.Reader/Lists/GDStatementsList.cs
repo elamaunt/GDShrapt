@@ -7,11 +7,13 @@ namespace GDShrapt.Reader
     {
         bool _completed;
         readonly bool _inExpressionContext;
+        readonly bool _allowZeroIndentationOnFirstLine;
 
-        internal GDStatementsList(int lineIntendation, bool inExpressionContext = false)
+        internal GDStatementsList(int lineIntendation, bool inExpressionContext = false, bool allowZeroIndentationOnFirstLine = false)
              : base(lineIntendation)
         {
             _inExpressionContext = inExpressionContext;
+            _allowZeroIndentationOnFirstLine = allowZeroIndentationOnFirstLine;
         }
 
         public GDStatementsList()
@@ -24,7 +26,9 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext));
+                var resolver = new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext);
+                resolver.AllowZeroIntendationOnFirstLine = _allowZeroIndentationOnFirstLine;
+                state.Push(resolver);
                 state.PassChar(c);
                 return;
             }
@@ -37,7 +41,9 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext));
+                var resolver = new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext);
+                resolver.AllowZeroIntendationOnFirstLine = _allowZeroIndentationOnFirstLine;
+                state.Push(resolver);
                 state.PassNewLine();
                 return;
             }
@@ -50,7 +56,9 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
-                state.Push(new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext));
+                var resolver = new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext);
+                resolver.AllowZeroIntendationOnFirstLine = _allowZeroIndentationOnFirstLine;
+                state.Push(resolver);
                 state.PassCarriageReturnChar();
                 return;
             }

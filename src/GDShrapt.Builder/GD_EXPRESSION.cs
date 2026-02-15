@@ -376,6 +376,35 @@ namespace GDShrapt.Builder
                 Expression = body
             };
 
+            public static GDMethodExpression Lambda(GDParametersList parameters, GDStatementsList statements) => new GDMethodExpression()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                Statements = statements
+            };
+
+            public static GDMethodExpression Lambda(GDParametersList parameters, params GDStatement[] statements) => new GDMethodExpression()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                Parameters = parameters,
+                CloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                Statements = List.Statements(statements)
+            };
+
+            public static GDMethodExpression Lambda(GDStatementsList statements) => new GDMethodExpression()
+            {
+                FuncKeyword = new GDFuncKeyword(),
+                OpenBracket = new GDOpenBracket(),
+                CloseBracket = new GDCloseBracket(),
+                Colon = new GDColon(),
+                Statements = statements
+            };
+
             /// <summary>
             /// Creates a rest/spread expression (..) used in pattern matching
             /// </summary>

@@ -64,7 +64,9 @@
                 default:
                     if (!this.ResolveSpaceToken(c, state))
                     {
-                        if (_waitForEndLine)
+                        if (c.IsExpressionStopChar())
+                            state.PopAndPass(c);
+                        else if (_waitForEndLine)
                             this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                         else
                             state.PopAndPass(c);

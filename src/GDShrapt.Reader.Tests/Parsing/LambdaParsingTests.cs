@@ -504,5 +504,53 @@ func second():
             AssertHelper.CompareCodeStrings(code, declaration.ToString());
             AssertHelper.NoInvalidTokens(declaration);
         }
+
+        [TestMethod]
+        public void ParseLambda_WithInlineIfStatement()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+    var f = func(): if is_instance_valid(self) and poison_timer: poison_timer.stop()";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseLambda_WithInlineIfStatement_InFunctionCall()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"func test():
+    timer.timeout.connect(func(): if cond: do_thing())
+    print(""after"")";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseLambda_WithInlineIfStatement_InArray()
+        {
+            var reader = new GDScriptReader();
+
+            var code = @"var callbacks = [
+    func(): if cond: do_a(),
+    func(): if cond: do_b(),
+]";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
     }
 }

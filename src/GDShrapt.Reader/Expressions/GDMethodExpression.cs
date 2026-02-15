@@ -74,7 +74,7 @@ namespace GDShrapt.Reader
 
         public GDStatementsList Statements
         {
-            get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1, inExpressionContext: true));
+            get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1, inExpressionContext: true, allowZeroIndentationOnFirstLine: true));
             set => _form.Token9 = value;
         }
 
@@ -161,7 +161,9 @@ namespace GDShrapt.Reader
                         return;
                     }
 
-                    this.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
+                    // Single-line lambda body with statement (e.g., func(): if cond: body)
+                    _form.State = State.Completed;
+                    state.PushAndPass(Statements, c);
                     break;
                 default:
                     state.PopAndPass(c);

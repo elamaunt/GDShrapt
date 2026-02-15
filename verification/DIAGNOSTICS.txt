@@ -1,6 +1,6 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-02-15 22:57:03
+Generated: 2026-02-16 00:21:00
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
@@ -21,34 +21,34 @@ By Source:
   Validator           :    32
 
 By Code (Top 30):
-  GD7007    :  262  (Variable 'result' may be null when accessing 'get')
+  GD7007    :  262  (Variable 'predicate' may be null when accessing 'call')
   GDL201    :  155  (Local variable 'current_pos' is declared but never used)
-  GDL513    :   99  (Too many empty lines before function (6), expected 2)
-  GD7006    :   82  (Variable 'data' may be null when accessing '[...]')
-  GD3020    :   40  (Variable 'x' may be null; comparison with '>' would cause...)
-  GD7005    :   27  (Variable 'timer' may be null when accessing 'timeout')
+  GDL513    :   99  (Expected 2 empty line(s) before function, found 1)
+  GD7006    :   82  (Variable 'transform' may be null when accessing '[...]')
+  GD3020    :   40  (Variable 'maximum' may be null; comparison with '<' would...)
+  GD7005    :   27  (Variable 'position' may be null when accessing 'x')
   GD7003    :   26  (Calling method 'process' on untyped variable 'stage' with...)
   GDL203    :   25  (Function '_on_ready' only contains 'pass')
-  GDL001    :   12  (Class name 'DiagnosticsTest_NamingRules' should use Pasca...)
-  GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
-  GDL222    :   11  ('UnionTypesComplex' has 28 public methods (max 20))
-  GD3009    :    9  (Property 'global_position' not found on type 'Node')
-  GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
-  GDL101    :    9  (Line 212 exceeds 120 characters (length: 146))
+  GDL001    :   12  (Class name 'DiagnosticsTest_CallErrors' should use Pascal...)
+  GD2001    :   12  (Undefined identifier: 'undefined_var_1')
+  GDL222    :   11  ('ECSLikeSystem' has 31 public methods (max 20))
+  GDL003    :    9  (Variable name 'NotSuppressedBadVar1' should use snake_case)
+  GDL101    :    9  (Line 263 exceeds 120 characters (length: 159))
+  GD3009    :    9  (Enum value 'NONEXISTENT_VALUE' not found in enum 'TestEnum')
   GD3004    :    9  (Type mismatch: cannot assign 'int' to variable of type 'T...)
-  GDL202    :    7  (Parameter 'amount' is declared but never used)
-  GD3001    :    7  (Type mismatch in assignment: cannot assign 'int' to 'Test...)
-  GDL211    :    7  (Local variable 'used_variable' shadows a class-level vari...)
+  GDL202    :    7  (Parameter 'delta' is declared but never used)
+  GD3001    :    7  (Type mismatch in assignment: cannot assign 'float' to 'int')
+  GDL211    :    7  (Local variable 'a' shadows a class-level variable)
   GDL223    :    6  ('check_types' has 8 return statements (max 6))
-  GD3010    :    6  (Argument type mismatch for 'x' in call to 'take_int': exp...)
-  GD3007    :    5  (Cannot return 'validation_edge_cases' from function with ...)
-  GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
+  GD3010    :    6  (Argument type mismatch for 'new_state' in call to 'change...)
   GD4009    :    5  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
+  GDL002    :    5  (Function name 'MultiNotSuppressedFunc' should use snake_case)
+  GD3007    :    5  (Cannot return 'validation_edge_cases' from function with ...)
+  GDL226    :    5  ('test_gdl226_invalid' has 16 local variables (max 15))
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
   GDL210    :    5  (Unreachable code detected)
-  GDL226    :    5  ('test_array_methods' has 17 local variables (max 15))
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
-  GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
+  GD4002    :    4  (Method 'nonexistent_method_xyz' not found on type 'Node')
   GD3014    :    4  (Type 'int' does not support indexing)
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
 

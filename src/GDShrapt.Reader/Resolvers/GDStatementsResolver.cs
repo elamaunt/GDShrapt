@@ -64,6 +64,11 @@ namespace GDShrapt.Reader
                 }
                 else
                 {
+                    if (_inExpressionContext && c.IsExpressionStopChar())
+                    {
+                        state.PopAndPass(c);
+                        return;
+                    }
                     Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                 }
                 return;
