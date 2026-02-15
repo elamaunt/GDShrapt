@@ -36,7 +36,7 @@ class SimpleBuilder:
 
 	func set_value(v: int) -> SimpleBuilder:
 		_value = v
-		return self  # Should NOT warn - self is a SimpleBuilder
+		return self  # 39:2-GD3007-SKIP  Should NOT warn - self is a SimpleBuilder
 
 
 # Test 4: Null default parameter (should allow any type)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
@@ -48,6 +49,11 @@ public class GDReferenceGroup
     /// Whether this group uses an inherited symbol (no local declaration).
     /// </summary>
     public bool IsInherited { get; init; }
+
+    /// <summary>
+    /// Whether this group contains cross-file references (duck-typed, potential).
+    /// </summary>
+    public bool IsCrossFile { get; init; }
 
     /// <summary>
     /// Reference locations belonging to this declaration's own file.
@@ -104,4 +110,19 @@ public class GDReferenceLocation
     /// Optional context text around the reference.
     /// </summary>
     public string? Context { get; init; }
+
+    /// <summary>
+    /// Confidence level of this reference (null for declaration-based refs).
+    /// </summary>
+    public GDReferenceConfidence? Confidence { get; init; }
+
+    /// <summary>
+    /// Human-readable reason for the confidence determination.
+    /// </summary>
+    public string? Reason { get; init; }
+
+    /// <summary>
+    /// Whether this reference is a contract string (has_method, emit_signal, etc.).
+    /// </summary>
+    public bool IsContractString { get; init; }
 }

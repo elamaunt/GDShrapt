@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.CLI.Core;
 
@@ -146,9 +147,58 @@ public class GDTextFormatter : IGDOutputFormatter
 
     public void WriteReferenceGroups(TextWriter output, IEnumerable<GDReferenceGroupInfo> groups)
     {
-        foreach (var group in groups)
+        var groupList = groups.ToList();
+        var regularGroups = groupList.Where(g => !g.IsCrossFile).ToList();
+        var crossFileGroups = groupList.Where(g => g.IsCrossFile).ToList();
+
+        foreach (var group in regularGroups)
         {
             WriteGroupTree(output, group, indent: "");
+            output.WriteLine();
+        }
+
+        // Duck-typed / potential references
+        var duckTypedRefs = crossFileGroups
+            .SelectMany(g => g.References.Where(r => !r.IsContractString).Select(r => (Group: g, Ref: r)))
+            .ToList();
+
+        if (duckTypedRefs.Count > 0)
+        {
+            output.WriteLine(GDAnsiColors.Yellow("Duck-typed references:"));
+            var byFile = duckTypedRefs.GroupBy(x => x.Ref.FilePath);
+            foreach (var fileGroup in byFile)
+            {
+                output.WriteLine($"  {fileGroup.Key}");
+                foreach (var (_, reference) in fileGroup.OrderBy(x => x.Ref.Line).ThenBy(x => x.Ref.Column))
+                {
+                    var conf = reference.Confidence.HasValue
+                        ? $"[{reference.Confidence.Value.ToString().ToLowerInvariant()}]"
+                        : "[potential]";
+                    var reason = !string.IsNullOrEmpty(reference.Reason) ? $" {reference.Reason}" : "";
+                    output.WriteLine($"    {reference.Line}:{reference.Column} {GDAnsiColors.Yellow(conf)}{reason}");
+                }
+            }
+            output.WriteLine();
+        }
+
+        // Contract string references
+        var contractRefs = crossFileGroups
+            .SelectMany(g => g.References.Where(r => r.IsContractString).Select(r => (Group: g, Ref: r)))
+            .ToList();
+
+        if (contractRefs.Count > 0)
+        {
+            output.WriteLine(GDAnsiColors.Magenta("Contract strings:"));
+            var byFile = contractRefs.GroupBy(x => x.Ref.FilePath);
+            foreach (var fileGroup in byFile)
+            {
+                output.WriteLine($"  {fileGroup.Key}");
+                foreach (var (_, reference) in fileGroup.OrderBy(x => x.Ref.Line).ThenBy(x => x.Ref.Column))
+                {
+                    var context = !string.IsNullOrEmpty(reference.Context) ? $" {reference.Context}" : "";
+                    output.WriteLine($"    {reference.Line}:{reference.Column}{context}");
+                }
+            }
             output.WriteLine();
         }
     }
@@ -201,7 +251,12 @@ public class GDTextFormatter : IGDOutputFormatter
     private static void WriteReferenceLine(TextWriter output, GDReferenceInfo reference, string indent = "", bool isInherited = false)
     {
         string marker;
-        if (isInherited)
+        if (reference.Confidence.HasValue)
+        {
+            var conf = reference.Confidence.Value.ToString().ToLowerInvariant();
+            marker = reference.IsContractString ? $"[contract-{conf}]" : $"[{conf}]";
+        }
+        else if (isInherited)
             marker = reference.IsWrite ? "[write-base]" : "[read-base]";
         else if (reference.IsOverride)
             marker = "[overr]";

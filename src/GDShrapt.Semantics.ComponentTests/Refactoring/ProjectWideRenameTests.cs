@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Runtime.InteropServices;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -558,6 +559,10 @@ public class ProjectWideRenameTests
     {
         // Bug: GDScriptReference.NormalizePath converts \ to /,
         // but PlanRename used Path.GetFullPath (backslashes on Windows) for comparison.
+        // Backslash is a path separator only on Windows; on Linux/macOS it's a valid filename char.
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            Assert.Inconclusive("Backslash path test is Windows-only");
+
         var script = TestProjectFixture.GetScript("unrelated_class.gd");
         script.Should().NotBeNull();
 

@@ -72,15 +72,15 @@ class ConfigBuilder:
 
 	func set_name(name: String) -> ConfigBuilder:
 		_name = name
-		return self
+		return self  # 75:2-GD3007-SKIP
 
 	func set_value(value: int) -> ConfigBuilder:  # 77:1-GDL513-OK
 		_value = value
-		return self
+		return self  # 79:2-GD3007-SKIP
 
 	func set_enabled(enabled: bool) -> ConfigBuilder:  # 81:1-GDL513-OK
 		_enabled = enabled
-		return self
+		return self  # 83:2-GD3007-SKIP
 
 	func build() -> Dictionary:  # 85:1-GDL513-OK
 		return {"name": _name, "value": _value, "enabled": _enabled}

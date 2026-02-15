@@ -1,30 +1,23 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-02-16 00:21:40
+Generated: 2026-02-16 02:19:11
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
 Total:           918
 Verified (OK):   914
-Unverified:      4
+Unverified:      0
 False Positives: 0
-Skipped:         0
+Skipped:         4
 Orphaned Markers:0
 
 ================================================================================
-UNVERIFIED DIAGNOSTICS
+SKIPPED (NEEDS ANALYSIS)
 ================================================================================
 
---- test_scripts/method_chains.gd (3 diagnostics) ---
-  75:2 [GD3007] Cannot return 'MethodChains' from function with return type 'ConfigBuilder'
-    Add: # 75:2-GD3007-OK
-  79:2 [GD3007] Cannot return 'MethodChains' from function with return type 'ConfigBuilder'
-    Add: # 79:2-GD3007-OK
-  83:2 [GD3007] Cannot return 'MethodChains' from function with return type 'ConfigBuilder'
-    Add: # 83:2-GD3007-OK
-
---- test_scripts/validation_edge_cases.gd (1 diagnostics) ---
-  39:2 [GD3007] Cannot return 'validation_edge_cases' from function with return type 'SimpleBuilder'
-    Add: # 39:2-GD3007-OK
+  test_scripts/method_chains.gd:75:2 [GD3007]
+  test_scripts/method_chains.gd:79:2 [GD3007]
+  test_scripts/method_chains.gd:83:2 [GD3007]
+  test_scripts/validation_edge_cases.gd:39:2 [GD3007]
 

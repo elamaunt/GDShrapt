@@ -39,6 +39,12 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 CollectGroupFromScript(script, symbolName, rawGroups);
         }
 
+        // Cross-file duck-typed references (project-wide search only)
+        if (string.IsNullOrEmpty(filePath) && _projectModel != null)
+        {
+            AddCrossFileReferences(symbolName, rawGroups);
+        }
+
         return MergeOverrides(rawGroups);
     }
 
@@ -170,10 +176,107 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         }
     }
 
+    private void AddCrossFileReferences(string symbolName, List<RawGroup> rawGroups)
+    {
+        // Find the declaring script: first root group (non-override, non-inherited)
+        var existingFiles = new HashSet<string>(
+            rawGroups.Select(g => g.FilePath),
+            StringComparer.OrdinalIgnoreCase);
+
+        GDScriptFile? declaringScript = null;
+        Semantics.GDSymbolInfo? symbol = null;
+
+        // Try root groups first (original declarations)
+        foreach (var group in rawGroups.Where(g => !g.IsOverride && !g.IsInherited))
+        {
+            var script = _project.GetScript(group.FilePath);
+            if (script?.SemanticModel == null) continue;
+
+            var sym = script.SemanticModel.FindSymbol(symbolName);
+            if (sym?.DeclarationNode != null)
+            {
+                declaringScript = script;
+                symbol = sym;
+                break;
+            }
+        }
+
+        if (declaringScript == null || symbol == null)
+            return;
+
+        var crossFileFinder = new GDCrossFileReferenceFinder(_project, _projectModel);
+        var crossFileRefs = crossFileFinder.FindReferences(symbol, declaringScript);
+
+        // Group cross-file references by script file
+        var allCrossRefs = crossFileRefs.StrictReferences
+            .Concat(crossFileRefs.PotentialReferences)
+            .GroupBy(r => r.Script.FullPath ?? "");
+
+        foreach (var fileGroup in allCrossRefs)
+        {
+            if (string.IsNullOrEmpty(fileGroup.Key))
+                continue;
+
+            // Skip files already covered by per-file collection
+            if (existingFiles.Contains(fileGroup.Key))
+                continue;
+
+            var script = fileGroup.First().Script;
+            var locations = new List<GDReferenceLocation>();
+
+            foreach (var crossRef in fileGroup)
+            {
+                var node = crossRef.Node;
+                var isContractString = node is GDStringNode;
+
+                // For member access, point to the identifier (not the whole expression)
+                int refLine, refColumn;
+                if (node is GDMemberOperatorExpression memberOp && memberOp.Identifier != null)
+                {
+                    refLine = memberOp.Identifier.StartLine + 1;
+                    refColumn = memberOp.Identifier.StartColumn;
+                }
+                else
+                {
+                    refLine = node.StartLine + 1;
+                    // String literal tokens need +1 column for the opening quote
+                    refColumn = isContractString ? node.StartColumn + 1 : node.StartColumn;
+                }
+
+                locations.Add(new GDReferenceLocation
+                {
+                    FilePath = fileGroup.Key,
+                    Line = refLine,
+                    Column = refColumn,
+                    Confidence = crossRef.Confidence,
+                    Reason = crossRef.Reason,
+                    IsContractString = isContractString
+                });
+            }
+
+            if (locations.Count > 0)
+            {
+                rawGroups.Add(new RawGroup
+                {
+                    ClassName = script.TypeName,
+                    ExtendsType = GetExtendsTypeName(script),
+                    FilePath = fileGroup.Key,
+                    DeclLine = 0,
+                    DeclColumn = 0,
+                    IsOverride = false,
+                    IsInherited = false,
+                    IsCrossFile = true,
+                    Locations = locations
+                });
+            }
+        }
+    }
+
     private IReadOnlyList<GDReferenceGroup> MergeOverrides(List<RawGroup> rawGroups)
     {
-        var roots = rawGroups.Where(g => !g.IsOverride && !g.IsInherited).ToList();
-        var dependents = rawGroups.Where(g => g.IsOverride || g.IsInherited).ToList();
+        var roots = rawGroups.Where(g => !g.IsOverride && !g.IsInherited && !g.IsCrossFile).ToList();
+        var dependents = rawGroups.Where(g => (g.IsOverride || g.IsInherited) && !g.IsCrossFile).ToList();
+        var crossFileGroups = rawGroups.Where(g => g.IsCrossFile).ToList();
 
         var merged = new List<GDReferenceGroup>();
 
@@ -219,6 +322,20 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                     Locations = new List<GDReferenceLocation>(dep.Locations)
                 });
             }
+        }
+
+        // Cross-file groups (duck-typed / potential refs) appended at the end
+        foreach (var cf in crossFileGroups)
+        {
+            merged.Add(new GDReferenceGroup
+            {
+                ClassName = cf.ClassName,
+                DeclarationFilePath = cf.FilePath,
+                DeclarationLine = cf.DeclLine,
+                DeclarationColumn = cf.DeclColumn,
+                IsCrossFile = true,
+                Locations = new List<GDReferenceLocation>(cf.Locations)
+            });
         }
 
         return merged;
@@ -343,6 +460,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         public int DeclColumn;
         public bool IsOverride;
         public bool IsInherited;
+        public bool IsCrossFile;
         public required List<GDReferenceLocation> Locations;
     }
 

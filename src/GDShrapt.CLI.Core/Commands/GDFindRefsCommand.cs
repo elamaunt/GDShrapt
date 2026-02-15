@@ -166,6 +166,7 @@ public class GDFindRefsCommand : IGDCommand
             DeclarationColumn = g.DeclarationColumn,
             IsOverride = g.IsOverride,
             IsInherited = g.IsInherited,
+            IsCrossFile = g.IsCrossFile,
             References = g.Locations.Select(loc => new GDReferenceInfo
             {
                 FilePath = GetRelativePath(loc.FilePath, projectRoot),
@@ -175,7 +176,10 @@ public class GDFindRefsCommand : IGDCommand
                 IsOverride = loc.IsOverride,
                 IsSuperCall = loc.IsSuperCall,
                 IsWrite = loc.IsWrite,
-                Context = loc.Context
+                Context = loc.Context,
+                Confidence = loc.Confidence,
+                Reason = loc.Reason,
+                IsContractString = loc.IsContractString
             }).ToList(),
             Overrides = g.Overrides.Select(o => MapGroup(o, projectRoot)).ToList()
         };

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -147,6 +148,9 @@ public class GDReferenceInfo
     public bool IsOverride { get; set; }
     public bool IsSuperCall { get; set; }
     public bool IsWrite { get; set; }
+    public GDReferenceConfidence? Confidence { get; set; }
+    public string? Reason { get; set; }
+    public bool IsContractString { get; set; }
 }
 
 /// <summary>
@@ -160,6 +164,7 @@ public class GDReferenceGroupInfo
     public int DeclarationColumn { get; set; }
     public bool IsOverride { get; set; }
     public bool IsInherited { get; set; }
+    public bool IsCrossFile { get; set; }
     public List<GDReferenceInfo> References { get; set; } = new();
     public List<GDReferenceGroupInfo> Overrides { get; set; } = new();
 }
