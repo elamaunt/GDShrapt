@@ -201,6 +201,27 @@ public class GDProjectSemanticModel : IDisposable
             registry.Register(connection);
         }
 
+        var sceneProvider = _project.SceneTypesProvider;
+        if (sceneProvider != null)
+        {
+            foreach (var sceneInfo in sceneProvider.AllScenes)
+            {
+                foreach (var conn in sceneInfo.SignalConnections)
+                {
+                    var fromNode = sceneInfo.Nodes.FirstOrDefault(n => n.Path == conn.FromNode);
+                    var toNode = sceneInfo.Nodes.FirstOrDefault(n => n.Path == conn.ToNode);
+
+                    registry.Register(GDSignalConnectionEntry.FromScene(
+                        sceneInfo.FullPath,
+                        conn.LineNumber,
+                        fromNode?.ScriptTypeName ?? fromNode?.NodeType ?? conn.SourceNodeType ?? "",
+                        conn.SignalName,
+                        toNode?.ScriptTypeName ?? toNode?.NodeType ?? "",
+                        conn.Method));
+                }
+            }
+        }
+
         return registry;
     }
 

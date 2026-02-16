@@ -87,6 +87,43 @@ public class GDDependencyService
             fileDependencies[filePath] = deps;
         }
 
+        // Scene dependencies (scene→script, scene→sub-scene)
+        var sceneProvider = _project.SceneTypesProvider;
+        if (sceneProvider != null)
+        {
+            foreach (var sceneInfo in sceneProvider.AllScenes)
+            {
+                var scenePath = sceneInfo.FullPath?.Replace('\\', '/');
+                if (string.IsNullOrEmpty(scenePath))
+                    continue;
+
+                var sceneDeps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var node in sceneInfo.Nodes)
+                {
+                    if (!string.IsNullOrEmpty(node.ScriptPath))
+                    {
+                        var resolved = ResolveResPath(node.ScriptPath, scenePath);
+                        if (!string.IsNullOrEmpty(resolved))
+                            sceneDeps.Add(resolved);
+                    }
+                }
+
+                foreach (var sub in sceneInfo.SubSceneReferences)
+                {
+                    if (!string.IsNullOrEmpty(sub.SubScenePath))
+                    {
+                        var resolved = ResolveResPath(sub.SubScenePath, scenePath);
+                        if (!string.IsNullOrEmpty(resolved))
+                            sceneDeps.Add(resolved);
+                    }
+                }
+
+                if (sceneDeps.Count > 0)
+                    fileDependencies[scenePath] = sceneDeps;
+            }
+        }
+
         // Detect file-level cycles using DFS
         var cyclesFound = DetectFileCycles(fileDependencies);
 
@@ -107,8 +144,35 @@ public class GDDependencyService
             files.Add(info);
         }
 
+        // Add scene file dependency info
+        if (sceneProvider != null)
+        {
+            foreach (var sceneInfo in sceneProvider.AllScenes)
+            {
+                var scenePath = sceneInfo.FullPath?.Replace('\\', '/');
+                if (string.IsNullOrEmpty(scenePath))
+                    continue;
+
+                var info = new GDFileDependencyInfo(scenePath)
+                {
+                    IsInCycle = filesInCycles.Contains(scenePath)
+                };
+
+                if (info.IsInCycle)
+                {
+                    info.CycleMembers = cyclesFound
+                        .Where(c => c.Contains(scenePath))
+                        .SelectMany(c => c)
+                        .Distinct()
+                        .ToList();
+                }
+
+                files.Add(info);
+            }
+        }
+
         // Build transitive dependencies
-        BuildTransitiveDependencies(files);
+        BuildTransitiveDependencies(files, fileDependencies);
 
         return new GDProjectDependencyReport
         {
@@ -307,45 +371,19 @@ public class GDDependencyService
         return info;
     }
 
-    private void BuildTransitiveDependencies(List<GDFileDependencyInfo> files)
+    private void BuildTransitiveDependencies(
+        List<GDFileDependencyInfo> files,
+        Dictionary<string, HashSet<string>> fileDependencies)
     {
-        var fileMap = files.ToDictionary(f => f.FilePath, f => f, StringComparer.OrdinalIgnoreCase);
-
-        // Build direct dependency map
+        // Use the pre-computed fileDependencies map as the authoritative source
+        // This includes both script deps (extends, preload, load) and scene deps (script attachments, sub-scenes)
         var directDeps = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var file in files)
         {
-            var deps = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            if (!string.IsNullOrEmpty(file.ExtendsScript))
-            {
-                var resolvedPath = ResolveResPath(file.ExtendsScript, file.FilePath);
-                if (!string.IsNullOrEmpty(resolvedPath))
-                    deps.Add(resolvedPath);
-            }
-            // Handle ExtendsClass (class_name references)
-            else if (!string.IsNullOrEmpty(file.ExtendsClass) && !IsBuiltInType(file.ExtendsClass))
-            {
-                var resolvedPath = ResolveClassName(file.ExtendsClass);
-                if (!string.IsNullOrEmpty(resolvedPath))
-                    deps.Add(resolvedPath);
-            }
-
-            foreach (var preload in file.Preloads)
-            {
-                var resolvedPath = ResolveResPath(preload, file.FilePath);
-                if (!string.IsNullOrEmpty(resolvedPath))
-                    deps.Add(resolvedPath);
-            }
-
-            foreach (var load in file.Loads)
-            {
-                var resolvedPath = ResolveResPath(load, file.FilePath);
-                if (!string.IsNullOrEmpty(resolvedPath))
-                    deps.Add(resolvedPath);
-            }
-
-            directDeps[file.FilePath] = deps;
+            if (fileDependencies.TryGetValue(file.FilePath, out var deps))
+                directDeps[file.FilePath] = deps;
+            else
+                directDeps[file.FilePath] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         // Build reverse dependency map (dependents)

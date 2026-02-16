@@ -40,12 +40,23 @@ public static class DepsCommandBuilder
             ["--fail-on-cycles"],
             "Exit with error if circular dependencies are found");
 
+        var includeScenesOption = new Option<bool>(
+            ["--include-scenes"],
+            () => true,
+            "Include scene→scene and scene→script dependencies");
+
+        var includeSignalsOption = new Option<bool>(
+            ["--include-signals"],
+            "Include signal connections as dependency edges");
+
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
         command.AddOption(fileOption);
         command.AddOption(showCoupledOption);
         command.AddOption(showDependentOption);
         command.AddOption(failOnCyclesOption);
+        command.AddOption(includeScenesOption);
+        command.AddOption(includeSignalsOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -56,6 +67,8 @@ public static class DepsCommandBuilder
             var showCoupled = context.ParseResult.GetValueForOption(showCoupledOption);
             var showDependent = context.ParseResult.GetValueForOption(showDependentOption);
             var failOnCycles = context.ParseResult.GetValueForOption(failOnCyclesOption);
+            var includeScenes = context.ParseResult.GetValueForOption(includeScenesOption);
+            var includeSignals = context.ParseResult.GetValueForOption(includeSignalsOption);
             var quiet = context.ParseResult.GetValueForOption(quietOption);
             var verbose = context.ParseResult.GetValueForOption(verboseOption);
             var debug = context.ParseResult.GetValueForOption(debugOption);
@@ -69,7 +82,9 @@ public static class DepsCommandBuilder
                 FilePath = file,
                 ShowCoupled = showCoupled,
                 ShowDependent = showDependent,
-                FailOnCycles = failOnCycles
+                FailOnCycles = failOnCycles,
+                IncludeScenes = includeScenes,
+                IncludeSignals = includeSignals
             };
 
             var cmd = new GDDepsCommand(projectPath, formatter, logger: logger, options: options);

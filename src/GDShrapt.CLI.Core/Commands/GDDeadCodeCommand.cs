@@ -87,6 +87,15 @@ public class GDDeadCodeCommand : GDProjectCommandBase
         // Output results
         WriteDeadCodeOutput(items.ToList(), projectRoot);
 
+        // Scene signal informational note
+        var sceneSignalCount = projectModel.SignalConnectionRegistry.GetAllConnections()
+            .Count(c => c.IsSceneConnection);
+        if (sceneSignalCount > 0)
+        {
+            _formatter.WriteMessage(_output, "");
+            _formatter.WriteMessage(_output, $"Note: {sceneSignalCount} scene signal connection(s) considered.");
+        }
+
         // Fail conditions
         var count = items.Count();
         if (_options.FailIfFound && count > 0)

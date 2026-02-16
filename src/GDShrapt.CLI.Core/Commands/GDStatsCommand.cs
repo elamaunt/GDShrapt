@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
@@ -39,6 +40,12 @@ public class GDStatsCommand : GDProjectCommandBase
         var metrics = metricsHandler.AnalyzeProject();
         var coverage = coverageHandler.AnalyzeProject();
 
+        var sceneReport = projectModel.SceneFlow.AnalyzeProject();
+        var resourceReport = projectModel.ResourceFlow.AnalyzeProject();
+        var allSignalConnections = projectModel.SignalConnectionRegistry.GetAllConnections();
+        var signalTotal = allSignalConnections.Count;
+        var sceneSignalCount = allSignalConnections.Count(c => c.IsSceneConnection);
+
         // Header
         _formatter.WriteMessage(_output, "╔════════════════════════════════════════════════════════════════╗");
         _formatter.WriteMessage(_output, "║                    GDScript Project Statistics                 ║");
@@ -60,6 +67,31 @@ public class GDStatsCommand : GDProjectCommandBase
         _formatter.WriteMessage(_output, $"   Signals:      {metrics.SignalCount,8}");
         _formatter.WriteMessage(_output, "");
 
+        // Scenes
+        _formatter.WriteMessage(_output, "[Scenes]");
+        _formatter.WriteMessage(_output, $"   Scenes:       {sceneReport.TotalScenes,8}");
+        _formatter.WriteMessage(_output, $"   Sub-scenes:   {sceneReport.StaticSubSceneCount,8}");
+        _formatter.WriteMessage(_output, $"   Code inst.:   {sceneReport.CodeInstantiationCount,8}");
+        _formatter.WriteMessage(_output, "");
+
+        // Resources
+        _formatter.WriteMessage(_output, "[Resources]");
+        _formatter.WriteMessage(_output, $"   Total:        {resourceReport.TotalResources,8}");
+        foreach (var cat in resourceReport.ResourcesByCategory.OrderByDescending(c => c.Value))
+        {
+            _formatter.WriteMessage(_output, $"   {cat.Key + ":",-13}{cat.Value,8}");
+        }
+        _formatter.WriteMessage(_output, $"   Unused:       {resourceReport.UnusedResources.Count,8}");
+        _formatter.WriteMessage(_output, $"   Missing:      {resourceReport.MissingResources.Count,8}");
+        _formatter.WriteMessage(_output, "");
+
+        // Signal Connections
+        _formatter.WriteMessage(_output, "[Signal Connections]");
+        _formatter.WriteMessage(_output, $"   Total:        {signalTotal,8}");
+        _formatter.WriteMessage(_output, $"   From scenes:  {sceneSignalCount,8}");
+        _formatter.WriteMessage(_output, $"   From code:    {signalTotal - sceneSignalCount,8}");
+        _formatter.WriteMessage(_output, "");
+
         // Complexity metrics
         _formatter.WriteMessage(_output, "[Complexity]");
         _formatter.WriteMessage(_output, $"   Avg CC:       {metrics.AverageComplexity,8:F2}");
@@ -78,6 +110,8 @@ public class GDStatsCommand : GDProjectCommandBase
         WriteHealthIndicator("Complexity", metrics.AverageComplexity <= 10 ? "Good" : metrics.AverageComplexity <= 20 ? "Fair" : "High");
         WriteHealthIndicator("Maintainability", metrics.AverageMaintainability >= 65 ? "Good" : metrics.AverageMaintainability >= 40 ? "Fair" : "Low");
         WriteHealthIndicator("Type Safety", coverage.TypeSafetyScore >= 80 ? "Good" : coverage.TypeSafetyScore >= 50 ? "Fair" : "Low");
+        WriteHealthIndicator("Scene Deps", sceneReport.Warnings.Count > 0 ? "Warning" : "Good");
+        WriteHealthIndicator("Resources", resourceReport.MissingResources.Count > 0 ? "Warning" : resourceReport.UnusedResources.Count > 0 ? "Fair" : "Good");
 
         return Task.FromResult(GDExitCode.Success);
     }
@@ -90,6 +124,7 @@ public class GDStatsCommand : GDProjectCommandBase
             "Fair" => "~",
             "High" => "!",
             "Low" => "!",
+            "Warning" => "!",
             _ => "?"
         };
         _formatter.WriteMessage(_output, $"   {name}: [{indicator}] {status}");

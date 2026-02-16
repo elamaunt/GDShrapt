@@ -36,7 +36,8 @@ public class GDMetricsCommand : GDProjectCommandBase
         GDProjectConfig config,
         CancellationToken cancellationToken)
     {
-        var handler = Registry?.GetService<IGDMetricsHandler>() ?? new GDMetricsHandler(new GDProjectSemanticModel(project));
+        var projectModel = new GDProjectSemanticModel(project);
+        var handler = Registry?.GetService<IGDMetricsHandler>() ?? new GDMetricsHandler(projectModel);
 
         // Analyze based on scope
         GDProjectMetrics metrics;
@@ -79,7 +80,7 @@ public class GDMetricsCommand : GDProjectCommandBase
             files = files.Take(_options.Top);
 
         // Output based on format
-        WriteMetricsOutput(metrics, files.ToList(), projectRoot);
+        WriteMetricsOutput(metrics, files.ToList(), projectRoot, projectModel);
 
         // Fail conditions
         if (_options.FailAboveComplexity > 0 && metrics.Files.Any(f => f.MaxComplexity > _options.FailAboveComplexity))
@@ -91,7 +92,7 @@ public class GDMetricsCommand : GDProjectCommandBase
         return Task.FromResult(GDExitCode.Success);
     }
 
-    private void WriteMetricsOutput(GDProjectMetrics metrics, System.Collections.Generic.List<GDFileMetrics> files, string projectRoot)
+    private void WriteMetricsOutput(GDProjectMetrics metrics, System.Collections.Generic.List<GDFileMetrics> files, string projectRoot, GDProjectSemanticModel projectModel)
     {
         // Summary
         _formatter.WriteMessage(_output, $"Project Metrics Summary:");
@@ -104,6 +105,43 @@ public class GDMetricsCommand : GDProjectCommandBase
         _formatter.WriteMessage(_output, $"  Avg Complexity: {metrics.AverageComplexity:F2}");
         _formatter.WriteMessage(_output, $"  Avg Maintainability: {metrics.AverageMaintainability:F2}");
         _formatter.WriteMessage(_output, "");
+
+        // Scene Metrics
+        var sceneReport = projectModel.SceneFlow.AnalyzeProject();
+        if (sceneReport.TotalScenes > 0)
+        {
+            _formatter.WriteMessage(_output, "Scene Metrics:");
+            _formatter.WriteMessage(_output, $"  Total Scenes: {sceneReport.TotalScenes}");
+
+            var totalNodes = 0;
+            var sceneNodeCounts = new System.Collections.Generic.List<(string path, int nodeCount, int subSceneCount)>();
+            foreach (var kvp in sceneReport.Scenes)
+            {
+                var nodeCount = kvp.Value.SceneInfo?.Nodes.Count ?? 0;
+                var subCount = kvp.Value.SubScenes.Count;
+                totalNodes += nodeCount;
+                sceneNodeCounts.Add((kvp.Key, nodeCount, subCount));
+            }
+
+            _formatter.WriteMessage(_output, $"  Total Scene Nodes: {totalNodes}");
+            if (sceneReport.TotalScenes > 0)
+            {
+                _formatter.WriteMessage(_output, $"  Avg Nodes/Scene: {(double)totalNodes / sceneReport.TotalScenes:F1}");
+            }
+            _formatter.WriteMessage(_output, "");
+
+            var largestScenes = sceneNodeCounts.OrderByDescending(s => s.nodeCount).Take(5).ToList();
+            if (largestScenes.Count > 0)
+            {
+                _formatter.WriteMessage(_output, "  Largest Scenes:");
+                foreach (var scene in largestScenes)
+                {
+                    var relPath = GetRelativePath(scene.path, projectRoot);
+                    _formatter.WriteMessage(_output, $"    {relPath}: {scene.nodeCount} nodes, {scene.subSceneCount} sub-scenes");
+                }
+            }
+            _formatter.WriteMessage(_output, "");
+        }
 
         if (_options.ShowFiles)
         {

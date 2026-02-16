@@ -37,7 +37,8 @@ public class GDDepsCommand : GDProjectCommandBase
         GDProjectConfig config,
         CancellationToken cancellationToken)
     {
-        var handler = Registry?.GetService<IGDDependencyHandler>() ?? new GDDependencyHandler(new GDProjectSemanticModel(project));
+        var projectModel = new GDProjectSemanticModel(project);
+        var handler = Registry?.GetService<IGDDependencyHandler>() ?? new GDDependencyHandler(projectModel);
 
         // Single file or project-wide
         if (!string.IsNullOrEmpty(_options.FilePath))
@@ -50,7 +51,7 @@ public class GDDepsCommand : GDProjectCommandBase
 
         // Project-wide analysis
         var report = handler.AnalyzeProject();
-        WriteProjectOutput(report, projectRoot);
+        WriteProjectOutput(report, projectRoot, projectModel);
 
         // Fail on cycles
         if (_options.FailOnCycles && report.HasCycles)
@@ -136,7 +137,7 @@ public class GDDepsCommand : GDProjectCommandBase
         }
     }
 
-    private void WriteProjectOutput(GDProjectDependencyReport report, string projectRoot)
+    private void WriteProjectOutput(GDProjectDependencyReport report, string projectRoot, GDProjectSemanticModel projectModel)
     {
         _formatter.WriteMessage(_output, $"Project Dependency Analysis:");
         _formatter.WriteMessage(_output, $"  Total Files: {report.TotalFiles}");
@@ -189,6 +190,53 @@ public class GDDepsCommand : GDProjectCommandBase
                     var relPath = GetRelativePath(file.FilePath, projectRoot);
                     _formatter.WriteMessage(_output, $"  {relPath}: {file.Dependents.Count} dependents");
                 }
+                _formatter.WriteMessage(_output, "");
+            }
+        }
+
+        // Scene dependencies
+        if (_options.IncludeScenes)
+        {
+            var sceneReport = projectModel.SceneFlow.AnalyzeProject();
+            if (sceneReport.TotalScenes > 0)
+            {
+                _formatter.WriteMessage(_output, "Scene Dependencies:");
+                _formatter.WriteMessage(_output, $"  Scenes: {sceneReport.TotalScenes}");
+                _formatter.WriteMessage(_output, $"  Sub-scene edges: {sceneReport.StaticSubSceneCount}");
+                _formatter.WriteMessage(_output, $"  Code instantiation edges: {sceneReport.CodeInstantiationCount}");
+
+                if (sceneReport.Warnings.Count > 0)
+                {
+                    _formatter.WriteMessage(_output, "");
+                    _formatter.WriteMessage(_output, "  Scene Warnings:");
+                    foreach (var warning in sceneReport.Warnings)
+                    {
+                        _formatter.WriteMessage(_output, $"    - {warning.Message}");
+                        if (!string.IsNullOrEmpty(warning.ScenePath))
+                            _formatter.WriteMessage(_output, $"      at {warning.ScenePath}");
+                    }
+                }
+                _formatter.WriteMessage(_output, "");
+            }
+        }
+
+        // Signal connections
+        if (_options.IncludeSignals)
+        {
+            var allConnections = projectModel.SignalConnectionRegistry.GetAllConnections();
+            if (allConnections.Count > 0)
+            {
+                _formatter.WriteMessage(_output, $"Signal Connections: {allConnections.Count}");
+                var byFile = allConnections
+                    .GroupBy(c => c.SourceFilePath)
+                    .OrderByDescending(g => g.Count())
+                    .Take(10);
+                foreach (var group in byFile)
+                {
+                    var relPath = GetRelativePath(group.Key, projectRoot);
+                    _formatter.WriteMessage(_output, $"  {relPath}: {group.Count()} connections");
+                }
+                _formatter.WriteMessage(_output, "");
             }
         }
     }
@@ -218,4 +266,14 @@ public class GDDepsOptions
     /// Fail if circular dependencies are found (for CI).
     /// </summary>
     public bool FailOnCycles { get; set; }
+
+    /// <summary>
+    /// Include scene→scene and scene→script dependencies.
+    /// </summary>
+    public bool IncludeScenes { get; set; } = true;
+
+    /// <summary>
+    /// Include signal connections as dependency edges.
+    /// </summary>
+    public bool IncludeSignals { get; set; }
 }
