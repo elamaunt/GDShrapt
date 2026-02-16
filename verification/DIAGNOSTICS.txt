@@ -1,6 +1,6 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-02-16 02:17:57
+Generated: 2026-02-16 12:08:53
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
@@ -21,36 +21,36 @@ By Source:
   Validator           :    32
 
 By Code (Top 30):
-  GD7007    :  262  (Variable 'input' may be null when accessing 'get')
-  GDL201    :  155  (Local variable 'item' is declared but never used)
-  GDL513    :   99  (Too many empty lines before function (4), expected 2)
-  GD7006    :   82  (Variable 'data' may be null when accessing '[...]')
-  GD3020    :   40  (Variable 'input' may be null; comparison with '<' would c...)
-  GD7005    :   27  (Variable 'child_sprite' is @onready - _ready() may not ha...)
-  GD7003    :   26  (Calling method 'visit' on untyped variable 'visitor' with...)
-  GDL203    :   25  (Function 'MultiSuppressedFunc' only contains 'pass')
-  GDL001    :   12  (Class name 'DiagnosticsTest_ControlFlowErrors' should use...)
+  GD7007    :  262  (Variable 'e' may be null when accessing 'get_health')
+  GDL201    :  155  (Local variable 'count' is declared but never used)
+  GDL513    :   99  (Too many empty lines before function (5), expected 2)
+  GD7006    :   82  (Variable 'available_targets' may be null when accessing '...)
+  GD3020    :   40  (Variable 'x' may be null; comparison with '>' would cause...)
+  GD7005    :   27  (Variable 'player' is @onready - _ready() may not have bee...)
+  GD7003    :   26  (Calling method 'get_health' on untyped variable 'e' witho...)
+  GDL203    :   25  (Function '_process_idle' only contains 'pass')
+  GDL001    :   12  (Class name 'DiagnosticsTest_ComplexityRules' should use P...)
   GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
-  GDL222    :   11  ('UnionTypesComplex' has 28 public methods (max 20))
+  GDL222    :   11  ('PolymorphicInterfaces' has 40 public methods (max 20))
   GD3009    :    9  (Property 'global_position' not found on type 'Node')
-  GDL003    :    9  (Variable name 'NotSuppressedBadVar1' should use snake_case)
-  GD3004    :    9  (Type mismatch: cannot assign 'int' to variable of type 'T...)
-  GDL101    :    9  (Line 212 exceeds 120 characters (length: 146))
-  GD3001    :    7  (Type mismatch in assignment: cannot assign 'int' to 'Test...)
-  GDL202    :    7  (Parameter 'amount' is declared but never used)
+  GDL101    :    9  (Line 26 exceeds 120 characters (length: 187))
+  GD3004    :    9  (Type mismatch: cannot assign 'Node' to variable of type '...)
+  GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
+  GDL202    :    7  (Parameter 'delta' is declared but never used)
   GDL211    :    7  (Local variable 'used_variable' shadows a class-level vari...)
-  GDL223    :    6  ('check_types' has 8 return statements (max 6))
+  GD3001    :    7  (Type mismatch in assignment: cannot assign 'float' to 'int')
+  GDL223    :    6  ('_get_type_name' has 8 return statements (max 6))
   GD3010    :    6  (Argument type mismatch for 'new_state' in call to 'change...)
+  GDL226    :    5  ('test_gdl226_invalid' has 16 local variables (max 15))
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
   GDL210    :    5  (Unreachable code detected)
-  GDL002    :    5  (Function name 'MultiNotSuppressedFunc' should use snake_case)
-  GDL226    :    5  ('test_array_methods' has 17 local variables (max 15))
-  GD3013    :    5  (Type 'Array' expects integer index, got 'String')
-  GD4009    :    5  (Signal 'player_scored' parameter 1 expects 'int', got 'St...)
   GD3007    :    5  (Cannot return 'Node' from function with return type 'Cont...)
-  GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
+  GD3013    :    5  (Type 'Array' expects integer index, got 'String')
+  GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
+  GD4009    :    5  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
   GD3014    :    4  (Type 'int' does not support indexing)
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
+  GD4002    :    4  (Method 'unguarded_call' not found on type 'Node')
 
 ================================================================================
 DIAGNOSTICS BY FILE
