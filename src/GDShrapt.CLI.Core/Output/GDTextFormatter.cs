@@ -455,7 +455,7 @@ public class GDTextFormatter : IGDOutputFormatter
         {
             output.WriteLine();
             output.WriteLine(GDAnsiColors.Magenta($"Contract strings ({contractRefs.Count}):"));
-            output.WriteLine(GDAnsiColors.Dim("  (string-based API contracts, not auto-applied in rename)"));
+            output.WriteLine(GDAnsiColors.Dim("  (string-based API contracts, not auto-applied in rename; use rename --include-contract-strings)"));
             var byFile = contractRefs.GroupBy(x => x.Ref.FilePath)
                 .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase);
             foreach (var fileGroup in byFile)
@@ -637,8 +637,7 @@ public class GDTextFormatter : IGDOutputFormatter
             }
             else
             {
-                var singleConf = confidenceCounts.First();
-                output.WriteLine($"  Potential (duck-typed): {crossFileCount} ({singleConf.Key}: {singleConf.Value})");
+                output.WriteLine($"  Potential (duck-typed): {crossFileCount}");
             }
         }
         if (signalTotal > 0) output.WriteLine($"  Signals: {signalTotal} (code: {signalCodeCount}, scene: {signalSceneCount})");

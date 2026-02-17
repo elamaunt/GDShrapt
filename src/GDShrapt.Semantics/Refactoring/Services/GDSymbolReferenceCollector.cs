@@ -602,7 +602,7 @@ public class GDSymbolReferenceCollector
                 conn.IsSceneConnection
                     ? GDSymbolReferenceKind.SceneSignalConnection
                     : GDSymbolReferenceKind.SignalConnection,
-                callerTypeName: conn.CallbackClassName,
+                callerTypeName: conn.CallbackClassName ?? script.TypeName,
                 signalName: conn.SignalName,
                 isSceneSignal: conn.IsSceneConnection));
         }
