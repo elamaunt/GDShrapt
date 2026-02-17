@@ -62,9 +62,19 @@ public interface IGDTypeSystem
     GDContainerElementType? GetContainerElementType(string variableName);
 
     /// <summary>
+    /// Gets the container element type for a class-level variable.
+    /// </summary>
+    GDContainerElementType? GetClassContainerElementType(string className, string variableName);
+
+    /// <summary>
     /// Gets the container usage profile for a variable.
     /// </summary>
     GDContainerUsageProfile? GetContainerProfile(string variableName);
+
+    /// <summary>
+    /// Gets the container usage profile for a class-level variable.
+    /// </summary>
+    GDContainerUsageProfile? GetClassContainerProfile(string className, string variableName);
 
     // ========================================
     // Type Relationships (from RuntimeProvider)

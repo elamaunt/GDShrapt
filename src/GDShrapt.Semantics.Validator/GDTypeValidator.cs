@@ -204,7 +204,9 @@ namespace GDShrapt.Semantics.Validator
                 return null;
 
             // Get method info with callable metadata
-            var methodInfo = _semanticModel?.RuntimeProvider?.GetMember(callerType, methodName);
+            // Use base type name for runtime provider lookup (Array[int] -> Array)
+            var baseCallerType = ExtractBaseTypeName(callerType);
+            var methodInfo = _semanticModel?.RuntimeProvider?.GetMember(baseCallerType, methodName);
             if (methodInfo?.Parameters == null)
                 return null;
 
@@ -220,11 +222,57 @@ namespace GDShrapt.Semantics.Validator
 
             // Get the container's element type
             var containerElementType = GetContainerElementType(callExpr, callerType);
-            if (containerElementType == null)
-                return null;
+            if (containerElementType != null)
+                return BuildLambdaParameterTypes(paramInfo.CallableReceivesType, containerElementType, paramInfo.CallableParameterCount ?? 1);
 
-            // Build list of parameter types based on CallableReceivesType
-            return BuildLambdaParameterTypes(paramInfo.CallableReceivesType, containerElementType, paramInfo.CallableParameterCount ?? 1);
+            // Element type could not be determined. Check if the array is a local variable
+            // with no elements (empty array literal or no appends) — callback never runs,
+            // so suppress GD3020 by returning "Variant" as safe placeholder.
+            if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp2)
+            {
+                var callerExpr2 = memberOp2.CallerExpression;
+
+                // Local variable: arr.filter(...)
+                if (callerExpr2 is GDIdentifierExpression callerIdent)
+                {
+                    var varName = callerIdent.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(varName))
+                    {
+                        var symbol = Context.Scopes.Lookup(varName);
+                        if (symbol?.Declaration is GDVariableDeclarationStatement)
+                        {
+                            var profile = _semanticModel?.TypeSystem.GetContainerProfile(varName);
+                            if (profile == null || profile.ValueUsages.Count == 0)
+                            {
+                                return BuildLambdaParameterTypes(paramInfo.CallableReceivesType, "Variant", paramInfo.CallableParameterCount ?? 1);
+                            }
+                        }
+                    }
+                }
+
+                // Class-level member: h.data.filter(...) or Holder.data.filter(...)
+                if (callerExpr2 is GDMemberOperatorExpression callerMemberOp2)
+                {
+                    var memberName = callerMemberOp2.Identifier?.Sequence;
+                    var ownerExpr = callerMemberOp2.CallerExpression;
+                    if (!string.IsNullOrEmpty(memberName) && ownerExpr != null)
+                    {
+                        var ownerTypeInfo = _semanticModel?.TypeSystem.GetType(ownerExpr);
+                        var ownerType = ownerTypeInfo?.IsVariant == true ? null : ownerTypeInfo?.DisplayName;
+                        if (!string.IsNullOrEmpty(ownerType))
+                        {
+                            var profile = _semanticModel?.TypeSystem.GetClassContainerProfile(ownerType, memberName);
+                            // Only suppress if profile exists and is confirmed empty (no appends tracked)
+                            if (profile != null && profile.ValueUsages.Count == 0)
+                            {
+                                return BuildLambdaParameterTypes(paramInfo.CallableReceivesType, "Variant", paramInfo.CallableParameterCount ?? 1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -327,7 +375,8 @@ namespace GDShrapt.Semantics.Validator
                 return arrayElement;
 
             // For non-generic Array, try to infer from the caller expression
-            if (callerType == "Array" && call.CallerExpression is GDMemberOperatorExpression memberOp)
+            var baseCallerType = ExtractBaseTypeName(callerType);
+            if (baseCallerType == "Array" && call.CallerExpression is GDMemberOperatorExpression memberOp)
             {
                 var callerExpr = memberOp.CallerExpression;
                 if (callerExpr != null)
@@ -338,6 +387,47 @@ namespace GDShrapt.Semantics.Validator
                     var detailedElement = GDGenericTypeHelper.ExtractArrayElementType(detailedType);
                     if (detailedElement != null)
                         return detailedElement;
+
+                    // Fallback: use container type inference (tracks append/[]= usage)
+                    if (callerExpr is GDIdentifierExpression identExpr)
+                    {
+                        var varName = identExpr.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(varName))
+                        {
+                            var containerType = _semanticModel?.TypeSystem.GetContainerElementType(varName);
+                            if (containerType != null && containerType.HasElementTypes)
+                            {
+                                var effectiveElement = containerType.EffectiveElementType;
+                                if (!effectiveElement.IsVariant)
+                                    return effectiveElement.DisplayName;
+                            }
+                        }
+                    }
+
+                    // Fallback: class-level container profiles (cross-file member access)
+                    if (callerExpr is GDMemberOperatorExpression callerMemberOp)
+                    {
+                        var memberName = callerMemberOp.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(memberName))
+                        {
+                            var ownerExpr = callerMemberOp.CallerExpression;
+                            if (ownerExpr != null)
+                            {
+                                var ownerTypeInfo = _semanticModel?.TypeSystem.GetType(ownerExpr);
+                                var ownerType = ownerTypeInfo?.IsVariant == true ? null : ownerTypeInfo?.DisplayName;
+                                if (!string.IsNullOrEmpty(ownerType))
+                                {
+                                    var containerType = _semanticModel?.TypeSystem.GetClassContainerElementType(ownerType, memberName);
+                                    if (containerType != null && containerType.HasElementTypes)
+                                    {
+                                        var effectiveElement = containerType.EffectiveElementType;
+                                        if (!effectiveElement.IsVariant)
+                                            return effectiveElement.DisplayName;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -765,8 +855,9 @@ namespace GDShrapt.Semantics.Validator
             if (symbol == null)
                 return;
 
-            // If it's a typed parameter, it's safe (non-null by type)
-            if (symbol.Declaration is GDParameterDeclaration paramDecl && paramDecl.Type != null)
+            // If it's a typed parameter (explicit annotation or inferred), it's safe
+            if (symbol.Declaration is GDParameterDeclaration paramDecl &&
+                (paramDecl.Type != null || !string.IsNullOrEmpty(symbol.TypeName)))
                 return;
 
             // Untyped parameter or untyped variable could be null

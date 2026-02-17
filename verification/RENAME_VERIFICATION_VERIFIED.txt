@@ -134,8 +134,9 @@ Source: rename_test.gd
 Result: Success
 =======================================
 
-Strict edits (10):
+Strict edits (11):
   test_scripts/rename_test.gd:
+    19:6 counter -> counter_renamed [Strict] # OK
     20:2 counter -> counter_renamed [Strict] # OK
     21:2 counter -> counter_renamed [Strict] # OK
     22:2 counter -> counter_renamed [Strict] # OK

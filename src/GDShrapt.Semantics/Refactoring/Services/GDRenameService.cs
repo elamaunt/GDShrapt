@@ -51,48 +51,23 @@ public class GDRenameService
         var potentialEdits = new List<GDTextEdit>();
         var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Find the script containing this symbol
+        // Use unified collector for all GDScript references
+        var collector = new GDSymbolReferenceCollector(_project, _projectModel);
         var containingScript = FindScriptContainingSymbol(symbol);
-        if (containingScript?.FullPath != null)
-        {
-            // Same-file edits are always Strict confidence
-            var scriptEdits = CollectEditsFromScript(containingScript, symbol, oldName, newName);
-            strictEdits.AddRange(scriptEdits);
-            if (scriptEdits.Count > 0)
-                filesModified.Add(containingScript.FullPath);
-        }
+        var collectedRefs = collector.CollectReferences(symbol, containingScript);
 
-        // For class members, also search other scripts that might reference this symbol
-        if (IsClassMemberSymbol(symbol) && containingScript != null)
-        {
-            var crossFileFinder = new GDCrossFileReferenceFinder(_project, _projectModel);
-            var crossFileRefs = crossFileFinder.FindReferences(symbol, containingScript);
-
-            AddCrossFileReferencesToEdits(crossFileRefs, strictEdits, potentialEdits, filesModified, oldName, newName);
-        }
-
-        // class_name rename: find type usages across the project
-        if (containingScript != null && oldName == containingScript.TypeName && _projectModel != null)
-        {
-            CollectClassNameEdits(containingScript, oldName, newName, strictEdits, filesModified);
-        }
-
-        // .tscn signal connections: [connection method="oldName"]
+        // Convert unified references to text edits
         var declaringTypeName = containingScript?.TypeName;
+        var typesWithMethod = _runtimeProvider?.FindTypesWithMethod(oldName);
 
+        ConvertRefsToEdits(collectedRefs, oldName, newName, declaringTypeName, typesWithMethod,
+            strictEdits, potentialEdits, filesModified);
+
+        // .tscn signal connections: [connection method="oldName"] — rename-specific (edits .tscn files)
         if (!string.IsNullOrEmpty(declaringTypeName))
             CollectTscnEdits(oldName, newName, declaringTypeName!, strictEdits, potentialEdits, filesModified);
         else
             CollectTscnEdits(oldName, newName, strictEdits, filesModified);
-
-        // Reflection-style string literal references (has_method, emit_signal, call, etc.)
-        if (_projectModel != null)
-        {
-            if (!string.IsNullOrEmpty(declaringTypeName))
-                CollectAllMemberAccessEdits(oldName, newName, declaringTypeName!, strictEdits, potentialEdits, filesModified);
-            else
-                CollectAllMemberAccessEdits(oldName, newName, strictEdits, potentialEdits, filesModified);
-        }
 
         if (strictEdits.Count == 0 && potentialEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
@@ -104,9 +79,9 @@ public class GDRenameService
         // Sort edits by file, then by position (reverse order for applying)
         var sortedStrict = SortEditsReverse(strictEdits);
         var sortedPotential = SortEditsReverse(potentialEdits);
-        var warnings = CollectStringReferenceWarnings(oldName);
 
-        return GDRenameResult.SuccessfulWithConfidence(sortedStrict, sortedPotential, filesModified.Count, warnings);
+        return GDRenameResult.SuccessfulWithConfidence(
+            sortedStrict, sortedPotential, filesModified.Count, collectedRefs.StringWarnings);
     }
 
     /// <summary>
@@ -363,7 +338,7 @@ public class GDRenameService
         if (context == null)
             return GDRenameResult.Failed("Context is null");
 
-        var findRefsService = new GDFindReferencesService();
+        var findRefsService = new GDFindReferencesService(_project, _projectModel);
         var scope = findRefsService.DetermineSymbolScope(context);
 
         if (scope == null)
@@ -399,8 +374,8 @@ public class GDRenameService
                 new GDRenameConflict(newName, $"'{newName}' is a reserved GDScript keyword", GDRenameConflictType.ReservedKeyword)
             });
 
-        // Find references using the service
-        var findRefsService = new GDFindReferencesService();
+        // Find references using the service (delegates to unified collector for cross-file scopes)
+        var findRefsService = new GDFindReferencesService(_project, _projectModel);
         var refsResult = findRefsService.FindReferencesForScope(context, scope);
 
         if (!refsResult.Success)
@@ -413,27 +388,6 @@ public class GDRenameService
 
         AddReferencesToEdits(refsResult.StrictReferences, strictEdits, filesModified, oldName, newName, GDReferenceConfidence.Strict);
         AddReferencesToEdits(refsResult.PotentialReferences, potentialEdits, filesModified, oldName, newName, GDReferenceConfidence.Potential);
-
-        // For class members and external members, also search other scripts
-        if ((scope.Type == GDSymbolScopeType.ClassMember ||
-             scope.Type == GDSymbolScopeType.ExternalMember ||
-             scope.Type == GDSymbolScopeType.ProjectWide) &&
-            scope.ContainingScript != null)
-        {
-            var crossFileFinder = new GDCrossFileReferenceFinder(_project, _projectModel);
-            var containingScript = scope.ContainingScript;
-
-            // Create a temporary symbol for cross-file search
-            if (scope.DeclarationNode is GDIdentifiableClassMember identifiable)
-            {
-                var symbol = containingScript.SemanticModel?.FindSymbol(oldName);
-                if (symbol != null)
-                {
-                    var crossFileRefs = crossFileFinder.FindReferences(symbol, containingScript);
-                    AddCrossFileReferencesToEdits(crossFileRefs, strictEdits, potentialEdits, filesModified, oldName, newName, skipExistingFiles: true);
-                }
-            }
-        }
 
         if (strictEdits.Count == 0 && potentialEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
@@ -560,8 +514,232 @@ public class GDRenameService
     #region Private helpers
 
     /// <summary>
+    /// Converts unified GDSymbolReferences into GDTextEdit lists for rename.
+    /// Handles confidence classification and provenance enrichment for duck-typed references.
+    /// </summary>
+    private void ConvertRefsToEdits(
+        GDSymbolReferences collectedRefs,
+        string oldName,
+        string newName,
+        string? declaringTypeName,
+        IReadOnlyList<string>? typesWithMethod,
+        List<GDTextEdit> strictEdits,
+        List<GDTextEdit> potentialEdits,
+        HashSet<string> filesModified)
+    {
+        // Build a set of file paths that are in a different type hierarchy than the declaring script.
+        // References from these files should be excluded from strict edits.
+        var unrelatedFiles = BuildUnrelatedFilesSet(collectedRefs, declaringTypeName);
+
+        foreach (var sref in collectedRefs.References)
+        {
+            if (sref.FilePath == null) continue;
+
+            // Signal connections in GDScript are informational for find-refs; rename edits .tscn directly
+            if (sref.IsSignalConnection)
+                continue;
+
+            // References from unrelated hierarchies: skip strict, keep potential
+            var isFromUnrelatedHierarchy = unrelatedFiles.Contains(sref.FilePath);
+
+            // Determine the identifier token for precise column placement
+            var identToken = sref.IdentifierToken;
+            int line, col;
+
+            if (identToken != null)
+            {
+                line = identToken.StartLine + 1;
+                col = identToken is GDStringNode ? identToken.StartColumn + 2 : identToken.StartColumn + 1;
+            }
+            else
+            {
+                // sref.Line/Column already point to the identifier position (set by collector)
+                line = sref.Line + 1;
+                col = sref.Column + 1;
+            }
+
+            var isContractString = sref.IsContractString;
+
+            if (isContractString)
+            {
+                // Contract string references need type-filtered enrichment
+                var callerType = sref.CallerTypeName;
+                var isUnknown = string.IsNullOrEmpty(callerType)
+                    || callerType == GDWellKnownTypes.Variant
+                    || callerType == GDWellKnownTypes.Object;
+
+                if (!isUnknown && !string.IsNullOrEmpty(declaringTypeName))
+                {
+                    if (!IsTypeCompatible(callerType!, declaringTypeName))
+                        continue;
+
+                    // From unrelated hierarchy: skip strict contract strings
+                    if (isFromUnrelatedHierarchy && sref.Confidence == GDReferenceConfidence.Strict)
+                        continue;
+
+                    var targetEdits = sref.Confidence == GDReferenceConfidence.Strict
+                        ? strictEdits : potentialEdits;
+                    targetEdits.Add(new GDTextEdit(
+                        sref.FilePath, line, col, oldName, newName,
+                        sref.Confidence, sref.ConfidenceReason)
+                    {
+                        IsContractString = true
+                    });
+                }
+                else
+                {
+                    // Duck-typed contract string — enriched reason + provenance
+                    var reason = sref.ConfidenceReason ?? "Duck-typed access";
+                    IReadOnlyList<GDTypeProvenanceEntry>? provenance = null;
+                    string? provenanceVarName = null;
+
+                    // Build provenance if we have the original reference data
+                    if (identToken != null)
+                    {
+                        var file = sref.Script;
+                        var refNode = sref.Node;
+                        if (refNode != null && file != null)
+                        {
+                            var gdRef = new GDReference
+                            {
+                                ReferenceNode = refNode,
+                                IdentifierToken = identToken,
+                                Confidence = sref.Confidence,
+                                ConfidenceReason = sref.ConfidenceReason,
+                                CallerTypeName = sref.CallerTypeName
+                            };
+                            provenance = BuildDuckTypeProvenance(file, gdRef, oldName,
+                                declaringTypeName ?? "", typesWithMethod);
+                            provenanceVarName = ExtractVariableName(gdRef);
+                        }
+                    }
+
+                    potentialEdits.Add(new GDTextEdit(
+                        sref.FilePath, line, col, oldName, newName,
+                        GDReferenceConfidence.Potential, reason)
+                    {
+                        DetailedProvenance = provenance,
+                        ProvenanceVariableName = provenanceVarName,
+                        IsContractString = true
+                    });
+                }
+                filesModified.Add(sref.FilePath);
+            }
+            else
+            {
+                // From unrelated hierarchy: skip strict references, keep potential (duck-typed)
+                if (isFromUnrelatedHierarchy && sref.Confidence == GDReferenceConfidence.Strict)
+                    continue;
+
+                // Regular references: declaration, read, write, super call, type usage, override
+                var targetEdits = sref.Confidence == GDReferenceConfidence.Strict
+                    ? strictEdits : potentialEdits;
+
+                // Duck-typed cross-file references get provenance
+                IReadOnlyList<GDTypeProvenanceEntry>? editProvenance = null;
+                string? editProvenanceVar = null;
+                if (sref.Confidence != GDReferenceConfidence.Strict && sref.Node != null)
+                {
+                    var gdRef = new GDReference
+                    {
+                        ReferenceNode = sref.Node,
+                        IdentifierToken = identToken,
+                        Confidence = sref.Confidence,
+                        ConfidenceReason = sref.ConfidenceReason,
+                        CallerTypeName = sref.CallerTypeName
+                    };
+                    editProvenance = BuildDuckTypeProvenance(
+                        sref.Script, gdRef, oldName, declaringTypeName ?? "", typesWithMethod);
+                    editProvenanceVar = ExtractVariableName(gdRef);
+                }
+
+                targetEdits.Add(new GDTextEdit(
+                    sref.FilePath, line, col, oldName, newName,
+                    sref.Confidence, sref.ConfidenceReason)
+                {
+                    DetailedProvenance = editProvenance,
+                    ProvenanceVariableName = editProvenanceVar
+                });
+                filesModified.Add(sref.FilePath);
+            }
+        }
+    }
+
+    /// <summary>
     /// Collects edits for class_name rename across the project using type usages.
     /// </summary>
+    private HashSet<string> BuildUnrelatedFilesSet(GDSymbolReferences collectedRefs, string? declaringTypeName)
+    {
+        var unrelated = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var declaringScript = collectedRefs.DeclaringScript;
+        if (declaringScript?.FullPath == null || string.IsNullOrEmpty(declaringTypeName))
+            return unrelated;
+
+        // Collect scripts with independent declarations (not the declaring script itself)
+        var otherDeclarationScripts = collectedRefs.References
+            .Where(r => r.FilePath != null
+                && r.Kind == GDSymbolReferenceKind.Declaration
+                && !string.Equals(r.FilePath, declaringScript.FullPath, StringComparison.OrdinalIgnoreCase))
+            .Select(r => r.Script)
+            .Distinct()
+            .ToList();
+
+        var typeSystem = _projectModel?.TypeSystem;
+
+        foreach (var otherScript in otherDeclarationScripts)
+        {
+            if (otherScript.FullPath == null) continue;
+            var otherType = otherScript.TypeName;
+
+            // If no type info, or not in same hierarchy, mark as unrelated
+            if (string.IsNullOrEmpty(otherType) || typeSystem == null)
+            {
+                unrelated.Add(otherScript.FullPath);
+                continue;
+            }
+
+            var inSameHierarchy =
+                typeSystem.IsAssignableTo(otherType, declaringTypeName!) ||
+                typeSystem.IsAssignableTo(declaringTypeName!, otherType);
+
+            if (!inSameHierarchy)
+                unrelated.Add(otherScript.FullPath);
+        }
+
+        // Also mark files that only have references (no declaration) but belong to unrelated hierarchies.
+        // Files with references but no declaration: their script type should be in the declaring type's hierarchy.
+        var filesWithDecl = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        filesWithDecl.Add(declaringScript.FullPath);
+        foreach (var sref in collectedRefs.References)
+        {
+            if (sref.FilePath != null && sref.Kind == GDSymbolReferenceKind.Declaration)
+                filesWithDecl.Add(sref.FilePath);
+        }
+
+        // For files that have references but no declaration, check if they're related
+        var refOnlyFiles = collectedRefs.References
+            .Where(r => r.FilePath != null && !filesWithDecl.Contains(r.FilePath))
+            .Select(r => r.Script)
+            .Distinct()
+            .ToList();
+
+        foreach (var refScript in refOnlyFiles)
+        {
+            if (refScript.FullPath == null) continue;
+            var refType = refScript.TypeName;
+            if (string.IsNullOrEmpty(refType) || typeSystem == null) continue;
+
+            var inSameHierarchy =
+                typeSystem.IsAssignableTo(refType, declaringTypeName!) ||
+                typeSystem.IsAssignableTo(declaringTypeName!, refType);
+
+            if (!inSameHierarchy)
+                unrelated.Add(refScript.FullPath);
+        }
+
+        return unrelated;
+    }
+
     private void CollectClassNameEdits(
         GDScriptFile containingScript,
         string oldName,

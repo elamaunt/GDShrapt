@@ -128,8 +128,9 @@ Source: rename_test.gd
 Result: Success
 =======================================
 
-Strict edits (10):
+Strict edits (11):
   test_scripts/rename_test.gd:
+    19:6 counter -> counter_renamed [Strict]
     20:2 counter -> counter_renamed [Strict]
     21:2 counter -> counter_renamed [Strict]
     22:2 counter -> counter_renamed [Strict]
@@ -244,4 +245,4 @@ Potential edits (2):
 
 ---
 
-# Summary: 10 cases, 93 strict edits, 14 potential edits
+# Summary: 10 cases, 94 strict edits, 14 potential edits

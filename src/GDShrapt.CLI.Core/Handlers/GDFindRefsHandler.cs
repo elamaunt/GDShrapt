@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using GDShrapt.Abstractions;
-using GDShrapt.Reader;
+
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
@@ -15,6 +16,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
 {
     protected readonly GDScriptProject _project;
     protected readonly GDProjectSemanticModel? _projectModel;
+    private readonly Dictionary<string, string[]?> _sourceLineCache = new(StringComparer.OrdinalIgnoreCase);
 
     public GDFindRefsHandler(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
     {
@@ -22,261 +24,178 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         _projectModel = projectModel;
     }
 
+    private string? GetSourceLine(string filePath, int line)
+    {
+        if (!_sourceLineCache.TryGetValue(filePath, out var lines))
+        {
+            try { lines = File.ReadAllLines(filePath); }
+            catch { lines = null; }
+            _sourceLineCache[filePath] = lines;
+        }
+        if (lines != null && line > 0 && line <= lines.Length)
+            return lines[line - 1].TrimEnd();
+        return null;
+    }
+
+    private string? ResolveDisplayName(GDScriptFile script)
+    {
+        foreach (var autoload in _project.AutoloadEntries)
+        {
+            if (!autoload.Enabled) continue;
+            if (script.ResPath != null &&
+                autoload.Path.Equals(script.ResPath, StringComparison.OrdinalIgnoreCase))
+                return autoload.Name;
+            if (script.FullPath != null)
+            {
+                var normalized = autoload.Path.Replace("res://", "").Replace('/', Path.DirectorySeparatorChar);
+                if (script.FullPath.EndsWith(normalized, StringComparison.OrdinalIgnoreCase))
+                    return autoload.Name;
+            }
+        }
+        return script.TypeName;
+    }
+
     /// <inheritdoc />
     public virtual IReadOnlyList<GDReferenceGroup> FindReferences(string symbolName, string? filePath = null)
     {
-        var rawGroups = new List<RawGroup>();
+        var collector = new GDSymbolReferenceCollector(_project, _projectModel);
+        var result = collector.CollectReferences(symbolName, filePath);
 
-        if (!string.IsNullOrEmpty(filePath))
-        {
-            var script = _project.GetScript(filePath);
-            if (script != null)
-                CollectGroupFromScript(script, symbolName, rawGroups);
-        }
-        else
-        {
-            foreach (var script in _project.ScriptFiles)
-                CollectGroupFromScript(script, symbolName, rawGroups);
-        }
-
-        // Cross-file duck-typed references (project-wide search only)
-        if (string.IsNullOrEmpty(filePath) && _projectModel != null)
-        {
-            AddCrossFileReferences(symbolName, rawGroups);
-        }
-
-        return MergeOverrides(rawGroups);
+        return ConvertToGroups(result, symbolName);
     }
 
-    private void CollectGroupFromScript(
-        GDScriptFile script,
-        string symbolName,
-        List<RawGroup> rawGroups)
+    /// <inheritdoc />
+    public virtual GDFindRefsResult FindAllReferences(string symbolName, string? filePath = null)
     {
-        var semanticModel = script.SemanticModel;
-        if (semanticModel == null)
-            return;
+        var collector = new GDSymbolReferenceCollector(_project, _projectModel);
+        var allRefs = collector.CollectAllReferences(symbolName, filePath);
 
-        var symbol = semanticModel.FindSymbol(symbolName);
-        if (symbol == null)
-            return;
+        var primary = allRefs.Primary;
+        var primaryGroups = ConvertToGroups(primary, symbolName);
 
-        var hasLocalDeclaration = symbol.DeclarationNode != null;
-        var isOverride = hasLocalDeclaration && IsOverrideDeclaration(script, symbol);
-        // Symbol used but not declared/overridden locally — inherited usage
-        var isInherited = !hasLocalDeclaration && HasInheritedSymbol(script, symbolName);
-        var locations = new List<GDReferenceLocation>();
-
-        var refs = semanticModel.GetReferencesTo(symbol);
-
-        foreach (var reference in refs)
+        var unrelatedGroups = new List<GDReferenceGroup>();
+        foreach (var unrelated in allRefs.UnrelatedSymbols)
         {
-            var node = reference.ReferenceNode;
-            if (node == null)
-                continue;
-
-            var isDecl = node == symbol.DeclarationNode;
-            locations.Add(new GDReferenceLocation
-            {
-                FilePath = script.Reference.FullPath,
-                Line = node.StartLine + 1,
-                Column = node.StartColumn,
-                IsDeclaration = isDecl,
-                IsOverride = isDecl && isOverride,
-                IsWrite = reference.IsWrite
-            });
+            unrelatedGroups.AddRange(ConvertToGroups(unrelated, symbolName));
         }
 
+        // Determine symbol metadata from primary
+        var symbolKind = primary.Symbol.Kind.ToString().ToLowerInvariant();
+        var declClassName = primary.DeclaringScript != null
+            ? ResolveDisplayName(primary.DeclaringScript)
+            : null;
+        var declFilePath = primary.DeclaringScript?.FullPath;
         int declLine = 0;
-        int declColumn = 0;
+        if (primary.Symbol.DeclarationNode != null)
+            declLine = primary.Symbol.DeclarationNode.StartLine + 1;
 
-        if (symbol.DeclarationNode != null)
+        return new GDFindRefsResult
         {
-            declLine = symbol.DeclarationNode.StartLine + 1;
-            declColumn = symbol.DeclarationNode.StartColumn;
-            var declarationIncluded = locations.Any(r =>
-                r.Line == declLine &&
-                r.Column == declColumn &&
-                r.FilePath == script.Reference.FullPath);
+            SymbolName = symbolName,
+            SymbolKind = symbolKind,
+            DeclaredInClassName = declClassName,
+            DeclaredInFilePath = declFilePath,
+            DeclaredAtLine = declLine,
+            PrimaryGroups = primaryGroups,
+            UnrelatedGroups = unrelatedGroups
+        };
+    }
 
-            if (!declarationIncluded)
+    /// <summary>
+    /// Converts unified GDSymbolReferences into the CLI presentation model (RawGroup → GDReferenceGroup).
+    /// </summary>
+    private IReadOnlyList<GDReferenceGroup> ConvertToGroups(GDSymbolReferences result, string symbolName)
+    {
+        var rawGroups = new List<RawGroup>();
+
+        // Group references by script file, separating signal connections into their own groups
+        var byFile = result.References
+            .Where(r => r.FilePath != null)
+            .GroupBy(r => (FilePath: r.FilePath!, IsSignal: r.IsSignalConnection));
+
+        foreach (var fileGroup in byFile)
+        {
+            var script = fileGroup.First().Script;
+            var filePath = fileGroup.Key.FilePath;
+            var isSignalConnection = fileGroup.Key.IsSignal;
+
+            // Determine group properties from the references in this file
+            var hasDeclaration = fileGroup.Any(r => r.Kind == GDSymbolReferenceKind.Declaration);
+            var isOverride = fileGroup.Any(r => r.IsOverride);
+            var isInherited = fileGroup.Any(r => r.IsInherited);
+            var isCrossFile = !hasDeclaration && !isOverride && !isInherited && !isSignalConnection
+                && fileGroup.Any(r => r.Confidence != GDReferenceConfidence.Strict || r.IsContractString);
+
+            // Build locations
+            var locations = new List<GDReferenceLocation>();
+            foreach (var sref in fileGroup)
             {
-                locations.Insert(0, new GDReferenceLocation
+                var line1 = sref.Line + 1; // Convert 0-based to 1-based
+                var col = sref.IsContractString ? sref.Column + 1 : sref.Column;
+
+                int? endCol = null;
+                if (sref.IdentifierToken != null)
+                    endCol = sref.IdentifierToken.EndColumn;
+
+                locations.Add(new GDReferenceLocation
                 {
-                    FilePath = script.Reference.FullPath,
-                    Line = declLine,
-                    Column = declColumn,
-                    IsDeclaration = true,
-                    IsOverride = isOverride,
-                    IsWrite = false
+                    FilePath = sref.FilePath!,
+                    Line = line1,
+                    Column = col,
+                    EndColumn = endCol,
+                    IsDeclaration = sref.Kind == GDSymbolReferenceKind.Declaration,
+                    IsOverride = sref.IsOverride,
+                    IsSuperCall = sref.Kind == GDSymbolReferenceKind.SuperCall,
+                    IsWrite = sref.Kind == GDSymbolReferenceKind.Write,
+                    IsContractString = sref.IsContractString,
+                    IsSignalConnection = sref.IsSignalConnection,
+                    SignalName = sref.SignalName,
+                    IsSceneSignal = sref.IsSceneSignal,
+                    ReceiverTypeName = sref.IsSignalConnection ? sref.CallerTypeName : null,
+                    Confidence = sref.IsContractString || sref.IsSignalConnection || isCrossFile
+                        ? sref.Confidence : (GDReferenceConfidence?)null,
+                    Reason = sref.ConfidenceReason,
+                    Context = GetSourceLine(sref.FilePath!, line1)
                 });
             }
-        }
 
-        var extendsTypeForSuper = GetExtendsTypeName(script);
-        if (!string.IsNullOrEmpty(extendsTypeForSuper))
-        {
-            var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
-            if (model != null)
+            if (locations.Count == 0) continue;
+
+            int declLine = 0, declColumn = 0;
+            var declRef = fileGroup.FirstOrDefault(r => r.Kind == GDSymbolReferenceKind.Declaration)
+                       ?? fileGroup.FirstOrDefault(r => r.Kind == GDSymbolReferenceKind.Override);
+            if (declRef != null)
             {
-                var memberAccesses = model.GetMemberAccesses(extendsTypeForSuper, symbolName);
-                foreach (var access in memberAccesses)
-                {
-                    var accessNode = access.ReferenceNode;
-                    if (accessNode == null) continue;
-
-                    int accessLine, accessColumn;
-                    if (accessNode is GDMemberOperatorExpression memberOp && memberOp.Identifier != null)
-                    {
-                        accessLine = memberOp.Identifier.StartLine + 1;
-                        accessColumn = memberOp.Identifier.StartColumn;
-                    }
-                    else
-                    {
-                        accessLine = accessNode.StartLine + 1;
-                        accessColumn = accessNode.StartColumn;
-                    }
-
-                    var alreadyIncluded = locations.Any(r =>
-                        r.Line == accessLine &&
-                        r.Column == accessColumn &&
-                        r.FilePath == script.Reference.FullPath);
-
-                    if (!alreadyIncluded)
-                    {
-                        locations.Add(new GDReferenceLocation
-                        {
-                            FilePath = script.Reference.FullPath,
-                            Line = accessLine,
-                            Column = accessColumn,
-                            IsSuperCall = true,
-                            IsWrite = false
-                        });
-                    }
-                }
+                declLine = declRef.Line + 1;
+                declColumn = declRef.Column;
             }
-        }
-
-        if (locations.Count > 0)
-        {
-            var className = script.TypeName;
-            var extendsType = GetExtendsTypeName(script);
 
             rawGroups.Add(new RawGroup
             {
-                ClassName = className,
-                ExtendsType = extendsType,
-                FilePath = script.Reference.FullPath,
+                ClassName = isSignalConnection && fileGroup.Any(r => r.IsSceneSignal)
+                    ? Path.GetFileName(filePath)
+                    : ResolveDisplayName(script),
+                ExtendsType = GetExtendsTypeName(script),
+                FilePath = filePath,
                 DeclLine = declLine,
                 DeclColumn = declColumn,
                 IsOverride = isOverride,
                 IsInherited = isInherited,
+                IsCrossFile = isCrossFile,
+                IsSignalConnection = isSignalConnection,
                 Locations = locations
             });
         }
+
+        return MergeOverrides(rawGroups, symbolName);
     }
 
-    private void AddCrossFileReferences(string symbolName, List<RawGroup> rawGroups)
+    private IReadOnlyList<GDReferenceGroup> MergeOverrides(List<RawGroup> rawGroups, string symbolName)
     {
-        // Find the declaring script: first root group (non-override, non-inherited)
-        var existingFiles = new HashSet<string>(
-            rawGroups.Select(g => g.FilePath),
-            StringComparer.OrdinalIgnoreCase);
-
-        GDScriptFile? declaringScript = null;
-        Semantics.GDSymbolInfo? symbol = null;
-
-        // Try root groups first (original declarations)
-        foreach (var group in rawGroups.Where(g => !g.IsOverride && !g.IsInherited))
-        {
-            var script = _project.GetScript(group.FilePath);
-            if (script?.SemanticModel == null) continue;
-
-            var sym = script.SemanticModel.FindSymbol(symbolName);
-            if (sym?.DeclarationNode != null)
-            {
-                declaringScript = script;
-                symbol = sym;
-                break;
-            }
-        }
-
-        if (declaringScript == null || symbol == null)
-            return;
-
-        var crossFileFinder = new GDCrossFileReferenceFinder(_project, _projectModel);
-        var crossFileRefs = crossFileFinder.FindReferences(symbol, declaringScript);
-
-        // Group cross-file references by script file
-        var allCrossRefs = crossFileRefs.StrictReferences
-            .Concat(crossFileRefs.PotentialReferences)
-            .GroupBy(r => r.Script.FullPath ?? "");
-
-        foreach (var fileGroup in allCrossRefs)
-        {
-            if (string.IsNullOrEmpty(fileGroup.Key))
-                continue;
-
-            // Skip files already covered by per-file collection
-            if (existingFiles.Contains(fileGroup.Key))
-                continue;
-
-            var script = fileGroup.First().Script;
-            var locations = new List<GDReferenceLocation>();
-
-            foreach (var crossRef in fileGroup)
-            {
-                var node = crossRef.Node;
-                var isContractString = node is GDStringNode;
-
-                // For member access, point to the identifier (not the whole expression)
-                int refLine, refColumn;
-                if (node is GDMemberOperatorExpression memberOp && memberOp.Identifier != null)
-                {
-                    refLine = memberOp.Identifier.StartLine + 1;
-                    refColumn = memberOp.Identifier.StartColumn;
-                }
-                else
-                {
-                    refLine = node.StartLine + 1;
-                    // String literal tokens need +1 column for the opening quote
-                    refColumn = isContractString ? node.StartColumn + 1 : node.StartColumn;
-                }
-
-                locations.Add(new GDReferenceLocation
-                {
-                    FilePath = fileGroup.Key,
-                    Line = refLine,
-                    Column = refColumn,
-                    Confidence = crossRef.Confidence,
-                    Reason = crossRef.Reason,
-                    IsContractString = isContractString
-                });
-            }
-
-            if (locations.Count > 0)
-            {
-                rawGroups.Add(new RawGroup
-                {
-                    ClassName = script.TypeName,
-                    ExtendsType = GetExtendsTypeName(script),
-                    FilePath = fileGroup.Key,
-                    DeclLine = 0,
-                    DeclColumn = 0,
-                    IsOverride = false,
-                    IsInherited = false,
-                    IsCrossFile = true,
-                    Locations = locations
-                });
-            }
-        }
-    }
-
-    private IReadOnlyList<GDReferenceGroup> MergeOverrides(List<RawGroup> rawGroups)
-    {
-        var roots = rawGroups.Where(g => !g.IsOverride && !g.IsInherited && !g.IsCrossFile).ToList();
-        var dependents = rawGroups.Where(g => (g.IsOverride || g.IsInherited) && !g.IsCrossFile).ToList();
+        var roots = rawGroups.Where(g => !g.IsOverride && !g.IsInherited && !g.IsCrossFile && !g.IsSignalConnection).ToList();
+        var dependents = rawGroups.Where(g => (g.IsOverride || g.IsInherited) && !g.IsCrossFile && !g.IsSignalConnection).ToList();
         var crossFileGroups = rawGroups.Where(g => g.IsCrossFile).ToList();
+        var signalGroups = rawGroups.Where(g => g.IsSignalConnection).ToList();
 
         var merged = new List<GDReferenceGroup>();
 
@@ -289,6 +208,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 DeclarationLine = root.DeclLine,
                 DeclarationColumn = root.DeclColumn,
                 IsOverride = false,
+                SymbolName = symbolName,
                 Locations = new List<GDReferenceLocation>(root.Locations)
             });
         }
@@ -296,35 +216,24 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         foreach (var dep in dependents)
         {
             var rootGroup = FindRootGroup(dep, merged);
+            var group = new GDReferenceGroup
+            {
+                ClassName = dep.ClassName,
+                DeclarationFilePath = dep.FilePath,
+                DeclarationLine = dep.DeclLine,
+                DeclarationColumn = dep.DeclColumn,
+                IsOverride = dep.IsOverride,
+                IsInherited = dep.IsInherited,
+                SymbolName = symbolName,
+                Locations = new List<GDReferenceLocation>(dep.Locations)
+            };
+
             if (rootGroup != null)
-            {
-                rootGroup.Overrides.Add(new GDReferenceGroup
-                {
-                    ClassName = dep.ClassName,
-                    DeclarationFilePath = dep.FilePath,
-                    DeclarationLine = dep.DeclLine,
-                    DeclarationColumn = dep.DeclColumn,
-                    IsOverride = dep.IsOverride,
-                    IsInherited = dep.IsInherited,
-                    Locations = new List<GDReferenceLocation>(dep.Locations)
-                });
-            }
+                rootGroup.Overrides.Add(group);
             else
-            {
-                merged.Add(new GDReferenceGroup
-                {
-                    ClassName = dep.ClassName,
-                    DeclarationFilePath = dep.FilePath,
-                    DeclarationLine = dep.DeclLine,
-                    DeclarationColumn = dep.DeclColumn,
-                    IsOverride = dep.IsOverride,
-                    IsInherited = dep.IsInherited,
-                    Locations = new List<GDReferenceLocation>(dep.Locations)
-                });
-            }
+                merged.Add(group);
         }
 
-        // Cross-file groups (duck-typed / potential refs) appended at the end
         foreach (var cf in crossFileGroups)
         {
             merged.Add(new GDReferenceGroup
@@ -334,7 +243,22 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 DeclarationLine = cf.DeclLine,
                 DeclarationColumn = cf.DeclColumn,
                 IsCrossFile = true,
+                SymbolName = symbolName,
                 Locations = new List<GDReferenceLocation>(cf.Locations)
+            });
+        }
+
+        foreach (var sg in signalGroups)
+        {
+            merged.Add(new GDReferenceGroup
+            {
+                ClassName = sg.ClassName,
+                DeclarationFilePath = sg.FilePath,
+                DeclarationLine = sg.DeclLine,
+                DeclarationColumn = sg.DeclColumn,
+                IsSignalConnection = true,
+                SymbolName = symbolName,
+                Locations = new List<GDReferenceLocation>(sg.Locations)
             });
         }
 
@@ -369,86 +293,10 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         return null;
     }
 
-    private bool IsOverrideDeclaration(GDScriptFile script, Semantics.GDSymbolInfo symbol)
-    {
-        if (symbol.DeclarationNode == null)
-            return false;
-
-        if (symbol.Kind != GDSymbolKind.Method && symbol.Kind != GDSymbolKind.Variable)
-            return false;
-
-        var extendsType = GetExtendsTypeName(script);
-        if (string.IsNullOrEmpty(extendsType))
-            return false;
-
-        return HasMemberInBaseType(extendsType, symbol.Name);
-    }
-
-    private bool HasMemberInBaseType(string typeName, string memberName)
-    {
-        var visited = new HashSet<string>(StringComparer.Ordinal);
-        var current = typeName;
-
-        while (!string.IsNullOrEmpty(current) && visited.Add(current))
-        {
-            var baseScript = _project.GetScriptByTypeName(current);
-            if (baseScript?.SemanticModel != null)
-            {
-                var baseSymbol = baseScript.SemanticModel.FindSymbol(memberName);
-                if (baseSymbol != null && baseSymbol.DeclarationNode != null)
-                    return true;
-
-                current = GetExtendsTypeName(baseScript);
-                continue;
-            }
-
-            var runtimeProvider = GetRuntimeProvider();
-            if (runtimeProvider != null)
-            {
-                var member = runtimeProvider.GetMember(current, memberName);
-                if (member != null)
-                    return true;
-
-                current = runtimeProvider.GetBaseType(current);
-                continue;
-            }
-
-            break;
-        }
-
-        return false;
-    }
-
-    private bool HasInheritedSymbol(GDScriptFile script, string symbolName)
-    {
-        var extendsType = GetExtendsTypeName(script);
-        if (string.IsNullOrEmpty(extendsType))
-            return false;
-
-        return HasMemberInBaseType(extendsType, symbolName);
-    }
-
     private string? GetExtendsTypeName(GDScriptFile script)
     {
         var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
         return model?.BaseTypeName;
-    }
-
-    private IGDRuntimeProvider? GetRuntimeProvider()
-    {
-        if (_projectModel != null)
-        {
-            foreach (var script in _project.ScriptFiles)
-            {
-                var model = _projectModel.GetSemanticModel(script);
-                if (model?.RuntimeProvider != null)
-                    return model.RuntimeProvider;
-            }
-        }
-
-        return _project.ScriptFiles
-            .FirstOrDefault(s => s.SemanticModel != null)
-            ?.SemanticModel?.RuntimeProvider;
     }
 
     private class RawGroup
@@ -461,6 +309,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         public bool IsOverride;
         public bool IsInherited;
         public bool IsCrossFile;
+        public bool IsSignalConnection;
         public required List<GDReferenceLocation> Locations;
     }
 

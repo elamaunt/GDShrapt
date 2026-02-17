@@ -143,6 +143,31 @@ public abstract class GDSemanticType
     }
 
     /// <summary>
+    /// Infers a semantic type from an initializer expression using AST pattern matching.
+    /// Handles literals (numbers, strings, bools) and container constructors (arrays, dictionaries).
+    /// Returns Variant for unrecognized expressions.
+    /// </summary>
+    public static GDSemanticType InferFromInitializer(GDExpression? initializer)
+    {
+        return initializer switch
+        {
+            null => GDVariantSemanticType.Instance,
+            GDArrayInitializerExpression => new GDSimpleSemanticType("Array"),
+            GDDictionaryInitializerExpression => new GDSimpleSemanticType("Dictionary"),
+            GDNumberExpression num => num.Number?.ResolveNumberType() switch
+            {
+                GDNumberType.LongDecimal or GDNumberType.LongBinary or GDNumberType.LongHexadecimal
+                    => new GDSimpleSemanticType("int"),
+                GDNumberType.Double => new GDSimpleSemanticType("float"),
+                _ => GDVariantSemanticType.Instance
+            },
+            GDStringExpression => new GDSimpleSemanticType("String"),
+            GDBoolExpression => new GDSimpleSemanticType("bool"),
+            _ => GDVariantSemanticType.Instance
+        };
+    }
+
+    /// <summary>
     /// Creates a union of two types.
     /// If both types are the same, returns the single type.
     /// </summary>

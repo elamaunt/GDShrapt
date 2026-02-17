@@ -10,7 +10,7 @@ public static class GDAnsiColors
 
     public static string Red(string text) => Enabled ? $"\x1b[31m{text}\x1b[0m" : text;
     public static string Yellow(string text) => Enabled ? $"\x1b[33m{text}\x1b[0m" : text;
-    public static string Green(string text) => Enabled ? $"\x1b[32m{text}\x1b[0m" : text;
+    public static string Green(string text) => Enabled ? $"\x1b[38;5;119m{text}\x1b[0m" : text;
     public static string Cyan(string text) => Enabled ? $"\x1b[36m{text}\x1b[0m" : text;
     public static string Blue(string text) => Enabled ? $"\x1b[34m{text}\x1b[0m" : text;
     public static string Bold(string text) => Enabled ? $"\x1b[1m{text}\x1b[0m" : text;

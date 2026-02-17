@@ -76,9 +76,22 @@ public class GDTypeSystem : IGDTypeSystem
     }
 
     /// <inheritdoc/>
+    public GDContainerElementType? GetClassContainerElementType(string className, string variableName)
+    {
+        var profile = _model.GetClassContainerProfile(className, variableName);
+        return profile?.ComputeInferredType();
+    }
+
+    /// <inheritdoc/>
     public GDContainerUsageProfile? GetContainerProfile(string variableName)
     {
         return _model.GetContainerProfile(variableName);
+    }
+
+    /// <inheritdoc/>
+    public GDContainerUsageProfile? GetClassContainerProfile(string className, string variableName)
+    {
+        return _model.GetClassContainerProfile(className, variableName);
     }
 
     /// <inheritdoc/>

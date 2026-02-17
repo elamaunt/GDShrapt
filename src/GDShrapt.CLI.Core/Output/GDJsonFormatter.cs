@@ -44,6 +44,12 @@ public class GDJsonFormatter : IGDOutputFormatter
         output.WriteLine(json);
     }
 
+    public void WriteFindRefsResult(TextWriter output, GDFindRefsResultInfo result)
+    {
+        var json = JsonSerializer.Serialize(result, s_options);
+        output.WriteLine(json);
+    }
+
     public void WriteMessage(TextWriter output, string message)
     {
         var obj = new { message };

@@ -79,7 +79,11 @@ config/name=""TestProject""
         // Create script files
         foreach (var (name, content) in scripts)
         {
-            var fileName = name.EndsWith(".gd", StringComparison.OrdinalIgnoreCase) ? name : name + ".gd";
+            var fileName = name.EndsWith(".gd", StringComparison.OrdinalIgnoreCase)
+                || name.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)
+                || name.EndsWith(".tres", StringComparison.OrdinalIgnoreCase)
+                ? name
+                : name + ".gd";
             var filePath = Path.Combine(tempPath, fileName);
 
             // Ensure directory exists for nested paths

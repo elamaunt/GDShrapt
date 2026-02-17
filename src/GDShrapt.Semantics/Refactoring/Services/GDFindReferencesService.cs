@@ -319,9 +319,23 @@ public class GDFindReferencesResult : GDRefactoringResult
 /// <summary>
 /// Service for finding all references to a symbol.
 /// Uses GDSemanticModel for symbol resolution when available.
+/// When project context is provided, delegates cross-file collection to GDSymbolReferenceCollector.
 /// </summary>
 public class GDFindReferencesService : GDRefactoringServiceBase
 {
+    private readonly GDScriptProject? _project;
+    private readonly GDProjectSemanticModel? _projectModel;
+
+    public GDFindReferencesService()
+    {
+    }
+
+    public GDFindReferencesService(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
+    {
+        _project = project;
+        _projectModel = projectModel;
+    }
+
     /// <summary>
     /// Determines the scope of a symbol at the given cursor position.
     /// </summary>
@@ -583,9 +597,19 @@ public class GDFindReferencesService : GDRefactoringServiceBase
 
     /// <summary>
     /// Finds all references for a known symbol scope.
+    /// When project context is available and the scope is cross-file (class member, external, project-wide),
+    /// delegates to GDSymbolReferenceCollector for unified cross-file collection.
     /// </summary>
     public GDFindReferencesResult FindReferencesForScope(GDRefactoringContext context, GDSymbolScope scope)
     {
+        // For cross-file scopes, delegate to the unified collector when project context is available
+        if (_project != null && IsCrossFileScope(scope))
+        {
+            var result = CollectViaUnifiedCollector(scope);
+            if (result != null)
+                return result;
+        }
+
         var strictRefs = new List<GDReferenceLocation>();
         var potentialRefs = new List<GDReferenceLocation>();
 
@@ -637,6 +661,93 @@ public class GDFindReferencesService : GDRefactoringServiceBase
         }
 
         return GDFindReferencesResult.Succeeded(scope, strictRefs, potentialRefs);
+    }
+
+    private static bool IsCrossFileScope(GDSymbolScope scope)
+    {
+        return scope.Type == GDSymbolScopeType.ClassMember
+            || scope.Type == GDSymbolScopeType.ExternalMember
+            || scope.Type == GDSymbolScopeType.ProjectWide;
+    }
+
+    /// <summary>
+    /// Delegates to GDSymbolReferenceCollector and converts results to GDReferenceLocation.
+    /// Returns null if the symbol cannot be resolved.
+    /// </summary>
+    private GDFindReferencesResult? CollectViaUnifiedCollector(GDSymbolScope scope)
+    {
+        var collector = new GDSymbolReferenceCollector(_project!, _projectModel);
+        var filterFile = scope.ContainingScript?.FullPath;
+        var collected = collector.CollectReferences(scope.SymbolName, filterFile);
+
+        if (collected.References.Count == 0)
+            return null;
+
+        var strictRefs = new List<GDReferenceLocation>();
+        var potentialRefs = new List<GDReferenceLocation>();
+
+        foreach (var symRef in collected.References)
+        {
+            var refKind = ConvertReferenceKind(symRef);
+            var (contextText, hlStart, hlEnd) = GetContextForSymbolReference(symRef, scope.SymbolName);
+
+            var location = new GDReferenceLocation(
+                scope.SymbolName,
+                symRef.FilePath,
+                symRef.Line,
+                symRef.Column,
+                symRef.Column + scope.SymbolName.Length,
+                refKind,
+                symRef.Confidence,
+                symRef.Node ?? symRef.Script.Class as GDNode ?? new GDClassDeclaration(),
+                contextText,
+                hlStart,
+                hlEnd,
+                symRef.ConfidenceReason);
+
+            if (symRef.Confidence == GDReferenceConfidence.Strict)
+                strictRefs.Add(location);
+            else if (symRef.Confidence == GDReferenceConfidence.Potential)
+                potentialRefs.Add(location);
+        }
+
+        return GDFindReferencesResult.Succeeded(scope, strictRefs, potentialRefs);
+    }
+
+    private static GDReferenceKind ConvertReferenceKind(GDSymbolReference symRef)
+    {
+        return symRef.Kind switch
+        {
+            GDSymbolReferenceKind.Declaration => GDReferenceKind.Declaration,
+            GDSymbolReferenceKind.Write => GDReferenceKind.Write,
+            GDSymbolReferenceKind.Call => GDReferenceKind.Call,
+            GDSymbolReferenceKind.Override => GDReferenceKind.Declaration,
+            _ => GDReferenceKind.Read
+        };
+    }
+
+    private (string contextText, int hlStart, int hlEnd) GetContextForSymbolReference(
+        GDSymbolReference symRef, string symbolName)
+    {
+        // Try to get context from the identifier token
+        if (symRef.IdentifierToken is GDIdentifier identifier)
+            return GetContextWithHighlight(identifier);
+
+        // Try to get context from the node
+        if (symRef.Node != null)
+        {
+            var text = symRef.Node.ToString() ?? symbolName;
+            if (text.Length > 60)
+                text = text.Substring(0, 57) + "...";
+            text = text.Trim().Replace("\n", " ").Replace("\r", "");
+
+            var idx = text.IndexOf(symbolName, StringComparison.Ordinal);
+            if (idx >= 0)
+                return (text, idx, idx + symbolName.Length);
+            return (text, 0, 0);
+        }
+
+        return (symbolName, 0, symbolName.Length);
     }
 
     /// <summary>

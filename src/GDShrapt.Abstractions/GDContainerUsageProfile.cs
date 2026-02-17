@@ -130,7 +130,7 @@ public class GDContainerUsageProfile
     /// </summary>
     public void AddValueUsage(GDSemanticType? inferredType, GDContainerUsageKind kind, GDNode? node)
     {
-        if (inferredType == null || inferredType.IsVariant)
+        if (inferredType == null)
             return;
 
         ValueUsages.Add(new GDContainerUsageObservation

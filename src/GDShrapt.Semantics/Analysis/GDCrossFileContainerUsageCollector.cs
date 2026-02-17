@@ -286,14 +286,14 @@ internal class GDCrossFileContainerUsageCollector
                 return;
 
             var valueType = _typeEngine?.InferSemanticType(valueExpr);
-            if (valueType != null && !valueType.IsVariant)
+            if (valueType != null)
             {
                 var token = sourceNode.AllTokens.FirstOrDefault();
                 _observations.Add(new GDContainerUsageObservation
                 {
                     Kind = usageKind,
                     InferredType = valueType,
-                    IsHighConfidence = true,
+                    IsHighConfidence = !valueType.IsVariant,
                     Node = sourceNode,
                     Line = token?.StartLine ?? 0,
                     Column = token?.StartColumn ?? 0,

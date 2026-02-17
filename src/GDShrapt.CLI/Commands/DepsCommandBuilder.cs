@@ -47,6 +47,7 @@ public static class DepsCommandBuilder
 
         var includeSignalsOption = new Option<bool>(
             ["--include-signals"],
+            () => true,
             "Include signal connections as dependency edges");
 
         command.AddArgument(pathArg);

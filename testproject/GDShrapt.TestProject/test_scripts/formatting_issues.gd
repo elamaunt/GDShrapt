@@ -74,7 +74,7 @@ func ternary_formatting(condition:bool)->int:
 
 func lambda_formatting():
 	var arr=[1,2,3,4,5]
-	var filtered=arr.filter(func(x):return x>2)  # 77:40-GD3020-OK
+	var filtered=arr.filter(func(x):return x>2)
 	var mapped=arr.map(func(x):return x*2)
 	return [filtered,mapped]
 

@@ -30,7 +30,7 @@ func test_array_methods(): # 10:5-GDL226-OK
 
 	# Methods returning Array
 	var duplicated = arr.duplicate()    # -> Array # 33:5-GDL201-OK
-	var sliced = arr.slice(1, 3)        # -> Array # 34:5-GDL201-OK, 34:43-GD3020-OK
+	var sliced = arr.slice(1, 3)        # -> Array # 34:5-GDL201-OK
 	var filtered = arr.filter(func(x): return x > 2)  # -> Array # 35:5-GDL201-OK
 	var mapped = arr.map(func(x): return x * 2)       # -> Array
 

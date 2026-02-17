@@ -34,12 +34,16 @@ public static class FindRefsCommandBuilder
         var columnOption = new Option<int?>(
             new[] { "--column" },
             "Column number (1-based, default: 1). Used with --line");
+        var explainOption = new Option<bool>(
+            "--explain",
+            "Show per-reference evidence chains");
 
         command.AddArgument(symbolArg);
         command.AddOption(projectOption);
         command.AddOption(fileOption);
         command.AddOption(lineOption);
         command.AddOption(columnOption);
+        command.AddOption(explainOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -48,10 +52,11 @@ public static class FindRefsCommandBuilder
             var filePath = context.ParseResult.GetValueForOption(fileOption);
             var line = context.ParseResult.GetValueForOption(lineOption);
             var column = context.ParseResult.GetValueForOption(columnOption);
+            var explain = context.ParseResult.GetValueForOption(explainOption);
             var format = context.ParseResult.GetValueForOption(globalFormatOption) ?? "text";
 
             var formatter = CommandHelpers.GetFormatter(format);
-            var cmd = new GDFindRefsCommand(symbol, projectPath, filePath, formatter, line: line, column: column);
+            var cmd = new GDFindRefsCommand(symbol, projectPath, filePath, formatter, line: line, column: column, explain: explain);
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

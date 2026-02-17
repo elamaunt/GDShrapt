@@ -241,8 +241,8 @@ func take_damage(amount: int) -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        outputText.Should().Contain("[decl]");
-        outputText.Should().Contain("[overr]");
+        outputText.Should().Contain("[def]");
+        outputText.Should().Contain("[override]");
     }
 
     [TestMethod]
@@ -267,8 +267,8 @@ func attack() -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        outputText.Should().Contain("[decl]");
-        outputText.Should().NotContain("[overr]");
+        outputText.Should().Contain("[def]");
+        outputText.Should().NotContain("[override]");
     }
 
     [TestMethod]
@@ -302,9 +302,9 @@ func process_turn() -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        // base_entity.gd has [decl], enemy.gd has [overr]
-        outputText.Should().Contain("[decl]");
-        outputText.Should().Contain("[overr]");
+        // base_entity.gd has [def], enemy.gd has [override]
+        outputText.Should().Contain("[def]");
+        outputText.Should().Contain("[override]");
     }
 
     [TestMethod]
@@ -336,9 +336,9 @@ func take_damage(amount: int) -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        outputText.Should().Contain("[decl]");
-        outputText.Should().Contain("[overr]");
-        outputText.Should().Contain("[read-base]");
+        outputText.Should().Contain("[def]");
+        outputText.Should().Contain("[override]");
+        outputText.Should().Contain("[call-super]");
     }
 
     [TestMethod]
@@ -364,7 +364,7 @@ func _ready() -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[def]");
         outputText.Should().Contain("[write]");
     }
 
@@ -391,8 +391,8 @@ func _ready() -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        outputText.Should().Contain("[decl]");
-        outputText.Should().Contain("[read]");
+        outputText.Should().Contain("[def]");
+        outputText.Should().Contain("[call]");
         outputText.Should().NotContain("[write]");
     }
 
@@ -420,9 +420,9 @@ func _ready() -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        outputText.Should().Contain("[decl]");
+        outputText.Should().Contain("[def]");
         outputText.Should().Contain("[write]");
-        outputText.Should().Contain("[read]");
+        outputText.Should().Contain("[call]");
     }
 
     [TestMethod]
@@ -455,8 +455,8 @@ func _ready() -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        // Should have two separate [decl] markers — one per file
-        var declCount = outputText.Split("[decl]").Length - 1;
+        // Should have two separate [def] markers — one per file
+        var declCount = outputText.Split("[def]").Length - 1;
         declCount.Should().Be(2, "each file's 'data' is an independent declaration");
     }
 
@@ -490,12 +490,9 @@ func fire(node: Node2D) -> void:
         result.Should().Be(0);
         var outputText = output.ToString();
         // Root group: ProjectileBase with declaration
-        outputText.Should().Contain("[decl]");
-        // Child inherited usage: [write-base] instead of [write]
-        outputText.Should().Contain("[write-base]");
-        // Should NOT have bare [write] for inherited usage
-        outputText.Should().NotContain("[write]",
-            "inherited variable writes should be [write-base], not [write]");
+        outputText.Should().Contain("[def]");
+        // Child inherited usage: [write] marker
+        outputText.Should().Contain("[write]");
     }
 
     [TestMethod]
@@ -524,7 +521,7 @@ func show_info() -> void:
         // Assert
         result.Should().Be(0);
         var outputText = output.ToString();
-        outputText.Should().Contain("[decl]");
-        outputText.Should().Contain("[read-base]");
+        outputText.Should().Contain("[def]");
+        outputText.Should().Contain("[call]");
     }
 }

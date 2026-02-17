@@ -1,5 +1,4 @@
 using GDShrapt.Abstractions;
-using GDShrapt.Reader;
 using GDShrapt.Semantics.Validator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
@@ -374,21 +373,114 @@ func test():
 
     #endregion
 
+    #region Lambda Parameter Inference Suppresses GD3020
+
+    [TestMethod]
+    public void LambdaParamInFilter_InferredFromArrayLiteral_NoGD3020()
+    {
+        var code = @"
+func test():
+    var arr = [1, 2, 3, 4, 5]
+    var filtered = arr.filter(func(x): return x > 2)
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Lambda param inferred as int from Array[int] should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParamInFilter_ExplicitTypedArray_NoGD3020()
+    {
+        var code = @"
+func test(arr: Array[float]):
+    var filtered = arr.filter(func(x): return x > 0.0)
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Lambda param inferred as float from Array[float] should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParamInFilter_ClassMemberTypedArray_NoGD3020()
+    {
+        var code = @"
+var scores: Array[int] = [90, 85, 70]
+
+func test():
+    var high = scores.filter(func(x): return x > 80)
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Lambda param from class member Array[int] should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParamInFilter_StaticTypedArray_NoGD3020()
+    {
+        var code = @"
+static var tags: Array[String] = [""alpha"", ""beta"", ""gamma""]
+
+func test():
+    var sorted = tags.filter(func(t): return t > ""b"")
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Lambda param from static Array[String] should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParamInFilter_EmptyArrayLiteral_NoGD3020()
+    {
+        var code = @"
+func test():
+    var arr = []
+    var filtered = arr.filter(func(x): return x > 2)
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Lambda param in empty array filter should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParamInFilter_EmptyArrayWithAppend_NoGD3020()
+    {
+        var code = @"
+func test():
+    var arr = []
+    arr.append(42)
+    arr.append(10)
+    var filtered = arr.filter(func(x): return x > 20)
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsFalse(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Lambda param from Array with int appends should not trigger GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    [TestMethod]
+    public void LambdaParamInFilter_UntypedArrayParam_StillWarns()
+    {
+        var code = @"
+func test(arr: Array):
+    var filtered = arr.filter(func(x): return x > 2)
+";
+        var diagnostics = ValidateCode(code);
+        Assert.IsTrue(diagnostics.Any(d => d.Code == GDDiagnosticCode.ComparisonWithPotentiallyNull),
+            $"Lambda param from plain Array should still warn GD3020. Found: {FormatDiagnostics(diagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
     {
-        var reader = new GDScriptReader();
-        var classDecl = reader.ParseFileContent(code);
-
-        if (classDecl == null)
-            return Enumerable.Empty<GDDiagnostic>();
-
         var reference = new GDScriptReference("test://virtual/test_script.gd");
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
 
-        // Use GDCompositeRuntimeProvider with GDGodotTypesProvider to get full Godot type info
+        if (scriptFile.Class == null)
+            return Enumerable.Empty<GDDiagnostic>();
+
         var runtimeProvider = new GDCompositeRuntimeProvider(
             new GDGodotTypesProvider(),
             null, null, null);
@@ -403,7 +495,7 @@ func test():
             CheckComparisonOperators = true
         };
         var validator = new GDSemanticValidator(semanticModel, options);
-        var result = validator.Validate(classDecl);
+        var result = validator.Validate(scriptFile.Class);
 
         return result.Diagnostics;
     }

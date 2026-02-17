@@ -233,11 +233,14 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     break;
 
                 case GDVariableDeclaration variable when variable.Identifier != null:
+                    var hasExplicitType1 = variable.Type != null;
                     info.Properties[variable.Identifier.Sequence] = new GDProjectPropertyInfo
                     {
                         Name = variable.Identifier.Sequence,
                         TypeName = variable.Type?.BuildName() ?? "Variant",
-                        IsConstant = variable.ConstKeyword != null
+                        IsConstant = variable.ConstKeyword != null,
+                        HasExplicitType = hasExplicitType1,
+                        VariableDeclaration = hasExplicitType1 ? null : variable
                     };
                     break;
 
@@ -316,12 +319,15 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     break;
 
                 case GDVariableDeclaration variable when variable.Identifier != null:
+                    var hasExplicitType2 = variable.Type != null;
                     info.Properties[variable.Identifier.Sequence] = new GDProjectPropertyInfo
                     {
                         Name = variable.Identifier.Sequence,
                         TypeName = variable.Type?.BuildName() ?? "Variant",
                         IsConstant = variable.ConstKeyword != null,
-                        IsStatic = variable.StaticKeyword != null
+                        IsStatic = variable.StaticKeyword != null,
+                        HasExplicitType = hasExplicitType2,
+                        VariableDeclaration = hasExplicitType2 ? null : variable
                     };
                     break;
 
@@ -508,11 +514,12 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check properties
         if (projectType.Properties.TryGetValue(memberName, out var property))
         {
+            var propertyType = GetPropertyType(property);
             GDRuntimeMemberInfo memberInfo;
             if (property.IsConstant)
-                memberInfo = GDRuntimeMemberInfo.Constant(property.Name, property.TypeName);
+                memberInfo = GDRuntimeMemberInfo.Constant(property.Name, propertyType);
             else
-                memberInfo = GDRuntimeMemberInfo.Property(property.Name, property.TypeName, property.IsStatic);
+                memberInfo = GDRuntimeMemberInfo.Property(property.Name, propertyType, property.IsStatic);
             return (memberInfo, typeName);
         }
 
@@ -708,7 +715,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check properties
         if (projectType.Properties.TryGetValue(memberName, out var property))
         {
-            return property.TypeName;
+            return GetPropertyType(property);
         }
 
         // Check base type
@@ -798,6 +805,33 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => Array.Empty<GDCollisionLayerInfo>();
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
+
+    private string GetPropertyType(GDProjectPropertyInfo property)
+    {
+        if (property.HasExplicitType || property.TypeInferred)
+            return property.TypeName;
+
+        if (property.VariableDeclaration == null)
+        {
+            property.TypeInferred = true;
+            return property.TypeName;
+        }
+
+        var inferred = GDSemanticType.InferFromInitializer(property.VariableDeclaration.Initializer);
+
+        lock (property)
+        {
+            if (!property.TypeInferred)
+            {
+                if (inferred is not GDVariantSemanticType)
+                    property.TypeName = inferred.DisplayName;
+
+                property.TypeInferred = true;
+            }
+        }
+
+        return property.TypeName;
+    }
 }
 
 /// <summary>
@@ -844,9 +878,25 @@ public class GDProjectMethodInfo
 public class GDProjectPropertyInfo
 {
     public string Name { get; init; } = "";
-    public string TypeName { get; init; } = "Variant";
+    public string TypeName { get; set; } = "Variant";
     public bool IsConstant { get; init; }
     public bool IsStatic { get; init; }
+
+    /// <summary>
+    /// Whether the type has an explicit annotation.
+    /// If false, TypeName may be "Variant" or inferred from initializer.
+    /// </summary>
+    public bool HasExplicitType { get; init; }
+
+    /// <summary>
+    /// Reference to the variable declaration for lazy type inference from initializer.
+    /// </summary>
+    internal GDVariableDeclaration? VariableDeclaration { get; init; }
+
+    /// <summary>
+    /// Whether the type has been inferred (for lazy inference).
+    /// </summary>
+    internal bool TypeInferred { get; set; }
 }
 
 public class GDProjectSignalInfo

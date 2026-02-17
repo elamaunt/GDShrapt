@@ -38,6 +38,11 @@ public interface IGDOutputFormatter
     void WriteReferenceGroups(TextWriter output, IEnumerable<GDReferenceGroupInfo> groups);
 
     /// <summary>
+    /// Writes a structured find-refs result with symbol header, categorized sections, and summary.
+    /// </summary>
+    void WriteFindRefsResult(TextWriter output, GDFindRefsResultInfo result);
+
+    /// <summary>
     /// Writes a simple message.
     /// </summary>
     void WriteMessage(TextWriter output, string message);
@@ -143,6 +148,7 @@ public class GDReferenceInfo
     public string FilePath { get; set; } = string.Empty;
     public int Line { get; set; }
     public int Column { get; set; }
+    public int? EndColumn { get; set; }
     public string? Context { get; set; }
     public bool IsDeclaration { get; set; }
     public bool IsOverride { get; set; }
@@ -151,6 +157,41 @@ public class GDReferenceInfo
     public GDReferenceConfidence? Confidence { get; set; }
     public string? Reason { get; set; }
     public bool IsContractString { get; set; }
+    public bool IsSignalConnection { get; set; }
+    public string? SignalName { get; set; }
+    public bool IsSceneSignal { get; set; }
+    public string? ReceiverTypeName { get; set; }
+
+    // Provenance fields (populated from rename planner)
+    public string? PromotionLabel { get; set; }
+    public List<string>? PromotionProofParts { get; set; }
+    public string? PromotionFilter { get; set; }
+    public List<GDProvenanceEntryInfo>? DetailedProvenance { get; set; }
+    public string? ProvenanceVariableName { get; set; }
+}
+
+/// <summary>
+/// Per-type provenance entry for output.
+/// </summary>
+public class GDProvenanceEntryInfo
+{
+    public string TypeName { get; set; } = "";
+    public string SourceReason { get; set; } = "";
+    public int? SourceLine { get; set; }
+    public string? SourceFilePath { get; set; }
+    public List<GDCallSiteInfo> CallSites { get; set; } = new();
+}
+
+/// <summary>
+/// Call site info for provenance chains.
+/// </summary>
+public class GDCallSiteInfo
+{
+    public string FilePath { get; set; } = "";
+    public int Line { get; set; }
+    public string Expression { get; set; } = "";
+    public bool? IsExplicitType { get; set; }
+    public List<GDCallSiteInfo> InnerChain { get; set; } = new();
 }
 
 /// <summary>
@@ -165,8 +206,24 @@ public class GDReferenceGroupInfo
     public bool IsOverride { get; set; }
     public bool IsInherited { get; set; }
     public bool IsCrossFile { get; set; }
+    public bool IsSignalConnection { get; set; }
+    public string? SymbolName { get; set; }
     public List<GDReferenceInfo> References { get; set; } = new();
     public List<GDReferenceGroupInfo> Overrides { get; set; } = new();
+}
+
+/// <summary>
+/// Structured find-refs result with symbol metadata and categorized groups.
+/// </summary>
+public class GDFindRefsResultInfo
+{
+    public string SymbolName { get; set; } = string.Empty;
+    public string SymbolKind { get; set; } = "unknown";
+    public string? DeclaredInClassName { get; set; }
+    public string? DeclaredInFilePath { get; set; }
+    public int DeclaredAtLine { get; set; }
+    public List<GDReferenceGroupInfo> PrimaryGroups { get; set; } = new();
+    public List<GDReferenceGroupInfo> UnrelatedGroups { get; set; } = new();
 }
 
 /// <summary>

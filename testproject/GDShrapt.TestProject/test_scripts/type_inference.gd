@@ -58,7 +58,7 @@ func array_operations() -> int:
 	var numbers := [1, 2, 3, 4, 5]
 
 	# Lambda return type inference
-	var filtered = numbers.filter(func(x): return x > 2)  # 61:47-GD3020-OK
+	var filtered = numbers.filter(func(x): return x > 2)
 	var mapped = filtered.map(func(x): return x * 2)
 	var reduced = mapped.reduce(func(a, b): return a + b)
 

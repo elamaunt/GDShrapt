@@ -136,6 +136,15 @@ public class GDCrossFileReferenceFinder
                     GDReferenceConfidence.Strict,
                     $"Inherited member '{memberName}' used directly in derived class");
             }
+            else if (gdRef.ReferenceNode is GDStringExpression or GDStringNameExpression)
+            {
+                // Contract string: has_method("member"), call("member"), emit_signal("member"), etc.
+                yield return new GDCrossFileReference(
+                    script,
+                    gdRef.ReferenceNode,
+                    gdRef.Confidence,
+                    gdRef.ConfidenceReason);
+            }
         }
 
         // For inherited files: also find method override declarations and super.method() calls

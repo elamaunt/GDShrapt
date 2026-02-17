@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
 
@@ -13,6 +14,68 @@ public interface IGDFindRefsHandler
     /// Finds all references to a symbol across the project, grouped by declaration.
     /// </summary>
     IReadOnlyList<GDReferenceGroup> FindReferences(string symbolName, string? filePath = null);
+
+    /// <summary>
+    /// Finds all references including unrelated same-name symbols, returning a structured result.
+    /// </summary>
+    GDFindRefsResult FindAllReferences(string symbolName, string? filePath = null);
+}
+
+/// <summary>
+/// Complete result of a find-refs operation, including primary and unrelated groups.
+/// </summary>
+public class GDFindRefsResult
+{
+    /// <summary>
+    /// The symbol name being searched.
+    /// </summary>
+    public required string SymbolName { get; init; }
+
+    /// <summary>
+    /// Kind of the primary symbol (method, variable, signal, etc.).
+    /// </summary>
+    public string SymbolKind { get; init; } = "unknown";
+
+    /// <summary>
+    /// Class name where the primary symbol is declared.
+    /// </summary>
+    public string? DeclaredInClassName { get; init; }
+
+    /// <summary>
+    /// File path where the primary symbol is declared.
+    /// </summary>
+    public string? DeclaredInFilePath { get; init; }
+
+    /// <summary>
+    /// Line of the primary symbol declaration (1-based).
+    /// </summary>
+    public int DeclaredAtLine { get; init; }
+
+    /// <summary>
+    /// Primary reference groups (related by inheritance).
+    /// </summary>
+    public IReadOnlyList<GDReferenceGroup> PrimaryGroups { get; init; } = [];
+
+    /// <summary>
+    /// Unrelated same-name symbol groups (different inheritance hierarchies).
+    /// </summary>
+    public IReadOnlyList<GDReferenceGroup> UnrelatedGroups { get; init; } = [];
+
+    /// <summary>
+    /// Total reference count across all groups.
+    /// </summary>
+    public int TotalCount => CountRefs(PrimaryGroups) + CountRefs(UnrelatedGroups);
+
+    private static int CountRefs(IReadOnlyList<GDReferenceGroup> groups)
+    {
+        int count = 0;
+        foreach (var g in groups)
+        {
+            count += g.Locations.Count;
+            count += CountRefs(g.Overrides);
+        }
+        return count;
+    }
 }
 
 /// <summary>
@@ -54,6 +117,16 @@ public class GDReferenceGroup
     /// Whether this group contains cross-file references (duck-typed, potential).
     /// </summary>
     public bool IsCrossFile { get; init; }
+
+    /// <summary>
+    /// Whether this group contains signal connection references.
+    /// </summary>
+    public bool IsSignalConnection { get; init; }
+
+    /// <summary>
+    /// The symbol name being searched for (used for highlighting in output).
+    /// </summary>
+    public string? SymbolName { get; init; }
 
     /// <summary>
     /// Reference locations belonging to this declaration's own file.
@@ -125,4 +198,29 @@ public class GDReferenceLocation
     /// Whether this reference is a contract string (has_method, emit_signal, etc.).
     /// </summary>
     public bool IsContractString { get; init; }
+
+    /// <summary>
+    /// Whether this reference is a signal connection (connect() or scene [connection]).
+    /// </summary>
+    public bool IsSignalConnection { get; init; }
+
+    /// <summary>
+    /// Signal name for signal connection references.
+    /// </summary>
+    public string? SignalName { get; init; }
+
+    /// <summary>
+    /// Whether this signal connection comes from a scene file.
+    /// </summary>
+    public bool IsSceneSignal { get; init; }
+
+    /// <summary>
+    /// End column of the identifier span (0-based, exclusive). Null if unavailable.
+    /// </summary>
+    public int? EndColumn { get; init; }
+
+    /// <summary>
+    /// Receiver type name for signal connections (e.g. "EnemyTank" for timeout.connect()).
+    /// </summary>
+    public string? ReceiverTypeName { get; init; }
 }

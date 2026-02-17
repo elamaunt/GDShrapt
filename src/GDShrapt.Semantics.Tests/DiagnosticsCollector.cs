@@ -35,8 +35,9 @@ public class DiagnosticsCollector
 
         var allDiagnostics = new List<DiagnosticEntry>();
 
-        // Collect diagnostics from all scripts
-        foreach (var scriptFile in project.ScriptFiles)
+        // Collect diagnostics from all scripts (sort by path for deterministic output)
+        foreach (var scriptFile in project.ScriptFiles
+            .OrderBy(s => s.FullPath, StringComparer.OrdinalIgnoreCase))
         {
             var diagnostics = CollectDiagnosticsFromScript(scriptFile, project);
             allDiagnostics.AddRange(diagnostics);
@@ -157,11 +158,15 @@ public class DiagnosticsCollector
         sb.AppendLine();
 
         // By Code (Top 30)
-        var byCode = diagnostics.GroupBy(d => d.Code).OrderByDescending(g => g.Count());
+        var byCode = diagnostics.GroupBy(d => d.Code)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key, StringComparer.Ordinal);
         sb.AppendLine("By Code (Top 30):");
         foreach (var group in byCode.Take(30))
         {
-            var sample = group.First().Message;
+            var sample = group.OrderBy(d => d.FilePath, StringComparer.Ordinal)
+                .ThenBy(d => d.StartLine).ThenBy(d => d.StartColumn)
+                .First().Message;
             if (sample.Length > 60)
                 sample = sample.Substring(0, 57) + "...";
             sb.AppendLine($"  {group.Key,-10}: {group.Count(),4}  ({sample})");

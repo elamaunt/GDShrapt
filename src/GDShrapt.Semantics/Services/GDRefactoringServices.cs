@@ -67,7 +67,7 @@ public class GDRefactoringServices
     /// Find all references to a symbol across the project.
     /// Includes confidence levels for dynamic/duck-typed references.
     /// </summary>
-    public GDFindReferencesService FindReferences => _findReferences ??= new GDFindReferencesService();
+    public GDFindReferencesService FindReferences => _findReferences ??= new GDFindReferencesService(_project, _projectModel);
 
     #endregion
 

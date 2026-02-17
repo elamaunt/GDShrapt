@@ -13673,9 +13673,9 @@ test_scripts/rename_test.gd
 --- 6:0 Variable local_speed ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     float
+    effective:    float
+    confidence:   High
     nullable:     no
 
 --- 7:0 Variable cached_score ---
@@ -13745,9 +13745,9 @@ test_scripts/rename_test.gd
 --- 47:1 Variable temp_value ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     float
+    effective:    float
+    confidence:   High
     nullable:     no
 
 --- 70:23 Parameter new_score ---

@@ -359,6 +359,81 @@ func test():
             "Inner.new() should infer Inner type");
     }
 
+    // ================================================================
+    // Category G: Duck-typed string references must not corrupt parameter types
+    // Regression: RegisterSymbol for duck-typed symbols caused name collisions
+    // ================================================================
+
+    [TestMethod]
+    public void DuckTypedStringRef_ShouldNotCorruptParameterType()
+    {
+        // Regression: RegisterSymbol for duck-typed symbols created name collisions.
+        // The call("value") string literal must not overwrite the parameter symbol.
+        // Method order matters: dynamic_access is declared BEFORE set_value,
+        // so the string literal "value" is visited first during AST traversal.
+        var code = @"
+func dynamic_access(target: Node) -> void:
+    target.call(""value"")
+
+func set_value(value: int) -> void:
+    print(value)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(model);
+
+        var typeInfo = model.TypeSystem.GetTypeInfo("value");
+        Assert.IsNotNull(typeInfo, "Type info should be available for parameter 'value'");
+        Assert.AreEqual("int", typeInfo.InferredType.DisplayName,
+            "Parameter 'value: int' must retain int type even when call(\"value\") string literal exists");
+        Assert.AreEqual(GDTypeConfidence.Certain, typeInfo.Confidence,
+            "Parameter with explicit type annotation must have Certain confidence");
+    }
+
+    [TestMethod]
+    public void HasMethodStringRef_ShouldNotCorruptParameterType()
+    {
+        // has_method("value") must not overwrite the parameter named 'value'
+        var code = @"
+func check(target: Node) -> bool:
+    return target.has_method(""value"")
+
+func process(value: float) -> float:
+    return value * 2.0
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(model);
+
+        var typeInfo = model.TypeSystem.GetTypeInfo("value");
+        Assert.IsNotNull(typeInfo, "Type info should be available for parameter 'value'");
+        Assert.AreEqual("float", typeInfo.InferredType.DisplayName,
+            "Parameter 'value: float' must retain float type even when has_method(\"value\") exists");
+    }
+
+    [TestMethod]
+    public void MultipleStringRefs_ShouldNotCorruptSameNameSymbols()
+    {
+        // Multiple string-literal duck-typed refs must not overwrite real symbols
+        var code = @"
+func dynamic_access(obj: Node) -> void:
+    obj.call(""count"")
+    obj.set(""count"", 42)
+    if obj.has_method(""count""):
+        pass
+
+var count: int = 0
+
+func increment(count: int) -> int:
+    return count + 1
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(model);
+
+        var varInfo = model.TypeSystem.GetTypeInfo("count");
+        Assert.IsNotNull(varInfo, "Type info should be available for 'count'");
+        Assert.AreEqual("int", varInfo.InferredType.DisplayName,
+            "Variable 'count: int' must retain int type despite call/set/has_method string refs");
+    }
+
     #region Helpers
 
     private static (GDClassDeclaration?, GDSemanticModel?) AnalyzeCode(string code)

@@ -95,23 +95,23 @@ public class GDMetricsCommand : GDProjectCommandBase
     private void WriteMetricsOutput(GDProjectMetrics metrics, System.Collections.Generic.List<GDFileMetrics> files, string projectRoot, GDProjectSemanticModel projectModel)
     {
         // Summary
-        _formatter.WriteMessage(_output, $"Project Metrics Summary:");
-        _formatter.WriteMessage(_output, $"  Files: {metrics.FileCount}");
-        _formatter.WriteMessage(_output, $"  Total Lines: {metrics.TotalLines:N0}");
-        _formatter.WriteMessage(_output, $"  Code Lines: {metrics.CodeLines:N0}");
-        _formatter.WriteMessage(_output, $"  Comment Lines: {metrics.CommentLines:N0}");
-        _formatter.WriteMessage(_output, $"  Methods: {metrics.MethodCount}");
-        _formatter.WriteMessage(_output, $"  Signals: {metrics.SignalCount}");
-        _formatter.WriteMessage(_output, $"  Avg Complexity: {metrics.AverageComplexity:F2}");
-        _formatter.WriteMessage(_output, $"  Avg Maintainability: {metrics.AverageMaintainability:F2}");
+        _formatter.WriteMessage(_output, GDAnsiColors.Bold("Project Metrics Summary:"));
+        _formatter.WriteMessage(_output, $"  Files:              {GDAnsiColors.Cyan($"{metrics.FileCount}")}");
+        _formatter.WriteMessage(_output, $"  Total Lines:        {GDAnsiColors.Cyan($"{metrics.TotalLines:N0}")}");
+        _formatter.WriteMessage(_output, $"  Code Lines:         {GDAnsiColors.Cyan($"{metrics.CodeLines:N0}")}");
+        _formatter.WriteMessage(_output, $"  Comment Lines:      {GDAnsiColors.Cyan($"{metrics.CommentLines:N0}")}");
+        _formatter.WriteMessage(_output, $"  Methods:            {GDAnsiColors.Cyan($"{metrics.MethodCount}")}");
+        _formatter.WriteMessage(_output, $"  Signals:            {GDAnsiColors.Cyan($"{metrics.SignalCount}")}");
+        _formatter.WriteMessage(_output, $"  Avg Complexity:     {ColorCC(metrics.AverageComplexity)}");
+        _formatter.WriteMessage(_output, $"  Avg Maintainability:{ColorMI(metrics.AverageMaintainability)}");
         _formatter.WriteMessage(_output, "");
 
         // Scene Metrics
         var sceneReport = projectModel.SceneFlow.AnalyzeProject();
         if (sceneReport.TotalScenes > 0)
         {
-            _formatter.WriteMessage(_output, "Scene Metrics:");
-            _formatter.WriteMessage(_output, $"  Total Scenes: {sceneReport.TotalScenes}");
+            _formatter.WriteMessage(_output, GDAnsiColors.Bold("Scene Metrics:"));
+            _formatter.WriteMessage(_output, $"  Total Scenes:       {GDAnsiColors.Cyan($"{sceneReport.TotalScenes}")}");
 
             var totalNodes = 0;
             var sceneNodeCounts = new System.Collections.Generic.List<(string path, int nodeCount, int subSceneCount)>();
@@ -123,21 +123,21 @@ public class GDMetricsCommand : GDProjectCommandBase
                 sceneNodeCounts.Add((kvp.Key, nodeCount, subCount));
             }
 
-            _formatter.WriteMessage(_output, $"  Total Scene Nodes: {totalNodes}");
+            _formatter.WriteMessage(_output, $"  Total Scene Nodes:  {GDAnsiColors.Cyan($"{totalNodes}")}");
             if (sceneReport.TotalScenes > 0)
             {
-                _formatter.WriteMessage(_output, $"  Avg Nodes/Scene: {(double)totalNodes / sceneReport.TotalScenes:F1}");
+                _formatter.WriteMessage(_output, $"  Avg Nodes/Scene:    {GDAnsiColors.Cyan($"{(double)totalNodes / sceneReport.TotalScenes:F1}")}");
             }
             _formatter.WriteMessage(_output, "");
 
             var largestScenes = sceneNodeCounts.OrderByDescending(s => s.nodeCount).Take(5).ToList();
             if (largestScenes.Count > 0)
             {
-                _formatter.WriteMessage(_output, "  Largest Scenes:");
+                _formatter.WriteMessage(_output, GDAnsiColors.Bold("  Largest Scenes:"));
                 foreach (var scene in largestScenes)
                 {
                     var relPath = GetRelativePath(scene.path, projectRoot);
-                    _formatter.WriteMessage(_output, $"    {relPath}: {scene.nodeCount} nodes, {scene.subSceneCount} sub-scenes");
+                    _formatter.WriteMessage(_output, $"    {GDAnsiColors.Bold(relPath)}: {GDAnsiColors.Cyan($"{scene.nodeCount}")} nodes, {GDAnsiColors.Cyan($"{scene.subSceneCount}")} sub-scenes");
                 }
             }
             _formatter.WriteMessage(_output, "");
@@ -145,23 +145,37 @@ public class GDMetricsCommand : GDProjectCommandBase
 
         if (_options.ShowFiles)
         {
-            _formatter.WriteMessage(_output, "File Details:");
+            _formatter.WriteMessage(_output, GDAnsiColors.Bold("File Details:"));
             foreach (var file in files)
             {
                 var relPath = GetRelativePath(file.FilePath, projectRoot);
-                _formatter.WriteMessage(_output, $"  {relPath}:");
-                _formatter.WriteMessage(_output, $"    Lines: {file.TotalLines}, Methods: {file.MethodCount}, Max CC: {file.MaxComplexity}, MI: {file.MaintainabilityIndex:F1}");
+                _formatter.WriteMessage(_output, $"  {GDAnsiColors.Bold(relPath)}:");
+                _formatter.WriteMessage(_output, $"    Lines: {GDAnsiColors.Cyan($"{file.TotalLines}")}, Methods: {GDAnsiColors.Cyan($"{file.MethodCount}")}, Max CC: {ColorCC(file.MaxComplexity)}, MI: {ColorMI(file.MaintainabilityIndex, "F1")}");
 
                 if (_options.ShowMethods && file.Methods.Count > 0)
                 {
                     foreach (var method in file.Methods.OrderByDescending(m => m.CyclomaticComplexity).Take(5))
                     {
-                        _formatter.WriteMessage(_output, $"      {method.Name}: CC={method.CyclomaticComplexity}, Cog={method.CognitiveComplexity}, Nesting={method.NestingDepth}");
+                        _formatter.WriteMessage(_output, $"      {GDAnsiColors.Bold(method.Name)}: CC={ColorCC(method.CyclomaticComplexity)}, Cog={GDAnsiColors.Cyan($"{method.CognitiveComplexity}")}, Nesting={GDAnsiColors.Cyan($"{method.NestingDepth}")}");
                     }
                 }
             }
         }
     }
+
+    private static string ColorCC(double cc, string format = "F2") => cc switch
+    {
+        <= 10 => GDAnsiColors.Green(cc.ToString(format)),
+        <= 20 => GDAnsiColors.Yellow(cc.ToString(format)),
+        _ => GDAnsiColors.Red(cc.ToString(format))
+    };
+
+    private static string ColorMI(double mi, string format = "F2") => mi switch
+    {
+        >= 65 => GDAnsiColors.Green(mi.ToString(format)),
+        >= 40 => GDAnsiColors.Yellow(mi.ToString(format)),
+        _ => GDAnsiColors.Red(mi.ToString(format))
+    };
 }
 
 /// <summary>
