@@ -10,7 +10,7 @@ namespace GDShrapt.Reader
     {
         public GDClassMembersList Members
         {
-            get => _form.Token0 ?? (_form.Token0 = new GDClassMembersList(0));
+            get => _form.GetOrInit(0, new GDClassMembersList(0));
             set => _form.Token0 = value;
         }
 

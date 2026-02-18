@@ -26,7 +26,7 @@
         }
         public GDDataParametersList Parameters 
         { 
-            get => _form.Token3 ?? (_form.Token3 = new GDDataParametersList());
+            get => _form.GetOrInit(3, new GDDataParametersList());
             set => _form.Token3 = value;
         }
         public GDCloseBracket CloseBracket

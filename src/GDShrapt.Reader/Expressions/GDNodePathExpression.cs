@@ -14,7 +14,7 @@
 
         public GDPathList Path
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDPathList());
+            get => _form.GetOrInit(1, new GDPathList());
             set => _form.Token1 = value;
         }
 

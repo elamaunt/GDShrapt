@@ -13,7 +13,7 @@
         }
         public GDDictionaryKeyValueDeclarationList KeyValues
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDDictionaryKeyValueDeclarationList(_intendation));
+            get => _form.GetOrInit(1, new GDDictionaryKeyValueDeclarationList(_intendation));
             set => _form.Token1 = value;
         }
         public GDFigureCloseBracket FigureCloseBracket

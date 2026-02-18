@@ -6,7 +6,7 @@ namespace GDShrapt.Reader
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.TripleDoubleQuotas));
+            get => _form.GetOrInit(1, new GDStringPartsList(GDStringBoundingChar.TripleDoubleQuotas));
             set => _form.Token1 = value;
         }
 
@@ -50,7 +50,7 @@ namespace GDShrapt.Reader
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.TripleSingleQuotas));
+            get => _form.GetOrInit(1, new GDStringPartsList(GDStringBoundingChar.TripleSingleQuotas));
             set => _form.Token1 = value;
         }
         public override GDStringBoundingChar BoundingChar => GDStringBoundingChar.TripleSingleQuotas;
@@ -93,7 +93,7 @@ namespace GDShrapt.Reader
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.DoubleQuotas));
+            get => _form.GetOrInit(1, new GDStringPartsList(GDStringBoundingChar.DoubleQuotas));
             set => _form.Token1 = value;
         }
         public override GDStringBoundingChar BoundingChar => GDStringBoundingChar.DoubleQuotas;
@@ -135,7 +135,7 @@ namespace GDShrapt.Reader
     {
         public override GDStringPartsList Parts
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDStringPartsList(GDStringBoundingChar.SingleQuotas));
+            get => _form.GetOrInit(1, new GDStringPartsList(GDStringBoundingChar.SingleQuotas));
             set => _form.Token1 = value;
         }
         public override GDStringBoundingChar BoundingChar => GDStringBoundingChar.SingleQuotas;

@@ -12,7 +12,7 @@ namespace GDShrapt.Reader
     {
         public GDExpressionsList Conditions 
         {
-            get => _form.Token0 ?? (_form.Token0 = new GDExpressionsList());
+            get => _form.GetOrInit(0, new GDExpressionsList());
             set => _form.Token0 = value;
         }
         public GDWhenKeyword When
@@ -37,7 +37,7 @@ namespace GDShrapt.Reader
         }
         public GDStatementsList Statements 
         { 
-            get => _form.Token5 ?? (_form.Token5 = new GDStatementsList(Intendation + 1));
+            get => _form.GetOrInit(5, new GDStatementsList(Intendation + 1));
             set => _form.Token5 = value;
         }
 

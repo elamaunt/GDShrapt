@@ -38,7 +38,7 @@ namespace GDShrapt.Reader
 
         public GDParametersList Parameters
         {
-            get => _form.Token3 ?? (_form.Token3 = new GDParametersList());
+            get => _form.GetOrInit(3, new GDParametersList());
             set => _form.Token3 = value;
         }
 
@@ -74,7 +74,7 @@ namespace GDShrapt.Reader
 
         public GDStatementsList Statements
         {
-            get => _form.Token9 ?? (_form.Token9 = new GDStatementsList(Intendation + 1, inExpressionContext: true, allowZeroIndentationOnFirstLine: true));
+            get => _form.GetOrInit(9, new GDStatementsList(Intendation + 1, inExpressionContext: true, allowZeroIndentationOnFirstLine: true));
             set => _form.Token9 = value;
         }
 

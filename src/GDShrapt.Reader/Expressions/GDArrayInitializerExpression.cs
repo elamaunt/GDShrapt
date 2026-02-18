@@ -14,7 +14,7 @@
         }
         public GDExpressionsList Values 
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDExpressionsList(_intendation));
+            get => _form.GetOrInit(1, new GDExpressionsList(_intendation));
             set => _form.Token1 = value;
         }
         public GDSquareCloseBracket SquareCloseBracket

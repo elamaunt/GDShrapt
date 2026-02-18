@@ -23,7 +23,7 @@
         }
         public GDStatementsList Statements
         {
-            get => _form.Token3 ?? (_form.Token3 = new GDStatementsList(_intendation + 1));
+            get => _form.GetOrInit(3, new GDStatementsList(_intendation + 1));
             set => _form.Token3 = value;
         }
 

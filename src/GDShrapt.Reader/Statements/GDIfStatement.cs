@@ -9,17 +9,17 @@
 
         public GDIfBranch IfBranch
         {
-            get => _form.Token0 ?? (_form.Token0 = new GDIfBranch(LineIntendation));
+            get => _form.GetOrInit(0, new GDIfBranch(LineIntendation));
             set => _form.Token0 = value;
         }
         public GDElifBranchesList ElifBranchesList
         {
-            get => _form.Token1 ?? (_form.Token1 = new GDElifBranchesList(LineIntendation));
+            get => _form.GetOrInit(1, new GDElifBranchesList(LineIntendation));
             set => _form.Token1 = value;
         }
         public GDElseBranch ElseBranch
         {
-            get => _form.Token2 ?? (_form.Token2 = new GDElseBranch(LineIntendation));
+            get => _form.GetOrInit(2, new GDElseBranch(LineIntendation));
             set => _form.Token2 = value;
         }
 

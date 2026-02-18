@@ -27,7 +27,7 @@
 
         public GDExpressionsList Parameters
         {
-            get => _form.Token3 ?? (_form.Token3 = new GDExpressionsList());
+            get => _form.GetOrInit(3, new GDExpressionsList());
             set => _form.Token3 = value;
         }
 

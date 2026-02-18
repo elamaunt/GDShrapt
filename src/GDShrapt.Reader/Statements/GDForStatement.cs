@@ -43,7 +43,7 @@ namespace GDShrapt.Reader
 
         public GDStatementsList Statements 
         {
-            get => _form.Token6 ?? (_form.Token6 = new GDStatementsList(LineIntendation + 1));
+            get => _form.GetOrInit(6, new GDStatementsList(LineIntendation + 1));
             set => _form.Token6 = value;
         }
 

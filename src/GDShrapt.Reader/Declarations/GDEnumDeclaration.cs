@@ -24,7 +24,7 @@
         }
         public GDEnumValuesList Values 
         {
-            get => _form.Token3 ?? (_form.Token3 = new GDEnumValuesList());
+            get => _form.GetOrInit(3, new GDEnumValuesList());
             set => _form.Token3 = value;
         }
         public GDFigureCloseBracket FigureCloseBracket

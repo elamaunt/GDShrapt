@@ -30,7 +30,7 @@ public class GDTypeAnnotationOptions
     /// Fallback type for variables whose type cannot be inferred.
     /// Set to null to skip such variables.
     /// </summary>
-    public string? UnknownTypeFallback { get; set; } = "Variant";
+    public string? UnknownTypeFallback { get; set; }
 
     /// <summary>
     /// Creates options with default values.

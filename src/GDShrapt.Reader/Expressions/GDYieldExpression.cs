@@ -22,7 +22,7 @@
         }
         public GDExpressionsList Parameters
         {
-            get => _form.Token2 ?? (_form.Token2 = new GDExpressionsList(_intendation));
+            get => _form.GetOrInit(2, new GDExpressionsList(_intendation));
             set => _form.Token2 = value;
         }
         public GDCloseBracket CloseBracket

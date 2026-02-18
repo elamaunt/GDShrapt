@@ -50,7 +50,7 @@ namespace GDShrapt.Reader
 
         public GDClassMembersList Members
         {
-            get => _form.Token5 ?? (_form.Token5 = new GDClassMembersList(Intendation + 1));
+            get => _form.GetOrInit(5, new GDClassMembersList(Intendation + 1));
             set => _form.Token5 = value;
         }
 

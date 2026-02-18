@@ -1287,6 +1287,21 @@ namespace GDShrapt.Reader
         public T Get<T>(int statePointIndex) where T : GDSyntaxToken => (T)_statePoints[statePointIndex].Value;
         public GDSyntaxToken Get(int index) => _statePoints[index].Value;
 
+        public T GetOrInit<T>(int statePointIndex, T defaultValue) where T : GDSyntaxToken
+        {
+            var node = _statePoints[statePointIndex];
+            var current = (T)node.Value;
+            if (current != null)
+                return current;
+
+            if (_isFrozen)
+                return defaultValue;
+
+            defaultValue.Parent = _owner;
+            node.Value = defaultValue;
+            return defaultValue;
+        }
+
         public void SetFormUnsafe(params GDSyntaxToken[] tokens)
         {
             ThrowIfFrozen();
