@@ -781,6 +781,42 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       signals: (none)
 
 
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+  12:33 Parameter flag in test_gd3023_valid_same_type # OK
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  19:25 Parameter flag in test_gd3023_invalid # OK
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  31:23 Parameter flag in test_gd3024_valid # OK
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  38:25 Parameter flag in test_gd3024_invalid # OK
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  43:28 Parameter flag in test_gd3024_valid_void # OK
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  110:29 Parameter amount in test_gd7020_valid_typed # OK
+    inferred-type: int
+    confidence: Certain
+    reason: explicit type annotation
+
+  114:34 Parameter _delta in test_gd7020_valid_underscore # OK
+    inferred-type: Variant
+    confidence: Unknown
+
+
 test_scripts/diagnostics/validator/type_errors.gd
   117:15 Parameter x in _take_int # OK
     inferred-type: int

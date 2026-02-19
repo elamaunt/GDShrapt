@@ -4026,6 +4026,98 @@ test_scripts/diagnostics/validator/scene_validation_errors.gd
 54:12 GDIdentifierExpression get_node -> Node # OK
 54:21 GDStringExpression "Panel" -> String # OK
 
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+12:0 Method test_gd3023_valid_same_type -> int # OK
+12:33 Parameter flag -> bool # OK
+13:4 GDIdentifierExpression flag -> bool # OK
+14:2 GDReturnExpression return 5 -> Variant # OK
+14:9 GDNumberExpression 5 -> int # OK
+16:2 GDReturnExpression return 10 -> Variant # OK
+16:9 GDNumberExpression 10 -> int # OK
+19:0 Method test_gd3023_invalid -> int | String # OK
+19:25 Parameter flag -> bool # OK
+20:4 GDIdentifierExpression flag -> bool # OK
+21:2 GDReturnExpression return 5 -> Variant # OK
+21:9 GDNumberExpression 5 -> int # OK
+23:2 GDReturnExpression return "hello" -> Variant # OK
+23:9 GDStringExpression "hello" -> String # OK
+31:0 Method test_gd3024_valid -> int # OK
+31:23 Parameter flag -> bool # OK
+32:4 GDIdentifierExpression flag -> bool # OK
+33:2 GDReturnExpression return 5 -> Variant # OK
+33:9 GDNumberExpression 5 -> int # OK
+35:2 GDReturnExpression return 10 -> Variant # OK
+35:9 GDNumberExpression 10 -> int # OK
+38:0 Method test_gd3024_invalid -> int # OK
+38:25 Parameter flag -> bool # OK
+39:4 GDIdentifierExpression flag -> bool # OK
+40:2 GDReturnExpression return 5 -> Variant # OK
+40:9 GDNumberExpression 5 -> int # OK
+43:0 Method test_gd3024_valid_void -> void # OK
+43:28 Parameter flag -> bool # OK
+44:4 GDIdentifierExpression flag -> bool # OK
+45:2 GDCallExpression print() -> void # OK
+45:2 GDIdentifierExpression print -> Callable # OK
+45:8 GDStringExpression "hello" -> String # OK
+53:0 Variable redundant_int -> int # OK
+53:25 GDNumberExpression 100 -> int # OK
+56:0 Variable redundant_str -> String # OK
+56:28 GDStringExpression "test" -> String # OK
+59:0 Variable redundant_bool -> bool # OK
+59:27 GDBoolExpression true -> bool # OK
+62:0 Variable not_redundant_float -> float # OK
+62:33 GDNumberExpression 5 -> int # OK
+65:0 Variable not_redundant_node -> Node # OK
+65:31 GDCallExpression Node.new() -> Node # OK
+65:31 GDMemberOperatorExpression Node.new -> Variant # OK
+65:31 GDIdentifierExpression Node -> Node # OK
+73:0 Variable exact_sprite -> Sprite2D # OK
+73:29 GDCallExpression Sprite2D.new() -> Sprite2D # OK
+73:29 GDMemberOperatorExpression Sprite2D.new -> Variant # OK
+73:29 GDIdentifierExpression Sprite2D -> Sprite2D # OK
+76:0 Variable no_annotation -> Sprite2D # OK
+76:20 GDCallExpression Sprite2D.new() -> Sprite2D # OK
+76:20 GDMemberOperatorExpression Sprite2D.new -> Variant # OK
+76:20 GDIdentifierExpression Sprite2D -> Sprite2D # OK
+84:0 Method test_gd7019_valid -> void # OK
+85:1 Variable sprite -> Sprite2D # OK
+85:24 GDCallExpression Sprite2D.new() -> Sprite2D # OK
+85:24 GDMemberOperatorExpression Sprite2D.new -> Variant # OK
+85:24 GDIdentifierExpression Sprite2D -> Sprite2D # OK
+86:1 GDDualOperatorExpression spriteAssignmentSprite2D.new() -> Sprite2D # OK
+86:1 GDIdentifierExpression sprite -> Sprite2D # OK
+86:10 GDCallExpression Sprite2D.new() -> Sprite2D # OK
+86:10 GDMemberOperatorExpression Sprite2D.new -> Variant # OK
+86:10 GDIdentifierExpression Sprite2D -> Sprite2D # OK
+89:0 Method test_gd7019_valid_no_annotation -> void # OK
+90:1 Variable sprite -> Sprite2D # OK
+90:14 GDCallExpression Sprite2D.new() -> Sprite2D # OK
+90:14 GDMemberOperatorExpression Sprite2D.new -> Variant # OK
+90:14 GDIdentifierExpression Sprite2D -> Sprite2D # OK
+91:1 GDDualOperatorExpression spriteAssignmentNode.new() -> Sprite2D # OK
+91:1 GDIdentifierExpression sprite -> Sprite2D # OK
+91:10 GDCallExpression Node.new() -> Node # OK
+91:10 GDMemberOperatorExpression Node.new -> Variant # OK
+91:10 GDIdentifierExpression Node -> Node # OK
+99:0 Variable typed_scores -> Array[int] # OK
+99:31 GDArrayInitializerExpression [...] -> Array # OK
+102:0 Variable not_container -> String # OK
+102:28 GDStringExpression "test" -> String # OK
+110:0 Method test_gd7020_valid_typed -> void # OK
+110:29 Parameter amount -> int # OK
+111:1 GDPassExpression pass -> void # OK
+114:0 Method test_gd7020_valid_underscore -> void # OK
+114:34 Parameter _delta -> Variant # OK
+115:1 GDPassExpression pass -> void # OK
+122:0 Variable typed_enemies -> Array[Node] # OK
+122:33 GDArrayInitializerExpression [...] -> Array # OK
+124:0 Method test_gd7021_valid -> void # OK
+125:1 Iterator enemy -> Variant # OK
+125:14 GDIdentifierExpression typed_enemies -> Array[Node] # OK
+126:2 GDCallExpression enemy.queue_free() -> void # OK
+126:2 GDMemberOperatorExpression enemy.queue_free -> void # OK
+126:2 GDIdentifierExpression enemy -> Node # OK
+
 test_scripts/diagnostics/validator/type_errors.gd
 23:0 Method test_gd3001_valid -> void # OK
 24:1 Variable x -> int # OK

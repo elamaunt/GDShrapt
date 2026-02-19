@@ -21,7 +21,7 @@ var either_value     # int|String (left=int, right=String)
 var mixed_input      # int|float|String|Array|Dictionary
 
 
-func try_operation(input):
+func try_operation(input):  # 24:0-GD3023-OK
 	# Returns int on success, String on error
 	if input == null:
 		return "Error: null input"
@@ -55,7 +55,7 @@ func get_position_or_null(node_path):
 
 # === Branching Creates Unions ===
 
-func process_by_type(value):
+func process_by_type(value):  # 58:0-GD3023-OK
 	# Return type is Union based on input type
 	if value is int:
 		return value * 2          # int path
@@ -81,7 +81,7 @@ var flag_a = true
 var flag_b = false
 
 
-func complex_conditional():
+func complex_conditional():  # 84:0-GD3023-OK
 	# Multiple branches, multiple possible return types
 	if flag_a and flag_b:
 		return 42                  # int
@@ -95,7 +95,7 @@ func complex_conditional():
 
 # === Match Creates Union ===
 
-func match_return(value):
+func match_return(value):  # 98:0-GD3023-OK
 	match value:
 		0:
 			return "zero"          # String
@@ -109,7 +109,7 @@ func match_return(value):
 			return value           # Same as input (Variant)
 
 
-func match_with_patterns(data):
+func match_with_patterns(data):  # 112:25-GD7020-OK
 	match data:
 		{"type": "player", "health": var h}:
 			return h                # Extracted value (Variant)
@@ -144,7 +144,7 @@ func process_mixed_array():
 	return results
 
 
-func _process_mixed_item(item):
+func _process_mixed_item(item):  # 147:0-GD3023-OK
 	# Input is Union type, output depends on runtime type
 	if item is int:
 		return item * 10
@@ -183,7 +183,7 @@ func update_config(key, value):
 
 # === Nullable Chains ===
 
-func safe_get_nested(data, path):
+func safe_get_nested(data, path):  # 186:27-GD7020-OK
 	# Each step could return null, final type is Variant|null
 	var current = data
 	for key in path:
@@ -236,7 +236,7 @@ func handle_result(result):
 
 # === Higher-Order Functions with Union Returns ===
 
-func map_with_fallback(array, transform, fallback):
+func map_with_fallback(array, transform, fallback):  # 239:23-GD7020-OK
 	# transform returns T|null, fallback is T
 	# Result is Array[T]
 	var results = []
@@ -249,7 +249,7 @@ func map_with_fallback(array, transform, fallback):
 	return results
 
 
-func filter_map(array, predicate, transform):
+func filter_map(array, predicate, transform):  # 252:16-GD7020-OK
 	# predicate: T -> bool
 	# transform: T -> U
 	# Returns Array[U] (subset)
@@ -297,7 +297,7 @@ func _complete_request(request_id, params):
 	result_ready.emit(result)
 
 
-func _compute_result(params):
+func _compute_result(params):  # 300:0-GD3023-OK
 	# Return type varies based on params
 	if params is String:
 		return params.sha256_text()    # String
@@ -323,7 +323,7 @@ func is_text(value):
 	return value is String or value is StringName
 
 
-func process_with_guards(value):
+func process_with_guards(value):  # 326:25-GD7020-OK
 	# Type should narrow after guards
 	if is_numeric(value):
 		# value should be int|float here

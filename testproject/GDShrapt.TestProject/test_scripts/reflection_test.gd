@@ -7,7 +7,7 @@ signal health_updated(value: float)
 const SIGNAL_NAME = "game_started"
 const METHOD_NAME = "start"
 
-var player_speed: float = 10.0
+var player_speed: float = 10.0  # 10:18-GD7022-OK
 
 
 func start() -> void:

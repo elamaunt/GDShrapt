@@ -5,7 +5,7 @@ class_name TypeGuards
 ## After type checks, the variable type should be narrowed.
 
 
-func process_value(value):
+func process_value(value):  # 8:0-GD3023-OK
 	# Each branch narrows the type
 	if value == null:
 		return null  # value is null here
@@ -25,7 +25,7 @@ func process_value(value):
 	return value
 
 
-func nested_type_guards(data):
+func nested_type_guards(data):  # 28:24-GD7020-OK
 	if data == null:
 		return "null"
 
@@ -71,7 +71,7 @@ func type_guard_with_or(value):
 	return null
 
 
-func early_return_guard(data):
+func early_return_guard(data):  # 74:0-GD3023-OK
 	# Early returns narrow type for rest of function
 	if data == null:
 		return "null"
@@ -129,7 +129,7 @@ func match_type_guard(value):
 			return "other"
 
 
-func custom_type_guard(value) -> bool:
+func custom_type_guard(value) -> bool:  # 132:23-GD7020-OK
 	# Custom type guard function
 	return value is Dictionary and value.has("type") and value.get("type") == "player"
 
@@ -169,7 +169,7 @@ func class_type_guard(node: Node):
 	return "other"
 
 
-func negated_guard(value):
+func negated_guard(value):  # 172:0-GD3023-OK
 	# Negated type checks
 	if not value is Dictionary:
 		# value is NOT Dictionary
@@ -179,7 +179,7 @@ func negated_guard(value):
 	return value.keys()
 
 
-func guard_in_while(data):
+func guard_in_while(data):  # 182:20-GD7020-OK
 	# Type guard in while condition
 	var current = data
 	while current is Dictionary and current.has("next"):
@@ -188,7 +188,7 @@ func guard_in_while(data):
 	return current
 
 
-func multiple_guards_same_var(value):
+func multiple_guards_same_var(value):  # 191:30-GD7020-OK
 	# Multiple sequential guards
 	var result = ""
 
@@ -204,7 +204,7 @@ func multiple_guards_same_var(value):
 	return result
 
 
-func guard_with_method_call(value):
+func guard_with_method_call(value):  # 207:28-GD7020-OK
 	# Guard combined with method result
 	if value is Array and value.front() is int:
 		# value is Array, value.front() is int
@@ -213,7 +213,7 @@ func guard_with_method_call(value):
 	return 0
 
 
-func structural_type_guard(obj):
+func structural_type_guard(obj):  # 216:27-GD7020-OK
 	# Duck typing guard - checking for methods/properties
 	if "position" in obj and "rotation" in obj:
 		# obj has position and rotation - likely Node2D-like
@@ -246,7 +246,7 @@ func enum_like_guard(data: Dictionary):
 			return null
 
 
-func assert_type_guard(value):
+func assert_type_guard(value):  # 249:23-GD7020-OK
 	# Assert as type guard (development only)
 	assert(value is Dictionary, "Expected Dictionary")
 	# After assert, value is Dictionary (in debug builds)
@@ -259,7 +259,7 @@ func ternary_with_guard(value):
 	return result
 
 
-func guard_propagation(outer):
+func guard_propagation(outer):  # 262:23-GD7020-OK
 	# Type guard should propagate to inner scope
 	if outer is Dictionary:
 		var inner_func = func():

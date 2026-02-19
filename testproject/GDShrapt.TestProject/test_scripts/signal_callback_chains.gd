@@ -248,7 +248,7 @@ class Observable:
 		_subscribers.append(subscription)
 		return subscription
 
-	func unsubscribe(subscription): # 251:1-GDL513-OK
+	func unsubscribe(subscription): # 251:1-GDL513-OK, 251:18-GD7020-OK
 		subscription["active"] = false # 252:2-GD7006-OK
 		_subscribers.erase(subscription)
 
@@ -370,7 +370,7 @@ func async_chain(operations, on_all_complete, on_any_error):
 	_run_chain_step(operations, 0, null, on_all_complete, on_any_error)
 
 
-func _run_chain_step(operations, index, previous_result, on_complete, on_error): # 374:4-GD3020-OK 374:13-GD7007-OK
+func _run_chain_step(operations, index, previous_result, on_complete, on_error): # 373:0-GDL101-OK, 374:4-GD3020-OK 374:13-GD7007-OK, 373:21-GD7020-OK
 	if index >= operations.size():
 		on_complete.call(previous_result) # 375:2-GD7007-OK
 		return
@@ -386,8 +386,8 @@ func _run_chain_step(operations, index, previous_result, on_complete, on_error):
 
 class ParallelContext: # 385:1-GDL513-OK
 	var results: Array
-	var completed_count: int = 0
-	var has_error: bool = false
+	var completed_count: int = 0  # 389:22-GD7022-OK
+	var has_error: bool = false  # 390:16-GD7022-OK
 	var total: int
 	var on_complete: Callable
 	var on_error: Callable
@@ -411,7 +411,7 @@ func _create_parallel_error_handler(ctx: ParallelContext):
 		ctx.on_error.call(error)
 
 
-func async_parallel(operations, on_all_complete, on_any_error):
+func async_parallel(operations, on_all_complete, on_any_error):  # 414:20-GD7020-OK
 	# Execute all operations in parallel
 	var ctx = ParallelContext.new()
 	ctx.results = []

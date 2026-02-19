@@ -11,12 +11,12 @@ signal health_changed(current: int, maximum: int)
 signal entity_died
 signal damage_taken(amount: int, source: Node)
 
-@export var max_health: int = 100
-@export var defense: int = 0
-@export var is_invulnerable: bool = false
+@export var max_health: int = 100  # 14:24-GD7022-OK
+@export var defense: int = 0  # 15:21-GD7022-OK
+@export var is_invulnerable: bool = false  # 16:29-GD7022-OK
 
 var current_health: int
-var is_alive: bool = true
+var is_alive: bool = true  # 19:14-GD7022-OK
 var last_damage_source: Node = null
 
 

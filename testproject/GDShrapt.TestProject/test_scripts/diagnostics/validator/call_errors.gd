@@ -78,13 +78,13 @@ func test_gd4004_valid() -> void:
 
 ## INVALID - SHOULD trigger GD4004
 func test_gd4004_invalid() -> void:
-	var number: int = 42
+	var number: int = 42  # 81:13-GD7022-OK
 	number()  # GD4004: int is not callable
 
 
 ## SUPPRESSED - GD4004 suppressed
 func test_gd4004_suppressed() -> void:
-	var text: String = "hello"
+	var text: String = "hello"  # 87:11-GD7022-OK
 	# gd:ignore = GD4004
 	text()  # Suppressed
 

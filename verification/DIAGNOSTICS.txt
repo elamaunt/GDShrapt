@@ -1,56 +1,56 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-02-19 22:29:29
+Generated: 2026-02-20 03:20:06
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 912
-Scripts analyzed:  53
+Total diagnostics: 963
+Scripts analyzed:  54
 
 By Severity:
   Error     :    30
-  Hint      :   101
-  Info      :    32
-  Warning   :   749
+  Hint      :   109
+  Info      :    35
+  Warning   :   789
 
 By Source:
-  Linter              :   376
-  SemanticValidator   :   504
+  Linter              :   388
+  SemanticValidator   :   543
   Validator           :    32
 
 By Code (Top 30):
   GD7007    :  262  (Variable 'timer_node' is @onready - _ready() may not have...)
   GDL201    :  155  (Local variable 'unused_var' is declared but never used)
-  GDL513    :   99  (Too many empty lines before function (5), expected 2)
+  GDL513    :  106  (Too many empty lines before function (5), expected 2)
   GD7006    :   82  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
+  GD3023    :   32  (Function 'create_game_object' returns inconsistent types:...)
   GD7005    :   27  (Variable 'child_sprite' is @onready - _ready() may not ha...)
+  GDL203    :   27  (Function '_process_idle' only contains 'pass')
   GD7003    :   26  (Calling method 'visit' on untyped variable 'visitor' with...)
-  GDL203    :   25  (Function '_process_idle' only contains 'pass')
+  GDL001    :   13  (Class name 'DiagnosticsTest_BestPractices' should use Pas...)
   GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
-  GDL001    :   12  (Class name 'DiagnosticsTest_BestPractices' should use Pas...)
   GDL222    :   11  ('CyclicInference' has 22 public methods (max 20))
+  GDL101    :   10  (Line 212 exceeds 120 characters (length: 146))
   GD3004    :    9  (Type mismatch: cannot assign 'int' to variable of type 'A...)
   GD3009    :    9  (Enum value 'NONEXISTENT_VALUE' not found in enum 'TestEnum')
   GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
-  GDL101    :    9  (Line 212 exceeds 120 characters (length: 146))
+  GDL202    :    8  (Parameter 'delta' is declared but never used)
   GD3001    :    7  (Type mismatch in assignment: cannot assign 'int' to 'Test...)
-  GDL202    :    7  (Parameter 'delta' is declared but never used)
   GDL211    :    7  (Local variable 'class_level_var' shadows a class-level va...)
   GD3010    :    6  (Argument type mismatch for 'new_state' in call to 'change...)
   GDL223    :    6  ('test_gdl223_invalid' has 8 return statements (max 6))
   GD3007    :    5  (Cannot return 'MethodChains' from function with return ty...)
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
+  GD3024    :    5  (Not all code paths return a value in 'test_gdl228_valid' ...)
   GD4009    :    5  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
   GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
   GDL210    :    5  (Unreachable code detected)
   GDL226    :    5  ('test_gdl226_invalid' has 16 local variables (max 15))
   GD3014    :    4  (Type 'int' does not support indexing)
-  GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
-  GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
 
 ================================================================================
 DIAGNOSTICS BY FILE
@@ -83,7 +83,7 @@ DIAGNOSTICS BY FILE
    108:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'int' to 'TestEnum'
    109:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'int' to 'TestEnum'
 
---- test_scripts/cross_file_inference.gd (70 diagnostics) ---
+--- test_scripts/cross_file_inference.gd (71 diagnostics) ---
 
     37:14  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
     37:43  [GD7007] Warning - Variable 'entity_data' may be null when accessing 'get'
@@ -127,6 +127,7 @@ DIAGNOSTICS BY FILE
    226:1   [GD7005] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'operation_result'
    230:8   [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'
    234:8   [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'
+   237:0   [GD3023] Warning - Function 'create_game_object' returns inconsistent types: Entity, AsyncOperation, Dictionary, null
    241:16  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
    242:3   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
    243:4   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'
@@ -156,12 +157,13 @@ DIAGNOSTICS BY FILE
    334:34  [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'try_operation'
    335:35  [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'
 
---- test_scripts/cycles_test.gd (2 diagnostics) ---
+--- test_scripts/cycles_test.gd (3 diagnostics) ---
 
     23:18  [GD7007] Warning - Variable 'input' may be null when accessing 'get'
+   124:0   [GD3023] Warning - Function '_reducer' returns inconsistent types: int, String
    140:14  [GD3002] Warning - Potential type mismatch in arithmetic operation: Array + Array[int]
 
---- test_scripts/cyclic_inference.gd (35 diagnostics) ---
+--- test_scripts/cyclic_inference.gd (36 diagnostics) ---
 
      2:11  [GDL222] Warning - 'CyclicInference' has 22 public methods (max 20)
     49:4   [GD3020] Warning - Variable 'value' may be null; comparison with '>' would cause runtime error
@@ -185,6 +187,7 @@ DIAGNOSTICS BY FILE
    203:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
    216:15  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
    217:1   [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
+   226:0   [GD3023] Warning - Function '_advance_generator' returns inconsistent types: float, String
    228:15  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
    229:12  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
    252:7   [GD3020] Warning - Variable 'new_pos' may be null; comparison with '<' would cause runtime error
@@ -199,9 +202,10 @@ DIAGNOSTICS BY FILE
    308:21  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
    308:38  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
 
---- test_scripts/diagnostics_issues.gd (5 diagnostics) ---
+--- test_scripts/diagnostics_issues.gd (6 diagnostics) ---
 
     24:5   [GDL203] Info - Function 'unused_function' only contains 'pass'
+    33:0   [GD3024] Warning - Not all code paths return a value in 'missing_return_path' (declared -> int)
     48:5   [GDL211] Warning - Local variable 'used_variable' shadows a class-level variable
     55:1   [GD5004] Warning - Unreachable code detected after return/break/continue statement
     55:1   [GDL210] Warning - Unreachable code detected
@@ -223,12 +227,13 @@ DIAGNOSTICS BY FILE
    180:2   [GDL214] Error - Duplicate dictionary key: '"dup"'
    198:1   [GDL230] Warning - Self-assignment of 'x'
 
---- test_scripts/diagnostics/linter/complexity_rules.gd (6 diagnostics) ---
+--- test_scripts/diagnostics/linter/complexity_rules.gd (7 diagnostics) ---
 
      2:0   [GDL001] Warning - Class name 'DiagnosticsTest_ComplexityRules' should use PascalCase
     28:5   [GDL225] Warning - 'test_gdl225_invalid' has nesting depth of 5 (max 4)
     63:5   [GDL226] Warning - 'test_gdl226_invalid' has 16 local variables (max 15)
    123:5   [GDL223] Warning - 'test_gdl223_invalid' has 8 return statements (max 6)
+   166:0   [GD3024] Warning - Not all code paths return a value in 'test_gdl228_valid' (declared -> String)
    179:5   [GDL223] Warning - 'test_gdl228_invalid' has 14 return statements (max 6)
    179:5   [GDL228] Warning - 'test_gdl228_invalid' has 13 branches (max 12)
 
@@ -381,6 +386,22 @@ DIAGNOSTICS BY FILE
    120:12  [GD3009] Warning - Enum value 'NONEXISTENT_VALUE' not found in enum 'TestEnum'
    127:12  [GD3009] Warning - Enum value 'ANOTHER_FAKE_VALUE' not found in enum 'TestEnum'
 
+--- test_scripts/diagnostics/validator/type_annotation_errors.gd (13 diagnostics) ---
+
+     2:0   [GDL001] Warning - Class name 'DiagnosticsTest_TypeAnnotationErrors' should use PascalCase
+    20:0   [GD3023] Warning - Function 'test_gd3023_invalid' returns inconsistent types: int, String
+    20:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    39:0   [GD3024] Warning - Not all code paths return a value in 'test_gd3024_invalid' (declared -> int)
+    39:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    44:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    48:1   [GDL513] Hint - Too many empty lines before function (13), expected 2
+    90:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+    94:1   [GDL513] Hint - Too many empty lines before function (6), expected 2
+   111:5   [GDL203] Info - Function 'test_gd7020_valid_typed' only contains 'pass'
+   111:29  [GDL202] Info - Parameter 'amount' is declared but never used
+   115:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+   115:5   [GDL203] Info - Function 'test_gd7020_valid_underscore' only contains 'pass'
+
 --- test_scripts/diagnostics/validator/type_errors.gd (12 diagnostics) ---
 
      2:0   [GDL001] Warning - Class name 'DiagnosticsTest_TypeErrors' should use PascalCase
@@ -396,7 +417,7 @@ DIAGNOSTICS BY FILE
    207:16  [GD3017] Warning - Unknown type 'NonExistentTypeXYZ' used in Array type parameter
    231:22  [GD3018] Warning - Type 'Array' is not hashable and cannot be used as Dictionary key
 
---- test_scripts/duck_typing_advanced.gd (15 diagnostics) ---
+--- test_scripts/duck_typing_advanced.gd (17 diagnostics) ---
 
     25:14  [GD7003] Warning - Calling method 'get_damage' on untyped variable 'source' without type guard
     25:14  [GD7007] Warning - Variable 'source' may be null when accessing 'get_damage'
@@ -408,13 +429,15 @@ DIAGNOSTICS BY FILE
     88:10  [GD7007] Warning - Variable 'position' may be null when accessing 'distance_squared_to'
     88:39  [GD3009] Warning - Property 'global_position' not found on type 'Node'
     94:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
+   110:0   [GD3023] Warning - Function '_create_component' returns inconsistent types: Dictionary, Array, Vector2, PackedInt32Array, String, null
    125:1   [GDL513] Hint - Too many empty lines before function (6), expected 2
    191:9   [GD7007] Warning - Variable 'transformer' may be null when accessing 'call'
+   226:0   [GD3023] Warning - Function '_step_transform' returns inconsistent types: int, float, Array
    245:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    248:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    251:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/dynamic_dispatch.gd (70 diagnostics) ---
+--- test_scripts/dynamic_dispatch.gd (73 diagnostics) ---
 
      2:11  [GDL222] Warning - 'DynamicDispatch' has 27 public methods (max 20)
     21:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
@@ -437,9 +460,12 @@ DIAGNOSTICS BY FILE
    104:9   [GD7007] Warning - Variable 'target' may be null when accessing 'call'
    126:13  [GD7007] Warning - Variable 'obj' may be null when accessing 'get_property_list'
    132:15  [GD7007] Warning - Variable 'obj' may be null when accessing 'get'
+   138:0   [GD3023] Warning - Function '_serialize_value' returns inconsistent types: null, Dictionary, Array, String
    138:5   [GDL223] Warning - '_serialize_value' has 9 return statements (max 6)
    168:34  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    169:3   [GD7007] Warning - Variable 'obj' may be null when accessing 'set'
+   172:0   [GD3023] Warning - Function '_deserialize_value' returns inconsistent types: null, Array, Dictionary
+   193:0   [GD3023] Warning - Function '_deserialize_typed' returns inconsistent types: Vector2, Vector3, Color
    194:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    197:18  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    197:29  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
@@ -561,7 +587,7 @@ DIAGNOSTICS BY FILE
     31:2   [GD7015] Warning - Method 'take_damage' not found on type 'Node2D'
     57:1   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/formatting_issues.gd (7 diagnostics) ---
+--- test_scripts/formatting_issues.gd (8 diagnostics) ---
 
     32:5   [GDL211] Warning - Local variable 'a' shadows a class-level variable
     33:5   [GDL211] Warning - Local variable 'b' shadows a class-level variable
@@ -570,8 +596,9 @@ DIAGNOSTICS BY FILE
     36:5   [GDL211] Warning - Local variable 'e' shadows a class-level variable
     67:0   [GDL101] Warning - Line 67 exceeds 120 characters (length: 170)
     68:0   [GDL101] Warning - Line 68 exceeds 120 characters (length: 155)
+    82:0   [GD3024] Warning - Not all code paths return a value in 'match_statement_formatting' (declared -> String)
 
---- test_scripts/game_patterns.gd (77 diagnostics) ---
+--- test_scripts/game_patterns.gd (79 diagnostics) ---
 
      2:11  [GDL222] Warning - 'GamePatterns' has 27 public methods (max 20)
     21:4   [GD3020] Warning - Variable 'index' may be null; comparison with '<' would cause runtime error
@@ -649,7 +676,9 @@ DIAGNOSTICS BY FILE
    512:18  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
    513:13  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
    526:33  [GD7006] Warning - Variable 'dict' may be null when accessing '[...]'
+   530:0   [GD3023] Warning - Function '_serialize_value' returns inconsistent types: Dictionary, Array, String
    554:35  [GD7006] Warning - Variable 'dict' may be null when accessing '[...]'
+   558:0   [GD3023] Warning - Function '_deserialize_value' returns inconsistent types: Vector2, Vector3, Dictionary, Array
 
 --- test_scripts/getters_setters.gd (7 diagnostics) ---
 
@@ -694,6 +723,10 @@ DIAGNOSTICS BY FILE
    166:5   [GDL203] Info - Function '_on_exit_tree' only contains 'pass'
    193:5   [GDL223] Warning - 'check_types' has 8 return statements (max 6)
    206:6   [GD7010] Hint - Redundant type check: 'node' is already declared as 'Node'
+
+--- test_scripts/local_variables.gd (1 diagnostics) ---
+
+   150:0   [GD3023] Warning - Function 'type_narrowing_local' returns inconsistent types: Array, int
 
 --- test_scripts/method_chains.gd (9 diagnostics) ---
 
@@ -791,14 +824,15 @@ DIAGNOSTICS BY FILE
    112:3   [GD3007] Warning - Cannot return 'Node' from function with return type 'Control'
    203:5   [GDL201] Warning - Local variable 'node_path' is declared but never used
 
---- test_scripts/scene_references.gd (4 diagnostics) ---
+--- test_scripts/scene_references.gd (5 diagnostics) ---
 
     34:2   [GD4006] Warning - Signal 'health_changed' not found on type 'CharacterBody2D'
     50:1   [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'add_child'
     56:14  [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'
     63:14  [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'
+    71:0   [GD3023] Warning - Function 'find_child_of_type' returns inconsistent types: Array[Node], Node, null
 
---- test_scripts/semantic_validation_demo.gd (45 diagnostics) ---
+--- test_scripts/semantic_validation_demo.gd (47 diagnostics) ---
 
     25:5   [GDL226] Warning - 'indexer_validation_demo' has 25 local variables (max 15)
     57:10  [GD3013] Warning - Type 'Array' expects integer index, got 'String'
@@ -840,13 +874,15 @@ DIAGNOSTICS BY FILE
    216:10  [GD7005] Warning - Variable 'unknown' may be null when accessing 'some_property'
    222:12  [GD3009] Warning - Property 'nonexistent_property' not found on type 'String'
    242:5   [GDL201] Warning - Local variable 'node' is declared but never used
+   242:11  [GD3022] Hint - Annotation 'Node' is wider than inferred type 'Node2D'
    245:5   [GDL201] Warning - Local variable 'f' is declared but never used
    251:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'String' to 'int'
    256:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'Node' to 'Node2D'
+   256:1   [GD7019] Warning - Assignment widens 'Node2D' to 'Node'
    275:12  [GD3013] Warning - Dictionary expects key of type 'String', got 'int'
    324:10  [GD3009] Warning - Property 'some_member' not found on type 'Dictionary'
 
---- test_scripts/signal_callback_chains.gd (84 diagnostics) ---
+--- test_scripts/signal_callback_chains.gd (85 diagnostics) ---
 
      2:11  [GDL222] Warning - 'SignalCallbackChains' has 25 public methods (max 20)
      2:11  [GDL232] Warning - 'SignalCallbackChains' has 8 inner classes (max 5)
@@ -904,6 +940,7 @@ DIAGNOSTICS BY FILE
    349:23  [GD7007] Warning - Variable '_on_throttle_timeout' may be null when accessing 'bind'
    363:2   [GD7007] Warning - Variable 'on_success' may be null when accessing 'call'
    365:2   [GD7007] Warning - Variable 'on_failure' may be null when accessing 'call'
+   373:0   [GDL101] Warning - Line 373 exceeds 120 characters (length: 150)
    374:4   [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
    374:13  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
    375:2   [GD7007] Warning - Variable 'on_complete' may be null when accessing 'call'
@@ -1042,10 +1079,13 @@ DIAGNOSTICS BY FILE
     74:5   [GDL203] Info - Function 'import_from_json' only contains 'pass'
     74:22  [GDL202] Info - Parameter 'json_string' is declared but never used
 
---- test_scripts/type_guards.gd (8 diagnostics) ---
+--- test_scripts/type_guards.gd (11 diagnostics) ---
 
+     8:0   [GD3023] Warning - Function 'process_value' returns inconsistent types: null, int, Array
+    74:0   [GD3023] Warning - Function 'early_return_guard' returns inconsistent types: String, Array
    161:6   [GDL201] Warning - Local variable 'overlapping' is declared but never used
    166:6   [GDL201] Warning - Local variable 'pos' is declared but never used
+   172:0   [GD3023] Warning - Function 'negated_guard' returns inconsistent types: String, Array
    186:6   [GDL201] Warning - Local variable 'value' is declared but never used
    220:12  [GD7005] Warning - Variable 'obj' may be null when accessing 'position'
    221:12  [GD7005] Warning - Variable 'obj' may be null when accessing 'rotation'
@@ -1053,27 +1093,43 @@ DIAGNOSTICS BY FILE
    253:8   [GD7007] Warning - Variable 'value' may be null when accessing 'keys'
    268:6   [GD7011] Hint - Redundant type check: 'outer' is already narrowed to 'Dictionary'
 
---- test_scripts/type_inference.gd (1 diagnostics) ---
+--- test_scripts/type_inference.gd (2 diagnostics) ---
 
+   100:0   [GD3024] Warning - Not all code paths return a value in 'test_match_inference' (declared -> String)
    176:1   [GDL513] Hint - Too many empty lines before function (6), expected 2
 
---- test_scripts/union_returns.gd (3 diagnostics) ---
+--- test_scripts/union_returns.gd (13 diagnostics) ---
 
      2:11  [GDL222] Warning - 'UnionReturns' has 22 public methods (max 20)
+    23:0   [GD3023] Warning - Function 'multi_type' returns inconsistent types: int, float, String, Array[int], null
+    47:0   [GD3023] Warning - Function 'parse_value' returns inconsistent types: int, float, String
+    56:0   [GD3023] Warning - Function 'get_node_or_default' returns inconsistent types: Node, String
+    73:0   [GD3023] Warning - Function 'process_input' returns inconsistent types: int, float, String, Array, null
+    88:0   [GD3023] Warning - Function 'early_returns' returns inconsistent types: String, bool, int, Array
     97:5   [GD3020] Warning - Variable 'value' may be null; comparison with '<' would cause runtime error
+   111:0   [GD3023] Warning - Function 'loop_return' returns inconsistent types: String, int
+   121:0   [GD3023] Warning - Function 'recursive_return' returns inconsistent types: String, Dictionary
+   139:0   [GD3023] Warning - Function 'exception_pattern' returns inconsistent types: Dictionary, bool
    190:10  [GD7007] Warning - Variable 'x' may be null when accessing 'length'
+   220:0   [GD3023] Warning - Function 'factory_method' returns inconsistent types: Node, Node2D, Control, null
+   233:0   [GD3023] Warning - Function 'type_from_data' returns inconsistent types: Vector2, Color, Rect2, Dictionary
 
---- test_scripts/union_types_complex.gd (24 diagnostics) ---
+--- test_scripts/union_types_complex.gd (30 diagnostics) ---
 
      2:11  [GDL222] Warning - 'UnionTypesComplex' has 28 public methods (max 20)
+    24:0   [GD3023] Warning - Function 'try_operation' returns inconsistent types: String, int
     29:5   [GD3020] Warning - Variable 'input' may be null; comparison with '<' would cause runtime error
     43:5   [GD7016] Warning - Property 'id' not found on type 'Node'
     52:9   [GD3009] Warning - Property 'global_position' not found on type 'Node'
+    58:0   [GD3023] Warning - Function 'process_by_type' returns inconsistent types: int, float, String, Array, null
     78:1   [GDL513] Hint - Too many empty lines before function (4), expected 2
+    84:0   [GD3023] Warning - Function 'complex_conditional' returns inconsistent types: int, String, Array[int], Dictionary
+    98:0   [GD3023] Warning - Function 'match_return' returns inconsistent types: String, float, Array[int], Dictionary
    117:10  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    124:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
    133:4   [GD3020] Warning - Variable 'index' may be null; comparison with '<' would cause runtime error
    133:17  [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
+   147:0   [GD3023] Warning - Function '_process_mixed_item' returns inconsistent types: int, String, Array
    160:1   [GDL513] Hint - Too many empty lines before function (5), expected 2
    226:7   [GD7007] Warning - Variable 'result' may be null when accessing 'get'
    228:10  [GD7006] Warning - Variable 'result' may be null when accessing '[...]'
@@ -1083,6 +1139,7 @@ DIAGNOSTICS BY FILE
    259:18  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
    269:8   [GD7007] Warning - Variable 'reducer' may be null when accessing 'call'
    271:1   [GDL513] Hint - Too many empty lines before function (6), expected 2
+   300:0   [GD3023] Warning - Function '_compute_result' returns inconsistent types: String, int
    333:9   [GD7007] Warning - Variable 'value' may be null when accessing 'length'
    362:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
    364:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'

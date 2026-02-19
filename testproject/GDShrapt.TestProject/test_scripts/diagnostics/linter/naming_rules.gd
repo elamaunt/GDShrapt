@@ -61,7 +61,7 @@ func SuppressedBadName() -> void: # 54:5-GDL203-OK
 
 ## VALID - snake_case variable names
 var valid_variable := 42
-var another_valid_var: String = "test"
+var another_valid_var: String = "test"  # 64:23-GD7022-OK
 var _private_var := 100
 
 
@@ -81,7 +81,7 @@ var SuppressedBadVar := 3  # Suppressed
 
 ## VALID - UPPER_CASE constant names
 const VALID_CONSTANT := 42
-const ANOTHER_CONSTANT: String = "test"
+const ANOTHER_CONSTANT: String = "test"  # 84:24-GD7022-OK
 const MAX_VALUE := 100
 
 

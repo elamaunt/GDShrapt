@@ -13,13 +13,13 @@ func test_local_flow(input):
 	return local                # Return
 
 
-func process_1(data):
+func process_1(data):  # 16:15-GD7020-OK
 	if data is int:
 		return data * 2
 	return data
 
 
-func process_2(data):
+func process_2(data):  # 22:15-GD7020-OK
 	if data is int:
 		return data + 10
 	return data
@@ -106,7 +106,7 @@ func early_return_flow(input):
 	return result  # Normal return
 
 
-func process_input(input):
+func process_input(input):  # 109:19-GD7020-OK
 	if input is int:
 		return input * 2
 	return null
@@ -147,7 +147,7 @@ func multi_assignment():
 	return [a, b, c, d]
 
 
-func type_narrowing_local(value):
+func type_narrowing_local(value):  # 150:0-GD3023-OK
 	# Local variable with type narrowing
 	var result = value
 

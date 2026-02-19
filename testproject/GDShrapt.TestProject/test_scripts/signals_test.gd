@@ -24,7 +24,7 @@ signal optional_params(required, optional)
 
 
 # Member variables
-var _health: int = 100
+var _health: int = 100  # 27:13-GD7022-OK
 var _position: Vector2 = Vector2.ZERO
 var _listeners: Array = []
 

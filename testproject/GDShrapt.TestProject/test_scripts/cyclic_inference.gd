@@ -10,7 +10,7 @@ var cycle_value_a  # Type depends on process_a() return
 var cycle_value_b  # Type depends on process_b() return
 
 
-func process_a(input):
+func process_a(input):  # 13:15-GD7020-OK
 	# Calls process_b, which calls process_a
 	# Creates direct cycle in type inference
 	if input is int and input > 0:
@@ -18,7 +18,7 @@ func process_a(input):
 	return input * 2
 
 
-func process_b(input):
+func process_b(input):  # 21:15-GD7020-OK
 	# Calls process_a, completing the cycle
 	if input is int and input > 0:
 		return process_a(input - 1)
@@ -87,7 +87,7 @@ func state_active(context):
 	return state_idle(context)
 
 
-func state_processing(data):
+func state_processing(data):  # 90:22-GD7020-OK
 	# Processes data, returns to idle or errors
 	if data is Array:
 		var results = []
@@ -118,7 +118,7 @@ func process_item(item):
 
 # === Accumulator Pattern with Cycle ===
 
-func accumulate_left(list, func_ref, initial):
+func accumulate_left(list, func_ref, initial):  # 121:21-GD7020-OK
 	# Standard fold-left, but calls itself
 	if list.is_empty(): # 123:4-GD7007-OK
 		return initial
@@ -128,7 +128,7 @@ func accumulate_left(list, func_ref, initial):
 	return accumulate_left(tail, func_ref, new_acc)
 
 
-func accumulate_right(list, func_ref, initial):
+func accumulate_right(list, func_ref, initial):  # 131:22-GD7020-OK
 	# Fold-right, also recursive
 	if list.is_empty(): # 133:4-GD7007-OK
 		return initial
@@ -189,7 +189,7 @@ func visit_node(node, visitor):
 	return result
 
 
-func traverse_and_transform(root, transformer):
+func traverse_and_transform(root, transformer):  # 192:34-GD7020-OK
 	# Transformer returns new nodes, creating inference cycles
 	var new_node = transformer.transform(root) # 194:16-GD7007-OK
 
@@ -223,7 +223,7 @@ func _init_generator(gen_id):
 	return {"current": 0, "step": 1, "id": gen_id}
 
 
-func _advance_generator(state):
+func _advance_generator(state):  # 226:0-GD3023-OK
 	# Return type same as state["current"] but inference must track it
 	var current = state["current"] # 228:15-GD7006-OK
 	var step = state["step"] # 229:12-GD7006-OK

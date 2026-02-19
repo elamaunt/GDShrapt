@@ -163,7 +163,7 @@ func test_gdl223_suppressed(x: int) -> int:
 # =============================================================================
 
 ## VALID - branches within limits
-func test_gdl228_valid(x: int) -> String:
+func test_gdl228_valid(x: int) -> String:  # 166:0-GD3024-OK
 	match x:
 		0:
 			return "zero"

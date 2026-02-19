@@ -11,12 +11,12 @@ class_name AIController
 enum AIState { IDLE, PATROL, CHASE, ATTACK, FLEE }
 
 @export var patrol_points: Array[Vector2] = []
-@export var move_speed: float = 100.0
-@export var detection_range: float = 200.0
-@export var attack_range: float = 50.0
+@export var move_speed: float = 100.0  # 14:24-GD7022-OK
+@export var detection_range: float = 200.0  # 15:29-GD7022-OK
+@export var attack_range: float = 50.0  # 16:26-GD7022-OK
 
 var current_state: AIState = AIState.IDLE  # 18:0-GD3004-OK
-var current_target_index: int = 0
+var current_target_index: int = 0  # 19:26-GD7022-OK
 var target_entity: Node2D = null
 var _path: Array[Vector2] = []
 

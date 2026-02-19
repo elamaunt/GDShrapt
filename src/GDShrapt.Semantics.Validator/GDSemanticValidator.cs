@@ -187,6 +187,46 @@ public class GDSemanticValidator
             lifecycleValidator.Validate(node);
         }
 
+        // Run return consistency validator (requires semantic model)
+        if (_options.CheckReturnConsistency && _semanticModel != null)
+        {
+            var returnValidator = new GDReturnConsistencyValidator(context, _semanticModel);
+            returnValidator.Validate(node);
+        }
+
+        // Run annotation narrowing validator (requires semantic model)
+        // Handles GD3022 (wider annotation) and GD7022 (redundant annotation)
+        if ((_options.CheckAnnotationNarrowing || _options.CheckRedundantAnnotations) && _semanticModel != null)
+        {
+            var annotationValidator = new GDAnnotationNarrowingValidator(context, _semanticModel, _options);
+            annotationValidator.Validate(node);
+        }
+
+        // Run type widening validator (requires semantic model)
+        if (_options.CheckTypeWidening && _semanticModel != null)
+        {
+            var wideningValidator = new GDTypeWideningValidator(context, _semanticModel);
+            wideningValidator.Validate(node);
+        }
+
+        // Run container specialization validator (requires semantic model)
+        // Handles GD3025 (bare container) and GD7021 (untyped container element)
+        if ((_options.CheckContainerSpecialization || _options.CheckUntypedContainerAccess) && _semanticModel != null)
+        {
+            var containerValidator = new GDContainerSpecializationValidator(context, _semanticModel, _options);
+            containerValidator.Validate(node);
+        }
+
+        // Run parameter type hint validator (requires semantic model)
+        if (_options.CheckParameterTypeHints && _semanticModel != null)
+        {
+            var paramHintValidator = new GDParameterTypeHintValidator(
+                context,
+                _semanticModel,
+                _options.ParameterTypeHintSeverity);
+            paramHintValidator.Validate(node);
+        }
+
         var result = context.BuildResult();
 
         // Apply comment-based suppression if enabled
@@ -361,4 +401,65 @@ public class GDSemanticValidatorOptions
     /// Provides access to SceneFlow, ResourceFlow, and SceneTypesProvider.
     /// </summary>
     public GDProjectSemanticModel? ProjectModel { get; set; }
+
+    // ========================================
+    // Type Annotation Diagnostics (GD3022-3025, GD7019-7022)
+    // ========================================
+
+    /// <summary>
+    /// Whether to check for inconsistent and missing return types (GD3023, GD3024).
+    /// Requires a semantic model. Enabled by default.
+    /// </summary>
+    public bool CheckReturnConsistency { get; set; } = true;
+
+    /// <summary>
+    /// Whether to check for annotations wider than inferred type (GD3022).
+    /// Requires a semantic model. Enabled by default.
+    /// </summary>
+    public bool CheckAnnotationNarrowing { get; set; } = true;
+
+    /// <summary>
+    /// Whether to check for bare Array/Dictionary that could be specialized (GD3025).
+    /// Requires a semantic model. Enabled by default.
+    /// </summary>
+    public bool CheckContainerSpecialization { get; set; } = true;
+
+    /// <summary>
+    /// Whether to check for assignments that widen a typed variable (GD7019).
+    /// Requires a semantic model. Enabled by default.
+    /// </summary>
+    public bool CheckTypeWidening { get; set; } = true;
+
+    /// <summary>
+    /// Whether to hint when all call sites agree on parameter type (GD7020).
+    /// Requires a semantic model. Disabled by default (noisy without annotations).
+    /// </summary>
+    public bool CheckParameterTypeHints { get; set; } = false;
+
+    /// <summary>
+    /// Whether to warn on for-loop over untyped container with typed element usage (GD7021).
+    /// Requires a semantic model. Disabled by default (noisy without annotations).
+    /// </summary>
+    public bool CheckUntypedContainerAccess { get; set; } = false;
+
+    /// <summary>
+    /// Whether to hint on redundant type annotations on literals (GD7022).
+    /// Disabled by default.
+    /// </summary>
+    public bool CheckRedundantAnnotations { get; set; } = false;
+
+    /// <summary>
+    /// Severity for annotation narrowing hints (GD3022).
+    /// </summary>
+    public GDDiagnosticSeverity AnnotationNarrowingSeverity { get; set; } = GDDiagnosticSeverity.Hint;
+
+    /// <summary>
+    /// Severity for container specialization hints (GD3025).
+    /// </summary>
+    public GDDiagnosticSeverity ContainerSpecializationSeverity { get; set; } = GDDiagnosticSeverity.Hint;
+
+    /// <summary>
+    /// Severity for parameter type consensus hints (GD7020).
+    /// </summary>
+    public GDDiagnosticSeverity ParameterTypeHintSeverity { get; set; } = GDDiagnosticSeverity.Hint;
 }

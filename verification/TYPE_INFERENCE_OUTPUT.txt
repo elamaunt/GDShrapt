@@ -4018,6 +4018,98 @@ test_scripts/diagnostics/validator/scope_errors.gd
 127:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
 127:7 GDIdentifierExpression val -> int
 
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+12:0 Method test_gd3023_valid_same_type -> int
+12:33 Parameter flag -> bool
+13:4 GDIdentifierExpression flag -> bool
+14:2 GDReturnExpression return 5 -> Variant
+14:9 GDNumberExpression 5 -> int
+16:2 GDReturnExpression return 10 -> Variant
+16:9 GDNumberExpression 10 -> int
+19:0 Method test_gd3023_invalid -> int | String
+19:25 Parameter flag -> bool
+20:4 GDIdentifierExpression flag -> bool
+21:2 GDReturnExpression return 5 -> Variant
+21:9 GDNumberExpression 5 -> int
+23:2 GDReturnExpression return "hello" -> Variant
+23:9 GDStringExpression "hello" -> String
+31:0 Method test_gd3024_valid -> int
+31:23 Parameter flag -> bool
+32:4 GDIdentifierExpression flag -> bool
+33:2 GDReturnExpression return 5 -> Variant
+33:9 GDNumberExpression 5 -> int
+35:2 GDReturnExpression return 10 -> Variant
+35:9 GDNumberExpression 10 -> int
+38:0 Method test_gd3024_invalid -> int
+38:25 Parameter flag -> bool
+39:4 GDIdentifierExpression flag -> bool
+40:2 GDReturnExpression return 5 -> Variant
+40:9 GDNumberExpression 5 -> int
+43:0 Method test_gd3024_valid_void -> void
+43:28 Parameter flag -> bool
+44:4 GDIdentifierExpression flag -> bool
+45:2 GDCallExpression print() -> void
+45:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+45:8 GDStringExpression "hello" -> String
+53:0 Variable redundant_int -> int
+53:25 GDNumberExpression 100 -> int
+56:0 Variable redundant_str -> String
+56:28 GDStringExpression "test" -> String
+59:0 Variable redundant_bool -> bool
+59:27 GDBoolExpression true -> bool
+62:0 Variable not_redundant_float -> float
+62:33 GDNumberExpression 5 -> int
+65:0 Variable not_redundant_node -> Node
+65:31 GDCallExpression Node.new() -> Node
+65:31 GDMemberOperatorExpression Node.new -> Variant
+65:31 GDIdentifierExpression Node -> Node
+73:0 Variable exact_sprite -> Sprite2D
+73:29 GDCallExpression Sprite2D.new() -> Sprite2D
+73:29 GDMemberOperatorExpression Sprite2D.new -> Variant
+73:29 GDIdentifierExpression Sprite2D -> Sprite2D
+76:0 Variable no_annotation -> Sprite2D
+76:20 GDCallExpression Sprite2D.new() -> Sprite2D
+76:20 GDMemberOperatorExpression Sprite2D.new -> Variant
+76:20 GDIdentifierExpression Sprite2D -> Sprite2D
+84:0 Method test_gd7019_valid -> void
+85:1 Variable sprite -> Sprite2D
+85:24 GDCallExpression Sprite2D.new() -> Sprite2D
+85:24 GDMemberOperatorExpression Sprite2D.new -> Variant
+85:24 GDIdentifierExpression Sprite2D -> Sprite2D
+86:1 GDDualOperatorExpression spriteAssignmentSprite2D.new() -> Sprite2D
+86:1 GDIdentifierExpression sprite -> Sprite2D
+86:10 GDCallExpression Sprite2D.new() -> Sprite2D
+86:10 GDMemberOperatorExpression Sprite2D.new -> Variant
+86:10 GDIdentifierExpression Sprite2D -> Sprite2D
+89:0 Method test_gd7019_valid_no_annotation -> void
+90:1 Variable sprite -> Sprite2D
+90:14 GDCallExpression Sprite2D.new() -> Sprite2D
+90:14 GDMemberOperatorExpression Sprite2D.new -> Variant
+90:14 GDIdentifierExpression Sprite2D -> Sprite2D
+91:1 GDDualOperatorExpression spriteAssignmentNode.new() -> Sprite2D
+91:1 GDIdentifierExpression sprite -> Sprite2D
+91:10 GDCallExpression Node.new() -> Node
+91:10 GDMemberOperatorExpression Node.new -> Variant
+91:10 GDIdentifierExpression Node -> Node
+99:0 Variable typed_scores -> Array[int]
+99:31 GDArrayInitializerExpression [...] -> Array
+102:0 Variable not_container -> String
+102:28 GDStringExpression "test" -> String
+110:0 Method test_gd7020_valid_typed -> void
+110:29 Parameter amount -> int
+111:1 GDPassExpression pass -> void
+114:0 Method test_gd7020_valid_underscore -> void
+114:34 Parameter _delta -> Variant
+115:1 GDPassExpression pass -> void
+122:0 Variable typed_enemies -> Array[Node]
+122:33 GDArrayInitializerExpression [...] -> Array
+124:0 Method test_gd7021_valid -> void
+125:1 Iterator enemy -> Variant
+125:14 GDIdentifierExpression typed_enemies -> Array[Node]
+126:2 GDCallExpression enemy.queue_free() -> void
+126:2 GDMemberOperatorExpression enemy.queue_free -> void
+126:2 GDIdentifierExpression enemy -> Node
+
 test_scripts/diagnostics/validator/type_errors.gd
 23:0 Method test_gd3001_valid -> void
 24:1 Variable x -> int
@@ -17636,4 +17728,4 @@ test_scripts/validation_edge_cases.gd
 68:1 GDReturnExpression return "hello" -> Variant
 68:8 GDStringExpression "hello" -> String
 
-# Summary: 17528 nodes in 53 files
+# Summary: 17618 nodes in 54 files

@@ -12,7 +12,7 @@ extends Control
 @onready var ui_label: Label = $UI/StatusLabel
 @onready var health_bar: ProgressBar = $UI/HealthBar
 
-var _scene_loaded: bool = false
+var _scene_loaded: bool = false  # 15:19-GD7022-OK
 
 
 func _ready() -> void:
@@ -68,7 +68,7 @@ func get_node_by_path(path: String) -> Node:
 	return get_node_or_null(path)
 
 
-func find_child_of_type(parent: Node, type_name: String) -> Node:
+func find_child_of_type(parent: Node, type_name: String) -> Node:  # 71:0-GD3023-OK
 	for child in parent.get_children():
 		if child.get_class() == type_name:
 			return child

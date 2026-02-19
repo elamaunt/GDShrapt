@@ -6,13 +6,13 @@ class_name InheritanceTest
 
 
 # Custom properties
-var custom_speed: float = 100.0
-var custom_health: int = 100
-var _damage_multiplier: float = 1.0
+var custom_speed: float = 100.0  # 9:18-GD7022-OK
+var custom_health: int = 100  # 10:19-GD7022-OK
+var _damage_multiplier: float = 1.0  # 11:24-GD7022-OK
 
 
 # Overriding inherited properties with custom behavior
-var gravity: float = 980.0
+var gravity: float = 980.0  # 15:13-GD7022-OK
 
 
 func _physics_process(delta: float):
@@ -108,7 +108,7 @@ func use_node2d_methods():
 
 # Inner class extending built-in
 class ChildEnemy extends InheritanceTest:
-	var enemy_type: String = "basic"
+	var enemy_type: String = "basic"  # 111:17-GD7022-OK
 
 	func _physics_process(delta: float):
 		# Can access parent's custom_speed

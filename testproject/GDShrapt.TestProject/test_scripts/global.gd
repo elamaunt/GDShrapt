@@ -3,14 +3,14 @@ extends Node
 ## Global autoload singleton for testing autoload support.
 
 var player_data: Dictionary = {}
-var current_level: int = 0
+var current_level: int = 0  # 6:19-GD7022-OK
 
 signal game_started
 signal game_ended
 signal level_changed(level: int)
 
-const VERSION: String = "1.0.0"
-const MAX_PLAYERS: int = 4
+const VERSION: String = "1.0.0"  # 12:15-GD7022-OK
+const MAX_PLAYERS: int = 4  # 13:19-GD7022-OK
 
 func start_game() -> void:
 	emit_signal("game_started")

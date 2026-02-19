@@ -90,7 +90,7 @@ func get_all_components(entity_id):
 
 # === Query system ===
 
-func query_entities(component_types):
+func query_entities(component_types):  # 93:20-GD7020-OK
 	# Returns entities that have ALL specified component types
 	var result = []
 
@@ -106,7 +106,7 @@ func query_entities(component_types):
 	return result
 
 
-func query_with_components(component_types):
+func query_with_components(component_types):  # 109:27-GD7020-OK
 	# Returns array of {entity_id, components: Dict}
 	var entity_ids = query_entities(component_types)
 	var result = []
@@ -190,7 +190,7 @@ func create_ai_component(initial_state = "idle", behavior = null):
 # === Example systems (duck typed) ===
 
 class MovementSystem:
-	func update(delta, world):  # 195:15-GD7007-OK
+	func update(delta, world):  # 195:15-GD7007-OK, 193:20-GD7020-OK
 		# Query entities with Transform and Velocity
 		var movers = world.query_entities(["Transform", "Velocity"])
 
@@ -205,7 +205,7 @@ class MovementSystem:
 class HealthSystem:
 	signal entity_died(entity_id)
 
-	func update(delta, world):  # 208:13-GDL202-OK
+	func update(delta, world):  # 208:13-GDL202-OK, 208:20-GD7020-OK
 		var with_health = world.query_entities(["Health"])  # 209:20-GD7007-OK
 
 		for eid in with_health:
@@ -216,7 +216,7 @@ class HealthSystem:
 
 
 class AISystem:
-	func update(delta, world):  # 220:20-GD7007-OK
+	func update(delta, world):  # 220:20-GD7007-OK, 219:20-GD7020-OK
 		var ai_entities = world.query_entities(["AI", "Transform"])
 
 		for eid in ai_entities:
@@ -317,7 +317,7 @@ func update_spatial_index(): # 299:1-GDL513-OK
 		spatial_grid[cell].append(eid)
 
 
-func _get_grid_cell(position):  # 322:6-GD7005-OK, 323:6-GD7005-OK
+func _get_grid_cell(position):  # 322:6-GD7005-OK, 323:6-GD7005-OK, 320:20-GD7020-OK
 	return Vector2i(
 		int(position.x / grid_cell_size),
 		int(position.y / grid_cell_size)

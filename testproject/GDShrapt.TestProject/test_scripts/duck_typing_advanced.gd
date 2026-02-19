@@ -28,7 +28,7 @@ func process_attack(source, target):
 	return result
 
 
-func apply_to_all(targets, effect):
+func apply_to_all(targets, effect):  # 31:18-GD7020-OK, 31:27-GD7020-OK
 	# 'targets' is iterable (Array, but element type unknown)
 	# 'effect' has .apply() method
 	var results = []
@@ -107,7 +107,7 @@ func get_or_create_component(component_type): # 94:1-GDL513-OK
 	return component
 
 
-func _create_component(type_name):
+func _create_component(type_name):  # 110:0-GD3023-OK
 	# Returns completely different types
 	match type_name:
 		"health":
@@ -202,7 +202,7 @@ func process_chain(initial_value):
 	return step4
 
 
-func _step_parse(value):
+func _step_parse(value):  # 205:17-GD7020-OK
 	if value is String:
 		if value.is_valid_int():
 			return value.to_int()
@@ -223,7 +223,7 @@ func _step_validate(value):
 	return value
 
 
-func _step_transform(value):
+func _step_transform(value):  # 226:0-GD3023-OK
 	if value is int:
 		return value * 2
 	if value is float:

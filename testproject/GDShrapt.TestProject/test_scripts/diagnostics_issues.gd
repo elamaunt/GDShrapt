@@ -6,7 +6,7 @@ class_name DiagnosticsTest
 
 # Unused variables should trigger warnings
 var unused_variable := 10
-var another_unused: String = "never used"
+var another_unused: String = "never used"  # 9:20-GD7022-OK
 var _private_unused := "test"  # Private variables might not warn
 
 # Used variable for comparison
@@ -30,7 +30,7 @@ func used_function() -> void:
 	print("This function is used")
 
 
-func missing_return_path() -> int:
+func missing_return_path() -> int:  # 33:0-GD3024-OK
 	var x := 10
 	if x > 5:
 		return x

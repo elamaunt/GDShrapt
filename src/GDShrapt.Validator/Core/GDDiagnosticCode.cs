@@ -5,11 +5,11 @@ namespace GDShrapt.Reader
     /// Codes are grouped by category:
     /// - GD1xxx: Syntax errors
     /// - GD2xxx: Scope errors
-    /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018)
+    /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018, annotation analysis GD3022-3025)
     /// - GD4xxx: Call errors (including signal types GD4009-4010, scene nodes GD4011-4012)
     /// - GD5xxx: Control flow errors
     /// - GD6xxx: Indentation errors
-    /// - GD7xxx: Duck typing errors (including scene node lifecycle GD7017-7018)
+    /// - GD7xxx: Duck typing errors (including scene node lifecycle GD7017-7018, type annotation hints GD7019-7022)
     /// - GD8xxx: Abstract errors
     /// - GD9xxx: Static method errors
     /// </summary>
@@ -192,6 +192,30 @@ namespace GDShrapt.Reader
         /// For example: "str" &lt; 5 - String and int are not comparable.
         /// </summary>
         IncompatibleComparisonTypes = 3021,
+
+        /// <summary>
+        /// Type annotation is wider than the inferred type.
+        /// For example: var enemy: Node = Sprite2D.new() — 'Node' is wider than 'Sprite2D'.
+        /// </summary>
+        AnnotationWiderThanInferred = 3022,
+
+        /// <summary>
+        /// Function returns different incompatible types in different branches.
+        /// For example: returns int in 'if' branch but String in 'else'.
+        /// </summary>
+        InconsistentReturnTypes = 3023,
+
+        /// <summary>
+        /// Function with declared return type has code paths without explicit return.
+        /// For example: func find() -> Node with no return after a for loop.
+        /// </summary>
+        MissingReturnInBranch = 3024,
+
+        /// <summary>
+        /// Container is declared as bare Array or Dictionary but usage proves a specific element type.
+        /// For example: var scores: Array could be Array[int] based on append() calls.
+        /// </summary>
+        ContainerMissingSpecialization = 3025,
 
         // Call errors (4xxx)
         /// <summary>
@@ -435,6 +459,33 @@ namespace GDShrapt.Reader
         /// $Node or get_node() in class-level initializer without @onready.
         /// </summary>
         NodeAccessBeforeReady = 7018,
+
+        /// <summary>
+        /// Assignment widens a typed variable beyond its declared type.
+        /// For example: var sprite: Sprite2D; sprite = get_node("X") widens to Node.
+        /// </summary>
+        TypeWideningAssignment = 7019,
+
+        /// <summary>
+        /// Untyped parameter has consistent type from all call sites.
+        /// For example: all callers pass 'int' for parameter 'amount'.
+        /// Disabled by default (noisy for codebases without annotations).
+        /// </summary>
+        CallSiteParameterTypeConsensus = 7020,
+
+        /// <summary>
+        /// For-loop iterates over untyped container but uses elements as a specific type.
+        /// For example: iterating untyped Array but accessing .position on elements.
+        /// Disabled by default (noisy for codebases without annotations).
+        /// </summary>
+        UntypedContainerElementAccess = 7021,
+
+        /// <summary>
+        /// Type annotation is redundant because the type is obvious from the literal initializer.
+        /// For example: var x: int = 5 — the annotation adds no value.
+        /// Disabled by default.
+        /// </summary>
+        RedundantAnnotation = 7022,
 
         // Abstract errors (8xxx)
         /// <summary>

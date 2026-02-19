@@ -32,7 +32,7 @@ func test_string_format():
 # Test 3: Return self pattern - tested in method_chains.gd (class ConfigBuilder)
 # Keeping a simple version here for reference
 class SimpleBuilder:
-	var _value: int = 0
+	var _value: int = 0  # 35:13-GD7022-OK
 
 	func set_value(v: int) -> SimpleBuilder:
 		_value = v

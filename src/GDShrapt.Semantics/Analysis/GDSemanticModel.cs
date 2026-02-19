@@ -869,6 +869,71 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         return _expressionTypeService.InferParameterTypes(method);
     }
 
+    /// <summary>
+    /// Analyzes return types for a method declaration.
+    /// Returns information about all return paths, their types, and whether they are implicit.
+    /// </summary>
+    public GDMethodReturnAnalysis? AnalyzeMethodReturns(GDMethodDeclaration method)
+    {
+        if (method == null)
+            return null;
+
+        var runtimeProvider = _scriptFile?.SemanticModel?.RuntimeProvider;
+        var collector = new GDReturnTypeCollector(method, runtimeProvider);
+        collector.Collect();
+
+        var returnPaths = collector.Returns.Select(r => new GDReturnPathInfo
+        {
+            InferredType = r.InferredType,
+            Line = r.Line,
+            IsImplicit = r.IsImplicit,
+            BranchContext = r.BranchContext,
+            IsHighConfidence = r.IsHighConfidence
+        }).ToList();
+
+        var unionType = collector.ComputeReturnUnionType();
+
+        // Determine declared return type
+        var declaredReturnTypeName = GDReturnTypeCollector.GetExplicitReturnType(method);
+        var declaredReturnType = declaredReturnTypeName != null
+            ? GDSemanticType.FromRuntimeTypeName(declaredReturnTypeName)
+            : null;
+
+        // Check for inconsistent types: 2+ non-null high-confidence types that are not assignable to each other
+        var hasInconsistentTypes = false;
+        var nonNullHighConfTypes = returnPaths
+            .Where(r => !r.IsImplicit && r.InferredType != null && r.IsHighConfidence && !r.InferredType.IsVariant)
+            .Select(r => r.InferredType!)
+            .Distinct()
+            .ToList();
+
+        if (nonNullHighConfTypes.Count >= 2 && runtimeProvider != null)
+        {
+            // Check if any pair of types is not assignable to each other
+            for (int i = 0; i < nonNullHighConfTypes.Count && !hasInconsistentTypes; i++)
+            {
+                for (int j = i + 1; j < nonNullHighConfTypes.Count; j++)
+                {
+                    var a = nonNullHighConfTypes[i].DisplayName;
+                    var b = nonNullHighConfTypes[j].DisplayName;
+                    if (!runtimeProvider.IsAssignableTo(a, b) && !runtimeProvider.IsAssignableTo(b, a))
+                    {
+                        hasInconsistentTypes = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new GDMethodReturnAnalysis
+        {
+            DeclaredReturnType = declaredReturnType,
+            ReturnPaths = returnPaths,
+            HasInconsistentTypes = hasInconsistentTypes,
+            ReturnUnionType = unionType
+        };
+    }
+
     #endregion
 
     #region Type Usage Queries

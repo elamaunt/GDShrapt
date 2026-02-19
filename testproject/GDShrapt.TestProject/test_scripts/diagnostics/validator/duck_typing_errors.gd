@@ -21,7 +21,7 @@ func test_gd7002_valid_typed() -> void:
 
 
 ## VALID - should NOT trigger GD7002 (with type guard)
-func test_gd7002_valid_guarded(obj) -> void:
+func test_gd7002_valid_guarded(obj) -> void:  # 24:31-GD7020-OK
 	if obj is Node:
 		print(obj.name)  # Type guarded - no warning
 
@@ -48,7 +48,7 @@ func test_gd7003_valid_typed() -> void:
 
 
 ## VALID - should NOT trigger GD7003 (with type guard)
-func test_gd7003_valid_guarded(obj) -> void:
+func test_gd7003_valid_guarded(obj) -> void:  # 51:31-GD7020-OK
 	if obj is Array:
 		obj.append(1)  # Type guarded - no warning
 
@@ -76,7 +76,7 @@ func test_multiple_unguarded(obj1, obj2) -> void:
 
 
 ## Mixed guarded and unguarded
-func test_mixed_guarded_unguarded(obj) -> void:
+func test_mixed_guarded_unguarded(obj) -> void:  # 79:34-GD7020-OK
 	# Unguarded - should warn
 	obj.unguarded_call()  # 81:1-GD4002-OK
 

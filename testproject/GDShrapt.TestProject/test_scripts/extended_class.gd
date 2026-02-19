@@ -9,9 +9,9 @@ class_name ExtendedClass
 # NOTE: combo_count resets on any damage taken
 # XXX: Consider extracting combat logic to separate component
 
-@export var armor: int = 0
+@export var armor: int = 0  # 12:19-GD7022-OK
 
-var combo_count: int = 0
+var combo_count: int = 0  # 14:17-GD7022-OK
 
 
 func _ready() -> void:
@@ -49,7 +49,7 @@ func _physics_process(delta: float) -> void:
 
 
 class InnerClass:
-	var value: int = 0
+	var value: int = 0  # 52:12-GD7022-OK
 
 	func increment() -> void:
 		value += 1

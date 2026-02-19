@@ -32,7 +32,7 @@ func _ready():
 
 # === Cross-file method calls ===
 
-func process_entity(entity_data):
+func process_entity(entity_data):  # 35:20-GD7020-OK
 	# Calls into ECSLikeSystem
 	var entity = entity_manager.create_entity(entity_data.get("name", "")) # 37:14-GD7007-OK, 37:43-GD7007-OK
 
@@ -74,7 +74,7 @@ func setup_signal_handlers(target): # 66:27-GDL202-OK
 	return op
 
 
-func _on_damage_event(data):
+func _on_damage_event(data):  # 77:22-GD7020-OK
 	return apply_damage(data["source"], data["target"], data["amount"]) # 78:21-GD7006-OK, 78:37-GD7006-OK, 78:53-GD7006-OK
 
 
@@ -86,7 +86,7 @@ func _on_operation_result(result):
 	last_result = result
 
 
-func register_handlers(objects):
+func register_handlers(objects):  # 89:23-GD7020-OK
 	# Uses PolymorphicInterfaces
 	for obj in objects:
 		if obj.has_method("take_damage"):
@@ -234,7 +234,7 @@ func _handle_union(value):
 	return union_handler.process_by_type(value) # 234:8-GD7007-OK
 
 
-func create_game_object(object_type, params = {}):
+func create_game_object(object_type, params = {}):  # 237:0-GD3023-OK
 	# Returns different types based on object_type
 	match object_type:
 		"player":
@@ -318,7 +318,7 @@ func stress_test_inference(depth, initial_value):
 	return stress_test_inference(depth - 1, step4)
 
 
-func parallel_inference_test(inputs):
+func parallel_inference_test(inputs):  # 321:29-GD7020-OK
 	# Multiple independent inference paths
 	var results = {
 		"entity_results": [],

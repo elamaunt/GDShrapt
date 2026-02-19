@@ -161,7 +161,7 @@ func notify_observers(event_name, data):
 var root_component  # Has: process(), get_children(), add_child(), remove_child()
 
 
-func process_tree(component): # 157:1-GDL513-OK
+func process_tree(component): # 157:1-GDL513-OK, 164:18-GD7020-OK
 	# Process this component
 	var result = component.process()  # 166:14-GD7003-OK, 166:14-GD7007-OK
 
@@ -174,7 +174,7 @@ func process_tree(component): # 157:1-GDL513-OK
 	return {"self": result, "children": children_results}
 
 
-func find_in_tree(component, predicate):
+func find_in_tree(component, predicate):  # 177:18-GD7020-OK
 	# predicate: (component) -> bool
 	if predicate.call(component):  # 179:4-GD7007-OK
 		return component
@@ -188,7 +188,7 @@ func find_in_tree(component, predicate):
 	return null
 
 
-func collect_from_tree(component, collector):
+func collect_from_tree(component, collector):  # 191:23-GD7020-OK
 	# collector: (component) -> Variant|null
 	var results = []
 

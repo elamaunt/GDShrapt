@@ -11,15 +11,15 @@ signal attack_performed(target: Node, damage: int)
 signal target_acquired(target: BaseEntity)
 signal target_lost
 
-@export var attack_power: int = 15
-@export var attack_range: float = 50.0
-@export var attack_cooldown: float = 1.0
-@export var detection_range: float = 200.0
-@export var experience_reward: int = 25
+@export var attack_power: int = 15  # 14:26-GD7022-OK
+@export var attack_range: float = 50.0  # 15:26-GD7022-OK
+@export var attack_cooldown: float = 1.0  # 16:29-GD7022-OK
+@export var detection_range: float = 200.0  # 17:29-GD7022-OK
+@export var experience_reward: int = 25  # 18:31-GD7022-OK
 
 var target: BaseEntity = null
-var can_attack: bool = true
-var _attack_timer: float = 0.0
+var can_attack: bool = true  # 21:16-GD7022-OK
+var _attack_timer: float = 0.0  # 22:19-GD7022-OK
 
 
 func _ready() -> void:

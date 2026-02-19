@@ -20,7 +20,7 @@ func optional_int(condition: bool):
 	return null  # null
 
 
-func multi_type(type_name: String):
+func multi_type(type_name: String):  # 23:0-GD3023-OK
 	# Returns int | float | String | Array | null
 	match type_name:
 		"int":
@@ -35,7 +35,7 @@ func multi_type(type_name: String):
 			return null          # null
 
 
-func success_or_error(input) -> Dictionary:
+func success_or_error(input) -> Dictionary:  # 38:22-GD7020-OK
 	# Returns Dictionary with different shapes
 	if input == null:
 		return {"success": false, "error": "Input is null"}
@@ -44,7 +44,7 @@ func success_or_error(input) -> Dictionary:
 	return {"success": true, "value": input}
 
 
-func parse_value(text: String):
+func parse_value(text: String):  # 47:0-GD3023-OK
 	# Returns int | float | String based on content
 	if text.is_valid_int():
 		return text.to_int()     # int
@@ -53,7 +53,7 @@ func parse_value(text: String):
 	return text                  # String
 
 
-func get_node_or_default(path: String):
+func get_node_or_default(path: String):  # 56:0-GD3023-OK
 	# Returns Node | String
 	var node = get_node_or_null(path)
 	if node != null:
@@ -70,7 +70,7 @@ func load_resource(path: String):
 	return resource
 
 
-func process_input(input):
+func process_input(input):  # 73:0-GD3023-OK
 	# Returns different types based on input type
 	if input is int:
 		return input * 2         # int
@@ -85,7 +85,7 @@ func process_input(input):
 	return null                  # null
 
 
-func early_returns(value):
+func early_returns(value):  # 88:0-GD3023-OK
 	# Multiple early returns with different types
 	if value == null:
 		return "null input"       # String
@@ -108,7 +108,7 @@ func conditional_expression_return(condition: bool):
 	return 42 if condition else "default"  # int | String
 
 
-func loop_return(items: Array):
+func loop_return(items: Array):  # 111:0-GD3023-OK
 	# Return from within loop or after
 	for item in items:
 		if item is int and item < 0:
@@ -118,7 +118,7 @@ func loop_return(items: Array):
 	return items.size()  # int
 
 
-func recursive_return(depth: int):
+func recursive_return(depth: int):  # 121:0-GD3023-OK
 	# Recursive function with multiple return types
 	if depth <= 0:
 		return "base"                              # String
@@ -136,7 +136,7 @@ func callback_return(callback: Callable):
 	return result                        # Variant (from callback)
 
 
-func exception_pattern(operation: String, data):
+func exception_pattern(operation: String, data):  # 139:0-GD3023-OK
 	# Exception-like pattern with union return
 	match operation:
 		"read":
@@ -151,7 +151,7 @@ func exception_pattern(operation: String, data):
 			return {"error": "Unknown operation"}  # Dictionary
 
 
-func result_monad(value):
+func result_monad(value):  # 154:18-GD7020-OK
 	# Result monad pattern: Ok(T) | Err(E)
 	if value == null:
 		return {"ok": false, "error": "Value is null"}
@@ -199,7 +199,7 @@ func async_result(success: bool):
 	return {"status": "failed", "error": "Operation failed"}
 
 
-func validate_input(input) -> Dictionary:
+func validate_input(input) -> Dictionary:  # 202:20-GD7020-OK
 	# Validation pattern returning errors or data
 	var errors = []
 
@@ -217,7 +217,7 @@ func validate_input(input) -> Dictionary:
 	return {"valid": true, "data": input}
 
 
-func factory_method(type_name: String):
+func factory_method(type_name: String):  # 220:0-GD3023-OK
 	# Factory pattern with different return types
 	match type_name:
 		"node":
@@ -230,7 +230,7 @@ func factory_method(type_name: String):
 			return null                 # null
 
 
-func type_from_data(data: Dictionary):
+func type_from_data(data: Dictionary):  # 233:0-GD3023-OK
 	# Return type determined by data content
 	var type_field = data.get("_type", "default")
 	match type_field:

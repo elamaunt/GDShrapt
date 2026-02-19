@@ -271,6 +271,12 @@ public class GDTypeSystem : IGDTypeSystem
         return _model.InferParameterType(param);
     }
 
+    /// <inheritdoc/>
+    public GDMethodReturnAnalysis? AnalyzeMethodReturns(GDMethodDeclaration method)
+    {
+        return _model.AnalyzeMethodReturns(method);
+    }
+
     private static GDExpression? GetInitializerExpression(GDSymbolInfo symbol)
     {
         return symbol.DeclarationNode switch

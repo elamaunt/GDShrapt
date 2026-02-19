@@ -9,10 +9,10 @@ enum TestEnum { VALUE_ONE, VALUE_TWO, VALUE_THREE }
 const MY_CONSTANT := 42
 const STRING_CONSTANT := "test"
 
-var my_string: String = ""
-var my_int: int = 0
-var my_float: float = 0.0
-var my_bool: bool = false
+var my_string: String = ""  # 12:15-GD7022-OK
+var my_int: int = 0  # 13:12-GD7022-OK
+var my_float: float = 0.0  # 14:14-GD7022-OK
+var my_bool: bool = false  # 15:13-GD7022-OK
 var my_array: Array[int] = []
 var my_dict: Dictionary = {}
 var my_vector: Vector2 = Vector2.ZERO

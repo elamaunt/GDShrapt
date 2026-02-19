@@ -97,7 +97,7 @@ func test_conditional_inference() -> void:
 	print(result, clamped)
 
 
-func test_match_inference() -> String:
+func test_match_inference() -> String:  # 100:0-GD3024-OK
 	var value := randi() % 3
 
 	match value:

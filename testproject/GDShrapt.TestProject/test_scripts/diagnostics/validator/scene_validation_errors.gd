@@ -49,7 +49,7 @@ var button = $Button  # 46:0-GD7018-OK
 @onready var label = $Label
 
 ## VALID - no node access
-var speed: float = 100.0
+var speed: float = 100.0  # 52:11-GD7022-OK
 
 ## INVALID - get_node without @onready
 var panel = get_node("Panel")  # 55:0-GD7018-OK

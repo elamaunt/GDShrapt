@@ -11,13 +11,13 @@ signal armor_changed(new_armor: int)
 signal experience_gained(amount: int)
 signal level_up(new_level: int)
 
-@export var armor: int = 10
-@export var experience: int = 0
-@export var level: int = 1
+@export var armor: int = 10  # 14:19-GD7022-OK
+@export var experience: int = 0  # 15:24-GD7022-OK
+@export var level: int = 1  # 16:19-GD7022-OK
 
-var is_blocking: bool = false
-var block_efficiency: float = 0.5
-var combo_count: int = 0
+var is_blocking: bool = false  # 18:17-GD7022-OK
+var block_efficiency: float = 0.5  # 19:22-GD7022-OK
+var combo_count: int = 0  # 20:17-GD7022-OK
 
 
 func _ready() -> void:

@@ -343,7 +343,7 @@ func use_ability(ability_id, user, targets = []):
 	return result
 
 
-func _apply_effect_template(template, user, targets):
+func _apply_effect_template(template, user, targets):  # 346:44-GD7020-OK
 	var results = []
 
 	for target in targets:
@@ -513,21 +513,21 @@ func load_game_state(data):
 	cooldowns = data.get("cooldowns", {})  # 513:13-GD7007-OK
 
 
-func _serialize_array(arr):
+func _serialize_array(arr):  # 516:22-GD7020-OK
 	var result = []
 	for item in arr:
 		result.append(_serialize_value(item))
 	return result
 
 
-func _serialize_dict(dict):
+func _serialize_dict(dict):  # 523:21-GD7020-OK
 	var result = {}
 	for key in dict:
 		result[key] = _serialize_value(dict[key])  # 526:33-GD7006-OK
 	return result
 
 
-func _serialize_value(value):
+func _serialize_value(value):  # 530:0-GD3023-OK
 	if value == null or value is bool or value is int or value is float or value is String:
 		return value
 	if value is Vector2:
@@ -541,21 +541,21 @@ func _serialize_value(value):
 	return str(value)
 
 
-func _deserialize_array(arr):
+func _deserialize_array(arr):  # 544:24-GD7020-OK
 	var result = []
 	for item in arr:
 		result.append(_deserialize_value(item))
 	return result
 
 
-func _deserialize_dict(dict):
+func _deserialize_dict(dict):  # 551:23-GD7020-OK
 	var result = {}
 	for key in dict:
 		result[key] = _deserialize_value(dict[key])  # 554:35-GD7006-OK
 	return result
 
 
-func _deserialize_value(value):
+func _deserialize_value(value):  # 558:0-GD3023-OK
 	if value is Dictionary:
 		if value.has("_t"):
 			match value["_t"]:

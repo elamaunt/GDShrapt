@@ -66,9 +66,9 @@ func builder_pattern() -> Dictionary:
 
 
 class ConfigBuilder:
-	var _name: String = ""
-	var _value: int = 0
-	var _enabled: bool = false
+	var _name: String = ""  # 69:12-GD7022-OK
+	var _value: int = 0  # 70:13-GD7022-OK
+	var _enabled: bool = false  # 71:15-GD7022-OK
 
 	func set_name(name: String) -> ConfigBuilder:
 		_name = name

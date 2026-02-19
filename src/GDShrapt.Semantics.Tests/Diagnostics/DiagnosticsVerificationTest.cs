@@ -402,6 +402,14 @@ public class DiagnosticsVerificationTest
                     CheckNodePaths = true,
                     CheckNodeLifecycle = true,
                     ProjectModel = _projectModel,
+                    // Type annotation diagnostics (GD3022-GD3025, GD7019-GD7022)
+                    CheckReturnConsistency = true,
+                    CheckAnnotationNarrowing = true,
+                    CheckContainerSpecialization = true,
+                    CheckTypeWidening = true,
+                    CheckParameterTypeHints = true,
+                    CheckUntypedContainerAccess = true,
+                    CheckRedundantAnnotations = true,
                 };
 
                 var semanticValidator = new GDSemanticValidator(scriptFile.SemanticModel, semanticValidatorOptions);

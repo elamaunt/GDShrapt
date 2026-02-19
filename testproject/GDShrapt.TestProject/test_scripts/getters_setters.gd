@@ -4,8 +4,8 @@ class_name GettersSetters  # 2:11-GDL227-OK
 ## Tests for property get/set type flow.
 ## Properties with getters and setters have special type flow patterns.
 
-var _health: int = 100
-var _max_health: int = 100
+var _health: int = 100  # 7:13-GD7022-OK
+var _max_health: int = 100  # 8:17-GD7022-OK
 var _position: Vector2 = Vector2.ZERO
 var _data: Dictionary = {}
 
@@ -169,7 +169,7 @@ func test_config_property():
 
 # Nested property access patterns, 168:1-GDL513-OK
 class Inner:
-	var _value: int = 0
+	var _value: int = 0  # 172:13-GD7022-OK
 
 	var value: int:
 		get:
@@ -197,7 +197,7 @@ func test_nested_property():
 
 
 # Static-like property pattern
-var _instance_counter: int = 0
+var _instance_counter: int = 0  # 200:23-GD7022-OK
 
 var instance_id: int:
 	get:

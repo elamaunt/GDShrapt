@@ -9,10 +9,10 @@ class_name SimpleClass
 # FIXME: Speed calculation doesn't account for delta properly
 # NOTE: This class is used as a base for many test scenarios
 
-@export var speed: float = 100.0
-@export var health: int = 100
+@export var speed: float = 100.0  # 12:19-GD7022-OK
+@export var health: int = 100  # 13:20-GD7022-OK
 
-var _private_var: String = "private"
+var _private_var: String = "private"  # 15:18-GD7022-OK
 var public_var := 42
 
 signal health_changed(new_health: int)

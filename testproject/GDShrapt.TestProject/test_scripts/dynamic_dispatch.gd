@@ -10,14 +10,14 @@ var handler_object  # Unknown type, methods called dynamically
 var processor_chain = []  # Array of objects with various methods
 
 
-func call_if_exists(obj, method_name, args = []):
+func call_if_exists(obj, method_name, args = []):  # 13:20-GD7020-OK
 	# Return type completely unknown
 	if obj and obj.has_method(method_name):
 		return obj.callv(method_name, args)
 	return null
 
 
-func call_with_fallback(obj, method_name, fallback_method, args = []):
+func call_with_fallback(obj, method_name, fallback_method, args = []):  # 20:24-GD7020-OK
 	if obj.has_method(method_name): # 21:4-GD7007-OK
 		return obj.callv(method_name, args) # 22:9-GD7007-OK
 	if obj.has_method(fallback_method): # 23:4-GD7007-OK
@@ -25,14 +25,14 @@ func call_with_fallback(obj, method_name, fallback_method, args = []):
 	return null
 
 
-func call_first_available(obj, method_names, args = []):
+func call_first_available(obj, method_names, args = []):  # 28:26-GD7020-OK, 28:31-GD7020-OK
 	for method in method_names:
 		if obj.has_method(method): # 30:5-GD7007-OK
 			return obj.callv(method, args) # 31:10-GD7007-OK
 	return null
 
 
-func call_all_matching(obj, prefix, args = []):
+func call_all_matching(obj, prefix, args = []):  # 35:23-GD7020-OK
 	# Call all methods starting with prefix
 	var results = {}
 	for method in obj.get_method_list(): # 38:15-GD7007-OK
@@ -53,14 +53,14 @@ func get_property(obj, prop_name, default_value = null): # 43:1-GDL513-OK
 	return default_value
 
 
-func set_property(obj, prop_name, value):
+func set_property(obj, prop_name, value):  # 56:18-GD7020-OK
 	if obj:
 		obj.set(prop_name, value)
 		return true
 	return false
 
 
-func copy_properties(source, target, prop_names):
+func copy_properties(source, target, prop_names):  # 63:37-GD7020-OK
 	for prop in prop_names:
 		if prop in source:
 			target.set(prop, source.get(prop)) # 66:3-GD7007-OK, 66:20-GD7007-OK
@@ -110,7 +110,7 @@ func send_message(target, message):
 	return null
 
 
-func broadcast_message(targets, message):
+func broadcast_message(targets, message):  # 113:23-GD7020-OK
 	var results = []
 	for target in targets:
 		results.append(send_message(target, message))
@@ -119,7 +119,7 @@ func broadcast_message(targets, message):
 
 # === Reflection-based serialization ===
 
-func serialize_object(obj):
+func serialize_object(obj):  # 122:22-GD7020-OK
 	var data = {}
 
 	# Get all exported properties
@@ -135,7 +135,7 @@ func serialize_object(obj):
 	return data
 
 
-func _serialize_value(value): # 138:5-GDL223-OK
+func _serialize_value(value): # 138:5-GDL223-OK, 138:0-GD3023-OK
 	if value == null:
 		return null
 	if value is int or value is float or value is bool or value is String:
@@ -162,14 +162,14 @@ func _serialize_value(value): # 138:5-GDL223-OK
 	return str(value)
 
 
-func deserialize_to_object(obj, data):
+func deserialize_to_object(obj, data):  # 165:32-GD7020-OK
 	for key in data:
 		if key in obj:
 			var value = _deserialize_value(data[key]) # 168:34-GD7006-OK
 			obj.set(key, value) # 169:3-GD7007-OK
 
 
-func _deserialize_value(data):
+func _deserialize_value(data):  # 172:0-GD3023-OK
 	if data == null:
 		return null
 	if data is int or data is float or data is bool or data is String:
@@ -190,7 +190,7 @@ func _deserialize_value(data):
 	return data
 
 
-func _deserialize_typed(data):
+func _deserialize_typed(data):  # 193:0-GD3023-OK, 193:24-GD7020-OK
 	var type_name = data["_type"] # 194:17-GD7006-OK
 	match type_name:
 		"Vector2":
@@ -211,7 +211,7 @@ func register_class(name, class_ref): # 203:1-GDL513-OK
 	class_registry[name] = class_ref
 
 
-func create_instance_by_name(class_name_str, init_params = {}):
+func create_instance_by_name(class_name_str, init_params = {}):  # 214:45-GD7020-OK
 	if not class_registry.has(class_name_str):
 		return null
 
@@ -250,7 +250,7 @@ func clone_object(obj):
 	return new_instance
 
 
-func _get_class_name(obj):
+func _get_class_name(obj):  # 253:21-GD7020-OK
 	if obj.has_method("get_class"):
 		return obj.get_class()
 	return obj.get_script().get_path().get_file().get_basename() # 256:8-GD7003-OK, 256:8-GD7003-OK, 256:8-GD7007-OK
@@ -354,7 +354,7 @@ func create_proxy(target):
 	return DynamicProxy.new(target)
 
 
-func create_logging_proxy(target, logger):
+func create_logging_proxy(target, logger):  # 357:26-GD7020-OK
 	var proxy = DynamicProxy.new(target)
 
 	# Intercept all calls for logging
@@ -397,7 +397,7 @@ func add_around(method_pattern, advice):
 	around_advice[method_pattern] = advice
 
 
-func advised_call(obj, method_name, args = []):
+func advised_call(obj, method_name, args = []):  # 400:23-GD7020-OK
 	# Apply before advice
 	for pattern in before_advice:
 		if method_name.match(pattern):  # 403:5-GD7007-OK

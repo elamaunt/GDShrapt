@@ -22,20 +22,20 @@ class_name DiagnosticsTest_TypeErrors # 2:0-GDL001-OK, 2:11-GDL222-OK
 
 ## VALID - should NOT trigger GD3001
 func test_gd3001_valid() -> void:
-	var x: int = 42
-	var y: String = "hello"
+	var x: int = 42  # 25:8-GD7022-OK
+	var y: String = "hello"  # 26:8-GD7022-OK
 	print(x, y)
 
 
 ## INVALID - SHOULD trigger GD3001
 func test_gd3001_invalid() -> void:
-	var x: int = 42
+	var x: int = 42  # 32:8-GD7022-OK
 	x = 3.14  # 33:1-GD3001-OK
 
 
 ## SUPPRESSED - GD3001 suppressed
 func test_gd3001_suppressed() -> void:
-	var x: int = 42
+	var x: int = 42  # 38:8-GD7022-OK
 	# gd:ignore = GD3001
 	x = 3.14  # Suppressed by gd:ignore above
 
@@ -178,14 +178,14 @@ func test_gd3014_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3014
 func test_gd3014_invalid() -> void:
-	var num: int = 42
+	var num: int = 42  # 181:10-GD7022-OK
 	var val = num[0]  # 182:11-GD3014-OK
 	print(val)
 
 
 ## SUPPRESSED - GD3014 suppressed
 func test_gd3014_suppressed() -> void:
-	var num: int = 100
+	var num: int = 100  # 188:10-GD7022-OK
 	# gd:ignore = GD3014
 	var val = num[0]  # Suppressed by gd:ignore above
 	print(val)

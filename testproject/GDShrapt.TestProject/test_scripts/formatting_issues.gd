@@ -5,15 +5,15 @@ class_name FormattingTest
 ## Used to test the Format Code command.
 
 # Variables with bad spacing around type annotations and assignments
-var a:int=10
-var b :String= "test"
-var c : float =3.14
+var a:int=10  # 8:6-GD7022-OK
+var b :String= "test"  # 9:7-GD7022-OK
+var c : float =3.14  # 10:8-GD7022-OK
 var d:Array[int]= [1,2,3]
 var e :Dictionary={"key":"value","count":42}
 
 # Exported variables with spacing issues
-@export var speed:float=100.0
-@export var name_value :String ="Player"
+@export var speed:float=100.0  # 15:18-GD7022-OK
+@export var name_value :String ="Player"  # 16:24-GD7022-OK
 
 # Signals with bad formatting
 signal value_changed(new_value:int)
@@ -79,7 +79,7 @@ func lambda_formatting():
 	return [filtered,mapped]
 
 
-func match_statement_formatting(value:int)->String:
+func match_statement_formatting(value:int)->String:  # 82:0-GD3024-OK
 	match value:
 		0:
 			return"zero"

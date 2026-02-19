@@ -781,6 +781,42 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       signals: (none)
 
 
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+  12:33 Parameter flag in test_gd3023_valid_same_type
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  19:25 Parameter flag in test_gd3023_invalid
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  31:23 Parameter flag in test_gd3024_valid
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  38:25 Parameter flag in test_gd3024_invalid
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  43:28 Parameter flag in test_gd3024_valid_void
+    inferred-type: bool
+    confidence: Certain
+    reason: explicit type annotation
+
+  110:29 Parameter amount in test_gd7020_valid_typed
+    inferred-type: int
+    confidence: Certain
+    reason: explicit type annotation
+
+  114:34 Parameter _delta in test_gd7020_valid_underscore
+    inferred-type: Variant
+    confidence: Unknown
+
+
 test_scripts/diagnostics/validator/type_errors.gd
   117:15 Parameter x in _take_int
     inferred-type: int
@@ -4208,4 +4244,4 @@ test_scripts/validation_edge_cases.gd
     confidence: Unknown
 
 
-# Summary: 699 parameters in 41 files (248 duck-typed)
+# Summary: 706 parameters in 42 files (248 duck-typed)

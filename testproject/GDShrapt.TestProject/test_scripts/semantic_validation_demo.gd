@@ -11,8 +11,8 @@ signal item_collected(item_id: int)
 #endregion
 
 #region Class variables for type checking
-var player_health: int = 100
-var player_name: String = "Player1"
+var player_health: int = 100  # 14:19-GD7022-OK
+var player_name: String = "Player1"  # 15:17-GD7022-OK
 var inventory: Array[String] = []
 var stats: Dictionary[String, int] = {}
 #endregion
@@ -34,7 +34,7 @@ func indexer_validation_demo() -> void:  # 25:5-GDL226-OK
 	var _b = typed_arr[1]
 
 	# String with int key - OK
-	var text: String = "hello"
+	var text: String = "hello"  # 37:11-GD7022-OK
 	var _c = text[0]
 
 	# Dictionary with any key (untyped) - OK
@@ -61,21 +61,21 @@ func indexer_validation_demo() -> void:  # 25:5-GDL226-OK
 	var _i = str_dict[42]  # GD3013: Expected String key, got int  # 61:10-GD3013-OK
 
 	# String with String key - ERROR
-	var text2: String = "world"
+	var text2: String = "world"  # 64:12-GD7022-OK
 	var _j = text2["x"]  # GD3013: String requires int key  # 65:10-GD3013-OK
 
 	# --- ERROR CASES (GD3014: NotIndexable) ---
 
 	# int is not indexable - ERROR
-	var num: int = 42
+	var num: int = 42  # 70:10-GD7022-OK
 	var _k = num[0]  # GD3014: int is not indexable  # 71:10-GD3014-OK
 
 	# float is not indexable - ERROR
-	var flt: float = 3.14
+	var flt: float = 3.14  # 74:10-GD7022-OK
 	var _l = flt[0]  # GD3014: float is not indexable  # 75:10-GD3014-OK
 
 	# bool is not indexable - ERROR
-	var flag: bool = true
+	var flag: bool = true  # 78:11-GD7022-OK
 	var _m = flag[0]  # GD3014: bool is not indexable  # 79:10-GD3014-OK
 
 
@@ -218,7 +218,7 @@ func member_access_validation_demo() -> void:
 	# --- ERROR CASES (GD3009: PropertyNotFound) ---
 
 	# Known type missing property - ERROR
-	var text: String = "hello"
+	var text: String = "hello"  # 221:11-GD7022-OK
 	var _bad = text.nonexistent_property  # 222:12-GD3009-OK  # GD3009: String has no 'nonexistent_property'
 
 
@@ -235,11 +235,11 @@ func type_assignment_validation_demo() -> void:
 	# --- VALID CASES ---
 
 	# Same type - OK
-	var a: int = 42
+	var a: int = 42  # 238:8-GD7022-OK
 	a = 100
 
 	# Subclass to parent - OK
-	var node: Node = Node2D.new()
+	var node: Node = Node2D.new()  # 242:11-GD3022-OK
 
 	# int to float (widening) - OK
 	var f: float = 42  # 242:5-GDL201-OK, 245:5-GDL201-OK  # int -> float is OK
@@ -247,13 +247,13 @@ func type_assignment_validation_demo() -> void:
 	# --- ERROR CASES (GD3003: InvalidAssignment) ---
 
 	# String to int - ERROR
-	var x: int = 0
+	var x: int = 0  # 250:8-GD7022-OK
 	x = "not valid"  # 251:1-GD3001-OK  # GD3003: Cannot assign String to int
 
 	# Parent to subclass - ERROR
 	var n2d: Node2D = null
 	var n: Node = Node.new()
-	n2d = n  # 256:1-GD3001-OK  # GD3003: Cannot assign Node to Node2D
+	n2d = n  # 256:1-GD3001-OK, 256:1-GD7019-OK  # GD3003: Cannot assign Node to Node2D
 
 
 # =============================================================================

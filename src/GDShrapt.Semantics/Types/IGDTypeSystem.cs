@@ -144,6 +144,16 @@ public interface IGDTypeSystem
     /// </summary>
     GDInferredParameterType InferParameterType(GDParameterDeclaration param);
 
+    // ========================================
+    // Return Type Analysis
+    // ========================================
+
+    /// <summary>
+    /// Analyzes return types for a method declaration.
+    /// Returns information about all return paths, their types, and consistency.
+    /// </summary>
+    GDMethodReturnAnalysis? AnalyzeMethodReturns(GDMethodDeclaration method);
+
     /// <summary>
     /// Gets the runtime provider used for type resolution.
     /// </summary>

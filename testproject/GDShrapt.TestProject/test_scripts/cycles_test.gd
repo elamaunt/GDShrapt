@@ -4,7 +4,7 @@ class_name CyclesTest
 ## Tests for cycle detection in type flow graphs.
 ## Variables that get reassigned in loops create cycles in the flow graph.
 
-var state_machine_state: String = "idle"
+var state_machine_state: String = "idle"  # 7:25-GD7022-OK
 
 
 func process_with_cycle():
@@ -115,13 +115,13 @@ func reduce_pattern(items: Array, initial):
 	# Reduce pattern - accumulator cycles through transformations
 	var accumulator = initial
 
-	for item in items:
+	for item in items:  # 118:1-GD7021-OK
 		accumulator = _reducer(accumulator, item)  # Cycle
 
 	return accumulator
 
 
-func _reducer(acc, item):
+func _reducer(acc, item):  # 124:0-GD3023-OK, 124:19-GD7020-OK
 	if acc is int and item is int:
 		return acc + item
 	if acc is String:

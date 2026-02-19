@@ -4341,6 +4341,197 @@ test_scripts/diagnostics/validator/scope_errors.gd
     nullable:     no
 
 
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+================================================================================
+
+--- 12:33 Parameter flag ---
+  Type Info:
+    declared:     (none)
+    inferred:     bool
+    effective:    bool
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     bool
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 19:25 Parameter flag ---
+  Type Info:
+    declared:     (none)
+    inferred:     bool
+    effective:    bool
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     bool
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 31:23 Parameter flag ---
+  Type Info:
+    declared:     (none)
+    inferred:     bool
+    effective:    bool
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     bool
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 38:25 Parameter flag ---
+  Type Info:
+    declared:     (none)
+    inferred:     bool
+    effective:    bool
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     bool
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 43:28 Parameter flag ---
+  Type Info:
+    declared:     (none)
+    inferred:     bool
+    effective:    bool
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     bool
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 53:0 Variable redundant_int ---
+  Type Info:
+    declared:     (none)
+    inferred:     int
+    effective:    int
+    confidence:   Certain
+    nullable:     no
+
+--- 56:0 Variable redundant_str ---
+  Type Info:
+    declared:     (none)
+    inferred:     String
+    effective:    String
+    confidence:   Certain
+    nullable:     no
+
+--- 59:0 Variable redundant_bool ---
+  Type Info:
+    declared:     (none)
+    inferred:     bool
+    effective:    bool
+    confidence:   Certain
+    nullable:     no
+
+--- 62:0 Variable not_redundant_float ---
+  Type Info:
+    declared:     (none)
+    inferred:     float
+    effective:    float
+    confidence:   Certain
+    nullable:     no
+
+--- 65:0 Variable not_redundant_node ---
+  Type Info:
+    declared:     (none)
+    inferred:     Node
+    effective:    Node
+    confidence:   Certain
+    nullable:     no
+
+--- 73:0 Variable exact_sprite ---
+  Type Info:
+    declared:     (none)
+    inferred:     Sprite2D
+    effective:    Sprite2D
+    confidence:   Certain
+    nullable:     no
+
+--- 76:0 Variable no_annotation ---
+  Type Info:
+    declared:     (none)
+    inferred:     Sprite2D
+    effective:    Sprite2D
+    confidence:   High
+    nullable:     no
+
+--- 85:1 Variable sprite ---
+  Type Info:
+    declared:     (none)
+    inferred:     Sprite2D
+    effective:    Sprite2D
+    confidence:   Certain
+    nullable:     no
+
+--- 90:1 Variable sprite ---
+  Type Info:
+    declared:     (none)
+    inferred:     Sprite2D
+    effective:    Sprite2D
+    confidence:   Certain
+    nullable:     no
+
+--- 99:0 Variable typed_scores ---
+  Type Info:
+    declared:     (none)
+    inferred:     Array[int]
+    effective:    Array[int]
+    confidence:   Certain
+    nullable:     no
+
+--- 102:0 Variable not_container ---
+  Type Info:
+    declared:     (none)
+    inferred:     String
+    effective:    String
+    confidence:   Certain
+    nullable:     no
+
+--- 110:29 Parameter amount ---
+  Type Info:
+    declared:     (none)
+    inferred:     int
+    effective:    int
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     int
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 114:34 Parameter _delta ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     Variant
+    confidence:   Unknown
+
+--- 122:0 Variable typed_enemies ---
+  Type Info:
+    declared:     (none)
+    inferred:     Array[Node]
+    effective:    Array[Node]
+    confidence:   Certain
+    nullable:     no
+
+--- 125:1 Iterator enemy ---
+  Type Info:
+    declared:     (none)
+    inferred:     Node
+    effective:    Node
+    confidence:   Certain
+    nullable:     no
+
+
 test_scripts/diagnostics/validator/type_errors.gd
 ================================================================================
 
@@ -21587,4 +21778,4 @@ test_scripts/validation_edge_cases.gd
     nullable:     no
 
 
-# Summary: 51 files analyzed
+# Summary: 52 files analyzed

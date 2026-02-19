@@ -3199,6 +3199,148 @@ test_scripts/diagnostics/validator/scope_errors.gd
     nullable: no
 
 
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+  12:33 Parameter flag
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  19:25 Parameter flag
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  31:23 Parameter flag
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  38:25 Parameter flag
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  43:28 Parameter flag
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  53:0 Variable redundant_int
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  56:0 Variable redundant_str
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  59:0 Variable redundant_bool
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  62:0 Variable not_redundant_float
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  65:0 Variable not_redundant_node
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  73:0 Variable exact_sprite
+    declared: (none)
+    inferred: Sprite2D
+    effective: Sprite2D
+    confidence: Certain
+    nullable: no
+
+  76:0 Variable no_annotation
+    declared: (none)
+    inferred: Sprite2D
+    effective: Sprite2D
+    confidence: High
+    nullable: no
+
+  85:1 Variable sprite
+    declared: (none)
+    inferred: Sprite2D
+    effective: Sprite2D
+    confidence: Certain
+    nullable: no
+
+  90:1 Variable sprite
+    declared: (none)
+    inferred: Sprite2D
+    effective: Sprite2D
+    confidence: Certain
+    nullable: no
+
+  99:0 Variable typed_scores
+    declared: (none)
+    inferred: Array[int]
+    effective: Array[int]
+    confidence: Certain
+    nullable: no
+
+  102:0 Variable not_container
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  110:29 Parameter amount
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  114:34 Parameter _delta
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  122:0 Variable typed_enemies
+    declared: (none)
+    inferred: Array[Node]
+    effective: Array[Node]
+    confidence: Certain
+    nullable: no
+
+  125:1 Iterator enemy
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+
 test_scripts/diagnostics/validator/type_errors.gd
   24:1 Variable x
     declared: (none)
@@ -15616,4 +15758,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 2209 entries in 51 files
+# Summary: 2229 entries in 52 files
