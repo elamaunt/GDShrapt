@@ -84,7 +84,7 @@ test_scripts/ai_controller.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   67:20 Parameter delta
@@ -112,7 +112,7 @@ test_scripts/ai_controller.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   89:15 Parameter target
@@ -147,7 +147,7 @@ test_scripts/ai_controller.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   127:1 Variable closest_dist
@@ -438,7 +438,7 @@ test_scripts/completion_test.gd
     declared: (none)
     inferred: PackedStringArray
     effective: PackedStringArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   48:1 Variable size
@@ -487,14 +487,14 @@ test_scripts/completion_test.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   69:1 Variable normalized
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   70:1 Variable length
@@ -515,7 +515,7 @@ test_scripts/completion_test.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   73:1 Variable distance
@@ -529,21 +529,21 @@ test_scripts/completion_test.gd
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   88:1 Variable darker
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   89:1 Variable inverted
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   90:1 Variable hex
@@ -578,14 +578,14 @@ test_scripts/completion_test.gd
     declared: (none)
     inferred: Viewport
     effective: Viewport
-    confidence: Medium
+    confidence: High
     nullable: no
 
   119:1 Variable tree
     declared: (none)
     inferred: SceneTree
     effective: SceneTree
-    confidence: Medium
+    confidence: High
     nullable: no
 
   122:1 Variable pressed
@@ -599,7 +599,7 @@ test_scripts/completion_test.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   135:1 Variable vectors
@@ -706,7 +706,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Entity
     effective: Entity
-    confidence: Medium
+    confidence: High
     nullable: no
 
   40:2 Variable transform
@@ -748,7 +748,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   57:28 Parameter input
@@ -769,7 +769,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   61:1 Variable step3
@@ -790,7 +790,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: AsyncOperation
     effective: AsyncOperation
-    confidence: Medium
+    confidence: High
     nullable: no
 
   76:22 Parameter data
@@ -811,7 +811,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   88:23 Parameter objects
@@ -874,7 +874,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Entity
     effective: Entity
-    confidence: Medium
+    confidence: High
     nullable: no
 
   150:1 Variable processed
@@ -895,7 +895,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   158:7 Parameter acc
@@ -916,7 +916,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   184:33 Parameter event_name
@@ -986,7 +986,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   228:21 Parameter data
@@ -1021,14 +1021,14 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Entity
     effective: Entity
-    confidence: Medium
+    confidence: High
     nullable: no
 
   250:3 Variable op
     declared: (none)
     inferred: AsyncOperation
     effective: AsyncOperation
-    confidence: Medium
+    confidence: High
     nullable: no
 
   273:22 Parameter target
@@ -1077,7 +1077,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   307:27 Parameter depth
@@ -1112,7 +1112,7 @@ test_scripts/cross_file_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   314:1 Variable step3
@@ -1726,7 +1726,7 @@ test_scripts/cyclic_inference.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   209:20 Parameter gen_id
@@ -1945,7 +1945,7 @@ test_scripts/diagnostics_issues.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   47:1 Variable used_variable
@@ -1994,7 +1994,7 @@ test_scripts/diagnostics_issues.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   90:1 Iterator i
@@ -2893,7 +2893,7 @@ test_scripts/diagnostics/validator/call_errors.gd
     declared: (none)
     inferred: Callable
     effective: Callable
-    confidence: Medium
+    confidence: High
     nullable: no
 
   80:1 Variable number
@@ -3046,70 +3046,70 @@ test_scripts/diagnostics/validator/scene_validation_errors.gd
     declared: (none)
     inferred: Button
     effective: Button
-    confidence: Medium
+    confidence: High
     nullable: no
 
   10:1 Variable lbl
     declared: (none)
     inferred: Label
     effective: Label
-    confidence: Medium
+    confidence: High
     nullable: no
 
   11:1 Variable sub
     declared: (none)
     inferred: Panel
     effective: Panel
-    confidence: Medium
+    confidence: High
     nullable: no
 
   16:1 Variable missing
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   17:1 Variable wrong
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   22:1 Variable maybe
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   32:1 Variable player
     declared: (none)
     inferred: CharacterBody2D
     effective: CharacterBody2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   37:1 Variable enemy
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   45:0 Variable button
     declared: (none)
     inferred: Button
     effective: Button
-    confidence: Medium
+    confidence: High
     nullable: no
 
   48:9 Variable label
     declared: (none)
     inferred: Label
     effective: Label
-    confidence: Medium
+    confidence: High
     nullable: no
 
   51:0 Variable speed
@@ -3123,7 +3123,7 @@ test_scripts/diagnostics/validator/scene_validation_errors.gd
     declared: (none)
     inferred: Panel
     effective: Panel
-    confidence: Medium
+    confidence: High
     nullable: no
 
 
@@ -3465,7 +3465,7 @@ test_scripts/duck_caller.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   10:1 Iterator entity
@@ -3650,7 +3650,7 @@ test_scripts/duck_typing_advanced.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   84:1 Variable nearest_dist
@@ -3678,7 +3678,7 @@ test_scripts/duck_typing_advanced.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   100:29 Parameter component_type
@@ -3706,14 +3706,14 @@ test_scripts/duck_typing_advanced.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   133:0 Variable action_results
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   136:18 Parameter action
@@ -3883,7 +3883,7 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   12:20 Parameter obj
@@ -4009,7 +4009,7 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   49:18 Parameter obj
@@ -4114,7 +4114,7 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   87:22 Parameter message_type
@@ -4352,7 +4352,7 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   209:20 Parameter name
@@ -4450,7 +4450,7 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   264:12 Parameter target
@@ -4513,7 +4513,7 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   299:23 Parameter event_type
@@ -4604,7 +4604,7 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   333:12 Parameter target
@@ -4730,21 +4730,21 @@ test_scripts/dynamic_dispatch.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   379:0 Variable after_advice
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   380:0 Variable around_advice
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   383:16 Parameter method_pattern
@@ -4872,7 +4872,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   9:0 Variable next_entity_id
@@ -4886,14 +4886,14 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   15:0 Variable systems
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   21:1 Variable id
@@ -4914,7 +4914,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   24:1 Variable active
@@ -5320,7 +5320,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   196:2 Iterator eid
@@ -5362,7 +5362,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   210:2 Iterator eid
@@ -5397,7 +5397,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   221:2 Iterator eid
@@ -5425,7 +5425,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   232:4 Variable new_state
@@ -5439,7 +5439,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   242:22 Parameter name
@@ -5509,7 +5509,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   276:16 Parameter event_type
@@ -5545,7 +5545,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   292:24 Parameter event_type
@@ -5566,14 +5566,14 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   302:0 Variable spatial_grid
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   303:0 Variable grid_cell_size
@@ -5608,7 +5608,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Vector2i
     effective: Vector2i
-    confidence: Medium
+    confidence: High
     nullable: no
 
   319:20 Parameter position
@@ -5643,7 +5643,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Vector2i
     effective: Vector2i
-    confidence: Medium
+    confidence: High
     nullable: no
 
   329:1 Variable cell_radius
@@ -5671,7 +5671,7 @@ test_scripts/ecs_like_system.gd
     declared: (none)
     inferred: Vector2i
     effective: Vector2i
-    confidence: Medium
+    confidence: High
     nullable: no
 
   335:4 Iterator eid
@@ -6318,21 +6318,21 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   9:0 Variable equipped
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   10:0 Variable hotbar
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   13:14 Parameter item
@@ -6444,7 +6444,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   64:18 Parameter slot
@@ -6507,7 +6507,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   91:0 Variable current_node
@@ -6521,14 +6521,14 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   93:0 Variable dialog_history
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   96:17 Parameter dialog_data
@@ -6619,7 +6619,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   176:19 Parameter choice_index
@@ -6668,21 +6668,21 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   203:0 Variable completed_quests
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   204:0 Variable quest_progress
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   207:18 Parameter quest_data
@@ -6780,7 +6780,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   251:21 Parameter quest_id
@@ -6815,21 +6815,21 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   272:0 Variable cooldowns
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   273:0 Variable active_effects
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   276:22 Parameter ability_id
@@ -6885,7 +6885,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   299:1 Variable conditions
@@ -6948,7 +6948,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   324:1 Variable effect_func
@@ -7090,7 +7090,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   403:21 Parameter recipe_id
@@ -7617,7 +7617,7 @@ test_scripts/getters_setters.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   155:2 Variable pos
@@ -7631,7 +7631,7 @@ test_scripts/getters_setters.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   164:1 Variable c
@@ -7804,14 +7804,14 @@ test_scripts/inheritance_test.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   29:1 Variable global_pos
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   32:1 Variable current_rotation
@@ -7853,7 +7853,7 @@ test_scripts/inheritance_test.gd
     declared: (none)
     inferred: KinematicCollision2D
     effective: KinematicCollision2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   82:3 Variable collider
@@ -7867,21 +7867,21 @@ test_scripts/inheritance_test.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   84:3 Variable position_coll
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   89:1 Variable parent
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   90:1 Variable children
@@ -7895,14 +7895,14 @@ test_scripts/inheritance_test.gd
     declared: (none)
     inferred: SceneTree
     effective: SceneTree
-    confidence: Medium
+    confidence: High
     nullable: no
 
   92:1 Variable node
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   95:1 Variable id
@@ -7930,28 +7930,28 @@ test_scripts/inheritance_test.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   103:1 Variable glob
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   104:1 Variable transform
     declared: (none)
     inferred: Transform2D
     effective: Transform2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   105:1 Variable global_transform_val
     declared: (none)
     inferred: Transform2D
     effective: Transform2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   110:1 Variable enemy_type
@@ -7972,7 +7972,7 @@ test_scripts/inheritance_test.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   137:1 Variable is_pressed
@@ -8000,21 +8000,21 @@ test_scripts/inheritance_test.gd
     declared: (none)
     inferred: Viewport
     effective: Viewport
-    confidence: Medium
+    confidence: High
     nullable: no
 
   187:1 Variable global_mouse
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   192:17 Parameter node
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
 
@@ -8601,14 +8601,14 @@ test_scripts/method_chains.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   94:1 Variable grandparent
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   104:17 Parameter input
@@ -8738,21 +8738,21 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   15:0 Variable moveable_entities
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   16:0 Variable all_updatables
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   18:0 Variable active_entity
@@ -8927,14 +8927,14 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   98:0 Variable redo_stack
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   101:21 Parameter command
@@ -8983,7 +8983,7 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   135:18 Parameter event_name
@@ -9159,7 +9159,7 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   211:19 Parameter decorator
@@ -9201,7 +9201,7 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Callable
     effective: Callable
-    confidence: Medium
+    confidence: High
     nullable: no
 
   232:23 Parameter start_index
@@ -9243,14 +9243,14 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Callable
     effective: Callable
-    confidence: Medium
+    confidence: High
     nullable: no
 
   247:0 Variable adapters
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   250:22 Parameter type_name
@@ -9390,7 +9390,7 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   328:22 Parameter type_name
@@ -9475,7 +9475,7 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   354:24 Parameter id
@@ -9587,7 +9587,7 @@ test_scripts/polymorphic_interfaces.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   408:0 Variable caretaker_data
@@ -9778,7 +9778,7 @@ test_scripts/refactoring_targets.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   106:22 Parameter base_damage
@@ -9850,14 +9850,14 @@ test_scripts/reflection_test.gd
     declared: (none)
     inferred: Callable
     effective: Callable
-    confidence: Medium
+    confidence: High
     nullable: no
 
   31:1 Variable cb2
     declared: (none)
     inferred: Callable
     effective: Callable
-    confidence: Medium
+    confidence: High
     nullable: no
 
 
@@ -10058,14 +10058,14 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   17:9 Variable camera
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   21:9 Variable label
@@ -10079,7 +10079,7 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   29:8 Variable external_target
@@ -10100,21 +10100,21 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: CharacterBody2D
     effective: CharacterBody2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   40:1 Variable optional
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   45:1 Variable sprite_node
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   50:18 Parameter p
@@ -10142,7 +10142,7 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: SceneTree
     effective: SceneTree
-    confidence: Medium
+    confidence: High
     nullable: no
 
   69:1 Variable players
@@ -10212,14 +10212,14 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   108:1 Variable current
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   116:19 Parameter node
@@ -10240,7 +10240,7 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   124:23 Parameter scene
@@ -10254,7 +10254,7 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   131:23 Parameter scene
@@ -10268,7 +10268,7 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   140:22 Parameter child_name
@@ -10296,28 +10296,28 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   164:1 Variable copy
     declared: (none)
     inferred: Node2D
     effective: Node2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   170:1 Variable warnings
     declared: (none)
     inferred: PackedStringArray
     effective: PackedStringArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   183:1 Variable parent
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   187:1 Iterator child
@@ -10352,28 +10352,28 @@ test_scripts/scene_nodes.gd
     declared: (none)
     inferred: NodePath
     effective: NodePath
-    confidence: Medium
+    confidence: High
     nullable: no
 
   209:1 Variable viewport
     declared: (none)
     inferred: Viewport
     effective: Viewport
-    confidence: Medium
+    confidence: High
     nullable: no
 
   210:1 Variable size
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   211:1 Variable mouse_pos
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
 
@@ -10438,7 +10438,7 @@ test_scripts/scene_references.gd
     declared: (none)
     inferred: Node2D
     effective: Node2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   54:1 Variable enemies
@@ -10494,7 +10494,7 @@ test_scripts/scene_references.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
 
@@ -10846,7 +10846,7 @@ test_scripts/semantic_validation_demo.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   204:1 Variable _rot
@@ -10867,7 +10867,7 @@ test_scripts/semantic_validation_demo.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   214:1 Variable unknown
@@ -11000,7 +11000,7 @@ test_scripts/semantic_validation_demo.gd
     declared: (none)
     inferred: StringName
     effective: StringName
-    confidence: Medium
+    confidence: High
     nullable: no
 
   317:1 Variable v
@@ -11058,21 +11058,21 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   25:0 Variable callback_chains
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   27:0 Variable pending_operations
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   30:23 Parameter name
@@ -11240,7 +11240,7 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: AsyncOperation
     effective: AsyncOperation
-    confidence: Medium
+    confidence: High
     nullable: no
 
   128:15 Parameter task_func
@@ -11289,14 +11289,14 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   138:0 Variable once_handlers
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   141:14 Parameter event_name
@@ -11401,7 +11401,7 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   185:15 Parameter stage
@@ -11457,7 +11457,7 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   208:20 Parameter middleware
@@ -11515,7 +11515,7 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   240:16 Parameter on_next
@@ -11543,14 +11543,14 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   250:18 Parameter subscription
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   254:16 Parameter value
@@ -11655,14 +11655,14 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   300:0 Variable throttle_locks
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   303:0 Variable _pending_debounce_callback
@@ -11970,14 +11970,14 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Callable
     effective: Callable
-    confidence: Medium
+    confidence: High
     nullable: no
 
   424:2 Variable error_handler
     declared: (none)
     inferred: Callable
     effective: Callable
-    confidence: Medium
+    confidence: High
     nullable: no
 
   428:21 Parameter url
@@ -12082,7 +12082,7 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   479:20 Parameter initial_value
@@ -12110,7 +12110,7 @@ test_scripts/signal_callback_chains.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   489:20 Parameter value
@@ -12462,7 +12462,7 @@ test_scripts/signals_test.gd
     declared: (none)
     inferred: SceneTreeTimer
     effective: SceneTreeTimer
-    confidence: Medium
+    confidence: High
     nullable: no
 
   149:1 Variable id
@@ -12691,7 +12691,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   28:34 Parameter acc
@@ -12825,7 +12825,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   63:1 Variable duplicated
@@ -13014,7 +13014,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: PackedStringArray
     effective: PackedStringArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   107:1 Variable similarity
@@ -13028,7 +13028,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   118:1 Variable length
@@ -13091,63 +13091,63 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   129:1 Variable rotated
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   130:1 Variable clamped
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   131:1 Variable abs_vec
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   132:1 Variable floor_vec
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   133:1 Variable ceil_vec
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   134:1 Variable round_vec
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   135:1 Variable lerp_vec
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   136:1 Variable direction
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   139:1 Variable is_normalized
@@ -13175,7 +13175,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   151:1 Variable length
@@ -13189,7 +13189,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   153:1 Variable cross
@@ -13217,14 +13217,14 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Transform2D
     effective: Transform2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   165:1 Variable origin
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   166:1 Variable rotation
@@ -13238,28 +13238,28 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   168:1 Variable inverted
     declared: (none)
     inferred: Transform2D
     effective: Transform2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   169:1 Variable rotated
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   177:1 Variable c
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   180:1 Variable hue
@@ -13294,28 +13294,28 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   187:1 Variable lightened
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   188:1 Variable inverted
     declared: (none)
     inferred: Transform2D
     effective: Transform2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   189:1 Variable lerped
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   192:1 Variable html
@@ -13343,7 +13343,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Rect2
     effective: Rect2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   206:1 Variable area
@@ -13357,7 +13357,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   208:1 Variable has_point
@@ -13378,14 +13378,14 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Rect2
     effective: Rect2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   211:1 Variable grown
     declared: (none)
     inferred: Rect2
     effective: Rect2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   212:1 Variable merged
@@ -13399,21 +13399,21 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Rect2
     effective: Rect2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   221:1 Variable box
     declared: (none)
     inferred: AABB
     effective: AABB
-    confidence: Medium
+    confidence: High
     nullable: no
 
   223:1 Variable center
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   224:1 Variable volume
@@ -13441,35 +13441,35 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Rect2
     effective: Rect2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   228:1 Variable grown
     declared: (none)
     inferred: Rect2
     effective: Rect2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   236:1 Variable p
     declared: (none)
     inferred: Plane
     effective: Plane
-    confidence: Medium
+    confidence: High
     nullable: no
 
   238:1 Variable center
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   239:1 Variable normal
     declared: (none)
     inferred: Vector3
     effective: Vector3
-    confidence: Medium
+    confidence: High
     nullable: no
 
   240:1 Variable d
@@ -13497,42 +13497,42 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: Rect2
     effective: Rect2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   251:1 Variable int_arr
     declared: (none)
     inferred: PackedInt32Array
     effective: PackedInt32Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   252:1 Variable float_arr
     declared: (none)
     inferred: PackedFloat32Array
     effective: PackedFloat32Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   253:1 Variable str_arr
     declared: (none)
     inferred: PackedStringArray
     effective: PackedStringArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   254:1 Variable vec2_arr
     declared: (none)
     inferred: PackedVector2Array
     effective: PackedVector2Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   255:1 Variable byte_arr
     declared: (none)
     inferred: PackedByteArray
     effective: PackedByteArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   258:1 Variable int_size
@@ -13567,21 +13567,21 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: PackedByteArray
     effective: PackedByteArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   265:1 Variable compressed
     declared: (none)
     inferred: PackedByteArray
     effective: PackedByteArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   273:1 Variable parent
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   274:1 Variable children
@@ -13609,7 +13609,7 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: NodePath
     effective: NodePath
-    confidence: Medium
+    confidence: High
     nullable: no
 
   278:1 Variable is_inside
@@ -13623,21 +13623,21 @@ test_scripts/standard_methods.gd
     declared: (none)
     inferred: SceneTree
     effective: SceneTree
-    confidence: Medium
+    confidence: High
     nullable: no
 
   280:1 Variable viewport
     declared: (none)
     inferred: Viewport
     effective: Viewport
-    confidence: Medium
+    confidence: High
     nullable: no
 
   281:1 Variable owner_node
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   282:1 Variable multiplayer_api
@@ -13744,7 +13744,7 @@ test_scripts/todo_examples.gd
     declared: (none)
     inferred: Array
     effective: Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   14:0 Variable processed_count
@@ -13929,7 +13929,7 @@ test_scripts/type_guards.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   171:19 Parameter value
@@ -13999,7 +13999,7 @@ test_scripts/type_guards.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   220:2 Variable rot
@@ -14020,7 +14020,7 @@ test_scripts/type_guards.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   248:23 Parameter value
@@ -14099,21 +14099,21 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   13:0 Variable inferred_vector
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   14:0 Variable inferred_color
     declared: (none)
     inferred: Color
     effective: Color
-    confidence: Medium
+    confidence: High
     nullable: no
 
   15:0 Variable inferred_null
@@ -14155,7 +14155,7 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   33:1 Variable sum
@@ -14254,7 +14254,7 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   62:34 Parameter a
@@ -14303,14 +14303,14 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: Sprite2D
     effective: Sprite2D
-    confidence: Medium
+    confidence: High
     nullable: no
 
   80:1 Variable label
     declared: (none)
     inferred: Label
     effective: Label
-    confidence: Medium
+    confidence: High
     nullable: no
 
   90:1 Variable value
@@ -14395,14 +14395,14 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   136:1 Variable tree
     declared: (none)
     inferred: SceneTree
     effective: SceneTree
-    confidence: Medium
+    confidence: High
     nullable: no
 
   137:1 Variable time
@@ -14430,7 +14430,7 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: Vector2
     effective: Vector2
-    confidence: Medium
+    confidence: High
     nullable: no
 
   148:1 Variable length
@@ -14444,21 +14444,21 @@ test_scripts/type_inference.gd
     declared: (none)
     inferred: PackedInt32Array
     effective: PackedInt32Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   155:1 Variable packed_floats
     declared: (none)
     inferred: PackedFloat32Array
     effective: PackedFloat32Array
-    confidence: Medium
+    confidence: High
     nullable: no
 
   156:1 Variable packed_strings
     declared: (none)
     inferred: PackedStringArray
     effective: PackedStringArray
-    confidence: Medium
+    confidence: High
     nullable: no
 
   159:1 Variable int_elem
@@ -14692,7 +14692,7 @@ test_scripts/union_returns.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   63:19 Parameter path
@@ -14706,7 +14706,7 @@ test_scripts/union_returns.gd
     declared: (none)
     inferred: Resource
     effective: Resource
-    confidence: Medium
+    confidence: High
     nullable: no
 
   72:19 Parameter input
@@ -14769,7 +14769,7 @@ test_scripts/union_returns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
   138:23 Parameter operation
@@ -14913,7 +14913,7 @@ test_scripts/union_returns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Medium
+    confidence: High
     nullable: no
 
 
@@ -14999,7 +14999,7 @@ test_scripts/union_types_complex.gd
     declared: (none)
     inferred: Node
     effective: Node
-    confidence: Medium
+    confidence: High
     nullable: no
 
   57:21 Parameter value
@@ -15127,7 +15127,7 @@ test_scripts/union_types_complex.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   173:16 Parameter key
@@ -15339,7 +15339,7 @@ test_scripts/union_types_complex.gd
     declared: (none)
     inferred: Dictionary
     effective: Dictionary
-    confidence: Medium
+    confidence: High
     nullable: no
 
   277:0 Variable next_request_id

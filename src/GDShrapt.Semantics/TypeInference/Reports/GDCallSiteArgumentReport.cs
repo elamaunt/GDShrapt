@@ -72,6 +72,16 @@ internal class GDCallSiteArgumentReport
     public GDReferenceConfidence Confidence { get; init; }
 
     /// <summary>
+    /// How the argument's type was determined.
+    /// </summary>
+    public GDTypeProvenance Provenance { get; init; }
+
+    /// <summary>
+    /// The source variable name (for identifier/member access arguments).
+    /// </summary>
+    public string? SourceVariableName { get; init; }
+
+    /// <summary>
     /// Creates a report from a GDArgumentInfo and GDCallSiteInfo.
     /// </summary>
     public static GDCallSiteArgumentReport FromCallSite(GDCallSiteInfo callSite, GDArgumentInfo argument)
@@ -90,7 +100,9 @@ internal class GDCallSiteArgumentReport
             FromUnionReceiver = callSite.UnionReceiverType != null,
             UnionReceiverType = callSite.UnionReceiverType?.DisplayName,
             ReceiverType = callSite.ReceiverType?.DisplayName,
-            Confidence = callSite.Confidence
+            Confidence = callSite.Confidence,
+            Provenance = argument.Provenance,
+            SourceVariableName = argument.SourceVariableName
         };
     }
 

@@ -63,6 +63,16 @@ public class GDInferredParameterType
     public GDParameterConstraints? SourceConstraints { get; private init; }
 
     /// <summary>
+    /// Call-site evidence showing where the parameter type was inferred from.
+    /// </summary>
+    public IReadOnlyList<GDCallSiteEvidence>? CallSiteEvidence { get; private init; }
+
+    /// <summary>
+    /// Suggests how a union type could be narrowed by fixing an overly-broad annotation.
+    /// </summary>
+    public GDUnionNarrowingHint? NarrowingHint { get; internal set; }
+
+    /// <summary>
     /// Whether any part of the type can be inferred further.
     /// </summary>
     public bool HasDerivableParts => UnionMembers?.Any(m =>
@@ -131,6 +141,19 @@ public class GDInferredParameterType
         => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), GDTypeConfidence.High, $"passed from {sourceLocation}");
 
     /// <summary>
+    /// Creates a parameter type from call site data flow with evidence.
+    /// </summary>
+    public static GDInferredParameterType FromCallSite(
+        string paramName,
+        string typeName,
+        string sourceLocation,
+        IReadOnlyList<GDCallSiteEvidence>? evidence)
+        => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), GDTypeConfidence.High, $"passed from {sourceLocation}")
+        {
+            CallSiteEvidence = evidence
+        };
+
+    /// <summary>
     /// Creates a parameter type from a type check (is operator).
     /// </summary>
     public static GDInferredParameterType FromTypeCheck(
@@ -159,6 +182,35 @@ public class GDInferredParameterType
         return new GDInferredParameterType(paramName, effectiveType, confidence, reason ?? "multiple types detected")
         {
             UnionTypes = semanticTypes
+        };
+    }
+
+    /// <summary>
+    /// Creates a union type from multiple candidate types with evidence.
+    /// </summary>
+    public static GDInferredParameterType Union(
+        string paramName,
+        List<string> types,
+        GDTypeConfidence confidence,
+        string? reason,
+        IReadOnlyList<GDCallSiteEvidence>? evidence)
+    {
+        if (types == null || types.Count == 0)
+            return Unknown(paramName);
+
+        var semanticTypes = types.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList();
+
+        if (semanticTypes.Count == 1)
+            return new GDInferredParameterType(paramName, semanticTypes[0], confidence, reason)
+            {
+                CallSiteEvidence = evidence
+            };
+
+        var effectiveType = new GDUnionSemanticType(semanticTypes);
+        return new GDInferredParameterType(paramName, effectiveType, confidence, reason ?? "multiple types detected")
+        {
+            UnionTypes = semanticTypes,
+            CallSiteEvidence = evidence
         };
     }
 

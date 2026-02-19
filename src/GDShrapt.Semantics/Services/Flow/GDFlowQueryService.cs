@@ -1,3 +1,4 @@
+using System.Linq;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
@@ -50,7 +51,7 @@ internal class GDFlowQueryService
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        var method = FindContainingMethodNode(atLocation);
+        var method = atLocation.GetContainingMethod();
         if (method == null)
             return null;
 
@@ -65,7 +66,7 @@ internal class GDFlowQueryService
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        var method = FindContainingMethodNode(atLocation);
+        var method = atLocation.GetContainingMethod();
         if (method == null)
             return null;
 
@@ -81,7 +82,7 @@ internal class GDFlowQueryService
         if (atLocation == null)
             return null;
 
-        var method = FindContainingMethodNode(atLocation);
+        var method = atLocation.GetContainingMethod();
         if (method == null)
             return null;
 
@@ -89,26 +90,11 @@ internal class GDFlowQueryService
     }
 
     /// <summary>
-    /// Finds the containing method declaration for an AST node.
-    /// </summary>
-    public static GDMethodDeclaration? FindContainingMethodNode(GDNode node)
-    {
-        var current = node?.Parent;
-        while (current != null)
-        {
-            if (current is GDMethodDeclaration method)
-                return method;
-            current = current.Parent;
-        }
-        return null;
-    }
-
-    /// <summary>
     /// Finds a local variable declaration in the containing method that appears before the given expression.
     /// </summary>
     public static GDVariableDeclarationStatement? FindLocalVariableDeclaration(GDExpression expr, string varName)
     {
-        var method = FindContainingMethodNode(expr);
+        var method = expr.GetContainingMethod();
         if (method?.Statements == null) return null;
 
         var beforeLine = expr.StartLine;
@@ -117,31 +103,13 @@ internal class GDFlowQueryService
     }
 
     /// <summary>
-    /// Checks if a local variable has any reassignments within the method.
-    /// Used to determine if we should fall back to initializer type inference.
+    /// Finds a local variable declaration in the specified method that appears before the given line.
     /// </summary>
-    public static bool HasLocalReassignments(GDMethodDeclaration? method, string varName)
+    public static GDVariableDeclarationStatement? FindLocalVariableDeclaration(GDMethodDeclaration method, string varName, int beforeLine)
     {
-        if (method?.Statements == null || string.IsNullOrEmpty(varName))
-            return false;
+        if (method?.Statements == null) return null;
 
-        // Look for assignment expressions targeting this variable
-        foreach (var node in method.AllNodes)
-        {
-            // Skip the initial declaration
-            if (node is GDVariableDeclarationStatement)
-                continue;
-
-            // Check for reassignment: x = something
-            if (node is GDDualOperatorExpression dualOp &&
-                dualOp.Operator?.OperatorType == GDDualOperatorType.Assignment &&
-                dualOp.LeftExpression is GDIdentifierExpression leftIdent &&
-                leftIdent.Identifier?.Sequence == varName)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return method.AllNodes.OfType<GDVariableDeclarationStatement>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == varName && v.StartLine < beforeLine);
     }
 }

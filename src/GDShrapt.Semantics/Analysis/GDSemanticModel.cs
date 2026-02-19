@@ -633,6 +633,23 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         => _flowQueryService.GetFlowVariableType(variableName, atLocation);
 
     /// <summary>
+    /// Gets the variable type from the initial flow state at method entry (before any narrowing).
+    /// Returns null if the variable is not tracked in the initial state.
+    /// </summary>
+    public GDFlowVariableType? GetInitialFlowVariableType(string variableName, GDNode atLocation)
+    {
+        if (string.IsNullOrEmpty(variableName) || atLocation == null)
+            return null;
+
+        var method = atLocation.GetContainingMethod();
+        if (method == null)
+            return null;
+
+        var analyzer = GetOrCreateFlowAnalyzer(method);
+        return analyzer?.InitialState?.GetVariableType(variableName);
+    }
+
+    /// <summary>
     /// Gets the flow state at a specific location in the code.
     /// Returns null if flow analysis is not available.
     /// </summary>
@@ -734,6 +751,27 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     internal GDSemanticType? GetSemanticTypeForExpression(GDExpression expression)
     {
         return _expressionTypeService.GetSemanticType(expression);
+    }
+
+    /// <summary>
+    /// Bridge: infers GDSemanticType for an expression using all available analysis
+    /// (rich semantic type → flow-sensitive string type → Variant fallback).
+    /// Used by call-site collector for accurate argument type resolution.
+    /// </summary>
+    internal GDSemanticType InferSemanticTypeForExpression(GDExpression? expression)
+    {
+        if (expression == null)
+            return GDVariantSemanticType.Instance;
+
+        var semanticType = GetSemanticTypeForExpression(expression);
+        if (semanticType != null && !semanticType.IsVariant)
+            return semanticType;
+
+        var typeString = GetExpressionType(expression);
+        if (!string.IsNullOrEmpty(typeString) && typeString != "Variant")
+            return GDSemanticType.FromRuntimeTypeName(typeString);
+
+        return GDVariantSemanticType.Instance;
     }
 
     /// <summary>
@@ -1397,6 +1435,11 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             if (paramReport.InferredUnionType != null && !paramReport.InferredUnionType.IsEmpty)
             {
                 SetCallSiteParameterTypes(report.MethodName, paramName, paramReport.InferredUnionType);
+            }
+
+            if (paramReport.CallSiteArguments.Count > 0)
+            {
+                _unionTypeService.SetCallSiteParameterReports(report.MethodName, paramName, paramReport.CallSiteArguments);
             }
         }
     }

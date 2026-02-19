@@ -37,8 +37,7 @@ internal class GDFlowAnalysisRegistry
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        // Find the containing method
-        var method = FindContainingMethod(atLocation);
+        var method = atLocation?.GetContainingMethod();
         if (method == null)
             return null;
 
@@ -107,21 +106,4 @@ internal class GDFlowAnalysisRegistry
         _methodFlowAnalyzers.Clear();
     }
 
-    // ========================================
-    // Helper Methods
-    // ========================================
-
-    /// <summary>
-    /// Finds the containing method for a node.
-    /// </summary>
-    private static GDMethodDeclaration? FindContainingMethod(GDNode? node)
-    {
-        while (node != null)
-        {
-            if (node is GDMethodDeclaration method)
-                return method;
-            node = node.Parent;
-        }
-        return null;
-    }
 }

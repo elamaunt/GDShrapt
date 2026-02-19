@@ -71,6 +71,46 @@ internal class GDCallSiteCollector
 
             callSites.AddRange(collector.CallSites);
         }
+
+        // Also collect call sites from parent classes that define the same method.
+        // When a child overrides a method, self-calls in the parent are valid call sites
+        // (at runtime self could be the child instance).
+        if (_runtimeProvider != null)
+        {
+            var baseType = _runtimeProvider.GetBaseType(declaringTypeName);
+            while (!string.IsNullOrEmpty(baseType))
+            {
+                var baseKey = $"{baseType}.{methodName}";
+                if (visited.Contains(baseKey))
+                    break;
+                visited.Add(baseKey);
+
+                // Check if the base type has this method defined in a project script
+                var baseScript = _project.ScriptFiles
+                    .FirstOrDefault(s => s.TypeName == baseType);
+
+                if (baseScript?.Class != null)
+                {
+                    var hasMethod = baseScript.Class.Members
+                        .OfType<GDMethodDeclaration>()
+                        .Any(m => m.Identifier?.Sequence == methodName);
+
+                    if (hasMethod)
+                    {
+                        var collector = new ScriptCallSiteVisitor(
+                            baseScript,
+                            baseType,
+                            methodName,
+                            _runtimeProvider);
+
+                        baseScript.Class.WalkIn(collector);
+                        callSites.AddRange(collector.CallSites);
+                    }
+                }
+
+                baseType = _runtimeProvider.GetBaseType(baseType);
+            }
+        }
     }
 
     /// <summary>
@@ -158,7 +198,8 @@ internal class GDCallSiteCollector
         private readonly string _targetTypeName;
         private readonly string _targetMethodName;
         private readonly IGDRuntimeProvider? _runtimeProvider;
-        private readonly GDTypeInferenceEngine? _typeEngine;
+        private readonly GDSemanticModel? _semanticModel;
+        private readonly GDTypeInferenceEngine? _fallbackTypeEngine;
         private readonly List<GDCallSiteInfo> _callSites = new();
 
         public IReadOnlyList<GDCallSiteInfo> CallSites => _callSites;
@@ -174,14 +215,28 @@ internal class GDCallSiteCollector
             _targetMethodName = targetMethodName;
             _runtimeProvider = runtimeProvider;
 
-            // Create type engine for argument type inference
-            if (runtimeProvider != null && scriptFile.Class != null)
+            _semanticModel = scriptFile.SemanticModel;
+
+            // Fallback if SemanticModel is unavailable (parse error, etc.)
+            if (_semanticModel == null && runtimeProvider != null && scriptFile.Class != null)
             {
                 var scopeStack = new GDScopeStack();
                 scopeStack.Push(GDScopeType.Global);
                 scopeStack.Push(GDScopeType.Class, scriptFile.Class);
-                _typeEngine = new GDTypeInferenceEngine(runtimeProvider, scopeStack);
+                _fallbackTypeEngine = new GDTypeInferenceEngine(runtimeProvider, scopeStack);
             }
+        }
+
+        private GDSemanticType InferSemanticType(GDExpression? expr)
+        {
+            if (expr == null)
+                return GDVariantSemanticType.Instance;
+
+            if (_semanticModel != null)
+                return _semanticModel.InferSemanticTypeForExpression(expr);
+
+            return _fallbackTypeEngine?.InferSemanticType(expr)
+                ?? GDVariantSemanticType.Instance;
         }
 
         public override void Visit(GDCallExpression callExpr)
@@ -228,9 +283,9 @@ internal class GDCallSiteCollector
                 return null;
 
             // Get receiver type
-            var receiverSemanticType = _typeEngine?.InferSemanticType(memberExpr.CallerExpression);
+            var receiverSemanticType = InferSemanticType(memberExpr.CallerExpression);
             var receiverVariableName = GetRootVariableName(memberExpr.CallerExpression);
-            var isDuckTyped = receiverSemanticType == null || receiverSemanticType.IsVariant;
+            var isDuckTyped = receiverSemanticType.IsVariant;
 
             // Check type compatibility for non-duck-typed calls
             if (!isDuckTyped)
@@ -263,8 +318,8 @@ internal class GDCallSiteCollector
                 }
                 else
                 {
-                    var argType = _typeEngine?.InferSemanticType(expr);
-                    var isHighConfidence = argType != null && !argType.IsVariant;
+                    var argType = InferSemanticType(expr);
+                    var isHighConfidence = !argType.IsVariant;
                     methodArgs.Add(new GDArgumentInfo(i - 1, expr, argType, isHighConfidence));
                 }
             }
@@ -341,11 +396,11 @@ internal class GDCallSiteCollector
             else
             {
                 // Member call - infer receiver type
-                var receiverSemanticType = _typeEngine?.InferSemanticType(receiverExpr);
+                var receiverSemanticType = InferSemanticType(receiverExpr);
                 receiverType = receiverSemanticType;
                 receiverVariableName = GetRootVariableName(receiverExpr);
 
-                if (receiverSemanticType != null && !receiverSemanticType.IsVariant)
+                if (!receiverSemanticType.IsVariant)
                 {
                     if (receiverSemanticType is GDUnionSemanticType unionSemType)
                     {
@@ -435,14 +490,72 @@ internal class GDCallSiteCollector
                 }
                 else
                 {
-                    var argType = _typeEngine?.InferSemanticType(expr);
-                    var isHighConfidence = argType != null && !argType.IsVariant;
-                    args.Add(new GDArgumentInfo(index, expr, argType, isHighConfidence));
+                    var argType = InferSemanticType(expr);
+                    var isHighConfidence = !argType.IsVariant;
+                    var (provenance, sourceVarName) = DetermineProvenance(expr);
+                    args.Add(new GDArgumentInfo(index, expr, argType, isHighConfidence, provenance, sourceVarName));
                 }
                 index++;
             }
 
             return args;
+        }
+
+        private (GDTypeProvenance, string?) DetermineProvenance(GDExpression expr)
+        {
+            // Literal values: numbers, strings, bools, arrays, dictionaries
+            if (expr is GDNumberExpression or GDStringExpression or GDBoolExpression
+                or GDArrayInitializerExpression or GDDictionaryInitializerExpression)
+                return (GDTypeProvenance.Literal, null);
+
+            // Constructor: Type.new()
+            if (expr is GDCallExpression call &&
+                call.CallerExpression is GDMemberOperatorExpression mem &&
+                mem.Identifier?.Sequence == "new")
+                return (GDTypeProvenance.Literal, null);
+
+            // Vector2(...), Color(...) etc — constructor-like calls with uppercase type name
+            if (expr is GDCallExpression typeCall &&
+                typeCall.CallerExpression is GDIdentifierExpression typeId &&
+                char.IsUpper(typeId.Identifier?.Sequence?.FirstOrDefault() ?? ' '))
+                return (GDTypeProvenance.Literal, null);
+
+            // Member access: obj.property
+            if (expr is GDMemberOperatorExpression)
+                return (GDTypeProvenance.MemberAccess, GetRootVariableName(expr));
+
+            // Identifier: variable reference
+            if (expr is GDIdentifierExpression idExpr)
+            {
+                var varName = idExpr.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(varName))
+                    return (GDTypeProvenance.Unknown, null);
+
+                if (_semanticModel != null)
+                {
+                    var symbol = _semanticModel.FindSymbolInScope(varName, idExpr);
+                    if (symbol?.DeclarationNode != null)
+                    {
+                        bool hasExplicitType = symbol.DeclarationNode switch
+                        {
+                            GDVariableDeclaration v => v.Type != null,
+                            GDVariableDeclarationStatement vs => vs.Type != null,
+                            GDParameterDeclaration p => p.Type != null,
+                            _ => false
+                        };
+                        return hasExplicitType
+                            ? (GDTypeProvenance.ExplicitAnnotation, varName)
+                            : (GDTypeProvenance.Inferred, varName);
+                    }
+                }
+                return (GDTypeProvenance.Inferred, varName);
+            }
+
+            // Method call result: foo()
+            if (expr is GDCallExpression)
+                return (GDTypeProvenance.ReturnType, null);
+
+            return (GDTypeProvenance.Unknown, null);
         }
 
         private bool IsTypeCompatible(string? sourceType, string targetType)

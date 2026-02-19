@@ -48,6 +48,29 @@ public class GDTypeAnnotationPlan
     /// </summary>
     public GDTextEdit Edit { get; }
 
+    /// <summary>
+    /// When true, this annotation is for display in --explain only (e.g. union types).
+    /// It should NOT be applied to files or counted in "annotations to apply" totals.
+    /// </summary>
+    public bool IsInformationalOnly { get; init; }
+
+    /// <summary>
+    /// Rich parameter inference data (when target is Parameter).
+    /// Contains call-site details, duck-typing constraints, union members.
+    /// </summary>
+    public GDInferredParameterType? SourceParameterType { get; init; }
+
+    /// <summary>
+    /// When true, this annotation replaces an existing wider type annotation.
+    /// The Edit.OldText contains the existing type text to replace.
+    /// </summary>
+    public bool IsTypeUpdate { get; init; }
+
+    /// <summary>
+    /// The previous type annotation being replaced (for display in --explain).
+    /// </summary>
+    public string? PreviousType { get; init; }
+
     public GDTypeAnnotationPlan(
         string filePath,
         string identifierName,

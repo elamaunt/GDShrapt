@@ -133,7 +133,14 @@ public class GDRedundantGuardValidator : GDValidationVisitor
         var parentNode = GetParentScopeNode(contextNode);
         if (parentNode != null)
         {
-            var parentFlowVarType = _semanticModel.GetFlowVariableType(varName, parentNode);
+            // When parent scope is a method/class declaration, use initial flow state to avoid
+            // seeing narrowing from this very check in the final state
+            GDFlowVariableType? parentFlowVarType;
+            if (parentNode is GDMethodDeclaration or GDClassDeclaration)
+                parentFlowVarType = _semanticModel.GetInitialFlowVariableType(varName, contextNode);
+            else
+                parentFlowVarType = _semanticModel.GetFlowVariableType(varName, parentNode);
+
             if (parentFlowVarType != null &&
                 parentFlowVarType.IsNarrowed &&
                 parentFlowVarType.NarrowedFromType != null &&
@@ -192,7 +199,13 @@ public class GDRedundantGuardValidator : GDValidationVisitor
         var parentNode = GetParentScopeNode(contextNode);
         if (parentNode != null)
         {
-            var parentFlowVarType = _semanticModel.GetFlowVariableType(varName, parentNode);
+            // When parent scope is a method/class declaration, use initial flow state
+            GDFlowVariableType? parentFlowVarType;
+            if (parentNode is GDMethodDeclaration or GDClassDeclaration)
+                parentFlowVarType = _semanticModel.GetInitialFlowVariableType(varName, contextNode);
+            else
+                parentFlowVarType = _semanticModel.GetFlowVariableType(varName, parentNode);
+
             if (parentFlowVarType?.IsGuaranteedNonNull == true)
             {
                 ReportDiagnostic(
@@ -215,7 +228,15 @@ public class GDRedundantGuardValidator : GDValidationVisitor
 
         // Get the flow state BEFORE the current if/elif/while applies its narrowing
         var parentNode = GetParentScopeNode(contextNode);
-        var flowVarType = _semanticModel.GetFlowVariableType(varName, parentNode ?? contextNode);
+
+        // When parent scope is a method/class declaration, use initial flow state to avoid
+        // circular logic (the final state may include narrowing from this very check)
+        GDFlowVariableType? flowVarType;
+        if (parentNode is GDMethodDeclaration or GDClassDeclaration)
+            flowVarType = _semanticModel.GetInitialFlowVariableType(varName, contextNode);
+        else
+            flowVarType = _semanticModel.GetFlowVariableType(varName, parentNode ?? contextNode);
+
         if (flowVarType == null)
             return;
 

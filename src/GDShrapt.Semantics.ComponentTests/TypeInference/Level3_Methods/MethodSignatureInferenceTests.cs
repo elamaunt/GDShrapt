@@ -649,6 +649,114 @@ func get_greeting():
 
     #endregion
 
+    #region Two-Pass Refinement Tests
+
+    [TestMethod]
+    public void TwoPassRefinement_ChainedParameterPropagation_ResolvesCorrectType()
+    {
+        // Chain: _on_timer() → _fire_at(current_target) → _damage(target.global_position)
+        // current_target: EnemyBase, EnemyBase extends Node2D, .global_position = Vector2
+        // Without pass 2: center_pos = Variant (target unknown)
+        // With pass 2: center_pos = Vector2 (target = EnemyBase → .global_position = Vector2)
+        var project = CreateProject("""
+class_name TowerAoe
+extends Node2D
+
+var current_target: EnemyBase = null
+
+func _on_timer():
+    _fire_at(current_target)
+
+func _fire_at(target):
+    _damage(target.global_position)
+
+func _damage(center_pos):
+    center_pos.distance_to(Vector2.ZERO)
+""", """
+class_name EnemyBase
+extends Node2D
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("TowerAoe", "_damage");
+
+        Assert.IsNotNull(report);
+        var centerPosParam = report.GetParameter("center_pos");
+        Assert.IsNotNull(centerPosParam);
+        Assert.IsNotNull(centerPosParam.InferredUnionType, "center_pos should have inferred type");
+
+        var types = centerPosParam.InferredUnionType.Types.Select(t => t.DisplayName).ToList();
+        Assert.IsTrue(types.Contains("Vector2"),
+            $"Expected Vector2, got: {string.Join(", ", types)}");
+        Assert.IsTrue(types.Count <= 2,
+            $"Expected narrow type, got {types.Count}: {string.Join(", ", types)}");
+    }
+
+    [TestMethod]
+    public void TwoPassRefinement_DirectLiteralCallSite_UnchangedByPassTwo()
+    {
+        var project = CreateProject("""
+class_name Player
+
+func attack(damage):
+    pass
+
+func combo():
+    attack(10)
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var union = engine.InferParameterType("Player", "attack", "damage");
+
+        Assert.IsNotNull(union);
+        Assert.IsTrue(union.IsSingleType);
+        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")));
+    }
+
+    [TestMethod]
+    public void TwoPassRefinement_TypedVariableThroughMemberAccess_ResolvesChain()
+    {
+        // typed local → parameter → member access → deeper parameter
+        var project = CreateProject("""
+class_name Game
+extends Node
+
+func update():
+    var p = Player.new()
+    handle_player(p)
+
+func handle_player(obj):
+    process_name(obj.name)
+
+func process_name(value):
+    value.length()
+""", """
+class_name Player
+extends Node2D
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+
+        // obj should be Player
+        var objReport = engine.GetMethodReport("Game", "handle_player");
+        Assert.IsNotNull(objReport);
+        var objParam = objReport.GetParameter("obj");
+        Assert.IsNotNull(objParam?.InferredUnionType);
+        Assert.IsTrue(objParam.InferredUnionType.Types.Any(t => t.DisplayName == "Player"));
+
+        // value should be String (obj.name where obj = Player extends Node2D)
+        var valueReport = engine.GetMethodReport("Game", "process_name");
+        Assert.IsNotNull(valueReport);
+        var valueParam = valueReport.GetParameter("value");
+        Assert.IsNotNull(valueParam?.InferredUnionType,
+            "value should be inferred via pass 2 (obj.name = String)");
+        var valueTypes = valueParam.InferredUnionType.Types.Select(t => t.DisplayName).ToList();
+        Assert.IsTrue(valueTypes.Contains("String") || valueTypes.Contains("StringName"),
+            $"Expected String/StringName, got: {string.Join(", ", valueTypes)}");
+    }
+
+    #endregion
+
     #region Cross-File Call Chain Tests
 
     [TestMethod]
@@ -774,6 +882,284 @@ func process():
         // The main assertion: confidence should not be NameMatch (which triggers GD7002)
         Assert.AreNotEqual(GDReferenceConfidence.NameMatch, confidence,
             $"entity.id should not have NameMatch confidence. Caller type: {callerType}");
+    }
+
+    #endregion
+
+    #region Provenance and Narrowing Tests
+
+    [TestMethod]
+    public void Provenance_ExplicitAnnotation_MarkedCorrectly()
+    {
+        var project = CreateProject("""
+class_name Projectile
+extends Node2D
+
+var target_node: Node2D
+
+func _hit():
+    _apply(target_node)
+
+func _apply(obj):
+    obj.queue_free()
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("Projectile", "_apply");
+        Assert.IsNotNull(report);
+
+        var objParam = report.GetParameter("obj");
+        Assert.IsNotNull(objParam);
+        Assert.IsTrue(objParam.CallSiteArguments.Count > 0,
+            $"Expected call site arguments, got {objParam.CallSiteArguments.Count}");
+
+        var arg = objParam.CallSiteArguments[0];
+        Assert.AreEqual(GDTypeProvenance.ExplicitAnnotation, arg.Provenance,
+            "Argument from explicitly-typed variable should have ExplicitAnnotation provenance");
+        Assert.AreEqual("target_node", arg.SourceVariableName);
+    }
+
+    [TestMethod]
+    public void Provenance_InferredVariable_MarkedAsInferred()
+    {
+        var project = CreateProject("""
+class_name Spawner
+extends Node
+
+func spawn():
+    var enemy = EnemyBase.new()
+    register(enemy)
+
+func register(obj):
+    pass
+""", """
+class_name EnemyBase
+extends Node2D
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("Spawner", "register");
+        Assert.IsNotNull(report);
+
+        var objParam = report.GetParameter("obj");
+        Assert.IsNotNull(objParam);
+        Assert.IsTrue(objParam.CallSiteArguments.Count > 0,
+            $"Expected call site arguments, got {objParam.CallSiteArguments.Count}");
+
+        var arg = objParam.CallSiteArguments[0];
+        Assert.AreEqual(GDTypeProvenance.Inferred, arg.Provenance,
+            "Argument from variable without type annotation should be Inferred");
+    }
+
+    [TestMethod]
+    public void Provenance_LiteralArgument_MarkedAsLiteral()
+    {
+        var project = CreateProject("""
+class_name Game
+
+func setup():
+    set_health(100)
+
+func set_health(value):
+    pass
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("Game", "set_health");
+        Assert.IsNotNull(report);
+
+        var valueParam = report.GetParameter("value");
+        Assert.IsNotNull(valueParam);
+        Assert.IsTrue(valueParam.CallSiteArguments.Count > 0,
+            $"Expected call site arguments, got {valueParam.CallSiteArguments.Count}");
+
+        var arg = valueParam.CallSiteArguments[0];
+        Assert.AreEqual(GDTypeProvenance.Literal, arg.Provenance,
+            "Literal number argument should have Literal provenance");
+    }
+
+    [TestMethod]
+    public void Provenance_MemberAccess_MarkedAsMemberAccess()
+    {
+        var project = CreateProject("""
+class_name Tower
+extends Node2D
+
+var target: Node2D
+
+func fire():
+    aim_at(target.global_position)
+
+func aim_at(pos):
+    pass
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("Tower", "aim_at");
+        Assert.IsNotNull(report);
+
+        var posParam = report.GetParameter("pos");
+        Assert.IsNotNull(posParam);
+        Assert.IsTrue(posParam.CallSiteArguments.Count > 0,
+            $"Expected call site arguments, got {posParam.CallSiteArguments.Count}");
+
+        var arg = posParam.CallSiteArguments[0];
+        Assert.AreEqual(GDTypeProvenance.MemberAccess, arg.Provenance,
+            "target.global_position should have MemberAccess provenance");
+        Assert.AreEqual("target", arg.SourceVariableName);
+    }
+
+    [TestMethod]
+    public void CrossFile_NarrowingHint_WiderAnnotation_SuggestsNarrowing()
+    {
+        var project = CreateProject("""
+class_name Damageable
+
+func can_take_damage(obj):
+    obj.queue_free()
+""", """
+class_name ProjectileBase
+extends Node2D
+
+var target_node: Node2D
+
+func _hit():
+    var d = Damageable.new()
+    d.can_take_damage(target_node)
+""", """
+class_name ProjectileAOE
+extends Node2D
+
+var enemy: EnemyBase
+
+func _hit():
+    var d = Damageable.new()
+    d.can_take_damage(enemy)
+""", """
+class_name EnemyBase
+extends Node2D
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("Damageable", "can_take_damage");
+        Assert.IsNotNull(report);
+
+        var objParam = report.GetParameter("obj");
+        Assert.IsNotNull(objParam);
+
+        // Should have at least 2 call site arguments with different types
+        Assert.IsTrue(objParam.CallSiteArguments.Count >= 2,
+            $"Expected >= 2 call sites, got {objParam.CallSiteArguments.Count}");
+
+        // Both should be ExplicitAnnotation
+        var provenances = objParam.CallSiteArguments
+            .Select(a => a.Provenance)
+            .Distinct()
+            .ToList();
+        Assert.IsTrue(provenances.All(p => p == GDTypeProvenance.ExplicitAnnotation),
+            "Both arguments come from explicitly-typed variables");
+    }
+
+    [TestMethod]
+    public void CrossFile_MultipleCallers_DifferentProvenances()
+    {
+        var project = CreateProject("""
+class_name Handler
+
+func process(value):
+    pass
+""", """
+class_name CallerA
+extends Node
+
+func run():
+    var h = Handler.new()
+    h.process(42)
+""", """
+class_name CallerB
+extends Node
+
+var data: String
+
+func run():
+    var h = Handler.new()
+    h.process(data)
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("Handler", "process");
+        Assert.IsNotNull(report);
+
+        var valueParam = report.GetParameter("value");
+        Assert.IsNotNull(valueParam);
+        Assert.IsTrue(valueParam.CallSiteArguments.Count >= 2,
+            $"Expected >= 2 call sites, got {valueParam.CallSiteArguments.Count}");
+
+        var provenances = valueParam.CallSiteArguments
+            .Select(a => a.Provenance)
+            .ToList();
+        CollectionAssert.Contains(provenances, GDTypeProvenance.Literal,
+            "Should contain Literal provenance from '42'");
+        CollectionAssert.Contains(provenances, GDTypeProvenance.ExplicitAnnotation,
+            "Should contain ExplicitAnnotation provenance from 'data: String'");
+    }
+
+    [TestMethod]
+    public void CrossFile_UnrelatedTypes_NoNarrowingHint()
+    {
+        var project = CreateProject("""
+class_name Logger
+
+func log(value):
+    pass
+""", """
+class_name UserService
+extends Node
+
+func run():
+    var l = Logger.new()
+    l.log(42)
+    l.log("hello")
+""");
+
+        var engine = new GDMethodSignatureInferenceEngine(project);
+        var report = engine.GetMethodReport("Logger", "log");
+        Assert.IsNotNull(report);
+
+        var valueParam = report.GetParameter("value");
+        Assert.IsNotNull(valueParam);
+        Assert.IsNotNull(valueParam.InferredUnionType,
+            "Should infer union from two different literal types");
+    }
+
+    #endregion
+
+    #region Update Existing Tests
+
+    [TestMethod]
+    public void UpdateExisting_CorrectAnnotation_SkipsNoChange()
+    {
+        var project = CreateProject("""
+class_name Game
+extends Node
+
+var health: int = 100
+""");
+
+        var file = project.ScriptFiles.First();
+        var service = new GDAddTypeAnnotationsService();
+        var options = new GDTypeAnnotationOptions
+        {
+            IncludeClassVariables = true,
+            UpdateExistingAnnotations = true,
+            MinimumConfidence = GDTypeConfidence.Certain
+        };
+
+        var result = service.PlanFile(file, options);
+
+        // health: int = 100 → inferred int = existing int → skip
+        var healthAnnotation = result.Annotations.FirstOrDefault(a => a.IdentifierName == "health");
+        Assert.IsNull(healthAnnotation, "Should not update annotation that already matches inferred type");
     }
 
     #endregion

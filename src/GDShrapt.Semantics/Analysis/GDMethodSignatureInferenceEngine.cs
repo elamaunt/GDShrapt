@@ -53,6 +53,14 @@ internal class GDMethodSignatureInferenceEngine
         if (_isBuilt)
             return;
 
+        // Lookup for progressive injection
+        var filesByType = new Dictionary<string, GDScriptFile>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in _project.ScriptFiles)
+        {
+            if (!string.IsNullOrEmpty(file.TypeName))
+                filesByType[file.TypeName] = file;
+        }
+
         _cycleDetector.BuildDependencyGraph();
         _cycleDetector.DetectCycles();
 
@@ -70,6 +78,35 @@ internal class GDMethodSignatureInferenceEngine
             if (report != null)
             {
                 _methodReports[methodKey] = report;
+
+                // Inject immediately so subsequent methods get updated types
+                if (filesByType.TryGetValue(report.ClassName, out var file))
+                    file.SemanticModel?.SetCallSiteTypesFromReport(report);
+            }
+        }
+
+        // Pass 2: Refine parameter types in reverse order (callers first).
+        // After pass 1, all initial types are injected. Pass 2 re-infers methods
+        // whose parameters were unresolved because their callers hadn't been processed yet.
+        var methodsNeedingRefinement = inferenceOrder
+            .Where(entry => !entry.InCycle && NeedsRefinement(entry.Method))
+            .Reverse()
+            .ToList();
+
+        foreach (var (methodKey, inCycle) in methodsNeedingRefinement)
+        {
+            var parts = methodKey.Split('.');
+            if (parts.Length < 2) continue;
+
+            var typeName = parts[0];
+            var methodName = parts[1];
+
+            var newReport = InferMethodSignatureInternal(typeName, methodName, inCycle);
+            if (newReport != null && IsImprovedReport(newReport, _methodReports.GetValueOrDefault(methodKey)))
+            {
+                _methodReports[methodKey] = newReport;
+                if (filesByType.TryGetValue(newReport.ClassName, out var file))
+                    file.SemanticModel?.SetCallSiteTypesFromReport(newReport);
             }
         }
 
@@ -350,6 +387,38 @@ internal class GDMethodSignatureInferenceEngine
             DependencyGraph = graph,
             DetectedCycles = cycles
         };
+    }
+
+    private bool NeedsRefinement(string methodKey)
+    {
+        if (!_methodReports.TryGetValue(methodKey, out var report))
+            return false;
+
+        return report.Parameters.Values.Any(p =>
+            !p.HasExplicitType &&
+            (p.InferredUnionType == null ||
+             p.CallSiteArguments.Any(c => !c.IsHighConfidence || c.IsDuckTyped)));
+    }
+
+    private static bool IsImprovedReport(GDMethodInferenceReport newReport, GDMethodInferenceReport? oldReport)
+    {
+        if (oldReport == null) return true;
+
+        foreach (var (paramName, newParam) in newReport.Parameters)
+        {
+            if (newParam.HasExplicitType) continue;
+            if (!oldReport.Parameters.TryGetValue(paramName, out var oldParam)) continue;
+
+            if ((oldParam.InferredUnionType == null || oldParam.InferredUnionType.IsEmpty) &&
+                newParam.InferredUnionType != null && !newParam.InferredUnionType.IsEmpty)
+                return true;
+
+            if (oldParam.InferredUnionType != null && newParam.InferredUnionType != null &&
+                newParam.InferredUnionType.Types.Count < oldParam.InferredUnionType.Types.Count)
+                return true;
+        }
+
+        return false;
     }
 
     private IGDScriptInfo? GetScriptInfo(string typeName)

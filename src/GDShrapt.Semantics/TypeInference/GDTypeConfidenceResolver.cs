@@ -22,8 +22,8 @@ internal class GDTypeConfidenceResolver
     {
         _semanticModel = semanticModel;
         _typeResolver = null;
-        _runtimeProvider = null;
-        _memberResolver = new GDMemberResolver(null);
+        _runtimeProvider = semanticModel?.RuntimeProvider;
+        _memberResolver = new GDMemberResolver(_runtimeProvider);
     }
 
     /// <summary>
@@ -128,6 +128,35 @@ internal class GDTypeConfidenceResolver
     }
 
     /// <summary>
+    /// Attempts to infer a type for a declaration node via the semantic model.
+    /// Returns null if no useful type can be determined.
+    /// </summary>
+    private GDInferredType? TryInferFromSemanticModel(GDNode node)
+    {
+        if (_semanticModel == null)
+            return null;
+
+        var type = _semanticModel.GetTypeForNode(node);
+        if (!string.IsNullOrEmpty(type) && type != GDWellKnownTypes.Variant)
+        {
+            var confidence = DetermineConfidenceFromType(type);
+            return GDInferredType.FromType(type, confidence, "Inferred from semantic analysis");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Infers type for a declaration node via the semantic model.
+    /// Returns Unknown if no useful type can be determined.
+    /// </summary>
+    public GDInferredType InferFromSemanticModel(GDNode node)
+    {
+        return TryInferFromSemanticModel(node)
+            ?? GDInferredType.Unknown("Semantic model could not infer type");
+    }
+
+    /// <summary>
     /// Infers type for a variable declaration.
     /// </summary>
     public GDInferredType InferVariableType(GDVariableDeclaration? varDecl)
@@ -144,7 +173,9 @@ internal class GDTypeConfidenceResolver
         if (varDecl.Initializer != null)
             return InferExpressionType(varDecl.Initializer);
 
-        return GDInferredType.Unknown("Variable has no type annotation or initializer");
+        // Fallback to semantic model (flow analysis, union types)
+        return TryInferFromSemanticModel(varDecl)
+            ?? GDInferredType.Unknown("Variable has no type annotation or initializer");
     }
 
     /// <summary>
@@ -164,7 +195,9 @@ internal class GDTypeConfidenceResolver
         if (varStmt.Initializer != null)
             return InferExpressionType(varStmt.Initializer);
 
-        return GDInferredType.Unknown("Variable has no type annotation or initializer");
+        // Fallback to semantic model (flow analysis, union types)
+        return TryInferFromSemanticModel(varStmt)
+            ?? GDInferredType.Unknown("Variable has no type annotation or initializer");
     }
 
     /// <summary>
@@ -184,7 +217,43 @@ internal class GDTypeConfidenceResolver
         if (paramDecl.DefaultValue != null)
             return InferExpressionType(paramDecl.DefaultValue);
 
+        // Fallback to semantic model (duck-typing, type guards, call sites)
+        if (_semanticModel != null)
+        {
+            var inferred = _semanticModel.InferParameterType(paramDecl);
+            if (inferred.Confidence != GDTypeConfidence.Unknown)
+            {
+                var typeName = inferred.TypeName?.DisplayName;
+                if (!string.IsNullOrEmpty(typeName) && typeName != GDWellKnownTypes.Variant)
+                    return GDInferredType.FromType(typeName, inferred.Confidence,
+                        inferred.Reason ?? "Inferred from usage");
+            }
+        }
+
         return GDInferredType.Unknown("Parameter has no type annotation or default value");
+    }
+
+    /// <summary>
+    /// Returns full GDInferredParameterType with provenance for --explain.
+    /// Null when parameter has explicit type or default value (provenance not useful).
+    /// </summary>
+    internal GDInferredParameterType? InferParameterTypeRich(GDParameterDeclaration? paramDecl)
+    {
+        if (paramDecl == null || _semanticModel == null)
+            return null;
+
+        var typeAnnotation = paramDecl.Type?.BuildName();
+        if (!string.IsNullOrEmpty(typeAnnotation) && typeAnnotation != GDWellKnownTypes.Variant)
+            return null;
+
+        if (paramDecl.DefaultValue != null)
+            return null;
+
+        var inferred = _semanticModel.InferParameterType(paramDecl);
+        if (inferred.Confidence != GDTypeConfidence.Unknown)
+            return inferred;
+
+        return null;
     }
 
     private bool TryInferLiteralType(GDExpression expression, out string type)

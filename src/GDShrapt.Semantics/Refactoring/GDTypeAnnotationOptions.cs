@@ -33,6 +33,12 @@ public class GDTypeAnnotationOptions
     public string? UnknownTypeFallback { get; set; }
 
     /// <summary>
+    /// Whether to update existing type annotations when inference suggests a narrower type.
+    /// When true, variables with explicit annotations that are wider than inferred will be re-annotated.
+    /// </summary>
+    public bool UpdateExistingAnnotations { get; set; } = false;
+
+    /// <summary>
     /// Creates options with default values.
     /// </summary>
     public static GDTypeAnnotationOptions Default => new();

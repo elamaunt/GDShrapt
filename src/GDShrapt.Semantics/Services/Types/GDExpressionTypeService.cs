@@ -101,13 +101,27 @@ internal class GDExpressionTypeService
                     return containerType.ToString();
                 }
 
-                var method = FindContainingMethodNode(expression);
+                var method = expression.GetContainingMethod();
                 if (method != null)
                 {
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
                     if (flowType != null && !flowType.IsVariant)
                         return flowType.DisplayName;
+                }
+
+                // Check call-site injected types for parameters (bypasses stale _nodeTypes cache).
+                // Exclude type guards — flow analyzer already handles branch-aware narrowing.
+                var symbol = _findSymbol?.Invoke(varName);
+                if (symbol?.Kind == GDSymbolKind.Parameter)
+                {
+                    var unionType = _unionTypeService.GetUnionType(varName, symbol, null, excludeTypeGuards: true);
+                    if (unionType != null && unionType.IsSingleType)
+                    {
+                        var effectiveType = unionType.EffectiveType;
+                        if (!effectiveType.IsVariant && effectiveType.DisplayName != "null")
+                            return effectiveType.DisplayName;
+                    }
                 }
             }
         }
@@ -161,7 +175,7 @@ internal class GDExpressionTypeService
             var varName = identExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName))
             {
-                var method = FindContainingMethodNode(expression);
+                var method = expression.GetContainingMethod();
                 if (method != null)
                 {
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
@@ -194,7 +208,7 @@ internal class GDExpressionTypeService
                 {
                     if (symbol?.DeclarationNode is GDVariableDeclarationStatement localVarDecl &&
                         localVarDecl.Initializer != null &&
-                        !HasLocalReassignments(method, varName))
+                        !(GetOrCreateFlowAnalyzer(method)?.HasReassignment(varName) ?? false))
                     {
                         var initType = GetExpressionType(localVarDecl.Initializer);
                         if (!string.IsNullOrEmpty(initType) && initType != "Variant")
@@ -572,39 +586,6 @@ internal class GDExpressionTypeService
         return GDContainerElementType.FromTypeNode(typeNode);
     }
 
-    private static GDMethodDeclaration? FindContainingMethodNode(GDNode node)
-    {
-        var current = node?.Parent;
-        while (current != null)
-        {
-            if (current is GDMethodDeclaration method)
-                return method;
-            current = current.Parent;
-        }
-        return null;
-    }
-
-    private static bool HasLocalReassignments(GDMethodDeclaration? method, string varName)
-    {
-        if (method?.Statements == null || string.IsNullOrEmpty(varName))
-            return false;
-
-        foreach (var node in method.AllNodes)
-        {
-            if (node is GDVariableDeclarationStatement)
-                continue;
-
-            if (node is GDDualOperatorExpression dualOp &&
-                dualOp.Operator?.OperatorType == GDDualOperatorType.Assignment &&
-                dualOp.LeftExpression is GDIdentifierExpression leftIdent &&
-                leftIdent.Identifier?.Sequence == varName)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private string? GetRootVariableName(GDExpression? expr)
     {
         while (expr != null)
@@ -876,11 +857,50 @@ internal class GDExpressionTypeService
         if (!string.IsNullOrEmpty(typeName))
             return GDInferredParameterType.Declared(paramName, typeName);
 
-        var method = FindContainingMethod(param);
+        var method = param.GetContainingMethod();
         if (method == null)
             return GDInferredParameterType.Unknown(paramName);
 
-        // Analyze parameter usage
+        var methodName = method.Identifier?.Sequence;
+
+        // Check call-site data first (higher precision than duck-typing)
+        if (!string.IsNullOrEmpty(methodName))
+        {
+            var callSiteTypes = _unionTypeService.GetCallSiteTypes(methodName, paramName);
+            if (callSiteTypes != null && !callSiteTypes.IsEmpty)
+            {
+                var reports = _unionTypeService.GetCallSiteArgumentReports(methodName, paramName);
+                var evidence = reports?.Select(GDCallSiteEvidence.FromReport).ToList();
+
+                if (callSiteTypes.IsSingleType)
+                {
+                    return GDInferredParameterType.FromCallSite(
+                        paramName,
+                        callSiteTypes.EffectiveType.DisplayName,
+                        "cross-method call sites",
+                        evidence);
+                }
+
+                var types = callSiteTypes.Types.Select(t => t.DisplayName).ToList();
+                var result = GDInferredParameterType.Union(
+                    paramName,
+                    types,
+                    GDTypeConfidence.High,
+                    "cross-method call sites",
+                    evidence);
+
+                if (evidence != null && evidence.Count > 1 && _runtimeProvider != null)
+                {
+                    var hint = ComputeNarrowingHint(evidence, types);
+                    if (hint != null)
+                        result.NarrowingHint = hint;
+                }
+
+                return result;
+            }
+        }
+
+        // Fallback to duck-typing analysis
         var constraints = GDParameterUsageAnalyzer.AnalyzeMethod(method, _runtimeProvider);
         if (!constraints.TryGetValue(paramName, out var paramConstraints) || !paramConstraints.HasConstraints)
             return GDInferredParameterType.Unknown(paramName);
@@ -888,6 +908,47 @@ internal class GDExpressionTypeService
         // Resolve constraints to type
         var resolver = new GDParameterTypeResolver(_runtimeProvider ?? new GDGodotTypesProvider());
         return resolver.ResolveFromConstraints(paramConstraints);
+    }
+
+    private GDUnionNarrowingHint? ComputeNarrowingHint(
+        List<GDCallSiteEvidence> evidence, List<string> unionTypes)
+    {
+        if (unionTypes.Count < 2 || _runtimeProvider == null)
+            return null;
+
+        var annotated = evidence
+            .Where(e => e.Provenance == GDTypeProvenance.ExplicitAnnotation && e.InferredType != null)
+            .ToList();
+
+        if (annotated.Count == 0)
+            return null;
+
+        foreach (var ann in annotated)
+        {
+            var widerType = ann.InferredType!;
+            var otherTypes = unionTypes.Where(t => t != widerType).ToList();
+
+            if (otherTypes.Count == 0)
+                continue;
+
+            // Check if all other types are subtypes of the wider type
+            bool allSubtypes = otherTypes.All(t =>
+                _runtimeProvider.IsAssignableTo(t, widerType));
+
+            if (allSubtypes && otherTypes.Count == 1)
+            {
+                return new GDUnionNarrowingHint
+                {
+                    WiderType = widerType,
+                    NarrowType = otherTypes[0],
+                    SourceVariable = ann.SourceVariableName ?? ann.ArgumentExpression,
+                    SourceFilePath = ann.FilePath,
+                    SourceLine = ann.Line
+                };
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -903,7 +964,7 @@ internal class GDExpressionTypeService
         if (string.IsNullOrEmpty(paramName))
             return null;
 
-        var method = FindContainingMethod(param);
+        var method = param.GetContainingMethod();
         if (method == null)
             return null;
 
@@ -958,17 +1019,5 @@ internal class GDExpressionTypeService
     /// <summary>
     /// Finds the containing method for a parameter declaration.
     /// </summary>
-    private static GDMethodDeclaration? FindContainingMethod(GDParameterDeclaration param)
-    {
-        var current = param.Parent;
-        while (current != null)
-        {
-            if (current is GDMethodDeclaration method)
-                return method;
-            current = current.Parent;
-        }
-        return null;
-    }
-
     #endregion
 }

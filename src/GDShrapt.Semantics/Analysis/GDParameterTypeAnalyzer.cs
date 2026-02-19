@@ -49,7 +49,9 @@ internal sealed class GDParameterTypeAnalyzer
     /// <param name="param">The parameter declaration.</param>
     /// <param name="method">The method containing the parameter.</param>
     /// <param name="includeUsageConstraints">Whether to include usage constraints analysis (method call patterns, property accesses, etc.).</param>
-    public GDUnionType ComputeExpectedTypes(GDParameterDeclaration param, GDMethodDeclaration method, bool includeUsageConstraints = false)
+    /// <param name="excludeTypeGuards">When true, skips type guard analysis (is checks, typeof, match, assert).
+    /// Use this when the flow analyzer already handles branch-aware narrowing.</param>
+    public GDUnionType ComputeExpectedTypes(GDParameterDeclaration param, GDMethodDeclaration method, bool includeUsageConstraints = false, bool excludeTypeGuards = false)
     {
         var union = new GDUnionType();
         var paramName = param.Identifier?.Sequence;
@@ -63,21 +65,24 @@ internal sealed class GDParameterTypeAnalyzer
         // 2. Default value type
         AddDefaultValueType(param, union);
 
-        // 3. Type guards from conditions
-        var context = new ConditionAnalysisContext(paramName, new HashSet<string>());
-
-        AnalyzeIfStatements(method, context);
-        AnalyzeMatchStatements(method, paramName, context.TypeGuardTypes);
-        AnalyzeAssertStatements(method, paramName, context.TypeGuardTypes);
-
-        foreach (var guardType in context.TypeGuardTypes)
+        // 3. Type guards from conditions (skip when flow analyzer handles narrowing)
+        if (!excludeTypeGuards)
         {
-            union.AddTypeName(guardType, isHighConfidence: true);
-        }
+            var context = new ConditionAnalysisContext(paramName, new HashSet<string>());
 
-        if (context.HasNullCheck)
-        {
-            union.AddTypeName("null", isHighConfidence: true);
+            AnalyzeIfStatements(method, context);
+            AnalyzeMatchStatements(method, paramName, context.TypeGuardTypes);
+            AnalyzeAssertStatements(method, paramName, context.TypeGuardTypes);
+
+            foreach (var guardType in context.TypeGuardTypes)
+            {
+                union.AddTypeName(guardType, isHighConfidence: true);
+            }
+
+            if (context.HasNullCheck)
+            {
+                union.AddTypeName("null", isHighConfidence: true);
+            }
         }
 
         // 4. Usage constraints (method calls, property accesses, etc.)

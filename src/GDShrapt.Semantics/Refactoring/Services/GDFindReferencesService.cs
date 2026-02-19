@@ -502,7 +502,7 @@ public class GDFindReferencesService : GDRefactoringServiceBase
             var method = GDPositionFinder.FindParent<GDMethodDeclaration>(identifier);
             if (method != null)
             {
-                var localDecl = FindLocalVariableDeclaration(symbolName, method, identifier.StartLine);
+                var localDecl = GDFlowQueryService.FindLocalVariableDeclaration(method, symbolName, identifier.StartLine);
                 if (localDecl != null)
                 {
                     return new GDSymbolScope(
@@ -1226,15 +1226,6 @@ public class GDFindReferencesService : GDRefactoringServiceBase
     #endregion
 
     #region Helper Methods
-
-    private GDVariableDeclarationStatement? FindLocalVariableDeclaration(
-        string name, GDMethodDeclaration method, int beforeLine)
-    {
-        if (method?.Statements == null) return null;
-
-        return method.AllNodes.OfType<GDVariableDeclarationStatement>()
-            .FirstOrDefault(v => v.Identifier?.Sequence == name && v.StartLine < beforeLine);
-    }
 
     private GDIdentifiableClassMember? FindClassMemberDeclaration(string name, GDClassDeclaration? classDecl)
     {

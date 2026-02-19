@@ -320,6 +320,33 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     }
 
     /// <summary>
+    /// Enriches semantic models with cross-method call-site analysis.
+    /// Must be called after AnalyzeAll() and before parameter type inference.
+    /// </summary>
+    public void EnrichWithCallSiteAnalysis()
+    {
+        var engine = new GDMethodSignatureInferenceEngine(this);
+        engine.BuildAll();
+
+        var projectReport = engine.GetProjectReport();
+
+        var filesByType = new Dictionary<string, GDScriptFile>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in ScriptFiles)
+        {
+            if (!string.IsNullOrEmpty(file.TypeName))
+                filesByType[file.TypeName] = file;
+        }
+
+        foreach (var (methodKey, report) in projectReport.Methods)
+        {
+            if (filesByType.TryGetValue(report.ClassName, out var file))
+            {
+                file.SemanticModel?.SetCallSiteTypesFromReport(report);
+            }
+        }
+    }
+
+    /// <summary>
     /// Resolves the effective parallelism degree from configuration.
     /// </summary>
     private static int ResolveParallelism(int configValue)

@@ -12,6 +12,7 @@ internal class GDUnionTypeService
 {
     private readonly Dictionary<string, GDUnionType> _unionTypeCache = new();
     private readonly Dictionary<string, GDUnionType> _callSiteParameterTypes = new();
+    private readonly Dictionary<string, List<GDCallSiteArgumentReport>> _callSiteArgumentReports = new();
     private readonly Dictionary<string, GDVariableUsageProfile> _variableProfiles = new();
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private GDTypeInferenceEngine? _typeEngine;
@@ -38,13 +39,13 @@ internal class GDUnionTypeService
     /// For methods, computes from all return statements.
     /// Returns null if the symbol is not found.
     /// </summary>
-    public GDUnionType? GetUnionType(string symbolName, GDSymbolInfo? symbol, GDScriptFile? scriptFile)
+    public GDUnionType? GetUnionType(string symbolName, GDSymbolInfo? symbol, GDScriptFile? scriptFile, bool excludeTypeGuards = false)
     {
         if (string.IsNullOrEmpty(symbolName))
             return null;
 
-        // Check cache first
-        if (_unionTypeCache.TryGetValue(symbolName, out var cached))
+        // Use cache only for unfiltered queries
+        if (!excludeTypeGuards && _unionTypeCache.TryGetValue(symbolName, out var cached))
         {
             return cached;
         }
@@ -62,11 +63,14 @@ internal class GDUnionTypeService
 
         if (symbol?.Kind == GDSymbolKind.Parameter && symbol.DeclarationNode is GDParameterDeclaration param)
         {
-            var union = ComputeParameterUnion(param, symbol);
+            var union = ComputeParameterUnion(param, symbol, excludeTypeGuards);
             if (union != null)
             {
-                EnrichUnionTypeIfNeeded(union);
-                _unionTypeCache[symbolName] = union;
+                if (!excludeTypeGuards)
+                {
+                    EnrichUnionTypeIfNeeded(union);
+                    _unionTypeCache[symbolName] = union;
+                }
                 return union;
             }
         }
@@ -154,6 +158,30 @@ internal class GDUnionTypeService
     }
 
     /// <summary>
+    /// Sets call site argument reports for a method parameter (for evidence chain display).
+    /// </summary>
+    internal void SetCallSiteParameterReports(string methodName, string paramName, List<GDCallSiteArgumentReport> reports)
+    {
+        if (string.IsNullOrEmpty(methodName) || string.IsNullOrEmpty(paramName) || reports == null)
+            return;
+
+        var key = BuildParameterKey(methodName, paramName);
+        _callSiteArgumentReports[key] = reports;
+    }
+
+    /// <summary>
+    /// Gets call site argument reports for a method parameter.
+    /// </summary>
+    internal IReadOnlyList<GDCallSiteArgumentReport>? GetCallSiteArgumentReports(string methodName, string paramName)
+    {
+        if (string.IsNullOrEmpty(methodName) || string.IsNullOrEmpty(paramName))
+            return null;
+
+        var key = BuildParameterKey(methodName, paramName);
+        return _callSiteArgumentReports.TryGetValue(key, out var reports) ? reports : null;
+    }
+
+    /// <summary>
     /// Clears union type cache for a variable (used during reassignment).
     /// </summary>
     internal void ClearUnionTypeCache(string variableName)
@@ -177,7 +205,7 @@ internal class GDUnionTypeService
     /// <summary>
     /// Computes the union type for a parameter based on type guards, null checks, and call site arguments.
     /// </summary>
-    private GDUnionType? ComputeParameterUnion(GDParameterDeclaration param, GDSymbolInfo symbol)
+    private GDUnionType? ComputeParameterUnion(GDParameterDeclaration param, GDSymbolInfo symbol, bool excludeTypeGuards = false)
     {
         var paramName = param.Identifier?.Sequence;
         if (string.IsNullOrEmpty(paramName))
@@ -189,7 +217,7 @@ internal class GDUnionTypeService
 
         // Use analyzer to compute expected types from code analysis
         var analyzer = new GDParameterTypeAnalyzer(_runtimeProvider, _typeEngine);
-        var union = analyzer.ComputeExpectedTypes(param, method);
+        var union = analyzer.ComputeExpectedTypes(param, method, excludeTypeGuards: excludeTypeGuards);
 
         // Add call site argument types if available
         var methodName = method.Identifier?.Sequence;

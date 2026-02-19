@@ -30,6 +30,9 @@ internal class GDFlowAnalyzer : GDVisitor
     // Container usage profiles for untyped containers (for 'in' operator narrowing)
     private readonly Dictionary<string, GDContainerUsageProfile> _containerProfiles = new();
 
+    // Variables that have been reassigned after declaration
+    private readonly HashSet<string> _reassignedVariables = new();
+
     // Guard against infinite recursion in ResolveTypeWithFallback
     private readonly HashSet<GDExpression> _resolvingExpressions = new();
     private const int MaxResolveDepth = 30;
@@ -73,6 +76,11 @@ internal class GDFlowAnalyzer : GDVisitor
     public GDFlowState FinalState => _currentState;
 
     /// <summary>
+    /// Gets the initial flow state at method entry (after parameter declarations, before body).
+    /// </summary>
+    public GDFlowState? InitialState { get; private set; }
+
+    /// <summary>
     /// Analyzes a method declaration for flow-sensitive types.
     /// </summary>
     public void Analyze(GDMethodDeclaration method)
@@ -94,6 +102,9 @@ internal class GDFlowAnalyzer : GDVisitor
 
         // Collect container usage profiles for untyped containers
         CollectContainerProfiles(method);
+
+        // Snapshot the initial state before method body processing
+        InitialState = _currentState.Clone();
 
         // Walk the method body
         method.WalkIn(this);
@@ -148,6 +159,7 @@ internal class GDFlowAnalyzer : GDVisitor
                 var name = identExpr.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(name))
                 {
+                    _reassignedVariables.Add(name);
                     var rhsType = ResolveTypeWithFallback(dualOp.RightExpression);
                     if (!string.IsNullOrEmpty(rhsType))
                     {
@@ -1075,6 +1087,11 @@ internal class GDFlowAnalyzer : GDVisitor
     #endregion
 
     #region Query Methods
+
+    /// <summary>
+    /// Checks if a variable has been reassigned (any assignment operator) after its declaration.
+    /// </summary>
+    public bool HasReassignment(string varName) => _reassignedVariables.Contains(varName);
 
     /// <summary>
     /// Gets the type of a variable at a specific AST node location.

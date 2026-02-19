@@ -45,6 +45,16 @@ internal class GDArgumentInfo
     public int Column { get; }
 
     /// <summary>
+    /// How the argument's type was determined.
+    /// </summary>
+    public GDTypeProvenance Provenance { get; }
+
+    /// <summary>
+    /// The source variable name (for identifier/member access arguments).
+    /// </summary>
+    public string? SourceVariableName { get; }
+
+    /// <summary>
     /// Creates a new argument info.
     /// </summary>
     public GDArgumentInfo(
@@ -57,6 +67,30 @@ internal class GDArgumentInfo
         Expression = expression;
         InferredType = inferredType;
         IsHighConfidence = isHighConfidence;
+        ExpressionText = expression?.ToString() ?? "";
+
+        var token = expression?.AllTokens.FirstOrDefault();
+        Line = token?.StartLine ?? 0;
+        Column = token?.StartColumn ?? 0;
+    }
+
+    /// <summary>
+    /// Creates an argument info with provenance tracking.
+    /// </summary>
+    public GDArgumentInfo(
+        int index,
+        GDExpression? expression,
+        GDSemanticType? inferredType,
+        bool isHighConfidence,
+        GDTypeProvenance provenance,
+        string? sourceVariableName = null)
+    {
+        Index = index;
+        Expression = expression;
+        InferredType = inferredType;
+        IsHighConfidence = isHighConfidence;
+        Provenance = provenance;
+        SourceVariableName = sourceVariableName;
         ExpressionText = expression?.ToString() ?? "";
 
         var token = expression?.AllTokens.FirstOrDefault();

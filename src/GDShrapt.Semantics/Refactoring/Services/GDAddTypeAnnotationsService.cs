@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -13,15 +15,18 @@ public class GDAddTypeAnnotationsService
 
     /// <summary>
     /// Abstracts the differences between variable, local variable, and parameter annotation contexts.
+    /// Each context uses the appropriate specialized inference method preserving confidence and reason.
     /// </summary>
     private interface IAnnotationContext
     {
-        bool ShouldSkip();
+        bool ShouldSkip(GDTypeAnnotationOptions options);
         GDIdentifier? GetIdentifier();
-        GDExpression? GetInitializer();
-        string GetUnknownReason();
+        GDInferredType InferType(GDTypeConfidenceResolver helper);
         TypeAnnotationTarget GetTarget();
         string GetFallbackName();
+        GDInferredParameterType? GetRichParameterType(GDTypeConfidenceResolver helper) => null;
+        string? GetExistingTypeName() => null;
+        GDTypeNode? GetTypeNode() => null;
     }
 
     private sealed class VariableAnnotationContext : IAnnotationContext
@@ -29,13 +34,18 @@ public class GDAddTypeAnnotationsService
         private readonly GDVariableDeclaration _varDecl;
         public VariableAnnotationContext(GDVariableDeclaration varDecl) => _varDecl = varDecl;
 
-        public bool ShouldSkip() =>
-            _varDecl.Type != null || _varDecl.TypeColon != null || _varDecl.ConstKeyword != null;
+        public bool ShouldSkip(GDTypeAnnotationOptions options)
+        {
+            if (_varDecl.ConstKeyword != null) return true;
+            if (_varDecl.Type == null && _varDecl.TypeColon == null) return false;
+            return !options.UpdateExistingAnnotations;
+        }
         public GDIdentifier? GetIdentifier() => _varDecl.Identifier;
-        public GDExpression? GetInitializer() => _varDecl.Initializer;
-        public string GetUnknownReason() => "No initializer";
+        public GDInferredType InferType(GDTypeConfidenceResolver helper) => helper.InferVariableType(_varDecl);
         public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.ClassVariable;
         public string GetFallbackName() => "variable";
+        public string? GetExistingTypeName() => _varDecl.Type?.BuildName();
+        public GDTypeNode? GetTypeNode() => _varDecl.Type;
     }
 
     private sealed class LocalVariableAnnotationContext : IAnnotationContext
@@ -43,12 +53,17 @@ public class GDAddTypeAnnotationsService
         private readonly GDVariableDeclarationStatement _varStmt;
         public LocalVariableAnnotationContext(GDVariableDeclarationStatement varStmt) => _varStmt = varStmt;
 
-        public bool ShouldSkip() => _varStmt.Type != null || _varStmt.Colon != null;
+        public bool ShouldSkip(GDTypeAnnotationOptions options)
+        {
+            if (_varStmt.Type == null && _varStmt.Colon == null) return false;
+            return !options.UpdateExistingAnnotations;
+        }
         public GDIdentifier? GetIdentifier() => _varStmt.Identifier;
-        public GDExpression? GetInitializer() => _varStmt.Initializer;
-        public string GetUnknownReason() => "No initializer";
+        public GDInferredType InferType(GDTypeConfidenceResolver helper) => helper.InferVariableType(_varStmt);
         public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.LocalVariable;
         public string GetFallbackName() => "variable";
+        public string? GetExistingTypeName() => _varStmt.Type?.BuildName();
+        public GDTypeNode? GetTypeNode() => _varStmt.Type;
     }
 
     private sealed class ParameterAnnotationContext : IAnnotationContext
@@ -56,16 +71,24 @@ public class GDAddTypeAnnotationsService
         private readonly GDParameterDeclaration _param;
         public ParameterAnnotationContext(GDParameterDeclaration param) => _param = param;
 
-        public bool ShouldSkip() => _param.Type != null;
+        public bool ShouldSkip(GDTypeAnnotationOptions options)
+        {
+            if (_param.Type == null) return false;
+            return !options.UpdateExistingAnnotations;
+        }
         public GDIdentifier? GetIdentifier() => _param.Identifier;
-        public GDExpression? GetInitializer() => _param.DefaultValue;
-        public string GetUnknownReason() => "No default value";
+        public GDInferredType InferType(GDTypeConfidenceResolver helper) => helper.InferParameterType(_param);
         public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.Parameter;
         public string GetFallbackName() => "parameter";
+        public GDInferredParameterType? GetRichParameterType(GDTypeConfidenceResolver helper)
+            => helper.InferParameterTypeRich(_param);
+        public string? GetExistingTypeName() => _param.Type?.BuildName();
+        public GDTypeNode? GetTypeNode() => _param.Type;
     }
 
     /// <summary>
     /// Core annotation logic shared by all annotation types.
+    /// Each context delegates to the appropriate specialized inference method.
     /// </summary>
     private static void TryAddAnnotationCore(
         GDScriptFile file,
@@ -74,17 +97,17 @@ public class GDAddTypeAnnotationsService
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations)
     {
-        if (context.ShouldSkip())
+        if (context.ShouldSkip(options))
             return;
 
         var identifier = context.GetIdentifier();
         if (identifier == null)
             return;
 
-        var initializer = context.GetInitializer();
-        var inferredType = initializer != null
-            ? helper.InferExpressionType(initializer)
-            : GDInferredType.Unknown(context.GetUnknownReason());
+        var existingType = context.GetExistingTypeName();
+        bool isUpdate = !string.IsNullOrEmpty(existingType);
+
+        var inferredType = context.InferType(helper);
 
         // Apply minimum confidence filter
         if (inferredType.Confidence > options.MinimumConfidence)
@@ -102,12 +125,49 @@ public class GDAddTypeAnnotationsService
             ? options.UnknownTypeFallback
             : inferredType.TypeName.DisplayName;
 
-        var edit = new GDTextEdit(
-            file.FullPath,
-            identifier.EndLine + 1,
-            identifier.OriginEndColumn + 1,
-            "",
-            $": {typeName}");
+        // For updates: skip if inferred type is same as existing
+        if (isUpdate && typeName == existingType)
+            return;
+
+        var isUnion = inferredType.TypeName is GDUnionSemanticType;
+        var richParamType = context.GetRichParameterType(helper);
+
+        GDTextEdit edit;
+        if (isUpdate)
+        {
+            var typeNode = context.GetTypeNode();
+            if (typeNode != null)
+            {
+                var firstToken = typeNode.AllTokens.FirstOrDefault();
+                var lastToken = typeNode.AllTokens.LastOrDefault();
+                if (firstToken != null && lastToken != null)
+                {
+                    edit = new GDTextEdit(
+                        file.FullPath,
+                        firstToken.StartLine + 1,
+                        firstToken.StartColumn + 1,
+                        existingType!,
+                        typeName);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            edit = new GDTextEdit(
+                file.FullPath,
+                identifier.EndLine + 1,
+                identifier.OriginEndColumn + 1,
+                "",
+                $": {typeName}");
+        }
 
         annotations.Add(new GDTypeAnnotationPlan(
             file.FullPath,
@@ -116,7 +176,13 @@ public class GDAddTypeAnnotationsService
             identifier.StartColumn + 1,
             inferredType,
             context.GetTarget(),
-            edit));
+            edit)
+        {
+            IsInformationalOnly = isUnion,
+            SourceParameterType = richParamType,
+            IsTypeUpdate = isUpdate,
+            PreviousType = isUpdate ? existingType : null
+        });
     }
 
     #endregion

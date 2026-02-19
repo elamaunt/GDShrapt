@@ -183,8 +183,10 @@ func test(value):
             d.Code == GDDiagnosticCode.UnguardedMethodCall ||
             d.Code == GDDiagnosticCode.MemberNotGuaranteed).ToList();
 
+        var allDiags = diagnostics.ToList();
+
         Assert.IsTrue(unguardedDiagnostics.Count > 0,
-            "Expected warning for access in else branch (type not narrowed to String)");
+            $"Expected warning for access in else branch (type not narrowed to String). All diagnostics ({allDiags.Count}): {string.Join("; ", allDiags.Select(d => $"{d.Code}:{d.Message} @L{d.StartLine}:{d.StartColumn}"))}");
     }
 
     #endregion
