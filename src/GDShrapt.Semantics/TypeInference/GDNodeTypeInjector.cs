@@ -327,7 +327,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         if (classDecl == null)
             return null;
 
-        var initExpr = FindVariableInitializer(classDecl, varName);
+        var initExpr = FindVariableInitializerInHierarchy(classDecl, varName);
         if (initExpr is GDCallExpression preloadCall)
             return ExtractScenePathFromPreloadCall(preloadCall);
 
@@ -365,7 +365,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         if (classDecl == null)
             return null;
 
-        var initExpr = FindVariableInitializer(classDecl, varName);
+        var initExpr = FindVariableInitializerInHierarchy(classDecl, varName);
         if (initExpr is not GDCallExpression instantiateCall)
             return null;
 
@@ -391,6 +391,48 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
                 var children = _sceneProvider.GetDirectChildren(scenePath, ".");
                 if (index >= 0 && index < children.Count)
                     return children[index].ScriptTypeName ?? children[index].NodeType;
+            }
+        }
+
+        return null;
+    }
+
+    private GDExpression? FindVariableInitializerInHierarchy(GDClassDeclaration classDecl, string variableName)
+    {
+        var visited = new HashSet<string>();
+        return FindVariableInitializerInHierarchyCore(classDecl, variableName, visited);
+    }
+
+    private GDExpression? FindVariableInitializerInHierarchyCore(
+        GDClassDeclaration? classDecl,
+        string variableName,
+        HashSet<string> visited)
+    {
+        if (classDecl == null)
+            return null;
+
+        // Prevent infinite loops in circular inheritance
+        var className = classDecl.ClassName?.Identifier?.Sequence
+            ?? classDecl.ToString();
+        if (!visited.Add(className))
+            return null;
+
+        // Check current class
+        var result = FindVariableInitializer(classDecl, variableName);
+        if (result != null)
+            return result;
+
+        // Check base class via script provider
+        if (_scriptProvider != null)
+        {
+            var baseTypeName = classDecl.Extends?.Type?.BuildName();
+            if (!string.IsNullOrEmpty(baseTypeName))
+            {
+                var baseScript = _scriptProvider.GetScriptByTypeName(baseTypeName)
+                    ?? _scriptProvider.GetScriptByPath(baseTypeName);
+
+                if (baseScript?.Class != null)
+                    return FindVariableInitializerInHierarchyCore(baseScript.Class, variableName, visited);
             }
         }
 

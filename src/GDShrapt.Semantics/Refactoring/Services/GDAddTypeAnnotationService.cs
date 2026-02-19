@@ -330,7 +330,12 @@ public enum TypeAnnotationTarget
     /// <summary>
     /// Function parameter.
     /// </summary>
-    Parameter
+    Parameter,
+
+    /// <summary>
+    /// Function return type.
+    /// </summary>
+    ReturnType
 }
 
 /// <summary>

@@ -872,12 +872,19 @@ internal class GDExpressionTypeService
                 var reports = _unionTypeService.GetCallSiteArgumentReports(methodName, paramName);
                 var evidence = reports?.Select(GDCallSiteEvidence.FromReport).ToList();
 
+                // Downgrade confidence if all evidence is from literals only
+                var callSiteConfidence = GDTypeConfidence.High;
+                if (evidence != null && evidence.Count > 0 &&
+                    evidence.All(ev => ev.Provenance == GDTypeProvenance.Literal))
+                    callSiteConfidence = GDTypeConfidence.Medium;
+
                 if (callSiteTypes.IsSingleType)
                 {
                     return GDInferredParameterType.FromCallSite(
                         paramName,
                         callSiteTypes.EffectiveType.DisplayName,
                         "cross-method call sites",
+                        callSiteConfidence,
                         evidence);
                 }
 
@@ -885,7 +892,7 @@ internal class GDExpressionTypeService
                 var result = GDInferredParameterType.Union(
                     paramName,
                     types,
-                    GDTypeConfidence.High,
+                    callSiteConfidence,
                     "cross-method call sites",
                     evidence);
 

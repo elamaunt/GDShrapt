@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -14,6 +16,12 @@ public class GDCallSiteEvidence
     public bool IsDuckTyped { get; init; }
     public GDTypeProvenance Provenance { get; init; }
     public string? SourceVariableName { get; init; }
+
+    /// <summary>
+    /// Recursive provenance chain showing where the argument's type originated.
+    /// Populated by deep tracing (e.g., signal connections, call chain).
+    /// </summary>
+    public IReadOnlyList<GDCallSiteProvenanceEntry>? InnerChain { get; set; }
 
     /// <summary>
     /// Creates evidence from a call-site argument report.

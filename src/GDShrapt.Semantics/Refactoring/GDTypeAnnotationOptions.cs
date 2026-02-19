@@ -21,6 +21,17 @@ public class GDTypeAnnotationOptions
     public bool IncludeParameters { get; set; } = false;
 
     /// <summary>
+    /// Whether to add return type annotations to functions.
+    /// </summary>
+    public bool IncludeReturnTypes { get; set; } = false;
+
+    /// <summary>
+    /// Whether to annotate void functions with -> void return type.
+    /// Only effective when IncludeReturnTypes is true.
+    /// </summary>
+    public bool AnnotateVoidReturns { get; set; } = false;
+
+    /// <summary>
     /// Minimum confidence level for type annotations.
     /// Annotations with lower confidence will be skipped.
     /// </summary>
@@ -62,6 +73,7 @@ public class GDTypeAnnotationOptions
         IncludeLocals = true,
         IncludeClassVariables = true,
         IncludeParameters = true,
+        IncludeReturnTypes = true,
         MinimumConfidence = GDTypeConfidence.High
     };
 }

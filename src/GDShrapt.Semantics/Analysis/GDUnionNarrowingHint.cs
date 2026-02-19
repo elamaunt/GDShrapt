@@ -9,6 +9,6 @@ public class GDUnionNarrowingHint
     public string WiderType { get; init; } = "";
     public string NarrowType { get; init; } = "";
     public string SourceVariable { get; init; } = "";
-    public string SourceFilePath { get; init; } = "";
-    public int SourceLine { get; init; }
+    public string SourceFilePath { get; set; } = "";
+    public int SourceLine { get; set; }
 }

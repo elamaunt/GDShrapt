@@ -154,6 +154,20 @@ public class GDInferredParameterType
         };
 
     /// <summary>
+    /// Creates a parameter type from call site data flow with explicit confidence.
+    /// </summary>
+    public static GDInferredParameterType FromCallSite(
+        string paramName,
+        string typeName,
+        string sourceLocation,
+        GDTypeConfidence confidence,
+        IReadOnlyList<GDCallSiteEvidence>? evidence)
+        => new(paramName, GDSemanticType.FromRuntimeTypeName(typeName), confidence, $"passed from {sourceLocation}")
+        {
+            CallSiteEvidence = evidence
+        };
+
+    /// <summary>
     /// Creates a parameter type from a type check (is operator).
     /// </summary>
     public static GDInferredParameterType FromTypeCheck(

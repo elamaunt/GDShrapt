@@ -367,7 +367,11 @@ internal class GDTypeConfidenceResolver
                 // Global function with known return type
                 var funcInfo = _runtimeProvider?.GetGlobalFunction(funcName);
                 if (funcInfo != null && !string.IsNullOrEmpty(funcInfo.ReturnType))
+                {
+                    if (funcInfo.ReturnType == GDWellKnownTypes.Variant)
+                        return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Return type of {funcName}() (untyped return)");
                     return GDInferredType.High(funcInfo.ReturnType, $"Return type of {funcName}()");
+                }
 
                 // Local method - try to find declaration
                 var methodDecl = FindMethodDeclaration(funcName, callExpr);
@@ -375,7 +379,11 @@ internal class GDTypeConfidenceResolver
                 {
                     var returnType = methodDecl.ReturnType.BuildName();
                     if (!string.IsNullOrEmpty(returnType))
+                    {
+                        if (returnType == GDWellKnownTypes.Variant)
+                            return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Return type of local method {funcName}() (untyped return)");
                         return GDInferredType.High(returnType, $"Return type of local method {funcName}()");
+                    }
                 }
 
                 return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Return type unknown for {funcName}()");
@@ -403,7 +411,20 @@ internal class GDTypeConfidenceResolver
                 if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                 {
                     if (!string.IsNullOrEmpty(memberInfo.Type))
+                    {
+                        var resolvedType = ResolveReturnTypeRole(
+                            memberInfo.ReturnTypeRole,
+                            memberInfo.Type,
+                            callerTypeResult.TypeName.DisplayName);
+
+                        if (resolvedType != null && resolvedType != GDWellKnownTypes.Variant)
+                            return GDInferredType.High(resolvedType, $"Return type of {callerTypeResult.TypeName.DisplayName}.{methodName}()");
+
+                        if (memberInfo.Type == GDWellKnownTypes.Variant)
+                            return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Return type of {callerTypeResult.TypeName.DisplayName}.{methodName}() (untyped return)");
+
                         return GDInferredType.High(memberInfo.Type, $"Return type of {callerTypeResult.TypeName.DisplayName}.{methodName}()");
+                    }
                 }
 
                 return GDInferredType.Medium(GDWellKnownTypes.Variant, $"Return type unknown for {callerTypeResult.TypeName.DisplayName}.{methodName}()");
@@ -413,6 +434,26 @@ internal class GDTypeConfidenceResolver
         }
 
         return GDInferredType.Unknown("Cannot determine call return type");
+    }
+
+    private static string? ResolveReturnTypeRole(string? role, string defaultType, string callerType)
+    {
+        if (string.IsNullOrEmpty(role))
+            return null;
+
+        return role switch
+        {
+            "element" => GDGenericTypeHelper.ExtractArrayElementType(callerType)
+                         ?? GDGenericTypeHelper.ExtractDictionaryTypes(callerType).valueType,
+            "key" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).keyType,
+            "value" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).valueType,
+            "self" => callerType,
+            "keys_array" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).keyType is { } k
+                ? GDGenericTypeHelper.CreateArrayType(k) : null,
+            "values_array" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).valueType is { } v
+                ? GDGenericTypeHelper.CreateArrayType(v) : null,
+            _ => null
+        };
     }
 
     private GDInferredType InferMemberType(GDMemberOperatorExpression memberExpr)

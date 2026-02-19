@@ -27,6 +27,7 @@ public class GDAddTypeAnnotationsService
         GDInferredParameterType? GetRichParameterType(GDTypeConfidenceResolver helper) => null;
         string? GetExistingTypeName() => null;
         GDTypeNode? GetTypeNode() => null;
+        string? GetMethodName() => null;
     }
 
     private sealed class VariableAnnotationContext : IAnnotationContext
@@ -84,6 +85,7 @@ public class GDAddTypeAnnotationsService
             => helper.InferParameterTypeRich(_param);
         public string? GetExistingTypeName() => _param.Type?.BuildName();
         public GDTypeNode? GetTypeNode() => _param.Type;
+        public string? GetMethodName() => _param.GetContainingMethod()?.Identifier?.Sequence;
     }
 
     /// <summary>
@@ -181,7 +183,8 @@ public class GDAddTypeAnnotationsService
             IsInformationalOnly = isUnion,
             SourceParameterType = richParamType,
             IsTypeUpdate = isUpdate,
-            PreviousType = isUpdate ? existingType : null
+            PreviousType = isUpdate ? existingType : null,
+            MethodName = context.GetMethodName()
         });
     }
 
@@ -254,6 +257,12 @@ public class GDAddTypeAnnotationsService
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations)
     {
+        // Return type
+        if (options.IncludeReturnTypes)
+        {
+            TryAddReturnTypeAnnotation(file, methodDecl, helper, options, annotations);
+        }
+
         // Parameters
         if (options.IncludeParameters && methodDecl.Parameters != null)
         {
@@ -333,4 +342,179 @@ public class GDAddTypeAnnotationsService
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations) =>
         TryAddAnnotationCore(file, new ParameterAnnotationContext(param), helper, options, annotations);
+
+    private static void TryAddReturnTypeAnnotation(
+        GDScriptFile file,
+        GDMethodDeclaration methodDecl,
+        GDTypeConfidenceResolver helper,
+        GDTypeAnnotationOptions options,
+        List<GDTypeAnnotationPlan> annotations)
+    {
+        // Skip if method already has explicit return type
+        if (GDReturnTypeCollector.HasExplicitReturnType(methodDecl))
+            return;
+
+        var identifier = methodDecl.Identifier;
+        if (identifier == null)
+            return;
+
+        // Need the colon token to know where to insert
+        var colon = methodDecl.Colon;
+        if (colon == null)
+            return;
+
+        // Collect and analyze return statements
+        var runtimeProvider = file.SemanticModel?.RuntimeProvider;
+        var collector = new GDReturnTypeCollector(methodDecl, runtimeProvider);
+        collector.Collect();
+
+        // Build SourceReturnInfo from collector
+        var returnInfo = BuildReturnInfo(collector.Returns);
+
+        var returnUnion = collector.ComputeReturnUnionType();
+
+        // Detect void methods (no return value, or only null/implicit returns)
+        bool isVoidMethod = returnUnion.IsEmpty;
+
+        List<GDSemanticType>? nonNullTypes = null;
+        if (!isVoidMethod)
+        {
+            nonNullTypes = returnUnion.Types
+                .Where(t => t is not GDNullSemanticType)
+                .ToList();
+
+            if (nonNullTypes.Count == 0)
+                isVoidMethod = true;
+        }
+
+        if (isVoidMethod)
+        {
+            if (!options.AnnotateVoidReturns)
+                return;
+
+            var voidInferred = GDInferredType.FromType("void", GDTypeConfidence.Certain, "no return value");
+            var voidEdit = new GDTextEdit(
+                file.FullPath,
+                colon.StartLine + 1,
+                colon.StartColumn + 1,
+                "",
+                " -> void");
+
+            annotations.Add(new GDTypeAnnotationPlan(
+                file.FullPath,
+                identifier.Sequence ?? "func",
+                identifier.StartLine + 1,
+                identifier.StartColumn + 1,
+                voidInferred,
+                TypeAnnotationTarget.ReturnType,
+                voidEdit)
+            {
+                MethodName = identifier.Sequence,
+                SourceReturnInfo = returnInfo
+            });
+            return;
+        }
+
+        // Skip if returns disagree (union of different types)
+        if (nonNullTypes!.Count > 1)
+            return;
+
+        var returnType = nonNullTypes[0];
+        var typeName = returnType.DisplayName;
+
+        if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+            return;
+
+        var confidence = returnUnion.AllHighConfidence
+            ? GDTypeConfidence.High
+            : GDTypeConfidence.Medium;
+
+        var inferredType = GDInferredType.FromType(typeName, confidence, "inferred from return statements");
+
+        // Apply minimum confidence filter
+        if (inferredType.Confidence > options.MinimumConfidence)
+        {
+            if (options.UnknownTypeFallback != null)
+                inferredType = GDInferredType.FromType(options.UnknownTypeFallback, GDTypeConfidence.Low, "Fallback type");
+            else
+                return;
+        }
+
+        if (inferredType.IsUnknown && options.UnknownTypeFallback == null)
+            return;
+
+        var finalTypeName = inferredType.IsUnknown && options.UnknownTypeFallback != null
+            ? options.UnknownTypeFallback
+            : inferredType.TypeName.DisplayName;
+
+        // Build edit: insert " -> TypeName" before the colon
+        var edit = new GDTextEdit(
+            file.FullPath,
+            colon.StartLine + 1,
+            colon.StartColumn + 1,
+            "",
+            $" -> {finalTypeName}");
+
+        annotations.Add(new GDTypeAnnotationPlan(
+            file.FullPath,
+            identifier.Sequence ?? "func",
+            identifier.StartLine + 1,
+            identifier.StartColumn + 1,
+            inferredType,
+            TypeAnnotationTarget.ReturnType,
+            edit)
+        {
+            MethodName = identifier.Sequence,
+            SourceReturnInfo = returnInfo
+        });
+    }
+
+    private static List<GDReturnStatementInfo> BuildReturnInfo(IReadOnlyList<GDReturnInfo> returns)
+    {
+        var result = new List<GDReturnStatementInfo>(returns.Count);
+        foreach (var r in returns)
+        {
+            List<GDDictionaryShapeEntry>? dictShape = null;
+
+            // Extract dictionary shape if return is a dict literal
+            if (r.ReturnExpression?.Expression is GDDictionaryInitializerExpression dictInit
+                && dictInit.KeyValues != null)
+            {
+                dictShape = new List<GDDictionaryShapeEntry>();
+                foreach (var kv in dictInit.KeyValues)
+                {
+                    var keyStr = kv.Key?.ToString()?.Trim('"', ' ');
+                    if (keyStr != null && kv.Value != null)
+                    {
+                        var valType = InferSimpleExpressionType(kv.Value);
+                        dictShape.Add(new GDDictionaryShapeEntry(keyStr, valType));
+                    }
+                }
+            }
+
+            result.Add(new GDReturnStatementInfo
+            {
+                TypeName = r.InferredType?.DisplayName,
+                Line = r.Line + 1,
+                IsImplicit = r.IsImplicit,
+                BranchContext = r.BranchContext,
+                IsHighConfidence = r.IsHighConfidence,
+                DictionaryShape = dictShape
+            });
+        }
+        return result;
+    }
+
+    private static string InferSimpleExpressionType(GDExpression expr)
+    {
+        return expr switch
+        {
+            GDNumberExpression num => num.Number?.ResolveNumberType() == GDNumberType.Double ? "float" : "int",
+            GDStringExpression => "String",
+            GDBoolExpression => "bool",
+            GDArrayInitializerExpression => "Array",
+            GDDictionaryInitializerExpression => "Dictionary",
+            _ => "Variant"
+        };
+    }
 }

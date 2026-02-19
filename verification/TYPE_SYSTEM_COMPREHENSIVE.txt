@@ -646,7 +646,7 @@ test_scripts/completion_test.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 69:1 Variable normalized ---
@@ -974,7 +974,7 @@ test_scripts/cross_file_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 57:28 Parameter input ---
@@ -1001,7 +1001,7 @@ test_scripts/cross_file_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 61:1 Variable step3 ---
@@ -1060,7 +1060,7 @@ test_scripts/cross_file_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
   Parameter Inference:
     inferred:     Variant
@@ -1182,7 +1182,7 @@ test_scripts/cross_file_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 158:7 Parameter acc ---
@@ -1298,7 +1298,7 @@ test_scripts/cross_file_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
   Parameter Inference:
     inferred:     Variant
@@ -1434,7 +1434,7 @@ test_scripts/cross_file_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 307:27 Parameter depth ---
@@ -1480,7 +1480,7 @@ test_scripts/cross_file_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 314:1 Variable step3 ---
@@ -7771,7 +7771,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 292:24 Parameter event_type ---
@@ -7798,7 +7798,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 302:0 Variable spatial_grid ---
@@ -8988,7 +8988,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 64:18 Parameter slot ---
@@ -9216,7 +9216,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 176:19 Parameter choice_index ---
@@ -9420,7 +9420,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 251:21 Parameter quest_id ---
@@ -9558,7 +9558,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 299:1 Variable conditions ---
@@ -9639,7 +9639,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 324:1 Variable effect_func ---
@@ -17525,7 +17525,7 @@ test_scripts/standard_methods.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 28:34 Parameter acc ---
@@ -17678,7 +17678,7 @@ test_scripts/standard_methods.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 63:1 Variable duplicated ---
@@ -19182,7 +19182,7 @@ test_scripts/type_guards.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 248:23 Parameter value ---
@@ -19544,7 +19544,7 @@ test_scripts/type_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 62:34 Parameter a ---
@@ -20209,7 +20209,7 @@ test_scripts/union_returns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
 --- 138:23 Parameter operation ---
@@ -20433,7 +20433,7 @@ test_scripts/union_returns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   High
+    confidence:   Medium
     nullable:     no
 
   Flow Narrowing:

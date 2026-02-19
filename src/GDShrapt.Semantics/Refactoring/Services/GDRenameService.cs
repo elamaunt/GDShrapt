@@ -1431,26 +1431,21 @@ public class GDRenameService
     }
 
     private static GDMethodDeclaration? FindEnclosingMethod(GDNode? node)
-    {
-        var current = node;
-        while (current != null)
-        {
-            if (current is GDMethodDeclaration method)
-                return method;
-            current = current.Parent;
-        }
-        return null;
-    }
+        => GDProvenanceTracer.FindEnclosingMethod(node);
 
     private static GDForStatement? FindEnclosingForStatement(GDNode? node, string varName)
+        => GDProvenanceTracer.FindEnclosingForStatement(node, varName);
+
+    private static int FindParameterIndex(GDMethodDeclaration method, string paramName)
+        => GDProvenanceTracer.FindParameterIndex(method, paramName);
+
+    private static T? FindParentOfType<T>(GDSyntaxToken? node) where T : GDNode
     {
-        var current = node;
+        var current = node?.Parent;
         while (current != null)
         {
-            if (current is GDForStatement forStmt && forStmt.Variable?.Sequence == varName)
-                return forStmt;
-            if (current is GDMethodDeclaration)
-                break;
+            if (current is T target)
+                return target;
             current = current.Parent;
         }
         return null;
@@ -1597,313 +1592,24 @@ public class GDRenameService
         GDExpression? argExpr,
         int maxDepth = 3)
     {
-        if (maxDepth <= 0 || _projectModel == null)
-            return new List<GDCallSiteProvenanceEntry>();
-
-        var chain = new List<GDCallSiteProvenanceEntry>();
-        var enclosingType = callSiteFile.TypeName;
-        if (string.IsNullOrEmpty(enclosingType))
-            return chain;
-
-        // 1. For-loop variable -> trace container
-        if (argExpr != null)
-        {
-            var forStmt = FindEnclosingForStatement(argExpr, argVarName);
-            if (forStmt != null)
-            {
-                var collectionName = (forStmt.Collection as GDIdentifierExpression)
-                    ?.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(collectionName))
-                {
-                    var forLine = (forStmt.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
-                    var innerChain = TraceContainerOrigin(
-                        callSiteFile, enclosingType, collectionName, maxDepth - 1);
-                    chain.Add(new GDCallSiteProvenanceEntry(
-                        callSiteFile.FullPath ?? "", forLine,
-                        $"for {argVarName} in {collectionName}", innerChain));
-                    return chain;
-                }
-            }
-        }
-
-        // 2. Parameter -> trace callers (signals + call sites)
-        var method = argExpr != null ? FindEnclosingMethod(argExpr) : null;
-        if (method != null)
-        {
-            var paramIdx = FindParameterIndex(method, argVarName);
-            if (paramIdx >= 0)
-            {
-                var methodName = method.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(methodName))
-                {
-                    // 2a: Signal connections -> signal parameter types
-                    try
-                    {
-                        var connections = _projectModel.SignalConnectionRegistry
-                            .GetSignalsCallingMethod(enclosingType, methodName);
-                        foreach (var conn in connections)
-                        {
-                            if (string.IsNullOrEmpty(conn.EmitterType)) continue;
-                            var signalParams = GetSignalParameterTypes(
-                                conn.EmitterType, conn.SignalName);
-                            if (signalParams != null && paramIdx < signalParams.Count)
-                            {
-                                chain.Add(new GDCallSiteProvenanceEntry(
-                                    conn.SourceFilePath ?? callSiteFile.FullPath ?? "",
-                                    conn.Line,
-                                    $"{conn.EmitterType}.{conn.SignalName} signal -> " +
-                                    $"{methodName}({argVarName}: {signalParams[paramIdx]})"));
-                            }
-                        }
-                    }
-                    catch { }
-
-                    // 2b: Direct call sites -> recurse into argument
-                    if (chain.Count == 0)
-                    {
-                        try
-                        {
-                            var collector = new GDCallSiteCollector(_project);
-                            var callSites = collector.CollectCallSites(
-                                enclosingType, methodName);
-                            foreach (var cs in callSites)
-                            {
-                                var arg = cs.GetArgument(paramIdx);
-                                if (arg?.Expression == null) continue;
-                                var innerChain = TraceArgumentOrigin(
-                                    cs.SourceScript, arg.ExpressionText,
-                                    arg.Expression, maxDepth - 1);
-                                chain.Add(new GDCallSiteProvenanceEntry(
-                                    cs.FilePath, cs.Line + 1,
-                                    arg.ExpressionText, innerChain));
-                            }
-                        }
-                        catch { }
-                    }
-                }
-            }
-        }
-
-        return chain;
+        return GDProvenanceTracer.TraceArgumentOrigin(
+            _project, _projectModel, _runtimeProvider,
+            callSiteFile, argVarName, argExpr, maxDepth);
     }
 
-    /// <summary>
-    /// Tries to extract a more specific type from the inner chain.
-    /// For example, if declared type is Node2D but the chain shows the argument
-    /// originates from a signal with Area2D parameter, returns Area2D.
-    /// </summary>
     private string? TryNarrowTypeFromChain(
         IReadOnlyList<GDCallSiteProvenanceEntry> chain, string currentType)
     {
-        if (_runtimeProvider == null || chain.Count == 0)
-            return null;
-
-        string? narrowest = null;
-
-        foreach (var entry in chain)
-        {
-            // Signal entries contain type in expression like "EmitterType.signal_name signal -> method(param: Area2D)"
-            var signalType = ExtractSignalParamType(entry.Expression);
-            if (!string.IsNullOrEmpty(signalType)
-                && signalType != "Variant"
-                && signalType != currentType
-                && _runtimeProvider.IsAssignableTo(signalType, currentType) == true)
-            {
-                if (narrowest == null
-                    || _runtimeProvider.IsAssignableTo(signalType, narrowest) == true)
-                    narrowest = signalType;
-            }
-
-            // Recurse into inner chain
-            var innerNarrowed = TryNarrowTypeFromChain(entry.InnerChain.ToList(), currentType);
-            if (innerNarrowed != null)
-            {
-                if (narrowest == null
-                    || _runtimeProvider.IsAssignableTo(innerNarrowed, narrowest) == true)
-                    narrowest = innerNarrowed;
-            }
-        }
-
-        return narrowest;
-    }
-
-    private static string? ExtractSignalParamType(string expression)
-    {
-        // Pattern: "EmitterType.signal_name signal -> method(param: TypeName)"
-        var arrowIdx = expression.IndexOf("-> ");
-        if (arrowIdx < 0) return null;
-
-        var colonIdx = expression.LastIndexOf(": ");
-        if (colonIdx < arrowIdx) return null;
-
-        var closeParen = expression.IndexOf(')', colonIdx);
-        if (closeParen < 0) return null;
-
-        return expression.Substring(colonIdx + 2, closeParen - colonIdx - 2).Trim();
+        return GDProvenanceTracer.TryNarrowTypeFromChain(_runtimeProvider, chain, currentType);
     }
 
     private List<GDCallSiteProvenanceEntry> TraceContainerOrigin(
         GDScriptFile file, string enclosingType,
         string containerVarName, int maxDepth)
     {
-        var chain = new List<GDCallSiteProvenanceEntry>();
-        if (maxDepth <= 0 || _projectModel == null) return chain;
-
-        var profile = _projectModel.GetMergedContainerProfile(
-            enclosingType, containerVarName);
-
-        if (profile == null)
-        {
-            // Try base class profile
-            if (_runtimeProvider != null)
-            {
-                var baseType = _runtimeProvider.GetBaseType(enclosingType);
-                while (!string.IsNullOrEmpty(baseType) && profile == null)
-                {
-                    profile = _projectModel.GetMergedContainerProfile(baseType, containerVarName);
-                    if (profile != null)
-                    {
-                        var baseScript = _project.ScriptFiles.FirstOrDefault(s => s.TypeName == baseType);
-                        if (baseScript != null) file = baseScript;
-                        break;
-                    }
-                    baseType = _runtimeProvider.GetBaseType(baseType);
-                }
-            }
-
-            // Still null? Check flow analysis for explicitly typed containers
-            if (profile == null)
-            {
-                var script = _project.ScriptFiles.FirstOrDefault(s => s.TypeName == enclosingType)
-                    ?? file;
-                var model = _projectModel.GetSemanticModel(script) ?? script.SemanticModel;
-                var flowType = model?.GetFlowVariableType(containerVarName, null);
-                if (flowType?.DeclaredType != null && flowType.DeclaredType.DisplayName?.Contains("[") == true)
-                {
-                    var declLine = FindVariableDeclarationLine(script, containerVarName);
-                    chain.Add(new GDCallSiteProvenanceEntry(
-                        script.FullPath ?? file.FullPath ?? "",
-                        declLine,
-                        $"var {containerVarName}: {flowType.DeclaredType.DisplayName}")
-                    { IsExplicitType = true });
-                    return chain;
-                }
-                return chain;
-            }
-        }
-
-        // Typed container (e.g. Array[EnemyBase]) -> declaration location
-        var elementType = profile.ComputeInferredType();
-        if (elementType?.HasElementTypes == true)
-        {
-            var elType = elementType.EffectiveElementType?.DisplayName;
-            if (!string.IsNullOrEmpty(elType) && elType != "Variant")
-            {
-                chain.Add(new GDCallSiteProvenanceEntry(
-                    file.FullPath ?? "",
-                    profile.DeclarationLine + 1,
-                    $"var {containerVarName} ~: Array[{elType}]")
-                { IsExplicitType = false });
-                return chain;
-            }
-        }
-
-        // Untyped container -> trace append sites
-        foreach (var usage in profile.ValueUsages)
-        {
-            if (usage.Node == null) continue;
-            if (usage.Kind != GDContainerUsageKind.Append
-                && usage.Kind != GDContainerUsageKind.PushBack
-                && usage.Kind != GDContainerUsageKind.PushFront) continue;
-
-            var callNode = usage.Node is GDCallExpression ce
-                ? ce : FindParentOfType<GDCallExpression>(usage.Node);
-            if (callNode == null) continue;
-
-            var args = callNode.Parameters?.ToList();
-            if (args == null || args.Count == 0) continue;
-            if (args[0] is not GDIdentifierExpression appendedIdent) continue;
-
-            var appendedVarName = appendedIdent.Identifier?.Sequence;
-            if (string.IsNullOrEmpty(appendedVarName)) continue;
-
-            var method = FindEnclosingMethod(usage.Node);
-            if (method == null) continue;
-
-            var paramIdx = FindParameterIndex(method, appendedVarName);
-            if (paramIdx < 0) continue;
-
-            var methodName = method.Identifier?.Sequence;
-            if (string.IsNullOrEmpty(methodName)) continue;
-
-            // Signal -> append -> container
-            try
-            {
-                var connections = _projectModel.SignalConnectionRegistry
-                    .GetSignalsCallingMethod(enclosingType, methodName);
-                foreach (var conn in connections)
-                {
-                    if (string.IsNullOrEmpty(conn.EmitterType)) continue;
-                    var signalParams = GetSignalParameterTypes(
-                        conn.EmitterType, conn.SignalName);
-                    if (signalParams != null && paramIdx < signalParams.Count)
-                    {
-                        var paramType = signalParams[paramIdx];
-                        if (!string.IsNullOrEmpty(paramType) && paramType != "Variant")
-                        {
-                            var usageLine = (usage.Node.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
-                            chain.Add(new GDCallSiteProvenanceEntry(
-                                file.FullPath ?? "", usageLine,
-                                $"{containerVarName}.append({appendedVarName}) " +
-                                $"<- {methodName}({appendedVarName}: {paramType}) " +
-                                $"<- {conn.EmitterType}.{conn.SignalName} signal"));
-                        }
-                    }
-                }
-            }
-            catch { }
-        }
-
-        return chain;
-    }
-
-    private static T? FindParentOfType<T>(GDSyntaxToken? node) where T : GDNode
-    {
-        var current = node?.Parent;
-        while (current != null)
-        {
-            if (current is T target)
-                return target;
-            current = current.Parent;
-        }
-        return null;
-    }
-
-    private static int FindVariableDeclarationLine(GDScriptFile script, string varName)
-    {
-        if (script.Class == null) return 0;
-        foreach (var member in script.Class.Members)
-        {
-            if (member is GDVariableDeclaration varDecl
-                && varDecl.Identifier?.Sequence == varName)
-                return varDecl.Identifier.StartLine + 1;
-        }
-        return 0;
-    }
-
-    private static int FindParameterIndex(GDMethodDeclaration method, string paramName)
-    {
-        if (method.Parameters == null)
-            return -1;
-
-        int index = 0;
-        foreach (var param in method.Parameters)
-        {
-            if (param is GDParameterDeclaration pd && pd.Identifier?.Sequence == paramName)
-                return index;
-            index++;
-        }
-        return -1;
+        return GDProvenanceTracer.TraceContainerOrigin(
+            _project, _projectModel, _runtimeProvider,
+            file, enclosingType, containerVarName, maxDepth);
     }
 
     private string? FindRootDeclaringType(string typeName, string memberName)
@@ -1926,41 +1632,7 @@ public class GDRenameService
     }
 
     private IReadOnlyList<string>? GetSignalParameterTypes(string emitterType, string signalName)
-    {
-        if (_runtimeProvider == null)
-            return null;
-
-        // Walk inheritance chain to find signal (handles project class → built-in type)
-        var visited = new HashSet<string>();
-        var current = emitterType;
-        while (!string.IsNullOrEmpty(current) && visited.Add(current))
-        {
-            var member = _runtimeProvider.GetMember(current, signalName);
-            if (member?.Kind == GDRuntimeMemberKind.Signal && member.Parameters != null && member.Parameters.Count > 0)
-            {
-                return member.Parameters.Select(p => p.Type ?? "Variant").ToList();
-            }
-
-            // Check project signal declarations at this level
-            var script = _project.GetScriptByTypeName(current);
-            if (script?.Class != null)
-            {
-                var signalDecl = script.Class.Members
-                    .OfType<GDSignalDeclaration>()
-                    .FirstOrDefault(s => s.Identifier?.Sequence == signalName);
-                if (signalDecl?.Parameters != null)
-                {
-                    return signalDecl.Parameters
-                        .Select(p => p.Type?.BuildName() ?? "Variant")
-                        .ToList();
-                }
-            }
-
-            current = _runtimeProvider.GetBaseType(current);
-        }
-
-        return null;
-    }
+        => GDProvenanceTracer.GetSignalParameterTypes(_project, _runtimeProvider, emitterType, signalName);
 
     /// <summary>
     /// Type-filtered version: collects .tscn signal connection edits only where

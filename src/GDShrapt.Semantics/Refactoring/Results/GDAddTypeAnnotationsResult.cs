@@ -71,6 +71,16 @@ public class GDTypeAnnotationPlan
     /// </summary>
     public string? PreviousType { get; init; }
 
+    /// <summary>
+    /// The containing method name (for grouping in --explain output).
+    /// </summary>
+    public string? MethodName { get; init; }
+
+    /// <summary>
+    /// Return statement details for return type annotations (when target is ReturnType).
+    /// </summary>
+    public IReadOnlyList<GDReturnStatementInfo>? SourceReturnInfo { get; init; }
+
     public GDTypeAnnotationPlan(
         string filePath,
         string identifierName,
@@ -211,6 +221,11 @@ public class GDTypeAnnotationStatistics
     public int ParameterCount { get; init; }
 
     /// <summary>
+    /// Number of return type annotations.
+    /// </summary>
+    public int ReturnTypeCount { get; init; }
+
+    /// <summary>
     /// Creates statistics from a list of annotations.
     /// </summary>
     public static GDTypeAnnotationStatistics FromAnnotations(IReadOnlyList<GDTypeAnnotationPlan> annotations)
@@ -224,7 +239,40 @@ public class GDTypeAnnotationStatistics
             UnknownCount = annotations.Count(a => a.InferredType.Confidence == GDTypeConfidence.Unknown),
             ClassVariableCount = annotations.Count(a => a.Target == TypeAnnotationTarget.ClassVariable),
             LocalVariableCount = annotations.Count(a => a.Target == TypeAnnotationTarget.LocalVariable),
-            ParameterCount = annotations.Count(a => a.Target == TypeAnnotationTarget.Parameter)
+            ParameterCount = annotations.Count(a => a.Target == TypeAnnotationTarget.Parameter),
+            ReturnTypeCount = annotations.Count(a => a.Target == TypeAnnotationTarget.ReturnType)
         };
+    }
+}
+
+/// <summary>
+/// Lightweight summary of a return statement for --explain output.
+/// </summary>
+public class GDReturnStatementInfo
+{
+    public string? TypeName { get; init; }
+    public int Line { get; init; }
+    public bool IsImplicit { get; init; }
+    public string? BranchContext { get; init; }
+    public bool IsHighConfidence { get; init; }
+
+    /// <summary>
+    /// For Dictionary returns, the observed key-type pairs.
+    /// </summary>
+    public IReadOnlyList<GDDictionaryShapeEntry>? DictionaryShape { get; init; }
+}
+
+/// <summary>
+/// A single key-value type pair in a dictionary shape.
+/// </summary>
+public class GDDictionaryShapeEntry
+{
+    public string Key { get; }
+    public string ValueType { get; }
+
+    public GDDictionaryShapeEntry(string key, string valueType)
+    {
+        Key = key;
+        ValueType = valueType;
     }
 }
