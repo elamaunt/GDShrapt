@@ -79,6 +79,7 @@ namespace GDShrapt.Reader
                 case GDOperationType.Identifier: return 21;
                 case GDOperationType.Method: return 21;
                 case GDOperationType.Yeild: return 21;
+                case GDOperationType.Await: return 21;
                 case GDOperationType.GetNode:
                 case GDOperationType.GetUniqueNode: return 21;
                 default:

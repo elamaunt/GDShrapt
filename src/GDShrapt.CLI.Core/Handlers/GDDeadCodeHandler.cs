@@ -65,7 +65,14 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
             var filteredItems = report.Items
                 .Where(item => item.Confidence == GDReferenceConfidence.Strict)
                 .ToList();
-            return new GDDeadCodeReport(filteredItems);
+            return new GDDeadCodeReport(filteredItems)
+            {
+                FilesAnalyzed = report.FilesAnalyzed,
+                SceneSignalConnectionsConsidered = report.SceneSignalConnectionsConsidered,
+                VirtualMethodsSkipped = report.VirtualMethodsSkipped,
+                AutoloadsResolved = report.AutoloadsResolved,
+                TotalCallSitesRegistered = report.TotalCallSitesRegistered
+            };
         }
         return report;
     }
@@ -79,16 +86,7 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
         // Base only allows Strict confidence for safety
         if (options.MaxConfidence > GDReferenceConfidence.Strict)
         {
-            return new GDDeadCodeOptions
-            {
-                MaxConfidence = GDReferenceConfidence.Strict,
-                IncludeVariables = options.IncludeVariables,
-                IncludeFunctions = options.IncludeFunctions,
-                IncludeSignals = options.IncludeSignals,
-                IncludeParameters = options.IncludeParameters,
-                IncludePrivate = options.IncludePrivate,
-                IncludeUnreachable = options.IncludeUnreachable
-            };
+            return options.WithStrictConfidenceOnly();
         }
         return options;
     }

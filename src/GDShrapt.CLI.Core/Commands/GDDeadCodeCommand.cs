@@ -60,7 +60,9 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             IncludeSignals = _options.IncludeSignals,
             IncludeParameters = _options.IncludeParameters,
             IncludePrivate = _options.IncludePrivate,
-            IncludeUnreachable = _options.IncludeUnreachable
+            IncludeUnreachable = _options.IncludeUnreachable,
+            ExcludeTestFiles = _options.ExcludeTests,
+            CollectEvidence = _options.Explain
         };
 
         // Analyze based on scope
@@ -75,7 +77,7 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             report = handler.AnalyzeProject(options);
         }
 
-        // Filter and group results
+        // Filter by kind
         var items = report.Items.AsEnumerable();
 
         if (!string.IsNullOrEmpty(_options.Kind))
@@ -84,20 +86,27 @@ public class GDDeadCodeCommand : GDProjectCommandBase
                 items = items.Where(i => i.Kind == kind);
         }
 
-        // Output results
-        WriteDeadCodeOutput(items.ToList(), projectRoot);
-
-        // Scene signal informational note
-        var sceneSignalCount = projectModel.SignalConnectionRegistry.GetAllConnections()
-            .Count(c => c.IsSceneConnection);
-        if (sceneSignalCount > 0)
+        var filteredReport = new GDDeadCodeReport(items.ToList())
         {
-            _formatter.WriteMessage(_output, "");
-            _formatter.WriteMessage(_output, $"Note: {sceneSignalCount} scene signal connection(s) considered.");
+            FilesAnalyzed = report.FilesAnalyzed,
+            SceneSignalConnectionsConsidered = report.SceneSignalConnectionsConsidered,
+            VirtualMethodsSkipped = report.VirtualMethodsSkipped,
+            AutoloadsResolved = report.AutoloadsResolved,
+            TotalCallSitesRegistered = report.TotalCallSitesRegistered
+        };
+
+        // Output results
+        if (_options.Quiet)
+        {
+            WriteQuietOutput(filteredReport);
+        }
+        else
+        {
+            WriteDeadCodeOutput(filteredReport, projectRoot);
         }
 
         // Fail conditions
-        var count = items.Count();
+        var count = filteredReport.Items.Count;
         if (_options.FailIfFound && count > 0)
         {
             _formatter.WriteError(_output, $"Found {count} dead code items");
@@ -107,43 +116,64 @@ public class GDDeadCodeCommand : GDProjectCommandBase
         return Task.FromResult(GDExitCode.Success);
     }
 
-    private void WriteDeadCodeOutput(System.Collections.Generic.List<GDDeadCodeItem> items, string projectRoot)
+    private void WriteQuietOutput(GDDeadCodeReport report)
     {
-        if (items.Count == 0)
+        if (report.Items.Count == 0)
+        {
+            _formatter.WriteMessage(_output, "dead-code: 0 items");
+            return;
+        }
+
+        _formatter.WriteMessage(_output, GDDeadCodeOutputHelper.FormatSummaryLine(report));
+    }
+
+    private void WriteDeadCodeOutput(GDDeadCodeReport report, string projectRoot)
+    {
+        if (report.Items.Count == 0)
         {
             _formatter.WriteMessage(_output, "No dead code found.");
             return;
         }
 
-        // Group by file
-        var byFile = items.GroupBy(i => i.FilePath);
-
-        _formatter.WriteMessage(_output, $"Dead Code Analysis: {items.Count} items found");
+        _formatter.WriteMessage(_output, $"Dead Code Analysis: {report.Items.Count} items found");
         _formatter.WriteMessage(_output, "");
 
-        foreach (var fileGroup in byFile.OrderBy(g => g.Key))
+        // Top files
+        GDDeadCodeOutputHelper.WriteTopOffenders(_formatter, _output, report, projectRoot, _options.TopN ?? 5);
+        _formatter.WriteMessage(_output, "");
+
+        // By kind summary
+        GDDeadCodeOutputHelper.WriteKindSummary(_formatter, _output, report);
+        _formatter.WriteMessage(_output, "");
+
+        // Legend (only codes present in results)
+        GDDeadCodeOutputHelper.WriteLegend(_formatter, _output, report.Items.Select(i => i.ReasonCode));
+        _formatter.WriteMessage(_output, "");
+
+        // Group by file, optionally limit to top N files
+        var byFile = report.Items.GroupBy(i => i.FilePath)
+            .OrderByDescending(g => g.Count())
+            .AsEnumerable();
+
+        if (_options.TopN.HasValue)
+            byFile = byFile.Take(_options.TopN.Value);
+
+        foreach (var fileGroup in byFile)
         {
             var relPath = GetRelativePath(fileGroup.Key, projectRoot);
             _formatter.WriteMessage(_output, $"{relPath}:");
 
             foreach (var item in fileGroup.OrderBy(i => i.Line))
             {
-                var confidence = item.Confidence == GDReferenceConfidence.Strict ? "" : $" [{item.Confidence}]";
-                _formatter.WriteMessage(_output, $"  {item.Line}:{item.Column} {item.Kind}: {item.Name}{confidence}");
-                if (!string.IsNullOrEmpty(item.Reason))
-                {
-                    _formatter.WriteMessage(_output, $"    Reason: {item.Reason}");
-                }
+                GDDeadCodeOutputHelper.WriteItem(_formatter, _output, item, _options.Explain);
             }
             _formatter.WriteMessage(_output, "");
         }
 
-        // Summary by kind
-        _formatter.WriteMessage(_output, "Summary:");
-        var byKind = items.GroupBy(i => i.Kind);
-        foreach (var kindGroup in byKind.OrderBy(g => g.Key))
+        // Scene signal note
+        if (report.SceneSignalConnectionsConsidered > 0)
         {
-            _formatter.WriteMessage(_output, $"  {kindGroup.Key}: {kindGroup.Count()}");
+            _formatter.WriteMessage(_output, $"Note: {report.SceneSignalConnectionsConsidered} scene signal connection(s) considered.");
         }
     }
 }
@@ -197,4 +227,24 @@ public class GDDeadCodeCommandOptions
     /// Fail if any dead code is found (for CI).
     /// </summary>
     public bool FailIfFound { get; set; }
+
+    /// <summary>
+    /// Show only the top N files by dead code count.
+    /// </summary>
+    public int? TopN { get; set; }
+
+    /// <summary>
+    /// Exclude test files from analysis.
+    /// </summary>
+    public bool ExcludeTests { get; set; }
+
+    /// <summary>
+    /// Show detailed evidence for each item.
+    /// </summary>
+    public bool Explain { get; set; }
+
+    /// <summary>
+    /// Output a single summary line (for CI).
+    /// </summary>
+    public bool Quiet { get; set; }
 }

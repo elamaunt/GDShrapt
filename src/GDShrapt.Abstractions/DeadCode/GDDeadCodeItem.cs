@@ -48,6 +48,11 @@ public class GDDeadCodeItem
     public GDReferenceConfidence Confidence { get; set; } = GDReferenceConfidence.Strict;
 
     /// <summary>
+    /// Compact reason code for the detection.
+    /// </summary>
+    public GDDeadCodeReasonCode ReasonCode { get; set; }
+
+    /// <summary>
     /// Human-readable reason why this is considered dead code.
     /// </summary>
     public string? Reason { get; set; }
@@ -56,6 +61,16 @@ public class GDDeadCodeItem
     /// Whether this is a private member (starts with _ in GDScript convention).
     /// </summary>
     public bool IsPrivate { get; set; }
+
+    /// <summary>
+    /// Whether this variable has @export or @onready annotation.
+    /// </summary>
+    public bool IsExportedOrOnready { get; set; }
+
+    /// <summary>
+    /// Evidence details for --explain mode. Null unless CollectEvidence is enabled.
+    /// </summary>
+    public GDDeadCodeEvidence? Evidence { get; set; }
 
     public GDDeadCodeItem()
     {

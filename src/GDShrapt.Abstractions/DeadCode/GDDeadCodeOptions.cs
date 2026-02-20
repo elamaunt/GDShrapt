@@ -136,6 +136,41 @@ public class GDDeadCodeOptions
     public HashSet<string> AdditionalSkipMethods { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Exclude test files from analysis.
+    /// </summary>
+    public bool ExcludeTestFiles { get; set; }
+
+    /// <summary>
+    /// Path patterns that identify test files.
+    /// </summary>
+    public HashSet<string> TestPathPatterns { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "test_", "tests/", "test/", "_test.gd"
+    };
+
+    /// <summary>
+    /// Collect evidence details for --explain mode.
+    /// </summary>
+    public bool CollectEvidence { get; set; }
+
+    /// <summary>
+    /// Checks if a file should be skipped based on test path patterns.
+    /// </summary>
+    public bool ShouldSkipFile(string filePath)
+    {
+        if (!ExcludeTestFiles)
+            return false;
+
+        var normalized = filePath.Replace('\\', '/');
+        foreach (var pattern in TestPathPatterns)
+        {
+            if (normalized.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Checks if a method name should be skipped.
     /// </summary>
     public bool ShouldSkipMethod(string methodName)
@@ -185,7 +220,10 @@ public class GDDeadCodeOptions
             IncludeUnreachable = IncludeUnreachable,
             SkipGodotVirtuals = SkipGodotVirtuals,
             SkipMethods = SkipMethods,
-            AdditionalSkipMethods = AdditionalSkipMethods
+            AdditionalSkipMethods = AdditionalSkipMethods,
+            ExcludeTestFiles = ExcludeTestFiles,
+            TestPathPatterns = TestPathPatterns,
+            CollectEvidence = CollectEvidence
         };
     }
 

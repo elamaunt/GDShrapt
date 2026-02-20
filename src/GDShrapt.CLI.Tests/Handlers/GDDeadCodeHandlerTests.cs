@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using GDShrapt.Abstractions;
 using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
@@ -1444,6 +1447,884 @@ func _ready() -> void:
             report.Items.Should().NotContain(item =>
                 item.Kind == GDDeadCodeKind.Constant && item.Name == "MAX_WAVES",
                 "MAX_WAVES is used cross-file via Constants.MAX_WAVES autoload");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Chained property access tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_VariableReadViaTwoLevelPropertyChain_NoFalsePositive()
+    {
+        // class A: has member variable
+        var regexCode = @"extends RefCounted
+class_name CompilerRegEx
+
+var INLINE_RANDOM_REGEX: RegEx = RegEx.create_from_string(""\[\[(?<options>.*?)\]\]"")
+";
+        // class B: has typed property pointing to A
+        var compilationCode = @"extends RefCounted
+class_name Compilation
+
+var regex: CompilerRegEx = CompilerRegEx.new()
+";
+        // class C: accesses A's member through B's property
+        var userCode = @"extends Node
+
+var compilation: Compilation = Compilation.new()
+
+func _ready() -> void:
+    var results = compilation.regex.INLINE_RANDOM_REGEX.search_all(""test"")
+    print(results)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("compiler_regex.gd", regexCode),
+            ("compilation.gd", compilationCode),
+            ("user.gd", userCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // INLINE_RANDOM_REGEX should NOT be dead — it's read via chain
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "INLINE_RANDOM_REGEX",
+                "INLINE_RANDOM_REGEX is read via property chain: compilation.regex.INLINE_RANDOM_REGEX");
+
+            // regex should NOT be dead — it's read via compilation.regex
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "regex",
+                "regex is read via: compilation.regex");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_VariableReadViaChainInForLoop_NoFalsePositive()
+    {
+        // Reproduces the exact user scenario: for loop iterating over chained property access
+        var regexCode = @"extends RefCounted
+class_name DMCompilerRegEx
+
+var IMPORT_REGEX: RegEx = RegEx.create_from_string(""import \""(?<path>[^\""]+)\""  as (?<prefix>[a-zA-Z_]+)"")
+var INLINE_RANDOM_REGEX: RegEx = RegEx.create_from_string(""\[\[(?<options>.*?)\]\]"")
+";
+        var compilationCode = @"extends RefCounted
+class_name DMCompilation
+
+var file_path: String
+var imported_paths: PackedStringArray = []
+var regex: DMCompilerRegEx = DMCompilerRegEx.new()
+";
+        var compilerCode = @"extends RefCounted
+
+var compilation: DMCompilation = DMCompilation.new()
+
+func resolve_random(text: String) -> String:
+    for found: RegExMatch in compilation.regex.INLINE_RANDOM_REGEX.search_all(text):
+        var options: PackedStringArray = found.get_string(&""options"").split(&""|"")
+        text = text.replace(&""[[%s]]"" % found.get_string(&""options""), options[randi_range(0, options.size() - 1)])
+    return text
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("compiler_regex.gd", regexCode),
+            ("compilation.gd", compilationCode),
+            ("compiler.gd", compilerCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // INLINE_RANDOM_REGEX should NOT be dead
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "INLINE_RANDOM_REGEX",
+                "INLINE_RANDOM_REGEX is read via: compilation.regex.INLINE_RANDOM_REGEX.search_all()");
+
+            // regex should NOT be dead
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "regex",
+                "regex is read via: compilation.regex");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_VariableReadViaChainWithLocalVar_NoFalsePositive()
+    {
+        // Chain access through a local variable (no class-level annotation)
+        var regexCode = @"extends RefCounted
+class_name CompilerRegEx
+
+var MY_PATTERN: RegEx = RegEx.create_from_string(""test"")
+";
+        var compilationCode = @"extends RefCounted
+class_name Compilation
+
+var regex: CompilerRegEx = CompilerRegEx.new()
+";
+        var userCode = @"extends Node
+
+func process_text(text: String) -> void:
+    var comp: Compilation = Compilation.new()
+    var result = comp.regex.MY_PATTERN.search(text)
+    if result:
+        print(result.get_string())
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("compiler_regex.gd", regexCode),
+            ("compilation.gd", compilationCode),
+            ("user.gd", userCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "MY_PATTERN",
+                "MY_PATTERN is read via local variable chain: comp.regex.MY_PATTERN");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_VariableReadViaChainWithManyMembers_NoFalsePositive()
+    {
+        // Reproduces the real scenario more faithfully:
+        // - DMCompilerRegEx has many RegEx members (not just one)
+        // - DMCompilation has regex property + many other properties
+        // - Access happens in a separate file via local variable in a function
+        // - The accessing file has no class_name
+        var regexCode = @"extends RefCounted
+class_name DMCompilerRegEx
+
+var IMPORT_REGEX: RegEx = RegEx.create_from_string(""import"")
+var USING_REGEX: RegEx = RegEx.create_from_string(""using"")
+var INDENT_REGEX: RegEx = RegEx.create_from_string(""indent"")
+var CONDITION_REGEX: RegEx = RegEx.create_from_string(""if|elif"")
+var GOTO_REGEX: RegEx = RegEx.create_from_string(""goto"")
+var INLINE_RANDOM_REGEX: RegEx = RegEx.create_from_string(""\[\[(?<options>.*?)\]\]"")
+var INLINE_CONDITIONALS_REGEX: RegEx = RegEx.create_from_string(""\[if (?<condition>.+?)\]"")
+var IMAGE_TAGS_REGEX: RegEx = RegEx.create_from_string(""\[img.*?\](?<path>.+?)\[\/img\]"")
+var TAGS_REGEX: RegEx = RegEx.create_from_string(""\[#(?<tags>.*?)\]"")
+";
+        var compilationCode = @"extends RefCounted
+class_name DMCompilation
+
+var file_path: String
+var imported_paths: PackedStringArray = []
+var using_states: PackedStringArray = []
+var labels: Dictionary = {}
+var first_label: String = """"
+var character_names: PackedStringArray = []
+var errors: Array[Dictionary] = []
+var lines: Dictionary = {}
+var data: Dictionary = {}
+var processor: Node = null
+var regex: DMCompilerRegEx = DMCompilerRegEx.new()
+";
+        // No class_name — just extends Node
+        var managerCode = @"extends Node
+
+func resolve_random_text(text: String) -> String:
+    var compilation: DMCompilation = DMCompilation.new()
+    for found: RegExMatch in compilation.regex.INLINE_RANDOM_REGEX.search_all(text):
+        var options: PackedStringArray = found.get_string(&""options"").split(&""|"")
+        text = text.replace(&""[[%s]]"" % found.get_string(&""options""), options[0])
+    var conditionals: Array[RegExMatch] = compilation.regex.INLINE_CONDITIONALS_REGEX.search_all(text)
+    for c: RegExMatch in conditionals:
+        print(c)
+    var tags: Array[RegExMatch] = compilation.regex.IMAGE_TAGS_REGEX.search_all(text)
+    for t: RegExMatch in tags:
+        print(t)
+    return text
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("compiler_regex.gd", regexCode),
+            ("compilation.gd", compilationCode),
+            ("manager.gd", managerCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "INLINE_RANDOM_REGEX",
+                "INLINE_RANDOM_REGEX is read via: compilation.regex.INLINE_RANDOM_REGEX");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "INLINE_CONDITIONALS_REGEX",
+                "INLINE_CONDITIONALS_REGEX is read via: compilation.regex.INLINE_CONDITIONALS_REGEX");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "IMAGE_TAGS_REGEX",
+                "IMAGE_TAGS_REGEX is read via: compilation.regex.IMAGE_TAGS_REGEX");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "regex",
+                "regex is read via: compilation.regex");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_DtoVariableReadCrossFile_NoFalsePositive()
+    {
+        // DTO class with properties read via typed local variable from another file
+        // Reproduces DialogueLine pattern: class has many public vars, other files read them
+        var dtoCode = @"extends RefCounted
+class_name DialogueLine
+
+var id: String
+var next_id: String = """"
+var character: String = """"
+var text: String = """"
+var translation_key: String = """"
+var responses: Array = []
+
+func _init(data: Dictionary = {}) -> void:
+    if data.size() > 0:
+        id = data.id
+        next_id = data.next_id
+        character = data.character
+        text = data.text
+";
+        var managerCode = @"extends Node
+
+func get_line() -> DialogueLine:
+    return DialogueLine.new({id = ""1"", next_id = ""2"", character = ""NPC"", text = ""Hello""})
+
+func process() -> void:
+    var line: DialogueLine = get_line()
+    print(line.next_id)
+    print(line.character)
+    print(line.text)
+    print(line.translation_key)
+    for r in line.responses:
+        print(r)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("dialogue_line.gd", dtoCode),
+            ("manager.gd", managerCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // All these properties are read cross-file via typed local variable
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "next_id",
+                "next_id is read via: line.next_id");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "character",
+                "character is read via: line.character");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "text",
+                "text is read via: line.text");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "translation_key",
+                "translation_key is read via: line.translation_key");
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable &&
+                item.Name == "responses",
+                "responses is read via: line.responses");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Reason Code Tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_Items_HaveReasonCodes()
+    {
+        var code = @"extends Node
+class_name ReasonCodeTest
+
+var unused_var: int = 0
+const UNUSED_CONST = 42
+signal unused_signal
+
+func unused_function():
+    pass
+
+func _ready():
+    return
+    print(""unreachable"")
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("dead.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = true,
+                IncludeSignals = true,
+                IncludeUnreachable = true,
+                IncludeConstants = true,
+                IncludePrivate = false
+            };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotBeEmpty("should find dead code in test script");
+
+            // Verify specific reason codes per kind
+            var variables = report.Items.Where(i => i.Kind == GDDeadCodeKind.Variable).ToList();
+            variables.Should().OnlyContain(i => i.ReasonCode == GDDeadCodeReasonCode.VNR,
+                "unused variables should have VNR reason code");
+
+            var functions = report.Items.Where(i => i.Kind == GDDeadCodeKind.Function).ToList();
+            functions.Should().OnlyContain(i => i.ReasonCode == GDDeadCodeReasonCode.FNC,
+                "unused functions should have FNC reason code");
+
+            var signals = report.Items.Where(i => i.Kind == GDDeadCodeKind.Signal).ToList();
+            signals.Should().OnlyContain(i => i.ReasonCode == GDDeadCodeReasonCode.SNE,
+                "unused signals should have SNE reason code");
+
+            var constants = report.Items.Where(i => i.Kind == GDDeadCodeKind.Constant).ToList();
+            constants.Should().OnlyContain(i => i.ReasonCode == GDDeadCodeReasonCode.CNU,
+                "unused constants should have CNU reason code");
+
+            var unreachable = report.Items.Where(i => i.Kind == GDDeadCodeKind.Unreachable).ToList();
+            unreachable.Should().OnlyContain(i => i.ReasonCode == GDDeadCodeReasonCode.UCR,
+                "unreachable code should have UCR reason code");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === @export/@onready confidence downgrade tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_ExportVariable_NotReportedAsStrictDeadCode()
+    {
+        var code = @"extends Node
+
+@export var speed: float = 10.0
+var truly_unused: int = 0
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("player.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                MaxConfidence = GDReferenceConfidence.Strict,
+                IncludeVariables = true
+            };
+            var report = handler.AnalyzeProject(options);
+
+            // Base handler = Strict only → @export vars excluded
+            report.Items.Should().NotContain(i => i.Name == "speed",
+                "@export variables should not appear in Strict-only results");
+
+            // truly_unused should still appear
+            report.Items.Should().Contain(i =>
+                i.Name == "truly_unused" && i.Confidence == GDReferenceConfidence.Strict);
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_OnreadyVariable_NotReportedAsStrictDeadCode()
+    {
+        var code = @"extends Node
+
+@onready var label = $Label
+var truly_unused: int = 0
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("ui.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                MaxConfidence = GDReferenceConfidence.Strict,
+                IncludeVariables = true
+            };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "label",
+                "@onready variables should not appear in Strict-only results");
+            report.Items.Should().Contain(i => i.Name == "truly_unused");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_ExportOnready_MarkedWithCorrectReasonCodeAndFlag()
+    {
+        var code = @"extends Node
+
+@export var speed: float = 10.0
+@onready var label = $Label
+@export_range(0, 100) var health: int = 100
+var normal_unused: int = 0
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("node.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var service = projectModel.DeadCode;
+            var options = new GDDeadCodeOptions
+            {
+                MaxConfidence = GDReferenceConfidence.Potential,
+                IncludeVariables = true
+            };
+            var report = service.AnalyzeProject(options);
+
+            // @export → VEX, Potential, IsExportedOrOnready=true
+            var speedItem = report.Items.FirstOrDefault(i => i.Name == "speed");
+            speedItem.Should().NotBeNull("@export var speed should be reported at Potential confidence");
+            speedItem!.ReasonCode.Should().Be(GDDeadCodeReasonCode.VEX);
+            speedItem.Confidence.Should().Be(GDReferenceConfidence.Potential);
+            speedItem.IsExportedOrOnready.Should().BeTrue();
+
+            // @onready → VOR, Potential, IsExportedOrOnready=true
+            var labelItem = report.Items.FirstOrDefault(i => i.Name == "label");
+            labelItem.Should().NotBeNull("@onready var label should be reported at Potential confidence");
+            labelItem!.ReasonCode.Should().Be(GDDeadCodeReasonCode.VOR);
+            labelItem.Confidence.Should().Be(GDReferenceConfidence.Potential);
+            labelItem.IsExportedOrOnready.Should().BeTrue();
+
+            // @export_range → VEX, Potential
+            var healthItem = report.Items.FirstOrDefault(i => i.Name == "health");
+            healthItem.Should().NotBeNull("@export_range var health should be reported at Potential confidence");
+            healthItem!.ReasonCode.Should().Be(GDDeadCodeReasonCode.VEX);
+
+            // normal → VNR, Strict, IsExportedOrOnready=false
+            var normalItem = report.Items.FirstOrDefault(i => i.Name == "normal_unused");
+            normalItem.Should().NotBeNull();
+            normalItem!.ReasonCode.Should().Be(GDDeadCodeReasonCode.VNR);
+            normalItem.IsExportedOrOnready.Should().BeFalse();
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Test file exclusion ===
+
+    [TestMethod]
+    public void AnalyzeProject_ExcludeTests_SkipsTestFiles()
+    {
+        // Test the ShouldSkipFile logic directly on the options object
+        var options = new GDDeadCodeOptions
+        {
+            ExcludeTestFiles = true
+        };
+
+        // Should skip files matching test patterns
+        options.ShouldSkipFile("tests/test_player.gd").Should().BeTrue(
+            "'tests/' prefix matches TestPathPatterns");
+        options.ShouldSkipFile("test_player.gd").Should().BeTrue(
+            "'test_' prefix matches TestPathPatterns");
+        options.ShouldSkipFile("unit_test.gd").Should().BeTrue(
+            "'unit_test.gd' matches '_test.gd' suffix pattern");
+        options.ShouldSkipFile("player.gd").Should().BeFalse(
+            "'player.gd' does not match any pattern");
+        options.ShouldSkipFile("src/game/player_test.gd").Should().BeTrue(
+            "'_test.gd' suffix matches TestPathPatterns");
+
+        // When disabled, nothing is skipped
+        options.ExcludeTestFiles = false;
+        options.ShouldSkipFile("tests/test_player.gd").Should().BeFalse(
+            "ExcludeTestFiles=false means nothing is skipped");
+    }
+
+    // === Report metadata tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_Report_HasMetadata()
+    {
+        var code = @"extends Node
+var unused: int = 0
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("main.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var report = handler.AnalyzeProject(new GDDeadCodeOptions());
+
+            report.FilesAnalyzed.Should().BeGreaterThan(0);
+            report.VirtualMethodsSkipped.Should().BeGreaterThan(0,
+                "should count Godot virtual methods in skip list");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Report helper tests ===
+
+    [TestMethod]
+    public void Report_ByConfidence_GroupsCorrectly()
+    {
+        var items = new List<GDDeadCodeItem>
+        {
+            new(GDDeadCodeKind.Variable, "a", "f.gd") { Confidence = GDReferenceConfidence.Strict },
+            new(GDDeadCodeKind.Variable, "b", "f.gd") { Confidence = GDReferenceConfidence.Potential },
+            new(GDDeadCodeKind.Variable, "c", "f.gd") { Confidence = GDReferenceConfidence.Strict },
+        };
+        var report = new GDDeadCodeReport(items);
+
+        var groups = report.ByConfidence.ToList();
+        groups.Should().HaveCount(2);
+        groups.First(g => g.Key == GDReferenceConfidence.Strict).Count().Should().Be(2);
+        groups.First(g => g.Key == GDReferenceConfidence.Potential).Count().Should().Be(1);
+    }
+
+    [TestMethod]
+    public void Report_TopOffenders_ReturnsCorrectOrder()
+    {
+        var items = new List<GDDeadCodeItem>
+        {
+            new(GDDeadCodeKind.Variable, "a", "big.gd"),
+            new(GDDeadCodeKind.Variable, "b", "big.gd"),
+            new(GDDeadCodeKind.Variable, "c", "big.gd"),
+            new(GDDeadCodeKind.Variable, "d", "small.gd"),
+        };
+        var report = new GDDeadCodeReport(items);
+
+        var top = report.TopOffenders(2);
+        top.Should().HaveCount(2);
+        top[0].FilePath.Should().Be("big.gd");
+        top[0].Count.Should().Be(3);
+        top[1].FilePath.Should().Be("small.gd");
+        top[1].Count.Should().Be(1);
+    }
+
+    // === Output helper tests ===
+
+    [TestMethod]
+    public void OutputHelper_GetReasonCodeLabel_AllCodesHaveLabels()
+    {
+        foreach (GDDeadCodeReasonCode code in Enum.GetValues(typeof(GDDeadCodeReasonCode)))
+        {
+            var label = GDDeadCodeOutputHelper.GetReasonCodeLabel(code);
+            label.Should().NotBeNullOrEmpty($"reason code {code} must have a label");
+        }
+    }
+
+    [TestMethod]
+    public void OutputHelper_FormatSummaryLine_ContainsCorrectCounts()
+    {
+        var items = new List<GDDeadCodeItem>
+        {
+            new(GDDeadCodeKind.Variable, "a", "f.gd"),
+            new(GDDeadCodeKind.Variable, "b", "f.gd"),
+            new(GDDeadCodeKind.Function, "c", "f.gd"),
+        };
+        var report = new GDDeadCodeReport(items);
+
+        var line = GDDeadCodeOutputHelper.FormatSummaryLine(report);
+
+        line.Should().Contain("dead-code:");
+        line.Should().Contain("3 items");
+        line.Should().Contain("2 var");
+        line.Should().Contain("1 func");
+    }
+
+    // === Output formatting tests ===
+
+    [TestMethod]
+    public void WriteDeadCodeOutput_ContainsReasonCodes()
+    {
+        var code = @"extends Node
+var unused: int = 0
+func unused_func():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test.gd", code));
+        try
+        {
+            var output = new StringWriter();
+            var formatter = new GDTextFormatter();
+            var options = new GDDeadCodeCommandOptions();
+            var cmd = new GDDeadCodeCommand(tempPath, formatter, output, options: options);
+            cmd.ExecuteAsync().GetAwaiter().GetResult();
+
+            var text = output.ToString();
+            text.Should().Contain("[VNR]", "output should contain reason code for unused variable");
+            text.Should().Contain("[FNC]", "output should contain reason code for unused function");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void WriteDeadCodeOutput_ContainsTopFilesSection()
+    {
+        var code = @"extends Node
+var a: int = 0
+var b: int = 0
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test.gd", code));
+        try
+        {
+            var output = new StringWriter();
+            var formatter = new GDTextFormatter();
+            var cmd = new GDDeadCodeCommand(tempPath, formatter, output);
+            cmd.ExecuteAsync().GetAwaiter().GetResult();
+
+            var text = output.ToString();
+            text.Should().Contain("Top files:");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void WriteDeadCodeOutput_ContainsByKindSummary()
+    {
+        var code = @"extends Node
+var unused: int = 0
+func unused_func():
+    pass
+signal unused_signal
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test.gd", code));
+        try
+        {
+            var output = new StringWriter();
+            var formatter = new GDTextFormatter();
+            var cmd = new GDDeadCodeCommand(tempPath, formatter, output);
+            cmd.ExecuteAsync().GetAwaiter().GetResult();
+
+            var text = output.ToString();
+            text.Should().Contain("By kind:");
+            text.Should().Contain("Variable:");
+            text.Should().Contain("Function:");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void WriteDeadCodeOutput_ContainsLegend()
+    {
+        var code = @"extends Node
+var unused: int = 0
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test.gd", code));
+        try
+        {
+            var output = new StringWriter();
+            var formatter = new GDTextFormatter();
+            var cmd = new GDDeadCodeCommand(tempPath, formatter, output);
+            cmd.ExecuteAsync().GetAwaiter().GetResult();
+
+            var text = output.ToString();
+            text.Should().Contain("Legend:");
+            text.Should().Contain("VNR");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void WriteDeadCodeOutput_Legend_OnlyShowsPresentCodes()
+    {
+        var code = @"extends Node
+var unused: int = 0
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test.gd", code));
+        try
+        {
+            var output = new StringWriter();
+            var formatter = new GDTextFormatter();
+            var cmd = new GDDeadCodeCommand(tempPath, formatter, output);
+            cmd.ExecuteAsync().GetAwaiter().GetResult();
+
+            var text = output.ToString();
+            text.Should().Contain("VNR");
+            // FNC and SNE should not be in the legend if no functions/signals are dead
+            text.Should().NotContain("FNC", "no functions are dead, FNC should not appear in legend");
+            text.Should().NotContain("SNE", "no signals are dead, SNE should not appear in legend");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void WriteDeadCodeOutput_QuietMode_OutputsSingleLine()
+    {
+        var code = @"extends Node
+var unused: int = 0
+func unused_func():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test.gd", code));
+        try
+        {
+            var output = new StringWriter();
+            var formatter = new GDTextFormatter();
+            var options = new GDDeadCodeCommandOptions { Quiet = true };
+            var cmd = new GDDeadCodeCommand(tempPath, formatter, output, options: options);
+            cmd.ExecuteAsync().GetAwaiter().GetResult();
+
+            var text = output.ToString();
+            var lines = text.Trim().Split('\n')
+                .Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
+
+            lines.Where(l => l.StartsWith("dead-code:")).Should().HaveCount(1,
+                "quiet mode should output exactly one summary line starting with 'dead-code:'");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Evidence collection test ===
+
+    [TestMethod]
+    public void AnalyzeProject_CollectEvidence_PopulatesEvidenceField()
+    {
+        var code = @"extends Node
+func unused_func():
+    pass
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true,
+                IncludePrivate = false,
+                CollectEvidence = true
+            };
+            var report = handler.AnalyzeProject(options);
+
+            var funcItem = report.Items.FirstOrDefault(i => i.Name == "unused_func");
+            funcItem.Should().NotBeNull();
+            funcItem!.Evidence.Should().NotBeNull("evidence should be collected when CollectEvidence=true");
+            funcItem.Evidence!.CallSitesScanned.Should().BeGreaterThanOrEqualTo(0);
         }
         finally
         {

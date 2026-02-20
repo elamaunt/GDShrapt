@@ -85,13 +85,22 @@ public class GDDeadCodeService
     public GDDeadCodeReport AnalyzeProject(GDDeadCodeOptions options)
     {
         var items = new List<GDDeadCodeItem>();
+        int filesAnalyzed = 0;
 
         foreach (var file in _project.ScriptFiles)
         {
+            filesAnalyzed++;
             items.AddRange(AnalyzeFileInternal(file, options));
         }
 
-        return new GDDeadCodeReport(items);
+        var report = new GDDeadCodeReport(items);
+        report.FilesAnalyzed = filesAnalyzed;
+        report.SceneSignalConnectionsConsidered = _signalRegistry.GetAllConnections()
+            .Count(c => c.IsSceneConnection);
+        report.VirtualMethodsSkipped = options.SkipMethods.Count;
+        report.AutoloadsResolved = _autoloadNamesByPath?.Count ?? 0;
+        report.TotalCallSitesRegistered = _callSiteRegistry?.GetAllTargets().Count() ?? 0;
+        return report;
     }
 
     /// <summary>
@@ -106,6 +115,9 @@ public class GDDeadCodeService
     private IEnumerable<GDDeadCodeItem> AnalyzeFileInternal(GDScriptFile file, GDDeadCodeOptions options)
     {
         if (file?.Class == null)
+            yield break;
+
+        if (options.ShouldSkipFile(file.FullPath ?? ""))
             yield break;
 
         var classDecl = file.Class;
@@ -226,6 +238,27 @@ public class GDDeadCodeService
                 if (HasCrossFileMemberAccess(file, effectiveNames, varName))
                     continue;
 
+                // Check for @export/@onready annotations → downgrade to Potential
+                bool isExport = false;
+                bool isOnready = false;
+                foreach (var attr in variable.AttributesDeclaredBefore)
+                {
+                    var attrName = attr.Attribute?.Name?.Sequence;
+                    if (attrName == null) continue;
+                    if (attrName == "export" || attrName.StartsWith("export_"))
+                        isExport = true;
+                    else if (attrName == "onready")
+                        isOnready = true;
+                }
+
+                bool hasExportOrOnready = isExport || isOnready;
+                var confidence = hasExportOrOnready
+                    ? GDReferenceConfidence.Potential
+                    : GDReferenceConfidence.Strict;
+                var reasonCode = isExport ? GDDeadCodeReasonCode.VEX
+                    : isOnready ? GDDeadCodeReasonCode.VOR
+                    : GDDeadCodeReasonCode.VNR;
+
                 var token = variable.Identifier ?? variable.AllTokens.FirstOrDefault();
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
                 {
@@ -233,9 +266,11 @@ public class GDDeadCodeService
                     Column = token?.StartColumn ?? 0,
                     EndLine = token?.EndLine ?? 0,
                     EndColumn = token?.EndColumn ?? 0,
-                    Confidence = GDReferenceConfidence.Strict,
+                    Confidence = confidence,
+                    ReasonCode = reasonCode,
                     Reason = "Variable is never read (semantic analysis)",
-                    IsPrivate = isPrivate
+                    IsPrivate = isPrivate,
+                    IsExportedOrOnready = hasExportOrOnready
                 };
             }
         }
@@ -277,20 +312,37 @@ public class GDDeadCodeService
 
             if (!hasCallers)
             {
+                var reasonCode = confidence == GDReferenceConfidence.Strict
+                    ? GDDeadCodeReasonCode.FNC
+                    : GDDeadCodeReasonCode.FDT;
+
                 // Use Identifier for accurate line position
                 var identToken = method.Identifier ?? method.FuncKeyword ?? method.AllTokens.FirstOrDefault();
                 var endToken = method.AllTokens.LastOrDefault();
 
-                yield return new GDDeadCodeItem(GDDeadCodeKind.Function, methodName, file.FullPath ?? "")
+                var item = new GDDeadCodeItem(GDDeadCodeKind.Function, methodName, file.FullPath ?? "")
                 {
                     Line = identToken?.StartLine ?? 0,
                     Column = identToken?.StartColumn ?? 0,
                     EndLine = endToken?.EndLine ?? 0,
                     EndColumn = endToken?.EndColumn ?? 0,
                     Confidence = confidence,
+                    ReasonCode = reasonCode,
                     Reason = reason,
                     IsPrivate = isPrivate
                 };
+
+                if (options.CollectEvidence)
+                {
+                    item.Evidence = new GDDeadCodeEvidence
+                    {
+                        CallSitesScanned = _callSiteRegistry?.GetAllTargets().Count() ?? 0,
+                        CrossFileAccessChecks = effectiveNames.Count,
+                        IsVirtualOrEntrypoint = options.ShouldSkipMethod(methodName)
+                    };
+                }
+
+                yield return item;
             }
         }
     }
@@ -529,6 +581,7 @@ public class GDDeadCodeService
                     EndLine = token?.EndLine ?? 0,
                     EndColumn = token?.EndColumn ?? 0,
                     Confidence = GDReferenceConfidence.Strict,
+                    ReasonCode = GDDeadCodeReasonCode.SNE,
                     Reason = "Signal is never emitted and has no connections",
                     IsPrivate = isPrivate
                 };
@@ -545,6 +598,7 @@ public class GDDeadCodeService
                     EndLine = token?.EndLine ?? 0,
                     EndColumn = token?.EndColumn ?? 0,
                     Confidence = GDReferenceConfidence.Potential,
+                    ReasonCode = GDDeadCodeReasonCode.SCB,
                     Reason = "Signal is connected but never emitted",
                     IsPrivate = isPrivate
                 };
@@ -633,6 +687,7 @@ public class GDDeadCodeService
                         EndLine = token?.EndLine ?? 0,
                         EndColumn = token?.EndColumn ?? 0,
                         Confidence = GDReferenceConfidence.Strict,
+                        ReasonCode = GDDeadCodeReasonCode.PNU,
                         Reason = $"Parameter is never used in method '{methodName}'",
                         IsPrivate = false
                     };
@@ -673,6 +728,7 @@ public class GDDeadCodeService
                     EndLine = token?.EndLine ?? 0,
                     EndColumn = token?.EndColumn ?? 0,
                     Confidence = GDReferenceConfidence.Strict,
+                    ReasonCode = GDDeadCodeReasonCode.UCR,
                     Reason = "Code is unreachable after return/break/continue",
                     IsPrivate = false
                 };
@@ -765,6 +821,7 @@ public class GDDeadCodeService
                     EndLine = token?.EndLine ?? 0,
                     EndColumn = token?.EndColumn ?? 0,
                     Confidence = GDReferenceConfidence.Strict,
+                    ReasonCode = GDDeadCodeReasonCode.CNU,
                     Reason = "Constant is never used",
                     IsPrivate = isPrivate
                 };
@@ -832,6 +889,7 @@ public class GDDeadCodeService
                         EndLine = token?.EndLine ?? 0,
                         EndColumn = token?.EndColumn ?? 0,
                         Confidence = GDReferenceConfidence.Potential, // Enum values may be used via reflection
+                        ReasonCode = GDDeadCodeReasonCode.ENU,
                         Reason = $"Enum value '{valueName}' in '{enumName ?? "anonymous"}' is never referenced",
                         IsPrivate = false
                     };
@@ -898,6 +956,7 @@ public class GDDeadCodeService
                     EndLine = endToken?.EndLine ?? 0,
                     EndColumn = endToken?.EndColumn ?? 0,
                     Confidence = GDReferenceConfidence.Potential, // Inner classes may be used externally
+                    ReasonCode = GDDeadCodeReasonCode.ICU,
                     Reason = "Inner class is never instantiated or referenced",
                     IsPrivate = isPrivate
                 };

@@ -781,5 +781,332 @@ func _ready():
         }
 
         #endregion
+
+        #region Crash Regression - CRLF with await assignment in if block
+
+        [TestMethod]
+        public void Parse_AwaitAssignmentInIfBlock_WithCRLF_ShouldNotCrash()
+        {
+            var reader = new GDScriptReader();
+            // Minimal reproduction: data.next_id = await _resolve(...) inside if block
+            var code = "extends Node\r\n\r\nfunc get_line(resource: Resource, key: String, extra_game_states: Array):\r\n\tvar data: Dictionary = resource.lines.get(key)\r\n\r\n\tif data.has(&\"next_id_expression\"):\r\n\t\tdata.next_id = await _resolve(data.next_id_expression, extra_game_states)\r\n\r\n\treturn data\r\n\r\nfunc _resolve(expr, states) -> Variant:\r\n\treturn null\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("await assignment in if block with CRLF should parse");
+            AssertHelper.NoInvalidTokens(tree);
+        }
+
+        [TestMethod]
+        public void Parse_MemberAwaitAssignment_WithLF_ShouldWork()
+        {
+            var reader = new GDScriptReader();
+            // Member property assignment with await on RHS
+            var code = "extends Node\n\nfunc test():\n\tvar data: Dictionary = {}\n\tdata.next_id = await _resolve(data)\n\nfunc _resolve(d) -> Variant:\n\treturn null\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("member await assignment with LF should parse");
+        }
+
+        [TestMethod]
+        public void Parse_SimpleMemberAssignment_WithCRLF_ShouldWork()
+        {
+            var reader = new GDScriptReader();
+            // Simple member assignment (no await) - baseline
+            var code = "extends Node\r\n\r\nfunc test():\r\n\tvar data: Dictionary = {}\r\n\tdata.next_id = \"hello\"\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("simple member assignment with CRLF should parse");
+        }
+
+        [TestMethod]
+        public void Parse_MemberAwaitAssignment_WithCRLF_ShouldNotCrash()
+        {
+            var reader = new GDScriptReader();
+            // Member assignment with await - CRLF
+            var code = "extends Node\r\n\r\nfunc test():\r\n\tvar data: Dictionary = {}\r\n\tdata.next_id = await _resolve(data)\r\n\r\nfunc _resolve(d) -> Variant:\r\n\treturn null\r\n";
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("member await assignment with CRLF should parse");
+        }
+
+        #endregion
+
+        #region Crash Regression Tests - CRLF with complex expressions
+
+        [TestMethod]
+        public void Parse_InlineLambdaInFilterCall_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var items: Array = [1, 2, 3]
+	var filtered = items.filter(func(x): return x > 1)
+	print(filtered)
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("inline lambda in filter call should parse");
+            tree.ToOriginalString().Should().Be(code);
+        }
+
+        [TestMethod]
+        public void Parse_InlineLambdaWithTypedParams_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var items: Array = [1, 2, 3]
+	var filtered = items.filter(func(x: int) -> bool: return x > 1)
+	print(filtered)
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("typed inline lambda should parse");
+            tree.ToOriginalString().Should().Be(code);
+        }
+
+        [TestMethod]
+        public void Parse_MultilineCallWithAwait_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var line = await get_line(
+		resource,
+		key,
+		extra_states
+	)
+	print(line)
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("multiline call with await should parse");
+            tree.ToOriginalString().Should().Be(code);
+        }
+
+        [TestMethod]
+        public void Parse_LambdaWithAwaitInFilter_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var data: Array = [{""condition"": true}]
+	var result = data.filter(func(s: Dictionary) -> bool: return s.has(""condition"") or await check(s))
+	print(result)
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("lambda with await in filter should parse");
+        }
+
+        [TestMethod]
+        public void Parse_ComplexMatchStatement_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	match data.type:
+		1:
+			var resolved = await get_data(data)
+			return MyClass.new({
+				id = data.get(&""id"", """"),
+				type = 1,
+				next_id = data.next_id,
+				character = await get_character(data),
+				text = resolved.text,
+			})
+		2:
+			return MyClass.new({
+				id = data.get(&""id"", """"),
+				type = 2,
+			})
+	return null
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("complex match with constructor calls should parse");
+        }
+
+        [TestMethod]
+        public void Parse_CallableVarWithLambda_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+var get_current_scene: Callable = func() -> Node:
+	var current_scene: Node = Engine.get_main_loop().current_scene
+	if current_scene == null:
+		var root: Node = (Engine.get_main_loop() as SceneTree).root
+		current_scene = root.get_child(root.get_child_count() - 1)
+	return current_scene
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("callable var with multiline lambda should parse");
+        }
+
+        [TestMethod]
+        public void Parse_FilterReduceChain_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var siblings: Array = [{""weight"": 1.0}, {""weight"": 2.0}]
+	var successful = siblings.filter(func(sibling: Dictionary) -> bool: return not sibling.has(""condition"") or await check(sibling))
+	if successful.size() == 0:
+		return null
+	var target: float = randf_range(0, successful.reduce(func(total: float, sibling: Dictionary) -> float: return total + sibling.weight, 0))
+	print(target)
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("filter/reduce chain with lambdas should parse");
+        }
+
+        [TestMethod]
+        public void Parse_MultilineDictionaryConstructor_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var error_msg = translate(&""runtime.error"").format({
+		line = error.line_number + 1,
+		message = get_error(error.error)
+	})
+	print(error_msg)
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("multiline dictionary in format call should parse");
+            tree.ToOriginalString().Should().Be(code);
+        }
+
+        [TestMethod]
+        public void Parse_ChainedCallsWithStringName_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var data: Dictionary = {}
+	var text_replacements: Array[Dictionary] = data.get(&""text_replacements"", [] as Array[Dictionary])
+	for replacement: Dictionary in text_replacements:
+		var value = await resolve(replacement.expression.duplicate(true))
+		var index: int = text.find(replacement.value_in_text)
+		if index > -1:
+			text = text.substr(0, index) + str(value) + text.substr(index + replacement.value_in_text.length())
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("chained calls with StringName should parse");
+        }
+
+        [TestMethod]
+        public void Parse_TypeofInArrayCheck_WithCRLF()
+        {
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+func test():
+	var result: Variant = null
+	if typeof(result) in [
+		TYPE_STRING, TYPE_STRING_NAME, \
+		TYPE_DICTIONARY, \
+		TYPE_ARRAY, TYPE_PACKED_BYTE_ARRAY, TYPE_PACKED_COLOR_ARRAY, \
+		TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY, \
+		TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_INT64_ARRAY, \
+		TYPE_PACKED_STRING_ARRAY, \
+		TYPE_PACKED_VECTOR2_ARRAY, TYPE_PACKED_VECTOR3_ARRAY, TYPE_PACKED_VECTOR4_ARRAY]:
+			return not (result as String).is_empty()
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("typeof in multiline array check should parse");
+        }
+
+        [TestMethod]
+        public void Parse_DialogueManagerLikeScript_WithCRLF()
+        {
+            // Combines all the challenging patterns from dialogue_manager.gd
+            var reader = new GDScriptReader();
+            var code = @"extends Node
+
+signal dialogue_started(resource: Resource)
+signal got_dialogue(line: RefCounted)
+signal dialogue_ended(resource: Resource)
+
+var game_states: Array = []
+var get_current_scene: Callable = func() -> Node:
+	var current_scene: Node = Engine.get_main_loop().current_scene
+	if current_scene == null:
+		var root: Node = (Engine.get_main_loop() as SceneTree).root
+		current_scene = root.get_child(root.get_child_count() - 1)
+	return current_scene
+
+func get_next_line(resource: Resource, key: String = """", extra_states: Array = []) -> RefCounted:
+	var line: RefCounted = await _get_next_line(resource, key, extra_states)
+	if line == null:
+		dialogue_ended.emit(resource)
+	return line
+
+func _get_next_line(resource: Resource, key: String = """", extra_states: Array = []) -> RefCounted:
+	if resource == null:
+		assert(false, ""No resource"")
+
+	for state_name: String in resource.get(""using_states""):
+		var autoload: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null(state_name)
+		if autoload == null:
+			printerr(""Unknown: "" + state_name)
+		else:
+			extra_states = [autoload] + extra_states
+
+	var data: Dictionary = resource.get(""lines"").get(key)
+
+	if data.has(&""siblings""):
+		var successful: Array = data.siblings.filter(func(sibling: Dictionary) -> bool: return not sibling.has(""condition"") or await _check(sibling, extra_states))
+		if successful.size() == 0:
+			return await _get_next_line(resource, data.next_id, extra_states)
+		var target: float = randf_range(0, successful.reduce(func(total: float, sibling: Dictionary) -> float: return total + sibling.weight, 0))
+		print(target)
+
+	match data.type:
+		1:
+			return RefCounted.new()
+		2:
+			return null
+
+	return null
+
+func _check(data: Dictionary, extra_states: Array) -> bool:
+	return true
+".Replace("\n", "\r\n");
+
+            var tree = reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull("dialogue manager-like script should parse with CRLF");
+        }
+
+        #endregion
     }
 }

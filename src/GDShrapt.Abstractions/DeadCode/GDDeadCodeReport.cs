@@ -66,10 +66,26 @@ public class GDDeadCodeReport
         Items.GroupBy(i => i.Kind);
 
     /// <summary>
+    /// Groups items by confidence level.
+    /// </summary>
+    public IEnumerable<IGrouping<GDReferenceConfidence, GDDeadCodeItem>> ByConfidence =>
+        Items.GroupBy(i => i.Confidence);
+
+    /// <summary>
     /// Gets only items with the specified confidence level or higher (more certain).
     /// </summary>
     public IEnumerable<GDDeadCodeItem> WithConfidence(GDReferenceConfidence maxConfidence) =>
         Items.Where(i => i.Confidence <= maxConfidence);
+
+    /// <summary>
+    /// Returns the top files by dead code item count.
+    /// </summary>
+    public IReadOnlyList<(string FilePath, int Count)> TopOffenders(int count = 5) =>
+        Items.GroupBy(i => i.FilePath)
+             .OrderByDescending(g => g.Count())
+             .Take(count)
+             .Select(g => (g.Key, g.Count()))
+             .ToList();
 
     /// <summary>
     /// Creates an empty report.
@@ -80,6 +96,31 @@ public class GDDeadCodeReport
     /// Whether the report has any items.
     /// </summary>
     public bool HasItems => Items.Count > 0;
+
+    /// <summary>
+    /// Number of files analyzed in the project.
+    /// </summary>
+    public int FilesAnalyzed { get; set; }
+
+    /// <summary>
+    /// Number of scene signal connections that were considered during analysis.
+    /// </summary>
+    public int SceneSignalConnectionsConsidered { get; set; }
+
+    /// <summary>
+    /// Number of Godot virtual methods that were skipped.
+    /// </summary>
+    public int VirtualMethodsSkipped { get; set; }
+
+    /// <summary>
+    /// Number of autoloads resolved for cross-file access.
+    /// </summary>
+    public int AutoloadsResolved { get; set; }
+
+    /// <summary>
+    /// Total number of call sites registered in the project.
+    /// </summary>
+    public int TotalCallSitesRegistered { get; set; }
 
     public GDDeadCodeReport()
     {

@@ -17,7 +17,7 @@ public static class DeadCodeCommandBuilder
         Option<bool> quietOption,
         Option<string?> logLevelOption)
     {
-        var command = new Command("dead-code", "Detect unused variables, functions, signals, and unreachable code.\n\nExamples:\n  gdshrapt dead-code                       Find all dead code\n  gdshrapt dead-code --fail-if-found       Fail for CI if found\n  gdshrapt dead-code --kind Function       Only unused functions");
+        var command = new Command("dead-code", "Detect unused variables, functions, signals, and unreachable code.\n\nExamples:\n  gdshrapt dead-code                       Find all dead code\n  gdshrapt dead-code --fail-if-found       Fail for CI if found\n  gdshrapt dead-code --kind Function       Only unused functions\n  gdshrapt dead-code --top 10              Show top 10 files\n  gdshrapt dead-code --exclude-tests       Skip test files\n  gdshrapt dead-code --explain             Show evidence details");
 
         var pathArg = new Argument<string>("project-path", "Path to the Godot project") { Arity = ArgumentArity.ZeroOrOne };
         var projectOption = new Option<string?>(
@@ -76,6 +76,18 @@ public static class DeadCodeCommandBuilder
             ["--fail-if-found"],
             "Exit with error code if any dead code is found (for CI)");
 
+        var topOption = new Option<int?>(
+            ["--top"],
+            "Show only the top N files by dead code count");
+
+        var excludeTestsOption = new Option<bool>(
+            ["--exclude-tests"],
+            "Exclude test files from analysis");
+
+        var explainOption = new Option<bool>(
+            ["--explain"],
+            "Show detailed evidence for each item");
+
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
         command.AddOption(fileOption);
@@ -90,6 +102,9 @@ public static class DeadCodeCommandBuilder
         command.AddOption(includeUnreachableOption);
         command.AddOption(kindOption);
         command.AddOption(failIfFoundOption);
+        command.AddOption(topOption);
+        command.AddOption(excludeTestsOption);
+        command.AddOption(explainOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -111,6 +126,9 @@ public static class DeadCodeCommandBuilder
             var quiet = context.ParseResult.GetValueForOption(quietOption);
             var verbose = context.ParseResult.GetValueForOption(verboseOption);
             var debug = context.ParseResult.GetValueForOption(debugOption);
+            var top = context.ParseResult.GetValueForOption(topOption);
+            var excludeTests = context.ParseResult.GetValueForOption(excludeTestsOption);
+            var explain = context.ParseResult.GetValueForOption(explainOption);
 
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
@@ -126,7 +144,11 @@ public static class DeadCodeCommandBuilder
                 IncludePrivate = includePrivate,
                 IncludeUnreachable = includeUnreachable,
                 Kind = kind,
-                FailIfFound = failIfFound
+                FailIfFound = failIfFound,
+                TopN = top,
+                ExcludeTests = excludeTests,
+                Explain = explain,
+                Quiet = quiet
             };
 
             var cmd = new GDDeadCodeCommand(projectPath, formatter, logger: logger, options: options);
