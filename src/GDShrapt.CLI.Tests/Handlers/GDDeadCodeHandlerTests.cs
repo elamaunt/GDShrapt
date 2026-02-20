@@ -2331,4 +2331,407 @@ func _ready():
             TestProjectHelper.DeleteTempProject(tempPath);
         }
     }
+
+    // === FP1: Variant-typed cross-file member access tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_VariableAccessedOnVariantTyped_NotReportedAsDead()
+    {
+        var classCode = @"extends Node
+class_name VariantTestClass
+
+var member_var: int = 0
+
+func _ready():
+    pass
+";
+        var userCode = @"extends Node
+
+var obj: Variant
+
+func _ready():
+    obj = VariantTestClass.new()
+    print(obj.member_var)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("variant_class.gd", classCode),
+            ("user.gd", userCode));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeVariables = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "member_var",
+                "variable accessed on Variant-typed instance cross-file should not be reported as dead");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_FunctionCalledOnVariantTyped_NotReportedAsDead()
+    {
+        var classCode = @"extends Node
+class_name VariantFuncClass
+
+func do_stuff():
+    pass
+
+func _ready():
+    pass
+";
+        var userCode = @"extends Node
+
+var obj: Variant
+
+func _ready():
+    obj = VariantFuncClass.new()
+    obj.do_stuff()
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("variant_func_class.gd", classCode),
+            ("caller.gd", userCode));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeFunctions = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "do_stuff",
+                "function called on Variant-typed instance cross-file should not be reported as dead");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_VariableNeverAccessed_StillReported()
+    {
+        var classCode = @"extends Node
+class_name UnusedVarClass
+
+var truly_unused: int = 0
+
+func _ready():
+    pass
+";
+        var userCode = @"extends Node
+
+var obj: Variant
+
+func _ready():
+    obj = UnusedVarClass.new()
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("unused_var_class.gd", classCode),
+            ("other.gd", userCode));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeVariables = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(i => i.Name == "truly_unused",
+                "variable never accessed anywhere should still be reported");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_VariableAccessedOnTypedInstance_NotReported()
+    {
+        var classCode = @"extends Node
+class_name TypedAccessClass
+
+var member_var: int = 0
+
+func _ready():
+    pass
+";
+        var userCode = @"extends Node
+
+var obj: TypedAccessClass
+
+func _ready():
+    obj = TypedAccessClass.new()
+    print(obj.member_var)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("typed_class.gd", classCode),
+            ("typed_user.gd", userCode));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeVariables = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "member_var",
+                "variable accessed on correctly-typed instance should not be reported");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === FP2: Framework test function tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_TestFunctions_SkippedWithFrameworkPrefix()
+    {
+        var code = @"extends Node
+
+func test_something():
+    pass
+
+func test_another():
+    pass
+
+func helper_func():
+    pass
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test_file.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true,
+                FrameworkMethodPrefixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "test_" }
+            };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "test_something",
+                "test_ functions should be skipped with framework prefix");
+            report.Items.Should().NotContain(i => i.Name == "test_another",
+                "test_ functions should be skipped with framework prefix");
+            report.Items.Should().Contain(i => i.Name == "helper_func",
+                "non-test functions should still be reported");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_TestFunctions_ReportedWhenNoPrefixConfigured()
+    {
+        var code = @"extends Node
+
+func test_something():
+    pass
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("test_default.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true
+                // FrameworkMethodPrefixes is empty by default
+            };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(i => i.Name == "test_something",
+                "test_ functions should be reported when no prefix is configured");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_TestFunctions_OnlySkippedForMatchingBase()
+    {
+        var baseCode = @"extends Node
+class_name AbstractTest
+";
+        var testCode = @"extends AbstractTest
+
+func test_x():
+    pass
+";
+        var nonTestCode = @"extends Node
+
+func test_y():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("abstract_test.gd", baseCode),
+            ("real_test.gd", testCode),
+            ("not_test.gd", nonTestCode));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true,
+                FrameworkMethodPrefixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "test_" },
+                FrameworkBaseClasses = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "AbstractTest" }
+            };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "test_x",
+                "test_ in class extending AbstractTest should be skipped");
+            report.Items.Should().Contain(i => i.Name == "test_y",
+                "test_ in class NOT extending AbstractTest should still be reported");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === FP3: emit_signal("name") and call("name") tests ===
+
+    [TestMethod]
+    public void AnalyzeProject_SignalEmittedViaEmitSignalString_NotReportedAsDead()
+    {
+        var code = @"extends Node
+
+signal my_signal
+
+func _ready():
+    emit_signal(""my_signal"")
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("emit_str.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeSignals = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i =>
+                i.Kind == GDDeadCodeKind.Signal && i.Name == "my_signal",
+                "signal emitted via emit_signal() should not be reported as dead");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_SignalNeverEmitted_StillReported()
+    {
+        var code = @"extends Node
+
+signal unused_signal
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("unused_sig.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeSignals = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(i =>
+                i.Kind == GDDeadCodeKind.Signal && i.Name == "unused_signal",
+                "signal never emitted should be reported");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_SignalEmittedViaModernSyntax_NotReported()
+    {
+        var code = @"extends Node
+
+signal my_signal
+
+func _ready():
+    my_signal.emit()
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("emit_modern.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeSignals = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i =>
+                i.Kind == GDDeadCodeKind.Signal && i.Name == "my_signal",
+                "signal emitted via .emit() should not be reported");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_FunctionCalledViaCallString_NotReportedAsDead()
+    {
+        var code = @"extends Node
+
+func my_func():
+    pass
+
+func _ready():
+    call(""my_func"")
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("call_str.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions { IncludeFunctions = true };
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "my_func",
+                "function called via call() string should not be reported as dead");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
 }

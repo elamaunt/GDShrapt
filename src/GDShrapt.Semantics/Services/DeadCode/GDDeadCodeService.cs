@@ -300,6 +300,10 @@ public class GDDeadCodeService
             if (options.ShouldSkipMethod(methodName))
                 continue;
 
+            // Skip framework-invoked methods (e.g., test_ in test classes)
+            if (IsFrameworkMethod(file, classDecl, methodName, options))
+                continue;
+
             bool isPrivate = methodName.StartsWith("_") && !options.ShouldSkipMethod(methodName);
 
             // Skip private if not included
@@ -366,7 +370,7 @@ public class GDDeadCodeService
 
             foreach (var name in effectiveNames)
             {
-                if (otherModel.HasMemberAccesses(name, memberName))
+                if (otherModel.HasMemberAccessesIncludingDuckTyped(name, memberName))
                     return true;
             }
         }
@@ -511,6 +515,57 @@ public class GDDeadCodeService
     }
 
     /// <summary>
+    /// Checks if a method is a framework-invoked method (e.g., test_ in test classes).
+    /// </summary>
+    private bool IsFrameworkMethod(
+        GDScriptFile file,
+        GDClassDeclaration classDecl,
+        string methodName,
+        GDDeadCodeOptions options)
+    {
+        if (options.FrameworkMethodPrefixes.Count == 0)
+            return false;
+
+        bool matchesPrefix = false;
+        foreach (var prefix in options.FrameworkMethodPrefixes)
+        {
+            if (methodName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                matchesPrefix = true;
+                break;
+            }
+        }
+
+        if (!matchesPrefix)
+            return false;
+
+        if (options.FrameworkBaseClasses.Count == 0)
+            return true;
+
+        return ExtendsFrameworkBase(classDecl, options.FrameworkBaseClasses);
+    }
+
+    private bool ExtendsFrameworkBase(GDClassDeclaration classDecl, HashSet<string> baseClasses)
+    {
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var current = classDecl.Extends?.Type?.BuildName();
+
+        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        {
+            if (baseClasses.Contains(current))
+                return true;
+
+            var parentFile = _project.GetScriptByTypeName(current);
+            if (parentFile?.Class == null)
+                break;
+
+            current = parentFile.Class.Extends?.Type?.BuildName();
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Finds unused signals using semantic signal registry and emit tracking.
     /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedSignals(
@@ -625,7 +680,41 @@ public class GDDeadCodeService
                 return true;
         }
 
+        // Check for emit_signal("name") pattern — reference node is the string literal
+        // inside emit_signal() call, linked to actual signal symbol by TrackStringLiteralArg
+        if (node is GDStringExpression || node is GDStringNameExpression)
+        {
+            var callExpr = FindParentCallExpression(node);
+            if (callExpr != null)
+            {
+                var callee = GetCalleeMethodName(callExpr);
+                if (callee == "emit_signal")
+                    return true;
+            }
+        }
+
         return false;
+    }
+
+    private static GDCallExpression? FindParentCallExpression(GDNode node)
+    {
+        var current = node.Parent;
+        while (current != null)
+        {
+            if (current is GDCallExpression call)
+                return call;
+            current = current.Parent;
+        }
+        return null;
+    }
+
+    private static string? GetCalleeMethodName(GDCallExpression callExpr)
+    {
+        if (callExpr.CallerExpression is GDIdentifierExpression idExpr)
+            return idExpr.Identifier?.Sequence;
+        if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
+            return memberOp.Identifier?.Sequence;
+        return null;
     }
 
     /// <summary>

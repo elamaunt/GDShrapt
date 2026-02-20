@@ -527,6 +527,22 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         return _symbolRegistry.GetMemberAccessReferences(typeName, memberName).Count > 0;
     }
 
+    /// <summary>
+    /// Checks if there are any accesses to a member on a specific type OR on Variant (duck-typed).
+    /// When code uses <c>var x: Variant; x.member</c>, the access is indexed under Variant,
+    /// not the actual runtime type. This method checks both.
+    /// </summary>
+    public bool HasMemberAccessesIncludingDuckTyped(string typeName, string memberName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
+            return false;
+
+        if (_symbolRegistry.GetMemberAccessReferences(typeName, memberName).Count > 0)
+            return true;
+
+        return _symbolRegistry.GetMemberAccessReferences("Variant", memberName).Count > 0;
+    }
+
     #endregion
 
     #region Type Queries

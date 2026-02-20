@@ -1321,6 +1321,19 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var symbol = GDSymbolInfo.DuckTyped(literalValue, symbolKind, null, reason);
             CreateReference(symbol, sourceNode, GDReferenceConfidence.Potential,
                 callerTypeName: GDWellKnownTypes.Variant);
+
+            // Also try to link to the actual declared symbol in the current class.
+            // This ensures emit_signal("name") is recognized as a reference to the signal,
+            // and call("method") is recognized as a reference to the method.
+            if (_model != null)
+            {
+                var declaredSymbol = _model.FindSymbol(literalValue);
+                if (declaredSymbol != null && declaredSymbol.Kind == symbolKind)
+                {
+                    CreateReference(declaredSymbol, sourceNode, GDReferenceConfidence.Potential,
+                        callerTypeName: null);
+                }
+            }
         }
         else
         {

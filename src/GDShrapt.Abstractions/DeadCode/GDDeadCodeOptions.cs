@@ -154,6 +154,20 @@ public class GDDeadCodeOptions
     public bool CollectEvidence { get; set; }
 
     /// <summary>
+    /// Method name prefixes for framework-invoked methods (e.g., "test_").
+    /// Functions matching these prefixes are skipped from dead code analysis.
+    /// Only applies when the declaring class extends one of FrameworkBaseClasses
+    /// (or when FrameworkBaseClasses is empty — matches all classes).
+    /// </summary>
+    public HashSet<string> FrameworkMethodPrefixes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Base class names that activate framework method prefix recognition.
+    /// If empty, prefix matching applies to all classes.
+    /// </summary>
+    public HashSet<string> FrameworkBaseClasses { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Checks if a file should be skipped based on test path patterns.
     /// </summary>
     public bool ShouldSkipFile(string filePath)
@@ -223,7 +237,9 @@ public class GDDeadCodeOptions
             AdditionalSkipMethods = AdditionalSkipMethods,
             ExcludeTestFiles = ExcludeTestFiles,
             TestPathPatterns = TestPathPatterns,
-            CollectEvidence = CollectEvidence
+            CollectEvidence = CollectEvidence,
+            FrameworkMethodPrefixes = FrameworkMethodPrefixes,
+            FrameworkBaseClasses = FrameworkBaseClasses
         };
     }
 
