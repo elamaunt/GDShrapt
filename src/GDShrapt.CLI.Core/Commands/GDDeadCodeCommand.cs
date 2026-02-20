@@ -62,7 +62,8 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             IncludePrivate = _options.IncludePrivate,
             IncludeUnreachable = _options.IncludeUnreachable,
             ExcludeTestFiles = _options.ExcludeTests,
-            CollectEvidence = _options.Explain
+            CollectEvidence = _options.Explain,
+            CollectDroppedByReflection = true
         };
 
         // Analyze based on scope
@@ -92,7 +93,8 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             SceneSignalConnectionsConsidered = report.SceneSignalConnectionsConsidered,
             VirtualMethodsSkipped = report.VirtualMethodsSkipped,
             AutoloadsResolved = report.AutoloadsResolved,
-            TotalCallSitesRegistered = report.TotalCallSitesRegistered
+            TotalCallSitesRegistered = report.TotalCallSitesRegistered,
+            DroppedByReflection = report.DroppedByReflection
         };
 
         // Output results
@@ -135,20 +137,35 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             return;
         }
 
-        _formatter.WriteMessage(_output, $"Dead Code Analysis: {report.Items.Count} items found");
+        // Header with suppressed count
+        var suppressedSuffix = report.DroppedByReflection.Count > 0
+            ? GDAnsiColors.Dim($" (+{report.DroppedByReflection.Count} suppressed by reflection)")
+            : "";
+        _formatter.WriteMessage(_output, $"{GDAnsiColors.Bold("Dead Code Analysis:")} {GDAnsiColors.Cyan(report.Items.Count.ToString())} items found{suppressedSuffix}");
         _formatter.WriteMessage(_output, "");
 
         // Top files
         GDDeadCodeOutputHelper.WriteTopOffenders(_formatter, _output, report, projectRoot, _options.TopN ?? 5);
         _formatter.WriteMessage(_output, "");
 
-        // By kind summary
-        GDDeadCodeOutputHelper.WriteKindSummary(_formatter, _output, report);
+        // By kind summary (non-zero only by default, all with --verbose/--debug)
+        GDDeadCodeOutputHelper.WriteKindSummary(_formatter, _output, report, _options.Verbose);
+        _formatter.WriteMessage(_output, "");
+
+        // By confidence summary
+        GDDeadCodeOutputHelper.WriteConfidenceSummary(_formatter, _output, report);
         _formatter.WriteMessage(_output, "");
 
         // Legend (only codes present in results)
         GDDeadCodeOutputHelper.WriteLegend(_formatter, _output, report.Items.Select(i => i.ReasonCode));
         _formatter.WriteMessage(_output, "");
+
+        // Analysis scope (--explain mode only)
+        if (_options.Explain)
+        {
+            GDDeadCodeOutputHelper.WriteAnalysisScope(_formatter, _output, report);
+            _formatter.WriteMessage(_output, "");
+        }
 
         // Group by file, optionally limit to top N files
         var byFile = report.Items.GroupBy(i => i.FilePath)
@@ -161,20 +178,26 @@ public class GDDeadCodeCommand : GDProjectCommandBase
         foreach (var fileGroup in byFile)
         {
             var relPath = GetRelativePath(fileGroup.Key, projectRoot);
-            _formatter.WriteMessage(_output, $"{relPath}:");
+            _formatter.WriteMessage(_output, GDAnsiColors.Bold($"{relPath}:"));
 
+            var maxWidth = fileGroup.Max(i => GDDeadCodeOutputHelper.GetItemTextWidth(i));
             foreach (var item in fileGroup.OrderBy(i => i.Line))
             {
-                GDDeadCodeOutputHelper.WriteItem(_formatter, _output, item, _options.Explain);
+                GDDeadCodeOutputHelper.WriteItem(_formatter, _output, item, _options.Explain, maxWidth);
             }
             _formatter.WriteMessage(_output, "");
         }
 
-        // Scene signal note
-        if (report.SceneSignalConnectionsConsidered > 0)
+        // Suppressed by reflection section
+        if (report.DroppedByReflection.Count > 0)
         {
-            _formatter.WriteMessage(_output, $"Note: {report.SceneSignalConnectionsConsidered} scene signal connection(s) considered.");
+            _formatter.WriteMessage(_output, "");
+            GDDeadCodeOutputHelper.WriteDroppedByReflection(_formatter, _output, report, projectRoot,
+                limit: _options.ShowDroppedByReflection ? 0 : 5);
         }
+
+        // Tip
+        GDDeadCodeOutputHelper.WriteTip(_formatter, _output, _options);
     }
 }
 
@@ -247,4 +270,14 @@ public class GDDeadCodeCommandOptions
     /// Output a single summary line (for CI).
     /// </summary>
     public bool Quiet { get; set; }
+
+    /// <summary>
+    /// Show items excluded from report because they are reachable via reflection patterns.
+    /// </summary>
+    public bool ShowDroppedByReflection { get; set; }
+
+    /// <summary>
+    /// Verbose output (show all kind breakdowns including zero-count).
+    /// </summary>
+    public bool Verbose { get; set; }
 }

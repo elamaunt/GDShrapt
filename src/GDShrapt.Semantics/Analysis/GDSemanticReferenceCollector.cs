@@ -173,6 +173,11 @@ internal class GDSemanticReferenceCollector : GDVisitor
         // Collect Callable call sites for lambda parameter inference
         CollectCallSites(_scriptFile.Class);
 
+        // Collect reflection-based call sites (get_method_list() + call(method.name) patterns)
+        var reflectionCollector = new GDReflectionCallSiteCollector(
+            _typeEngine, _model, _scriptFile.FullPath ?? "", _scriptFile.TypeName);
+        reflectionCollector.Analyze(_scriptFile.Class);
+
         return _model;
     }
 

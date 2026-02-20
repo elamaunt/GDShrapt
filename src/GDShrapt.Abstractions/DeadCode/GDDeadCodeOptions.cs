@@ -154,6 +154,11 @@ public class GDDeadCodeOptions
     public bool CollectEvidence { get; set; }
 
     /// <summary>
+    /// Collect items dropped by reflection for --show-dropped-by-reflection mode.
+    /// </summary>
+    public bool CollectDroppedByReflection { get; set; }
+
+    /// <summary>
     /// Method name prefixes for framework-invoked methods (e.g., "test_").
     /// Functions matching these prefixes are skipped from dead code analysis.
     /// Only applies when the declaring class extends one of FrameworkBaseClasses
@@ -238,6 +243,7 @@ public class GDDeadCodeOptions
             ExcludeTestFiles = ExcludeTestFiles,
             TestPathPatterns = TestPathPatterns,
             CollectEvidence = CollectEvidence,
+            CollectDroppedByReflection = CollectDroppedByReflection,
             FrameworkMethodPrefixes = FrameworkMethodPrefixes,
             FrameworkBaseClasses = FrameworkBaseClasses
         };

@@ -168,6 +168,16 @@ public class GDRenameCommand : IGDCommand
                         }
                     }
                 }
+
+                if (result.Warnings.Count > 0)
+                {
+                    _formatter.WriteMessage(_output, $"\n  Warnings ({result.Warnings.Count}):");
+                    foreach (var warning in result.Warnings)
+                    {
+                        var relativePath = Path.GetRelativePath(projectRoot, warning.FilePath);
+                        _formatter.WriteMessage(_output, $"    {relativePath}:{warning.Line}:{warning.Column} — {warning.Message}");
+                    }
+                }
             }
             else
             {
@@ -188,6 +198,16 @@ public class GDRenameCommand : IGDCommand
                 if (result.PotentialEdits.Count > 0)
                 {
                     _formatter.WriteMessage(_output, $"\n{result.PotentialEdits.Count} additional duck-typed reference(s) found but not applied (lower confidence).");
+                }
+
+                if (result.Warnings.Count > 0)
+                {
+                    _formatter.WriteMessage(_output, $"\nWarnings ({result.Warnings.Count}):");
+                    foreach (var warning in result.Warnings)
+                    {
+                        var relativePath = Path.GetRelativePath(projectRoot, warning.FilePath);
+                        _formatter.WriteMessage(_output, $"  {relativePath}:{warning.Line}:{warning.Column} — {warning.Message}");
+                    }
                 }
             }
 

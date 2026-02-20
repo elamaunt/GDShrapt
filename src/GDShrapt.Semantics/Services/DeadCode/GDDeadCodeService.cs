@@ -85,12 +85,15 @@ public class GDDeadCodeService
     public GDDeadCodeReport AnalyzeProject(GDDeadCodeOptions options)
     {
         var items = new List<GDDeadCodeItem>();
+        var droppedByReflection = options.CollectDroppedByReflection
+            ? new List<GDReflectionDroppedItem>()
+            : null;
         int filesAnalyzed = 0;
 
         foreach (var file in _project.ScriptFiles)
         {
             filesAnalyzed++;
-            items.AddRange(AnalyzeFileInternal(file, options));
+            items.AddRange(AnalyzeFileInternal(file, options, droppedByReflection));
         }
 
         var report = new GDDeadCodeReport(items);
@@ -100,6 +103,8 @@ public class GDDeadCodeService
         report.VirtualMethodsSkipped = options.SkipMethods.Count;
         report.AutoloadsResolved = _autoloadNamesByPath?.Count ?? 0;
         report.TotalCallSitesRegistered = _callSiteRegistry?.GetAllTargets().Count() ?? 0;
+        if (droppedByReflection != null)
+            report.DroppedByReflection = droppedByReflection;
         return report;
     }
 
@@ -108,11 +113,20 @@ public class GDDeadCodeService
     /// </summary>
     public GDDeadCodeReport AnalyzeFile(GDScriptFile file, GDDeadCodeOptions options)
     {
-        var items = AnalyzeFileInternal(file, options).ToList();
-        return new GDDeadCodeReport(items);
+        var droppedByReflection = options.CollectDroppedByReflection
+            ? new List<GDReflectionDroppedItem>()
+            : null;
+        var items = AnalyzeFileInternal(file, options, droppedByReflection).ToList();
+        var report = new GDDeadCodeReport(items);
+        if (droppedByReflection != null)
+            report.DroppedByReflection = droppedByReflection;
+        return report;
     }
 
-    private IEnumerable<GDDeadCodeItem> AnalyzeFileInternal(GDScriptFile file, GDDeadCodeOptions options)
+    private IEnumerable<GDDeadCodeItem> AnalyzeFileInternal(
+        GDScriptFile file,
+        GDDeadCodeOptions options,
+        List<GDReflectionDroppedItem>? droppedByReflection)
     {
         if (file?.Class == null)
             yield break;
@@ -136,21 +150,21 @@ public class GDDeadCodeService
         // 1. Find unused variables
         if (options.IncludeVariables)
         {
-            foreach (var item in FindUnusedVariables(file, classDecl, effectiveNames, semanticModel, options))
+            foreach (var item in FindUnusedVariables(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection))
                 yield return item;
         }
 
         // 2. Find unused functions
         if (options.IncludeFunctions)
         {
-            foreach (var item in FindUnusedFunctions(file, classDecl, effectiveNames, semanticModel, options))
+            foreach (var item in FindUnusedFunctions(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection))
                 yield return item;
         }
 
         // 3. Find unused signals
         if (options.IncludeSignals)
         {
-            foreach (var item in FindUnusedSignals(file, classDecl, effectiveNames, semanticModel, options))
+            foreach (var item in FindUnusedSignals(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection))
                 yield return item;
         }
 
@@ -199,7 +213,8 @@ public class GDDeadCodeService
         GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
-        GDDeadCodeOptions options)
+        GDDeadCodeOptions options,
+        List<GDReflectionDroppedItem>? droppedByReflection)
     {
         // Get all class-level variables (excluding constants - handled separately)
         var variables = classDecl.Members
@@ -237,6 +252,32 @@ public class GDDeadCodeService
                 // (includes both TypeName and autoload name)
                 if (HasCrossFileMemberAccess(file, effectiveNames, varName))
                     continue;
+
+                // Check if variable is reachable via get_property_list() reflection
+                var (propReflReachable, propReflSite) = IsReachableViaReflection(
+                    file, effectiveNames, varName, GDReflectionKind.Property);
+                if (propReflReachable)
+                {
+                    if (droppedByReflection != null && propReflSite != null)
+                    {
+                        var varToken = variable.Identifier ?? variable.AllTokens.FirstOrDefault();
+                        droppedByReflection.Add(new GDReflectionDroppedItem
+                        {
+                            Kind = GDDeadCodeKind.Variable,
+                            Name = varName,
+                            FilePath = file.FullPath ?? "",
+                            Line = varToken?.StartLine ?? 0,
+                            Column = varToken?.StartColumn ?? 0,
+                            ReflectionKind = propReflSite.Kind,
+                            ReflectionSiteFile = propReflSite.FilePath,
+                            ReflectionSiteLine = propReflSite.Line,
+                            CallMethod = propReflSite.CallMethod,
+                            ReceiverTypeName = propReflSite.ReceiverTypeName,
+                            NameFilters = propReflSite.NameFilters
+                        });
+                    }
+                    continue;
+                }
 
                 // Check for @export/@onready annotations → downgrade to Potential
                 bool isExport = false;
@@ -284,7 +325,8 @@ public class GDDeadCodeService
         GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
-        GDDeadCodeOptions options)
+        GDDeadCodeOptions options,
+        List<GDReflectionDroppedItem>? droppedByReflection)
     {
         var methods = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -311,8 +353,27 @@ public class GDDeadCodeService
                 continue;
 
             // Check if method has any callers
-            var (hasCallers, confidence, reason) = CheckMethodCallers(
+            var (hasCallers, confidence, reason, reflSite) = CheckMethodCallers(
                 file, effectiveNames, methodName, semanticModel, options);
+
+            if (hasCallers && reflSite != null && droppedByReflection != null)
+            {
+                var identToken = method.Identifier ?? method.FuncKeyword ?? method.AllTokens.FirstOrDefault();
+                droppedByReflection.Add(new GDReflectionDroppedItem
+                {
+                    Kind = GDDeadCodeKind.Function,
+                    Name = methodName,
+                    FilePath = file.FullPath ?? "",
+                    Line = identToken?.StartLine ?? 0,
+                    Column = identToken?.StartColumn ?? 0,
+                    ReflectionKind = reflSite.Kind,
+                    ReflectionSiteFile = reflSite.FilePath,
+                    ReflectionSiteLine = reflSite.Line,
+                    CallMethod = reflSite.CallMethod,
+                    ReceiverTypeName = reflSite.ReceiverTypeName,
+                    NameFilters = reflSite.NameFilters
+                });
+            }
 
             if (!hasCallers)
             {
@@ -380,9 +441,10 @@ public class GDDeadCodeService
 
     /// <summary>
     /// Checks if a method has any callers using semantic registries.
-    /// Returns (hasCallers, confidence, reason).
+    /// Returns (hasCallers, confidence, reason, reflSite).
+    /// reflSite is non-null only when the method was found via reflection pattern.
     /// </summary>
-    private (bool HasCallers, GDReferenceConfidence Confidence, string Reason) CheckMethodCallers(
+    private (bool HasCallers, GDReferenceConfidence Confidence, string Reason, GDReflectionCallSite? ReflSite) CheckMethodCallers(
         GDScriptFile file,
         List<string> effectiveNames,
         string methodName,
@@ -396,7 +458,7 @@ public class GDDeadCodeService
             {
                 var callers = _callSiteRegistry.GetCallersOf(name, methodName);
                 if (callers.Count > 0)
-                    return (true, GDReferenceConfidence.Strict, "Has callers");
+                    return (true, GDReferenceConfidence.Strict, "Has callers", null);
             }
         }
 
@@ -405,7 +467,7 @@ public class GDDeadCodeService
         {
             var signalConnections = _signalRegistry.GetSignalsCallingMethod(name, methodName);
             if (signalConnections.Count > 0)
-                return (true, GDReferenceConfidence.Strict, "Connected to signals");
+                return (true, GDReferenceConfidence.Strict, "Connected to signals", null);
         }
 
         // 3. Check local references within the file via semantic model
@@ -415,19 +477,28 @@ public class GDDeadCodeService
             var refs = semanticModel.GetReferencesTo(symbol);
             if (refs.Count > 0)
             {
-                return (true, GDReferenceConfidence.Strict, "Has local references");
+                return (true, GDReferenceConfidence.Strict, "Has local references", null);
             }
         }
 
         // 3.5 Check cross-file member access (e.g., GameManager.start_game() from another file)
         if (HasCrossFileMemberAccess(file, effectiveNames, methodName))
         {
-            return (true, GDReferenceConfidence.Strict, "Has cross-file callers");
+            return (true, GDReferenceConfidence.Strict, "Has cross-file callers", null);
         }
 
         // 3.6 Check if this is an override of a base class method that has callers
         if (IsOverrideMethodUsed(file, methodName))
-            return (true, GDReferenceConfidence.Strict, "Override of called base method");
+            return (true, GDReferenceConfidence.Strict, "Override of called base method", null);
+
+        // 3.6.5 Check if method is reachable via reflection pattern (get_method_list() + call())
+        var (reflectionReachable, reflSite) = IsReachableViaReflection(file, effectiveNames, methodName, GDReflectionKind.Method);
+        if (reflectionReachable)
+        {
+            var reflFileName = System.IO.Path.GetFileName(reflSite!.FilePath);
+            return (true, GDReferenceConfidence.Potential,
+                $"Reachable via reflection at {reflFileName}:{reflSite.Line + 1}", reflSite);
+        }
 
         // 3.7 Check duck-typed ("*") call site entries — calls on unresolved receiver types
         if (_callSiteRegistry != null)
@@ -436,7 +507,7 @@ public class GDDeadCodeService
             if (duckCallers.Count > 0)
             {
                 return (false, GDReferenceConfidence.Potential,
-                    $"May be called via duck-typing ({duckCallers.Count} potential site(s))");
+                    $"May be called via duck-typing ({duckCallers.Count} potential site(s))", null);
             }
         }
 
@@ -450,11 +521,11 @@ public class GDDeadCodeService
             if (duckTypeCallsCount > 0)
             {
                 return (false, GDReferenceConfidence.NameMatch,
-                    $"May be called via duck-typing ({duckTypeCallsCount} potential sites)");
+                    $"May be called via duck-typing ({duckTypeCallsCount} potential sites)", null);
             }
         }
 
-        return (false, GDReferenceConfidence.Strict, "No callers found");
+        return (false, GDReferenceConfidence.Strict, "No callers found", null);
     }
 
     /// <summary>
@@ -508,6 +579,86 @@ public class GDDeadCodeService
                 }
             }
 
+            current = parentFile.Class.Extends?.Type?.BuildName();
+        }
+
+        return false;
+    }
+
+    private (bool IsReachable, GDReflectionCallSite? Site) IsReachableViaReflection(
+        GDScriptFile file,
+        List<string> effectiveNames,
+        string memberName,
+        GDReflectionKind kind)
+    {
+        foreach (var otherFile in _project.ScriptFiles)
+        {
+            var otherModel = _projectModel.GetSemanticModel(otherFile);
+            if (otherModel == null) continue;
+
+            foreach (var site in otherModel.GetReflectionCallSites())
+            {
+                if (site.Kind != kind)
+                    continue;
+
+                if (!site.Matches(memberName))
+                    continue;
+
+                if (site.IsSelfCall && otherFile == file)
+                    return (true, site);
+
+                if (site.ReceiverTypeName == "*")
+                    return (true, site);
+
+                foreach (var name in effectiveNames)
+                {
+                    if (IsTypeCompatible(site.ReceiverTypeName, name))
+                        return (true, site);
+                }
+
+                if (FileExtendsType(file, site.ReceiverTypeName))
+                    return (true, site);
+            }
+        }
+        return (false, null);
+    }
+
+    private bool FileExtendsType(GDScriptFile file, string receiverType)
+    {
+        if (file.Class == null)
+            return false;
+
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var current = file.Class.Extends?.Type?.BuildName();
+
+        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        {
+            if (string.Equals(current, receiverType, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var parentFile = _project.GetScriptByTypeName(current);
+            if (parentFile?.Class == null)
+                break;
+
+            current = parentFile.Class.Extends?.Type?.BuildName();
+        }
+
+        return false;
+    }
+
+    private bool IsTypeCompatible(string receiverType, string targetType)
+    {
+        if (string.Equals(receiverType, targetType, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var current = targetType;
+        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        {
+            if (string.Equals(current, receiverType, StringComparison.OrdinalIgnoreCase))
+                return true;
+            var parentFile = _project.GetScriptByTypeName(current);
+            if (parentFile?.Class == null) break;
             current = parentFile.Class.Extends?.Type?.BuildName();
         }
 
@@ -573,7 +724,8 @@ public class GDDeadCodeService
         GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
-        GDDeadCodeOptions options)
+        GDDeadCodeOptions options,
+        List<GDReflectionDroppedItem>? droppedByReflection)
     {
         var signals = classDecl.Members
             .OfType<GDSignalDeclaration>()
@@ -623,6 +775,35 @@ public class GDDeadCodeService
             if (!isEmitted && !hasConnections)
             {
                 isEmitted = HasCrossFileMemberAccess(file, effectiveNames, signalName);
+            }
+
+            // Check if signal is reachable via get_signal_list() reflection
+            if (!isEmitted && !hasConnections)
+            {
+                var (sigReflReachable, sigReflSite) = IsReachableViaReflection(
+                    file, effectiveNames, signalName, GDReflectionKind.Signal);
+                if (sigReflReachable)
+                {
+                    if (droppedByReflection != null && sigReflSite != null)
+                    {
+                        var sigToken = signal.Identifier ?? signal.AllTokens.FirstOrDefault();
+                        droppedByReflection.Add(new GDReflectionDroppedItem
+                        {
+                            Kind = GDDeadCodeKind.Signal,
+                            Name = signalName,
+                            FilePath = file.FullPath ?? "",
+                            Line = sigToken?.StartLine ?? 0,
+                            Column = sigToken?.StartColumn ?? 0,
+                            ReflectionKind = sigReflSite.Kind,
+                            ReflectionSiteFile = sigReflSite.FilePath,
+                            ReflectionSiteLine = sigReflSite.Line,
+                            CallMethod = sigReflSite.CallMethod,
+                            ReceiverTypeName = sigReflSite.ReceiverTypeName,
+                            NameFilters = sigReflSite.NameFilters
+                        });
+                    }
+                    continue;
+                }
             }
 
             if (!isEmitted && !hasConnections)

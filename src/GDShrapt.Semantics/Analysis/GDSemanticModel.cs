@@ -103,6 +103,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes = new();
     private readonly Dictionary<string, List<GDTypeUsage>> _typeUsages = new();
     private readonly List<GDStringReferenceWarning> _stringReferenceWarnings = new();
+    private readonly List<GDReflectionCallSite> _reflectionCallSites = new();
     private GDCallableCallSiteRegistry? _callSiteRegistry;
 
     /// <summary>
@@ -1364,6 +1365,14 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     internal IReadOnlyList<GDStringReferenceWarning> GetStringReferenceWarnings(string memberName)
         => _stringReferenceWarnings.Where(w => w.MemberName == memberName).ToList();
+
+    internal void AddReflectionCallSite(GDReflectionCallSite site) => _reflectionCallSites.Add(site);
+
+    /// <summary>
+    /// Gets detected reflection-based method invocation patterns in this file.
+    /// Used by dead code analysis to determine reflection-reachable methods.
+    /// </summary>
+    public IReadOnlyList<GDReflectionCallSite> GetReflectionCallSites() => _reflectionCallSites;
 
     /// <summary>
     /// Sets the inferred type for a node.

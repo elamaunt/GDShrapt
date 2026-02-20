@@ -2734,4 +2734,851 @@ func _ready():
             TestProjectHelper.DeleteTempProject(tempPath);
         }
     }
+
+    // === Reflection Pattern Detection Tests (DC-Test 1-5) ===
+
+    [TestMethod]
+    public void AnalyzeProject_GetMethodListCallSelf_AllMethodsNotReported()
+    {
+        // DC-Test 1: get_method_list() + call(method.name) on self — methods NOT reported
+        var code = @"extends Node
+
+func test_a():
+    pass
+
+func test_b():
+    pass
+
+func helper():
+    pass
+
+func _ready():
+    for method in get_method_list():
+        call(method.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("reflection_self.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            // Act
+            var report = handler.AnalyzeProject(options);
+
+            // Assert — all methods should NOT be reported (reachable via reflection)
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "test_a",
+                "test_a is reachable via reflection");
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "test_b",
+                "test_b is reachable via reflection");
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "helper",
+                "helper is reachable via reflection");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_GetMethodListWithBeginsWithFilter_OnlyPrefixedMethodsSpared()
+    {
+        // DC-Test 2: get_method_list() + call() with begins_with filter
+        var code = @"extends Node
+
+func test_a():
+    pass
+
+func helper():
+    pass
+
+func _ready():
+    for method in get_method_list():
+        if method.name.begins_with(""test_""):
+            call(method.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("reflection_filter.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            // Act
+            var report = handler.AnalyzeProject(options);
+
+            // Assert — test_a NOT reported (matches "test_" prefix), helper IS reported
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "test_a",
+                "test_a matches the begins_with filter");
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "helper",
+                "helper does not match the begins_with filter");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_CrossFileReflection_TargetMethodsNotReported()
+    {
+        // DC-Test 3: Cross-file reflection — node.get_method_list() + node.call()
+        var classACode = @"class_name MyTestClass
+extends Node
+
+func test_x():
+    pass
+
+func do_work():
+    pass
+";
+        var classBCode = @"extends Node
+
+func _ready():
+    var node: MyTestClass = MyTestClass.new()
+    for method in node.get_method_list():
+        node.call(method.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("my_test_class.gd", classACode),
+            ("runner.gd", classBCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            // Act
+            var report = handler.AnalyzeProject(options);
+
+            // Assert — test_x and do_work should NOT be reported
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "test_x",
+                "test_x is reachable via cross-file reflection");
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "do_work",
+                "do_work is reachable via cross-file reflection");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_NoGetMethodList_MethodsStillReported()
+    {
+        // DC-Test 4: No get_method_list() — methods still reported
+        var code = @"extends Node
+
+func test_a():
+    pass
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("no_reflection.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            // Act
+            var report = handler.AnalyzeProject(options);
+
+            // Assert — test_a IS reported (no reflection pattern detected)
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "test_a",
+                "test_a should be dead when no reflection pattern exists");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_FrameworkMethodPrefixes_StillWorkAsFallback()
+    {
+        // DC-Test 5: FrameworkMethodPrefixes still works as fallback when no reflection pattern
+        var code = @"extends Node
+
+func test_a():
+    pass
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("fallback.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false,
+                FrameworkMethodPrefixes = new HashSet<string> { "test_" }
+            };
+
+            // Act
+            var report = handler.AnalyzeProject(options);
+
+            // Assert — test_a NOT reported (FrameworkMethodPrefixes kicks in)
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "test_a",
+                "test_a matches FrameworkMethodPrefixes fallback");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Property Reflection Dead Code Tests (DC-P1, DC-P2) ===
+
+    [TestMethod]
+    public void AnalyzeProject_GetPropertyList_WithBeginsWithFilter_FilteredVarsNotReported()
+    {
+        // DC-P1: get_property_list() + set() self with begins_with("custom_")
+        var code = @"extends Node
+
+var custom_health: int = 100
+var custom_speed: float = 5.0
+var normal_var: int = 0
+
+func _ready():
+    for prop in get_property_list():
+        if prop.name.begins_with(""custom_""):
+            set(prop.name, null)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("prop_reflection.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable && item.Name == "custom_health",
+                "custom_health matches the property reflection filter");
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Variable && item.Name == "custom_speed",
+                "custom_speed matches the property reflection filter");
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Variable && item.Name == "normal_var",
+                "normal_var does not match the property reflection filter");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_NoGetPropertyList_VarsStillReported()
+    {
+        // DC-P2: No get_property_list() — vars still reported normally
+        var code = @"extends Node
+
+var custom_health: int = 100
+
+func _ready():
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("no_prop_reflection.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Variable && item.Name == "custom_health",
+                "custom_health should be dead when no property reflection pattern exists");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Signal Reflection Dead Code Tests (DC-S1, DC-S2) ===
+
+    [TestMethod]
+    public void AnalyzeProject_GetSignalList_WithBeginsWithFilter_FilteredSignalsNotReported()
+    {
+        // DC-S1: get_signal_list() + emit_signal() self with begins_with("on_")
+        var code = @"extends Node
+
+signal on_started
+signal on_finished
+signal internal_signal
+
+func _ready():
+    for sig in get_signal_list():
+        if sig.name.begins_with(""on_""):
+            emit_signal(sig.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("sig_reflection.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = false,
+                IncludeSignals = true,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Signal && item.Name == "on_started",
+                "on_started matches the signal reflection filter");
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Signal && item.Name == "on_finished",
+                "on_finished matches the signal reflection filter");
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Signal && item.Name == "internal_signal",
+                "internal_signal does not match the signal reflection filter");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_CrossFileSignalReflection_TargetSignalsNotReported()
+    {
+        // DC-S2: Cross-file signal reflection — typed receiver Emitter
+        var emitterCode = @"class_name Emitter
+extends Node
+
+signal on_started
+signal on_finished
+";
+        var runnerCode = @"extends Node
+
+func _ready():
+    var emitter: Emitter = Emitter.new()
+    for sig in emitter.get_signal_list():
+        emitter.emit_signal(sig.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("emitter.gd", emitterCode),
+            ("runner.gd", runnerCode));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = false,
+                IncludeSignals = true,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Signal && item.Name == "on_started",
+                "on_started is reachable via cross-file signal reflection");
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Signal && item.Name == "on_finished",
+                "on_finished is reachable via cross-file signal reflection");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === Filter Guard Dead Code Tests (DC-F1, DC-F2) ===
+
+    [TestMethod]
+    public void AnalyzeProject_GetMethodList_WithExactGuard_OnlyExactMethodSpared()
+    {
+        // DC-F1: get_method_list() with == exact guard
+        var code = @"extends Node
+
+func special_method():
+    pass
+
+func other_method():
+    pass
+
+func _ready():
+    for method in get_method_list():
+        if method.name == ""special_method"":
+            call(method.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("exact_guard.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "special_method",
+                "special_method matches the exact guard filter");
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "other_method",
+                "other_method does not match the exact guard filter");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_GetMethodList_WithEndsWithGuard_MatchingMethodsSpared()
+    {
+        // DC-F2: get_method_list() with ends_with("_test") guard
+        var code = @"extends Node
+
+func click_test():
+    pass
+
+func submit_test():
+    pass
+
+func helper():
+    pass
+
+func _ready():
+    for method in get_method_list():
+        if method.name.ends_with(""_test""):
+            call(method.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("ends_with_guard.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = true,
+                IncludeSignals = false,
+                IncludePrivate = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "click_test",
+                "click_test matches the ends_with filter");
+            report.Items.Should().NotContain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "submit_test",
+                "submit_test matches the ends_with filter");
+            report.Items.Should().Contain(item =>
+                item.Kind == GDDeadCodeKind.Function && item.Name == "helper",
+                "helper does not match the ends_with filter");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    // === DroppedByReflection Handler Tests (DC-DR-1 through DC-DR-7) ===
+
+    [TestMethod]
+    public void DC_DR1_MethodReflectionDrop_ViaHandler_InDroppedByReflection()
+    {
+        // DC-DR-1: Method reflection drop via handler with CollectDroppedByReflection=true
+        var code = @"extends Node
+class_name HandlerDR1
+
+func _ready():
+    for method in get_method_list():
+        call(method.name)
+
+func test_a() -> void:
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("handler_dr1.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true,
+                IncludeVariables = false,
+                IncludeSignals = false,
+                IncludePrivate = false,
+                CollectDroppedByReflection = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.DroppedByReflection.Should().Contain(d =>
+                d.Kind == GDDeadCodeKind.Function && d.Name == "test_a");
+            report.Items.Should().NotContain(i =>
+                i.Kind == GDDeadCodeKind.Function && i.Name == "test_a");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void DC_DR2_VariableReflectionDrop_ViaHandler_InDroppedByReflection()
+    {
+        // DC-DR-2: Variable reflection drop via handler
+        var code = @"extends Node
+class_name HandlerDR2
+
+var custom_val: int = 10
+
+func _ready():
+    for prop in get_property_list():
+        if prop.name.begins_with(""custom_""):
+            set(prop.name, 0)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("handler_dr2.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                CollectDroppedByReflection = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.DroppedByReflection.Should().Contain(d =>
+                d.Kind == GDDeadCodeKind.Variable && d.Name == "custom_val");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void DC_DR3_SignalReflectionDrop_ViaHandler_InDroppedByReflection()
+    {
+        // DC-DR-3: Signal reflection drop via handler
+        var code = @"extends Node
+class_name HandlerDR3
+
+signal on_done
+
+func _ready():
+    for sig in get_signal_list():
+        if sig.name.begins_with(""on_""):
+            emit_signal(sig.name)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("handler_dr3.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = false,
+                IncludeFunctions = false,
+                IncludeSignals = true,
+                CollectDroppedByReflection = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.DroppedByReflection.Should().Contain(d =>
+                d.Kind == GDDeadCodeKind.Signal && d.Name == "on_done");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void DC_DR4_TrulyDeadMethod_ViaHandler_InItems_NotInDropped()
+    {
+        // DC-DR-4: No reflection, truly dead method
+        var code = @"extends Node
+class_name HandlerDR4
+
+func _ready() -> void:
+    pass
+
+func dead_func() -> void:
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("handler_dr4.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true,
+                IncludeVariables = false,
+                IncludeSignals = false,
+                IncludePrivate = false,
+                CollectDroppedByReflection = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(i =>
+                i.Kind == GDDeadCodeKind.Function && i.Name == "dead_func");
+            report.DroppedByReflection.Should().NotContain(d => d.Name == "dead_func");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void DC_DR5_MixedDroppedAndDead_ViaHandler_BothListsPopulated()
+    {
+        // DC-DR-5: Mixed: one dropped by reflection + one truly dead
+        var code = @"extends Node
+class_name HandlerDR5
+
+func _ready():
+    for method in get_method_list():
+        if method.name.begins_with(""action_""):
+            call(method.name)
+
+func action_run() -> void:
+    pass
+
+func orphan_func() -> void:
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("handler_dr5.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true,
+                IncludeVariables = false,
+                IncludeSignals = false,
+                IncludePrivate = false,
+                CollectDroppedByReflection = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // action_run dropped by reflection
+            report.DroppedByReflection.Should().Contain(d => d.Name == "action_run");
+            report.Items.Should().NotContain(i => i.Name == "action_run");
+
+            // orphan_func is truly dead
+            report.Items.Should().Contain(i =>
+                i.Kind == GDDeadCodeKind.Function && i.Name == "orphan_func");
+            report.DroppedByReflection.Should().NotContain(d => d.Name == "orphan_func");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void DC_DR6_CollectDroppedFalse_ViaHandler_DroppedByReflectionEmpty()
+    {
+        // DC-DR-6: CollectDroppedByReflection=false (default) → DroppedByReflection is empty
+        var code = @"extends Node
+class_name HandlerDR6
+
+func _ready():
+    for method in get_method_list():
+        call(method.name)
+
+func test_x() -> void:
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("handler_dr6.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeFunctions = true,
+                IncludeVariables = false,
+                IncludeSignals = false,
+                IncludePrivate = false,
+                CollectDroppedByReflection = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.DroppedByReflection.Should().BeEmpty();
+            // test_x should still be excluded from Items (reflection still works)
+            report.Items.Should().NotContain(i => i.Name == "test_x");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void DC_DR7_BaseHandlerFiltersItems_PreservesDroppedByReflection()
+    {
+        // DC-DR-7: Base handler filters Items to Strict but preserves DroppedByReflection
+        var code = @"extends Node
+class_name HandlerDR7
+
+func _ready():
+    for method in get_method_list():
+        call(method.name)
+
+func test_m() -> void:
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("handler_dr7.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+
+            // Request Potential confidence — Base handler will enforce Strict
+            var options = new GDDeadCodeOptions
+            {
+                MaxConfidence = GDReferenceConfidence.Potential,
+                IncludeFunctions = true,
+                IncludeVariables = false,
+                IncludeSignals = false,
+                IncludePrivate = false,
+                CollectDroppedByReflection = true
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // Base handler enforces Strict — all items should be Strict only
+            if (report.HasItems)
+            {
+                report.Items.Should().OnlyContain(i => i.Confidence == GDReferenceConfidence.Strict);
+            }
+
+            // DroppedByReflection should still be preserved through filtering
+            report.DroppedByReflection.Should().Contain(d => d.Name == "test_m");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
 }

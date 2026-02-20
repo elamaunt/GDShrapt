@@ -278,14 +278,20 @@ public class GDSymbolReferenceCollector
             CollectContractStringReferences(symbol.Name, refs, seen);
         }
 
-        // Step 5: Class_name type usages
+        // Step 5: Reflection pattern references (get_method_list() + call(method.name))
+        if (_projectModel != null && isClassMember)
+        {
+            CollectReflectionSiteReferences(symbol, refs, seen);
+        }
+
+        // Step 6: Class_name type usages
         if (_projectModel != null && declaringScript != null && declaringScript.TypeName == symbol.Name)
         {
             CollectTypeUsageReferences(symbol.Name, refs, seen);
         }
 
-        // Step 6: String reference warnings
-        var warnings = CollectStringWarnings(symbol.Name);
+        // Step 7: String reference warnings
+        var warnings = CollectStringWarnings(symbol);
 
         return new GDSymbolReferences(symbol, declaringScript, refs, warnings);
     }
@@ -672,6 +678,43 @@ public class GDSymbolReferenceCollector
     }
 
     // ========================================
+    // Step 5: Reflection pattern references
+    // ========================================
+
+    private void CollectReflectionSiteReferences(
+        GDSymbolInfo symbol,
+        List<GDSymbolReference> refs,
+        HashSet<(string?, int, int)> seen)
+    {
+        var reflectionKind = MapToReflectionKind(symbol.Kind);
+        if (reflectionKind == null) return;
+
+        foreach (var script in _project.ScriptFiles)
+        {
+            if (script.FullPath == null) continue;
+
+            var model = _projectModel!.GetSemanticModel(script);
+            if (model == null) continue;
+
+            foreach (var site in model.GetReflectionCallSites())
+            {
+                if (site.Kind != reflectionKind) continue;
+                if (!site.Matches(symbol.Name)) continue;
+
+                var key = (script.FullPath, site.Line, site.Column);
+                if (!seen.Add(key)) continue;
+
+                refs.Add(new GDSymbolReference(
+                    script, null, null,
+                    site.Line, site.Column,
+                    GDReferenceConfidence.Potential,
+                    $"Reflection pattern: {FormatReflectionListMethod(site.Kind)} + {site.CallMethod}()",
+                    GDSymbolReferenceKind.ContractString));
+            }
+        }
+    }
+
+    // ========================================
     // Step 6: Class_name type usages
     // ========================================
 
@@ -707,7 +750,7 @@ public class GDSymbolReferenceCollector
     // Step 7: String warnings
     // ========================================
 
-    private IReadOnlyList<GDRenameWarning> CollectStringWarnings(string symbolName)
+    private IReadOnlyList<GDRenameWarning> CollectStringWarnings(GDSymbolInfo symbol)
     {
         var warnings = new List<GDRenameWarning>();
         if (_projectModel == null)
@@ -718,13 +761,36 @@ public class GDSymbolReferenceCollector
             var model = _projectModel.GetSemanticModel(script);
             if (model == null) continue;
 
-            foreach (var w in model.GetStringReferenceWarnings(symbolName))
+            foreach (var w in model.GetStringReferenceWarnings(symbol.Name))
             {
                 warnings.Add(new GDRenameWarning(
                     script.FullPath ?? "",
                     w.Node.StartLine + 1,
                     w.Node.StartColumn + 1,
                     w.Reason));
+            }
+        }
+
+        // Reflection pattern warnings
+        var reflectionKind = MapToReflectionKind(symbol.Kind);
+        if (reflectionKind != null)
+        {
+            foreach (var script in _project.ScriptFiles)
+            {
+                var model = _projectModel.GetSemanticModel(script);
+                if (model == null) continue;
+
+                foreach (var site in model.GetReflectionCallSites())
+                {
+                    if (site.Kind != reflectionKind) continue;
+                    if (!site.Matches(symbol.Name)) continue;
+
+                    warnings.Add(new GDRenameWarning(
+                        script.FullPath ?? "",
+                        site.Line + 1,
+                        site.Column + 1,
+                        $"Reflection pattern: {FormatReflectionListMethod(site.Kind)} + {site.CallMethod}() may reference '{symbol.Name}' dynamically"));
+                }
             }
         }
 
@@ -830,6 +896,30 @@ public class GDSymbolReferenceCollector
         return _project.ScriptFiles
             .FirstOrDefault(s => s.SemanticModel != null)
             ?.SemanticModel?.RuntimeProvider;
+    }
+
+    private static GDReflectionKind? MapToReflectionKind(GDSymbolKind kind)
+    {
+        return kind switch
+        {
+            GDSymbolKind.Method => GDReflectionKind.Method,
+            GDSymbolKind.Variable => GDReflectionKind.Property,
+            GDSymbolKind.Constant => GDReflectionKind.Property,
+            GDSymbolKind.Property => GDReflectionKind.Property,
+            GDSymbolKind.Signal => GDReflectionKind.Signal,
+            _ => null
+        };
+    }
+
+    private static string FormatReflectionListMethod(GDReflectionKind kind)
+    {
+        return kind switch
+        {
+            GDReflectionKind.Method => "get_method_list()",
+            GDReflectionKind.Property => "get_property_list()",
+            GDReflectionKind.Signal => "get_signal_list()",
+            _ => "reflection"
+        };
     }
 
     private static GDSymbolReferences Empty(string? symbolName) =>

@@ -98,6 +98,17 @@ public class GDDeadCodeReport
     public bool HasItems => Items.Count > 0;
 
     /// <summary>
+    /// Items excluded from the report because they are reachable via reflection patterns.
+    /// Populated when CollectDroppedByReflection option is enabled.
+    /// </summary>
+    public IReadOnlyList<GDReflectionDroppedItem> DroppedByReflection { get; set; } = new List<GDReflectionDroppedItem>();
+
+    /// <summary>
+    /// Count of items dropped by reflection.
+    /// </summary>
+    public int DroppedByReflectionCount => DroppedByReflection.Count;
+
+    /// <summary>
     /// Number of files analyzed in the project.
     /// </summary>
     public int FilesAnalyzed { get; set; }

@@ -88,6 +88,10 @@ public static class DeadCodeCommandBuilder
             ["--explain"],
             "Show detailed evidence for each item");
 
+        var showDroppedByReflectionOption = new Option<bool>(
+            ["--show-suppressed"],
+            "Show all items suppressed by reflection patterns (no limit)");
+
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
         command.AddOption(fileOption);
@@ -105,6 +109,7 @@ public static class DeadCodeCommandBuilder
         command.AddOption(topOption);
         command.AddOption(excludeTestsOption);
         command.AddOption(explainOption);
+        command.AddOption(showDroppedByReflectionOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -129,6 +134,7 @@ public static class DeadCodeCommandBuilder
             var top = context.ParseResult.GetValueForOption(topOption);
             var excludeTests = context.ParseResult.GetValueForOption(excludeTestsOption);
             var explain = context.ParseResult.GetValueForOption(explainOption);
+            var showDroppedByReflection = context.ParseResult.GetValueForOption(showDroppedByReflectionOption);
 
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
@@ -148,7 +154,9 @@ public static class DeadCodeCommandBuilder
                 TopN = top,
                 ExcludeTests = excludeTests,
                 Explain = explain,
-                Quiet = quiet
+                Quiet = quiet,
+                ShowDroppedByReflection = showDroppedByReflection,
+                Verbose = verbose || debug
             };
 
             var cmd = new GDDeadCodeCommand(projectPath, formatter, logger: logger, options: options);

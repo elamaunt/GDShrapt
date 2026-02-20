@@ -1,6 +1,7 @@
 # GDShrapt.CLI
 
-Command-line tool for GDScript analysis, validation, and refactoring. Designed for CI/CD pipelines and developer workflows.
+Command-line toolchain for **GDScript 2.0** analysis, validation, linting, formatting and refactoring.
+Built on [GDShrapt](https://github.com/elamaunt/GDShrapt) — a C# GDScript parser.
 
 ## Installation
 
@@ -8,101 +9,96 @@ Command-line tool for GDScript analysis, validation, and refactoring. Designed f
 dotnet tool install -g GDShrapt.CLI
 ```
 
+## Quick Start
+
+```bash
+# Full project analysis (validation + linting)
+gdshrapt analyze .
+
+# Quick CI health check
+gdshrapt check . --fail-on warning
+
+# Lint with a preset
+gdshrapt lint . --preset strict
+
+# Format code
+gdshrapt format . --check
+
+# Find dead code
+gdshrapt dead-code . --fail-if-found
+```
+
 ## Commands
 
-### analyze
+### Analysis & Diagnostics
 
-Analyze a GDScript project and output diagnostics:
+| Command | Description |
+|---------|-------------|
+| `analyze` | Full project analysis (validation + linting) |
+| `check` | Quick health check with exit codes for CI/CD |
+| `validate` | Semantic validation (types, scope, calls, control flow) |
+| `lint` | Code style violations (64+ rules, presets, naming conventions) |
 
-```bash
-gdshrapt analyze [project-path] [--format text|json]
+### Code Navigation & Refactoring
 
-# Examples
-gdshrapt analyze .
-gdshrapt analyze /path/to/godot/project
-gdshrapt analyze . --format json
-```
+| Command | Description |
+|---------|-------------|
+| `symbols` | List all symbols in a file (classes, functions, variables, signals) |
+| `find-refs` | Find all references to a symbol across the project |
+| `rename` | Safely rename a symbol across all files |
 
-### check
+### Formatting & Style
 
-Check a GDScript project for errors (CI/CD friendly):
+| Command | Description |
+|---------|-------------|
+| `format` | Auto-format GDScript files (indentation, spacing, wrapping) |
+| `extract-style` | Detect formatting conventions from an existing file |
 
-```bash
-gdshrapt check [project-path] [--quiet] [--format text|json]
+### Project Insights
 
-# Examples
-gdshrapt check .                    # Returns exit code 0 on success, 1 on errors
-gdshrapt check . --quiet            # No output, only exit code
-gdshrapt check . --format json      # JSON output for parsing
-```
+| Command | Description |
+|---------|-------------|
+| `metrics` | Cyclomatic complexity, maintainability index, and more |
+| `dead-code` | Detect unused variables, functions, signals, unreachable code |
+| `deps` | Dependency graph, circular import detection |
+| `type-coverage` | Type annotation coverage report |
+| `stats` | Combined project summary (size, complexity, health) |
 
-Exit codes:
-- `0` - No errors found
-- `1` - Errors found or execution failed
+### Utilities
 
-### symbols
-
-List symbols defined in a GDScript file:
-
-```bash
-gdshrapt symbols <file> [--format text|json]
-
-# Examples
-gdshrapt symbols player.gd
-gdshrapt symbols scripts/enemy.gd --format json
-```
-
-### find-refs
-
-Find references to a symbol across the project:
-
-```bash
-gdshrapt find-refs <symbol> [--project path] [--file path] [--format text|json]
-
-# Examples
-gdshrapt find-refs Player                     # Find all references to Player
-gdshrapt find-refs move_speed -p ./my-game    # In specific project
-gdshrapt find-refs health --file player.gd    # Only in specific file
-```
-
-### rename
-
-Rename a symbol across the project:
-
-```bash
-gdshrapt rename <old-name> <new-name> [--project path] [--file path] [--dry-run] [--format text|json]
-
-# Examples
-gdshrapt rename Player Character              # Rename across entire project
-gdshrapt rename hp health --dry-run           # Preview changes without applying
-gdshrapt rename speed velocity --file npc.gd  # Only in specific file
-```
-
-### format
-
-Format GDScript files:
-
-```bash
-gdshrapt format [path] [--dry-run] [--check] [--format text|json]
-
-# Examples
-gdshrapt format .                    # Format all files in current directory
-gdshrapt format player.gd            # Format single file
-gdshrapt format . --check            # Check if files are formatted (CI/CD)
-gdshrapt format . --dry-run          # Show what would change
-```
+| Command | Description |
+|---------|-------------|
+| `parse` | Display AST or token stream for a file |
+| `init` | Create a `.gdshrapt.json` configuration file |
+| `watch` | *[Experimental]* Real-time file monitoring |
 
 ## Global Options
 
-| Option | Description |
-|--------|-------------|
-| `--format, -f` | Output format: `text` (default) or `json` |
+Available on every command:
+
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--format` | `-f` | Output format: `text` (default) or `json` |
+| `--verbose` | `-v` | Enable verbose logging |
+| `--debug` | | Debug logging with timestamps |
+| `--quiet` | `-q` | Only show errors |
+| `--color` | | Color output: `auto`, `always`, `never` |
+| `--max-parallelism` | | Max parallel file analysis (`-1` = auto) |
+| `--timeout-seconds` | | Per-file timeout (default: 30) |
+| `--exclude` | | Glob pattern to exclude (repeatable) |
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success — no issues found |
+| 1 | Warnings or hints found (when `--fail-on warning`/`hint`) |
+| 2 | Errors found |
+| 3 | Fatal error (project not found, bad config, exception) |
 
 ## Output Formats
 
 ### Text (default)
-
-Human-readable output:
 
 ```
 player.gd:15:8: error GD2001: Undefined identifier 'unknwon_var'
@@ -110,8 +106,6 @@ player.gd:23:4: warning GD3002: Type mismatch in assignment
 ```
 
 ### JSON
-
-Machine-parseable output:
 
 ```json
 {
@@ -134,45 +128,79 @@ Machine-parseable output:
 ### GitHub Actions
 
 ```yaml
-- name: Check GDScript
-  run: |
-    dotnet tool install -g GDShrapt.CLI
-    gdshrapt check . --quiet
+name: GDScript Quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  gdscript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install GDShrapt CLI
+        run: dotnet tool install -g GDShrapt.CLI
+
+      - name: Check for errors
+        run: gdshrapt check . --fail-on warning
+
+      - name: Lint
+        run: gdshrapt lint . --preset recommended --fail-on warning
+
+      - name: Verify formatting
+        run: gdshrapt format . --check
+
+      - name: Detect dead code
+        run: gdshrapt dead-code . --exclude-tests --fail-if-found
+
+      - name: Check for circular dependencies
+        run: gdshrapt deps . --fail-on-cycles
 ```
 
 ### GitLab CI
 
 ```yaml
-gdscript-check:
-  script:
+gdscript-quality:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  before_script:
     - dotnet tool install -g GDShrapt.CLI
-    - gdshrapt check . --format json > gdshrapt-report.json
-  artifacts:
-    reports:
-      codequality: gdshrapt-report.json
+    - export PATH="$PATH:$HOME/.dotnet/tools"
+  script:
+    - gdshrapt check . --fail-on warning
+    - gdshrapt lint . --preset recommended
+    - gdshrapt format . --check
+    - gdshrapt dead-code . --exclude-tests --fail-if-found
 ```
 
 ## Configuration
 
-The CLI respects project configuration from `.gdshrapt/config.json` if present. See GDShrapt.Semantics for configuration options.
+Create a `.gdshrapt.json` configuration file:
 
-## Exit Codes
+```bash
+gdshrapt init --preset recommended
+```
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Errors found or command failed |
+CLI flags override configuration file settings. See `gdshrapt <command> --help` for all available options.
 
 ## Dependencies
 
-- `GDShrapt.CLI.Core` - Command implementations
-- `GDShrapt.Semantics` - Project analysis
-- `System.CommandLine` - CLI framework
+- `GDShrapt.CLI.Core` — Command implementations
+- `GDShrapt.Semantics` — Project analysis engine
+- `System.CommandLine` — CLI framework
 
 ## Target Framework
 
-- .NET 8.0
+.NET 8.0
 
 ## License
 
-Apache License 2.0 - see [LICENSE](../../LICENSE) for details.
+Apache License 2.0 — see [LICENSE](../../LICENSE) for details.

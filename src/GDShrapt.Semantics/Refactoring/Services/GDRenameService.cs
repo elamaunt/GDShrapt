@@ -292,6 +292,8 @@ public class GDRenameService
                 strictEdits = DeduplicateEdits(strictEdits);
                 potentialEdits = DeduplicateEdits(potentialEdits);
                 var warnings = CollectStringReferenceWarnings(oldName);
+                var symbolKind = definitions.First().Symbol.Kind;
+                warnings.AddRange(CollectReflectionWarnings(oldName, symbolKind));
 
                 return GDRenameResult.SuccessfulWithConfidence(
                     SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count, warnings);
@@ -1039,6 +1041,61 @@ public class GDRenameService
         }
 
         return warnings;
+    }
+
+    private List<GDRenameWarning> CollectReflectionWarnings(string oldName, GDSymbolKind symbolKind)
+    {
+        var warnings = new List<GDRenameWarning>();
+        if (_projectModel == null)
+            return warnings;
+
+        var reflectionKind = MapToReflectionKind(symbolKind);
+        if (reflectionKind == null)
+            return warnings;
+
+        foreach (var script in _project.ScriptFiles)
+        {
+            var model = _projectModel.GetSemanticModel(script);
+            if (model == null) continue;
+
+            foreach (var site in model.GetReflectionCallSites())
+            {
+                if (site.Kind != reflectionKind) continue;
+                if (!site.Matches(oldName)) continue;
+
+                warnings.Add(new GDRenameWarning(
+                    script.FullPath ?? "",
+                    site.Line + 1,
+                    site.Column + 1,
+                    $"Reflection pattern: {FormatReflectionListMethod(site.Kind)} + {site.CallMethod}() may reference '{oldName}' dynamically"));
+            }
+        }
+
+        return warnings;
+    }
+
+    private static GDReflectionKind? MapToReflectionKind(GDSymbolKind kind)
+    {
+        return kind switch
+        {
+            GDSymbolKind.Method => GDReflectionKind.Method,
+            GDSymbolKind.Variable => GDReflectionKind.Property,
+            GDSymbolKind.Constant => GDReflectionKind.Property,
+            GDSymbolKind.Property => GDReflectionKind.Property,
+            GDSymbolKind.Signal => GDReflectionKind.Signal,
+            _ => null
+        };
+    }
+
+    private static string FormatReflectionListMethod(GDReflectionKind kind)
+    {
+        return kind switch
+        {
+            GDReflectionKind.Method => "get_method_list()",
+            GDReflectionKind.Property => "get_property_list()",
+            GDReflectionKind.Signal => "get_signal_list()",
+            _ => "reflection"
+        };
     }
 
     private void CollectTscnEdits(

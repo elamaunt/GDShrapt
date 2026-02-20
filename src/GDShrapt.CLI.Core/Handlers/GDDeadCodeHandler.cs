@@ -71,7 +71,8 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
                 SceneSignalConnectionsConsidered = report.SceneSignalConnectionsConsidered,
                 VirtualMethodsSkipped = report.VirtualMethodsSkipped,
                 AutoloadsResolved = report.AutoloadsResolved,
-                TotalCallSitesRegistered = report.TotalCallSitesRegistered
+                TotalCallSitesRegistered = report.TotalCallSitesRegistered,
+                DroppedByReflection = report.DroppedByReflection
             };
         }
         return report;

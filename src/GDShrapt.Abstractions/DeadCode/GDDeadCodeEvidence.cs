@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace GDShrapt.Abstractions;
 
 /// <summary>
@@ -22,12 +24,17 @@ public class GDDeadCodeEvidence
     public bool IsVirtualOrEntrypoint { get; set; }
 
     /// <summary>
-    /// Number of duck-type matches found (if any).
+    /// Number of dynamic dispatch probes performed (duck-typed call resolution).
     /// </summary>
     public int DuckTypeMatches { get; set; }
 
     /// <summary>
-    /// Number of cross-file access checks performed.
+    /// Number of project-wide index lookups performed (cross-file access checks).
     /// </summary>
     public int CrossFileAccessChecks { get; set; }
+
+    /// <summary>
+    /// Reflection call sites that make this method reachable (for --explain output).
+    /// </summary>
+    public List<string>? ReflectionSites { get; set; }
 }

@@ -17,6 +17,7 @@ public static class GDAnsiColors
     public static string Dim(string text) => Enabled ? $"\x1b[2m{text}\x1b[0m" : text;
     public static string Orange(string text) => Enabled ? $"\x1b[38;5;208m{text}\x1b[0m" : text;
     public static string Magenta(string text) => Enabled ? $"\x1b[35m{text}\x1b[0m" : text;
+    public static string White(string text) => Enabled ? $"\x1b[97m{text}\x1b[0m" : text;
 
     /// <summary>
     /// Configures color based on --color option value.
