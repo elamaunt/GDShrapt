@@ -23,10 +23,10 @@ GDShrapt is built and tested as a **standalone tooling platform**. It does **not
 
 - **Test coverage:** 5,000+ automated tests (including semantic stress tests and benchmarks)
 - **Latest stable release:** 5.x (parser, linter, formatter libraries)
-- **Current preview:** **6.0.0-alpha.5** — CLI alpha available on NuGet
+- **Current preview:** **6.0.0-alpha.4** — CLI alpha available on NuGet
 
 🔗 NuGet (CLI alpha):  
-https://www.nuget.org/packages/GDShrapt.CLI/6.0.0-alpha.5
+https://www.nuget.org/packages/GDShrapt.CLI/6.0.0-alpha.4
 
 🔗 Demo project (used for CLI examples):  
 https://github.com/elamaunt/GDShrapt-Demo
@@ -40,7 +40,7 @@ Version 6.0.0 represents a **conceptual shift** from standalone libraries to an 
 Install the CLI tool:
 
 ```bash
-dotnet tool install -g GDShrapt.CLI --version 6.0.0-alpha.5
+dotnet tool install -g GDShrapt.CLI --version 6.0.0-alpha.4
 ```
 
 Analyze a project:
