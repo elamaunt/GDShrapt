@@ -26,7 +26,7 @@ GDShrapt is built and tested as a **standalone tooling platform**. It does **not
 - **Current preview:** **6.0.0-alpha.5** — CLI alpha available on NuGet
 
 🔗 NuGet (CLI alpha):  
-https://www.nuget.org/packages/GDShrapt.CLI/6.0.0-alpha.4
+https://www.nuget.org/packages/GDShrapt.CLI/6.0.0-alpha.5
 
 🔗 Demo project (used for CLI examples):  
 https://github.com/elamaunt/GDShrapt-Demo
