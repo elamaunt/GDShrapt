@@ -72,6 +72,8 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
                 VirtualMethodsSkipped = report.VirtualMethodsSkipped,
                 AutoloadsResolved = report.AutoloadsResolved,
                 TotalCallSitesRegistered = report.TotalCallSitesRegistered,
+                CSharpCodeDetected = report.CSharpCodeDetected,
+                CSharpInteropExcluded = report.CSharpInteropExcluded,
                 DroppedByReflection = report.DroppedByReflection
             };
         }

@@ -237,6 +237,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         // Godot 4 format: [ext_resource type="Script" uid="..." path="res://..." id="..."]
         // Attributes can be in any order, so we need flexible parsing
         var extResources = new Dictionary<string, string>();
+        var csResources = new Dictionary<string, string>();
         var sceneResources = new Dictionary<string, string>();
         var allExtResources = new Dictionary<string, (string Path, string Type)>();
         var extResBlockRegex = new Regex(@"\[ext_resource\s+([^\]]+)\]", RegexOptions.Multiline);
@@ -262,6 +263,10 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
                 if (path.EndsWith(".gd"))
                 {
                     extResources[id] = path;
+                }
+                else if (path.EndsWith(".cs"))
+                {
+                    csResources[id] = path;
                 }
                 if (path.EndsWith(".tscn") || path.EndsWith(".scn"))
                 {
@@ -358,7 +363,34 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             var scriptRef = scriptMatch.Groups[1].Value;
 
             if (!extResources.TryGetValue(scriptRef, out var scriptPath))
+            {
+                // Check if it's a C# script reference
+                if (csResources.TryGetValue(scriptRef, out var csPath))
+                {
+                    // Find owning node for C# script
+                    int csOwnerIndex = -1;
+                    for (int i = 0; i < nodeMatches.Count; i++)
+                    {
+                        if (nodeMatches[i].Index < scriptPos)
+                        {
+                            if (i + 1 >= nodeMatches.Count || nodeMatches[i + 1].Index > scriptPos)
+                            {
+                                csOwnerIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (csOwnerIndex >= 0 && csOwnerIndex < nodes.Count)
+                    {
+                        nodes[csOwnerIndex].ScriptPath = csPath;
+                        nodes[csOwnerIndex].ScriptTypeName = GetTypeNameFromScriptPath(csPath);
+                        nodes[csOwnerIndex].IsCSharpScript = true;
+                        sceneInfo.ScriptToNodePath[csPath] = nodes[csOwnerIndex].Path;
+                    }
+                }
                 continue;
+            }
 
             // Find which node this script belongs to by finding the last node defined before this script
             int ownerNodeIndex = -1;
@@ -1432,6 +1464,11 @@ public class GDNodeTypeInfo
     /// Resource path of the sub-scene (.tscn/.scn) if this is a sub-scene instance.
     /// </summary>
     public string? SubScenePath { get; set; }
+
+    /// <summary>
+    /// Whether this node's script is a C# script (.cs) rather than GDScript (.gd).
+    /// </summary>
+    public bool IsCSharpScript { get; set; }
 }
 
 /// <summary>

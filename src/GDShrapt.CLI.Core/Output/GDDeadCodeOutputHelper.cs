@@ -149,6 +149,9 @@ public static class GDDeadCodeOutputHelper
 
         if (report.AutoloadsResolved > 0)
             formatter.WriteMessage(output, GDAnsiColors.Dim($"  Autoloads resolved:            {report.AutoloadsResolved}"));
+
+        if (report.CSharpInteropExcluded > 0)
+            formatter.WriteMessage(output, GDAnsiColors.Dim($"  C# interop excluded:           {report.CSharpInteropExcluded}"));
     }
 
     /// <summary>

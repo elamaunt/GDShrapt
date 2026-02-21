@@ -2,6 +2,7 @@ using GDShrapt.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace GDShrapt.Semantics;
@@ -14,6 +15,14 @@ public static class GDGodotProjectParser
 {
     private static readonly Regex AutoloadEntryRegex = new Regex(
         @"^(\w+)\s*=\s*""(\*?)(.+)""$",
+        RegexOptions.Compiled);
+
+    private static readonly Regex FeaturesRegex = new Regex(
+        @"config/features\s*=\s*PackedStringArray\(""(\d+\.\d+)""",
+        RegexOptions.Compiled);
+
+    private static readonly Regex UidInHeaderRegex = new Regex(
+        @"uid=""(uid://[a-y0-8]+)""",
         RegexOptions.Compiled);
 
     /// <summary>
@@ -76,7 +85,173 @@ public static class GDGodotProjectParser
             // Return empty list on parse errors
         }
 
+        // Resolve uid:// paths if any autoloads use them
+        ResolveUidPaths(autoloads, projectGodotPath, fs);
+
         return autoloads;
+    }
+
+    /// <summary>
+    /// Parses the Godot engine version from the project.godot config/features field.
+    /// Returns null if version cannot be determined.
+    /// </summary>
+    public static Version? ParseGodotVersion(string projectGodotPath, IGDFileSystem? fileSystem = null)
+    {
+        var fs = fileSystem ?? new GDDefaultFileSystem();
+
+        if (!fs.FileExists(projectGodotPath))
+            return null;
+
+        try
+        {
+            var content = fs.ReadAllText(projectGodotPath);
+            var lines = content.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+            bool inApplicationSection = false;
+
+            foreach (var rawLine in lines)
+            {
+                var line = rawLine.Trim();
+
+                if (line.StartsWith("["))
+                {
+                    inApplicationSection = line.Equals("[application]", StringComparison.OrdinalIgnoreCase);
+                    continue;
+                }
+
+                if (!inApplicationSection)
+                    continue;
+
+                var match = FeaturesRegex.Match(line);
+                if (match.Success)
+                {
+                    if (Version.TryParse(match.Groups[1].Value, out var version))
+                        return version;
+                }
+            }
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
+    private static void ResolveUidPaths(List<GDAutoloadEntry> autoloads, string projectGodotPath, IGDFileSystem fs)
+    {
+        var neededUids = new HashSet<string>(
+            autoloads.Where(a => a.Path.StartsWith("uid://")).Select(a => a.Path));
+
+        if (neededUids.Count == 0)
+            return;
+
+        var projectDir = Path.GetDirectoryName(projectGodotPath);
+        if (string.IsNullOrEmpty(projectDir))
+            return;
+
+        var uidMap = BuildUidMap(projectDir, fs, neededUids);
+
+        for (int i = 0; i < autoloads.Count; i++)
+        {
+            if (autoloads[i].Path.StartsWith("uid://")
+                && uidMap.TryGetValue(autoloads[i].Path, out var resolved))
+            {
+                autoloads[i] = new GDAutoloadEntry
+                {
+                    Name = autoloads[i].Name,
+                    Path = resolved,
+                    Enabled = autoloads[i].Enabled
+                };
+            }
+        }
+    }
+
+    private static Dictionary<string, string> BuildUidMap(
+        string projectDir, IGDFileSystem fs, HashSet<string> neededUids)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        try
+        {
+            // 1. Scan .uid sidecar files (Godot 4.4+)
+            foreach (var uidFile in fs.GetFiles(projectDir, "*.uid", true))
+            {
+                if (neededUids.Count == 0)
+                    break;
+
+                try
+                {
+                    var content = fs.ReadAllText(uidFile).Trim();
+                    if (content.StartsWith("uid://") && neededUids.Contains(content))
+                    {
+                        // Strip .uid suffix to get the resource path
+                        var resourceFullPath = uidFile.Substring(0, uidFile.Length - 4);
+                        var resPath = GetRelativeResPath(projectDir, resourceFullPath);
+                        if (resPath != null)
+                        {
+                            map[content] = resPath;
+                            neededUids.Remove(content);
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 2. Scan .tscn/.tres headers for uid (if any UIDs still unresolved)
+            if (neededUids.Count > 0)
+            {
+                IEnumerable<string> sceneFiles;
+                try { sceneFiles = fs.GetFiles(projectDir, "*.tscn", true); }
+                catch { sceneFiles = Enumerable.Empty<string>(); }
+
+                IEnumerable<string> resFiles;
+                try { resFiles = fs.GetFiles(projectDir, "*.tres", true); }
+                catch { resFiles = Enumerable.Empty<string>(); }
+
+                foreach (var file in sceneFiles.Concat(resFiles))
+                {
+                    if (neededUids.Count == 0)
+                        break;
+
+                    try
+                    {
+                        var fileContent = fs.ReadAllText(file);
+                        var firstLineEnd = fileContent.IndexOf('\n');
+                        var firstLine = firstLineEnd >= 0
+                            ? fileContent.Substring(0, firstLineEnd).Trim()
+                            : fileContent.Trim();
+
+                        var uidMatch = UidInHeaderRegex.Match(firstLine);
+                        if (uidMatch.Success)
+                        {
+                            var uid = uidMatch.Groups[1].Value;
+                            if (neededUids.Contains(uid) && !map.ContainsKey(uid))
+                            {
+                                var resPath = GetRelativeResPath(projectDir, file);
+                                if (resPath != null)
+                                {
+                                    map[uid] = resPath;
+                                    neededUids.Remove(uid);
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+        catch { }
+
+        return map;
+    }
+
+    private static string? GetRelativeResPath(string projectDir, string fullPath)
+    {
+        var normalizedDir = projectDir.Replace('\\', '/').TrimEnd('/') + '/';
+        var normalizedPath = fullPath.Replace('\\', '/');
+        if (normalizedPath.StartsWith(normalizedDir, StringComparison.OrdinalIgnoreCase))
+            return "res://" + normalizedPath.Substring(normalizedDir.Length);
+        return null;
     }
 
     /// <summary>
@@ -149,4 +324,9 @@ public class GDAutoloadEntry
     /// Whether this autoload is a scene file.
     /// </summary>
     public bool IsScene => Extension == ".tscn" || Extension == ".scn";
+
+    /// <summary>
+    /// Whether this autoload is a C# script.
+    /// </summary>
+    public bool IsCSharp => Extension == ".cs";
 }

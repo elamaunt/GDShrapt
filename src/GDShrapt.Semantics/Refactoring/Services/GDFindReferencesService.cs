@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -711,7 +712,70 @@ public class GDFindReferencesService : GDRefactoringServiceBase
                 potentialRefs.Add(location);
         }
 
+        EnrichWithCSharpInteropNote(scope, strictRefs);
+
         return GDFindReferencesResult.Succeeded(scope, strictRefs, potentialRefs);
+    }
+
+    /// <summary>
+    /// Enriches declaration references with C# interop notes when the symbol
+    /// is on an autoload in a mixed GDScript/C# project.
+    /// </summary>
+    private void EnrichWithCSharpInteropNote(GDSymbolScope scope, List<GDReferenceLocation> strictRefs)
+    {
+        if (_projectModel == null || _project == null)
+            return;
+
+        if (!_projectModel.CSharpInterop.HasCSharpCode)
+            return;
+
+        // Find the declaring script
+        var declaringScript = scope.ContainingScript;
+        if (declaringScript == null)
+            return;
+
+        // Check if declaring script is an autoload
+        var isAutoload = _project.AutoloadEntries.Any(a =>
+        {
+            var resPath = a.Path;
+            if (resPath.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                resPath = resPath.Substring(6);
+            var fullPath = System.IO.Path.GetFullPath(
+                System.IO.Path.Combine(_project.ProjectPath, resPath))
+                .Replace('\\', '/').TrimEnd('/');
+            return declaringScript.FullPath != null &&
+                fullPath.Equals(declaringScript.FullPath, StringComparison.OrdinalIgnoreCase);
+        });
+
+        if (!isAutoload)
+            return;
+
+        // Find the declaration reference and replace it with an enriched version
+        for (int i = 0; i < strictRefs.Count; i++)
+        {
+            if (strictRefs[i].Kind == GDReferenceKind.Declaration)
+            {
+                var orig = strictRefs[i];
+                var interopReason = orig.ConfidenceReason != null
+                    ? $"{orig.ConfidenceReason}; may be called from C# via Call()"
+                    : "May be called from C# via Call()";
+
+                strictRefs[i] = new GDReferenceLocation(
+                    orig.SymbolName,
+                    orig.FilePath,
+                    orig.Line,
+                    orig.Column,
+                    orig.EndColumn,
+                    orig.Kind,
+                    orig.Confidence,
+                    orig.Node,
+                    orig.ContextText,
+                    orig.HighlightStart,
+                    orig.HighlightEnd,
+                    interopReason);
+                break;
+            }
+        }
     }
 
     private static GDReferenceKind ConvertReferenceKind(GDSymbolReference symRef)

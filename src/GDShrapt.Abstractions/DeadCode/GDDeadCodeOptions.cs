@@ -159,6 +159,12 @@ public class GDDeadCodeOptions
     public bool CollectDroppedByReflection { get; set; }
 
     /// <summary>
+    /// When true, non-private members on classes with class_name are downgraded
+    /// from Strict to Potential confidence (they may be used externally).
+    /// </summary>
+    public bool TreatClassNameAsPublicAPI { get; set; } = true;
+
+    /// <summary>
     /// Method name prefixes for framework-invoked methods (e.g., "test_").
     /// Functions matching these prefixes are skipped from dead code analysis.
     /// Only applies when the declaring class extends one of FrameworkBaseClasses
@@ -245,7 +251,8 @@ public class GDDeadCodeOptions
             CollectEvidence = CollectEvidence,
             CollectDroppedByReflection = CollectDroppedByReflection,
             FrameworkMethodPrefixes = FrameworkMethodPrefixes,
-            FrameworkBaseClasses = FrameworkBaseClasses
+            FrameworkBaseClasses = FrameworkBaseClasses,
+            TreatClassNameAsPublicAPI = TreatClassNameAsPublicAPI
         };
     }
 

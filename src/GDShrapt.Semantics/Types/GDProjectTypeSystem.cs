@@ -17,7 +17,7 @@ public class GDProjectTypeSystem : IGDProjectTypeSystem
     public GDProjectTypeSystem(GDProjectSemanticModel projectModel)
     {
         _projectModel = projectModel ?? throw new ArgumentNullException(nameof(projectModel));
-        _runtimeProvider = new Lazy<IGDRuntimeProvider?>(() => _projectModel.Project.CreateRuntimeProvider());
+        _runtimeProvider = new Lazy<IGDRuntimeProvider?>(() => _projectModel.RuntimeProvider);
     }
 
     /// <inheritdoc />

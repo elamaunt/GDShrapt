@@ -15,10 +15,10 @@ internal class GDCrossFileContainerUsageCollector
     private readonly GDScriptProject _project;
     private readonly IGDRuntimeProvider? _runtimeProvider;
 
-    public GDCrossFileContainerUsageCollector(GDScriptProject project)
+    public GDCrossFileContainerUsageCollector(GDScriptProject project, IGDRuntimeProvider? runtimeProvider = null)
     {
         _project = project;
-        _runtimeProvider = project.CreateRuntimeProvider();
+        _runtimeProvider = runtimeProvider ?? project.CreateRuntimeProvider();
     }
 
     /// <summary>

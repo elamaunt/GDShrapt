@@ -11,15 +11,17 @@ public static class InitCommandBuilder
     {
         var command = new Command("init",
             "Create a .gdshrapt.json configuration file.\n\n" +
+            "Available presets: minimal, recommended, strict, relaxed, ci, local, team\n\n" +
             "Examples:\n" +
             "  gdshrapt init                             Create config in current directory\n" +
             "  gdshrapt init --preset strict             Create strict config\n" +
+            "  gdshrapt init --preset ci                 CI-optimized config (fail-fast)\n" +
             "  gdshrapt init ./my-project --force        Overwrite existing config");
 
         var pathArg = new Argument<string>("path", () => ".", "Directory to create config in");
         var presetOption = new Option<string?>(
             new[] { "--preset" },
-            "Configuration preset: recommended, strict, relaxed, minimal");
+            "Apply a built-in preset (minimal, recommended, strict, relaxed, ci, local, team)");
         var forceOption = new Option<bool>(
             new[] { "--force" },
             "Overwrite existing configuration file");

@@ -1,3 +1,5 @@
+using GDShrapt.Abstractions;
+
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -27,6 +29,7 @@ public class GDRefactoringServices
 {
     private readonly GDScriptProject _project;
     private readonly GDProjectSemanticModel? _projectModel;
+    private readonly IGDRuntimeProvider? _runtimeProvider;
 
     // Lazy-initialized services (project-aware)
     private GDRenameService? _rename;
@@ -49,10 +52,11 @@ public class GDRefactoringServices
     private GDSnippetService? _snippets;
     private GDSurroundWithService? _surroundWith;
 
-    internal GDRefactoringServices(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
+    internal GDRefactoringServices(GDScriptProject project, GDProjectSemanticModel? projectModel = null, IGDRuntimeProvider? runtimeProvider = null)
     {
         _project = project ?? throw new System.ArgumentNullException(nameof(project));
         _projectModel = projectModel;
+        _runtimeProvider = runtimeProvider;
     }
 
     #region Navigation Services
@@ -77,7 +81,7 @@ public class GDRefactoringServices
     /// Rename symbol across the project.
     /// Plans and executes symbol renames with conflict detection.
     /// </summary>
-    public GDRenameService Rename => _rename ??= new GDRenameService(_project, _projectModel);
+    public GDRenameService Rename => _rename ??= new GDRenameService(_project, _projectModel, _runtimeProvider);
 
     #endregion
 

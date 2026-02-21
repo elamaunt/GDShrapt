@@ -15,11 +15,11 @@ public class GDCrossFileReferenceFinder
     private readonly GDDuckTypeResolver? _duckTypeResolver;
     private readonly GDProjectSemanticModel? _projectModel;
 
-    public GDCrossFileReferenceFinder(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
+    public GDCrossFileReferenceFinder(GDScriptProject project, GDProjectSemanticModel? projectModel = null, IGDRuntimeProvider? runtimeProvider = null)
     {
         _project = project;
         _projectModel = projectModel;
-        _runtimeProvider = project.CreateRuntimeProvider();
+        _runtimeProvider = runtimeProvider ?? project.CreateRuntimeProvider();
         if (_runtimeProvider != null)
             _duckTypeResolver = new GDDuckTypeResolver(_runtimeProvider);
     }

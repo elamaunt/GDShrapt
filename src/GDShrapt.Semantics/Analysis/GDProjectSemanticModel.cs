@@ -63,11 +63,19 @@ public class GDProjectSemanticModel : IDisposable
     private readonly Lazy<GDResourceFlowService> _resourceFlow;
     private readonly Lazy<GDDuplicateDetectionService> _duplicates;
     private readonly Lazy<GDSecurityScanningService> _security;
+    private readonly Lazy<IGDRuntimeProvider?> _runtimeProvider;
+    private readonly Lazy<GDCSharpInteropIndex> _csharpInterop;
 
     /// <summary>
     /// The underlying project.
     /// </summary>
     public GDScriptProject Project => _project;
+
+    /// <summary>
+    /// Shared runtime provider for type resolution across the project.
+    /// Lazily initialized, thread-safe, single instance shared by all services.
+    /// </summary>
+    public IGDRuntimeProvider? RuntimeProvider => _runtimeProvider.Value;
 
     /// <summary>
     /// Project-level type system for cross-file type resolution.
@@ -146,6 +154,12 @@ public class GDProjectSemanticModel : IDisposable
     public GDSecurityScanningService Security => _security.Value;
 
     /// <summary>
+    /// C# interop index for detecting mixed GDScript/C# projects.
+    /// Provides data for dead code, rename, and find-refs consumers.
+    /// </summary>
+    public GDCSharpInteropIndex CSharpInterop => _csharpInterop.Value;
+
+    /// <summary>
     /// Fired when a file is invalidated in the semantic model.
     /// </summary>
     public event EventHandler<string>? FileInvalidated;
@@ -165,8 +179,9 @@ public class GDProjectSemanticModel : IDisposable
         _debounceInterval = TimeSpan.FromMilliseconds(semanticsConfig.FileChangeDebounceMs);
         _enableIncrementalAnalysis = semanticsConfig.EnableIncrementalAnalysis;
 
+        _runtimeProvider = new Lazy<IGDRuntimeProvider?>(() => _project.CreateRuntimeProvider(), LazyThreadSafetyMode.ExecutionAndPublication);
         _typeSystem = new Lazy<IGDProjectTypeSystem>(() => new GDProjectTypeSystem(this), LazyThreadSafetyMode.ExecutionAndPublication);
-        _services = new Lazy<GDRefactoringServices>(() => new GDRefactoringServices(_project, this), LazyThreadSafetyMode.ExecutionAndPublication);
+        _services = new Lazy<GDRefactoringServices>(() => new GDRefactoringServices(_project, this, RuntimeProvider), LazyThreadSafetyMode.ExecutionAndPublication);
         _diagnostics = new Lazy<GDDiagnosticsServices>(() => new GDDiagnosticsServices(_project), LazyThreadSafetyMode.ExecutionAndPublication);
         _deadCode = new Lazy<GDDeadCodeService>(() => new GDDeadCodeService(this), LazyThreadSafetyMode.ExecutionAndPublication);
         _metrics = new Lazy<GDMetricsService>(() => new GDMetricsService(_project), LazyThreadSafetyMode.ExecutionAndPublication);
@@ -176,6 +191,7 @@ public class GDProjectSemanticModel : IDisposable
         _resourceFlow = new Lazy<GDResourceFlowService>(() => new GDResourceFlowService(this), LazyThreadSafetyMode.ExecutionAndPublication);
         _duplicates = new Lazy<GDDuplicateDetectionService>(() => new GDDuplicateDetectionService(this), LazyThreadSafetyMode.ExecutionAndPublication);
         _security = new Lazy<GDSecurityScanningService>(() => new GDSecurityScanningService(this), LazyThreadSafetyMode.ExecutionAndPublication);
+        _csharpInterop = new Lazy<GDCSharpInteropIndex>(() => new GDCSharpInteropIndex(_project), LazyThreadSafetyMode.ExecutionAndPublication);
 
         _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
@@ -193,7 +209,7 @@ public class GDProjectSemanticModel : IDisposable
     private GDSignalConnectionRegistry InitializeSignalRegistry()
     {
         var registry = new GDSignalConnectionRegistry();
-        var collector = new GDSignalConnectionCollector(_project);
+        var collector = new GDSignalConnectionCollector(_project, RuntimeProvider);
         var connections = collector.CollectAllConnections();
 
         foreach (var connection in connections)
@@ -255,7 +271,7 @@ public class GDProjectSemanticModel : IDisposable
             }
         }
 
-        var crossFileCollector = new GDCrossFileContainerUsageCollector(_project);
+        var crossFileCollector = new GDCrossFileContainerUsageCollector(_project, RuntimeProvider);
 
         foreach (var profileEntry in registry.AllProfiles)
         {
@@ -475,8 +491,7 @@ public class GDProjectSemanticModel : IDisposable
         {
             if (scriptFile.SemanticModel == null)
             {
-                var runtimeProvider = _project.CreateRuntimeProvider();
-                scriptFile.Analyze(runtimeProvider);
+                scriptFile.Analyze(RuntimeProvider);
             }
             // Analyze() guarantees SemanticModel is set (even on parse failure, a minimal model is created)
             return scriptFile.SemanticModel!;
@@ -789,7 +804,7 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     internal IEnumerable<(string MethodKey, bool InCycle)> GetInferenceOrder()
     {
-        var cycleDetector = new GDInferenceCycleDetector(_project);
+        var cycleDetector = new GDInferenceCycleDetector(_project, RuntimeProvider);
         cycleDetector.BuildDependencyGraph();
         return cycleDetector.GetInferenceOrder();
     }
@@ -799,7 +814,7 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     internal IEnumerable<IReadOnlyList<string>> DetectInferenceCycles()
     {
-        var cycleDetector = new GDInferenceCycleDetector(_project);
+        var cycleDetector = new GDInferenceCycleDetector(_project, RuntimeProvider);
         cycleDetector.BuildDependencyGraph();
         return cycleDetector.DetectCycles();
     }
@@ -1065,7 +1080,7 @@ public class GDProjectSemanticModel : IDisposable
             if (_signalRegistry.IsValueCreated)
             {
                 _signalRegistry.Value.UnregisterFile(filePath);
-                var collector = new GDSignalConnectionCollector(_project);
+                var collector = new GDSignalConnectionCollector(_project, RuntimeProvider);
                 var file = GetFileByPath(filePath);
                 if (file != null)
                 {
@@ -1421,7 +1436,7 @@ public class GDProjectSemanticModel : IDisposable
         if (paramNames.Count == 0)
             return result;
 
-        var runtimeProvider = _project.CreateRuntimeProvider();
+        var runtimeProvider = RuntimeProvider;
         foreach (var connection in connections)
         {
             if (string.IsNullOrEmpty(connection.EmitterType))

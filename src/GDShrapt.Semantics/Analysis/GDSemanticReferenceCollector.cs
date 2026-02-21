@@ -1023,6 +1023,17 @@ internal class GDSemanticReferenceCollector : GDVisitor
             {
                 CreateReference(symbolInfo, memberExpression, GDReferenceConfidence.Strict, callerType);
             }
+            else
+            {
+                // Member not found on the known type (e.g., custom method on a base-typed variable).
+                // Still register the access so cross-file dead code analysis can find it.
+                var unresolvedSymbol = GDSymbolInfo.DuckTyped(
+                    memberName,
+                    GDSymbolKind.Property,
+                    callerType,
+                    $"Unresolved member on '{callerType}'");
+                CreateReference(unresolvedSymbol, memberExpression, GDReferenceConfidence.Potential, callerType);
+            }
         }
         else
         {
@@ -1142,6 +1153,17 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         if (symbolInfo != null)
                         {
                             CreateReference(symbolInfo, callExpression, GDReferenceConfidence.Strict, callerType);
+                        }
+                        else
+                        {
+                            // Method not found on the known type (e.g., custom method on a base-typed variable).
+                            // Still register the access so cross-file dead code analysis can find it.
+                            var unresolvedSymbol = GDSymbolInfo.DuckTyped(
+                                methodName,
+                                GDSymbolKind.Method,
+                                callerType,
+                                $"Unresolved method on '{callerType}'");
+                            CreateReference(unresolvedSymbol, callExpression, GDReferenceConfidence.Potential, callerType);
                         }
                     }
 

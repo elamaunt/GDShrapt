@@ -133,6 +133,17 @@ public class GDDeadCodeReport
     /// </summary>
     public int TotalCallSitesRegistered { get; set; }
 
+    /// <summary>
+    /// Whether C# code was detected in the project (mixed GDScript/C# project).
+    /// </summary>
+    public bool CSharpCodeDetected { get; set; }
+
+    /// <summary>
+    /// Number of items excluded from Strict results due to C# Singleton Interop (CSI).
+    /// These are autoloaded members that may be reachable from C# code.
+    /// </summary>
+    public int CSharpInteropExcluded { get; set; }
+
     public GDDeadCodeReport()
     {
     }

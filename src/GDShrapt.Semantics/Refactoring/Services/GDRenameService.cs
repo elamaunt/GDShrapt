@@ -19,11 +19,11 @@ public class GDRenameService
     private readonly GDProjectSemanticModel? _projectModel;
     private readonly IGDRuntimeProvider? _runtimeProvider;
 
-    public GDRenameService(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
+    public GDRenameService(GDScriptProject project, GDProjectSemanticModel? projectModel = null, IGDRuntimeProvider? runtimeProvider = null)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
         _projectModel = projectModel;
-        _runtimeProvider = project.CreateRuntimeProvider();
+        _runtimeProvider = runtimeProvider ?? project.CreateRuntimeProvider();
     }
 
     /// <summary>
@@ -80,8 +80,12 @@ public class GDRenameService
         var sortedStrict = SortEditsReverse(strictEdits);
         var sortedPotential = SortEditsReverse(potentialEdits);
 
+        var warnings = new List<GDRenameWarning>(collectedRefs.StringWarnings);
+        warnings.AddRange(CollectReflectionWarnings(oldName, symbol.Kind));
+        warnings.AddRange(CollectCSharpInteropWarnings(oldName, containingScript));
+
         return GDRenameResult.SuccessfulWithConfidence(
-            sortedStrict, sortedPotential, filesModified.Count, collectedRefs.StringWarnings);
+            sortedStrict, sortedPotential, filesModified.Count, warnings);
     }
 
     /// <summary>
@@ -294,6 +298,7 @@ public class GDRenameService
                 var warnings = CollectStringReferenceWarnings(oldName);
                 var symbolKind = definitions.First().Symbol.Kind;
                 warnings.AddRange(CollectReflectionWarnings(oldName, symbolKind));
+                warnings.AddRange(CollectCSharpInteropWarnings(oldName, definitions.First().Script));
 
                 return GDRenameResult.SuccessfulWithConfidence(
                     SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count, warnings);
@@ -1069,6 +1074,45 @@ public class GDRenameService
                     site.Column + 1,
                     $"Reflection pattern: {FormatReflectionListMethod(site.Kind)} + {site.CallMethod}() may reference '{oldName}' dynamically"));
             }
+        }
+
+        return warnings;
+    }
+
+    private List<GDRenameWarning> CollectCSharpInteropWarnings(string oldName, GDScriptFile? declaringScript)
+    {
+        var warnings = new List<GDRenameWarning>();
+        if (_projectModel == null || declaringScript == null)
+            return warnings;
+
+        if (!_projectModel.CSharpInterop.HasCSharpCode)
+            return warnings;
+
+        // Check if declaring script is an autoload
+        var autoloadName = _project.AutoloadEntries
+            .Where(a => a.IsScript || a.IsScene)
+            .FirstOrDefault(a =>
+            {
+                var resPath = a.Path;
+                if (resPath.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                    resPath = resPath.Substring(6);
+                var fullPath = System.IO.Path.GetFullPath(
+                    System.IO.Path.Combine(_project.ProjectPath, resPath))
+                    .Replace('\\', '/').TrimEnd('/');
+                return declaringScript.FullPath != null &&
+                    fullPath.Equals(declaringScript.FullPath, StringComparison.OrdinalIgnoreCase);
+            })?.Name;
+
+        if (autoloadName == null)
+            return warnings;
+
+        if (!oldName.StartsWith("_"))
+        {
+            warnings.Add(new GDRenameWarning(
+                declaringScript.FullPath ?? "",
+                0, 0,
+                $"Symbol '{oldName}' is on autoload '{autoloadName}' in a mixed GDScript/C# project. " +
+                $"C# code may reference it via Call(\"{oldName}\") — update C# callers manually."));
         }
 
         return warnings;

@@ -15,10 +15,10 @@ internal class GDCallSiteCollector
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly GDProjectTypesProvider? _projectTypesProvider;
 
-    public GDCallSiteCollector(GDScriptProject project)
+    public GDCallSiteCollector(GDScriptProject project, IGDRuntimeProvider? runtimeProvider = null)
     {
         _project = project;
-        _runtimeProvider = project.CreateRuntimeProvider();
+        _runtimeProvider = runtimeProvider ?? project.CreateRuntimeProvider();
 
         if (_runtimeProvider is GDCompositeRuntimeProvider composite)
         {

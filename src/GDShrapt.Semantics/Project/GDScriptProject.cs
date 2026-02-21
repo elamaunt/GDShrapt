@@ -40,6 +40,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private FileSystemWatcher? _scriptsWatcher;
     private bool _disposed;
     private IReadOnlyList<GDAutoloadEntry>? _autoloadEntries;
+    private Version? _godotVersion;
+    private bool _godotVersionParsed;
 
     #region Events
 
@@ -142,6 +144,29 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             return _autoloadEntries;
         }
     }
+
+    /// <summary>
+    /// Godot engine version detected from project.godot config/features.
+    /// Null if version cannot be determined.
+    /// </summary>
+    public Version? GodotVersion
+    {
+        get
+        {
+            if (!_godotVersionParsed)
+            {
+                var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
+                _godotVersion = GDGodotProjectParser.ParseGodotVersion(projectGodotPath, _fileSystem);
+                _godotVersionParsed = true;
+            }
+            return _godotVersion;
+        }
+    }
+
+    /// <summary>
+    /// File system abstraction for the project.
+    /// </summary>
+    internal IGDFileSystem FileSystem => _fileSystem;
 
     /// <summary>
     /// Logger for diagnostic output.

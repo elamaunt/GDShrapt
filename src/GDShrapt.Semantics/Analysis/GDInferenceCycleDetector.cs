@@ -53,7 +53,7 @@ internal class GDInferenceCycleDetector
     /// <summary>
     /// Creates a new cycle detector with a custom runtime provider.
     /// </summary>
-    public GDInferenceCycleDetector(GDScriptProject project, IGDRuntimeProvider runtimeProvider)
+    public GDInferenceCycleDetector(GDScriptProject project, IGDRuntimeProvider? runtimeProvider)
     {
         _project = project;
         _customRuntimeProvider = runtimeProvider;

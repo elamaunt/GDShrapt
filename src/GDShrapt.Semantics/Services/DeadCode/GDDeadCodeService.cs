@@ -16,6 +16,7 @@ public class GDDeadCodeService
     private readonly GDScriptProject _project;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly GDSignalConnectionRegistry _signalRegistry;
+    private readonly IGDRuntimeProvider? _runtimeProvider;
     private Dictionary<string, string>? _autoloadNamesByPath;
 
 
@@ -30,6 +31,7 @@ public class GDDeadCodeService
         _project = projectModel.Project;
         _callSiteRegistry = _project.CallSiteRegistry;
         _signalRegistry = projectModel.SignalConnectionRegistry;
+        _runtimeProvider = projectModel.RuntimeProvider;
     }
 
     /// <summary>
@@ -103,6 +105,8 @@ public class GDDeadCodeService
         report.VirtualMethodsSkipped = options.SkipMethods.Count;
         report.AutoloadsResolved = _autoloadNamesByPath?.Count ?? 0;
         report.TotalCallSitesRegistered = _callSiteRegistry?.GetAllTargets().Count() ?? 0;
+        report.CSharpCodeDetected = _projectModel.CSharpInterop.HasCSharpCode;
+        report.CSharpInteropExcluded = items.Count(i => i.ReasonCode == GDDeadCodeReasonCode.CSI);
         if (droppedByReflection != null)
             report.DroppedByReflection = droppedByReflection;
         return report;
@@ -138,6 +142,10 @@ public class GDDeadCodeService
         var className = file.TypeName ?? classDecl.ClassName?.Identifier?.Sequence;
         var effectiveNames = GetEffectiveClassNames(file, className);
 
+        // C# interop: autoloaded scripts in mixed projects get CSI downgrade
+        bool isAutoload = GetAutoloadName(file) != null;
+        bool csharpReachable = isAutoload && _projectModel.CSharpInterop.HasCSharpCode;
+
         // Get semantic model for this file
         var semanticModel = _projectModel.GetSemanticModel(file);
         if (semanticModel == null)
@@ -150,21 +158,21 @@ public class GDDeadCodeService
         // 1. Find unused variables
         if (options.IncludeVariables)
         {
-            foreach (var item in FindUnusedVariables(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection))
+            foreach (var item in FindUnusedVariables(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
                 yield return item;
         }
 
         // 2. Find unused functions
         if (options.IncludeFunctions)
         {
-            foreach (var item in FindUnusedFunctions(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection))
+            foreach (var item in FindUnusedFunctions(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
                 yield return item;
         }
 
         // 3. Find unused signals
         if (options.IncludeSignals)
         {
-            foreach (var item in FindUnusedSignals(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection))
+            foreach (var item in FindUnusedSignals(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
                 yield return item;
         }
 
@@ -185,7 +193,7 @@ public class GDDeadCodeService
         // 6. Find unused constants
         if (options.IncludeConstants)
         {
-            foreach (var item in FindUnusedConstants(file, classDecl, effectiveNames, semanticModel, options))
+            foreach (var item in FindUnusedConstants(file, classDecl, effectiveNames, semanticModel, options, csharpReachable))
                 yield return item;
         }
 
@@ -214,7 +222,8 @@ public class GDDeadCodeService
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options,
-        List<GDReflectionDroppedItem>? droppedByReflection)
+        List<GDReflectionDroppedItem>? droppedByReflection,
+        bool csharpReachable = false)
     {
         // Get all class-level variables (excluding constants - handled separately)
         var variables = classDecl.Members
@@ -300,6 +309,19 @@ public class GDDeadCodeService
                     : isOnready ? GDDeadCodeReasonCode.VOR
                     : GDDeadCodeReasonCode.VNR;
 
+                if (file.IsGlobal && !isPrivate && options.TreatClassNameAsPublicAPI
+                    && confidence == GDReferenceConfidence.Strict)
+                {
+                    confidence = GDReferenceConfidence.Potential;
+                    reasonCode = GDDeadCodeReasonCode.FPA;
+                }
+
+                if (csharpReachable && !isPrivate && confidence == GDReferenceConfidence.Strict)
+                {
+                    confidence = GDReferenceConfidence.Potential;
+                    reasonCode = GDDeadCodeReasonCode.CSI;
+                }
+
                 var token = variable.Identifier ?? variable.AllTokens.FirstOrDefault();
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
                 {
@@ -326,7 +348,8 @@ public class GDDeadCodeService
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options,
-        List<GDReflectionDroppedItem>? droppedByReflection)
+        List<GDReflectionDroppedItem>? droppedByReflection,
+        bool csharpReachable = false)
     {
         var methods = classDecl.Members
             .OfType<GDMethodDeclaration>()
@@ -381,6 +404,19 @@ public class GDDeadCodeService
                     ? GDDeadCodeReasonCode.FNC
                     : GDDeadCodeReasonCode.FDT;
 
+                if (file.IsGlobal && !isPrivate && options.TreatClassNameAsPublicAPI
+                    && confidence == GDReferenceConfidence.Strict)
+                {
+                    confidence = GDReferenceConfidence.Potential;
+                    reasonCode = GDDeadCodeReasonCode.FPA;
+                }
+
+                if (csharpReachable && !isPrivate && confidence == GDReferenceConfidence.Strict)
+                {
+                    confidence = GDReferenceConfidence.Potential;
+                    reasonCode = GDDeadCodeReasonCode.CSI;
+                }
+
                 // Use Identifier for accurate line position
                 var identToken = method.Identifier ?? method.FuncKeyword ?? method.AllTokens.FirstOrDefault();
                 var endToken = method.AllTokens.LastOrDefault();
@@ -413,12 +449,15 @@ public class GDDeadCodeService
     }
 
     /// <summary>
-    /// Checks if any other file in the project has member accesses matching any of the effective names.
+    /// Checks if any other file in the project has member accesses matching any of the effective names
+    /// or any base type in the file's inheritance chain (handles var x: BaseType calling x.custom_method()).
     /// </summary>
     private bool HasCrossFileMemberAccess(GDScriptFile file, List<string> effectiveNames, string memberName)
     {
         if (effectiveNames.Count == 0)
             return false;
+
+        var baseTypes = GetInheritanceChain(file);
 
         foreach (var otherFile in _project.ScriptFiles)
         {
@@ -434,9 +473,48 @@ public class GDDeadCodeService
                 if (otherModel.HasMemberAccessesIncludingDuckTyped(name, memberName))
                     return true;
             }
+
+            foreach (var baseType in baseTypes)
+            {
+                if (otherModel.HasMemberAccessesIncludingDuckTyped(baseType, memberName))
+                    return true;
+            }
         }
 
         return false;
+    }
+
+    private List<string> GetInheritanceChain(GDScriptFile file)
+    {
+        var chain = new List<string>();
+        if (file.Class == null)
+            return chain;
+
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var current = file.Class.Extends?.Type?.BuildName();
+
+        // Walk script-based parents
+        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        {
+            chain.Add(current);
+            var parentFile = _project.GetScriptByTypeName(current);
+            if (parentFile?.Class == null)
+                break;
+            current = parentFile.Class.Extends?.Type?.BuildName();
+        }
+
+        // Continue walking built-in type hierarchy via runtime provider
+        if (_runtimeProvider != null && chain.Count > 0)
+        {
+            current = _runtimeProvider.GetBaseType(chain[chain.Count - 1]);
+            while (!string.IsNullOrEmpty(current) && visited.Add(current))
+            {
+                chain.Add(current);
+                current = _runtimeProvider.GetBaseType(current);
+            }
+        }
+
+        return chain;
     }
 
     /// <summary>
@@ -725,7 +803,8 @@ public class GDDeadCodeService
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options,
-        List<GDReflectionDroppedItem>? droppedByReflection)
+        List<GDReflectionDroppedItem>? droppedByReflection,
+        bool csharpReachable = false)
     {
         var signals = classDecl.Members
             .OfType<GDSignalDeclaration>()
@@ -810,14 +889,29 @@ public class GDDeadCodeService
             {
                 var token = signal.Identifier ?? signal.AllTokens.FirstOrDefault();
 
+                var signalConfidence = GDReferenceConfidence.Strict;
+                var signalReasonCode = GDDeadCodeReasonCode.SNE;
+
+                if (file.IsGlobal && !isPrivate && options.TreatClassNameAsPublicAPI)
+                {
+                    signalConfidence = GDReferenceConfidence.Potential;
+                    signalReasonCode = GDDeadCodeReasonCode.FPA;
+                }
+
+                if (csharpReachable && !isPrivate && signalConfidence == GDReferenceConfidence.Strict)
+                {
+                    signalConfidence = GDReferenceConfidence.Potential;
+                    signalReasonCode = GDDeadCodeReasonCode.CSI;
+                }
+
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Signal, signalName, file.FullPath ?? "")
                 {
                     Line = token?.StartLine ?? 0,
                     Column = token?.StartColumn ?? 0,
                     EndLine = token?.EndLine ?? 0,
                     EndColumn = token?.EndColumn ?? 0,
-                    Confidence = GDReferenceConfidence.Strict,
-                    ReasonCode = GDDeadCodeReasonCode.SNE,
+                    Confidence = signalConfidence,
+                    ReasonCode = signalReasonCode,
                     Reason = "Signal is never emitted and has no connections",
                     IsPrivate = isPrivate
                 };
@@ -1048,7 +1142,8 @@ public class GDDeadCodeService
         GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
-        GDDeadCodeOptions options)
+        GDDeadCodeOptions options,
+        bool csharpReachable = false)
     {
         // Get all constant declarations (variables with const keyword)
         var constants = classDecl.Members
@@ -1084,14 +1179,29 @@ public class GDDeadCodeService
 
                 var token = constant.Identifier ?? constant.AllTokens.FirstOrDefault();
 
+                var constConfidence = GDReferenceConfidence.Strict;
+                var constReasonCode = GDDeadCodeReasonCode.CNU;
+
+                if (file.IsGlobal && !isPrivate && options.TreatClassNameAsPublicAPI)
+                {
+                    constConfidence = GDReferenceConfidence.Potential;
+                    constReasonCode = GDDeadCodeReasonCode.FPA;
+                }
+
+                if (csharpReachable && !isPrivate && constConfidence == GDReferenceConfidence.Strict)
+                {
+                    constConfidence = GDReferenceConfidence.Potential;
+                    constReasonCode = GDDeadCodeReasonCode.CSI;
+                }
+
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Constant, constName, file.FullPath ?? "")
                 {
                     Line = token?.StartLine ?? 0,
                     Column = token?.StartColumn ?? 0,
                     EndLine = token?.EndLine ?? 0,
                     EndColumn = token?.EndColumn ?? 0,
-                    Confidence = GDReferenceConfidence.Strict,
-                    ReasonCode = GDDeadCodeReasonCode.CNU,
+                    Confidence = constConfidence,
+                    ReasonCode = constReasonCode,
                     Reason = "Constant is never used",
                     IsPrivate = isPrivate
                 };

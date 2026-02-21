@@ -18,7 +18,6 @@ public class GDDeadCodeCommandOutputTests
     {
         // Use begins_with filter so test_a is dropped by reflection but dead_func stays dead
         var code = @"extends Node
-class_name OutputTest1
 
 func _ready():
     for method in get_method_list():
@@ -62,7 +61,6 @@ func dead_func() -> void:
     public async Task CO2_ShowDroppedByReflection_NoMatch_OutputDoesNotContainDroppedSection()
     {
         var code = @"extends Node
-class_name OutputTest2
 
 func _ready() -> void:
     pass
@@ -102,7 +100,6 @@ func dead_func() -> void:
     {
         // With reflection matches, a paginated section (top 5) should appear even without the flag
         var code = @"extends Node
-class_name OutputTest3
 
 func _ready():
     for method in get_method_list():
@@ -147,7 +144,6 @@ func dead_func() -> void:
     {
         // Use begins_with filter so test_a is dropped by reflection but dead_func stays dead
         var code = @"extends Node
-class_name OutputTest4
 
 func _ready():
     for method in get_method_list():
@@ -195,7 +191,6 @@ func dead_func() -> void:
     {
         // Use begins_with filter so test_a is dropped by reflection but dead_func stays dead
         var code = @"extends Node
-class_name OutputTest5
 
 func _ready():
     for method in get_method_list():

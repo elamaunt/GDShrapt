@@ -233,7 +233,6 @@ public class GDDeadCodeHandlerTests
     {
         // Arrange
         var code = @"extends Node
-class_name DeadCodeTest
 
 var used_var: int = 0
 var unused_var: String = ""never used""
@@ -275,7 +274,6 @@ func _ready() -> void:
     {
         // Arrange
         var code = @"extends Node
-class_name DeadFunctionTest
 
 func _ready() -> void:
     used_function()
@@ -321,7 +319,6 @@ func unused_function() -> void:
     {
         // Arrange
         var code = @"extends Node
-class_name DeadSignalTest
 
 signal used_signal
 signal unused_signal
@@ -363,7 +360,6 @@ func _ready() -> void:
     {
         // Arrange
         var code = @"extends Node
-class_name AllDeadCodeTest
 
 var unused_var = 0
 signal unused_signal
@@ -523,7 +519,6 @@ func _on_signal() -> void:
     {
         // Arrange — signal that is never connected or emitted
         var code = @"extends Node
-class_name UnusedSignalTest
 
 signal unused_signal
 
@@ -746,7 +741,6 @@ func _ready() -> void:
     {
         // Arrange — method that is never called from anywhere
         var code = @"extends Node
-class_name UnusedMethodTest
 
 func _ready() -> void:
     pass
@@ -1343,7 +1337,8 @@ func never_called() -> void:
                 IncludeVariables = false,
                 IncludeFunctions = true,
                 IncludeSignals = false,
-                IncludePrivate = false
+                IncludePrivate = false,
+                TreatClassNameAsPublicAPI = false
             };
 
             var report = handler.AnalyzeProject(options);
@@ -1391,7 +1386,8 @@ func _ready() -> void:
                 IncludeVariables = false,
                 IncludeFunctions = false,
                 IncludeSignals = false,
-                IncludeConstants = true
+                IncludeConstants = true,
+                TreatClassNameAsPublicAPI = false
             };
 
             var report = handler.AnalyzeProject(options);
@@ -2440,7 +2436,7 @@ func _ready():
             using var project = GDProjectLoader.LoadProject(tempPath);
             using var projectModel = new GDProjectSemanticModel(project);
             var handler = new GDDeadCodeHandler(projectModel);
-            var options = new GDDeadCodeOptions { IncludeVariables = true };
+            var options = new GDDeadCodeOptions { IncludeVariables = true, TreatClassNameAsPublicAPI = false };
             var report = handler.AnalyzeProject(options);
 
             report.Items.Should().Contain(i => i.Name == "truly_unused",
@@ -3399,7 +3395,6 @@ func _ready():
     {
         // DC-DR-4: No reflection, truly dead method
         var code = @"extends Node
-class_name HandlerDR4
 
 func _ready() -> void:
     pass
@@ -3441,7 +3436,6 @@ func dead_func() -> void:
     {
         // DC-DR-5: Mixed: one dropped by reflection + one truly dead
         var code = @"extends Node
-class_name HandlerDR5
 
 func _ready():
     for method in get_method_list():

@@ -40,4 +40,10 @@ public enum GDDeadCodeReasonCode
 
     /// <summary>Inner Class Unused.</summary>
     ICU,
+
+    /// <summary>Found as Public API — no internal callers, but externally accessible (class has class_name).</summary>
+    FPA,
+
+    /// <summary>C# Singleton Interop — autoloaded member potentially reachable from C# code.</summary>
+    CSI,
 }
