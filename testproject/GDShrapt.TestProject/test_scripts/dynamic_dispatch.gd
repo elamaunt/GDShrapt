@@ -47,7 +47,7 @@ func call_all_matching(obj, prefix, args = []):  # 35:23-GD7020-OK
 var dynamic_properties = {}  # Mirror of object properties
 
 
-func get_property(obj, prop_name, default_value = null): # 43:1-GDL513-OK
+func get_property(obj, prop_name, default_value = null):
 	if obj and prop_name in obj:
 		return obj.get(prop_name)
 	return default_value
@@ -85,7 +85,7 @@ func apply_properties(obj):
 var message_handlers = {}  # Dict[String, Callable]
 
 
-func register_handler(message_type, handler): # 81:1-GDL513-OK
+func register_handler(message_type, handler):
 	message_handlers[message_type] = handler
 
 
@@ -207,7 +207,7 @@ func _deserialize_typed(data):  # 193:0-GD3023-OK, 193:24-GD7020-OK
 var class_registry = {}  # Dict[String, GDScript or PackedScene]
 
 
-func register_class(name, class_ref): # 203:1-GDL513-OK
+func register_class(name, class_ref):
 	class_registry[name] = class_ref
 
 
@@ -262,22 +262,22 @@ class DynamicBuilder:
 	var _target
 	var _pending_calls = []
 
-	func _init(target = null): # 257:1-GDL513-OK
+	func _init(target = null):
 		_target = target if target else {}
 
-	func set_target(target): # 268:1-GDL513-OK
+	func set_target(target):
 		_target = target
 		return self
 
-	func call_method(method_name, args = []): # 272:1-GDL513-OK
+	func call_method(method_name, args = []):
 		_pending_calls.append({"method": method_name, "args": args})
 		return self
 
-	func set_prop(prop_name, value): # 276:1-GDL513-OK
+	func set_prop(prop_name, value):
 		_pending_calls.append({"property": prop_name, "value": value})
 		return self
 
-	func build(): # 280:1-GDL513-OK
+	func build():
 		for call_info in _pending_calls:
 			if call_info.has("method"):
 				if _target.has_method(call_info["method"]): # 283:7-GD7007-OK
@@ -297,7 +297,7 @@ func create_builder(target = null):
 var dispatch_table = {}  # Dict[String, Dict[String, Callable]]
 
 
-func register_dispatch(event_type, handler_name, handler): # 293:1-GDL513-OK
+func register_dispatch(event_type, handler_name, handler):
 	if not dispatch_table.has(event_type):
 		dispatch_table[event_type] = {}
 	dispatch_table[event_type][handler_name] = handler
@@ -331,13 +331,13 @@ class DynamicProxy:
 	var _target
 	var _intercepts = {}  # Dict[String, Callable]
 
-	func _init(target): # 326:1-GDL513-OK
+	func _init(target):
 		_target = target
 
-	func intercept(method_name, interceptor): # 337:1-GDL513-OK
+	func intercept(method_name, interceptor):
 		_intercepts[method_name] = interceptor
 
-	func _call(method_name, args): # 340:1-GDL513-OK
+	func _call(method_name, args):
 		if _intercepts.has(method_name):
 			return _intercepts[method_name].call(_target, method_name, args)
 
@@ -346,7 +346,7 @@ class DynamicProxy:
 
 		return null
 
-	func get_target(): # 349:1-GDL513-OK
+	func get_target():
 		return _target
 
 
@@ -381,7 +381,7 @@ var after_advice = {}    # Dict[String, Array[Callable]]
 var around_advice = {}   # Dict[String, Callable]
 
 
-func add_before(method_pattern, advice): # 375:1-GDL513-OK
+func add_before(method_pattern, advice):
 	if not before_advice.has(method_pattern):
 		before_advice[method_pattern] = []
 	before_advice[method_pattern].append(advice)

@@ -72,7 +72,7 @@ func odd_check(n):
 var state_machine_value  # Changes type based on state transitions
 
 
-func state_idle(context): # 68:1-GDL513-OK
+func state_idle(context):
 	# Context type unknown, return type depends on transition
 	if context.has("trigger"):
 		return state_active(context)
@@ -144,7 +144,7 @@ var computed_y  # Depends on computed_x
 var computed_z  # Depends on both
 
 
-func compute_values(seed_value): # 138:1-GDL513-OK
+func compute_values(seed_value):
 	# Creates dependency cycle between member variables
 	computed_x = _compute_x(seed_value)
 	computed_y = _compute_y(computed_x)
@@ -207,7 +207,7 @@ func traverse_and_transform(root, transformer):  # 192:34-GD7020-OK
 var generator_state = {}
 
 
-func generator_next(gen_id): # 203:1-GDL513-OK
+func generator_next(gen_id):
 	# Returns current value and advances state
 	if not generator_state.has(gen_id):
 		generator_state[gen_id] = _init_generator(gen_id)

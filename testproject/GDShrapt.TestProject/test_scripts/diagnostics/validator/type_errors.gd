@@ -115,7 +115,7 @@ func test_gd3009_suppressed() -> void:
 # =============================================================================
 
 
-func _take_int(x: int) -> void: # 111:1-GDL513-OK
+func _take_int(x: int) -> void:
 	print(x)
 
 

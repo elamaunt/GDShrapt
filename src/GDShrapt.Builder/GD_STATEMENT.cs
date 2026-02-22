@@ -15,12 +15,12 @@ namespace GDShrapt.Builder
                 ForKeyword = new GDForKeyword(),
                 [1] = Syntax.Space(),
                 Variable = variable,
-                [2] = Syntax.Space(),
+                [4] = Syntax.Space(),
                 InKeyword = new GDInKeyword(),
-                [3] = Syntax.Space(),
+                [5] = Syntax.Space(),
                 Collection = collection,
                 Colon = new GDColon(),
-                [5] = Syntax.Space(),
+                [7] = Syntax.Space(),
                 Expression = body
             };
 
@@ -29,11 +29,10 @@ namespace GDShrapt.Builder
                 ForKeyword = new GDForKeyword(),
                 [1] = Syntax.Space(),
                 Variable = variable,
-                [2] = Syntax.Space(),
-                InKeyword = new GDInKeyword(),
-                [3] = Syntax.Space(),
-                Collection = collection,
                 [4] = Syntax.Space(),
+                InKeyword = new GDInKeyword(),
+                [5] = Syntax.Space(),
+                Collection = collection,
                 Colon = new GDColon(),
                 Statements = List.Statements(statements)
             };

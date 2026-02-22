@@ -90,7 +90,7 @@ func test_gd2003_suppressed() -> void:
 signal defined_signal(value: int)
 
 ## VALID - should NOT trigger GD2005
-func test_gd2005_valid() -> void: # 84:1-GDL513-OK
+func test_gd2005_valid() -> void:
 	emit_signal("defined_signal", 42)
 
 

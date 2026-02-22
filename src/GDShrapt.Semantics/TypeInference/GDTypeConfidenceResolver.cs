@@ -201,6 +201,37 @@ internal class GDTypeConfidenceResolver
     }
 
     /// <summary>
+    /// Infers type for a for-loop iterator variable.
+    /// </summary>
+    public GDInferredType InferForLoopVariableType(GDForStatement? forStmt)
+    {
+        if (forStmt == null)
+            return GDInferredType.Unknown("For statement is null");
+
+        // Explicit type annotation: for x: int in ...
+        if (forStmt.VariableType != null)
+        {
+            var typeName = forStmt.VariableType.BuildName();
+            if (!string.IsNullOrEmpty(typeName) && typeName != GDWellKnownTypes.Variant)
+                return GDInferredType.Certain(typeName, "Iterator type annotation");
+        }
+
+        // Infer from collection type
+        if (forStmt.Collection != null && _semanticModel != null)
+        {
+            var collectionType = _semanticModel.GetExpressionType(forStmt.Collection);
+            if (!string.IsNullOrEmpty(collectionType))
+            {
+                var elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType);
+                if (!string.IsNullOrEmpty(elementType) && elementType != GDWellKnownTypes.Variant)
+                    return GDInferredType.FromType(elementType, GDTypeConfidence.High, "inferred from collection type");
+            }
+        }
+
+        return GDInferredType.FromType(GDWellKnownTypes.Variant, GDTypeConfidence.Low, "untyped iterator");
+    }
+
+    /// <summary>
     /// Infers type for a parameter declaration.
     /// </summary>
     public GDInferredType InferParameterType(GDParameterDeclaration? paramDecl)

@@ -91,7 +91,7 @@ func test_gd5004_suppressed() -> int:
 const VALID_CONST = 42
 
 ## VALID - should NOT trigger GD5010
-func test_gd5010_valid() -> void: # 85:1-GDL513-OK
+func test_gd5010_valid() -> void:
 	var mutable_var := VALID_CONST
 	mutable_var = 100  # Reassigning variable is OK
 	print(mutable_var)

@@ -188,7 +188,7 @@ var complex_dict: Dictionary[String, Array[int]] = {"nums": [1, 2, 3]}
 var entity_array: Array[Node2D] = []
 
 
-func test_typed_dictionary_inference() -> void: # 176:1-GDL513-OK
+func test_typed_dictionary_inference() -> void:
 	# Dictionary with typed key-value pairs
 	var dict: Dictionary[String, int] = {"x": 10, "y": 20}
 	var value := dict["x"]  # Should be int

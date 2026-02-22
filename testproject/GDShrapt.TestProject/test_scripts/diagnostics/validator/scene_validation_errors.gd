@@ -29,7 +29,7 @@ func test_gd4011_nullable() -> void:
 
 
 ## VALID - unique node exists
-func test_gd4012_valid() -> void: # 24:1-GDL513-OK
+func test_gd4012_valid() -> void:
 	var player = %UniquePlayer  # 33:5-GDL201-OK
 
 

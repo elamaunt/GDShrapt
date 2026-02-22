@@ -94,7 +94,7 @@ var dialog_variables = {}  # Variables for dialog conditions
 var dialog_history = []   # History of shown dialogs
 
 
-func load_dialog(dialog_data): # 87:1-GDL513-OK
+func load_dialog(dialog_data):
 	# dialog_data could be from JSON, Resource, or built programmatically
 	if dialog_data is String:
 		dialog_tree = JSON.parse_string(dialog_data)
@@ -205,7 +205,7 @@ var completed_quests = [] # Array[String] - quest ids
 var quest_progress = {}   # Dict[String, Dict] - quest_id -> progress data
 
 
-func accept_quest(quest_data): # 199:1-GDL513-OK
+func accept_quest(quest_data):
 	var quest_id = quest_data.get("id", str(randi()))  # 209:16-GD7007-OK
 	active_quests[quest_id] = quest_data
 	quest_progress[quest_id] = {}
@@ -274,7 +274,7 @@ var cooldowns = {}        # Dict[String, float] - ability_id -> remaining cooldo
 var active_effects = []   # Array of active ability effects
 
 
-func register_ability(ability_id, ability_data): # 268:1-GDL513-OK
+func register_ability(ability_id, ability_data):
 	abilities[ability_id] = ability_data
 	cooldowns[ability_id] = 0.0
 
@@ -401,7 +401,7 @@ func update_abilities(delta):
 var recipes = {}  # Dict[String, Recipe]
 
 
-func register_recipe(recipe_id, recipe_data): # 397:1-GDL513-OK
+func register_recipe(recipe_id, recipe_data):
 	recipes[recipe_id] = recipe_data
 
 

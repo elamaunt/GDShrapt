@@ -66,7 +66,7 @@ func test_disable_to_eof() -> void:
 # SECTION 5: Multiple Rules Suppression
 # =============================================================================
 
-func test_multiple_rules() -> void: # 60:1-GDL513-OK
+func test_multiple_rules() -> void:
 	# gd:ignore = GD2001, GD2002
 	unknown_function(undefined_multi_var)  # SUPPRESSED - both codes
 

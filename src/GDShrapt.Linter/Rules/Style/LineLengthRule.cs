@@ -49,8 +49,23 @@ namespace GDShrapt.Linter
                     if (firstTokenOnLine == null)
                         firstTokenOnLine = token;
 
-                    // Add token length to current line
-                    currentLineLength += token.Length;
+                    var tokenStr = token.ToString();
+                    if (tokenStr != null && tokenStr.IndexOf('\n') >= 0)
+                    {
+                        var parts = tokenStr.Split('\n');
+                        currentLineLength += parts[0].Length;
+                        for (int i = 1; i < parts.Length; i++)
+                        {
+                            CheckLineLength(currentLineNumber, currentLineLength, maxLength, firstTokenOnLine);
+                            currentLineLength = parts[i].Replace("\r", "").Length;
+                            currentLineNumber++;
+                            firstTokenOnLine = null;
+                        }
+                    }
+                    else
+                    {
+                        currentLineLength += token.Length;
+                    }
                 }
             }
 
@@ -60,13 +75,20 @@ namespace GDShrapt.Linter
 
         private void CheckLineLength(int lineNumber, int length, int maxLength, GDSyntaxToken firstToken)
         {
-            if (length > maxLength && firstToken != null && !_reportedLines.Contains(lineNumber))
+            if (length > maxLength && !_reportedLines.Contains(lineNumber))
             {
                 _reportedLines.Add(lineNumber);
-                ReportIssue(
-                    $"Line {lineNumber} exceeds {maxLength} characters (length: {length})",
-                    firstToken,
-                    "Break line into multiple lines or shorten identifiers");
+                var message = $"Line {lineNumber} exceeds {maxLength} characters (length: {length})";
+                var suggestion = "Break line into multiple lines or shorten identifiers";
+
+                if (firstToken != null)
+                {
+                    ReportIssue(message, lineNumber, firstToken.StartColumn, suggestion);
+                }
+                else
+                {
+                    ReportIssue(message, lineNumber, 0, suggestion);
+                }
             }
         }
     }

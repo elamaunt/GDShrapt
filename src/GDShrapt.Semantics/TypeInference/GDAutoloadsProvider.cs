@@ -147,12 +147,14 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
             switch (member)
             {
                 case GDMethodDeclaration method when method.Identifier != null:
-                    var paramCount = method.Parameters?.Count() ?? 0;
+                    var allParams = method.Parameters?.ToList() ?? new List<GDParameterDeclaration>();
+                    var minArgs = allParams.Count(p => p.DefaultValue == null);
+                    var maxArgs = allParams.Count;
                     members.Add(GDRuntimeMemberInfo.Method(
                         method.Identifier.Sequence,
                         method.ReturnType?.BuildName() ?? GDWellKnownTypes.Variant,
-                        paramCount,
-                        paramCount,
+                        minArgs,
+                        maxArgs,
                         isVarArgs: false,
                         isStatic: method.IsStatic));
                     break;

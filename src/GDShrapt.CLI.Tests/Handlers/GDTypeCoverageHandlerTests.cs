@@ -349,6 +349,97 @@ func _ready() -> void:
     }
 
     [TestMethod]
+    public void AnalyzeProject_TypedForLoop_CountsAsAnnotated()
+    {
+        var code = @"extends Node
+
+func _ready() -> void:
+    for x: int in range(10):
+        pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("typed_for.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
+
+            var report = handler.AnalyzeProject();
+
+            report.Should().NotBeNull();
+            report.TotalVariables.Should().BeGreaterThanOrEqualTo(1);
+            report.AnnotatedVariables.Should().BeGreaterThanOrEqualTo(1);
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_UntypedForLoop_CountsAsInferred()
+    {
+        var code = @"extends Node
+
+func _ready() -> void:
+    for x in range(10):
+        pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("untyped_for.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
+
+            var report = handler.AnalyzeProject();
+
+            report.Should().NotBeNull();
+            report.TotalVariables.Should().BeGreaterThanOrEqualTo(1);
+            report.InferredVariables.Should().BeGreaterThanOrEqualTo(1);
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_MixedForLoops_CombinesWithLocalVars()
+    {
+        var code = @"extends Node
+
+func _ready() -> void:
+    var x: int = 1
+    for i: int in range(10):
+        pass
+    for j in range(5):
+        pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("mixed_for.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            var handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(project));
+
+            var report = handler.AnalyzeProject();
+
+            report.Should().NotBeNull();
+            // 3 variables: 1 local var + 2 for-loop iterators
+            report.TotalVariables.Should().Be(3);
+            // 2 annotated: x: int + i: int
+            report.AnnotatedVariables.Should().Be(2);
+            // 1 inferred: j (from range)
+            report.InferredVariables.Should().Be(1);
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
     public void AnalyzeProject_EmptyProject_ReturnsFullCoverage()
     {
         // Arrange

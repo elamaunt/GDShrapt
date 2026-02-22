@@ -54,5 +54,5 @@ class InnerClass:
 	func increment() -> void:
 		value += 1
 
-	func get_value() -> int:  # 57:1-GDL513-OK
+	func get_value() -> int:
 		return value

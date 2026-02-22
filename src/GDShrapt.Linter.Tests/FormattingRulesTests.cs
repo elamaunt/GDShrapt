@@ -421,6 +421,33 @@ func _update_afterimages():
             result.Issues.Where(i => i.RuleId == "GDL513").Should().BeEmpty();
         }
 
+        [TestMethod]
+        public void EmptyLines_MultilineString_BetweenFunctions_NoFalsePositive()
+        {
+            // Multiline string between functions should not inflate empty line count
+            var code = "func foo():\n\tvar x = \"line1\\nline2\\nline3\"\n\tpass\n\n\nfunc bar():\n\tpass\n";
+            var options = new GDLinterOptions { EmptyLinesBetweenFunctions = 2 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL513").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void EmptyLines_NormalCase_StillReports()
+        {
+            // Normal case: 1 empty line when 2 required should still report
+            var code = "func foo():\n\tpass\n\nfunc bar():\n\tpass\n";
+            var options = new GDLinterOptions { EmptyLinesBetweenFunctions = 2 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL513" &&
+                i.Message.Contains("Expected"));
+        }
+
         #endregion
     }
 }

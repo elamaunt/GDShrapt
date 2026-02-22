@@ -71,7 +71,7 @@ func MultiSuppressedFunc() -> void:  # SUPPRESSED for GDL002  # 70:5-GDL203-OK
 	pass
 
 
-var MultiNotSuppressedVar := 200  # NOT SUPPRESSED - GDL003 expected  # 72:1-GDL513-OK, 74:4-GDL003-OK
+var MultiNotSuppressedVar := 200  # NOT SUPPRESSED - GDL003 expected  # 74:4-GDL003-OK
 
 
 func MultiNotSuppressedFunc() -> void:  # NOT SUPPRESSED - GDL002 expected  # 77:5-GDL002-OK, 77:5-GDL203-OK
@@ -94,7 +94,7 @@ var NotSuppressedById := 400  # NOT SUPPRESSED - GDL003 expected  # 88:4-GDL003-
 ## The file-level suppression for line-length (GDL101) is at the top of this file.
 ## Long lines should NOT trigger GDL101 anywhere in this file.
 
-func test_file_level_suppression() -> void: # 79:1-GDL513-OK
+func test_file_level_suppression() -> void:
 	var this_is_a_very_long_variable_name_that_would_normally_trigger_the_line_length_rule_but_it_is_suppressed := 1
 	print(this_is_a_very_long_variable_name_that_would_normally_trigger_the_line_length_rule_but_it_is_suppressed)
 
@@ -108,7 +108,7 @@ var ControlBadVar1 := 500  # GDL003 expected  # 107:4-GDL003-OK
 var ControlBadVar2 := 600  # GDL003 expected  # 108:4-GDL003-OK
 
 
-func ControlBadFunc1() -> void:  # GDL002 expected  # 111:5-GDL002-OK, 111:5-GDL203-OK, 100:1-GDL513-OK
+func ControlBadFunc1() -> void:  # GDL002 expected  # 111:5-GDL002-OK, 111:5-GDL203-OK
 	pass
 
 

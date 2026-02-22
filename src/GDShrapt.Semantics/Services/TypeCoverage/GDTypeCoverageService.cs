@@ -252,6 +252,21 @@ public class GDTypeCoverageService
         public int InferredVariables { get; private set; }
         public int VariantVariables { get; private set; }
 
+        public override void Visit(GDForStatement forStmt)
+        {
+            if (forStmt.Variable != null)
+            {
+                TotalVariables++;
+
+                if (forStmt.VariableType != null)
+                    AnnotatedVariables++;
+                else
+                    InferredVariables++;
+            }
+
+            base.Visit(forStmt);
+        }
+
         public override void Visit(GDVariableDeclarationStatement varDecl)
         {
             TotalVariables++;

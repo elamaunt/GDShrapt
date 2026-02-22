@@ -154,16 +154,16 @@ func generic_type_validation_demo() -> void:
 
 func take_int(x: int) -> void:
 	print(x)
-# 158:1-GDL513-OK
+# 158:0-GDL513-OK
 func take_string(s: String) -> void:
 	print(s)
-# 161:1-GDL513-OK
+# 161:0-GDL513-OK
 func take_node(n: Node) -> void:
 	print(n)
-# 164:1-GDL513-OK
+# 164:0-GDL513-OK
 func take_node2d(n: Node2D) -> void:
 	print(n)
-# 167:1-GDL513-OK
+# 167:0-GDL513-OK
 func argument_type_validation_demo() -> void:
 	# --- VALID CASES ---
 

@@ -335,7 +335,12 @@ public enum TypeAnnotationTarget
     /// <summary>
     /// Function return type.
     /// </summary>
-    ReturnType
+    ReturnType,
+
+    /// <summary>
+    /// For-loop iterator variable.
+    /// </summary>
+    ForLoopVariable
 }
 
 /// <summary>

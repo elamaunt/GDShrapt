@@ -39,7 +39,7 @@ func test_gdl101_suppressed() -> void:
 ## VALID - correct spacing (2 empty lines before function)
 
 
-func test_gdl513_valid_a() -> void: # 33:1-GDL513-OK
+func test_gdl513_valid_a() -> void:
 	print("Function A")
 
 
@@ -47,7 +47,7 @@ func test_gdl513_valid_b() -> void:
 	print("Function B")
 
 ## INVALID - only 1 empty line before function - SHOULD trigger GDL513
-func test_gdl513_invalid() -> void: # 50:1-GDL513-OK
+func test_gdl513_invalid() -> void: # 50:0-GDL513-OK
 	print("Too close to previous function")
 
 

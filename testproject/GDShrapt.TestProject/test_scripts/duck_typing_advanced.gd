@@ -45,7 +45,7 @@ var damage_modifier  # Callable: (int) -> int OR (int, Node) -> int
 var filter_func      # Callable: (Variant) -> bool
 
 
-func register_callback(callback): # 39:1-GDL513-OK
+func register_callback(callback):
 	on_hit_callback = callback
 
 
@@ -98,7 +98,7 @@ func find_nearest(position, type_filter):
 var component_cache = {}  # Dict[String, Variant] - values are mixed types
 
 
-func get_or_create_component(component_type): # 94:1-GDL513-OK
+func get_or_create_component(component_type):
 	if component_cache.has(component_type):
 		return component_cache[component_type]
 
@@ -134,7 +134,7 @@ var pending_actions = []  # Array of mixed action types
 var action_results = {}   # Dict mapping action -> result (both unknown types)
 
 
-func queue_action(action): # 125:1-GDL513-OK
+func queue_action(action):
 	pending_actions.append(action)
 
 
@@ -242,11 +242,11 @@ func _step_format(value):
 func _create_player():
 	return {"type": "player", "health": 100}
 
-func _create_enemy(): # 245:1-GDL513-OK
+func _create_enemy(): # 245:0-GDL513-OK
 	return {"type": "enemy", "health": 50, "damage": 10}
 
-func _create_npc(): # 248:1-GDL513-OK
+func _create_npc(): # 248:0-GDL513-OK
 	return {"type": "npc", "dialog": []}
 
-func _create_item(): # 251:1-GDL513-OK
+func _create_item(): # 251:0-GDL513-OK
 	return {"type": "item", "value": 25}

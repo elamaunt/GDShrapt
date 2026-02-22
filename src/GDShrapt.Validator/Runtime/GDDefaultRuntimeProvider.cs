@@ -438,6 +438,7 @@ namespace GDShrapt.Reader
             AddFunction(GDRuntimeFunctionInfo.Exact("get_stack", 0, "Array"));
 
             // Exactly 2 arguments
+            AddFunction(GDRuntimeFunctionInfo.Exact("is_instance_of", 2, "bool"));
             AddFunction(GDRuntimeFunctionInfo.Exact("atan2", 2, "float"));
             AddFunction(GDRuntimeFunctionInfo.Exact("pow", 2, "float"));
             AddFunction(GDRuntimeFunctionInfo.Exact("fmod", 2, "float"));

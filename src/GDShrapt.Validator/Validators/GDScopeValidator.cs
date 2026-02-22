@@ -447,6 +447,10 @@ namespace GDShrapt.Reader
             if (string.IsNullOrEmpty(name))
                 return;
 
+            if (identifierExpression.Parent is GDDictionaryKeyValueDeclaration dictKV
+                && dictKV.Key == identifierExpression)
+                return;
+
             // Skip built-in identifiers
             if (Context.RuntimeProvider.IsBuiltIn(name))
                 return;

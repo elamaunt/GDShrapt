@@ -361,6 +361,73 @@ func do_something() -> void:
     }
 
     [TestMethod]
+    public void GetMember_MethodWithDefaultParams_ReportsCorrectMinMaxArgs()
+    {
+        var scriptContent = @"extends Node
+
+func get_data(data: Dictionary, extra: Array = []) -> Dictionary:
+    return data";
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(scriptContent);
+
+        var mockScriptInfo = new MockScriptInfo
+        {
+            TypeName = "DialogueManager",
+            FullPath = "/project/dialogue_manager.gd",
+            ResPath = "res://dialogue_manager.gd",
+            Class = classDecl
+        };
+
+        var mockProvider = new MockScriptProvider(new[] { mockScriptInfo });
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "DialogueManager", Path = "res://dialogue_manager.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads, mockProvider);
+
+        var member = provider.GetMember("DialogueManager", "get_data");
+        Assert.IsNotNull(member);
+        Assert.AreEqual(GDRuntimeMemberKind.Method, member.Kind);
+        Assert.AreEqual(1, member.MinArgs, "Method with 1 required + 1 default param should have MinArgs=1");
+        Assert.AreEqual(2, member.MaxArgs, "Method with 2 total params should have MaxArgs=2");
+    }
+
+    [TestMethod]
+    public void GetMember_MethodAllDefaultParams_MinArgsZero()
+    {
+        var scriptContent = @"extends Node
+
+func configure(timeout: int = 30, retries: int = 3) -> void:
+    pass";
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(scriptContent);
+
+        var mockScriptInfo = new MockScriptInfo
+        {
+            TypeName = "Settings",
+            FullPath = "/project/settings.gd",
+            ResPath = "res://settings.gd",
+            Class = classDecl
+        };
+
+        var mockProvider = new MockScriptProvider(new[] { mockScriptInfo });
+
+        var autoloads = new[]
+        {
+            new GDAutoloadEntry { Name = "Settings", Path = "res://settings.gd", Enabled = true }
+        };
+        var provider = new GDAutoloadsProvider(autoloads, mockProvider);
+
+        var member = provider.GetMember("Settings", "configure");
+        Assert.IsNotNull(member);
+        Assert.AreEqual(0, member.MinArgs, "Method with all default params should have MinArgs=0");
+        Assert.AreEqual(2, member.MaxArgs, "Method with 2 total params should have MaxArgs=2");
+    }
+
+    [TestMethod]
     public void GetMember_ResPathMatching_FindsMembers()
     {
         var scriptContent = @"extends Node

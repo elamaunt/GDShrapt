@@ -94,6 +94,41 @@ func test():
         }
 
         [TestMethod]
+        public void ValidateCall_IsInstanceOf_TwoArgs_NoError()
+        {
+            var code = @"
+func test():
+    var obj = Node.new()
+    var result = is_instance_of(obj, Node)
+";
+            var result = _validator.ValidateCode(code);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.WrongArgumentCount && d.Message.Contains("is_instance_of")).Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void ValidateCall_IsInstanceOf_OneArg_ReportsError()
+        {
+            var code = @"
+func test():
+    var obj = Node.new()
+    var result = is_instance_of(obj)
+";
+            var result = _validator.ValidateCode(code);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.WrongArgumentCount && d.Message.Contains("is_instance_of")).Should().NotBeEmpty();
+        }
+
+        [TestMethod]
+        public void ValidateCall_IsInstanceOf_ThreeArgs_ReportsError()
+        {
+            var code = @"
+func test():
+    var result = is_instance_of(1, 2, 3)
+";
+            var result = _validator.ValidateCode(code);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.WrongArgumentCount && d.Message.Contains("is_instance_of")).Should().NotBeEmpty();
+        }
+
+        [TestMethod]
         public void ValidateCall_MathFunctionsWithValidArgs()
         {
             var code = @"

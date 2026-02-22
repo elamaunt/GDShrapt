@@ -160,6 +160,47 @@ func test():
         }
 
         [TestMethod]
+        public void LineLength_MultilineString_NoFalsePositive()
+        {
+            var options = new GDLinterOptions { MaxLineLength = 80 };
+            var linter = new GDLinter(options);
+            // Each physical line is short, but the string token spans multiple lines
+            var code = "func test():\n\tvar x = \"short\\nshort\"";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL101").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void LineLength_MultilineString_LongFirstLine_ReportsOnlyFirst()
+        {
+            var options = new GDLinterOptions { MaxLineLength = 30 };
+            var linter = new GDLinter(options);
+            // First physical line is long (assignment + first part of string)
+            var code = "func test():\n\tvar very_long_variable_name = \"first\\nsecond\"";
+
+            var result = linter.LintCode(code);
+
+            var issues = result.Issues.Where(i => i.RuleId == "GDL101").ToList();
+            issues.Count.Should().Be(1);
+        }
+
+        [TestMethod]
+        public void LineLength_ReportsCorrectLineNumber()
+        {
+            var options = new GDLinterOptions { MaxLineLength = 20 };
+            var linter = new GDLinter(options);
+            // Line 1: short, Line 2: short, Line 3: long
+            var code = "var x = 1\nvar y = 2\nvar this_is_a_very_long_line = 3";
+
+            var result = linter.LintCode(code);
+
+            var issue = result.Issues.First(i => i.RuleId == "GDL101");
+            issue.Message.Should().Contain("Line 3");
+        }
+
+        [TestMethod]
         public void LineLength_MethodChaining()
         {
             var options = new GDLinterOptions { MaxLineLength = 40 };
@@ -172,6 +213,81 @@ func test():
             var result = linter.LintCode(code);
 
             result.Issues.Should().Contain(i => i.RuleId == "GDL101");
+        }
+
+        [TestMethod]
+        public void LineLength_MultilineRealString_NoFalsePositive()
+        {
+            var options = new GDLinterOptions { MaxLineLength = 80 };
+            var linter = new GDLinter(options);
+            // Regular string spanning multiple physical lines (each short)
+            var code = "func test():\n\tvar x = compile(\"\n~ start\nNathan: Hello.\n=> END\")";
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL101").Should().BeEmpty();
+        }
+
+[TestMethod]
+        public void LineLength_MultilineRealString_DoesNotCorruptSubsequentLineNumbers()
+        {
+            var options = new GDLinterOptions { MaxLineLength = 40 };
+            var linter = new GDLinter(options);
+            // Lines 1-4 are short, line 5 is long
+            var code = "func test():\n\tvar x = compile(\"\n~ start\n=> END\")\n\tvar extremely_long_name = some_very_long_function_call()";
+
+            var result = linter.LintCode(code);
+
+            var issues = result.Issues.Where(i => i.RuleId == "GDL101").ToList();
+            issues.Count.Should().Be(1);
+            issues[0].Message.Should().Contain("Line 5");
+        }
+
+        [TestMethod]
+        public void LineLength_MultilineRealString_LongLineInsideString()
+        {
+            var options = new GDLinterOptions { MaxLineLength = 40 };
+            var linter = new GDLinter(options);
+            // Line 2 inside the string exceeds the limit
+            var code = "func test():\n\tvar x = \"short\n" + new string('a', 50) + "\nshort\"";
+
+            var result = linter.LintCode(code);
+
+            var issues = result.Issues.Where(i => i.RuleId == "GDL101").ToList();
+            issues.Count.Should().Be(1);
+            issues[0].Message.Should().Contain("Line 3");
+        }
+
+        [TestMethod]
+        public void LintIssue_StartLine_IsOneBased()
+        {
+            // "var x" is on physical line 4 (1-based): extends=1, blank=2, func=3, var x=4
+            var code = "extends Node\n\nfunc test():\n\tvar " + new string('x', 120) + " = 10";
+            var options = new GDLinterOptions { MaxLineLength = 100 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            var issue = result.Issues.FirstOrDefault(i => i.RuleId == "GDL101");
+            issue.Should().NotBeNull("long line on line 4 should trigger GDL101");
+            issue.StartLine.Should().Be(4, "GDLintIssue.StartLine must be 1-based (line 4 in editor)");
+            issue.Message.Should().Contain("Line 4");
+        }
+
+        [TestMethod]
+        public void LintIssue_StartLine_IsOneBased_FirstLine()
+        {
+            // A very long first line
+            var code = "var " + new string('a', 120) + " = 10";
+            var options = new GDLinterOptions { MaxLineLength = 100 };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            var issue = result.Issues.FirstOrDefault(i => i.RuleId == "GDL101");
+            issue.Should().NotBeNull("long line on line 1 should trigger GDL101");
+            issue.StartLine.Should().Be(1, "first line must be reported as line 1, not 0");
+            issue.Message.Should().Contain("Line 1");
         }
 
         #endregion

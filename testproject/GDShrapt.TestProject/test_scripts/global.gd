@@ -15,12 +15,12 @@ const MAX_PLAYERS: int = 4  # 13:19-GD7022-OK
 func start_game() -> void:
 	emit_signal("game_started")
 
-func end_game() -> void:  # 18:1-GDL513-OK
+func end_game() -> void:  # 18:0-GDL513-OK
 	emit_signal("game_ended")
 
-func set_level(level: int) -> void:  # 21:1-GDL513-OK
+func set_level(level: int) -> void:  # 21:0-GDL513-OK
 	current_level = level
 	emit_signal("level_changed", level)
 
-func get_player_count() -> int:  # 25:1-GDL513-OK
+func get_player_count() -> int:  # 25:0-GDL513-OK
 	return player_data.size()

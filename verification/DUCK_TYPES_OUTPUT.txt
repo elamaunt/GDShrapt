@@ -3,121 +3,121 @@
 # Format: block per parameter with inference + duck type details
 
 test_scripts/ai_controller.gd
-  32:14 Parameter delta in _process
+  33:14 Parameter delta in _process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  48:19 Parameter delta in _process_idle
+  49:19 Parameter delta in _process_idle
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  53:21 Parameter delta in _process_patrol
+  54:21 Parameter delta in _process_patrol
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  67:20 Parameter delta in _process_chase
+  68:20 Parameter delta in _process_chase
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  76:21 Parameter delta in _process_attack
+  77:21 Parameter delta in _process_attack
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  81:19 Parameter delta in _process_flee
+  82:19 Parameter delta in _process_flee
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  89:15 Parameter target in find_path
+  90:15 Parameter target in find_path
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
 
-  98:18 Parameter new_state in change_state
+  99:18 Parameter new_state in change_state
     inferred-type: AIState
     confidence: Certain
     reason: explicit type annotation
 
-  105:16 Parameter entity in set_target
+  106:16 Parameter entity in set_target
     inferred-type: Node2D
     confidence: Certain
     reason: explicit type annotation
 
-  114:24 Parameter range_distance in is_target_in_range
+  115:24 Parameter range_distance in is_target_in_range
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/base_entity.gd
-  27:17 Parameter amount in take_damage
+  28:17 Parameter amount in take_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  27:30 Parameter source in take_damage
+  28:30 Parameter source in take_damage
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
 
-  43:29 Parameter raw_damage in calculate_actual_damage
+  44:29 Parameter raw_damage in calculate_actual_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  49:10 Parameter amount in heal
+  50:10 Parameter amount in heal
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  69:12 Parameter health_percent in revive
+  70:12 Parameter health_percent in revive
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  88:20 Parameter value in set_max_health
+  89:20 Parameter value in set_max_health
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  88:32 Parameter heal_to_full in set_max_health
+  89:32 Parameter heal_to_full in set_max_health
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  97:16 Parameter health_bonus in apply_buff
+  98:16 Parameter health_bonus in apply_buff
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  97:35 Parameter defense_bonus in apply_buff
+  98:35 Parameter defense_bonus in apply_buff
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  104:17 Parameter health_bonus in remove_buff
+  105:17 Parameter health_bonus in remove_buff
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  104:36 Parameter defense_bonus in remove_buff
+  105:36 Parameter defense_bonus in remove_buff
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/completion_test.gd
-  144:21 Parameter param1 in helper_function
+  145:21 Parameter param1 in helper_function
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  144:34 Parameter param2 in helper_function
+  145:34 Parameter param2 in helper_function
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
@@ -128,7 +128,7 @@ test_scripts/completion_test.gd
 
 
 test_scripts/cross_file_inference.gd
-  34:20 Parameter entity_data in process_entity
+  35:20 Parameter entity_data in process_entity
     inferred-type: Dictionary[String, Variant]
     confidence: High
     reason: single type from constraints
@@ -138,138 +138,138 @@ test_scripts/cross_file_inference.gd
       properties: has
       signals: (none)
 
-  50:18 Parameter attacker in apply_damage
+  51:18 Parameter attacker in apply_damage
     inferred-type: Variant
     confidence: Unknown
 
-  50:28 Parameter target in apply_damage
+  51:28 Parameter target in apply_damage
     inferred-type: Variant
     confidence: Unknown
 
-  50:36 Parameter amount in apply_damage
+  51:36 Parameter amount in apply_damage
     inferred-type: Variant
     confidence: Unknown
 
-  57:28 Parameter input in run_cyclic_computation
+  58:28 Parameter input in run_cyclic_computation
     inferred-type: Variant
     confidence: Unknown
 
-  65:27 Parameter target in setup_signal_handlers
+  66:27 Parameter target in setup_signal_handlers
     inferred-type: Variant
     confidence: Unknown
 
-  76:22 Parameter data in _on_damage_event
+  77:22 Parameter data in _on_damage_event
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  80:21 Parameter data in _on_spawn_event
+  81:21 Parameter data in _on_spawn_event
     inferred-type: Variant
     confidence: Unknown
 
-  84:26 Parameter result in _on_operation_result
+  85:26 Parameter result in _on_operation_result
     inferred-type: Variant
     confidence: Unknown
 
-  88:23 Parameter objects in register_handlers
+  89:23 Parameter objects in register_handlers
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  101:30 Parameter source_name in get_result_from_anywhere
+  102:30 Parameter source_name in get_result_from_anywhere
     inferred-type: Variant
     confidence: Unknown
 
-  101:43 Parameter key in get_result_from_anywhere
+  102:43 Parameter key in get_result_from_anywhere
     inferred-type: Variant
     confidence: Unknown
 
-  116:24 Parameter handler_type in execute_on_handler
+  117:24 Parameter handler_type in execute_on_handler
     inferred-type: Variant
     confidence: Unknown
 
-  116:38 Parameter action in execute_on_handler
+  117:38 Parameter action in execute_on_handler
     inferred-type: Variant
     confidence: Unknown
 
-  116:46 Parameter args in execute_on_handler
+  117:46 Parameter args in execute_on_handler
     inferred-type: Variant
     confidence: Unknown
 
-  142:29 Parameter initial_data in complex_chain_operation
+  143:29 Parameter initial_data in complex_chain_operation
     inferred-type: Variant
     confidence: Unknown
 
-  184:33 Parameter event_name in register_cross_file_handler
+  185:33 Parameter event_name in register_cross_file_handler
     inferred-type: Variant
     confidence: Unknown
 
-  184:45 Parameter handler_type in register_cross_file_handler
+  185:45 Parameter handler_type in register_cross_file_handler
     inferred-type: Variant
     confidence: Unknown
 
-  214:23 Parameter event_name in invoke_cross_file
+  215:23 Parameter event_name in invoke_cross_file
     inferred-type: Variant
     confidence: Unknown
 
-  214:35 Parameter data in invoke_cross_file
+  215:35 Parameter data in invoke_cross_file
     inferred-type: Variant
     confidence: Unknown
 
-  224:23 Parameter result in _on_effect_result
+  225:23 Parameter result in _on_effect_result
     inferred-type: Variant
     confidence: Unknown
 
-  228:21 Parameter data in _process_cyclic
+  229:21 Parameter data in _process_cyclic
     inferred-type: Variant
     confidence: Unknown
 
-  232:19 Parameter value in _handle_union
+  233:19 Parameter value in _handle_union
     inferred-type: Variant
     confidence: Unknown
 
-  236:24 Parameter object_type in create_game_object
+  237:24 Parameter object_type in create_game_object
     inferred-type: Variant
     confidence: Unknown
 
-  236:37 Parameter params in create_game_object
+  237:37 Parameter params in create_game_object
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  273:22 Parameter target in _on_hit_callback
+  274:22 Parameter target in _on_hit_callback
     inferred-type: Variant
     confidence: Unknown
 
-  273:30 Parameter damage in _on_hit_callback
+  274:30 Parameter damage in _on_hit_callback
     inferred-type: Variant
     confidence: Unknown
 
-  286:21 Parameter entity_id in _on_entity_died
+  287:21 Parameter entity_id in _on_entity_died
     inferred-type: Variant
     confidence: Unknown
 
-  291:23 Parameter base in _calculate_damage
+  292:23 Parameter base in _calculate_damage
     inferred-type: Variant
     confidence: Unknown
 
-  291:29 Parameter target in _calculate_damage
+  292:29 Parameter target in _calculate_damage
     inferred-type: Variant
     confidence: Unknown
 
-  307:27 Parameter depth in stress_test_inference
+  308:27 Parameter depth in stress_test_inference
     inferred-type: Variant
     confidence: Unknown
 
-  307:34 Parameter initial_value in stress_test_inference
+  308:34 Parameter initial_value in stress_test_inference
     inferred-type: Variant
     confidence: Unknown
 
-  320:29 Parameter inputs in parallel_inference_test
+  321:29 Parameter inputs in parallel_inference_test
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -277,45 +277,45 @@ test_scripts/cross_file_inference.gd
 
 
 test_scripts/cycles_test.gd
-  21:15 Parameter input in transform
+  22:15 Parameter input in transform
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  51:26 Parameter depth in recursive_type_cycle
+  52:26 Parameter depth in recursive_type_cycle
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  59:24 Parameter value in mutual_recursion_a
+  60:24 Parameter value in mutual_recursion_a
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  66:24 Parameter value in mutual_recursion_b
+  67:24 Parameter value in mutual_recursion_b
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  113:20 Parameter items in reduce_pattern
+  114:20 Parameter items in reduce_pattern
     inferred-type: Array
     confidence: Certain
     reason: explicit type annotation
 
-  113:34 Parameter initial in reduce_pattern
+  114:34 Parameter initial in reduce_pattern
     inferred-type: Variant
     confidence: Unknown
 
-  123:14 Parameter acc in _reducer
+  124:14 Parameter acc in _reducer
     inferred-type: int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  123:19 Parameter item in _reducer
+  124:19 Parameter item in _reducer
     inferred-type: int
     confidence: High
     reason: single type from constraints
@@ -323,19 +323,19 @@ test_scripts/cycles_test.gd
 
 
 test_scripts/cyclic_inference.gd
-  12:15 Parameter input in process_a
+  13:15 Parameter input in process_a
     inferred-type: int
     confidence: High
     reason: single type from constraints
     duck-typed: yes
 
-  20:15 Parameter input in process_b
+  21:15 Parameter input in process_b
     inferred-type: int
     confidence: High
     reason: single type from constraints
     duck-typed: yes
 
-  29:23 Parameter data in transform_stage_1
+  30:23 Parameter data in transform_stage_1
     inferred-type: Array[<Derivable>] | int | String
     confidence: High
     reason: union from type checks
@@ -346,23 +346,23 @@ test_scripts/cyclic_inference.gd
       properties: length, size
       signals: (none)
 
-  40:23 Parameter value in transform_stage_2
+  41:23 Parameter value in transform_stage_2
     inferred-type: Variant
     confidence: Unknown
 
-  46:23 Parameter value in transform_stage_3
+  47:23 Parameter value in transform_stage_3
     inferred-type: Variant
     confidence: Unknown
 
-  55:16 Parameter n in even_check
+  56:16 Parameter n in even_check
     inferred-type: Variant
     confidence: Unknown
 
-  62:15 Parameter n in odd_check
+  63:15 Parameter n in odd_check
     inferred-type: Variant
     confidence: Unknown
 
-  74:16 Parameter context in state_idle
+  75:16 Parameter context in state_idle
     inferred-type: Array | Dictionary | PackedStringArray
     confidence: High
     reason: union from type checks
@@ -373,7 +373,7 @@ test_scripts/cyclic_inference.gd
       properties: has
       signals: (none)
 
-  81:18 Parameter context in state_active
+  82:18 Parameter context in state_active
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
@@ -384,7 +384,7 @@ test_scripts/cyclic_inference.gd
       properties: has
       signals: (none)
 
-  89:22 Parameter data in state_processing
+  90:22 Parameter data in state_processing
     inferred-type: Array[<Derivable>]
     confidence: High
     reason: single type from constraints
@@ -394,7 +394,7 @@ test_scripts/cyclic_inference.gd
       properties: length, size
       signals: (none)
 
-  99:20 Parameter results in state_complete
+  100:20 Parameter results in state_complete
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -402,11 +402,11 @@ test_scripts/cyclic_inference.gd
       properties: append
       signals: (none)
 
-  103:17 Parameter message in state_error
+  104:17 Parameter message in state_error
     inferred-type: Variant
     confidence: Unknown
 
-  107:18 Parameter item in process_item
+  108:18 Parameter item in process_item
     inferred-type: Dictionary[String, <Derivable>] | int | String
     confidence: High
     reason: union from type checks
@@ -417,7 +417,7 @@ test_scripts/cyclic_inference.gd
       properties: length
       signals: (none)
 
-  120:21 Parameter list in accumulate_left
+  121:21 Parameter list in accumulate_left
     inferred-type: Array
     confidence: High
     reason: single type from constraints
@@ -427,18 +427,18 @@ test_scripts/cyclic_inference.gd
       properties: is_empty, slice
       signals: (none)
 
-  120:27 Parameter func_ref in accumulate_left
+  121:27 Parameter func_ref in accumulate_left
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  120:37 Parameter initial in accumulate_left
+  121:37 Parameter initial in accumulate_left
     inferred-type: Variant
     confidence: Unknown
 
-  130:22 Parameter list in accumulate_right
+  131:22 Parameter list in accumulate_right
     inferred-type: Array
     confidence: High
     reason: single type from constraints
@@ -448,46 +448,46 @@ test_scripts/cyclic_inference.gd
       properties: is_empty, slice
       signals: (none)
 
-  130:28 Parameter func_ref in accumulate_right
+  131:28 Parameter func_ref in accumulate_right
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  130:38 Parameter initial in accumulate_right
+  131:38 Parameter initial in accumulate_right
     inferred-type: Variant
     confidence: Unknown
 
-  146:20 Parameter seed_value in compute_values
+  147:20 Parameter seed_value in compute_values
     inferred-type: Variant
     confidence: Unknown
 
-  157:16 Parameter seed in _compute_x
+  158:16 Parameter seed in _compute_x
     inferred-type: Variant
     confidence: Unknown
 
-  161:16 Parameter x_val in _compute_y
+  162:16 Parameter x_val in _compute_y
     inferred-type: Variant
     confidence: Unknown
 
-  165:16 Parameter x_val in _compute_z
+  166:16 Parameter x_val in _compute_z
     inferred-type: Variant
     confidence: Unknown
 
-  165:23 Parameter y_val in _compute_z
+  166:23 Parameter y_val in _compute_z
     inferred-type: Variant
     confidence: Unknown
 
-  169:30 Parameter z_val in _compute_x_with_feedback
+  170:30 Parameter z_val in _compute_x_with_feedback
     inferred-type: Variant
     confidence: Unknown
 
-  173:30 Parameter z_val in _compute_y_with_feedback
+  174:30 Parameter z_val in _compute_y_with_feedback
     inferred-type: Variant
     confidence: Unknown
 
-  179:16 Parameter node in visit_node
+  180:16 Parameter node in visit_node
     inferred-type: Array | Dictionary[String, Variant] | PackedStringArray
     confidence: High
     reason: union from type checks
@@ -498,7 +498,7 @@ test_scripts/cyclic_inference.gd
       properties: has
       signals: (none)
 
-  179:22 Parameter visitor in visit_node
+  180:22 Parameter visitor in visit_node
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -506,7 +506,7 @@ test_scripts/cyclic_inference.gd
       properties: visit, combine
       signals: (none)
 
-  191:28 Parameter root in traverse_and_transform
+  192:28 Parameter root in traverse_and_transform
     inferred-type: Array | Dictionary[String, Variant] | PackedStringArray
     confidence: High
     reason: union from type checks
@@ -517,7 +517,7 @@ test_scripts/cyclic_inference.gd
       properties: has
       signals: (none)
 
-  191:34 Parameter transformer in traverse_and_transform
+  192:34 Parameter transformer in traverse_and_transform
     inferred-type: CyclesTest
     confidence: Medium
     reason: single type from constraints
@@ -527,22 +527,22 @@ test_scripts/cyclic_inference.gd
       properties: transform
       signals: (none)
 
-  209:20 Parameter gen_id in generator_next
+  210:20 Parameter gen_id in generator_next
     inferred-type: Variant
     confidence: Unknown
 
-  221:21 Parameter gen_id in _init_generator
+  222:21 Parameter gen_id in _init_generator
     inferred-type: Variant
     confidence: Unknown
 
-  225:24 Parameter state in _advance_generator
+  226:24 Parameter state in _advance_generator
     inferred-type: Array | float | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  242:16 Parameter tokens in parse_expr
+  243:16 Parameter tokens in parse_expr
     inferred-type: Array | Dictionary
     confidence: Medium
     reason: union from type checks
@@ -553,11 +553,11 @@ test_scripts/cyclic_inference.gd
       properties: size
       signals: (none)
 
-  242:24 Parameter pos in parse_expr
+  243:24 Parameter pos in parse_expr
     inferred-type: Variant
     confidence: Unknown
 
-  269:16 Parameter tokens in parse_term
+  270:16 Parameter tokens in parse_term
     inferred-type: Array | Dictionary
     confidence: Medium
     reason: union from type checks
@@ -568,11 +568,11 @@ test_scripts/cyclic_inference.gd
       properties: size
       signals: (none)
 
-  269:24 Parameter pos in parse_term
+  270:24 Parameter pos in parse_term
     inferred-type: Variant
     confidence: Unknown
 
-  296:18 Parameter tokens in parse_factor
+  297:18 Parameter tokens in parse_factor
     inferred-type: Array | Dictionary | float | int
     confidence: High
     reason: union from type checks
@@ -583,126 +583,126 @@ test_scripts/cyclic_inference.gd
       properties: size
       signals: (none)
 
-  296:26 Parameter pos in parse_factor
+  297:26 Parameter pos in parse_factor
     inferred-type: Variant
     confidence: Unknown
 
 
 test_scripts/diagnostics/linter/best_practices_rules.gd
-  47:23 Parameter param in test_gdl202_valid
+  48:23 Parameter param in test_gdl202_valid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  52:25 Parameter unused_param in test_gdl202_invalid
+  53:25 Parameter unused_param in test_gdl202_invalid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  58:28 Parameter suppressed_param in test_gdl202_suppressed
+  59:28 Parameter suppressed_param in test_gdl202_suppressed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  137:23 Parameter a in test_gdl213_valid
+  138:23 Parameter a in test_gdl213_valid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  137:31 Parameter b in test_gdl213_valid
+  138:31 Parameter b in test_gdl213_valid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  142:25 Parameter x in test_gdl213_invalid
+  143:25 Parameter x in test_gdl213_invalid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  147:28 Parameter x in test_gdl213_suppressed
+  148:28 Parameter x in test_gdl213_suppressed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/diagnostics/linter/complexity_rules.gd
-  19:23 Parameter x in test_gdl225_valid
+  20:23 Parameter x in test_gdl225_valid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  27:25 Parameter x in test_gdl225_invalid
+  28:25 Parameter x in test_gdl225_invalid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  38:28 Parameter x in test_gdl225_suppressed
+  39:28 Parameter x in test_gdl225_suppressed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  109:23 Parameter x in test_gdl223_valid
+  110:23 Parameter x in test_gdl223_valid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  122:25 Parameter x in test_gdl223_invalid
+  123:25 Parameter x in test_gdl223_invalid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  142:28 Parameter x in test_gdl223_suppressed
+  143:28 Parameter x in test_gdl223_suppressed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  165:23 Parameter x in test_gdl228_valid
+  166:23 Parameter x in test_gdl228_valid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  178:25 Parameter x in test_gdl228_invalid
+  179:25 Parameter x in test_gdl228_invalid
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  210:28 Parameter x in test_gdl228_suppressed
+  211:28 Parameter x in test_gdl228_suppressed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/diagnostics/linter/formatting_rules.gd
-  88:22 Parameter x in _helper_function
+  89:22 Parameter x in _helper_function
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  88:30 Parameter y in _helper_function
+  89:30 Parameter y in _helper_function
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  88:38 Parameter z in _helper_function
+  89:38 Parameter z in _helper_function
     inferred-type: Array
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/diagnostics/validator/call_errors.gd
-  22:20 Parameter a in _func_two_args
+  23:20 Parameter a in _func_two_args
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  22:28 Parameter b in _func_two_args
+  23:28 Parameter b in _func_two_args
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/diagnostics/validator/duck_typing_errors.gd
-  23:31 Parameter obj in test_gd7002_valid_guarded
+  24:31 Parameter obj in test_gd7002_valid_guarded
     inferred-type: Node
     confidence: High
     reason: single type from constraints
@@ -712,7 +712,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: name, append, unguarded_call, queue_free, another_unguarded
       signals: (none)
 
-  29:25 Parameter untyped_obj in test_gd7002_invalid
+  30:25 Parameter untyped_obj in test_gd7002_invalid
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -720,7 +720,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: some_property, another_property, some_method, another_method
       signals: (none)
 
-  34:28 Parameter untyped_obj in test_gd7002_suppressed
+  35:28 Parameter untyped_obj in test_gd7002_suppressed
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -728,7 +728,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: some_property, another_property, some_method, another_method
       signals: (none)
 
-  50:31 Parameter obj in test_gd7003_valid_guarded
+  51:31 Parameter obj in test_gd7003_valid_guarded
     inferred-type: Array[<Derivable>]
     confidence: High
     reason: single type from constraints
@@ -738,7 +738,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: name, append, unguarded_call, queue_free, another_unguarded
       signals: (none)
 
-  56:25 Parameter untyped_obj in test_gd7003_invalid
+  57:25 Parameter untyped_obj in test_gd7003_invalid
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -746,7 +746,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: some_property, another_property, some_method, another_method
       signals: (none)
 
-  61:28 Parameter untyped_obj in test_gd7003_suppressed
+  62:28 Parameter untyped_obj in test_gd7003_suppressed
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -754,7 +754,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: some_property, another_property, some_method, another_method
       signals: (none)
 
-  71:29 Parameter obj1 in test_multiple_unguarded
+  72:29 Parameter obj1 in test_multiple_unguarded
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -762,7 +762,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: method_a
       signals: (none)
 
-  71:35 Parameter obj2 in test_multiple_unguarded
+  72:35 Parameter obj2 in test_multiple_unguarded
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -770,7 +770,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       properties: method_b
       signals: (none)
 
-  78:34 Parameter obj in test_mixed_guarded_unguarded
+  79:34 Parameter obj in test_mixed_guarded_unguarded
     inferred-type: Node
     confidence: High
     reason: single type from constraints
@@ -782,27 +782,27 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
 
 
 test_scripts/diagnostics/validator/type_annotation_errors.gd
-  12:33 Parameter flag in test_gd3023_valid_same_type
+  13:33 Parameter flag in test_gd3023_valid_same_type
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  19:25 Parameter flag in test_gd3023_invalid
+  20:25 Parameter flag in test_gd3023_invalid
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  31:23 Parameter flag in test_gd3024_valid
+  32:23 Parameter flag in test_gd3024_valid
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  38:25 Parameter flag in test_gd3024_invalid
+  39:25 Parameter flag in test_gd3024_invalid
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  43:28 Parameter flag in test_gd3024_valid_void
+  44:28 Parameter flag in test_gd3024_valid_void
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
@@ -818,14 +818,14 @@ test_scripts/diagnostics/validator/type_annotation_errors.gd
 
 
 test_scripts/diagnostics/validator/type_errors.gd
-  117:15 Parameter x in _take_int
+  118:15 Parameter x in _take_int
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/duck_typing_advanced.gd
-  20:20 Parameter source in process_attack
+  21:20 Parameter source in process_attack
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -833,7 +833,7 @@ test_scripts/duck_typing_advanced.gd
       properties: get_damage
       signals: (none)
 
-  20:28 Parameter target in process_attack
+  21:28 Parameter target in process_attack
     inferred-type: BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass | UnrelatedClass
     confidence: Medium
     reason: union from type checks
@@ -844,13 +844,13 @@ test_scripts/duck_typing_advanced.gd
       properties: take_damage
       signals: (none)
 
-  30:18 Parameter targets in apply_to_all
+  31:18 Parameter targets in apply_to_all
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  30:27 Parameter effect in apply_to_all
+  31:27 Parameter effect in apply_to_all
     inferred-type: SpinBox
     confidence: Medium
     reason: single type from constraints
@@ -860,23 +860,23 @@ test_scripts/duck_typing_advanced.gd
       properties: apply
       signals: (none)
 
-  47:23 Parameter callback in register_callback
+  48:23 Parameter callback in register_callback
     inferred-type: Variant
     confidence: Unknown
 
-  51:27 Parameter base_value in execute_with_modifier
+  52:27 Parameter base_value in execute_with_modifier
     inferred-type: Variant
     confidence: Unknown
 
-  51:39 Parameter context in execute_with_modifier
+  52:39 Parameter context in execute_with_modifier
     inferred-type: Variant
     confidence: Unknown
 
-  62:24 Parameter entity_name in get_entity_by_name
+  63:24 Parameter entity_name in get_entity_by_name
     inferred-type: Variant
     confidence: Unknown
 
-  77:18 Parameter position in find_nearest
+  78:18 Parameter position in find_nearest
     inferred-type: Vector2 | Vector2i | Vector3 | Vector3i | Vector4 | Vector4i
     confidence: High
     reason: union from type checks
@@ -887,34 +887,34 @@ test_scripts/duck_typing_advanced.gd
       properties: distance_squared_to
       signals: (none)
 
-  77:28 Parameter type_filter in find_nearest
+  78:28 Parameter type_filter in find_nearest
     inferred-type: Variant
     confidence: Unknown
 
-  100:29 Parameter component_type in get_or_create_component
+  101:29 Parameter component_type in get_or_create_component
     inferred-type: Variant
     confidence: Unknown
 
-  109:23 Parameter type_name in _create_component
+  110:23 Parameter type_name in _create_component
     inferred-type: Variant
     confidence: Unknown
 
-  136:18 Parameter action in queue_action
+  137:18 Parameter action in queue_action
     inferred-type: Variant
     confidence: Unknown
 
-  151:21 Parameter action in _execute_action
+  152:21 Parameter action in _execute_action
     inferred-type: Callable | Dictionary[Variant, <Derivable>] | Object | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  162:29 Parameter cmd in _execute_string_command
+  163:29 Parameter cmd in _execute_string_command
     inferred-type: Variant
     confidence: Unknown
 
-  166:26 Parameter action_dict in _execute_dict_action
+  167:26 Parameter action_dict in _execute_dict_action
     inferred-type: Array | Dictionary[String, Variant] | PackedStringArray
     confidence: High
     reason: union from type checks
@@ -925,25 +925,25 @@ test_scripts/duck_typing_advanced.gd
       properties: has
       signals: (none)
 
-  174:20 Parameter data in transform_data
+  175:20 Parameter data in transform_data
     inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>]
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  174:26 Parameter transformer in transform_data
+  175:26 Parameter transformer in transform_data
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  195:19 Parameter initial_value in process_chain
+  196:19 Parameter initial_value in process_chain
     inferred-type: Variant
     confidence: Unknown
 
-  204:17 Parameter value in _step_parse
+  205:17 Parameter value in _step_parse
     inferred-type: String
     confidence: High
     reason: single type from constraints
@@ -953,7 +953,7 @@ test_scripts/duck_typing_advanced.gd
       properties: is_valid_int, to_int, is_valid_float, to_float, begins_with, is_empty, map
       signals: (none)
 
-  215:20 Parameter value in _step_validate
+  216:20 Parameter value in _step_validate
     inferred-type: Array[<Derivable>] | Dictionary | int | String | StringName
     confidence: High
     reason: union from type checks
@@ -964,7 +964,7 @@ test_scripts/duck_typing_advanced.gd
       properties: is_valid_int, to_int, is_valid_float, to_float, begins_with, is_empty, map
       signals: (none)
 
-  225:21 Parameter value in _step_transform
+  226:21 Parameter value in _step_transform
     inferred-type: Array[<Derivable>] | float | int | Observable | SignalCallbackChains.Observable
     confidence: High
     reason: union from type checks
@@ -975,7 +975,7 @@ test_scripts/duck_typing_advanced.gd
       properties: is_valid_int, to_int, is_valid_float, to_float, begins_with, is_empty, map
       signals: (none)
 
-  235:18 Parameter value in _step_format
+  236:18 Parameter value in _step_format
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -985,7 +985,7 @@ test_scripts/duck_typing_advanced.gd
 
 
 test_scripts/dynamic_dispatch.gd
-  12:20 Parameter obj in call_if_exists
+  13:20 Parameter obj in call_if_exists
     inferred-type: Object
     confidence: High
     reason: single type from constraints
@@ -995,7 +995,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  12:25 Parameter method_name in call_if_exists
+  13:25 Parameter method_name in call_if_exists
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1003,11 +1003,11 @@ test_scripts/dynamic_dispatch.gd
       properties: match
       signals: (none)
 
-  12:38 Parameter args in call_if_exists
+  13:38 Parameter args in call_if_exists
     inferred-type: Variant
     confidence: Unknown
 
-  19:24 Parameter obj in call_with_fallback
+  20:24 Parameter obj in call_with_fallback
     inferred-type: Object
     confidence: High
     reason: single type from constraints
@@ -1017,7 +1017,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  19:29 Parameter method_name in call_with_fallback
+  20:29 Parameter method_name in call_with_fallback
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1025,15 +1025,15 @@ test_scripts/dynamic_dispatch.gd
       properties: match
       signals: (none)
 
-  19:42 Parameter fallback_method in call_with_fallback
+  20:42 Parameter fallback_method in call_with_fallback
     inferred-type: Variant
     confidence: Unknown
 
-  19:59 Parameter args in call_with_fallback
+  20:59 Parameter args in call_with_fallback
     inferred-type: Variant
     confidence: Unknown
 
-  27:26 Parameter obj in call_first_available
+  28:26 Parameter obj in call_first_available
     inferred-type: Object
     confidence: High
     reason: single type from constraints
@@ -1043,17 +1043,17 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  27:31 Parameter method_names in call_first_available
+  28:31 Parameter method_names in call_first_available
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  27:45 Parameter args in call_first_available
+  28:45 Parameter args in call_first_available
     inferred-type: Variant
     confidence: Unknown
 
-  34:23 Parameter obj in call_all_matching
+  35:23 Parameter obj in call_all_matching
     inferred-type: Object
     confidence: High
     reason: single type from constraints
@@ -1063,15 +1063,15 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  34:28 Parameter prefix in call_all_matching
+  35:28 Parameter prefix in call_all_matching
     inferred-type: Variant
     confidence: Unknown
 
-  34:36 Parameter args in call_all_matching
+  35:36 Parameter args in call_all_matching
     inferred-type: Variant
     confidence: Unknown
 
-  49:18 Parameter obj in get_property
+  50:18 Parameter obj in get_property
     inferred-type: Dictionary | Object
     confidence: High
     reason: union from type checks
@@ -1082,15 +1082,15 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  49:23 Parameter prop_name in get_property
+  50:23 Parameter prop_name in get_property
     inferred-type: Variant
     confidence: Unknown
 
-  49:34 Parameter default_value in get_property
+  50:34 Parameter default_value in get_property
     inferred-type: Variant
     confidence: Unknown
 
-  55:18 Parameter obj in set_property
+  56:18 Parameter obj in set_property
     inferred-type: Object
     confidence: High
     reason: single type from constraints
@@ -1100,11 +1100,11 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  55:23 Parameter prop_name in set_property
+  56:23 Parameter prop_name in set_property
     inferred-type: Variant
     confidence: Unknown
 
-  55:34 Parameter value in set_property
+  56:34 Parameter value in set_property
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1112,14 +1112,14 @@ test_scripts/dynamic_dispatch.gd
       properties: x, y, z, r, g, b, a
       signals: (none)
 
-  62:21 Parameter source in copy_properties
+  63:21 Parameter source in copy_properties
     inferred-type: Dictionary | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  62:29 Parameter target in copy_properties
+  63:29 Parameter target in copy_properties
     inferred-type: Object | PackedByteArray | PackedColorArray | PackedFloat32Array | PackedFloat64Array | PackedInt32Array | PackedInt64Array | PackedStringArray | PackedVector2Array | PackedVector3Array | PackedVector4Array
     confidence: High
     reason: union from type checks
@@ -1130,13 +1130,13 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  62:37 Parameter prop_names in copy_properties
+  63:37 Parameter prop_names in copy_properties
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  68:21 Parameter obj in sync_properties
+  69:21 Parameter obj in sync_properties
     inferred-type: Dictionary | Object
     confidence: High
     reason: union from type checks
@@ -1147,7 +1147,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  75:22 Parameter obj in apply_properties
+  76:22 Parameter obj in apply_properties
     inferred-type: Object | PackedByteArray | PackedColorArray | PackedFloat32Array | PackedFloat64Array | PackedInt32Array | PackedInt64Array | PackedStringArray | PackedVector2Array | PackedVector3Array | PackedVector4Array
     confidence: High
     reason: union from type checks
@@ -1158,15 +1158,15 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  87:22 Parameter message_type in register_handler
+  88:22 Parameter message_type in register_handler
     inferred-type: Variant
     confidence: Unknown
 
-  87:36 Parameter handler in register_handler
+  88:36 Parameter handler in register_handler
     inferred-type: Variant
     confidence: Unknown
 
-  91:18 Parameter target in send_message
+  92:18 Parameter target in send_message
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1174,24 +1174,24 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  91:26 Parameter message in send_message
+  92:26 Parameter message in send_message
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  112:23 Parameter targets in broadcast_message
+  113:23 Parameter targets in broadcast_message
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  112:32 Parameter message in broadcast_message
+  113:32 Parameter message in broadcast_message
     inferred-type: Variant
     confidence: Unknown
 
-  121:22 Parameter obj in serialize_object
+  122:22 Parameter obj in serialize_object
     inferred-type: Object
     confidence: High
     reason: single type from constraints
@@ -1201,7 +1201,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  137:22 Parameter value in _serialize_value
+  138:22 Parameter value in _serialize_value
     inferred-type: Array[<Derivable>] | bool | Color | Dictionary[Variant, <Derivable>] | float | int | Object | String | Vector2 | Vector3
     confidence: High
     reason: union from type checks
@@ -1212,7 +1212,7 @@ test_scripts/dynamic_dispatch.gd
       properties: x, y, z, r, g, b, a
       signals: (none)
 
-  164:27 Parameter obj in deserialize_to_object
+  165:27 Parameter obj in deserialize_to_object
     inferred-type: Object | PackedByteArray | PackedColorArray | PackedFloat32Array | PackedFloat64Array | PackedInt32Array | PackedInt64Array | PackedStringArray | PackedVector2Array | PackedVector3Array | PackedVector4Array
     confidence: High
     reason: union from type checks
@@ -1223,7 +1223,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  164:32 Parameter data in deserialize_to_object
+  165:32 Parameter data in deserialize_to_object
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -1233,7 +1233,7 @@ test_scripts/dynamic_dispatch.gd
       properties: has
       signals: (none)
 
-  171:24 Parameter data in _deserialize_value
+  172:24 Parameter data in _deserialize_value
     inferred-type: Array[<Derivable>] | bool | Dictionary[Variant, <Derivable>] | float | int | PackedStringArray | String
     confidence: High
     reason: union from type checks
@@ -1244,7 +1244,7 @@ test_scripts/dynamic_dispatch.gd
       properties: has
       signals: (none)
 
-  192:24 Parameter data in _deserialize_typed
+  193:24 Parameter data in _deserialize_typed
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -1254,7 +1254,7 @@ test_scripts/dynamic_dispatch.gd
       properties: has
       signals: (none)
 
-  209:20 Parameter name in register_class
+  210:20 Parameter name in register_class
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1262,7 +1262,7 @@ test_scripts/dynamic_dispatch.gd
       properties: begins_with
       signals: (none)
 
-  209:26 Parameter class_ref in register_class
+  210:26 Parameter class_ref in register_class
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1270,17 +1270,17 @@ test_scripts/dynamic_dispatch.gd
       properties: instantiate, new
       signals: (none)
 
-  213:29 Parameter class_name_str in create_instance_by_name
+  214:29 Parameter class_name_str in create_instance_by_name
     inferred-type: Variant
     confidence: Unknown
 
-  213:45 Parameter init_params in create_instance_by_name
+  214:45 Parameter init_params in create_instance_by_name
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  235:18 Parameter obj in clone_object
+  236:18 Parameter obj in clone_object
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1288,7 +1288,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  252:21 Parameter obj in _get_class_name
+  253:21 Parameter obj in _get_class_name
     inferred-type: Object
     confidence: High
     reason: single type from constraints
@@ -1298,7 +1298,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  264:12 Parameter target in _init
+  265:12 Parameter target in _init
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1306,7 +1306,7 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  267:17 Parameter target in set_target
+  268:17 Parameter target in set_target
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1314,7 +1314,7 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  271:18 Parameter method_name in call_method
+  272:18 Parameter method_name in call_method
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1322,15 +1322,15 @@ test_scripts/dynamic_dispatch.gd
       properties: match
       signals: (none)
 
-  271:31 Parameter args in call_method
+  272:31 Parameter args in call_method
     inferred-type: Variant
     confidence: Unknown
 
-  275:15 Parameter prop_name in set_prop
+  276:15 Parameter prop_name in set_prop
     inferred-type: Variant
     confidence: Unknown
 
-  275:26 Parameter value in set_prop
+  276:26 Parameter value in set_prop
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1338,7 +1338,7 @@ test_scripts/dynamic_dispatch.gd
       properties: x, y, z, r, g, b, a
       signals: (none)
 
-  290:20 Parameter target in create_builder
+  291:20 Parameter target in create_builder
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1346,37 +1346,37 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  299:23 Parameter event_type in register_dispatch
+  300:23 Parameter event_type in register_dispatch
     inferred-type: Variant
     confidence: Unknown
 
-  299:35 Parameter handler_name in register_dispatch
+  300:35 Parameter handler_name in register_dispatch
     inferred-type: Variant
     confidence: Unknown
 
-  299:49 Parameter handler in register_dispatch
+  300:49 Parameter handler in register_dispatch
     inferred-type: Variant
     confidence: Unknown
 
-  305:14 Parameter event in dispatch
+  306:14 Parameter event in dispatch
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  317:25 Parameter event in dispatch_to_handler
+  318:25 Parameter event in dispatch_to_handler
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  317:32 Parameter handler_name in dispatch_to_handler
+  318:32 Parameter handler_name in dispatch_to_handler
     inferred-type: Variant
     confidence: Unknown
 
-  333:12 Parameter target in _init
+  334:12 Parameter target in _init
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1384,7 +1384,7 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  336:16 Parameter method_name in intercept
+  337:16 Parameter method_name in intercept
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1392,11 +1392,11 @@ test_scripts/dynamic_dispatch.gd
       properties: match
       signals: (none)
 
-  336:29 Parameter interceptor in intercept
+  337:29 Parameter interceptor in intercept
     inferred-type: Variant
     confidence: Unknown
 
-  339:12 Parameter method_name in _call
+  340:12 Parameter method_name in _call
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1404,11 +1404,11 @@ test_scripts/dynamic_dispatch.gd
       properties: match
       signals: (none)
 
-  339:25 Parameter args in _call
+  340:25 Parameter args in _call
     inferred-type: Variant
     confidence: Unknown
 
-  352:18 Parameter target in create_proxy
+  353:18 Parameter target in create_proxy
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1416,7 +1416,7 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  356:26 Parameter target in create_logging_proxy
+  357:26 Parameter target in create_logging_proxy
     inferred-type: Object
     confidence: Medium
     reason: single type from constraints
@@ -1426,42 +1426,42 @@ test_scripts/dynamic_dispatch.gd
       properties: handle_message
       signals: (none)
 
-  356:34 Parameter logger in create_logging_proxy
+  357:34 Parameter logger in create_logging_proxy
     inferred-type: Variant
     confidence: Unknown
 
-  368:33 Parameter logger in _create_logging_interceptor
+  369:33 Parameter logger in _create_logging_interceptor
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  383:16 Parameter method_pattern in add_before
+  384:16 Parameter method_pattern in add_before
     inferred-type: Variant
     confidence: Unknown
 
-  383:32 Parameter advice in add_before
+  384:32 Parameter advice in add_before
     inferred-type: Variant
     confidence: Unknown
 
-  389:15 Parameter method_pattern in add_after
+  390:15 Parameter method_pattern in add_after
     inferred-type: Variant
     confidence: Unknown
 
-  389:31 Parameter advice in add_after
+  390:31 Parameter advice in add_after
     inferred-type: Variant
     confidence: Unknown
 
-  395:16 Parameter method_pattern in add_around
+  396:16 Parameter method_pattern in add_around
     inferred-type: Variant
     confidence: Unknown
 
-  395:32 Parameter advice in add_around
+  396:32 Parameter advice in add_around
     inferred-type: Variant
     confidence: Unknown
 
-  399:18 Parameter obj in advised_call
+  400:18 Parameter obj in advised_call
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
@@ -1472,7 +1472,7 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  399:23 Parameter method_name in advised_call
+  400:23 Parameter method_name in advised_call
     inferred-type: String
     confidence: High
     reason: single type from constraints
@@ -1482,96 +1482,96 @@ test_scripts/dynamic_dispatch.gd
       properties: match
       signals: (none)
 
-  399:36 Parameter args in advised_call
+  400:36 Parameter args in advised_call
     inferred-type: Variant
     confidence: Unknown
 
 
 test_scripts/ecs_like_system.gd
-  26:12 Parameter entity_id in _init
+  27:12 Parameter entity_id in _init
     inferred-type: Variant
     confidence: Unknown
 
-  26:23 Parameter entity_name in _init
+  27:23 Parameter entity_name in _init
     inferred-type: Variant
     confidence: Unknown
 
-  31:19 Parameter entity_name in create_entity
+  32:19 Parameter entity_name in create_entity
     inferred-type: Variant
     confidence: Unknown
 
-  38:20 Parameter entity_id in destroy_entity
+  39:20 Parameter entity_id in destroy_entity
     inferred-type: Variant
     confidence: Unknown
 
-  50:16 Parameter entity_id in get_entity
+  51:16 Parameter entity_id in get_entity
     inferred-type: Variant
     confidence: Unknown
 
-  56:19 Parameter entity_id in add_component
+  57:19 Parameter entity_id in add_component
     inferred-type: Variant
     confidence: Unknown
 
-  56:30 Parameter component_type in add_component
+  57:30 Parameter component_type in add_component
     inferred-type: Variant
     confidence: Unknown
 
-  56:46 Parameter component in add_component
+  57:46 Parameter component in add_component
     inferred-type: Variant
     confidence: Unknown
 
-  65:19 Parameter entity_id in get_component
+  66:19 Parameter entity_id in get_component
     inferred-type: Variant
     confidence: Unknown
 
-  65:30 Parameter component_type in get_component
+  66:30 Parameter component_type in get_component
     inferred-type: Variant
     confidence: Unknown
 
-  71:22 Parameter entity_id in remove_component
+  72:22 Parameter entity_id in remove_component
     inferred-type: Variant
     confidence: Unknown
 
-  71:33 Parameter component_type in remove_component
+  72:33 Parameter component_type in remove_component
     inferred-type: Variant
     confidence: Unknown
 
-  77:19 Parameter entity_id in has_component
+  78:19 Parameter entity_id in has_component
     inferred-type: Variant
     confidence: Unknown
 
-  77:30 Parameter component_type in has_component
+  78:30 Parameter component_type in has_component
     inferred-type: Variant
     confidence: Unknown
 
-  81:24 Parameter entity_id in get_all_components
+  82:24 Parameter entity_id in get_all_components
     inferred-type: Variant
     confidence: Unknown
 
-  92:20 Parameter component_types in query_entities
+  93:20 Parameter component_types in query_entities
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  108:27 Parameter component_types in query_with_components
+  109:27 Parameter component_types in query_with_components
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  122:18 Parameter tag in query_by_tag
+  123:18 Parameter tag in query_by_tag
     inferred-type: Variant
     confidence: Unknown
 
-  130:24 Parameter predicate in query_by_predicate
+  131:24 Parameter predicate in query_by_predicate
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  143:21 Parameter system in register_system
+  144:21 Parameter system in register_system
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1579,7 +1579,7 @@ test_scripts/ecs_like_system.gd
       properties: update
       signals: (none)
 
-  148:23 Parameter system in unregister_system
+  149:23 Parameter system in unregister_system
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1587,63 +1587,63 @@ test_scripts/ecs_like_system.gd
       properties: update
       signals: (none)
 
-  152:20 Parameter delta in update_systems
+  153:20 Parameter delta in update_systems
     inferred-type: Variant
     confidence: Unknown
 
-  167:32 Parameter pos in create_transform_component
+  168:32 Parameter pos in create_transform_component
     inferred-type: Variant
     confidence: Unknown
 
-  167:52 Parameter rot in create_transform_component
+  168:52 Parameter rot in create_transform_component
     inferred-type: Variant
     confidence: Unknown
 
-  167:63 Parameter scl in create_transform_component
+  168:63 Parameter scl in create_transform_component
     inferred-type: Variant
     confidence: Unknown
 
-  171:31 Parameter linear in create_velocity_component
+  172:31 Parameter linear in create_velocity_component
     inferred-type: Variant
     confidence: Unknown
 
-  171:54 Parameter angular in create_velocity_component
+  172:54 Parameter angular in create_velocity_component
     inferred-type: Variant
     confidence: Unknown
 
-  175:29 Parameter current in create_health_component
+  176:29 Parameter current in create_health_component
     inferred-type: Variant
     confidence: Unknown
 
-  175:38 Parameter maximum in create_health_component
+  176:38 Parameter maximum in create_health_component
     inferred-type: Variant
     confidence: Unknown
 
-  181:29 Parameter sprite in create_render_component
+  182:29 Parameter sprite in create_render_component
     inferred-type: Variant
     confidence: Unknown
 
-  181:44 Parameter color in create_render_component
+  182:44 Parameter color in create_render_component
     inferred-type: Variant
     confidence: Unknown
 
-  181:65 Parameter visible in create_render_component
+  182:65 Parameter visible in create_render_component
     inferred-type: Variant
     confidence: Unknown
 
-  185:25 Parameter initial_state in create_ai_component
+  186:25 Parameter initial_state in create_ai_component
     inferred-type: Variant
     confidence: Unknown
 
-  185:49 Parameter behavior in create_ai_component
+  186:49 Parameter behavior in create_ai_component
     inferred-type: Variant
     confidence: Unknown
 
-  192:13 Parameter delta in update
+  193:13 Parameter delta in update
     inferred-type: Variant
     confidence: Unknown
 
-  192:20 Parameter world in update
+  193:20 Parameter world in update
     inferred-type: ECSLikeSystem
     confidence: Medium
     reason: single type from constraints
@@ -1653,11 +1653,11 @@ test_scripts/ecs_like_system.gd
       properties: query_entities, get_component
       signals: (none)
 
-  207:13 Parameter delta in update
+  208:13 Parameter delta in update
     inferred-type: Variant
     confidence: Unknown
 
-  207:20 Parameter world in update
+  208:20 Parameter world in update
     inferred-type: ECSLikeSystem
     confidence: Medium
     reason: single type from constraints
@@ -1667,11 +1667,11 @@ test_scripts/ecs_like_system.gd
       properties: query_entities, get_component
       signals: (none)
 
-  218:13 Parameter delta in update
+  219:13 Parameter delta in update
     inferred-type: Variant
     confidence: Unknown
 
-  218:20 Parameter world in update
+  219:20 Parameter world in update
     inferred-type: ECSLikeSystem
     confidence: Medium
     reason: single type from constraints
@@ -1681,19 +1681,19 @@ test_scripts/ecs_like_system.gd
       properties: query_entities, get_component
       signals: (none)
 
-  242:22 Parameter name in define_archetype
+  243:22 Parameter name in define_archetype
     inferred-type: Variant
     confidence: Unknown
 
-  242:28 Parameter component_defs in define_archetype
+  243:28 Parameter component_defs in define_archetype
     inferred-type: Variant
     confidence: Unknown
 
-  246:27 Parameter archetype_name in create_from_archetype
+  247:27 Parameter archetype_name in create_from_archetype
     inferred-type: Variant
     confidence: Unknown
 
-  246:43 Parameter overrides in create_from_archetype
+  247:43 Parameter overrides in create_from_archetype
     inferred-type: Array | Dictionary
     confidence: High
     reason: union from type checks
@@ -1704,30 +1704,30 @@ test_scripts/ecs_like_system.gd
       properties: has
       signals: (none)
 
-  276:16 Parameter event_type in emit_event
+  277:16 Parameter event_type in emit_event
     inferred-type: Variant
     confidence: Unknown
 
-  276:28 Parameter data in emit_event
+  277:28 Parameter data in emit_event
     inferred-type: Variant
     confidence: Unknown
 
-  276:41 Parameter source_entity in emit_event
+  277:41 Parameter source_entity in emit_event
     inferred-type: Variant
     confidence: Unknown
 
-  285:20 Parameter handler in process_events
+  286:20 Parameter handler in process_events
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  292:24 Parameter event_type in get_events_by_type
+  293:24 Parameter event_type in get_events_by_type
     inferred-type: Variant
     confidence: Unknown
 
-  319:20 Parameter position in _get_grid_cell
+  320:20 Parameter position in _get_grid_cell
     inferred-type: Vector2
     confidence: Medium
     reason: single type from constraints
@@ -1737,7 +1737,7 @@ test_scripts/ecs_like_system.gd
       properties: x, y
       signals: (none)
 
-  326:18 Parameter position in query_nearby
+  327:18 Parameter position in query_nearby
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1745,34 +1745,34 @@ test_scripts/ecs_like_system.gd
       properties: x, y
       signals: (none)
 
-  326:28 Parameter radius in query_nearby
+  327:28 Parameter radius in query_nearby
     inferred-type: Variant
     confidence: Unknown
 
-  367:23 Parameter data in deserialize_world
+  368:23 Parameter data in deserialize_world
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  390:18 Parameter entity_id in debug_entity
+  391:18 Parameter entity_id in debug_entity
     inferred-type: Variant
     confidence: Unknown
 
 
 test_scripts/enemy_entity.gd
-  30:14 Parameter delta in _process
+  31:14 Parameter delta in _process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  38:16 Parameter new_target in set_target
+  39:16 Parameter new_target in set_target
     inferred-type: BaseEntity
     confidence: Certain
     reason: explicit type annotation
 
-  80:25 Parameter player in _on_player_detected
+  81:25 Parameter player in _on_player_detected
     inferred-type: BaseEntity
     confidence: Certain
     reason: explicit type annotation
@@ -1781,166 +1781,166 @@ test_scripts/enemy_entity.gd
       properties: gain_experience
       signals: (none)
 
-  98:17 Parameter amount in take_damage
+  99:17 Parameter amount in take_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  98:30 Parameter source in take_damage
+  99:30 Parameter source in take_damage
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
 
-  106:15 Parameter target_position in patrol_to
+  107:15 Parameter target_position in patrol_to
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
 
-  106:41 Parameter speed in patrol_to
+  107:41 Parameter speed in patrol_to
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  106:55 Parameter delta in patrol_to
+  107:55 Parameter delta in patrol_to
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  111:18 Parameter speed in chase_target
+  112:18 Parameter speed in chase_target
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  111:32 Parameter delta in chase_target
+  112:32 Parameter delta in chase_target
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/extended_class.gd
-  21:17 Parameter amount in take_damage
+  22:17 Parameter amount in take_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  26:12 Parameter target in attack
+  27:12 Parameter target in attack
     inferred-type: Node2D
     confidence: Certain
     reason: explicit type annotation
 
-  45:22 Parameter delta in _physics_process
+  46:22 Parameter delta in _physics_process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/formatting_issues.gd
-  22:17 Parameter x in bad_spacing
+  23:17 Parameter x in bad_spacing
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  22:23 Parameter y in bad_spacing
+  23:23 Parameter y in bad_spacing
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  22:29 Parameter z in bad_spacing
+  23:29 Parameter z in bad_spacing
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  39:35 Parameter value in missing_spaces_in_comparisons
+  40:35 Parameter value in missing_spaces_in_comparisons
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  66:20 Parameter parameter_one in long_line_test
+  67:20 Parameter parameter_one in long_line_test
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  66:40 Parameter parameter_two in long_line_test
+  67:40 Parameter parameter_two in long_line_test
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  66:63 Parameter parameter_three in long_line_test
+  67:63 Parameter parameter_three in long_line_test
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  66:87 Parameter parameter_four in long_line_test
+  67:87 Parameter parameter_four in long_line_test
     inferred-type: Array
     confidence: Certain
     reason: explicit type annotation
 
-  66:110 Parameter parameter_five in long_line_test
+  67:110 Parameter parameter_five in long_line_test
     inferred-type: Dictionary
     confidence: Certain
     reason: explicit type annotation
 
-  70:24 Parameter condition in ternary_formatting
+  71:24 Parameter condition in ternary_formatting
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  81:32 Parameter value in match_statement_formatting
+  82:32 Parameter value in match_statement_formatting
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/game_patterns.gd
-  13:14 Parameter item in add_item
+  14:14 Parameter item in add_item
     inferred-type: Variant
     confidence: Unknown
 
-  19:17 Parameter index in remove_item
+  20:17 Parameter index in remove_item
     inferred-type: Variant
     confidence: Unknown
 
-  25:15 Parameter predicate in find_item
+  26:15 Parameter predicate in find_item
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  34:20 Parameter predicate in find_all_items
+  35:20 Parameter predicate in find_all_items
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  42:23 Parameter item in get_item_property
+  43:23 Parameter item in get_item_property
     inferred-type: Dictionary[Variant, <Derivable>] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  42:29 Parameter prop_name in get_item_property
+  43:29 Parameter prop_name in get_item_property
     inferred-type: Variant
     confidence: Unknown
 
-  42:40 Parameter default_val in get_item_property
+  43:40 Parameter default_val in get_item_property
     inferred-type: Variant
     confidence: Unknown
 
-  51:23 Parameter item in set_item_property
+  52:23 Parameter item in set_item_property
     inferred-type: Dictionary[Variant, <Derivable>] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  51:29 Parameter prop_name in set_item_property
+  52:29 Parameter prop_name in set_item_property
     inferred-type: Variant
     confidence: Unknown
 
-  51:40 Parameter value in set_item_property
+  52:40 Parameter value in set_item_property
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -1948,42 +1948,42 @@ test_scripts/game_patterns.gd
       properties: x, y, z, has
       signals: (none)
 
-  58:16 Parameter slot in equip_item
+  59:16 Parameter slot in equip_item
     inferred-type: Variant
     confidence: Unknown
 
-  58:22 Parameter item in equip_item
+  59:22 Parameter item in equip_item
     inferred-type: Variant
     confidence: Unknown
 
-  64:18 Parameter slot in unequip_slot
+  65:18 Parameter slot in unequip_slot
     inferred-type: Variant
     confidence: Unknown
 
-  68:18 Parameter slot in get_equipped
+  69:18 Parameter slot in get_equipped
     inferred-type: Variant
     confidence: Unknown
 
-  72:17 Parameter item1 in stack_items
+  73:17 Parameter item1 in stack_items
     inferred-type: Variant
     confidence: Unknown
 
-  72:24 Parameter item2 in stack_items
+  73:24 Parameter item2 in stack_items
     inferred-type: Variant
     confidence: Unknown
 
-  96:17 Parameter dialog_data in load_dialog
+  97:17 Parameter dialog_data in load_dialog
     inferred-type: Dictionary[Variant, <Derivable>] | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  106:18 Parameter node_id in start_dialog
+  107:18 Parameter node_id in start_dialog
     inferred-type: Variant
     confidence: Unknown
 
-  142:29 Parameter choice in _check_choice_condition
+  143:29 Parameter choice in _check_choice_condition
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
@@ -1994,70 +1994,70 @@ test_scripts/game_patterns.gd
       properties: has
       signals: (none)
 
-  176:19 Parameter choice_index in select_choice
+  177:19 Parameter choice_index in select_choice
     inferred-type: Variant
     confidence: Unknown
 
-  207:18 Parameter quest_data in accept_quest
+  208:18 Parameter quest_data in accept_quest
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  220:28 Parameter quest_id in update_quest_objective
+  221:28 Parameter quest_id in update_quest_objective
     inferred-type: Variant
     confidence: Unknown
 
-  220:38 Parameter objective_index in update_quest_objective
+  221:38 Parameter objective_index in update_quest_objective
     inferred-type: Variant
     confidence: Unknown
 
-  220:55 Parameter delta in update_quest_objective
+  221:55 Parameter delta in update_quest_objective
     inferred-type: Variant
     confidence: Unknown
 
-  235:29 Parameter quest_id in _check_quest_completion
+  236:29 Parameter quest_id in _check_quest_completion
     inferred-type: Variant
     confidence: Unknown
 
-  251:21 Parameter quest_id in _complete_quest
+  252:21 Parameter quest_id in _complete_quest
     inferred-type: Variant
     confidence: Unknown
 
-  261:22 Parameter quest_id in get_quest_status
+  262:22 Parameter quest_id in get_quest_status
     inferred-type: Variant
     confidence: Unknown
 
-  276:22 Parameter ability_id in register_ability
+  277:22 Parameter ability_id in register_ability
     inferred-type: Variant
     confidence: Unknown
 
-  276:34 Parameter ability_data in register_ability
+  277:34 Parameter ability_data in register_ability
     inferred-type: Variant
     confidence: Unknown
 
-  281:21 Parameter ability_id in can_use_ability
+  282:21 Parameter ability_id in can_use_ability
     inferred-type: Variant
     confidence: Unknown
 
-  281:33 Parameter user in can_use_ability
+  282:33 Parameter user in can_use_ability
     inferred-type: Variant
     confidence: Unknown
 
-  308:17 Parameter ability_id in use_ability
+  309:17 Parameter ability_id in use_ability
     inferred-type: Variant
     confidence: Unknown
 
-  308:29 Parameter user in use_ability
+  309:29 Parameter user in use_ability
     inferred-type: Variant
     confidence: Unknown
 
-  308:35 Parameter targets in use_ability
+  309:35 Parameter targets in use_ability
     inferred-type: Variant
     confidence: Unknown
 
-  345:28 Parameter template in _apply_effect_template
+  346:28 Parameter template in _apply_effect_template
     inferred-type: Dictionary[String, <Derivable>] | int
     confidence: High
     reason: union from type checks
@@ -2068,75 +2068,75 @@ test_scripts/game_patterns.gd
       properties: has
       signals: (none)
 
-  345:38 Parameter user in _apply_effect_template
+  346:38 Parameter user in _apply_effect_template
     inferred-type: Variant
     confidence: Unknown
 
-  345:44 Parameter targets in _apply_effect_template
+  346:44 Parameter targets in _apply_effect_template
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  374:22 Parameter delta in update_abilities
+  375:22 Parameter delta in update_abilities
     inferred-type: Variant
     confidence: Unknown
 
-  403:21 Parameter recipe_id in register_recipe
+  404:21 Parameter recipe_id in register_recipe
     inferred-type: Variant
     confidence: Unknown
 
-  403:32 Parameter recipe_data in register_recipe
+  404:32 Parameter recipe_data in register_recipe
     inferred-type: Variant
     confidence: Unknown
 
-  407:15 Parameter recipe_id in can_craft
+  408:15 Parameter recipe_id in can_craft
     inferred-type: Variant
     confidence: Unknown
 
-  430:26 Parameter item_filter in _find_matching_items
+  431:26 Parameter item_filter in _find_matching_items
     inferred-type: Variant
     confidence: Unknown
 
-  438:31 Parameter item_filter in _find_first_matching_item
+  439:31 Parameter item_filter in _find_first_matching_item
     inferred-type: Variant
     confidence: Unknown
 
-  445:21 Parameter item in _matches_filter
+  446:21 Parameter item in _matches_filter
     inferred-type: Variant
     confidence: Unknown
 
-  445:27 Parameter item_filter in _matches_filter
+  446:27 Parameter item_filter in _matches_filter
     inferred-type: Callable | Object | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  453:11 Parameter recipe_id in craft
+  454:11 Parameter recipe_id in craft
     inferred-type: Variant
     confidence: Unknown
 
-  505:21 Parameter data in load_game_state
+  506:21 Parameter data in load_game_state
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  515:22 Parameter arr in _serialize_array
+  516:22 Parameter arr in _serialize_array
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  522:21 Parameter dict in _serialize_dict
+  523:21 Parameter dict in _serialize_dict
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  529:22 Parameter value in _serialize_value
+  530:22 Parameter value in _serialize_value
     inferred-type: Array[<Derivable>] | bool | Dictionary[Variant, <Derivable>] | float | int | String | Vector2 | Vector3
     confidence: High
     reason: union from type checks
@@ -2147,19 +2147,19 @@ test_scripts/game_patterns.gd
       properties: x, y, z, has
       signals: (none)
 
-  543:24 Parameter arr in _deserialize_array
+  544:24 Parameter arr in _deserialize_array
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  550:23 Parameter dict in _deserialize_dict
+  551:23 Parameter dict in _deserialize_dict
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  557:24 Parameter value in _deserialize_value
+  558:24 Parameter value in _deserialize_value
     inferred-type: Array[<Derivable>] | Dictionary[String, <Derivable>] | PackedStringArray
     confidence: High
     reason: union from type checks
@@ -2172,7 +2172,7 @@ test_scripts/game_patterns.gd
 
 
 test_scripts/getters_setters.gd
-  108:19 Parameter code in _store_secret
+  109:19 Parameter code in _store_secret
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
@@ -2181,7 +2181,7 @@ test_scripts/getters_setters.gd
       properties: sha256_text
       signals: (none)
 
-  113:22 Parameter pos in _clamp_to_bounds
+  114:22 Parameter pos in _clamp_to_bounds
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
@@ -2190,46 +2190,46 @@ test_scripts/getters_setters.gd
       properties: x, y
       signals: (none)
 
-  120:12 Parameter amount in damage
+  121:12 Parameter amount in damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  125:10 Parameter amount in heal
+  126:10 Parameter amount in heal
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  135:14 Parameter new_pos in teleport
+  136:14 Parameter new_pos in teleport
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/global.gd
-  20:15 Parameter level in set_level
+  21:15 Parameter level in set_level
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/inheritance_test.gd
-  17:22 Parameter delta in _physics_process
+  18:22 Parameter delta in _physics_process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  26:14 Parameter _delta in _process
+  27:14 Parameter _delta in _process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  44:17 Parameter amount in take_damage
+  45:17 Parameter amount in take_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  51:21 Parameter direction in apply_knockback
+  52:21 Parameter direction in apply_knockback
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
@@ -2238,120 +2238,120 @@ test_scripts/inheritance_test.gd
       properties: normalized
       signals: (none)
 
-  51:41 Parameter force in apply_knockback
+  52:41 Parameter force in apply_knockback
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  112:23 Parameter delta in _physics_process
+  113:23 Parameter delta in _physics_process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  153:19 Parameter what in _notification
+  154:19 Parameter what in _notification
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  192:17 Parameter node in check_types
+  193:17 Parameter node in check_types
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/local_variables.gd
-  7:21 Parameter input in test_local_flow
+  8:21 Parameter input in test_local_flow
     inferred-type: Variant
     confidence: Unknown
 
-  15:15 Parameter data in process_1
+  16:15 Parameter data in process_1
     inferred-type: int
     confidence: High
     reason: single type from constraints
     duck-typed: yes
 
-  21:15 Parameter data in process_2
+  22:15 Parameter data in process_2
     inferred-type: int
     confidence: High
     reason: single type from constraints
     duck-typed: yes
 
-  27:21 Parameter a in multiple_locals
+  28:21 Parameter a in multiple_locals
     inferred-type: Variant
     confidence: Unknown
 
-  27:24 Parameter b in multiple_locals
+  28:24 Parameter b in multiple_locals
     inferred-type: Variant
     confidence: Unknown
 
-  27:27 Parameter c in multiple_locals
+  28:27 Parameter c in multiple_locals
     inferred-type: Variant
     confidence: Unknown
 
-  35:28 Parameter condition in conditional_assignment
+  36:28 Parameter condition in conditional_assignment
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  35:45 Parameter value_a in conditional_assignment
+  36:45 Parameter value_a in conditional_assignment
     inferred-type: Variant
     confidence: Unknown
 
-  35:54 Parameter value_b in conditional_assignment
+  36:54 Parameter value_b in conditional_assignment
     inferred-type: Variant
     confidence: Unknown
 
-  45:20 Parameter param in shadowing_test
+  46:20 Parameter param in shadowing_test
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  73:19 Parameter a in variable_swap
+  74:19 Parameter a in variable_swap
     inferred-type: Variant
     confidence: Unknown
 
-  73:22 Parameter b in variable_swap
+  74:22 Parameter b in variable_swap
     inferred-type: Variant
     confidence: Unknown
 
-  93:23 Parameter input in early_return_flow
+  94:23 Parameter input in early_return_flow
     inferred-type: Variant
     confidence: Unknown
 
-  108:19 Parameter input in process_input
+  109:19 Parameter input in process_input
     inferred-type: int
     confidence: High
     reason: single type from constraints
     duck-typed: yes
 
-  114:23 Parameter value in variable_in_match
+  115:23 Parameter value in variable_in_match
     inferred-type: Variant
     confidence: Unknown
 
-  127:27 Parameter param in variable_with_default
+  128:27 Parameter param in variable_with_default
     inferred-type: Variant
     confidence: Unknown
 
-  149:26 Parameter value in type_narrowing_local
+  150:26 Parameter value in type_narrowing_local
     inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>]
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  166:25 Parameter data in walrus_like_pattern
+  167:25 Parameter data in walrus_like_pattern
     inferred-type: Dictionary
     confidence: Certain
     reason: explicit type annotation
 
-  174:20 Parameter input in chained_locals
+  175:20 Parameter input in chained_locals
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/method_chains.gd
-  20:19 Parameter input in complex_chain
+  21:19 Parameter input in complex_chain
     inferred-type: Array
     confidence: Certain
     reason: explicit type annotation
@@ -2360,7 +2360,7 @@ test_scripts/method_chains.gd
       properties: filter, size, to_upper
       signals: (none)
 
-  30:18 Parameter text in string_chain
+  31:18 Parameter text in string_chain
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
@@ -2369,7 +2369,7 @@ test_scripts/method_chains.gd
       properties: strip_edges
       signals: (none)
 
-  36:22 Parameter dict in dictionary_chain
+  37:22 Parameter dict in dictionary_chain
     inferred-type: Dictionary
     confidence: Certain
     reason: explicit type annotation
@@ -2378,29 +2378,29 @@ test_scripts/method_chains.gd
       properties: keys
       signals: (none)
 
-  44:28 Parameter data in optional_chain_pattern
+  45:28 Parameter data in optional_chain_pattern
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  72:15 Parameter name in set_name
+  73:15 Parameter name in set_name
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  76:16 Parameter value in set_value
+  77:16 Parameter value in set_value
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  80:18 Parameter enabled in set_enabled
+  81:18 Parameter enabled in set_enabled
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  104:17 Parameter input in mixed_chain
+  105:17 Parameter input in mixed_chain
     inferred-type: Array[<Derivable>] | Dictionary[String, <Derivable>] | String
     confidence: High
     reason: union from type checks
@@ -2413,32 +2413,32 @@ test_scripts/method_chains.gd
 
 
 test_scripts/player_entity.gd
-  29:17 Parameter amount in take_damage
+  30:17 Parameter amount in take_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  29:30 Parameter source in take_damage
+  30:30 Parameter source in take_damage
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
 
-  42:25 Parameter value in collect_health_pack
+  43:25 Parameter value in collect_health_pack
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  48:19 Parameter value in collect_armor
+  49:19 Parameter value in collect_armor
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  53:21 Parameter amount in gain_experience
+  54:21 Parameter amount in gain_experience
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  91:20 Parameter target in perform_attack
+  92:20 Parameter target in perform_attack
     inferred-type: BaseEntity
     confidence: Certain
     reason: explicit type annotation
@@ -2447,66 +2447,66 @@ test_scripts/player_entity.gd
       properties: take_damage
       signals: (none)
 
-  91:40 Parameter base_damage in perform_attack
+  92:40 Parameter base_damage in perform_attack
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/polymorphic_interfaces.gd
-  21:25 Parameter entity in register_damageable
+  22:25 Parameter entity in register_damageable
     inferred-type: Variant
     confidence: Unknown
 
-  26:23 Parameter entity in register_moveable
+  27:23 Parameter entity in register_moveable
     inferred-type: Variant
     confidence: Unknown
 
-  31:24 Parameter entity in register_updatable
+  32:24 Parameter entity in register_updatable
     inferred-type: Variant
     confidence: Unknown
 
-  36:16 Parameter amount in damage_all
+  37:16 Parameter amount in damage_all
     inferred-type: Variant
     confidence: Unknown
 
-  46:17 Parameter target in move_all_to
+  47:17 Parameter target in move_all_to
     inferred-type: Variant
     confidence: Unknown
 
-  51:16 Parameter delta in update_all
+  52:16 Parameter delta in update_all
     inferred-type: Variant
     confidence: Unknown
 
-  63:27 Parameter calculator in set_damage_calculator
+  64:27 Parameter calculator in set_damage_calculator
     inferred-type: Variant
     confidence: Unknown
 
-  67:27 Parameter strategy in set_movement_strategy
+  68:27 Parameter strategy in set_movement_strategy
     inferred-type: Variant
     confidence: Unknown
 
-  71:28 Parameter strategy in set_targeting_strategy
+  72:28 Parameter strategy in set_targeting_strategy
     inferred-type: Variant
     confidence: Unknown
 
-  75:22 Parameter base_damage in calculate_damage
+  76:22 Parameter base_damage in calculate_damage
     inferred-type: Variant
     confidence: Unknown
 
-  75:35 Parameter target in calculate_damage
+  76:35 Parameter target in calculate_damage
     inferred-type: Variant
     confidence: Unknown
 
-  81:15 Parameter from_pos in find_path
+  82:15 Parameter from_pos in find_path
     inferred-type: Variant
     confidence: Unknown
 
-  81:25 Parameter to_pos in find_path
+  82:25 Parameter to_pos in find_path
     inferred-type: Variant
     confidence: Unknown
 
-  87:19 Parameter available_targets in select_target
+  88:19 Parameter available_targets in select_target
     inferred-type: Array | Dictionary[int, Variant] | String | StringName
     confidence: Medium
     reason: union from type checks
@@ -2517,7 +2517,7 @@ test_scripts/polymorphic_interfaces.gd
       properties: is_empty
       signals: (none)
 
-  101:21 Parameter command in execute_command
+  102:21 Parameter command in execute_command
     inferred-type: Expression | SkeletonModificationStack2D
     confidence: High
     reason: union from type checks
@@ -2528,31 +2528,31 @@ test_scripts/polymorphic_interfaces.gd
       properties: execute, undo
       signals: (none)
 
-  135:18 Parameter event_name in add_observer
+  136:18 Parameter event_name in add_observer
     inferred-type: Variant
     confidence: Unknown
 
-  135:30 Parameter observer in add_observer
+  136:30 Parameter observer in add_observer
     inferred-type: Variant
     confidence: Unknown
 
-  142:21 Parameter event_name in remove_observer
+  143:21 Parameter event_name in remove_observer
     inferred-type: Variant
     confidence: Unknown
 
-  142:33 Parameter observer in remove_observer
+  143:33 Parameter observer in remove_observer
     inferred-type: Variant
     confidence: Unknown
 
-  147:22 Parameter event_name in notify_observers
+  148:22 Parameter event_name in notify_observers
     inferred-type: Variant
     confidence: Unknown
 
-  147:34 Parameter data in notify_observers
+  148:34 Parameter data in notify_observers
     inferred-type: Variant
     confidence: Unknown
 
-  163:18 Parameter component in process_tree
+  164:18 Parameter component in process_tree
     inferred-type: Node
     confidence: Medium
     reason: single type from constraints
@@ -2562,7 +2562,7 @@ test_scripts/polymorphic_interfaces.gd
       properties: process, get_children
       signals: (none)
 
-  176:18 Parameter component in find_in_tree
+  177:18 Parameter component in find_in_tree
     inferred-type: Node
     confidence: Medium
     reason: single type from constraints
@@ -2572,14 +2572,14 @@ test_scripts/polymorphic_interfaces.gd
       properties: process, get_children
       signals: (none)
 
-  176:29 Parameter predicate in find_in_tree
+  177:29 Parameter predicate in find_in_tree
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  190:23 Parameter component in collect_from_tree
+  191:23 Parameter component in collect_from_tree
     inferred-type: Node
     confidence: Medium
     reason: single type from constraints
@@ -2589,14 +2589,14 @@ test_scripts/polymorphic_interfaces.gd
       properties: process, get_children
       signals: (none)
 
-  190:34 Parameter collector in collect_from_tree
+  191:34 Parameter collector in collect_from_tree
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  211:19 Parameter decorator in add_decorator
+  212:19 Parameter decorator in add_decorator
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -2604,19 +2604,19 @@ test_scripts/polymorphic_interfaces.gd
       properties: process
       signals: (none)
 
-  215:29 Parameter data in process_with_decorators
+  216:29 Parameter data in process_with_decorators
     inferred-type: Variant
     confidence: Unknown
 
-  232:23 Parameter start_index in _create_next_func
+  233:23 Parameter start_index in _create_next_func
     inferred-type: Variant
     confidence: Unknown
 
-  250:22 Parameter type_name in register_adapter
+  251:22 Parameter type_name in register_adapter
     inferred-type: Variant
     confidence: Unknown
 
-  250:33 Parameter adapter in register_adapter
+  251:33 Parameter adapter in register_adapter
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -2624,22 +2624,22 @@ test_scripts/polymorphic_interfaces.gd
       properties: adapt
       signals: (none)
 
-  254:17 Parameter value in adapt_value
+  255:17 Parameter value in adapt_value
     inferred-type: Variant
     confidence: Unknown
 
-  254:24 Parameter target_type in adapt_value
+  255:24 Parameter target_type in adapt_value
     inferred-type: Variant
     confidence: Unknown
 
-  270:20 Parameter value in _get_type_name
+  271:20 Parameter value in _get_type_name
     inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String | Vector2 | Vector3
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  293:17 Parameter iterator in iterate_all
+  294:17 Parameter iterator in iterate_all
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -2647,7 +2647,7 @@ test_scripts/polymorphic_interfaces.gd
       properties: reset, has_next, next
       signals: (none)
 
-  302:28 Parameter iterator in iterate_with_transform
+  303:28 Parameter iterator in iterate_with_transform
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -2655,14 +2655,14 @@ test_scripts/polymorphic_interfaces.gd
       properties: reset, has_next, next
       signals: (none)
 
-  302:38 Parameter transform in iterate_with_transform
+  303:38 Parameter transform in iterate_with_transform
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  311:19 Parameter iterator in iterate_until
+  312:19 Parameter iterator in iterate_until
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -2670,18 +2670,18 @@ test_scripts/polymorphic_interfaces.gd
       properties: reset, has_next, next
       signals: (none)
 
-  311:29 Parameter predicate in iterate_until
+  312:29 Parameter predicate in iterate_until
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  328:22 Parameter type_name in register_factory
+  329:22 Parameter type_name in register_factory
     inferred-type: Variant
     confidence: Unknown
 
-  328:33 Parameter factory in register_factory
+  329:33 Parameter factory in register_factory
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -2689,84 +2689,84 @@ test_scripts/polymorphic_interfaces.gd
       properties: create
       signals: (none)
 
-  332:21 Parameter type_name in create_instance
+  333:21 Parameter type_name in create_instance
     inferred-type: Variant
     confidence: Unknown
 
-  332:32 Parameter params in create_instance
+  333:32 Parameter params in create_instance
     inferred-type: Variant
     confidence: Unknown
 
-  340:21 Parameter type_name in create_multiple
+  341:21 Parameter type_name in create_multiple
     inferred-type: Variant
     confidence: Unknown
 
-  340:32 Parameter count in create_multiple
+  341:32 Parameter count in create_multiple
     inferred-type: Variant
     confidence: Unknown
 
-  340:39 Parameter params in create_multiple
+  341:39 Parameter params in create_multiple
     inferred-type: Variant
     confidence: Unknown
 
-  354:24 Parameter id in register_colleague
+  355:24 Parameter id in register_colleague
     inferred-type: Variant
     confidence: Unknown
 
-  354:28 Parameter colleague in register_colleague
+  355:28 Parameter colleague in register_colleague
     inferred-type: Variant
     confidence: Unknown
 
-  358:18 Parameter from_id in send_message
+  359:18 Parameter from_id in send_message
     inferred-type: Variant
     confidence: Unknown
 
-  358:27 Parameter to_id in send_message
+  359:27 Parameter to_id in send_message
     inferred-type: Variant
     confidence: Unknown
 
-  358:34 Parameter message in send_message
+  359:34 Parameter message in send_message
     inferred-type: Variant
     confidence: Unknown
 
-  366:23 Parameter from_id in broadcast_message
+  367:23 Parameter from_id in broadcast_message
     inferred-type: Variant
     confidence: Unknown
 
-  366:32 Parameter message in broadcast_message
+  367:32 Parameter message in broadcast_message
     inferred-type: Variant
     confidence: Unknown
 
-  379:18 Parameter new_state in change_state
+  380:18 Parameter new_state in change_state
     inferred-type: Variant
     confidence: Unknown
 
-  389:18 Parameter delta in state_update
+  390:18 Parameter delta in state_update
     inferred-type: Variant
     confidence: Unknown
 
-  399:24 Parameter event in state_handle_input
+  400:24 Parameter event in state_handle_input
     inferred-type: Variant
     confidence: Unknown
 
 
 test_scripts/refactoring_targets.gd
-  24:21 Parameter base_value in calculate_score
+  25:21 Parameter base_value in calculate_score
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  24:38 Parameter multiplier in calculate_score
+  25:38 Parameter multiplier in calculate_score
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  81:15 Parameter points in add_score
+  82:15 Parameter points in add_score
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  90:17 Parameter spawn_position in spawn_enemy
+  91:17 Parameter spawn_position in spawn_enemy
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
@@ -2775,51 +2775,51 @@ test_scripts/refactoring_targets.gd
       properties: x, y
       signals: (none)
 
-  106:22 Parameter base_damage in calculate_damage
+  107:22 Parameter base_damage in calculate_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  106:40 Parameter armor in calculate_damage
+  107:40 Parameter armor in calculate_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  106:52 Parameter is_critical in calculate_damage
+  107:52 Parameter is_critical in calculate_damage
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/rename_test.gd
-  33:27 Parameter value in test_rename_parameter
+  34:27 Parameter value in test_rename_parameter
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  33:39 Parameter name in test_rename_parameter
+  34:39 Parameter name in test_rename_parameter
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  70:23 Parameter new_score in _on_score_changed
+  71:23 Parameter new_score in _on_score_changed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  120:27 Parameter base in calculate_with_factor
+  121:27 Parameter base in calculate_with_factor
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  120:38 Parameter factor in calculate_with_factor
+  121:38 Parameter factor in calculate_with_factor
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/scene_nodes.gd
-  50:18 Parameter p in setup_player
+  51:18 Parameter p in setup_player
     inferred-type: CharacterBody2D
     confidence: Certain
     reason: explicit type annotation
@@ -2828,27 +2828,27 @@ test_scripts/scene_nodes.gd
       properties: velocity
       signals: (none)
 
-  59:23 Parameter health in update_health_bar
+  60:23 Parameter health in update_health_bar
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  59:36 Parameter max_health in update_health_bar
+  60:36 Parameter max_health in update_health_bar
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  73:25 Parameter group_name in find_first_in_group
+  74:25 Parameter group_name in find_first_in_group
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  89:20 Parameter node_name in recursive_find
+  90:20 Parameter node_name in recursive_find
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  94:21 Parameter node in _find_recursive
+  95:21 Parameter node in _find_recursive
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
@@ -2857,12 +2857,12 @@ test_scripts/scene_nodes.gd
       properties: name, get_children, get_parent
       signals: (none)
 
-  94:33 Parameter target_name in _find_recursive
+  95:33 Parameter target_name in _find_recursive
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  116:19 Parameter node in reparent_node
+  117:19 Parameter node in reparent_node
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
@@ -2871,7 +2871,7 @@ test_scripts/scene_nodes.gd
       properties: name, get_children, get_parent
       signals: (none)
 
-  116:31 Parameter new_parent in reparent_node
+  117:31 Parameter new_parent in reparent_node
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
@@ -2880,7 +2880,7 @@ test_scripts/scene_nodes.gd
       properties: add_child
       signals: (none)
 
-  124:23 Parameter scene in instantiate_scene
+  125:23 Parameter scene in instantiate_scene
     inferred-type: PackedScene
     confidence: Certain
     reason: explicit type annotation
@@ -2889,7 +2889,7 @@ test_scripts/scene_nodes.gd
       properties: instantiate
       signals: (none)
 
-  131:23 Parameter scene in instantiate_typed
+  132:23 Parameter scene in instantiate_typed
     inferred-type: PackedScene
     confidence: Certain
     reason: explicit type annotation
@@ -2898,12 +2898,12 @@ test_scripts/scene_nodes.gd
       properties: instantiate
       signals: (none)
 
-  140:22 Parameter child_name in queue_free_child
+  141:22 Parameter child_name in queue_free_child
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  194:26 Parameter path in access_node_via_path
+  195:26 Parameter path in access_node_via_path
     inferred-type: NodePath
     confidence: Certain
     reason: explicit type annotation
@@ -2912,7 +2912,7 @@ test_scripts/scene_nodes.gd
       properties: get_as_property_path
       signals: (none)
 
-  200:35 Parameter path in access_node_property_via_path
+  201:35 Parameter path in access_node_property_via_path
     inferred-type: NodePath
     confidence: Certain
     reason: explicit type annotation
@@ -2923,12 +2923,12 @@ test_scripts/scene_nodes.gd
 
 
 test_scripts/scene_references.gd
-  36:31 Parameter new_health in _on_player_health_changed
+  37:31 Parameter new_health in _on_player_health_changed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  44:17 Parameter enemy_scene in spawn_enemy
+  45:17 Parameter enemy_scene in spawn_enemy
     inferred-type: PackedScene
     confidence: Certain
     reason: explicit type annotation
@@ -2937,17 +2937,17 @@ test_scripts/scene_references.gd
       properties: instantiate
       signals: (none)
 
-  44:43 Parameter spawn_pos in spawn_enemy
+  45:43 Parameter spawn_pos in spawn_enemy
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
 
-  66:22 Parameter path in get_node_by_path
+  67:22 Parameter path in get_node_by_path
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  70:24 Parameter parent in find_child_of_type
+  71:24 Parameter parent in find_child_of_type
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
@@ -2956,104 +2956,104 @@ test_scripts/scene_references.gd
       properties: get_children
       signals: (none)
 
-  70:38 Parameter type_name in find_child_of_type
+  71:38 Parameter type_name in find_child_of_type
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/semantic_validation_demo.gd
-  154:14 Parameter x in take_int
+  155:14 Parameter x in take_int
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  157:17 Parameter s in take_string
+  158:17 Parameter s in take_string
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  160:15 Parameter n in take_node
+  161:15 Parameter n in take_node
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
 
-  163:17 Parameter n in take_node2d
+  164:17 Parameter n in take_node2d
     inferred-type: Node2D
     confidence: Certain
     reason: explicit type annotation
 
-  290:24 Parameter entities in complex_scenario_3
+  291:24 Parameter entities in complex_scenario_3
     inferred-type: Array
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/signal_callback_chains.gd
-  30:23 Parameter name in register_callback
+  31:23 Parameter name in register_callback
     inferred-type: Variant
     confidence: Unknown
 
-  30:29 Parameter callback in register_callback
+  31:29 Parameter callback in register_callback
     inferred-type: Variant
     confidence: Unknown
 
-  34:20 Parameter name in register_chain
+  35:20 Parameter name in register_chain
     inferred-type: Variant
     confidence: Unknown
 
-  34:26 Parameter callback in register_chain
+  35:26 Parameter callback in register_chain
     inferred-type: Variant
     confidence: Unknown
 
-  40:21 Parameter name in invoke_callback
+  41:21 Parameter name in invoke_callback
     inferred-type: Variant
     confidence: Unknown
 
-  40:27 Parameter args in invoke_callback
+  41:27 Parameter args in invoke_callback
     inferred-type: Variant
     confidence: Unknown
 
-  48:18 Parameter name in invoke_chain
+  49:18 Parameter name in invoke_chain
     inferred-type: Variant
     confidence: Unknown
 
-  48:24 Parameter initial_value in invoke_chain
+  49:24 Parameter initial_value in invoke_chain
     inferred-type: Variant
     confidence: Unknown
 
-  68:11 Parameter callback in then
+  69:11 Parameter callback in then
     inferred-type: Variant
     confidence: Unknown
 
-  74:18 Parameter callback in catch_error
+  75:18 Parameter callback in catch_error
     inferred-type: Variant
     confidence: Unknown
 
-  80:17 Parameter callback in finally_do
+  81:17 Parameter callback in finally_do
     inferred-type: Variant
     confidence: Unknown
 
-  86:14 Parameter value in resolve
+  87:14 Parameter value in resolve
     inferred-type: Variant
     confidence: Unknown
 
-  94:13 Parameter error in reject
+  95:13 Parameter error in reject
     inferred-type: Variant
     confidence: Unknown
 
-  119:22 Parameter task_func in start_async_task
+  120:22 Parameter task_func in start_async_task
     inferred-type: Variant
     confidence: Unknown
 
-  128:15 Parameter task_func in _run_task
+  129:15 Parameter task_func in _run_task
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  128:26 Parameter operation in _run_task
+  129:26 Parameter operation in _run_task
     inferred-type: AsyncOperation | SignalCallbackChains.AsyncOperation
     confidence: Medium
     reason: union from type checks
@@ -3064,39 +3064,39 @@ test_scripts/signal_callback_chains.gd
       properties: resolve, reject
       signals: (none)
 
-  141:14 Parameter event_name in on_event
+  142:14 Parameter event_name in on_event
     inferred-type: Variant
     confidence: Unknown
 
-  141:26 Parameter handler in on_event
+  142:26 Parameter handler in on_event
     inferred-type: Variant
     confidence: Unknown
 
-  147:10 Parameter event_name in once
+  148:10 Parameter event_name in once
     inferred-type: Variant
     confidence: Unknown
 
-  147:22 Parameter handler in once
+  148:22 Parameter handler in once
     inferred-type: Variant
     confidence: Unknown
 
-  153:15 Parameter event_name in off_event
+  154:15 Parameter event_name in off_event
     inferred-type: Variant
     confidence: Unknown
 
-  153:27 Parameter handler in off_event
+  154:27 Parameter handler in off_event
     inferred-type: Variant
     confidence: Unknown
 
-  160:16 Parameter event_name in emit_event
+  161:16 Parameter event_name in emit_event
     inferred-type: Variant
     confidence: Unknown
 
-  160:28 Parameter data in emit_event
+  161:28 Parameter data in emit_event
     inferred-type: Variant
     confidence: Unknown
 
-  185:15 Parameter stage in add_stage
+  186:15 Parameter stage in add_stage
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3104,19 +3104,19 @@ test_scripts/signal_callback_chains.gd
       properties: process
       signals: (none)
 
-  189:18 Parameter initial_data in run_pipeline
+  190:18 Parameter initial_data in run_pipeline
     inferred-type: Variant
     confidence: Unknown
 
-  193:16 Parameter index in _run_stage
+  194:16 Parameter index in _run_stage
     inferred-type: Variant
     confidence: Unknown
 
-  193:23 Parameter data in _run_stage
+  194:23 Parameter data in _run_stage
     inferred-type: Variant
     confidence: Unknown
 
-  208:20 Parameter middleware in use_middleware
+  209:20 Parameter middleware in use_middleware
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3124,59 +3124,59 @@ test_scripts/signal_callback_chains.gd
       properties: handle
       signals: (none)
 
-  212:20 Parameter request in handle_request
+  213:20 Parameter request in handle_request
     inferred-type: Variant
     confidence: Unknown
 
-  225:22 Parameter index in _next_middleware
+  226:22 Parameter index in _next_middleware
     inferred-type: Variant
     confidence: Unknown
 
-  225:29 Parameter context in _next_middleware
+  226:29 Parameter context in _next_middleware
     inferred-type: Variant
     confidence: Unknown
 
-  240:16 Parameter on_next in subscribe
+  241:16 Parameter on_next in subscribe
     inferred-type: Variant
     confidence: Unknown
 
-  240:25 Parameter on_error in subscribe
+  241:25 Parameter on_error in subscribe
     inferred-type: Variant
     confidence: Unknown
 
-  240:42 Parameter on_complete in subscribe
+  241:42 Parameter on_complete in subscribe
     inferred-type: Variant
     confidence: Unknown
 
-  250:18 Parameter subscription in unsubscribe
+  251:18 Parameter subscription in unsubscribe
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  254:16 Parameter value in emit_next
+  255:16 Parameter value in emit_next
     inferred-type: Variant
     confidence: Unknown
 
-  259:17 Parameter error in emit_error
+  260:17 Parameter error in emit_error
     inferred-type: Variant
     confidence: Unknown
 
-  271:10 Parameter transform in map
+  272:10 Parameter transform in map
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  280:13 Parameter predicate in filter
+  281:13 Parameter predicate in filter
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  307:26 Parameter timer in _on_debounce_timeout
+  308:26 Parameter timer in _on_debounce_timeout
     inferred-type: Timer
     confidence: Certain
     reason: explicit type annotation
@@ -3185,24 +3185,24 @@ test_scripts/signal_callback_chains.gd
       properties: queue_free, wait_time, one_shot, timeout, start
       signals: (none)
 
-  314:14 Parameter key in debounce
+  315:14 Parameter key in debounce
     inferred-type: Variant
     confidence: Unknown
 
-  314:19 Parameter delay in debounce
+  315:19 Parameter delay in debounce
     inferred-type: Variant
     confidence: Unknown
 
-  314:26 Parameter callback in debounce
+  315:26 Parameter callback in debounce
     inferred-type: Variant
     confidence: Unknown
 
-  332:26 Parameter key in _on_throttle_timeout
+  333:26 Parameter key in _on_throttle_timeout
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  332:39 Parameter timer in _on_throttle_timeout
+  333:39 Parameter timer in _on_throttle_timeout
     inferred-type: Timer
     confidence: Certain
     reason: explicit type annotation
@@ -3211,22 +3211,22 @@ test_scripts/signal_callback_chains.gd
       properties: queue_free, wait_time, one_shot, timeout, start
       signals: (none)
 
-  337:14 Parameter key in throttle
+  338:14 Parameter key in throttle
     inferred-type: Variant
     confidence: Unknown
 
-  337:19 Parameter delay in throttle
+  338:19 Parameter delay in throttle
     inferred-type: Variant
     confidence: Unknown
 
-  337:26 Parameter callback in throttle
+  338:26 Parameter callback in throttle
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  357:17 Parameter url in async_fetch
+  358:17 Parameter url in async_fetch
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3234,21 +3234,21 @@ test_scripts/signal_callback_chains.gd
       properties: begins_with
       signals: (none)
 
-  357:22 Parameter on_success in async_fetch
+  358:22 Parameter on_success in async_fetch
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  357:34 Parameter on_failure in async_fetch
+  358:34 Parameter on_failure in async_fetch
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  367:17 Parameter operations in async_chain
+  368:17 Parameter operations in async_chain
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3256,15 +3256,15 @@ test_scripts/signal_callback_chains.gd
       properties: size
       signals: (none)
 
-  367:29 Parameter on_all_complete in async_chain
+  368:29 Parameter on_all_complete in async_chain
     inferred-type: Variant
     confidence: Unknown
 
-  367:46 Parameter on_any_error in async_chain
+  368:46 Parameter on_any_error in async_chain
     inferred-type: Variant
     confidence: Unknown
 
-  372:21 Parameter operations in _run_chain_step
+  373:21 Parameter operations in _run_chain_step
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -3274,26 +3274,26 @@ test_scripts/signal_callback_chains.gd
       properties: size
       signals: (none)
 
-  372:33 Parameter index in _run_chain_step
+  373:33 Parameter index in _run_chain_step
     inferred-type: Variant
     confidence: Unknown
 
-  372:40 Parameter previous_result in _run_chain_step
+  373:40 Parameter previous_result in _run_chain_step
     inferred-type: Variant
     confidence: Unknown
 
-  372:57 Parameter on_complete in _run_chain_step
+  373:57 Parameter on_complete in _run_chain_step
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  372:70 Parameter on_error in _run_chain_step
+  373:70 Parameter on_error in _run_chain_step
     inferred-type: Variant
     confidence: Unknown
 
-  395:38 Parameter ctx in _create_parallel_success_handler
+  396:38 Parameter ctx in _create_parallel_success_handler
     inferred-type: ParallelContext
     confidence: Certain
     reason: explicit type annotation
@@ -3302,12 +3302,12 @@ test_scripts/signal_callback_chains.gd
       properties: has_error, results, completed_count, total, on_complete, on_error, resize, target, signal_name, connection, resolve, operation, reject
       signals: (none)
 
-  395:60 Parameter index in _create_parallel_success_handler
+  396:60 Parameter index in _create_parallel_success_handler
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  405:36 Parameter ctx in _create_parallel_error_handler
+  406:36 Parameter ctx in _create_parallel_error_handler
     inferred-type: ParallelContext
     confidence: Certain
     reason: explicit type annotation
@@ -3316,7 +3316,7 @@ test_scripts/signal_callback_chains.gd
       properties: has_error, results, completed_count, total, on_complete, on_error, resize, target, signal_name, connection, resolve, operation, reject
       signals: (none)
 
-  413:20 Parameter operations in async_parallel
+  414:20 Parameter operations in async_parallel
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -3326,15 +3326,15 @@ test_scripts/signal_callback_chains.gd
       properties: size
       signals: (none)
 
-  413:32 Parameter on_all_complete in async_parallel
+  414:32 Parameter on_all_complete in async_parallel
     inferred-type: Variant
     confidence: Unknown
 
-  413:49 Parameter on_any_error in async_parallel
+  414:49 Parameter on_any_error in async_parallel
     inferred-type: Variant
     confidence: Unknown
 
-  428:21 Parameter url in _simulate_fetch
+  429:21 Parameter url in _simulate_fetch
     inferred-type: String | StringName
     confidence: High
     reason: union from type checks
@@ -3345,7 +3345,7 @@ test_scripts/signal_callback_chains.gd
       properties: begins_with
       signals: (none)
 
-  444:25 Parameter ctx in _on_signal_received
+  445:25 Parameter ctx in _on_signal_received
     inferred-type: SignalWaitContext
     confidence: Certain
     reason: explicit type annotation
@@ -3354,11 +3354,11 @@ test_scripts/signal_callback_chains.gd
       properties: has_error, results, completed_count, total, on_complete, on_error, resize, target, signal_name, connection, resolve, operation, reject
       signals: (none)
 
-  444:49 Parameter args in _on_signal_received
+  445:49 Parameter args in _on_signal_received
     inferred-type: Variant
     confidence: Unknown
 
-  449:22 Parameter ctx in _on_wait_timeout
+  450:22 Parameter ctx in _on_wait_timeout
     inferred-type: SignalWaitContext
     confidence: Certain
     reason: explicit type annotation
@@ -3367,82 +3367,82 @@ test_scripts/signal_callback_chains.gd
       properties: has_error, results, completed_count, total, on_complete, on_error, resize, target, signal_name, connection, resolve, operation, reject
       signals: (none)
 
-  455:21 Parameter target in wait_for_signal
+  456:21 Parameter target in wait_for_signal
     inferred-type: Object | Signal
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  455:29 Parameter signal_name in wait_for_signal
+  456:29 Parameter signal_name in wait_for_signal
     inferred-type: Variant
     confidence: Unknown
 
-  455:42 Parameter timeout in wait_for_signal
+  456:42 Parameter timeout in wait_for_signal
     inferred-type: Variant
     confidence: Unknown
 
-  479:20 Parameter initial_value in call_composed
+  480:20 Parameter initial_value in call_composed
     inferred-type: Variant
     confidence: Unknown
 
-  489:20 Parameter value in call_parallel
+  490:20 Parameter value in call_parallel
     inferred-type: Variant
     confidence: Unknown
 
-  501:23 Parameter value in call_conditional
+  502:23 Parameter value in call_conditional
     inferred-type: Variant
     confidence: Unknown
 
-  512:17 Parameter value in call_retry
+  513:17 Parameter value in call_retry
     inferred-type: Variant
     confidence: Unknown
 
-  529:23 Parameter callbacks_array in compose_callbacks
+  530:23 Parameter callbacks_array in compose_callbacks
     inferred-type: Variant
     confidence: Unknown
 
-  536:24 Parameter callbacks_array in parallel_callbacks
+  537:24 Parameter callbacks_array in parallel_callbacks
     inferred-type: Variant
     confidence: Unknown
 
-  543:26 Parameter predicate in conditional_callback
+  544:26 Parameter predicate in conditional_callback
     inferred-type: Variant
     confidence: Unknown
 
-  543:37 Parameter true_callback in conditional_callback
+  544:37 Parameter true_callback in conditional_callback
     inferred-type: Variant
     confidence: Unknown
 
-  543:52 Parameter false_callback in conditional_callback
+  544:52 Parameter false_callback in conditional_callback
     inferred-type: Variant
     confidence: Unknown
 
-  551:20 Parameter callback in retry_callback
+  552:20 Parameter callback in retry_callback
     inferred-type: Variant
     confidence: Unknown
 
-  551:30 Parameter max_retries in retry_callback
+  552:30 Parameter max_retries in retry_callback
     inferred-type: Variant
     confidence: Unknown
 
-  551:43 Parameter should_retry in retry_callback
+  552:43 Parameter should_retry in retry_callback
     inferred-type: Variant
     confidence: Unknown
 
 
 test_scripts/signals_test.gd
-  36:24 Parameter new_health in emit_health_change
+  37:24 Parameter new_health in emit_health_change
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  43:19 Parameter pos in emit_position
+  44:19 Parameter pos in emit_position
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
 
-  49:15 Parameter data in emit_data
+  50:15 Parameter data in emit_data
     inferred-type: Dictionary
     confidence: Certain
     reason: explicit type annotation
@@ -3451,12 +3451,12 @@ test_scripts/signals_test.gd
       properties: keys, id, name, payload
       signals: (none)
 
-  54:18 Parameter name in emit_generic
+  55:18 Parameter name in emit_generic
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  54:32 Parameter data in emit_generic
+  55:32 Parameter data in emit_generic
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3464,22 +3464,22 @@ test_scripts/signals_test.gd
       properties: keys, id, name, payload
       signals: (none)
 
-  72:24 Parameter old in _on_health_changed
+  73:24 Parameter old in _on_health_changed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  72:34 Parameter new in _on_health_changed
+  73:34 Parameter new in _on_health_changed
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  79:26 Parameter new_pos in _on_position_updated
+  80:26 Parameter new_pos in _on_position_updated
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
 
-  84:23 Parameter data in _on_data_received
+  85:23 Parameter data in _on_data_received
     inferred-type: Dictionary
     confidence: Certain
     reason: explicit type annotation
@@ -3488,25 +3488,25 @@ test_scripts/signals_test.gd
       properties: keys, id, name, payload
       signals: (none)
 
-  90:23 Parameter event_name in _on_generic_event
+  91:23 Parameter event_name in _on_generic_event
     inferred-type: Variant
     confidence: Unknown
 
-  90:35 Parameter event_data in _on_generic_event
+  91:35 Parameter event_data in _on_generic_event
     inferred-type: Variant
     confidence: Unknown
 
-  116:22 Parameter condition in conditional_emit
+  117:22 Parameter condition in conditional_emit
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  116:39 Parameter value in conditional_emit
+  117:39 Parameter value in conditional_emit
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  163:21 Parameter data in _on_custom_data
+  164:21 Parameter data in _on_custom_data
     inferred-type: CustomData
     confidence: Certain
     reason: explicit type annotation
@@ -3515,48 +3515,48 @@ test_scripts/signals_test.gd
       properties: keys, id, name, payload
       signals: (none)
 
-  201:29 Parameter context in _on_simple_with_context
+  202:29 Parameter context in _on_simple_with_context
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  201:46 Parameter value in _on_simple_with_context
+  202:46 Parameter value in _on_simple_with_context
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/simple_class.gd
-  26:14 Parameter delta in _process
+  27:14 Parameter delta in _process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  35:17 Parameter amount in take_damage
+  36:17 Parameter amount in take_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  58:22 Parameter pos in create_at
+  59:22 Parameter pos in create_at
     inferred-type: Vector2
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/todo_examples.gd
-  37:14 Parameter item in add_item
+  38:14 Parameter item in add_item
     inferred-type: Variant
     confidence: Certain
     reason: explicit type annotation
 
-  73:22 Parameter json_string in import_from_json
+  74:22 Parameter json_string in import_from_json
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/type_guards.gd
-  7:19 Parameter value in process_value
+  8:19 Parameter value in process_value
     inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | int | String
     confidence: High
     reason: union from type checks
@@ -3567,7 +3567,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  27:24 Parameter data in nested_type_guards
+  28:24 Parameter data in nested_type_guards
     inferred-type: Dictionary[String, <Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3577,7 +3577,7 @@ test_scripts/type_guards.gd
       properties: has, keys
       signals: (none)
 
-  43:25 Parameter value in type_guard_with_and
+  44:25 Parameter value in type_guard_with_and
     inferred-type: Array[<Derivable>] | Dictionary[int | String, <Derivable>] | String
     confidence: High
     reason: union from type checks
@@ -3588,7 +3588,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  60:24 Parameter value in type_guard_with_or
+  61:24 Parameter value in type_guard_with_or
     inferred-type: float | int | Quaternion | String | StringName | Vector2 | Vector2i | Vector3 | Vector3i | Vector4 | Vector4i
     confidence: High
     reason: union from type checks
@@ -3599,7 +3599,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  73:24 Parameter data in early_return_guard
+  74:24 Parameter data in early_return_guard
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3607,7 +3607,7 @@ test_scripts/type_guards.gd
       properties: has, keys
       signals: (none)
 
-  88:28 Parameter value in assignment_after_guard
+  89:28 Parameter value in assignment_after_guard
     inferred-type: int | String | StringName
     confidence: High
     reason: union from type checks
@@ -3618,12 +3618,12 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  101:21 Parameter items in loop_with_guard
+  102:21 Parameter items in loop_with_guard
     inferred-type: Array
     confidence: Certain
     reason: explicit type annotation
 
-  114:22 Parameter value in match_type_guard
+  115:22 Parameter value in match_type_guard
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3631,7 +3631,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  131:23 Parameter value in custom_type_guard
+  132:23 Parameter value in custom_type_guard
     inferred-type: Dictionary[String, <Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3641,7 +3641,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  136:24 Parameter value in using_custom_guard
+  137:24 Parameter value in using_custom_guard
     inferred-type: Dictionary[String, <Derivable>] | Object
     confidence: High
     reason: union from type checks
@@ -3652,7 +3652,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  145:22 Parameter node in class_type_guard
+  146:22 Parameter node in class_type_guard
     inferred-type: Node
     confidence: Certain
     reason: explicit type annotation
@@ -3661,7 +3661,7 @@ test_scripts/type_guards.gd
       properties: velocity, move_and_slide, apply_central_force, get_overlapping_bodies, global_position
       signals: (none)
 
-  171:19 Parameter value in negated_guard
+  172:19 Parameter value in negated_guard
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3669,7 +3669,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  181:20 Parameter data in guard_in_while
+  182:20 Parameter data in guard_in_while
     inferred-type: Dictionary[String, <Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3679,7 +3679,7 @@ test_scripts/type_guards.gd
       properties: has, keys
       signals: (none)
 
-  190:30 Parameter value in multiple_guards_same_var
+  191:30 Parameter value in multiple_guards_same_var
     inferred-type: Dictionary[String, <Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3689,7 +3689,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  206:28 Parameter value in guard_with_method_call
+  207:28 Parameter value in guard_with_method_call
     inferred-type: Array[<Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3699,7 +3699,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  215:27 Parameter obj in structural_type_guard
+  216:27 Parameter obj in structural_type_guard
     inferred-type: Node2D
     confidence: Medium
     reason: single type from constraints
@@ -3709,7 +3709,7 @@ test_scripts/type_guards.gd
       properties: position, rotation, velocity
       signals: (none)
 
-  230:21 Parameter data in enum_like_guard
+  231:21 Parameter data in enum_like_guard
     inferred-type: Dictionary
     confidence: Certain
     reason: explicit type annotation
@@ -3718,7 +3718,7 @@ test_scripts/type_guards.gd
       properties: has, keys
       signals: (none)
 
-  248:23 Parameter value in assert_type_guard
+  249:23 Parameter value in assert_type_guard
     inferred-type: Dictionary[Variant, <Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3728,7 +3728,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  255:24 Parameter value in ternary_with_guard
+  256:24 Parameter value in ternary_with_guard
     inferred-type: Quaternion | String | StringName | Vector2 | Vector2i | Vector3 | Vector3i | Vector4 | Vector4i
     confidence: High
     reason: union from type checks
@@ -3739,7 +3739,7 @@ test_scripts/type_guards.gd
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
-  261:23 Parameter outer in guard_propagation
+  262:23 Parameter outer in guard_propagation
     inferred-type: Dictionary[Variant, <Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3751,34 +3751,34 @@ test_scripts/type_guards.gd
 
 
 test_scripts/type_inference.gd
-  142:19 Parameter x in create_vector
+  143:19 Parameter x in create_vector
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
-  142:29 Parameter y in create_vector
+  143:29 Parameter y in create_vector
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/union_returns.gd
-  7:18 Parameter key in get_or_error
+  8:18 Parameter key in get_or_error
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  15:18 Parameter condition in optional_int
+  16:18 Parameter condition in optional_int
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  22:16 Parameter type_name in multi_type
+  23:16 Parameter type_name in multi_type
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  37:22 Parameter input in success_or_error
+  38:22 Parameter input in success_or_error
     inferred-type: int
     confidence: High
     reason: single type from constraints
@@ -3788,7 +3788,7 @@ test_scripts/union_returns.gd
       properties: to_upper, size, keys, has
       signals: (none)
 
-  46:17 Parameter text in parse_value
+  47:17 Parameter text in parse_value
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
@@ -3797,17 +3797,17 @@ test_scripts/union_returns.gd
       properties: is_valid_int, to_int, is_valid_float, to_float
       signals: (none)
 
-  55:25 Parameter path in get_node_or_default
+  56:25 Parameter path in get_node_or_default
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  63:19 Parameter path in load_resource
+  64:19 Parameter path in load_resource
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  72:19 Parameter input in process_input
+  73:19 Parameter input in process_input
     inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String
     confidence: High
     reason: union from type checks
@@ -3818,19 +3818,19 @@ test_scripts/union_returns.gd
       properties: to_upper, size, keys, has
       signals: (none)
 
-  87:19 Parameter value in early_returns
+  88:19 Parameter value in early_returns
     inferred-type: bool | int
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  105:35 Parameter condition in conditional_expression_return
+  106:35 Parameter condition in conditional_expression_return
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  110:17 Parameter items in loop_return
+  111:17 Parameter items in loop_return
     inferred-type: Array
     confidence: Certain
     reason: explicit type annotation
@@ -3839,22 +3839,22 @@ test_scripts/union_returns.gd
       properties: size
       signals: (none)
 
-  120:22 Parameter depth in recursive_return
+  121:22 Parameter depth in recursive_return
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  130:21 Parameter callback in callback_return
+  131:21 Parameter callback in callback_return
     inferred-type: Callable
     confidence: Certain
     reason: explicit type annotation
 
-  138:23 Parameter operation in exception_pattern
+  139:23 Parameter operation in exception_pattern
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  138:42 Parameter data in exception_pattern
+  139:42 Parameter data in exception_pattern
     inferred-type: Dictionary[String, <Derivable>] | Object
     confidence: High
     reason: union from type checks
@@ -3865,31 +3865,31 @@ test_scripts/union_returns.gd
       properties: has
       signals: (none)
 
-  153:18 Parameter value in result_monad
+  154:18 Parameter value in result_monad
     inferred-type: int
     confidence: High
     reason: single type from constraints
     duck-typed: yes
 
-  162:17 Parameter get_value in maybe_monad
+  163:17 Parameter get_value in maybe_monad
     inferred-type: Callable
     confidence: Certain
     reason: explicit type annotation
 
-  170:20 Parameter condition in either_pattern
+  171:20 Parameter condition in either_pattern
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  170:37 Parameter left_val in either_pattern
+  171:37 Parameter left_val in either_pattern
     inferred-type: Variant
     confidence: Unknown
 
-  170:47 Parameter right_val in either_pattern
+  171:47 Parameter right_val in either_pattern
     inferred-type: Variant
     confidence: Unknown
 
-  177:20 Parameter data in union_in_match
+  178:20 Parameter data in union_in_match
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3897,12 +3897,12 @@ test_scripts/union_returns.gd
       properties: has
       signals: (none)
 
-  194:18 Parameter success in async_result
+  195:18 Parameter success in async_result
     inferred-type: bool
     confidence: Certain
     reason: explicit type annotation
 
-  201:20 Parameter input in validate_input
+  202:20 Parameter input in validate_input
     inferred-type: Dictionary[String, <Derivable>]
     confidence: High
     reason: single type from constraints
@@ -3912,12 +3912,12 @@ test_scripts/union_returns.gd
       properties: to_upper, size, keys, has
       signals: (none)
 
-  219:20 Parameter type_name in factory_method
+  220:20 Parameter type_name in factory_method
     inferred-type: String
     confidence: Certain
     reason: explicit type annotation
 
-  232:20 Parameter data in type_from_data
+  233:20 Parameter data in type_from_data
     inferred-type: Dictionary
     confidence: Certain
     reason: explicit type annotation
@@ -3928,7 +3928,7 @@ test_scripts/union_returns.gd
 
 
 test_scripts/union_types_complex.gd
-  23:19 Parameter input in try_operation
+  24:19 Parameter input in try_operation
     inferred-type: int | String | StringName
     confidence: High
     reason: union from type checks
@@ -3939,15 +3939,15 @@ test_scripts/union_types_complex.gd
       properties: is_empty, length
       signals: (none)
 
-  38:25 Parameter player_id in get_optional_player
+  39:25 Parameter player_id in get_optional_player
     inferred-type: Variant
     confidence: Unknown
 
-  47:26 Parameter node_path in get_position_or_null
+  48:26 Parameter node_path in get_position_or_null
     inferred-type: Variant
     confidence: Unknown
 
-  57:21 Parameter value in process_by_type
+  58:21 Parameter value in process_by_type
     inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String
     confidence: High
     reason: union from type checks
@@ -3958,19 +3958,19 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys, length
       signals: (none)
 
-  72:24 Parameter condition in conditional_return
+  73:24 Parameter condition in conditional_return
     inferred-type: Variant
     confidence: Unknown
 
-  72:35 Parameter true_value in conditional_return
+  73:35 Parameter true_value in conditional_return
     inferred-type: Variant
     confidence: Unknown
 
-  72:47 Parameter false_value in conditional_return
+  73:47 Parameter false_value in conditional_return
     inferred-type: Variant
     confidence: Unknown
 
-  97:18 Parameter value in match_return
+  98:18 Parameter value in match_return
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -3978,7 +3978,7 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys, length
       signals: (none)
 
-  111:25 Parameter data in match_with_patterns
+  112:25 Parameter data in match_with_patterns
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -3988,11 +3988,11 @@ test_scripts/union_types_complex.gd
       properties: has
       signals: (none)
 
-  130:23 Parameter index in get_mixed_element
+  131:23 Parameter index in get_mixed_element
     inferred-type: Variant
     confidence: Unknown
 
-  146:25 Parameter item in _process_mixed_item
+  147:25 Parameter item in _process_mixed_item
     inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String
     confidence: High
     reason: union from type checks
@@ -4003,15 +4003,15 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys
       signals: (none)
 
-  173:16 Parameter key in get_config
+  174:16 Parameter key in get_config
     inferred-type: Variant
     confidence: Unknown
 
-  178:19 Parameter key in update_config
+  179:19 Parameter key in update_config
     inferred-type: Variant
     confidence: Unknown
 
-  178:24 Parameter value in update_config
+  179:24 Parameter value in update_config
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -4019,7 +4019,7 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys, length
       signals: (none)
 
-  185:21 Parameter data in safe_get_nested
+  186:21 Parameter data in safe_get_nested
     inferred-type: Array[<Derivable>] | Dictionary[int, <Derivable>]
     confidence: High
     reason: union from type checks
@@ -4030,13 +4030,13 @@ test_scripts/union_types_complex.gd
       properties: has
       signals: (none)
 
-  185:27 Parameter path in safe_get_nested
+  186:27 Parameter path in safe_get_nested
     inferred-type: Array[int]
     confidence: Medium
     reason: single type from constraints
     duck-typed: yes
 
-  211:20 Parameter value in create_success
+  212:20 Parameter value in create_success
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -4044,18 +4044,18 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys, length
       signals: (none)
 
-  215:18 Parameter message in create_error
+  216:18 Parameter message in create_error
     inferred-type: Variant
     confidence: Unknown
 
-  223:19 Parameter result in handle_result
+  224:19 Parameter result in handle_result
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  238:23 Parameter array in map_with_fallback
+  239:23 Parameter array in map_with_fallback
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -4065,18 +4065,18 @@ test_scripts/union_types_complex.gd
       properties: is_empty, size
       signals: (none)
 
-  238:30 Parameter transform in map_with_fallback
+  239:30 Parameter transform in map_with_fallback
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  238:41 Parameter fallback in map_with_fallback
+  239:41 Parameter fallback in map_with_fallback
     inferred-type: Variant
     confidence: Unknown
 
-  251:16 Parameter array in filter_map
+  252:16 Parameter array in filter_map
     inferred-type: Array
     confidence: Medium
     reason: single type from constraints
@@ -4086,21 +4086,21 @@ test_scripts/union_types_complex.gd
       properties: is_empty, size
       signals: (none)
 
-  251:23 Parameter predicate in filter_map
+  252:23 Parameter predicate in filter_map
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  251:34 Parameter transform in filter_map
+  252:34 Parameter transform in filter_map
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  262:23 Parameter array in reduce_or_default
+  263:23 Parameter array in reduce_or_default
     inferred-type: Array | Dictionary[int, Variant]
     confidence: Medium
     reason: union from type checks
@@ -4111,30 +4111,18 @@ test_scripts/union_types_complex.gd
       properties: is_empty, size
       signals: (none)
 
-  262:30 Parameter reducer in reduce_or_default
+  263:30 Parameter reducer in reduce_or_default
     inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  262:39 Parameter default_value in reduce_or_default
+  263:39 Parameter default_value in reduce_or_default
     inferred-type: Variant
     confidence: Unknown
 
-  280:19 Parameter params in async_request
-    inferred-type: Variant
-    confidence: Unknown
-    duck-constraints:
-      methods: sha256_text(-1), size(-1)
-      properties: sha256_text, size
-      signals: (none)
-
-  292:23 Parameter request_id in _complete_request
-    inferred-type: Variant
-    confidence: Unknown
-
-  292:35 Parameter params in _complete_request
+  281:19 Parameter params in async_request
     inferred-type: Variant
     confidence: Unknown
     duck-constraints:
@@ -4142,7 +4130,19 @@ test_scripts/union_types_complex.gd
       properties: sha256_text, size
       signals: (none)
 
-  299:21 Parameter params in _compute_result
+  293:23 Parameter request_id in _complete_request
+    inferred-type: Variant
+    confidence: Unknown
+
+  293:35 Parameter params in _complete_request
+    inferred-type: Variant
+    confidence: Unknown
+    duck-constraints:
+      methods: sha256_text(-1), size(-1)
+      properties: sha256_text, size
+      signals: (none)
+
+  300:21 Parameter params in _compute_result
     inferred-type: Array[<Derivable>] | int | String
     confidence: High
     reason: union from type checks
@@ -4153,11 +4153,11 @@ test_scripts/union_types_complex.gd
       properties: sha256_text, size
       signals: (none)
 
-  310:16 Parameter request_id in get_result
+  311:16 Parameter request_id in get_result
     inferred-type: Variant
     confidence: Unknown
 
-  317:16 Parameter value in is_numeric
+  318:16 Parameter value in is_numeric
     inferred-type: float | int
     confidence: High
     reason: union from type checks
@@ -4168,7 +4168,7 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys, length
       signals: (none)
 
-  321:13 Parameter value in is_text
+  322:13 Parameter value in is_text
     inferred-type: String | StringName
     confidence: High
     reason: union from type checks
@@ -4179,7 +4179,7 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys, length
       signals: (none)
 
-  325:25 Parameter value in process_with_guards
+  326:25 Parameter value in process_with_guards
     inferred-type: Array[<Derivable>]
     confidence: High
     reason: single type from constraints
@@ -4189,7 +4189,7 @@ test_scripts/union_types_complex.gd
       properties: to_upper, size, keys, length
       signals: (none)
 
-  339:26 Parameter data in validate_and_process
+  340:26 Parameter data in validate_and_process
     inferred-type: Array | PackedStringArray
     confidence: High
     reason: union from type checks
@@ -4200,7 +4200,7 @@ test_scripts/union_types_complex.gd
       properties: has
       signals: (none)
 
-  358:25 Parameter data in _process_typed_data
+  359:25 Parameter data in _process_typed_data
     inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
@@ -4211,35 +4211,35 @@ test_scripts/union_types_complex.gd
       properties: has
       signals: (none)
 
-  358:31 Parameter type_str in _process_typed_data
+  359:31 Parameter type_str in _process_typed_data
     inferred-type: Variant
     confidence: Unknown
 
-  372:27 Parameter param in type_flow_test_method
+  373:27 Parameter param in type_flow_test_method
     inferred-type: Variant
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/unrelated_class.gd
-  9:17 Parameter amount in take_damage
+  10:17 Parameter amount in take_damage
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  13:14 Parameter delta in _process
+  14:14 Parameter delta in _process
     inferred-type: float
     confidence: Certain
     reason: explicit type annotation
 
 
 test_scripts/validation_edge_cases.gd
-  36:16 Parameter v in set_value
+  37:16 Parameter v in set_value
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation
 
-  43:18 Parameter data in process_data
+  44:18 Parameter data in process_data
     inferred-type: Variant
     confidence: Unknown
 

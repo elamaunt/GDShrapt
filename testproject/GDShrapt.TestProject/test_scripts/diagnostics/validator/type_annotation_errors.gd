@@ -17,7 +17,7 @@ func test_gd3023_valid_same_type(flag: bool) -> int:
 		return 10
 
 ## INVALID - inconsistent return types (int vs String)
-func test_gd3023_invalid(flag: bool):  # 20:0-GD3023-OK, 20:1-GDL513-OK
+func test_gd3023_invalid(flag: bool):  # 20:0-GD3023-OK, 20:0-GDL513-OK
 	if flag:
 		return 5
 	else:
@@ -36,15 +36,15 @@ func test_gd3024_valid(flag: bool) -> int:
 		return 10
 
 ## INVALID - missing return in else branch
-func test_gd3024_invalid(flag: bool) -> int:  # 39:0-GD3024-OK, 39:1-GDL513-OK
+func test_gd3024_invalid(flag: bool) -> int:  # 39:0-GD3024-OK, 39:0-GDL513-OK
 	if flag:
 		return 5
 
 ## VALID - void return type
-func test_gd3024_valid_void(flag: bool) -> void:  # 44:1-GDL513-OK
+func test_gd3024_valid_void(flag: bool) -> void:  # 44:0-GDL513-OK
 	if flag:
 		print("hello")
-	# 48:1-GDL513-OK
+
 
 # =============================================================================
 # GD7022: RedundantAnnotation
@@ -87,10 +87,9 @@ func test_gd7019_valid():
 	sprite = Sprite2D.new()
 
 ## VALID - no annotation
-func test_gd7019_valid_no_annotation():  # 90:1-GDL513-OK
+func test_gd7019_valid_no_annotation():  # 90:0-GDL513-OK
 	var sprite = Sprite2D.new()
 	sprite = Node.new()
-	# 94:1-GDL513-OK
 
 # =============================================================================
 # GD3025: ContainerMissingSpecialization
@@ -100,7 +99,7 @@ func test_gd7019_valid_no_annotation():  # 90:1-GDL513-OK
 var typed_scores: Array[int] = []
 
 ## VALID - non-container
-var not_container: String = "test"  # 103:19-GD7022-OK
+var not_container: String = "test"  # 102:19-GD7022-OK
 
 
 # =============================================================================
@@ -108,11 +107,11 @@ var not_container: String = "test"  # 103:19-GD7022-OK
 # =============================================================================
 
 ## VALID - typed parameter (should not suggest)
-func test_gd7020_valid_typed(amount: int):  # 111:5-GDL203-OK, 111:29-GDL202-OK
+func test_gd7020_valid_typed(amount: int):  # 110:5-GDL203-OK, 110:29-GDL202-OK
 	pass
 
 ## VALID - _ prefixed (should not suggest)
-func test_gd7020_valid_underscore(_delta):  # 115:1-GDL513-OK, 115:5-GDL203-OK
+func test_gd7020_valid_underscore(_delta):  # 114:0-GDL513-OK, 114:5-GDL203-OK
 	pass
 
 # =============================================================================
@@ -122,6 +121,7 @@ func test_gd7020_valid_underscore(_delta):  # 115:1-GDL513-OK, 115:5-GDL203-OK
 ## VALID - typed Array (should not suggest)
 var typed_enemies: Array[Node] = []
 
+# 125:0-GDL513-OK
 func test_gd7021_valid():
 	for enemy in typed_enemies:
 		enemy.queue_free()

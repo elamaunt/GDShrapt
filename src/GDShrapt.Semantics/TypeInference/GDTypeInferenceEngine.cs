@@ -167,11 +167,15 @@ namespace GDShrapt.Semantics
         /// <param name="callerType">The type of the caller (e.g., "Array[int]")</param>
         /// <param name="callerExpr">The caller expression for further type inference</param>
         /// <returns>The specific return type, or null to use the default</returns>
-        private string? ApplyReturnTypeRole(GDRuntimeMemberInfo memberInfo, string callerType, GDExpression? callerExpr)
+        private string? ApplyReturnTypeRole(GDRuntimeMemberInfo memberInfo, string callerType, GDExpression? callerExpr, GDCallExpression? callExpr = null)
         {
             var role = memberInfo.ReturnTypeRole;
             if (string.IsNullOrEmpty(role))
                 return null;
+
+            // callable_return_array doesn't need container info — it infers from the lambda argument
+            if (role == "callable_return_array")
+                return InferCallableReturnArrayType(memberInfo, callExpr);
 
             // Get container type info
             var containerInfo = ExtractContainerTypeInfo(callerType, callerExpr);
@@ -186,9 +190,118 @@ namespace GDShrapt.Semantics
                 "self" => callerType,
                 "keys_array" => GDGenericTypeHelper.CreateArrayType(containerInfo.KeyType),
                 "values_array" => GDGenericTypeHelper.CreateArrayType(containerInfo.ValueType),
-                "callable_return_array" => null,
                 _ => null
             };
+        }
+
+        /// <summary>
+        /// Infers the return type for methods with callable_return_array role (e.g., Array.map()).
+        /// Extracts the lambda argument, infers its return type, and wraps it as Array[T].
+        /// </summary>
+        private string? InferCallableReturnArrayType(GDRuntimeMemberInfo memberInfo, GDCallExpression? callExpr)
+        {
+            if (callExpr?.Parameters == null)
+                return null;
+
+            // Find callable parameter index from metadata
+            int callableParamIndex = 0;
+            if (memberInfo.Parameters != null)
+            {
+                for (int i = 0; i < memberInfo.Parameters.Count; i++)
+                {
+                    if (!string.IsNullOrEmpty(memberInfo.Parameters[i].CallableReceivesType))
+                    {
+                        callableParamIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // Extract the callable argument at the expected index
+            GDExpression? callableArg = null;
+            int idx = 0;
+            foreach (var arg in callExpr.Parameters)
+            {
+                if (idx == callableParamIndex)
+                {
+                    callableArg = arg;
+                    break;
+                }
+                idx++;
+            }
+
+            if (callableArg == null)
+                return null;
+
+            // Case 1: Inline lambda — infer return type from body
+            if (callableArg is GDMethodExpression lambda)
+            {
+                var lambdaReturn = InferLambdaReturnType(lambda);
+                if (!string.IsNullOrEmpty(lambdaReturn) && lambdaReturn != "void" && lambdaReturn != GDWellKnownTypes.Variant)
+                    return GDGenericTypeHelper.CreateArrayType(lambdaReturn);
+            }
+
+            // Case 2: Method reference (e.g., my_transform) — find method and use its return type
+            if (callableArg is GDIdentifierExpression identExpr)
+            {
+                var methodName = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(methodName))
+                {
+                    // 2a: Local method in current class
+                    var methodDecl = FindLocalMethodDeclaration(methodName, callExpr);
+                    if (methodDecl != null)
+                    {
+                        var returnType = methodDecl.ReturnType?.BuildName();
+                        if (string.IsNullOrEmpty(returnType) || returnType == GDWellKnownTypes.Variant)
+                        {
+                            var inferred = InferMethodReturnType(methodDecl);
+                            if (!string.IsNullOrEmpty(inferred) && inferred != "void" && inferred != GDWellKnownTypes.Variant)
+                                returnType = inferred;
+                        }
+                        if (!string.IsNullOrEmpty(returnType) && returnType != "void" && returnType != GDWellKnownTypes.Variant)
+                            return GDGenericTypeHelper.CreateArrayType(returnType);
+                    }
+
+                    // 2b: Inherited method from base class (cross-file via runtime provider)
+                    var classDecl = callExpr.RootClassDeclaration;
+                    if (classDecl != null)
+                    {
+                        var baseTypeName = GetClassBaseType(classDecl);
+                        if (!string.IsNullOrEmpty(baseTypeName))
+                        {
+                            var inheritedMember = FindMemberWithInheritance(baseTypeName, methodName);
+                            if (inheritedMember != null && inheritedMember.Kind == GDRuntimeMemberKind.Method)
+                            {
+                                var returnType = inheritedMember.Type;
+                                if (!string.IsNullOrEmpty(returnType) && returnType != "void" && returnType != GDWellKnownTypes.Variant)
+                                    return GDGenericTypeHelper.CreateArrayType(returnType);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Case 3: Member access (e.g., SomeClass.static_method or obj.method)
+            if (callableArg is GDMemberOperatorExpression memberRefExpr)
+            {
+                var refMethodName = memberRefExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(refMethodName))
+                {
+                    var callerType = InferTypeNode(memberRefExpr.CallerExpression)?.BuildName();
+                    if (!string.IsNullOrEmpty(callerType))
+                    {
+                        var resolvedMember = FindMemberWithInheritance(callerType, refMethodName);
+                        if (resolvedMember != null && resolvedMember.Kind == GDRuntimeMemberKind.Method)
+                        {
+                            var returnType = resolvedMember.Type;
+                            if (!string.IsNullOrEmpty(returnType) && returnType != "void" && returnType != GDWellKnownTypes.Variant)
+                                return GDGenericTypeHelper.CreateArrayType(returnType);
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -981,7 +1094,7 @@ namespace GDShrapt.Semantics
                             var memberInfo = FindMemberWithInheritance(baseTypeName, funcName);
                             if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                             {
-                                var returnType = ApplyReturnTypeRole(memberInfo, baseTypeName, identExpr);
+                                var returnType = ApplyReturnTypeRole(memberInfo, baseTypeName, identExpr, callExpr);
                                 return returnType ?? memberInfo.Type;
                             }
                         }
@@ -1086,7 +1199,7 @@ namespace GDShrapt.Semantics
                         if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                         {
                             // Apply ReturnTypeRole if available to get more specific type
-                            var returnType = ApplyReturnTypeRole(memberInfo, callerType, memberExpr.CallerExpression);
+                            var returnType = ApplyReturnTypeRole(memberInfo, callerType, memberExpr.CallerExpression, callExpr);
                             return returnType ?? memberInfo.Type;
                         }
                     }

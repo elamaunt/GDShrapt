@@ -67,6 +67,24 @@ public class GDAddTypeAnnotationsService
         public GDTypeNode? GetTypeNode() => _varStmt.Type;
     }
 
+    private sealed class ForLoopVariableAnnotationContext : IAnnotationContext
+    {
+        private readonly GDForStatement _forStmt;
+        public ForLoopVariableAnnotationContext(GDForStatement forStmt) => _forStmt = forStmt;
+
+        public bool ShouldSkip(GDTypeAnnotationOptions options)
+        {
+            if (_forStmt.VariableType == null && _forStmt.TypeColon == null) return false;
+            return !options.UpdateExistingAnnotations;
+        }
+        public GDIdentifier? GetIdentifier() => _forStmt.Variable;
+        public GDInferredType InferType(GDTypeConfidenceResolver helper) => helper.InferForLoopVariableType(_forStmt);
+        public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.ForLoopVariable;
+        public string GetFallbackName() => "iterator";
+        public string? GetExistingTypeName() => _forStmt.VariableType?.BuildName();
+        public GDTypeNode? GetTypeNode() => _forStmt.VariableType;
+    }
+
     private sealed class ParameterAnnotationContext : IAnnotationContext
     {
         private readonly GDParameterDeclaration _param;
@@ -317,6 +335,11 @@ public class GDAddTypeAnnotationsService
             if (stmt is GDVariableDeclarationStatement varStmt)
                 TryAddLocalVariableAnnotation(_file, varStmt, _helper, _options, _annotations);
         }
+
+        protected override void BeforeForLoop(GDForStatement forStmt)
+        {
+            TryAddForLoopVariableAnnotation(_file, forStmt, _helper, _options, _annotations);
+        }
     }
 
     private static void TryAddVariableAnnotation(
@@ -334,6 +357,14 @@ public class GDAddTypeAnnotationsService
         GDTypeAnnotationOptions options,
         List<GDTypeAnnotationPlan> annotations) =>
         TryAddAnnotationCore(file, new LocalVariableAnnotationContext(varStmt), helper, options, annotations);
+
+    private static void TryAddForLoopVariableAnnotation(
+        GDScriptFile file,
+        GDForStatement forStmt,
+        GDTypeConfidenceResolver helper,
+        GDTypeAnnotationOptions options,
+        List<GDTypeAnnotationPlan> annotations) =>
+        TryAddAnnotationCore(file, new ForLoopVariableAnnotationContext(forStmt), helper, options, annotations);
 
     private static void TryAddParameterAnnotation(
         GDScriptFile file,

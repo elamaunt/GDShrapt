@@ -116,7 +116,7 @@ class ChildEnemy extends InheritanceTest:
 		# Can call parent's method
 		super._physics_process(delta)
 
-	func get_enemy_info() -> Dictionary:  # 119:1-GDL513-OK
+	func get_enemy_info() -> Dictionary:
 		var base_state = get_current_state()  # Inherited method
 		base_state["enemy_type"] = enemy_type
 		return base_state

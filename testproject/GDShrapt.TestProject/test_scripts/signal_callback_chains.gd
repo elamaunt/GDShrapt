@@ -56,7 +56,7 @@ func invoke_chain(name, initial_value):
 	return current
 
 
-# === Promise-like pattern === # 75:1-GDL513-OK
+# === Promise-like pattern ===
 
 class AsyncOperation:
 	var _resolve_callback
@@ -66,25 +66,25 @@ class AsyncOperation:
 	var _value
 	var _error
 
-	func then(callback): # 57:1-GDL513-OK
+	func then(callback):
 		_resolve_callback = callback
 		if _state == "resolved":
 			_call_resolve()
 		return self
 
-	func catch_error(callback): # 81:1-GDL513-OK
+	func catch_error(callback):
 		_reject_callback = callback
 		if _state == "rejected":
 			_call_reject()
 		return self
 
-	func finally_do(callback): # 87:1-GDL513-OK
+	func finally_do(callback):
 		_finally_callback = callback
 		if _state != "pending":
 			_call_finally()
 		return self
 
-	func resolve(value): # 87:1-GDL513-OK
+	func resolve(value):
 		if _state != "pending":
 			return
 		_state = "resolved"
@@ -92,7 +92,7 @@ class AsyncOperation:
 		_call_resolve()
 		_call_finally()
 
-	func reject(error): # 95:1-GDL513-OK
+	func reject(error):
 		if _state != "pending":
 			return
 		_state = "rejected"
@@ -100,15 +100,15 @@ class AsyncOperation:
 		_call_reject()
 		_call_finally()
 
-	func _call_resolve(): # 103:1-GDL513-OK
+	func _call_resolve():
 		if _resolve_callback:
 			_resolve_callback.call(_value)
 
-	func _call_reject(): # 107:1-GDL513-OK
+	func _call_reject():
 		if _reject_callback:
 			_reject_callback.call(_error)
 
-	func _call_finally(): # 111:1-GDL513-OK
+	func _call_finally():
 		if _finally_callback:
 			_finally_callback.call()
 
@@ -139,7 +139,7 @@ var event_handlers = {}  # Dict[String, Array[Callable]]
 var once_handlers = {}   # Dict[String, Array[Callable]] - remove after first call
 
 
-func on_event(event_name, handler): # 134:1-GDL513-OK
+func on_event(event_name, handler):
 	if not event_handlers.has(event_name):
 		event_handlers[event_name] = []
 	event_handlers[event_name].append(handler)
@@ -183,7 +183,7 @@ func emit_event(event_name, data = null):
 var pipeline_stages = []  # Array of stages, each with process(data, next)
 
 
-func add_stage(stage): # 179:1-GDL513-OK
+func add_stage(stage):
 	pipeline_stages.append(stage)
 
 
@@ -206,7 +206,7 @@ func _run_stage(index, data): # 195:4-GD3020-OK
 var middleware_stack = []  # Array of middleware with handle(context, next)
 
 
-func use_middleware(middleware): # 202:1-GDL513-OK
+func use_middleware(middleware):
 	middleware_stack.append(middleware)
 
 
@@ -238,7 +238,7 @@ func _next_middleware(index, context): # 227:4-GD3020-OK
 class Observable:
 	var _subscribers = []
 
-	func subscribe(on_next, on_error = null, on_complete = null): # 234:1-GDL513-OK
+	func subscribe(on_next, on_error = null, on_complete = null):
 		var subscription = {
 			"on_next": on_next,
 			"on_error": on_error,
@@ -248,28 +248,28 @@ class Observable:
 		_subscribers.append(subscription)
 		return subscription
 
-	func unsubscribe(subscription): # 251:1-GDL513-OK, 251:18-GD7020-OK
+	func unsubscribe(subscription): # 251:18-GD7020-OK
 		subscription["active"] = false # 252:2-GD7006-OK
 		_subscribers.erase(subscription)
 
-	func emit_next(value): # 255:1-GDL513-OK
+	func emit_next(value):
 		for sub in _subscribers:
 			if sub["active"] and sub["on_next"]: # 257:6-GD7006-OK 257:24-GD7006-OK
 				sub["on_next"].call(value) # 258:4-GD7007-OK 258:4-GD7006-OK
 
-	func emit_error(error): # 260:1-GDL513-OK
+	func emit_error(error):
 		for sub in _subscribers:
 			if sub["active"] and sub["on_error"]: # 262:6-GD7006-OK 262:24-GD7006-OK
 				sub["on_error"].call(error) # 263:4-GD7007-OK 263:4-GD7006-OK
 			sub["active"] = false # 264:3-GD7006-OK
 
-	func emit_complete(): # 266:1-GDL513-OK
+	func emit_complete():
 		for sub in _subscribers:
 			if sub["active"] and sub["on_complete"]: # 268:6-GD7006-OK 268:24-GD7006-OK
 				sub["on_complete"].call() # 269:4-GD7007-OK 269:4-GD7006-OK
 			sub["active"] = false # 270:3-GD7006-OK
 
-	func map(transform): # 272:1-GDL513-OK
+	func map(transform):
 		var mapped = Observable.new()
 		subscribe(
 			func(value): mapped.emit_next(transform.call(value)), # 275:33-GD7007-OK
@@ -278,7 +278,7 @@ class Observable:
 		)
 		return mapped
 
-	func filter(predicate): # 281:1-GDL513-OK
+	func filter(predicate):
 		var filtered = Observable.new()
 		var on_next_filter = func(value):
 			if predicate.call(value): # 284:6-GD7007-OK
@@ -305,7 +305,7 @@ var _pending_debounce_callback
 var _pending_debounce_key: String
 
 
-func _on_debounce_timeout(timer: Timer): # 296:1-GDL513-OK
+func _on_debounce_timeout(timer: Timer):
 	if _pending_debounce_callback:
 		_pending_debounce_callback.call()
 	timer.queue_free()
@@ -384,7 +384,7 @@ func _run_chain_step(operations, index, previous_result, on_complete, on_error):
 	)
 
 
-class ParallelContext: # 385:1-GDL513-OK
+class ParallelContext:
 	var results: Array
 	var completed_count: int = 0  # 389:22-GD7022-OK
 	var has_error: bool = false  # 390:16-GD7022-OK
@@ -442,7 +442,7 @@ class SignalWaitContext:
 	var connection: Callable
 
 
-func _on_signal_received(ctx: SignalWaitContext, args = []): # 434:1-GDL513-OK
+func _on_signal_received(ctx: SignalWaitContext, args = []):
 	ctx.target.disconnect(ctx.signal_name, ctx.connection)
 	ctx.operation.resolve(args) # 447:1-GD7003-OK
 
@@ -477,7 +477,7 @@ func wait_for_signal(target, signal_name, timeout = 5.0):
 class ComposedCallback:
 	var callbacks: Array
 
-	func call_composed(initial_value): # 473:1-GDL513-OK
+	func call_composed(initial_value):
 		var current = initial_value
 		for cb in callbacks:
 			current = cb.call(current) # 483:13-GD7007-OK

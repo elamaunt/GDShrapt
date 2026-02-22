@@ -153,7 +153,7 @@ class CustomData:
 
 signal custom_data_signal(data: CustomData)
 
-func emit_custom(): # 146:1-GDL513-OK
+func emit_custom():
 	var data = CustomData.new()
 	data.id = 1
 	data.name = "test"

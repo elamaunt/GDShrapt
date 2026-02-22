@@ -68,7 +68,7 @@ public class FlowNarrowingCollector
     {
         if (node == null) return 0;
         var token = node.AllTokens.FirstOrDefault();
-        return token?.StartLine ?? 0;
+        return token != null ? token.StartLine + 1 : 0;
     }
 
     private int GetNodeColumn(GDNode? node)

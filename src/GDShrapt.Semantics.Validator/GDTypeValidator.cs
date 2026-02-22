@@ -139,6 +139,12 @@ namespace GDShrapt.Semantics.Validator
             ValidateClassVariableDeclaration(variableDeclaration);
         }
 
+        public override void Visit(GDForStatement forStatement)
+        {
+            RegisterForLoopVariable(forStatement);
+            ValidateForLoopVariable(forStatement);
+        }
+
         private void RegisterMethodParameters(GDMethodDeclaration method)
         {
             if (method.Parameters == null)
@@ -542,6 +548,93 @@ namespace GDShrapt.Semantics.Validator
                     $"Type mismatch: cannot assign '{initType}' to variable of type '{declaredType}'",
                     varDecl);
             }
+        }
+
+        private void RegisterForLoopVariable(GDForStatement forStmt)
+        {
+            var varName = forStmt.Variable?.Sequence;
+            if (string.IsNullOrEmpty(varName))
+                return;
+
+            var typeName = forStmt.VariableType?.BuildName();
+            GDTypeNode typeNode = forStmt.VariableType;
+
+            if (string.IsNullOrEmpty(typeName) && forStmt.Collection != null)
+            {
+                typeName = InferCollectionElementType(forStmt.Collection);
+            }
+
+            if (string.IsNullOrEmpty(typeName) || typeName == "Unknown")
+                typeName = "Variant";
+
+            Context.Declare(GDSymbol.Variable(varName, forStmt, typeName: typeName, typeNode: typeNode));
+        }
+
+        private void ValidateForLoopVariable(GDForStatement forStmt)
+        {
+            var declaredType = forStmt.VariableType?.BuildName();
+            if (string.IsNullOrEmpty(declaredType))
+                return;
+
+            if (forStmt.Collection == null)
+                return;
+
+            var elementType = InferCollectionElementType(forStmt.Collection);
+
+            if (elementType == null || elementType == "Unknown" || elementType == "Variant")
+                return;
+
+            // Variant annotation when a narrower type is known — unnecessary widening
+            if (declaredType == "Variant")
+            {
+                ReportWarning(
+                    GDDiagnosticCode.AnnotationWiderThanInferred,
+                    $"Unnecessary 'Variant' annotation: for-loop iterates '{elementType}' elements. Use '{elementType}' instead",
+                    forStmt);
+                return;
+            }
+
+            if (!AreTypesCompatibleForAssignment(elementType, declaredType))
+            {
+                ReportWarning(
+                    GDDiagnosticCode.TypeAnnotationMismatch,
+                    $"Type mismatch: for-loop iterates '{elementType}' elements but variable is typed as '{declaredType}'",
+                    forStmt);
+            }
+        }
+
+        private string? InferCollectionElementType(GDExpression collection)
+        {
+            // Check for range() call directly — range() always yields int
+            if (collection is GDCallExpression callExpr &&
+                callExpr.CallerExpression is GDIdentifierExpression callerIdent &&
+                callerIdent.Identifier?.Sequence == "range")
+            {
+                return "int";
+            }
+
+            var collectionType = InferSimpleType(collection);
+            if (collectionType == null || collectionType == "Unknown")
+                return null;
+
+            var arrayElement = GDGenericTypeHelper.ExtractArrayElementType(collectionType);
+            if (arrayElement != null)
+                return arrayElement;
+
+            if (collectionType == "int")
+                return "int";
+
+            if (collectionType == "String")
+                return "String";
+
+            if (GDGenericTypeHelper.IsDictionaryType(collectionType))
+                return "Variant";
+
+            var packedElement = GDPackedArrayTypes.GetElementType(collectionType);
+            if (packedElement != null)
+                return packedElement;
+
+            return "Variant";
         }
 
         private bool AreTypesCompatibleForAssignment(string sourceType, string targetType)

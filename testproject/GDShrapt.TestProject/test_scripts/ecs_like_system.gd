@@ -165,7 +165,7 @@ func update_systems(delta):
 # AI component: {state: String, target: int, behavior: Callable}
 
 
-func create_transform_component(pos = Vector2.ZERO, rot = 0.0, scl = Vector2.ONE): # 156:1-GDL513-OK
+func create_transform_component(pos = Vector2.ZERO, rot = 0.0, scl = Vector2.ONE):
 	return {"position": pos, "rotation": rot, "scale": scl}
 
 
@@ -240,7 +240,7 @@ class AISystem:
 var archetypes = {}  # Dict[String, Array[Dict]] - archetype_name -> component definitions
 
 
-func define_archetype(name, component_defs):  # 247:1-GDL513-OK, 236:1-GDL513-OK
+func define_archetype(name, component_defs):  # 247:0-GDL513-OK
 	# component_defs is Array of {type: String, factory: Callable or default_value}
 	archetypes[name] = component_defs
 
@@ -274,7 +274,7 @@ func create_from_archetype(archetype_name, overrides = {}):
 var event_queue = []  # Array of {type: String, data: Variant, source: int}
 
 
-func emit_event(event_type, data = null, source_entity = -1): # 270:1-GDL513-OK
+func emit_event(event_type, data = null, source_entity = -1):
 	event_queue.append({
 		"type": event_type,
 		"data": data,
@@ -304,7 +304,7 @@ var spatial_grid = {}  # Dict[Vector2i, Array[int]] - grid cell -> entity ids
 var grid_cell_size = 64.0
 
 
-func update_spatial_index(): # 299:1-GDL513-OK
+func update_spatial_index():
 	spatial_grid.clear()
 
 	var positioned = query_entities(["Transform"])
@@ -365,7 +365,7 @@ func serialize_world():
 
 	return data
 
-func deserialize_world(data):  # 368:1-GDL513-OK
+func deserialize_world(data):  # 368:0-GDL513-OK
 	entities.clear()
 	components.clear()
 

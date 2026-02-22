@@ -92,6 +92,24 @@ namespace GDShrapt.Linter
         }
 
         /// <summary>
+        /// Reports an issue with explicit line/column coordinates (1-based line, 0-based column).
+        /// </summary>
+        protected void ReportIssue(string message, int startLine, int startColumn, string suggestion = null)
+        {
+            t_result?.AddIssue(new GDLintIssue(
+                RuleId,
+                Name,
+                DefaultSeverity,
+                Category,
+                message,
+                startLine,
+                startColumn,
+                startLine,
+                startColumn,
+                suggestion));
+        }
+
+        /// <summary>
         /// Reports an issue with fix descriptors.
         /// </summary>
         protected void ReportIssue(string message, GDSyntaxToken token, string suggestion, IEnumerable<GDFixDescriptor> fixes)

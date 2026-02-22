@@ -70,7 +70,7 @@ func process_by_type(value):  # 58:0-GD3023-OK
 	return null                   # null path
 
 
-func conditional_return(condition, true_value, false_value): # 78:1-GDL513-OK
+func conditional_return(condition, true_value, false_value):
 	# Return type is Union of true_value type and false_value type
 	if condition:
 		return true_value
@@ -128,7 +128,7 @@ func match_with_patterns(data):  # 112:25-GD7020-OK
 var mixed_array = [1, "two", 3.0, [4], {"five": 5}]
 
 
-func get_mixed_element(index): # 124:1-GDL513-OK
+func get_mixed_element(index):
 	# Return type is int|String|float|Array|Dictionary
 	if index < 0 or index >= mixed_array.size(): # 133:4-GD3020-OK, 133:17-GD3020-OK
 		return null
@@ -171,7 +171,7 @@ var config = {
 }
 
 
-func get_config(key): # 160:1-GDL513-OK
+func get_config(key):
 	# Return type is String|int|float|bool|Array|Dictionary|null
 	return config.get(key)
 
@@ -278,7 +278,7 @@ var pending_results = {}  # Dict[int, Variant|null]
 var next_request_id = 0
 
 
-func async_request(params): # 271:1-GDL513-OK
+func async_request(params):
 	# Returns request_id (int), result comes later via signal
 	var request_id = next_request_id
 	next_request_id += 1

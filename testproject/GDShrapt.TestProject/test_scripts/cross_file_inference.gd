@@ -182,7 +182,7 @@ func complex_chain_operation(initial_data):
 var cross_file_callbacks = {}
 
 
-func register_cross_file_handler(event_name, handler_type): # 178:1-GDL513-OK
+func register_cross_file_handler(event_name, handler_type):
 	match handler_type:
 		"entity_create":
 			cross_file_callbacks[event_name] = _create_entity_handler()
