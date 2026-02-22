@@ -3575,4 +3575,404 @@ func test_m() -> void:
             TestProjectHelper.DeleteTempProject(tempPath);
         }
     }
+
+    // === Regression: Self-passed-as-argument VDA suppression ===
+
+    [TestMethod]
+    public void AnalyzeProject_SelfPassedAsArgument_DowngradesVariablesToPotential()
+    {
+        var code = @"extends Node
+
+var game_data: Dictionary = {}
+var score: int = 0
+
+func _ready() -> void:
+    GameManager.register([self])
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("self_passed.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // Base handler filters to Strict only — VDA items (Potential) should be gone
+            report.Items.Should().NotContain(i => i.Name == "game_data",
+                "Variable on self-passed class should be downgraded to Potential (VDA) and filtered by base handler");
+            report.Items.Should().NotContain(i => i.Name == "score",
+                "Variable on self-passed class should be downgraded to Potential (VDA) and filtered by base handler");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_SelfNotPassed_VariablesStayStrict()
+    {
+        var code = @"extends Node
+
+var game_data: Dictionary = {}
+
+func _ready() -> void:
+    pass
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("no_self_passed.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(i =>
+                i.Name == "game_data" && i.Confidence == GDReferenceConfidence.Strict,
+                "Variable without self-passed should stay Strict VNR");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_SelfPassedAsArgument_PrivateVariablesStayStrict()
+    {
+        var code = @"extends Node
+
+var _internal: int = 0
+
+func _ready() -> void:
+    SomeFunc.call(self)
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("self_passed_private.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludePrivate = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().Contain(i =>
+                i.Name == "_internal" && i.Confidence == GDReferenceConfidence.Strict,
+                "Private variable should stay Strict even when self is passed externally");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_SelfInArrayLiteral_DowngradesVariables()
+    {
+        var code = @"extends Node
+
+var state: Dictionary = {}
+
+func _ready() -> void:
+    var states = [self] + other_states
+";
+        var tempPath = TestProjectHelper.CreateTempProject(("self_in_array.gd", code));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // Base handler filters Potential — VDA items should be gone
+            report.Items.Should().NotContain(i => i.Name == "state",
+                "Variable on self-in-array class should be downgraded to Potential (VDA) and filtered");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    #region TRF — .tres Resource File Reference Tests
+
+    [TestMethod]
+    public void AnalyzeProject_ExportVarReferencedFromTres_NotDeadCode()
+    {
+        var script = @"extends Resource
+class_name BattlerStats
+
+@export var base_attack: int = 10
+@export var base_defense: int = 5
+var unused_internal: int = 0
+";
+
+        var tres = @"[gd_resource type=""Resource"" script_class=""BattlerStats"" load_steps=2 format=3]
+
+[ext_resource type=""Script"" path=""res://battler_stats.gd"" id=""1_abc""]
+
+[resource]
+script = ExtResource(""1_abc"")
+base_attack = 25
+base_defense = 15
+";
+
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("battler_stats.gd", script),
+            ("warrior.tres", tres));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                TreatClassNameAsPublicAPI = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "base_attack",
+                "base_attack is referenced from warrior.tres");
+            report.Items.Should().NotContain(i => i.Name == "base_defense",
+                "base_defense is referenced from warrior.tres");
+            report.Items.Should().Contain(i => i.Name == "unused_internal",
+                "unused_internal is not in any .tres file");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_VarNotInTres_IsDeadCode()
+    {
+        var script = @"extends Resource
+class_name BattlerStats
+
+var base_attack: int = 10
+var not_in_tres: int = 0
+";
+
+        var tres = @"[gd_resource type=""Resource"" script_class=""BattlerStats"" load_steps=2 format=3]
+
+[ext_resource type=""Script"" path=""res://battler_stats.gd"" id=""1_abc""]
+
+[resource]
+script = ExtResource(""1_abc"")
+base_attack = 25
+";
+
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("battler_stats.gd", script),
+            ("warrior.tres", tres));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                TreatClassNameAsPublicAPI = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "base_attack",
+                "base_attack is in warrior.tres");
+            report.Items.Should().Contain(i => i.Name == "not_in_tres",
+                "not_in_tres is not in any .tres file");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_TresForDifferentClass_VariableStillDeadCode()
+    {
+        var scriptA = @"extends Resource
+class_name ClassA
+
+@export var shared_name: int = 0
+";
+
+        var scriptB = @"extends Resource
+class_name ClassB
+
+var shared_name: int = 0
+";
+
+        var tres = @"[gd_resource type=""Resource"" script_class=""ClassA"" load_steps=2 format=3]
+
+[ext_resource type=""Script"" path=""res://class_a.gd"" id=""1_abc""]
+
+[resource]
+script = ExtResource(""1_abc"")
+shared_name = 42
+";
+
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("class_a.gd", scriptA),
+            ("class_b.gd", scriptB),
+            ("instance.tres", tres));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                TreatClassNameAsPublicAPI = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            // ClassA.shared_name is in the .tres file — not dead
+            var classAItems = report.Items.Where(i => i.FilePath != null && i.FilePath.Contains("class_a")).ToList();
+            classAItems.Should().NotContain(i => i.Name == "shared_name",
+                "ClassA.shared_name is referenced from instance.tres");
+
+            // ClassB.shared_name is NOT in any .tres — still dead code
+            var classBItems = report.Items.Where(i => i.FilePath != null && i.FilePath.Contains("class_b")).ToList();
+            classBItems.Should().Contain(i => i.Name == "shared_name",
+                "ClassB.shared_name is not referenced from any .tres");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_TresWithExtResourceScript_ResolvesClass()
+    {
+        var script = @"extends Resource
+class_name MyResource
+
+@export var data: Dictionary = {}
+";
+
+        // No script_class in header — class resolved via ExtResource script path
+        var tres = @"[gd_resource type=""Resource"" load_steps=2 format=3]
+
+[ext_resource type=""Script"" path=""res://my_resource.gd"" id=""1_scr""]
+
+[resource]
+script = ExtResource(""1_scr"")
+data = { ""key"": ""value"" }
+";
+
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("my_resource.gd", script),
+            ("instance.tres", tres));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions
+            {
+                IncludeVariables = true,
+                IncludeFunctions = false,
+                IncludeSignals = false,
+                TreatClassNameAsPublicAPI = false
+            };
+
+            var report = handler.AnalyzeProject(options);
+
+            report.Items.Should().NotContain(i => i.Name == "data",
+                "data is referenced from instance.tres (class resolved via ExtResource script)");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void AnalyzeProject_TresResourceFilesConsidered_IsPopulated()
+    {
+        var script = @"extends Resource
+class_name TestRes
+
+@export var value: int = 0
+";
+
+        var tres = @"[gd_resource type=""Resource"" script_class=""TestRes"" format=3]
+
+[resource]
+value = 42
+";
+
+        var tempPath = TestProjectHelper.CreateTempProject(
+            ("test_res.gd", script),
+            ("test_instance.tres", tres));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            using var projectModel = new GDProjectSemanticModel(project);
+            var handler = new GDDeadCodeHandler(projectModel);
+            var options = new GDDeadCodeOptions();
+
+            var report = handler.AnalyzeProject(options);
+
+            report.ResourceFilesConsidered.Should().BeGreaterThan(0,
+                "at least one .tres file should be considered");
+        }
+        finally
+        {
+            TestProjectHelper.DeleteTempProject(tempPath);
+        }
+    }
+
+    #endregion
 }

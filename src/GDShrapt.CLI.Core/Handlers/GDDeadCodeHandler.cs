@@ -74,6 +74,7 @@ public class GDDeadCodeHandler : IGDDeadCodeHandler
                 TotalCallSitesRegistered = report.TotalCallSitesRegistered,
                 CSharpCodeDetected = report.CSharpCodeDetected,
                 CSharpInteropExcluded = report.CSharpInteropExcluded,
+                ResourceFilesConsidered = report.ResourceFilesConsidered,
                 DroppedByReflection = report.DroppedByReflection
             };
         }

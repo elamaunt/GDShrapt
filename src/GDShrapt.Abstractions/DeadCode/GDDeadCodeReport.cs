@@ -144,6 +144,11 @@ public class GDDeadCodeReport
     /// </summary>
     public int CSharpInteropExcluded { get; set; }
 
+    /// <summary>
+    /// Number of .tres resource files that were considered during analysis.
+    /// </summary>
+    public int ResourceFilesConsidered { get; set; }
+
     public GDDeadCodeReport()
     {
     }

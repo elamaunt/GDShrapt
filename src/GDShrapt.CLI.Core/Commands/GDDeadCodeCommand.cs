@@ -63,7 +63,8 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             IncludeUnreachable = _options.IncludeUnreachable,
             ExcludeTestFiles = _options.ExcludeTests,
             CollectEvidence = _options.Explain,
-            CollectDroppedByReflection = true
+            CollectDroppedByReflection = true,
+            TreatClassNameAsPublicAPI = false // CLI has full project visibility
         };
 
         // Analyze based on scope

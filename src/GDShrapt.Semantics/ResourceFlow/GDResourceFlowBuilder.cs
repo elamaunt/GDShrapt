@@ -25,6 +25,8 @@ internal class GDResourceFlowBuilder
 
         AddCodeResourceEdges(graph);
 
+        AddTresResourceEdges(graph);
+
         return graph;
     }
 
@@ -129,6 +131,44 @@ internal class GDResourceFlowBuilder
                     VariableName = load.VariableName,
                     IsConditional = load.IsConditional,
                     LineNumber = load.LineNumber
+                });
+            }
+        }
+    }
+
+    private void AddTresResourceEdges(GDResourceFlowGraph graph)
+    {
+        var tresProvider = _project?.TresResourceProvider;
+        if (tresProvider == null)
+            return;
+
+        foreach (var tresInfo in tresProvider.AllResources)
+        {
+            foreach (var extRes in tresInfo.ExtResources)
+            {
+                if (extRes.Path.EndsWith(".gd") || extRes.Path.EndsWith(".tscn") || extRes.Path.EndsWith(".scn"))
+                    continue;
+
+                var category = GDResourceCategoryResolver.CategoryFromTypeName(extRes.Type);
+                if (category == GDResourceCategory.Other)
+                    category = GDResourceCategoryResolver.CategoryFromExtension(extRes.Path);
+
+                if (!graph.AllResourcePaths.Contains(extRes.Path))
+                {
+                    graph.AddResource(new GDResourceNode
+                    {
+                        ResourcePath = extRes.Path,
+                        ResourceType = extRes.Type,
+                        Category = category
+                    });
+                }
+
+                graph.AddEdge(new GDResourceFlowEdge
+                {
+                    ConsumerPath = tresInfo.ResourcePath,
+                    ResourcePath = extRes.Path,
+                    Source = GDResourceReferenceSource.TresExtResource,
+                    Confidence = GDTypeConfidence.Certain
                 });
             }
         }

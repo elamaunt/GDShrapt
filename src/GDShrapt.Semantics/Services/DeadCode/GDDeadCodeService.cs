@@ -18,6 +18,7 @@ public class GDDeadCodeService
     private readonly GDSignalConnectionRegistry _signalRegistry;
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private Dictionary<string, string>? _autoloadNamesByPath;
+    private readonly Dictionary<GDClassDeclaration, bool> _selfPassedCache = new();
 
 
     /// <summary>
@@ -107,6 +108,7 @@ public class GDDeadCodeService
         report.TotalCallSitesRegistered = _callSiteRegistry?.GetAllTargets().Count() ?? 0;
         report.CSharpCodeDetected = _projectModel.CSharpInterop.HasCSharpCode;
         report.CSharpInteropExcluded = items.Count(i => i.ReasonCode == GDDeadCodeReasonCode.CSI);
+        report.ResourceFilesConsidered = _project.TresResourceProvider?.ResourceCount ?? 0;
         if (droppedByReflection != null)
             report.DroppedByReflection = droppedByReflection;
         return report;
@@ -322,6 +324,13 @@ public class GDDeadCodeService
                     reasonCode = GDDeadCodeReasonCode.CSI;
                 }
 
+                if (!isPrivate && confidence == GDReferenceConfidence.Strict
+                    && IsSelfPassedExternally(classDecl))
+                {
+                    confidence = GDReferenceConfidence.Potential;
+                    reasonCode = GDDeadCodeReasonCode.VDA;
+                }
+
                 var token = variable.Identifier ?? variable.AllTokens.FirstOrDefault();
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
                 {
@@ -480,6 +489,25 @@ public class GDDeadCodeService
                     return true;
             }
         }
+
+        // Check .tres resource files for property references
+        if (HasTresResourceReference(effectiveNames, baseTypes, memberName))
+            return true;
+
+        return false;
+    }
+
+    private bool HasTresResourceReference(List<string> effectiveNames, List<string> baseTypes, string memberName)
+    {
+        var provider = _project.TresResourceProvider;
+        if (provider == null)
+            return false;
+
+        if (provider.HasPropertyReference(effectiveNames, memberName))
+            return true;
+
+        if (baseTypes.Count > 0 && provider.HasPropertyReference(baseTypes, memberName))
+            return true;
 
         return false;
     }
@@ -1342,5 +1370,63 @@ public class GDDeadCodeService
                 };
             }
         }
+    }
+
+    /// <summary>
+    /// Checks if 'self' is passed as an argument in any call expression or
+    /// used in any array literal within the class body.
+    /// When self is passed externally, non-private members may be accessed dynamically.
+    /// Result is cached per class declaration.
+    /// </summary>
+    private bool IsSelfPassedExternally(GDClassDeclaration classDecl)
+    {
+        if (_selfPassedCache.TryGetValue(classDecl, out var cached))
+            return cached;
+
+        var result = CheckSelfPassedExternally(classDecl);
+        _selfPassedCache[classDecl] = result;
+        return result;
+    }
+
+    private static bool CheckSelfPassedExternally(GDClassDeclaration classDecl)
+    {
+        foreach (var node in classDecl.AllNodes)
+        {
+            if (node is GDCallExpression call && call.Parameters != null)
+            {
+                if (ContainsSelfIdentifier(call.Parameters))
+                    return true;
+            }
+            else if (node is GDArrayInitializerExpression array && array.Values != null)
+            {
+                if (ContainsSelfIdentifier(array.Values))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsSelfIdentifier(GDExpressionsList expressions)
+    {
+        foreach (var expr in expressions)
+        {
+            if (expr is GDIdentifierExpression idExpr
+                && idExpr.Identifier?.Sequence == "self")
+                return true;
+
+            // Check nested expressions (e.g., [self] inside a call argument)
+            if (expr != null)
+            {
+                foreach (var nested in expr.AllNodes)
+                {
+                    if (nested is GDIdentifierExpression nestedId
+                        && nestedId.Identifier?.Sequence == "self")
+                        return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

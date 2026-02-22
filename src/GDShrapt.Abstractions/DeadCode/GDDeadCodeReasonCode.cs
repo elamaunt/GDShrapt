@@ -46,4 +46,10 @@ public enum GDDeadCodeReasonCode
 
     /// <summary>C# Singleton Interop — autoloaded member potentially reachable from C# code.</summary>
     CSI,
+
+    /// <summary>Variable may be accessed via Dynamic Access — self is passed to external code.</summary>
+    VDA,
+
+    /// <summary>Member referenced from .tres resource file property.</summary>
+    TRF,
 }

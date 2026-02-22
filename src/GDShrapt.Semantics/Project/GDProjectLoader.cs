@@ -35,7 +35,9 @@ public static class GDProjectLoader
         var project = new GDScriptProject(context, options);
         project.LoadScripts();
         project.LoadScenes();
+        project.LoadResources();
         project.AnalyzeAll();
+        project.ResolveTresClassNames();
 
         return project;
     }
@@ -56,7 +58,9 @@ public static class GDProjectLoader
         var project = new GDScriptProject(context, options);
         project.LoadScripts();
         project.LoadScenes();
+        project.LoadResources();
         project.AnalyzeAll();
+        project.ResolveTresClassNames();
 
         return project;
     }
@@ -86,6 +90,7 @@ public static class GDProjectLoader
         var project = new GDScriptProject(context, options);
         project.LoadScripts();
         project.LoadScenes();
+        project.LoadResources();
 
         return project;
     }

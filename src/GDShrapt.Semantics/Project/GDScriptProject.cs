@@ -33,6 +33,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private readonly IGDFileSystem _fileSystem;
     private readonly IGDLogger _logger;
     private readonly GDSceneTypesProvider? _sceneTypesProvider;
+    private readonly GDTresResourceProvider? _tresResourceProvider;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly GDSceneChangeReanalysisService? _sceneChangeService;
     private readonly bool _enableFileWatcher;
@@ -123,6 +124,11 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public GDSceneTypesProvider? SceneTypesProvider => _sceneTypesProvider;
 
     /// <summary>
+    /// Resource provider for .tres file analysis.
+    /// </summary>
+    internal GDTresResourceProvider? TresResourceProvider => _tresResourceProvider;
+
+    /// <summary>
     /// Call site registry for incremental updates.
     /// May be null if call site tracking is not enabled.
     /// </summary>
@@ -192,6 +198,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         if (options?.EnableSceneTypesProvider == true)
         {
             _sceneTypesProvider = new GDSceneTypesProvider(_context.ProjectPath, _fileSystem, _logger);
+            _tresResourceProvider = new GDTresResourceProvider(_context.ProjectPath, _fileSystem, _logger);
         }
 
         if (options?.EnableCallSiteRegistry == true)
@@ -276,6 +283,23 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public void LoadScenes()
     {
         _sceneTypesProvider?.ReloadAllScenes();
+    }
+
+    /// <summary>
+    /// Loads .tres resource files from the project directory.
+    /// </summary>
+    public void LoadResources()
+    {
+        _tresResourceProvider?.ReloadAllResources();
+    }
+
+    /// <summary>
+    /// Resolves .tres resource class names using loaded scripts.
+    /// Should be called after LoadScripts + LoadResources but before dead code analysis.
+    /// </summary>
+    internal void ResolveTresClassNames()
+    {
+        _tresResourceProvider?.ResolveClassNames(this);
     }
 
     /// <summary>

@@ -44,6 +44,8 @@ public static class GDDeadCodeOutputHelper
         GDDeadCodeReasonCode.UCR => "Unreachable code",
         GDDeadCodeReasonCode.ENU => "Enum value never used",
         GDDeadCodeReasonCode.ICU => "Inner class unused",
+        GDDeadCodeReasonCode.VDA => "Variable may be accessed dynamically (self passed externally)",
+        GDDeadCodeReasonCode.TRF => "Member referenced from .tres resource file",
         _ => code.ToString()
     };
 
@@ -152,6 +154,9 @@ public static class GDDeadCodeOutputHelper
 
         if (report.CSharpInteropExcluded > 0)
             formatter.WriteMessage(output, GDAnsiColors.Dim($"  C# interop excluded:           {report.CSharpInteropExcluded}"));
+
+        if (report.ResourceFilesConsidered > 0)
+            formatter.WriteMessage(output, GDAnsiColors.Dim($"  Resource files (.tres):         {report.ResourceFilesConsidered}"));
     }
 
     /// <summary>
