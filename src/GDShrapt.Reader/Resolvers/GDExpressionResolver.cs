@@ -191,10 +191,28 @@ namespace GDShrapt.Reader
             }
             else
             {
+                if (_expression is GDIdentifierExpression idExpr
+                    && idExpr.Identifier?.Sequence == "r"
+                    && (c == '"' || c == '\''))
+                {
+                    _expression = null;
+                    var rawExpr = new GDRawStringExpression();
+                    rawExpr.RawPrefix = new GDRawStringPrefix();
+                    rawExpr.TypedForm.State = GDRawStringExpression.State.String;
+                    PushAndSave(state, rawExpr);
+                    state.PassChar(c);
+                    return;
+                }
+
                 if (_expression is GDMethodExpression)
                 {
-                    CompleteExpression(state);
-                    return;
+                    if (c != '.' && c != '(' && c != '[')
+                    {
+                        CompleteExpression(state);
+                        FlushSplitTokens(state);
+                        state.PassChar(c);
+                        return;
+                    }
                 }
 
                 if (CheckKeywords(state))

@@ -1,3 +1,4 @@
+using System.Linq;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -90,6 +91,13 @@ public class GDSymbolInfo
     /// True if this is a static symbol.
     /// </summary>
     public bool IsStatic { get; }
+
+    /// <summary>
+    /// The best available position token for this symbol.
+    /// Prefers the declaration identifier; falls back to the first token of the declaration node.
+    /// </summary>
+    public GDSyntaxToken? PositionToken => DeclarationIdentifier
+        ?? DeclarationNode?.AllTokens.FirstOrDefault();
 
     /// <summary>
     /// Creates a symbol info from a GDSymbol with additional semantic context.

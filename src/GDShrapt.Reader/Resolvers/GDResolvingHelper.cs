@@ -476,9 +476,9 @@ namespace GDShrapt.Reader
             state.PushAndPass(new GDTypeResolver(receiver), c);
         }
 
-        public static void ResolveStringPart(this ITokenOrSkipReceiver<GDStringPart> receiver, char c, GDReadingState state, GDStringBoundingChar bounder)
+        public static void ResolveStringPart(this ITokenOrSkipReceiver<GDStringPart> receiver, char c, GDReadingState state, GDStringBoundingChar bounder, bool isRawString = false)
         {
-            state.PushAndPass(new GDStringPartResolver(receiver, bounder), c);
+            state.PushAndPass(new GDStringPartResolver(receiver, bounder, isRawString), c);
         }
 
         public static bool ResolveSingleQuotas(this ITokenOrSkipReceiver<GDSingleQuotas> receiver, char c, GDReadingState state)

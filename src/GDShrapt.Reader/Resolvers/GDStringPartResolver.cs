@@ -6,6 +6,7 @@ namespace GDShrapt.Reader
     {
         readonly GDStringBoundingChar _bounder;
         bool _triple;
+        readonly bool _isRawString;
 
         int _boundingCharsCounter;
         bool _escapeNextChar;
@@ -14,11 +15,12 @@ namespace GDShrapt.Reader
 
         readonly StringBuilder _stringBuilder = new StringBuilder();
 
-        public GDStringPartResolver(ITokenOrSkipReceiver<GDStringPart> owner, GDStringBoundingChar bounder) 
+        public GDStringPartResolver(ITokenOrSkipReceiver<GDStringPart> owner, GDStringBoundingChar bounder, bool isRawString = false)
             : base(owner)
         {
             Owner = owner;
             _bounder = bounder;
+            _isRawString = isRawString;
             _triple = bounder == GDStringBoundingChar.TripleSingleQuotas || bounder == GDStringBoundingChar.TripleDoubleQuotas;
         }
 
@@ -156,6 +158,12 @@ namespace GDShrapt.Reader
 
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
+            if (_isRawString)
+            {
+                _stringBuilder.Append('\\');
+                return;
+            }
+
             if (_bounder == GDStringBoundingChar.TripleSingleQuotas || _bounder == GDStringBoundingChar.SingleQuotas)
             {
                 for (int i = 0; i < _boundingCharsCounter; i++)

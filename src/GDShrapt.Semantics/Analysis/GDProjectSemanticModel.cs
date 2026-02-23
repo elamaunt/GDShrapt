@@ -65,6 +65,9 @@ public class GDProjectSemanticModel : IDisposable
     private readonly Lazy<GDSecurityScanningService> _security;
     private readonly Lazy<IGDRuntimeProvider?> _runtimeProvider;
     private readonly Lazy<GDCSharpInteropIndex> _csharpInterop;
+    private readonly Lazy<GDCallableStringFlowRegistry> _callableStringFlowRegistry;
+    private readonly Lazy<GDExpressionDispatchRegistry> _expressionDispatchRegistry;
+    private readonly Lazy<GDDynamicEmitAnalyzer> _dynamicEmitAnalyzer;
 
     /// <summary>
     /// The underlying project.
@@ -196,6 +199,9 @@ public class GDProjectSemanticModel : IDisposable
         _signalRegistry = new Lazy<GDSignalConnectionRegistry>(InitializeSignalRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _containerRegistry = new Lazy<GDClassContainerRegistry>(InitializeContainerRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
         _dependencyGraph = new Lazy<GDTypeDependencyGraph>(InitializeDependencyGraph, LazyThreadSafetyMode.ExecutionAndPublication);
+        _callableStringFlowRegistry = new Lazy<GDCallableStringFlowRegistry>(InitializeCallableStringFlowRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
+        _expressionDispatchRegistry = new Lazy<GDExpressionDispatchRegistry>(InitializeExpressionDispatchRegistry, LazyThreadSafetyMode.ExecutionAndPublication);
+        _dynamicEmitAnalyzer = new Lazy<GDDynamicEmitAnalyzer>(() => new GDDynamicEmitAnalyzer(_project, _project.CallSiteRegistry), LazyThreadSafetyMode.ExecutionAndPublication);
 
         if (_subscribeToChanges)
         {
@@ -239,6 +245,103 @@ public class GDProjectSemanticModel : IDisposable
         }
 
         return registry;
+    }
+
+    private GDCallableStringFlowRegistry InitializeCallableStringFlowRegistry()
+    {
+        var registry = new GDCallableStringFlowRegistry();
+        var resolver = new GDStringValueResolver(_project);
+        var collector = new GDCallableStringFlowCollector(_project, resolver);
+
+        foreach (var entry in collector.CollectAll())
+            registry.Register(entry);
+
+        return registry;
+    }
+
+    private GDExpressionDispatchRegistry InitializeExpressionDispatchRegistry()
+    {
+        var registry = new GDExpressionDispatchRegistry();
+        var resolver = new GDStringValueResolver(_project);
+        var collector = new GDExpressionDispatchCollector(_project, resolver);
+
+        foreach (var entry in collector.CollectAll())
+            registry.Register(entry);
+
+        return registry;
+    }
+
+    internal bool IsMethodReferencedViaCallableStringFlow(
+        string methodName, IReadOnlyList<string> effectiveClassNames)
+        => _callableStringFlowRegistry.Value.IsMethodReferenced(methodName, effectiveClassNames);
+
+    internal bool IsMethodReferencedViaExpressionDispatch(
+        string methodName, IReadOnlyList<string> effectiveClassNames)
+        => _expressionDispatchRegistry.Value.IsMethodReferenced(methodName, effectiveClassNames);
+
+    internal bool IsSignalEmittedDynamically(
+        GDScriptFile file, GDClassDeclaration classDecl,
+        string signalName, IReadOnlyList<string> effectiveNames)
+        => _dynamicEmitAnalyzer.Value.IsSignalEmittedDynamically(file, classDecl, signalName, effectiveNames);
+
+    /// <summary>
+    /// Gets the full inheritance chain of type names for a script file.
+    /// Walks script-based parents via BaseTypeName → GetScriptByTypeName,
+    /// then continues via RuntimeProvider.GetBaseType for built-in types.
+    /// Does not include the file's own type name.
+    /// </summary>
+    public IReadOnlyList<string> GetInheritanceChain(GDScriptFile file)
+    {
+        var chain = new List<string>();
+        var model = GetSemanticModel(file);
+        if (model == null)
+            return chain;
+
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var current = model.BaseTypeName;
+
+        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        {
+            chain.Add(current);
+            var parentFile = _project.GetScriptByTypeName(current);
+            if (parentFile == null)
+                break;
+            var parentModel = GetSemanticModel(parentFile);
+            if (parentModel == null)
+                break;
+            current = parentModel.BaseTypeName;
+        }
+
+        if (RuntimeProvider != null && chain.Count > 0)
+        {
+            current = RuntimeProvider.GetBaseType(chain[chain.Count - 1]);
+            while (!string.IsNullOrEmpty(current) && visited.Add(current))
+            {
+                chain.Add(current);
+                current = RuntimeProvider.GetBaseType(current);
+            }
+        }
+
+        return chain;
+    }
+
+    /// <summary>
+    /// Checks if a file's class inherits from a specific type name anywhere in the chain.
+    /// Case-insensitive.
+    /// </summary>
+    public bool IsSubclassOf(GDScriptFile file, string baseTypeName)
+    {
+        if (string.IsNullOrEmpty(baseTypeName))
+            return false;
+
+        var chain = GetInheritanceChain(file);
+        foreach (var typeName in chain)
+        {
+            if (string.Equals(typeName, baseTypeName, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

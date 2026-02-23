@@ -715,6 +715,302 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     internal GDMethodDeclaration? GetReadyMethod()
         => _onreadyService.GetReadyMethod();
 
+    internal static bool HasWarningIgnore(GDClassMember member, string warningName)
+    {
+        foreach (var attr in member.AttributesDeclaredBefore)
+        {
+            if (attr.Attribute == null || !attr.Attribute.IsWarningIgnore())
+                continue;
+
+            var parameters = attr.Attribute.Parameters;
+            if (parameters == null)
+                continue;
+
+            foreach (var param in parameters)
+            {
+                if (param is GDStringExpression strExpr && strExpr.String?.Sequence == warningName)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    internal bool IsPropertyAccessor(string methodName)
+    {
+        var classDecl = _scriptFile.Class;
+        if (classDecl == null)
+            return false;
+
+        foreach (var varDecl in classDecl.Members.OfType<GDVariableDeclaration>())
+        {
+            if (varDecl.FirstAccessorDeclarationNode is GDSetAccessorMethodDeclaration setter &&
+                setter.Identifier?.Sequence == methodName)
+                return true;
+
+            if (varDecl.FirstAccessorDeclarationNode is GDGetAccessorMethodDeclaration getter &&
+                getter.Identifier?.Sequence == methodName)
+                return true;
+
+            if (varDecl.SecondAccessorDeclarationNode is GDSetAccessorMethodDeclaration setter2 &&
+                setter2.Identifier?.Sequence == methodName)
+                return true;
+
+            if (varDecl.SecondAccessorDeclarationNode is GDGetAccessorMethodDeclaration getter2 &&
+                getter2.Identifier?.Sequence == methodName)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a variable has the @export or @export_* annotation.
+    /// </summary>
+    public bool IsExportVariable(string variableName)
+    {
+        if (string.IsNullOrEmpty(variableName))
+            return false;
+
+        var symbol = FindSymbol(variableName);
+        if (symbol?.DeclarationNode is not GDVariableDeclaration varDecl)
+            return false;
+
+        foreach (var attr in varDecl.AttributesDeclaredBefore)
+        {
+            if (attr.Attribute != null && attr.Attribute.IsExportAnnotation())
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if 'self' is passed as an argument to any call expression
+    /// or used in any array literal within the class body.
+    /// </summary>
+    public bool IsSelfPassedExternally()
+    {
+        if (_selfPassedExternally.HasValue)
+            return _selfPassedExternally.Value;
+
+        _selfPassedExternally = CheckSelfPassedExternally();
+        return _selfPassedExternally.Value;
+    }
+
+    private bool? _selfPassedExternally;
+
+    private bool CheckSelfPassedExternally()
+    {
+        var classDecl = _scriptFile?.Class;
+        if (classDecl == null)
+            return false;
+
+        foreach (var node in classDecl.AllNodes)
+        {
+            if (node is GDCallExpression call && call.Parameters != null)
+            {
+                if (ContainsSelfIdentifier(call.Parameters))
+                    return true;
+            }
+            else if (node is GDArrayInitializerExpression array && array.Values != null)
+            {
+                if (ContainsSelfIdentifier(array.Values))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsSelfIdentifier(GDExpressionsList expressions)
+    {
+        foreach (var expr in expressions)
+        {
+            if (expr is GDIdentifierExpression idExpr
+                && idExpr.Identifier?.Sequence == "self")
+                return true;
+
+            if (expr != null)
+            {
+                foreach (var nested in expr.AllNodes)
+                {
+                    if (nested is GDIdentifierExpression nestedId
+                        && nestedId.Identifier?.Sequence == "self")
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the declaration of a named symbol has @warning_ignore for the given warning.
+    /// </summary>
+    public bool HasWarningIgnore(string symbolName, string warningName)
+    {
+        if (string.IsNullOrEmpty(symbolName) || string.IsNullOrEmpty(warningName))
+            return false;
+
+        var symbol = FindSymbol(symbolName);
+        if (symbol?.DeclarationNode is GDClassMember member)
+            return HasWarningIgnore(member, warningName);
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a signal is emitted within this file (signal.emit() or emit_signal("name")).
+    /// </summary>
+    public bool IsSignalEmitted(string signalName)
+    {
+        if (string.IsNullOrEmpty(signalName))
+            return false;
+
+        var symbol = FindSymbol(signalName);
+        if (symbol == null)
+            return false;
+
+        var refs = GetReferencesTo(symbol);
+        foreach (var reference in refs)
+        {
+            if (IsSignalEmitReference(reference))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsSignalEmitReference(GDReference reference)
+    {
+        var node = reference.ReferenceNode;
+        if (node == null)
+            return false;
+
+        var parent = node.Parent;
+        if (parent is GDMemberOperatorExpression memberOp &&
+            memberOp.Identifier?.Sequence == "emit")
+        {
+            if (memberOp.Parent is GDCallExpression)
+                return true;
+        }
+
+        if (node is GDStringExpression || node is GDStringNameExpression)
+        {
+            var callExpr = FindParentCallExpression(node);
+            if (callExpr != null)
+            {
+                var callee = GetCalleeMethodName(callExpr);
+                if (callee == "emit_signal")
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static GDCallExpression? FindParentCallExpression(GDNode node)
+    {
+        var current = node.Parent;
+        while (current != null)
+        {
+            if (current is GDCallExpression call)
+                return call;
+            current = current.Parent;
+        }
+        return null;
+    }
+
+    private static string? GetCalleeMethodName(GDCallExpression callExpr)
+    {
+        if (callExpr.CallerExpression is GDIdentifierExpression idExpr)
+            return idExpr.Identifier?.Sequence;
+        if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
+            return memberOp.Identifier?.Sequence;
+        return null;
+    }
+
+    /// <summary>
+    /// Finds unreachable statements in a method (after return/break/continue).
+    /// </summary>
+    public IReadOnlyList<GDUnreachableCodeInfo> FindUnreachableStatements(string methodName)
+    {
+        if (string.IsNullOrEmpty(methodName))
+            return Array.Empty<GDUnreachableCodeInfo>();
+
+        var symbol = FindSymbol(methodName);
+        if (symbol?.DeclarationNode is not GDMethodDeclaration method)
+            return Array.Empty<GDUnreachableCodeInfo>();
+
+        var statements = method.Statements;
+        if (statements == null)
+            return Array.Empty<GDUnreachableCodeInfo>();
+
+        var results = new List<GDUnreachableCodeInfo>();
+        bool terminatorEncountered = false;
+
+        foreach (var stmt in statements)
+        {
+            if (terminatorEncountered)
+            {
+                if (IsDanglingMemberChainContinuation(stmt))
+                    continue;
+
+                var firstToken = stmt.AllTokens.FirstOrDefault();
+                var lastToken = stmt.AllTokens.LastOrDefault();
+                if (firstToken != null)
+                {
+                    results.Add(new GDUnreachableCodeInfo(
+                        firstToken.StartLine,
+                        firstToken.StartColumn,
+                        lastToken?.EndLine ?? firstToken.EndLine,
+                        lastToken?.EndColumn ?? firstToken.EndColumn));
+                }
+                continue;
+            }
+
+            if (stmt is GDExpressionStatement exprStmt)
+            {
+                if (exprStmt.Expression is GDReturnExpression ||
+                    exprStmt.Expression is GDBreakExpression ||
+                    exprStmt.Expression is GDContinueExpression)
+                {
+                    terminatorEncountered = true;
+                }
+            }
+            else if (stmt is GDReturnExpression ||
+                     stmt is GDBreakExpression ||
+                     stmt is GDContinueExpression)
+            {
+                terminatorEncountered = true;
+            }
+        }
+
+        return results;
+    }
+
+    private static bool IsDanglingMemberChainContinuation(GDNode stmt)
+    {
+        GDExpression? expr = null;
+        if (stmt is GDExpressionStatement exprStmt)
+            expr = exprStmt.Expression;
+
+        if (expr == null)
+            return false;
+
+        if (expr is GDCallExpression callExpr &&
+            callExpr.CallerExpression is GDMemberOperatorExpression memberOp &&
+            memberOp.CallerExpression == null)
+            return true;
+
+        if (expr is GDMemberOperatorExpression directMemberOp &&
+            directMemberOp.CallerExpression == null)
+            return true;
+
+        return false;
+    }
+
     /// <summary>
     /// Checks if a variable is an inherited property from the extends clause.
     /// </summary>

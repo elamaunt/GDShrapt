@@ -46,7 +46,7 @@ namespace GDShrapt.Reader
                     {
                         // In expression context (e.g., lambda inside call), pass stop chars up
                         // This allows lambdas inside GDExpressionsList to properly terminate on comma/bracket
-                        if (_inExpressionContext)
+                        if (_inExpressionContext || state.ExpressionContextDepth > 0)
                         {
                             state.PopAndPass(c);
                             return;
@@ -64,7 +64,7 @@ namespace GDShrapt.Reader
                 }
                 else
                 {
-                    if (_inExpressionContext && c.IsExpressionStopChar())
+                    if ((_inExpressionContext || state.ExpressionContextDepth > 0) && c.IsExpressionStopChar())
                     {
                         state.PopAndPass(c);
                         return;

@@ -168,5 +168,7 @@
         void Left(GDRestExpression e);
         void Visit(GDStringNameExpression e);
         void Left(GDStringNameExpression e);
+        void Visit(GDRawStringExpression e);
+        void Left(GDRawStringExpression e);
     }
 }

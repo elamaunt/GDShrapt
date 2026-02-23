@@ -1186,6 +1186,27 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         case "set":
                             TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Property, methodName);
                             break;
+
+                        default:
+                            // TypesMap fallback: detect StringName callback parameters from Godot API metadata
+                            if (_runtimeProvider != null && !string.IsNullOrEmpty(callerType))
+                            {
+                                var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
+                                if (memberInfo?.Parameters != null)
+                                {
+                                    for (int i = 0; i < memberInfo.Parameters.Count; i++)
+                                    {
+                                        var param = memberInfo.Parameters[i];
+                                        if (param.Type == "StringName")
+                                        {
+                                            var kind = InferSymbolKindFromStringNameParam(param.Name, methodName);
+                                            if (kind != GDSymbolKind.Variable) // Variable = Unknown
+                                                TrackStringLiteralArg(callExpression, i, kind, methodName);
+                                        }
+                                    }
+                                }
+                            }
+                            break;
                     }
                 }
             }
@@ -1314,6 +1335,33 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var declaringType = FindDeclaringTypeForMember(typeName, memberName) ?? typeName;
 
         return GDSymbolInfo.BuiltIn(memberInfo, declaringType);
+    }
+
+    /// <summary>
+    /// Infers the symbol kind from a StringName parameter name and method name.
+    /// Returns GDSymbolKind.Variable as a sentinel for "unknown / don't track".
+    /// </summary>
+    private static GDSymbolKind InferSymbolKindFromStringNameParam(string paramName, string methodName)
+    {
+        var lower = paramName.ToLowerInvariant();
+
+        if (lower.Contains("method") || lower.Contains("func") || lower == "receiver_func")
+            return GDSymbolKind.Method;
+
+        if (lower.Contains("signal"))
+            return GDSymbolKind.Signal;
+
+        if (lower.Contains("property"))
+            return GDSymbolKind.Property;
+
+        var lowerMethod = methodName.ToLowerInvariant();
+        if (lowerMethod.StartsWith("call") || lowerMethod.Contains("method"))
+            return GDSymbolKind.Method;
+
+        if (lowerMethod.Contains("signal") || lowerMethod.Contains("emit"))
+            return GDSymbolKind.Signal;
+
+        return GDSymbolKind.Variable; // Unknown — don't track
     }
 
     /// <summary>

@@ -41,6 +41,12 @@ namespace GDShrapt.Reader
         /// </summary>
         public int? IntendationInSpacesCount { get; set; } = null;
 
+        /// <summary>
+        /// Depth counter for expression context (e.g., lambda bodies).
+        /// When > 0, nested statement resolvers should pass expression stop chars upward.
+        /// </summary>
+        internal int ExpressionContextDepth { get; set; }
+
         #region Pending Chars Buffering
 
         /// <summary>

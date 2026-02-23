@@ -7,14 +7,16 @@
         bool _firstSlashChecking;
         bool _ended;
         readonly GDStringBoundingChar _bounder;
+        readonly bool _isRawString;
 
         public GDStringPartsList()
         {
         }
 
-        internal GDStringPartsList(GDStringBoundingChar bounder)
+        internal GDStringPartsList(GDStringBoundingChar bounder, bool isRawString = false)
         {
             _bounder = bounder;
+            _isRawString = isRawString;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -25,7 +27,7 @@
                 return;
             }
 
-            this.ResolveStringPart(c, state, _bounder);
+            this.ResolveStringPart(c, state, _bounder, _isRawString);
         }
 
         internal override void HandleNewLineChar(GDReadingState state)
@@ -36,7 +38,7 @@
                 return;
             }
 
-            this.ResolveStringPart('\n', state, _bounder);
+            this.ResolveStringPart('\n', state, _bounder, _isRawString);
         }
 
         internal override void HandleCarriageReturnChar(GDReadingState state)
@@ -47,11 +49,17 @@
                 return;
             }
 
-            this.ResolveStringPart('\r', state, _bounder);
+            this.ResolveStringPart('\r', state, _bounder, _isRawString);
         }
 
         internal override void HandleLeftSlashChar(GDReadingState state)
         {
+            if (_isRawString)
+            {
+                HandleChar('\\', state);
+                return;
+            }
+
             if (Count == 0)
             {
                 _firstSlashChecking = true;

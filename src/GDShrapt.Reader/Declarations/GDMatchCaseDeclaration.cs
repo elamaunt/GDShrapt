@@ -162,7 +162,7 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.Colon))
             {
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 Colon = token;
                 return;
             }
@@ -174,7 +174,7 @@ namespace GDShrapt.Reader
         {
             if (_form.IsOrLowerState(State.Colon))
             {
-                _form.State = State.Statements;
+                _form.State = State.Expression;
                 return;
             }
 

@@ -26,6 +26,8 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
+                if (_inExpressionContext)
+                    state.ExpressionContextDepth++;
                 var resolver = new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext);
                 resolver.AllowZeroIntendationOnFirstLine = _allowZeroIndentationOnFirstLine;
                 state.Push(resolver);
@@ -33,6 +35,8 @@ namespace GDShrapt.Reader
                 return;
             }
 
+            if (_inExpressionContext)
+                state.ExpressionContextDepth--;
             state.PopAndPass(c);
         }
 
@@ -41,6 +45,8 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
+                if (_inExpressionContext)
+                    state.ExpressionContextDepth++;
                 var resolver = new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext);
                 resolver.AllowZeroIntendationOnFirstLine = _allowZeroIndentationOnFirstLine;
                 state.Push(resolver);
@@ -48,6 +54,8 @@ namespace GDShrapt.Reader
                 return;
             }
 
+            if (_inExpressionContext)
+                state.ExpressionContextDepth--;
             state.PopAndPassNewLine();
         }
 
@@ -56,6 +64,8 @@ namespace GDShrapt.Reader
             if (!_completed)
             {
                 _completed = true;
+                if (_inExpressionContext)
+                    state.ExpressionContextDepth++;
                 var resolver = new GDStatementsResolver(this, LineIntendationThreshold, _inExpressionContext);
                 resolver.AllowZeroIntendationOnFirstLine = _allowZeroIndentationOnFirstLine;
                 state.Push(resolver);
@@ -63,6 +73,8 @@ namespace GDShrapt.Reader
                 return;
             }
 
+            if (_inExpressionContext)
+                state.ExpressionContextDepth--;
             state.PopAndPassCarriageReturnChar();
         }
 

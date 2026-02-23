@@ -811,5 +811,15 @@
         {
             // Nothing
         }
+
+        public virtual void Visit(GDRawStringExpression e)
+        {
+            // Nothing
+        }
+
+        public virtual void Left(GDRawStringExpression e)
+        {
+            // Nothing
+        }
     }
 }

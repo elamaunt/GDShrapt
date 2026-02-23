@@ -351,7 +351,10 @@ namespace GDShrapt.Reader
                 return;
 
             for (int i = 0; i < _sequenceBuilder.Length; i++)
+            {
+                state.AdvanceInputPosition();
                 state.PassChar(_sequenceBuilder[i]);
+            }
 
             ResetIntendation();
         }

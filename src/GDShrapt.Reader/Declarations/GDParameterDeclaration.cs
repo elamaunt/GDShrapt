@@ -216,7 +216,7 @@
         {
             if (_form.IsOrLowerState(State.Type))
             {
-                _form.State = State.Completed;
+                _form.State = State.Assign;
                 return;
             }
 

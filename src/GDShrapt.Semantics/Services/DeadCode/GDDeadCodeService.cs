@@ -1,5 +1,4 @@
 using GDShrapt.Abstractions;
-using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +7,7 @@ namespace GDShrapt.Semantics;
 
 /// <summary>
 /// Service for detecting dead code in GDScript projects.
-/// Uses semantic analysis with GDProjectSemanticModel for accurate detection.
+/// Consumes only semantic API — no direct AST access.
 /// </summary>
 public class GDDeadCodeService
 {
@@ -16,9 +15,7 @@ public class GDDeadCodeService
     private readonly GDScriptProject _project;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly GDSignalConnectionRegistry _signalRegistry;
-    private readonly IGDRuntimeProvider? _runtimeProvider;
     private Dictionary<string, string>? _autoloadNamesByPath;
-    private readonly Dictionary<GDClassDeclaration, bool> _selfPassedCache = new();
 
 
     /// <summary>
@@ -32,7 +29,6 @@ public class GDDeadCodeService
         _project = projectModel.Project;
         _callSiteRegistry = _project.CallSiteRegistry;
         _signalRegistry = projectModel.SignalConnectionRegistry;
-        _runtimeProvider = projectModel.RuntimeProvider;
     }
 
     /// <summary>
@@ -46,8 +42,6 @@ public class GDDeadCodeService
             _autoloadNamesByPath = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in _project.AutoloadEntries)
             {
-                // Resolve res:// path to full path, normalize to forward slashes
-                // to match GDScriptReference.NormalizePath convention
                 var resPath = entry.Path;
                 if (resPath.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
                     resPath = resPath.Substring(6);
@@ -140,15 +134,12 @@ public class GDDeadCodeService
         if (options.ShouldSkipFile(file.FullPath ?? ""))
             yield break;
 
-        var classDecl = file.Class;
-        var className = file.TypeName ?? classDecl.ClassName?.Identifier?.Sequence;
+        var className = file.TypeName;
         var effectiveNames = GetEffectiveClassNames(file, className);
 
-        // C# interop: autoloaded scripts in mixed projects get CSI downgrade
         bool isAutoload = GetAutoloadName(file) != null;
         bool csharpReachable = isAutoload && _projectModel.CSharpInterop.HasCSharpCode;
 
-        // Get semantic model for this file
         var semanticModel = _projectModel.GetSemanticModel(file);
         if (semanticModel == null)
         {
@@ -157,128 +148,100 @@ public class GDDeadCodeService
                 "Ensure the project is loaded with semantic analysis enabled.");
         }
 
-        // 1. Find unused variables
         if (options.IncludeVariables)
         {
-            foreach (var item in FindUnusedVariables(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
+            foreach (var item in FindUnusedVariables(file, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
                 yield return item;
         }
 
-        // 2. Find unused functions
         if (options.IncludeFunctions)
         {
-            foreach (var item in FindUnusedFunctions(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
+            foreach (var item in FindUnusedFunctions(file, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
                 yield return item;
         }
 
-        // 3. Find unused signals
         if (options.IncludeSignals)
         {
-            foreach (var item in FindUnusedSignals(file, classDecl, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
+            foreach (var item in FindUnusedSignals(file, effectiveNames, semanticModel, options, droppedByReflection, csharpReachable))
                 yield return item;
         }
 
-        // 4. Find unused parameters
         if (options.IncludeParameters)
         {
-            foreach (var item in FindUnusedParameters(file, classDecl, semanticModel, options))
+            foreach (var item in FindUnusedParameters(file, semanticModel, options))
                 yield return item;
         }
 
-        // 5. Find unreachable code
         if (options.IncludeUnreachable)
         {
-            foreach (var item in FindUnreachableCode(file, classDecl, options))
+            foreach (var item in FindUnreachableCode(file, semanticModel, options))
                 yield return item;
         }
 
-        // 6. Find unused constants
         if (options.IncludeConstants)
         {
-            foreach (var item in FindUnusedConstants(file, classDecl, effectiveNames, semanticModel, options, csharpReachable))
+            foreach (var item in FindUnusedConstants(file, effectiveNames, semanticModel, options, csharpReachable))
                 yield return item;
         }
 
-        // 7. Find unused enum values
         if (options.IncludeEnumValues)
         {
-            foreach (var item in FindUnusedEnumValues(file, classDecl, semanticModel, options))
+            foreach (var item in FindUnusedEnumValues(file, semanticModel, options))
                 yield return item;
         }
 
-        // 8. Find unused inner classes
         if (options.IncludeInnerClasses)
         {
-            foreach (var item in FindUnusedInnerClasses(file, classDecl, semanticModel, options))
+            foreach (var item in FindUnusedInnerClasses(file, semanticModel, options))
                 yield return item;
         }
     }
 
-    /// <summary>
-    /// Finds unused class-level variables using semantic reference tracking.
-    /// Properly handles shadowing by using scope-aware symbol resolution.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedVariables(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options,
         List<GDReflectionDroppedItem>? droppedByReflection,
         bool csharpReachable = false)
     {
-        // Get all class-level variables (excluding constants - handled separately)
-        var variables = classDecl.Members
-            .OfType<GDVariableDeclaration>()
-            .Where(v => !v.IsConstant)
-            .ToList();
-
-        foreach (var variable in variables)
+        foreach (var symbol in semanticModel.GetVariables())
         {
-            var varName = variable.Identifier?.Sequence;
+            var varName = symbol.Name;
             if (string.IsNullOrEmpty(varName))
+                continue;
+
+            // Constants are handled separately
+            if (symbol.Kind == GDSymbolKind.Constant)
                 continue;
 
             bool isPrivate = varName.StartsWith("_");
 
-            // Skip private if not included
             if (isPrivate && !options.IncludePrivate)
                 continue;
 
-            // Find the symbol for this variable
-            var symbol = semanticModel.FindSymbol(varName);
-            if (symbol == null)
-                continue;
-
-            // Get all references to this symbol
             var references = semanticModel.GetReferencesTo(symbol);
-
-            // Filter to only reads (not writes/assignments)
-            // A variable that is only written to is still dead code
             var reads = references.Where(r => r.IsRead).ToList();
 
             if (reads.Count == 0)
             {
-                // Check cross-file access using all effective names
-                // (includes both TypeName and autoload name)
                 if (HasCrossFileMemberAccess(file, effectiveNames, varName))
                     continue;
 
-                // Check if variable is reachable via get_property_list() reflection
                 var (propReflReachable, propReflSite) = IsReachableViaReflection(
                     file, effectiveNames, varName, GDReflectionKind.Property);
                 if (propReflReachable)
                 {
                     if (droppedByReflection != null && propReflSite != null)
                     {
-                        var varToken = variable.Identifier ?? variable.AllTokens.FirstOrDefault();
+                        var posToken = symbol.PositionToken;
                         droppedByReflection.Add(new GDReflectionDroppedItem
                         {
                             Kind = GDDeadCodeKind.Variable,
                             Name = varName,
                             FilePath = file.FullPath ?? "",
-                            Line = varToken?.StartLine ?? 0,
-                            Column = varToken?.StartColumn ?? 0,
+                            Line = posToken?.StartLine ?? 0,
+                            Column = posToken?.StartColumn ?? 0,
                             ReflectionKind = propReflSite.Kind,
                             ReflectionSiteFile = propReflSite.FilePath,
                             ReflectionSiteLine = propReflSite.Line,
@@ -290,19 +253,8 @@ public class GDDeadCodeService
                     continue;
                 }
 
-                // Check for @export/@onready annotations → downgrade to Potential
-                bool isExport = false;
-                bool isOnready = false;
-                foreach (var attr in variable.AttributesDeclaredBefore)
-                {
-                    var attrName = attr.Attribute?.Name?.Sequence;
-                    if (attrName == null) continue;
-                    if (attrName == "export" || attrName.StartsWith("export_"))
-                        isExport = true;
-                    else if (attrName == "onready")
-                        isOnready = true;
-                }
-
+                bool isExport = semanticModel.IsExportVariable(varName);
+                bool isOnready = semanticModel.IsOnreadyVariable(varName);
                 bool hasExportOrOnready = isExport || isOnready;
                 var confidence = hasExportOrOnready
                     ? GDReferenceConfidence.Potential
@@ -325,13 +277,13 @@ public class GDDeadCodeService
                 }
 
                 if (!isPrivate && confidence == GDReferenceConfidence.Strict
-                    && IsSelfPassedExternally(classDecl))
+                    && semanticModel.IsSelfPassedExternally())
                 {
                     confidence = GDReferenceConfidence.Potential;
                     reasonCode = GDDeadCodeReasonCode.VDA;
                 }
 
-                var token = variable.Identifier ?? variable.AllTokens.FirstOrDefault();
+                var token = symbol.PositionToken;
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
                 {
                     Line = token?.StartLine ?? 0,
@@ -348,56 +300,44 @@ public class GDDeadCodeService
         }
     }
 
-    /// <summary>
-    /// Finds unused functions using semantic call site registry and reference tracking.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedFunctions(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options,
         List<GDReflectionDroppedItem>? droppedByReflection,
         bool csharpReachable = false)
     {
-        var methods = classDecl.Members
-            .OfType<GDMethodDeclaration>()
-            .ToList();
-
-        foreach (var method in methods)
+        foreach (var symbol in semanticModel.GetMethods())
         {
-            var methodName = method.Identifier?.Sequence;
+            var methodName = symbol.Name;
             if (string.IsNullOrEmpty(methodName))
                 continue;
 
-            // Skip Godot virtual methods (configurable via options)
             if (options.ShouldSkipMethod(methodName))
                 continue;
 
-            // Skip framework-invoked methods (e.g., test_ in test classes)
-            if (IsFrameworkMethod(file, classDecl, methodName, options))
+            if (IsFrameworkMethod(file, methodName, options))
                 continue;
 
             bool isPrivate = methodName.StartsWith("_") && !options.ShouldSkipMethod(methodName);
 
-            // Skip private if not included
             if (isPrivate && !options.IncludePrivate)
                 continue;
 
-            // Check if method has any callers
             var (hasCallers, confidence, reason, reflSite) = CheckMethodCallers(
                 file, effectiveNames, methodName, semanticModel, options);
 
             if (hasCallers && reflSite != null && droppedByReflection != null)
             {
-                var identToken = method.Identifier ?? method.FuncKeyword ?? method.AllTokens.FirstOrDefault();
+                var posToken = symbol.PositionToken;
                 droppedByReflection.Add(new GDReflectionDroppedItem
                 {
                     Kind = GDDeadCodeKind.Function,
                     Name = methodName,
                     FilePath = file.FullPath ?? "",
-                    Line = identToken?.StartLine ?? 0,
-                    Column = identToken?.StartColumn ?? 0,
+                    Line = posToken?.StartLine ?? 0,
+                    Column = posToken?.StartColumn ?? 0,
                     ReflectionKind = reflSite.Kind,
                     ReflectionSiteFile = reflSite.FilePath,
                     ReflectionSiteLine = reflSite.Line,
@@ -426,14 +366,14 @@ public class GDDeadCodeService
                     reasonCode = GDDeadCodeReasonCode.CSI;
                 }
 
-                // Use Identifier for accurate line position
-                var identToken = method.Identifier ?? method.FuncKeyword ?? method.AllTokens.FirstOrDefault();
-                var endToken = method.AllTokens.LastOrDefault();
+                var posToken = symbol.PositionToken;
+                var declNode = symbol.DeclarationNode;
+                var endToken = declNode?.AllTokens.LastOrDefault();
 
                 var item = new GDDeadCodeItem(GDDeadCodeKind.Function, methodName, file.FullPath ?? "")
                 {
-                    Line = identToken?.StartLine ?? 0,
-                    Column = identToken?.StartColumn ?? 0,
+                    Line = posToken?.StartLine ?? 0,
+                    Column = posToken?.StartColumn ?? 0,
                     EndLine = endToken?.EndLine ?? 0,
                     EndColumn = endToken?.EndColumn ?? 0,
                     Confidence = confidence,
@@ -457,16 +397,12 @@ public class GDDeadCodeService
         }
     }
 
-    /// <summary>
-    /// Checks if any other file in the project has member accesses matching any of the effective names
-    /// or any base type in the file's inheritance chain (handles var x: BaseType calling x.custom_method()).
-    /// </summary>
     private bool HasCrossFileMemberAccess(GDScriptFile file, List<string> effectiveNames, string memberName)
     {
         if (effectiveNames.Count == 0)
             return false;
 
-        var baseTypes = GetInheritanceChain(file);
+        var baseTypes = _projectModel.GetInheritanceChain(file);
 
         foreach (var otherFile in _project.ScriptFiles)
         {
@@ -490,14 +426,13 @@ public class GDDeadCodeService
             }
         }
 
-        // Check .tres resource files for property references
         if (HasTresResourceReference(effectiveNames, baseTypes, memberName))
             return true;
 
         return false;
     }
 
-    private bool HasTresResourceReference(List<string> effectiveNames, List<string> baseTypes, string memberName)
+    private bool HasTresResourceReference(List<string> effectiveNames, IReadOnlyList<string> baseTypes, string memberName)
     {
         var provider = _project.TresResourceProvider;
         if (provider == null)
@@ -506,50 +441,12 @@ public class GDDeadCodeService
         if (provider.HasPropertyReference(effectiveNames, memberName))
             return true;
 
-        if (baseTypes.Count > 0 && provider.HasPropertyReference(baseTypes, memberName))
+        if (baseTypes.Count > 0 && provider.HasPropertyReference((IList<string>)baseTypes, memberName))
             return true;
 
         return false;
     }
 
-    private List<string> GetInheritanceChain(GDScriptFile file)
-    {
-        var chain = new List<string>();
-        if (file.Class == null)
-            return chain;
-
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var current = file.Class.Extends?.Type?.BuildName();
-
-        // Walk script-based parents
-        while (!string.IsNullOrEmpty(current) && visited.Add(current))
-        {
-            chain.Add(current);
-            var parentFile = _project.GetScriptByTypeName(current);
-            if (parentFile?.Class == null)
-                break;
-            current = parentFile.Class.Extends?.Type?.BuildName();
-        }
-
-        // Continue walking built-in type hierarchy via runtime provider
-        if (_runtimeProvider != null && chain.Count > 0)
-        {
-            current = _runtimeProvider.GetBaseType(chain[chain.Count - 1]);
-            while (!string.IsNullOrEmpty(current) && visited.Add(current))
-            {
-                chain.Add(current);
-                current = _runtimeProvider.GetBaseType(current);
-            }
-        }
-
-        return chain;
-    }
-
-    /// <summary>
-    /// Checks if a method has any callers using semantic registries.
-    /// Returns (hasCallers, confidence, reason, reflSite).
-    /// reflSite is non-null only when the method was found via reflection pattern.
-    /// </summary>
     private (bool HasCallers, GDReferenceConfidence Confidence, string Reason, GDReflectionCallSite? ReflSite) CheckMethodCallers(
         GDScriptFile file,
         List<string> effectiveNames,
@@ -557,7 +454,6 @@ public class GDDeadCodeService
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
-        // 1. Check cross-file calls via CallSiteRegistry (check all effective names)
         if (_callSiteRegistry != null)
         {
             foreach (var name in effectiveNames)
@@ -568,7 +464,6 @@ public class GDDeadCodeService
             }
         }
 
-        // 2. Check signal connections (check all effective names)
         foreach (var name in effectiveNames)
         {
             var signalConnections = _signalRegistry.GetSignalsCallingMethod(name, methodName);
@@ -576,7 +471,6 @@ public class GDDeadCodeService
                 return (true, GDReferenceConfidence.Strict, "Connected to signals", null);
         }
 
-        // 3. Check local references within the file via semantic model
         var symbol = semanticModel.FindSymbol(methodName);
         if (symbol != null)
         {
@@ -587,17 +481,23 @@ public class GDDeadCodeService
             }
         }
 
-        // 3.5 Check cross-file member access (e.g., GameManager.start_game() from another file)
         if (HasCrossFileMemberAccess(file, effectiveNames, methodName))
         {
             return (true, GDReferenceConfidence.Strict, "Has cross-file callers", null);
         }
 
-        // 3.6 Check if this is an override of a base class method that has callers
         if (IsOverrideMethodUsed(file, methodName))
             return (true, GDReferenceConfidence.Strict, "Override of called base method", null);
 
-        // 3.6.5 Check if method is reachable via reflection pattern (get_method_list() + call())
+        if (semanticModel.IsPropertyAccessor(methodName))
+            return (true, GDReferenceConfidence.Strict, "Property accessor", null);
+
+        if (IsPropertyAccessorInBaseClass(file, methodName))
+            return (true, GDReferenceConfidence.Strict, "Property accessor (inherited)", null);
+
+        if (IsCalledFromSubclass(file, effectiveNames, methodName))
+            return (true, GDReferenceConfidence.Strict, "Called from subclass", null);
+
         var (reflectionReachable, reflSite) = IsReachableViaReflection(file, effectiveNames, methodName, GDReflectionKind.Method);
         if (reflectionReachable)
         {
@@ -606,7 +506,16 @@ public class GDDeadCodeService
                 $"Reachable via reflection at {reflFileName}:{reflSite.Line + 1}", reflSite);
         }
 
-        // 3.7 Check duck-typed ("*") call site entries — calls on unresolved receiver types
+        if (_projectModel.IsMethodReferencedViaCallableStringFlow(methodName, effectiveNames))
+        {
+            return (true, GDReferenceConfidence.Strict, "Called via Callable with resolved string argument", null);
+        }
+
+        if (_projectModel.IsMethodReferencedViaExpressionDispatch(methodName, effectiveNames))
+        {
+            return (true, GDReferenceConfidence.Strict, "Called via Expression.execute() dispatch", null);
+        }
+
         if (_callSiteRegistry != null)
         {
             var duckCallers = _callSiteRegistry.GetCallersOf("*", methodName);
@@ -617,7 +526,6 @@ public class GDDeadCodeService
             }
         }
 
-        // 4. Check duck-type calls (by method name only) if allowed
         if (options.MaxConfidence >= GDReferenceConfidence.NameMatch && _callSiteRegistry != null)
         {
             var allTargets = _callSiteRegistry.GetAllTargets();
@@ -634,58 +542,113 @@ public class GDDeadCodeService
         return (false, GDReferenceConfidence.Strict, "No callers found", null);
     }
 
-    /// <summary>
-    /// Checks if a method is an override of a base class method that has callers.
-    /// If ParentClass.M() is called anywhere, ChildClass.M() (an override) is also used.
-    /// </summary>
     private bool IsOverrideMethodUsed(GDScriptFile file, string methodName)
     {
-        if (file.Class == null)
-            return false;
+        var chain = _projectModel.GetInheritanceChain(file);
 
-        var extendsTypeName = file.Class.Extends?.Type?.BuildName();
-        if (string.IsNullOrEmpty(extendsTypeName))
-            return false;
-
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var current = extendsTypeName;
-
-        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        foreach (var parentTypeName in chain)
         {
-            var parentFile = _project.GetScriptByTypeName(current);
-            if (parentFile?.Class == null)
-                break;
+            var parentFile = _project.GetScriptByTypeName(parentTypeName);
+            if (parentFile == null)
+                continue;
 
-            var hasMethod = parentFile.Class.Members
-                .OfType<GDMethodDeclaration>()
-                .Any(m => m.Identifier?.Sequence == methodName);
+            var parentModel = _projectModel.GetSemanticModel(parentFile);
+            if (parentModel == null)
+                continue;
 
-            if (hasMethod)
+            var parentSymbol = parentModel.FindSymbol(methodName);
+            if (parentSymbol == null || parentSymbol.Kind != GDSymbolKind.Method)
+                continue;
+
+            var parentEffectiveNames = GetEffectiveClassNames(parentFile, parentFile.TypeName);
+
+            if (_callSiteRegistry != null)
             {
-                var parentEffectiveNames = GetEffectiveClassNames(parentFile, parentFile.TypeName);
-
-                if (_callSiteRegistry != null)
+                foreach (var name in parentEffectiveNames)
                 {
-                    foreach (var name in parentEffectiveNames)
-                    {
-                        if (_callSiteRegistry.GetCallersOf(name, methodName).Count > 0)
-                            return true;
-                    }
-                }
-
-                if (HasCrossFileMemberAccess(parentFile, parentEffectiveNames, methodName))
-                    return true;
-
-                var parentModel = _projectModel.GetSemanticModel(parentFile);
-                if (parentModel != null)
-                {
-                    var sym = parentModel.FindSymbol(methodName);
-                    if (sym != null && parentModel.GetReferencesTo(sym).Count > 0)
+                    if (_callSiteRegistry.GetCallersOf(name, methodName).Count > 0)
                         return true;
                 }
             }
 
-            current = parentFile.Class.Extends?.Type?.BuildName();
+            if (HasCrossFileMemberAccess(parentFile, parentEffectiveNames, methodName))
+                return true;
+
+            if (parentModel.GetReferencesTo(parentSymbol).Count > 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsCalledFromSubclass(GDScriptFile file, List<string> effectiveNames, string methodName)
+    {
+        foreach (var otherFile in _project.ScriptFiles)
+        {
+            if (otherFile == file || otherFile.Class == null)
+                continue;
+
+            var otherModel = _projectModel.GetSemanticModel(otherFile);
+            if (otherModel == null)
+                continue;
+
+            var otherBaseType = otherModel.BaseTypeName;
+            if (string.IsNullOrEmpty(otherBaseType))
+                continue;
+
+            bool isSubclass = false;
+            foreach (var name in effectiveNames)
+            {
+                if (string.Equals(otherBaseType, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    isSubclass = true;
+                    break;
+                }
+            }
+
+            if (!isSubclass && file.FullPath != null)
+            {
+                var projectPath = _project.ProjectPath;
+                if (!string.IsNullOrEmpty(projectPath) &&
+                    file.FullPath.StartsWith(projectPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    var relative = file.FullPath.Substring(projectPath.Length)
+                        .TrimStart(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar)
+                        .Replace('\\', '/');
+                    var resPath = "res://" + relative;
+                    if (string.Equals(otherBaseType, resPath, StringComparison.OrdinalIgnoreCase))
+                        isSubclass = true;
+                }
+            }
+
+            if (!isSubclass)
+                continue;
+
+            // Check if the subclass references (calls) this method
+            var methodSymbol = otherModel.FindSymbol(methodName);
+            if (methodSymbol != null && otherModel.GetReferencesTo(methodSymbol).Count > 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsPropertyAccessorInBaseClass(GDScriptFile file, string methodName)
+    {
+        var chain = _projectModel.GetInheritanceChain(file);
+
+        foreach (var parentTypeName in chain)
+        {
+            var parentFile = _project.GetScriptByTypeName(parentTypeName);
+            if (parentFile == null)
+                continue;
+
+            var parentModel = _projectModel.GetSemanticModel(parentFile);
+            if (parentModel == null)
+                continue;
+
+            if (parentModel.IsPropertyAccessor(methodName))
+                return true;
         }
 
         return false;
@@ -718,65 +681,19 @@ public class GDDeadCodeService
 
                 foreach (var name in effectiveNames)
                 {
-                    if (IsTypeCompatible(site.ReceiverTypeName, name))
+                    if (string.Equals(site.ReceiverTypeName, name, StringComparison.OrdinalIgnoreCase))
                         return (true, site);
                 }
 
-                if (FileExtendsType(file, site.ReceiverTypeName))
+                if (_projectModel.IsSubclassOf(file, site.ReceiverTypeName))
                     return (true, site);
             }
         }
         return (false, null);
     }
 
-    private bool FileExtendsType(GDScriptFile file, string receiverType)
-    {
-        if (file.Class == null)
-            return false;
-
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var current = file.Class.Extends?.Type?.BuildName();
-
-        while (!string.IsNullOrEmpty(current) && visited.Add(current))
-        {
-            if (string.Equals(current, receiverType, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            var parentFile = _project.GetScriptByTypeName(current);
-            if (parentFile?.Class == null)
-                break;
-
-            current = parentFile.Class.Extends?.Type?.BuildName();
-        }
-
-        return false;
-    }
-
-    private bool IsTypeCompatible(string receiverType, string targetType)
-    {
-        if (string.Equals(receiverType, targetType, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var current = targetType;
-        while (!string.IsNullOrEmpty(current) && visited.Add(current))
-        {
-            if (string.Equals(current, receiverType, StringComparison.OrdinalIgnoreCase))
-                return true;
-            var parentFile = _project.GetScriptByTypeName(current);
-            if (parentFile?.Class == null) break;
-            current = parentFile.Class.Extends?.Type?.BuildName();
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if a method is a framework-invoked method (e.g., test_ in test classes).
-    /// </summary>
     private bool IsFrameworkMethod(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         string methodName,
         GDDeadCodeOptions options)
     {
@@ -799,49 +716,30 @@ public class GDDeadCodeService
         if (options.FrameworkBaseClasses.Count == 0)
             return true;
 
-        return ExtendsFrameworkBase(classDecl, options.FrameworkBaseClasses);
-    }
-
-    private bool ExtendsFrameworkBase(GDClassDeclaration classDecl, HashSet<string> baseClasses)
-    {
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var current = classDecl.Extends?.Type?.BuildName();
-
-        while (!string.IsNullOrEmpty(current) && visited.Add(current))
+        foreach (var baseClass in options.FrameworkBaseClasses)
         {
-            if (baseClasses.Contains(current))
+            if (_projectModel.IsSubclassOf(file, baseClass))
                 return true;
-
-            var parentFile = _project.GetScriptByTypeName(current);
-            if (parentFile?.Class == null)
-                break;
-
-            current = parentFile.Class.Extends?.Type?.BuildName();
         }
 
         return false;
     }
 
-    /// <summary>
-    /// Finds unused signals using semantic signal registry and emit tracking.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedSignals(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options,
         List<GDReflectionDroppedItem>? droppedByReflection,
         bool csharpReachable = false)
     {
-        var signals = classDecl.Members
-            .OfType<GDSignalDeclaration>()
-            .ToList();
-
-        foreach (var signal in signals)
+        foreach (var symbol in semanticModel.GetSignals())
         {
-            var signalName = signal.Identifier?.Sequence;
+            var signalName = symbol.Name;
             if (string.IsNullOrEmpty(signalName))
+                continue;
+
+            if (semanticModel.HasWarningIgnore(signalName, "unused_signal"))
                 continue;
 
             bool isPrivate = signalName.StartsWith("_");
@@ -849,16 +747,13 @@ public class GDDeadCodeService
             if (isPrivate && !options.IncludePrivate)
                 continue;
 
-            // Check if signal is emitted using semantic model
-            var signalSymbol = semanticModel.FindSymbol(signalName);
-            var signalRefs = signalSymbol != null
-                ? semanticModel.GetReferencesTo(signalSymbol)
-                : Array.Empty<GDReference>();
+            bool isEmitted = semanticModel.IsSignalEmitted(signalName);
 
-            // Check for emit calls - references where signal is accessed for .emit()
-            bool isEmitted = signalRefs.Any(r => IsSignalEmitReference(r));
+            if (!isEmitted)
+            {
+                isEmitted = _projectModel.IsSignalEmittedDynamically(file, file.Class!, signalName, effectiveNames);
+            }
 
-            // Check if signal has connections via registry (check all effective names)
             bool hasConnections = false;
             foreach (var name in effectiveNames)
             {
@@ -870,7 +765,6 @@ public class GDDeadCodeService
                 }
             }
 
-            // Broader connection check: match by signal name with any emitter type
             if (!hasConnections)
             {
                 var allConns = _signalRegistry.GetAllConnections();
@@ -878,13 +772,11 @@ public class GDDeadCodeService
                     (effectiveNames.Any(n => c.EmitterType == n) || c.EmitterType == null));
             }
 
-            // Cross-file signal usage detection
             if (!isEmitted && !hasConnections)
             {
                 isEmitted = HasCrossFileMemberAccess(file, effectiveNames, signalName);
             }
 
-            // Check if signal is reachable via get_signal_list() reflection
             if (!isEmitted && !hasConnections)
             {
                 var (sigReflReachable, sigReflSite) = IsReachableViaReflection(
@@ -893,14 +785,14 @@ public class GDDeadCodeService
                 {
                     if (droppedByReflection != null && sigReflSite != null)
                     {
-                        var sigToken = signal.Identifier ?? signal.AllTokens.FirstOrDefault();
+                        var posToken = symbol.PositionToken;
                         droppedByReflection.Add(new GDReflectionDroppedItem
                         {
                             Kind = GDDeadCodeKind.Signal,
                             Name = signalName,
                             FilePath = file.FullPath ?? "",
-                            Line = sigToken?.StartLine ?? 0,
-                            Column = sigToken?.StartColumn ?? 0,
+                            Line = posToken?.StartLine ?? 0,
+                            Column = posToken?.StartColumn ?? 0,
                             ReflectionKind = sigReflSite.Kind,
                             ReflectionSiteFile = sigReflSite.FilePath,
                             ReflectionSiteLine = sigReflSite.Line,
@@ -915,7 +807,7 @@ public class GDDeadCodeService
 
             if (!isEmitted && !hasConnections)
             {
-                var token = signal.Identifier ?? signal.AllTokens.FirstOrDefault();
+                var posToken = symbol.PositionToken;
 
                 var signalConfidence = GDReferenceConfidence.Strict;
                 var signalReasonCode = GDDeadCodeReasonCode.SNE;
@@ -934,10 +826,10 @@ public class GDDeadCodeService
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Signal, signalName, file.FullPath ?? "")
                 {
-                    Line = token?.StartLine ?? 0,
-                    Column = token?.StartColumn ?? 0,
-                    EndLine = token?.EndLine ?? 0,
-                    EndColumn = token?.EndColumn ?? 0,
+                    Line = posToken?.StartLine ?? 0,
+                    Column = posToken?.StartColumn ?? 0,
+                    EndLine = posToken?.EndLine ?? 0,
+                    EndColumn = posToken?.EndColumn ?? 0,
                     Confidence = signalConfidence,
                     ReasonCode = signalReasonCode,
                     Reason = "Signal is never emitted and has no connections",
@@ -946,15 +838,14 @@ public class GDDeadCodeService
             }
             else if (!isEmitted)
             {
-                // Signal has connections but is never emitted - potentially dead
-                var token = signal.Identifier ?? signal.AllTokens.FirstOrDefault();
+                var posToken = symbol.PositionToken;
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Signal, signalName, file.FullPath ?? "")
                 {
-                    Line = token?.StartLine ?? 0,
-                    Column = token?.StartColumn ?? 0,
-                    EndLine = token?.EndLine ?? 0,
-                    EndColumn = token?.EndColumn ?? 0,
+                    Line = posToken?.StartLine ?? 0,
+                    Column = posToken?.StartColumn ?? 0,
+                    EndLine = posToken?.EndLine ?? 0,
+                    EndColumn = posToken?.EndColumn ?? 0,
                     Confidence = GDReferenceConfidence.Potential,
                     ReasonCode = GDDeadCodeReasonCode.SCB,
                     Reason = "Signal is connected but never emitted",
@@ -964,120 +855,45 @@ public class GDDeadCodeService
         }
     }
 
-    /// <summary>
-    /// Checks if a reference is a signal emit (signal.emit() or emit_signal("name")).
-    /// </summary>
-    private static bool IsSignalEmitReference(GDReference reference)
-    {
-        var node = reference.ReferenceNode;
-        if (node == null)
-            return false;
-
-        // Check for signal.emit() pattern
-        var parent = node.Parent;
-        if (parent is GDMemberOperatorExpression memberOp &&
-            memberOp.Identifier?.Sequence == "emit")
-        {
-            var grandParent = memberOp.Parent;
-            if (grandParent is GDCallExpression)
-                return true;
-        }
-
-        // Check for emit_signal("name") pattern — reference node is the string literal
-        // inside emit_signal() call, linked to actual signal symbol by TrackStringLiteralArg
-        if (node is GDStringExpression || node is GDStringNameExpression)
-        {
-            var callExpr = FindParentCallExpression(node);
-            if (callExpr != null)
-            {
-                var callee = GetCalleeMethodName(callExpr);
-                if (callee == "emit_signal")
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static GDCallExpression? FindParentCallExpression(GDNode node)
-    {
-        var current = node.Parent;
-        while (current != null)
-        {
-            if (current is GDCallExpression call)
-                return call;
-            current = current.Parent;
-        }
-        return null;
-    }
-
-    private static string? GetCalleeMethodName(GDCallExpression callExpr)
-    {
-        if (callExpr.CallerExpression is GDIdentifierExpression idExpr)
-            return idExpr.Identifier?.Sequence;
-        if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
-            return memberOp.Identifier?.Sequence;
-        return null;
-    }
-
-    /// <summary>
-    /// Finds unused parameters using semantic scope-aware reference tracking.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedParameters(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
-        var methods = classDecl.Members
-            .OfType<GDMethodDeclaration>()
-            .ToList();
-
-        foreach (var method in methods)
+        foreach (var methodSymbol in semanticModel.GetMethods())
         {
-            var methodName = method.Identifier?.Sequence;
+            var methodName = methodSymbol.Name;
             if (string.IsNullOrEmpty(methodName))
                 continue;
 
-            // Skip Godot virtual methods - their signatures are fixed (configurable via options)
             if (options.ShouldSkipMethod(methodName))
                 continue;
 
-            var parameters = method.Parameters;
-            if (parameters == null || parameters.Count == 0)
-                continue;
+            var paramSymbols = semanticModel.GetSymbolsOfKind(GDSymbolKind.Parameter)
+                .Where(p => p.DeclaringScopeNode == methodSymbol.DeclarationNode)
+                .ToList();
 
-            foreach (var param in parameters)
+            foreach (var paramSymbol in paramSymbols)
             {
-                var paramName = param.Identifier?.Sequence;
+                var paramName = paramSymbol.Name;
                 if (string.IsNullOrEmpty(paramName))
                     continue;
 
-                // Skip if parameter starts with _ (intentionally unused convention)
                 if (paramName.StartsWith("_"))
                     continue;
 
-                // Use scope-aware lookup to find the parameter symbol
-                // This ensures we find the parameter, not a same-named class member
-                var paramSymbol = semanticModel.FindSymbolInScope(paramName, param);
-
-                if (paramSymbol == null)
-                    continue;
-
-                // Get references to this parameter within the method
                 var refs = semanticModel.GetReferencesTo(paramSymbol);
 
-                // If no references (other than possible declaration), parameter is unused
                 if (refs.Count == 0)
                 {
-                    var token = param.Identifier ?? param.AllTokens.FirstOrDefault();
+                    var posToken = paramSymbol.PositionToken;
 
                     yield return new GDDeadCodeItem(GDDeadCodeKind.Parameter, paramName, file.FullPath ?? "")
                     {
-                        Line = token?.StartLine ?? 0,
-                        Column = token?.StartColumn ?? 0,
-                        EndLine = token?.EndLine ?? 0,
-                        EndColumn = token?.EndColumn ?? 0,
+                        Line = posToken?.StartLine ?? 0,
+                        Column = posToken?.StartColumn ?? 0,
+                        EndLine = posToken?.EndLine ?? 0,
+                        EndColumn = posToken?.EndColumn ?? 0,
                         Confidence = GDReferenceConfidence.Strict,
                         ReasonCode = GDDeadCodeReasonCode.PNU,
                         Reason = $"Parameter is never used in method '{methodName}'",
@@ -1088,37 +904,23 @@ public class GDDeadCodeService
         }
     }
 
-    /// <summary>
-    /// Finds unreachable code after return/break/continue statements.
-    /// This uses simple control flow analysis as semantic model doesn't track reachability.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnreachableCode(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
+        GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
-        var methods = classDecl.Members
-            .OfType<GDMethodDeclaration>()
-            .ToList();
-
-        foreach (var method in methods)
+        foreach (var methodSymbol in semanticModel.GetMethods())
         {
-            var methodName = method.Identifier?.Sequence ?? "";
-            var statements = method.Statements;
-            if (statements == null)
-                continue;
+            var methodName = methodSymbol.Name ?? "";
 
-            // Find unreachable statements after return/break/continue
-            foreach (var unreachable in FindUnreachableStatements(statements))
+            foreach (var info in semanticModel.FindUnreachableStatements(methodName))
             {
-                var token = unreachable.AllTokens.FirstOrDefault();
-
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Unreachable, methodName, file.FullPath ?? "")
                 {
-                    Line = token?.StartLine ?? 0,
-                    Column = token?.StartColumn ?? 0,
-                    EndLine = token?.EndLine ?? 0,
-                    EndColumn = token?.EndColumn ?? 0,
+                    Line = info.Line,
+                    Column = info.Column,
+                    EndLine = info.EndLine,
+                    EndColumn = info.EndColumn,
                     Confidence = GDReferenceConfidence.Strict,
                     ReasonCode = GDDeadCodeReasonCode.UCR,
                     Reason = "Code is unreachable after return/break/continue",
@@ -1128,60 +930,16 @@ public class GDDeadCodeService
         }
     }
 
-    /// <summary>
-    /// Finds statements that are unreachable due to preceding return/break/continue.
-    /// </summary>
-    private static IEnumerable<GDNode> FindUnreachableStatements(GDStatementsList statements)
-    {
-        bool terminatorEncountered = false;
-
-        foreach (var stmt in statements)
-        {
-            if (terminatorEncountered)
-            {
-                yield return stmt;
-                continue;
-            }
-
-            // Check if this statement is a terminator
-            if (stmt is GDExpressionStatement exprStmt)
-            {
-                if (exprStmt.Expression is GDReturnExpression ||
-                    exprStmt.Expression is GDBreakExpression ||
-                    exprStmt.Expression is GDContinueExpression)
-                {
-                    terminatorEncountered = true;
-                }
-            }
-            else if (stmt is GDReturnExpression ||
-                     stmt is GDBreakExpression ||
-                     stmt is GDContinueExpression)
-            {
-                terminatorEncountered = true;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Finds unused constants (const declarations) using semantic reference tracking.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedConstants(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         List<string> effectiveNames,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options,
         bool csharpReachable = false)
     {
-        // Get all constant declarations (variables with const keyword)
-        var constants = classDecl.Members
-            .OfType<GDVariableDeclaration>()
-            .Where(v => v.IsConstant)
-            .ToList();
-
-        foreach (var constant in constants)
+        foreach (var symbol in semanticModel.GetConstants())
         {
-            var constName = constant.Identifier?.Sequence;
+            var constName = symbol.Name;
             if (string.IsNullOrEmpty(constName))
                 continue;
 
@@ -1190,22 +948,15 @@ public class GDDeadCodeService
             if (isPrivate && !options.IncludePrivate)
                 continue;
 
-            var symbol = semanticModel.FindSymbol(constName);
-            if (symbol == null)
-                continue;
-
             var references = semanticModel.GetReferencesTo(symbol);
-
-            // Constants need at least one read reference to be considered used
             var reads = references.Where(r => r.IsRead).ToList();
 
             if (reads.Count == 0)
             {
-                // Check cross-file access using all effective names
                 if (HasCrossFileMemberAccess(file, effectiveNames, constName))
                     continue;
 
-                var token = constant.Identifier ?? constant.AllTokens.FirstOrDefault();
+                var posToken = symbol.PositionToken;
 
                 var constConfidence = GDReferenceConfidence.Strict;
                 var constReasonCode = GDDeadCodeReasonCode.CNU;
@@ -1224,10 +975,10 @@ public class GDDeadCodeService
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Constant, constName, file.FullPath ?? "")
                 {
-                    Line = token?.StartLine ?? 0,
-                    Column = token?.StartColumn ?? 0,
-                    EndLine = token?.EndLine ?? 0,
-                    EndColumn = token?.EndColumn ?? 0,
+                    Line = posToken?.StartLine ?? 0,
+                    Column = posToken?.StartColumn ?? 0,
+                    EndLine = posToken?.EndLine ?? 0,
+                    EndColumn = posToken?.EndColumn ?? 0,
                     Confidence = constConfidence,
                     ReasonCode = constReasonCode,
                     Reason = "Constant is never used",
@@ -1237,45 +988,32 @@ public class GDDeadCodeService
         }
     }
 
-    /// <summary>
-    /// Finds unused enum values using semantic reference tracking.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedEnumValues(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
-        var enums = classDecl.Members
-            .OfType<GDEnumDeclaration>()
-            .ToList();
-
-        foreach (var enumDecl in enums)
+        foreach (var enumSymbol in semanticModel.GetEnums())
         {
-            var enumName = enumDecl.Identifier?.Sequence;
-            if (enumDecl.Values == null)
-                continue;
+            var enumName = enumSymbol.Name;
 
-            foreach (var enumValue in enumDecl.Values.OfType<GDEnumValueDeclaration>())
+            var enumValues = semanticModel.GetSymbolsOfKind(GDSymbolKind.EnumValue)
+                .Where(ev => ev.DeclaringScopeNode == enumSymbol.DeclarationNode)
+                .ToList();
+
+            foreach (var valueSymbol in enumValues)
             {
-                var valueName = enumValue.Identifier?.Sequence;
+                var valueName = valueSymbol.Name;
                 if (string.IsNullOrEmpty(valueName))
                     continue;
 
-                // For enum values, we search for both EnumName.VALUE and just VALUE references
                 var qualifiedName = !string.IsNullOrEmpty(enumName) ? $"{enumName}.{valueName}" : valueName;
 
-                // Check if value is referenced
-                var symbol = semanticModel.FindSymbol(valueName);
                 var isUsed = false;
 
-                if (symbol != null)
-                {
-                    var refs = semanticModel.GetReferencesTo(symbol);
-                    isUsed = refs.Count > 0;
-                }
+                var refs = semanticModel.GetReferencesTo(valueSymbol);
+                isUsed = refs.Count > 0;
 
-                // Also check via qualified name pattern in the file content
                 if (!isUsed && !string.IsNullOrEmpty(enumName))
                 {
                     var qualifiedSymbol = semanticModel.FindSymbol(qualifiedName);
@@ -1288,15 +1026,15 @@ public class GDDeadCodeService
 
                 if (!isUsed)
                 {
-                    var token = enumValue.Identifier ?? enumValue.AllTokens.FirstOrDefault();
+                    var posToken = valueSymbol.PositionToken;
 
                     yield return new GDDeadCodeItem(GDDeadCodeKind.EnumValue, valueName, file.FullPath ?? "")
                     {
-                        Line = token?.StartLine ?? 0,
-                        Column = token?.StartColumn ?? 0,
-                        EndLine = token?.EndLine ?? 0,
-                        EndColumn = token?.EndColumn ?? 0,
-                        Confidence = GDReferenceConfidence.Potential, // Enum values may be used via reflection
+                        Line = posToken?.StartLine ?? 0,
+                        Column = posToken?.StartColumn ?? 0,
+                        EndLine = posToken?.EndLine ?? 0,
+                        EndColumn = posToken?.EndColumn ?? 0,
+                        Confidence = GDReferenceConfidence.Potential,
                         ReasonCode = GDDeadCodeReasonCode.ENU,
                         Reason = $"Enum value '{valueName}' in '{enumName ?? "anonymous"}' is never referenced",
                         IsPrivate = false
@@ -1306,23 +1044,14 @@ public class GDDeadCodeService
         }
     }
 
-    /// <summary>
-    /// Finds unused inner classes using semantic reference tracking.
-    /// Checks for instantiation (new InnerClass()) and type references.
-    /// </summary>
     private IEnumerable<GDDeadCodeItem> FindUnusedInnerClasses(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
         GDSemanticModel semanticModel,
         GDDeadCodeOptions options)
     {
-        var innerClasses = classDecl.Members
-            .OfType<GDInnerClassDeclaration>()
-            .ToList();
-
-        foreach (var innerClass in innerClasses)
+        foreach (var symbol in semanticModel.GetInnerClasses())
         {
-            var className = innerClass.Identifier?.Sequence;
+            var className = symbol.Name;
             if (string.IsNullOrEmpty(className))
                 continue;
 
@@ -1331,20 +1060,13 @@ public class GDDeadCodeService
             if (isPrivate && !options.IncludePrivate)
                 continue;
 
-            // Check if the inner class is referenced anywhere
-            var symbol = semanticModel.FindSymbol(className);
             var isUsed = false;
 
-            if (symbol != null)
-            {
-                var refs = semanticModel.GetReferencesTo(symbol);
-                isUsed = refs.Count > 0;
-            }
+            var refs = semanticModel.GetReferencesTo(symbol);
+            isUsed = refs.Count > 0;
 
-            // Also check if it's instantiated via .new() calls
             if (!isUsed)
             {
-                // Check for ClassName.new() pattern in call sites
                 if (_callSiteRegistry != null)
                 {
                     var callers = _callSiteRegistry.GetCallersOf(className, "new");
@@ -1354,79 +1076,22 @@ public class GDDeadCodeService
 
             if (!isUsed)
             {
-                var token = innerClass.Identifier ?? innerClass.ClassKeyword ?? innerClass.AllTokens.FirstOrDefault();
-                var endToken = innerClass.AllTokens.LastOrDefault();
+                var posToken = symbol.PositionToken;
+                var declNode = symbol.DeclarationNode;
+                var endToken = declNode?.AllTokens.LastOrDefault();
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.InnerClass, className, file.FullPath ?? "")
                 {
-                    Line = token?.StartLine ?? 0,
-                    Column = token?.StartColumn ?? 0,
+                    Line = posToken?.StartLine ?? 0,
+                    Column = posToken?.StartColumn ?? 0,
                     EndLine = endToken?.EndLine ?? 0,
                     EndColumn = endToken?.EndColumn ?? 0,
-                    Confidence = GDReferenceConfidence.Potential, // Inner classes may be used externally
+                    Confidence = GDReferenceConfidence.Potential,
                     ReasonCode = GDDeadCodeReasonCode.ICU,
                     Reason = "Inner class is never instantiated or referenced",
                     IsPrivate = isPrivate
                 };
             }
         }
-    }
-
-    /// <summary>
-    /// Checks if 'self' is passed as an argument in any call expression or
-    /// used in any array literal within the class body.
-    /// When self is passed externally, non-private members may be accessed dynamically.
-    /// Result is cached per class declaration.
-    /// </summary>
-    private bool IsSelfPassedExternally(GDClassDeclaration classDecl)
-    {
-        if (_selfPassedCache.TryGetValue(classDecl, out var cached))
-            return cached;
-
-        var result = CheckSelfPassedExternally(classDecl);
-        _selfPassedCache[classDecl] = result;
-        return result;
-    }
-
-    private static bool CheckSelfPassedExternally(GDClassDeclaration classDecl)
-    {
-        foreach (var node in classDecl.AllNodes)
-        {
-            if (node is GDCallExpression call && call.Parameters != null)
-            {
-                if (ContainsSelfIdentifier(call.Parameters))
-                    return true;
-            }
-            else if (node is GDArrayInitializerExpression array && array.Values != null)
-            {
-                if (ContainsSelfIdentifier(array.Values))
-                    return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool ContainsSelfIdentifier(GDExpressionsList expressions)
-    {
-        foreach (var expr in expressions)
-        {
-            if (expr is GDIdentifierExpression idExpr
-                && idExpr.Identifier?.Sequence == "self")
-                return true;
-
-            // Check nested expressions (e.g., [self] inside a call argument)
-            if (expr != null)
-            {
-                foreach (var nested in expr.AllNodes)
-                {
-                    if (nested is GDIdentifierExpression nestedId
-                        && nestedId.Identifier?.Sequence == "self")
-                        return true;
-                }
-            }
-        }
-
-        return false;
     }
 }
