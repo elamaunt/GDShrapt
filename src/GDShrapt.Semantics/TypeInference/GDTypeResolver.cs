@@ -2,6 +2,7 @@ using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GDShrapt.Semantics;
 
@@ -322,7 +323,7 @@ public class GDTypeResolver
         return member switch
         {
             GDMethodDeclaration method when method.Identifier != null =>
-                GDSymbol.Method(method.Identifier.Sequence, method, method.IsStatic),
+                CreateMethodSymbol(method),
 
             GDVariableDeclaration variable when variable.Identifier != null =>
                 variable.ConstKeyword != null
@@ -337,6 +338,20 @@ public class GDTypeResolver
 
             _ => null
         };
+    }
+
+    private static GDSymbol CreateMethodSymbol(GDMethodDeclaration method)
+    {
+        var symbol = GDSymbol.Method(method.Identifier!.Sequence, method, method.IsStatic);
+        symbol.ReturnTypeName = method.ReturnType?.BuildName();
+        symbol.Parameters = method.Parameters?
+            .Select((p, i) => new GDParameterSymbolInfo(
+                p.Identifier?.Sequence ?? $"param{i}",
+                p.Type?.BuildName(),
+                p.DefaultValue != null,
+                i))
+            .ToList();
+        return symbol;
     }
 
     private string GetBuiltInType(string name)

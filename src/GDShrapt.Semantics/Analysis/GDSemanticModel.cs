@@ -223,7 +223,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         _localTypeService = new GDLocalTypeService(FindSymbols, FindMemberWithInheritanceInternal);
         _expressionTypeService.SetLocalTypeService(_localTypeService);
 
-        _onreadyService = new GDOnreadyService(FindSymbol, () => _scriptFile?.Class);
+        _onreadyService = new GDOnreadyService(FindSymbol, GetVariables, GetMethods);
 
         _flowQueryService = new GDFlowQueryService(
             (method, varName, loc) => GetOrCreateFlowAnalyzer(method)?.GetTypeAtLocation(varName, loc),
@@ -1175,7 +1175,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     /// <summary>
-    /// Infers parameter types for all parameters of a method.
+    /// Infers parameter types for all parameters of a method by name.
+    /// </summary>
+    public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypes(string methodName)
+    {
+        var symbol = FindSymbol(methodName);
+        if (symbol?.DeclarationNode is not GDMethodDeclaration methodDecl)
+            return new Dictionary<string, GDInferredParameterType>();
+        return InferParameterTypes(methodDecl);
+    }
+
+    /// <summary>
+    /// Infers parameter types for a method declaration.
     /// </summary>
     public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypes(GDMethodDeclaration method)
     {
@@ -1183,8 +1194,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     /// <summary>
+    /// Analyzes return types for a method by name.
+    /// </summary>
+    public GDMethodReturnAnalysis? AnalyzeMethodReturns(string methodName)
+    {
+        var symbol = FindSymbol(methodName);
+        if (symbol?.DeclarationNode is not GDMethodDeclaration methodDecl)
+            return null;
+        return AnalyzeMethodReturns(methodDecl);
+    }
+
+    /// <summary>
     /// Analyzes return types for a method declaration.
-    /// Returns information about all return paths, their types, and whether they are implicit.
     /// </summary>
     public GDMethodReturnAnalysis? AnalyzeMethodReturns(GDMethodDeclaration method)
     {

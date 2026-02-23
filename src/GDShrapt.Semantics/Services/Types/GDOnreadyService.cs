@@ -16,22 +16,30 @@ internal class GDOnreadyService
     public delegate GDSymbolInfo? FindSymbolDelegate(string name);
 
     /// <summary>
-    /// Delegate for getting class declaration.
+    /// Delegate for getting all variable symbols.
     /// </summary>
-    public delegate GDClassDeclaration? GetClassDeclarationDelegate();
+    public delegate IReadOnlyList<GDSymbolInfo> GetVariablesDelegate();
+
+    /// <summary>
+    /// Delegate for getting all method symbols.
+    /// </summary>
+    public delegate IReadOnlyList<GDSymbolInfo> GetMethodsDelegate();
 
     private readonly FindSymbolDelegate? _findSymbol;
-    private readonly GetClassDeclarationDelegate? _getClassDeclaration;
+    private readonly GetVariablesDelegate? _getVariables;
+    private readonly GetMethodsDelegate? _getMethods;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GDOnreadyService"/> class.
     /// </summary>
     public GDOnreadyService(
         FindSymbolDelegate? findSymbol = null,
-        GetClassDeclarationDelegate? getClassDeclaration = null)
+        GetVariablesDelegate? getVariables = null,
+        GetMethodsDelegate? getMethods = null)
     {
         _findSymbol = findSymbol;
-        _getClassDeclaration = getClassDeclaration;
+        _getVariables = getVariables;
+        _getMethods = getMethods;
     }
 
     /// <summary>
@@ -81,21 +89,14 @@ internal class GDOnreadyService
     /// </summary>
     public IEnumerable<string> GetOnreadyVariables()
     {
-        var classDecl = _getClassDeclaration?.Invoke();
-        if (classDecl == null)
+        var variables = _getVariables?.Invoke();
+        if (variables == null)
             yield break;
 
-        foreach (var member in classDecl.Members)
+        foreach (var varSymbol in variables)
         {
-            if (member is GDVariableDeclaration varDecl)
-            {
-                if (varDecl.AttributesDeclaredBefore.Any(attr => attr.Attribute?.IsOnready() == true))
-                {
-                    var name = varDecl.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(name))
-                        yield return name;
-                }
-            }
+            if (IsOnreadyVariable(varSymbol.Name))
+                yield return varSymbol.Name;
         }
     }
 
@@ -104,13 +105,13 @@ internal class GDOnreadyService
     /// </summary>
     public GDMethodDeclaration? GetReadyMethod()
     {
-        var classDecl = _getClassDeclaration?.Invoke();
-        if (classDecl == null)
+        var methods = _getMethods?.Invoke();
+        if (methods == null)
             return null;
 
-        foreach (var member in classDecl.Members)
+        foreach (var methodSymbol in methods)
         {
-            if (member is GDMethodDeclaration method && method.IsReady())
+            if (methodSymbol.DeclarationNode is GDMethodDeclaration method && method.IsReady())
                 return method;
         }
 

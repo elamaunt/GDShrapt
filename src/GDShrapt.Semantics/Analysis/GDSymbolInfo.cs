@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Reader;
 
@@ -93,6 +94,21 @@ public class GDSymbolInfo
     public bool IsStatic { get; }
 
     /// <summary>
+    /// For methods: the declared return type name (null if no annotation).
+    /// </summary>
+    public string? ReturnTypeName { get; }
+
+    /// <summary>
+    /// For methods: parameter information.
+    /// </summary>
+    public IReadOnlyList<GDParameterSymbolInfo>? Parameters { get; }
+
+    /// <summary>
+    /// For methods: count of parameters (0 if not a method).
+    /// </summary>
+    public int ParameterCount => Parameters?.Count ?? 0;
+
+    /// <summary>
     /// The best available position token for this symbol.
     /// Prefers the declaration identifier; falls back to the first token of the declaration node.
     /// </summary>
@@ -119,6 +135,8 @@ public class GDSymbolInfo
         TypeName = symbol.TypeName;
         TypeNode = symbol.TypeNode;
         IsStatic = symbol.IsStatic;
+        ReturnTypeName = symbol.ReturnTypeName;
+        Parameters = symbol.Parameters;
         DeclaringTypeName = declaringTypeName;
         DeclaringScript = declaringScript;
         AccessingScript = accessingScript;

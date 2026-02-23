@@ -45,39 +45,33 @@ public class GDTypeCoverageService
     {
         var report = new GDTypeCoverageReport();
 
-        if (file?.Class == null)
+        var semanticModel = file?.SemanticModel;
+        if (semanticModel == null)
             return report;
 
-        var classDecl = file.Class;
-
-        // Analyze class-level variables
-        foreach (var member in classDecl.Members)
+        foreach (var varSymbol in semanticModel.GetVariables().Where(v => v.DeclaringScopeNode == null))
         {
-            if (member is GDVariableDeclaration varDecl)
-            {
-                AnalyzeVariable(varDecl, report);
-            }
-            else if (member is GDMethodDeclaration methodDecl)
-            {
-                AnalyzeMethod(methodDecl, report);
-            }
+            AnalyzeVariable(varSymbol, report);
+        }
+
+        foreach (var methodSymbol in semanticModel.GetMethods())
+        {
+            AnalyzeMethod(methodSymbol, report);
         }
 
         return report;
     }
 
-    private void AnalyzeVariable(GDVariableDeclaration varDecl, GDTypeCoverageReport report)
+    private void AnalyzeVariable(GDSymbolInfo varSymbol, GDTypeCoverageReport report)
     {
         report.TotalVariables++;
 
-        if (varDecl.Type != null)
+        if (varSymbol.TypeName != null)
         {
-            // Has explicit type annotation
             report.AnnotatedVariables++;
         }
-        else if (varDecl.Initializer != null)
+        else if (varSymbol.DeclarationNode is GDVariableDeclaration varDecl && varDecl.Initializer != null)
         {
-            // No annotation but has initializer - type can be inferred
             var initType = InferInitializerType(varDecl.Initializer);
             if (!string.IsNullOrEmpty(initType) && initType != "Variant")
             {
@@ -90,80 +84,72 @@ public class GDTypeCoverageService
         }
         else
         {
-            // No type and no initializer - Variant
             report.VariantVariables++;
         }
     }
 
-    private void AnalyzeMethod(GDMethodDeclaration method, GDTypeCoverageReport report)
+    private void AnalyzeMethod(GDSymbolInfo methodSymbol, GDTypeCoverageReport report)
     {
-        // Analyze parameters
-        var parameters = method.Parameters;
-        if (parameters != null)
+        // Analyze parameters using semantic data
+        if (methodSymbol.Parameters != null)
         {
-            foreach (var param in parameters)
+            foreach (var param in methodSymbol.Parameters)
             {
                 report.TotalParameters++;
 
-                if (param.Type != null)
+                if (param.TypeName != null)
                 {
                     report.AnnotatedParameters++;
                 }
-                else if (param.DefaultValue != null)
+                else if (param.HasDefaultValue)
                 {
-                    // Type can potentially be inferred from default value
-                    var defaultType = InferInitializerType(param.DefaultValue);
-                    if (!string.IsNullOrEmpty(defaultType) && defaultType != "Variant")
-                    {
-                        report.InferredParameters++;
-                    }
+                    report.InferredParameters++;
                 }
             }
         }
 
         // Analyze return type
-        if (HasNonVoidReturn(method))
+        if (methodSymbol.DeclarationNode is GDMethodDeclaration method)
         {
-            report.TotalReturnTypes++;
+            if (HasNonVoidReturn(methodSymbol, method))
+            {
+                report.TotalReturnTypes++;
 
-            if (method.ReturnType != null)
-            {
-                report.AnnotatedReturnTypes++;
-            }
-            else
-            {
-                // Check if return type can be inferred
-                var returnTypeInferred = CanInferReturnType(method);
-                if (returnTypeInferred)
+                if (methodSymbol.ReturnTypeName != null)
                 {
-                    report.InferredReturnTypes++;
+                    report.AnnotatedReturnTypes++;
+                }
+                else
+                {
+                    var returnTypeInferred = CanInferReturnType(method);
+                    if (returnTypeInferred)
+                    {
+                        report.InferredReturnTypes++;
+                    }
                 }
             }
-        }
 
-        // Analyze local variables in method body
-        if (method.Statements != null)
-        {
-            var localVarAnalyzer = new LocalVariableAnalyzer();
-            method.Statements.WalkIn(localVarAnalyzer);
+            // Analyze local variables in method body (requires AST traversal)
+            if (method.Statements != null)
+            {
+                var localVarAnalyzer = new LocalVariableAnalyzer();
+                method.Statements.WalkIn(localVarAnalyzer);
 
-            report.TotalVariables += localVarAnalyzer.TotalVariables;
-            report.AnnotatedVariables += localVarAnalyzer.AnnotatedVariables;
-            report.InferredVariables += localVarAnalyzer.InferredVariables;
-            report.VariantVariables += localVarAnalyzer.VariantVariables;
+                report.TotalVariables += localVarAnalyzer.TotalVariables;
+                report.AnnotatedVariables += localVarAnalyzer.AnnotatedVariables;
+                report.InferredVariables += localVarAnalyzer.InferredVariables;
+                report.VariantVariables += localVarAnalyzer.VariantVariables;
+            }
         }
     }
 
-    private bool HasNonVoidReturn(GDMethodDeclaration method)
+    private bool HasNonVoidReturn(GDSymbolInfo methodSymbol, GDMethodDeclaration method)
     {
-        // Check if method has explicit void return type
-        if (method.ReturnType != null)
+        if (methodSymbol.ReturnTypeName != null)
         {
-            var returnTypeName = method.ReturnType.ToString();
-            return !string.Equals(returnTypeName, "void", System.StringComparison.OrdinalIgnoreCase);
+            return !string.Equals(methodSymbol.ReturnTypeName, "void", System.StringComparison.OrdinalIgnoreCase);
         }
 
-        // Check if method has any return statements with values
         if (method.Statements != null)
         {
             var returnChecker = new ReturnValueChecker();
@@ -182,7 +168,6 @@ public class GDTypeCoverageService
         var returnChecker = new ReturnValueChecker();
         method.Statements.WalkIn(returnChecker);
 
-        // Can infer if all returns have typed values
         return returnChecker.HasValueReturn && returnChecker.AllReturnsTyped;
     }
 

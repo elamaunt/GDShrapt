@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
@@ -49,6 +50,16 @@ public class GDSymbol
     /// True if this symbol is a constant.
     /// </summary>
     public bool IsConst => Kind == GDSymbolKind.Constant;
+
+    /// <summary>
+    /// For methods: the declared return type name (null if no annotation).
+    /// </summary>
+    public string? ReturnTypeName { get; set; }
+
+    /// <summary>
+    /// For methods: parameter information extracted during symbol registration.
+    /// </summary>
+    public IReadOnlyList<GDParameterSymbolInfo>? Parameters { get; set; }
 
     // === Semantic properties ===
 

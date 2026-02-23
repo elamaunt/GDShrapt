@@ -321,6 +321,14 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
         var isStatic = methodDecl.IsStatic;
         var symbol = GDSymbol.Method(name, methodDecl, isStatic: isStatic);
+        symbol.ReturnTypeName = methodDecl.ReturnType?.BuildName();
+        symbol.Parameters = methodDecl.Parameters?
+            .Select((p, i) => new GDParameterSymbolInfo(
+                p.Identifier?.Sequence ?? $"param{i}",
+                p.Type?.BuildName(),
+                p.DefaultValue != null,
+                i))
+            .ToList();
 
         context.Declare(symbol);
 

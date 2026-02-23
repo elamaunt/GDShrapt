@@ -25,41 +25,33 @@ public class GDMetricsService
     /// </summary>
     public GDFileMetrics AnalyzeFile(GDScriptFile file)
     {
-        if (file?.Class == null)
+        var semanticModel = file?.SemanticModel;
+        if (semanticModel == null)
             return CreateEmptyFileMetrics(file?.FullPath ?? "");
 
         var methods = new List<GDMethodMetrics>();
-        var classDecl = file.Class;
 
-        // Collect method metrics
-        foreach (var member in classDecl.Members)
+        foreach (var methodSymbol in semanticModel.GetMethods())
         {
-            if (member is GDMethodDeclaration method)
-            {
-                var methodMetrics = AnalyzeMethod(method);
-                if (methodMetrics != null)
-                    methods.Add(methodMetrics);
-            }
+            var methodMetrics = AnalyzeMethod(methodSymbol);
+            if (methodMetrics != null)
+                methods.Add(methodMetrics);
         }
 
-        // Count lines from LastContent
-        var lineStats = CountLines(file);
+        var lineStats = CountLines(file!);
 
-        // Count signals
-        int signalCount = classDecl.Members.Count(m => m is GDSignalDeclaration);
-
-        // Count variables (class-level)
-        int variableCount = classDecl.Members.Count(m => m is GDVariableDeclaration);
+        int signalCount = semanticModel.GetSignals().Count;
+        int variableCount = semanticModel.GetVariables().Count;
 
         return new GDFileMetrics
         {
-            FilePath = file.FullPath ?? "",
+            FilePath = file!.FullPath ?? "",
             FileName = Path.GetFileName(file.FullPath ?? ""),
             TotalLines = lineStats.Total,
             CodeLines = lineStats.Code,
             CommentLines = lineStats.Comments,
             BlankLines = lineStats.Blank,
-            ClassCount = 1, // GDScript has one class per file
+            ClassCount = 1,
             MethodCount = methods.Count,
             SignalCount = signalCount,
             VariableCount = variableCount,
@@ -102,10 +94,9 @@ public class GDMetricsService
         };
     }
 
-    private GDMethodMetrics? AnalyzeMethod(GDMethodDeclaration method)
+    private GDMethodMetrics? AnalyzeMethod(GDSymbolInfo methodSymbol)
     {
-        var methodName = method.Identifier?.Sequence;
-        if (string.IsNullOrEmpty(methodName))
+        if (methodSymbol.DeclarationNode is not GDMethodDeclaration method)
             return null;
 
         var firstToken = method.AllTokens.FirstOrDefault();
@@ -114,33 +105,18 @@ public class GDMetricsService
         int startLine = firstToken?.StartLine ?? 0;
         int endLine = lastToken?.EndLine ?? startLine;
 
-        // Calculate cyclomatic complexity
         int cyclomaticComplexity = CalculateCyclomaticComplexity(method);
-
-        // Calculate cognitive complexity
         int cognitiveComplexity = CalculateCognitiveComplexity(method);
-
-        // Calculate nesting depth
         int nestingDepth = CalculateNestingDepth(method);
-
-        // Count parameters
-        int parameterCount = method.Parameters?.Count ?? 0;
-
-        // Count local variables
+        int parameterCount = methodSymbol.ParameterCount;
         int localVariableCount = CountLocalVariables(method);
-
-        // Count return statements
         int returnCount = CountReturnExpressions(method);
-
-        // Calculate lines of code for the method
         int methodLoc = endLine - startLine + 1;
-
-        // Calculate Maintainability Index
         double maintainabilityIndex = CalculateMaintainabilityIndex(methodLoc, cyclomaticComplexity, cognitiveComplexity);
 
         return new GDMethodMetrics
         {
-            Name = methodName,
+            Name = methodSymbol.Name,
             StartLine = startLine,
             EndLine = endLine,
             CyclomaticComplexity = cyclomaticComplexity,

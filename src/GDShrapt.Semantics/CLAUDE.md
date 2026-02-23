@@ -35,7 +35,10 @@ Access through `file.SemanticModel?.Method()`.
 | `GetReferencesTo()` | Find references to symbol |
 | `GetUnionType()` / `GetDuckType()` | Union/duck-typed inference |
 | `GetMemberAccessConfidence()` | Confidence for member access |
-| `InferParameterTypes()` | Parameter type inference |
+| `InferParameterTypes(string)` | Parameter type inference (name-based, preferred) |
+| `InferParameterTypes(GDMethodDeclaration)` | Parameter type inference (AST, for cross-assembly callers) |
+| `AnalyzeMethodReturns(string)` | Method return analysis (name-based, preferred) |
+| `AnalyzeMethodReturns(GDMethodDeclaration)` | Method return analysis (AST, for cross-assembly callers) |
 | `GetTypeDiffForNode()` | Detailed type analysis |
 
 ### GDProjectSemanticModel (project-level)
@@ -89,6 +92,21 @@ Centralized constants for Godot type names, functions, and compatibility rules:
 `GDProjectSemanticModel` lazy properties use `Lazy<T>` for thread-safe initialization:
 - `Services`, `Diagnostics`, `TypeSystem`, `DeadCode`, `Metrics`, `TypeCoverage`, `Dependencies` — all use `Lazy<T>` with `LazyThreadSafetyMode.PublicationOnly`
 - `SignalConnectionRegistry`, `ContainerRegistry`, `DependencyGraph` — also `Lazy<T>`
+
+## Architectural Boundary: AST Access
+
+**Legitimate AST access** (TypeInference/, Analysis/ internals):
+- `TypeInference/` — builds TypeInfo from AST. `BuildName()` here is the AST→String boundary.
+- `Analysis/GDSemanticReferenceCollector` — builds SymbolRegistry from AST.
+- `Analysis/GDFlowAnalyzer` — flow analysis operates on AST.
+- `Refactoring/Infrastructure/` — code generation requires AST manipulation.
+
+**Services must use semantic API only** (Services/ layer):
+- `GDMetricsService` — uses `semanticModel.GetMethods()`, `GetSignals()`, `GetVariables()`
+- `GDTypeCoverageService` — uses `symbol.TypeName`, `symbol.Parameters`, `symbol.ReturnTypeName`
+- `GDOnreadyService` — uses `GetVariables()`, `GetMethods()` delegates
+
+Services may access `symbol.DeclarationNode` only for AST visitor traversal (e.g., complexity counters, local variable walkers) — not for reading member declarations.
 
 ## Known Limitations
 

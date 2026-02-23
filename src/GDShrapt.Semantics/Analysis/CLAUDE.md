@@ -43,7 +43,7 @@ GDProjectSemanticModel (entry point)
 - **Type queries:** `GetTypeForNode(node)`, `GetExpressionType(expr)`, `GetFlowVariableType()`, `GetFlowStateAtLocation()`
 - **Union/Duck:** `GetUnionType(name)`, `GetDuckType(name)`, `ShouldSuppressDuckConstraints()`
 - **Confidence:** `GetMemberAccessConfidence()`, `GetIdentifierConfidence()`, `GetConfidenceReason()`
-- **Type inference:** `InferParameterTypes(GDMethodDeclaration)`, `GetTypeDiffForNode(node)`
+- **Type inference:** `InferParameterTypes(string methodName)` (preferred), `InferParameterTypes(GDMethodDeclaration)` (kept public for cross-assembly callers), `AnalyzeMethodReturns(string methodName)` (preferred), `AnalyzeMethodReturns(GDMethodDeclaration)`, `GetTypeDiffForNode(node)`
 - **Standalone:** `ResolveStandaloneExpression()`
 - **Type usages:** `GetTypeUsages(typeName)`
 
@@ -290,6 +290,15 @@ Represents a symbol (variable, method, signal, etc.) with metadata:
 - `Name`, `Kind`, `DeclarationNode`
 - `DeclaringTypeName`, `DeclaringScript`
 - `IsInherited`, `ConfidenceReason`
+- `ReturnTypeName` — method return type (delegated from `GDSymbol`)
+- `Parameters` → `IReadOnlyList<GDParameterSymbolInfo>?` — method parameter info
+- `ParameterCount` — convenience accessor
+
+### GDParameterSymbolInfo
+Method parameter data without AST exposure (defined in `GDShrapt.Abstractions`):
+- `Name`, `TypeName`, `HasDefaultValue`, `Position`
+
+Populated during symbol registration in `GDSemanticReferenceCollector` and `GDTypeResolver`.
 
 ### GDReference
 Represents a reference to a symbol:
