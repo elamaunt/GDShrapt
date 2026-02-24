@@ -232,6 +232,44 @@ internal class GDTypeConfidenceResolver
     }
 
     /// <summary>
+    /// Infers type for a match case binding variable from the match subject.
+    /// </summary>
+    public GDInferredType InferMatchCaseBindingType(GDMatchCaseVariableExpression? matchVar)
+    {
+        if (matchVar == null)
+            return GDInferredType.Unknown("Match case variable is null");
+
+        // Check for guard condition narrowing first
+        var matchCase = GDMatchPatternHelper.FindEnclosingMatchCase(matchVar);
+        if (matchCase != null)
+        {
+            var (guardVar, guardType) = GDMatchPatternHelper.ExtractGuardNarrowing(matchCase);
+            if (matchVar.Identifier?.Sequence == guardVar && !string.IsNullOrEmpty(guardType))
+                return GDInferredType.High(guardType, "Narrowed by match guard condition");
+        }
+
+        var matchStmt = GDMatchPatternHelper.FindEnclosingMatchStatement(matchVar);
+        if (matchStmt?.Value == null)
+            return GDInferredType.Unknown("Cannot find enclosing match statement");
+
+        // Infer from match subject
+        var subjectType = _semanticModel != null
+            ? _semanticModel.GetExpressionType(matchStmt.Value)
+            : null;
+
+        if (string.IsNullOrEmpty(subjectType) || subjectType == GDWellKnownTypes.Variant)
+            return InferExpressionType(matchStmt.Value);
+
+        var context = GDMatchPatternHelper.DetermineBindingContext(matchVar);
+        var bindingType = GDMatchPatternHelper.InferMatchBindingType(subjectType, context);
+
+        if (!string.IsNullOrEmpty(bindingType) && bindingType != GDWellKnownTypes.Variant)
+            return GDInferredType.High(bindingType, $"Bound from match subject ({context})");
+
+        return GDInferredType.FromType(GDWellKnownTypes.Variant, GDTypeConfidence.Medium, "Match binding from untyped subject");
+    }
+
+    /// <summary>
     /// Infers type for a parameter declaration.
     /// </summary>
     public GDInferredType InferParameterType(GDParameterDeclaration? paramDecl)

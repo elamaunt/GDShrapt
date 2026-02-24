@@ -234,6 +234,22 @@ public class GDTypeSystem : IGDTypeSystem
                 }
             }
 
+            // Match case binding — infer from match subject
+            if (symbol.Kind == GDSymbolKind.MatchCaseBinding
+                && symbol.DeclarationNode is GDMatchCaseVariableExpression matchVarExpr)
+            {
+                var confidenceHelper = new GDTypeConfidenceResolver(_model);
+                var inferred = confidenceHelper.InferMatchCaseBindingType(matchVarExpr);
+                if (!inferred.IsUnknown)
+                {
+                    return new GDTypeInfo
+                    {
+                        InferredType = inferred.TypeName,
+                        Confidence = inferred.Confidence
+                    };
+                }
+            }
+
             // Fallback to Variant
             return new GDTypeInfo
             {

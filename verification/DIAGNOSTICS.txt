@@ -1,27 +1,27 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-02-23 23:56:06
+Generated: 2026-02-24 12:31:02
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 876
+Total diagnostics: 875
 Scripts analyzed:  54
 
 By Severity:
   Error     :    30
   Hint      :    22
   Info      :    35
-  Warning   :   789
+  Warning   :   788
 
 By Source:
   Linter              :   301
-  SemanticValidator   :   543
+  SemanticValidator   :   542
   Validator           :    32
 
 By Code (Top 30):
-  GD7007    :  262  (Variable 'timer_node' is @onready - _ready() may not have...)
+  GD7007    :  261  (Variable 'timer_node' is @onready - _ready() may not have...)
   GDL201    :  155  (Local variable 'unused_var' is declared but never used)
   GD7006    :   82  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
@@ -1015,7 +1015,7 @@ DIAGNOSTICS BY FILE
 
    100:0   [GD3024] Warning - Not all code paths return a value in 'test_match_inference' (declared -> String)
 
---- test_scripts/union_returns.gd (13 diagnostics) ---
+--- test_scripts/union_returns.gd (12 diagnostics) ---
 
      2:11  [GDL222] Warning - 'UnionReturns' has 22 public methods (max 20)
     23:0   [GD3023] Warning - Function 'multi_type' returns inconsistent types: int, float, String, Array[int], null
@@ -1027,7 +1027,6 @@ DIAGNOSTICS BY FILE
    111:0   [GD3023] Warning - Function 'loop_return' returns inconsistent types: String, int
    121:0   [GD3023] Warning - Function 'recursive_return' returns inconsistent types: String, Dictionary
    139:0   [GD3023] Warning - Function 'exception_pattern' returns inconsistent types: Dictionary, bool
-   190:10  [GD7007] Warning - Variable 'x' may be null when accessing 'length'
    220:0   [GD3023] Warning - Function 'factory_method' returns inconsistent types: Node, Node2D, Control, null
    233:0   [GD3023] Warning - Function 'type_from_data' returns inconsistent types: Vector2, Color, Rect2, Dictionary
 

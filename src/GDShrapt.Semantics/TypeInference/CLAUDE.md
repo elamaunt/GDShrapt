@@ -136,6 +136,37 @@ finally
 }
 ```
 
+## Match Case Binding Type Inference
+
+Infers types for `var x` bindings in match case patterns. Implemented across 4 layers:
+
+| Layer | Method | Responsibility |
+|-------|--------|----------------|
+| `GDTypeInferenceEngine` | `InferMatchCaseVariableType()` | Expression-level: resolves type from match subject |
+| `GDFlowAnalyzer` | `DeclareMatchBindings()` | Flow analysis: declares bindings with inferred types |
+| `GDTypeSystem` | `GetTypeInfo()` MatchCaseBinding branch | Symbol query: delegates to confidence resolver |
+| `GDTypeConfidenceResolver` | `InferMatchCaseBindingType()` | Confidence-tracked inference from match subject |
+
+Shared helpers in `Analysis/FlowServices/GDMatchPatternHelper.cs`:
+- `FindEnclosingMatchStatement(node)` — walks parent chain to find `GDMatchStatement`
+- `FindEnclosingMatchCase(node)` — walks parent chain to find `GDMatchCaseDeclaration`
+- `DetermineBindingContext(varExpr)` — returns Direct, ArrayElement, or DictionaryValue
+- `ExtractGuardNarrowing(matchCase)` — extracts `(varName, typeName)` from `when x is T` guards
+- `InferMatchBindingType(subjectType, context)` — applies context-specific type extraction
+
+**Type Rules:**
+
+| Pattern | Subject Type | Binding Type |
+|---------|-------------|--------------|
+| `var x:` | `T` (known) | `T` |
+| `var x:` | `Variant` | `Variant` |
+| `[var x, ..]` | `Array[T]` | `T` |
+| `[var x, ..]` | `PackedInt32Array` | `int` |
+| `[var x, ..]` | `Array` | `Variant` |
+| `{"k": var v}` | `Dictionary[K,V]` | `V` |
+| `{"k": var v}` | `Dictionary` | `Variant` |
+| `var x when x is T:` | any | `T` (guard narrowing, highest priority) |
+
 ## Known Limitations
 
 1. **Nested Generics** - Limited support for `Array[Array[int]]`

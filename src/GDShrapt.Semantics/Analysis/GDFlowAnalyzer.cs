@@ -18,6 +18,7 @@ internal class GDFlowAnalyzer : GDVisitor
     private readonly Func<IEnumerable<string>>? _onreadyVariablesProvider;
     private readonly Stack<GDFlowState> _stateStack = new();
     private readonly Stack<List<GDFlowState>> _branchStatesStack = new();
+    private readonly Stack<GDExpression?> _matchSubjectStack = new();
     private GDFlowState _currentState;
 
     // Results: maps AST nodes to their flow state at that point
@@ -482,6 +483,8 @@ internal class GDFlowAnalyzer : GDVisitor
         _stateStack.Push(_currentState);
         // Create list to collect case end states
         _branchStatesStack.Push(new List<GDFlowState>());
+        // Track match subject for binding type inference
+        _matchSubjectStack.Push(matchStmt.Value);
         RecordState(matchStmt);
     }
 
@@ -510,6 +513,9 @@ internal class GDFlowAnalyzer : GDVisitor
 
     public override void Left(GDMatchStatement matchStmt)
     {
+        if (_matchSubjectStack.Count > 0)
+            _matchSubjectStack.Pop();
+
         var parentState = _stateStack.Count > 0 ? _stateStack.Pop() : _currentState;
         var caseStates = _branchStatesStack.Count > 0 ? _branchStatesStack.Pop() : new List<GDFlowState>();
 
@@ -528,23 +534,31 @@ internal class GDFlowAnalyzer : GDVisitor
     }
 
     /// <summary>
-    /// Declares binding variables from match case patterns.
+    /// Declares binding variables from match case patterns with type inference from match subject.
     /// </summary>
     private void DeclareMatchBindings(GDMatchCaseDeclaration matchCase, GDFlowState state)
     {
         if (matchCase.Conditions == null)
             return;
 
+        // Infer subject type from match statement
+        string? subjectType = null;
+        if (_matchSubjectStack.Count > 0 && _matchSubjectStack.Peek() != null)
+            subjectType = _typeEngine?.InferSemanticType(_matchSubjectStack.Peek()!)?.DisplayName;
+
+        // Extract guard condition narrowing
+        var (guardVar, guardType) = GDMatchPatternHelper.ExtractGuardNarrowing(matchCase);
+
         foreach (var condition in matchCase.Conditions)
         {
-            DeclareBindingsFromPattern(condition, state);
+            DeclareBindingsFromPattern(condition, state, subjectType, guardVar, guardType);
         }
     }
 
     /// <summary>
     /// Recursively declares binding variables from a pattern expression.
     /// </summary>
-    private void DeclareBindingsFromPattern(GDExpression? pattern, GDFlowState state)
+    private void DeclareBindingsFromPattern(GDExpression? pattern, GDFlowState state, string? subjectType, string? guardVar, string? guardType)
     {
         if (pattern == null)
             return;
@@ -555,17 +569,22 @@ internal class GDFlowAnalyzer : GDVisitor
             var name = varExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(name))
             {
-                // Binding variables get type from the matched value (Variant for now)
-                state.DeclareVariable(name, null, GDVariantSemanticType.Instance);
+                // Apply guard narrowing if applicable, otherwise use subject type
+                var bindingType = (name == guardVar && !string.IsNullOrEmpty(guardType))
+                    ? guardType
+                    : subjectType;
+
+                state.DeclareVariable(name, null, GDSemanticType.FromRuntimeTypeName(bindingType));
             }
             return;
         }
 
         if (pattern is GDArrayInitializerExpression arrayExpr)
         {
+            var elementType = GDLoopFlowHelper.InferIteratorElementType(subjectType);
             foreach (var element in arrayExpr.Values ?? Enumerable.Empty<GDExpression>())
             {
-                DeclareBindingsFromPattern(element, state);
+                DeclareBindingsFromPattern(element, state, elementType, guardVar, guardType);
             }
             return;
         }
@@ -573,9 +592,11 @@ internal class GDFlowAnalyzer : GDVisitor
         // Handle dictionary patterns: {key: value}
         if (pattern is GDDictionaryInitializerExpression dictExpr)
         {
+            var (_, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(subjectType);
+            var dictValueType = valueType ?? GDWellKnownTypes.Variant;
             foreach (var kvp in dictExpr.KeyValues ?? Enumerable.Empty<GDDictionaryKeyValueDeclaration>())
             {
-                DeclareBindingsFromPattern(kvp.Value, state);
+                DeclareBindingsFromPattern(kvp.Value, state, dictValueType, guardVar, guardType);
             }
         }
     }

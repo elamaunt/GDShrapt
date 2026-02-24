@@ -187,7 +187,7 @@ func union_in_match(data):
 		var x when x is int:
 			return x * 2                # int
 		var x when x is String:
-			return x.length()           # int  # 190:10-GD7007-OK
+			return x.length()           # int
 		_:
 			return null                 # null
 

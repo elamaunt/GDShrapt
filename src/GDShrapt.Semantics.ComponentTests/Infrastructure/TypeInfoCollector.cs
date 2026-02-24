@@ -1,3 +1,6 @@
+using GDShrapt.Abstractions;
+using GDShrapt.Reader;
+
 namespace GDShrapt.Semantics.ComponentTests;
 
 /// <summary>
@@ -31,14 +34,6 @@ public class TypeInfoCollector
 
         foreach (var symbol in model.Symbols)
         {
-            // Only collect declarations that have meaningful type info
-            if (symbol.Kind != GDShrapt.Abstractions.GDSymbolKind.Variable &&
-                symbol.Kind != GDShrapt.Abstractions.GDSymbolKind.Parameter &&
-                symbol.Kind != GDShrapt.Abstractions.GDSymbolKind.Constant &&
-                symbol.Kind != GDShrapt.Abstractions.GDSymbolKind.Property &&
-                symbol.Kind != GDShrapt.Abstractions.GDSymbolKind.Iterator)
-                continue;
-
             var declNode = symbol.DeclarationNode;
             int line = GetNodeLine(declNode);
             int column = GetNodeColumn(declNode);
@@ -47,7 +42,11 @@ public class TypeInfoCollector
                 continue;
 
             // Get rich type info
-            var typeInfo = model.TypeSystem.GetTypeInfo(symbol.Name);
+            // For match case bindings, use expression-level query to resolve per-node
+            // (name-based GetTypeInfo would return the same result for all bindings with the same name)
+            var typeInfo = symbol.Kind == GDSymbolKind.MatchCaseBinding && declNode is GDExpression matchExpr
+                ? model.TypeSystem.GetExpressionTypeInfo(matchExpr)
+                : model.TypeSystem.GetTypeInfo(symbol.Name);
             var containerInfo = model.TypeSystem.GetContainerElementType(symbol.Name);
 
             string? declaredType = typeInfo?.DeclaredTypeName;

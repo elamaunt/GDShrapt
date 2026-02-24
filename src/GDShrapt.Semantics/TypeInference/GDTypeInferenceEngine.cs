@@ -644,9 +644,9 @@ namespace GDShrapt.Semantics
                     }
                     return CreateSimpleType("Node");
 
-                // Match case variable - bound type from pattern
-                case GDMatchCaseVariableExpression _:
-                    return null;
+                // Match case variable - bound type from match subject
+                case GDMatchCaseVariableExpression matchVarExpr:
+                    return InferMatchCaseVariableType(matchVarExpr);
 
                 // Pass expression
                 case GDPassExpression _:
@@ -655,6 +655,31 @@ namespace GDShrapt.Semantics
                 default:
                     return null;
             }
+        }
+
+        private GDTypeNode InferMatchCaseVariableType(GDMatchCaseVariableExpression matchVarExpr)
+        {
+            var matchCase = GDMatchPatternHelper.FindEnclosingMatchCase(matchVarExpr);
+            if (matchCase != null)
+            {
+                var (guardVar, guardType) = GDMatchPatternHelper.ExtractGuardNarrowing(matchCase);
+                if (matchVarExpr.Identifier?.Sequence == guardVar && !string.IsNullOrEmpty(guardType))
+                    return CreateSimpleType(guardType);
+            }
+
+            var matchStmt = GDMatchPatternHelper.FindEnclosingMatchStatement(matchVarExpr);
+            if (matchStmt?.Value == null)
+                return null;
+
+            var subjectType = InferTypeNode(matchStmt.Value);
+            if (subjectType == null)
+                return null;
+
+            var subjectTypeName = subjectType.BuildName();
+            var context = GDMatchPatternHelper.DetermineBindingContext(matchVarExpr);
+            var bindingType = GDMatchPatternHelper.InferMatchBindingType(subjectTypeName, context);
+
+            return !string.IsNullOrEmpty(bindingType) ? CreateSimpleType(bindingType) : null;
         }
 
         /// <summary>

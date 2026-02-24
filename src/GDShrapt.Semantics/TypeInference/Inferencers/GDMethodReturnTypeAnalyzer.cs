@@ -244,21 +244,8 @@ internal class GDMethodReturnTypeAnalyzer
         if (matchCase.Conditions == null)
             return;
 
-        // Check for guard condition "when x is Type" to infer narrowed type
-        string guardType = null;
-        string guardVar = null;
+        var (guardVar, guardType) = GDMatchPatternHelper.ExtractGuardNarrowing(matchCase);
 
-        if (matchCase.GuardCondition is GDDualOperatorExpression guardExpr &&
-            guardExpr.Operator?.OperatorType == GDDualOperatorType.Is)
-        {
-            if (guardExpr.LeftExpression is GDIdentifierExpression guardIdExpr)
-                guardVar = guardIdExpr.Identifier?.Sequence;
-
-            if (guardExpr.RightExpression is GDIdentifierExpression typeIdExpr)
-                guardType = typeIdExpr.Identifier?.Sequence;
-        }
-
-        // Recursively collect pattern variables from conditions
         foreach (var condition in matchCase.Conditions)
         {
             CollectPatternVariablesFromExpression(condition, scope, guardVar, guardType);

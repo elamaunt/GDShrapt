@@ -119,6 +119,7 @@ Most internal methods (scope queries, nullability, onready, cross-method flow, l
 **State Stack:**
 - `_stateStack` — Parent states for branch merging
 - `_branchStatesStack` — Collects branch end states
+- `_matchSubjectStack` — Match subject expressions for binding type inference
 
 **Interactions:**
 - Used by: `GDSemanticModel` (via `_flowAnalyzers` cache)
