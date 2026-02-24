@@ -34,6 +34,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
     private GDTypeNarrowingContext? _currentNarrowingContext;
 
     private bool _inAssignmentLeft;
+    private bool _inPropertyWriteCaller;
+    private bool _isSimpleAssignment;
+    private bool _isCompoundAssignment;
     private readonly HashSet<GDNode> _visitedNodes = new();
     private readonly Dictionary<string, GDSymbolInfo> _inheritedSymbolCache = new();
     private readonly Dictionary<string, (GDAccessorDeclaration? First, GDAccessorDeclaration? Second)> _propertyAccessors = new();
@@ -754,8 +757,18 @@ internal class GDSemanticReferenceCollector : GDVisitor
         else if (opType != null && IsAssignmentOperator(opType.Value))
         {
             _inAssignmentLeft = true;
+            if (opType.Value == GDDualOperatorType.Assignment)
+            {
+                _isSimpleAssignment = true;
+            }
+            else
+            {
+                _isCompoundAssignment = true;
+            }
             dualOperator.LeftExpression?.WalkIn(this);
             _inAssignmentLeft = false;
+            _isSimpleAssignment = false;
+            _isCompoundAssignment = false;
 
             dualOperator.RightExpression?.WalkIn(this);
             RecordNodeType(dualOperator);
@@ -873,11 +886,21 @@ internal class GDSemanticReferenceCollector : GDVisitor
         }
 
         RecordNodeType(memberExpression);
+
+        // In obj.prop = val, the member is the write target but the caller (obj) is a read
+        if (_inAssignmentLeft)
+        {
+            _inAssignmentLeft = false;
+            _inPropertyWriteCaller = _isSimpleAssignment;
+        }
     }
 
     public override void Left(GDDualOperatorExpression dualOperator)
     {
         _inAssignmentLeft = false;
+        _isSimpleAssignment = false;
+        _isCompoundAssignment = false;
+        _inPropertyWriteCaller = false;
     }
 
     public override void Visit(GDCallExpression callExpression)
@@ -1012,6 +1035,13 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDIndexerExpression indexerExpression)
     {
         RecordNodeType(indexerExpression);
+
+        // In arr[i] = val, the indexer is the write target but the caller (arr) is a read
+        if (_inAssignmentLeft)
+        {
+            _inAssignmentLeft = false;
+            _inPropertyWriteCaller = _isSimpleAssignment;
+        }
     }
 
     public override void Visit(GDNumberExpression numberExpression)
@@ -1209,12 +1239,15 @@ internal class GDSemanticReferenceCollector : GDVisitor
             ReferenceNode = node,
             Scope = _currentGDScope,
             IsWrite = _inAssignmentLeft,
-            IsRead = !_inAssignmentLeft,
+            IsRead = !_inAssignmentLeft || _isCompoundAssignment,
+            IsPropertyWriteOnCaller = _inPropertyWriteCaller,
             Confidence = confidence,
             ConfidenceReason = BuildConfidenceReason(symbol, confidence),
             CallerTypeName = callerTypeName,
             IdentifierToken = ResolveIdentifierToken(node)
         };
+
+        _inPropertyWriteCaller = false;
 
         if (_typeEngine != null && node is GDExpression expr && _recordingTypes.Add(expr))
         {

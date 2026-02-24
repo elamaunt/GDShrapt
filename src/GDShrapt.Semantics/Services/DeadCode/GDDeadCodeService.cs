@@ -1,4 +1,5 @@
 using GDShrapt.Abstractions;
+using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -295,6 +296,22 @@ public class GDDeadCodeService
                     Reason = "Variable is never read (semantic analysis)",
                     IsPrivate = isPrivate,
                     IsExportedOrOnready = hasExportOrOnready
+                };
+            }
+            else if (reads.All(r => r.IsPropertyWriteOnCaller)
+                     && IsLocallyConstructedNonEscaping(symbol, references))
+            {
+                var token = symbol.PositionToken;
+                yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
+                {
+                    Line = token?.StartLine ?? 0,
+                    Column = token?.StartColumn ?? 0,
+                    EndLine = token?.EndLine ?? 0,
+                    EndColumn = token?.EndColumn ?? 0,
+                    Confidence = GDReferenceConfidence.Strict,
+                    ReasonCode = GDDeadCodeReasonCode.VPW,
+                    Reason = "Variable only used as property/indexer write target on locally-constructed non-escaping object",
+                    IsPrivate = isPrivate
                 };
             }
         }
@@ -1094,4 +1111,164 @@ public class GDDeadCodeService
             }
         }
     }
+
+    #region Escape Analysis
+
+    private static bool IsLocallyConstructedNonEscaping(
+        GDSymbolInfo symbol,
+        IReadOnlyList<GDReference> allReferences)
+    {
+        if (symbol.ScopeType != GDSymbolScopeType.LocalVariable)
+            return false;
+
+        if (!HasConstructorInitializer(symbol))
+            return false;
+
+        foreach (var writeRef in allReferences.Where(r => r.IsWrite))
+        {
+            if (!IsConstructorSourceAssignment(writeRef))
+                return false;
+        }
+
+        foreach (var reference in allReferences)
+        {
+            if (reference.IsRead && !reference.IsPropertyWriteOnCaller)
+                return false;
+        }
+
+        if (HasEscapeInAST(symbol))
+            return false;
+
+        return true;
+    }
+
+    private static bool HasConstructorInitializer(GDSymbolInfo symbol)
+    {
+        GDExpression? initializer = symbol.DeclarationNode switch
+        {
+            GDVariableDeclarationStatement local => local.Initializer,
+            GDVariableDeclaration classVar => classVar.Initializer,
+            _ => null
+        };
+        return initializer != null && IsConstructorExpression(initializer);
+    }
+
+    private static bool IsConstructorExpression(GDExpression expr)
+    {
+        if (expr is GDCallExpression call
+            && call.CallerExpression is GDMemberOperatorExpression member
+            && member.Identifier?.Sequence == "new")
+            return true;
+
+        if (expr is GDArrayInitializerExpression)
+            return true;
+
+        if (expr is GDDictionaryInitializerExpression)
+            return true;
+
+        if (expr is GDCallExpression ctorCall
+            && ctorCall.CallerExpression is GDIdentifierExpression ctorId)
+        {
+            var name = ctorId.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(name) && GDWellKnownTypes.IsBuiltInType(name))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsConstructorSourceAssignment(GDReference writeRef)
+    {
+        var node = writeRef.ReferenceNode;
+        var parent = node?.Parent;
+        while (parent != null)
+        {
+            if (parent is GDDualOperatorExpression dualOp)
+            {
+                return dualOp.RightExpression != null
+                    && IsConstructorExpression(dualOp.RightExpression);
+            }
+            if (parent is GDVariableDeclarationStatement)
+                return true;
+            parent = parent.Parent;
+        }
+        return true;
+    }
+
+    private static bool HasEscapeInAST(GDSymbolInfo symbol)
+    {
+        var varName = symbol.Name;
+        var scope = symbol.DeclaringScopeNode;
+        if (scope == null || string.IsNullOrEmpty(varName))
+            return true;
+
+        foreach (var node in scope.AllNodes)
+        {
+            if (node is GDCallExpression call && call.Parameters != null)
+            {
+                foreach (var param in call.Parameters)
+                {
+                    if (ContainsIdentifier(param, varName))
+                        return true;
+                }
+            }
+
+            if (node is GDReturnExpression ret && ContainsIdentifier(ret.Expression, varName))
+                return true;
+
+            if (node is GDDualOperatorExpression dualOp)
+            {
+                var opType = dualOp.Operator?.OperatorType;
+                if (opType == GDDualOperatorType.Assignment
+                    || opType == GDDualOperatorType.AddAndAssign
+                    || opType == GDDualOperatorType.SubtractAndAssign)
+                {
+                    if (dualOp.RightExpression != null
+                        && ContainsIdentifier(dualOp.RightExpression, varName))
+                    {
+                        var lhsName = GetRootIdentifierName(dualOp.LeftExpression);
+                        if (lhsName != varName)
+                            return true;
+                    }
+                }
+            }
+
+            if (node is GDArrayInitializerExpression arr && arr.Values != null)
+            {
+                foreach (var val in arr.Values)
+                {
+                    if (ContainsIdentifier(val, varName))
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsIdentifier(GDExpression? expr, string name)
+    {
+        if (expr == null) return false;
+        if (expr is GDIdentifierExpression id && id.Identifier?.Sequence == name)
+            return true;
+        foreach (var child in expr.AllNodes)
+        {
+            if (child is GDIdentifierExpression childId && childId.Identifier?.Sequence == name)
+                return true;
+        }
+        return false;
+    }
+
+    private static string? GetRootIdentifierName(GDExpression? expr)
+    {
+        while (expr is GDMemberOperatorExpression member)
+            expr = member.CallerExpression;
+        while (expr is GDIndexerExpression indexer)
+            expr = indexer.CallerExpression;
+        if (expr is GDIdentifierExpression ident)
+            return ident.Identifier?.Sequence;
+        return null;
+    }
+
+    #endregion
 }

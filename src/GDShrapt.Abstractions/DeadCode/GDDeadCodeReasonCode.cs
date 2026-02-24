@@ -52,4 +52,7 @@ public enum GDDeadCodeReasonCode
 
     /// <summary>Member referenced from .tres resource file property.</summary>
     TRF,
+
+    /// <summary>Variable only used as Property Write target on locally-constructed non-escaping object.</summary>
+    VPW,
 }

@@ -59,4 +59,11 @@ public class GDReference
     /// not the entire expression node. Use this for precise edit positioning.
     /// </summary>
     public GDSyntaxToken? IdentifierToken { get; set; }
+
+    /// <summary>
+    /// True when this read reference exists because the variable was the caller
+    /// in a property/indexer write (obj.prop = val). The dead code service uses this
+    /// to distinguish genuine reads from property-write-on-caller reads.
+    /// </summary>
+    public bool IsPropertyWriteOnCaller { get; set; }
 }
