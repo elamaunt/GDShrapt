@@ -16,16 +16,8 @@ namespace GDShrapt.Semantics.ComponentTests;
 [TestCategory("ManualVerification")]
 public class RenameVerificationTest
 {
-    private static string GetVerificationRoot()
-    {
-        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
-            dir = dir.Parent;
-        return Path.Combine(dir?.FullName ?? throw new InvalidOperationException("Could not find repo root"), "verification");
-    }
-
-    private static string OutputPath => Path.Combine(GetVerificationRoot(), "RENAME_VERIFICATION_OUTPUT.txt");
-    private static string VerifiedPath => Path.Combine(GetVerificationRoot(), "RENAME_VERIFICATION_VERIFIED.txt");
+    private static string OutputPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "RENAME_VERIFICATION_OUTPUT.txt");
+    private static string VerifiedPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "RENAME_VERIFICATION_VERIFIED.txt");
 
     private static readonly RenameTestCase[] TestCases = new[]
     {

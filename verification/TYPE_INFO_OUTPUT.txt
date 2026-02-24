@@ -20380,16 +20380,16 @@ test_scripts/type_guards.gd
 
   124:2 MatchCaseBinding x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   126:2 MatchCaseBinding x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   132:0 Method custom_type_guard
@@ -21705,16 +21705,16 @@ test_scripts/union_returns.gd
 
   187:2 MatchCaseBinding x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   189:2 MatchCaseBinding x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
   195:0 Method async_result
@@ -22004,9 +22004,9 @@ test_scripts/union_types_complex.gd
 
   120:2 MatchCaseBinding x
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   128:0 Variable mixed_array

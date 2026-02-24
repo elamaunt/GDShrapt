@@ -15763,3 +15763,7212 @@ test_scripts/reflection_test.gd
     confidence: Medium
     nullable: no
 
+
+# Entries added by match case binding type inference update
+
+test_scripts/ai_controller.gd
+  11:0 Enum AIState # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  23:0 Signal state_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  24:0 Signal target_reached # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  27:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  33:0 Method _process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  49:0 Method _process_idle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:0 Method _process_patrol # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method _process_chase # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  77:0 Method _process_attack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:0 Method _process_flee # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method find_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  99:0 Method change_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  106:0 Method set_target # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  115:0 Method is_target_in_range # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  122:0 Method get_closest_patrol_point # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/base_entity.gd
+  10:0 Signal health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  11:0 Signal entity_died # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  12:0 Signal damage_taken # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  23:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:0 Method take_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method calculate_actual_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  50:0 Method heal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  58:0 Method die # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  70:0 Method revive # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  79:0 Method get_health_percent # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  85:0 Method is_full_health # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  89:0 Method set_max_health # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  98:0 Method apply_buff # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  105:0 Method remove_buff # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/completion_test.gd
+  7:0 Enum TestEnum # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  26:0 Signal custom_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  29:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  34:0 Method test_string_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method test_array_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  57:0 Method test_dictionary_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method test_vector_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  78:0 Method test_node_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  86:0 Method test_color_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  95:0 Method test_timer_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  105:0 Method test_enum_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  117:0 Method test_global_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  129:0 Method test_chain_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  134:0 Method test_typed_array_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  145:0 Method helper_function # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  149:0 Method test_function_signature_help # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/cross_file_inference.gd
+  22:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method process_entity # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  51:0 Method apply_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  58:0 Method run_cyclic_computation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  66:0 Method setup_signal_handlers # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  77:0 Method _on_damage_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  81:0 Method _on_spawn_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  85:0 Method _on_operation_result # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  89:0 Method register_handlers # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  102:0 Method get_result_from_anywhere # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  117:0 Method execute_on_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method complex_chain_operation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  185:0 Method register_cross_file_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  197:0 Method _create_entity_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  201:0 Method _create_damage_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  205:0 Method _create_signal_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  211:0 Method _create_dynamic_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  215:0 Method invoke_cross_file # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  225:0 Method _on_effect_result # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  229:0 Method _process_cyclic # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  233:0 Method _handle_union # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  237:0 Method create_game_object # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  274:0 Method _on_hit_callback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  287:0 Method _on_entity_died # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  292:0 Method _calculate_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  299:0 Method setup_bidirectional # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  308:0 Method stress_test_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  321:0 Method parallel_inference_test # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/cycles_test.gd
+  10:0 Method process_with_cycle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  18:0 Method get_initial # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  22:0 Method transform # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  26:0 Method accumulator_cycle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method string_builder_cycle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  43:0 Method array_builder_cycle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Method recursive_type_cycle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  60:0 Method mutual_recursion_a # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  67:0 Method mutual_recursion_b # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  73:0 Method state_machine_cycle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  91:0 Method linked_list_cycle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:0 Method iterator_pattern # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  114:0 Method reduce_pattern # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  124:0 Method _reducer # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  132:0 Method self_referential_update # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/cyclic_inference.gd
+  13:0 Method process_a # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  21:0 Method process_b # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  30:0 Method transform_stage_1 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  41:0 Method transform_stage_2 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  47:0 Method transform_stage_3 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  56:0 Method even_check # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  63:0 Method odd_check # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  75:0 Method state_idle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:0 Method state_active # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method state_processing # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  100:0 Method state_complete # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  104:0 Method state_error # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  108:0 Method process_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  121:0 Method accumulate_left # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  131:0 Method accumulate_right # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  147:0 Method compute_values # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  158:0 Method _compute_x # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  162:0 Method _compute_y # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  166:0 Method _compute_z # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  170:0 Method _compute_x_with_feedback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  174:0 Method _compute_y_with_feedback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  180:0 Method visit_node # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  192:0 Method traverse_and_transform # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  210:0 Method generator_next # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  222:0 Method _init_generator # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  226:0 Method _advance_generator # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  243:0 Method parse_expr # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  270:0 Method parse_term # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  297:0 Method parse_factor # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics_issues.gd
+  15:0 Signal unused_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  16:0 Signal used_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  19:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  24:0 Method unused_function # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  29:0 Method used_function # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  33:0 Method missing_return_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  40:0 Method shadowing_test # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  46:0 Method another_shadowing # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Method unreachable_code # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  60:0 Method empty_if_body # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method redundant_condition # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  77:0 Method deprecated_style # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  84:0 Method potential_null_access # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method unused_loop_variable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  96:0 Method modifying_loop_variable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:0 Method duplicate_keys # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  112:0 Method always_true_condition # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  118:0 Method always_false_condition # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  124:0 Method integer_division_issue # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  131:0 Method _on_test # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/linter/best_practices_rules.gd
+  25:0 Method test_gdl201_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method test_gdl201_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method test_gdl201_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  48:0 Method test_gdl202_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  53:0 Method test_gdl202_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  59:0 Method test_gdl202_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method test_gdl203_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  73:0 Method test_gdl203_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  79:0 Method test_gdl203_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  88:0 Method test_gdl210_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  96:0 Method test_gdl210_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:0 Method test_gdl210_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  115:0 Method test_gdl211_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  121:0 Method test_gdl211_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  127:0 Method test_gdl211_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  138:0 Method test_gdl213_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method test_gdl213_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  148:0 Method test_gdl213_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  158:0 Method test_gdl214_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  167:0 Method test_gdl214_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  176:0 Method test_gdl214_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  189:0 Method test_gdl230_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  196:0 Method test_gdl230_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  203:0 Method test_gdl230_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/linter/complexity_rules.gd
+  20:0 Method test_gdl225_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:0 Method test_gdl225_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  39:0 Method test_gdl225_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  53:0 Method test_gdl226_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  63:0 Method test_gdl226_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  85:0 Method test_gdl226_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  110:0 Method test_gdl223_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  123:0 Method test_gdl223_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method test_gdl223_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  166:0 Method test_gdl228_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  179:0 Method test_gdl228_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  211:0 Method test_gdl228_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/linter/formatting_rules.gd
+  19:0 Method test_gdl101_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  25:0 Method test_gdl101_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method test_gdl101_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  42:0 Method test_gdl513_valid_a # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  46:0 Method test_gdl513_valid_b # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  50:0 Method test_gdl513_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:0 Method test_gdl513_after_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  60:0 Method test_gdl513_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  69:0 Method formatting_examples # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  89:0 Method _helper_function # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/linter/naming_rules.gd
+  31:0 Method valid_function_name # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method another_valid_name # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  39:0 Method _private_function # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method InvalidFunctionName # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  48:0 Method camelCaseFunction # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:0 Method SuppressedBadName # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:0 Signal valid_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  104:0 Signal player_died # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  105:0 Signal health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  109:0 Signal InvalidSignalName # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  110:0 Signal camelCaseSignal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  115:0 Signal SuppressedBadSignal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  123:0 Enum ValidEnum # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  124:0 Enum GameState # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  128:0 Enum invalid_enum # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  129:0 Enum SHOUTING_ENUM # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  134:0 Enum suppressed_bad_enum # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  142:0 Enum ValidEnumValues # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  146:0 Enum InvalidEnumValues # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  155:0 Enum SuppressedEnumValues # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  163:0 Class ValidInnerClass # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  167:0 Class AnotherValidClass # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  168:1 Method do_something # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  173:0 Class invalid_inner_class # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  177:0 Class anotherBadClass # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  183:0 Class suppressed_bad_class # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/suppression/linter_suppression.gd
+  70:0 Method MultiSuppressedFunc # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  77:0 Method MultiNotSuppressedFunc # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  97:0 Method test_file_level_suppression # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  111:0 Method ControlBadFunc1 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  115:0 Method ControlBadFunc2 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/suppression/validator_suppression.gd
+  19:0 Method test_ignore_next_line # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  30:0 Method test_ignore_inline # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  40:0 Method test_disable_enable_block # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:0 Method test_disable_to_eof # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  69:0 Method test_multiple_rules # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  80:0 Method test_case_insensitive # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method test_control_unsuppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/abstract_errors.gd
+  20:0 Class ValidAbstractClass # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  22:1 Method abstract_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  26:0 Class InvalidAbstractWithBody # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:1 Method abstract_with_body # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  33:0 Class SuppressedAbstractBody # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  36:1 Method suppressed_abstract # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  46:0 Class ValidAbstractAnnotation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  48:1 Method must_implement # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Class MissingAbstractAnnotation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:1 Method abstract_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  63:0 Class AbstractBase # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  65:1 Method required_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  69:0 Class ValidImplementation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  70:1 Method required_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  75:0 Class MissingImplementation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  76:1 Method other_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  85:0 Class CannotInstantiate # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  87:1 Method do_something # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  91:0 Method test_gd8005_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  97:0 Method test_gd8005_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:0 Method test_gd8005_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/call_errors.gd
+  15:0 Signal typed_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  16:0 Signal simple_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  23:0 Method _func_two_args # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:0 Method test_gd4001_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  34:0 Method test_gd4001_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  40:0 Method test_gd4001_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  51:0 Method test_gd4002_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  57:0 Method test_gd4002_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  63:0 Method test_gd4002_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  74:0 Method test_gd4004_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  80:0 Method test_gd4004_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  86:0 Method test_gd4004_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  97:0 Method test_gd4005_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  102:0 Method test_gd4005_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  107:0 Method test_gd4005_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  117:0 Method test_gd4009_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  122:0 Method test_gd4009_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  127:0 Method test_gd4009_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/control_flow_errors.gd
+  19:0 Method test_gd5001_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  27:0 Method test_gd5001_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method test_gd5001_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  42:0 Method test_gd5002_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  50:0 Method test_gd5002_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  55:0 Method test_gd5002_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  65:0 Method test_gd5004_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  72:0 Method test_gd5004_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  80:0 Method test_gd5004_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  94:0 Method test_gd5010_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  101:0 Method test_gd5010_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  106:0 Method test_gd5010_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/duck_typing_errors.gd
+  18:0 Method test_gd7002_valid_typed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  24:0 Method test_gd7002_valid_guarded # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  30:0 Method test_gd7002_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method test_gd7002_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  45:0 Method test_gd7003_valid_typed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  51:0 Method test_gd7003_valid_guarded # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  57:0 Method test_gd7003_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  62:0 Method test_gd7003_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  72:0 Method test_multiple_unguarded # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  79:0 Method test_mixed_guarded_unguarded # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/scene_validation_errors.gd
+  9:0 Method test_gd4011_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  16:0 Method test_gd4011_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  22:0 Method test_gd4011_nullable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method test_gd4012_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method test_gd4012_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/scope_errors.gd
+  16:0 Enum TestEnum # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  24:0 Method test_gd2001_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  30:0 Method test_gd2001_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method test_gd2001_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  45:0 Method test_gd2002_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  50:0 Method test_gd2002_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  55:0 Method test_gd2002_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  65:0 Method test_gd2003_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  72:0 Method test_gd2003_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  79:0 Method test_gd2003_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Signal defined_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  93:0 Method test_gd2005_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  98:0 Method test_gd2005_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:0 Method test_gd2005_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  113:0 Method test_gd2006_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  119:0 Method test_gd2006_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  125:0 Method test_gd2006_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+  13:0 Method test_gd3023_valid_same_type # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  20:0 Method test_gd3023_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method test_gd3024_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  39:0 Method test_gd3024_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method test_gd3024_valid_void # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  85:0 Method test_gd7019_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method test_gd7019_valid_no_annotation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  110:0 Method test_gd7020_valid_typed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  114:0 Method test_gd7020_valid_underscore # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  125:0 Method test_gd7021_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/diagnostics/validator/type_errors.gd
+  24:0 Method test_gd3001_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method test_gd3001_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method test_gd3001_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  48:0 Method test_gd3004_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:0 Method test_gd3004_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  60:0 Method test_gd3004_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  71:0 Method test_gd3006_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  78:0 Method test_gd3006_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  84:0 Method test_gd3006_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  95:0 Method test_gd3009_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  101:0 Method test_gd3009_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  107:0 Method test_gd3009_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  118:0 Method _take_int # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  123:0 Method test_gd3010_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  128:0 Method test_gd3010_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  133:0 Method test_gd3010_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method test_gd3013_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  154:0 Method test_gd3013_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  161:0 Method test_gd3013_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  173:0 Method test_gd3014_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  180:0 Method test_gd3014_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  187:0 Method test_gd3014_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  199:0 Method test_gd3017_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  206:0 Method test_gd3017_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  212:0 Method test_gd3017_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  223:0 Method test_gd3018_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  230:0 Method test_gd3018_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  236:0 Method test_gd3018_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/duck_caller.gd
+  10:0 Method process_entities # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/duck_typing_advanced.gd
+  21:0 Method process_attack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method apply_to_all # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  48:0 Method register_callback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Method execute_with_modifier # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  63:0 Method get_entity_by_name # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  78:0 Method find_nearest # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  101:0 Method get_or_create_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  110:0 Method _create_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  129:0 Signal data_received # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  130:0 Signal state_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  131:0 Signal action_completed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  137:0 Method queue_action # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  141:0 Method process_next_action # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  152:0 Method _execute_action # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  163:0 Method _execute_string_command # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  167:0 Method _execute_dict_action # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  175:0 Method transform_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  196:0 Method process_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  205:0 Method _step_parse # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  216:0 Method _step_validate # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  226:0 Method _step_transform # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  236:0 Method _step_format # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  242:0 Method _create_player # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  245:0 Method _create_enemy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  248:0 Method _create_npc # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  251:0 Method _create_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/dynamic_dispatch.gd
+  13:0 Method call_if_exists # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  20:0 Method call_with_fallback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:0 Method call_first_available # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method call_all_matching # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  50:0 Method get_property # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  56:0 Method set_property # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  63:0 Method copy_properties # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  69:0 Method sync_properties # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  76:0 Method apply_properties # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  88:0 Method register_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  92:0 Method send_message # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  113:0 Method broadcast_message # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  122:0 Method serialize_object # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  138:0 Method _serialize_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  165:0 Method deserialize_to_object # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  172:0 Method _deserialize_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  193:0 Method _deserialize_typed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  210:0 Method register_class # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  214:0 Method create_instance_by_name # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  236:0 Method clone_object # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  253:0 Method _get_class_name # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  261:0 Class DynamicBuilder # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  265:1 Method _init # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  268:1 Method set_target # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  272:1 Method call_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  276:1 Method set_prop # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  280:1 Method build # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  291:0 Method create_builder # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  300:0 Method register_dispatch # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  306:0 Method dispatch # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  318:0 Method dispatch_to_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  330:0 Class DynamicProxy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  334:1 Method _init # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  337:1 Method intercept # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  340:1 Method _call # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  349:1 Method get_target # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  353:0 Method create_proxy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  357:0 Method create_logging_proxy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  369:0 Method _create_logging_interceptor # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  384:0 Method add_before # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  390:0 Method add_after # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  396:0 Method add_around # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  400:0 Method advised_call # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/ecs_like_system.gd
+  21:0 Class Entity # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  27:1 Method _init # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method create_entity # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  39:0 Method destroy_entity # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  51:0 Method get_entity # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  57:0 Method add_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  66:0 Method get_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  72:0 Method remove_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  78:0 Method has_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:0 Method get_all_components # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  93:0 Method query_entities # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  109:0 Method query_with_components # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  123:0 Method query_by_tag # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  131:0 Method query_by_predicate # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  144:0 Method register_system # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  149:0 Method unregister_system # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  153:0 Method update_systems # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  168:0 Method create_transform_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  172:0 Method create_velocity_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  176:0 Method create_health_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  182:0 Method create_render_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  186:0 Method create_ai_component # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  192:0 Class MovementSystem # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  193:1 Method update # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  205:0 Class HealthSystem # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  206:1 Signal entity_died # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  208:1 Method update # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  218:0 Class AISystem # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  219:1 Method update # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  243:0 Method define_archetype # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  247:0 Method create_from_archetype # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  277:0 Method emit_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  286:0 Method process_events # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  293:0 Method get_events_by_type # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  307:0 Method update_spatial_index # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  320:0 Method _get_grid_cell # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  327:0 Method query_nearby # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  346:0 Method serialize_world # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  368:0 Method deserialize_world # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  391:0 Method debug_entity # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  407:0 Method debug_statistics # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/enemy_entity.gd
+  10:0 Signal attack_performed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  11:0 Signal target_acquired # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  12:0 Signal target_lost # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  25:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method _process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  39:0 Method set_target # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  48:0 Method attack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  67:0 Method is_target_in_attack_range # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  74:0 Method is_target_in_detection_range # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  81:0 Method _on_player_detected # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  86:0 Method _on_player_exited_detection # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method die # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  99:0 Method take_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  107:0 Method patrol_to # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  112:0 Method chase_target # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  119:0 Method get_enemy_stats # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/extended_class.gd
+  17:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  22:0 Method take_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  27:0 Method attack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method reset_combo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  39:0 Method get_info # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  46:0 Method _physics_process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  51:0 Class InnerClass # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:1 Method increment # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  57:1 Method get_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/formatting_issues.gd
+  19:0 Signal value_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  20:0 Signal data_updated # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  23:0 Method bad_spacing # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method inconsistent_operators # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  40:0 Method missing_spaces_in_comparisons # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Method array_formatting # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  59:0 Method function_call_spacing # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  67:0 Method long_line_test # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  71:0 Method ternary_formatting # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  75:0 Method lambda_formatting # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:0 Method match_statement_formatting # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  94:0 Method for_loop_formatting # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:0 Method string_formatting # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/game_patterns.gd
+  14:0 Method add_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  20:0 Method remove_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  26:0 Method find_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method find_all_items # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  43:0 Method get_item_property # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Method set_item_property # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  59:0 Method equip_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  65:0 Method unequip_slot # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  69:0 Method get_equipped # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  73:0 Method stack_items # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  97:0 Method load_dialog # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  107:0 Method start_dialog # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  116:0 Method get_dialog_text # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  129:0 Method get_dialog_choices # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method _check_choice_condition # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  177:0 Method select_choice # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  208:0 Method accept_quest # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  221:0 Method update_quest_objective # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  236:0 Method _check_quest_completion # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  252:0 Method _complete_quest # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  262:0 Method get_quest_status # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  277:0 Method register_ability # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  282:0 Method can_use_ability # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  309:0 Method use_ability # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  346:0 Method _apply_effect_template # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  375:0 Method update_abilities # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  404:0 Method register_recipe # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  408:0 Method can_craft # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  431:0 Method _find_matching_items # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  439:0 Method _find_first_matching_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  446:0 Method _matches_filter # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  454:0 Method craft # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  493:0 Method save_game_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  506:0 Method load_game_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  516:0 Method _serialize_array # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  523:0 Method _serialize_dict # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  530:0 Method _serialize_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  544:0 Method _deserialize_array # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  551:0 Method _deserialize_dict # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  558:0 Method _deserialize_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/getters_setters.gd
+  94:0 Signal health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  105:0 Method _on_health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  109:0 Method _store_secret # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  114:0 Method _clamp_to_bounds # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  121:0 Method damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  126:0 Method heal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  131:0 Method get_percent # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  136:0 Method teleport # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  141:0 Method test_property_flow # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  151:0 Method test_property_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  162:0 Method test_config_property # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  171:0 Class Inner # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  192:0 Method test_nested_property # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  207:0 Method _init # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  211:0 Method _get_next_id # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  225:0 Method _compute_expensive # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  229:0 Method invalidate_cache # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/global.gd
+  8:0 Signal game_started # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  9:0 Signal game_ended # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  10:0 Signal level_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  15:0 Method start_game # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  18:0 Method end_game # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  21:0 Method set_level # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  25:0 Method get_player_count # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/inheritance_test.gd
+  18:0 Method _physics_process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  27:0 Method _process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method reset # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  45:0 Method take_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Method apply_knockback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  57:0 Method get_current_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  77:0 Method use_collision_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  88:0 Method use_node_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  101:0 Method use_node2d_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  110:0 Class ChildEnemy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  113:1 Method _physics_process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  119:1 Method get_enemy_info # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  126:0 Method attack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  130:0 Class StrongEnemy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  131:1 Method attack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  136:0 Method use_static_helpers # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method _on_ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  148:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  154:0 Method _notification # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  162:0 Method _on_enter_tree # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  166:0 Method _on_exit_tree # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  171:0 Signal custom_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  173:0 Method emit_signals # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  184:0 Method get_global_mouse_in_local # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  193:0 Method check_types # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/local_variables.gd
+  8:0 Method test_local_flow # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  16:0 Method process_1 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  22:0 Method process_2 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:0 Method multiple_locals # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  36:0 Method conditional_assignment # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  46:0 Method shadowing_test # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  56:0 Method loop_local_variables # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  66:0 Method captured_variable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  74:0 Method variable_swap # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:0 Method destructuring_assignment # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method get_pair # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  94:0 Method early_return_flow # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  109:0 Method process_input # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  115:0 Method variable_in_match # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  128:0 Method variable_with_default # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  136:0 Method get_default_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  140:0 Method multi_assignment # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  150:0 Method type_narrowing_local # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  167:0 Method walrus_like_pattern # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  175:0 Method chained_locals # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/method_chains.gd
+  10:0 Method process_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  17:0 Method get_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  21:0 Method complex_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method string_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method dictionary_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  45:0 Method optional_chain_pattern # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  61:0 Method builder_pattern # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Class ConfigBuilder # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  73:1 Method set_name # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  77:1 Method set_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  81:1 Method set_enabled # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  85:1 Method build # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  89:0 Method node_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  105:0 Method mixed_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/path_extends_test.gd
+  8:0 Method test_inherited_member_via_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  18:0 Method test_inherited_method_via_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:0 Method test_inherited_signal_via_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/player_entity.gd
+  10:0 Signal armor_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  11:0 Signal experience_gained # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  12:0 Signal level_up # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  23:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  30:0 Method take_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  43:0 Method collect_health_pack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  49:0 Method collect_armor # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:0 Method gain_experience # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  64:0 Method level_up_player # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  79:0 Method get_xp_for_next_level # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  84:0 Method start_blocking # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  88:0 Method stop_blocking # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  92:0 Method perform_attack # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  102:0 Method reset_combo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  106:0 Method die # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  112:0 Method get_player_stats # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/polymorphic_interfaces.gd
+  22:0 Method register_damageable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  27:0 Method register_moveable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method register_updatable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method damage_all # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  47:0 Method move_all_to # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  52:0 Method update_all # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  64:0 Method set_damage_calculator # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method set_movement_strategy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  72:0 Method set_targeting_strategy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  76:0 Method calculate_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:0 Method find_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  88:0 Method select_target # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  102:0 Method execute_command # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  110:0 Method undo_last # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  121:0 Method redo_last # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  136:0 Method add_observer # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method remove_observer # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  148:0 Method notify_observers # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  164:0 Method process_tree # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  177:0 Method find_in_tree # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  191:0 Method collect_from_tree # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  212:0 Method add_decorator # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  216:0 Method process_with_decorators # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  233:0 Method _create_next_func # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  251:0 Method register_adapter # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  255:0 Method adapt_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  271:0 Method _get_type_name # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  294:0 Method iterate_all # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  303:0 Method iterate_with_transform # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  312:0 Method iterate_until # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  329:0 Method register_factory # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  333:0 Method create_instance # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  341:0 Method create_multiple # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  355:0 Method register_colleague # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  359:0 Method send_message # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  367:0 Method broadcast_message # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  380:0 Method change_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  390:0 Method state_update # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  400:0 Method state_handle_input # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  412:0 Method save_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  418:0 Method restore_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  429:0 Method get_state_count # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/refactoring_targets.gd
+  16:0 Signal score_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  17:0 Signal game_over # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  18:0 Signal level_completed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  21:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  25:0 Method calculate_score # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  42:0 Method process_enemies # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  49:0 Method update_player # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  67:0 Method check_game_state # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:0 Method add_score # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  91:0 Method spawn_enemy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  107:0 Method calculate_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  123:0 Method reset_game # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  130:0 Method get_game_statistics # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/reflection_test.gd
+  4:0 Signal game_started # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  5:0 Signal health_updated # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  13:0 Method start # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  18:0 Method check_reflections # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  30:0 Method create_callable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method concat_cases # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/rename_test.gd
+  12:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  17:0 Method test_rename_local_variable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  34:0 Method test_rename_parameter # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  46:0 Method test_rename_inherited_member # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  61:0 Method test_rename_signal_usage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  71:0 Method _on_score_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  76:0 Method test_rename_class_member # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  86:0 Method test_rename_in_expressions # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  105:0 Method test_rename_in_array_operations # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  121:0 Method calculate_with_factor # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/scene_nodes.gd
+  34:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  51:0 Method setup_player # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  55:0 Method get_player_position # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  60:0 Method update_health_bar # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  66:0 Method find_nodes_by_group # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  74:0 Method find_first_in_group # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  81:0 Method get_children_of_type # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method recursive_find # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  95:0 Method _find_recursive # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  107:0 Method get_parent_of_type # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  117:0 Method reparent_node # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  125:0 Method instantiate_scene # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  132:0 Method instantiate_typed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  141:0 Method queue_free_child # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  148:0 Method process_all_children # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  157:0 Method find_owner # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  163:0 Method duplicate_node # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  169:0 Method get_node_configuration_warnings # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  182:0 Method access_sibling # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  195:0 Method access_node_via_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  201:0 Method access_node_property_via_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  208:0 Method get_viewport_info # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  216:0 Method await_node_ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  222:0 Method get_unique_node # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/scene_references.gd
+  18:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  24:0 Method _setup_ui # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method _connect_signals # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method _on_player_health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  45:0 Method spawn_enemy # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  54:0 Method get_enemies # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  62:0 Method clear_enemies # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  67:0 Method get_node_by_path # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  71:0 Method find_child_of_type # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/semantic_validation_demo.gd
+  8:0 Signal player_scored # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  9:0 Signal health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  10:0 Signal item_collected # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  25:0 Method indexer_validation_demo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  86:0 Method signal_type_validation_demo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  116:0 Method generic_type_validation_demo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  155:0 Method take_int # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  158:0 Method take_string # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  161:0 Method take_node # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  164:0 Method take_node2d # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  167:0 Method argument_type_validation_demo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  199:0 Method member_access_validation_demo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  225:0 Method get_unknown_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  234:0 Method type_assignment_validation_demo # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  263:0 Method complex_scenario_1 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  278:0 Method complex_scenario_2 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  291:0 Method complex_scenario_3 # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  307:0 Method null_handling # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  316:0 Method variant_handling # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  327:0 Method generic_base_type_handling # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/signal_callback_chains.gd
+  9:0 Signal data_loaded # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  10:0 Signal entity_spawned # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  11:0 Signal state_transition # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  12:0 Signal batch_completed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  13:0 Signal progress_update # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  16:0 Signal value_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  17:0 Signal result_ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method register_callback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  35:0 Method register_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  41:0 Method invoke_callback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  49:0 Method invoke_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  61:0 Class AsyncOperation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  69:1 Method then # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  75:1 Method catch_error # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  81:1 Method finally_do # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  87:1 Method resolve # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  95:1 Method reject # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  103:1 Method _call_resolve # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  107:1 Method _call_reject # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  111:1 Method _call_finally # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  116:0 Method create_operation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  120:0 Method start_async_task # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  129:0 Method _run_task # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  142:0 Method on_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  148:0 Method once # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  154:0 Method off_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  161:0 Method emit_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  186:0 Method add_stage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  190:0 Method run_pipeline # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  194:0 Method _run_stage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  209:0 Method use_middleware # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  213:0 Method handle_request # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  226:0 Method _next_middleware # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  238:0 Class Observable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  241:1 Method subscribe # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  251:1 Method unsubscribe # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  255:1 Method emit_next # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  260:1 Method emit_error # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  266:1 Method emit_complete # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  272:1 Method map # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  281:1 Method filter # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  294:0 Method create_observable # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  308:0 Method _on_debounce_timeout # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  315:0 Method debounce # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  333:0 Method _on_throttle_timeout # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  338:0 Method throttle # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  358:0 Method async_fetch # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  368:0 Method async_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  373:0 Method _run_chain_step # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  387:0 Class ParallelContext # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  396:0 Method _create_parallel_success_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  406:0 Method _create_parallel_error_handler # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  414:0 Method async_parallel # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  429:0 Method _simulate_fetch # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  438:0 Class SignalWaitContext # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  445:0 Method _on_signal_received # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  450:0 Method _on_wait_timeout # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  456:0 Method wait_for_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  477:0 Class ComposedCallback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  480:1 Method call_composed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  487:0 Class ParallelCallback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  490:1 Method call_parallel # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  497:0 Class ConditionalCallback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  502:1 Method call_conditional # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  508:0 Class RetryCallback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  513:1 Method call_retry # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  530:0 Method compose_callbacks # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  537:0 Method parallel_callbacks # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  544:0 Method conditional_callback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  552:0 Method retry_callback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/signals_test.gd
+  9:0 Signal simple_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  13:0 Signal health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  14:0 Signal position_updated # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  15:0 Signal data_received # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  19:0 Signal generic_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  23:0 Signal optional_params # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method emit_simple # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method emit_health_change # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method emit_position # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  50:0 Method emit_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  55:0 Method emit_generic # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  60:0 Method connect_signals # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  69:0 Method _on_simple # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  73:0 Method _on_health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  80:0 Method _on_position_updated # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  85:0 Method _on_data_received # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  91:0 Method _on_generic_event # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  96:0 Method _handle_death # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  101:0 Method connect_with_lambda # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  108:0 Signal forwarded_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  110:0 Method forward_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  117:0 Method conditional_emit # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  125:0 Signal request_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  127:0 Method request_and_process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  136:0 Method async_operation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  142:0 Method await_with_timeout # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  149:0 Class CustomData # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  154:0 Signal custom_data_signal # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  156:0 Method emit_custom # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  164:0 Method _on_custom_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  173:0 Method connect_tracked # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  178:0 Method disconnect_tracked # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  184:0 Signal chain_a # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  185:0 Signal chain_b # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  186:0 Signal chain_c # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  188:0 Method setup_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  193:0 Method trigger_chain # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  198:0 Method connect_with_bind # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  202:0 Method _on_simple_with_context # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  207:0 Method connect_one_shot # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  212:0 Method connect_deferred # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/simple_class.gd
+  18:0 Signal health_changed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  19:0 Signal died # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  22:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  27:0 Method _process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  31:0 Method _initialize # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  36:0 Method take_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  46:0 Method _die # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  51:0 Method get_info # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  59:0 Method create_at # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/standard_methods.gd
+  10:0 Method test_array_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  42:0 Method test_dict_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  72:0 Method test_string_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  115:0 Method test_vector2_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  149:0 Method test_vector3_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  163:0 Method test_transform2d_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  177:0 Method test_color_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  204:0 Method test_rect2_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  221:0 Method test_aabb_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  236:0 Method test_plane_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  251:0 Method test_packed_arrays # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  273:0 Method test_node_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  290:0 Method test_math_functions # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/todo_examples.gd
+  17:0 Signal data_processed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  20:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  25:0 Method process_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  38:0 Method add_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method clear_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  50:0 Method get_statistics # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  60:0 Method validate_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method export_to_json # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  74:0 Method import_from_json # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/type_guards.gd
+  8:0 Method process_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  28:0 Method nested_type_guards # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method type_guard_with_and # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  61:0 Method type_guard_with_or # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  74:0 Method early_return_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  89:0 Method assignment_after_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  102:0 Method loop_with_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  115:0 Method match_type_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  124:2 MatchCaseBinding x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: High
+    nullable: no
+
+  126:2 MatchCaseBinding x # OK
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: High
+    nullable: no
+
+  132:0 Method custom_type_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  137:0 Method using_custom_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  146:0 Method class_type_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  172:0 Method negated_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  182:0 Method guard_in_while # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  191:0 Method multiple_guards_same_var # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  207:0 Method guard_with_method_call # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  216:0 Method structural_type_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  231:0 Method enum_like_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  249:0 Method assert_type_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  256:0 Method ternary_with_guard # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  262:0 Method guard_propagation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/type_inference.gd
+  28:0 Method _ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  32:0 Method test_assignments # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  42:0 Method chain_calls # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  47:0 Method test_method_chain_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  57:0 Method array_operations # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method test_typed_array_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  78:0 Method get_node_types # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  90:0 Method test_conditional_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  100:0 Method test_match_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  112:0 Method test_loop_variable_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  124:0 Method test_dictionary_access # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  134:0 Method test_call_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  143:0 Method create_vector # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  147:0 Method test_custom_function_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  154:0 Method test_packed_array_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  167:0 Method test_complex_expression_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  191:0 Method test_typed_dictionary_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  200:0 Method test_nested_array_inference # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  212:0 Method test_typed_custom_class_array # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  221:0 Method test_untyped_containers # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/union_returns.gd
+  8:0 Method get_or_error # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  16:0 Method optional_int # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  23:0 Method multi_type # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  38:0 Method success_or_error # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  47:0 Method parse_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  56:0 Method get_node_or_default # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  64:0 Method load_resource # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  73:0 Method process_input # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  88:0 Method early_returns # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  106:0 Method conditional_expression_return # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  111:0 Method loop_return # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  121:0 Method recursive_return # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  131:0 Method callback_return # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  139:0 Method exception_pattern # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  154:0 Method result_monad # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  163:0 Method maybe_monad # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  171:0 Method either_pattern # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  178:0 Method union_in_match # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  181:30 MatchCaseBinding v # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  183:30 MatchCaseBinding c # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  185:3 MatchCaseBinding first # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  187:2 MatchCaseBinding x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: High
+    nullable: no
+
+  189:2 MatchCaseBinding x # OK
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: High
+    nullable: no
+
+  195:0 Method async_result # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  202:0 Method validate_input # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  220:0 Method factory_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  233:0 Method type_from_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/union_types_complex.gd
+  24:0 Method try_operation # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  39:0 Method get_optional_player # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  48:0 Method get_position_or_null # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  58:0 Method process_by_type # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  73:0 Method conditional_return # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  84:0 Method complex_conditional # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  98:0 Method match_return # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  112:0 Method match_with_patterns # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  114:31 MatchCaseBinding h # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  118:3 MatchCaseBinding first # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  120:2 MatchCaseBinding x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: High
+    nullable: no
+
+  131:0 Method get_mixed_element # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  138:0 Method process_mixed_array # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  147:0 Method _process_mixed_item # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  174:0 Method get_config # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  179:0 Method update_config # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  186:0 Method safe_get_nested # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  203:0 Method safe_chain_example # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  212:0 Method create_success # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  216:0 Method create_error # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  220:0 Method create_loading # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  224:0 Method handle_result # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  239:0 Method map_with_fallback # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  252:0 Method filter_map # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  263:0 Method reduce_or_default # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  275:0 Signal result_ready # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  281:0 Method async_request # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  293:0 Method _complete_request # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  300:0 Method _compute_result # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  311:0 Method get_result # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  318:0 Method is_numeric # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  322:0 Method is_text # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  326:0 Method process_with_guards # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  340:0 Method validate_and_process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  359:0 Method _process_typed_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  373:0 Method type_flow_test_method # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/unrelated_class.gd
+  10:0 Method take_damage # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  14:0 Method _process # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/validation_edge_cases.gd
+  11:0 Method test_variant_methods # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  25:0 Method test_string_format # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  34:0 Class SimpleBuilder # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:1 Method set_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  44:0 Method process_data # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  49:0 Method test_null_param # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  58:0 Method test_stringname # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  68:0 Method get_string_value # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+

@@ -13,6 +13,23 @@ namespace GDShrapt.Semantics.ComponentTests;
 public static class IntegrationTestHelpers
 {
     /// <summary>
+    /// Gets the verification output directory (repo_root/verification).
+    /// Handles both standalone repos (.git directory) and submodules (.git file).
+    /// </summary>
+    public static string GetVerificationRoot()
+    {
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (dir != null)
+        {
+            var gitPath = Path.Combine(dir.FullName, ".git");
+            if (Directory.Exists(gitPath) || File.Exists(gitPath))
+                return Path.Combine(dir.FullName, "verification");
+            dir = dir.Parent;
+        }
+        throw new InvalidOperationException("Could not find repo root (.git not found)");
+    }
+
+    /// <summary>
     /// Gets the test project path relative to the test assembly output directory.
     /// </summary>
     public static string GetTestProjectPath()

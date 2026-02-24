@@ -10,15 +10,7 @@ namespace GDShrapt.Semantics.ComponentTests;
 [TestCategory("ManualVerification")]
 public class ComprehensiveOutputTest
 {
-    private static string GetVerificationRoot()
-    {
-        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
-            dir = dir.Parent;
-        return Path.Combine(dir?.FullName ?? throw new InvalidOperationException("Could not find repo root"), "verification");
-    }
-
-    private static string OutputPath => Path.Combine(GetVerificationRoot(), "TYPE_SYSTEM_COMPREHENSIVE.txt");
+    private static string OutputPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "TYPE_SYSTEM_COMPREHENSIVE.txt");
 
     [TestMethod]
     public void GenerateComprehensiveTypeSystemReport()

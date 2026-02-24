@@ -258,9 +258,9 @@ public class DiagnosticsCollector
 
         for (int i = 0; i < 15; i++)
         {
-            // Look for .git or CLAUDE.md to identify repo root
+            var gitPath = Path.Combine(currentDir, ".git");
             if (File.Exists(Path.Combine(currentDir, "CLAUDE.md")) ||
-                Directory.Exists(Path.Combine(currentDir, ".git")))
+                Directory.Exists(gitPath) || File.Exists(gitPath))
             {
                 return currentDir;
             }

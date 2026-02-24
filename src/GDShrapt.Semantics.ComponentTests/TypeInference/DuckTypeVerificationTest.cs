@@ -11,16 +11,8 @@ namespace GDShrapt.Semantics.ComponentTests;
 [TestCategory("ManualVerification")]
 public class DuckTypeVerificationTest
 {
-    private static string GetVerificationRoot()
-    {
-        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
-            dir = dir.Parent;
-        return Path.Combine(dir?.FullName ?? throw new InvalidOperationException("Could not find repo root"), "verification");
-    }
-
-    private static string OutputPath => Path.Combine(GetVerificationRoot(), "DUCK_TYPES_OUTPUT.txt");
-    private static string VerifiedPath => Path.Combine(GetVerificationRoot(), "DUCK_TYPES_VERIFIED.txt");
+    private static string OutputPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "DUCK_TYPES_OUTPUT.txt");
+    private static string VerifiedPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "DUCK_TYPES_VERIFIED.txt");
 
     [TestMethod]
     public void AllParameters_MustHaveVerifiedDuckTypes()
@@ -174,7 +166,7 @@ public class DuckTypeVerificationTest
             }
         }
 
-        var unverifiedPath = Path.Combine(GetVerificationRoot(), "DUCK_TYPES_UNVERIFIED.txt");
+        var unverifiedPath = Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "DUCK_TYPES_UNVERIFIED.txt");
         File.WriteAllText(unverifiedPath, sb.ToString());
     }
 

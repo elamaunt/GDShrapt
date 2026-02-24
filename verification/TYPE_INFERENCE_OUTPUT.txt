@@ -15471,24 +15471,24 @@ test_scripts/type_guards.gd
 122:8 GDNumberExpression 2 -> int
 123:3 GDReturnExpression return "small int" -> Variant
 123:10 GDStringExpression "small int" -> String
-124:2 MatchCaseBinding x -> Variant
+124:2 MatchCaseBinding x -> int
 124:13 GDDualOperatorExpression xIsint -> bool
-124:13 GDIdentifierExpression x -> Variant
+124:13 GDIdentifierExpression x -> int
 124:18 GDIdentifierExpression int -> int
 125:3 GDReturnExpression return "int: "Additionstr() -> Variant
 125:10 GDDualOperatorExpression "int: "Additionstr() -> String
 125:10 GDStringExpression "int: " -> String
 125:20 GDCallExpression str() -> String
 125:20 GDIdentifierExpression str -> Callable(Object[]...) -> String
-125:24 GDIdentifierExpression x -> Variant
-126:2 MatchCaseBinding x -> Variant
+125:24 GDIdentifierExpression x -> int
+126:2 MatchCaseBinding x -> String
 126:13 GDDualOperatorExpression xIsString -> bool
-126:13 GDIdentifierExpression x -> Variant
+126:13 GDIdentifierExpression x -> String
 126:18 GDIdentifierExpression String -> String
 127:3 GDReturnExpression return "string: "Additionx -> Variant
-127:10 GDDualOperatorExpression "string: "Additionx -> Variant
+127:10 GDDualOperatorExpression "string: "Additionx -> String
 127:10 GDStringExpression "string: " -> String
-127:23 GDIdentifierExpression x -> Variant
+127:23 GDIdentifierExpression x -> String
 128:2 GDMatchDefaultOperatorExpression _ -> Variant
 129:3 GDReturnExpression return "other" -> Variant
 129:10 GDStringExpression "other" -> String
@@ -16666,22 +16666,22 @@ test_scripts/union_returns.gd
 185:14 GDRestExpression ... -> Variant
 186:3 GDReturnExpression return first -> Variant
 186:10 GDIdentifierExpression first -> Variant
-187:2 MatchCaseBinding x -> Variant
+187:2 MatchCaseBinding x -> int
 187:13 GDDualOperatorExpression xIsint -> bool
-187:13 GDIdentifierExpression x -> Variant
+187:13 GDIdentifierExpression x -> int
 187:18 GDIdentifierExpression int -> int
 188:3 GDReturnExpression return xMultiply2 -> Variant
-188:10 GDDualOperatorExpression xMultiply2 -> Variant
-188:10 GDIdentifierExpression x -> Variant
+188:10 GDDualOperatorExpression xMultiply2 -> int
+188:10 GDIdentifierExpression x -> int
 188:14 GDNumberExpression 2 -> int
-189:2 MatchCaseBinding x -> Variant
+189:2 MatchCaseBinding x -> String
 189:13 GDDualOperatorExpression xIsString -> bool
-189:13 GDIdentifierExpression x -> Variant
+189:13 GDIdentifierExpression x -> String
 189:18 GDIdentifierExpression String -> String
 190:3 GDReturnExpression return x.length() -> Variant
 190:10 GDCallExpression x.length() -> float
-190:10 GDMemberOperatorExpression x.length -> Variant
-190:10 GDIdentifierExpression x -> Variant
+190:10 GDMemberOperatorExpression x.length -> int
+190:10 GDIdentifierExpression x -> String
 191:2 GDMatchDefaultOperatorExpression _ -> Variant
 192:3 GDReturnExpression return null -> Variant
 192:10 GDIdentifierExpression null -> null
@@ -17040,13 +17040,13 @@ test_scripts/union_types_complex.gd
 118:14 GDRestExpression ... -> Variant
 119:3 GDReturnExpression return first -> Variant
 119:10 GDIdentifierExpression first -> Variant
-120:2 MatchCaseBinding x -> Variant
+120:2 MatchCaseBinding x -> int
 120:13 GDDualOperatorExpression xIsint -> bool
-120:13 GDIdentifierExpression x -> Variant
+120:13 GDIdentifierExpression x -> int
 120:18 GDIdentifierExpression int -> int
 121:3 GDReturnExpression return xMultiply2 -> Variant
-121:10 GDDualOperatorExpression xMultiply2 -> Variant
-121:10 GDIdentifierExpression x -> Variant
+121:10 GDDualOperatorExpression xMultiply2 -> int
+121:10 GDIdentifierExpression x -> int
 121:14 GDNumberExpression 2 -> int
 122:2 GDMatchDefaultOperatorExpression _ -> Variant
 123:3 GDReturnExpression return null -> Variant

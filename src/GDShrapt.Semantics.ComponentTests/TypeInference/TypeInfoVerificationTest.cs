@@ -11,16 +11,8 @@ namespace GDShrapt.Semantics.ComponentTests;
 [TestCategory("ManualVerification")]
 public class TypeInfoVerificationTest
 {
-    private static string GetVerificationRoot()
-    {
-        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, ".git")))
-            dir = dir.Parent;
-        return Path.Combine(dir?.FullName ?? throw new InvalidOperationException("Could not find repo root"), "verification");
-    }
-
-    private static string OutputPath => Path.Combine(GetVerificationRoot(), "TYPE_INFO_OUTPUT.txt");
-    private static string VerifiedPath => Path.Combine(GetVerificationRoot(), "TYPE_INFO_VERIFIED.txt");
+    private static string OutputPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "TYPE_INFO_OUTPUT.txt");
+    private static string VerifiedPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "TYPE_INFO_VERIFIED.txt");
 
     [TestMethod]
     public void AllDeclarations_MustHaveVerifiedTypeInfo()
@@ -186,7 +178,7 @@ public class TypeInfoVerificationTest
             }
         }
 
-        var unverifiedPath = Path.Combine(GetVerificationRoot(), "TYPE_INFO_UNVERIFIED.txt");
+        var unverifiedPath = Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "TYPE_INFO_UNVERIFIED.txt");
         File.WriteAllText(unverifiedPath, sb.ToString());
     }
 
