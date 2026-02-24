@@ -15,12 +15,14 @@ namespace GDShrapt.Semantics
     public class GDIncrementalCallSiteUpdater : IGDIncrementalSemanticUpdate
     {
         private readonly object _lock = new object();
+        private readonly IGDRuntimeProvider? _runtimeProvider;
 
         /// <summary>
         /// Creates a new call site updater.
         /// </summary>
-        public GDIncrementalCallSiteUpdater()
+        public GDIncrementalCallSiteUpdater(IGDRuntimeProvider? runtimeProvider = null)
         {
+            _runtimeProvider = runtimeProvider;
         }
 
         /// <inheritdoc/>
@@ -305,7 +307,7 @@ namespace GDShrapt.Semantics
                     // super.foo() → parent class
                     if (receiverName == "super")
                     {
-                        var parentType = file.Class?.Extends?.Type?.BuildName();
+                        var parentType = NormalizeTypeName(file.Class?.Extends?.Type?.BuildName());
                         if (!string.IsNullOrEmpty(parentType))
                             return (parentType, GDReferenceConfidence.Strict, false);
                     }
@@ -346,7 +348,7 @@ namespace GDShrapt.Semantics
                 {
                     if (param.Identifier?.Sequence == identifierName && param.Type != null)
                     {
-                        var typeName = param.Type.BuildName();
+                        var typeName = NormalizeTypeName(param.Type.BuildName());
                         if (!string.IsNullOrEmpty(typeName))
                             return typeName;
                     }
@@ -358,7 +360,7 @@ namespace GDShrapt.Semantics
             {
                 if (varDecl.Identifier?.Sequence == identifierName && varDecl.Type != null)
                 {
-                    var typeName = varDecl.Type.BuildName();
+                    var typeName = NormalizeTypeName(varDecl.Type.BuildName());
                     if (!string.IsNullOrEmpty(typeName))
                         return typeName;
                 }
@@ -371,7 +373,7 @@ namespace GDShrapt.Semantics
                 {
                     if (member.Identifier?.Sequence == identifierName && member.Type != null)
                     {
-                        var typeName = member.Type.BuildName();
+                        var typeName = NormalizeTypeName(member.Type.BuildName());
                         if (!string.IsNullOrEmpty(typeName))
                             return typeName;
                     }
@@ -401,6 +403,25 @@ namespace GDShrapt.Semantics
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Normalizes a raw type name (from BuildName()) to a canonical type name via the runtime provider.
+        /// Handles preload aliases (e.g., "TextBubble" → "text_bubble") and path-based types.
+        /// </summary>
+        private string? NormalizeTypeName(string? typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return null;
+
+            if (_runtimeProvider != null)
+            {
+                var typeInfo = _runtimeProvider.GetTypeInfo(typeName);
+                if (typeInfo != null)
+                    return typeInfo.Name;
+            }
+
+            return typeName;
         }
 
         /// <summary>

@@ -88,6 +88,10 @@ Most internal methods (scope queries, nullability, onready, cross-method flow, l
 - `CollectDuckTypes()` — Analyzes duck-typed parameter usage
 - `CollectVariableUsageProfiles()` — Tracks variable assignments for union inference
 
+**Type Name Normalization:**
+- `NormalizeTypeName()` resolves raw type names (from `InferSemanticType().DisplayName`) to canonical names via `IGDRuntimeProvider.GetTypeInfo()`. Handles preload const aliases (e.g., `"TextBubble"` → `"text_bubble"`) so that member access and call-site references are indexed consistently.
+- Applied in `Visit(GDMemberOperatorExpression)` and `Visit(GDCallExpression)` for the `GDMemberOperatorExpression` branch.
+
 **Interactions:**
 - Creates: `GDSemanticModel`
 - Uses: `GDTypeInferenceEngine`, `GDDuckTypeCollector`, `GDVariableUsageCollector`

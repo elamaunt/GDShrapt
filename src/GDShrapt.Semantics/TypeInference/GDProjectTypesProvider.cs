@@ -16,6 +16,9 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     private readonly Dictionary<string, GDProjectTypeInfo> _typeCache = new();
     // Index by script path (for extends "res://path/to/script.gd" support)
     private readonly Dictionary<string, string> _pathToTypeName = new(StringComparer.OrdinalIgnoreCase);
+    // Index preload const aliases to canonical type names
+    // e.g., "const TextBubble := preload('res://text_bubble.gd')" → "TextBubble" → "text_bubble"
+    private readonly Dictionary<string, string> _preloadAliasToTypeName = new(StringComparer.OrdinalIgnoreCase);
 
     // For lazy return type inference
     private IGDRuntimeProvider? _compositeProvider;
@@ -44,6 +47,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     {
         _typeCache.Clear();
         _pathToTypeName.Clear();
+        _preloadAliasToTypeName.Clear();
 
         foreach (var scriptInfo in _scriptProvider.Scripts)
         {
@@ -76,6 +80,38 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     _pathToTypeName[resPath] = typeName;
                     // Also without quotes (in case BuildName returns "res://..." with quotes)
                     _pathToTypeName[$"\"{resPath}\""] = typeName;
+                }
+            }
+        }
+
+        // Second pass: build preload alias index
+        // Maps "const Alias := preload('res://...script.gd')" alias names to canonical type names
+        foreach (var scriptInfo in _scriptProvider.Scripts)
+        {
+            if (scriptInfo.Class?.Members == null) continue;
+            foreach (var member in scriptInfo.Class.Members)
+            {
+                if (member is GDVariableDeclaration varDecl
+                    && varDecl.ConstKeyword != null
+                    && varDecl.Initializer is GDCallExpression preloadCall
+                    && preloadCall.CallerExpression is GDIdentifierExpression preloadId
+                    && preloadId.Identifier?.Sequence == "preload")
+                {
+                    var args = preloadCall.Parameters?.ToList();
+                    if (args?.Count == 1 && args[0] is GDStringExpression strExpr)
+                    {
+                        var preloadPath = strExpr.String?.Sequence;
+                        if (!string.IsNullOrEmpty(preloadPath) && preloadPath.EndsWith(".gd"))
+                        {
+                            var alias = varDecl.Identifier?.Sequence;
+                            if (!string.IsNullOrEmpty(alias)
+                                && _pathToTypeName.TryGetValue(preloadPath, out var canonicalName)
+                                && !_typeCache.ContainsKey(alias))
+                            {
+                                _preloadAliasToTypeName[alias] = canonicalName;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -375,7 +411,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             return true;
 
         // Try path-based lookup (extends "res://path/to/script.gd")
-        return _pathToTypeName.ContainsKey(typeName);
+        if (_pathToTypeName.ContainsKey(typeName))
+            return true;
+
+        // Try preload alias lookup (const TextBubble := preload("res://..."))
+        return _preloadAliasToTypeName.ContainsKey(typeName);
     }
 
     /// <summary>
@@ -394,6 +434,10 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Path-based lookup (extends "res://path/to/script.gd")
         if (_pathToTypeName.TryGetValue(typeName, out var resolvedName))
             return resolvedName;
+
+        // Preload alias lookup (const TextBubble := preload("res://..."))
+        if (_preloadAliasToTypeName.TryGetValue(typeName, out var aliasResolved))
+            return aliasResolved;
 
         return null;
     }

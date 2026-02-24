@@ -854,4 +854,537 @@ func _ready():
     }
 
     #endregion
+
+    #region Preload Alias Type Resolution
+
+    [TestMethod]
+    public void PreloadAlias_Method_NotDeadCode()
+    {
+        var targetScript = @"extends Control
+
+func take_damage(amount: int) -> void:
+    pass
+";
+        var callerScript = @"extends Node
+
+const Target := preload(""res://target.gd"")
+
+func _ready():
+    var t: Target = Target.new()
+    t.take_damage(10)
+";
+        var tempPath = CreateTempProject(
+            ("target.gd", targetScript),
+            ("caller.gd", callerScript));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Function && i.Name == "take_damage",
+                "take_damage is called via preload alias type annotation");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void PreloadAlias_Property_NotDeadCode()
+    {
+        var targetScript = @"extends Resource
+
+var health: int = 100
+";
+        var callerScript = @"extends Node
+
+const Stats := preload(""res://stats.gd"")
+
+func _ready():
+    var s: Stats = Stats.new()
+    print(s.health)
+";
+        var tempPath = CreateTempProject(
+            ("stats.gd", targetScript),
+            ("caller.gd", callerScript));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "health",
+                "health is accessed via preload alias type annotation");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void PreloadAlias_Constant_NotDeadCode()
+    {
+        var targetScript = @"extends Node
+
+const SPEED: int = 100
+";
+        var callerScript = @"extends Node
+
+const Constants := preload(""res://constants.gd"")
+
+func _ready():
+    print(Constants.SPEED)
+";
+        var tempPath = CreateTempProject(
+            ("constants.gd", targetScript),
+            ("caller.gd", callerScript));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "SPEED",
+                "SPEED is accessed via preload alias Constants.SPEED");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void PreloadAlias_WithClassName_StillWorks()
+    {
+        var targetScript = @"class_name Player
+extends CharacterBody2D
+
+func take_damage(amount: int) -> void:
+    pass
+";
+        var callerScript = @"extends Node
+
+func _ready():
+    var p: Player = Player.new()
+    p.take_damage(10)
+";
+        var tempPath = CreateTempProject(
+            ("player.gd", targetScript),
+            ("caller.gd", callerScript));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Function && i.Name == "take_damage",
+                "take_damage is called via class_name type annotation (regression test)");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void PreloadAlias_NoCaller_StillDeadCode()
+    {
+        var targetScript = @"extends Node
+
+func unused_method() -> void:
+    pass
+";
+        var callerScript = @"extends Node
+
+const Target := preload(""res://target.gd"")
+";
+        var tempPath = CreateTempProject(
+            ("target.gd", targetScript),
+            ("caller.gd", callerScript));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().Contain(
+                i => i.Kind == GDDeadCodeKind.Function && i.Name == "unused_method",
+                "unused_method has no callers even though it's preloaded");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void PreloadAlias_MultipleAliases_AllResolved()
+    {
+        var targetScript = @"extends Control
+
+func take_damage(amount: int) -> void:
+    pass
+";
+        var callerA = @"extends Node
+
+const TargetA := preload(""res://target.gd"")
+
+func _ready():
+    var t: TargetA = TargetA.new()
+    t.take_damage(10)
+";
+        var callerB = @"extends Node
+
+const TargetB := preload(""res://target.gd"")
+
+func _ready():
+    var t: TargetB = TargetB.new()
+    t.take_damage(20)
+";
+        var tempPath = CreateTempProject(
+            ("target.gd", targetScript),
+            ("caller_a.gd", callerA),
+            ("caller_b.gd", callerB));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Function && i.Name == "take_damage",
+                "take_damage is called from two files via different preload aliases");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    #endregion
+
+    #region RC1 — Built-in name shadow
+
+    [TestMethod]
+    public void LocalVar_ShadowingBuiltInName_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func _ready():
+    var array := []
+    array.append(1)
+    array.append(2)
+    print(array)
+";
+        var tempPath = CreateTempProject(("builtin_shadow.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "array",
+                "local 'array' shadows built-in name but is used in the method");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_DictionaryShadow_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func _ready():
+    var dictionary := {}
+    dictionary[""key""] = 1
+    return dictionary
+";
+        var tempPath = CreateTempProject(("dict_shadow.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "dictionary",
+                "local 'dictionary' shadows built-in name but is used in the method");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_StringShadow_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test():
+    var string := ""hello""
+    string += "" world""
+    return string
+";
+        var tempPath = CreateTempProject(("string_shadow.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "string",
+                "local 'string' shadows built-in name but is used (concat + return)");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_ObjectShadow_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test():
+    var object: Object = null
+    if object:
+        print(object)
+";
+        var tempPath = CreateTempProject(("object_shadow.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "object",
+                "local 'object' shadows built-in name but is used (condition + print)");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_ColorShadow_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test():
+    var color := Color.RED
+    color = color.lerp(Color.BLUE, 0.5)
+    print(color)
+";
+        var tempPath = CreateTempProject(("color_shadow.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "color",
+                "local 'color' shadows built-in type name but is used (lerp + print)");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_SignalShadow_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test():
+    var signal := ""ready""
+    print(signal)
+";
+        var tempPath = CreateTempProject(("signal_shadow.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "signal",
+                "local 'signal' shadows built-in type name but is used (print)");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    #endregion
+
+    #region RC2 — Block scope collapse
+
+    [TestMethod]
+    public void LocalVar_SameNameDifferentForLoops_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func _ready():
+    var items_a := [""a.gd"", ""b.gd""]
+    for item in items_a:
+        var possible_script = load(item)
+        if possible_script:
+            print(possible_script)
+
+    var items_b := [""c.gd"", ""d.gd""]
+    for item in items_b:
+        var possible_script = load(item)
+        if possible_script:
+            print(possible_script)
+";
+        var tempPath = CreateTempProject(("for_scope.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "possible_script",
+                "both 'possible_script' variables in different for loops are used");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_SameNameIfElseBranches_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test(flag: bool):
+    if flag:
+        var v_length := 10.0
+        print(v_length)
+    else:
+        var v_length := 20.0
+        print(v_length)
+";
+        var tempPath = CreateTempProject(("if_else_scope.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "v_length",
+                "both 'v_length' variables in if/else branches are used");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_SameNameIfElifBranches_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test(value: int):
+    if value == 1:
+        var result := ""one""
+        print(result)
+    elif value == 2:
+        var result := ""two""
+        print(result)
+";
+        var tempPath = CreateTempProject(("if_elif_scope.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "result",
+                "both 'result' variables in if/elif branches are used");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_SameNameMatchBranches_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test(action: int):
+    match action:
+        0:
+            var ev := ""idle""
+            print(ev)
+        1:
+            var ev := ""walk""
+            print(ev)
+        2:
+            var ev := ""run""
+            print(ev)
+";
+        var tempPath = CreateTempProject(("match_scope.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "ev",
+                "all 'ev' variables in different match branches are used");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void LocalVar_SameNameWhileBlocks_NotDeadCode()
+    {
+        var script = @"extends Node
+
+func test():
+    var i := 0
+    while i < 3:
+        var temp := i * 2
+        print(temp)
+        i += 1
+";
+        var tempPath = CreateTempProject(("while_scope.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "temp",
+                "'temp' inside while block is used");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    #endregion
+
+    #region RC3 — Inner class member identity
+
+    [TestMethod]
+    public void InnerClassMember_ReadViaMemberAccess_NotDeadCode()
+    {
+        var script = @"extends Node
+
+class InnerData:
+    var field := 0
+    var name := """"
+
+func _ready():
+    var obj := InnerData.new()
+    obj.field = 42
+    print(obj.field)
+    print(obj.name)
+";
+        var tempPath = CreateTempProject(("inner_class.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "field",
+                "inner class 'field' is read via member access");
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "name",
+                "inner class 'name' is read via member access");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void InnerClassMember_MultipleFields_NotDeadCode()
+    {
+        var script = @"extends Node
+
+class InnerData:
+    var new_events := 0
+    var updated_events := 0
+    var new_timelines := 0
+
+func _ready():
+    var data := InnerData.new()
+    data.new_events = 5
+    data.updated_events = 3
+    data.new_timelines = 10
+    print(data.new_events)
+    print(data.updated_events)
+    print(data.new_timelines)
+";
+        var tempPath = CreateTempProject(("inner_multi_fields.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "new_events",
+                "inner class 'new_events' is written and read via member access");
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "updated_events",
+                "inner class 'updated_events' is written and read via member access");
+            report.Items.Should().NotContain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "new_timelines",
+                "inner class 'new_timelines' is written and read via member access");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void InnerClassMember_WriteOnly_StillDeadCode()
+    {
+        var script = @"extends Node
+
+class InnerData:
+    var unused_field := 0
+
+func _ready():
+    var obj := InnerData.new()
+    obj.unused_field = 42
+";
+        var tempPath = CreateTempProject(("inner_write_only.gd", script));
+        try
+        {
+            var report = RunDeadCodeAnalysis(tempPath);
+            report.Items.Should().Contain(
+                i => i.Kind == GDDeadCodeKind.Variable && i.Name == "unused_field",
+                "inner class 'unused_field' is only written, never read — should be dead code");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    #endregion
 }

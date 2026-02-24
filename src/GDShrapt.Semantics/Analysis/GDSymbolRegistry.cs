@@ -174,12 +174,50 @@ internal class GDSymbolRegistry
         if (symbol == null || reference == null)
             return;
 
+        if (symbol.Symbol == null && !string.IsNullOrEmpty(symbol.DeclaringTypeName))
+        {
+            var registered = FindRegisteredSymbolForMember(
+                symbol.Name, symbol.Kind, symbol.DeclaringTypeName);
+            if (registered != null)
+                symbol = registered;
+        }
+
         if (!_symbolReferences.TryGetValue(symbol, out var refs))
         {
             refs = new List<GDReference>();
             _symbolReferences[symbol] = refs;
         }
         refs.Add(reference);
+    }
+
+    private GDSymbolInfo? FindRegisteredSymbolForMember(
+        string name, GDSymbolKind kind, string declaringTypeName)
+    {
+        if (!_nameToSymbols.TryGetValue(name, out var symbols))
+            return null;
+
+        foreach (var s in symbols)
+        {
+            if (s.Symbol == null) continue;
+            if (!AreKindsCompatible(s.Kind, kind)) continue;
+            var dt = s.DeclaringTypeName;
+            if (dt == null) continue;
+
+            if (string.Equals(dt, declaringTypeName, System.StringComparison.OrdinalIgnoreCase)
+                || dt.EndsWith("." + declaringTypeName, System.StringComparison.OrdinalIgnoreCase)
+                || declaringTypeName.EndsWith("." + dt, System.StringComparison.OrdinalIgnoreCase))
+                return s;
+        }
+        return null;
+    }
+
+    private static bool AreKindsCompatible(GDSymbolKind a, GDSymbolKind b)
+    {
+        if (a == b) return true;
+        if ((a == GDSymbolKind.Variable || a == GDSymbolKind.Property) &&
+            (b == GDSymbolKind.Variable || b == GDSymbolKind.Property))
+            return true;
+        return false;
     }
 
     /// <summary>

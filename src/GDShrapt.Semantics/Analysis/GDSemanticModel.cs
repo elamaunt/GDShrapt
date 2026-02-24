@@ -394,13 +394,35 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         var enclosingScopes = CollectEnclosingScopeNodes(contextNode);
 
         // Match the most specific scope first (inner scopes take priority)
+        // When multiple symbols share the same scope, use position to pick the closest declaration before the reference
+        var contextLine = GetNodeStartLine(contextNode);
         foreach (var scopeNode in enclosingScopes)
         {
+            GDSymbolInfo? match = null;
+            int matchCount = 0;
+            int bestLine = -1;
+
             foreach (var symbol in symbols)
             {
-                if (symbol.DeclaringScopeNode == scopeNode)
-                    return symbol;
+                if (symbol.DeclaringScopeNode != scopeNode)
+                    continue;
+                matchCount++;
+                if (matchCount == 1)
+                {
+                    match = symbol;
+                    bestLine = GetSymbolStartLine(symbol);
+                    continue;
+                }
+                var declLine = GetSymbolStartLine(symbol);
+                if (declLine >= 0 && declLine <= contextLine && declLine > bestLine)
+                {
+                    match = symbol;
+                    bestLine = declLine;
+                }
             }
+
+            if (match != null)
+                return match;
         }
 
         foreach (var symbol in symbols)
@@ -421,7 +443,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             if (current is GDMatchCaseDeclaration
                 || current is GDForStatement
                 || current is GDMethodDeclaration
-                || current is GDMethodExpression)
+                || current is GDMethodExpression
+                || current is GDIfBranch
+                || current is GDElifBranch
+                || current is GDElseBranch
+                || current is GDWhileStatement
+                || current is GDSetAccessorBodyDeclaration
+                || current is GDGetAccessorBodyDeclaration)
             {
                 scopes.Add(current);
             }
@@ -429,6 +457,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         }
         return scopes;
     }
+
+    private static int GetNodeStartLine(GDNode? node)
+        => node?.AllTokens.FirstOrDefault()?.StartLine ?? -1;
+
+    private static int GetSymbolStartLine(GDSymbolInfo symbol)
+        => symbol.PositionToken?.StartLine ?? -1;
 
     /// <summary>
     /// Finds the enclosing method or lambda for an AST node.

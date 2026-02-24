@@ -226,6 +226,11 @@ public class GDDeadCodeService
 
             if (reads.Count == 0)
             {
+                // Check same-file duck-typed member access (RC5: self.prop, autoload.SubSystem.prop)
+                if (symbol.DeclaringScopeNode == null && semanticModel.HasMemberAccessesIncludingDuckTyped(
+                        file.TypeName ?? "", varName))
+                    continue;
+
                 if (HasCrossFileMemberAccess(file, effectiveNames, varName))
                     continue;
 

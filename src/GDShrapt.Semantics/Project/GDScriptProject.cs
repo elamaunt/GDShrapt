@@ -625,7 +625,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
         _callSiteRegistry.Clear();
 
-        var updater = new GDIncrementalCallSiteUpdater();
+        var updater = new GDIncrementalCallSiteUpdater(CreateRuntimeProvider());
 
         foreach (var scriptFile in _scripts.Values)
         {
@@ -665,7 +665,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         if (_callSiteRegistry == null || string.IsNullOrEmpty(filePath))
             return;
 
-        var updater = new GDIncrementalCallSiteUpdater();
+        var updater = new GDIncrementalCallSiteUpdater(CreateRuntimeProvider());
         updater.UpdateSemanticModel(this, filePath, oldTree, newTree, changes, cancellationToken);
     }
 

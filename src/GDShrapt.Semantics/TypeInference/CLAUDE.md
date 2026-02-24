@@ -94,6 +94,17 @@ Used for:
 - Parameter type inference from call sites
 - Container element type from usage
 
+## GDProjectTypesProvider — Type Name Resolution
+
+`ResolveTypeName()` is the single source of truth for mapping raw type names to canonical names. All public methods (`GetTypeInfo`, `GetMember`, `GetBaseType`, `IsKnownType`, etc.) call it internally.
+
+**Resolution order:**
+1. `_typeCache` — direct class_name lookup (canonical)
+2. `_pathToTypeName` — path-based extends (`"res://path/script.gd"` → canonical)
+3. `_preloadAliasToTypeName` — preload const aliases (`"TextBubble"` → `"text_bubble"`)
+
+**Preload Alias Index:** Populated during `RebuildCache()` in a second pass over all scripts. Scans for `const Alias := preload("res://...script.gd")` patterns and maps the alias identifier to the target script's canonical TypeName. Guard: aliases don't shadow existing `class_name` registrations.
+
 ## Provider Lookup Order
 
 ```

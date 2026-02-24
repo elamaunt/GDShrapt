@@ -302,6 +302,444 @@ func method_b():
 
     #endregion
 
+    #region For-Loop Iterator Scope Isolation (RC8)
+
+    [TestMethod]
+    public void FindSymbolInScope_IteratorAndVar_AfterLoop_ResolvesToVar()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for x in range(5):
+        print(x)
+    var x = 99
+    print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        Assert.IsTrue(xUsages.Count >= 2, "Should have at least 2 uses of x");
+
+        // Last usage is after the for-loop (print(x) after var x = 99)
+        var lastX = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", lastX);
+        Assert.IsNotNull(symbol);
+        Assert.AreNotEqual(symbol.DeclaringScopeNode is GDForStatement, true,
+            "After the for-loop, x should resolve to the var, not the iterator");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_IteratorAndVar_InsideLoop_ResolvesToIterator()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for x in range(5):
+        print(x)
+    var x = 99
+    print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        Assert.IsTrue(xUsages.Count >= 2);
+
+        // First usage is inside the for-loop
+        var firstX = xUsages.First();
+        var symbol = semanticModel.FindSymbolInScope("x", firstX);
+        Assert.IsNotNull(symbol);
+        Assert.IsInstanceOfType(symbol.DeclaringScopeNode, typeof(GDForStatement),
+            "Inside the for-loop, x should resolve to the iterator");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_VarBeforeForLoop_InsideLoop_ResolvesToIterator()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var x = 0
+    for x in range(5):
+        print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        Assert.IsTrue(xUsages.Count >= 1);
+
+        // The print(x) inside the for-loop should resolve to the iterator
+        var xInsideLoop = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", xInsideLoop);
+        Assert.IsNotNull(symbol);
+        Assert.IsInstanceOfType(symbol.DeclaringScopeNode, typeof(GDForStatement),
+            "Inside the for-loop, x should resolve to the iterator, not the outer var");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_VarBeforeForLoop_AfterLoop_ResolvesToVar()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var x = 0
+    for x in range(5):
+        pass
+    print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        // print(x) after the for-loop
+        var lastX = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", lastX);
+        Assert.IsNotNull(symbol);
+
+        // Should resolve to the method-scoped var, not the for-loop iterator
+        Assert.AreNotEqual(symbol.DeclaringScopeNode is GDForStatement, true,
+            "After the for-loop, x should resolve to the var, not the iterator");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_NestedForLoops_SameName_InnerResolves()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for x in range(3):
+        for x in range(5):
+            print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        Assert.IsTrue(xUsages.Count >= 1);
+
+        // The print(x) inside the inner for-loop
+        var innerX = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", innerX);
+        Assert.IsNotNull(symbol);
+
+        // Should have 2 iterator symbols with different for-loop scopes
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count, "Should have 2 iterator symbols named x");
+        var scopes = allX.Select(s => s.DeclaringScopeNode).Distinct().ToList();
+        Assert.AreEqual(2, scopes.Count, "Each iterator should be in its own for-loop scope");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_NestedForLoops_SameName_AfterInner_ResolvesToOuter()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for x in range(3):
+        for x in range(5):
+            pass
+        print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        // print(x) after the inner for-loop but inside the outer
+        var printX = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", printX);
+        Assert.IsNotNull(symbol);
+
+        // Verify it resolves to the outer for-loop iterator
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count);
+
+        // The resolved symbol's scope should be the outer for-loop
+        Assert.IsInstanceOfType(symbol.DeclaringScopeNode, typeof(GDForStatement));
+        // Find which for-loop is the outer (earlier start line)
+        var outerIterator = allX.OrderBy(s => s.PositionToken?.StartLine ?? 0).First();
+        Assert.AreSame(symbol, outerIterator,
+            "After inner for-loop, x should resolve to the outer for-loop iterator");
+    }
+
+    #endregion
+
+    #region While Scope Isolation (RC8)
+
+    [TestMethod]
+    public void FindSymbolInScope_VarInsideWhile_NotVisibleAfter()
+    {
+        var code = @"
+extends Node
+
+func test():
+    while true:
+        var x = 1
+        print(x)
+        break
+    var x = 2
+    print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count, "Should have 2 symbols named x");
+
+        var scopes = allX.Select(s => s.DeclaringScopeNode).Distinct().ToList();
+        Assert.AreEqual(2, scopes.Count,
+            "While-scoped x and method-scoped x should have different scopes");
+
+        // The print(x) after the while loop should resolve to the method-scoped var
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        var lastX = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", lastX);
+        Assert.IsNotNull(symbol);
+        Assert.AreNotEqual(symbol.DeclaringScopeNode is GDWhileStatement, true,
+            "After while loop, x should resolve to method-scoped var");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_VarSameNameInsideAndAfterWhile_ResolveCorrectly()
+    {
+        var code = @"
+extends Node
+
+func test():
+    while true:
+        var result = 1
+        print(result)
+        break
+    var result = 2
+    print(result)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var resultUsages = FindAllIdentifierExpressions(method, "result");
+        Assert.IsTrue(resultUsages.Count >= 2);
+
+        // First usage (inside while) should have while scope
+        var firstResult = resultUsages.First();
+        var symbolInWhile = semanticModel.FindSymbolInScope("result", firstResult);
+        Assert.IsNotNull(symbolInWhile);
+        Assert.IsInstanceOfType(symbolInWhile.DeclaringScopeNode, typeof(GDWhileStatement),
+            "Inside while, result should resolve to while-scoped var");
+
+        // Last usage (after while) should have method scope
+        var lastResult = resultUsages.Last();
+        var symbolAfterWhile = semanticModel.FindSymbolInScope("result", lastResult);
+        Assert.IsNotNull(symbolAfterWhile);
+        Assert.AreNotSame(symbolInWhile, symbolAfterWhile,
+            "Different scopes should yield different symbols");
+    }
+
+    #endregion
+
+    #region If/Elif/Else Scope Isolation (RC8)
+
+    [TestMethod]
+    public void FindSymbolInScope_VarInsideIfBranch_NotVisibleAfter()
+    {
+        var code = @"
+extends Node
+
+func test():
+    if true:
+        var x = 1
+        print(x)
+    var x = 2
+    print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count, "Should have 2 symbols named x");
+
+        var scopes = allX.Select(s => s.DeclaringScopeNode).Distinct().ToList();
+        Assert.AreEqual(2, scopes.Count,
+            "If-scoped x and method-scoped x should have different scopes");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        var lastX = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", lastX);
+        Assert.IsNotNull(symbol);
+        Assert.AreNotEqual(symbol.DeclaringScopeNode is GDIfBranch, true,
+            "After if branch, x should resolve to method-scoped var");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_VarInIfAndElse_SeparateScopes()
+    {
+        var code = @"
+extends Node
+
+func test():
+    if true:
+        var x = 1
+        print(x)
+    else:
+        var x = 2
+        print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count, "Should have 2 symbols named x");
+
+        var scopes = allX.Select(s => s.DeclaringScopeNode).Distinct().ToList();
+        Assert.AreEqual(2, scopes.Count,
+            "If-branch x and else-branch x should have different scopes");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_VarInElifBranch_IsolatedScope()
+    {
+        var code = @"
+extends Node
+
+func test():
+    if true:
+        var x = 1
+        print(x)
+    elif true:
+        var x = 2
+        print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count, "Should have 2 symbols named x");
+
+        var scopes = allX.Select(s => s.DeclaringScopeNode).Distinct().ToList();
+        Assert.AreEqual(2, scopes.Count,
+            "If-branch x and elif-branch x should have different scopes");
+    }
+
+    #endregion
+
+    #region Match Case Scope Isolation (RC8)
+
+    [TestMethod]
+    public void FindSymbolInScope_MatchCaseBinding_NotVisibleOutside()
+    {
+        var code = @"
+extends Node
+
+func test():
+    match 42:
+        var x:
+            print(x)
+    var x = 99
+    print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var method = classDecl.Members
+            .OfType<GDMethodDeclaration>()
+            .First(m => m.Identifier?.Sequence == "test");
+
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count, "Should have 2 symbols named x");
+
+        var scopes = allX.Select(s => s.DeclaringScopeNode).Distinct().ToList();
+        Assert.AreEqual(2, scopes.Count,
+            "Match-case x and method-scoped x should have different scopes");
+
+        var xUsages = FindAllIdentifierExpressions(method, "x");
+        var lastX = xUsages.Last();
+        var symbol = semanticModel.FindSymbolInScope("x", lastX);
+        Assert.IsNotNull(symbol);
+        Assert.AreNotEqual(symbol.DeclaringScopeNode is GDMatchCaseDeclaration, true,
+            "After match block, x should resolve to method-scoped var");
+    }
+
+    [TestMethod]
+    public void FindSymbolInScope_MatchCaseBindings_DifferentCases_Isolated()
+    {
+        var code = @"
+extends Node
+
+func test():
+    match 42:
+        var x:
+            print(x)
+        var x:
+            print(x)
+";
+        var (classDecl, semanticModel) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(semanticModel);
+
+        var allX = semanticModel.FindSymbols("x").ToList();
+        Assert.AreEqual(2, allX.Count, "Should have 2 match case bindings named x");
+
+        var scopes = allX.Select(s => s.DeclaringScopeNode).Distinct().ToList();
+        Assert.AreEqual(2, scopes.Count,
+            "Each match case binding should be in its own scope");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static (GDClassDeclaration?, GDSemanticModel?) AnalyzeCode(string code)
@@ -326,6 +764,13 @@ func method_b():
         GDIdentifierExpression? result = null;
         method.WalkIn(new IdentifierExpressionFinder(name, expr => result = expr));
         return result;
+    }
+
+    private static System.Collections.Generic.List<GDIdentifierExpression> FindAllIdentifierExpressions(GDMethodDeclaration method, string name)
+    {
+        var results = new System.Collections.Generic.List<GDIdentifierExpression>();
+        method.WalkIn(new IdentifierExpressionFinder(name, expr => results.Add(expr)));
+        return results;
     }
 
     private class IdentifierExpressionFinder : GDVisitor

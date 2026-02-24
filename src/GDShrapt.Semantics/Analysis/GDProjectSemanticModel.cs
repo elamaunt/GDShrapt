@@ -236,15 +236,32 @@ public class GDProjectSemanticModel : IDisposable
                     registry.Register(GDSignalConnectionEntry.FromScene(
                         sceneInfo.FullPath,
                         conn.LineNumber,
-                        fromNode?.ScriptTypeName ?? fromNode?.NodeType ?? conn.SourceNodeType ?? "",
+                        ResolveSceneNodeTypeName(fromNode) ?? conn.SourceNodeType ?? "",
                         conn.SignalName,
-                        toNode?.ScriptTypeName ?? toNode?.NodeType ?? "",
+                        ResolveSceneNodeTypeName(toNode) ?? "",
                         conn.Method));
                 }
             }
         }
 
         return registry;
+    }
+
+    private string? ResolveSceneNodeTypeName(GDNodeTypeInfo? node)
+    {
+        if (node == null)
+            return null;
+
+        // Resolve ScriptPath to actual TypeName from loaded scripts (RC4)
+        if (!string.IsNullOrEmpty(node.ScriptPath))
+        {
+            var script = _project.ScriptFiles?.FirstOrDefault(s =>
+                s.ResPath != null && s.ResPath.Equals(node.ScriptPath, StringComparison.OrdinalIgnoreCase));
+            if (script != null && !string.IsNullOrEmpty(script.TypeName))
+                return script.TypeName;
+        }
+
+        return node.ScriptTypeName ?? node.NodeType;
     }
 
     private GDCallableStringFlowRegistry InitializeCallableStringFlowRegistry()

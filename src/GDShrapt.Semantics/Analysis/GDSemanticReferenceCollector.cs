@@ -356,8 +356,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
             }
 
             var symbol = GDSymbol.Iterator(iteratorName, forStatement, typeName: elementTypeName);
-            var enclosingScope = FindEnclosingScopeNode(forStatement);
-            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope));
+            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: forStatement));
             _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
@@ -694,7 +693,12 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var current = node.Parent;
         while (current != null)
         {
-            if (current is GDMethodDeclaration || current is GDMethodExpression)
+            if (current is GDMethodDeclaration || current is GDMethodExpression
+                || current is GDForStatement || current is GDIfBranch
+                || current is GDElifBranch || current is GDElseBranch
+                || current is GDWhileStatement || current is GDMatchCaseDeclaration
+                || current is GDSetAccessorBodyDeclaration
+                || current is GDGetAccessorBodyDeclaration)
                 return current as GDNode;
             current = current.Parent;
         }
@@ -736,6 +740,13 @@ internal class GDSemanticReferenceCollector : GDVisitor
         }
 
         _model!.AddTypeUsage(baseType, typeNode, GDTypeUsageKind.TypeAnnotation);
+
+        // Type annotations referencing local constants count as references (RC7)
+        var symbol = _model!.FindSymbolInScope(baseType, typeNode) ?? _model.FindSymbol(baseType);
+        if (symbol != null && symbol.Kind == GDSymbolKind.Constant)
+        {
+            CreateReference(symbol, typeNode, GDReferenceConfidence.Strict);
+        }
     }
 
     public override void Visit(GDDualOperatorExpression dualOperator)
@@ -801,9 +812,6 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (string.IsNullOrEmpty(name))
             return;
 
-        if (_runtimeProvider?.IsBuiltIn(name) == true)
-            return;
-
         var localSymbol = _model!.FindSymbolInScope(name, identifierExpression);
         if (localSymbol != null)
         {
@@ -811,6 +819,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
             RecordNodeType(identifierExpression);
             return;
         }
+
+        if (_runtimeProvider?.IsBuiltIn(name) == true)
+            return;
 
         var inheritedSymbol = ResolveOrCreateInheritedSymbol(name);
         if (inheritedSymbol != null)
@@ -826,6 +837,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
     public override void Visit(GDMemberOperatorExpression memberExpression)
     {
+        if (!_visitedNodes.Add(memberExpression))
+            return;
+
         var memberName = memberExpression.Identifier?.Sequence;
         if (string.IsNullOrEmpty(memberName))
         {
@@ -840,7 +854,11 @@ internal class GDSemanticReferenceCollector : GDVisitor
             return;
         }
 
-        var callerType = _typeEngine?.InferSemanticType(callerExpr)?.DisplayName;
+        var callerType = NormalizeTypeName(_typeEngine?.InferSemanticType(callerExpr)?.DisplayName);
+
+        // RC5: "self" literal → resolve to actual script type name
+        if (callerType == GDWellKnownTypes.Self)
+            callerType = _scriptFile.TypeName;
 
         if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" && !callerType.StartsWith("Unknown"))
         {
@@ -884,6 +902,17 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
                     CreateReference(duckSymbol, memberExpression, GDReferenceConfidence.Potential,
                         callerTypeName: GDWellKnownTypes.Variant);
+
+                    // RC5: If caller chain starts with 'self', also link to class-level symbol
+                    if (varName == "self")
+                    {
+                        var classSymbol = _model!.FindSymbol(memberName);
+                        if (classSymbol != null && classSymbol.DeclaringScopeNode == null)
+                        {
+                            CreateReference(classSymbol, memberExpression, GDReferenceConfidence.Potential,
+                                callerTypeName: _scriptFile.TypeName);
+                        }
+                    }
                 }
             }
         }
@@ -994,7 +1023,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var methodName = memberOp.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(methodName))
                 {
-                    var callerType = _typeEngine?.InferSemanticType(memberOp.CallerExpression)?.DisplayName;
+                    var callerType = NormalizeTypeName(_typeEngine?.InferSemanticType(memberOp.CallerExpression)?.DisplayName);
                     if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
                     {
                         var symbolInfo = ResolveMemberOnType(callerType, methodName);
@@ -1192,6 +1221,23 @@ internal class GDSemanticReferenceCollector : GDVisitor
     }
 
     /// <summary>
+    /// Normalizes a type name to its canonical form via the runtime provider.
+    /// Handles preload aliases (e.g., "TextBubble" → "text_bubble") and path-based types.
+    /// </summary>
+    private string? NormalizeTypeName(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+            return typeName;
+        if (_runtimeProvider != null)
+        {
+            var typeInfo = _runtimeProvider.GetTypeInfo(typeName);
+            if (typeInfo != null)
+                return typeInfo.Name;
+        }
+        return typeName;
+    }
+
+    /// <summary>
     /// Resolves a member on a specific type, including inherited members.
     /// </summary>
     private GDSymbolInfo? ResolveMemberOnType(string typeName, string memberName)
@@ -1200,12 +1246,25 @@ internal class GDSemanticReferenceCollector : GDVisitor
             return null;
 
         var memberInfo = _runtimeProvider.GetMember(typeName, memberName);
-        if (memberInfo == null)
-            return null;
+        if (memberInfo != null)
+        {
+            var declaringType = FindDeclaringTypeForMember(typeName, memberName) ?? typeName;
+            return GDSymbolInfo.BuiltIn(memberInfo, declaringType);
+        }
 
-        var declaringType = FindDeclaringTypeForMember(typeName, memberName) ?? typeName;
+        var candidates = _model!.FindSymbols(memberName);
+        foreach (var s in candidates)
+        {
+            var dt = s.DeclaringTypeName;
+            if (dt == null) continue;
 
-        return GDSymbolInfo.BuiltIn(memberInfo, declaringType);
+            if (string.Equals(dt, typeName, System.StringComparison.OrdinalIgnoreCase)
+                || dt.EndsWith("." + typeName, System.StringComparison.OrdinalIgnoreCase)
+                || typeName.EndsWith("." + dt, System.StringComparison.OrdinalIgnoreCase))
+                return s;
+        }
+
+        return null;
     }
 
     /// <summary>
