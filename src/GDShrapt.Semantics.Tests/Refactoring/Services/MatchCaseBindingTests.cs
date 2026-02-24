@@ -65,9 +65,9 @@ public class MatchCaseBindingTests
         var scope = _service.DetermineSymbolScope(identifier, context);
 
         scope.Should().NotBeNull();
-        scope!.Type.Should().Be(GDSymbolScopeType.MatchCaseVariable);
-        scope.SymbolName.Should().Be("x");
-        scope.ContainingMatchCase.Should().NotBeNull();
+        scope!.ScopeType.Should().Be(GDSymbolScopeType.MatchCaseVariable);
+        scope.Name.Should().Be("x");
+        scope.Kind.Should().Be(GDSymbolKind.MatchCaseBinding);
     }
 
     [TestMethod]
@@ -95,9 +95,9 @@ public class MatchCaseBindingTests
         var scope = _service.DetermineSymbolScope(identifier, context);
 
         scope.Should().NotBeNull();
-        scope!.Type.Should().Be(GDSymbolScopeType.MatchCaseVariable);
-        scope.SymbolName.Should().Be("x");
-        scope.ContainingMatchCase.Should().NotBeNull();
+        scope!.ScopeType.Should().Be(GDSymbolScopeType.MatchCaseVariable);
+        scope.Name.Should().Be("x");
+        scope.Kind.Should().Be(GDSymbolKind.MatchCaseBinding);
     }
 
     #endregion
@@ -115,9 +115,7 @@ public class MatchCaseBindingTests
 ";
         var (script, classDecl) = CreateScript(code);
 
-        // Get the match case variable
         var matchCaseVar = classDecl.AllNodes.OfType<GDMatchCaseVariableExpression>().First();
-        var matchCase = classDecl.AllNodes.OfType<GDMatchCaseDeclaration>().First();
         var identifier = matchCaseVar.Identifier!;
 
         var context = new GDRefactoringContext(
@@ -126,15 +124,10 @@ public class MatchCaseBindingTests
             new GDCursorPosition(identifier.StartLine, identifier.StartColumn),
             GDSelectionInfo.None);
 
-        var scope = new GDSymbolScope(
-            GDSymbolScopeType.MatchCaseVariable,
-            "x",
-            declarationNode: matchCaseVar,
-            containingMatchCase: matchCase,
-            containingClass: classDecl,
-            containingScript: script);
+        var scope = _service.DetermineSymbolScope(identifier, context);
+        scope.Should().NotBeNull();
 
-        var result = _service.FindReferencesForScope(context, scope);
+        var result = _service.FindReferencesForScope(context, scope!);
 
         result.Success.Should().BeTrue();
         // Should find: declaration (var x), usage in print(x), usage in return x
@@ -153,7 +146,6 @@ public class MatchCaseBindingTests
         var (script, classDecl) = CreateScript(code);
 
         var matchCaseVar = classDecl.AllNodes.OfType<GDMatchCaseVariableExpression>().First();
-        var matchCase = classDecl.AllNodes.OfType<GDMatchCaseDeclaration>().First();
         var identifier = matchCaseVar.Identifier!;
 
         var context = new GDRefactoringContext(
@@ -162,15 +154,10 @@ public class MatchCaseBindingTests
             new GDCursorPosition(identifier.StartLine, identifier.StartColumn),
             GDSelectionInfo.None);
 
-        var scope = new GDSymbolScope(
-            GDSymbolScopeType.MatchCaseVariable,
-            "x",
-            declarationNode: matchCaseVar,
-            containingMatchCase: matchCase,
-            containingClass: classDecl,
-            containingScript: script);
+        var scope = _service.DetermineSymbolScope(identifier, context);
+        scope.Should().NotBeNull();
 
-        var result = _service.FindReferencesForScope(context, scope);
+        var result = _service.FindReferencesForScope(context, scope!);
 
         result.Success.Should().BeTrue();
         // Should find: declaration, guard condition 'x < 0', return x
@@ -192,7 +179,6 @@ public class MatchCaseBindingTests
         matchCaseVars.Should().HaveCount(2);
 
         var firstVar = matchCaseVars.First(v => v.Identifier?.Sequence == "first");
-        var matchCase = classDecl.AllNodes.OfType<GDMatchCaseDeclaration>().First();
 
         var context = new GDRefactoringContext(
             script,
@@ -200,15 +186,10 @@ public class MatchCaseBindingTests
             new GDCursorPosition(firstVar.Identifier!.StartLine, firstVar.Identifier.StartColumn),
             GDSelectionInfo.None);
 
-        var scope = new GDSymbolScope(
-            GDSymbolScopeType.MatchCaseVariable,
-            "first",
-            declarationNode: firstVar,
-            containingMatchCase: matchCase,
-            containingClass: classDecl,
-            containingScript: script);
+        var scope = _service.DetermineSymbolScope(firstVar.Identifier, context);
+        scope.Should().NotBeNull();
 
-        var result = _service.FindReferencesForScope(context, scope);
+        var result = _service.FindReferencesForScope(context, scope!);
 
         result.Success.Should().BeTrue();
         // Should find: declaration and usage in 'first + second'
@@ -236,8 +217,6 @@ public class MatchCaseBindingTests
 
         // Find the 'x' variable
         var xVar = matchCaseVars.First(v => v.Identifier?.Sequence == "x");
-        var matchCases = classDecl.AllNodes.OfType<GDMatchCaseDeclaration>().ToList();
-        var xMatchCase = matchCases.First();
 
         var context = new GDRefactoringContext(
             script,
@@ -245,15 +224,10 @@ public class MatchCaseBindingTests
             new GDCursorPosition(xVar.Identifier!.StartLine, xVar.Identifier.StartColumn),
             GDSelectionInfo.None);
 
-        var scope = new GDSymbolScope(
-            GDSymbolScopeType.MatchCaseVariable,
-            "x",
-            declarationNode: xVar,
-            containingMatchCase: xMatchCase,
-            containingClass: classDecl,
-            containingScript: script);
+        var scope = _service.DetermineSymbolScope(xVar.Identifier, context);
+        scope.Should().NotBeNull();
 
-        var result = _service.FindReferencesForScope(context, scope);
+        var result = _service.FindReferencesForScope(context, scope!);
 
         result.Success.Should().BeTrue();
         // Should only find references in the first case (var x), not in second case (print(y))
@@ -275,7 +249,6 @@ public class MatchCaseBindingTests
 
         // Find the match case 'x' variable
         var matchCaseVar = classDecl.AllNodes.OfType<GDMatchCaseVariableExpression>().First();
-        var matchCase = classDecl.AllNodes.OfType<GDMatchCaseDeclaration>().First();
 
         var context = new GDRefactoringContext(
             script,
@@ -283,15 +256,10 @@ public class MatchCaseBindingTests
             new GDCursorPosition(matchCaseVar.Identifier!.StartLine, matchCaseVar.Identifier.StartColumn),
             GDSelectionInfo.None);
 
-        var scope = new GDSymbolScope(
-            GDSymbolScopeType.MatchCaseVariable,
-            "x",
-            declarationNode: matchCaseVar,
-            containingMatchCase: matchCase,
-            containingClass: classDecl,
-            containingScript: script);
+        var scope = _service.DetermineSymbolScope(matchCaseVar.Identifier, context);
+        scope.Should().NotBeNull();
 
-        var result = _service.FindReferencesForScope(context, scope);
+        var result = _service.FindReferencesForScope(context, scope!);
 
         result.Success.Should().BeTrue();
         // Should only find: declaration (var x in match) + usage (print(x) in match case body)

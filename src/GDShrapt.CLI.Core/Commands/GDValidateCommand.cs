@@ -126,7 +126,7 @@ public class GDValidateCommand : GDProjectCommandBase
                     ? GDSeverity.Error
                     : GDSeverityHelper.FromUnified(diagnostic.Severity);
 
-                if (_minSeverity.HasValue && severity < _minSeverity.Value)
+                if (_minSeverity.HasValue && severity > _minSeverity.Value)
                     continue;
 
                 fileDiags.Diagnostics.Add(new GDDiagnosticInfo
@@ -140,19 +140,7 @@ public class GDValidateCommand : GDProjectCommandBase
                     EndColumn = diagnostic.EndColumn
                 });
 
-                switch (severity)
-                {
-                    case GDSeverity.Error:
-                        totalErrors++;
-                        break;
-                    case GDSeverity.Warning:
-                        totalWarnings++;
-                        break;
-                    case GDSeverity.Hint:
-                    case GDSeverity.Information:
-                        totalHints++;
-                        break;
-                }
+                UpdateSeverityCounts(ref totalErrors, ref totalWarnings, ref totalHints, severity);
                 totalIssuesReported++;
             }
 

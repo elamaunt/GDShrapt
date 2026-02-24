@@ -139,29 +139,8 @@ public static class ValidateCommandBuilder
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
-            GDGroupBy groupByMode = GDGroupBy.File;
-            if (groupBy != null)
-            {
-                groupByMode = groupBy.ToLowerInvariant() switch
-                {
-                    "rule" => GDGroupBy.Rule,
-                    "severity" => GDGroupBy.Severity,
-                    _ => GDGroupBy.File
-                };
-            }
-
-            GDSeverity? minSev = null;
-            if (minSeverity != null)
-            {
-                minSev = minSeverity.ToLowerInvariant() switch
-                {
-                    "error" => GDSeverity.Error,
-                    "warning" => GDSeverity.Warning,
-                    "info" or "information" => GDSeverity.Information,
-                    "hint" => GDSeverity.Hint,
-                    _ => null
-                };
-            }
+            var groupByMode = OptionParsers.ParseGroupBy(groupBy);
+            var minSev = OptionParsers.ParseGDSeverity(minSeverity);
 
             var formatter = CommandHelpers.GetFormatter(format);
             var validationChecks = OptionParsers.ParseValidationChecks(checks);

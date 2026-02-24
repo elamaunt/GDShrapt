@@ -116,6 +116,40 @@ public class GDSymbolInfo
         ?? DeclarationNode?.AllTokens.FirstOrDefault();
 
     /// <summary>
+    /// The scope type of this symbol, computed from its Kind and context.
+    /// </summary>
+    public GDSymbolScopeType ScopeType
+    {
+        get
+        {
+            if (IsInherited)
+                return GDSymbolScopeType.ExternalMember;
+
+            return Kind switch
+            {
+                GDSymbolKind.Parameter => GDSymbolScopeType.MethodParameter,
+                GDSymbolKind.Iterator => GDSymbolScopeType.ForLoopVariable,
+                GDSymbolKind.MatchCaseBinding => GDSymbolScopeType.MatchCaseVariable,
+                GDSymbolKind.Variable when DeclaringTypeName == null => GDSymbolScopeType.LocalVariable,
+                GDSymbolKind.Variable => GDSymbolScopeType.ClassMember,
+                GDSymbolKind.Method => GDSymbolScopeType.ClassMember,
+                GDSymbolKind.Signal => GDSymbolScopeType.ClassMember,
+                GDSymbolKind.Property => GDSymbolScopeType.ClassMember,
+                GDSymbolKind.Constant => GDSymbolScopeType.ClassMember,
+                GDSymbolKind.Enum => GDSymbolScopeType.ClassMember,
+                GDSymbolKind.EnumValue => GDSymbolScopeType.ClassMember,
+                GDSymbolKind.Class => GDSymbolScopeType.ProjectWide,
+                _ => GDSymbolScopeType.ProjectWide
+            };
+        }
+    }
+
+    /// <summary>
+    /// Whether the symbol name is public (doesn't start with underscore).
+    /// </summary>
+    public bool IsPublic => !Name.StartsWith("_");
+
+    /// <summary>
     /// Creates a symbol info from a GDSymbol with additional semantic context.
     /// </summary>
     public GDSymbolInfo(

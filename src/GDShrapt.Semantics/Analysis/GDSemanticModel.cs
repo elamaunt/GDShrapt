@@ -389,13 +389,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (contextNode == null || symbols.Count == 1)
             return symbols[0];
 
-        var contextMethod = FindEnclosingMethod(contextNode);
+        // Collect all enclosing scope nodes from context (most specific first)
+        var enclosingScopes = CollectEnclosingScopeNodes(contextNode);
 
-        foreach (var symbol in symbols)
+        // Match the most specific scope first (inner scopes take priority)
+        foreach (var scopeNode in enclosingScopes)
         {
-            if (symbol.DeclaringScopeNode != null)
+            foreach (var symbol in symbols)
             {
-                    if (symbol.DeclaringScopeNode == contextMethod)
+                if (symbol.DeclaringScopeNode == scopeNode)
                     return symbol;
             }
         }
@@ -407,6 +409,24 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         }
 
         return symbols[0];
+    }
+
+    private static List<GDNode> CollectEnclosingScopeNodes(GDNode node)
+    {
+        var scopes = new List<GDNode>();
+        var current = node;
+        while (current != null)
+        {
+            if (current is GDMatchCaseDeclaration
+                || current is GDForStatement
+                || current is GDMethodDeclaration
+                || current is GDMethodExpression)
+            {
+                scopes.Add(current);
+            }
+            current = current.Parent as GDNode;
+        }
+        return scopes;
     }
 
     /// <summary>
@@ -744,24 +764,22 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
         foreach (var varDecl in classDecl.Members.OfType<GDVariableDeclaration>())
         {
-            if (varDecl.FirstAccessorDeclarationNode is GDSetAccessorMethodDeclaration setter &&
-                setter.Identifier?.Sequence == methodName)
-                return true;
-
-            if (varDecl.FirstAccessorDeclarationNode is GDGetAccessorMethodDeclaration getter &&
-                getter.Identifier?.Sequence == methodName)
-                return true;
-
-            if (varDecl.SecondAccessorDeclarationNode is GDSetAccessorMethodDeclaration setter2 &&
-                setter2.Identifier?.Sequence == methodName)
-                return true;
-
-            if (varDecl.SecondAccessorDeclarationNode is GDGetAccessorMethodDeclaration getter2 &&
-                getter2.Identifier?.Sequence == methodName)
+            if (IsAccessorMatch(varDecl.FirstAccessorDeclarationNode, methodName) ||
+                IsAccessorMatch(varDecl.SecondAccessorDeclarationNode, methodName))
                 return true;
         }
 
         return false;
+    }
+
+    private static bool IsAccessorMatch(GDAccessorDeclaration? accessor, string methodName)
+    {
+        return accessor switch
+        {
+            GDSetAccessorMethodDeclaration setter => setter.Identifier?.Sequence == methodName,
+            GDGetAccessorMethodDeclaration getter => getter.Identifier?.Sequence == methodName,
+            _ => false
+        };
     }
 
     /// <summary>
@@ -970,24 +988,27 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 continue;
             }
 
-            if (stmt is GDExpressionStatement exprStmt)
-            {
-                if (exprStmt.Expression is GDReturnExpression ||
-                    exprStmt.Expression is GDBreakExpression ||
-                    exprStmt.Expression is GDContinueExpression)
-                {
-                    terminatorEncountered = true;
-                }
-            }
-            else if (stmt is GDReturnExpression ||
-                     stmt is GDBreakExpression ||
-                     stmt is GDContinueExpression)
+            if (IsTerminatingStatement(stmt))
             {
                 terminatorEncountered = true;
             }
         }
 
         return results;
+    }
+
+    private static bool IsTerminatingStatement(GDNode stmt)
+    {
+        if (stmt is GDExpressionStatement exprStmt)
+        {
+            return exprStmt.Expression is GDReturnExpression
+                or GDBreakExpression
+                or GDContinueExpression;
+        }
+
+        return stmt is GDReturnExpression
+            or GDBreakExpression
+            or GDContinueExpression;
     }
 
     private static bool IsDanglingMemberChainContinuation(GDNode stmt)

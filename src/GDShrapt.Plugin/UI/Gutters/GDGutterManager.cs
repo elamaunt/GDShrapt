@@ -722,17 +722,17 @@ internal class GDGutterManager
         }
 
         // For local/parameter/for-loop scope
-        if (scope.Type == GDSymbolScopeType.LocalVariable ||
-            scope.Type == GDSymbolScopeType.MethodParameter ||
-            scope.Type == GDSymbolScopeType.ForLoopVariable ||
-            scope.Type == GDSymbolScopeType.MatchCaseVariable)
+        if (scope.ScopeType == GDSymbolScopeType.LocalVariable ||
+            scope.ScopeType == GDSymbolScopeType.MethodParameter ||
+            scope.ScopeType == GDSymbolScopeType.ForLoopVariable ||
+            scope.ScopeType == GDSymbolScopeType.MatchCaseVariable)
         {
             var result = _findReferencesService.FindReferencesForScope(context, scope);
             return (result.StrictReferences.Count, result.PotentialReferences.Count);
         }
 
         // For class members - use cross-file search
-        if (scope.Type == GDSymbolScopeType.ClassMember)
+        if (scope.ScopeType == GDSymbolScopeType.ClassMember)
         {
             return CountClassMemberReferences(scope, decl.Name);
         }
@@ -740,15 +740,16 @@ internal class GDGutterManager
         return (CountReferencesSimple(decl.Name), 0);
     }
 
-    private (int strictCount, int potentialCount) CountClassMemberReferences(GDSymbolScope scope, string symbolName)
+    private (int strictCount, int potentialCount) CountClassMemberReferences(GDSymbolInfo scope, string symbolName)
     {
         int strictCount = 0;
         int potentialCount = 0;
 
         // Count in current file
-        if (scope.ContainingClass != null)
+        var containingClass = _scriptFile?.Class;
+        if (containingClass != null)
         {
-            strictCount += scope.ContainingClass.AllTokens.OfType<GDIdentifier>()
+            strictCount += containingClass.AllTokens.OfType<GDIdentifier>()
                 .Count(i => i.Sequence == symbolName);
         }
 

@@ -78,7 +78,7 @@ internal class FindReferencesCommand : Command
             return Task.CompletedTask;
         }
 
-        Logger.Info($"Symbol scope: {symbolScope.Type}");
+        Logger.Info($"Symbol scope: {symbolScope.ScopeType}");
 
         var allReferences = new List<ReferenceItem>();
 

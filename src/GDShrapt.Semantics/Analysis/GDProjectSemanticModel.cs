@@ -899,6 +899,103 @@ public class GDProjectSemanticModel : IDisposable
 
     #endregion
 
+    #region Navigation
+
+    /// <summary>
+    /// Gets all call sites for a method symbol.
+    /// Extracts className and methodName from the symbol automatically.
+    /// </summary>
+    public IReadOnlyList<GDCallSiteEntry> GetCallSites(GDSymbolInfo method)
+    {
+        if (method == null || method.Kind != GDSymbolKind.Method)
+            return Array.Empty<GDCallSiteEntry>();
+
+        var className = method.DeclaringTypeName ?? method.DeclaringScript?.TypeName ?? "";
+        return GetCallSitesForMethod(className, method.Name);
+    }
+
+    /// <summary>
+    /// Resolves a symbol declaration across the project.
+    /// Searches in order: current file scope, inheritance chain, project-wide types.
+    /// </summary>
+    public GDSymbolInfo? ResolveDeclaration(string symbolName, GDScriptFile fromFile)
+    {
+        if (string.IsNullOrEmpty(symbolName) || fromFile == null)
+            return null;
+
+        var model = GetSemanticModel(fromFile);
+        if (model == null)
+            return null;
+
+        // 1. Look in current file
+        var local = model.FindSymbol(symbolName);
+        if (local != null)
+            return local;
+
+        // 2. Walk inheritance chain
+        var chain = GetInheritanceChain(fromFile);
+        foreach (var parentTypeName in chain)
+        {
+            var parentFile = _project.GetScriptByTypeName(parentTypeName);
+            if (parentFile != null)
+            {
+                var parentModel = GetSemanticModel(parentFile);
+                var parentSymbol = parentModel?.FindSymbol(symbolName);
+                if (parentSymbol != null)
+                    return parentSymbol;
+            }
+
+            // Check built-in types via runtime provider
+            if (RuntimeProvider != null)
+            {
+                var runtimeMember = RuntimeProvider.GetMember(parentTypeName, symbolName);
+                if (runtimeMember != null)
+                    return GDSymbolInfo.BuiltIn(runtimeMember, parentTypeName);
+            }
+        }
+
+        // 3. Project-wide type search
+        var projectSymbol = FindSymbolsInProject(symbolName).FirstOrDefault();
+        if (projectSymbol.Symbol != null)
+            return projectSymbol.Symbol;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Finds all implementations (overrides) of a method across the project.
+    /// Searches all scripts that inherit from the method's declaring type.
+    /// </summary>
+    public IReadOnlyList<GDSymbolInfo> FindImplementations(GDSymbolInfo method)
+    {
+        if (method == null || method.Kind != GDSymbolKind.Method)
+            return Array.Empty<GDSymbolInfo>();
+
+        var declaringType = method.DeclaringTypeName ?? method.DeclaringScript?.TypeName;
+        if (string.IsNullOrEmpty(declaringType))
+            return Array.Empty<GDSymbolInfo>();
+
+        var results = new List<GDSymbolInfo>();
+
+        foreach (var scriptFile in _project.ScriptFiles)
+        {
+            if (!IsSubclassOf(scriptFile, declaringType))
+                continue;
+
+            var fileModel = GetSemanticModel(scriptFile);
+            if (fileModel == null)
+                continue;
+
+            var overrideSymbol = fileModel.FindSymbol(method.Name);
+            if (overrideSymbol != null && overrideSymbol.Kind == GDSymbolKind.Method)
+                results.Add(overrideSymbol);
+        }
+
+        return results;
+    }
+
+    #endregion
+
     #region Inference Order
 
     /// <summary>
@@ -926,10 +1023,7 @@ public class GDProjectSemanticModel : IDisposable
 
     #region Project-Wide Type Resolution
 
-    /// <summary>
-    /// Gets the inferred type for a method across the project.
-    /// </summary>
-    internal GDInferredType? InferMethodReturnType(string className, string methodName)
+    private (GDSemanticModel Model, GDMethodDeclaration Method)? ResolveMethod(string className, string methodName)
     {
         var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
         if (typeDecl.File == null)
@@ -950,6 +1044,19 @@ public class GDProjectSemanticModel : IDisposable
         if (method == null)
             return null;
 
+        return (model, method);
+    }
+
+    /// <summary>
+    /// Gets the inferred type for a method across the project.
+    /// </summary>
+    internal GDInferredType? InferMethodReturnType(string className, string methodName)
+    {
+        var resolved = ResolveMethod(className, methodName);
+        if (resolved == null)
+            return null;
+
+        var (model, method) = resolved.Value;
         var type = model.GetTypeForNode(method);
         return string.IsNullOrEmpty(type) || type == GDWellKnownTypes.Variant
             ? GDInferredType.Unknown()
@@ -964,35 +1071,15 @@ public class GDProjectSemanticModel : IDisposable
         string className,
         string methodName)
     {
-        var result = new Dictionary<string, GDInferredParameterType>();
+        var resolved = ResolveMethod(className, methodName);
+        if (resolved == null)
+            return new Dictionary<string, GDInferredParameterType>();
 
-        var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
-        if (typeDecl.File == null)
-            return result;
-
-        var model = GetSemanticModel(typeDecl.File);
-        if (model == null)
-            return result;
-
-        var classDecl = typeDecl.File.Class;
-        if (classDecl == null)
-            return result;
-
-        var method = classDecl.Members
-            .OfType<GDMethodDeclaration>()
-            .FirstOrDefault(m => m.Identifier?.Sequence == methodName);
-
-        if (method == null)
-            return result;
-
-        return model.InferParameterTypes(method);
+        return resolved.Value.Model.InferParameterTypes(resolved.Value.Method);
     }
 
     /// <summary>
     /// Infers parameter types for a method using both local usage analysis and cross-file call site analysis.
-    /// This provides the most accurate inference by combining:
-    /// 1. Local duck typing (how parameters are used within the method)
-    /// 2. Call site analysis (what types are passed when the method is called)
     /// </summary>
     /// <param name="className">The class name containing the method.</param>
     /// <param name="methodName">The method name.</param>
@@ -1003,27 +1090,11 @@ public class GDProjectSemanticModel : IDisposable
         string methodName,
         bool preferCallSites = true)
     {
-        var result = new Dictionary<string, GDInferredParameterType>();
+        var resolved = ResolveMethod(className, methodName);
+        if (resolved == null)
+            return new Dictionary<string, GDInferredParameterType>();
 
-        var typeDecl = FindTypeDeclarations(className).FirstOrDefault();
-        if (typeDecl.File == null)
-            return result;
-
-        var model = GetSemanticModel(typeDecl.File);
-        if (model == null)
-            return result;
-
-        var classDecl = typeDecl.File.Class;
-        if (classDecl == null)
-            return result;
-
-        var method = classDecl.Members
-            .OfType<GDMethodDeclaration>()
-            .FirstOrDefault(m => m.Identifier?.Sequence == methodName);
-
-        if (method == null)
-            return result;
-
+        var (model, method) = resolved.Value;
         var localTypes = model.InferParameterTypes(method);
 
         var callSiteRegistry = _project.CallSiteRegistry;

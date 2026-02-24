@@ -180,7 +180,7 @@ public class GDLintCommand : GDProjectCommandBase
                     EndColumn = issue.EndColumn
                 });
 
-                UpdateCounts(ref totalErrors, ref totalWarnings, ref totalHints, severity);
+                UpdateSeverityCounts(ref totalErrors, ref totalWarnings, ref totalHints, severity);
                 totalIssuesReported++;
             }
 
@@ -206,20 +206,4 @@ public class GDLintCommand : GDProjectCommandBase
         return true;
     }
 
-    private static void UpdateCounts(ref int errors, ref int warnings, ref int hints, GDSeverity severity)
-    {
-        switch (severity)
-        {
-            case GDSeverity.Error:
-                errors++;
-                break;
-            case GDSeverity.Warning:
-                warnings++;
-                break;
-            case GDSeverity.Hint:
-            case GDSeverity.Information:
-                hints++;
-                break;
-        }
-    }
 }

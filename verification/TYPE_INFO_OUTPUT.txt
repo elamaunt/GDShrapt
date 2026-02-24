@@ -14025,20 +14025,6 @@ test_scripts/type_guards.gd
     confidence: Certain
     nullable: no
 
-  124:2 Variable x
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  126:2 Variable x
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
   132:23 Parameter value
     declared: (none)
     inferred: Variant
@@ -14979,41 +14965,6 @@ test_scripts/union_returns.gd
     nullable: no
     container: Dictionary[String, Variant]
 
-  181:30 Variable v
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  183:30 Variable c
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  185:3 Variable first
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  187:2 Variable x
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  189:2 Variable x
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
   195:18 Parameter success
     declared: (none)
     inferred: bool
@@ -15200,27 +15151,6 @@ test_scripts/union_types_complex.gd
     confidence: High
     nullable: no
     container: Dictionary[String, Dictionary] (homogeneous)
-
-  114:31 Variable h
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  118:3 Variable first
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  120:2 Variable x
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
 
   128:0 Variable mixed_array
     declared: (none)
@@ -15758,4 +15688,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 2229 entries in 52 files
+# Summary: 2219 entries in 52 files

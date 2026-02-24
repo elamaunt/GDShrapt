@@ -19149,22 +19149,6 @@ test_scripts/type_guards.gd
     methods:      length(-1), size(-1), keys(-1), is_empty(-1), has(-1), to_upper(-1), front(-1)
     properties:   length, size, keys, is_empty, has, to_upper, front
 
---- 124:2 Variable x ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 126:2 Variable x ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
 --- 132:23 Parameter value ---
   Type Info:
     declared:     (none)
@@ -20514,46 +20498,6 @@ test_scripts/union_returns.gd
     methods:      has(-1)
     properties:   has
 
---- 181:30 Variable v ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 183:30 Variable c ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 185:3 Variable first ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 187:2 Variable x ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 189:2 Variable x ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
 --- 195:18 Parameter success ---
   Type Info:
     declared:     (none)
@@ -20885,30 +20829,6 @@ test_scripts/union_types_complex.gd
   Duck Constraints:
     methods:      has(-1)
     properties:   has
-
---- 114:31 Variable h ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 118:3 Variable first ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 120:2 Variable x ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
 
 --- 128:0 Variable mixed_array ---
   Type Info:

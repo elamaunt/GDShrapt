@@ -147,4 +147,21 @@ public abstract class GDProjectCommandBase : IGDCommand
             return fullPath;
         }
     }
+
+    protected static void UpdateSeverityCounts(ref int errors, ref int warnings, ref int hints, GDSeverity severity)
+    {
+        switch (severity)
+        {
+            case GDSeverity.Error:
+                errors++;
+                break;
+            case GDSeverity.Warning:
+                warnings++;
+                break;
+            case GDSeverity.Hint:
+            case GDSeverity.Information:
+                hints++;
+                break;
+        }
+    }
 }

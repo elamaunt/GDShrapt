@@ -131,7 +131,7 @@ public class GDReferenceGroup
     /// <summary>
     /// Reference locations belonging to this declaration's own file.
     /// </summary>
-    public List<GDReferenceLocation> Locations { get; init; } = new();
+    public List<GDCliReferenceLocation> Locations { get; init; } = new();
 
     /// <summary>
     /// Child classes that override this symbol, each with their own locations.
@@ -142,7 +142,7 @@ public class GDReferenceGroup
 /// <summary>
 /// Represents a reference location in the codebase.
 /// </summary>
-public class GDReferenceLocation
+public class GDCliReferenceLocation
 {
     /// <summary>
     /// Full path to the file containing the reference.

@@ -115,6 +115,24 @@ var opt = new Option<bool>("--incremental", "[Experimental] Only analyze changed
 
 Never use "Use GDShrapt Pro" or "[Pro only]" in Base CLI output.
 
+## Position Conventions
+
+CLI.Core uses **1-based** line and column numbers in all output (matching user expectations).
+The AST and SemanticModel use **0-based** positions internally.
+
+Handlers convert at the boundary:
+```csharp
+// Output: AST 0-based → CLI 1-based
+outputLine = node.Line + 1;
+outputColumn = node.Column + 1;
+
+// Input: CLI 1-based → AST 0-based (when receiving positions from LSP/Plugin)
+astLine = inputLine - 1;
+astColumn = inputColumn - 1;
+```
+
+See `Analysis/CLAUDE.md` for the full position convention table.
+
 ## Known Limitations
 
 1. **Service Priority** - Higher priority modules override lower, no merge

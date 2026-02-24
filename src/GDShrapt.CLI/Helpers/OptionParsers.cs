@@ -174,4 +174,38 @@ public static class OptionParsers
             _ => GDIndentationStyle.Tabs
         };
     }
+
+    /// <summary>
+    /// Parses a severity string to GDSeverity enum (for validate/analyze commands).
+    /// </summary>
+    public static GDSeverity? ParseGDSeverity(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return value.ToLowerInvariant() switch
+        {
+            "error" => GDSeverity.Error,
+            "warning" => GDSeverity.Warning,
+            "info" or "information" => GDSeverity.Information,
+            "hint" => GDSeverity.Hint,
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Parses a group-by string to GDGroupBy enum.
+    /// </summary>
+    public static GDGroupBy ParseGroupBy(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return GDGroupBy.File;
+
+        return value.ToLowerInvariant() switch
+        {
+            "rule" => GDGroupBy.Rule,
+            "severity" => GDGroupBy.Severity,
+            _ => GDGroupBy.File
+        };
+    }
 }

@@ -60,16 +60,7 @@ public static class AnalyzeCommandBuilder
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
-            GDGroupBy groupByMode = GDGroupBy.File;
-            if (groupBy != null)
-            {
-                groupByMode = groupBy.ToLowerInvariant() switch
-                {
-                    "rule" => GDGroupBy.Rule,
-                    "severity" => GDGroupBy.Severity,
-                    _ => GDGroupBy.File
-                };
-            }
+            var groupByMode = OptionParsers.ParseGroupBy(groupBy);
 
             GDProjectConfig? config = null;
             if (failOn != null)
@@ -87,18 +78,7 @@ public static class AnalyzeCommandBuilder
                 }
             }
 
-            GDSeverity? minSev = null;
-            if (minSeverity != null)
-            {
-                minSev = minSeverity.ToLowerInvariant() switch
-                {
-                    "error" => GDSeverity.Error,
-                    "warning" => GDSeverity.Warning,
-                    "info" or "information" => GDSeverity.Information,
-                    "hint" => GDSeverity.Hint,
-                    _ => null
-                };
-            }
+            var minSev = OptionParsers.ParseGDSeverity(minSeverity);
 
             var formatter = CommandHelpers.GetFormatter(format);
             var cmd = new GDAnalyzeCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, logger: logger);

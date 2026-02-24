@@ -67,7 +67,7 @@ public class GDReferencesHandler
         return Task.FromResult<GDLspLocation[]?>(locations.ToArray());
     }
 
-    private static IEnumerable<CLI.Core.GDReferenceLocation> FlattenLocations(IEnumerable<GDReferenceGroup> groups)
+    private static IEnumerable<CLI.Core.GDCliReferenceLocation> FlattenLocations(IEnumerable<GDReferenceGroup> groups)
     {
         foreach (var group in groups)
         {

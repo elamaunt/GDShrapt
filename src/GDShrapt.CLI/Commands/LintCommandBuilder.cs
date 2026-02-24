@@ -373,29 +373,8 @@ public static class LintCommandBuilder
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
 
-            GDGroupBy groupByMode = GDGroupBy.File;
-            if (groupBy != null)
-            {
-                groupByMode = groupBy.ToLowerInvariant() switch
-                {
-                    "rule" => GDGroupBy.Rule,
-                    "severity" => GDGroupBy.Severity,
-                    _ => GDGroupBy.File
-                };
-            }
-
-            GDLintSeverity? minSev = null;
-            if (minSeverity != null)
-            {
-                minSev = minSeverity.ToLowerInvariant() switch
-                {
-                    "error" => GDLintSeverity.Error,
-                    "warning" => GDLintSeverity.Warning,
-                    "info" or "information" => GDLintSeverity.Info,
-                    "hint" => GDLintSeverity.Hint,
-                    _ => null
-                };
-            }
+            var groupByMode = OptionParsers.ParseGroupBy(groupBy);
+            var minSev = OptionParsers.ParseSeverity(minSeverity);
 
             var formatter = CommandHelpers.GetFormatter(format);
 

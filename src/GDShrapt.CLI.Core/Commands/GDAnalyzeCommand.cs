@@ -119,19 +119,7 @@ public class GDAnalyzeCommand : GDProjectCommandBase
                 });
 
                 totalIssuesReported++;
-
-                switch (severity)
-                {
-                    case GDSeverity.Error:
-                        totalErrors++;
-                        break;
-                    case GDSeverity.Warning:
-                        totalWarnings++;
-                        break;
-                    default:
-                        totalHints++;
-                        break;
-                }
+                UpdateSeverityCounts(ref totalErrors, ref totalWarnings, ref totalHints, severity);
             }
 
             if (fileDiags.Diagnostics.Count > 0)

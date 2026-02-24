@@ -63,11 +63,7 @@ public class GDRenameService
         ConvertRefsToEdits(collectedRefs, oldName, newName, declaringTypeName, typesWithMethod,
             strictEdits, potentialEdits, filesModified);
 
-        // .tscn signal connections: [connection method="oldName"] — rename-specific (edits .tscn files)
-        if (!string.IsNullOrEmpty(declaringTypeName))
-            CollectTscnEdits(oldName, newName, declaringTypeName!, strictEdits, potentialEdits, filesModified);
-        else
-            CollectTscnEdits(oldName, newName, strictEdits, filesModified);
+        CollectTscnEdits(oldName, newName, declaringTypeName, strictEdits, potentialEdits, filesModified);
 
         if (strictEdits.Count == 0 && potentialEdits.Count == 0)
             return GDRenameResult.NoOccurrences(oldName);
@@ -88,9 +84,35 @@ public class GDRenameService
             sortedStrict, sortedPotential, filesModified.Count, warnings);
     }
 
-    /// <summary>
-    /// Adds GDReferenceLocation references to the edit lists with the specified confidence level.
-    /// </summary>
+    private static void AddRefsToEdits(
+        IEnumerable<(string? FilePath, int Line, int Column, string? Reason)> references,
+        List<GDTextEdit> edits,
+        HashSet<string> filesModified,
+        string oldName,
+        string newName,
+        GDReferenceConfidence confidence,
+        bool skipExistingFiles = false)
+    {
+        foreach (var (filePath, line, column, reason) in references)
+        {
+            if (string.IsNullOrEmpty(filePath))
+                continue;
+
+            if (skipExistingFiles && filesModified.Contains(filePath))
+                continue;
+
+            edits.Add(new GDTextEdit(
+                filePath,
+                line + 1,
+                column + 1,
+                oldName,
+                newName,
+                confidence,
+                reason));
+            filesModified.Add(filePath);
+        }
+    }
+
     private static void AddReferencesToEdits(
         IEnumerable<GDReferenceLocation> references,
         List<GDTextEdit> edits,
@@ -100,30 +122,11 @@ public class GDRenameService
         GDReferenceConfidence confidence,
         bool skipExistingFiles = false)
     {
-        foreach (var r in references)
-        {
-            var filePath = r.FilePath;
-            if (string.IsNullOrEmpty(filePath))
-                continue;
-
-            if (skipExistingFiles && filesModified.Contains(filePath))
-                continue;
-
-            edits.Add(new GDTextEdit(
-                filePath,
-                r.Line + 1,
-                r.Column + 1,
-                oldName,
-                newName,
-                confidence,
-                r.ConfidenceReason));
-            filesModified.Add(filePath);
-        }
+        AddRefsToEdits(
+            references.Select(r => (r.FilePath, r.Line, r.Column, r.ConfidenceReason)),
+            edits, filesModified, oldName, newName, confidence, skipExistingFiles);
     }
 
-    /// <summary>
-    /// Adds GDCrossFileReference references to the edit lists with the specified confidence level.
-    /// </summary>
     private static void AddCrossFileRefsToEdits(
         IEnumerable<GDCrossFileReference> references,
         List<GDTextEdit> edits,
@@ -133,30 +136,11 @@ public class GDRenameService
         GDReferenceConfidence confidence,
         bool skipExistingFiles = false)
     {
-        foreach (var r in references)
-        {
-            var filePath = r.FilePath;
-            if (string.IsNullOrEmpty(filePath))
-                continue;
-
-            if (skipExistingFiles && filesModified.Contains(filePath))
-                continue;
-
-            edits.Add(new GDTextEdit(
-                filePath,
-                r.Line + 1,
-                r.Column + 1,
-                oldName,
-                newName,
-                confidence,
-                r.Reason));
-            filesModified.Add(filePath);
-        }
+        AddRefsToEdits(
+            references.Select(r => (r.FilePath, r.Line, r.Column, r.Reason)),
+            edits, filesModified, oldName, newName, confidence, skipExistingFiles);
     }
 
-    /// <summary>
-    /// Adds cross-file references to the edit lists.
-    /// </summary>
     private static void AddCrossFileReferencesToEdits(
         GDCrossFileReferenceResult crossFileRefs,
         List<GDTextEdit> strictEdits,
@@ -361,7 +345,7 @@ public class GDRenameService
     /// <param name="scope">The symbol scope determined by GDFindReferencesService.</param>
     /// <param name="newName">The new name for the symbol.</param>
     /// <returns>The rename result with all required edits.</returns>
-    public GDRenameResult PlanRenameInScope(GDRefactoringContext context, GDSymbolScope scope, string newName)
+    public GDRenameResult PlanRenameInScope(GDRefactoringContext context, GDSymbolInfo scope, string newName)
     {
         if (context == null)
             return GDRenameResult.Failed("Context is null");
@@ -373,7 +357,7 @@ public class GDRenameService
         if (!ValidateIdentifier(newName, out var validationError))
             return GDRenameResult.Failed(validationError!);
 
-        var oldName = scope.SymbolName;
+        var oldName = scope.Name;
 
         // Check for reserved keywords
         if (GDNamingUtilities.IsReservedKeyword(newName))
@@ -959,11 +943,6 @@ public class GDRenameService
         return CollectEditsFromScript(script, symbol, oldName, newName);
     }
 
-    /// <summary>
-    /// Collects edits from ALL member access patterns for a given member name across the project,
-    /// regardless of caller type. Ensures super.method() calls are found even when
-    /// the caller type differs from script.TypeName.
-    /// </summary>
     private void CollectAllMemberAccessEdits(
         string oldName,
         string newName,
@@ -1145,7 +1124,9 @@ public class GDRenameService
     private void CollectTscnEdits(
         string oldName,
         string newName,
+        string? declaringTypeName,
         List<GDTextEdit> strictEdits,
+        List<GDTextEdit>? potentialEdits,
         HashSet<string> filesModified)
     {
         var sceneProvider = _project.SceneTypesProvider;
@@ -1162,19 +1143,52 @@ public class GDRenameService
                 if (conn.Method != oldName)
                     continue;
 
-                // Find the column of the method name within the connection line
-                // Format: [connection ... method="take_damage" ...]
                 var column = FindMethodColumnInTscn(scene.FullPath, conn.LineNumber, oldName);
 
-                strictEdits.Add(new GDTextEdit(
-                    scene.FullPath,
-                    conn.LineNumber,
-                    column,
-                    oldName,
-                    newName,
-                    GDReferenceConfidence.Strict,
-                    $".tscn signal connection method=\"{oldName}\""));
-                filesModified.Add(scene.FullPath);
+                if (string.IsNullOrEmpty(declaringTypeName))
+                {
+                    // No declaring type — all connections are strict
+                    strictEdits.Add(new GDTextEdit(
+                        scene.FullPath,
+                        conn.LineNumber,
+                        column,
+                        oldName,
+                        newName,
+                        GDReferenceConfidence.Strict,
+                        $".tscn signal connection method=\"{oldName}\""));
+                    filesModified.Add(scene.FullPath);
+                    continue;
+                }
+
+                // Resolve target node type for type-filtered mode
+                var targetNode = scene.Nodes.FirstOrDefault(n =>
+                    n.Path == conn.ToNode || (conn.ToNode == "." && n.Path == "."));
+                var targetType = targetNode?.ScriptTypeName ?? targetNode?.NodeType;
+
+                if (!string.IsNullOrEmpty(targetType) && IsTypeCompatible(targetType!, declaringTypeName))
+                {
+                    strictEdits.Add(new GDTextEdit(
+                        scene.FullPath,
+                        conn.LineNumber,
+                        column,
+                        oldName,
+                        newName,
+                        GDReferenceConfidence.Strict,
+                        $".tscn signal connection method=\"{oldName}\" (target: {targetType})"));
+                    filesModified.Add(scene.FullPath);
+                }
+                else if (string.IsNullOrEmpty(targetType) && potentialEdits != null)
+                {
+                    potentialEdits.Add(new GDTextEdit(
+                        scene.FullPath,
+                        conn.LineNumber,
+                        column,
+                        oldName,
+                        newName,
+                        GDReferenceConfidence.Potential,
+                        $".tscn signal connection method=\"{oldName}\" (target type unknown)"));
+                    filesModified.Add(scene.FullPath);
+                }
             }
         }
     }
@@ -1212,89 +1226,6 @@ public class GDRenameService
         return _runtimeProvider?.IsAssignableTo(sourceType, targetType) ?? false;
     }
 
-    /// <summary>
-    /// Type-filtered version: collects member access edits only for references
-    /// where the caller type is compatible with the declaring type.
-    /// Duck-typed references (Variant/Object/unknown) go to potential with enriched reasons.
-    /// </summary>
-    private void CollectAllMemberAccessEdits(
-        string oldName,
-        string newName,
-        string declaringTypeName,
-        List<GDTextEdit> strictEdits,
-        List<GDTextEdit> potentialEdits,
-        HashSet<string> filesModified)
-    {
-        var typesWithMethod = _runtimeProvider?.FindTypesWithMethod(oldName);
-
-        foreach (var (file, reference) in _projectModel!.GetAllMemberAccessesForMemberInProject(oldName))
-        {
-            if (file.FullPath == null)
-                continue;
-
-            var identToken = reference.IdentifierToken;
-            if (identToken == null)
-                continue;
-
-            var callerType = reference.CallerTypeName;
-            var isUnknown = string.IsNullOrEmpty(callerType)
-                || callerType == GDWellKnownTypes.Variant
-                || callerType == GDWellKnownTypes.Object;
-
-            // String literal tokens need +1 column offset for the opening quote
-            var columnOffset = identToken is GDStringNode ? 2 : 1;
-            var isContractString = identToken is GDStringNode;
-
-            if (!isUnknown)
-            {
-                // Known type — check compatibility
-                if (!IsTypeCompatible(callerType!, declaringTypeName))
-                    continue;
-
-                var targetEdits = reference.Confidence == GDReferenceConfidence.Strict
-                    ? strictEdits : potentialEdits;
-
-                targetEdits.Add(new GDTextEdit(
-                    file.FullPath,
-                    identToken.StartLine + 1,
-                    identToken.StartColumn + columnOffset,
-                    oldName,
-                    newName,
-                    reference.Confidence,
-                    reference.ConfidenceReason)
-                {
-                    IsContractString = isContractString
-                });
-                filesModified.Add(file.FullPath);
-            }
-            else
-            {
-                // Duck-typed — enrich reason with possible types
-                var reason = EnrichDuckTypeReason(reference.ConfidenceReason, oldName, typesWithMethod);
-                var provenance = BuildDuckTypeProvenance(file, reference, oldName, declaringTypeName, typesWithMethod);
-
-                potentialEdits.Add(new GDTextEdit(
-                    file.FullPath,
-                    identToken.StartLine + 1,
-                    identToken.StartColumn + columnOffset,
-                    oldName,
-                    newName,
-                    GDReferenceConfidence.Potential,
-                    reason)
-                {
-                    DetailedProvenance = provenance,
-                    ProvenanceVariableName = ExtractVariableName(reference),
-                    IsContractString = isContractString
-                });
-                filesModified.Add(file.FullPath);
-            }
-        }
-    }
-
-    private string EnrichDuckTypeReason(string? baseReason, string memberName, IReadOnlyList<string>? typesWithMethod)
-    {
-        return baseReason ?? "Duck-typed access";
-    }
 
     private IReadOnlyList<GDTypeProvenanceEntry>? BuildDuckTypeProvenance(
         GDScriptFile file,
@@ -1739,65 +1670,6 @@ public class GDRenameService
     /// Type-filtered version: collects .tscn signal connection edits only where
     /// the target node type is compatible with the declaring type.
     /// </summary>
-    private void CollectTscnEdits(
-        string oldName,
-        string newName,
-        string declaringTypeName,
-        List<GDTextEdit> strictEdits,
-        List<GDTextEdit> potentialEdits,
-        HashSet<string> filesModified)
-    {
-        var sceneProvider = _project.SceneTypesProvider;
-        if (sceneProvider == null)
-            return;
-
-        foreach (var scene in sceneProvider.AllScenes)
-        {
-            if (string.IsNullOrEmpty(scene.FullPath))
-                continue;
-
-            foreach (var conn in scene.SignalConnections)
-            {
-                if (conn.Method != oldName)
-                    continue;
-
-                // Resolve target node type
-                var targetNode = scene.Nodes.FirstOrDefault(n =>
-                    n.Path == conn.ToNode || (conn.ToNode == "." && n.Path == "."));
-                var targetType = targetNode?.ScriptTypeName ?? targetNode?.NodeType;
-
-                var column = FindMethodColumnInTscn(scene.FullPath, conn.LineNumber, oldName);
-
-                if (!string.IsNullOrEmpty(targetType) && IsTypeCompatible(targetType!, declaringTypeName))
-                {
-                    // Compatible type → Strict
-                    strictEdits.Add(new GDTextEdit(
-                        scene.FullPath,
-                        conn.LineNumber,
-                        column,
-                        oldName,
-                        newName,
-                        GDReferenceConfidence.Strict,
-                        $".tscn signal connection method=\"{oldName}\" (target: {targetType})"));
-                    filesModified.Add(scene.FullPath);
-                }
-                else if (string.IsNullOrEmpty(targetType))
-                {
-                    // Unknown type → Potential
-                    potentialEdits.Add(new GDTextEdit(
-                        scene.FullPath,
-                        conn.LineNumber,
-                        column,
-                        oldName,
-                        newName,
-                        GDReferenceConfidence.Potential,
-                        $".tscn signal connection method=\"{oldName}\" (target type unknown)"));
-                    filesModified.Add(scene.FullPath);
-                }
-                // Incompatible type → skip
-            }
-        }
-    }
 
     #endregion
 }

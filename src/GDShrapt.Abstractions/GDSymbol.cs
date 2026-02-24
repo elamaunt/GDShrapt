@@ -149,6 +149,12 @@ public class GDSymbol
     public static GDSymbol Iterator(string name, GDNode declaration, GDType? type = null, string? typeName = null, GDTypeNode? typeNode = null)
         => new GDSymbol(name, GDSymbolKind.Iterator, declaration, type, typeName, typeNode: typeNode);
 
+    /// <summary>
+    /// Match case binding variable (var x in match patterns).
+    /// </summary>
+    public static GDSymbol MatchCaseBinding(string name, GDNode declaration, GDType? type = null, string? typeName = null)
+        => new GDSymbol(name, GDSymbolKind.MatchCaseBinding, declaration, type, typeName);
+
     // === Factory methods for semantic context ===
 
     /// <summary>

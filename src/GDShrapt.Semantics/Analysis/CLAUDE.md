@@ -261,6 +261,13 @@ Most internal methods (scope queries, nullability, onready, cross-method flow, l
 #### Call Site Queries
 - `GetCallSitesForMethod(className, methodName)` → Find callers
 
+#### Navigation (high-level API)
+- `GetCallSites(GDSymbolInfo method)` → Call sites for a method symbol (extracts className/methodName automatically)
+- `ResolveDeclaration(symbolName, fromFile)` → Cross-file go-to-definition (searches: current file → inheritance chain → built-in types → project-wide)
+- `FindImplementations(GDSymbolInfo method)` → All overrides of a method in subclasses
+- `GetInheritanceChain(GDScriptFile file)` → Full inheritance chain (script parents + built-in types)
+- `IsSubclassOf(GDScriptFile file, string baseTypeName)` → Checks if a file inherits from a type
+
 #### Invalidation
 - `InvalidateFile(filePath)` → Invalidate cached model for a file
 - `InvalidateAll()` → Clear all cached models
@@ -293,6 +300,8 @@ Represents a symbol (variable, method, signal, etc.) with metadata:
 - `ReturnTypeName` — method return type (delegated from `GDSymbol`)
 - `Parameters` → `IReadOnlyList<GDParameterSymbolInfo>?` — method parameter info
 - `ParameterCount` — convenience accessor
+- `ScopeType` — computed `GDSymbolScopeType` (LocalVariable, MethodParameter, ForLoopVariable, MatchCaseVariable, ClassMember, ExternalMember, ProjectWide)
+- `IsPublic` — true if name doesn't start with `_`
 
 ### GDParameterSymbolInfo
 Method parameter data without AST exposure (defined in `GDShrapt.Abstractions`):
@@ -513,3 +522,20 @@ Tests are organized in `GDShrapt.Semantics.Tests/`:
 - `Level2_Indexers/` — Indexer key type validation
 - `Level3_Signals/` — Signal parameter type validation
 - `Level4_Generics/` — Generic type parameter validation
+
+---
+
+## Position Conventions
+
+| Layer | Line | Column | Notes |
+|-------|------|--------|-------|
+| AST (Reader) | 0-based | 0-based | `GDNode.Line`, `GDNode.Column` |
+| SemanticModel | 0-based | 0-based | Same as AST — `GetSymbolAtPosition(line, column)` |
+| CLI.Core output | 1-based | 1-based | Converts via `line + 1` for user-facing display |
+| LSP | 0-based | 0-based | LSP protocol standard |
+| Plugin (Godot) | 1-based | 1-based | Godot editor convention |
+
+Conversion happens at the boundary:
+- **CLI.Core handlers** add +1 when formatting output (e.g., `GDFindRefsHandler`, `GDGoToDefHandler`)
+- **LSP handlers** pass positions through as-is (LSP and AST both 0-based)
+- **Plugin** converts at `IScriptEditor.CursorLine`/`CursorColumn` boundary

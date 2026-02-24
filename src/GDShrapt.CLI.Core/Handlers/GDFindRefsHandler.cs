@@ -127,7 +127,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 && fileGroup.Any(r => r.Confidence != GDReferenceConfidence.Strict || r.IsContractString);
 
             // Build locations
-            var locations = new List<GDReferenceLocation>();
+            var locations = new List<GDCliReferenceLocation>();
             foreach (var sref in fileGroup)
             {
                 var line1 = sref.Line + 1; // Convert 0-based to 1-based
@@ -137,7 +137,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 if (sref.IdentifierToken != null)
                     endCol = sref.IdentifierToken.EndColumn;
 
-                locations.Add(new GDReferenceLocation
+                locations.Add(new GDCliReferenceLocation
                 {
                     FilePath = sref.FilePath!,
                     Line = line1,
@@ -209,7 +209,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 DeclarationColumn = root.DeclColumn,
                 IsOverride = false,
                 SymbolName = symbolName,
-                Locations = new List<GDReferenceLocation>(root.Locations)
+                Locations = new List<GDCliReferenceLocation>(root.Locations)
             });
         }
 
@@ -225,7 +225,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 IsOverride = dep.IsOverride,
                 IsInherited = dep.IsInherited,
                 SymbolName = symbolName,
-                Locations = new List<GDReferenceLocation>(dep.Locations)
+                Locations = new List<GDCliReferenceLocation>(dep.Locations)
             };
 
             if (rootGroup != null)
@@ -244,7 +244,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 DeclarationColumn = cf.DeclColumn,
                 IsCrossFile = true,
                 SymbolName = symbolName,
-                Locations = new List<GDReferenceLocation>(cf.Locations)
+                Locations = new List<GDCliReferenceLocation>(cf.Locations)
             });
         }
 
@@ -258,7 +258,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 DeclarationColumn = sg.DeclColumn,
                 IsSignalConnection = true,
                 SymbolName = symbolName,
-                Locations = new List<GDReferenceLocation>(sg.Locations)
+                Locations = new List<GDCliReferenceLocation>(sg.Locations)
             });
         }
 
@@ -310,7 +310,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         public bool IsInherited;
         public bool IsCrossFile;
         public bool IsSignalConnection;
-        public required List<GDReferenceLocation> Locations;
+        public required List<GDCliReferenceLocation> Locations;
     }
 
 }

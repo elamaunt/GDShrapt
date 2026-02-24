@@ -102,21 +102,13 @@ func _ready():
             var symbol = model!.FindSymbol("show_dialogue");
             symbol.Should().NotBeNull("show_dialogue should be found in semantic model");
 
-            // Use FindReferencesForScope with a manually constructed scope
-            var scope = new GDSymbolScope(
-                GDSymbolScopeType.ClassMember,
-                "show_dialogue",
-                declarationNode: symbol!.DeclarationNode,
-                containingClass: script.Class,
-                containingScript: script);
-
             var cursor = new GDCursorPosition(
-                symbol.DeclarationNode!.StartLine,
+                symbol!.DeclarationNode!.StartLine,
                 symbol.DeclarationNode.StartColumn);
             var context = new GDRefactoringContext(
                 script, script.Class!, cursor, GDSelectionInfo.None, project);
 
-            var result = service.FindReferencesForScope(context, scope);
+            var result = service.FindReferencesForScope(context, symbol);
 
             result.Success.Should().BeTrue();
 
@@ -162,20 +154,13 @@ func _ready():
             var symbol = model!.FindSymbol("do_something");
             symbol.Should().NotBeNull("do_something should be found in semantic model");
 
-            var scope = new GDSymbolScope(
-                GDSymbolScopeType.ClassMember,
-                "do_something",
-                declarationNode: symbol!.DeclarationNode,
-                containingClass: script.Class,
-                containingScript: script);
-
             var cursor = new GDCursorPosition(
-                symbol.DeclarationNode!.StartLine,
+                symbol!.DeclarationNode!.StartLine,
                 symbol.DeclarationNode.StartColumn);
             var context = new GDRefactoringContext(
                 script, script.Class!, cursor, GDSelectionInfo.None, project);
 
-            var result = service.FindReferencesForScope(context, scope);
+            var result = service.FindReferencesForScope(context, symbol);
 
             result.Success.Should().BeTrue();
 
