@@ -240,7 +240,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                         TypeName = variable.Type?.BuildName() ?? "Variant",
                         IsConstant = variable.ConstKeyword != null,
                         HasExplicitType = hasExplicitType1,
-                        VariableDeclaration = hasExplicitType1 ? null : variable
+                        VariableDeclaration = (variable.ConstKeyword != null || !hasExplicitType1) ? variable : null
                     };
                     break;
 
@@ -327,7 +327,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                         IsConstant = variable.ConstKeyword != null,
                         IsStatic = variable.StaticKeyword != null,
                         HasExplicitType = hasExplicitType2,
-                        VariableDeclaration = hasExplicitType2 ? null : variable
+                        VariableDeclaration = (variable.ConstKeyword != null || !hasExplicitType2) ? variable : null
                     };
                     break;
 
@@ -542,6 +542,25 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         }
 
         return (null, null);
+    }
+
+    public GDExpression? GetConstantInitializer(string typeName, string constantName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(constantName))
+            return null;
+
+        var resolved = ResolveTypeName(typeName);
+        if (resolved == null || !_typeCache.TryGetValue(resolved, out var typeInfo))
+            return null;
+
+        if (typeInfo.Properties.TryGetValue(constantName, out var prop)
+            && prop.IsConstant
+            && prop.VariableDeclaration?.Initializer != null)
+        {
+            return prop.VariableDeclaration.Initializer as GDExpression;
+        }
+
+        return null;
     }
 
     public string? GetBaseType(string typeName)

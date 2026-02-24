@@ -225,4 +225,5 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
     public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => Array.Empty<GDCollisionLayerInfo>();
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
+    public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
 }

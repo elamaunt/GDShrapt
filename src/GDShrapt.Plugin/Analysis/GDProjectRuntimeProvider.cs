@@ -489,6 +489,7 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
     public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => System.Array.Empty<GDCollisionLayerInfo>();
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => System.Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => System.Array.Empty<GDAvoidanceLayerInfo>();
+    public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
 
     #endregion
 }

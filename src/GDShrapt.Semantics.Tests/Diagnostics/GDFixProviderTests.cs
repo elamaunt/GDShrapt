@@ -352,5 +352,6 @@ func test():
         public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => Array.Empty<GDCollisionLayerInfo>();
         public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
         public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
+        public GDShrapt.Reader.GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
     }
 }

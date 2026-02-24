@@ -594,7 +594,7 @@ public class GDProjectSemanticModel : IDisposable
         {
             if (scriptFile.SemanticModel == null)
             {
-                scriptFile.Analyze(RuntimeProvider);
+                scriptFile.Analyze(RuntimeProvider, callSiteRegistry: _project.CallSiteRegistry);
             }
             // Analyze() guarantees SemanticModel is set (even on parse failure, a minimal model is created)
             return scriptFile.SemanticModel!;

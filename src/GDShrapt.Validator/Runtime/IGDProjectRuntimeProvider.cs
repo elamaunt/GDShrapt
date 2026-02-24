@@ -560,6 +560,16 @@ namespace GDShrapt.Reader
             return result;
         }
 
+        public GDExpression GetConstantInitializer(string typeName, string constantName)
+        {
+            foreach (var provider in _providers)
+            {
+                var init = provider.GetConstantInitializer(typeName, constantName);
+                if (init != null) return init;
+            }
+            return null;
+        }
+
         // IGDProjectRuntimeProvider implementation
 
         public GDScriptTypeInfo GetScriptType(string scriptPath)

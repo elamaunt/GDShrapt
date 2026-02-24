@@ -197,14 +197,14 @@ public class GDScriptFile : IGDScriptInfo
     /// </summary>
     /// <param name="runtimeProvider">Runtime provider for type resolution.</param>
     /// <param name="typeInjector">Optional type injector for scene-based node type inference.</param>
-    public void Analyze(IGDRuntimeProvider? runtimeProvider = null, IGDRuntimeTypeInjector? typeInjector = null)
+    public void Analyze(IGDRuntimeProvider? runtimeProvider = null, IGDRuntimeTypeInjector? typeInjector = null, GDCallSiteRegistry? callSiteRegistry = null)
     {
         if (Class == null)
             return;
 
         try
         {
-            SemanticModel = GDSemanticModel.Create(this, runtimeProvider, typeInjector);
+            SemanticModel = GDSemanticModel.Create(this, runtimeProvider, typeInjector, callSiteRegistry);
             _logger.Debug($"Analysis complete: {SemanticModel.Symbols.Count()} symbols found");
         }
         catch (Exception ex)

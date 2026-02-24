@@ -254,12 +254,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     public static GDSemanticModel Create(
         GDScriptFile scriptFile,
         IGDRuntimeProvider? runtimeProvider = null,
-        IGDRuntimeTypeInjector? typeInjector = null)
+        IGDRuntimeTypeInjector? typeInjector = null,
+        GDCallSiteRegistry? callSiteRegistry = null)
     {
         if (scriptFile == null)
             throw new ArgumentNullException(nameof(scriptFile));
 
-        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider, typeInjector);
+        var collector = new GDSemanticReferenceCollector(scriptFile, runtimeProvider, typeInjector, callSiteRegistry);
         return collector.BuildSemanticModel();
     }
 

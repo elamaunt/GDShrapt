@@ -830,6 +830,8 @@ namespace GDShrapt.Reader
             return System.Array.Empty<GDAvoidanceLayerInfo>();
         }
 
+        public GDExpression GetConstantInitializer(string typeName, string constantName) => null;
+
         private static string ExtractBaseTypeName(string typeName)
         {
             if (string.IsNullOrEmpty(typeName))

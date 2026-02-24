@@ -289,6 +289,7 @@ namespace GDShrapt.Reader.Tests.Helpers
         public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => _builtInProvider.GetCollisionLayerDetails();
         public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => _builtInProvider.GetTypesWithNonZeroAvoidanceLayers();
         public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => _builtInProvider.GetAvoidanceLayerDetails();
+        public GDExpression GetConstantInitializer(string typeName, string constantName) => null;
 
         #endregion
     }

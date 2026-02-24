@@ -824,6 +824,13 @@ public class GDDeadCodeService
 
             if (!isEmitted && !hasConnections)
             {
+                var signalRefs = semanticModel.GetReferencesTo(symbol);
+                if (signalRefs.Count > 0)
+                    continue;
+            }
+
+            if (!isEmitted && !hasConnections)
+            {
                 var posToken = symbol.PositionToken;
 
                 var signalConfidence = GDReferenceConfidence.Strict;

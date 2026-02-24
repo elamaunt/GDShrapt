@@ -18,6 +18,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     private readonly GDScriptFile _scriptFile;
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly IGDRuntimeTypeInjector? _typeInjector;
+    private readonly GDCallSiteRegistry? _callSiteRegistry;
     private GDTypeInferenceEngine? _typeEngine;
     private readonly GDTypeNarrowingAnalyzer? _narrowingAnalyzer;
 
@@ -50,11 +51,13 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public GDSemanticReferenceCollector(
         GDScriptFile scriptFile,
         IGDRuntimeProvider? runtimeProvider = null,
-        IGDRuntimeTypeInjector? typeInjector = null)
+        IGDRuntimeTypeInjector? typeInjector = null,
+        GDCallSiteRegistry? callSiteRegistry = null)
     {
         _scriptFile = scriptFile ?? throw new ArgumentNullException(nameof(scriptFile));
         _runtimeProvider = runtimeProvider;
         _typeInjector = typeInjector;
+        _callSiteRegistry = callSiteRegistry;
 
         if (runtimeProvider != null)
         {
@@ -942,22 +945,46 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         case "has_method":
                         case "call":
                         case "call_deferred":
+                        case "callv":
+                        case "rpc":
                             TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Method, methodName);
                             break;
 
                         case "has_signal":
                         case "emit_signal":
                         case "connect":
+                        case "is_connected":
+                        case "disconnect":
+                        case "has_user_signal":
                             TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Signal, methodName);
                             break;
 
                         case "get":
                         case "set":
+                        case "set_deferred":
+                        case "get_indexed":
+                        case "set_indexed":
                             TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Property, methodName);
                             break;
 
                         case "Callable":
                             TrackStringLiteralArg(callExpression, 1, GDSymbolKind.Method, "Callable");
+                            break;
+
+                        case "add_do_method":
+                        case "add_undo_method":
+                        case "call_group":
+                        case "rpc_id":
+                            TrackStringLiteralArg(callExpression, 1, GDSymbolKind.Method, methodName);
+                            break;
+
+                        case "add_do_property":
+                        case "add_undo_property":
+                            TrackStringLiteralArg(callExpression, 1, GDSymbolKind.Property, methodName);
+                            break;
+
+                        case "call_group_flags":
+                            TrackStringLiteralArg(callExpression, 2, GDSymbolKind.Method, methodName);
                             break;
                     }
                 }
@@ -991,18 +1018,42 @@ internal class GDSemanticReferenceCollector : GDVisitor
                         case "has_method":
                         case "call":
                         case "call_deferred":
+                        case "callv":
+                        case "rpc":
                             TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Method, methodName);
                             break;
 
                         case "has_signal":
                         case "emit_signal":
                         case "connect":
+                        case "is_connected":
+                        case "disconnect":
+                        case "has_user_signal":
                             TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Signal, methodName);
                             break;
 
                         case "get":
                         case "set":
+                        case "set_deferred":
+                        case "get_indexed":
+                        case "set_indexed":
                             TrackStringLiteralArg(callExpression, 0, GDSymbolKind.Property, methodName);
+                            break;
+
+                        case "add_do_method":
+                        case "add_undo_method":
+                        case "call_group":
+                        case "rpc_id":
+                            TrackStringLiteralArg(callExpression, 1, GDSymbolKind.Method, methodName);
+                            break;
+
+                        case "add_do_property":
+                        case "add_undo_property":
+                            TrackStringLiteralArg(callExpression, 1, GDSymbolKind.Property, methodName);
+                            break;
+
+                        case "call_group_flags":
+                            TrackStringLiteralArg(callExpression, 2, GDSymbolKind.Method, methodName);
                             break;
 
                         default:
@@ -1028,6 +1079,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 }
             }
         }
+
+        TryReflectionPattern(callExpression);
 
         RecordNodeType(callExpression);
     }
@@ -1218,7 +1271,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
             if (_model != null)
             {
                 var declaredSymbol = _model.FindSymbol(literalValue);
-                if (declaredSymbol != null && declaredSymbol.Kind == symbolKind)
+                if (declaredSymbol != null && IsCompatibleKind(declaredSymbol.Kind, symbolKind))
                 {
                     CreateReference(declaredSymbol, sourceNode, GDReferenceConfidence.Potential,
                         callerTypeName: null);
@@ -1230,6 +1283,191 @@ internal class GDSemanticReferenceCollector : GDVisitor
             _model?.AddStringReferenceWarning(literalValue, argExpr,
                 $"{callerMethodName}() contains concatenated string that evaluates to \"{literalValue}\" — manual update required");
         }
+    }
+
+    private static bool IsCompatibleKind(GDSymbolKind declaredKind, GDSymbolKind expectedKind)
+    {
+        if (declaredKind == expectedKind)
+            return true;
+
+        if (expectedKind == GDSymbolKind.Property &&
+            (declaredKind == GDSymbolKind.Variable || declaredKind == GDSymbolKind.Property))
+            return true;
+
+        return false;
+    }
+
+    private void TryReflectionPattern(GDCallExpression callExpression)
+    {
+        var args = callExpression.Parameters?.ToList();
+        if (args == null || args.Count < 2)
+            return;
+
+        // Guard: skip calls to locally-declared or inherited functions
+        if (callExpression.CallerExpression is GDIdentifierExpression idExpr)
+        {
+            var callerName = idExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(callerName))
+            {
+                if (_model!.FindSymbolInScope(callerName, callExpression) != null)
+                    return;
+                if (ResolveOrCreateInheritedSymbol(callerName) != null)
+                    return;
+            }
+        }
+
+        // Collect typed object args: (argIndex, typeName, isSelf)
+        var typedArgs = new List<(int index, string typeName, bool isSelf)>();
+
+        for (int i = 0; i < args.Count; i++)
+        {
+            if (args[i] is GDIdentifierExpression argId && argId.Identifier?.Sequence == "self")
+            {
+                var selfType = _scriptFile.TypeName
+                    ?? _scriptFile.Class?.ClassName?.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(selfType))
+                    typedArgs.Add((i, selfType, true));
+                continue;
+            }
+
+            if (_typeEngine != null && args[i] is GDExpression argExpr)
+            {
+                var semanticType = _typeEngine.InferSemanticType(argExpr);
+                if (semanticType != null && !semanticType.IsVariant)
+                {
+                    var typeName = semanticType.DisplayName;
+                    if (!string.IsNullOrEmpty(typeName) && !GDWellKnownTypes.IsPrimitiveType(typeName))
+                        typedArgs.Add((i, typeName, false));
+                }
+            }
+        }
+
+        if (typedArgs.Count == 0)
+            return;
+
+        // Create analyzer for string value resolution
+        var analyzer = new GDStaticValueAnalyzer(
+            GDStringValueRules.Instance,
+            callExpression.RootClassDeclaration,
+            _runtimeProvider,
+            _callSiteRegistry,
+            _scriptFile);
+
+        var callerMethodName = GetCallerMethodName(callExpression);
+
+        // For each string arg, try to match against typed object members
+        for (int i = 0; i < args.Count; i++)
+        {
+            var argExpr = args[i] as GDExpression;
+            if (argExpr == null) continue;
+
+            // Skip args that are typed objects themselves
+            if (typedArgs.Any(t => t.index == i))
+                continue;
+
+            var resolvedValues = analyzer.ResolveValues(argExpr);
+            if (resolvedValues.Count == 0)
+                continue;
+
+            foreach (var resolved in resolvedValues)
+            {
+                if (resolved.Value is not string stringValue || string.IsNullOrEmpty(stringValue))
+                    continue;
+
+                foreach (var (_, typeName, isSelf) in typedArgs)
+                {
+                    if (isSelf)
+                        HandleSelfStringMatch(stringValue, resolved, callerMethodName);
+                    else
+                        HandleTypedObjectStringMatch(stringValue, resolved, typeName, callerMethodName);
+                }
+            }
+        }
+    }
+
+    private void HandleSelfStringMatch(string literalValue, GDResolvedValue resolved, string callerMethodName)
+    {
+        var declaredSymbol = _model!.FindSymbol(literalValue);
+        if (declaredSymbol == null)
+            return;
+
+        if (declaredSymbol.Kind != GDSymbolKind.Method &&
+            declaredSymbol.Kind != GDSymbolKind.Signal &&
+            declaredSymbol.Kind != GDSymbolKind.Property &&
+            declaredSymbol.Kind != GDSymbolKind.Variable)
+            return;
+
+        var reason = $"self+string: {callerMethodName}(self, \"{literalValue}\")";
+
+        var duckSymbol = GDSymbolInfo.DuckTyped(literalValue, declaredSymbol.Kind, null, reason);
+        var sourceNode = resolved.SourceNode ?? (GDNode?)null;
+        if (sourceNode != null)
+        {
+            CreateReference(duckSymbol, sourceNode, GDReferenceConfidence.Potential,
+                callerTypeName: GDWellKnownTypes.Variant);
+        }
+
+        var refNode = resolved.SourceNode ?? (GDNode?)null;
+        if (refNode != null)
+        {
+            CreateReference(declaredSymbol, refNode, GDReferenceConfidence.Potential,
+                callerTypeName: null);
+        }
+    }
+
+    private void HandleTypedObjectStringMatch(string literalValue, GDResolvedValue resolved, string typeName, string callerMethodName)
+    {
+        if (_runtimeProvider == null)
+            return;
+
+        var memberInfo = _runtimeProvider.GetMember(typeName, literalValue);
+        if (memberInfo == null)
+            return;
+
+        var symbolKind = RuntimeMemberKindToSymbolKind(memberInfo.Kind);
+
+        var reason = $"typed-object: {callerMethodName}({typeName}, \"{literalValue}\")";
+
+        var duckSymbol = GDSymbolInfo.DuckTyped(literalValue, symbolKind, typeName, reason);
+        var sourceNode = resolved.SourceNode ?? (GDNode?)null;
+        if (sourceNode != null)
+        {
+            CreateReference(duckSymbol, sourceNode, GDReferenceConfidence.Potential,
+                callerTypeName: GDWellKnownTypes.Variant);
+        }
+
+        // Also create a local reference if this member exists on self
+        var localSymbol = _model!.FindSymbol(literalValue);
+        if (localSymbol != null && IsCompatibleKind(localSymbol.Kind, symbolKind))
+        {
+            var refNode = resolved.SourceNode ?? (GDNode?)null;
+            if (refNode != null)
+            {
+                CreateReference(localSymbol, refNode, GDReferenceConfidence.Potential,
+                    callerTypeName: null);
+            }
+        }
+    }
+
+    private static GDSymbolKind RuntimeMemberKindToSymbolKind(GDRuntimeMemberKind kind) => kind switch
+    {
+        GDRuntimeMemberKind.Method => GDSymbolKind.Method,
+        GDRuntimeMemberKind.Property => GDSymbolKind.Property,
+        GDRuntimeMemberKind.Signal => GDSymbolKind.Signal,
+        GDRuntimeMemberKind.Constant => GDSymbolKind.Constant,
+        GDRuntimeMemberKind.Enum => GDSymbolKind.Enum,
+        GDRuntimeMemberKind.EnumValue => GDSymbolKind.EnumValue,
+        _ => GDSymbolKind.Variable
+    };
+
+    private static string GetCallerMethodName(GDCallExpression callExpr)
+    {
+        return callExpr.CallerExpression switch
+        {
+            GDIdentifierExpression id => id.Identifier?.Sequence ?? "unknown",
+            GDMemberOperatorExpression member => member.Identifier?.Sequence ?? "unknown",
+            _ => "unknown"
+        };
     }
 
     private void CreateReference(GDSymbolInfo symbol, GDNode node, GDReferenceConfidence confidence, string? callerTypeName = null)

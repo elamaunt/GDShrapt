@@ -86,6 +86,17 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
         return null;
     }
 
+    public GDExpression? GetConstantInitializer(string typeName, string constantName)
+    {
+        foreach (var provider in _providers)
+        {
+            var init = provider.GetConstantInitializer(typeName, constantName);
+            if (init != null)
+                return init;
+        }
+        return null;
+    }
+
     public string? GetBaseType(string typeName)
     {
         foreach (var provider in _providers)
