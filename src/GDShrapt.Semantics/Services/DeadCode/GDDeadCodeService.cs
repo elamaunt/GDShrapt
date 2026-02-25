@@ -17,6 +17,7 @@ public class GDDeadCodeService
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private readonly GDSignalConnectionRegistry _signalRegistry;
     private Dictionary<string, string>? _autoloadNamesByPath;
+    private int _annotationSuppressedCount;
 
 
     /// <summary>
@@ -87,6 +88,7 @@ public class GDDeadCodeService
             ? new List<GDReflectionDroppedItem>()
             : null;
         int filesAnalyzed = 0;
+        _annotationSuppressedCount = 0;
 
         foreach (var file in _project.ScriptFiles)
         {
@@ -96,6 +98,7 @@ public class GDDeadCodeService
 
         var report = new GDDeadCodeReport(items);
         report.FilesAnalyzed = filesAnalyzed;
+        report.AnnotationSuppressedCount = _annotationSuppressedCount;
         report.SceneSignalConnectionsConsidered = _signalRegistry.GetAllConnections()
             .Count(c => c.IsSceneConnection);
         report.VirtualMethodsSkipped = options.SkipMethods.Count;
@@ -117,8 +120,10 @@ public class GDDeadCodeService
         var droppedByReflection = options.CollectDroppedByReflection
             ? new List<GDReflectionDroppedItem>()
             : null;
+        _annotationSuppressedCount = 0;
         var items = AnalyzeFileInternal(file, options, droppedByReflection).ToList();
         var report = new GDDeadCodeReport(items);
+        report.AnnotationSuppressedCount = _annotationSuppressedCount;
         if (droppedByReflection != null)
             report.DroppedByReflection = droppedByReflection;
         return report;
@@ -215,6 +220,12 @@ public class GDDeadCodeService
             // Constants are handled separately
             if (symbol.Kind == GDSymbolKind.Constant)
                 continue;
+
+            if (options.RespectSuppressionAnnotations && IsAnnotationSuppressed(semanticModel, varName, options))
+            {
+                _annotationSuppressedCount++;
+                continue;
+            }
 
             bool isPrivate = varName.StartsWith("_");
 
@@ -341,6 +352,12 @@ public class GDDeadCodeService
 
             if (IsFrameworkMethod(file, methodName, options))
                 continue;
+
+            if (options.RespectSuppressionAnnotations && IsAnnotationSuppressed(semanticModel, methodName, options))
+            {
+                _annotationSuppressedCount++;
+                continue;
+            }
 
             bool isPrivate = methodName.StartsWith("_") && !options.ShouldSkipMethod(methodName);
 
@@ -764,6 +781,12 @@ public class GDDeadCodeService
             if (semanticModel.HasWarningIgnore(signalName, "unused_signal"))
                 continue;
 
+            if (options.RespectSuppressionAnnotations && IsAnnotationSuppressed(semanticModel, signalName, options))
+            {
+                _annotationSuppressedCount++;
+                continue;
+            }
+
             bool isPrivate = signalName.StartsWith("_");
 
             if (isPrivate && !options.IncludePrivate)
@@ -972,6 +995,12 @@ public class GDDeadCodeService
             if (string.IsNullOrEmpty(constName))
                 continue;
 
+            if (options.RespectSuppressionAnnotations && IsAnnotationSuppressed(semanticModel, constName, options))
+            {
+                _annotationSuppressedCount++;
+                continue;
+            }
+
             bool isPrivate = constName.StartsWith("_");
 
             if (isPrivate && !options.IncludePrivate)
@@ -1084,6 +1113,12 @@ public class GDDeadCodeService
             if (string.IsNullOrEmpty(className))
                 continue;
 
+            if (options.RespectSuppressionAnnotations && IsAnnotationSuppressed(semanticModel, className, options))
+            {
+                _annotationSuppressedCount++;
+                continue;
+            }
+
             bool isPrivate = className.StartsWith("_");
 
             if (isPrivate && !options.IncludePrivate)
@@ -1122,6 +1157,20 @@ public class GDDeadCodeService
                 };
             }
         }
+    }
+
+    private bool IsAnnotationSuppressed(GDSemanticModel semanticModel, string memberName, GDDeadCodeOptions options)
+    {
+        if (semanticModel.HasPublicApiAnnotation(memberName) || semanticModel.HasDynamicUseAnnotation(memberName))
+            return true;
+
+        foreach (var ann in options.CustomSuppressionAnnotations)
+        {
+            if (semanticModel.HasAnnotation(memberName, ann))
+                return true;
+        }
+
+        return false;
     }
 
     #region Escape Analysis

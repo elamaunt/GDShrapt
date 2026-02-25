@@ -41,6 +41,10 @@ namespace GDShrapt.Reader
         public const string Static_Unload = "static_unload";
         public const string Abstract = "abstract";
 
+        // Dead code suppression annotations
+        public const string PublicApi = "public_api";
+        public const string DynamicUse = "dynamic_use";
+
         /// <summary>
         /// Checks if the attribute is any type of export annotation
         /// </summary>
@@ -194,6 +198,22 @@ namespace GDShrapt.Reader
         public static bool IsAbstract(this GDAttribute attribute)
         {
             return attribute?.Name?.Sequence == Abstract;
+        }
+
+        /// <summary>
+        /// Checks if the attribute is @public_api
+        /// </summary>
+        public static bool IsPublicApi(this GDAttribute attribute)
+        {
+            return attribute?.Name?.Sequence == PublicApi;
+        }
+
+        /// <summary>
+        /// Checks if the attribute is @dynamic_use
+        /// </summary>
+        public static bool IsDynamicUse(this GDAttribute attribute)
+        {
+            return attribute?.Name?.Sequence == DynamicUse;
         }
 
         /// <summary>

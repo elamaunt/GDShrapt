@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using GDShrapt.CLI.Core;
 
 namespace GDShrapt.CLI;
@@ -92,6 +94,17 @@ public static class DeadCodeCommandBuilder
             ["--show-suppressed"],
             "Show all items suppressed by reflection patterns (no limit)");
 
+        var noSuppressAnnotationsOption = new Option<bool>(
+            ["--no-suppress-annotations"],
+            "Disable @public_api/@dynamic_use annotation suppression");
+
+        var suppressAnnotationOption = new Option<string[]>(
+            ["--suppress-annotation"],
+            "Custom annotation name for dead code suppression (repeatable)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
         command.AddOption(fileOption);
@@ -110,6 +123,8 @@ public static class DeadCodeCommandBuilder
         command.AddOption(excludeTestsOption);
         command.AddOption(explainOption);
         command.AddOption(showDroppedByReflectionOption);
+        command.AddOption(noSuppressAnnotationsOption);
+        command.AddOption(suppressAnnotationOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -135,6 +150,8 @@ public static class DeadCodeCommandBuilder
             var excludeTests = context.ParseResult.GetValueForOption(excludeTestsOption);
             var explain = context.ParseResult.GetValueForOption(explainOption);
             var showDroppedByReflection = context.ParseResult.GetValueForOption(showDroppedByReflectionOption);
+            var noSuppressAnnotations = context.ParseResult.GetValueForOption(noSuppressAnnotationsOption);
+            var suppressAnnotations = context.ParseResult.GetValueForOption(suppressAnnotationOption);
 
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
@@ -156,7 +173,9 @@ public static class DeadCodeCommandBuilder
                 Explain = explain,
                 Quiet = quiet,
                 ShowDroppedByReflection = showDroppedByReflection,
-                Verbose = verbose || debug
+                Verbose = verbose || debug,
+                NoSuppressAnnotations = noSuppressAnnotations,
+                SuppressAnnotations = suppressAnnotations?.ToList() ?? new List<string>()
             };
 
             var cmd = new GDDeadCodeCommand(projectPath, formatter, logger: logger, options: options);

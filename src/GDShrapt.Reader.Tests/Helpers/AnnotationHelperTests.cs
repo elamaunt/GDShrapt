@@ -174,6 +174,39 @@ var b = 2";
         }
 
         [TestMethod]
+        public void AnnotationHelper_IsPublicApi()
+        {
+            var reader = new GDScriptReader();
+            var code = @"@public_api
+var api_data: int = 42";
+            var @class = reader.ParseFileContent(code);
+
+            var variable = @class.Members.OfType<GDVariableDeclaration>().First();
+            var attribute = variable.AttributesDeclaredBefore.First().Attribute;
+
+            attribute.IsPublicApi().Should().BeTrue();
+            attribute.IsExportAnnotation().Should().BeFalse();
+            attribute.GetAnnotationName().Should().Be("public_api");
+        }
+
+        [TestMethod]
+        public void AnnotationHelper_IsDynamicUse()
+        {
+            var reader = new GDScriptReader();
+            var code = @"@dynamic_use
+func handler(data):
+	pass";
+            var @class = reader.ParseFileContent(code);
+
+            var method = @class.Methods.First();
+            var attribute = method.AttributesDeclaredBefore.First().Attribute;
+
+            attribute.IsDynamicUse().Should().BeTrue();
+            attribute.IsExportAnnotation().Should().BeFalse();
+            attribute.GetAnnotationName().Should().Be("dynamic_use");
+        }
+
+        [TestMethod]
         public void AnnotationHelper_AbstractOnClass()
         {
             // @abstract can also be applied to inner classes

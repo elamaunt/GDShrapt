@@ -165,6 +165,18 @@ public class GDDeadCodeOptions
     public bool TreatClassNameAsPublicAPI { get; set; } = true;
 
     /// <summary>
+    /// When true, members annotated with @public_api, @dynamic_use, or custom
+    /// suppression annotations are excluded from dead code results.
+    /// </summary>
+    public bool RespectSuppressionAnnotations { get; set; } = true;
+
+    /// <summary>
+    /// Additional annotation names that suppress dead code detection.
+    /// Specified via --suppress-annotation CLI option.
+    /// </summary>
+    public HashSet<string> CustomSuppressionAnnotations { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Method name prefixes for framework-invoked methods (e.g., "test_").
     /// Functions matching these prefixes are skipped from dead code analysis.
     /// Only applies when the declaring class extends one of FrameworkBaseClasses
@@ -252,7 +264,9 @@ public class GDDeadCodeOptions
             CollectDroppedByReflection = CollectDroppedByReflection,
             FrameworkMethodPrefixes = FrameworkMethodPrefixes,
             FrameworkBaseClasses = FrameworkBaseClasses,
-            TreatClassNameAsPublicAPI = TreatClassNameAsPublicAPI
+            TreatClassNameAsPublicAPI = TreatClassNameAsPublicAPI,
+            RespectSuppressionAnnotations = RespectSuppressionAnnotations,
+            CustomSuppressionAnnotations = CustomSuppressionAnnotations
         };
     }
 

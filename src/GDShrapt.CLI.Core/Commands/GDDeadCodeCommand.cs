@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -64,7 +65,9 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             ExcludeTestFiles = _options.ExcludeTests,
             CollectEvidence = _options.Explain,
             CollectDroppedByReflection = true,
-            TreatClassNameAsPublicAPI = false // CLI has full project visibility
+            TreatClassNameAsPublicAPI = false, // CLI has full project visibility
+            RespectSuppressionAnnotations = !_options.NoSuppressAnnotations,
+            CustomSuppressionAnnotations = new HashSet<string>(_options.SuppressAnnotations, StringComparer.OrdinalIgnoreCase)
         };
 
         // Analyze based on scope
@@ -97,7 +100,8 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             TotalCallSitesRegistered = report.TotalCallSitesRegistered,
             CSharpCodeDetected = report.CSharpCodeDetected,
             CSharpInteropExcluded = report.CSharpInteropExcluded,
-            DroppedByReflection = report.DroppedByReflection
+            DroppedByReflection = report.DroppedByReflection,
+            AnnotationSuppressedCount = report.AnnotationSuppressedCount
         };
 
         // Output results
@@ -140,9 +144,15 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             return;
         }
 
-        // Header with suppressed count
-        var suppressedSuffix = report.DroppedByReflection.Count > 0
-            ? GDAnsiColors.Dim($" (+{report.DroppedByReflection.Count} suppressed by reflection)")
+        // Header with suppressed counts
+        var suppressedParts = new List<string>();
+        if (report.DroppedByReflection.Count > 0)
+            suppressedParts.Add($"{report.DroppedByReflection.Count} by reflection");
+        if (report.AnnotationSuppressedCount > 0)
+            suppressedParts.Add($"{report.AnnotationSuppressedCount} by annotations");
+
+        var suppressedSuffix = suppressedParts.Count > 0
+            ? GDAnsiColors.Dim($" (+{string.Join(", ", suppressedParts)} suppressed)")
             : "";
         _formatter.WriteMessage(_output, $"{GDAnsiColors.Bold("Dead Code Analysis:")} {GDAnsiColors.Cyan(report.Items.Count.ToString())} items found{suppressedSuffix}");
         _formatter.WriteMessage(_output, "");
@@ -198,6 +208,10 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             GDDeadCodeOutputHelper.WriteDroppedByReflection(_formatter, _output, report, projectRoot,
                 limit: _options.ShowDroppedByReflection ? 0 : 5);
         }
+
+        // Annotation hint (once, when annotations are enabled)
+        if (!_options.NoSuppressAnnotations)
+            GDDeadCodeOutputHelper.WriteAnnotationHint(_formatter, _output);
 
         // Tip
         GDDeadCodeOutputHelper.WriteTip(_formatter, _output, _options);
@@ -283,4 +297,14 @@ public class GDDeadCodeCommandOptions
     /// Verbose output (show all kind breakdowns including zero-count).
     /// </summary>
     public bool Verbose { get; set; }
+
+    /// <summary>
+    /// Disable annotation-based suppression (@public_api, @dynamic_use).
+    /// </summary>
+    public bool NoSuppressAnnotations { get; set; }
+
+    /// <summary>
+    /// Custom annotation names that suppress dead code warnings.
+    /// </summary>
+    public List<string> SuppressAnnotations { get; set; } = new();
 }

@@ -46,6 +46,11 @@ public static class GDDeadCodeOutputHelper
         GDDeadCodeReasonCode.ICU => "Inner class unused",
         GDDeadCodeReasonCode.VDA => "Variable may be accessed dynamically (self passed externally)",
         GDDeadCodeReasonCode.TRF => "Member referenced from .tres resource file",
+        GDDeadCodeReasonCode.FPA => "Member accessed via reflection pattern",
+        GDDeadCodeReasonCode.CSI => "Member excluded due to C# Singleton Interop",
+        GDDeadCodeReasonCode.PAA => "Member annotated with @public_api",
+        GDDeadCodeReasonCode.DUA => "Member annotated with @dynamic_use",
+        GDDeadCodeReasonCode.CUA => "Member suppressed by custom annotation",
         _ => code.ToString()
     };
 
@@ -157,6 +162,9 @@ public static class GDDeadCodeOutputHelper
 
         if (report.ResourceFilesConsidered > 0)
             formatter.WriteMessage(output, GDAnsiColors.Dim($"  Resource files (.tres):         {report.ResourceFilesConsidered}"));
+
+        if (report.AnnotationSuppressedCount > 0)
+            formatter.WriteMessage(output, GDAnsiColors.Dim($"  Annotation suppressed:          {report.AnnotationSuppressedCount}"));
     }
 
     /// <summary>
@@ -340,6 +348,15 @@ public static class GDDeadCodeOutputHelper
         if (option != null)
             formatter.WriteMessage(output,
                 GDAnsiColors.Dim("Tip: Use ") + GDAnsiColors.Magenta(option) + GDAnsiColors.Dim($" {description}"));
+    }
+
+    /// <summary>
+    /// Writes a one-time hint about annotation-based suppression.
+    /// </summary>
+    public static void WriteAnnotationHint(IGDOutputFormatter formatter, TextWriter output)
+    {
+        formatter.WriteMessage(output,
+            GDAnsiColors.Dim("Hint: Use ") + GDAnsiColors.Magenta("@public_api") + GDAnsiColors.Dim(" or ") + GDAnsiColors.Magenta("@dynamic_use") + GDAnsiColors.Dim(" to suppress intentionally unused declarations."));
     }
 
     private static string GetRelativePath(string fullPath, string basePath)

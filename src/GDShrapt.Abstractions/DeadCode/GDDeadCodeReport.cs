@@ -149,6 +149,11 @@ public class GDDeadCodeReport
     /// </summary>
     public int ResourceFilesConsidered { get; set; }
 
+    /// <summary>
+    /// Number of members suppressed from report due to @public_api, @dynamic_use, or custom annotations.
+    /// </summary>
+    public int AnnotationSuppressedCount { get; set; }
+
     public GDDeadCodeReport()
     {
     }

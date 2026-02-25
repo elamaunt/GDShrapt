@@ -839,6 +839,72 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     /// <summary>
+    /// Checks if a class member has the @public_api annotation.
+    /// Works for variables, methods, signals, constants, and inner classes.
+    /// </summary>
+    public bool HasPublicApiAnnotation(string memberName)
+    {
+        if (string.IsNullOrEmpty(memberName))
+            return false;
+
+        var symbol = FindSymbol(memberName);
+        if (symbol?.DeclarationNode is not GDClassMember classMember)
+            return false;
+
+        foreach (var attr in classMember.AttributesDeclaredBefore)
+        {
+            if (attr.Attribute != null && attr.Attribute.IsPublicApi())
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a class member has the @dynamic_use annotation.
+    /// Works for variables, methods, signals, constants, and inner classes.
+    /// </summary>
+    public bool HasDynamicUseAnnotation(string memberName)
+    {
+        if (string.IsNullOrEmpty(memberName))
+            return false;
+
+        var symbol = FindSymbol(memberName);
+        if (symbol?.DeclarationNode is not GDClassMember classMember)
+            return false;
+
+        foreach (var attr in classMember.AttributesDeclaredBefore)
+        {
+            if (attr.Attribute != null && attr.Attribute.IsDynamicUse())
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a class member has a specific annotation by name.
+    /// Used for custom suppression annotations specified via --suppress-annotation.
+    /// </summary>
+    public bool HasAnnotation(string memberName, string annotationName)
+    {
+        if (string.IsNullOrEmpty(memberName) || string.IsNullOrEmpty(annotationName))
+            return false;
+
+        var symbol = FindSymbol(memberName);
+        if (symbol?.DeclarationNode is not GDClassMember classMember)
+            return false;
+
+        foreach (var attr in classMember.AttributesDeclaredBefore)
+        {
+            if (attr.Attribute?.GetAnnotationName() == annotationName)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Checks if 'self' is passed as an argument to any call expression
     /// or used in any array literal within the class body.
     /// </summary>

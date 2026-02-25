@@ -68,6 +68,16 @@ public class GDDeadCodeItem
     public bool IsExportedOrOnready { get; set; }
 
     /// <summary>
+    /// Whether this member has @public_api annotation.
+    /// </summary>
+    public bool IsPublicApiAnnotated { get; set; }
+
+    /// <summary>
+    /// Whether this member has @dynamic_use annotation.
+    /// </summary>
+    public bool IsDynamicUseAnnotated { get; set; }
+
+    /// <summary>
     /// Evidence details for --explain mode. Null unless CollectEvidence is enabled.
     /// </summary>
     public GDDeadCodeEvidence? Evidence { get; set; }

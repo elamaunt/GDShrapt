@@ -134,6 +134,9 @@ namespace GDShrapt.Builder
             public static GDCustomAttribute StaticUnload() => Custom("static_unload");
 
             public static GDCustomAttribute Abstract() => Custom("abstract");
+
+            public static GDCustomAttribute PublicApi() => Custom("public_api");
+            public static GDCustomAttribute DynamicUse() => Custom("dynamic_use");
         }
     }
 }

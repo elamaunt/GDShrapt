@@ -55,4 +55,13 @@ public enum GDDeadCodeReasonCode
 
     /// <summary>Variable only used as Property Write target on locally-constructed non-escaping object.</summary>
     VPW,
+
+    /// <summary>Member annotated with @public_api — explicitly marked as public API.</summary>
+    PAA,
+
+    /// <summary>Member annotated with @dynamic_use — explicitly marked as dynamically used.</summary>
+    DUA,
+
+    /// <summary>Member suppressed by custom user annotation (--suppress-annotation).</summary>
+    CUA,
 }
