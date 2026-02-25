@@ -81,7 +81,7 @@ public class GDReorderMembersService : GDRefactoringServiceBase
 
         var originalCode = context.ClassDeclaration.ToString();
 
-        if (!HasOrderChanged(members, sorted))
+        if (!HasOrderChanged(categorized, sorted))
             return GDReorderMembersResult.NoChanges(originalCode);
 
         // Build reordered code for preview
@@ -92,12 +92,12 @@ public class GDReorderMembersService : GDRefactoringServiceBase
         for (int newIndex = 0; newIndex < sorted.Count; newIndex++)
         {
             var item = sorted[newIndex];
-            if (item.OriginalIndex != newIndex)
+            if (item.CategorizedIndex != newIndex)
             {
                 changes.Add(new GDMemberReorderChange(
                     item.Member,
                     item.Category,
-                    item.OriginalIndex,
+                    item.CategorizedIndex,
                     newIndex));
             }
         }
@@ -121,7 +121,7 @@ public class GDReorderMembersService : GDRefactoringServiceBase
         var categorized = CategorizeMembersWithContext(members);
         var sorted = SortByCategory(categorized, order);
 
-        if (!HasOrderChanged(members, sorted))
+        if (!HasOrderChanged(categorized, sorted))
             return GDRefactoringResult.Empty;
 
         // Clone the class and reorder
@@ -187,15 +187,12 @@ public class GDReorderMembersService : GDRefactoringServiceBase
         if (context?.ClassDeclaration?.Members == null)
             return new List<(GDClassMember, GDMemberCategory, int)>();
 
-        var result = new List<(GDClassMember, GDMemberCategory, int)>();
         var members = context.ClassDeclaration.Members.ToList();
+        var categorized = CategorizeMembersWithContext(members);
 
-        for (int i = 0; i < members.Count; i++)
-        {
-            var member = members[i];
-            var category = GetCategory(member);
-            result.Add((member, category, i));
-        }
+        var result = new List<(GDClassMember, GDMemberCategory, int)>();
+        foreach (var item in categorized)
+            result.Add((item.Member, item.Category, item.CategorizedIndex));
 
         return result;
     }
@@ -207,20 +204,34 @@ public class GDReorderMembersService : GDRefactoringServiceBase
         public GDClassMember Member { get; set; }
         public GDMemberCategory Category { get; set; }
         public int OriginalIndex { get; set; }
+        public int CategorizedIndex { get; set; }
     }
 
     private List<MemberWithContext> CategorizeMembersWithContext(List<GDClassMember> members)
     {
-        var result = new List<MemberWithContext>();
+        // Collect all GDCustomAttribute nodes consumed by subsequent members
+        var consumedAttributes = new HashSet<GDCustomAttribute>();
+        foreach (var member in members)
+        {
+            if (member is GDCustomAttribute)
+                continue;
+            foreach (var attr in member.AttributesDeclaredBefore)
+                consumedAttributes.Add(attr);
+        }
 
+        var result = new List<MemberWithContext>();
+        int categorizedIdx = 0;
         for (int i = 0; i < members.Count; i++)
         {
             var member = members[i];
+            if (member is GDCustomAttribute customAttr && consumedAttributes.Contains(customAttr))
+                continue;
             result.Add(new MemberWithContext
             {
                 Member = member,
                 Category = GetCategory(member),
-                OriginalIndex = i
+                OriginalIndex = i,
+                CategorizedIndex = categorizedIdx++
             });
         }
 
@@ -242,11 +253,13 @@ public class GDReorderMembersService : GDRefactoringServiceBase
             .ToList();
     }
 
-    private bool HasOrderChanged(List<GDClassMember> original, List<MemberWithContext> sorted)
+    private bool HasOrderChanged(List<MemberWithContext> categorized, List<MemberWithContext> sorted)
     {
-        for (int i = 0; i < original.Count; i++)
+        if (categorized.Count != sorted.Count)
+            return true;
+        for (int i = 0; i < categorized.Count; i++)
         {
-            if (sorted[i].OriginalIndex != i)
+            if (!ReferenceEquals(categorized[i].Member, sorted[i].Member))
                 return true;
         }
         return false;
@@ -311,28 +324,45 @@ public class GDReorderMembersService : GDRefactoringServiceBase
         var sb = new System.Text.StringBuilder();
 
         // Copy any tokens before members (extends, class_name, etc. that are part of the class)
-        var preTokens = new List<GDSyntaxToken>();
         foreach (var token in classDecl.Form.Direct())
         {
             if (token is GDClassMembersList)
                 break;
-            preTokens.Add(token);
-        }
-
-        foreach (var token in preTokens)
-        {
             sb.Append(token.ToString());
         }
 
-        // Now add members in new order
-        foreach (var item in sorted)
+        GDMemberCategory? previousCategory = null;
+        bool previousWasMethod = false;
+
+        for (int i = 0; i < sorted.Count; i++)
         {
-            // Include any attributes before the member
-            foreach (var attr in item.Member.AttributesDeclaredBefore.Reverse())
+            var item = sorted[i];
+            bool isMethod = item.Member is GDMethodDeclaration || item.Member is GDInnerClassDeclaration;
+
+            // Blank line logic (matching GDFormatterOptions defaults)
+            if (i > 0)
             {
-                sb.AppendLine(attr.ToString());
+                if (isMethod || previousWasMethod)
+                {
+                    // 2 blank lines before/after functions and inner classes
+                    sb.Append("\n\n");
+                }
+                else if (item.Category != previousCategory)
+                {
+                    // 1 blank line between different member categories
+                    sb.Append("\n");
+                }
             }
+
+            // Emit annotations inline before this member (in source order)
+            // attr.ToString() includes a trailing space (e.g., "@export ")
+            foreach (var attr in item.Member.AttributesDeclaredBefore.Reverse())
+                sb.Append(attr.ToString());
+
             sb.AppendLine(item.Member.ToString());
+
+            previousCategory = item.Category;
+            previousWasMethod = isMethod;
         }
 
         return sb.ToString();
@@ -367,7 +397,7 @@ public class GDReorderMembersService : GDRefactoringServiceBase
 
         var originalCode = classDecl.ToString();
 
-        if (!HasOrderChanged(members, sorted))
+        if (!HasOrderChanged(categorized, sorted))
             return new GDFileReorderPlan(file.FullPath, new List<GDMemberReorderChange>(), null, originalCode, originalCode, null);
 
         var reorderedCode = BuildReorderedCode(classDecl, sorted);
@@ -377,12 +407,12 @@ public class GDReorderMembersService : GDRefactoringServiceBase
         for (int newIndex = 0; newIndex < sorted.Count; newIndex++)
         {
             var item = sorted[newIndex];
-            if (item.OriginalIndex != newIndex)
+            if (item.CategorizedIndex != newIndex)
             {
                 changes.Add(new GDMemberReorderChange(
                     item.Member,
                     item.Category,
-                    item.OriginalIndex,
+                    item.CategorizedIndex,
                     newIndex));
             }
         }
