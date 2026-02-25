@@ -57,35 +57,42 @@ public abstract class GDProjectCommandBase : IGDCommand
             }
 
             _logger.Debug($"Found project root: {projectRoot}");
-            _logger.Info($"Loading project: {projectRoot}");
 
             var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
             var projectOptions = GetProjectOptions();
-            using var project = projectOptions != null
-                ? GDProjectLoader.LoadProject(projectRoot, projectOptions)
-                : GDProjectLoader.LoadProject(projectRoot, _logger);
 
-            _logger.Debug($"Project loaded: {project.ScriptFiles.Count()} scripts");
-
-            // Report files with parse errors
-            var filesWithErrors = project.ScriptFiles.Where(f => f.WasReadError).ToList();
-            if (filesWithErrors.Count > 0)
+            GDScriptProject project;
+            using (new GDConsoleSpinner($"Loading project: {projectRoot}"))
             {
-                _formatter.WriteError(_output, $"Warning: {filesWithErrors.Count} file(s) had parse errors and were excluded from analysis:");
-                foreach (var file in filesWithErrors)
-                {
-                    var relPath = GetRelativePath(file.FullPath ?? "", projectRoot);
-                    _formatter.WriteError(_output, $"  {relPath}");
-                }
-                _formatter.WriteMessage(_output, "");
+                project = projectOptions != null
+                    ? GDProjectLoader.LoadProject(projectRoot, projectOptions)
+                    : GDProjectLoader.LoadProject(projectRoot, _logger);
             }
 
-            // Initialize service registry with base module
-            var registry = new GDServiceRegistry();
-            registry.LoadModules(project, new GDBaseModule());
-            Registry = registry;
+            using (project)
+            {
+                _logger.Debug($"Project loaded: {project.ScriptFiles.Count()} scripts");
 
-            return await ExecuteOnProjectAsync(project, projectRoot, config, cancellationToken);
+                // Report files with parse errors
+                var filesWithErrors = project.ScriptFiles.Where(f => f.WasReadError).ToList();
+                if (filesWithErrors.Count > 0)
+                {
+                    _formatter.WriteError(_output, $"Warning: {filesWithErrors.Count} file(s) had parse errors and were excluded from analysis:");
+                    foreach (var file in filesWithErrors)
+                    {
+                        var relPath = GetRelativePath(file.FullPath ?? "", projectRoot);
+                        _formatter.WriteError(_output, $"  {relPath}");
+                    }
+                    _formatter.WriteMessage(_output, "");
+                }
+
+                // Initialize service registry with base module
+                var registry = new GDServiceRegistry();
+                registry.LoadModules(project, new GDBaseModule());
+                Registry = registry;
+
+                return await ExecuteOnProjectAsync(project, projectRoot, config, cancellationToken);
+            }
         }
         catch (DirectoryNotFoundException ex)
         {
