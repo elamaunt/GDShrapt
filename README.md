@@ -21,7 +21,7 @@ GDShrapt is built and tested as a **standalone tooling platform**. It does **not
 
 ## Project Status
 
-- **Test coverage:** 5,000+ automated tests (including semantic stress tests and benchmarks)
+- **Test coverage:** 6,000+ automated tests (including semantic stress tests and benchmarks)
 - **Latest stable release:** 5.x (parser, linter, formatter libraries)
 - **Current preview:** **6.0.0-alpha.6** — CLI alpha available on NuGet
 
