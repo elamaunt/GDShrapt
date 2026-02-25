@@ -1,5 +1,4 @@
 using FluentAssertions;
-using GDShrapt.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 

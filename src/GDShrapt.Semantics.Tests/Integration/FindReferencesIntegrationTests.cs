@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Linq;
@@ -650,6 +651,149 @@ public class FindReferencesIntegrationTests
         {
             try { Directory.Delete(tempDir, true); } catch { }
         }
+    }
+
+    #endregion
+
+    #region Scope Isolation: For-Loop and Setter (RC5/RC6/RC8)
+
+    private static string CreateTempProject(params (string name, string content)[] scripts)
+    {
+        var tempPath = Path.Combine(Path.GetTempPath(), "gdshrapt_findref_test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempPath);
+
+        File.WriteAllText(Path.Combine(tempPath, "project.godot"),
+            "[gd_resource type=\"ProjectSettings\" format=3]\n\nconfig_version=5\n\n[application]\nconfig/name=\"TestProject\"\n");
+
+        foreach (var (name, content) in scripts)
+        {
+            var fileName = name.EndsWith(".gd", System.StringComparison.OrdinalIgnoreCase) ? name : name + ".gd";
+            File.WriteAllText(Path.Combine(tempPath, fileName), content);
+        }
+
+        return tempPath;
+    }
+
+    private static void DeleteTempProject(string path)
+    {
+        try { if (Directory.Exists(path)) Directory.Delete(path, true); } catch { }
+    }
+
+    [TestMethod]
+    public void FindRefs_ForLoopIterator_OnlyInsideLoop()
+    {
+        var script = @"extends Node
+
+func test():
+    var items = [1, 2, 3]
+    for x in items:
+        print(x)
+    var x = 99
+    print(x)
+";
+        var tempPath = CreateTempProject(("entity.gd", script));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var file = project.ScriptFiles.First();
+            var model = projectModel.GetSemanticModel(file)!;
+
+            var allX = model.FindSymbols("x");
+            Assert.IsTrue(allX.Count() >= 2,
+                "should have iterator x and var x as separate symbols");
+
+            var iteratorSymbol = allX.FirstOrDefault(s => s.Kind == GDSymbolKind.Iterator);
+            Assert.IsNotNull(iteratorSymbol, "iterator x should exist");
+            var iteratorRefs = model.GetReferencesTo(iteratorSymbol!);
+            Assert.IsTrue(iteratorRefs.Any(), "iterator x is used inside loop");
+
+            var varSymbol = allX.FirstOrDefault(s => s.Kind != GDSymbolKind.Iterator);
+            Assert.IsNotNull(varSymbol, "var x should exist");
+            var varRefs = model.GetReferencesTo(varSymbol!);
+            Assert.IsTrue(varRefs.Any(), "var x is used after loop");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void FindRefs_VarInSetter_ScopedToAccessor()
+    {
+        var script = @"extends Node
+
+var value: int = 0:
+    set(new_value):
+        var old_value := value
+        value = clampi(new_value, 0, 100)
+        if value < old_value:
+            print(""decreased"")
+
+var selected: int = 0:
+    set(new_value):
+        var old_value := selected
+        selected = clampi(new_value, 0, 100)
+        if selected < old_value:
+            print(""decreased"")
+";
+        var tempPath = CreateTempProject(("entity.gd", script));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var file = project.ScriptFiles.First();
+            var model = projectModel.GetSemanticModel(file)!;
+
+            var allOldValue = model.FindSymbols("old_value");
+            Assert.AreEqual(2, allOldValue.Count(),
+                "each setter should have its own old_value symbol");
+
+            foreach (var symbol in allOldValue)
+            {
+                var refs = model.GetReferencesTo(symbol);
+                Assert.IsTrue(refs.Any(),
+                    $"old_value in scope {symbol.DeclaringScopeNode?.GetType().Name} should have references");
+                Assert.IsTrue(refs.Any(r => r.IsRead),
+                    "old_value should be read in its setter");
+            }
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void FindRefs_NestedForLoop_IteratorScopedCorrectly()
+    {
+        var script = @"extends Node
+
+func process():
+    var nodes = get_children()
+    for container in nodes:
+        var children = container.get_children()
+        for item in children:
+            print(item)
+        var item = container.get_child(-1)
+        print(item)
+";
+        var tempPath = CreateTempProject(("entity.gd", script));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var file = project.ScriptFiles.First();
+            var model = projectModel.GetSemanticModel(file)!;
+
+            var allItem = model.FindSymbols("item");
+            Assert.IsTrue(allItem.Count() >= 2,
+                "iterator item and var item should be separate symbols");
+
+            var varSymbol = allItem.FirstOrDefault(s => s.Kind != GDSymbolKind.Iterator);
+            Assert.IsNotNull(varSymbol, "var item should exist as non-iterator symbol");
+            var varRefs = model.GetReferencesTo(varSymbol!);
+            Assert.IsTrue(varRefs.Any(), "var item is used after inner loop");
+        }
+        finally { DeleteTempProject(tempPath); }
     }
 
     #endregion

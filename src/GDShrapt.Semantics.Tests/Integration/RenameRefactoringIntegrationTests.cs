@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
@@ -396,6 +397,168 @@ public class RenameRefactoringIntegrationTests
         int readWrites = (counts.ContainsKey(ReferenceKind.Read) ? counts[ReferenceKind.Read] : 0) +
                         (counts.ContainsKey(ReferenceKind.Write) ? counts[ReferenceKind.Write] : 0);
         Assert.IsTrue(readWrites >= 3, "Should have multiple read/write usages");
+    }
+
+    #endregion
+
+    #region Scope Isolation: For-Loop and Setter (RC5/RC6/RC8)
+
+    private static string CreateTempProject(params (string name, string content)[] scripts)
+    {
+        var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "gdshrapt_rename_test_" + System.IO.Path.GetRandomFileName());
+        System.IO.Directory.CreateDirectory(tempPath);
+
+        System.IO.File.WriteAllText(System.IO.Path.Combine(tempPath, "project.godot"),
+            "[gd_resource type=\"ProjectSettings\" format=3]\n\nconfig_version=5\n\n[application]\nconfig/name=\"TestProject\"\n");
+
+        foreach (var (name, content) in scripts)
+        {
+            var fileName = name.EndsWith(".gd", System.StringComparison.OrdinalIgnoreCase) ? name : name + ".gd";
+            System.IO.File.WriteAllText(System.IO.Path.Combine(tempPath, fileName), content);
+        }
+
+        return tempPath;
+    }
+
+    private static void DeleteTempProject(string path)
+    {
+        try { if (System.IO.Directory.Exists(path)) System.IO.Directory.Delete(path, true); } catch { }
+    }
+
+    [TestMethod]
+    public void Rename_VarAfterForLoop_ScopeResolutionSeparatesSymbols()
+    {
+        var script = @"extends Node
+
+func test():
+    var items = [1, 2, 3]
+    for x in items:
+        print(x)
+    var x = 99
+    print(x)
+";
+        var tempPath = CreateTempProject(("entity.gd", script));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var file = project.ScriptFiles.First();
+            var model = projectModel.GetSemanticModel(file)!;
+
+            var allX = model.FindSymbols("x");
+            Assert.IsTrue(allX.Count() >= 2,
+                "iterator x and var x should be separate symbols");
+
+            var iteratorSymbol = allX.FirstOrDefault(s => s.Kind == GDSymbolKind.Iterator);
+            var varSymbol = allX.FirstOrDefault(s => s.Kind != GDSymbolKind.Iterator);
+            Assert.IsNotNull(iteratorSymbol, "iterator x should exist");
+            Assert.IsNotNull(varSymbol, "var x should exist");
+
+            var renameService = new GDRenameService(project, projectModel);
+            var plan = renameService.PlanRename(varSymbol!, "y");
+
+            Assert.IsNotNull(plan);
+            Assert.IsTrue(plan.Success, "rename should succeed");
+            Assert.IsTrue(plan.StrictEdits.Count > 0, "should have edits");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void Rename_VarInSetter_OnlyRenamesInSameAccessor()
+    {
+        var script = @"extends Node
+
+var value: int = 0:
+    set(new_value):
+        var old_value := value
+        value = clampi(new_value, 0, 100)
+        if value < old_value:
+            print(""decreased"")
+
+var selected: int = 0:
+    set(new_value):
+        var old_value := selected
+        selected = clampi(new_value, 0, 100)
+        if selected < old_value:
+            print(""decreased"")
+";
+        var tempPath = CreateTempProject(("entity.gd", script));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var file = project.ScriptFiles.First();
+            var model = projectModel.GetSemanticModel(file)!;
+
+            var allOldValue = model.FindSymbols("old_value");
+            Assert.AreEqual(2, allOldValue.Count(),
+                "each setter should have its own old_value symbol");
+
+            var firstSymbol = allOldValue.OrderBy(s => s.PositionToken?.StartLine ?? 0).First();
+            var renameService = new GDRenameService(project, projectModel);
+            var plan = renameService.PlanRename(firstSymbol, "prev");
+
+            Assert.IsNotNull(plan);
+            Assert.IsTrue(plan.Success, "rename should succeed");
+            Assert.IsTrue(plan.StrictEdits.Count > 0, "should have edits");
+
+            // All edits should be in the first setter region (before the second setter)
+            // PositionToken.StartLine is 0-based, GDTextEdit.Line is 1-based
+            var secondSetterLine = (allOldValue
+                .OrderBy(s => s.PositionToken?.StartLine ?? 0)
+                .Last().PositionToken?.StartLine ?? 998) + 1;
+
+            Assert.IsTrue(plan.StrictEdits.All(e => e.Line < secondSetterLine),
+                "rename should only affect the first setter's old_value");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void Rename_ForLoopIterator_IncludesDeclarationLine()
+    {
+        var script = @"extends Node
+
+func test():
+    for x in range(5):
+        print(x)
+    var x = 99
+    print(x)
+";
+        var tempPath = CreateTempProject(("entity.gd", script));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var file = project.ScriptFiles.First();
+            var model = projectModel.GetSemanticModel(file)!;
+
+            var allX = model.FindSymbols("x");
+            Assert.IsTrue(allX.Count() >= 2,
+                "iterator x and var x should be separate symbols");
+
+            var iteratorSymbol = allX.FirstOrDefault(s => s.Kind == GDSymbolKind.Iterator);
+            var varSymbol = allX.FirstOrDefault(s => s.Kind != GDSymbolKind.Iterator);
+            Assert.IsNotNull(iteratorSymbol, "iterator x should exist");
+            Assert.IsNotNull(varSymbol, "var x after loop should exist");
+
+            var renameService = new GDRenameService(project, projectModel);
+            var plan = renameService.PlanRename(iteratorSymbol!, "i");
+
+            Assert.IsNotNull(plan);
+            Assert.IsTrue(plan.Success, "rename should succeed");
+            Assert.IsTrue(plan.StrictEdits.Count > 0, "should have edits");
+
+            // PositionToken.StartLine is 0-based, GDTextEdit.Line is 1-based
+            var iteratorLine = (iteratorSymbol!.PositionToken?.StartLine ?? 0) + 1;
+            Assert.IsTrue(plan.StrictEdits.Any(e => e.Line == iteratorLine),
+                "rename should include the for-loop iterator declaration");
+        }
+        finally { DeleteTempProject(tempPath); }
     }
 
     #endregion

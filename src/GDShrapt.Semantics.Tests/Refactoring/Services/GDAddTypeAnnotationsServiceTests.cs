@@ -159,4 +159,158 @@ func _ready() -> void:
             DeleteTempProject(tempPath);
         }
     }
+
+    #region Cross-service scope verification: Add Type Annotations
+
+    [TestMethod]
+    public void PlanFile_ForLoopOverScopedArray_CorrectElementType()
+    {
+        var code = @"extends Node
+
+func _ready() -> void:
+    var items: Array[String] = [""a"", ""b""]
+    for x in items:
+        print(x)
+";
+        var tempPath = CreateTempProject(("scoped_array.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            var model = new GDProjectSemanticModel(project);
+            var service = new GDAddTypeAnnotationsService();
+            var file = project.ScriptFiles.First();
+            var options = new GDTypeAnnotationOptions
+            {
+                IncludeLocals = true,
+                MinimumConfidence = GDTypeConfidence.High
+            };
+
+            var result = service.PlanFile(file, options);
+
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+
+            if (result.HasAnnotations)
+            {
+                var forLoopAnnotations = result.Annotations
+                    .Where(a => a.Target == TypeAnnotationTarget.ForLoopVariable && a.IdentifierName == "x")
+                    .ToList();
+
+                if (forLoopAnnotations.Any())
+                {
+                    forLoopAnnotations.Should().HaveCount(1);
+                    forLoopAnnotations.First().InferredType.TypeName.DisplayName.Should().Be("String",
+                        "iterator over Array[String] should infer element type String");
+                }
+            }
+        }
+        finally
+        {
+            DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void PlanFile_VarAfterForLoop_IndependentType()
+    {
+        var code = @"extends Node
+
+func _ready() -> void:
+    for x in range(5):
+        pass
+    var x = ""hello""
+    print(x)
+";
+        var tempPath = CreateTempProject(("var_after_loop.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            var model = new GDProjectSemanticModel(project);
+            var service = new GDAddTypeAnnotationsService();
+            var file = project.ScriptFiles.First();
+            var options = new GDTypeAnnotationOptions
+            {
+                IncludeLocals = true,
+                MinimumConfidence = GDTypeConfidence.High
+            };
+
+            var result = service.PlanFile(file, options);
+
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+
+            if (result.HasAnnotations)
+            {
+                var localVarAnnotations = result.Annotations
+                    .Where(a => a.Target == TypeAnnotationTarget.LocalVariable && a.IdentifierName == "x")
+                    .ToList();
+
+                if (localVarAnnotations.Any())
+                {
+                    localVarAnnotations.First().InferredType.TypeName.DisplayName.Should().Be("String",
+                        "var x after for-loop should get its own type String, not int from iterator");
+                }
+            }
+        }
+        finally
+        {
+            DeleteTempProject(tempPath);
+        }
+    }
+
+    [TestMethod]
+    public void PlanFile_VarInsideSetterBody_CorrectType()
+    {
+        var code = @"extends Node
+
+var health: int = 100:
+    set(v):
+        var old := health
+        health = v
+        if health < old:
+            print(""down"")
+";
+        var tempPath = CreateTempProject(("setter_var.gd", code));
+
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            var model = new GDProjectSemanticModel(project);
+            var service = new GDAddTypeAnnotationsService();
+            var file = project.ScriptFiles.First();
+            var options = new GDTypeAnnotationOptions
+            {
+                IncludeLocals = true,
+                MinimumConfidence = GDTypeConfidence.High
+            };
+
+            var result = service.PlanFile(file, options);
+
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+
+            if (result.HasAnnotations)
+            {
+                var setterLocalAnnotations = result.Annotations
+                    .Where(a => a.Target == TypeAnnotationTarget.LocalVariable && a.IdentifierName == "old")
+                    .ToList();
+
+                if (setterLocalAnnotations.Any())
+                {
+                    setterLocalAnnotations.Should().HaveCount(1,
+                        "setter-scoped var 'old' should appear exactly once");
+                    setterLocalAnnotations.First().InferredType.TypeName.DisplayName.Should().Be("int",
+                        "var old := health should infer type int from health");
+                }
+            }
+        }
+        finally
+        {
+            DeleteTempProject(tempPath);
+        }
+    }
+
+    #endregion
 }
