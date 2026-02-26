@@ -29,6 +29,9 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<IGDRenameHandler>(new GDRenameHandler(project, projectModel, goToDefHandler));
         registry.Register<IGDFindRefsHandler>(new GDFindRefsHandler(project, projectModel));
 
+        // Project-wide index queries
+        registry.Register<IGDListHandler>(new GDListHandler(project, projectModel));
+
         // Diagnostics and formatting
         registry.Register<IGDDiagnosticsHandler>(new GDDiagnosticsHandler(project));
         registry.Register<IGDFormatHandler>(new GDFormatHandler());

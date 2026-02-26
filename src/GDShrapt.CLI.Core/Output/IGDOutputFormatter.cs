@@ -43,6 +43,11 @@ public interface IGDOutputFormatter
     void WriteFindRefsResult(TextWriter output, GDFindRefsResultInfo result);
 
     /// <summary>
+    /// Writes a list query result to the output.
+    /// </summary>
+    void WriteListResult(TextWriter output, GDListResult result);
+
+    /// <summary>
     /// Writes a simple message.
     /// </summary>
     void WriteMessage(TextWriter output, string message);
@@ -278,4 +283,56 @@ public static class GDSeverityHelper
             _ => GDSeverity.Information
         };
     }
+}
+
+/// <summary>
+/// Kind of item returned by the list command.
+/// </summary>
+public enum GDListItemKind
+{
+    Class,
+    Signal,
+    Autoload,
+    EngineCallback,
+    Method,
+    Variable,
+    Export,
+    Node,
+    Scene,
+    Resource,
+    Enum
+}
+
+/// <summary>
+/// Sort order for list results.
+/// </summary>
+public enum GDListSortBy
+{
+    Name,
+    File
+}
+
+/// <summary>
+/// A single item in a list query result.
+/// </summary>
+public class GDListItemInfo
+{
+    public string Name { get; set; } = "";
+    public GDListItemKind Kind { get; set; }
+    public string? FilePath { get; set; }
+    public int Line { get; set; }
+    public string? OwnerScope { get; set; }
+    public string? SemanticType { get; set; }
+    public Dictionary<string, string>? Metadata { get; set; }
+}
+
+/// <summary>
+/// Result of a list query.
+/// </summary>
+public class GDListResult
+{
+    public GDListItemKind QueryKind { get; set; }
+    public List<GDListItemInfo> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public string ProjectPath { get; set; } = "";
 }

@@ -98,6 +98,8 @@ public class Program
         rootCommand.AddCommand(TypeCoverageCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
         rootCommand.AddCommand(StatsCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
 
+        rootCommand.AddCommand(ListCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));
+
         rootCommand.AddCommand(InitCommandBuilder.Build());
         rootCommand.AddCommand(ConfigCommandBuilder.Build());
         rootCommand.AddCommand(WatchCommandBuilder.Build(formatOption, verboseOption, debugOption, quietOption, logLevelOption));

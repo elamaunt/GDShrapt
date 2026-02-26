@@ -825,6 +825,45 @@ public class GDTextFormatter : IGDOutputFormatter
         return sb.ToString();
     }
 
+    public void WriteListResult(TextWriter output, GDListResult result)
+    {
+        var kindName = result.QueryKind switch
+        {
+            GDListItemKind.Class => "Classes",
+            GDListItemKind.Signal => "Signals",
+            GDListItemKind.Autoload => "Autoloads",
+            GDListItemKind.EngineCallback => "Engine Callbacks",
+            GDListItemKind.Method => "Methods",
+            GDListItemKind.Variable => "Variables",
+            GDListItemKind.Export => "Exports",
+            GDListItemKind.Node => "Nodes",
+            GDListItemKind.Scene => "Scenes",
+            GDListItemKind.Resource => "Resources",
+            GDListItemKind.Enum => "Enums",
+            _ => "Items"
+        };
+
+        output.WriteLine($"{GDAnsiColors.Bold($"{kindName} ({result.TotalCount}):")}");
+
+        foreach (var item in result.Items)
+        {
+            var type = !string.IsNullOrEmpty(item.SemanticType) ? $" : {GDAnsiColors.Cyan(item.SemanticType)}" : "";
+            var owner = !string.IsNullOrEmpty(item.OwnerScope) ? $" in {item.OwnerScope}" : "";
+            var location = !string.IsNullOrEmpty(item.FilePath) ? $"  {GDAnsiColors.Dim($"{item.FilePath}:{item.Line}")}" : "";
+
+            output.WriteLine($"  {GDAnsiColors.Bold(item.Name)}{type}{owner}{location}");
+
+            if (item.Metadata != null && item.Metadata.Count > 0)
+            {
+                var tags = string.Join(", ", item.Metadata.Select(kv => $"{kv.Key}: {kv.Value}"));
+                output.WriteLine($"    {GDAnsiColors.Dim(tags)}");
+            }
+        }
+
+        if (result.Items.Count == 0)
+            output.WriteLine($"  {GDAnsiColors.Dim("(none)")}");
+    }
+
     public void WriteMessage(TextWriter output, string message)
     {
         output.WriteLine(message);

@@ -50,6 +50,12 @@ public class GDJsonFormatter : IGDOutputFormatter
         output.WriteLine(json);
     }
 
+    public void WriteListResult(TextWriter output, GDListResult result)
+    {
+        var json = JsonSerializer.Serialize(result, s_options);
+        output.WriteLine(json);
+    }
+
     public void WriteMessage(TextWriter output, string message)
     {
         var obj = new { message };
