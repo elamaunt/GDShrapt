@@ -18,13 +18,14 @@ namespace GDShrapt.Reader
         bool _isCompleted;
         readonly int _intendation;
         readonly bool _allowAssignment;
+        readonly bool _allowNewLines;
 
         new ITokenReceiver<GDExpression> Owner { get; }
         ITokenSkipReceiver<GDExpression> OwnerWithSkip { get; }
         INewLineReceiver NewLineReceiver { get; }
         public bool IsCompleted => _isCompleted;
 
-        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner, int intendation, INewLineReceiver newLineReceiver = null, bool allowAssignment = true)
+        public GDExpressionResolver(ITokenOrSkipReceiver<GDExpression> owner, int intendation, INewLineReceiver newLineReceiver = null, bool allowAssignment = true, bool allowNewLines = false)
             : base(owner)
         {
             Owner = owner;
@@ -32,6 +33,7 @@ namespace GDShrapt.Reader
             NewLineReceiver = newLineReceiver;
             _intendation = intendation;
             _allowAssignment = allowAssignment;
+            _allowNewLines = allowNewLines;
         }
 
         internal override void HandleChar(char c, GDReadingState state)
@@ -278,7 +280,7 @@ namespace GDShrapt.Reader
                     return;
                 }
 
-                PushAndSwap(state, new GDDualOperatorExpression(_intendation, NewLineReceiver != null));
+                PushAndSwap(state, new GDDualOperatorExpression(_intendation, NewLineReceiver != null || _allowNewLines));
                 state.PassChar(c);
             }
         }
@@ -536,6 +538,11 @@ namespace GDShrapt.Reader
                     FlushSplitTokensToNewLineReceiver();
                     NewLineReceiver.HandleReceivedToken(new GDNewLine());
                 }
+            }
+            else if (_expression != null && _allowNewLines)
+            {
+                PushAndSwap(state, new GDDualOperatorExpression(_intendation, true));
+                state.PassNewLine();
             }
             else
             {

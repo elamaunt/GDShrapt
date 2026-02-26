@@ -258,7 +258,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             script.Reload();
         }
 
-        _logger.Info($"Project loaded: {_scripts.Count} scripts");
+        _logger.Debug($"Project loaded: {_scripts.Count} scripts");
 
         if (_enableFileWatcher)
         {
@@ -514,7 +514,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         // Load autoloads from project.godot
         var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
         var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
-        var autoloadsProvider = new GDAutoloadsProvider(autoloads, this);
+        var autoloadsProvider = new GDAutoloadsProvider(autoloads, this, _sceneTypesProvider);
 
         return new GDCompositeRuntimeProvider(
             godotTypesProvider,
@@ -535,7 +535,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         // Load autoloads from project.godot
         var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
         var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
-        var autoloadsProvider = new GDAutoloadsProvider(autoloads, this);
+        var autoloadsProvider = new GDAutoloadsProvider(autoloads, this, _sceneTypesProvider);
 
         return new GDTypeResolver(
             godotTypesProvider,

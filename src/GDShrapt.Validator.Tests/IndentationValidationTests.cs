@@ -268,6 +268,108 @@ class B:
 
         #endregion
 
+        #region Expression Context Tests (Lambda / Multi-line Arguments)
+
+        [TestMethod]
+        public void Indentation_LambdaInsideConnect_NoError()
+        {
+            var code = @"extends Node
+
+func _ready():
+	some_signal.connect(
+		func callback():
+			do_thing()
+	)
+";
+            var options = new GDValidationOptions { CheckIndentation = true, CheckSyntax = false, CheckScope = false, CheckCalls = false, CheckControlFlow = false };
+            var result = _validator.ValidateCode(code, options);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.UnexpectedIndent).Should().BeEmpty(
+                "lambda body indentation inside function call arguments should not trigger GD6002");
+        }
+
+        [TestMethod]
+        public void Indentation_MultiLineFunctionArguments_NoError()
+        {
+            var code = @"extends Node
+
+func _ready():
+	call_func(
+		arg1,
+		arg2,
+		arg3
+	)
+";
+            var options = new GDValidationOptions { CheckIndentation = true, CheckSyntax = false, CheckScope = false, CheckCalls = false, CheckControlFlow = false };
+            var result = _validator.ValidateCode(code, options);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.UnexpectedIndent).Should().BeEmpty(
+                "multi-line function arguments should not trigger GD6002");
+        }
+
+        [TestMethod]
+        public void Indentation_ArrayInitializer_NoError()
+        {
+            var code = @"extends Node
+
+func _ready():
+	var arr = [
+		1,
+		2,
+		3
+	]
+";
+            var options = new GDValidationOptions { CheckIndentation = true, CheckSyntax = false, CheckScope = false, CheckCalls = false, CheckControlFlow = false };
+            var result = _validator.ValidateCode(code, options);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.UnexpectedIndent).Should().BeEmpty(
+                "array initializer indentation should not trigger GD6002");
+        }
+
+        [TestMethod]
+        public void Indentation_DictionaryInitializer_NoError()
+        {
+            var code = @"extends Node
+
+func _ready():
+	var dict = {
+		""key1"": 1,
+		""key2"": 2
+	}
+";
+            var options = new GDValidationOptions { CheckIndentation = true, CheckSyntax = false, CheckScope = false, CheckCalls = false, CheckControlFlow = false };
+            var result = _validator.ValidateCode(code, options);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.UnexpectedIndent).Should().BeEmpty(
+                "dictionary initializer indentation should not trigger GD6002");
+        }
+
+        [TestMethod]
+        public void Indentation_TopLevelJump_StillReportsError()
+        {
+            // Outside expression context, a 2-level jump should still be flagged
+            var code = "func test():\n\t\tvar x = 1\n";
+            var options = new GDValidationOptions { CheckIndentation = true, CheckSyntax = false, CheckScope = false, CheckCalls = false, CheckControlFlow = false };
+            var result = _validator.ValidateCode(code, options);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.UnexpectedIndent).Should().NotBeEmpty(
+                "top-level indentation jump should still trigger GD6002");
+        }
+
+        [TestMethod]
+        public void Indentation_LambdaInFilterCall_NoError()
+        {
+            var code = @"extends Node
+
+func _ready():
+	var result = items.filter(
+		func filter_fn(item):
+			return item.is_active
+	)
+";
+            var options = new GDValidationOptions { CheckIndentation = true, CheckSyntax = false, CheckScope = false, CheckCalls = false, CheckControlFlow = false };
+            var result = _validator.ValidateCode(code, options);
+            result.Errors.Where(d => d.Code == GDDiagnosticCode.UnexpectedIndent).Should().BeEmpty(
+                "lambda inside .filter() should not trigger GD6002");
+        }
+
+        #endregion
+
         #region Diagnostic Code Format Tests
 
         [TestMethod]

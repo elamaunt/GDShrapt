@@ -105,6 +105,13 @@ public static class DeadCodeCommandBuilder
             AllowMultipleArgumentsPerToken = true
         };
 
+        var excludeOption = new Option<string[]>(
+            ["--exclude"],
+            "Glob patterns to exclude files (repeatable, e.g. addons/** .godot/**)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
         command.AddOption(fileOption);
@@ -125,6 +132,7 @@ public static class DeadCodeCommandBuilder
         command.AddOption(showDroppedByReflectionOption);
         command.AddOption(noSuppressAnnotationsOption);
         command.AddOption(suppressAnnotationOption);
+        command.AddOption(excludeOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -152,6 +160,7 @@ public static class DeadCodeCommandBuilder
             var showDroppedByReflection = context.ParseResult.GetValueForOption(showDroppedByReflectionOption);
             var noSuppressAnnotations = context.ParseResult.GetValueForOption(noSuppressAnnotationsOption);
             var suppressAnnotations = context.ParseResult.GetValueForOption(suppressAnnotationOption);
+            var exclude = context.ParseResult.GetValueForOption(excludeOption);
 
             var logLevel = context.ParseResult.GetValueForOption(logLevelOption);
             var logger = GDCliLogger.FromFlags(quiet, verbose, debug, logLevel);
@@ -175,7 +184,8 @@ public static class DeadCodeCommandBuilder
                 ShowDroppedByReflection = showDroppedByReflection,
                 Verbose = verbose || debug,
                 NoSuppressAnnotations = noSuppressAnnotations,
-                SuppressAnnotations = suppressAnnotations?.ToList() ?? new List<string>()
+                SuppressAnnotations = suppressAnnotations?.ToList() ?? new List<string>(),
+                ExcludePatterns = exclude?.ToList() ?? new List<string>()
             };
 
             var cmd = new GDDeadCodeCommand(projectPath, formatter, logger: logger, options: options);

@@ -38,8 +38,9 @@ public class GDLintCommand : GDProjectCommandBase
         int? maxIssues = null,
         GDGroupBy groupBy = GDGroupBy.File,
         GDLinterOptionsOverrides? optionsOverrides = null,
-        IGDLogger? logger = null)
-        : base(projectPath, formatter, output, config, logger)
+        IGDLogger? logger = null,
+        IReadOnlyList<string>? cliExcludePatterns = null)
+        : base(projectPath, formatter, output, config, logger, cliExcludePatterns)
     {
         _optionsOverrides = optionsOverrides;
 

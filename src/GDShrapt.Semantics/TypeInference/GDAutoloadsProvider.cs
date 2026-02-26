@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,19 +13,22 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
 {
     private readonly Dictionary<string, GDAutoloadEntry> _autoloads;
     private readonly IGDScriptProvider? _scriptProvider;
-    private readonly Dictionary<string, GDRuntimeTypeInfo> _typeCache = new();
+    private readonly GDSceneTypesProvider? _sceneTypesProvider;
+    private readonly ConcurrentDictionary<string, GDRuntimeTypeInfo> _typeCache = new();
 
     /// <summary>
     /// Creates an autoloads provider.
     /// </summary>
     /// <param name="autoloads">Autoload entries from project.godot.</param>
     /// <param name="scriptProvider">Script provider for resolving script types (optional).</param>
-    public GDAutoloadsProvider(IEnumerable<GDAutoloadEntry> autoloads, IGDScriptProvider? scriptProvider = null)
+    /// <param name="sceneTypesProvider">Scene types provider for resolving scene autoloads to their root scripts (optional).</param>
+    public GDAutoloadsProvider(IEnumerable<GDAutoloadEntry> autoloads, IGDScriptProvider? scriptProvider = null, GDSceneTypesProvider? sceneTypesProvider = null)
     {
         _autoloads = autoloads
             .Where(a => a.Enabled)
             .ToDictionary(a => a.Name, a => a);
         _scriptProvider = scriptProvider;
+        _sceneTypesProvider = sceneTypesProvider;
     }
 
     /// <summary>
@@ -125,9 +129,42 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
             }
         }
 
-        // If it's a scene, return Node type
+        // If it's a scene, try to resolve the root node's attached script
         if (autoload.IsScene)
         {
+            if (_sceneTypesProvider != null && _scriptProvider != null)
+            {
+                var rootScriptPath = _sceneTypesProvider.GetNodeScript(autoload.Path, ".");
+                if (!string.IsNullOrEmpty(rootScriptPath))
+                {
+                    var scriptInfo = _scriptProvider.GetScriptByPath(rootScriptPath)
+                        ?? _scriptProvider.Scripts.FirstOrDefault(s =>
+                            s.ResPath != null && s.ResPath.Equals(rootScriptPath, System.StringComparison.OrdinalIgnoreCase))
+                        ?? _scriptProvider.Scripts.FirstOrDefault(s =>
+                            s.FullPath != null && s.FullPath.EndsWith(
+                                rootScriptPath.Replace("res://", "").Replace('\\', '/'),
+                                System.StringComparison.OrdinalIgnoreCase));
+
+                    if (scriptInfo != null)
+                    {
+                        var baseType = scriptInfo.Class?.Extends?.Type?.BuildName() ?? "Node";
+                        var members = ExtractMembers(scriptInfo);
+
+                        return new GDRuntimeTypeInfo(autoload.Name, baseType)
+                        {
+                            Members = members
+                        };
+                    }
+                }
+
+                // Try getting the root node type from the scene
+                var rootType = _sceneTypesProvider.GetRootNodeType(autoload.Path);
+                if (!string.IsNullOrEmpty(rootType))
+                {
+                    return new GDRuntimeTypeInfo(autoload.Name, rootType);
+                }
+            }
+
             return new GDRuntimeTypeInfo(autoload.Name, "Node");
         }
 

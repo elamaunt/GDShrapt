@@ -13,12 +13,12 @@ namespace GDShrapt.Semantics;
 public class GDProjectTypesProvider : IGDRuntimeProvider
 {
     private readonly IGDScriptProvider _scriptProvider;
-    private readonly Dictionary<string, GDProjectTypeInfo> _typeCache = new();
+    private readonly ConcurrentDictionary<string, GDProjectTypeInfo> _typeCache = new();
     // Index by script path (for extends "res://path/to/script.gd" support)
-    private readonly Dictionary<string, string> _pathToTypeName = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, string> _pathToTypeName = new(StringComparer.OrdinalIgnoreCase);
     // Index preload const aliases to canonical type names
     // e.g., "const TextBubble := preload('res://text_bubble.gd')" → "TextBubble" → "text_bubble"
-    private readonly Dictionary<string, string> _preloadAliasToTypeName = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, string> _preloadAliasToTypeName = new(StringComparer.OrdinalIgnoreCase);
 
     // For lazy return type inference
     private IGDRuntimeProvider? _compositeProvider;

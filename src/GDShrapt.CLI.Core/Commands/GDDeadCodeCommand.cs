@@ -53,6 +53,17 @@ public class GDDeadCodeCommand : GDProjectCommandBase
         var projectModel = new GDProjectSemanticModel(project);
         var handler = Registry?.GetService<IGDDeadCodeHandler>() ?? new GDDeadCodeHandler(projectModel);
 
+        // Merge CLI --exclude patterns with config exclude patterns
+        var excludePatterns = config.Cli.Exclude.ToList();
+        if (_options.ExcludePatterns.Count > 0)
+        {
+            foreach (var p in _options.ExcludePatterns)
+            {
+                if (!excludePatterns.Contains(p))
+                    excludePatterns.Add(p);
+            }
+        }
+
         var options = new GDDeadCodeOptions
         {
             MaxConfidence = GDReferenceConfidence.Strict, // Base: only Strict
@@ -63,6 +74,7 @@ public class GDDeadCodeCommand : GDProjectCommandBase
             IncludePrivate = _options.IncludePrivate,
             IncludeUnreachable = _options.IncludeUnreachable,
             ExcludeTestFiles = _options.ExcludeTests,
+            ExcludePatterns = excludePatterns,
             CollectEvidence = _options.Explain,
             CollectDroppedByReflection = true,
             TreatClassNameAsPublicAPI = false, // CLI has full project visibility
@@ -307,4 +319,9 @@ public class GDDeadCodeCommandOptions
     /// Custom annotation names that suppress dead code warnings.
     /// </summary>
     public List<string> SuppressAnnotations { get; set; } = new();
+
+    /// <summary>
+    /// Glob patterns to exclude files from analysis (from --exclude CLI option).
+    /// </summary>
+    public List<string> ExcludePatterns { get; set; } = new();
 }

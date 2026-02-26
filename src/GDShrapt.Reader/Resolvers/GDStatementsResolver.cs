@@ -99,12 +99,20 @@ namespace GDShrapt.Reader
                 {
                     if (c.IsExpressionStopChar())
                     {
+                        if (_inExpressionContext || state.ExpressionContextDepth > 0)
+                        {
+                            state.PopAndPass(c);
+                            return;
+                        }
+
                         SendIntendationTokensToOwner();
                         Owner.HandleReceivedToken(new GDInvalidToken(c.ToString()));
                     }
                     else
                     {
-                        CompleteAsExpressionStatement(state);
+                        _statementResolved = true;
+                        _resolvedAsExpression = true;
+                        _resolvedStatement = CompleteAsExpressionStatement(state);
                         state.PassChar(c);
                     }
                 }

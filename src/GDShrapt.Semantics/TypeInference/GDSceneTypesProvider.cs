@@ -1,6 +1,7 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,9 +19,9 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
     private readonly string _projectPath;
     private readonly IGDFileSystem _fileSystem;
     private readonly IGDLogger _logger;
-    private readonly Dictionary<string, GDSceneInfo> _sceneCache = new();
-    private readonly Dictionary<string, GDNodeTypeInfo> _nodePathCache = new();
-    private readonly Dictionary<string, GDSceneSnapshot> _snapshots = new();
+    private readonly ConcurrentDictionary<string, GDSceneInfo> _sceneCache = new();
+    private readonly ConcurrentDictionary<string, GDNodeTypeInfo> _nodePathCache = new();
+    private readonly ConcurrentDictionary<string, GDSceneSnapshot> _snapshots = new();
     private FileSystemWatcher? _sceneWatcher;
     private System.Threading.Timer? _debounceTimer;
     private readonly object _timerLock = new();
@@ -1112,8 +1113,8 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         _logger.Debug($"Scene deleted: {e.Name}");
 
         var resourcePath = ToResourcePath(e.FullPath);
-        _snapshots.Remove(resourcePath);
-        _sceneCache.Remove(resourcePath);
+        _snapshots.TryRemove(resourcePath, out _);
+        _sceneCache.TryRemove(resourcePath, out _);
 
         SceneChanged?.Invoke(this, new GDSceneChangedEventArgs(resourcePath, e.FullPath, null));
     }
@@ -1125,8 +1126,8 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         var oldResourcePath = ToResourcePath(e.OldFullPath);
         var newResourcePath = ToResourcePath(e.FullPath);
 
-        _snapshots.Remove(oldResourcePath);
-        _sceneCache.Remove(oldResourcePath);
+        _snapshots.TryRemove(oldResourcePath, out _);
+        _sceneCache.TryRemove(oldResourcePath, out _);
 
         LoadScene(newResourcePath);
         CaptureSnapshot(newResourcePath);

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -27,8 +28,9 @@ public class GDAnalyzeCommand : GDProjectCommandBase
         GDSeverity? minSeverity = null,
         int? maxIssues = null,
         GDGroupBy groupBy = GDGroupBy.File,
-        IGDLogger? logger = null)
-        : base(projectPath, formatter, output, config, logger)
+        IGDLogger? logger = null,
+        IReadOnlyList<string>? cliExcludePatterns = null)
+        : base(projectPath, formatter, output, config, logger, cliExcludePatterns)
     {
         _minSeverity = minSeverity;
         _maxIssues = maxIssues;

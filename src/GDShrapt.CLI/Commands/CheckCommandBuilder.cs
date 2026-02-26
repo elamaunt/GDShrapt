@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
 
@@ -31,10 +33,18 @@ public static class CheckCommandBuilder
             new[] { "--fail-on" },
             "Fail threshold: error (default), warning, or hint");
 
+        var excludeOption = new Option<string[]>(
+            ["--exclude"],
+            "Glob patterns to exclude files (repeatable, e.g. addons/** .godot/**)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
         command.AddOption(silentOption);
         command.AddOption(failOnOption);
+        command.AddOption(excludeOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -60,8 +70,9 @@ public static class CheckCommandBuilder
                 }
             }
 
+            var exclude = context.ParseResult.GetValueForOption(excludeOption);
             var formatter = CommandHelpers.GetFormatter(format);
-            var cmd = new GDCheckCommand(projectPath, formatter, silent: silent, config: config);
+            var cmd = new GDCheckCommand(projectPath, formatter, silent: silent, config: config, cliExcludePatterns: exclude?.ToList());
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

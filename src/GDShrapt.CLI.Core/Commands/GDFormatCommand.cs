@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -18,6 +21,7 @@ public class GDFormatCommand : IGDCommand
     private readonly bool _dryRun;
     private readonly bool _checkOnly;
     private readonly GDFormatter _codeFormatter;
+    private readonly List<string> _excludePatterns;
 
     public string Name => "format";
     public string Description => "Format GDScript files";
@@ -29,13 +33,15 @@ public class GDFormatCommand : IGDCommand
         bool dryRun = false,
         bool checkOnly = false,
         GDFormatterOptions? formatterOptions = null,
-        GDFormatterOptionsOverrides? optionsOverrides = null)
+        GDFormatterOptionsOverrides? optionsOverrides = null,
+        IReadOnlyList<string>? excludePatterns = null)
     {
         _path = path;
         _outputFormatter = formatter;
         _output = output ?? Console.Out;
         _dryRun = dryRun;
         _checkOnly = checkOnly;
+        _excludePatterns = excludePatterns != null ? new List<string>(excludePatterns) : new List<string>();
 
         var options = formatterOptions ?? LoadFormatterOptions();
         optionsOverrides?.ApplyTo(options);
@@ -55,6 +61,13 @@ public class GDFormatCommand : IGDCommand
                 if (projectRoot != null)
                 {
                     var config = GDConfigLoader.LoadConfig(projectRoot);
+
+                    foreach (var pattern in config.Cli.Exclude)
+                    {
+                        if (!_excludePatterns.Contains(pattern))
+                            _excludePatterns.Add(pattern);
+                    }
+
                     return GDFormatterOptionsFactory.FromConfig(config);
                 }
             }
@@ -141,9 +154,26 @@ public class GDFormatCommand : IGDCommand
         return GDExitCode.Success;
     }
 
+    private bool ShouldExclude(string filePath, string basePath)
+    {
+        if (_excludePatterns.Count == 0)
+            return false;
+
+        var relativePath = Path.GetRelativePath(basePath, filePath).Replace('\\', '/');
+        foreach (var pattern in _excludePatterns)
+        {
+            if (GDGlobMatcher.Matches(relativePath, pattern.Replace('\\', '/')))
+                return true;
+        }
+        return false;
+    }
+
     private int FormatDirectory(string dirPath)
     {
-        var files = Directory.GetFiles(dirPath, "*.gd", SearchOption.AllDirectories);
+        var allFiles = Directory.GetFiles(dirPath, "*.gd", SearchOption.AllDirectories);
+        var files = _excludePatterns.Count > 0
+            ? allFiles.Where(f => !ShouldExclude(f, dirPath)).ToArray()
+            : allFiles;
 
         if (files.Length == 0)
         {

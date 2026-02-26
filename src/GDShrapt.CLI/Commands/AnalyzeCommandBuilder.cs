@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
 
@@ -37,12 +39,20 @@ public static class AnalyzeCommandBuilder
             new[] { "--group-by" },
             "Group output by: file (default), rule, or severity");
 
+        var excludeOption = new Option<string[]>(
+            ["--exclude"],
+            "Glob patterns to exclude files (repeatable, e.g. addons/** .godot/**)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+
         command.AddArgument(pathArg);
         command.AddOption(projectOption);
         command.AddOption(failOnOption);
         command.AddOption(minSeverityOption);
         command.AddOption(maxIssuesOption);
         command.AddOption(groupByOption);
+        command.AddOption(excludeOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -78,10 +88,11 @@ public static class AnalyzeCommandBuilder
                 }
             }
 
+            var exclude = context.ParseResult.GetValueForOption(excludeOption);
             var minSev = OptionParsers.ParseGDSeverity(minSeverity);
 
             var formatter = CommandHelpers.GetFormatter(format);
-            var cmd = new GDAnalyzeCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, logger: logger);
+            var cmd = new GDAnalyzeCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, logger: logger, cliExcludePatterns: exclude?.ToList());
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

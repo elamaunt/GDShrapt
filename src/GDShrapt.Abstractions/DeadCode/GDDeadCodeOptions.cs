@@ -149,6 +149,12 @@ public class GDDeadCodeOptions
     };
 
     /// <summary>
+    /// Glob patterns to exclude files from analysis (e.g., "addons/**", ".godot/**").
+    /// Merged from config and CLI --exclude option.
+    /// </summary>
+    public List<string> ExcludePatterns { get; set; } = new();
+
+    /// <summary>
     /// Collect evidence details for --explain mode.
     /// </summary>
     public bool CollectEvidence { get; set; }
@@ -195,15 +201,26 @@ public class GDDeadCodeOptions
     /// </summary>
     public bool ShouldSkipFile(string filePath)
     {
-        if (!ExcludeTestFiles)
-            return false;
-
         var normalized = filePath.Replace('\\', '/');
-        foreach (var pattern in TestPathPatterns)
+
+        if (ExcludePatterns.Count > 0)
         {
-            if (normalized.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)
-                return true;
+            foreach (var pattern in ExcludePatterns)
+            {
+                if (GDGlobMatcher.Matches(normalized, pattern.Replace('\\', '/')))
+                    return true;
+            }
         }
+
+        if (ExcludeTestFiles)
+        {
+            foreach (var pattern in TestPathPatterns)
+            {
+                if (normalized.IndexOf(pattern, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+        }
+
         return false;
     }
 
@@ -260,6 +277,7 @@ public class GDDeadCodeOptions
             AdditionalSkipMethods = AdditionalSkipMethods,
             ExcludeTestFiles = ExcludeTestFiles,
             TestPathPatterns = TestPathPatterns,
+            ExcludePatterns = ExcludePatterns,
             CollectEvidence = CollectEvidence,
             CollectDroppedByReflection = CollectDroppedByReflection,
             FrameworkMethodPrefixes = FrameworkMethodPrefixes,

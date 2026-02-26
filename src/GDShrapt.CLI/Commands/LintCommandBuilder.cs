@@ -354,9 +354,17 @@ public static class LintCommandBuilder
         var groupByOption = new Option<string?>(
             new[] { "--group-by" },
             "Group output by: file (default), rule, or severity");
+        var excludeOption = new Option<string[]>(
+            ["--exclude"],
+            "Glob patterns to exclude files (repeatable, e.g. addons/** .godot/**)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+
         command.AddOption(minSeverityOption);
         command.AddOption(maxIssuesOption);
         command.AddOption(groupByOption);
+        command.AddOption(excludeOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -648,7 +656,8 @@ public static class LintCommandBuilder
                 }
             }
 
-            var cmd = new GDLintCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, optionsOverrides: overrides, logger: logger);
+            var exclude = context.ParseResult.GetValueForOption(excludeOption);
+            var cmd = new GDLintCommand(projectPath, formatter, config: config, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, optionsOverrides: overrides, logger: logger, cliExcludePatterns: exclude?.ToList());
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

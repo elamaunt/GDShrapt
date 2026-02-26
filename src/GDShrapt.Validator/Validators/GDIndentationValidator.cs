@@ -95,6 +95,12 @@ namespace GDShrapt.Reader
             int currentLevel = CalculateIndentLevel(sequence);
             int previousLevel = _indentLevels.Peek();
 
+            // Skip level-jump validation for tokens inside expression contexts
+            // (lambda bodies, multi-line function arguments, array/dictionary initializers).
+            // Indentation inside parentheses is continuation indentation, not statement-level.
+            if (IsInsideExpressionContext(intendation))
+                return;
+
             // Check for valid indentation changes
             if (currentLevel > previousLevel)
             {
@@ -125,6 +131,26 @@ namespace GDShrapt.Reader
                         intendation);
                 }
             }
+        }
+
+        private static bool IsInsideExpressionContext(GDSyntaxToken token)
+        {
+            var node = token.Parent;
+            while (node != null)
+            {
+                if (node is GDExpressionsList ||
+                    node is GDCallExpression ||
+                    node is GDMethodExpression ||
+                    node is GDArrayInitializerExpression ||
+                    node is GDDictionaryInitializerExpression ||
+                    node is GDBracketExpression)
+                {
+                    return true;
+                }
+
+                node = node.Parent;
+            }
+            return false;
         }
 
         private int CalculateIndentLevel(string sequence)

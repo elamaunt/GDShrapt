@@ -16,7 +16,7 @@
 
         internal override GDReader ResolveNode()
         {
-            return new GDExpressionResolver(this, _intendation);
+            return new GDExpressionResolver(this, _intendation, allowNewLines: true);
         }
 
         internal override bool IsStopChar(char c)

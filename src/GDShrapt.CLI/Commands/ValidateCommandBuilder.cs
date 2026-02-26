@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
 
@@ -118,9 +120,17 @@ public static class ValidateCommandBuilder
         var groupByOption = new Option<string?>(
             new[] { "--group-by" },
             "Group output by: file (default), rule, or severity");
+        var excludeOption = new Option<string[]>(
+            ["--exclude"],
+            "Glob patterns to exclude files (repeatable, e.g. addons/** .godot/**)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+
         command.AddOption(minSeverityOption);
         command.AddOption(maxIssuesOption);
         command.AddOption(groupByOption);
+        command.AddOption(excludeOption);
 
         command.SetHandler(async (InvocationContext context) =>
         {
@@ -192,7 +202,8 @@ public static class ValidateCommandBuilder
                 }
             }
 
-            var cmd = new GDValidateCommand(projectPath, formatter, config: config, checks: validationChecks, strict: strict, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, logger: logger);
+            var exclude = context.ParseResult.GetValueForOption(excludeOption);
+            var cmd = new GDValidateCommand(projectPath, formatter, config: config, checks: validationChecks, strict: strict, minSeverity: minSev, maxIssues: maxIssues, groupBy: groupByMode, logger: logger, cliExcludePatterns: exclude?.ToList());
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

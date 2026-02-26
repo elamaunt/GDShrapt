@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,17 +20,19 @@ public class GDCheckCommand : IGDCommand
     private readonly TextWriter _output;
     private readonly bool _silent;
     private readonly GDProjectConfig? _config;
+    private readonly IReadOnlyList<string> _cliExcludePatterns;
 
     public string Name => "check";
     public string Description => "Check a GDScript project for errors (for CI/CD)";
 
-    public GDCheckCommand(string projectPath, IGDOutputFormatter formatter, TextWriter? output = null, bool silent = false, GDProjectConfig? config = null)
+    public GDCheckCommand(string projectPath, IGDOutputFormatter formatter, TextWriter? output = null, bool silent = false, GDProjectConfig? config = null, IReadOnlyList<string>? cliExcludePatterns = null)
     {
         _projectPath = projectPath;
         _formatter = formatter;
         _output = output ?? Console.Out;
         _silent = silent;
         _config = config;
+        _cliExcludePatterns = cliExcludePatterns ?? Array.Empty<string>();
     }
 
     public Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -45,6 +48,15 @@ public class GDCheckCommand : IGDCommand
             }
 
             var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
+
+            if (_cliExcludePatterns.Count > 0)
+            {
+                foreach (var pattern in _cliExcludePatterns)
+                {
+                    if (!config.Cli.Exclude.Contains(pattern))
+                        config.Cli.Exclude.Add(pattern);
+                }
+            }
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
 

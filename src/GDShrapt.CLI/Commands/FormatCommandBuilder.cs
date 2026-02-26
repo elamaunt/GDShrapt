@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using GDShrapt.CLI.Core;
 using GDShrapt.Reader;
 
@@ -153,6 +155,14 @@ public static class FormatCommandBuilder
         command.AddOption(ensureTrailingNewlineOption);
         command.AddOption(removeMultipleNewlinesOption);
 
+        var excludeOption = new Option<string[]>(
+            ["--exclude"],
+            "Glob patterns to exclude files (repeatable, e.g. addons/** .godot/**)")
+        {
+            AllowMultipleArgumentsPerToken = true
+        };
+        command.AddOption(excludeOption);
+
         command.SetHandler(async (InvocationContext context) =>
         {
             var path = context.ParseResult.GetValueForOption(projectOption)
@@ -216,7 +226,8 @@ public static class FormatCommandBuilder
             overrides.EnsureTrailingNewline = context.ParseResult.GetValueForOption(ensureTrailingNewlineOption);
             overrides.RemoveMultipleTrailingNewlines = context.ParseResult.GetValueForOption(removeMultipleNewlinesOption);
 
-            var cmd = new GDFormatCommand(path, formatter, dryRun: dryRun, checkOnly: check, optionsOverrides: overrides);
+            var exclude = context.ParseResult.GetValueForOption(excludeOption);
+            var cmd = new GDFormatCommand(path, formatter, dryRun: dryRun, checkOnly: check, optionsOverrides: overrides, excludePatterns: exclude?.ToList());
             Environment.ExitCode = await cmd.ExecuteAsync();
         });
 

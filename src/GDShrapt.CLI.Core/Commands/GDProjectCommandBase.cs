@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -19,6 +20,7 @@ public abstract class GDProjectCommandBase : IGDCommand
     protected readonly TextWriter _output;
     protected readonly GDProjectConfig? _config;
     protected readonly IGDLogger _logger;
+    protected readonly IReadOnlyList<string> _cliExcludePatterns;
 
     /// <summary>
     /// Service registry for accessing CLI.Core handlers.
@@ -34,13 +36,15 @@ public abstract class GDProjectCommandBase : IGDCommand
         IGDOutputFormatter formatter,
         TextWriter? output = null,
         GDProjectConfig? config = null,
-        IGDLogger? logger = null)
+        IGDLogger? logger = null,
+        IReadOnlyList<string>? cliExcludePatterns = null)
     {
         _projectPath = projectPath;
         _formatter = formatter;
         _output = output ?? Console.Out;
         _config = config;
         _logger = logger ?? GDNullLogger.Instance;
+        _cliExcludePatterns = cliExcludePatterns ?? Array.Empty<string>();
     }
 
     public async Task<int> ExecuteAsync(CancellationToken cancellationToken = default)
@@ -59,6 +63,16 @@ public abstract class GDProjectCommandBase : IGDCommand
             _logger.Debug($"Found project root: {projectRoot}");
 
             var config = _config ?? GDConfigLoader.LoadConfig(projectRoot);
+
+            if (_cliExcludePatterns.Count > 0)
+            {
+                foreach (var pattern in _cliExcludePatterns)
+                {
+                    if (!config.Cli.Exclude.Contains(pattern))
+                        config.Cli.Exclude.Add(pattern);
+                }
+            }
+
             var projectOptions = GetProjectOptions();
 
             GDScriptProject project;
