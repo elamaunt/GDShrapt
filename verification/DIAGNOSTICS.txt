@@ -1,24 +1,24 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-02-27 03:19:57
+Generated: 2026-02-27 18:58:19
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 875
+Total diagnostics: 878
 Scripts analyzed:  54
 
 By Severity:
   Error     :    30
   Hint      :    22
-  Info      :    35
-  Warning   :   788
+  Info      :    36
+  Warning   :   790
 
 By Source:
-  Linter              :   301
+  Linter              :   302
   SemanticValidator   :   542
-  Validator           :    32
+  Validator           :    34
 
 By Code (Top 30):
   GD7007    :  261  (Variable 'timer_node' is @onready - _ready() may not have...)
@@ -26,8 +26,8 @@ By Code (Top 30):
   GD7006    :   82  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
   GD3023    :   32  (Function 'create_game_object' returns inconsistent types:...)
+  GDL203    :   28  (Function '_process_idle' only contains 'pass')
   GD7005    :   27  (Variable 'child_sprite' is @onready - _ready() may not ha...)
-  GDL203    :   27  (Function '_process_idle' only contains 'pass')
   GD7003    :   26  (Calling method 'visit' on untyped variable 'visitor' with...)
   GDL513    :   19  (Expected 2 empty line(s) before function, found 1)
   GDL001    :   13  (Class name 'DiagnosticsTest_BestPractices' should use Pas...)
@@ -314,13 +314,14 @@ DIAGNOSTICS BY FILE
     87:6   [GDL203] Info - Function 'do_something' is empty
     98:12  [GD8005] Error - Cannot instantiate abstract class 'CannotInstantiate'
 
---- test_scripts/diagnostics/validator/call_errors.gd (5 diagnostics) ---
+--- test_scripts/diagnostics/validator/call_errors.gd (6 diagnostics) ---
 
      2:0   [GDL001] Warning - Class name 'DiagnosticsTest_CallErrors' should use PascalCase
     35:15  [GD4001] Error - '_func_two_args' requires at least 2 argument(s), got 1
     59:1   [GD4002] Warning - Method 'nonexistent_method_xyz' not found on type 'Node'
    103:1   [GD4005] Error - Signal 'typed_signal' expects 2 argument(s), got 1
    123:29  [GD4009] Warning - Signal 'typed_signal' parameter 1 expects 'int', got 'String'
+   150:5   [GDL203] Info - Function '_on_callback' only contains 'pass'
 
 --- test_scripts/diagnostics/validator/control_flow_errors.gd (7 diagnostics) ---
 
@@ -388,19 +389,21 @@ DIAGNOSTICS BY FILE
    114:5   [GDL203] Info - Function 'test_gd7020_valid_underscore' only contains 'pass'
    125:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/diagnostics/validator/type_errors.gd (11 diagnostics) ---
+--- test_scripts/diagnostics/validator/type_errors.gd (13 diagnostics) ---
 
      2:0   [GDL001] Warning - Class name 'DiagnosticsTest_TypeErrors' should use PascalCase
-     2:11  [GDL222] Warning - 'DiagnosticsTest_TypeErrors' has 27 public methods (max 20)
+     2:11  [GDL222] Warning - 'DiagnosticsTest_TypeErrors' has 29 public methods (max 20)
     33:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'float' to 'int'
     55:1   [GD3004] Warning - Type mismatch: cannot assign 'Node' to variable of type 'Sprite2D'
     79:1   [GD3006] Warning - Unknown type: 'CompletelyUnknownType'
-   103:7   [GD3009] Warning - Property 'nonexistent_property_xyz' not found on type 'Node'
-   129:11  [GD3010] Warning - Argument type mismatch for 'x' in call to '_take_int': expected 'int', got 'String'
-   156:11  [GD3013] Warning - Type 'Array' expects integer index, got 'String'
-   182:11  [GD3014] Error - Type 'int' does not support indexing
-   207:16  [GD3017] Warning - Unknown type 'NonExistentTypeXYZ' used in Array type parameter
-   231:22  [GD3018] Warning - Type 'Array' is not hashable and cannot be used as Dictionary key
+    98:1   [GD3006] Warning - Unknown type: 'FakeParent'
+    98:1   [GD3006] Warning - Unknown type: 'FakeParent.FakeChild'
+   115:7   [GD3009] Warning - Property 'nonexistent_property_xyz' not found on type 'Node'
+   141:11  [GD3010] Warning - Argument type mismatch for 'x' in call to '_take_int': expected 'int', got 'String'
+   168:11  [GD3013] Warning - Type 'Array' expects integer index, got 'String'
+   194:11  [GD3014] Error - Type 'int' does not support indexing
+   219:16  [GD3017] Warning - Unknown type 'NonExistentTypeXYZ' used in Array type parameter
+   243:22  [GD3018] Warning - Type 'Array' is not hashable and cannot be used as Dictionary key
 
 --- test_scripts/duck_typing_advanced.gd (14 diagnostics) ---
 

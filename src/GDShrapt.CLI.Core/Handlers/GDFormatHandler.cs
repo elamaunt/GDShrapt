@@ -27,7 +27,7 @@ public class GDFormatHandler : IGDFormatHandler
             return code;
 
         var formatterOptions = options != null
-            ? CreateFormatterOptions(options)
+            ? GDFormatterOptionsFactory.FromConfig(options)
             : GDFormatterOptions.Default;
 
         var formatter = new GDFormatter(formatterOptions);
@@ -42,25 +42,10 @@ public class GDFormatHandler : IGDFormatHandler
 
         var original = File.ReadAllText(filePath);
         var formatterOptions = options != null
-            ? CreateFormatterOptions(options)
+            ? GDFormatterOptionsFactory.FromConfig(options)
             : GDFormatterOptions.Default;
 
         var formatter = new GDFormatter(formatterOptions);
         return !formatter.IsFormatted(original);
-    }
-
-    private static GDFormatterOptions CreateFormatterOptions(GDFormatterConfig config)
-    {
-        var options = new GDFormatterOptions
-        {
-            IndentSize = config.IndentSize,
-            IndentStyle = config.IndentStyle == Semantics.GDIndentationStyle.Tabs ? IndentStyle.Tabs : IndentStyle.Spaces,
-            BlankLinesBetweenFunctions = config.BlankLinesBetweenFunctions,
-            SpaceAroundOperators = config.SpaceAroundOperators,
-            SpaceAfterComma = config.SpaceAfterComma,
-            SpaceAfterColon = config.SpaceAfterColon
-        };
-
-        return options;
     }
 }

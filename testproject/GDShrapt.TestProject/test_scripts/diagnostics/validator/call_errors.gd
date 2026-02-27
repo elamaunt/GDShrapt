@@ -127,3 +127,25 @@ func test_gd4009_invalid() -> void:
 func test_gd4009_suppressed() -> void:
 	# gd:ignore = GD4009
 	emit_signal("typed_signal", "wrong", 123)  # Suppressed - both args wrong type
+
+
+# =============================================================================
+# GD4006: UndefinedSignalEmit - call expression caller (false positive fix)
+# =============================================================================
+
+func _get_node_target() -> Node:
+	return self
+
+
+## VALID - emit_signal on call expression should NOT trigger GD4006
+func test_gd4006_call_expression_emit() -> void:
+	_get_node_target().emit_signal("some_signal")
+
+
+## VALID - connect on call expression should NOT trigger GD4006
+func test_gd4006_call_expression_connect() -> void:
+	_get_node_target().connect("some_signal", _on_callback)
+
+
+func _on_callback() -> void:  # 150:5-GDL203-OK
+	pass

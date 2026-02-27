@@ -16,6 +16,7 @@ public class GDLanguageServer : IGDLanguageServer
     private GDServiceRegistry? _registry;
     private GDDocumentManager? _documentManager;
     private GDDiagnosticPublisher? _diagnosticPublisher;
+    private GDProjectConfig? _config;
     private IGDJsonRpcTransport? _transport;
     private TaskCompletionSource? _shutdownTcs;
     private bool _disposed;
@@ -72,6 +73,9 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnRequest<GDDocumentSymbolParams, GDLspDocumentSymbol[]?>("textDocument/documentSymbol", HandleDocumentSymbolAsync);
         _transport.OnRequest<GDCompletionParams, GDLspCompletionList?>("textDocument/completion", HandleCompletionAsync);
         _transport.OnRequest<GDRenameParams, GDWorkspaceEdit?>("textDocument/rename", HandleRenameAsync);
+        _transport.OnRequest<GDPrepareRenameParams, GDPrepareRenameResult?>("textDocument/prepareRename", HandlePrepareRenameAsync);
+        _transport.OnRequest<GDDocumentHighlightParams, GDDocumentHighlight[]?>("textDocument/documentHighlight", HandleDocumentHighlightAsync);
+        _transport.OnRequest<GDFoldingRangeParams, GDFoldingRange[]?>("textDocument/foldingRange", HandleFoldingRangeAsync);
         _transport.OnRequest<GDDocumentFormattingParams, GDLspTextEdit[]?>("textDocument/formatting", HandleFormattingAsync);
         _transport.OnRequest<GDCodeActionParams, GDLspCodeAction[]?>("textDocument/codeAction", HandleCodeActionAsync);
         _transport.OnRequest<GDSignatureHelpParams, GDLspSignatureHelp?>("textDocument/signatureHelp", HandleSignatureHelpAsync);
@@ -98,7 +102,8 @@ public class GDLanguageServer : IGDLanguageServer
                     // Load project WITHOUT analysis - analysis will run in background after initialized
                     project = GDProjectLoader.LoadProjectWithoutAnalysis(projectRoot);
                     _documentManager = new GDDocumentManager(project);
-                    _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, project);
+                    _config = GDConfigLoader.LoadConfig(project.ProjectPath);
+                    _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, project, config: _config);
                     _project = project;
 
                     // Initialize service registry with base module
@@ -134,7 +139,9 @@ public class GDLanguageServer : IGDLanguageServer
                 DefinitionProvider = true,
                 ReferencesProvider = true,
                 DocumentSymbolProvider = true,
-                RenameProvider = true,
+                RenameProvider = new GDRenameOptions { PrepareProvider = true },
+                DocumentHighlightProvider = true,
+                FoldingRangeProvider = true,
                 DocumentFormattingProvider = true,
                 CompletionProvider = new GDCompletionOptions
                 {
@@ -278,7 +285,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task HandleDidSaveAsync(GDDidSaveTextDocumentParams @params)
     {
-        // Optionally trigger full analysis on save
+        _diagnosticPublisher?.ScheduleUpdate(@params.TextDocument.Uri);
         return Task.CompletedTask;
     }
 
@@ -288,9 +295,13 @@ public class GDLanguageServer : IGDLanguageServer
 
     private async Task HandleDidChangeConfigurationAsync(GDDidChangeConfigurationParams @params)
     {
-        // Reload configuration and refresh diagnostics
-        // The settings are in @params.Settings which can contain gdshrapt configuration
-        // For now, just refresh diagnostics for all open documents
+        // Reload configuration from .gdshrapt.json and refresh diagnostics
+        if (_project != null)
+        {
+            _config = GDConfigLoader.LoadConfig(_project.ProjectPath);
+            _diagnosticPublisher?.UpdateConfig(_config);
+        }
+
         if (_diagnosticPublisher != null && _documentManager != null)
         {
             await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
@@ -457,6 +468,46 @@ public class GDLanguageServer : IGDLanguageServer
         return handler.HandleAsync(@params, ct);
     }
 
+    private Task<GDPrepareRenameResult?> HandlePrepareRenameAsync(GDPrepareRenameParams @params, CancellationToken ct)
+    {
+        if (_registry == null)
+            return Task.FromResult<GDPrepareRenameResult?>(null);
+
+        var goToDefHandler = _registry.GetService<IGDGoToDefHandler>();
+        if (goToDefHandler == null)
+            return Task.FromResult<GDPrepareRenameResult?>(null);
+
+        var handler = new GDLspPrepareRenameHandler(goToDefHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
+    private Task<GDDocumentHighlight[]?> HandleDocumentHighlightAsync(GDDocumentHighlightParams @params, CancellationToken ct)
+    {
+        if (_registry == null)
+            return Task.FromResult<GDDocumentHighlight[]?>(null);
+
+        var goToDefHandler = _registry.GetService<IGDGoToDefHandler>();
+        var findRefsHandler = _registry.GetService<IGDFindRefsHandler>();
+        if (goToDefHandler == null || findRefsHandler == null)
+            return Task.FromResult<GDDocumentHighlight[]?>(null);
+
+        var handler = new GDDocumentHighlightHandler(findRefsHandler, goToDefHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
+    private Task<GDFoldingRange[]?> HandleFoldingRangeAsync(GDFoldingRangeParams @params, CancellationToken ct)
+    {
+        if (_registry == null)
+            return Task.FromResult<GDFoldingRange[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDFoldingRangeHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDFoldingRange[]?>(null);
+
+        var handler = new GDLspFoldingRangeHandler(coreHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
     private Task<GDLspTextEdit[]?> HandleFormattingAsync(GDDocumentFormattingParams @params, CancellationToken ct)
     {
         if (_registry == null)
@@ -466,7 +517,7 @@ public class GDLanguageServer : IGDLanguageServer
         if (coreHandler == null)
             return Task.FromResult<GDLspTextEdit[]?>(null);
 
-        var handler = new GDFormattingHandler(coreHandler);
+        var handler = new GDFormattingHandler(coreHandler, _config);
         return handler.HandleAsync(@params, ct);
     }
 

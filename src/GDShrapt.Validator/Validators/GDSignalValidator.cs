@@ -80,11 +80,15 @@ namespace GDShrapt.Reader
 
             if (signalInfo == null)
             {
-                // Signal not found - report warning (could be inherited from unknown type)
-                ReportWarning(
-                    GDDiagnosticCode.UndefinedSignalEmit,
-                    $"Signal '{signalName}' not found on type '{callerType ?? "self"}'",
-                    callExpr);
+                // Only report when caller type is known or it's a bare self call.
+                // Skip when there's a caller expression but type is unresolvable (e.g., call chain).
+                if (callerExpression == null || callerType != null)
+                {
+                    ReportWarning(
+                        GDDiagnosticCode.UndefinedSignalEmit,
+                        $"Signal '{signalName}' not found on type '{callerType ?? "self"}'",
+                        callExpr);
+                }
                 return;
             }
 
@@ -125,11 +129,15 @@ namespace GDShrapt.Reader
 
             if (signalInfo == null)
             {
-                // Signal not found - report warning (could be inherited from unknown type)
-                ReportWarning(
-                    GDDiagnosticCode.UndefinedSignalEmit,
-                    $"Signal '{signalName}' not found on type '{callerType ?? "self"}'",
-                    callExpr);
+                // Only report when caller type is known or it's a bare self call.
+                // Skip when there's a caller expression but type is unresolvable (e.g., call chain).
+                if (callerExpression == null || callerType != null)
+                {
+                    ReportWarning(
+                        GDDiagnosticCode.UndefinedSignalEmit,
+                        $"Signal '{signalName}' not found on type '{callerType ?? "self"}'",
+                        callExpr);
+                }
                 return;
             }
 

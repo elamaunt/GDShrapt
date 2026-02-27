@@ -16,7 +16,7 @@ public sealed class GDBaseModule : IGDModule
     public void Configure(IGDServiceRegistry registry, GDScriptProject project)
     {
         // Project semantic model (shared across handlers that need cross-file analysis)
-        var projectModel = new GDProjectSemanticModel(project);
+        var projectModel = project.AnalyzeAndBuildProjectModel();
         registry.Register<GDProjectSemanticModel>(projectModel);
 
         // Code intelligence (registered first — used by other handlers)
@@ -44,6 +44,9 @@ public sealed class GDBaseModule : IGDModule
 
         // TypeFlow visualization
         registry.Register<IGDTypeFlowHandler>(new GDTypeFlowHandler(project));
+
+        // Folding range
+        registry.Register<IGDFoldingRangeHandler>(new GDFoldingRangeHandler(project));
 
         // Analysis handlers — all routed through the project semantic model
         registry.Register<IGDMetricsHandler>(new GDMetricsHandler(projectModel));

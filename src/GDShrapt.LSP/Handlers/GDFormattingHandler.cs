@@ -14,18 +14,20 @@ namespace GDShrapt.LSP;
 public class GDFormattingHandler
 {
     private readonly IGDFormatHandler _handler;
+    private readonly GDProjectConfig? _config;
 
-    public GDFormattingHandler(IGDFormatHandler handler)
+    public GDFormattingHandler(IGDFormatHandler handler, GDProjectConfig? config = null)
     {
         _handler = handler;
+        _config = config;
     }
 
     public Task<GDLspTextEdit[]?> HandleAsync(GDDocumentFormattingParams @params, CancellationToken cancellationToken)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
 
-        // Convert LSP formatting options to CLI.Core format config
-        var config = ConvertOptions(@params.Options);
+        // Merge project config with LSP editor settings (LSP indent params take priority)
+        var config = MergeOptions(@params.Options);
 
         // Delegate to CLI.Core handler
         var formatted = _handler.Format(filePath, config);
@@ -50,13 +52,13 @@ public class GDFormattingHandler
         return Task.FromResult<GDLspTextEdit[]?>([edit]);
     }
 
-    private static GDFormatterConfig ConvertOptions(GDFormattingOptions lspOptions)
+    private GDFormatterConfig MergeOptions(GDFormattingOptions lspOptions)
     {
-        var config = new GDFormatterConfig
-        {
-            IndentSize = lspOptions.TabSize,
-            IndentStyle = lspOptions.InsertSpaces ? GDIndentationStyle.Spaces : GDIndentationStyle.Tabs
-        };
+        var config = _config?.Formatter ?? new GDFormatterConfig();
+
+        // LSP editor settings override project config
+        config.IndentSize = lspOptions.TabSize;
+        config.IndentStyle = lspOptions.InsertSpaces ? GDIndentationStyle.Spaces : GDIndentationStyle.Tabs;
 
         return config;
     }

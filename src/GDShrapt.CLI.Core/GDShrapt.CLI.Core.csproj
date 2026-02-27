@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GDShrapt.Abstractions\GDShrapt.Abstractions.csproj" />
     <ProjectReference Include="..\GDShrapt.Semantics\GDShrapt.Semantics.csproj" />
+    <ProjectReference Include="..\GDShrapt.Semantics.Validator\GDShrapt.Semantics.Validator.csproj" />
     <ProjectReference Include="..\GDShrapt.Formatter\GDShrapt.Formatter.csproj" />
     <ProjectReference Include="..\GDShrapt.Linter\GDShrapt.Linter.csproj" />
   </ItemGroup>

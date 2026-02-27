@@ -448,5 +448,72 @@ func _handler(a, b, c, d, e):
         }
 
         #endregion
+
+        #region Call Expression Caller Tests (GD4006 false positive fix)
+
+        [TestMethod]
+        public void EmitSignal_OnCallExpression_NoWarning()
+        {
+            // When emit_signal is called on an unresolvable call expression result,
+            // the validator should NOT report GD4006 since we can't determine the caller type.
+            var code = @"
+extends Node
+
+func get_target() -> Node:
+    return self
+
+func test():
+    get_target().emit_signal(""some_signal"")
+";
+            var result = _validator.ValidateCode(code);
+
+            result.Warnings
+                .Where(d => d.Code == GDDiagnosticCode.UndefinedSignalEmit)
+                .Should().BeEmpty("emit_signal on unresolvable call expression should not produce GD4006");
+        }
+
+        [TestMethod]
+        public void Connect_OnCallExpression_NoWarning()
+        {
+            // When connect is called on an unresolvable call expression result,
+            // the validator should NOT report GD4006.
+            var code = @"
+extends Node
+
+func get_button() -> Node:
+    return null
+
+func _ready():
+    get_button().connect(""pressed"", _on_pressed)
+
+func _on_pressed():
+    pass
+";
+            var result = _validator.ValidateCode(code);
+
+            result.Warnings
+                .Where(d => d.Code == GDDiagnosticCode.UndefinedSignalEmit)
+                .Should().BeEmpty("connect on unresolvable call expression should not produce GD4006");
+        }
+
+        [TestMethod]
+        public void EmitSignal_OnSelfWithUnknownSignal_StillReportsWarning()
+        {
+            // When emit_signal is called directly (no caller expression),
+            // we still expect the GD4006 warning for unknown signals.
+            var code = @"
+extends Node
+
+func test():
+    emit_signal(""nonexistent"")
+";
+            var result = _validator.ValidateCode(code);
+
+            result.Warnings
+                .Where(d => d.Code == GDDiagnosticCode.UndefinedSignalEmit)
+                .Should().NotBeEmpty("emit_signal with unknown signal on self should still produce GD4006");
+        }
+
+        #endregion
     }
 }

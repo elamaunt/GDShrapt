@@ -192,7 +192,7 @@ public class GDLintCommand : GDProjectCommandBase
             }
         }
 
-        result.FilesWithErrors = filesWithIssues;
+        result.FilesWithIssues = filesWithIssues;
         result.TotalErrors = totalErrors;
         result.TotalWarnings = totalWarnings;
         result.TotalHints = totalHints;

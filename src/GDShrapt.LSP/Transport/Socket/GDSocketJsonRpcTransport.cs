@@ -172,7 +172,6 @@ public class GDSocketJsonRpcTransport : IGDJsonRpcTransport
     public void OnRequest<TParams, TResult>(string method, Func<TParams, CancellationToken, Task<TResult?>> handler)
     {
         _requestHandlers[method] = new RequestHandler(
-            typeof(TParams),
             async (paramsJson, ct) =>
             {
                 var @params = paramsJson != null
@@ -185,7 +184,6 @@ public class GDSocketJsonRpcTransport : IGDJsonRpcTransport
     public void OnNotification<TParams>(string method, Func<TParams, Task> handler)
     {
         _notificationHandlers[method] = new NotificationHandler(
-            typeof(TParams),
             async (paramsJson) =>
             {
                 var @params = paramsJson != null
@@ -408,24 +406,20 @@ public class GDSocketJsonRpcTransport : IGDJsonRpcTransport
 
     private class RequestHandler
     {
-        public Type ParamsType { get; }
         public Func<JsonElement?, CancellationToken, Task<object?>> Handler { get; }
 
-        public RequestHandler(Type paramsType, Func<JsonElement?, CancellationToken, Task<object?>> handler)
+        public RequestHandler(Func<JsonElement?, CancellationToken, Task<object?>> handler)
         {
-            ParamsType = paramsType;
             Handler = handler;
         }
     }
 
     private class NotificationHandler
     {
-        public Type ParamsType { get; }
         public Func<JsonElement?, Task> Handler { get; }
 
-        public NotificationHandler(Type paramsType, Func<JsonElement?, Task> handler)
+        public NotificationHandler(Func<JsonElement?, Task> handler)
         {
-            ParamsType = paramsType;
             Handler = handler;
         }
     }

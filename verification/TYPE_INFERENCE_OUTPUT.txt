@@ -3726,6 +3726,24 @@ test_scripts/diagnostics/validator/call_errors.gd
 129:13 GDStringExpression "typed_sign..." -> String
 129:29 GDStringExpression "wrong" -> String
 129:38 GDNumberExpression 123 -> int
+136:0 Method _get_node_target -> Node
+137:1 GDReturnExpression return self -> Variant
+137:8 GDIdentifierExpression self -> DiagnosticsTest_CallErrors
+141:0 Method test_gd4006_call_expression_emit -> void
+142:1 GDCallExpression _get_node_target().emit_signal() -> Error
+142:1 GDMemberOperatorExpression _get_node_target().emit_signal -> Error
+142:1 GDCallExpression _get_node_target() -> Node
+142:1 GDIdentifierExpression _get_node_target -> Callable
+142:32 GDStringExpression "some_signa..." -> String
+146:0 Method test_gd4006_call_expression_connect -> void
+147:1 GDCallExpression _get_node_target().connect() -> Error
+147:1 GDMemberOperatorExpression _get_node_target().connect -> Error
+147:1 GDCallExpression _get_node_target() -> Node
+147:1 GDIdentifierExpression _get_node_target -> Callable
+147:28 GDStringExpression "some_signa..." -> String
+147:43 GDIdentifierExpression _on_callback -> Callable
+150:0 Method _on_callback -> void
+151:1 GDPassExpression pass -> void
 
 test_scripts/diagnostics/validator/control_flow_errors.gd
 19:0 Method test_gd5001_valid -> void
@@ -4173,175 +4191,185 @@ test_scripts/diagnostics/validator/type_errors.gd
 87:1 GDCallExpression print() -> void
 87:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
 87:7 GDIdentifierExpression y -> AnotherFakeType
-95:0 Method test_gd3009_valid -> void
-96:1 Variable node -> Node
-96:18 GDCallExpression Node.new() -> Node
-96:18 GDMemberOperatorExpression Node.new -> Variant
-96:18 GDIdentifierExpression Node -> Node
-97:1 GDCallExpression print() -> void
-97:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-97:7 GDMemberOperatorExpression node.name -> StringName
-97:7 GDIdentifierExpression node -> Node
-101:0 Method test_gd3009_invalid -> void
-102:1 Variable node -> Node
-102:18 GDCallExpression Node.new() -> Node
-102:18 GDMemberOperatorExpression Node.new -> Variant
-102:18 GDIdentifierExpression Node -> Node
-103:1 GDCallExpression print() -> void
-103:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-103:7 GDMemberOperatorExpression node.nonexistent_property_xyz -> Variant
-103:7 GDIdentifierExpression node -> Node
-107:0 Method test_gd3009_suppressed -> void
+91:0 Method test_gd3006_nested_enum_valid -> void
+92:1 Variable mode -> BaseMaterial3D.ShadingMode
+93:1 GDCallExpression print() -> void
+93:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+93:7 GDIdentifierExpression mode -> BaseMaterial3D.ShadingMode
+97:0 Method test_gd3006_nested_enum_invalid -> void
+98:1 Variable x -> FakeParent.FakeChild
+99:1 GDCallExpression print() -> void
+99:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+99:7 GDIdentifierExpression x -> FakeParent.FakeChild
+107:0 Method test_gd3009_valid -> void
 108:1 Variable node -> Node
 108:18 GDCallExpression Node.new() -> Node
 108:18 GDMemberOperatorExpression Node.new -> Variant
 108:18 GDIdentifierExpression Node -> Node
-110:1 GDCallExpression print() -> void
-110:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-110:7 GDMemberOperatorExpression node.another_fake_property -> Variant
-110:7 GDIdentifierExpression node -> Node
-118:0 Method _take_int -> void
-118:15 Parameter x -> int
-119:1 GDCallExpression print() -> void
-119:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-119:7 GDIdentifierExpression x -> int
-123:0 Method test_gd3010_valid -> void
-124:1 GDCallExpression _take_int() -> void
-124:1 GDIdentifierExpression _take_int -> Callable
-124:11 GDNumberExpression 42 -> int
-128:0 Method test_gd3010_invalid -> void
-129:1 GDCallExpression _take_int() -> void
-129:1 GDIdentifierExpression _take_int -> Callable
-129:11 GDStringExpression "not an int" -> String
-133:0 Method test_gd3010_suppressed -> void
-135:1 GDCallExpression _take_int() -> void
-135:1 GDIdentifierExpression _take_int -> Callable
-135:11 GDStringExpression "also not i..." -> String
-143:0 Method test_gd3013_valid -> void
-144:1 Variable arr -> Array
-144:18 GDArrayInitializerExpression [...] -> Array[int]
-144:19 GDNumberExpression 1 -> int
-144:22 GDNumberExpression 2 -> int
-144:25 GDNumberExpression 3 -> int
-145:1 Variable val -> Variant
-145:11 GDIndexerExpression arr[] -> Variant
-145:11 GDIdentifierExpression arr -> Array
-145:15 GDNumberExpression 0 -> int
-146:1 GDCallExpression print() -> void
-146:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-146:7 GDIdentifierExpression val -> Variant
-148:1 Variable dict -> Dictionary[String, int]
-148:37 GDDictionaryInitializerExpression {...} -> Dictionary
-148:38 GDStringExpression "key" -> String
-148:45 GDNumberExpression 42 -> int
-149:1 Variable val2 -> int
-149:12 GDIndexerExpression dict[] -> int
-149:12 GDIdentifierExpression dict -> Dictionary[String, int]
-149:17 GDStringExpression "key" -> String
-150:1 GDCallExpression print() -> void
-150:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-150:7 GDIdentifierExpression val2 -> int
-154:0 Method test_gd3013_invalid -> void
-155:1 Variable arr -> Array
-155:18 GDArrayInitializerExpression [...] -> Array[int]
-155:19 GDNumberExpression 1 -> int
-155:22 GDNumberExpression 2 -> int
-155:25 GDNumberExpression 3 -> int
-156:1 Variable val -> Variant
-156:11 GDIndexerExpression arr[] -> Variant
-156:11 GDIdentifierExpression arr -> Array
-156:15 GDStringExpression "bad_key" -> String
-157:1 GDCallExpression print() -> void
-157:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-157:7 GDIdentifierExpression val -> Variant
-161:0 Method test_gd3013_suppressed -> void
-162:1 Variable arr -> Array
-162:18 GDArrayInitializerExpression [...] -> Array[int]
-162:19 GDNumberExpression 1 -> int
-162:22 GDNumberExpression 2 -> int
-162:25 GDNumberExpression 3 -> int
-164:1 Variable val -> Variant
-164:11 GDIndexerExpression arr[] -> Variant
-164:11 GDIdentifierExpression arr -> Array
-164:15 GDStringExpression "suppressed" -> String
-165:1 GDCallExpression print() -> void
-165:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-165:7 GDIdentifierExpression val -> Variant
-173:0 Method test_gd3014_valid -> void
+109:1 GDCallExpression print() -> void
+109:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+109:7 GDMemberOperatorExpression node.name -> StringName
+109:7 GDIdentifierExpression node -> Node
+113:0 Method test_gd3009_invalid -> void
+114:1 Variable node -> Node
+114:18 GDCallExpression Node.new() -> Node
+114:18 GDMemberOperatorExpression Node.new -> Variant
+114:18 GDIdentifierExpression Node -> Node
+115:1 GDCallExpression print() -> void
+115:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+115:7 GDMemberOperatorExpression node.nonexistent_property_xyz -> Variant
+115:7 GDIdentifierExpression node -> Node
+119:0 Method test_gd3009_suppressed -> void
+120:1 Variable node -> Node
+120:18 GDCallExpression Node.new() -> Node
+120:18 GDMemberOperatorExpression Node.new -> Variant
+120:18 GDIdentifierExpression Node -> Node
+122:1 GDCallExpression print() -> void
+122:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+122:7 GDMemberOperatorExpression node.another_fake_property -> Variant
+122:7 GDIdentifierExpression node -> Node
+130:0 Method _take_int -> void
+130:15 Parameter x -> int
+131:1 GDCallExpression print() -> void
+131:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+131:7 GDIdentifierExpression x -> int
+135:0 Method test_gd3010_valid -> void
+136:1 GDCallExpression _take_int() -> void
+136:1 GDIdentifierExpression _take_int -> Callable
+136:11 GDNumberExpression 42 -> int
+140:0 Method test_gd3010_invalid -> void
+141:1 GDCallExpression _take_int() -> void
+141:1 GDIdentifierExpression _take_int -> Callable
+141:11 GDStringExpression "not an int" -> String
+145:0 Method test_gd3010_suppressed -> void
+147:1 GDCallExpression _take_int() -> void
+147:1 GDIdentifierExpression _take_int -> Callable
+147:11 GDStringExpression "also not i..." -> String
+155:0 Method test_gd3013_valid -> void
+156:1 Variable arr -> Array
+156:18 GDArrayInitializerExpression [...] -> Array[int]
+156:19 GDNumberExpression 1 -> int
+156:22 GDNumberExpression 2 -> int
+156:25 GDNumberExpression 3 -> int
+157:1 Variable val -> Variant
+157:11 GDIndexerExpression arr[] -> Variant
+157:11 GDIdentifierExpression arr -> Array
+157:15 GDNumberExpression 0 -> int
+158:1 GDCallExpression print() -> void
+158:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+158:7 GDIdentifierExpression val -> Variant
+160:1 Variable dict -> Dictionary[String, int]
+160:37 GDDictionaryInitializerExpression {...} -> Dictionary
+160:38 GDStringExpression "key" -> String
+160:45 GDNumberExpression 42 -> int
+161:1 Variable val2 -> int
+161:12 GDIndexerExpression dict[] -> int
+161:12 GDIdentifierExpression dict -> Dictionary[String, int]
+161:17 GDStringExpression "key" -> String
+162:1 GDCallExpression print() -> void
+162:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+162:7 GDIdentifierExpression val2 -> int
+166:0 Method test_gd3013_invalid -> void
+167:1 Variable arr -> Array
+167:18 GDArrayInitializerExpression [...] -> Array[int]
+167:19 GDNumberExpression 1 -> int
+167:22 GDNumberExpression 2 -> int
+167:25 GDNumberExpression 3 -> int
+168:1 Variable val -> Variant
+168:11 GDIndexerExpression arr[] -> Variant
+168:11 GDIdentifierExpression arr -> Array
+168:15 GDStringExpression "bad_key" -> String
+169:1 GDCallExpression print() -> void
+169:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+169:7 GDIdentifierExpression val -> Variant
+173:0 Method test_gd3013_suppressed -> void
 174:1 Variable arr -> Array
 174:18 GDArrayInitializerExpression [...] -> Array[int]
 174:19 GDNumberExpression 1 -> int
 174:22 GDNumberExpression 2 -> int
 174:25 GDNumberExpression 3 -> int
-175:1 Variable val -> Variant
-175:11 GDIndexerExpression arr[] -> Variant
-175:11 GDIdentifierExpression arr -> Array
-175:15 GDNumberExpression 0 -> int
-176:1 GDCallExpression print() -> void
-176:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-176:7 GDIdentifierExpression val -> Variant
-180:0 Method test_gd3014_invalid -> void
-181:1 Variable num -> int
-181:16 GDNumberExpression 42 -> int
-182:1 Variable val -> Variant
-182:11 GDIndexerExpression num[] -> Variant
-182:11 GDIdentifierExpression num -> int
-182:15 GDNumberExpression 0 -> int
-183:1 GDCallExpression print() -> void
-183:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-183:7 GDIdentifierExpression val -> Variant
-187:0 Method test_gd3014_suppressed -> void
-188:1 Variable num -> int
-188:16 GDNumberExpression 100 -> int
-190:1 Variable val -> Variant
-190:11 GDIndexerExpression num[] -> Variant
-190:11 GDIdentifierExpression num -> int
-190:15 GDNumberExpression 0 -> int
-191:1 GDCallExpression print() -> void
-191:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-191:7 GDIdentifierExpression val -> Variant
-199:0 Method test_gd3017_valid -> void
-200:1 Variable arr -> Array[int]
-200:23 GDArrayInitializerExpression [...] -> Array
-201:1 Variable dict -> Dictionary[String, Node]
-201:38 GDDictionaryInitializerExpression {...} -> Dictionary
-202:1 GDCallExpression print() -> void
-202:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-202:7 GDIdentifierExpression arr -> Array[int]
-202:12 GDIdentifierExpression dict -> Dictionary[String, Node]
-206:0 Method test_gd3017_invalid -> void
-207:1 Variable arr -> Array[NonExistentTypeXYZ]
-207:38 GDArrayInitializerExpression [...] -> Array
-208:1 GDCallExpression print() -> void
-208:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-208:7 GDIdentifierExpression arr -> Array[NonExistentTypeXYZ]
-212:0 Method test_gd3017_suppressed -> void
-214:1 Variable arr -> Array[AnotherFakeTypeABC]
-214:38 GDArrayInitializerExpression [...] -> Array
-215:1 GDCallExpression print() -> void
-215:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-215:7 GDIdentifierExpression arr -> Array[AnotherFakeTypeABC]
-223:0 Method test_gd3018_valid -> void
-224:1 Variable dict -> Dictionary[String, int]
-224:37 GDDictionaryInitializerExpression {...} -> Dictionary
-225:1 Variable dict2 -> Dictionary[int, String]
-225:38 GDDictionaryInitializerExpression {...} -> Dictionary
-226:1 GDCallExpression print() -> void
-226:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-226:7 GDIdentifierExpression dict -> Dictionary[String, int]
-226:13 GDIdentifierExpression dict2 -> Dictionary[int, String]
-230:0 Method test_gd3018_invalid -> void
-231:1 Variable dict -> Dictionary[Array, int]
-231:36 GDDictionaryInitializerExpression {...} -> Dictionary
-232:1 GDCallExpression print() -> void
-232:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-232:7 GDIdentifierExpression dict -> Dictionary[Array, int]
-236:0 Method test_gd3018_suppressed -> void
-238:1 Variable dict -> Dictionary[Dictionary, int]
-238:41 GDDictionaryInitializerExpression {...} -> Dictionary
-239:1 GDCallExpression print() -> void
-239:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
-239:7 GDIdentifierExpression dict -> Dictionary[Dictionary, int]
+176:1 Variable val -> Variant
+176:11 GDIndexerExpression arr[] -> Variant
+176:11 GDIdentifierExpression arr -> Array
+176:15 GDStringExpression "suppressed" -> String
+177:1 GDCallExpression print() -> void
+177:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+177:7 GDIdentifierExpression val -> Variant
+185:0 Method test_gd3014_valid -> void
+186:1 Variable arr -> Array
+186:18 GDArrayInitializerExpression [...] -> Array[int]
+186:19 GDNumberExpression 1 -> int
+186:22 GDNumberExpression 2 -> int
+186:25 GDNumberExpression 3 -> int
+187:1 Variable val -> Variant
+187:11 GDIndexerExpression arr[] -> Variant
+187:11 GDIdentifierExpression arr -> Array
+187:15 GDNumberExpression 0 -> int
+188:1 GDCallExpression print() -> void
+188:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+188:7 GDIdentifierExpression val -> Variant
+192:0 Method test_gd3014_invalid -> void
+193:1 Variable num -> int
+193:16 GDNumberExpression 42 -> int
+194:1 Variable val -> Variant
+194:11 GDIndexerExpression num[] -> Variant
+194:11 GDIdentifierExpression num -> int
+194:15 GDNumberExpression 0 -> int
+195:1 GDCallExpression print() -> void
+195:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+195:7 GDIdentifierExpression val -> Variant
+199:0 Method test_gd3014_suppressed -> void
+200:1 Variable num -> int
+200:16 GDNumberExpression 100 -> int
+202:1 Variable val -> Variant
+202:11 GDIndexerExpression num[] -> Variant
+202:11 GDIdentifierExpression num -> int
+202:15 GDNumberExpression 0 -> int
+203:1 GDCallExpression print() -> void
+203:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+203:7 GDIdentifierExpression val -> Variant
+211:0 Method test_gd3017_valid -> void
+212:1 Variable arr -> Array[int]
+212:23 GDArrayInitializerExpression [...] -> Array
+213:1 Variable dict -> Dictionary[String, Node]
+213:38 GDDictionaryInitializerExpression {...} -> Dictionary
+214:1 GDCallExpression print() -> void
+214:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+214:7 GDIdentifierExpression arr -> Array[int]
+214:12 GDIdentifierExpression dict -> Dictionary[String, Node]
+218:0 Method test_gd3017_invalid -> void
+219:1 Variable arr -> Array[NonExistentTypeXYZ]
+219:38 GDArrayInitializerExpression [...] -> Array
+220:1 GDCallExpression print() -> void
+220:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+220:7 GDIdentifierExpression arr -> Array[NonExistentTypeXYZ]
+224:0 Method test_gd3017_suppressed -> void
+226:1 Variable arr -> Array[AnotherFakeTypeABC]
+226:38 GDArrayInitializerExpression [...] -> Array
+227:1 GDCallExpression print() -> void
+227:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+227:7 GDIdentifierExpression arr -> Array[AnotherFakeTypeABC]
+235:0 Method test_gd3018_valid -> void
+236:1 Variable dict -> Dictionary[String, int]
+236:37 GDDictionaryInitializerExpression {...} -> Dictionary
+237:1 Variable dict2 -> Dictionary[int, String]
+237:38 GDDictionaryInitializerExpression {...} -> Dictionary
+238:1 GDCallExpression print() -> void
+238:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+238:7 GDIdentifierExpression dict -> Dictionary[String, int]
+238:13 GDIdentifierExpression dict2 -> Dictionary[int, String]
+242:0 Method test_gd3018_invalid -> void
+243:1 Variable dict -> Dictionary[Array, int]
+243:36 GDDictionaryInitializerExpression {...} -> Dictionary
+244:1 GDCallExpression print() -> void
+244:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+244:7 GDIdentifierExpression dict -> Dictionary[Array, int]
+248:0 Method test_gd3018_suppressed -> void
+250:1 Variable dict -> Dictionary[Dictionary, int]
+250:41 GDDictionaryInitializerExpression {...} -> Dictionary
+251:1 GDCallExpression print() -> void
+251:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+251:7 GDIdentifierExpression dict -> Dictionary[Dictionary, int]
 
 test_scripts/duck_caller.gd
 7:0 Variable entities -> Array
@@ -17728,4 +17756,4 @@ test_scripts/validation_edge_cases.gd
 69:1 GDReturnExpression return "hello" -> Variant
 69:8 GDStringExpression "hello" -> String
 
-# Summary: 17618 nodes in 54 files
+# Summary: 17646 nodes in 54 files

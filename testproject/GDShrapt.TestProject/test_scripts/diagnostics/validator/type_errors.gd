@@ -87,6 +87,18 @@ func test_gd3006_suppressed() -> void:
 	print(y)
 
 
+## VALID - nested enum type (should NOT trigger GD3006)
+func test_gd3006_nested_enum_valid() -> void:
+	var mode: BaseMaterial3D.ShadingMode
+	print(mode)
+
+
+## INVALID - unknown nested type (SHOULD trigger GD3006)
+func test_gd3006_nested_enum_invalid() -> void:
+	var x: FakeParent.FakeChild  # 98:1-GD3006-OK, 98:1-GD3006-OK
+	print(x)
+
+
 # =============================================================================
 # GD3009: PropertyNotFound
 # =============================================================================
@@ -100,7 +112,7 @@ func test_gd3009_valid() -> void:
 ## INVALID - SHOULD trigger GD3009
 func test_gd3009_invalid() -> void:
 	var node: Node = Node.new()
-	print(node.nonexistent_property_xyz)  # 103:7-GD3009-OK
+	print(node.nonexistent_property_xyz)  # 115:7-GD3009-OK
 
 
 ## SUPPRESSED - GD3009 suppressed
@@ -126,7 +138,7 @@ func test_gd3010_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3010
 func test_gd3010_invalid() -> void:
-	_take_int("not an int")  # 129:11-GD3010-OK
+	_take_int("not an int")  # 141:11-GD3010-OK
 
 
 ## SUPPRESSED - GD3010 suppressed
@@ -153,7 +165,7 @@ func test_gd3013_valid() -> void:
 ## INVALID - SHOULD trigger GD3013
 func test_gd3013_invalid() -> void:
 	var arr: Array = [1, 2, 3]
-	var val = arr["bad_key"]  # 156:11-GD3013-OK
+	var val = arr["bad_key"]  # 168:11-GD3013-OK
 	print(val)
 
 
@@ -178,14 +190,14 @@ func test_gd3014_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3014
 func test_gd3014_invalid() -> void:
-	var num: int = 42  # 181:10-GD7022-OK
-	var val = num[0]  # 182:11-GD3014-OK
+	var num: int = 42  # 193:10-GD7022-OK
+	var val = num[0]  # 194:11-GD3014-OK
 	print(val)
 
 
 ## SUPPRESSED - GD3014 suppressed
 func test_gd3014_suppressed() -> void:
-	var num: int = 100  # 188:10-GD7022-OK
+	var num: int = 100  # 200:10-GD7022-OK
 	# gd:ignore = GD3014
 	var val = num[0]  # Suppressed by gd:ignore above
 	print(val)
@@ -204,7 +216,7 @@ func test_gd3017_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3017
 func test_gd3017_invalid() -> void:
-	var arr: Array[NonExistentTypeXYZ] = []  # 207:16-GD3017-OK
+	var arr: Array[NonExistentTypeXYZ] = []  # 219:16-GD3017-OK
 	print(arr)
 
 
@@ -228,7 +240,7 @@ func test_gd3018_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3018
 func test_gd3018_invalid() -> void:
-	var dict: Dictionary[Array, int] = {}  # 231:22-GD3018-OK
+	var dict: Dictionary[Array, int] = {}  # 243:22-GD3018-OK
 	print(dict)
 
 

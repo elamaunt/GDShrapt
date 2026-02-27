@@ -206,7 +206,19 @@ public class GDServerCapabilities
     /// The server provides rename support.
     /// </summary>
     [JsonPropertyName("renameProvider")]
-    public bool? RenameProvider { get; set; }
+    public GDRenameOptions? RenameProvider { get; set; }
+
+    /// <summary>
+    /// The server provides document highlight support.
+    /// </summary>
+    [JsonPropertyName("documentHighlightProvider")]
+    public bool? DocumentHighlightProvider { get; set; }
+
+    /// <summary>
+    /// The server provides folding range support.
+    /// </summary>
+    [JsonPropertyName("foldingRangeProvider")]
+    public bool? FoldingRangeProvider { get; set; }
 
     /// <summary>
     /// The server provides document formatting support.

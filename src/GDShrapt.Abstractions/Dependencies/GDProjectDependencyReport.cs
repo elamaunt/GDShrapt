@@ -53,6 +53,12 @@ public class GDProjectDependencyReport
         Files.OrderByDescending(f => f.DirectDependencyCount);
 
     /// <summary>
+    /// Files ordered by combined fan-in + fan-out score.
+    /// </summary>
+    public IEnumerable<GDFileDependencyInfo> MostCoupledCombined =>
+        Files.OrderByDescending(f => f.Dependents.Count + f.DirectDependencyCount);
+
+    /// <summary>
     /// Gets dependency info for a specific file.
     /// Normalizes path separators for cross-platform compatibility.
     /// </summary>

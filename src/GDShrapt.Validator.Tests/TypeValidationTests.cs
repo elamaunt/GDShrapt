@@ -1,4 +1,6 @@
 using FluentAssertions;
+using GDShrapt.Abstractions;
+using GDShrapt.Reader.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
@@ -163,6 +165,59 @@ var e: MyEnum = MyEnum.A
 ";
             var result = _validator.ValidateCode(code);
             result.Warnings.Where(d => d.Code == GDDiagnosticCode.UnknownType).Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void NestedEnumType_KnownParentAndMember_NoWarning()
+        {
+            var code = @"
+extends Node
+
+var mode: ParentClass.InnerEnum
+";
+            var mockProvider = new MockProjectRuntimeProvider();
+            mockProvider.AddKnownType("ParentClass");
+            mockProvider.AddMember("ParentClass", "InnerEnum",
+                new GDRuntimeMemberInfo("InnerEnum", GDRuntimeMemberKind.Enum, "int"));
+
+            var options = new GDValidationOptions { RuntimeProvider = mockProvider };
+            var result = _validator.ValidateCode(code, options);
+
+            result.Warnings.Where(d =>
+                d.Code == GDDiagnosticCode.UnknownType &&
+                d.Message.Contains("ParentClass.InnerEnum"))
+                .Should().BeEmpty("nested enum type with known parent and member should not produce GD3006");
+        }
+
+        [TestMethod]
+        public void NestedEnumType_UnknownParent_ReportsWarning()
+        {
+            var code = @"
+extends Node
+
+var mode: FakeClass.FakeEnum
+";
+            var result = _validator.ValidateCode(code);
+
+            result.Warnings.Where(d =>
+                d.Code == GDDiagnosticCode.UnknownType)
+                .Should().NotBeEmpty("nested type with unknown parent should report GD3006");
+        }
+
+        [TestMethod]
+        public void NestedEnumType_KnownParentUnknownMember_ReportsWarning()
+        {
+            var code = @"
+extends Node
+
+var mode: Node.NonExistentEnum
+";
+            var result = _validator.ValidateCode(code);
+
+            result.Warnings.Where(d =>
+                d.Code == GDDiagnosticCode.UnknownType &&
+                d.Message.Contains("Node.NonExistentEnum"))
+                .Should().NotBeEmpty("nested type with known parent but unknown member should report GD3006");
         }
 
         #endregion

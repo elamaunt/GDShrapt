@@ -18,7 +18,7 @@ public class GDTextFormatter : IGDOutputFormatter
     {
         output.WriteLine($"Analysis of: {result.ProjectPath}");
         output.WriteLine($"Total files: {result.TotalFiles}");
-        output.WriteLine($"Files with errors: {result.FilesWithErrors}");
+        output.WriteLine($"Files with issues: {result.FilesWithIssues}");
         output.WriteLine($"Total errors: {result.TotalErrors}");
         output.WriteLine($"Total warnings: {result.TotalWarnings}");
         output.WriteLine($"Total hints: {result.TotalHints}");

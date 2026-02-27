@@ -158,6 +158,16 @@ public class GDGenericTypeValidator : GDValidationVisitor
         if (_runtimeProvider.GetGlobalClass(baseType) != null)
             return true;
 
+        // Check nested types (e.g., BaseMaterial3D.ShadingMode)
+        var dotIndex = baseType.IndexOf('.');
+        if (dotIndex > 0 && dotIndex < baseType.Length - 1)
+        {
+            var parentType = baseType.Substring(0, dotIndex);
+            var memberName = baseType.Substring(dotIndex + 1);
+            if (_runtimeProvider.GetMember(parentType, memberName) != null)
+                return true;
+        }
+
         // Variant is always valid
         if (baseType == "Variant")
             return true;

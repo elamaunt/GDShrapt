@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
+using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
@@ -155,7 +156,7 @@ public class GDWatchCommand : GDProjectCommandBase
             TotalFiles = project.ScriptFiles.Count()
         };
 
-        var filesWithErrors = 0;
+        var filesWithIssues = 0;
         var totalErrors = 0;
         var totalWarnings = 0;
         var totalHints = 0;
@@ -174,7 +175,7 @@ public class GDWatchCommand : GDProjectCommandBase
 
             try
             {
-                var diagnosticsResult = diagnosticsService.Diagnose(script);
+                var diagnosticsResult = GDDiagnosticsHandler.DiagnoseWithSemantics(script, diagnosticsService, config: config);
 
                 foreach (var diagnostic in diagnosticsResult.Diagnostics)
                 {
@@ -212,12 +213,12 @@ public class GDWatchCommand : GDProjectCommandBase
 
             if (fileDiags.Diagnostics.Count > 0)
             {
-                filesWithErrors++;
+                filesWithIssues++;
                 result.Files.Add(fileDiags);
             }
         }
 
-        result.FilesWithErrors = filesWithErrors;
+        result.FilesWithIssues = filesWithIssues;
         result.TotalErrors = totalErrors;
         result.TotalWarnings = totalWarnings;
         result.TotalHints = totalHints;

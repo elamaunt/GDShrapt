@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using GDShrapt.CLI.Core;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.LSP;
@@ -18,6 +20,7 @@ public class GDDiagnosticPublisher : IAsyncDisposable
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _pendingUpdates = new();
     private readonly TimeSpan _debounceDelay;
     private GDDiagnosticsService _diagnosticsService;
+    private GDProjectConfig? _config;
     private bool _disposed;
 
     /// <summary>
@@ -36,6 +39,7 @@ public class GDDiagnosticPublisher : IAsyncDisposable
         _transport = transport;
         _project = project;
         _debounceDelay = debounceDelay ?? TimeSpan.FromMilliseconds(300);
+        _config = config;
         _diagnosticsService = config != null
             ? GDDiagnosticsService.FromConfig(config)
             : new GDDiagnosticsService();
@@ -46,6 +50,7 @@ public class GDDiagnosticPublisher : IAsyncDisposable
     /// </summary>
     public void UpdateConfig(GDProjectConfig config)
     {
+        _config = config;
         _diagnosticsService = GDDiagnosticsService.FromConfig(config);
     }
 
@@ -109,8 +114,9 @@ public class GDDiagnosticPublisher : IAsyncDisposable
 
         if (script != null)
         {
-            // Use diagnostics service with both validator and linter
-            diagnostics = GDDiagnosticAdapter.FromScript(script, _diagnosticsService);
+            // Use unified pipeline: syntax + validator + linter + semantic validator
+            var result = GDDiagnosticsHandler.DiagnoseWithSemantics(script, _diagnosticsService, config: _config);
+            diagnostics = result.Diagnostics.Select(d => GDDiagnosticAdapter.FromUnifiedDiagnostic(d)).ToArray();
         }
         else
         {

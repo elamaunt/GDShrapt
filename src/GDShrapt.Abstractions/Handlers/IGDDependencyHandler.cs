@@ -17,4 +17,9 @@ public interface IGDDependencyHandler
     /// </summary>
     /// <returns>Dependency report for the project.</returns>
     GDProjectDependencyReport AnalyzeProject();
+
+    /// <summary>
+    /// Gets typed dependency edges for a specific file.
+    /// </summary>
+    GDFileDependencyEdges GetFileEdges(string filePath);
 }

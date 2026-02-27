@@ -59,6 +59,11 @@ public class GDFileDependencyInfo
     public IReadOnlyList<string> Dependencies { get; set; } = new List<string>();
 
     /// <summary>
+    /// Whether the extends target is a project class (not a built-in type).
+    /// </summary>
+    public bool ExtendsProjectClass { get; set; }
+
+    /// <summary>
     /// Whether this file is part of a circular dependency.
     /// </summary>
     public bool IsInCycle { get; set; }
@@ -72,7 +77,9 @@ public class GDFileDependencyInfo
     /// Total count of direct dependencies.
     /// </summary>
     public int DirectDependencyCount =>
-        Preloads.Count + Loads.Count + (ExtendsScript != null ? 1 : 0);
+        Preloads.Count + Loads.Count
+        + (ExtendsScript != null ? 1 : 0)
+        + (ExtendsProjectClass ? 1 : 0);
 
     public GDFileDependencyInfo()
     {

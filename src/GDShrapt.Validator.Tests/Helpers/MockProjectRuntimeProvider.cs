@@ -14,6 +14,8 @@ namespace GDShrapt.Reader.Tests.Helpers
         private readonly Dictionary<string, GDScriptTypeInfo> _scripts = new Dictionary<string, GDScriptTypeInfo>();
         private readonly Dictionary<string, GDScriptTypeInfo> _classesByName = new Dictionary<string, GDScriptTypeInfo>();
         private readonly Dictionary<string, List<GDSignalInfo>> _typeSignals = new Dictionary<string, List<GDSignalInfo>>();
+        private readonly Dictionary<(string, string), GDRuntimeMemberInfo> _members = new Dictionary<(string, string), GDRuntimeMemberInfo>();
+        private readonly HashSet<string> _knownTypes = new HashSet<string>();
         private readonly List<GDAutoloadInfo> _autoloads = new List<GDAutoloadInfo>();
         private readonly IGDRuntimeProvider _builtInProvider = GDDefaultRuntimeProvider.Instance;
 
@@ -53,6 +55,22 @@ namespace GDShrapt.Reader.Tests.Helpers
         }
 
         /// <summary>
+        /// Registers a member for a type.
+        /// </summary>
+        public void AddMember(string typeName, string memberName, GDRuntimeMemberInfo member)
+        {
+            _members[(typeName, memberName)] = member;
+        }
+
+        /// <summary>
+        /// Registers a type as known (by name only).
+        /// </summary>
+        public void AddKnownType(string typeName)
+        {
+            _knownTypes.Add(typeName);
+        }
+
+        /// <summary>
         /// Registers an autoload singleton.
         /// </summary>
         public void AddAutoload(GDAutoloadInfo autoload)
@@ -72,6 +90,9 @@ namespace GDShrapt.Reader.Tests.Helpers
             if (_builtInProvider.IsKnownType(typeName))
                 return true;
 
+            if (_knownTypes.Contains(typeName))
+                return true;
+
             return _classesByName.ContainsKey(typeName);
         }
 
@@ -82,6 +103,10 @@ namespace GDShrapt.Reader.Tests.Helpers
 
         public GDRuntimeMemberInfo GetMember(string typeName, string memberName)
         {
+            if (typeName != null && memberName != null &&
+                _members.TryGetValue((typeName, memberName), out var member))
+                return member;
+
             return _builtInProvider.GetMember(typeName, memberName);
         }
 

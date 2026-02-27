@@ -65,7 +65,7 @@ public class GDAnalysisResult
 {
     public string ProjectPath { get; set; } = string.Empty;
     public int TotalFiles { get; set; }
-    public int FilesWithErrors { get; set; }
+    public int FilesWithIssues { get; set; }
     public int TotalErrors { get; set; }
     public int TotalWarnings { get; set; }
     public int TotalHints { get; set; }

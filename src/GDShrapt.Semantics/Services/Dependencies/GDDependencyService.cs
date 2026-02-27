@@ -304,6 +304,12 @@ public class GDDependencyService
                 else
                 {
                     info.ExtendsClass = extendsTypeName;
+                    if (!string.IsNullOrEmpty(extendsTypeName) && !IsBuiltInType(extendsTypeName))
+                    {
+                        var resolved = ResolveClassName(extendsTypeName);
+                        if (!string.IsNullOrEmpty(resolved))
+                            info.ExtendsProjectClass = true;
+                    }
                 }
             }
         }

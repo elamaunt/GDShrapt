@@ -324,6 +324,26 @@ public class GDAnalyzeCommandTests
         // Should mention multiple files were analyzed
         outputText.Should().Contain("3"); // 3 scripts
     }
+
+    // === Output label tests (Fix 5) ===
+
+    [TestMethod]
+    public async Task ExecuteAsync_OutputContainsFilesWithIssues_NotErrors()
+    {
+        // Arrange - project with some diagnostics
+        _tempProjectPath = TestProjectHelper.CreateProjectWithBreakOutsideLoop();
+        var output = new StringWriter();
+        var formatter = new GDTextFormatter();
+        var command = new GDAnalyzeCommand(_tempProjectPath, formatter, output);
+
+        // Act
+        await command.ExecuteAsync();
+
+        // Assert
+        var outputText = output.ToString();
+        outputText.Should().Contain("issues", "output should use 'issues' label, not 'errors'");
+        outputText.ToLower().Should().NotContain("files with errors", "output should NOT use 'Files with errors' label");
+    }
 }
 
 public class SkipException : Exception

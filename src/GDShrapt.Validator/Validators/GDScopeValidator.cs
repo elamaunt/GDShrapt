@@ -637,6 +637,21 @@ namespace GDShrapt.Reader
             if (typeNode == null)
                 return;
 
+            // Handle nested types via AST (e.g., BaseMaterial3D.ShadingMode)
+            if (typeNode is GDSubTypeNode subTypeNode)
+            {
+                ValidateTypeAnnotation(subTypeNode.OverType, reportOn);
+                var parentName = subTypeNode.OverType?.BuildName();
+                var memberName = subTypeNode.Type?.Sequence;
+                if (!string.IsNullOrEmpty(parentName) && !string.IsNullOrEmpty(memberName)
+                    && Context.RuntimeProvider.GetMember(parentName, memberName) != null)
+                    return;
+                var fullName = typeNode.BuildName();
+                if (!string.IsNullOrEmpty(fullName))
+                    ReportWarning(GDDiagnosticCode.UnknownType, $"Unknown type: '{fullName}'", reportOn);
+                return;
+            }
+
             var typeName = typeNode.BuildName();
             if (string.IsNullOrEmpty(typeName))
                 return;

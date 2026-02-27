@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -41,27 +40,6 @@ public static class GDDiagnosticAdapter
     }
 
     /// <summary>
-    /// Converts GDShrapt script analysis to LSP diagnostics.
-    /// Uses default validation without linting.
-    /// </summary>
-    public static GDLspDiagnostic[] FromScript(GDScriptFile script)
-    {
-        // Use default diagnostics service (validator only, no linter)
-        var service = new GDDiagnosticsService();
-        return FromScript(script, service);
-    }
-
-    /// <summary>
-    /// Converts GDShrapt script analysis to LSP diagnostics using a diagnostics service.
-    /// This method uses GDDiagnosticsService which includes both validator and linter.
-    /// </summary>
-    public static GDLspDiagnostic[] FromScript(GDScriptFile script, GDDiagnosticsService service)
-    {
-        var result = service.Diagnose(script);
-        return result.Diagnostics.Select(d => FromUnifiedDiagnostic(d)).ToArray();
-    }
-
-    /// <summary>
     /// Converts a unified diagnostic to LSP diagnostic.
     /// </summary>
     public static GDLspDiagnostic FromUnifiedDiagnostic(GDUnifiedDiagnostic diagnostic)
@@ -87,36 +65,6 @@ public static class GDDiagnosticAdapter
             Code = diagnostic.Code,
             Message = diagnostic.Message
         };
-    }
-
-    /// <summary>
-    /// Converts GDShrapt validation results to LSP diagnostics.
-    /// </summary>
-    public static IEnumerable<GDLspDiagnostic> FromValidation(GDValidationResult validationResult)
-    {
-        foreach (var diagnostic in validationResult.Diagnostics)
-        {
-            var severity = diagnostic.Severity switch
-            {
-                Reader.GDDiagnosticSeverity.Error => GDLspDiagnosticSeverity.Error,
-                Reader.GDDiagnosticSeverity.Warning => GDLspDiagnosticSeverity.Warning,
-                Reader.GDDiagnosticSeverity.Hint => GDLspDiagnosticSeverity.Hint,
-                _ => GDLspDiagnosticSeverity.Information
-            };
-
-            yield return new GDLspDiagnostic
-            {
-                Range = GDLocationAdapter.ToLspRange(
-                    diagnostic.StartLine,
-                    diagnostic.StartColumn,
-                    diagnostic.EndLine,
-                    diagnostic.EndColumn),
-                Severity = severity,
-                Source = "gdshrapt",
-                Code = diagnostic.CodeString,
-                Message = diagnostic.Message
-            };
-        }
     }
 
     /// <summary>

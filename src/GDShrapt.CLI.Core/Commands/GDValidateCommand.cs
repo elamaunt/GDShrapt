@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
+using GDShrapt.Semantics.Validator;
 
 namespace GDShrapt.CLI.Core;
 
@@ -75,7 +76,7 @@ public class GDValidateCommand : GDProjectCommandBase
             TotalFiles = project.ScriptFiles.Count()
         };
 
-        var filesWithErrors = 0;
+        var filesWithIssues = 0;
         var totalErrors = 0;
         var totalWarnings = 0;
         var totalHints = 0;
@@ -117,7 +118,16 @@ public class GDValidateCommand : GDProjectCommandBase
                 FilePath = relativePath
             };
 
-            var diagnosticsResult = diagnosticsService.Diagnose(script);
+            var semanticOptions = new GDSemanticValidatorOptions
+            {
+                CheckTypes = _checks.HasFlag(GDValidationChecks.Types),
+                CheckMemberAccess = _checks.HasFlag(GDValidationChecks.MemberAccess),
+                CheckArgumentTypes = _checks.HasFlag(GDValidationChecks.Calls),
+                CheckSignalTypes = _checks.HasFlag(GDValidationChecks.Signals),
+                CheckGenericTypes = _checks.HasFlag(GDValidationChecks.Types)
+            };
+            var diagnosticsResult = GDDiagnosticsHandler.DiagnoseWithSemantics(
+                script, diagnosticsService, semanticOptions, config);
 
             foreach (var diagnostic in diagnosticsResult.Diagnostics)
             {
@@ -148,12 +158,12 @@ public class GDValidateCommand : GDProjectCommandBase
 
             if (fileDiags.Diagnostics.Count > 0)
             {
-                filesWithErrors++;
+                filesWithIssues++;
                 result.Files.Add(fileDiags);
             }
         }
 
-        result.FilesWithErrors = filesWithErrors;
+        result.FilesWithIssues = filesWithIssues;
         result.TotalErrors = totalErrors;
         result.TotalWarnings = totalWarnings;
         result.TotalHints = totalHints;
