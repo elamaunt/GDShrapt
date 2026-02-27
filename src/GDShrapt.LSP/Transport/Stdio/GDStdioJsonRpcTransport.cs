@@ -27,6 +27,11 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
     private int _requestId;
     private bool _disposed;
 
+    /// <summary>
+    /// Optional logger for sending errors to the LSP client via window/logMessage.
+    /// </summary>
+    public GDLspLogger? Logger { get; set; }
+
     public GDStdioJsonRpcTransport(IGDMessageSerializer serializer)
         : this(serializer, Console.In, Console.Out)
     {
@@ -257,8 +262,10 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
         }
         catch (Exception ex)
         {
-            // Log error
-            Console.Error.WriteLine($"Error processing message: {ex.Message}");
+            if (Logger != null)
+                _ = Logger.ErrorAsync($"Error processing message: {ex.Message}");
+            else
+                Console.Error.WriteLine($"Error processing message: {ex.Message}");
         }
     }
 

@@ -34,6 +34,11 @@ public class GDSocketJsonRpcTransport : IGDJsonRpcTransport
     private bool _disposed;
 
     /// <summary>
+    /// Optional logger for sending errors to the LSP client via window/logMessage.
+    /// </summary>
+    public GDLspLogger? Logger { get; set; }
+
+    /// <summary>
     /// Creates a new socket transport that listens on the specified port.
     /// </summary>
     /// <param name="serializer">The message serializer.</param>
@@ -302,7 +307,10 @@ public class GDSocketJsonRpcTransport : IGDJsonRpcTransport
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error processing message: {ex.Message}");
+            if (Logger != null)
+                _ = Logger.ErrorAsync($"Error processing message: {ex.Message}");
+            else
+                Console.Error.WriteLine($"Error processing message: {ex.Message}");
         }
     }
 

@@ -28,4 +28,10 @@ public interface IGDLanguageServer : IAsyncDisposable
     /// Gets whether shutdown has been requested.
     /// </summary>
     bool IsShuttingDown { get; }
+
+    /// <summary>
+    /// Attempts to send a critical error message to the client via window/showMessage.
+    /// Safe to call even before initialization — will not throw.
+    /// </summary>
+    Task TryShowErrorAsync(string message);
 }

@@ -28,7 +28,7 @@ class Program
                     }
                     break;
                 case "--version":
-                    Console.WriteLine("GDShrapt LSP Server 1.0.0");
+                    Console.WriteLine($"GDShrapt LSP Server {GDLspVersionInfo.GetVersion()}");
                     return 0;
                 case "--help":
                 case "-h":
@@ -72,6 +72,7 @@ class Program
         }
         catch (Exception ex)
         {
+            await server.TryShowErrorAsync($"Fatal error: {ex.Message}");
             Console.Error.WriteLine($"Error: {ex.Message}");
             return 1;
         }

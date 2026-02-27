@@ -36,6 +36,13 @@ public class GDInitializeParams
     /// </summary>
     [JsonPropertyName("initializationOptions")]
     public object? InitializationOptions { get; set; }
+
+    /// <summary>
+    /// The initial trace setting. If omitted trace is disabled ('off').
+    /// Values: 'off', 'messages', 'verbose'.
+    /// </summary>
+    [JsonPropertyName("trace")]
+    public string? Trace { get; set; }
 }
 
 /// <summary>
@@ -255,6 +262,12 @@ public class GDServerCapabilities
     /// </summary>
     [JsonPropertyName("workspaceSymbolProvider")]
     public bool? WorkspaceSymbolProvider { get; set; }
+
+    /// <summary>
+    /// The server provides execute command support.
+    /// </summary>
+    [JsonPropertyName("executeCommandProvider")]
+    public GDExecuteCommandOptions? ExecuteCommandProvider { get; set; }
 }
 
 /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
@@ -18,6 +19,9 @@ public class GDLanguageServer : IGDLanguageServer
     private GDDiagnosticPublisher? _diagnosticPublisher;
     private GDProjectConfig? _config;
     private IGDJsonRpcTransport? _transport;
+    private GDLspLogger? _logger;
+    private GDLspTraceLevel _traceLevel = GDLspTraceLevel.Off;
+    private string? _initializationError;
     private TaskCompletionSource? _shutdownTcs;
     private bool _disposed;
 
@@ -28,6 +32,13 @@ public class GDLanguageServer : IGDLanguageServer
     {
         _transport = transport;
         _shutdownTcs = new TaskCompletionSource();
+
+        // Create logger and wire to transport
+        _logger = new GDLspLogger(transport);
+        if (transport is GDStdioJsonRpcTransport stdioTransport)
+            stdioTransport.Logger = _logger;
+        else if (transport is GDSocketJsonRpcTransport socketTransport)
+            socketTransport.Logger = _logger;
 
         // Register handlers
         RegisterHandlers();
@@ -62,9 +73,13 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnNotification<GDDidCloseTextDocumentParams>("textDocument/didClose", HandleDidCloseAsync);
         _transport.OnNotification<GDDidSaveTextDocumentParams>("textDocument/didSave", HandleDidSaveAsync);
 
+        // Trace
+        _transport.OnNotification<GDSetTraceParams>("$/setTrace", HandleSetTraceAsync);
+
         // Workspace
         _transport.OnNotification<GDDidChangeConfigurationParams>("workspace/didChangeConfiguration", HandleDidChangeConfigurationAsync);
         _transport.OnRequest<GDWorkspaceSymbolParams, GDLspSymbolInformation[]?>("workspace/symbol", HandleWorkspaceSymbolAsync);
+        _transport.OnRequest<GDExecuteCommandParams, object?>("workspace/executeCommand", HandleExecuteCommandAsync);
 
         // Language features
         _transport.OnRequest<GDDefinitionParams, GDLspLocation?>("textDocument/definition", HandleDefinitionAsync);
@@ -86,6 +101,14 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDInitializeResult?> HandleInitializeAsync(GDInitializeParams @params, CancellationToken ct)
     {
+        // Parse trace level
+        _traceLevel = @params.Trace switch
+        {
+            "messages" => GDLspTraceLevel.Messages,
+            "verbose" => GDLspTraceLevel.Verbose,
+            _ => GDLspTraceLevel.Off
+        };
+
         // Determine project root
         var rootPath = @params.RootUri != null
             ? GDDocumentManager.UriToPath(@params.RootUri)
@@ -114,9 +137,9 @@ public class GDLanguageServer : IGDLanguageServer
                     project = null; // Successfully transferred ownership
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Failed to load project, will work without project context
+                _initializationError = $"Failed to load project: {ex.Message}";
             }
             finally
             {
@@ -158,12 +181,16 @@ public class GDLanguageServer : IGDLanguageServer
                 {
                     ResolveProvider = false
                 },
-                WorkspaceSymbolProvider = true
+                WorkspaceSymbolProvider = true,
+                ExecuteCommandProvider = new GDExecuteCommandOptions
+                {
+                    Commands = ["gdshrapt.serverStatus"]
+                }
             },
             ServerInfo = new GDServerInfo
             {
                 Name = "GDShrapt LSP",
-                Version = "1.0.0"
+                Version = GDLspVersionInfo.GetVersion()
             }
         };
 
@@ -173,6 +200,12 @@ public class GDLanguageServer : IGDLanguageServer
     private Task HandleInitializedAsync(object? @params)
     {
         IsInitialized = true;
+
+        // Send deferred initialization error if project loading failed
+        if (_initializationError != null)
+        {
+            _ = ShowCriticalErrorAsync(_initializationError);
+        }
 
         // Subscribe to scene-triggered script reanalysis
         if (_project != null)
@@ -197,9 +230,9 @@ public class GDLanguageServer : IGDLanguageServer
                         await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Analysis failed, but server can still function with reduced capabilities
+                    _ = ShowCriticalErrorAsync($"Background analysis failed: {ex.Message}");
                 }
             });
         }
@@ -384,12 +417,46 @@ public class GDLanguageServer : IGDLanguageServer
         return Task.FromResult<GDLspSymbolInformation[]?>(results.ToArray());
     }
 
+    private Task HandleSetTraceAsync(GDSetTraceParams @params)
+    {
+        _traceLevel = @params.Value switch
+        {
+            "messages" => GDLspTraceLevel.Messages,
+            "verbose" => GDLspTraceLevel.Verbose,
+            _ => GDLspTraceLevel.Off
+        };
+        return Task.CompletedTask;
+    }
+
+    private Task<object?> HandleExecuteCommandAsync(GDExecuteCommandParams @params, CancellationToken ct)
+    {
+        return @params.Command switch
+        {
+            "gdshrapt.serverStatus" => Task.FromResult<object?>(GetServerStatus()),
+            _ => Task.FromResult<object?>(null)
+        };
+    }
+
+    private object GetServerStatus()
+    {
+        return new
+        {
+            version = GDLspVersionInfo.GetVersion(),
+            platform = RuntimeInformation.OSDescription,
+            projectPath = _project?.ProjectPath,
+            initialized = IsInitialized
+        };
+    }
+
     #endregion
 
     #region Language Feature Handlers
 
     private Task<GDLspLocation?> HandleDefinitionAsync(GDDefinitionParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/definition", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspLocation?>(null);
 
@@ -403,6 +470,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspLocation[]?> HandleReferencesAsync(GDReferencesParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/references", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspLocation[]?>(null);
 
@@ -417,6 +487,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspHover?> HandleHoverAsync(GDHoverParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/hover", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspHover?>(null);
 
@@ -430,6 +503,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspDocumentSymbol[]?> HandleDocumentSymbolAsync(GDDocumentSymbolParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/documentSymbol", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspDocumentSymbol[]?>(null);
 
@@ -443,6 +519,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspCompletionList?> HandleCompletionAsync(GDCompletionParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/completion", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspCompletionList?>(null);
 
@@ -456,6 +535,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDWorkspaceEdit?> HandleRenameAsync(GDRenameParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/rename", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} newName={@params.NewName}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDWorkspaceEdit?>(null);
 
@@ -470,6 +552,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDPrepareRenameResult?> HandlePrepareRenameAsync(GDPrepareRenameParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/prepareRename", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDPrepareRenameResult?>(null);
 
@@ -483,6 +568,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDDocumentHighlight[]?> HandleDocumentHighlightAsync(GDDocumentHighlightParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/documentHighlight", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
@@ -497,6 +585,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDFoldingRange[]?> HandleFoldingRangeAsync(GDFoldingRangeParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/foldingRange", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDFoldingRange[]?>(null);
 
@@ -510,6 +601,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspTextEdit[]?> HandleFormattingAsync(GDDocumentFormattingParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/formatting", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspTextEdit[]?>(null);
 
@@ -523,6 +617,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspCodeAction[]?> HandleCodeActionAsync(GDCodeActionParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/codeAction", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspCodeAction[]?>(null);
 
@@ -536,6 +633,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspSignatureHelp?> HandleSignatureHelpAsync(GDSignatureHelpParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/signatureHelp", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspSignatureHelp?>(null);
 
@@ -549,6 +649,9 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspInlayHint[]?> HandleInlayHintAsync(GDInlayHintParams @params, CancellationToken ct)
     {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/inlayHint", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
         if (_registry == null)
             return Task.FromResult<GDLspInlayHint[]?>(null);
 
@@ -559,6 +662,44 @@ public class GDLanguageServer : IGDLanguageServer
         var handler = new GDLspInlayHintHandler(coreHandler);
         return handler.HandleAsync(@params, ct);
     }
+
+    #endregion
+
+    #region Trace and Notifications
+
+    private Task TraceAsync(string message, string? verbose = null)
+    {
+        if (_traceLevel == GDLspTraceLevel.Off || _transport == null)
+            return Task.CompletedTask;
+
+        var @params = new GDLogTraceParams { Message = message };
+        if (_traceLevel == GDLspTraceLevel.Verbose && verbose != null)
+            @params.Verbose = verbose;
+
+        return _transport.SendNotificationAsync("$/logTrace", @params);
+    }
+
+    private async Task ShowCriticalErrorAsync(string message)
+    {
+        if (_transport == null)
+            return;
+
+        try
+        {
+            await _transport.SendNotificationAsync("window/showMessage", new GDShowMessageParams
+            {
+                Type = GDLspMessageType.Error,
+                Message = message
+            }).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Best-effort: if transport is broken, nothing we can do
+        }
+    }
+
+    /// <inheritdoc />
+    public Task TryShowErrorAsync(string message) => ShowCriticalErrorAsync(message);
 
     #endregion
 
