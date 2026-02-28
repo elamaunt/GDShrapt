@@ -49,7 +49,7 @@ func get_position_or_null(node_path):
 	# Returns Vector2|null
 	var node = get_node_or_null(node_path)
 	if node and node is Node2D:
-		return node.global_position  # 52:9-GD3009-OK
+		return node.global_position  # Type guard narrows node to Node2D; global_position is valid
 	return null
 
 

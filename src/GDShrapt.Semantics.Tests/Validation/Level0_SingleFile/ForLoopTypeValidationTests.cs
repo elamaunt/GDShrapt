@@ -239,6 +239,81 @@ func test():
 
     #endregion
 
+    #region For-Loop Downcast - Subtype Variable over Base Collection
+
+    [TestMethod]
+    public void ForLoop_SubtypeVariable_OverGetChildren_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for child: Node3D in get_children():
+        child.get_position()
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var forLoopDiagnostics = FilterTypeDiagnostics(diagnostics)
+            .Where(d => d.Message.Contains("for-loop"))
+            .ToList();
+        Assert.AreEqual(0, forLoopDiagnostics.Count,
+            $"Downcast from Node to Node3D in for-loop should be allowed. Found: {FormatDiagnostics(forLoopDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ForLoop_SubtypeVariable_MethodAccessWorks()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for child: Control in get_children():
+        child.set_size(Vector2.ZERO)
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var memberDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound ||
+            d.Code == GDDiagnosticCode.PropertyNotFound).ToList();
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Methods on downcast for-loop variable should resolve. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ForLoop_SubtypeVariable_PropertyAccessWorks()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for child: Node3D in get_children():
+        var pos = child.position
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var memberDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.PropertyNotFound).ToList();
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Properties on downcast for-loop variable should resolve. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ForLoop_IncompatibleType_StillReportsMismatch()
+    {
+        var code = @"
+extends Node
+
+func test():
+    for child: int in get_children():
+        pass
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var forLoopDiagnostics = FilterTypeDiagnostics(diagnostics)
+            .Where(d => d.Message.Contains("for-loop"))
+            .ToList();
+        Assert.IsTrue(forLoopDiagnostics.Count > 0,
+            "int variable over Array[Node] (get_children) should still report mismatch");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
@@ -254,6 +329,36 @@ func test():
         scriptFile.Reload(code);
 
         var runtimeProvider = GDDefaultRuntimeProvider.Instance;
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
+
+        var options = new GDSemanticValidatorOptions
+        {
+            CheckTypes = true,
+            CheckMemberAccess = true,
+            CheckArgumentTypes = true
+        };
+        var validator = new GDSemanticValidator(semanticModel, options);
+        var result = validator.Validate(classDecl);
+
+        return result.Diagnostics;
+    }
+
+    private static IEnumerable<GDDiagnostic> ValidateCodeWithGodotTypes(string code)
+    {
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+
+        if (classDecl == null)
+            return Enumerable.Empty<GDDiagnostic>();
+
+        var reference = new GDScriptReference("test://virtual/test_script.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(code);
+
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null, null, null);
         scriptFile.Analyze(runtimeProvider);
         var semanticModel = scriptFile.SemanticModel!;
 

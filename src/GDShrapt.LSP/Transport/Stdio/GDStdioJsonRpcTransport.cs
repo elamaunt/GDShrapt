@@ -110,12 +110,14 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
         return WriteMessageAsync(notification);
     }
 
+    private static readonly JsonElement _jsonNull = JsonDocument.Parse("null").RootElement.Clone();
+
     public Task SendResponseAsync(object? id, object? result)
     {
         var response = new GDJsonRpcResponse
         {
             Id = id,
-            Result = result
+            Result = result ?? _jsonNull
         };
 
         return WriteMessageAsync(response);

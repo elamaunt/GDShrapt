@@ -759,6 +759,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         => _onreadyService.IsOnreadyOrReadyInitializedVariable(variableName);
 
     /// <summary>
+    /// Checks if a variable is initialized in _init() constructor.
+    /// </summary>
+    public bool IsInitInitializedVariable(string variableName)
+        => _onreadyService.IsInitInitializedVariable(variableName);
+
+    /// <summary>
+    /// Checks if a variable has conditional initialization in _init().
+    /// </summary>
+    public bool HasConditionalInitInitialization(string variableName)
+        => _onreadyService.HasConditionalInitInitialization(variableName);
+
+    /// <summary>
     /// Gets all @onready variable names in the current class.
     /// </summary>
     internal IEnumerable<string> GetOnreadyVariables()
@@ -2033,6 +2045,28 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     string? IGDMemberAccessAnalyzer.GetExpressionType(object expression)
     {
+        if (expression is GDExpression expr)
+            return GetExpressionType(expr);
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the effective type of an expression considering type narrowing.
+    /// For identifier expressions inside type guard blocks, returns the narrowed type.
+    /// </summary>
+    string? IGDMemberAccessAnalyzer.GetEffectiveExpressionType(object expression, object atLocation)
+    {
+        if (expression is GDIdentifierExpression identExpr && atLocation is GDNode location)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var narrowedType = GetNarrowedType(varName, location);
+                if (!string.IsNullOrEmpty(narrowedType))
+                    return narrowedType;
+            }
+        }
+
         if (expression is GDExpression expr)
             return GetExpressionType(expr);
         return null;

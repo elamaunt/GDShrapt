@@ -1,23 +1,14 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-02-27 18:59:24
+Generated: 2026-02-28 19:07:18
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           1034
-Verified (OK):   1030
+Total:           1019
+Verified (OK):   1019
 Unverified:      0
 False Positives: 0
-Skipped:         4
+Skipped:         0
 Orphaned Markers:0
-
-================================================================================
-SKIPPED (NEEDS ANALYSIS)
-================================================================================
-
-  test_scripts/method_chains.gd:75:2 [GD3007]
-  test_scripts/method_chains.gd:79:2 [GD3007]
-  test_scripts/method_chains.gd:83:2 [GD3007]
-  test_scripts/validation_edge_cases.gd:39:2 [GD3007]
 

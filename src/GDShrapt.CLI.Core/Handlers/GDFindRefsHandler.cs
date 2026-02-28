@@ -130,8 +130,8 @@ public class GDFindRefsHandler : IGDFindRefsHandler
             var locations = new List<GDCliReferenceLocation>();
             foreach (var sref in fileGroup)
             {
-                var line1 = sref.Line + 1; // Convert 0-based to 1-based
-                var col = sref.IsContractString ? sref.Column + 1 : sref.Column;
+                var line1 = sref.Line + 1;   // Convert 0-based to 1-based
+                var col1 = sref.Column + 1;  // Convert 0-based to 1-based
 
                 int? endCol = null;
                 if (sref.IdentifierToken != null)
@@ -141,7 +141,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 {
                     FilePath = sref.FilePath!,
                     Line = line1,
-                    Column = col,
+                    Column = col1,
                     EndColumn = endCol,
                     IsDeclaration = sref.Kind == GDSymbolReferenceKind.Declaration,
                     IsOverride = sref.IsOverride,
@@ -167,7 +167,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
             if (declRef != null)
             {
                 declLine = declRef.Line + 1;
-                declColumn = declRef.Column;
+                declColumn = declRef.Column + 1;
             }
 
             rawGroups.Add(new RawGroup

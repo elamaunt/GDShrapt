@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using GDShrapt.Abstractions;
 using GDShrapt.CLI.Core;
 
 namespace GDShrapt.LSP;
@@ -41,17 +42,23 @@ public class GDDocumentHighlightHandler
             if (!reference.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            // Only Strict confidence (null = declaration-based, Strict = type-resolved)
+            if (reference.Confidence != null && reference.Confidence != GDReferenceConfidence.Strict)
+                continue;
+
             var kind = reference.IsWrite || reference.IsDeclaration
                 ? GDDocumentHighlightKind.Write
                 : GDDocumentHighlightKind.Read;
 
+            // GDCliReferenceLocation uses 1-based column, convert to 0-based
+            var col0 = reference.Column - 1;
             highlights.Add(new GDDocumentHighlight
             {
                 Range = GDLocationAdapter.ToLspRange(
                     reference.Line,
-                    reference.Column,
+                    col0,
                     reference.Line,
-                    reference.Column + symbolName.Length),
+                    col0 + symbolName.Length),
                 Kind = kind
             });
         }

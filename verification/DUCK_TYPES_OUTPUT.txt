@@ -818,7 +818,7 @@ test_scripts/diagnostics/validator/type_annotation_errors.gd
 
 
 test_scripts/diagnostics/validator/type_errors.gd
-  130:15 Parameter x in _take_int
+  136:15 Parameter x in _take_int
     inferred-type: int
     confidence: Certain
     reason: explicit type annotation

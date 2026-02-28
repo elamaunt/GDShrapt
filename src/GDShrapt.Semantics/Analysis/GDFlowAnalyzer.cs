@@ -319,8 +319,11 @@ internal class GDFlowAnalyzer : GDVisitor
         }
         else if (branchStates.Count == 1)
         {
-            // Single branch (if without else) - merge with parent (else path = parent)
-            _currentState = GDFlowState.MergeBranches(branchStates[0], parentState, parentState);
+            // Single branch (if without else) — pass null for else branch so that
+            // variables only narrowed in the parent (not modified in the if) are
+            // preserved via parentType.Clone() instead of going through MergeVariableTypes
+            // which strips IsNarrowed.
+            _currentState = GDFlowState.MergeBranches(branchStates[0], null, parentState);
         }
         else
         {
@@ -380,12 +383,24 @@ internal class GDFlowAnalyzer : GDVisitor
             IterationCount = 0
         };
 
-        // Declare iterator variable with inferred type from collection
+        // Declare iterator variable with type from annotation or inferred from collection
         var iteratorName = forStmt.Variable?.Sequence;
         if (!string.IsNullOrEmpty(iteratorName))
         {
-            var collectionType = _typeEngine?.InferSemanticType(forStmt.Collection)?.DisplayName;
-            var elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType);
+            // Prefer explicit type annotation (e.g., `for p: TacticsPawn in get_children()`)
+            var declaredType = forStmt.VariableType?.BuildName();
+            string? elementType;
+
+            if (!string.IsNullOrEmpty(declaredType))
+            {
+                elementType = declaredType;
+            }
+            else
+            {
+                var collectionType = _typeEngine?.InferSemanticType(forStmt.Collection)?.DisplayName;
+                elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType);
+            }
+
             context.IteratorName = iteratorName;
             context.IteratorType = elementType;
         }

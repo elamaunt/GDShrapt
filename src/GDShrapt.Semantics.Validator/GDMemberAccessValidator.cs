@@ -94,7 +94,7 @@ public class GDMemberAccessValidator : GDValidationVisitor
             return;
 
         var confidence = _analyzer.GetMemberAccessConfidence(memberAccess);
-        var callerType = _analyzer.GetExpressionType(callerExpr);
+        var callerType = _analyzer.GetEffectiveExpressionType(callerExpr, memberAccess);
 
         switch (confidence)
         {
@@ -143,7 +143,7 @@ public class GDMemberAccessValidator : GDValidationVisitor
             return;
 
         var confidence = _analyzer.GetMemberAccessConfidence(memberExpr);
-        var callerType = _analyzer.GetExpressionType(callerExpr);
+        var callerType = _analyzer.GetEffectiveExpressionType(callerExpr, memberExpr);
 
         switch (confidence)
         {
@@ -168,6 +168,10 @@ public class GDMemberAccessValidator : GDValidationVisitor
 
         // Variant can have any properties (duck typing)
         if (typeName == "Variant")
+            return;
+
+        // Dictionary supports dot access for key lookup (dict.key == dict["key"])
+        if (GDGenericTypeHelper.IsDictionaryType(typeName))
             return;
 
         // Check if this is a local enum value access (e.g., AIState.IDLE)

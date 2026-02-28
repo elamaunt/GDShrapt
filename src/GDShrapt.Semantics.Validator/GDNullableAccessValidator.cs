@@ -21,6 +21,8 @@ internal sealed class GDNullableAccessContext
     public bool IsOnreadyVariable { get; init; }
     public bool IsReadyInitializedVariable { get; init; }
     public bool HasConditionalReadyInit { get; init; }
+    public bool IsInitInitializedVariable { get; init; }
+    public bool HasConditionalInitInit { get; init; }
 }
 
 /// <summary>
@@ -198,7 +200,9 @@ public class GDNullableAccessValidator : GDValidationVisitor
             Code = code,
             IsOnreadyVariable = _semanticModel.IsOnreadyVariable(varName),
             IsReadyInitializedVariable = _semanticModel.IsReadyInitializedVariable(varName),
-            HasConditionalReadyInit = _semanticModel.HasConditionalReadyInitialization(varName)
+            HasConditionalReadyInit = _semanticModel.HasConditionalReadyInitialization(varName),
+            IsInitInitializedVariable = _semanticModel.IsInitInitializedVariable(varName),
+            HasConditionalInitInit = _semanticModel.HasConditionalInitInitialization(varName)
         };
     }
 
@@ -207,6 +211,21 @@ public class GDNullableAccessValidator : GDValidationVisitor
     /// </summary>
     private GDNullabilitySafetyResult AnalyzeNullabilitySafety(GDNullableAccessContext context)
     {
+        // Handle _init()-initialized variables — strongest guarantee, safe everywhere
+        // _init() is a constructor: must complete before any method call on the object
+        if (context.IsInitInitializedVariable)
+        {
+            if (context.HasConditionalInitInit)
+            {
+                if (!_semanticModel.IsVariablePotentiallyNull(context.VarName, context.AccessNode))
+                    return GDNullabilitySafetyResult.Safe;
+
+                return GDNullabilitySafetyResult.UnsafeConditional;
+            }
+
+            return GDNullabilitySafetyResult.Safe;
+        }
+
         // Handle @onready and _ready()-initialized variables
         if (context.IsOnreadyVariable || context.IsReadyInitializedVariable)
         {

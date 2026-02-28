@@ -511,8 +511,10 @@ namespace GDShrapt.Semantics.Validator
             if (initType == null || initType == "Unknown")
                 return;
 
-            // Check type compatibility
-            if (!AreTypesCompatibleForAssignment(initType, declaredType))
+            // Check both directions: upcast (init IS-A declared) and downcast (declared IS-A init)
+            // GDScript allows implicit downcasts: var sprite: Sprite2D = get_node("...")
+            if (!AreTypesCompatibleForAssignment(initType, declaredType) &&
+                !AreTypesCompatibleForAssignment(declaredType, initType))
             {
                 ReportWarning(
                     GDDiagnosticCode.TypeAnnotationMismatch,
@@ -540,8 +542,10 @@ namespace GDShrapt.Semantics.Validator
             if (initType == null || initType == "Unknown")
                 return;
 
-            // Check type compatibility
-            if (!AreTypesCompatibleForAssignment(initType, declaredType))
+            // Check both directions: upcast (init IS-A declared) and downcast (declared IS-A init)
+            // GDScript allows implicit downcasts: @export var res: MyResource = load("...")
+            if (!AreTypesCompatibleForAssignment(initType, declaredType) &&
+                !AreTypesCompatibleForAssignment(declaredType, initType))
             {
                 ReportWarning(
                     GDDiagnosticCode.TypeAnnotationMismatch,
@@ -594,7 +598,10 @@ namespace GDShrapt.Semantics.Validator
                 return;
             }
 
-            if (!AreTypesCompatibleForAssignment(elementType, declaredType))
+            // Check both directions: upcast (element IS-A declared) and downcast (declared IS-A element)
+            // Downcast is valid in GDScript for-loops: `for p: TacticsPawn in get_children()` narrows Node to TacticsPawn
+            if (!AreTypesCompatibleForAssignment(elementType, declaredType) &&
+                !AreTypesCompatibleForAssignment(declaredType, elementType))
             {
                 ReportWarning(
                     GDDiagnosticCode.TypeAnnotationMismatch,
@@ -720,8 +727,10 @@ namespace GDShrapt.Semantics.Validator
             if (actualType == null || actualType == "Unknown")
                 return;
 
-            // Check type compatibility
-            if (!AreReturnTypesCompatible(actualType, declaredReturnType))
+            // Check both directions: upcast and downcast
+            // GDScript allows implicit downcasts in returns (e.g., return get_node() for -> Sprite2D)
+            if (!AreReturnTypesCompatible(actualType, declaredReturnType) &&
+                !AreReturnTypesCompatible(declaredReturnType, actualType))
             {
                 ReportWarning(
                     GDDiagnosticCode.IncompatibleReturnType,
@@ -1157,8 +1166,10 @@ namespace GDShrapt.Semantics.Validator
             if (IsUntypedVariable(target))
                 return;
 
-            // Use semantic model for compatibility check
-            if (_semanticModel != null && !_semanticModel.AreTypesCompatible(valueType, targetType))
+            // Use semantic model for compatibility check (bidirectional for implicit downcasts)
+            if (_semanticModel != null &&
+                !_semanticModel.AreTypesCompatible(valueType, targetType) &&
+                !_semanticModel.AreTypesCompatible(targetType, valueType))
             {
                 ReportWarning(
                     GDDiagnosticCode.TypeMismatch,

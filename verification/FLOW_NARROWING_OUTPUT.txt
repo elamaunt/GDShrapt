@@ -105,6 +105,12 @@ test_scripts/duck_typing_advanced.gd
 
   _step_parse()
     206:4 value -> String (base: Variant)
+    207:5 value -> String (base: Variant)
+    208:10 value -> String (base: Variant)
+    209:5 value -> String (base: Variant)
+    210:10 value -> String (base: Variant)
+    211:5 value -> String (base: Variant)
+    212:28 value -> String (base: Variant)
 
   _step_validate()
     217:4 value -> null (base: Variant)
@@ -149,6 +155,10 @@ test_scripts/dynamic_dispatch.gd
     177:4 data -> Array (base: Variant)
     179:14 data -> Array (base: Variant)
     182:4 data -> Dictionary (base: Variant)
+    183:5 data -> Dictionary (base: Variant)
+    184:29 data -> Dictionary (base: Variant)
+    186:13 data -> Dictionary (base: Variant)
+    187:34 data -> Dictionary (base: Variant)
 
   create_instance_by_name()
     221:4 class_ref -> PackedScene (base: Variant)
@@ -203,6 +213,7 @@ test_scripts/game_patterns.gd
 
   can_use_ability()
     302:5 condition -> Callable (base: Variant)
+    303:10 condition -> Callable (base: Variant)
 
   use_ability()
     328:4 effect_func -> Callable (base: Variant)
@@ -247,6 +258,13 @@ test_scripts/game_patterns.gd
 
   _deserialize_value()
     559:4 value -> Dictionary (base: Variant)
+    560:5 value -> Dictionary (base: Variant)
+    561:9 value -> Dictionary (base: Variant)
+    563:20 value -> Dictionary (base: Variant)
+    563:32 value -> Dictionary (base: Variant)
+    565:20 value -> Dictionary (base: Variant)
+    565:32 value -> Dictionary (base: Variant)
+    565:44 value -> Dictionary (base: Variant)
     566:27 value -> Dictionary (base: Variant)
     567:4 value -> Array (base: Variant)
     568:28 value -> Array (base: Variant)
@@ -371,6 +389,7 @@ test_scripts/signal_callback_chains.gd
     519:6 result -> Dictionary (base: Variant)
     519:31 result -> Dictionary (base: Variant)
     520:17 result -> Dictionary (base: Variant)
+    522:12 result -> Dictionary (base: Variant)
 
 test_scripts/signals_test.gd
   request_and_process()
@@ -396,6 +415,8 @@ test_scripts/type_guards.gd
   nested_type_guards()
     29:4 data -> null (base: Variant)
     32:4 data -> Dictionary (base: Variant)
+    34:5 data -> Dictionary (base: Variant)
+    35:18 data -> Dictionary (base: Variant)
     36:6 type_val -> String (base: Variant)
     38:11 type_val -> String (base: Variant)
 
@@ -446,6 +467,8 @@ test_scripts/type_guards.gd
 
   multiple_guards_same_var()
     195:4 value -> Dictionary (base: Variant)
+    197:5 value -> Dictionary (base: Variant)
+    198:14 value -> Dictionary (base: Variant)
     199:6 name -> String (base: Variant)
     200:24 name -> String (base: Variant)
     201:8 name -> int (base: Variant)
@@ -487,7 +510,9 @@ test_scripts/union_returns.gd
     93:4 value -> bool (base: Variant)
     94:9 value -> bool (base: Variant)
     96:4 value -> int (base: Variant)
+    97:5 value -> int (base: Variant)
     99:5 value -> int (base: Variant)
+    101:9 value -> int (base: Variant)
 
   loop_return()
     114:5 item -> int (base: Variant)
@@ -519,12 +544,19 @@ test_scripts/union_returns.gd
   validate_input()
     206:4 input -> null (base: Variant)
     209:4 input -> Dictionary (base: Variant)
+    210:9 input -> Dictionary (base: Variant)
+    212:5 input -> Dictionary (base: Variant)
+    212:32 input -> Dictionary (base: Variant)
 
 test_scripts/union_types_complex.gd
   try_operation()
     26:4 input -> null (base: Variant)
     28:4 input -> int (base: Variant)
+    29:5 input -> int (base: Variant)
+    31:9 input -> int (base: Variant)
     32:4 input -> String (base: Variant)
+    33:5 input -> String (base: Variant)
+    35:9 input -> String (base: Variant)
 
   get_position_or_null()
     51:4 node -> Node2D (base: Node)
@@ -562,6 +594,12 @@ test_scripts/union_types_complex.gd
     193:13 current -> Dictionary (base: Variant)
     194:7 current -> Array (base: Variant)
     194:28 key -> int (base: Variant)
+    195:6 key -> int (base: Variant)
+    195:17 key -> int (base: Variant)
+    195:24 current -> Array (base: Variant)
+    197:3 current -> Array (base: Variant)
+    197:13 current -> Array (base: Variant)
+    197:21 key -> int (base: Variant)
 
   map_with_fallback()
     245:5 transformed -> null (base: Variant)
@@ -581,6 +619,7 @@ test_scripts/union_types_complex.gd
 
   validate_and_process()
     342:4 data -> null (base: Variant)
+    348:8 data -> Dictionary (base: Variant)
     356:49 type_field -> String (base: Variant)
 
   type_flow_test_method()
@@ -594,4 +633,4 @@ test_scripts/union_types_complex.gd
     395:9 local -> Array (base: Variant)
     403:4 local -> String (base: Variant)
 
-# Summary: 375 narrowings in 23 files
+# Summary: 414 narrowings in 23 files

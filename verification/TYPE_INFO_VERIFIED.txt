@@ -3510,6 +3510,20 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence: Unknown
     nullable: no
 
+  31:0 Method test_gd3001_float_to_int # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  37:0 Method test_gd3001_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
   25:1 Variable x # OK
     declared: (none)
     inferred: int
@@ -3524,25 +3538,11 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence: Certain
     nullable: no
 
-  31:0 Method test_gd3001_invalid # OK
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
   32:1 Variable x # OK
     declared: (none)
     inferred: int
     effective: int
     confidence: Certain
-    nullable: no
-
-  37:0 Method test_gd3001_suppressed # OK
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
     nullable: no
 
   38:1 Variable x # OK
@@ -3552,140 +3552,140 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence: Certain
     nullable: no
 
-  48:0 Method test_gd3004_valid # OK
+  43:0 Method test_gd3001_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  49:1 Variable node # OK
+  44:1 Variable x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  54:0 Method test_gd3004_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  55:1 Variable node # OK
     declared: (none)
     inferred: Node
     effective: Node
     confidence: Certain
     nullable: no
 
-  54:0 Method test_gd3004_invalid # OK
+  60:0 Method test_gd3004_downcast # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  55:1 Variable sprite # OK
+  61:1 Variable sprite # OK
     declared: (none)
     inferred: Sprite2D
     effective: Sprite2D
     confidence: Certain
     nullable: no
 
-  60:0 Method test_gd3004_suppressed # OK
+  66:0 Method test_gd3004_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  62:1 Variable label # OK
+  68:1 Variable label # OK
     declared: (none)
     inferred: Label
     effective: Label
     confidence: Certain
     nullable: no
 
-  71:0 Method test_gd3006_valid # OK
+  77:0 Method test_gd3006_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  72:1 Variable node # OK
+  78:1 Variable node # OK
     declared: (none)
     inferred: Node
     effective: Node
     confidence: Certain
     nullable: no
 
-  73:1 Variable sprite # OK
+  79:1 Variable sprite # OK
     declared: (none)
     inferred: Sprite2D
     effective: Sprite2D
     confidence: Certain
     nullable: no
 
-  78:0 Method test_gd3006_invalid # OK
+  84:0 Method test_gd3006_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  79:1 Variable x # OK
+  85:1 Variable x # OK
     declared: (none)
     inferred: int
     effective: int
     confidence: Certain
     nullable: no
 
-  84:0 Method test_gd3006_suppressed # OK
+  90:0 Method test_gd3006_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  86:1 Variable y # OK
+  92:1 Variable y # OK
     declared: (none)
     inferred: String
     effective: String
     confidence: Certain
     nullable: no
 
-  91:0 Method test_gd3006_nested_enum_valid # OK
+  97:0 Method test_gd3006_nested_enum_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  92:1 Variable mode # OK
+  98:1 Variable mode # OK
     declared: (none)
     inferred: BaseMaterial3D.ShadingMode
     effective: BaseMaterial3D.ShadingMode
     confidence: Certain
     nullable: no
 
-  97:0 Method test_gd3006_nested_enum_invalid # OK
+  103:0 Method test_gd3006_nested_enum_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  98:1 Variable x # OK
+  104:1 Variable x # OK
     declared: (none)
     inferred: int
     effective: int
     confidence: Certain
     nullable: no
 
-  107:0 Method test_gd3009_valid # OK
-    declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
-    nullable: no
-
-  108:1 Variable node # OK
-    declared: (none)
-    inferred: Node
-    effective: Node
-    confidence: Certain
-    nullable: no
-
-  113:0 Method test_gd3009_invalid # OK
+  113:0 Method test_gd3009_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
@@ -3699,7 +3699,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence: Certain
     nullable: no
 
-  119:0 Method test_gd3009_suppressed # OK
+  119:0 Method test_gd3009_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
@@ -3713,278 +3713,293 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence: Certain
     nullable: no
 
-  130:0 Method _take_int # OK
+  125:0 Method test_gd3009_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  130:15 Parameter x # OK
+  126:1 Variable node # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  136:0 Method _take_int # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  136:15 Parameter x # OK
     declared: (none)
     inferred: int
     effective: int
     confidence: Certain
     nullable: no
 
-  135:0 Method test_gd3010_valid # OK
+  141:0 Method test_gd3010_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  140:0 Method test_gd3010_invalid # OK
+  146:0 Method test_gd3010_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  145:0 Method test_gd3010_suppressed # OK
+  151:0 Method test_gd3010_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  155:0 Method test_gd3013_valid # OK
+  161:0 Method test_gd3013_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  156:1 Variable arr # OK
+  162:1 Variable arr # OK
     declared: (none)
     inferred: Array
     effective: Array
     confidence: Certain
     nullable: no
 
-  157:1 Variable val # OK
+  163:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  160:1 Variable dict # OK
+  166:1 Variable dict # OK
     declared: (none)
     inferred: Dictionary[String, int]
     effective: Dictionary[String, int]
     confidence: Certain
     nullable: no
 
-  161:1 Variable val2 # OK
+  167:1 Variable val2 # OK
     declared: (none)
     inferred: int
     effective: int
     confidence: High
     nullable: no
 
-  166:0 Method test_gd3013_invalid # OK
+  172:0 Method test_gd3013_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  167:1 Variable arr # OK
+  173:1 Variable arr # OK
     declared: (none)
     inferred: Array
     effective: Array
     confidence: Certain
     nullable: no
 
-  168:1 Variable val # OK
+  174:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  173:0 Method test_gd3013_suppressed # OK
+  179:0 Method test_gd3013_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  174:1 Variable arr # OK
+  180:1 Variable arr # OK
     declared: (none)
     inferred: Array
     effective: Array
     confidence: Certain
     nullable: no
 
-  176:1 Variable val # OK
+  182:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  185:0 Method test_gd3014_valid # OK
+  191:0 Method test_gd3014_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  186:1 Variable arr # OK
+  192:1 Variable arr # OK
     declared: (none)
     inferred: Array
     effective: Array
     confidence: Certain
     nullable: no
 
-  187:1 Variable val # OK
+  193:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  192:0 Method test_gd3014_invalid # OK
+  198:0 Method test_gd3014_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  193:1 Variable num # OK
+  199:1 Variable num # OK
     declared: (none)
     inferred: int
     effective: int
     confidence: Certain
     nullable: no
 
-  194:1 Variable val # OK
+  200:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  199:0 Method test_gd3014_suppressed # OK
+  205:0 Method test_gd3014_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  200:1 Variable num # OK
+  206:1 Variable num # OK
     declared: (none)
     inferred: int
     effective: int
     confidence: Certain
     nullable: no
 
-  202:1 Variable val # OK
+  208:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  211:0 Method test_gd3017_valid # OK
+  217:0 Method test_gd3017_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  212:1 Variable arr # OK
+  218:1 Variable arr # OK
     declared: (none)
     inferred: Array
     effective: Array
     confidence: Certain
     nullable: no
 
-  213:1 Variable dict # OK
+  219:1 Variable dict # OK
     declared: (none)
     inferred: Dictionary[String, int]
     effective: Dictionary[String, int]
     confidence: Certain
     nullable: no
 
-  218:0 Method test_gd3017_invalid # OK
+  224:0 Method test_gd3017_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  219:1 Variable arr # OK
+  225:1 Variable arr # OK
     declared: (none)
     inferred: Array
     effective: Array
     confidence: Certain
     nullable: no
 
-  224:0 Method test_gd3017_suppressed # OK
+  230:0 Method test_gd3017_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  226:1 Variable arr # OK
+  232:1 Variable arr # OK
     declared: (none)
     inferred: Array
     effective: Array
     confidence: Certain
     nullable: no
 
-  235:0 Method test_gd3018_valid # OK
+  241:0 Method test_gd3018_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  236:1 Variable dict # OK
+  242:1 Variable dict # OK
     declared: (none)
     inferred: Dictionary[String, int]
     effective: Dictionary[String, int]
     confidence: Certain
     nullable: no
 
-  237:1 Variable dict2 # OK
+  243:1 Variable dict2 # OK
     declared: (none)
     inferred: Dictionary[int, String]
     effective: Dictionary[int, String]
     confidence: Certain
     nullable: no
 
-  242:0 Method test_gd3018_invalid # OK
+  248:0 Method test_gd3018_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  243:1 Variable dict # OK
+  249:1 Variable dict # OK
     declared: (none)
     inferred: Dictionary[String, int]
     effective: Dictionary[String, int]
     confidence: Certain
     nullable: no
 
-  248:0 Method test_gd3018_suppressed # OK
+  254:0 Method test_gd3018_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  250:1 Variable dict # OK
+  256:1 Variable dict # OK
     declared: (none)
     inferred: Dictionary[String, int]
     effective: Dictionary[String, int]
     confidence: Certain
     nullable: no
+
 
 test_scripts/duck_caller.gd
   7:0 Variable entities # OK
@@ -18388,193 +18403,494 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence: Unknown
     nullable: no
 
-  31:0 Method test_gd3001_invalid # OK
+  31:0 Method test_gd3001_float_to_int # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  37:0 Method test_gd3001_suppressed # OK
+  37:0 Method test_gd3001_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  48:0 Method test_gd3004_valid # OK
+  25:1 Variable x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  26:1 Variable y # OK
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  32:1 Variable x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  38:1 Variable x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  43:0 Method test_gd3001_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  54:0 Method test_gd3004_invalid # OK
+  44:1 Variable x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  54:0 Method test_gd3004_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  60:0 Method test_gd3004_suppressed # OK
+  55:1 Variable node # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  60:0 Method test_gd3004_downcast # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  71:0 Method test_gd3006_valid # OK
+  61:1 Variable sprite # OK
+    declared: (none)
+    inferred: Sprite2D
+    effective: Sprite2D
+    confidence: Certain
+    nullable: no
+
+  66:0 Method test_gd3004_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  78:0 Method test_gd3006_invalid # OK
+  68:1 Variable label # OK
+    declared: (none)
+    inferred: Label
+    effective: Label
+    confidence: Certain
+    nullable: no
+
+  77:0 Method test_gd3006_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  84:0 Method test_gd3006_suppressed # OK
+  78:1 Variable node # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  79:1 Variable sprite # OK
+    declared: (none)
+    inferred: Sprite2D
+    effective: Sprite2D
+    confidence: Certain
+    nullable: no
+
+  84:0 Method test_gd3006_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  95:0 Method test_gd3009_valid # OK
+  85:1 Variable x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  90:0 Method test_gd3006_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  101:0 Method test_gd3009_invalid # OK
+  92:1 Variable y # OK
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  97:0 Method test_gd3006_nested_enum_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  107:0 Method test_gd3009_suppressed # OK
+  98:1 Variable mode # OK
+    declared: (none)
+    inferred: BaseMaterial3D.ShadingMode
+    effective: BaseMaterial3D.ShadingMode
+    confidence: Certain
+    nullable: no
+
+  103:0 Method test_gd3006_nested_enum_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  118:0 Method _take_int # OK
+  104:1 Variable x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  113:0 Method test_gd3009_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  123:0 Method test_gd3010_valid # OK
+  114:1 Variable node # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  119:0 Method test_gd3009_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  128:0 Method test_gd3010_invalid # OK
+  120:1 Variable node # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  125:0 Method test_gd3009_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  133:0 Method test_gd3010_suppressed # OK
+  126:1 Variable node # OK
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  136:0 Method _take_int # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  143:0 Method test_gd3013_valid # OK
+  136:15 Parameter x # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  141:0 Method test_gd3010_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  154:0 Method test_gd3013_invalid # OK
+  146:0 Method test_gd3010_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  161:0 Method test_gd3013_suppressed # OK
+  151:0 Method test_gd3010_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  173:0 Method test_gd3014_valid # OK
+  161:0 Method test_gd3013_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  180:0 Method test_gd3014_invalid # OK
+  162:1 Variable arr # OK
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  163:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  187:0 Method test_gd3014_suppressed # OK
+  166:1 Variable dict # OK
+    declared: (none)
+    inferred: Dictionary[String, int]
+    effective: Dictionary[String, int]
+    confidence: Certain
+    nullable: no
+
+  167:1 Variable val2 # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: High
+    nullable: no
+
+  172:0 Method test_gd3013_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  199:0 Method test_gd3017_valid # OK
+  173:1 Variable arr # OK
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  174:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  206:0 Method test_gd3017_invalid # OK
+  179:0 Method test_gd3013_suppressed # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  212:0 Method test_gd3017_suppressed # OK
+  180:1 Variable arr # OK
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  182:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  223:0 Method test_gd3018_valid # OK
+  191:0 Method test_gd3014_valid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  230:0 Method test_gd3018_invalid # OK
+  192:1 Variable arr # OK
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  193:1 Variable val # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  236:0 Method test_gd3018_suppressed # OK
+  198:0 Method test_gd3014_invalid # OK
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
+    nullable: no
+
+  199:1 Variable num # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  200:1 Variable val # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  205:0 Method test_gd3014_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  206:1 Variable num # OK
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  208:1 Variable val # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  217:0 Method test_gd3017_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  218:1 Variable arr # OK
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  219:1 Variable dict # OK
+    declared: (none)
+    inferred: Dictionary[String, int]
+    effective: Dictionary[String, int]
+    confidence: Certain
+    nullable: no
+
+  224:0 Method test_gd3017_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  225:1 Variable arr # OK
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  230:0 Method test_gd3017_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  232:1 Variable arr # OK
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: Certain
+    nullable: no
+
+  241:0 Method test_gd3018_valid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  242:1 Variable dict # OK
+    declared: (none)
+    inferred: Dictionary[String, int]
+    effective: Dictionary[String, int]
+    confidence: Certain
+    nullable: no
+
+  243:1 Variable dict2 # OK
+    declared: (none)
+    inferred: Dictionary[int, String]
+    effective: Dictionary[int, String]
+    confidence: Certain
+    nullable: no
+
+  248:0 Method test_gd3018_invalid # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  249:1 Variable dict # OK
+    declared: (none)
+    inferred: Dictionary[String, int]
+    effective: Dictionary[String, int]
+    confidence: Certain
+    nullable: no
+
+  254:0 Method test_gd3018_suppressed # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  256:1 Variable dict # OK
+    declared: (none)
+    inferred: Dictionary[String, int]
+    effective: Dictionary[String, int]
+    confidence: Certain
     nullable: no
 
 

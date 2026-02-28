@@ -253,7 +253,7 @@ func type_assignment_validation_demo() -> void:
 	# Parent to subclass - ERROR
 	var n2d: Node2D = null
 	var n: Node = Node.new()
-	n2d = n  # 256:1-GD3001-OK, 256:1-GD7019-OK  # GD3003: Cannot assign Node to Node2D
+	n2d = n  # 256:1-GD7019-OK  # Implicit downcast Node -> Node2D is valid in GDScript
 
 
 # =============================================================================
@@ -321,7 +321,7 @@ func variant_handling() -> void:
 	v = {"key": "value"}
 
 	# But accessing members on Variant may warn
-	var _x = v.some_member  # 324:10-GD3009-OK  # GD7002: Unguarded access
+	var _x = v.some_member  # Flow analyzer infers Dictionary from last assignment; dot access is allowed
 
 
 func generic_base_type_handling() -> void:

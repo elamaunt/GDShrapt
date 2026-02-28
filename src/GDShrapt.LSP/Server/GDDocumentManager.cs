@@ -85,7 +85,7 @@ public class GDDocumentManager
     {
         if (uri.StartsWith("file:///", StringComparison.OrdinalIgnoreCase))
         {
-            var path = uri.Substring(8);
+            var path = Uri.UnescapeDataString(uri.Substring(8));
             // Handle Windows paths (file:///C:/...)
             if (path.Length > 2 && path[1] == ':')
             {
@@ -105,11 +105,11 @@ public class GDDocumentManager
         path = path.Replace('\\', '/');
         if (!path.StartsWith("/"))
         {
-            // Windows path
-            return "file:///" + path;
+            // Windows path — encode using Uri class for correct percent-encoding
+            return new Uri("file:///" + path).AbsoluteUri;
         }
         // Unix path
-        return "file://" + path;
+        return new Uri("file://" + path).AbsoluteUri;
     }
 }
 

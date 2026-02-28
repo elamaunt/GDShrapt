@@ -19,6 +19,7 @@ public class GDDiagnosticPublisher : IAsyncDisposable
     private readonly GDScriptProject _project;
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _pendingUpdates = new();
     private readonly TimeSpan _debounceDelay;
+    private readonly Task? _analysisReady;
     private GDDiagnosticsService _diagnosticsService;
     private GDProjectConfig? _config;
     private bool _disposed;
@@ -30,16 +31,19 @@ public class GDDiagnosticPublisher : IAsyncDisposable
     /// <param name="project">The project for script analysis.</param>
     /// <param name="debounceDelay">Delay before publishing diagnostics (default 300ms).</param>
     /// <param name="config">Optional project configuration for diagnostics.</param>
+    /// <param name="analysisReady">Task that completes when initial project analysis is done.</param>
     public GDDiagnosticPublisher(
         IGDJsonRpcTransport transport,
         GDScriptProject project,
         TimeSpan? debounceDelay = null,
-        GDProjectConfig? config = null)
+        GDProjectConfig? config = null,
+        Task? analysisReady = null)
     {
         _transport = transport;
         _project = project;
         _debounceDelay = debounceDelay ?? TimeSpan.FromMilliseconds(300);
         _config = config;
+        _analysisReady = analysisReady;
         _diagnosticsService = config != null
             ? GDDiagnosticsService.FromConfig(config)
             : new GDDiagnosticsService();
@@ -106,6 +110,20 @@ public class GDDiagnosticPublisher : IAsyncDisposable
     {
         if (_disposed)
             return;
+
+        // Wait for initial analysis to complete before publishing diagnostics.
+        // This prevents false positives from missing runtime provider (GD2001, GD3005, GD3006).
+        if (_analysisReady != null && !_analysisReady.IsCompleted)
+        {
+            try
+            {
+                await _analysisReady.ConfigureAwait(false);
+            }
+            catch
+            {
+                // Analysis may have failed, but we should still publish with whatever state we have
+            }
+        }
 
         var filePath = GDDocumentManager.UriToPath(uri);
         var script = _project.GetScript(filePath);

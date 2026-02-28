@@ -40,9 +40,9 @@ public class GDDocumentSymbolHandler
 
     private static GDLspDocumentSymbol ConvertToLspSymbol(GDDocumentSymbol symbol)
     {
-        // Create range using line/column info
-        var line = symbol.Line - 1;  // Convert 1-based to 0-based
-        var column = symbol.Column - 1;
+        // Create range using line/column info (convert 1-based to 0-based, clamp to >= 0)
+        var line = Math.Max(0, symbol.Line - 1);
+        var column = Math.Max(0, symbol.Column - 1);
 
         var lspSymbol = new GDLspDocumentSymbol
         {

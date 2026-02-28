@@ -375,6 +375,301 @@ func process_text(text):
 
     #endregion
 
+    #region Dictionary Dot Access - Valid GDScript
+
+    [TestMethod]
+    public void DictionaryDotAccess_SimpleProperty_NoDiagnostic()
+    {
+        var code = @"
+var config: Dictionary = {""key"": 42}
+
+func test():
+    var val = config.key
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Dictionary dot access is valid GDScript. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void DictionaryDotAccess_MultipleProperties_NoDiagnostic()
+    {
+        var code = @"
+var settings: Dictionary = {""width"": 1920, ""height"": 1080}
+
+func test():
+    var w = settings.width
+    var h = settings.height
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Multiple Dictionary dot accesses should be allowed. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void DictionaryDotAccess_ChainedAccess_NoDiagnostic()
+    {
+        var code = @"
+var config: Dictionary = {}
+
+func test():
+    var val = config.nested_key
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Dictionary dot access with arbitrary key names should be allowed. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void DictionaryBuiltinMethod_StillWorks()
+    {
+        var code = @"
+var config: Dictionary = {}
+
+func test():
+    config.clear()
+    var k = config.keys()
+    var s = config.size()
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Dictionary built-in methods should still work. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Type Guard Narrowing - is Expression
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_PropertyAccess_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func _input(event: InputEvent):
+    if event is InputEventMouseButton:
+        var idx = event.button_index
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"After 'is InputEventMouseButton', event.button_index should be valid. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_MethodCall_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func _input(event: InputEvent):
+    if event is InputEventMouseMotion:
+        var vel = event.get_relative()
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"After 'is InputEventMouseMotion', event.get_relative() should be valid. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_MultipleProperties_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func _input(event: InputEvent):
+    if event is InputEventMouseButton:
+        var idx = event.button_index
+        var pressed = event.pressed
+        var dbl = event.double_click
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Multiple properties on narrowed type should all be valid. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_BaseTypeProperty_StillWorks()
+    {
+        var code = @"
+extends Node
+
+func _input(event: InputEvent):
+    if event is InputEventMouseButton:
+        var dev = event.device
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Base type properties should still work after narrowing. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_ElifChain_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func process_input(event: InputEvent):
+    if event is InputEventMouseButton:
+        var idx = event.button_index
+    elif event is InputEventJoypadMotion:
+        var ax = event.axis
+        var val = event.axis_value
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Properties on narrowed types in elif chain should be valid. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_NestedIf_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func process_input(event: InputEvent):
+    if event is InputEventMouseButton:
+        if event.pressed:
+            if event.button_index == 1:
+                pass
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Nested ifs after type guard should use narrowed type. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_RefCounted_NoDiagnostic()
+    {
+        var code = @"
+extends RefCounted
+
+func process_input(event: InputEvent):
+    if event is InputEventMouseButton:
+        if event.pressed:
+            if event.button_index == 1:
+                pass
+        else:
+            pass
+    elif event is InputEventJoypadMotion:
+        if event.axis in [0, 1]:
+            pass
+        if event.axis in [2, 3]:
+            if abs(event.axis_value) > 0.2:
+                pass
+            elif abs(event.axis_value) < 0.2:
+                pass
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"RefCounted class with InputEvent type guard should work. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_MultipleNestedIfs_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func process_input(event: InputEvent):
+    if event is InputEventJoypadMotion:
+        if event.axis in [0, 1]:
+            pass
+        if event.axis in [2, 3]:
+            if abs(event.axis_value) > 0.2:
+                pass
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Multiple nested ifs with narrowed type should work. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_TwoSequentialIfs_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func test(event: InputEvent):
+    if event is InputEventJoypadMotion:
+        if event.axis == 0:
+            pass
+        if event.axis == 1:
+            pass
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Second if inside narrowed block should still use narrowed type. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_SimpleElif_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func process_input(event: InputEvent):
+    if event is InputEventMouseButton:
+        var idx = event.button_index
+    elif event is InputEventJoypadMotion:
+        var ax = event.axis
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Simple elif type guard should narrow the type. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_IsExpression_ElifWithNestedIf_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func process_input(event: InputEvent):
+    if event is InputEventMouseButton:
+        if event.pressed:
+            pass
+    elif event is InputEventJoypadMotion:
+        if event.axis in [0, 1]:
+            pass
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.AreEqual(0, memberDiagnostics.Count,
+            $"Elif with nested if should still use narrowed type. Found: {FormatDiagnostics(memberDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypeGuard_NoNarrowing_InvalidProperty_StillReports()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var node: Node2D = Node2D.new()
+    var x = node.nonexistent_property
+";
+        var diagnostics = ValidateCode(code);
+        var memberDiagnostics = FilterMemberAccessDiagnostics(diagnostics);
+        Assert.IsTrue(memberDiagnostics.Count > 0,
+            "Property not found should still be reported when no narrowing is involved");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
@@ -432,6 +727,24 @@ func process_text(text):
     private static string FormatDiagnostics(IEnumerable<GDDiagnostic> diagnostics)
     {
         return string.Join("; ", diagnostics.Select(d => $"[{d.Code}] {d.Message}"));
+    }
+
+    private class MemberAccessFinder : GDShrapt.Reader.GDBaseVisitor
+    {
+        private readonly string _memberName;
+        public List<GDMemberOperatorExpression> Found { get; } = new();
+
+        public MemberAccessFinder(string memberName)
+        {
+            _memberName = memberName;
+        }
+
+        public override void EnterNode(GDShrapt.Reader.GDNode node)
+        {
+            if (node is GDMemberOperatorExpression memberAccess &&
+                memberAccess.Identifier?.Sequence == _memberName)
+                Found.Add(memberAccess);
+        }
     }
 
     #endregion

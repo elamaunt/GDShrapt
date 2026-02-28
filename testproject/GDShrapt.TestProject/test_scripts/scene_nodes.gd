@@ -6,11 +6,11 @@ class_name SceneNodes  # 2:11-GDL222-OK
 
 
 # @onready with typed nodes
-@onready var player: CharacterBody2D = $Player  # 9:9-GD3004-OK
-@onready var health_bar: ProgressBar = $UI/HealthBar  # 10:9-GD3004-OK
-@onready var sprite: Sprite2D = $Player/Sprite2D  # 11:9-GD3004-OK
-@onready var collision: CollisionShape2D = $Player/CollisionShape2D  # 12:9-GD3004-OK
-@onready var animation_player: AnimationPlayer = $AnimationPlayer  # 13:9-GD3004-OK
+@onready var player: CharacterBody2D = $Player
+@onready var health_bar: ProgressBar = $UI/HealthBar
+@onready var sprite: Sprite2D = $Player/Sprite2D
+@onready var collision: CollisionShape2D = $Player/CollisionShape2D
+@onready var animation_player: AnimationPlayer = $AnimationPlayer
 
 
 # @onready with inferred type from path
@@ -19,7 +19,7 @@ class_name SceneNodes  # 2:11-GDL222-OK
 
 
 # @onready with get_node
-@onready var label: Label = get_node("UI/Label")  # 22:9-GD3004-OK
+@onready var label: Label = get_node("UI/Label")
 
 
 # @onready with optional node
@@ -109,7 +109,7 @@ func get_parent_of_type() -> Control:
 	var current = get_parent()
 	while current != null:
 		if current is Control:
-			return current  # 112:3-GD3007-OK
+			return current
 		current = current.get_parent()
 	return null
 

@@ -72,7 +72,6 @@ public class GDJsonRpcResponse : GDJsonRpcMessage
     /// The result of a request.
     /// </summary>
     [JsonPropertyName("result")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Result { get; set; }
 
     /// <summary>

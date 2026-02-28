@@ -71,8 +71,9 @@ public class GDInlayHintHandler : IGDInlayHintHandler
             if (variable.DeclarationNode == null)
                 continue;
 
-            var line = variable.DeclarationNode.StartLine;
-            if (line < startLine || line > endLine)
+            // AST StartLine is 0-based, startLine/endLine are 1-based
+            var line1 = variable.DeclarationNode.StartLine + 1;
+            if (line1 < startLine || line1 > endLine)
                 continue;
 
             // Skip if already has explicit type
@@ -122,8 +123,9 @@ public class GDInlayHintHandler : IGDInlayHintHandler
             if (hints.Count >= MaxHintsPerRequest)
                 break;
 
-            // Check if in range
-            if (node.StartLine < startLine || node.StartLine > endLine)
+            // AST StartLine is 0-based, startLine/endLine are 1-based
+            var nodeLine1 = node.StartLine + 1;
+            if (nodeLine1 < startLine || nodeLine1 > endLine)
                 continue;
 
             // Handle local variable declarations (var statements)
@@ -201,8 +203,8 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         {
             if (token is GDIdentifier id && id.ToString() == name)
             {
-                // Position is after the identifier (1-based)
-                return (id.EndLine, id.EndColumn + 1);
+                // AST EndLine/EndColumn are 0-based, convert to 1-based
+                return (id.EndLine + 1, id.EndColumn + 1);
             }
         }
 
@@ -218,8 +220,8 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         if (identifier == null)
             return null;
 
-        // Position is after the identifier (1-based)
-        return (identifier.EndLine, identifier.EndColumn + 1);
+        // AST EndLine/EndColumn are 0-based, convert to 1-based
+        return (identifier.EndLine + 1, identifier.EndColumn + 1);
     }
 
 }

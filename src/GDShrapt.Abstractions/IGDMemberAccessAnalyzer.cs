@@ -22,6 +22,16 @@ public interface IGDMemberAccessAnalyzer
     string? GetExpressionType(object expression);
 
     /// <summary>
+    /// Gets the effective type of an expression considering type narrowing.
+    /// For identifier expressions inside type guard blocks (e.g., `if x is Foo:`),
+    /// returns the narrowed type. Falls back to GetExpressionType.
+    /// </summary>
+    /// <param name="expression">The expression to analyze.</param>
+    /// <param name="atLocation">The AST node where the type is being checked (for narrowing context).</param>
+    /// <returns>The effective type name, or null if unknown.</returns>
+    string? GetEffectiveExpressionType(object expression, object atLocation);
+
+    /// <summary>
     /// Checks if the type name refers to a local enum.
     /// </summary>
     /// <param name="typeName">The type name to check.</param>

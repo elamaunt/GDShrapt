@@ -7107,7 +7107,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 31:0 Method test_gd3001_invalid ---
+--- 31:0 Method test_gd3001_float_to_int ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7123,7 +7123,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 37:0 Method test_gd3001_suppressed ---
+--- 37:0 Method test_gd3001_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7139,7 +7139,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 48:0 Method test_gd3004_valid ---
+--- 43:0 Method test_gd3001_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7147,7 +7147,23 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 49:1 Variable node ---
+--- 44:1 Variable x ---
+  Type Info:
+    declared:     (none)
+    inferred:     int
+    effective:    int
+    confidence:   Certain
+    nullable:     no
+
+--- 54:0 Method test_gd3004_valid ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 55:1 Variable node ---
   Type Info:
     declared:     (none)
     inferred:     Node
@@ -7155,7 +7171,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 54:0 Method test_gd3004_invalid ---
+--- 60:0 Method test_gd3004_downcast ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7163,7 +7179,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 55:1 Variable sprite ---
+--- 61:1 Variable sprite ---
   Type Info:
     declared:     (none)
     inferred:     Sprite2D
@@ -7171,7 +7187,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 60:0 Method test_gd3004_suppressed ---
+--- 66:0 Method test_gd3004_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7179,7 +7195,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 62:1 Variable label ---
+--- 68:1 Variable label ---
   Type Info:
     declared:     (none)
     inferred:     Label
@@ -7187,7 +7203,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 71:0 Method test_gd3006_valid ---
+--- 77:0 Method test_gd3006_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7195,7 +7211,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 72:1 Variable node ---
+--- 78:1 Variable node ---
   Type Info:
     declared:     (none)
     inferred:     Node
@@ -7203,7 +7219,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 73:1 Variable sprite ---
+--- 79:1 Variable sprite ---
   Type Info:
     declared:     (none)
     inferred:     Sprite2D
@@ -7211,7 +7227,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 78:0 Method test_gd3006_invalid ---
+--- 84:0 Method test_gd3006_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7219,7 +7235,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 79:1 Variable x ---
+--- 85:1 Variable x ---
   Type Info:
     declared:     (none)
     inferred:     int
@@ -7227,7 +7243,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 84:0 Method test_gd3006_suppressed ---
+--- 90:0 Method test_gd3006_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7235,7 +7251,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 86:1 Variable y ---
+--- 92:1 Variable y ---
   Type Info:
     declared:     (none)
     inferred:     String
@@ -7243,7 +7259,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 91:0 Method test_gd3006_nested_enum_valid ---
+--- 97:0 Method test_gd3006_nested_enum_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7251,7 +7267,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 92:1 Variable mode ---
+--- 98:1 Variable mode ---
   Type Info:
     declared:     (none)
     inferred:     BaseMaterial3D.ShadingMode
@@ -7259,7 +7275,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 97:0 Method test_gd3006_nested_enum_invalid ---
+--- 103:0 Method test_gd3006_nested_enum_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7267,7 +7283,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 98:1 Variable x ---
+--- 104:1 Variable x ---
   Type Info:
     declared:     (none)
     inferred:     int
@@ -7275,23 +7291,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 107:0 Method test_gd3009_valid ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 108:1 Variable node ---
-  Type Info:
-    declared:     (none)
-    inferred:     Node
-    effective:    Node
-    confidence:   Certain
-    nullable:     no
-
---- 113:0 Method test_gd3009_invalid ---
+--- 113:0 Method test_gd3009_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7307,7 +7307,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 119:0 Method test_gd3009_suppressed ---
+--- 119:0 Method test_gd3009_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7323,7 +7323,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 130:0 Method _take_int ---
+--- 125:0 Method test_gd3009_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7331,7 +7331,23 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 130:15 Parameter x ---
+--- 126:1 Variable node ---
+  Type Info:
+    declared:     (none)
+    inferred:     Node
+    effective:    Node
+    confidence:   Certain
+    nullable:     no
+
+--- 136:0 Method _take_int ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 136:15 Parameter x ---
   Type Info:
     declared:     (none)
     inferred:     int
@@ -7343,7 +7359,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     reason:       explicit type annotation
 
---- 135:0 Method test_gd3010_valid ---
+--- 141:0 Method test_gd3010_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7351,7 +7367,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 140:0 Method test_gd3010_invalid ---
+--- 146:0 Method test_gd3010_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7359,7 +7375,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 145:0 Method test_gd3010_suppressed ---
+--- 151:0 Method test_gd3010_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7367,7 +7383,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 155:0 Method test_gd3013_valid ---
+--- 161:0 Method test_gd3013_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7375,7 +7391,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 156:1 Variable arr ---
+--- 162:1 Variable arr ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -7383,7 +7399,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 157:1 Variable val ---
+--- 163:1 Variable val ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7391,7 +7407,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 160:1 Variable dict ---
+--- 166:1 Variable dict ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary[String, int]
@@ -7399,7 +7415,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 161:1 Variable val2 ---
+--- 167:1 Variable val2 ---
   Type Info:
     declared:     (none)
     inferred:     int
@@ -7407,7 +7423,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   High
     nullable:     no
 
---- 166:0 Method test_gd3013_invalid ---
+--- 172:0 Method test_gd3013_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7415,7 +7431,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 167:1 Variable arr ---
+--- 173:1 Variable arr ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -7423,7 +7439,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 168:1 Variable val ---
+--- 174:1 Variable val ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7431,7 +7447,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 173:0 Method test_gd3013_suppressed ---
+--- 179:0 Method test_gd3013_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7439,7 +7455,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 174:1 Variable arr ---
+--- 180:1 Variable arr ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -7447,7 +7463,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 176:1 Variable val ---
+--- 182:1 Variable val ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7455,7 +7471,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 185:0 Method test_gd3014_valid ---
+--- 191:0 Method test_gd3014_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7463,7 +7479,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 186:1 Variable arr ---
+--- 192:1 Variable arr ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -7471,7 +7487,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 187:1 Variable val ---
+--- 193:1 Variable val ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7479,7 +7495,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 192:0 Method test_gd3014_invalid ---
+--- 198:0 Method test_gd3014_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7487,7 +7503,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 193:1 Variable num ---
+--- 199:1 Variable num ---
   Type Info:
     declared:     (none)
     inferred:     int
@@ -7495,7 +7511,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 194:1 Variable val ---
+--- 200:1 Variable val ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7503,7 +7519,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 199:0 Method test_gd3014_suppressed ---
+--- 205:0 Method test_gd3014_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7511,7 +7527,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 200:1 Variable num ---
+--- 206:1 Variable num ---
   Type Info:
     declared:     (none)
     inferred:     int
@@ -7519,7 +7535,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 202:1 Variable val ---
+--- 208:1 Variable val ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7527,7 +7543,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 211:0 Method test_gd3017_valid ---
+--- 217:0 Method test_gd3017_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7535,7 +7551,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 212:1 Variable arr ---
+--- 218:1 Variable arr ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -7543,7 +7559,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 213:1 Variable dict ---
+--- 219:1 Variable dict ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary[String, int]
@@ -7551,7 +7567,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 218:0 Method test_gd3017_invalid ---
+--- 224:0 Method test_gd3017_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7559,7 +7575,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 219:1 Variable arr ---
+--- 225:1 Variable arr ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -7567,7 +7583,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 224:0 Method test_gd3017_suppressed ---
+--- 230:0 Method test_gd3017_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7575,7 +7591,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 226:1 Variable arr ---
+--- 232:1 Variable arr ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -7583,7 +7599,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 235:0 Method test_gd3018_valid ---
+--- 241:0 Method test_gd3018_valid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7591,7 +7607,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 236:1 Variable dict ---
+--- 242:1 Variable dict ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary[String, int]
@@ -7599,7 +7615,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 237:1 Variable dict2 ---
+--- 243:1 Variable dict2 ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary[int, String]
@@ -7607,7 +7623,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 242:0 Method test_gd3018_invalid ---
+--- 248:0 Method test_gd3018_invalid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7615,7 +7631,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 243:1 Variable dict ---
+--- 249:1 Variable dict ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary[String, int]
@@ -7623,7 +7639,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Certain
     nullable:     no
 
---- 248:0 Method test_gd3018_suppressed ---
+--- 254:0 Method test_gd3018_suppressed ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -7631,7 +7647,7 @@ test_scripts/diagnostics/validator/type_errors.gd
     confidence:   Unknown
     nullable:     no
 
---- 250:1 Variable dict ---
+--- 256:1 Variable dict ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary[String, int]
@@ -8462,6 +8478,12 @@ test_scripts/duck_typing_advanced.gd
       188:32 data -> Dictionary (base: Variant)
     _step_parse():
       206:4 value -> String (base: Variant)
+      207:5 value -> String (base: Variant)
+      208:10 value -> String (base: Variant)
+      209:5 value -> String (base: Variant)
+      210:10 value -> String (base: Variant)
+      211:5 value -> String (base: Variant)
+      212:28 value -> String (base: Variant)
     _step_validate():
       217:4 value -> null (base: Variant)
       219:4 value -> int (base: Variant)
@@ -10364,6 +10386,10 @@ test_scripts/dynamic_dispatch.gd
       177:4 data -> Array (base: Variant)
       179:14 data -> Array (base: Variant)
       182:4 data -> Dictionary (base: Variant)
+      183:5 data -> Dictionary (base: Variant)
+      184:29 data -> Dictionary (base: Variant)
+      186:13 data -> Dictionary (base: Variant)
+      187:34 data -> Dictionary (base: Variant)
     create_instance_by_name():
       221:4 class_ref -> PackedScene (base: Variant)
       222:13 class_ref -> PackedScene (base: Variant)
@@ -14761,6 +14787,7 @@ test_scripts/game_patterns.gd
       155:14 condition -> Dictionary (base: Variant)
     can_use_ability():
       302:5 condition -> Callable (base: Variant)
+      303:10 condition -> Callable (base: Variant)
     use_ability():
       328:4 effect_func -> Callable (base: Variant)
       329:11 effect_func -> Callable (base: Variant)
@@ -14799,6 +14826,13 @@ test_scripts/game_patterns.gd
       540:25 value -> Dictionary (base: Variant)
     _deserialize_value():
       559:4 value -> Dictionary (base: Variant)
+      560:5 value -> Dictionary (base: Variant)
+      561:9 value -> Dictionary (base: Variant)
+      563:20 value -> Dictionary (base: Variant)
+      563:32 value -> Dictionary (base: Variant)
+      565:20 value -> Dictionary (base: Variant)
+      565:32 value -> Dictionary (base: Variant)
+      565:44 value -> Dictionary (base: Variant)
       566:27 value -> Dictionary (base: Variant)
       567:4 value -> Array (base: Variant)
       568:28 value -> Array (base: Variant)
@@ -15653,9 +15687,9 @@ test_scripts/inheritance_test.gd
 --- 83:3 Variable collider ---
   Type Info:
     declared:     (none)
-    inferred:     GodotObject
-    effective:    GodotObject
-    confidence:   Medium
+    inferred:     Object
+    effective:    Object
+    confidence:   High
     nullable:     no
 
 --- 84:3 Variable normal ---
@@ -23855,6 +23889,7 @@ test_scripts/signal_callback_chains.gd
       519:6 result -> Dictionary (base: Variant)
       519:31 result -> Dictionary (base: Variant)
       520:17 result -> Dictionary (base: Variant)
+      522:12 result -> Dictionary (base: Variant)
 
 
 test_scripts/signals_test.gd
@@ -26878,6 +26913,8 @@ test_scripts/type_guards.gd
     nested_type_guards():
       29:4 data -> null (base: Variant)
       32:4 data -> Dictionary (base: Variant)
+      34:5 data -> Dictionary (base: Variant)
+      35:18 data -> Dictionary (base: Variant)
       36:6 type_val -> String (base: Variant)
       38:11 type_val -> String (base: Variant)
     type_guard_with_and():
@@ -26920,6 +26957,8 @@ test_scripts/type_guards.gd
       179:8 value -> Dictionary (base: Variant)
     multiple_guards_same_var():
       195:4 value -> Dictionary (base: Variant)
+      197:5 value -> Dictionary (base: Variant)
+      198:14 value -> Dictionary (base: Variant)
       199:6 name -> String (base: Variant)
       200:24 name -> String (base: Variant)
       201:8 name -> int (base: Variant)
@@ -28410,7 +28449,9 @@ test_scripts/union_returns.gd
       93:4 value -> bool (base: Variant)
       94:9 value -> bool (base: Variant)
       96:4 value -> int (base: Variant)
+      97:5 value -> int (base: Variant)
       99:5 value -> int (base: Variant)
+      101:9 value -> int (base: Variant)
     loop_return():
       114:5 item -> int (base: Variant)
       114:21 item -> int (base: Variant)
@@ -28435,6 +28476,9 @@ test_scripts/union_returns.gd
     validate_input():
       206:4 input -> null (base: Variant)
       209:4 input -> Dictionary (base: Variant)
+      210:9 input -> Dictionary (base: Variant)
+      212:5 input -> Dictionary (base: Variant)
+      212:32 input -> Dictionary (base: Variant)
 
 
 test_scripts/union_types_complex.gd
@@ -29572,7 +29616,11 @@ test_scripts/union_types_complex.gd
     try_operation():
       26:4 input -> null (base: Variant)
       28:4 input -> int (base: Variant)
+      29:5 input -> int (base: Variant)
+      31:9 input -> int (base: Variant)
       32:4 input -> String (base: Variant)
+      33:5 input -> String (base: Variant)
+      35:9 input -> String (base: Variant)
     get_position_or_null():
       51:4 node -> Node2D (base: Node)
       51:13 node -> Node2D (base: Node)
@@ -29606,6 +29654,12 @@ test_scripts/union_types_complex.gd
       193:13 current -> Dictionary (base: Variant)
       194:7 current -> Array (base: Variant)
       194:28 key -> int (base: Variant)
+      195:6 key -> int (base: Variant)
+      195:17 key -> int (base: Variant)
+      195:24 current -> Array (base: Variant)
+      197:3 current -> Array (base: Variant)
+      197:13 current -> Array (base: Variant)
+      197:21 key -> int (base: Variant)
     map_with_fallback():
       245:5 transformed -> null (base: Variant)
     _compute_result():
@@ -29621,6 +29675,7 @@ test_scripts/union_types_complex.gd
       336:9 value -> Array (base: Variant)
     validate_and_process():
       342:4 data -> null (base: Variant)
+      348:8 data -> Dictionary (base: Variant)
       356:49 type_field -> String (base: Variant)
     type_flow_test_method():
       379:4 local -> null (base: Variant)

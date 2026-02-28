@@ -226,7 +226,10 @@ public class GDDiagnosticsService
             var runtimeProvider = script.SemanticModel?.RuntimeProvider ?? _validationOptions.RuntimeProvider;
             var semanticModel = script.SemanticModel;
 
-            var options = CreateOptionsForScript(runtimeProvider, semanticModel);
+            // When no proper runtime provider is available, disable checks that depend on type info
+            // to prevent false positives (GD2001, GD3005, GD3006) from incomplete type resolution
+            var hasProperProvider = runtimeProvider != null;
+            var options = CreateOptionsForScript(runtimeProvider, semanticModel, hasProperProvider);
 
             var classResult = DiagnoseInternal(script.Class, options);
             result.AddRange(classResult.Diagnostics);
@@ -237,23 +240,24 @@ public class GDDiagnosticsService
 
     /// <summary>
     /// Creates validation options with a specific runtime provider and member access analyzer.
+    /// When no proper runtime provider is available, disables checks that depend on type information.
     /// </summary>
-    private GDValidationOptions CreateOptionsForScript(IGDRuntimeProvider? runtimeProvider, IGDMemberAccessAnalyzer? analyzer)
+    private GDValidationOptions CreateOptionsForScript(IGDRuntimeProvider? runtimeProvider, IGDMemberAccessAnalyzer? analyzer, bool hasProperProvider = true)
     {
         return new GDValidationOptions
         {
             RuntimeProvider = runtimeProvider ?? _validationOptions.RuntimeProvider,
             MemberAccessAnalyzer = analyzer ?? _validationOptions.MemberAccessAnalyzer,
             CheckSyntax = _validationOptions.CheckSyntax,
-            CheckScope = _validationOptions.CheckScope,
-            CheckTypes = _validationOptions.CheckTypes,
-            CheckCalls = _validationOptions.CheckCalls,
+            CheckScope = _validationOptions.CheckScope && hasProperProvider,
+            CheckTypes = _validationOptions.CheckTypes && hasProperProvider,
+            CheckCalls = _validationOptions.CheckCalls && hasProperProvider,
             CheckControlFlow = _validationOptions.CheckControlFlow,
             CheckIndentation = _validationOptions.CheckIndentation,
             CheckMemberAccess = _validationOptions.CheckMemberAccess,
             MemberAccessSeverity = _validationOptions.MemberAccessSeverity,
-            CheckAbstract = _validationOptions.CheckAbstract,
-            CheckSignals = _validationOptions.CheckSignals,
+            CheckAbstract = _validationOptions.CheckAbstract && hasProperProvider,
+            CheckSignals = _validationOptions.CheckSignals && hasProperProvider,
             CheckResourcePaths = _validationOptions.CheckResourcePaths,
             EnableCommentSuppression = _validationOptions.EnableCommentSuppression
         };

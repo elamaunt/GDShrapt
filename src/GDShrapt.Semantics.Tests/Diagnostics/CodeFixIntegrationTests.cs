@@ -286,6 +286,9 @@ var MyVariable = 1
         public string? GetExpressionType(object expression)
             => null;
 
+        public string? GetEffectiveExpressionType(object expression, object atLocation)
+            => null;
+
         public bool IsLocalEnum(string typeName) => false;
 
         public bool IsLocalEnumValue(string enumTypeName, string memberName) => false;

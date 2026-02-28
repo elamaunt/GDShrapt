@@ -23,6 +23,7 @@ public class GDLanguageServer : IGDLanguageServer
     private GDLspTraceLevel _traceLevel = GDLspTraceLevel.Off;
     private string? _initializationError;
     private TaskCompletionSource? _shutdownTcs;
+    private TaskCompletionSource<bool>? _analysisComplete;
     private bool _disposed;
 
     public bool IsInitialized { get; private set; }
@@ -114,25 +115,51 @@ public class GDLanguageServer : IGDLanguageServer
             ? GDDocumentManager.UriToPath(@params.RootUri)
             : @params.RootPath;
 
+        _ = _logger?.InfoAsync($"[initialize] rootUri={@params.RootUri} rootPath={@params.RootPath} resolved={rootPath}");
+
         if (!string.IsNullOrEmpty(rootPath))
         {
             GDScriptProject? project = null;
             try
             {
                 var projectRoot = GDProjectLoader.FindProjectRoot(rootPath);
+                _ = _logger?.InfoAsync($"[initialize] projectRoot={projectRoot}");
                 if (projectRoot != null)
                 {
                     // Load project WITHOUT analysis - analysis will run in background after initialized
                     project = GDProjectLoader.LoadProjectWithoutAnalysis(projectRoot);
                     _documentManager = new GDDocumentManager(project);
                     _config = GDConfigLoader.LoadConfig(project.ProjectPath);
-                    _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, project, config: _config);
+                    _analysisComplete = new TaskCompletionSource<bool>();
+                    _diagnosticPublisher = new GDDiagnosticPublisher(_transport!, project, config: _config, analysisReady: _analysisComplete.Task);
                     _project = project;
+
+                    var scriptCount = 0;
+                    foreach (var _ in project.ScriptFiles) scriptCount++;
+                    _ = _logger?.InfoAsync($"[initialize] loaded {scriptCount} scripts, initializing registry...");
 
                     // Initialize service registry with base module
                     // NOTE: Pro module is NOT loaded in LSP (by design - Strict mode only)
                     _registry = new GDServiceRegistry();
-                    _registry.LoadModules(project, new GDBaseModule());
+                    try
+                    {
+                        _registry.LoadModules(project, new GDBaseModule());
+                        _ = _logger?.InfoAsync($"[initialize] registry initialized successfully");
+                    }
+                    catch (Exception moduleEx)
+                    {
+                        _ = _logger?.ErrorAsync($"[initialize] LoadModules failed: {moduleEx}");
+                    }
+
+                    // Check semantic model status after module loading
+                    var analyzedCount = 0;
+                    var totalCount = 0;
+                    foreach (var s in project.ScriptFiles)
+                    {
+                        totalCount++;
+                        if (s.SemanticModel != null) analyzedCount++;
+                    }
+                    _ = _logger?.InfoAsync($"[initialize] semantic models: {analyzedCount}/{totalCount}");
 
                     project = null; // Successfully transferred ownership
                 }
@@ -223,16 +250,22 @@ public class GDLanguageServer : IGDLanguageServer
                 {
                     // Run analysis in background
                     _project.AnalyzeAll();
-
-                    // Publish initial diagnostics for all loaded scripts
-                    if (_diagnosticPublisher != null && _documentManager != null)
-                    {
-                        await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
-                    }
                 }
                 catch (Exception ex)
                 {
                     _ = ShowCriticalErrorAsync($"Background analysis failed: {ex.Message}");
+                }
+                finally
+                {
+                    // Signal that analysis is complete (even if it failed partially)
+                    // This unblocks any pending diagnostic publish requests
+                    _analysisComplete?.TrySetResult(true);
+                }
+
+                // Publish initial diagnostics for all loaded scripts
+                if (_diagnosticPublisher != null && _documentManager != null)
+                {
+                    await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
                 }
             });
         }
@@ -503,8 +536,26 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspDocumentSymbol[]?> HandleDocumentSymbolAsync(GDDocumentSymbolParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/documentSymbol", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
+        _ = _logger?.InfoAsync($"[documentSymbol] uri={@params.TextDocument.Uri} path={filePath} registry={_registry != null} project={_project != null}");
+
+        if (_project != null)
+        {
+            var script = _project.GetScript(filePath);
+            _ = _logger?.InfoAsync($"[documentSymbol] script={script != null} semanticModel={script?.SemanticModel != null} class={script?.Class != null}");
+            if (script == null)
+            {
+                // Log available scripts for debugging
+                var count = 0;
+                foreach (var s in _project.ScriptFiles)
+                {
+                    if (count < 5)
+                        _ = _logger?.InfoAsync($"[documentSymbol] available script: {s.FullPath}");
+                    count++;
+                }
+                _ = _logger?.InfoAsync($"[documentSymbol] total scripts: {count}");
+            }
+        }
 
         if (_registry == null)
             return Task.FromResult<GDLspDocumentSymbol[]?>(null);

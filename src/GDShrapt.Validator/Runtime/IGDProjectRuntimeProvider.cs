@@ -295,6 +295,7 @@ namespace GDShrapt.Reader
 
         public bool IsKnownType(string typeName)
         {
+            typeName = NormalizeTypeName(typeName);
             foreach (var provider in _providers)
             {
                 if (provider.IsKnownType(typeName))
@@ -305,6 +306,7 @@ namespace GDShrapt.Reader
 
         public GDRuntimeTypeInfo GetTypeInfo(string typeName)
         {
+            typeName = NormalizeTypeName(typeName);
             foreach (var provider in _providers)
             {
                 var info = provider.GetTypeInfo(typeName);
@@ -316,6 +318,7 @@ namespace GDShrapt.Reader
 
         public GDRuntimeMemberInfo GetMember(string typeName, string memberName)
         {
+            typeName = NormalizeTypeName(typeName);
             foreach (var provider in _providers)
             {
                 var info = provider.GetMember(typeName, memberName);
@@ -327,6 +330,7 @@ namespace GDShrapt.Reader
 
         public string GetBaseType(string typeName)
         {
+            typeName = NormalizeTypeName(typeName);
             foreach (var provider in _providers)
             {
                 var baseType = provider.GetBaseType(typeName);
@@ -338,12 +342,21 @@ namespace GDShrapt.Reader
 
         public bool IsAssignableTo(string sourceType, string targetType)
         {
+            sourceType = NormalizeTypeName(sourceType);
+            targetType = NormalizeTypeName(targetType);
+
             foreach (var provider in _providers)
             {
                 if (provider.IsAssignableTo(sourceType, targetType))
                     return true;
             }
             return false;
+        }
+
+        private static string NormalizeTypeName(string typeName)
+        {
+            if (typeName == "GodotObject") return "Object";
+            return typeName;
         }
 
         public GDRuntimeFunctionInfo GetGlobalFunction(string functionName)

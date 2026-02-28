@@ -95,7 +95,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                     var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
                     members.Add(GDRuntimeMemberInfo.Method(
                         method.GDScriptName,
-                        method.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant,
+                        NormalizeCSharpTypeName(method.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant),
                         minArgs,
                         maxArgs,
                         isVarArgs));
@@ -109,7 +109,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             {
                 members.Add(GDRuntimeMemberInfo.Property(
                     propKvp.Value.GDScriptName,
-                    propKvp.Value.GDScriptTypeName ?? GDWellKnownTypes.Variant,
+                    NormalizeCSharpTypeName(propKvp.Value.GDScriptTypeName ?? GDWellKnownTypes.Variant),
                     propKvp.Value.IsStatic));
             }
         }
@@ -166,9 +166,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // GDScript has no generics — prefer non-generic overload when available
             var method = SelectMethod(methods);
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
-            var returnType = ConvertCSharpGenericToGDScript(
-                method.GDScriptReturnTypeName,
-                method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant;
+            var returnType = NormalizeCSharpTypeName(
+                ConvertCSharpGenericToGDScript(
+                    method.GDScriptReturnTypeName,
+                    method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant);
 
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
@@ -189,7 +190,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             return GDRuntimeMemberInfo.Property(
                 property.GDScriptName,
-                property.GDScriptTypeName ?? GDWellKnownTypes.Variant,
+                NormalizeCSharpTypeName(property.GDScriptTypeName ?? GDWellKnownTypes.Variant),
                 property.IsStatic);
         }
 
@@ -282,7 +283,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             return GDRuntimeMemberInfo.Property(
                 property.GDScriptName,
-                property.GDScriptTypeName ?? GDWellKnownTypes.Variant,
+                NormalizeCSharpTypeName(property.GDScriptTypeName ?? GDWellKnownTypes.Variant),
                 property.IsStatic);
         }
 
@@ -305,6 +306,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (_typeCache.TryGetValue(typeName, out var typeData))
         {
             var baseType = typeData.GDScriptBaseTypeName;
+            if (baseType != null)
+                baseType = NormalizeCSharpTypeName(baseType);
             // Prevent self-referential base type (Object -> Object creates infinite loop)
             if (baseType == typeName)
                 return null;
@@ -405,7 +408,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 (minArgs, maxArgs, isVarArgs) = CalculateArgConstraintsFromOverloads(methods);
             }
 
-            var returnType = method.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant;
+            var returnType = NormalizeCSharpTypeName(method.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant);
 
             // Create parameter list: merge from all overloads if multiple exist
             var parameters = methods.Count > 1
@@ -1073,4 +1076,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
     public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+
+    private static string NormalizeCSharpTypeName(string typeName)
+    {
+        if (typeName == "GodotObject") return "Object";
+        return typeName;
+    }
 }

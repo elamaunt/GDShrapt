@@ -27,17 +27,23 @@ func test_gd3001_valid() -> void:
 	print(x, y)
 
 
-## INVALID - SHOULD trigger GD3001
-func test_gd3001_invalid() -> void:
+## float->int is valid in GDScript (implicit narrowing/truncation)
+func test_gd3001_float_to_int() -> void:
 	var x: int = 42  # 32:8-GD7022-OK
-	x = 3.14  # 33:1-GD3001-OK
+	x = 3.14
+
+
+## INVALID - SHOULD trigger GD3001 (unrelated types)
+func test_gd3001_invalid() -> void:
+	var x: int = 42  # 38:8-GD7022-OK
+	x = "hello"  # 39:1-GD3001-OK
 
 
 ## SUPPRESSED - GD3001 suppressed
 func test_gd3001_suppressed() -> void:
-	var x: int = 42  # 38:8-GD7022-OK
+	var x: int = 42  # 44:8-GD7022-OK
 	# gd:ignore = GD3001
-	x = 3.14  # Suppressed by gd:ignore above
+	x = "suppressed"  # Suppressed by gd:ignore above
 
 
 # =============================================================================
@@ -50,9 +56,9 @@ func test_gd3004_valid() -> void:
 	print(node)
 
 
-## INVALID - SHOULD trigger GD3004
-func test_gd3004_invalid() -> void:
-	var sprite: Sprite2D = Node.new()  # 55:1-GD3004-OK
+## Implicit downcast - GDScript allows Node -> Sprite2D
+func test_gd3004_downcast() -> void:
+	var sprite: Sprite2D = Node.new()
 	print(sprite)
 
 
@@ -76,7 +82,7 @@ func test_gd3006_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3006
 func test_gd3006_invalid() -> void:
-	var x: CompletelyUnknownType  # 79:1-GD3006-OK
+	var x: CompletelyUnknownType  # 85:1-GD3006-OK
 	print(x)
 
 
@@ -95,7 +101,7 @@ func test_gd3006_nested_enum_valid() -> void:
 
 ## INVALID - unknown nested type (SHOULD trigger GD3006)
 func test_gd3006_nested_enum_invalid() -> void:
-	var x: FakeParent.FakeChild  # 98:1-GD3006-OK, 98:1-GD3006-OK
+	var x: FakeParent.FakeChild  # 104:1-GD3006-OK, 104:1-GD3006-OK
 	print(x)
 
 
@@ -112,7 +118,7 @@ func test_gd3009_valid() -> void:
 ## INVALID - SHOULD trigger GD3009
 func test_gd3009_invalid() -> void:
 	var node: Node = Node.new()
-	print(node.nonexistent_property_xyz)  # 115:7-GD3009-OK
+	print(node.nonexistent_property_xyz)  # 121:7-GD3009-OK
 
 
 ## SUPPRESSED - GD3009 suppressed
@@ -138,7 +144,7 @@ func test_gd3010_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3010
 func test_gd3010_invalid() -> void:
-	_take_int("not an int")  # 141:11-GD3010-OK
+	_take_int("not an int")  # 147:11-GD3010-OK
 
 
 ## SUPPRESSED - GD3010 suppressed
@@ -165,7 +171,7 @@ func test_gd3013_valid() -> void:
 ## INVALID - SHOULD trigger GD3013
 func test_gd3013_invalid() -> void:
 	var arr: Array = [1, 2, 3]
-	var val = arr["bad_key"]  # 168:11-GD3013-OK
+	var val = arr["bad_key"]  # 174:11-GD3013-OK
 	print(val)
 
 
@@ -190,14 +196,14 @@ func test_gd3014_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3014
 func test_gd3014_invalid() -> void:
-	var num: int = 42  # 193:10-GD7022-OK
-	var val = num[0]  # 194:11-GD3014-OK
+	var num: int = 42  # 199:10-GD7022-OK
+	var val = num[0]  # 200:11-GD3014-OK
 	print(val)
 
 
 ## SUPPRESSED - GD3014 suppressed
 func test_gd3014_suppressed() -> void:
-	var num: int = 100  # 200:10-GD7022-OK
+	var num: int = 100  # 206:10-GD7022-OK
 	# gd:ignore = GD3014
 	var val = num[0]  # Suppressed by gd:ignore above
 	print(val)
@@ -216,7 +222,7 @@ func test_gd3017_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3017
 func test_gd3017_invalid() -> void:
-	var arr: Array[NonExistentTypeXYZ] = []  # 219:16-GD3017-OK
+	var arr: Array[NonExistentTypeXYZ] = []  # 225:16-GD3017-OK
 	print(arr)
 
 
@@ -240,7 +246,7 @@ func test_gd3018_valid() -> void:
 
 ## INVALID - SHOULD trigger GD3018
 func test_gd3018_invalid() -> void:
-	var dict: Dictionary[Array, int] = {}  # 243:22-GD3018-OK
+	var dict: Dictionary[Array, int] = {}  # 249:22-GD3018-OK
 	print(dict)
 
 

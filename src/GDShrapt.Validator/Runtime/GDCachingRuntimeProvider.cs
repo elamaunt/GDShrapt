@@ -53,6 +53,7 @@ namespace GDShrapt.Reader
         public bool IsKnownType(string typeName)
         {
             if (typeName == null) return false;
+            typeName = NormalizeTypeName(typeName);
 
             if (_knownTypeCache.TryGetValue(typeName, out var result))
                 return result;
@@ -65,6 +66,7 @@ namespace GDShrapt.Reader
         public GDRuntimeTypeInfo GetTypeInfo(string typeName)
         {
             if (typeName == null) return null;
+            typeName = NormalizeTypeName(typeName);
 
             if (_typeCache.TryGetValue(typeName, out var result))
                 return result;
@@ -77,6 +79,7 @@ namespace GDShrapt.Reader
         public GDRuntimeMemberInfo GetMember(string typeName, string memberName)
         {
             if (typeName == null || memberName == null) return null;
+            typeName = NormalizeTypeName(typeName);
 
             var key = (typeName, memberName);
             if (_memberCache.TryGetValue(key, out var result))
@@ -90,6 +93,7 @@ namespace GDShrapt.Reader
         public string GetBaseType(string typeName)
         {
             if (typeName == null) return null;
+            typeName = NormalizeTypeName(typeName);
 
             if (_baseTypeCache.TryGetValue(typeName, out var result))
                 return result;
@@ -102,6 +106,8 @@ namespace GDShrapt.Reader
         public bool IsAssignableTo(string sourceType, string targetType)
         {
             if (sourceType == null || targetType == null) return false;
+            sourceType = NormalizeTypeName(sourceType);
+            targetType = NormalizeTypeName(targetType);
 
             var key = (sourceType, targetType);
             if (_assignableCache.TryGetValue(key, out var result))
@@ -244,6 +250,12 @@ namespace GDShrapt.Reader
         public GDExpression GetConstantInitializer(string typeName, string constantName)
         {
             return _inner.GetConstantInitializer(typeName, constantName);
+        }
+
+        private static string NormalizeTypeName(string typeName)
+        {
+            if (typeName == "GodotObject") return "Object";
+            return typeName;
         }
     }
 }

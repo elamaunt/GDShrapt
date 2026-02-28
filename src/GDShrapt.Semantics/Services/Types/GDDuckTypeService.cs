@@ -40,8 +40,23 @@ internal class GDDuckTypeService
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        var narrowingContext = FindNarrowingContextForNode(atLocation);
-        return narrowingContext?.GetConcreteType(variableName)?.DisplayName;
+        // Walk up the AST checking all narrowing contexts, not just the first one.
+        // A nested if may have its own narrowing context that doesn't include
+        // the outer if's type guard (e.g., `if event is Foo: if event.x == 1:`)
+        var current = (GDNode?)atLocation;
+        while (current != null)
+        {
+            if (_narrowingContexts.TryGetValue(current, out var context))
+            {
+                var concreteType = context.GetConcreteType(variableName);
+                if (concreteType != null)
+                    return concreteType.DisplayName;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
     }
 
     /// <summary>

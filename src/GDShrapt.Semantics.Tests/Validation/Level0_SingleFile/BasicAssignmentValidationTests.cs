@@ -1,6 +1,7 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics.Validator;
+using GDShrapt.TypesMap;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
@@ -111,6 +112,102 @@ func test():
             $"Variant should accept any type. Found: {FormatDiagnostics(typeDiagnostics)}");
     }
 
+    [TestMethod]
+    public void Assignment_BaseTypeToSubtype_NoDiagnostic()
+    {
+        // GDScript allows implicit downcasts: var x: Sprite2D = some_node
+        // This is common with load(), get_node(), get_collider() etc.
+        var code = @"
+extends Node
+func test():
+    var node: Node = Node.new()
+    var sprite: Sprite2D = node
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"GDScript allows implicit downcasts (Node -> Sprite2D). Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void Assignment_ObjectToSubtype_NoDiagnostic()
+    {
+        // GDScript allows implicit downcast from Object to any subclass
+        var code = @"
+extends Node
+func test():
+    var obj: Object = Object.new()
+    var node: Node = obj
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"GDScript allows implicit downcasts (Object -> Node). Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ClassVar_BaseTypeToSubtype_NoDiagnostic()
+    {
+        // Class-level variable with base type initializer should allow downcast
+        var code = @"
+extends Node
+var sprite: Sprite2D = $Sprite
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"Class var with downcast should be valid. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void Assignment_UnrelatedTypes_StillReports()
+    {
+        // Unrelated types should still report: String cannot be a Node
+        var code = @"
+extends Node
+func test():
+    var node: Node = ""hello""
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.IsTrue(typeDiagnostics.Count > 0,
+            "Unrelated types (String -> Node) should still report");
+    }
+
+    [TestMethod]
+    public void Reassignment_BaseToSubtype_NoDiagnostic()
+    {
+        // Reassigning base type to subtype variable (implicit downcast)
+        var code = @"
+extends Node
+func test():
+    var pawn: Sprite2D = Sprite2D.new()
+    var node: Node = Node.new()
+    pawn = node
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"GDScript allows implicit downcasts in reassignment. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void Reassignment_UnrelatedTypes_StillReports()
+    {
+        // Reassigning unrelated types should still report
+        var code = @"
+extends Node
+func test():
+    var node: Node = Node.new()
+    node = ""hello""
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.IsTrue(typeDiagnostics.Count > 0,
+            "Unrelated types (String -> Node) in reassignment should still report");
+    }
+
     #endregion
 
     #region Incorrect Assignments - Diagnostics Expected
@@ -148,9 +245,10 @@ func test():
     }
 
     [TestMethod]
-    public void Assignment_FloatToInt_ReportsMismatch()
+    public void Assignment_FloatToInt_NoDiagnostic()
     {
-        // float is NOT assignable to int (narrowing conversion)
+        // In GDScript, float→int is a valid implicit narrowing conversion (truncation)
+        // Godot silently truncates: var x: int = 3.14 → x = 3
         var code = @"
 func test():
     var x: int = 3.14
@@ -158,8 +256,8 @@ func test():
         var diagnostics = ValidateCode(code);
         var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
 
-        Assert.IsTrue(typeDiagnostics.Count > 0,
-            "Expected type mismatch for float->int (narrowing conversion)");
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"GDScript allows float->int (narrowing). Found: {FormatDiagnostics(typeDiagnostics)}");
     }
 
     [TestMethod]
@@ -236,7 +334,9 @@ var score: int = ""not a number""
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
 
-        var runtimeProvider = GDDefaultRuntimeProvider.Instance;
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null, null, null);
         scriptFile.Analyze(runtimeProvider);
         var semanticModel = scriptFile.SemanticModel!;
 
