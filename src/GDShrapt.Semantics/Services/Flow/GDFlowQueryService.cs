@@ -13,17 +13,17 @@ internal class GDFlowQueryService
     /// <summary>
     /// Delegate for getting flow-sensitive type at a location.
     /// </summary>
-    public delegate GDSemanticType? GetFlowTypeDelegate(GDMethodDeclaration method, string variableName, GDNode atLocation);
+    public delegate GDSemanticType? GetFlowTypeDelegate(GDNode methodScope, string variableName, GDNode atLocation);
 
     /// <summary>
     /// Delegate for getting flow variable type at a location.
     /// </summary>
-    public delegate GDFlowVariableType? GetFlowVariableTypeDelegate(GDMethodDeclaration method, string variableName, GDNode atLocation);
+    public delegate GDFlowVariableType? GetFlowVariableTypeDelegate(GDNode methodScope, string variableName, GDNode atLocation);
 
     /// <summary>
     /// Delegate for getting flow state at a location.
     /// </summary>
-    public delegate GDFlowState? GetFlowStateDelegate(GDMethodDeclaration method, GDNode atLocation);
+    public delegate GDFlowState? GetFlowStateDelegate(GDNode methodScope, GDNode atLocation);
 
     private readonly GetFlowTypeDelegate _getFlowType;
     private readonly GetFlowVariableTypeDelegate _getFlowVariableType;
@@ -51,11 +51,11 @@ internal class GDFlowQueryService
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        var method = atLocation.GetContainingMethod();
-        if (method == null)
+        var scope = atLocation.GetContainingMethodScope();
+        if (scope == null)
             return null;
 
-        return _getFlowType(method, variableName, atLocation);
+        return _getFlowType(scope, variableName, atLocation);
     }
 
     /// <summary>
@@ -66,11 +66,11 @@ internal class GDFlowQueryService
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        var method = atLocation.GetContainingMethod();
-        if (method == null)
+        var scope = atLocation.GetContainingMethodScope();
+        if (scope == null)
             return null;
 
-        return _getFlowVariableType(method, variableName, atLocation);
+        return _getFlowVariableType(scope, variableName, atLocation);
     }
 
     /// <summary>
@@ -82,11 +82,11 @@ internal class GDFlowQueryService
         if (atLocation == null)
             return null;
 
-        var method = atLocation.GetContainingMethod();
-        if (method == null)
+        var scope = atLocation.GetContainingMethodScope();
+        if (scope == null)
             return null;
 
-        return _getFlowState(method, atLocation);
+        return _getFlowState(scope, atLocation);
     }
 
     /// <summary>
@@ -94,11 +94,11 @@ internal class GDFlowQueryService
     /// </summary>
     public static GDVariableDeclarationStatement? FindLocalVariableDeclaration(GDExpression expr, string varName)
     {
-        var method = expr.GetContainingMethod();
-        if (method?.Statements == null) return null;
+        var scope = expr.GetContainingMethodScope();
+        if (scope == null) return null;
 
         var beforeLine = expr.StartLine;
-        return method.AllNodes.OfType<GDVariableDeclarationStatement>()
+        return scope.AllNodes.OfType<GDVariableDeclarationStatement>()
             .FirstOrDefault(v => v.Identifier?.Sequence == varName && v.StartLine < beforeLine);
     }
 

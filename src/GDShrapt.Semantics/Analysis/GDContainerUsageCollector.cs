@@ -26,11 +26,11 @@ internal class GDContainerUsageCollector : GDVisitor
     }
 
     /// <summary>
-    /// Collects container usage profiles from a method declaration.
+    /// Collects container usage profiles from a method-like scope.
     /// </summary>
-    public void Collect(GDMethodDeclaration method)
+    public void Collect(GDNode scope)
     {
-        method?.WalkIn(this);
+        scope?.WalkIn(this);
     }
 
     public override void Visit(GDVariableDeclarationStatement varDecl)

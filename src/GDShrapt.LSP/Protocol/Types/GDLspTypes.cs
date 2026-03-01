@@ -88,6 +88,25 @@ public class GDLspLocation
 }
 
 /// <summary>
+/// Represents a link between a source and a target location.
+/// </summary>
+public class GDLspLocationLink
+{
+    [JsonPropertyName("originSelectionRange")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GDLspRange? OriginSelectionRange { get; set; }
+
+    [JsonPropertyName("targetUri")]
+    public string TargetUri { get; set; } = string.Empty;
+
+    [JsonPropertyName("targetRange")]
+    public GDLspRange TargetRange { get; set; } = new();
+
+    [JsonPropertyName("targetSelectionRange")]
+    public GDLspRange TargetSelectionRange { get; set; } = new();
+}
+
+/// <summary>
 /// A text edit applicable to a text document.
 /// </summary>
 public class GDLspTextEdit

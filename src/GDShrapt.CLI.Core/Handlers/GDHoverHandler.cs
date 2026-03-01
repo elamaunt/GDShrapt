@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
@@ -9,77 +10,318 @@ namespace GDShrapt.CLI.Core;
 /// <summary>
 /// Handler for hover information.
 /// Extracts symbol info and documentation at a given position.
+/// Uses GDProjectSemanticModel as the unified entry point for all semantic queries.
 /// </summary>
 public class GDHoverHandler : IGDHoverHandler
 {
-    protected readonly GDScriptProject _project;
+    protected readonly GDProjectSemanticModel _projectModel;
 
-    public GDHoverHandler(GDScriptProject project)
+    public GDHoverHandler(GDProjectSemanticModel projectModel)
     {
-        _project = project;
+        _projectModel = projectModel;
     }
 
     /// <inheritdoc />
     public virtual GDHoverInfo? GetHover(string filePath, int line, int column)
     {
-        var script = _project.GetScript(filePath);
-        var semanticModel = script?.SemanticModel;
+        var script = _projectModel.Project.GetScript(filePath);
+        var semanticModel = script != null ? _projectModel.GetSemanticModel(script) : null;
         if (semanticModel == null || script?.Class == null)
             return null;
 
-        // Find the node at the position
-        var node = semanticModel.GetNodeAtPosition(line, column);
+        // Convert 1-based CLI position to 0-based AST position
+        var node = semanticModel.GetNodeAtPosition(line - 1, column - 1);
         if (node == null)
             return null;
 
-        // Get the symbol for this node (via SemanticModel per Rule 11)
         var symbol = semanticModel.GetSymbolForNode(node);
         if (symbol == null)
             return null;
 
-        // Build hover content
-        var sb = new StringBuilder();
-        sb.Append("```gdscript\n");
-
-        // Add symbol kind and name
-        sb.Append(GetSymbolKindString(symbol));
-        sb.Append(' ');
-        sb.Append(symbol.Name);
-
-        // Add type if available
-        if (symbol.TypeNode != null)
-        {
-            sb.Append(": ");
-            sb.Append(symbol.TypeNode.ToString());
-        }
-        else if (!string.IsNullOrEmpty(symbol.TypeName))
-        {
-            sb.Append(": ");
-            sb.Append(symbol.TypeName);
-        }
-
-        sb.Append("\n```");
-
-        // Add documentation if available
+        var content = BuildHoverContent(symbol, semanticModel, node);
         var docComment = ExtractDocComment(symbol.DeclarationNode);
+
         if (!string.IsNullOrEmpty(docComment))
         {
-            sb.Append("\n\n---\n\n");
-            sb.Append(docComment);
+            content += "\n\n---\n\n";
+            content += docComment;
         }
+
+        // Use identifier token for hover range (just the name, not the entire declaration)
+        var posToken = symbol.PositionToken;
 
         return new GDHoverInfo
         {
-            Content = sb.ToString(),
+            Content = content,
             Kind = symbol.Kind,
             SymbolName = symbol.Name,
             TypeName = symbol.TypeName ?? symbol.TypeNode?.ToString(),
             Documentation = docComment,
-            StartLine = symbol.DeclarationNode?.StartLine,
-            StartColumn = symbol.DeclarationNode?.StartColumn,
-            EndLine = symbol.DeclarationNode?.EndLine,
-            EndColumn = symbol.DeclarationNode?.EndColumn
+            StartLine = posToken != null ? posToken.StartLine + 1 : null,
+            StartColumn = posToken?.StartColumn,
+            EndLine = posToken != null ? posToken.StartLine + 1 : null,
+            EndColumn = posToken != null ? posToken.StartColumn + symbol.Name.Length : null
         };
+    }
+
+    /// <summary>
+    /// Builds rich hover content based on symbol kind.
+    /// Shows declared type, inferred type, flow narrowing, union types, and duck-type constraints.
+    /// </summary>
+    protected virtual string BuildHoverContent(Semantics.GDSymbolInfo symbol, GDSemanticModel semanticModel, GDNode node)
+    {
+        return symbol.Kind switch
+        {
+            GDSymbolKind.Method => BuildMethodHover(symbol),
+            GDSymbolKind.Signal => BuildSignalHover(symbol),
+            GDSymbolKind.Class => BuildClassHover(symbol),
+            GDSymbolKind.Enum => BuildEnumHover(symbol),
+            GDSymbolKind.EnumValue => BuildEnumValueHover(symbol),
+            _ => BuildVariableHover(symbol, semanticModel, node)
+        };
+    }
+
+    private string BuildMethodHover(Semantics.GDSymbolInfo symbol)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+
+        if (symbol.IsStatic)
+            sb.Append("static ");
+
+        sb.Append("func ");
+        sb.Append(symbol.Name);
+        sb.Append('(');
+
+        if (symbol.Parameters != null && symbol.Parameters.Count > 0)
+        {
+            var paramParts = new List<string>();
+            foreach (var param in symbol.Parameters)
+            {
+                var part = param.Name;
+                if (!string.IsNullOrEmpty(param.TypeName))
+                    part += ": " + param.TypeName;
+                if (param.HasDefaultValue)
+                    part += " = ...";
+                paramParts.Add(part);
+            }
+            sb.Append(string.Join(", ", paramParts));
+        }
+
+        sb.Append(')');
+
+        if (!string.IsNullOrEmpty(symbol.ReturnTypeName))
+        {
+            sb.Append(" -> ");
+            sb.Append(symbol.ReturnTypeName);
+        }
+
+        sb.Append("\n```");
+
+        if (!string.IsNullOrEmpty(symbol.DeclaringTypeName))
+        {
+            sb.Append("\n\n*");
+            sb.Append(symbol.DeclaringTypeName);
+            sb.Append('*');
+        }
+
+        return sb.ToString();
+    }
+
+    private string BuildSignalHover(Semantics.GDSymbolInfo symbol)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+        sb.Append("signal ");
+        sb.Append(symbol.Name);
+
+        if (symbol.Parameters != null && symbol.Parameters.Count > 0)
+        {
+            sb.Append('(');
+            var paramParts = new List<string>();
+            foreach (var param in symbol.Parameters)
+            {
+                var part = param.Name;
+                if (!string.IsNullOrEmpty(param.TypeName))
+                    part += ": " + param.TypeName;
+                paramParts.Add(part);
+            }
+            sb.Append(string.Join(", ", paramParts));
+            sb.Append(')');
+        }
+
+        sb.Append("\n```");
+
+        if (!string.IsNullOrEmpty(symbol.DeclaringTypeName))
+        {
+            sb.Append("\n\n*");
+            sb.Append(symbol.DeclaringTypeName);
+            sb.Append('*');
+        }
+
+        return sb.ToString();
+    }
+
+    private string BuildClassHover(Semantics.GDSymbolInfo symbol)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+        sb.Append("class ");
+        sb.Append(symbol.Name);
+
+        if (!string.IsNullOrEmpty(symbol.TypeName))
+        {
+            sb.Append(" extends ");
+            sb.Append(symbol.TypeName);
+        }
+
+        sb.Append("\n```");
+        return sb.ToString();
+    }
+
+    private string BuildEnumHover(Semantics.GDSymbolInfo symbol)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+        sb.Append("enum ");
+        sb.Append(symbol.Name);
+        sb.Append("\n```");
+        return sb.ToString();
+    }
+
+    private string BuildEnumValueHover(Semantics.GDSymbolInfo symbol)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+
+        if (!string.IsNullOrEmpty(symbol.DeclaringTypeName))
+        {
+            sb.Append(symbol.DeclaringTypeName);
+            sb.Append('.');
+        }
+        sb.Append(symbol.Name);
+
+        sb.Append("\n```");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Builds hover content for variable-like symbols (variables, constants, parameters, iterators, properties, match bindings).
+    /// Shows declared type, inferred type, initializer, flow narrowing, union types, and duck-type constraints.
+    /// </summary>
+    private string BuildVariableHover(Semantics.GDSymbolInfo symbol, GDSemanticModel semanticModel, GDNode node)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+
+        sb.Append(GetSymbolKindString(symbol));
+        sb.Append(' ');
+        sb.Append(symbol.Name);
+
+        // Get declared type
+        var declaredType = symbol.TypeNode?.ToString() ?? symbol.TypeName;
+
+        // Get inferred type from flow analysis
+        string? inferredType = null;
+        string? narrowedType = null;
+        GDFlowVariableType? flowVarType = null;
+
+        if (node is GDIdentifierExpression identExpr)
+        {
+            var varName = symbol.Name;
+            flowVarType = semanticModel.GetFlowVariableType(varName, node);
+
+            if (flowVarType != null)
+            {
+                if (flowVarType.IsNarrowed && flowVarType.NarrowedFromType != null)
+                    narrowedType = flowVarType.NarrowedFromType.DisplayName;
+
+                // Get the effective inferred type (could be union)
+                inferredType = flowVarType.EffectiveTypeFormatted;
+
+                if (inferredType == "Variant" || inferredType == declaredType)
+                    inferredType = null;
+            }
+        }
+
+        // Show declared type
+        if (!string.IsNullOrEmpty(declaredType))
+        {
+            sb.Append(": ");
+            sb.Append(declaredType);
+        }
+
+        // Show initializer for constants
+        if (symbol.Kind == GDSymbolKind.Constant && symbol.DeclarationNode is GDVariableDeclaration constDecl)
+        {
+            var initializer = constDecl.Initializer;
+            if (initializer != null)
+            {
+                sb.Append(" = ");
+                sb.Append(initializer.ToString());
+            }
+        }
+
+        sb.Append("\n```");
+
+        // Show inferred type if different from declared
+        var annotations = new List<string>();
+
+        if (narrowedType != null)
+        {
+            annotations.Add($"narrowed to: `{narrowedType}`");
+        }
+        else if (inferredType != null)
+        {
+            annotations.Add($"inferred: `{inferredType}`");
+        }
+
+        // Show duck-type constraints
+        if (flowVarType?.DuckType != null)
+        {
+            var duckInfo = BuildDuckTypeInfo(flowVarType.DuckType);
+            if (!string.IsNullOrEmpty(duckInfo))
+                annotations.Add(duckInfo);
+        }
+
+        // Show declaring type
+        if (!string.IsNullOrEmpty(symbol.DeclaringTypeName))
+            annotations.Add($"*{symbol.DeclaringTypeName}*");
+
+        if (annotations.Count > 0)
+        {
+            sb.Append("\n\n");
+            sb.Append(string.Join("  \n", annotations));
+        }
+
+        return sb.ToString();
+    }
+
+    private static string? BuildDuckTypeInfo(GDDuckType duckType)
+    {
+        var parts = new List<string>();
+
+        foreach (var method in duckType.RequiredMethods.OrderBy(m => m.Key))
+            parts.Add($".{method.Key}()");
+
+        foreach (var prop in duckType.RequiredProperties.Keys.OrderBy(p => p))
+            parts.Add($".{prop}");
+
+        foreach (var signal in duckType.RequiredSignals.OrderBy(s => s))
+            parts.Add($".{signal}");
+
+        if (parts.Count == 0)
+            return null;
+
+        var result = "duck type: `{ " + string.Join(", ", parts) + " }`";
+
+        if (duckType.PossibleTypes.Count > 0)
+        {
+            var possibleTypes = string.Join(" | ", duckType.PossibleTypes.Select(t => t.DisplayName).OrderBy(t => t));
+            result += $"  \npossible types: `{possibleTypes}`";
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -89,15 +331,17 @@ public class GDHoverHandler : IGDHoverHandler
     {
         return symbol.Kind switch
         {
-            Abstractions.GDSymbolKind.Variable => symbol.IsStatic ? "const" : "var",
-            Abstractions.GDSymbolKind.Constant => "const",
-            Abstractions.GDSymbolKind.Method => "func",
-            Abstractions.GDSymbolKind.Signal => "signal",
-            Abstractions.GDSymbolKind.Class => "class",
-            Abstractions.GDSymbolKind.Enum => "enum",
-            Abstractions.GDSymbolKind.EnumValue => "enum value",
-            Abstractions.GDSymbolKind.Parameter => "param",
-            Abstractions.GDSymbolKind.Iterator => "var",
+            GDSymbolKind.Variable => symbol.IsStatic ? "const" : "var",
+            GDSymbolKind.Constant => "const",
+            GDSymbolKind.Property => symbol.IsStatic ? "const" : "var",
+            GDSymbolKind.Method => "func",
+            GDSymbolKind.Signal => "signal",
+            GDSymbolKind.Class => "class",
+            GDSymbolKind.Enum => "enum",
+            GDSymbolKind.EnumValue => "enum value",
+            GDSymbolKind.Parameter => "param",
+            GDSymbolKind.Iterator => "var",
+            GDSymbolKind.MatchCaseBinding => "var",
             _ => "symbol"
         };
     }
@@ -111,11 +355,8 @@ public class GDHoverHandler : IGDHoverHandler
         if (declaration == null)
             return null;
 
-        // In GDScript, doc comments are ## lines above the declaration
-        // We look for comment tokens preceding the declaration
         var docLines = new List<string>();
 
-        // Find the first token of the declaration
         GDSyntaxToken? firstToken = null;
         foreach (var token in declaration.AllTokens)
         {
@@ -126,7 +367,6 @@ public class GDHoverHandler : IGDHoverHandler
         if (firstToken == null)
             return null;
 
-        // Walk backwards through tokens looking for ## comments
         var currentToken = firstToken.GlobalPreviousToken;
         while (currentToken != null)
         {
@@ -135,13 +375,11 @@ public class GDHoverHandler : IGDHoverHandler
                 var text = comment.ToString().Trim();
                 if (text.StartsWith("##"))
                 {
-                    // Remove the ## prefix and add to doc
                     var docText = text.Substring(2).TrimStart();
                     docLines.Insert(0, docText);
                 }
                 else
                 {
-                    // Regular comment (not doc comment) - stop
                     break;
                 }
             }
@@ -151,7 +389,6 @@ public class GDHoverHandler : IGDHoverHandler
             }
             else
             {
-                // Any other token means we've passed the doc comments
                 break;
             }
 

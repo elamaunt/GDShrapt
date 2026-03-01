@@ -181,9 +181,9 @@ public class GDValidateCommandTests
 
         // Assert
         result.Should().Be(2); // Errors
-        // Should contain either GD0001 or GD0002 (parse errors)
+        // Should contain either GD0001 or GD1001 (invalid token from validator)
         var outputText = output.ToString();
-        (outputText.Contains("GD0001") || outputText.Contains("GD0002")).Should().BeTrue();
+        (outputText.Contains("GD0001") || outputText.Contains("GD1001")).Should().BeTrue();
     }
 
     [TestMethod]
@@ -204,9 +204,9 @@ public class GDValidateCommandTests
         await command.ExecuteAsync();
 
         // Assert
-        // Invalid tokens (GD0002) should NOT be reported when CheckSyntax is disabled
+        // Invalid tokens (GD1001) should NOT be reported when CheckSyntax is disabled
         var outputText = output.ToString();
-        outputText.Should().NotContain("GD0002");
+        outputText.Should().NotContain("GD1001");
     }
 
     // === Basic vs All checks ===

@@ -267,13 +267,13 @@ public class GDSymbolReferenceCollector
         }
 
         // Step 3: Signal connections from SignalConnectionRegistry
-        if (_projectModel != null)
+        if (_projectModel != null && isClassMember)
         {
             CollectSignalConnectionReferences(symbol.Name, refs, seen);
         }
 
         // Step 4: Contract string references (has_method, emit_signal, call, etc.)
-        if (_projectModel != null)
+        if (_projectModel != null && isClassMember)
         {
             CollectContractStringReferences(symbol.Name, refs, seen);
         }
@@ -327,6 +327,12 @@ public class GDSymbolReferenceCollector
             var isOverride = hasLocalDeclaration && IsOverrideDeclaration(script, localSymbol);
             var isInherited = !hasLocalDeclaration && HasInheritedSymbol(script, symbol.Name);
 
+            // Skip scripts that have their own independent declaration of the same symbol.
+            // If a script declares the same name but it's NOT an override and NOT the original
+            // declaring script, it's an unrelated symbol (e.g., different class with same var name).
+            if (isClassMember && hasLocalDeclaration && !isOverride && script != declaringScript)
+                continue;
+
             var localRefs = model.GetReferencesTo(localSymbol);
             bool foundDeclaration = false;
 
@@ -339,19 +345,21 @@ public class GDSymbolReferenceCollector
                 if (node is GDStringExpression or GDStringNameExpression)
                     continue;
 
-                var line = node.StartLine;
-                var col = node.StartColumn;
-                if (!seen.Add((script.FullPath, line, col)))
-                    continue;
-
                 var isDecl = node == localSymbol.DeclarationNode
                           || node == localSymbol.DeclarationIdentifier;
                 // Also detect declaration by position match (in case of different AST node instances)
                 if (!isDecl && hasLocalDeclaration && localSymbol.DeclarationIdentifier != null)
                 {
-                    isDecl = line == localSymbol.DeclarationIdentifier.StartLine
-                          && col == localSymbol.DeclarationIdentifier.StartColumn;
+                    isDecl = node.StartLine == localSymbol.DeclarationIdentifier.StartLine
+                          && node.StartColumn == localSymbol.DeclarationIdentifier.StartColumn;
                 }
+
+                // For declarations, use identifier position so highlighting covers the name, not the keyword
+                var identToken = reference.IdentifierToken as GDSyntaxToken;
+                var line = (isDecl && identToken != null) ? identToken.StartLine : node.StartLine;
+                var col = (isDecl && identToken != null) ? identToken.StartColumn : node.StartColumn;
+                if (!seen.Add((script.FullPath, line, col)))
+                    continue;
                 if (isDecl)
                 {
                     foundDeclaration = true;
@@ -390,9 +398,9 @@ public class GDSymbolReferenceCollector
                 // For local variable statements, extract identifier directly
                 if (declIdent == null && localSymbol.DeclarationNode is GDVariableDeclarationStatement varDeclStmt)
                     declIdent = varDeclStmt.Identifier;
-                // Use declaration node position (e.g., "func" keyword) for line/column
-                var declLine = localSymbol.DeclarationNode.StartLine;
-                var declCol = localSymbol.DeclarationNode.StartColumn;
+                // Use identifier position when available, otherwise fall back to declaration node
+                var declLine = declIdent?.StartLine ?? localSymbol.DeclarationNode.StartLine;
+                var declCol = declIdent?.StartColumn ?? localSymbol.DeclarationNode.StartColumn;
                 if (seen.Add((script.FullPath, declLine, declCol)))
                 {
                     // Also mark the identifier position to prevent cross-file duplicates

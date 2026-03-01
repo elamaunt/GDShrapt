@@ -1,5 +1,6 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using GDShrapt.Semantics.Validator;
 using GDShrapt.Validator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -142,7 +143,79 @@ var x: CompletelyFakeType
             "CompletelyFakeType should still report GD3006");
     }
 
+    #region Cross-File Enum Value Access (GD3009)
+
+    [TestMethod]
+    public void CrossFileEnumValue_QualifiedAccess_NoGD3009()
+    {
+        var battlerAnimCode = @"
+class_name BattlerAnim
+extends Node
+
+enum Direction {
+    LEFT = 0,
+    RIGHT = 1
+}
+";
+        var consumerCode = @"
+extends Node
+
+var is_player: bool = true
+
+func test():
+    var facing = BattlerAnim.Direction.LEFT if is_player else BattlerAnim.Direction.RIGHT
+";
+        var diagnostics = ValidateCrossFileWithSemanticValidator(battlerAnimCode, consumerCode);
+        var gd3009 = diagnostics.Where(d => d.Code == GDDiagnosticCode.PropertyNotFound).ToList();
+
+        Assert.AreEqual(0, gd3009.Count,
+            $"BattlerAnim.Direction.LEFT should not report GD3009. Found: {FormatDiagnostics(gd3009)}");
+    }
+
+    #endregion
+
     #region Helpers
+
+    private static List<GDDiagnostic> ValidateCrossFileWithSemanticValidator(
+        string providerCode, string consumerCode)
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "GDShrapt_Test_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            File.WriteAllText(Path.Combine(tempDir, "provider.gd"), providerCode);
+            File.WriteAllText(Path.Combine(tempDir, "consumer.gd"), consumerCode);
+            File.WriteAllText(Path.Combine(tempDir, "project.godot"), "[gd_resource]\n");
+
+            var context = new GDDefaultProjectContext(tempDir);
+            var project = new GDScriptProject(context);
+            project.LoadScripts();
+            project.AnalyzeAll();
+
+            var consumerScript = project.ScriptFiles.FirstOrDefault(s =>
+                s.FullPath != null &&
+                Path.GetFileName(s.FullPath).Equals("consumer.gd", StringComparison.OrdinalIgnoreCase));
+
+            Assert.IsNotNull(consumerScript, "consumer.gd script not found in project");
+            Assert.IsNotNull(consumerScript.Class, "consumer.gd should have a class declaration");
+            Assert.IsNotNull(consumerScript.SemanticModel, "consumer.gd should have a semantic model");
+
+            var options = new GDSemanticValidatorOptions
+            {
+                CheckTypes = true,
+                CheckMemberAccess = true,
+                CheckArgumentTypes = true
+            };
+            var validator = new GDSemanticValidator(consumerScript.SemanticModel, options);
+            var result = validator.Validate(consumerScript.Class);
+            return result.Diagnostics.ToList();
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
 
     private static List<GDDiagnostic> ValidateCrossFile(string constantsCode, string consumerCode)
     {

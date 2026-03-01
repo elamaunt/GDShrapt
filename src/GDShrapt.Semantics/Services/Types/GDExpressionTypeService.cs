@@ -101,10 +101,10 @@ internal class GDExpressionTypeService
                     return containerType.ToString();
                 }
 
-                var method = expression.GetContainingMethod();
-                if (method != null)
+                var scope = expression.GetContainingMethodScope();
+                if (scope != null)
                 {
-                    var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+                    var flowAnalyzer = GetOrCreateFlowAnalyzer(scope);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
                     if (flowType != null && !flowType.IsVariant)
                         return flowType.DisplayName;
@@ -175,10 +175,10 @@ internal class GDExpressionTypeService
             var varName = identExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName))
             {
-                var method = expression.GetContainingMethod();
-                if (method != null)
+                var scope = expression.GetContainingMethodScope();
+                if (scope != null)
                 {
-                    var flowAnalyzer = GetOrCreateFlowAnalyzer(method);
+                    var flowAnalyzer = GetOrCreateFlowAnalyzer(scope);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
                     if (flowType != null && !flowType.IsVariant)
                         return flowType.DisplayName;
@@ -204,11 +204,11 @@ internal class GDExpressionTypeService
                     return "Callable";
 
                 // Fall back to initializer
-                if (method != null)
+                if (scope != null)
                 {
                     if (symbol?.DeclarationNode is GDVariableDeclarationStatement localVarDecl &&
                         localVarDecl.Initializer != null &&
-                        !(GetOrCreateFlowAnalyzer(method)?.HasReassignment(varName) ?? false))
+                        !(GetOrCreateFlowAnalyzer(scope)?.HasReassignment(varName) ?? false))
                     {
                         var initType = GetExpressionType(localVarDecl.Initializer);
                         if (!string.IsNullOrEmpty(initType) && initType != "Variant")
@@ -519,13 +519,13 @@ internal class GDExpressionTypeService
         return new GDSingleTypeNode { Type = new GDType { Sequence = typeName } };
     }
 
-    private GDFlowAnalyzer? GetOrCreateFlowAnalyzer(GDMethodDeclaration method)
+    private GDFlowAnalyzer? GetOrCreateFlowAnalyzer(GDNode methodScope)
     {
-        if (method == null)
+        if (methodScope == null)
             return null;
 
         return _flowRegistry.GetOrCreateFlowAnalyzer(
-            method,
+            methodScope,
             _typeEngine,
             GetExpressionTypeWithoutFlow,
             _getOnreadyVariables ?? (() => Enumerable.Empty<string>()));

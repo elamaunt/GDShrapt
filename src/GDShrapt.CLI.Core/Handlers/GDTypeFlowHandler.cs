@@ -92,8 +92,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         if (script?.SemanticModel == null || script.Class == null)
             return null;
 
-        // Find the node at the position
-        var astNode = script.SemanticModel.GetNodeAtPosition(line, column);
+        // Convert 1-based CLI position to 0-based AST position
+        var astNode = script.SemanticModel.GetNodeAtPosition(line - 1, column - 1);
         if (astNode == null)
             return null;
 
@@ -1357,7 +1357,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         if (script?.SemanticModel == null || script.Class == null)
             return null;
 
-        var astNode = script.SemanticModel.GetNodeAtPosition(line, column);
+        // Convert 1-based CLI position to 0-based AST position
+        var astNode = script.SemanticModel.GetNodeAtPosition(line - 1, column - 1);
         if (astNode == null)
             return null;
 

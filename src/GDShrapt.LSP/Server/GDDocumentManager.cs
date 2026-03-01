@@ -12,10 +12,16 @@ public class GDDocumentManager
 {
     private readonly ConcurrentDictionary<string, GDOpenDocument> _documents = new();
     private readonly GDScriptProject _project;
+    private GDProjectSemanticModel? _projectModel;
 
     public GDDocumentManager(GDScriptProject project)
     {
         _project = project;
+    }
+
+    public void SetProjectModel(GDProjectSemanticModel? projectModel)
+    {
+        _projectModel = projectModel;
     }
 
     /// <summary>
@@ -29,7 +35,11 @@ public class GDDocumentManager
 
         // Get the script and reload with new content
         var script = _project.GetScript(filePath);
-        script?.Reload(content);
+        if (script != null)
+        {
+            script.Reload(content);
+            InvalidateSemanticModel(script);
+        }
     }
 
     /// <summary>
@@ -44,7 +54,40 @@ public class GDDocumentManager
 
             // Reload the script with new content
             var script = _project.GetScript(doc.FilePath);
-            script?.Reload(content);
+            if (script != null)
+            {
+                script.Reload(content);
+                InvalidateSemanticModel(script);
+            }
+        }
+    }
+
+    private void InvalidateSemanticModel(GDScriptFile script)
+    {
+        if (script.Class == null)
+            return;
+
+        var filePath = script.FullPath;
+        if (string.IsNullOrEmpty(filePath))
+            return;
+
+        if (_projectModel != null)
+        {
+            _projectModel.InvalidateFile(filePath);
+            // Eagerly rebuild so the model is ready for next request
+            _projectModel.GetSemanticModel(script);
+        }
+        else
+        {
+            // Fallback: rebuild per-file model directly
+            try
+            {
+                script.Analyze(_project.CreateRuntimeProvider());
+            }
+            catch
+            {
+                // Best effort
+            }
         }
     }
 
@@ -57,7 +100,11 @@ public class GDDocumentManager
         {
             // Reload from disk
             var script = _project.GetScript(doc.FilePath);
-            script?.Reload();
+            if (script != null)
+            {
+                script.Reload();
+                InvalidateSemanticModel(script);
+            }
         }
     }
 

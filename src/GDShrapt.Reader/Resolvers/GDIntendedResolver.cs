@@ -345,6 +345,21 @@ namespace GDShrapt.Reader
             }
         }
 
+        protected void PopAndPassWithBufferedIndentation(GDReadingState state, char c)
+        {
+            state.Pop();
+
+            for (int i = 0; i < _sequenceBuilder.Length; i++)
+            {
+                state.AdvanceInputPosition();
+                state.PassChar(_sequenceBuilder[i]);
+            }
+
+            state.PassChar(c);
+        }
+
+        protected bool HasBufferedIndentation => _sequenceBuilder.Length > 0 && !_intendationTokensSent;
+
         protected void PassIntendationSequence(GDReadingState state)
         {
             if (_intendationTokensSent)

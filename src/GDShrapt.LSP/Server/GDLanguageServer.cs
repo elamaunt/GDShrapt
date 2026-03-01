@@ -83,7 +83,7 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnRequest<GDExecuteCommandParams, object?>("workspace/executeCommand", HandleExecuteCommandAsync);
 
         // Language features
-        _transport.OnRequest<GDDefinitionParams, GDLspLocation?>("textDocument/definition", HandleDefinitionAsync);
+        _transport.OnRequest<GDDefinitionParams, GDLspLocationLink[]?>("textDocument/definition", HandleDefinitionAsync);
         _transport.OnRequest<GDReferencesParams, GDLspLocation[]?>("textDocument/references", HandleReferencesAsync);
         _transport.OnRequest<GDHoverParams, GDLspHover?>("textDocument/hover", HandleHoverAsync);
         _transport.OnRequest<GDDocumentSymbolParams, GDLspDocumentSymbol[]?>("textDocument/documentSymbol", HandleDocumentSymbolAsync);
@@ -96,6 +96,7 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnRequest<GDCodeActionParams, GDLspCodeAction[]?>("textDocument/codeAction", HandleCodeActionAsync);
         _transport.OnRequest<GDSignatureHelpParams, GDLspSignatureHelp?>("textDocument/signatureHelp", HandleSignatureHelpAsync);
         _transport.OnRequest<GDInlayHintParams, GDLspInlayHint[]?>("textDocument/inlayHint", HandleInlayHintAsync);
+        _transport.OnRequest<GDSemanticTokensParams, GDSemanticTokens?>("textDocument/semanticTokens/full", HandleSemanticTokensFullAsync);
     }
 
     #region Lifecycle Handlers
@@ -144,6 +145,7 @@ public class GDLanguageServer : IGDLanguageServer
                     try
                     {
                         _registry.LoadModules(project, new GDBaseModule());
+                        _documentManager.SetProjectModel(_registry.GetService<GDProjectSemanticModel>());
                         _ = _logger?.InfoAsync($"[initialize] registry initialized successfully");
                     }
                     catch (Exception moduleEx)
@@ -208,6 +210,15 @@ public class GDLanguageServer : IGDLanguageServer
                 {
                     ResolveProvider = false
                 },
+                SemanticTokensProvider = new GDSemanticTokensOptions
+                {
+                    Legend = new GDSemanticTokensLegend
+                    {
+                        TokenTypes = GDSemanticTokensHandler.TokenTypes,
+                        TokenModifiers = GDSemanticTokensHandler.TokenModifiers
+                    },
+                    Full = true
+                },
                 WorkspaceSymbolProvider = true,
                 ExecuteCommandProvider = new GDExecuteCommandOptions
                 {
@@ -262,7 +273,6 @@ public class GDLanguageServer : IGDLanguageServer
                     _analysisComplete?.TrySetResult(true);
                 }
 
-                // Publish initial diagnostics for all loaded scripts
                 if (_diagnosticPublisher != null && _documentManager != null)
                 {
                     await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
@@ -485,20 +495,31 @@ public class GDLanguageServer : IGDLanguageServer
 
     #region Language Feature Handlers
 
-    private Task<GDLspLocation?> HandleDefinitionAsync(GDDefinitionParams @params, CancellationToken ct)
+    private async Task<GDLspLocationLink[]?> HandleDefinitionAsync(GDDefinitionParams @params, CancellationToken ct)
     {
         if (_traceLevel >= GDLspTraceLevel.Messages)
             _ = TraceAsync("textDocument/definition", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
 
         if (_registry == null)
-            return Task.FromResult<GDLspLocation?>(null);
+            return null;
 
         var coreHandler = _registry.GetService<IGDGoToDefHandler>();
         if (coreHandler == null)
-            return Task.FromResult<GDLspLocation?>(null);
+            return null;
 
         var handler = new GDDefinitionHandler(coreHandler);
-        return handler.HandleAsync(@params, ct);
+        var (links, infoMessage) = await handler.HandleAsync(@params, ct);
+
+        if (infoMessage != null && _transport != null)
+        {
+            await _transport.SendNotificationAsync("window/showMessage", new GDShowMessageParams
+            {
+                Type = GDLspMessageType.Info,
+                Message = infoMessage
+            });
+        }
+
+        return links;
     }
 
     private Task<GDLspLocation[]?> HandleReferencesAsync(GDReferencesParams @params, CancellationToken ct)
@@ -619,9 +640,6 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDDocumentHighlight[]?> HandleDocumentHighlightAsync(GDDocumentHighlightParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/documentHighlight", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
-
         if (_registry == null)
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
@@ -712,6 +730,26 @@ public class GDLanguageServer : IGDLanguageServer
 
         var handler = new GDLspInlayHintHandler(coreHandler);
         return handler.HandleAsync(@params, ct);
+    }
+
+    private async Task<GDSemanticTokens?> HandleSemanticTokensFullAsync(GDSemanticTokensParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/semanticTokens/full",
+                _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
+        if (_project == null)
+            return null;
+
+        var projectModel = _registry?.GetService<GDProjectSemanticModel>();
+        var handler = new GDSemanticTokensHandler(_project, projectModel);
+        var result = await handler.HandleAsync(@params, ct);
+
+        if (_traceLevel >= GDLspTraceLevel.Verbose && result != null)
+            _ = TraceAsync("semanticTokens/full response",
+                $"tokens={result.Data.Length / 5}, data.length={result.Data.Length}");
+
+        return result;
     }
 
     #endregion

@@ -76,7 +76,7 @@ var config: Dictionary:
 	get:
 		return _data.duplicate()  # Return copy
 	set(value):
-		if value is Dictionary:
+		if value is Dictionary:  # 79:5-GD7010-OK
 			_data = value.duplicate()
 
 

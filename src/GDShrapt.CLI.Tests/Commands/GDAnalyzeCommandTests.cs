@@ -252,7 +252,7 @@ public class GDAnalyzeCommandTests
     }
 
     [TestMethod]
-    public async Task ExecuteAsync_SyntaxError_ReportsGD0002()
+    public async Task ExecuteAsync_SyntaxError_ReportsGD1001()
     {
         // Arrange
         _tempProjectPath = TestProjectHelper.CreateProjectWithSyntaxError();
@@ -265,9 +265,9 @@ public class GDAnalyzeCommandTests
 
         // Assert
         var outputText = output.ToString();
-        // Should report either GD0001 (parse failure) or GD0002 (invalid token)
-        (outputText.Contains("GD0001") || outputText.Contains("GD0002")).Should().BeTrue(
-            $"Expected GD0001 or GD0002 in output: {outputText}");
+        // Should report either GD0001 (parse failure) or GD1001 (invalid token from validator)
+        (outputText.Contains("GD0001") || outputText.Contains("GD1001")).Should().BeTrue(
+            $"Expected GD0001 or GD1001 in output: {outputText}");
     }
 
     // === Clean project test ===

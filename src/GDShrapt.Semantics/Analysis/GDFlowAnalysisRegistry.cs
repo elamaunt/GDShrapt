@@ -10,21 +10,21 @@ namespace GDShrapt.Semantics;
 /// </summary>
 internal class GDFlowAnalysisRegistry
 {
-    // Flow-sensitive type analysis (SSA-style)
-    private readonly Dictionary<GDMethodDeclaration, GDFlowAnalyzer> _methodFlowAnalyzers = new();
+    // Flow-sensitive type analysis (SSA-style) — keyed by method-like scope (method or accessor body)
+    private readonly Dictionary<GDNode, GDFlowAnalyzer> _methodFlowAnalyzers = new();
 
     /// <summary>
-    /// Gets the flow analyzer for a method.
+    /// Gets the flow analyzer for a method-like scope.
     /// </summary>
-    public GDFlowAnalyzer? GetFlowAnalyzer(GDMethodDeclaration method)
+    public GDFlowAnalyzer? GetFlowAnalyzer(GDNode methodScope)
     {
-        return _methodFlowAnalyzers.TryGetValue(method, out var analyzer) ? analyzer : null;
+        return _methodFlowAnalyzers.TryGetValue(methodScope, out var analyzer) ? analyzer : null;
     }
 
     /// <summary>
     /// Gets all registered flow analyzers.
     /// </summary>
-    public IEnumerable<KeyValuePair<GDMethodDeclaration, GDFlowAnalyzer>> GetAllFlowAnalyzers()
+    public IEnumerable<KeyValuePair<GDNode, GDFlowAnalyzer>> GetAllFlowAnalyzers()
     {
         return _methodFlowAnalyzers;
     }
@@ -37,12 +37,12 @@ internal class GDFlowAnalysisRegistry
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        var method = atLocation?.GetContainingMethod();
-        if (method == null)
+        var scope = atLocation?.GetContainingMethodScope();
+        if (scope == null)
             return null;
 
-        // Get the flow analyzer for this method
-        if (!_methodFlowAnalyzers.TryGetValue(method, out var analyzer))
+        // Get the flow analyzer for this scope
+        if (!_methodFlowAnalyzers.TryGetValue(scope, out var analyzer))
             return null;
 
         // Get flow state at the specific location and check narrowing
@@ -59,43 +59,43 @@ internal class GDFlowAnalysisRegistry
     // ========================================
 
     /// <summary>
-    /// Registers a flow analyzer for a method.
+    /// Registers a flow analyzer for a method-like scope.
     /// </summary>
-    internal void RegisterFlowAnalyzer(GDMethodDeclaration method, GDFlowAnalyzer analyzer)
+    internal void RegisterFlowAnalyzer(GDNode methodScope, GDFlowAnalyzer analyzer)
     {
-        if (method != null && analyzer != null)
+        if (methodScope != null && analyzer != null)
         {
-            _methodFlowAnalyzers[method] = analyzer;
+            _methodFlowAnalyzers[methodScope] = analyzer;
         }
     }
 
     /// <summary>
-    /// Gets or creates a flow analyzer for a method.
+    /// Gets or creates a flow analyzer for a method-like scope (method or accessor body).
     /// </summary>
     internal GDFlowAnalyzer GetOrCreateFlowAnalyzer(
-        GDMethodDeclaration method,
+        GDNode methodScope,
         GDTypeInferenceEngine? typeEngine,
         System.Func<GDExpression, string?>? expressionTypeGetter = null,
         System.Func<IEnumerable<string>>? onreadyVarsGetter = null)
     {
-        if (_methodFlowAnalyzers.TryGetValue(method, out var existing))
+        if (_methodFlowAnalyzers.TryGetValue(methodScope, out var existing))
         {
             return existing;
         }
 
         var analyzer = new GDFlowAnalyzer(typeEngine, expressionTypeGetter, onreadyVarsGetter);
         // Cache BEFORE Analyze to prevent infinite recursion
-        _methodFlowAnalyzers[method] = analyzer;
-        analyzer.Analyze(method);
+        _methodFlowAnalyzers[methodScope] = analyzer;
+        analyzer.AnalyzeScope(methodScope);
         return analyzer;
     }
 
     /// <summary>
-    /// Checks if an analyzer exists for a method.
+    /// Checks if an analyzer exists for a method-like scope.
     /// </summary>
-    internal bool HasFlowAnalyzer(GDMethodDeclaration method)
+    internal bool HasFlowAnalyzer(GDNode methodScope)
     {
-        return _methodFlowAnalyzers.ContainsKey(method);
+        return _methodFlowAnalyzers.ContainsKey(methodScope);
     }
 
     /// <summary>

@@ -38,20 +38,24 @@ namespace GDShrapt.Reader
                     if (_resolvedStatement.Form.IsCompleted && _resolvedStatement.Form.FirstToken == null)
                     {
                         _resolvedStatement.RemoveFromParent();
-                        state.PopAndPass(c);
+
+                        if (HasBufferedIndentation)
+                            PopAndPassWithBufferedIndentation(state, c);
+                        else
+                            state.PopAndPass(c);
                         return;
                     }
 
                     if (c.IsExpressionStopChar())
                     {
-                        // In expression context (e.g., lambda inside call), pass stop chars up
-                        // This allows lambdas inside GDExpressionsList to properly terminate on comma/bracket
                         if (_inExpressionContext || state.ExpressionContextDepth > 0)
                         {
-                            state.PopAndPass(c);
+                            if (HasBufferedIndentation)
+                                PopAndPassWithBufferedIndentation(state, c);
+                            else
+                                state.PopAndPass(c);
                             return;
                         }
-                        // Otherwise treat as invalid token (top-level or malformed code)
                         Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
                         return;
                     }
@@ -66,7 +70,10 @@ namespace GDShrapt.Reader
                 {
                     if ((_inExpressionContext || state.ExpressionContextDepth > 0) && c.IsExpressionStopChar())
                     {
-                        state.PopAndPass(c);
+                        if (HasBufferedIndentation)
+                            PopAndPassWithBufferedIndentation(state, c);
+                        else
+                            state.PopAndPass(c);
                         return;
                     }
                     Owner.HandleAsInvalidToken(c, state, x => x.IsSpace() || x.IsNewLine());
@@ -101,7 +108,10 @@ namespace GDShrapt.Reader
                     {
                         if (_inExpressionContext || state.ExpressionContextDepth > 0)
                         {
-                            state.PopAndPass(c);
+                            if (HasBufferedIndentation)
+                                PopAndPassWithBufferedIndentation(state, c);
+                            else
+                                state.PopAndPass(c);
                             return;
                         }
 

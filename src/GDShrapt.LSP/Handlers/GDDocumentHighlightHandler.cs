@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
@@ -21,8 +22,8 @@ public class GDDocumentHighlightHandler
     public Task<GDDocumentHighlight[]?> HandleAsync(GDDocumentHighlightParams @params, CancellationToken cancellationToken)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
+        var normalizedFilePath = NormalizePath(filePath);
 
-        // Convert LSP 0-based to CLI.Core 1-based
         var line = @params.Position.Line + 1;
         var column = @params.Position.Character + 1;
 
@@ -30,42 +31,50 @@ public class GDDocumentHighlightHandler
         if (definition == null || string.IsNullOrEmpty(definition.SymbolName))
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
+        if (definition.IsInfoOnly)
+            return Task.FromResult<GDDocumentHighlight[]?>(null);
+
         var symbolName = definition.SymbolName;
 
         var groups = _findRefsHandler.FindReferences(symbolName, filePath);
-        if (groups == null || groups.Count == 0)
-            return Task.FromResult<GDDocumentHighlight[]?>(null);
 
         var highlights = new List<GDDocumentHighlight>();
-        foreach (var reference in FlattenLocations(groups))
+
+        if (groups != null && groups.Count > 0)
         {
-            if (!reference.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // Only Strict confidence (null = declaration-based, Strict = type-resolved)
-            if (reference.Confidence != null && reference.Confidence != GDReferenceConfidence.Strict)
-                continue;
-
-            var kind = reference.IsWrite || reference.IsDeclaration
-                ? GDDocumentHighlightKind.Write
-                : GDDocumentHighlightKind.Read;
-
-            // GDCliReferenceLocation uses 1-based column, convert to 0-based
-            var col0 = reference.Column - 1;
-            highlights.Add(new GDDocumentHighlight
+            foreach (var reference in FlattenLocations(groups))
             {
-                Range = GDLocationAdapter.ToLspRange(
-                    reference.Line,
-                    col0,
-                    reference.Line,
-                    col0 + symbolName.Length),
-                Kind = kind
-            });
+                if (!NormalizePath(reference.FilePath).Equals(normalizedFilePath, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (reference.Confidence != null && reference.Confidence != GDReferenceConfidence.Strict)
+                    continue;
+
+                var kind = reference.IsWrite || reference.IsDeclaration
+                    ? GDDocumentHighlightKind.Write
+                    : GDDocumentHighlightKind.Read;
+
+                var col0 = reference.Column - 1;
+                highlights.Add(new GDDocumentHighlight
+                {
+                    Range = GDLocationAdapter.ToLspRange(
+                        reference.Line,
+                        col0,
+                        reference.Line,
+                        col0 + symbolName.Length),
+                    Kind = kind
+                });
+            }
         }
 
-        return Task.FromResult<GDDocumentHighlight[]?>(
-            highlights.Count > 0 ? highlights.ToArray() : null);
+        if (highlights.Count == 0)
+            return Task.FromResult<GDDocumentHighlight[]?>(null);
+
+        return Task.FromResult<GDDocumentHighlight[]?>(highlights.ToArray());
     }
+
+    private static string NormalizePath(string path) =>
+        path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
 
     private static IEnumerable<GDCliReferenceLocation> FlattenLocations(IEnumerable<GDReferenceGroup> groups)
     {

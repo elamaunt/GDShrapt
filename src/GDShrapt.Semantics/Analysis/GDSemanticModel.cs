@@ -226,9 +226,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         _onreadyService = new GDOnreadyService(FindSymbol, GetVariables, GetMethods);
 
         _flowQueryService = new GDFlowQueryService(
-            (method, varName, loc) => GetOrCreateFlowAnalyzer(method)?.GetTypeAtLocation(varName, loc),
-            (method, varName, loc) => GetOrCreateFlowAnalyzer(method)?.GetVariableTypeAtLocation(varName, loc),
-            (method, loc) => GetOrCreateFlowAnalyzer(method)?.GetStateAtLocation(loc));
+            (scope, varName, loc) => GetOrCreateFlowAnalyzer(scope)?.GetTypeAtLocation(varName, loc),
+            (scope, varName, loc) => GetOrCreateFlowAnalyzer(scope)?.GetVariableTypeAtLocation(varName, loc),
+            (scope, loc) => GetOrCreateFlowAnalyzer(scope)?.GetStateAtLocation(loc));
 
         _nullabilityService = new GDNullabilityService(
             runtimeProvider,
@@ -357,10 +357,76 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         {
             var name = identExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(name))
-                return FindSymbolInScope(name, node);
+            {
+                var scopeSymbol = FindSymbolInScope(name, node);
+                if (scopeSymbol != null)
+                    return scopeSymbol;
+
+                // Fallback: check if this is a type name (Godot built-in or user class_name)
+                return TryResolveTypeName(name);
+            }
+        }
+
+        // Handle member access expression (the whole "stats.speed" node)
+        if (node is GDMemberOperatorExpression memberAccess)
+        {
+            var memberName = memberAccess.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(memberName))
+            {
+                var callerType = GetExpressionType(memberAccess.CallerExpression);
+                if (!string.IsNullOrEmpty(callerType))
+                    return ResolveMember(callerType, memberName);
+            }
+        }
+
+        // Handle lambda expressions (func(...): ...)
+        if (node is GDMethodExpression lambdaExpr)
+        {
+            return BuildLambdaSymbolInfo(lambdaExpr);
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Tries to resolve a name as a type name (Godot built-in or user class_name).
+    /// </summary>
+    private GDSymbolInfo? TryResolveTypeName(string name)
+    {
+        if (_runtimeProvider == null)
+            return null;
+
+        var typeInfo = _runtimeProvider.GetTypeInfo(name);
+        if (typeInfo != null)
+        {
+            var baseType = _runtimeProvider.GetBaseType(name);
+            return new GDSymbolInfo(name, GDSymbolKind.Class, baseType, name);
+        }
+
+        var globalClass = _runtimeProvider.GetGlobalClass(name);
+        if (globalClass != null)
+        {
+            var baseType = _runtimeProvider.GetBaseType(name);
+            return new GDSymbolInfo(name, GDSymbolKind.Class, baseType, name);
+        }
+
+        return null;
+    }
+
+    private GDSymbolInfo BuildLambdaSymbolInfo(GDMethodExpression lambdaExpr)
+    {
+        var name = lambdaExpr.Identifier?.Sequence ?? "(anonymous)";
+        var symbol = GDSymbol.Method(name, lambdaExpr);
+        symbol.ReturnTypeName = lambdaExpr.ReturnType?.BuildName();
+        symbol.Parameters = lambdaExpr.Parameters?
+            .Select((p, i) => new GDParameterSymbolInfo(
+                p.Identifier?.Sequence ?? $"param{i}",
+                p.Type?.BuildName(),
+                p.DefaultValue != null,
+                i))
+            .ToList();
+
+        return GDSymbolInfo.Local(symbol, _scriptFile);
     }
 
     /// <summary>
@@ -671,15 +737,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         => _memberResolver.FindMember(typeName, memberName);
 
     /// <summary>
-    /// Gets or creates a flow analyzer for a method.
-    /// Flow analyzers are cached per method.
+    /// Gets or creates a flow analyzer for a method-like scope.
+    /// Flow analyzers are cached per scope.
     /// </summary>
-    private GDFlowAnalyzer? GetOrCreateFlowAnalyzer(GDMethodDeclaration method)
+    private GDFlowAnalyzer? GetOrCreateFlowAnalyzer(GDNode methodScope)
     {
-        if (method == null)
+        if (methodScope == null)
             return null;
 
-        return _flowRegistry.GetOrCreateFlowAnalyzer(method, _typeEngine, GetExpressionTypeWithoutFlow, () => GetOnreadyVariables());
+        return _flowRegistry.GetOrCreateFlowAnalyzer(methodScope, _typeEngine, GetExpressionTypeWithoutFlow, () => GetOnreadyVariables());
     }
 
     /// <summary>
@@ -713,11 +779,11 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (string.IsNullOrEmpty(variableName) || atLocation == null)
             return null;
 
-        var method = atLocation.GetContainingMethod();
-        if (method == null)
+        var scope = atLocation.GetContainingMethodScope();
+        if (scope == null)
             return null;
 
-        var analyzer = GetOrCreateFlowAnalyzer(method);
+        var analyzer = GetOrCreateFlowAnalyzer(scope);
         return analyzer?.InitialState?.GetVariableType(variableName);
     }
 

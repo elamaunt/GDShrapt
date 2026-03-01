@@ -1,23 +1,23 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-02-28 19:06:13
+Generated: 2026-03-02 01:01:42
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 862
+Total diagnostics: 863
 Scripts analyzed:  54
 
 By Severity:
   Error     :    30
-  Hint      :    22
+  Hint      :    23
   Info      :    36
   Warning   :   774
 
 By Source:
   Linter              :   302
-  SemanticValidator   :   526
+  SemanticValidator   :   527
   Validator           :    34
 
 By Code (Top 30):
@@ -641,9 +641,10 @@ DIAGNOSTICS BY FILE
    554:35  [GD7006] Warning - Variable 'dict' may be null when accessing '[...]'
    558:0   [GD3023] Warning - Function '_deserialize_value' returns inconsistent types: Vector2, Vector3, Dictionary, Array
 
---- test_scripts/getters_setters.gd (4 diagnostics) ---
+--- test_scripts/getters_setters.gd (5 diagnostics) ---
 
      2:11  [GDL227] Warning - 'GettersSetters' has 22 member variables (max 20)
+    79:5   [GD7010] Hint - Redundant type check: 'value' is already declared as 'Dictionary'
    105:5   [GDL203] Info - Function '_on_health_changed' only contains 'pass'
    194:1   [GD7005] Warning - Variable 'inner' may be null when accessing 'value'
    195:9   [GD7005] Warning - Variable 'inner' may be null when accessing 'doubled'

@@ -41,7 +41,7 @@ public class GDDefinitionLocation
     public int Line { get; init; }
 
     /// <summary>
-    /// Column number (1-based).
+    /// Column number (0-based).
     /// </summary>
     public int Column { get; init; }
 
@@ -54,4 +54,24 @@ public class GDDefinitionLocation
     /// Kind of the symbol.
     /// </summary>
     public GDSymbolKind? Kind { get; init; }
+
+    /// <summary>
+    /// Optional info message to show to the user (e.g. "Built-in Godot type").
+    /// When set, the LSP layer should display this as a notification.
+    /// </summary>
+    public string? InfoMessage { get; init; }
+
+    /// <summary>
+    /// Creates an info-only result with no navigable location.
+    /// </summary>
+    public static GDDefinitionLocation WithInfo(string message) => new()
+    {
+        FilePath = string.Empty,
+        InfoMessage = message
+    };
+
+    /// <summary>
+    /// Whether this result is info-only (no navigable location).
+    /// </summary>
+    public bool IsInfoOnly => !string.IsNullOrEmpty(InfoMessage) && string.IsNullOrEmpty(FilePath);
 }

@@ -27,8 +27,12 @@ public class GDSignatureHelpHandler : IGDSignatureHelpHandler
         if (script?.Class == null || script.SemanticModel == null)
             return null;
 
+        // Convert 1-based CLI position to 0-based AST position
+        var line0 = line - 1;
+        var column0 = column - 1;
+
         // Find the call expression containing the cursor
-        var callExpression = FindEnclosingCallExpression(script.Class, line, column);
+        var callExpression = FindEnclosingCallExpression(script.Class, line0, column0);
         if (callExpression == null)
             return null;
 
@@ -43,7 +47,7 @@ public class GDSignatureHelpHandler : IGDSignatureHelpHandler
             return null;
 
         // Calculate active parameter index based on cursor position
-        var activeParameter = CalculateActiveParameter(callExpression, line, column);
+        var activeParameter = CalculateActiveParameter(callExpression, line0, column0);
 
         return new GDSignatureHelpResult
         {

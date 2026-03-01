@@ -125,6 +125,79 @@ func test():
             $"Typed String should not report null. Found: {FormatDiagnostics(nullDiagnostics)}");
     }
 
+    [TestMethod]
+    public void TypedNode_FromInstantiate_PropertyAccess_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+@export var scene_ref: PackedScene
+
+func setup():
+    if scene_ref:
+        var new_scene: Node = scene_ref.instantiate()
+        var anim = new_scene as Node2D
+        if not anim:
+            push_warning(new_scene.name)
+            new_scene.free()
+            return
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"var new_scene: Node should not be null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypedNode_ExportWithoutGuard_PropertyAccess_ReportsForExportVar()
+    {
+        var code = @"
+extends Node
+
+@export var scene_ref: PackedScene
+
+func setup():
+    var new_scene: Node = scene_ref.instantiate()
+    var n = new_scene.name
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        var sceneRefDiags = nullDiagnostics.Where(d => d.Message.Contains("'scene_ref'")).ToList();
+        var newSceneDiags = nullDiagnostics.Where(d => d.Message.Contains("'new_scene'")).ToList();
+        Assert.IsTrue(sceneRefDiags.Count > 0,
+            $"Expected GD7005/7007 for unguarded @export var scene_ref. Found: {FormatDiagnostics(nullDiagnostics)}");
+        Assert.AreEqual(0, newSceneDiags.Count,
+            $"var new_scene: Node should not be null. Found: {FormatDiagnostics(newSceneDiags)}");
+    }
+
+    [TestMethod]
+    public void TypedNode_InferredType_InSetter_PropertyAccess_NoDiagnostic()
+    {
+        // Reproduces battler.gd: var inside @export setter with `: =` inferred type
+        var code = @"
+extends Node
+
+var anim: Node
+
+@export var battler_anim_scene: PackedScene:
+    set(value):
+        battler_anim_scene = value
+        if battler_anim_scene:
+            var new_scene: = battler_anim_scene.instantiate()
+            anim = new_scene as Node2D
+            if not anim:
+                push_warning(new_scene.name)
+                new_scene.free()
+                battler_anim_scene = null
+                return
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        var newSceneDiags = nullDiagnostics.Where(d => d.Message.Contains("'new_scene'")).ToList();
+        Assert.AreEqual(0, newSceneDiags.Count,
+            $"var new_scene: = in setter should not be null. Found: {FormatDiagnostics(newSceneDiags)}");
+    }
+
     #endregion
 
     #region Self Access - Should NOT Report

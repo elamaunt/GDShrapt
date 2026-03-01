@@ -258,6 +258,12 @@ public class GDServerCapabilities
     public GDInlayHintOptions? InlayHintProvider { get; set; }
 
     /// <summary>
+    /// The server provides semantic tokens support.
+    /// </summary>
+    [JsonPropertyName("semanticTokensProvider")]
+    public GDSemanticTokensOptions? SemanticTokensProvider { get; set; }
+
+    /// <summary>
     /// The server provides workspace symbol support.
     /// </summary>
     [JsonPropertyName("workspaceSymbolProvider")]

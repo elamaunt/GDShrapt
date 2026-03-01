@@ -112,13 +112,72 @@ internal class GDFlowAnalyzer : GDVisitor
     }
 
     /// <summary>
-    /// Collects container usage profiles from the method for untyped Array/Dictionary variables.
+    /// Analyzes a method-like scope (method, setter body, or getter body) for flow-sensitive types.
     /// </summary>
-    private void CollectContainerProfiles(GDMethodDeclaration method)
+    public void AnalyzeScope(GDNode scope)
+    {
+        if (scope is GDMethodDeclaration method)
+        {
+            Analyze(method);
+            return;
+        }
+
+        if (scope is GDSetAccessorBodyDeclaration setter)
+        {
+            AnalyzeSetterBody(setter);
+            return;
+        }
+
+        if (scope is GDGetAccessorBodyDeclaration getter)
+        {
+            AnalyzeGetterBody(getter);
+            return;
+        }
+    }
+
+    private void AnalyzeSetterBody(GDSetAccessorBodyDeclaration setter)
+    {
+        // Initialize the setter parameter (e.g., "value" in set(value):)
+        var param = setter.Parameter;
+        if (param != null)
+        {
+            var name = param.Identifier?.Sequence;
+            var declType = param.Type?.BuildName();
+
+            // If no explicit type on the parameter, infer from the containing variable's type
+            if (string.IsNullOrEmpty(declType))
+            {
+                var varDecl = setter.Parent as GDVariableDeclaration;
+                declType = varDecl?.Type?.BuildName();
+            }
+
+            if (!string.IsNullOrEmpty(name))
+                _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(declType));
+        }
+
+        // Collect container usage profiles
+        CollectContainerProfiles(setter);
+
+        InitialState = _currentState.Clone();
+        setter.WalkIn(this);
+    }
+
+    private void AnalyzeGetterBody(GDGetAccessorBodyDeclaration getter)
+    {
+        // Getters have no parameters
+        CollectContainerProfiles(getter);
+        InitialState = _currentState.Clone();
+        getter.WalkIn(this);
+    }
+
+    /// <summary>
+    /// Collects container usage profiles from a method-like scope for untyped Array/Dictionary variables.
+    /// </summary>
+    private void CollectContainerProfiles(GDNode scope)
     {
         var scopes = new GDScopeStack();
         var containerCollector = new GDContainerUsageCollector(scopes, _typeEngine);
-        containerCollector.Collect(method);
+        containerCollector.Collect(scope);
 
         foreach (var kv in containerCollector.Profiles)
         {
@@ -161,10 +220,15 @@ internal class GDFlowAnalyzer : GDVisitor
                 if (!string.IsNullOrEmpty(name))
                 {
                     _reassignedVariables.Add(name);
+
+                    // Ensure class member variables have their declared type registered
+                    EnsureClassMemberDeclared(name, identExpr);
+
                     var rhsType = ResolveTypeWithFallback(dualOp.RightExpression);
                     if (!string.IsNullOrEmpty(rhsType))
                     {
-                        _currentState.SetVariableType(name, GDSemanticType.FromRuntimeTypeName(rhsType), dualOp);
+                        var adjustedType = AdjustTypeForDeclaredType(name, rhsType);
+                        _currentState.SetVariableType(name, GDSemanticType.FromRuntimeTypeName(adjustedType), dualOp);
                     }
                 }
             }
@@ -190,6 +254,60 @@ internal class GDFlowAnalyzer : GDVisitor
             GDDualOperatorType.XorAndAssign => true,
             _ => false
         };
+    }
+
+    /// <summary>
+    /// For class member variables not yet in the flow state, registers them with their declared type.
+    /// This ensures that when a class member like `@export var stats: BattlerStats` is assigned,
+    /// the flow analyzer knows its declared type for type adjustment.
+    /// </summary>
+    private void EnsureClassMemberDeclared(string name, GDIdentifierExpression identExpr)
+    {
+        if (_currentState.GetVariableType(name) != null)
+            return;
+
+        var symbol = _typeEngine?.Scopes?.Lookup(name);
+        if (symbol?.TypeName != null)
+        {
+            _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(symbol.TypeName));
+        }
+    }
+
+    /// <summary>
+    /// When RHS type is an ancestor of the variable's declared type, preserve the declared type.
+    /// e.g., stats: BattlerStats = stats.duplicate() → duplicate() returns Resource,
+    /// but BattlerStats extends Resource, so keep BattlerStats.
+    /// </summary>
+    private string AdjustTypeForDeclaredType(string name, string rhsType)
+    {
+        var existing = _currentState.GetVariableType(name);
+        if (existing?.DeclaredType == null)
+            return rhsType;
+
+        var declaredTypeName = existing.DeclaredType.DisplayName;
+        if (string.IsNullOrEmpty(declaredTypeName) || declaredTypeName == rhsType)
+            return rhsType;
+
+        if (IsSubclassOf(declaredTypeName, rhsType))
+            return declaredTypeName;
+
+        return rhsType;
+    }
+
+    private bool IsSubclassOf(string childType, string parentType)
+    {
+        var provider = _typeEngine?.RuntimeProvider;
+        if (provider == null)
+            return false;
+
+        var current = provider.GetBaseType(childType);
+        while (!string.IsNullOrEmpty(current))
+        {
+            if (current == parentType)
+                return true;
+            current = provider.GetBaseType(current);
+        }
+        return false;
     }
 
     /// <summary>

@@ -112,10 +112,8 @@ public class GDFindRefsCommand : IGDCommand
                 }
 
                 var col = _column ?? 1;
-                // Convert CLI 1-based positions to AST 0-based
-                var line0 = _line.Value - 1;
-                var col0 = col - 1;
-                var definition = goToDefHandler.FindDefinition(fullFilePath, line0, col0);
+                // FindDefinition expects 1-based positions (per interface contract)
+                var definition = goToDefHandler.FindDefinition(fullFilePath, _line.Value, col);
                 if (definition == null || string.IsNullOrEmpty(definition.SymbolName))
                 {
                     _formatter.WriteError(_output, $"No symbol found at line {_line.Value}, column {col}");

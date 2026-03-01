@@ -95,6 +95,21 @@ public static class GDRefactoringExtensions
     }
 
     /// <summary>
+    /// Gets the containing method-like scope for a node (method, setter body, or getter body).
+    /// </summary>
+    public static GDNode? GetContainingMethodScope(this GDNode? node)
+    {
+        var current = node;
+        while (current != null)
+        {
+            if (current is GDMethodDeclaration or GDSetAccessorBodyDeclaration or GDGetAccessorBodyDeclaration)
+                return current;
+            current = current.Parent as GDNode;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Gets the containing statement for a node.
     /// </summary>
     public static GDStatement? GetContainingStatement(this GDNode? node)

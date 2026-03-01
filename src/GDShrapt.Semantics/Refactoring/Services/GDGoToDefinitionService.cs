@@ -214,10 +214,10 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             return GDGoToDefinitionResult.Failed("Invalid context");
 
         var finder = new GDPositionFinder(context.ClassDeclaration);
-        var token = finder.FindIdentifierAtPosition(context.Cursor.Line, context.Cursor.Column);
+        var token = finder.FindTokenAtPosition(context.Cursor.Line, context.Cursor.Column);
 
         if (token == null)
-            return GDGoToDefinitionResult.Failed("No identifier at cursor position");
+            return GDGoToDefinitionResult.Failed("No token at cursor position");
 
         var parent = token.Parent;
         if (parent == null)
@@ -226,13 +226,20 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         // Route to appropriate handler based on parent type
         return parent switch
         {
-            GDIdentifierExpression idExpr => ResolveIdentifier(context, (GDIdentifier)token, idExpr),
+            GDIdentifierExpression idExpr when token is GDIdentifier id => ResolveIdentifier(context, id, idExpr),
+            GDClassNameAttribute classNameAttr when token is GDIdentifier id => ResolveClassNameDeclaration(context, id, classNameAttr),
+            GDVariableDeclarationStatement varDecl when token is GDIdentifier id => ResolveVariableDeclaration(context, id, varDecl),
+            GDVariableDeclaration varDecl when token is GDIdentifier id => ResolveClassVariableDeclaration(context, id, varDecl),
+            GDMethodDeclaration methodDecl when token is GDIdentifier id => ResolveMethodDeclaration(context, id, methodDecl),
+            GDSignalDeclaration signalDecl when token is GDIdentifier id => ResolveSignalDeclaration(context, id, signalDecl),
+            GDParameterDeclaration paramDecl when token is GDIdentifier id => ResolveParameterDeclaration(context, id, paramDecl),
+            GDForStatement forStmt when token is GDIdentifier id => ResolveForVariable(context, id, forStmt),
             GDExtendsAttribute _ => ResolveType(context, token.ToString()),
             GDInnerClassDeclaration innerClass => ResolveInnerClassToken(context, token, innerClass),
             GDPathList pathList => ResolveNodePath(context, pathList.ToString()),
             GDNodePathExpression nodePathExpr => ResolveNodePath(context, nodePathExpr.Path?.ToString() ?? ""),
             GDGetNodeExpression getNodeExpr => ResolveNodePath(context, getNodeExpr.Path?.ToString() ?? ""),
-            GDMemberOperatorExpression memberExpr => ResolveMember(context, (GDIdentifier)token, memberExpr),
+            GDMemberOperatorExpression memberExpr when token is GDIdentifier id => ResolveMember(context, id, memberExpr),
             GDTypeNode typeNode => ResolveType(context, typeNode.BuildName()),
             _ => GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.Unknown, token.ToString())
         };
@@ -249,62 +256,24 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         var filePath = context.Script?.Reference?.FullPath;
         var symbolName = identifier.Sequence;
 
-        // 1. Search in method scope (parameters, local variables, for loop variables)
-        var methodScope = FindParentOfType<GDMethodDeclaration>(identifier);
-        if (methodScope != null)
+        // 1. Walk up scope chain — search methods and lambdas (innermost first)
+        GDNode? current = identifier.Parent;
+        while (current != null)
         {
-            // Check method parameters
-            foreach (var param in methodScope.Parameters?.OfType<GDParameterDeclaration>() ?? Enumerable.Empty<GDParameterDeclaration>())
+            GDParametersList? parameters = current switch
             {
-                if (param.Identifier?.Sequence == symbolName)
-                {
-                    return GDGoToDefinitionResult.Found(
-                        GDDefinitionType.MethodParameter,
-                        filePath,
-                        param.Identifier.StartLine,
-                        param.Identifier.StartColumn,
-                        param.Identifier.EndColumn,
-                        symbolName,
-                        param,
-                        param.Identifier);
-                }
+                GDMethodDeclaration md => md.Parameters,
+                GDMethodExpression me => me.Parameters,
+                _ => null
+            };
+
+            if (parameters != null)
+            {
+                var found = SearchMethodScope(current, parameters, symbolName, identifier, filePath);
+                if (found != null) return found;
             }
 
-            // Check local variable declarations
-            foreach (var varDecl in methodScope.AllNodes.OfType<GDVariableDeclarationStatement>())
-            {
-                if (varDecl.Identifier?.Sequence == symbolName &&
-                    varDecl.StartLine < identifier.StartLine)
-                {
-                    return GDGoToDefinitionResult.Found(
-                        GDDefinitionType.LocalVariable,
-                        filePath,
-                        varDecl.Identifier.StartLine,
-                        varDecl.Identifier.StartColumn,
-                        varDecl.Identifier.EndColumn,
-                        symbolName,
-                        varDecl,
-                        varDecl.Identifier);
-                }
-            }
-
-            // Check for loop variables
-            foreach (var forStmt in methodScope.AllNodes.OfType<GDForStatement>())
-            {
-                if (forStmt.Variable?.Sequence == symbolName &&
-                    forStmt.StartLine <= identifier.StartLine)
-                {
-                    return GDGoToDefinitionResult.Found(
-                        GDDefinitionType.ForLoopVariable,
-                        filePath,
-                        forStmt.Variable.StartLine,
-                        forStmt.Variable.StartColumn,
-                        forStmt.Variable.EndColumn,
-                        symbolName,
-                        forStmt,
-                        forStmt.Variable);
-                }
-            }
+            current = current.Parent;
         }
 
         // 2. Search in class members
@@ -328,8 +297,232 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             }
         }
 
-        // 3. Try to resolve as a type (class_name, global)
+        // 3. Try semantic model (covers inherited members, etc.)
+        var semanticModel = context.GetSemanticModel();
+        if (semanticModel != null)
+        {
+            var symbol = semanticModel.FindSymbol(symbolName);
+            if (symbol?.DeclarationNode != null)
+            {
+                return GDGoToDefinitionResult.Found(
+                    GDDefinitionType.ClassMember,
+                    filePath,
+                    symbol.DeclarationNode.StartLine,
+                    symbol.DeclarationNode.StartColumn,
+                    symbol.DeclarationNode.EndColumn,
+                    symbolName,
+                    symbol.DeclarationNode);
+            }
+        }
+
+        // 4. Try to resolve as a type (class_name, global)
         return ResolveType(context, symbolName);
+    }
+
+    private static GDGoToDefinitionResult? SearchMethodScope(
+        GDNode scope,
+        GDParametersList? parameters,
+        string symbolName,
+        GDIdentifier identifier,
+        string? filePath)
+    {
+        // Check parameters
+        if (parameters != null)
+        {
+            foreach (var param in parameters.OfType<GDParameterDeclaration>())
+            {
+                if (param.Identifier?.Sequence == symbolName)
+                {
+                    return GDGoToDefinitionResult.Found(
+                        GDDefinitionType.MethodParameter,
+                        filePath,
+                        param.Identifier.StartLine,
+                        param.Identifier.StartColumn,
+                        param.Identifier.EndColumn,
+                        symbolName,
+                        param,
+                        param.Identifier);
+                }
+            }
+        }
+
+        // Check local variable declarations
+        foreach (var varDecl in scope.AllNodes.OfType<GDVariableDeclarationStatement>())
+        {
+            if (varDecl.Identifier?.Sequence == symbolName &&
+                varDecl.StartLine < identifier.StartLine)
+            {
+                return GDGoToDefinitionResult.Found(
+                    GDDefinitionType.LocalVariable,
+                    filePath,
+                    varDecl.Identifier.StartLine,
+                    varDecl.Identifier.StartColumn,
+                    varDecl.Identifier.EndColumn,
+                    symbolName,
+                    varDecl,
+                    varDecl.Identifier);
+            }
+        }
+
+        // Check for loop variables
+        foreach (var forStmt in scope.AllNodes.OfType<GDForStatement>())
+        {
+            if (forStmt.Variable?.Sequence == symbolName &&
+                forStmt.StartLine <= identifier.StartLine)
+            {
+                return GDGoToDefinitionResult.Found(
+                    GDDefinitionType.ForLoopVariable,
+                    filePath,
+                    forStmt.Variable.StartLine,
+                    forStmt.Variable.StartColumn,
+                    forStmt.Variable.EndColumn,
+                    symbolName,
+                    forStmt,
+                    forStmt.Variable);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves a class_name declaration — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveClassNameDeclaration(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDClassNameAttribute classNameAttr)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.TypeDeclaration,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            classNameAttr,
+            identifier);
+    }
+
+    /// <summary>
+    /// Resolves a local variable declaration — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveVariableDeclaration(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDVariableDeclarationStatement varDecl)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.LocalVariable,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            varDecl,
+            identifier);
+    }
+
+    /// <summary>
+    /// Resolves a class-level variable declaration — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveClassVariableDeclaration(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDVariableDeclaration varDecl)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.ClassMember,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            varDecl,
+            identifier);
+    }
+
+    /// <summary>
+    /// Resolves a method declaration — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveMethodDeclaration(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDMethodDeclaration methodDecl)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.ClassMember,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            methodDecl,
+            identifier);
+    }
+
+    /// <summary>
+    /// Resolves a signal declaration — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveSignalDeclaration(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDSignalDeclaration signalDecl)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.ClassMember,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            signalDecl,
+            identifier);
+    }
+
+    /// <summary>
+    /// Resolves a parameter declaration — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveParameterDeclaration(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDParameterDeclaration paramDecl)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.MethodParameter,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            paramDecl,
+            identifier);
+    }
+
+    /// <summary>
+    /// Resolves a for loop variable — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveForVariable(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDForStatement forStmt)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.ForLoopVariable,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            forStmt,
+            identifier);
     }
 
     /// <summary>

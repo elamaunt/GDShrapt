@@ -21,7 +21,7 @@ public sealed class GDBaseModule : IGDModule
 
         // Code intelligence (registered first — used by other handlers)
         registry.Register<IGDCompletionHandler>(new GDCompletionHandler(project));
-        var goToDefHandler = new GDGoToDefHandler(project);
+        var goToDefHandler = new GDGoToDefHandler(project, projectModel.RuntimeProvider);
         registry.Register<IGDGoToDefHandler>(goToDefHandler);
         registry.Register<IGDSymbolsHandler>(new GDSymbolsHandler(project));
 
@@ -37,7 +37,7 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<IGDFormatHandler>(new GDFormatHandler());
 
         // LSP-specific handlers (hover, code actions, signature help, inlay hints)
-        registry.Register<IGDHoverHandler>(new GDHoverHandler(project));
+        registry.Register<IGDHoverHandler>(new GDHoverHandler(projectModel));
         registry.Register<IGDCodeActionHandler>(new GDCodeActionHandler(project));
         registry.Register<IGDSignatureHelpHandler>(new GDSignatureHelpHandler(project));
         registry.Register<IGDInlayHintHandler>(new GDInlayHintHandler(project));

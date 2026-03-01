@@ -573,10 +573,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             return (GDRuntimeMemberInfo.Signal(signal.Name), typeName);
         }
 
-        // Check enums
+        // Check enums - use qualified name so FindMember can locate enum values in _typeCache
         if (projectType.Enums.TryGetValue(memberName, out var enumInfo))
         {
-            return (GDRuntimeMemberInfo.Constant(enumInfo.Name, enumInfo.Name), typeName);
+            var qualifiedEnumName = $"{typeName}.{enumInfo.Name}";
+            return (GDRuntimeMemberInfo.Constant(enumInfo.Name, qualifiedEnumName), typeName);
         }
 
         // Check base type - propagate the declaring type from base

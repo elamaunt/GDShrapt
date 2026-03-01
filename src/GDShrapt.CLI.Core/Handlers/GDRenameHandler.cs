@@ -29,7 +29,7 @@ public class GDRenameHandler : IGDRenameHandler
             return null;
 
         var fullPath = Path.GetFullPath(filePath);
-        var definition = _goToDefHandler.FindDefinition(fullPath, line - 1, column - 1);
+        var definition = _goToDefHandler.FindDefinition(fullPath, line, column);
         return definition?.SymbolName;
     }
 
