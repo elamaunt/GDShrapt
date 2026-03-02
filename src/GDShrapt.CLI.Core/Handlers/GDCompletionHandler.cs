@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Abstractions;
+using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Core;
@@ -149,7 +150,8 @@ public class GDCompletionHandler : IGDCompletionHandler
         {
             foreach (var symbol in semanticModel.Symbols)
             {
-                var item = MapSymbolToCompletionItem(symbol);
+                var resolvedType = ResolveDisplayType(symbol, semanticModel);
+                var item = MapSymbolToCompletionItem(symbol, resolvedType);
                 if (item != null)
                     yield return item;
             }
@@ -189,18 +191,47 @@ public class GDCompletionHandler : IGDCompletionHandler
         }
     }
 
-    private static GDCompletionItem? MapSymbolToCompletionItem(Semantics.GDSymbolInfo symbol)
+    private static string? ResolveDisplayType(Semantics.GDSymbolInfo symbol, GDSemanticModel semanticModel)
+    {
+        if (!string.IsNullOrEmpty(symbol.TypeName))
+            return symbol.TypeName;
+
+        if ((symbol.Kind == GDSymbolKind.Variable || symbol.Kind == GDSymbolKind.Constant)
+            && symbol.DeclarationNode is GDVariableDeclaration varDecl
+            && varDecl.Initializer != null)
+        {
+            var typeInfo = semanticModel.TypeSystem.GetType(varDecl.Initializer);
+            if (!typeInfo.IsVariant)
+            {
+                var typeName = typeInfo.DisplayName;
+
+                // Enrich plain container types with usage-based generic parameters
+                if (typeName == "Dictionary" || typeName == "Array")
+                {
+                    var containerType = semanticModel.TypeSystem.GetContainerElementType(symbol.Name);
+                    if (containerType != null && containerType.HasElementTypes)
+                        return containerType.ToString();
+                }
+
+                return typeName;
+            }
+        }
+
+        return null;
+    }
+
+    private static GDCompletionItem? MapSymbolToCompletionItem(Semantics.GDSymbolInfo symbol, string? resolvedType)
     {
         return symbol.Kind switch
         {
-            GDSymbolKind.Variable => GDCompletionItem.Variable(symbol.Name, symbol.TypeName, GDCompletionSource.Script),
-            GDSymbolKind.Method => GDCompletionItem.Method(symbol.Name, symbol.TypeName ?? "Variant", null, GDCompletionSource.Script),
+            GDSymbolKind.Variable => GDCompletionItem.Variable(symbol.Name, resolvedType, GDCompletionSource.Script),
+            GDSymbolKind.Method => GDCompletionItem.Method(symbol.Name, resolvedType ?? "Variant", null, GDCompletionSource.Script),
             GDSymbolKind.Signal => GDCompletionItem.Signal(symbol.Name, GDCompletionSource.Script),
-            GDSymbolKind.Constant => GDCompletionItem.Constant(symbol.Name, symbol.TypeName, GDCompletionSource.Script),
+            GDSymbolKind.Constant => GDCompletionItem.Constant(symbol.Name, resolvedType, GDCompletionSource.Script),
             GDSymbolKind.Enum => GDCompletionItem.Class(symbol.Name, GDCompletionSource.Script),
             GDSymbolKind.EnumValue => GDCompletionItem.EnumValue(symbol.Name, null, GDCompletionSource.Script),
             GDSymbolKind.Class => GDCompletionItem.Class(symbol.Name, GDCompletionSource.Script),
-            GDSymbolKind.Parameter => GDCompletionItem.Variable(symbol.Name, symbol.TypeName, GDCompletionSource.Local),
+            GDSymbolKind.Parameter => GDCompletionItem.Variable(symbol.Name, resolvedType, GDCompletionSource.Local),
             _ => null
         };
     }

@@ -918,7 +918,18 @@ namespace GDShrapt.Semantics
                 {
                     var memberInfo = FindMemberWithInheritance(baseTypeName, name);
                     if (memberInfo != null)
+                    {
+                        // Inherited method used without calling → Callable
+                        if (memberInfo.Kind == GDRuntimeMemberKind.Method)
+                        {
+                            bool isCalledDirectly = identExpr.Parent is GDCallExpression call
+                                && call.CallerExpression == identExpr;
+                            if (!isCalledDirectly)
+                                return CreateSimpleType("Callable");
+                        }
+
                         return CreateSimpleType(memberInfo.Type);
+                    }
                 }
             }
 
@@ -1749,7 +1760,18 @@ namespace GDShrapt.Semantics
             {
                 var memberInfo = FindMemberWithInheritance(callerType, memberName);
                 if (memberInfo != null)
+                {
+                    // Method reference: obj.method (not obj.method()) returns Callable
+                    if (memberInfo.Kind == GDRuntimeMemberKind.Method)
+                    {
+                        bool isCalledDirectly = memberExpr.Parent is GDCallExpression call
+                            && call.CallerExpression == memberExpr;
+                        if (!isCalledDirectly)
+                            return "Callable";
+                    }
+
                     return memberInfo.Type;
+                }
             }
 
             return null;

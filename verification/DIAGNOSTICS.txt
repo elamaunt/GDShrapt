@@ -1,23 +1,23 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-02 01:01:42
+Generated: 2026-03-02 11:30:55
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 863
+Total diagnostics: 862
 Scripts analyzed:  54
 
 By Severity:
   Error     :    30
   Hint      :    23
   Info      :    36
-  Warning   :   774
+  Warning   :   773
 
 By Source:
   Linter              :   302
-  SemanticValidator   :   527
+  SemanticValidator   :   526
   Validator           :    34
 
 By Code (Top 30):
@@ -43,7 +43,6 @@ By Code (Top 30):
   GD3001    :    5  (Type mismatch in assignment: cannot assign 'int' to 'Test...)
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
   GD3024    :    5  (Not all code paths return a value in 'test_gdl228_valid' ...)
-  GD4009    :    5  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
   GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
   GDL210    :    5  (Unreachable code detected)
@@ -51,6 +50,7 @@ By Code (Top 30):
   GD3014    :    4  (Type 'int' does not support indexing)
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
   GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
+  GD4009    :    4  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
 
 ================================================================================
 DIAGNOSTICS BY FILE
@@ -762,7 +762,7 @@ DIAGNOSTICS BY FILE
     63:14  [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'
     71:0   [GD3023] Warning - Function 'find_child_of_type' returns inconsistent types: Array[Node], Node, null
 
---- test_scripts/semantic_validation_demo.gd (45 diagnostics) ---
+--- test_scripts/semantic_validation_demo.gd (44 diagnostics) ---
 
     25:5   [GDL226] Warning - 'indexer_validation_demo' has 25 local variables (max 15)
     57:10  [GD3013] Warning - Type 'Array' expects integer index, got 'String'
@@ -773,7 +773,6 @@ DIAGNOSTICS BY FILE
     79:10  [GD3014] Error - Type 'bool' does not support indexing
    100:30  [GD4009] Warning - Signal 'player_scored' parameter 1 expects 'int', got 'String'
    103:31  [GD4009] Warning - Signal 'item_collected' parameter 1 expects 'int', got 'Array[int]'
-   106:31  [GD4009] Warning - Signal 'item_collected' parameter 1 expects 'int', got 'float'
    109:34  [GD4009] Warning - Signal 'player_scored' parameter 2 expects 'String', got 'int'
    120:5   [GDL201] Warning - Local variable 'int_array' is declared but never used
    121:5   [GDL201] Warning - Local variable 'string_array' is declared but never used

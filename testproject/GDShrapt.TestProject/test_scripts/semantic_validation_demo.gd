@@ -102,8 +102,8 @@ func signal_type_validation_demo() -> void:
 	# Array instead of int - ERROR
 	emit_signal("item_collected", [1, 2, 3])  # GD4009: Expected int, got Array  # 103:31-GD4009-OK
 
-	# float to int (narrowing) - ERROR
-	emit_signal("item_collected", 3.14)  # GD4009: Expected int, got float  # 106:31-GD4009-OK
+	# float to int (narrowing) - allowed (GDScript allows implicit narrowing)
+	emit_signal("item_collected", 3.14)
 
 	# Wrong second parameter - ERROR
 	emit_signal("player_scored", 50, 123)  # GD4009: Expected String, got int  # 109:34-GD4009-OK

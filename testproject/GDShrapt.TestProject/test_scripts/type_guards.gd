@@ -246,7 +246,7 @@ func enum_like_guard(data: Dictionary):
 			return null
 
 
-func assert_type_guard(value):  # 249:23-GD7020-OK
+func assert_type_guard(value):
 	# Assert as type guard (development only)
 	assert(value is Dictionary, "Expected Dictionary")
 	# After assert, value is Dictionary (in debug builds)
@@ -259,7 +259,7 @@ func ternary_with_guard(value):
 	return result
 
 
-func guard_propagation(outer):  # 262:23-GD7020-OK
+func guard_propagation(outer):
 	# Type guard should propagate to inner scope
 	if outer is Dictionary:
 		var inner_func = func():

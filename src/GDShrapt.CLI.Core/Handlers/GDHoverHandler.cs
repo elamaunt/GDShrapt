@@ -244,6 +244,25 @@ public class GDHoverHandler : IGDHoverHandler
             }
         }
 
+        // Fallback: infer type from initializer when declared type is null and flow analysis didn't help
+        if (string.IsNullOrEmpty(declaredType) && inferredType == null
+            && symbol.DeclarationNode is GDVariableDeclaration varDecl && varDecl.Initializer != null)
+        {
+            var initializerType = semanticModel.TypeSystem.GetType(varDecl.Initializer);
+            if (!initializerType.IsVariant)
+            {
+                inferredType = initializerType.DisplayName;
+
+                // Enrich plain container types with usage-based generic parameters
+                if (inferredType == "Dictionary" || inferredType == "Array")
+                {
+                    var containerType = semanticModel.TypeSystem.GetContainerElementType(symbol.Name);
+                    if (containerType != null && containerType.HasElementTypes)
+                        inferredType = containerType.ToString();
+                }
+            }
+        }
+
         // Show declared type
         if (!string.IsNullOrEmpty(declaredType))
         {

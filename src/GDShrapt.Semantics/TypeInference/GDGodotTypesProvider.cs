@@ -43,7 +43,27 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // Take the first type data for each GDScript name
             if (kvp.Value.Count > 0)
             {
-                _typeCache.TryAdd(gdScriptName, kvp.Value.Values.First());
+                var typeData = kvp.Value.Values.First();
+
+                if (typeData.IsEnum)
+                {
+                    // Enum types can be implicitly converted to int
+                    if (typeData.Traits?.ImplicitlyConvertibleTo == null)
+                    {
+                        typeData.Traits ??= new GDTypeTraits();
+                        typeData.Traits.ImplicitlyConvertibleTo = new[] { "int" };
+                    }
+
+                    // Enum types have built-in methods: values(), keys(), size(), has(), find_key()
+                    typeData.MethodDatas ??= new Dictionary<string, List<GDMethodData>>();
+                    AddEnumBuiltinMethod(typeData.MethodDatas, "values", "Array");
+                    AddEnumBuiltinMethod(typeData.MethodDatas, "keys", "Array");
+                    AddEnumBuiltinMethod(typeData.MethodDatas, "size", "int");
+                    AddEnumBuiltinMethodWithParam(typeData.MethodDatas, "has", "bool", "value", "int");
+                    AddEnumBuiltinMethodWithParam(typeData.MethodDatas, "find_key", "Variant", "value", "int");
+                }
+
+                _typeCache.TryAdd(gdScriptName, typeData);
             }
         }
 
@@ -335,11 +355,15 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             return true;
 
         // Variant as source can be assigned to any type (runtime type check will occur)
-        // This is common in GDScript where untyped variables (Variant) are passed to typed contexts
         if (sourceType == GDWellKnownTypes.Variant)
             return true;
 
-        if (GDTypeCompatibility.IsImplicitlyConvertible(sourceType, targetType))
+        // Check implicit conversions from TypesMap traits (int→float, String↔StringName, Array↔PackedArrays, enum→int)
+        if (CheckImplicitConversion(sourceType, targetType))
+            return true;
+
+        // int → any enum type
+        if (sourceType == "int" && _typeCache.TryGetValue(targetType, out var targetData) && targetData.IsEnum)
             return true;
 
         // Extract base type names for generics (Array[int] -> Array)
@@ -349,6 +373,19 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         // Generic type is assignable to its non-generic base (Array[int] -> Array)
         if (sourceBaseTypeName == targetBaseTypeName && sourceBaseTypeName != sourceType)
             return true;
+
+        // Generic Array[T] → PackedArray with matching element type
+        if (sourceBaseTypeName == "Array" && sourceBaseTypeName != sourceType)
+        {
+            if (_typeCache.TryGetValue(targetType, out var td) &&
+                td.Traits is { IsPackedArray: true, PackedElementType: var elemType } &&
+                elemType != null)
+            {
+                var sourceElem = GDGenericTypeHelper.ExtractArrayElementType(sourceType);
+                if (sourceElem == elemType)
+                    return true;
+            }
+        }
 
         // Check inheritance chain with cycle protection
         var visited = new HashSet<string>();
@@ -365,6 +402,18 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 break;
 
             currentType = baseType;
+        }
+
+        return false;
+    }
+
+    private bool CheckImplicitConversion(string sourceType, string targetType)
+    {
+        if (_typeCache.TryGetValue(sourceType, out var sourceData) &&
+            sourceData.Traits?.ImplicitlyConvertibleTo != null)
+        {
+            if (Array.IndexOf(sourceData.Traits.ImplicitlyConvertibleTo, targetType) >= 0)
+                return true;
         }
 
         return false;
@@ -1080,6 +1129,42 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     private static string NormalizeCSharpTypeName(string typeName)
     {
         if (typeName == "GodotObject") return "Object";
+        if (typeName == "Int64") return "int";
         return typeName;
+    }
+
+    private static void AddEnumBuiltinMethod(Dictionary<string, List<GDMethodData>> methods, string name, string returnType)
+    {
+        if (!methods.ContainsKey(name))
+        {
+            methods[name] = new List<GDMethodData>
+            {
+                new GDMethodData
+                {
+                    GDScriptName = name,
+                    GDScriptReturnTypeName = returnType,
+                    Parameters = Array.Empty<GDParameterInfo>()
+                }
+            };
+        }
+    }
+
+    private static void AddEnumBuiltinMethodWithParam(Dictionary<string, List<GDMethodData>> methods, string name, string returnType, string paramName, string paramType)
+    {
+        if (!methods.ContainsKey(name))
+        {
+            methods[name] = new List<GDMethodData>
+            {
+                new GDMethodData
+                {
+                    GDScriptName = name,
+                    GDScriptReturnTypeName = returnType,
+                    Parameters = new[]
+                    {
+                        new GDParameterInfo { CSharpName = paramName, GDScriptTypeName = paramType }
+                    }
+                }
+            };
+        }
     }
 }

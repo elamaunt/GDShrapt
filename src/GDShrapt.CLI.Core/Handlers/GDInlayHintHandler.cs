@@ -80,8 +80,24 @@ public class GDInlayHintHandler : IGDInlayHintHandler
             if (variable.TypeNode != null)
                 continue;
 
-            // Skip if no inferred type or type is Variant
+            // Try declared type first, then infer from initializer
             var typeName = variable.TypeName;
+            if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+            {
+                if (variable.DeclarationNode is GDVariableDeclaration varDecl && varDecl.Initializer != null)
+                {
+                    var typeInfo = semanticModel.TypeSystem.GetType(varDecl.Initializer);
+                    typeName = typeInfo.IsVariant ? null : typeInfo.DisplayName;
+
+                    // Enrich plain container types with usage-based generic parameters
+                    if (typeName == "Dictionary" || typeName == "Array")
+                    {
+                        var containerType = semanticModel.TypeSystem.GetContainerElementType(variable.Name);
+                        if (containerType != null && containerType.HasElementTypes)
+                            typeName = containerType.ToString();
+                    }
+                }
+            }
             if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
                 continue;
 
